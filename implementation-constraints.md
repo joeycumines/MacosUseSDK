@@ -26,4 +26,61 @@ Testing and Tooling:
 - Implement comprehensive unit tests, at bare minimum
 - Implement PROPER CI, using GitHub Actions, inclusive of unit testing, and build and linting and all relevant checks
 
+Documentation and Planning:
+- ALL updates to the plan MUST be represented in `./implementation-plan.md`, NOT any other files
+- You MUST NOT create status update files like `IMPLEMENTATION_COMPLETE.md` or `IMPLEMENTATION_NOTES.md`
+- You MUST keep `./implementation-plan.md` UP TO DATE with minimal edits, consolidating and updating where necessary
+- The plan MUST be STRICTLY and PERFECTLY aligned to this constraints document
+- You MUST update `implementation-plan.md` as part of each set of changes, potentially multiple times per session
+
+Proto API Structure:
+- Proto files MUST be located at `proto/macosusesdk/v1/` (NOT `proto/v1/`) - the proto dir is the root of the proto path and MUST mirror the package structure
+- Common components MUST be created under `proto/macosusesdk/type` where appropriate per https://google.aip.dev/213
+- Resource definitions MUST be in their own .proto files separate from service definitions
+- Method request/response messages MUST be co-located with the service definition
+- File names MUST correctly align with service names per AIPs
+- Files MUST include mandatory file options per AIPs
+- MUST follow https://google.aip.dev/190 and https://google.aip.dev/191 for naming conventions
+- Consolidate all services into a SINGLE service named `MacosUse`
+- Document proto semantics in `proto/README.md`
+
+Input Action Modeling:
+- Model input actions as a timeline of inputs (actual collections): `applications/*/inputs/*`, `desktopInputs/*`, etc.
+- Input resources MUST support Get and List standard methods per https://google.aip.dev/130, https://google.aip.dev/131, https://google.aip.dev/132
+- Inputs which have been handled MUST have a circular buffer per target resource, applicable to COMPLETED actions
+
+OpenApplication Method:
+- MUST use a dedicated response type (not returning TargetApplication directly)
+- MUST be a long-running operation using the `google.longrunning` API per https://google.aip.dev/151
+
+Google API Linter:
+- api-linter MUST be run using `go -C hack/google-api-linter run api-linter` from a dedicated Go module at `hack/google-api-linter/`
+- MUST use `buf export` command to export the full (flattened) protopath for googleapis protos
+- MUST use a tempdir to stage the proto files with proper cleanup hooks
+- MUST configure api-linter with a config file located at `google-api-linter.yaml`
+- MUST output in GitHub Actions format
+- Logic MUST be encapsulated in a POSIX-compliant shell script at `./hack/google-api-linter.sh`
+- The contents of `./google-api-linter.yaml` MUST be:
+  ```yaml
+  ---
+  - included_paths:
+      - 'google/**/*.proto'
+    disabled_rules:
+      - 'all'
+  ```
+- MUST NOT ignore linting for ANYTHING except googleapis protos (which are entirely ignored)
+- ALL linting issues MUST be fixed
+
+CI/CD Workflows:
+- MUST use reusable workflow pattern with `workflow_call`
+- Individual workflows (buf, api-linter, swift) MUST be callable as jobs in a single core CI workflow `ci.yaml`
+- Individual workflows MUST NOT have push/pull_request triggers - those belong on `ci.yaml` only
+- `ci.yaml` MUST have events: push or pull request to main, or workflow dispatch
+- `ci.yaml` MUST have a final summary job with `if: always()` that runs after ALL other jobs
+- MUST NOT auto-commit generated code - generate all required source locally and commit it
+- MUST properly lock dependencies with `buf dep update`
+- Scripts MUST handle ALL errors and MUST NOT assume the use of `set -e`
+- MUST NOT use `set -e` - use chaining with `&&` or explicit if conditions with non-zero exit codes
+- For multi-command scripts, typically use `set -x`
+
 IMPORTANT: You, the implementer, are expected to read and CONTINUALLY refine [implementation-plan.md](./implementation-plan.md).
