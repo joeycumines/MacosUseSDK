@@ -8,9 +8,14 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: macos-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       
@@ -35,6 +40,8 @@ jobs:
   # This job will build the gRPC server once it's implemented
   build-server:
     runs-on: macos-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       
