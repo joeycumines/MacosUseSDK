@@ -12,3 +12,7 @@ DerivedData/
 # Uncomment these if you don't want to commit generated code
 # /gen/
 # Note: We'll commit generated code for now to support development
+
+# Example binaries
+/examples/**/go-client
+/examples/**/*.exe
