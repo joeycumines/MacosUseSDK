@@ -14,5 +14,5 @@ DerivedData/
 # Note: We'll commit generated code for now to support development
 
 # Example binaries
-/examples/**/go-client
-/examples/**/*.exe
+examples/go-client/go-client
+examples/**/*.exe
