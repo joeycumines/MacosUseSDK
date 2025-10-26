@@ -1,0 +1,61 @@
+name: Swift
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Select Xcode version
+        run: sudo xcode-select -s /Applications/Xcode_15.2.app/Contents/Developer
+      
+      - name: Build SDK
+        run: swift build -c release
+      
+      - name: Run SDK tests
+        run: swift test
+      
+      - name: Build all tools
+        run: |
+          swift build -c release --product TraversalTool
+          swift build -c release --product HighlightTraversalTool
+          swift build -c release --product InputControllerTool
+          swift build -c release --product VisualInputTool
+          swift build -c release --product AppOpenerTool
+          swift build -c release --product ActionTool
+
+  # This job will build the gRPC server once it's implemented
+  build-server:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Select Xcode version
+        run: sudo xcode-select -s /Applications/Xcode_15.2.app/Contents/Developer
+      
+      - name: Check if server exists
+        id: check_server
+        run: |
+          if [ -d "Server" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Build Server
+        if: steps.check_server.outputs.exists == 'true'
+        working-directory: Server
+        run: swift build -c release
+      
+      - name: Test Server
+        if: steps.check_server.outputs.exists == 'true'
+        working-directory: Server
+        run: swift test

@@ -1,0 +1,24 @@
+version: v2
+plugins:
+  # Swift Server Stubs (grpc-swift)
+  - remote: buf.build/apple/swift
+    out: gen/swift
+    opt:
+      - Visibility=Public
+  - remote: buf.build/grpc/swift
+    out: gen/swift
+    opt:
+      - Visibility=Public
+      - Server=true
+      - Client=false
+
+  # Go Client Stubs
+  - remote: buf.build/protocolbuffers/go
+    out: gen/go
+    opt:
+      - paths=source_relative
+  - remote: buf.build/grpc/go
+    out: gen/go
+    opt:
+      - paths=source_relative
+      - require_unimplemented_servers=false

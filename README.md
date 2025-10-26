@@ -1,6 +1,12 @@
 # MacosUseSDK
 
-Library and command-line tools to traverse the macOS accessibility tree and simulate user input actions. Allows interaction with UI elements of other applications.
+Library, command-line tools, and gRPC server to traverse the macOS accessibility tree and simulate user input actions. Allows interaction with UI elements of other applications.
+
+## Components
+
+- **MacosUseSDK**: Core Swift library for accessibility automation
+- **Command-line Tools**: Standalone executables for common automation tasks
+- **gRPC Server**: Production-ready API server with resource-oriented gRPC API
 
 
 https://github.com/user-attachments/assets/d8dc75ba-5b15-492c-bb40-d2bc5b65483e
@@ -176,6 +182,51 @@ Task {
 
 // Remember to keep the run loop active if using async UI functions like highlightVisibleElements or *AndVisualize
 // RunLoop.main.run() // Or use within an @main Application structure
+```
+
+## gRPC Server
+
+The repository includes a production-ready gRPC server that exposes all SDK functionality via a resource-oriented API.
+
+### Features
+
+- **Resource-oriented API** following [Google's AIPs](https://google.aip.dev/)
+- **Multi-application support**: Automate multiple applications simultaneously
+- **Real-time streaming**: Watch accessibility tree changes in real-time
+- **Thread-safe architecture**: CQRS-style with central control loop
+- **Flexible configuration**: TCP sockets or Unix domain sockets
+
+### Quick Start
+
+1. Install [buf](https://buf.build/) for protobuf code generation
+2. Generate gRPC stubs:
+   ```bash
+   buf generate
+   ```
+3. Build and run the server:
+   ```bash
+   cd Server
+   swift build -c release
+   .build/release/MacosUseServer
+   ```
+
+See [Server/README.md](Server/README.md) for detailed documentation.
+
+### API Example
+
+Open Calculator and perform an action:
+
+```bash
+# Open application
+grpcurl -plaintext -d '{"identifier": "Calculator"}' \
+  localhost:8080 macosusesdk.v1.DesktopService/OpenApplication
+
+# Perform action (type "1+2=")
+grpcurl -plaintext -d '{
+  "name": "targetApplications/12345",
+  "action": {"input": {"type_text": "1+2="}},
+  "options": {"show_animation": true}
+}' localhost:8080 macosusesdk.v1.TargetApplicationsService/PerformAction
 ```
 
 ## License

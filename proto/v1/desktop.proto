@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package macosusesdk.v1;
+
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "google/api/field_behavior.proto";
+import "google/protobuf/empty.proto";
+import "macosusesdk/v1/targets.proto";
+
+// Service for interacting with the desktop environment as a whole.
+service DesktopService {
+  option (google.api.default_host) = "macos.googleapis.com";
+
+  // Opens or activates an application, creating a manageable target resource.
+  rpc OpenApplication(OpenApplicationRequest) returns (TargetApplication) {
+    option (google.api.http) = {
+      post: "/v1/desktop:openApplication"
+      body: "*"
+    };
+  }
+
+  // Executes a "global" input command not tied to a specific application PID.
+  rpc ExecuteGlobalInput(ExecuteGlobalInputRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/desktop:executeGlobalInput"
+      body: "*"
+    };
+  }
+}
+
+message OpenApplicationRequest {
+  // The identifier (name, bundle ID, or path) of the application to open.
+  // e.g., "Calculator", "com.apple.calculator"
+  string identifier = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message ExecuteGlobalInputRequest {
+  // The input action to perform globally.
+  InputAction input = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // If true, shows visual feedback for the input.
+  bool show_animation = 2;
+
+  // Duration for the visual feedback.
+  double animation_duration = 3;
+}

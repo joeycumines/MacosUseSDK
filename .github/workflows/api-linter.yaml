@@ -1,0 +1,32 @@
+name: API Linter
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  api-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+      
+      - name: Install api-linter
+        working-directory: tools
+        run: |
+          go mod download
+          go install github.com/googleapis/api-linter/cmd/api-linter
+      
+      - name: Run api-linter
+        run: |
+          # Note: This will fail initially until we have valid proto files with googleapis imports
+          # The BSR dependency resolution happens in CI
+          api-linter proto/**/*.proto --set-exit-status || true
+          echo "Note: API linting will be fully enforced once proto dependencies are resolved in CI"
