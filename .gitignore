@@ -13,6 +13,7 @@ DerivedData/
 # /gen/
 # Note: We'll commit generated code for now to support development
 
-# Example binaries
+# Example binaries (compiled executables)
 examples/go-client/go-client
 examples/**/*.exe
+examples/**/*.out
