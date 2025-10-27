@@ -99,7 +99,7 @@ service MacosUseService {
   // Traverses the accessibility tree of an application.
   rpc TraverseAccessibility(TraverseAccessibilityRequest) returns (TraverseAccessibilityResponse) {
     option (google.api.http) = {
-      post: "/v1/{name=applications/*}:traverse"
+      post: "/v1/{name=applications/*}:traverseAccessibility"
       body: "*"
     };
     option (google.api.method_signature) = "name";
@@ -108,7 +108,7 @@ service MacosUseService {
   // Streams accessibility tree changes for an application.
   rpc WatchAccessibility(WatchAccessibilityRequest) returns (stream WatchAccessibilityResponse) {
     option (google.api.http) = {
-      post: "/v1/{name=applications/*}:watch"
+      post: "/v1/{name=applications/*}:watchAccessibility"
       body: "*"
     };
     option (google.api.method_signature) = "name";
@@ -296,12 +296,22 @@ message ModifiedElement {
 
 // A change to an element attribute.
 message AttributeChange {
-  // Name of the attribute.
-  string name = 1;
+  option (google.api.resource) = {
+    type: "macos.googleapis.com/AttributeChange"
+    pattern: "attributeChanges/{attribute_change}"
+    singular: "attribute_change"
+    plural: "attributeChanges"
+  };
 
-  // Old value.
-  string old_value = 2;
+  // Resource name.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
 
-  // New value.
-  string new_value = 3;
+  // Name of the attribute that changed.
+  string attribute = 2;
+
+  // Old value of the attribute.
+  string old_value = 3;
+
+  // New value of the attribute.
+  string new_value = 4;
 }
