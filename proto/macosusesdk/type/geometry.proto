@@ -1,0 +1,21 @@
+// Copyright 2025 MacosUseSDK
+//
+// Common geometric types
+
+syntax = "proto3";
+
+package macosusesdk.type;
+
+option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type;macosusesdktype";
+option java_multiple_files = true;
+option java_outer_classname = "GeometryProto";
+option java_package = "com.macosusesdk.type";
+
+// A 2D point with x and y coordinates (screen coordinates).
+message Point {
+  // X coordinate.
+  double x = 1;
+
+  // Y coordinate.
+  double y = 2;
+}

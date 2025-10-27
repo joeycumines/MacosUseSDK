@@ -1,0 +1,60 @@
+// Copyright 2025 MacosUseSDK
+//
+// Common UI element types
+
+syntax = "proto3";
+
+package macosusesdk.type;
+
+option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type;macosusesdktype";
+option java_multiple_files = true;
+option java_outer_classname = "ElementProto";
+option java_package = "com.macosusesdk.type";
+
+// Represents a UI element from accessibility tree traversal.
+message Element {
+  // The accessibility role of the element (e.g., "button", "text field").
+  string role = 1;
+
+  // Text content of the element, if any.
+  optional string text = 2;
+
+  // X coordinate of the element's position.
+  optional double x = 3;
+
+  // Y coordinate of the element's position.
+  optional double y = 4;
+
+  // Width of the element.
+  optional double width = 5;
+
+  // Height of the element.
+  optional double height = 6;
+}
+
+// Statistics about a traversal operation.
+message TraversalStatistics {
+  // Total number of elements found.
+  int32 count = 1;
+
+  // Number of elements excluded from results.
+  int32 excluded_count = 2;
+
+  // Number excluded due to not being interactable.
+  int32 excluded_non_interactable = 3;
+
+  // Number excluded due to having no text.
+  int32 excluded_no_text = 4;
+
+  // Number of elements with text.
+  int32 with_text_count = 5;
+
+  // Number of elements without text.
+  int32 without_text_count = 6;
+
+  // Number of visible elements.
+  int32 visible_elements_count = 7;
+
+  // Count of elements by role type.
+  map<string, int32> role_counts = 8;
+}

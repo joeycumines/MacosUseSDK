@@ -1,12 +1,7 @@
 name: Buf
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  workflow_call:
 
 permissions:
   contents: read
@@ -19,60 +14,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Needed for breaking change detection
+          fetch-depth: 0
       
       - uses: bufbuild/buf-setup-action@v1
         with:
-          version: '1.47.2'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Update buf dependencies
-        run: buf dep update
+      - name: Lint protos
+        run: /tmp/buf lint
       
-      - name: Lint
-        run: buf lint
-      
-      - name: Breaking Change Detection
+      - name: Check breaking changes
         if: github.event_name == 'pull_request'
         run: |
-          buf breaking --against '.git#branch=origin/main'
-
-  generate-stubs:
-    runs-on: ubuntu-latest
-    needs: lint-and-breaking
-    if: github.ref == 'refs/heads/main'
-    permissions:
-      contents: write  # Need write for committing generated stubs
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-      
-      - uses: bufbuild/buf-setup-action@v1
-        with:
-          version: '1.47.2'
-      
-      - uses: actions/setup-go@v5
-        with:
-          go-version: '1.23'
-      
-      - name: Update buf dependencies
-        run: buf dep update
-      
-      - name: Generate Stubs
-        run: buf generate
-      
-      - name: Update Go dependencies
-        run: go mod tidy
-        if: hashFiles('gen/go/**/*.go') != ''
-      
-      - name: Commit and Push Generated Code
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add gen/ go.mod go.sum buf.lock
-          if ! git diff --staged --quiet; then
-            git commit -m "ci: update generated gRPC stubs [skip ci]"
-            git push
-          else
-            echo "No changes to generated stubs."
-          fi
+          /tmp/buf breaking --against ".git#branch=${{ github.base_ref }}"

@@ -1,138 +1,210 @@
-# Protobuf API Documentation
+# MacosUseSDK Proto API
 
-This directory contains the gRPC API definitions for MacosUseSDK.
-
-## Overview
-
-The API follows Google's [API Improvement Proposals (AIPs)](https://google.aip.dev/) and provides a resource-oriented interface for macOS UI automation.
+This directory contains the Protocol Buffer definitions for the MacosUseSDK gRPC API.
 
 ## Structure
 
 ```
 proto/
-└── v1/
-    ├── desktop.proto      # Desktop-level operations
-    └── targets.proto      # Application target management
+├── macosusesdk/
+│   ├── type/           # Common type definitions (AIP-213)
+│   │   ├── geometry.proto   # Point and geometric types
+│   │   └── element.proto    # UI element and traversal types
+│   └── v1/             # API v1 definitions
+│       ├── application.proto   # Application resource
+│       ├── input.proto        # Input resource
+│       └── macos_use.proto    # MacosUse service and methods
+└── README.md
 ```
 
-## Services
+## API Design Principles
 
-### DesktopService
+This API follows [Google's API Improvement Proposals (AIPs)](https://google.aip.dev/) strictly:
 
-Global desktop operations not tied to a specific application.
+### Resource-Oriented Design
 
-**Methods:**
-- `OpenApplication`: Opens or activates an application, returning a TargetApplication resource
-- `ExecuteGlobalInput`: Executes input actions globally (e.g., mouse clicks anywhere)
+The API exposes two primary resources:
 
-### TargetApplicationsService
+1. **Application** (`applications/{application}`)
+   - Represents a running macOS application being tracked for automation
+   - Supports standard methods: Get, List, Delete
+   
+2. **Input** (`applications/{application}/inputs/{input}` or `desktopInputs/{input}`)
+   - Represents an input action in a timeline
+   - Supports standard methods: Create, Get, List
+   - Forms a timeline for each application or globally for the desktop
 
-Manages and automates specific application instances (PIDs).
+### Service Structure (AIP-190, AIP-191)
 
-**Standard Methods:**
-- `GetTargetApplication`: Retrieves a specific target by resource name
-- `ListTargetApplications`: Lists all tracked targets
-- `DeleteTargetApplication`: Stops tracking a target (doesn't quit the app)
+- Single service: `MacosUse` (not `MacosUseService` - service suffix is discouraged per AIP-191)
+- File: `macos_use.proto` aligns with service name
+- All method request/response messages co-located with the service
+- Resources in separate files
 
-**Custom Methods:**
-- `PerformAction`: Executes automation actions with optional before/after traversals and diffing
-- `Watch`: Server-streaming RPC that streams accessibility tree changes in real-time
+### Common Components (AIP-213)
 
-## Resources
+Common types that are reused across the API are placed in `macosusesdk/type/`:
 
-### TargetApplication
+- `Point`: 2D screen coordinates
+- `Element`: UI element representation
+- `TraversalStatistics`: Statistics from accessibility tree traversal
 
-Represents a running application instance being tracked by the server.
+These are minimal and only include truly common, reusable types.
 
-**Pattern:** `targetApplications/{pid}`
+### Long-Running Operations (AIP-151)
 
-**Fields:**
-- `name` (string): Resource name, e.g., "targetApplications/12345"
-- `pid` (int32): Process ID (output only)
-- `app_name` (string): Localized application name (output only)
+`OpenApplication` is implemented as a long-running operation using `google.longrunning.Operation`:
 
-## Message Types
+```protobuf
+rpc OpenApplication(OpenApplicationRequest) returns (google.longrunning.Operation) {
+  option (google.longrunning.operation_info) = {
+    response_type: "OpenApplicationResponse"
+    metadata_type: "OpenApplicationMetadata"
+  };
+}
+```
 
-### Input Actions
+This allows clients to:
+- Poll for completion
+- Cancel operations
+- Receive metadata during execution
 
-All input simulation types supported by the SDK:
+### Input Timeline & Circular Buffer
 
-- `Point`: Screen coordinates (x, y)
-- `InputAction`: Click, double-click, right-click, type text, press key, move mouse
-- `KeyPress`: Key combination (e.g., "cmd+c", "return")
-- `PrimaryAction`: Input action or traverse-only operation
+Inputs are modeled as resources forming a timeline:
 
-### Options and Results
+- **Application-specific**: `applications/{application}/inputs/{input}`
+- **Global desktop**: `desktopInputs/{input}`
 
-- `ActionOptions`: Configuration for action execution (traversals, diffing, animations, delays)
-- `ActionResult`: Complete result including traversal data and errors
-- `ResponseData`: Accessibility tree traversal output
-- `ElementData`: Individual UI element information
-- `Statistics`: Traversal statistics (counts, role distribution)
+Each input has a state lifecycle:
+1. `STATE_PENDING`: Created but not yet executing
+2. `STATE_EXECUTING`: Currently being executed
+3. `STATE_COMPLETED`: Successfully completed
+4. `STATE_FAILED`: Failed with an error
 
-### Diffing
+**Circular Buffer**: The server maintains a circular buffer of completed inputs per application. This allows:
+- Querying recent input history
+- Analyzing automation patterns
+- Debugging failed sequences
 
-- `TraversalDiff`: Changes between two traversals (added, removed, modified)
-- `ModifiedElement`: Element that changed with detailed attribute changes
-- `AttributeChangeDetail`: Specific attribute change (text, position, size)
+The buffer size is server-configurable and oldest completed inputs are automatically evicted.
+
+### Standard Methods (AIP-130, AIP-131, AIP-132)
+
+All resources implement appropriate standard methods:
+
+**Application**:
+- `GetApplication` (AIP-131)
+- `ListApplications` (AIP-132)
+- `DeleteApplication` (AIP-135)
+
+**Input**:
+- `CreateInput` (AIP-133)
+- `GetInput` (AIP-131)
+- `ListInputs` (AIP-132)
+
+### Custom Methods (AIP-136)
+
+- `TraverseAccessibility`: Retrieves accessibility tree snapshot
+- `WatchAccessibility`: Streams accessibility tree changes (server-streaming RPC)
+
+### Pagination (AIP-158)
+
+List methods support pagination with `page_size` and `page_token`:
+
+```protobuf
+message ListApplicationsRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+message ListApplicationsResponse {
+  repeated Application applications = 1;
+  string next_page_token = 2;
+}
+```
+
+## File Options
+
+All proto files include mandatory options per AIP-191:
+
+```protobuf
+option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/...";
+option java_multiple_files = true;
+option java_outer_classname = "...Proto";
+option java_package = "com.macosusesdk...";
+```
 
 ## Code Generation
 
-### For Swift (Server)
+Generated code is committed to the repository in `gen/`:
+
+- `gen/swift/`: Swift server stubs (grpc-swift)
+- `gen/go/`: Go client stubs
+
+### Regenerating Code
 
 ```bash
 buf generate
+buf generate buf.build/googleapis/googleapis --include-imports
 ```
-
-Generates server stubs in `gen/swift/`
-
-### For Go (Client)
-
-```bash
-buf generate
-```
-
-Generates client stubs in `gen/go/`
-
-The Go module is `github.com/joeycumines/MacosUseSDK`.
 
 ## Linting
 
-The API is validated using both `buf lint` and `api-linter` (Google's AIP linter).
+The API is validated with both `buf lint` and `api-linter`:
+
+### buf lint
 
 ```bash
-# Buf linting
 buf lint
-
-# API linting (requires api-linter)
-api-linter proto/**/*.proto
 ```
 
-## Breaking Changes
+Note: Some buf lint warnings conflict with AIPs. Per `implementation-constraints.md`, AIPs take precedence.
 
-Breaking changes are detected in CI:
+### api-linter (Google's AIP linter)
 
 ```bash
-buf breaking --against '.git#branch=main'
+./hack/google-api-linter.sh
 ```
+
+This script:
+1. Exports googleapis protos via `buf export`
+2. Runs `api-linter` with proper proto paths
+3. Outputs in GitHub Actions format
+4. Ignores googleapis protos (configured in `google-api-linter.yaml`)
 
 ## Dependencies
 
-- `buf.build/googleapis/googleapis`: Google API common protos (annotations, resources, etc.)
+- `buf.build/googleapis/googleapis`: Google API common protos and types
+
+Dependencies are locked in `buf.lock` via:
+
+```bash
+buf dep update
+```
 
 ## Versioning
 
-The API is versioned as `v1`. Breaking changes will result in a new version (v2, etc.).
+The API is versioned as `v1`. Future breaking changes will require a new version (`v2`, etc) per AIP-180.
 
 ## HTTP/JSON Mapping
 
-All RPCs include HTTP annotations for gRPC-Gateway compatibility, enabling JSON/REST access:
+All RPCs include HTTP annotations enabling REST/JSON access via grpc-gateway:
 
-```bash
-# Example: Open application via HTTP/JSON
-curl -X POST http://localhost:8080/v1/desktop:openApplication \
-  -H "Content-Type: application/json" \
-  -d '{"identifier": "Calculator"}'
+```protobuf
+rpc GetApplication(GetApplicationRequest) returns (Application) {
+  option (google.api.http) = {
+    get: "/v1/{name=applications/*}"
+  };
+}
 ```
 
-(Note: HTTP/JSON transcoding requires additional configuration)
+## Contributing
+
+When modifying the API:
+
+1. Follow all applicable AIPs
+2. Run `buf lint` and `./hack/google-api-linter.sh`
+3. Regenerate code with `buf generate`
+4. Update this README if structure changes
+5. Update `implementation-plan.md` with significant changes
