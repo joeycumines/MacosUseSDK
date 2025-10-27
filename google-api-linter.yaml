@@ -1,0 +1,5 @@
+---
+- included_paths:
+    - 'google/**/*.proto'
+  disabled_rules:
+    - 'all'

@@ -1,0 +1,299 @@
+// Copyright 2025 MacosUseSDK
+//
+// MacosUse service definition
+
+syntax = "proto3";
+
+package macosusesdk.v1;
+
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/longrunning/operations.proto";
+import "google/protobuf/empty.proto";
+import "macosusesdk/type/element.proto";
+import "macosusesdk/v1/application.proto";
+import "macosusesdk/v1/input.proto";
+
+option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
+option java_multiple_files = true;
+option java_outer_classname = "MacosUseServiceProto";
+option java_package = "com.macosusesdk.v1";
+
+// MacosUse is the primary service for automating macOS applications.
+service MacosUse {
+  option (google.api.default_host) = "macos.googleapis.com";
+
+  // Opens or activates an application. This is a long-running operation.
+  rpc OpenApplication(OpenApplicationRequest) returns (google.longrunning.Operation) {
+    option (google.api.http) = {
+      post: "/v1/applications:open"
+      body: "*"
+    };
+    option (google.longrunning.operation_info) = {
+      response_type: "OpenApplicationResponse"
+      metadata_type: "OpenApplicationMetadata"
+    };
+  }
+
+  // Gets a specific application being tracked.
+  rpc GetApplication(GetApplicationRequest) returns (Application) {
+    option (google.api.http) = {
+      get: "/v1/{name=applications/*}"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists all applications currently tracked.
+  rpc ListApplications(ListApplicationsRequest) returns (ListApplicationsResponse) {
+    option (google.api.http) = {
+      get: "/v1/applications"
+    };
+  }
+
+  // Stops tracking an application. This does NOT quit the app.
+  rpc DeleteApplication(DeleteApplicationRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/{name=applications/*}"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // Creates an input action to be executed.
+  rpc CreateInput(CreateInputRequest) returns (Input) {
+    option (google.api.http) = {
+      post: "/v1/{parent=applications/*}/inputs"
+      body: "input"
+      additional_bindings {
+        post: "/v1/desktopInputs"
+        body: "input"
+      }
+    };
+    option (google.api.method_signature) = "parent,input";
+  }
+
+  // Gets a specific input.
+  rpc GetInput(GetInputRequest) returns (Input) {
+    option (google.api.http) = {
+      get: "/v1/{name=applications/*/inputs/*}"
+      additional_bindings {
+        get: "/v1/{name=desktopInputs/*}"
+      }
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists inputs for an application or globally.
+  rpc ListInputs(ListInputsRequest) returns (ListInputsResponse) {
+    option (google.api.http) = {
+      get: "/v1/{parent=applications/*}/inputs"
+      additional_bindings {
+        get: "/v1/desktopInputs"
+      }
+    };
+    option (google.api.method_signature) = "parent";
+  }
+
+  // Traverses the accessibility tree of an application.
+  rpc TraverseAccessibility(TraverseAccessibilityRequest) returns (TraverseAccessibilityResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=applications/*}:traverse"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // Streams accessibility tree changes for an application.
+  rpc WatchAccessibility(WatchAccessibilityRequest) returns (stream WatchAccessibilityResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=applications/*}:watch"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name";
+  }
+}
+
+// Request to open an application.
+message OpenApplicationRequest {
+  // The identifier (name, bundle ID, or path) of the application to open.
+  // Examples: "Calculator", "com.apple.calculator", "/Applications/Calculator.app"
+  string identifier = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Response from opening an application.
+message OpenApplicationResponse {
+  // The application resource that was opened.
+  Application application = 1;
+}
+
+// Metadata for OpenApplication long-running operation.
+message OpenApplicationMetadata {
+  // The identifier being opened.
+  string identifier = 1;
+}
+
+// Request to get an application.
+message GetApplicationRequest {
+  // Resource name of the application.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "macos.googleapis.com/Application" }
+  ];
+}
+
+// Request to list applications.
+message ListApplicationsRequest {
+  // Maximum number of applications to return.
+  int32 page_size = 1;
+
+  // Page token from a previous ListApplications call.
+  string page_token = 2;
+}
+
+// Response from listing applications.
+message ListApplicationsResponse {
+  // The applications.
+  repeated Application applications = 1;
+
+  // Token to retrieve the next page of results.
+  string next_page_token = 2;
+}
+
+// Request to delete an application.
+message DeleteApplicationRequest {
+  // Resource name of the application.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "macos.googleapis.com/Application" }
+  ];
+}
+
+// Request to create an input.
+message CreateInputRequest {
+  // Parent resource. Either "applications/{application}" or "" for desktop inputs.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "macos.googleapis.com/Application" }
+  ];
+
+  // The input to create.
+  Input input = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Optional input ID. If not provided, the server generates one.
+  string input_id = 3;
+}
+
+// Request to get an input.
+message GetInputRequest {
+  // Resource name of the input.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "macos.googleapis.com/Input" }
+  ];
+}
+
+// Request to list inputs.
+message ListInputsRequest {
+  // Parent resource. Either "applications/{application}" or "" for desktop inputs.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "macos.googleapis.com/Application" }
+  ];
+
+  // Maximum number of inputs to return.
+  int32 page_size = 2;
+
+  // Page token from a previous ListInputs call.
+  string page_token = 3;
+
+  // Filter inputs by state.
+  Input.State state_filter = 4;
+}
+
+// Response from listing inputs.
+message ListInputsResponse {
+  // The inputs.
+  repeated Input inputs = 1;
+
+  // Token to retrieve the next page of results.
+  string next_page_token = 2;
+}
+
+// Request to traverse accessibility tree.
+message TraverseAccessibilityRequest {
+  // Resource name of the application.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "macos.googleapis.com/Application" }
+  ];
+
+  // Whether to return only visible elements.
+  bool visible_only = 2;
+}
+
+// Response from traversing accessibility tree.
+message TraverseAccessibilityResponse {
+  // Name of the application.
+  string app_name = 1;
+
+  // Elements found in the traversal.
+  repeated macosusesdk.type.Element elements = 2;
+
+  // Statistics about the traversal.
+  macosusesdk.type.TraversalStatistics statistics = 3;
+
+  // Processing time in seconds.
+  string processing_time = 4;
+}
+
+// Request to watch accessibility changes.
+message WatchAccessibilityRequest {
+  // Resource name of the application.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "macos.googleapis.com/Application" }
+  ];
+
+  // Poll interval in seconds.
+  double poll_interval = 2;
+
+  // Whether to return only visible elements.
+  bool visible_only = 3;
+}
+
+// Response streamed from watching accessibility.
+message WatchAccessibilityResponse {
+  // Elements added since last update.
+  repeated macosusesdk.type.Element added = 1;
+
+  // Elements removed since last update.
+  repeated macosusesdk.type.Element removed = 2;
+
+  // Elements modified since last update.
+  repeated ModifiedElement modified = 3;
+}
+
+// An element that was modified.
+message ModifiedElement {
+  // The element before modification.
+  macosusesdk.type.Element before = 1;
+
+  // The element after modification.
+  macosusesdk.type.Element after = 2;
+
+  // List of changed attributes.
+  repeated AttributeChange changes = 3;
+}
+
+// A change to an element attribute.
+message AttributeChange {
+  // Name of the attribute.
+  string name = 1;
+
+  // Old value.
+  string old_value = 2;
+
+  // New value.
+  string new_value = 3;
+}

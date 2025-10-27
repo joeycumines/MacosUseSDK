@@ -1,0 +1,103 @@
+// Copyright 2025 MacosUseSDK
+//
+// Input resource definition
+
+syntax = "proto3";
+
+package macosusesdk.v1;
+
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+import "macosusesdk/type/geometry.proto";
+
+option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
+option java_multiple_files = true;
+option java_outer_classname = "InputProto";
+option java_package = "com.macosusesdk.v1";
+
+// A resource representing an input action that was or will be executed.
+// Inputs form a timeline for each application or globally for the desktop.
+message Input {
+  option (google.api.resource) = {
+    type: "macos.googleapis.com/Input"
+    pattern: "applications/{application}/inputs/{input}"
+    pattern: "desktopInputs/{input}"
+    singular: "input"
+    plural: "inputs"
+  };
+
+  // Resource name. Either:
+  // - "applications/{application}/inputs/{input}" for app-specific inputs
+  // - "desktopInputs/{input}" for global desktop inputs
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // The specific action to perform or that was performed.
+  InputAction action = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Current state of the input.
+  State state = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the input was created.
+  google.protobuf.Timestamp create_time = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the input completed (success or failure).
+  google.protobuf.Timestamp complete_time = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Error message if the input failed.
+  string error = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // State of an input action.
+  enum State {
+    // Default unspecified state.
+    STATE_UNSPECIFIED = 0;
+
+    // Input is pending execution.
+    STATE_PENDING = 1;
+
+    // Input is currently executing.
+    STATE_EXECUTING = 2;
+
+    // Input completed successfully.
+    STATE_COMPLETED = 3;
+
+    // Input failed with an error.
+    STATE_FAILED = 4;
+  }
+}
+
+// Specification of an input action.
+message InputAction {
+  // Whether to show visual feedback during execution.
+  bool show_animation = 1;
+
+  // Duration of visual feedback in seconds.
+  double animation_duration = 2;
+
+  // The specific input type and parameters.
+  oneof input_type {
+    // Click at a specific point.
+    macosusesdk.type.Point click = 10;
+
+    // Double-click at a specific point.
+    macosusesdk.type.Point double_click = 11;
+
+    // Right-click at a specific point.
+    macosusesdk.type.Point right_click = 12;
+
+    // Type the specified text.
+    string type_text = 13;
+
+    // Press a key combination.
+    KeyPress press_key = 14;
+
+    // Move mouse to a specific point.
+    macosusesdk.type.Point move_to = 15;
+  }
+}
+
+// A key press with optional modifiers.
+message KeyPress {
+  // Key combination string (e.g., "return", "a", "cmd+c").
+  string key_combo = 1 [(google.api.field_behavior) = REQUIRED];
+}
