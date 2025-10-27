@@ -7,7 +7,6 @@ managed:
       value: github.com/joeycumines/MacosUseSDK/gen/go
 inputs:
   - directory: proto
-  - module: buf.build/googleapis/googleapis
 plugins:
   - remote: buf.build/apple/swift
     out: Server/Sources/MacosUseSDKProtos

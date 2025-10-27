@@ -33,7 +33,7 @@ public struct Macosusesdk_V1_Input: Sendable {
 
   /// Resource name. Either:
   /// - "applications/{application}/inputs/{input}" for app-specific inputs
-  /// - "desktopInputs/{input}" for global desktop inputs
+  /// - "inputs/{input}" for global desktop inputs
   public var name: String = String()
 
   /// The specific action to perform or that was performed.
@@ -199,12 +199,12 @@ public struct Macosusesdk_V1_InputAction: Sendable {
   }
 
   /// Move mouse to a specific point.
-  public var moveTo: Macosusesdk_Type_Point {
+  public var moveMouse: Macosusesdk_Type_Point {
     get {
-      if case .moveTo(let v)? = inputType {return v}
+      if case .moveMouse(let v)? = inputType {return v}
       return Macosusesdk_Type_Point()
     }
-    set {inputType = .moveTo(newValue)}
+    set {inputType = .moveMouse(newValue)}
   }
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -222,7 +222,7 @@ public struct Macosusesdk_V1_InputAction: Sendable {
     /// Press a key combination.
     case pressKey(Macosusesdk_V1_KeyPress)
     /// Move mouse to a specific point.
-    case moveTo(Macosusesdk_Type_Point)
+    case moveMouse(Macosusesdk_Type_Point)
 
   }
 
@@ -312,7 +312,7 @@ extension Macosusesdk_V1_Input.State: SwiftProtobuf._ProtoNameProviding {
 
 extension Macosusesdk_V1_InputAction: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".InputAction"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}show_animation\0\u{3}animation_duration\0\u{2}\u{8}click\0\u{3}double_click\0\u{3}right_click\0\u{3}type_text\0\u{3}press_key\0\u{3}move_to\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}show_animation\0\u{3}animation_duration\0\u{2}\u{8}click\0\u{3}double_click\0\u{3}right_click\0\u{3}type_text\0\u{3}press_key\0\u{3}move_mouse\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -387,12 +387,12 @@ extension Macosusesdk_V1_InputAction: SwiftProtobuf.Message, SwiftProtobuf._Mess
         var hadOneofValue = false
         if let current = self.inputType {
           hadOneofValue = true
-          if case .moveTo(let m) = current {v = m}
+          if case .moveMouse(let m) = current {v = m}
         }
         try decoder.decodeSingularMessageField(value: &v)
         if let v = v {
           if hadOneofValue {try decoder.handleConflictingOneOf()}
-          self.inputType = .moveTo(v)
+          self.inputType = .moveMouse(v)
         }
       }()
       default: break
@@ -432,8 +432,8 @@ extension Macosusesdk_V1_InputAction: SwiftProtobuf.Message, SwiftProtobuf._Mess
       guard case .pressKey(let v)? = self.inputType else { preconditionFailure() }
       try visitor.visitSingularMessageField(value: v, fieldNumber: 14)
     }()
-    case .moveTo?: try {
-      guard case .moveTo(let v)? = self.inputType else { preconditionFailure() }
+    case .moveMouse?: try {
+      guard case .moveMouse(let v)? = self.inputType else { preconditionFailure() }
       try visitor.visitSingularMessageField(value: v, fieldNumber: 15)
     }()
     case nil: break

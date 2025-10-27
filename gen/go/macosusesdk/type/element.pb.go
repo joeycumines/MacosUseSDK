@@ -117,7 +117,7 @@ func (x *Element) GetHeight() float64 {
 }
 
 // Statistics about a traversal operation.
-type TraversalStatistics struct {
+type TraversalStats struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Total number of elements found.
 	Count int32 `protobuf:"varint,1,opt,name=count,proto3" json:"count,omitempty"`
@@ -128,9 +128,9 @@ type TraversalStatistics struct {
 	// Number excluded due to having no text.
 	ExcludedNoText int32 `protobuf:"varint,4,opt,name=excluded_no_text,json=excludedNoText,proto3" json:"excluded_no_text,omitempty"`
 	// Number of elements with text.
-	WithTextCount int32 `protobuf:"varint,5,opt,name=with_text_count,json=withTextCount,proto3" json:"with_text_count,omitempty"`
+	TextElementsCount int32 `protobuf:"varint,5,opt,name=text_elements_count,json=textElementsCount,proto3" json:"text_elements_count,omitempty"`
 	// Number of elements without text.
-	WithoutTextCount int32 `protobuf:"varint,6,opt,name=without_text_count,json=withoutTextCount,proto3" json:"without_text_count,omitempty"`
+	NonTextElementsCount int32 `protobuf:"varint,6,opt,name=non_text_elements_count,json=nonTextElementsCount,proto3" json:"non_text_elements_count,omitempty"`
 	// Number of visible elements.
 	VisibleElementsCount int32 `protobuf:"varint,7,opt,name=visible_elements_count,json=visibleElementsCount,proto3" json:"visible_elements_count,omitempty"`
 	// Count of elements by role type.
@@ -139,20 +139,20 @@ type TraversalStatistics struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *TraversalStatistics) Reset() {
-	*x = TraversalStatistics{}
+func (x *TraversalStats) Reset() {
+	*x = TraversalStats{}
 	mi := &file_macosusesdk_type_element_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *TraversalStatistics) String() string {
+func (x *TraversalStats) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*TraversalStatistics) ProtoMessage() {}
+func (*TraversalStats) ProtoMessage() {}
 
-func (x *TraversalStatistics) ProtoReflect() protoreflect.Message {
+func (x *TraversalStats) ProtoReflect() protoreflect.Message {
 	mi := &file_macosusesdk_type_element_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -164,61 +164,61 @@ func (x *TraversalStatistics) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use TraversalStatistics.ProtoReflect.Descriptor instead.
-func (*TraversalStatistics) Descriptor() ([]byte, []int) {
+// Deprecated: Use TraversalStats.ProtoReflect.Descriptor instead.
+func (*TraversalStats) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_type_element_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *TraversalStatistics) GetCount() int32 {
+func (x *TraversalStats) GetCount() int32 {
 	if x != nil {
 		return x.Count
 	}
 	return 0
 }
 
-func (x *TraversalStatistics) GetExcludedCount() int32 {
+func (x *TraversalStats) GetExcludedCount() int32 {
 	if x != nil {
 		return x.ExcludedCount
 	}
 	return 0
 }
 
-func (x *TraversalStatistics) GetExcludedNonInteractable() int32 {
+func (x *TraversalStats) GetExcludedNonInteractable() int32 {
 	if x != nil {
 		return x.ExcludedNonInteractable
 	}
 	return 0
 }
 
-func (x *TraversalStatistics) GetExcludedNoText() int32 {
+func (x *TraversalStats) GetExcludedNoText() int32 {
 	if x != nil {
 		return x.ExcludedNoText
 	}
 	return 0
 }
 
-func (x *TraversalStatistics) GetWithTextCount() int32 {
+func (x *TraversalStats) GetTextElementsCount() int32 {
 	if x != nil {
-		return x.WithTextCount
+		return x.TextElementsCount
 	}
 	return 0
 }
 
-func (x *TraversalStatistics) GetWithoutTextCount() int32 {
+func (x *TraversalStats) GetNonTextElementsCount() int32 {
 	if x != nil {
-		return x.WithoutTextCount
+		return x.NonTextElementsCount
 	}
 	return 0
 }
 
-func (x *TraversalStatistics) GetVisibleElementsCount() int32 {
+func (x *TraversalStats) GetVisibleElementsCount() int32 {
 	if x != nil {
 		return x.VisibleElementsCount
 	}
 	return 0
 }
 
-func (x *TraversalStatistics) GetRoleCounts() map[string]int32 {
+func (x *TraversalStats) GetRoleCounts() map[string]int32 {
 	if x != nil {
 		return x.RoleCounts
 	}
@@ -241,16 +241,16 @@ const file_macosusesdk_type_element_proto_rawDesc = "" +
 	"\x02_xB\x04\n" +
 	"\x02_yB\b\n" +
 	"\x06_widthB\t\n" +
-	"\a_height\"\xdb\x03\n" +
-	"\x13TraversalStatistics\x12\x14\n" +
+	"\a_height\"\xe2\x03\n" +
+	"\x0eTraversalStats\x12\x14\n" +
 	"\x05count\x18\x01 \x01(\x05R\x05count\x12%\n" +
 	"\x0eexcluded_count\x18\x02 \x01(\x05R\rexcludedCount\x12:\n" +
 	"\x19excluded_non_interactable\x18\x03 \x01(\x05R\x17excludedNonInteractable\x12(\n" +
-	"\x10excluded_no_text\x18\x04 \x01(\x05R\x0eexcludedNoText\x12&\n" +
-	"\x0fwith_text_count\x18\x05 \x01(\x05R\rwithTextCount\x12,\n" +
-	"\x12without_text_count\x18\x06 \x01(\x05R\x10withoutTextCount\x124\n" +
-	"\x16visible_elements_count\x18\a \x01(\x05R\x14visibleElementsCount\x12V\n" +
-	"\vrole_counts\x18\b \x03(\v25.macosusesdk.type.TraversalStatistics.RoleCountsEntryR\n" +
+	"\x10excluded_no_text\x18\x04 \x01(\x05R\x0eexcludedNoText\x12.\n" +
+	"\x13text_elements_count\x18\x05 \x01(\x05R\x11textElementsCount\x125\n" +
+	"\x17non_text_elements_count\x18\x06 \x01(\x05R\x14nonTextElementsCount\x124\n" +
+	"\x16visible_elements_count\x18\a \x01(\x05R\x14visibleElementsCount\x12Q\n" +
+	"\vrole_counts\x18\b \x03(\v20.macosusesdk.type.TraversalStats.RoleCountsEntryR\n" +
 	"roleCounts\x1a=\n" +
 	"\x0fRoleCountsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
@@ -271,12 +271,12 @@ func file_macosusesdk_type_element_proto_rawDescGZIP() []byte {
 
 var file_macosusesdk_type_element_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_macosusesdk_type_element_proto_goTypes = []any{
-	(*Element)(nil),             // 0: macosusesdk.type.Element
-	(*TraversalStatistics)(nil), // 1: macosusesdk.type.TraversalStatistics
-	nil,                         // 2: macosusesdk.type.TraversalStatistics.RoleCountsEntry
+	(*Element)(nil),        // 0: macosusesdk.type.Element
+	(*TraversalStats)(nil), // 1: macosusesdk.type.TraversalStats
+	nil,                    // 2: macosusesdk.type.TraversalStats.RoleCountsEntry
 }
 var file_macosusesdk_type_element_proto_depIdxs = []int32{
-	2, // 0: macosusesdk.type.TraversalStatistics.role_counts:type_name -> macosusesdk.type.TraversalStatistics.RoleCountsEntry
+	2, // 0: macosusesdk.type.TraversalStats.role_counts:type_name -> macosusesdk.type.TraversalStats.RoleCountsEntry
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name

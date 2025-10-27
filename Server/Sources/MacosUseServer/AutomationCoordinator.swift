@@ -55,7 +55,7 @@ public actor AutomationCoordinator {
         
         let sdkResult = await MacosUseSDK.performAction(action: sdkAction, optionsInput: sdkOptions)
         
-        return convertFromSDKActionResult(sdkResult)
+        return try convertFromSDKActionResult(sdkResult)
     }
     
     /// Executes an input action globally or on a specific PID

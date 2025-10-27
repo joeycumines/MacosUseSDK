@@ -33,7 +33,7 @@ message Element {
 }
 
 // Statistics about a traversal operation.
-message TraversalStatistics {
+message TraversalStats {
   // Total number of elements found.
   int32 count = 1;
 
@@ -47,10 +47,10 @@ message TraversalStatistics {
   int32 excluded_no_text = 4;
 
   // Number of elements with text.
-  int32 with_text_count = 5;
+  int32 text_elements_count = 5;
 
   // Number of elements without text.
-  int32 without_text_count = 6;
+  int32 non_text_elements_count = 6;
 
   // Number of visible elements.
   int32 visible_elements_count = 7;

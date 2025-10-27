@@ -22,14 +22,14 @@ message Input {
   option (google.api.resource) = {
     type: "macos.googleapis.com/Input"
     pattern: "applications/{application}/inputs/{input}"
-    pattern: "desktopInputs/{input}"
+    pattern: "inputs/{input}"
     singular: "input"
     plural: "inputs"
   };
 
   // Resource name. Either:
   // - "applications/{application}/inputs/{input}" for app-specific inputs
-  // - "desktopInputs/{input}" for global desktop inputs
+  // - "inputs/{input}" for global desktop inputs
   string name = 1 [(google.api.field_behavior) = IDENTIFIER];
 
   // The specific action to perform or that was performed.
@@ -69,10 +69,10 @@ message Input {
 // Specification of an input action.
 message InputAction {
   // Whether to show visual feedback during execution.
-  bool show_animation = 1;
+  bool show_animation = 1 [(google.api.field_behavior) = OPTIONAL];
 
   // Duration of visual feedback in seconds.
-  double animation_duration = 2;
+  double animation_duration = 2 [(google.api.field_behavior) = OPTIONAL];
 
   // The specific input type and parameters.
   oneof input_type {
@@ -92,7 +92,7 @@ message InputAction {
     KeyPress press_key = 14;
 
     // Move mouse to a specific point.
-    macosusesdk.type.Point move_to = 15;
+    macosusesdk.type.Point move_mouse = 15;
   }
 }
 

@@ -95,7 +95,7 @@ type Input struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Resource name. Either:
 	// - "applications/{application}/inputs/{input}" for app-specific inputs
-	// - "desktopInputs/{input}" for global desktop inputs
+	// - "inputs/{input}" for global desktop inputs
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The specific action to perform or that was performed.
 	Action *InputAction `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"`
@@ -199,7 +199,7 @@ type InputAction struct {
 	//	*InputAction_RightClick
 	//	*InputAction_TypeText
 	//	*InputAction_PressKey
-	//	*InputAction_MoveTo
+	//	*InputAction_MoveMouse
 	InputType     isInputAction_InputType `protobuf_oneof:"input_type"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -301,10 +301,10 @@ func (x *InputAction) GetPressKey() *KeyPress {
 	return nil
 }
 
-func (x *InputAction) GetMoveTo() *_type.Point {
+func (x *InputAction) GetMoveMouse() *_type.Point {
 	if x != nil {
-		if x, ok := x.InputType.(*InputAction_MoveTo); ok {
-			return x.MoveTo
+		if x, ok := x.InputType.(*InputAction_MoveMouse); ok {
+			return x.MoveMouse
 		}
 	}
 	return nil
@@ -339,9 +339,9 @@ type InputAction_PressKey struct {
 	PressKey *KeyPress `protobuf:"bytes,14,opt,name=press_key,json=pressKey,proto3,oneof"`
 }
 
-type InputAction_MoveTo struct {
+type InputAction_MoveMouse struct {
 	// Move mouse to a specific point.
-	MoveTo *_type.Point `protobuf:"bytes,15,opt,name=move_to,json=moveTo,proto3,oneof"`
+	MoveMouse *_type.Point `protobuf:"bytes,15,opt,name=move_mouse,json=moveMouse,proto3,oneof"`
 }
 
 func (*InputAction_Click) isInputAction_InputType() {}
@@ -354,7 +354,7 @@ func (*InputAction_TypeText) isInputAction_InputType() {}
 
 func (*InputAction_PressKey) isInputAction_InputType() {}
 
-func (*InputAction_MoveTo) isInputAction_InputType() {}
+func (*InputAction_MoveMouse) isInputAction_InputType() {}
 
 // A key press with optional modifiers.
 type KeyPress struct {
@@ -406,7 +406,7 @@ var File_macosusesdk_v1_input_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_input_proto_rawDesc = "" +
 	"\n" +
-	"\x1amacosusesdk/v1/input.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1fmacosusesdk/type/geometry.proto\"\x96\x04\n" +
+	"\x1amacosusesdk/v1/input.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1fmacosusesdk/type/geometry.proto\"\x8f\x04\n" +
 	"\x05Input\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x128\n" +
 	"\x06action\x18\x02 \x01(\v2\x1b.macosusesdk.v1.InputActionB\x03\xe0A\x02R\x06action\x126\n" +
@@ -420,19 +420,20 @@ const file_macosusesdk_v1_input_proto_rawDesc = "" +
 	"\rSTATE_PENDING\x10\x01\x12\x13\n" +
 	"\x0fSTATE_EXECUTING\x10\x02\x12\x13\n" +
 	"\x0fSTATE_COMPLETED\x10\x03\x12\x10\n" +
-	"\fSTATE_FAILED\x10\x04:p\xeaAm\n" +
-	"\x1amacos.googleapis.com/Input\x12)applications/{application}/inputs/{input}\x12\x15desktopInputs/{input}*\x06inputs2\x05input\"\xa8\x03\n" +
-	"\vInputAction\x12%\n" +
-	"\x0eshow_animation\x18\x01 \x01(\bR\rshowAnimation\x12-\n" +
-	"\x12animation_duration\x18\x02 \x01(\x01R\x11animationDuration\x12/\n" +
+	"\fSTATE_FAILED\x10\x04:i\xeaAf\n" +
+	"\x1amacos.googleapis.com/Input\x12)applications/{application}/inputs/{input}\x12\x0einputs/{input}*\x06inputs2\x05input\"\xb8\x03\n" +
+	"\vInputAction\x12*\n" +
+	"\x0eshow_animation\x18\x01 \x01(\bB\x03\xe0A\x01R\rshowAnimation\x122\n" +
+	"\x12animation_duration\x18\x02 \x01(\x01B\x03\xe0A\x01R\x11animationDuration\x12/\n" +
 	"\x05click\x18\n" +
 	" \x01(\v2\x17.macosusesdk.type.PointH\x00R\x05click\x12<\n" +
 	"\fdouble_click\x18\v \x01(\v2\x17.macosusesdk.type.PointH\x00R\vdoubleClick\x12:\n" +
 	"\vright_click\x18\f \x01(\v2\x17.macosusesdk.type.PointH\x00R\n" +
 	"rightClick\x12\x1d\n" +
 	"\ttype_text\x18\r \x01(\tH\x00R\btypeText\x127\n" +
-	"\tpress_key\x18\x0e \x01(\v2\x18.macosusesdk.v1.KeyPressH\x00R\bpressKey\x122\n" +
-	"\amove_to\x18\x0f \x01(\v2\x17.macosusesdk.type.PointH\x00R\x06moveToB\f\n" +
+	"\tpress_key\x18\x0e \x01(\v2\x18.macosusesdk.v1.KeyPressH\x00R\bpressKey\x128\n" +
+	"\n" +
+	"move_mouse\x18\x0f \x01(\v2\x17.macosusesdk.type.PointH\x00R\tmoveMouseB\f\n" +
 	"\n" +
 	"input_type\",\n" +
 	"\bKeyPress\x12 \n" +
@@ -471,7 +472,7 @@ var file_macosusesdk_v1_input_proto_depIdxs = []int32{
 	5, // 5: macosusesdk.v1.InputAction.double_click:type_name -> macosusesdk.type.Point
 	5, // 6: macosusesdk.v1.InputAction.right_click:type_name -> macosusesdk.type.Point
 	3, // 7: macosusesdk.v1.InputAction.press_key:type_name -> macosusesdk.v1.KeyPress
-	5, // 8: macosusesdk.v1.InputAction.move_to:type_name -> macosusesdk.type.Point
+	5, // 8: macosusesdk.v1.InputAction.move_mouse:type_name -> macosusesdk.type.Point
 	9, // [9:9] is the sub-list for method output_type
 	9, // [9:9] is the sub-list for method input_type
 	9, // [9:9] is the sub-list for extension type_name
@@ -490,7 +491,7 @@ func file_macosusesdk_v1_input_proto_init() {
 		(*InputAction_RightClick)(nil),
 		(*InputAction_TypeText)(nil),
 		(*InputAction_PressKey)(nil),
-		(*InputAction_MoveTo)(nil),
+		(*InputAction_MoveMouse)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

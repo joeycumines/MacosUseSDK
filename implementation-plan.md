@@ -10,12 +10,30 @@ This plan details the construction of a fully-realized, production-grade gRPC se
 
 The implementation adheres strictly to Google's AIPs, centered on a robust, asynchronous control loop (a `@MainActor` global actor) to serially manage all SDK interactions. This architecture guarantees thread safety, supports multi-target automation, and provides a clear, maintainable separation between the API layer and the automation core.
 
-**STATUS: FULLY IMPLEMENTED AND VERIFIED WITH ZERO WARNINGS**
+**STATUS: FULLY IMPLEMENTED WITH MAKEFILE INTEGRATION**
+
+### **Makefile Integration**
+- ✅ **Swift Support:** Added `make/swift.mk` with comprehensive Swift build, test, and formatting targets
+- ✅ **Unified Build:** Root `Makefile` now includes both Go and Swift targets (`make all` runs both)
+- ✅ **Parallel Execution:** Swift packages build and test in parallel for efficiency
+
+### **Server Startup**
+To start the gRPC server:
+```bash
+cd Server
+swift run MacosUseServer
+```
+
+The server will:
+- Listen on Unix socket `/tmp/macos-use-server.sock` (configurable via `MACOS_USE_SERVER_SOCKET` env var)
+- Support all implemented gRPC methods for application and input management
+- Provide real-time accessibility traversal and automation
 
 ### **Verification Results**
-- ✅ **Proto Generation:** `buf generate` succeeds
-- ✅ **SDK Build:** `swift build -c release` succeeds  
-- ✅ **Server Build:** `cd Server && swift build -c release` succeeds
+- ✅ **Proto Generation:** `buf generate` succeeds (updated configuration to use external googleapis dependencies)
+- ⚠️ **Go Module Build:** Requires cleanup of generated googleapis files and `go mod tidy` (dependencies updated in go.mod)
+- ✅ **Swift SDK Build:** `swift build -c release` succeeds
+- ✅ **Swift Server Build:** `cd Server && swift build -c release` succeeds
 - ✅ **AIP Compliance:** Core structural requirements met (standard methods return resources directly, service naming follows AIP-191)
 - ✅ **Linting:** All compiler warnings eliminated for clean, professional code quality
 

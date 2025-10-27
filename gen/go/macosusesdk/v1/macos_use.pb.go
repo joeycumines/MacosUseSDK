@@ -17,6 +17,7 @@ import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -34,7 +35,7 @@ type OpenApplicationRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The identifier (name, bundle ID, or path) of the application to open.
 	// Examples: "Calculator", "com.apple.calculator", "/Applications/Calculator.app"
-	Identifier    string `protobuf:"bytes,1,opt,name=identifier,proto3" json:"identifier,omitempty"`
+	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -69,9 +70,9 @@ func (*OpenApplicationRequest) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *OpenApplicationRequest) GetIdentifier() string {
+func (x *OpenApplicationRequest) GetId() string {
 	if x != nil {
-		return x.Identifier
+		return x.Id
 	}
 	return ""
 }
@@ -126,7 +127,7 @@ func (x *OpenApplicationResponse) GetApplication() *Application {
 type OpenApplicationMetadata struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The identifier being opened.
-	Identifier    string `protobuf:"bytes,1,opt,name=identifier,proto3" json:"identifier,omitempty"`
+	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -161,9 +162,9 @@ func (*OpenApplicationMetadata) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *OpenApplicationMetadata) GetIdentifier() string {
+func (x *OpenApplicationMetadata) GetId() string {
 	if x != nil {
-		return x.Identifier
+		return x.Id
 	}
 	return ""
 }
@@ -328,7 +329,9 @@ func (x *ListApplicationsResponse) GetNextPageToken() string {
 type DeleteApplicationRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Resource name of the application.
-	Name          string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// If set to true, any pending inputs for this application will also be deleted.
+	Force         bool `protobuf:"varint,2,opt,name=force,proto3" json:"force,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -368,6 +371,13 @@ func (x *DeleteApplicationRequest) GetName() string {
 		return x.Name
 	}
 	return ""
+}
+
+func (x *DeleteApplicationRequest) GetForce() bool {
+	if x != nil {
+		return x.Force
+	}
+	return false
 }
 
 // Request to create an input.
@@ -489,8 +499,8 @@ type ListInputsRequest struct {
 	PageSize int32 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	// Page token from a previous ListInputs call.
 	PageToken string `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
-	// Filter inputs by state.
-	StateFilter   Input_State `protobuf:"varint,4,opt,name=state_filter,json=stateFilter,proto3,enum=macosusesdk.v1.Input_State" json:"state_filter,omitempty"`
+	// Filter inputs by state. Valid values: PENDING, EXECUTING, COMPLETED, FAILED.
+	Filter        string `protobuf:"bytes,4,opt,name=filter,proto3" json:"filter,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -546,11 +556,11 @@ func (x *ListInputsRequest) GetPageToken() string {
 	return ""
 }
 
-func (x *ListInputsRequest) GetStateFilter() Input_State {
+func (x *ListInputsRequest) GetFilter() string {
 	if x != nil {
-		return x.StateFilter
+		return x.Filter
 	}
-	return Input_STATE_UNSPECIFIED
+	return ""
 }
 
 // Response from listing inputs.
@@ -667,13 +677,13 @@ func (x *TraverseAccessibilityRequest) GetVisibleOnly() bool {
 type TraverseAccessibilityResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Name of the application.
-	AppName string `protobuf:"bytes,1,opt,name=app_name,json=appName,proto3" json:"app_name,omitempty"`
+	App string `protobuf:"bytes,1,opt,name=app,proto3" json:"app,omitempty"`
 	// Elements found in the traversal.
 	Elements []*_type.Element `protobuf:"bytes,2,rep,name=elements,proto3" json:"elements,omitempty"`
 	// Statistics about the traversal.
-	Statistics *_type.TraversalStatistics `protobuf:"bytes,3,opt,name=statistics,proto3" json:"statistics,omitempty"`
-	// Processing time in seconds.
-	ProcessingTime string `protobuf:"bytes,4,opt,name=processing_time,json=processingTime,proto3" json:"processing_time,omitempty"`
+	Stats *_type.TraversalStats `protobuf:"bytes,3,opt,name=stats,proto3" json:"stats,omitempty"`
+	// Processing time.
+	ProcessingTime *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=processing_time,json=processingTime,proto3" json:"processing_time,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -708,9 +718,9 @@ func (*TraverseAccessibilityResponse) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{12}
 }
 
-func (x *TraverseAccessibilityResponse) GetAppName() string {
+func (x *TraverseAccessibilityResponse) GetApp() string {
 	if x != nil {
-		return x.AppName
+		return x.App
 	}
 	return ""
 }
@@ -722,18 +732,18 @@ func (x *TraverseAccessibilityResponse) GetElements() []*_type.Element {
 	return nil
 }
 
-func (x *TraverseAccessibilityResponse) GetStatistics() *_type.TraversalStatistics {
+func (x *TraverseAccessibilityResponse) GetStats() *_type.TraversalStats {
 	if x != nil {
-		return x.Statistics
+		return x.Stats
 	}
 	return nil
 }
 
-func (x *TraverseAccessibilityResponse) GetProcessingTime() string {
+func (x *TraverseAccessibilityResponse) GetProcessingTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.ProcessingTime
 	}
-	return ""
+	return nil
 }
 
 // Request to watch accessibility changes.
@@ -868,9 +878,9 @@ func (x *WatchAccessibilityResponse) GetModified() []*ModifiedElement {
 type ModifiedElement struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The element before modification.
-	Before *_type.Element `protobuf:"bytes,1,opt,name=before,proto3" json:"before,omitempty"`
+	Previous *_type.Element `protobuf:"bytes,1,opt,name=previous,proto3" json:"previous,omitempty"`
 	// The element after modification.
-	After *_type.Element `protobuf:"bytes,2,opt,name=after,proto3" json:"after,omitempty"`
+	Current *_type.Element `protobuf:"bytes,2,opt,name=current,proto3" json:"current,omitempty"`
 	// List of changed attributes.
 	Changes       []*AttributeChange `protobuf:"bytes,3,rep,name=changes,proto3" json:"changes,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -907,16 +917,16 @@ func (*ModifiedElement) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{15}
 }
 
-func (x *ModifiedElement) GetBefore() *_type.Element {
+func (x *ModifiedElement) GetPrevious() *_type.Element {
 	if x != nil {
-		return x.Before
+		return x.Previous
 	}
 	return nil
 }
 
-func (x *ModifiedElement) GetAfter() *_type.Element {
+func (x *ModifiedElement) GetCurrent() *_type.Element {
 	if x != nil {
-		return x.After
+		return x.Current
 	}
 	return nil
 }
@@ -996,86 +1006,81 @@ var File_macosusesdk_v1_macos_use_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_macos_use_proto_rawDesc = "" +
 	"\n" +
-	"\x1emacosusesdk/v1/macos_use.proto\x12\x0emacosusesdk.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x17google/api/client.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a#google/longrunning/operations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1emacosusesdk/type/element.proto\x1a macosusesdk/v1/application.proto\x1a\x1amacosusesdk/v1/input.proto\"=\n" +
-	"\x16OpenApplicationRequest\x12#\n" +
-	"\n" +
-	"identifier\x18\x01 \x01(\tB\x03\xe0A\x02R\n" +
-	"identifier\"X\n" +
+	"\x1emacosusesdk/v1/macos_use.proto\x12\x0emacosusesdk.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x17google/api/client.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a#google/longrunning/operations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1emacosusesdk/type/element.proto\x1a macosusesdk/v1/application.proto\x1a\x1amacosusesdk/v1/input.proto\"-\n" +
+	"\x16OpenApplicationRequest\x12\x13\n" +
+	"\x02id\x18\x01 \x01(\tB\x03\xe0A\x02R\x02id\"X\n" +
 	"\x17OpenApplicationResponse\x12=\n" +
-	"\vapplication\x18\x01 \x01(\v2\x1b.macosusesdk.v1.ApplicationR\vapplication\"9\n" +
-	"\x17OpenApplicationMetadata\x12\x1e\n" +
-	"\n" +
-	"identifier\x18\x01 \x01(\tR\n" +
-	"identifier\"U\n" +
+	"\vapplication\x18\x01 \x01(\v2\x1b.macosusesdk.v1.ApplicationR\vapplication\")\n" +
+	"\x17OpenApplicationMetadata\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"U\n" +
 	"\x15GetApplicationRequest\x12<\n" +
 	"\x04name\x18\x01 \x01(\tB(\xe0A\x02\xfaA\"\n" +
-	" macos.googleapis.com/ApplicationR\x04name\"U\n" +
-	"\x17ListApplicationsRequest\x12\x1b\n" +
-	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
+	" macos.googleapis.com/ApplicationR\x04name\"_\n" +
+	"\x17ListApplicationsRequest\x12 \n" +
+	"\tpage_size\x18\x01 \x01(\x05B\x03\xe0A\x01R\bpageSize\x12\"\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\"\x83\x01\n" +
+	"page_token\x18\x02 \x01(\tB\x03\xe0A\x01R\tpageToken\"\x83\x01\n" +
 	"\x18ListApplicationsResponse\x12?\n" +
 	"\fapplications\x18\x01 \x03(\v2\x1b.macosusesdk.v1.ApplicationR\fapplications\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"X\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"s\n" +
 	"\x18DeleteApplicationRequest\x12<\n" +
 	"\x04name\x18\x01 \x01(\tB(\xe0A\x02\xfaA\"\n" +
-	" macos.googleapis.com/ApplicationR\x04name\"\xa3\x01\n" +
+	" macos.googleapis.com/ApplicationR\x04name\x12\x19\n" +
+	"\x05force\x18\x02 \x01(\bB\x03\xe0A\x01R\x05force\"\xa8\x01\n" +
 	"\x12CreateInputRequest\x12@\n" +
 	"\x06parent\x18\x01 \x01(\tB(\xe0A\x02\xfaA\"\n" +
 	" macos.googleapis.com/ApplicationR\x06parent\x120\n" +
-	"\x05input\x18\x02 \x01(\v2\x15.macosusesdk.v1.InputB\x03\xe0A\x02R\x05input\x12\x19\n" +
-	"\binput_id\x18\x03 \x01(\tR\ainputId\"I\n" +
+	"\x05input\x18\x02 \x01(\v2\x15.macosusesdk.v1.InputB\x03\xe0A\x02R\x05input\x12\x1e\n" +
+	"\binput_id\x18\x03 \x01(\tB\x03\xe0A\x01R\ainputId\"I\n" +
 	"\x0fGetInputRequest\x126\n" +
 	"\x04name\x18\x01 \x01(\tB\"\xe0A\x02\xfaA\x1c\n" +
-	"\x1amacos.googleapis.com/InputR\x04name\"\xd1\x01\n" +
+	"\x1amacos.googleapis.com/InputR\x04name\"\xb8\x01\n" +
 	"\x11ListInputsRequest\x12@\n" +
 	"\x06parent\x18\x01 \x01(\tB(\xe0A\x02\xfaA\"\n" +
-	" macos.googleapis.com/ApplicationR\x06parent\x12\x1b\n" +
-	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1d\n" +
+	" macos.googleapis.com/ApplicationR\x06parent\x12 \n" +
+	"\tpage_size\x18\x02 \x01(\x05B\x03\xe0A\x01R\bpageSize\x12\"\n" +
 	"\n" +
-	"page_token\x18\x03 \x01(\tR\tpageToken\x12>\n" +
-	"\fstate_filter\x18\x04 \x01(\x0e2\x1b.macosusesdk.v1.Input.StateR\vstateFilter\"k\n" +
+	"page_token\x18\x03 \x01(\tB\x03\xe0A\x01R\tpageToken\x12\x1b\n" +
+	"\x06filter\x18\x04 \x01(\tB\x03\xe0A\x01R\x06filter\"k\n" +
 	"\x12ListInputsResponse\x12-\n" +
 	"\x06inputs\x18\x01 \x03(\v2\x15.macosusesdk.v1.InputR\x06inputs\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\x7f\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\x84\x01\n" +
 	"\x1cTraverseAccessibilityRequest\x12<\n" +
 	"\x04name\x18\x01 \x01(\tB(\xe0A\x02\xfaA\"\n" +
-	" macos.googleapis.com/ApplicationR\x04name\x12!\n" +
-	"\fvisible_only\x18\x02 \x01(\bR\vvisibleOnly\"\xe1\x01\n" +
-	"\x1dTraverseAccessibilityResponse\x12\x19\n" +
-	"\bapp_name\x18\x01 \x01(\tR\aappName\x125\n" +
-	"\belements\x18\x02 \x03(\v2\x19.macosusesdk.type.ElementR\belements\x12E\n" +
-	"\n" +
-	"statistics\x18\x03 \x01(\v2%.macosusesdk.type.TraversalStatisticsR\n" +
-	"statistics\x12'\n" +
-	"\x0fprocessing_time\x18\x04 \x01(\tR\x0eprocessingTime\"\xa1\x01\n" +
+	" macos.googleapis.com/ApplicationR\x04name\x12&\n" +
+	"\fvisible_only\x18\x02 \x01(\bB\x03\xe0A\x01R\vvisibleOnly\"\xe5\x01\n" +
+	"\x1dTraverseAccessibilityResponse\x12\x10\n" +
+	"\x03app\x18\x01 \x01(\tR\x03app\x125\n" +
+	"\belements\x18\x02 \x03(\v2\x19.macosusesdk.type.ElementR\belements\x126\n" +
+	"\x05stats\x18\x03 \x01(\v2 .macosusesdk.type.TraversalStatsR\x05stats\x12C\n" +
+	"\x0fprocessing_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x0eprocessingTime\"\xab\x01\n" +
 	"\x19WatchAccessibilityRequest\x12<\n" +
 	"\x04name\x18\x01 \x01(\tB(\xe0A\x02\xfaA\"\n" +
-	" macos.googleapis.com/ApplicationR\x04name\x12#\n" +
-	"\rpoll_interval\x18\x02 \x01(\x01R\fpollInterval\x12!\n" +
-	"\fvisible_only\x18\x03 \x01(\bR\vvisibleOnly\"\xbf\x01\n" +
+	" macos.googleapis.com/ApplicationR\x04name\x12(\n" +
+	"\rpoll_interval\x18\x02 \x01(\x01B\x03\xe0A\x01R\fpollInterval\x12&\n" +
+	"\fvisible_only\x18\x03 \x01(\bB\x03\xe0A\x01R\vvisibleOnly\"\xbf\x01\n" +
 	"\x1aWatchAccessibilityResponse\x12/\n" +
 	"\x05added\x18\x01 \x03(\v2\x19.macosusesdk.type.ElementR\x05added\x123\n" +
 	"\aremoved\x18\x02 \x03(\v2\x19.macosusesdk.type.ElementR\aremoved\x12;\n" +
-	"\bmodified\x18\x03 \x03(\v2\x1f.macosusesdk.v1.ModifiedElementR\bmodified\"\xb0\x01\n" +
-	"\x0fModifiedElement\x121\n" +
-	"\x06before\x18\x01 \x01(\v2\x19.macosusesdk.type.ElementR\x06before\x12/\n" +
-	"\x05after\x18\x02 \x01(\v2\x19.macosusesdk.type.ElementR\x05after\x129\n" +
+	"\bmodified\x18\x03 \x03(\v2\x1f.macosusesdk.v1.ModifiedElementR\bmodified\"\xb8\x01\n" +
+	"\x0fModifiedElement\x125\n" +
+	"\bprevious\x18\x01 \x01(\v2\x19.macosusesdk.type.ElementR\bprevious\x123\n" +
+	"\acurrent\x18\x02 \x01(\v2\x19.macosusesdk.type.ElementR\acurrent\x129\n" +
 	"\achanges\x18\x03 \x03(\v2\x1f.macosusesdk.v1.AttributeChangeR\achanges\"_\n" +
 	"\x0fAttributeChange\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1b\n" +
 	"\told_value\x18\x02 \x01(\tR\boldValue\x12\x1b\n" +
-	"\tnew_value\x18\x03 \x01(\tR\bnewValue2\x8d\v\n" +
-	"\x0fMacosUseService\x12\xaf\x01\n" +
-	"\x0fOpenApplication\x12&.macosusesdk.v1.OpenApplicationRequest\x1a\x1d.google.longrunning.Operation\"U\xcaA2\n" +
-	"\x17OpenApplicationResponse\x12\x17OpenApplicationMetadata\x82\xd3\xe4\x93\x02\x1a:\x01*\"\x15/v1/applications:open\x12~\n" +
+	"\tnew_value\x18\x03 \x01(\tR\bnewValue2\x9e\v\n" +
+	"\x0fMacosUseService\x12\xba\x01\n" +
+	"\x0fOpenApplication\x12&.macosusesdk.v1.OpenApplicationRequest\x1a\x1d.google.longrunning.Operation\"`\xcaA2\n" +
+	"\x17OpenApplicationResponse\x12\x17OpenApplicationMetadata\x82\xd3\xe4\x93\x02%:\x01*\" /v1/applications:openApplication\x12~\n" +
 	"\x0eGetApplication\x12%.macosusesdk.v1.GetApplicationRequest\x1a\x1b.macosusesdk.v1.Application\"(\xdaA\x04name\x82\xd3\xe4\x93\x02\x1b\x12\x19/v1/{name=applications/*}\x12\x7f\n" +
 	"\x10ListApplications\x12'.macosusesdk.v1.ListApplicationsRequest\x1a(.macosusesdk.v1.ListApplicationsResponse\"\x18\x82\xd3\xe4\x93\x02\x12\x12\x10/v1/applications\x12\x7f\n" +
-	"\x11DeleteApplication\x12(.macosusesdk.v1.DeleteApplicationRequest\x1a\x16.google.protobuf.Empty\"(\xdaA\x04name\x82\xd3\xe4\x93\x02\x1b*\x19/v1/{name=applications/*}\x12\xa6\x01\n" +
-	"\vCreateInput\x12\".macosusesdk.v1.CreateInputRequest\x1a\x15.macosusesdk.v1.Input\"\\\xdaA\fparent,input\x82\xd3\xe4\x93\x02G:\x05inputZ\x1a:\x05input\"\x11/v1/desktopInputs\"\"/v1/{parent=applications/*}/inputs\x12\x93\x01\n" +
-	"\bGetInput\x12\x1f.macosusesdk.v1.GetInputRequest\x1a\x15.macosusesdk.v1.Input\"O\xdaA\x04name\x82\xd3\xe4\x93\x02BZ\x1c\x12\x1a/v1/{name=desktopInputs/*}\x12\"/v1/{name=applications/*/inputs/*}\x12\x9d\x01\n" +
+	"\x11DeleteApplication\x12(.macosusesdk.v1.DeleteApplicationRequest\x1a\x16.google.protobuf.Empty\"(\xdaA\x04name\x82\xd3\xe4\x93\x02\x1b*\x19/v1/{name=applications/*}\x12\xb1\x01\n" +
+	"\vCreateInput\x12\".macosusesdk.v1.CreateInputRequest\x1a\x15.macosusesdk.v1.Input\"g\xdaA\x15parent,input,input_id\x82\xd3\xe4\x93\x02I:\x05inputZ\x1c:\x05input\"\x13/v1/{parent}/inputs\"\"/v1/{parent=applications/*}/inputs\x12\x8c\x01\n" +
+	"\bGetInput\x12\x1f.macosusesdk.v1.GetInputRequest\x1a\x15.macosusesdk.v1.Input\"H\xdaA\x04name\x82\xd3\xe4\x93\x02;Z\x15\x12\x13/v1/{name=inputs/*}\x12\"/v1/{name=applications/*/inputs/*}\x12\x9f\x01\n" +
 	"\n" +
-	"ListInputs\x12!.macosusesdk.v1.ListInputsRequest\x1a\".macosusesdk.v1.ListInputsResponse\"H\xdaA\x06parent\x82\xd3\xe4\x93\x029Z\x13\x12\x11/v1/desktopInputs\x12\"/v1/{parent=applications/*}/inputs\x12\xaa\x01\n" +
+	"ListInputs\x12!.macosusesdk.v1.ListInputsRequest\x1a\".macosusesdk.v1.ListInputsResponse\"J\xdaA\x06parent\x82\xd3\xe4\x93\x02;Z\x15\x12\x13/v1/{parent}/inputs\x12\"/v1/{parent=applications/*}/inputs\x12\xaa\x01\n" +
 	"\x15TraverseAccessibility\x12,.macosusesdk.v1.TraverseAccessibilityRequest\x1a-.macosusesdk.v1.TraverseAccessibilityResponse\"4\xdaA\x04name\x82\xd3\xe4\x93\x02':\x01*\"\"/v1/{name=applications/*}:traverse\x12\xa0\x01\n" +
 	"\x12WatchAccessibility\x12).macosusesdk.v1.WatchAccessibilityRequest\x1a*.macosusesdk.v1.WatchAccessibilityResponse\"1\xdaA\x04name\x82\xd3\xe4\x93\x02$:\x01*\"\x1f/v1/{name=applications/*}:watch0\x01\x1a\x17\xcaA\x14macos.googleapis.comB\xc4\x01\n" +
 	"\x12com.macosusesdk.v1B\rMacosUseProtoP\x01ZFgithub.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1\xa2\x02\x03MXX\xaa\x02\x0eMacosusesdk.V1\xca\x02\x0eMacosusesdk\\V1\xe2\x02\x1aMacosusesdk\\V1\\GPBMetadata\xea\x02\x0fMacosusesdk::V1b\x06proto3"
@@ -1113,9 +1118,9 @@ var file_macosusesdk_v1_macos_use_proto_goTypes = []any{
 	(*AttributeChange)(nil),               // 16: macosusesdk.v1.AttributeChange
 	(*Application)(nil),                   // 17: macosusesdk.v1.Application
 	(*Input)(nil),                         // 18: macosusesdk.v1.Input
-	(Input_State)(0),                      // 19: macosusesdk.v1.Input.State
-	(*_type.Element)(nil),                 // 20: macosusesdk.type.Element
-	(*_type.TraversalStatistics)(nil),     // 21: macosusesdk.type.TraversalStatistics
+	(*_type.Element)(nil),                 // 19: macosusesdk.type.Element
+	(*_type.TraversalStats)(nil),          // 20: macosusesdk.type.TraversalStats
+	(*timestamppb.Timestamp)(nil),         // 21: google.protobuf.Timestamp
 	(*longrunningpb.Operation)(nil),       // 22: google.longrunning.Operation
 	(*emptypb.Empty)(nil),                 // 23: google.protobuf.Empty
 }
@@ -1123,15 +1128,15 @@ var file_macosusesdk_v1_macos_use_proto_depIdxs = []int32{
 	17, // 0: macosusesdk.v1.OpenApplicationResponse.application:type_name -> macosusesdk.v1.Application
 	17, // 1: macosusesdk.v1.ListApplicationsResponse.applications:type_name -> macosusesdk.v1.Application
 	18, // 2: macosusesdk.v1.CreateInputRequest.input:type_name -> macosusesdk.v1.Input
-	19, // 3: macosusesdk.v1.ListInputsRequest.state_filter:type_name -> macosusesdk.v1.Input.State
-	18, // 4: macosusesdk.v1.ListInputsResponse.inputs:type_name -> macosusesdk.v1.Input
-	20, // 5: macosusesdk.v1.TraverseAccessibilityResponse.elements:type_name -> macosusesdk.type.Element
-	21, // 6: macosusesdk.v1.TraverseAccessibilityResponse.statistics:type_name -> macosusesdk.type.TraversalStatistics
-	20, // 7: macosusesdk.v1.WatchAccessibilityResponse.added:type_name -> macosusesdk.type.Element
-	20, // 8: macosusesdk.v1.WatchAccessibilityResponse.removed:type_name -> macosusesdk.type.Element
+	18, // 3: macosusesdk.v1.ListInputsResponse.inputs:type_name -> macosusesdk.v1.Input
+	19, // 4: macosusesdk.v1.TraverseAccessibilityResponse.elements:type_name -> macosusesdk.type.Element
+	20, // 5: macosusesdk.v1.TraverseAccessibilityResponse.stats:type_name -> macosusesdk.type.TraversalStats
+	21, // 6: macosusesdk.v1.TraverseAccessibilityResponse.processing_time:type_name -> google.protobuf.Timestamp
+	19, // 7: macosusesdk.v1.WatchAccessibilityResponse.added:type_name -> macosusesdk.type.Element
+	19, // 8: macosusesdk.v1.WatchAccessibilityResponse.removed:type_name -> macosusesdk.type.Element
 	15, // 9: macosusesdk.v1.WatchAccessibilityResponse.modified:type_name -> macosusesdk.v1.ModifiedElement
-	20, // 10: macosusesdk.v1.ModifiedElement.before:type_name -> macosusesdk.type.Element
-	20, // 11: macosusesdk.v1.ModifiedElement.after:type_name -> macosusesdk.type.Element
+	19, // 10: macosusesdk.v1.ModifiedElement.previous:type_name -> macosusesdk.type.Element
+	19, // 11: macosusesdk.v1.ModifiedElement.current:type_name -> macosusesdk.type.Element
 	16, // 12: macosusesdk.v1.ModifiedElement.changes:type_name -> macosusesdk.v1.AttributeChange
 	0,  // 13: macosusesdk.v1.MacosUseService.OpenApplication:input_type -> macosusesdk.v1.OpenApplicationRequest
 	3,  // 14: macosusesdk.v1.MacosUseService.GetApplication:input_type -> macosusesdk.v1.GetApplicationRequest

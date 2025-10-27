@@ -12,13 +12,14 @@ import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 import "google/longrunning/operations.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 import "macosusesdk/type/element.proto";
 import "macosusesdk/v1/application.proto";
 import "macosusesdk/v1/input.proto";
 
 option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
 option java_multiple_files = true;
-option java_outer_classname = "MacosUseServiceProto";
+option java_outer_classname = "MacosUseProto";
 option java_package = "com.macosusesdk.v1";
 
 // MacosUseService is the primary service for automating macOS applications.
@@ -28,7 +29,7 @@ service MacosUseService {
   // Opens or activates an application. This is a long-running operation.
   rpc OpenApplication(OpenApplicationRequest) returns (google.longrunning.Operation) {
     option (google.api.http) = {
-      post: "/v1/applications:open"
+      post: "/v1/applications:openApplication"
       body: "*"
     };
     option (google.longrunning.operation_info) = {
@@ -66,11 +67,11 @@ service MacosUseService {
       post: "/v1/{parent=applications/*}/inputs"
       body: "input"
       additional_bindings {
-        post: "/v1/desktopInputs"
+        post: "/v1/{parent}/inputs"
         body: "input"
       }
     };
-    option (google.api.method_signature) = "parent,input";
+    option (google.api.method_signature) = "parent,input,input_id";
   }
 
   // Gets a specific input.
@@ -78,7 +79,7 @@ service MacosUseService {
     option (google.api.http) = {
       get: "/v1/{name=applications/*/inputs/*}"
       additional_bindings {
-        get: "/v1/{name=desktopInputs/*}"
+        get: "/v1/{name=inputs/*}"
       }
     };
     option (google.api.method_signature) = "name";
@@ -89,7 +90,7 @@ service MacosUseService {
     option (google.api.http) = {
       get: "/v1/{parent=applications/*}/inputs"
       additional_bindings {
-        get: "/v1/desktopInputs"
+        get: "/v1/{parent}/inputs"
       }
     };
     option (google.api.method_signature) = "parent";
@@ -118,7 +119,7 @@ service MacosUseService {
 message OpenApplicationRequest {
   // The identifier (name, bundle ID, or path) of the application to open.
   // Examples: "Calculator", "com.apple.calculator", "/Applications/Calculator.app"
-  string identifier = 1 [(google.api.field_behavior) = REQUIRED];
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
 }
 
 // Response from opening an application.
@@ -130,7 +131,7 @@ message OpenApplicationResponse {
 // Metadata for OpenApplication long-running operation.
 message OpenApplicationMetadata {
   // The identifier being opened.
-  string identifier = 1;
+  string id = 1;
 }
 
 // Request to get an application.
@@ -146,10 +147,10 @@ message GetApplicationRequest {
 // Request to list applications.
 message ListApplicationsRequest {
   // Maximum number of applications to return.
-  int32 page_size = 1;
+  int32 page_size = 1 [(google.api.field_behavior) = OPTIONAL];
 
   // Page token from a previous ListApplications call.
-  string page_token = 2;
+  string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from listing applications.
@@ -168,6 +169,9 @@ message DeleteApplicationRequest {
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = { type: "macos.googleapis.com/Application" }
   ];
+
+  // If set to true, any pending inputs for this application will also be deleted.
+  bool force = 2 [(google.api.field_behavior) = OPTIONAL];
 }
 
 
@@ -183,7 +187,7 @@ message CreateInputRequest {
   Input input = 2 [(google.api.field_behavior) = REQUIRED];
 
   // Optional input ID. If not provided, the server generates one.
-  string input_id = 3;
+  string input_id = 3 [(google.api.field_behavior) = OPTIONAL];
 }
 
 
@@ -206,13 +210,13 @@ message ListInputsRequest {
   ];
 
   // Maximum number of inputs to return.
-  int32 page_size = 2;
+  int32 page_size = 2 [(google.api.field_behavior) = OPTIONAL];
 
   // Page token from a previous ListInputs call.
-  string page_token = 3;
+  string page_token = 3 [(google.api.field_behavior) = OPTIONAL];
 
-  // Filter inputs by state.
-  Input.State state_filter = 4;
+  // Filter inputs by state. Valid values: PENDING, EXECUTING, COMPLETED, FAILED.
+  string filter = 4 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from listing inputs.
@@ -233,22 +237,22 @@ message TraverseAccessibilityRequest {
   ];
 
   // Whether to return only visible elements.
-  bool visible_only = 2;
+  bool visible_only = 2 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from traversing accessibility tree.
 message TraverseAccessibilityResponse {
   // Name of the application.
-  string app_name = 1;
+  string app = 1;
 
   // Elements found in the traversal.
   repeated macosusesdk.type.Element elements = 2;
 
   // Statistics about the traversal.
-  macosusesdk.type.TraversalStatistics statistics = 3;
+  macosusesdk.type.TraversalStats stats = 3;
 
-  // Processing time in seconds.
-  string processing_time = 4;
+  // Processing time.
+  google.protobuf.Timestamp processing_time = 4;
 }
 
 // Request to watch accessibility changes.
@@ -260,10 +264,10 @@ message WatchAccessibilityRequest {
   ];
 
   // Poll interval in seconds.
-  double poll_interval = 2;
+  double poll_interval = 2 [(google.api.field_behavior) = OPTIONAL];
 
   // Whether to return only visible elements.
-  bool visible_only = 3;
+  bool visible_only = 3 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response streamed from watching accessibility.
@@ -281,10 +285,10 @@ message WatchAccessibilityResponse {
 // An element that was modified.
 message ModifiedElement {
   // The element before modification.
-  macosusesdk.type.Element before = 1;
+  macosusesdk.type.Element previous = 1;
 
   // The element after modification.
-  macosusesdk.type.Element after = 2;
+  macosusesdk.type.Element current = 2;
 
   // List of changed attributes.
   repeated AttributeChange changes = 3;

@@ -32,7 +32,7 @@ public struct Macosusesdk_V1_OpenApplicationRequest: Sendable {
 
   /// The identifier (name, bundle ID, or path) of the application to open.
   /// Examples: "Calculator", "com.apple.calculator", "/Applications/Calculator.app"
-  public var identifier: String = String()
+  public var id: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -69,7 +69,7 @@ public struct Macosusesdk_V1_OpenApplicationMetadata: Sendable {
   // methods supported on all messages.
 
   /// The identifier being opened.
-  public var identifier: String = String()
+  public var id: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -132,6 +132,9 @@ public struct Macosusesdk_V1_DeleteApplicationRequest: Sendable {
 
   /// Resource name of the application.
   public var name: String = String()
+
+  /// If set to true, any pending inputs for this application will also be deleted.
+  public var force: Bool = false
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -196,8 +199,8 @@ public struct Macosusesdk_V1_ListInputsRequest: Sendable {
   /// Page token from a previous ListInputs call.
   public var pageToken: String = String()
 
-  /// Filter inputs by state.
-  public var stateFilter: Macosusesdk_V1_Input.State = .unspecified
+  /// Filter inputs by state. Valid values: PENDING, EXECUTING, COMPLETED, FAILED.
+  public var filter: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -245,29 +248,37 @@ public struct Macosusesdk_V1_TraverseAccessibilityResponse: Sendable {
   // methods supported on all messages.
 
   /// Name of the application.
-  public var appName: String = String()
+  public var app: String = String()
 
   /// Elements found in the traversal.
   public var elements: [Macosusesdk_Type_Element] = []
 
   /// Statistics about the traversal.
-  public var statistics: Macosusesdk_Type_TraversalStatistics {
-    get {return _statistics ?? Macosusesdk_Type_TraversalStatistics()}
-    set {_statistics = newValue}
+  public var stats: Macosusesdk_Type_TraversalStats {
+    get {return _stats ?? Macosusesdk_Type_TraversalStats()}
+    set {_stats = newValue}
   }
-  /// Returns true if `statistics` has been explicitly set.
-  public var hasStatistics: Bool {return self._statistics != nil}
-  /// Clears the value of `statistics`. Subsequent reads from it will return its default value.
-  public mutating func clearStatistics() {self._statistics = nil}
+  /// Returns true if `stats` has been explicitly set.
+  public var hasStats: Bool {return self._stats != nil}
+  /// Clears the value of `stats`. Subsequent reads from it will return its default value.
+  public mutating func clearStats() {self._stats = nil}
 
-  /// Processing time in seconds.
-  public var processingTime: String = String()
+  /// Processing time.
+  public var processingTime: SwiftProtobuf.Google_Protobuf_Timestamp {
+    get {return _processingTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_processingTime = newValue}
+  }
+  /// Returns true if `processingTime` has been explicitly set.
+  public var hasProcessingTime: Bool {return self._processingTime != nil}
+  /// Clears the value of `processingTime`. Subsequent reads from it will return its default value.
+  public mutating func clearProcessingTime() {self._processingTime = nil}
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
 
-  fileprivate var _statistics: Macosusesdk_Type_TraversalStatistics? = nil
+  fileprivate var _stats: Macosusesdk_Type_TraversalStats? = nil
+  fileprivate var _processingTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
 }
 
 /// Request to watch accessibility changes.
@@ -317,24 +328,24 @@ public struct Macosusesdk_V1_ModifiedElement: Sendable {
   // methods supported on all messages.
 
   /// The element before modification.
-  public var before: Macosusesdk_Type_Element {
-    get {return _before ?? Macosusesdk_Type_Element()}
-    set {_before = newValue}
+  public var previous: Macosusesdk_Type_Element {
+    get {return _previous ?? Macosusesdk_Type_Element()}
+    set {_previous = newValue}
   }
-  /// Returns true if `before` has been explicitly set.
-  public var hasBefore: Bool {return self._before != nil}
-  /// Clears the value of `before`. Subsequent reads from it will return its default value.
-  public mutating func clearBefore() {self._before = nil}
+  /// Returns true if `previous` has been explicitly set.
+  public var hasPrevious: Bool {return self._previous != nil}
+  /// Clears the value of `previous`. Subsequent reads from it will return its default value.
+  public mutating func clearPrevious() {self._previous = nil}
 
   /// The element after modification.
-  public var after: Macosusesdk_Type_Element {
-    get {return _after ?? Macosusesdk_Type_Element()}
-    set {_after = newValue}
+  public var current: Macosusesdk_Type_Element {
+    get {return _current ?? Macosusesdk_Type_Element()}
+    set {_current = newValue}
   }
-  /// Returns true if `after` has been explicitly set.
-  public var hasAfter: Bool {return self._after != nil}
-  /// Clears the value of `after`. Subsequent reads from it will return its default value.
-  public mutating func clearAfter() {self._after = nil}
+  /// Returns true if `current` has been explicitly set.
+  public var hasCurrent: Bool {return self._current != nil}
+  /// Clears the value of `current`. Subsequent reads from it will return its default value.
+  public mutating func clearCurrent() {self._current = nil}
 
   /// List of changed attributes.
   public var changes: [Macosusesdk_V1_AttributeChange] = []
@@ -343,8 +354,8 @@ public struct Macosusesdk_V1_ModifiedElement: Sendable {
 
   public init() {}
 
-  fileprivate var _before: Macosusesdk_Type_Element? = nil
-  fileprivate var _after: Macosusesdk_Type_Element? = nil
+  fileprivate var _previous: Macosusesdk_Type_Element? = nil
+  fileprivate var _current: Macosusesdk_Type_Element? = nil
 }
 
 /// A change to an element attribute.
@@ -373,7 +384,7 @@ fileprivate let _protobuf_package = "macosusesdk.v1"
 
 extension Macosusesdk_V1_OpenApplicationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".OpenApplicationRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}identifier\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}id\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -381,21 +392,21 @@ extension Macosusesdk_V1_OpenApplicationRequest: SwiftProtobuf.Message, SwiftPro
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.identifier) }()
+      case 1: try { try decoder.decodeSingularStringField(value: &self.id) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.identifier.isEmpty {
-      try visitor.visitSingularStringField(value: self.identifier, fieldNumber: 1)
+    if !self.id.isEmpty {
+      try visitor.visitSingularStringField(value: self.id, fieldNumber: 1)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_OpenApplicationRequest, rhs: Macosusesdk_V1_OpenApplicationRequest) -> Bool {
-    if lhs.identifier != rhs.identifier {return false}
+    if lhs.id != rhs.id {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -437,7 +448,7 @@ extension Macosusesdk_V1_OpenApplicationResponse: SwiftProtobuf.Message, SwiftPr
 
 extension Macosusesdk_V1_OpenApplicationMetadata: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".OpenApplicationMetadata"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}identifier\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}id\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -445,21 +456,21 @@ extension Macosusesdk_V1_OpenApplicationMetadata: SwiftProtobuf.Message, SwiftPr
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.identifier) }()
+      case 1: try { try decoder.decodeSingularStringField(value: &self.id) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.identifier.isEmpty {
-      try visitor.visitSingularStringField(value: self.identifier, fieldNumber: 1)
+    if !self.id.isEmpty {
+      try visitor.visitSingularStringField(value: self.id, fieldNumber: 1)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_OpenApplicationMetadata, rhs: Macosusesdk_V1_OpenApplicationMetadata) -> Bool {
-    if lhs.identifier != rhs.identifier {return false}
+    if lhs.id != rhs.id {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -567,7 +578,7 @@ extension Macosusesdk_V1_ListApplicationsResponse: SwiftProtobuf.Message, SwiftP
 
 extension Macosusesdk_V1_DeleteApplicationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".DeleteApplicationRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}force\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -576,6 +587,7 @@ extension Macosusesdk_V1_DeleteApplicationRequest: SwiftProtobuf.Message, SwiftP
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      case 2: try { try decoder.decodeSingularBoolField(value: &self.force) }()
       default: break
       }
     }
@@ -585,11 +597,15 @@ extension Macosusesdk_V1_DeleteApplicationRequest: SwiftProtobuf.Message, SwiftP
     if !self.name.isEmpty {
       try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
     }
+    if self.force != false {
+      try visitor.visitSingularBoolField(value: self.force, fieldNumber: 2)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_DeleteApplicationRequest, rhs: Macosusesdk_V1_DeleteApplicationRequest) -> Bool {
     if lhs.name != rhs.name {return false}
+    if lhs.force != rhs.force {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -671,7 +687,7 @@ extension Macosusesdk_V1_GetInputRequest: SwiftProtobuf.Message, SwiftProtobuf._
 
 extension Macosusesdk_V1_ListInputsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListInputsRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}page_size\0\u{3}page_token\0\u{3}state_filter\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}page_size\0\u{3}page_token\0\u{1}filter\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -682,7 +698,7 @@ extension Macosusesdk_V1_ListInputsRequest: SwiftProtobuf.Message, SwiftProtobuf
       case 1: try { try decoder.decodeSingularStringField(value: &self.parent) }()
       case 2: try { try decoder.decodeSingularInt32Field(value: &self.pageSize) }()
       case 3: try { try decoder.decodeSingularStringField(value: &self.pageToken) }()
-      case 4: try { try decoder.decodeSingularEnumField(value: &self.stateFilter) }()
+      case 4: try { try decoder.decodeSingularStringField(value: &self.filter) }()
       default: break
       }
     }
@@ -698,8 +714,8 @@ extension Macosusesdk_V1_ListInputsRequest: SwiftProtobuf.Message, SwiftProtobuf
     if !self.pageToken.isEmpty {
       try visitor.visitSingularStringField(value: self.pageToken, fieldNumber: 3)
     }
-    if self.stateFilter != .unspecified {
-      try visitor.visitSingularEnumField(value: self.stateFilter, fieldNumber: 4)
+    if !self.filter.isEmpty {
+      try visitor.visitSingularStringField(value: self.filter, fieldNumber: 4)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -708,7 +724,7 @@ extension Macosusesdk_V1_ListInputsRequest: SwiftProtobuf.Message, SwiftProtobuf
     if lhs.parent != rhs.parent {return false}
     if lhs.pageSize != rhs.pageSize {return false}
     if lhs.pageToken != rhs.pageToken {return false}
-    if lhs.stateFilter != rhs.stateFilter {return false}
+    if lhs.filter != rhs.filter {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -786,7 +802,7 @@ extension Macosusesdk_V1_TraverseAccessibilityRequest: SwiftProtobuf.Message, Sw
 
 extension Macosusesdk_V1_TraverseAccessibilityResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".TraverseAccessibilityResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}app_name\0\u{1}elements\0\u{1}statistics\0\u{3}processing_time\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}app\0\u{1}elements\0\u{1}stats\0\u{3}processing_time\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -794,10 +810,10 @@ extension Macosusesdk_V1_TraverseAccessibilityResponse: SwiftProtobuf.Message, S
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.appName) }()
+      case 1: try { try decoder.decodeSingularStringField(value: &self.app) }()
       case 2: try { try decoder.decodeRepeatedMessageField(value: &self.elements) }()
-      case 3: try { try decoder.decodeSingularMessageField(value: &self._statistics) }()
-      case 4: try { try decoder.decodeSingularStringField(value: &self.processingTime) }()
+      case 3: try { try decoder.decodeSingularMessageField(value: &self._stats) }()
+      case 4: try { try decoder.decodeSingularMessageField(value: &self._processingTime) }()
       default: break
       }
     }
@@ -808,26 +824,26 @@ extension Macosusesdk_V1_TraverseAccessibilityResponse: SwiftProtobuf.Message, S
     // allocates stack space for every if/case branch local when no optimizations
     // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
     // https://github.com/apple/swift-protobuf/issues/1182
-    if !self.appName.isEmpty {
-      try visitor.visitSingularStringField(value: self.appName, fieldNumber: 1)
+    if !self.app.isEmpty {
+      try visitor.visitSingularStringField(value: self.app, fieldNumber: 1)
     }
     if !self.elements.isEmpty {
       try visitor.visitRepeatedMessageField(value: self.elements, fieldNumber: 2)
     }
-    try { if let v = self._statistics {
+    try { if let v = self._stats {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
     } }()
-    if !self.processingTime.isEmpty {
-      try visitor.visitSingularStringField(value: self.processingTime, fieldNumber: 4)
-    }
+    try { if let v = self._processingTime {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
+    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_TraverseAccessibilityResponse, rhs: Macosusesdk_V1_TraverseAccessibilityResponse) -> Bool {
-    if lhs.appName != rhs.appName {return false}
+    if lhs.app != rhs.app {return false}
     if lhs.elements != rhs.elements {return false}
-    if lhs._statistics != rhs._statistics {return false}
-    if lhs.processingTime != rhs.processingTime {return false}
+    if lhs._stats != rhs._stats {return false}
+    if lhs._processingTime != rhs._processingTime {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -915,7 +931,7 @@ extension Macosusesdk_V1_WatchAccessibilityResponse: SwiftProtobuf.Message, Swif
 
 extension Macosusesdk_V1_ModifiedElement: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ModifiedElement"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}before\0\u{1}after\0\u{1}changes\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}previous\0\u{1}current\0\u{1}changes\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -923,8 +939,8 @@ extension Macosusesdk_V1_ModifiedElement: SwiftProtobuf.Message, SwiftProtobuf._
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularMessageField(value: &self._before) }()
-      case 2: try { try decoder.decodeSingularMessageField(value: &self._after) }()
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._previous) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._current) }()
       case 3: try { try decoder.decodeRepeatedMessageField(value: &self.changes) }()
       default: break
       }
@@ -936,10 +952,10 @@ extension Macosusesdk_V1_ModifiedElement: SwiftProtobuf.Message, SwiftProtobuf._
     // allocates stack space for every if/case branch local when no optimizations
     // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
     // https://github.com/apple/swift-protobuf/issues/1182
-    try { if let v = self._before {
+    try { if let v = self._previous {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
     } }()
-    try { if let v = self._after {
+    try { if let v = self._current {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
     } }()
     if !self.changes.isEmpty {
@@ -949,8 +965,8 @@ extension Macosusesdk_V1_ModifiedElement: SwiftProtobuf.Message, SwiftProtobuf._
   }
 
   public static func ==(lhs: Macosusesdk_V1_ModifiedElement, rhs: Macosusesdk_V1_ModifiedElement) -> Bool {
-    if lhs._before != rhs._before {return false}
-    if lhs._after != rhs._after {return false}
+    if lhs._previous != rhs._previous {return false}
+    if lhs._current != rhs._current {return false}
     if lhs.changes != rhs.changes {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true

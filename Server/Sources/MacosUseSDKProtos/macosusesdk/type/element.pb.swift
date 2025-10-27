@@ -95,7 +95,7 @@ public struct Macosusesdk_Type_Element: Sendable {
 }
 
 /// Statistics about a traversal operation.
-public struct Macosusesdk_Type_TraversalStatistics: Sendable {
+public struct Macosusesdk_Type_TraversalStats: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -113,10 +113,10 @@ public struct Macosusesdk_Type_TraversalStatistics: Sendable {
   public var excludedNoText: Int32 = 0
 
   /// Number of elements with text.
-  public var withTextCount: Int32 = 0
+  public var textElementsCount: Int32 = 0
 
   /// Number of elements without text.
-  public var withoutTextCount: Int32 = 0
+  public var nonTextElementsCount: Int32 = 0
 
   /// Number of visible elements.
   public var visibleElementsCount: Int32 = 0
@@ -192,9 +192,9 @@ extension Macosusesdk_Type_Element: SwiftProtobuf.Message, SwiftProtobuf._Messag
   }
 }
 
-extension Macosusesdk_Type_TraversalStatistics: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".TraversalStatistics"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}count\0\u{3}excluded_count\0\u{3}excluded_non_interactable\0\u{3}excluded_no_text\0\u{3}with_text_count\0\u{3}without_text_count\0\u{3}visible_elements_count\0\u{3}role_counts\0")
+extension Macosusesdk_Type_TraversalStats: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".TraversalStats"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}count\0\u{3}excluded_count\0\u{3}excluded_non_interactable\0\u{3}excluded_no_text\0\u{3}text_elements_count\0\u{3}non_text_elements_count\0\u{3}visible_elements_count\0\u{3}role_counts\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -206,8 +206,8 @@ extension Macosusesdk_Type_TraversalStatistics: SwiftProtobuf.Message, SwiftProt
       case 2: try { try decoder.decodeSingularInt32Field(value: &self.excludedCount) }()
       case 3: try { try decoder.decodeSingularInt32Field(value: &self.excludedNonInteractable) }()
       case 4: try { try decoder.decodeSingularInt32Field(value: &self.excludedNoText) }()
-      case 5: try { try decoder.decodeSingularInt32Field(value: &self.withTextCount) }()
-      case 6: try { try decoder.decodeSingularInt32Field(value: &self.withoutTextCount) }()
+      case 5: try { try decoder.decodeSingularInt32Field(value: &self.textElementsCount) }()
+      case 6: try { try decoder.decodeSingularInt32Field(value: &self.nonTextElementsCount) }()
       case 7: try { try decoder.decodeSingularInt32Field(value: &self.visibleElementsCount) }()
       case 8: try { try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufInt32>.self, value: &self.roleCounts) }()
       default: break
@@ -228,11 +228,11 @@ extension Macosusesdk_Type_TraversalStatistics: SwiftProtobuf.Message, SwiftProt
     if self.excludedNoText != 0 {
       try visitor.visitSingularInt32Field(value: self.excludedNoText, fieldNumber: 4)
     }
-    if self.withTextCount != 0 {
-      try visitor.visitSingularInt32Field(value: self.withTextCount, fieldNumber: 5)
+    if self.textElementsCount != 0 {
+      try visitor.visitSingularInt32Field(value: self.textElementsCount, fieldNumber: 5)
     }
-    if self.withoutTextCount != 0 {
-      try visitor.visitSingularInt32Field(value: self.withoutTextCount, fieldNumber: 6)
+    if self.nonTextElementsCount != 0 {
+      try visitor.visitSingularInt32Field(value: self.nonTextElementsCount, fieldNumber: 6)
     }
     if self.visibleElementsCount != 0 {
       try visitor.visitSingularInt32Field(value: self.visibleElementsCount, fieldNumber: 7)
@@ -243,13 +243,13 @@ extension Macosusesdk_Type_TraversalStatistics: SwiftProtobuf.Message, SwiftProt
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Macosusesdk_Type_TraversalStatistics, rhs: Macosusesdk_Type_TraversalStatistics) -> Bool {
+  public static func ==(lhs: Macosusesdk_Type_TraversalStats, rhs: Macosusesdk_Type_TraversalStats) -> Bool {
     if lhs.count != rhs.count {return false}
     if lhs.excludedCount != rhs.excludedCount {return false}
     if lhs.excludedNonInteractable != rhs.excludedNonInteractable {return false}
     if lhs.excludedNoText != rhs.excludedNoText {return false}
-    if lhs.withTextCount != rhs.withTextCount {return false}
-    if lhs.withoutTextCount != rhs.withoutTextCount {return false}
+    if lhs.textElementsCount != rhs.textElementsCount {return false}
+    if lhs.nonTextElementsCount != rhs.nonTextElementsCount {return false}
     if lhs.visibleElementsCount != rhs.visibleElementsCount {return false}
     if lhs.roleCounts != rhs.roleCounts {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
