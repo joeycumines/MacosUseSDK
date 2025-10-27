@@ -67,7 +67,7 @@ service MacosUseService {
       post: "/v1/{parent=applications/*}/inputs"
       body: "input"
       additional_bindings {
-        post: "/v1/{parent}/inputs"
+        post: "/v1/{parent=applications/*}/inputs"
         body: "input"
       }
     };
@@ -78,9 +78,6 @@ service MacosUseService {
   rpc GetInput(GetInputRequest) returns (Input) {
     option (google.api.http) = {
       get: "/v1/{name=applications/*/inputs/*}"
-      additional_bindings {
-        get: "/v1/{name=inputs/*}"
-      }
     };
     option (google.api.method_signature) = "name";
   }
@@ -90,7 +87,7 @@ service MacosUseService {
     option (google.api.http) = {
       get: "/v1/{parent=applications/*}/inputs"
       additional_bindings {
-        get: "/v1/{parent}/inputs"
+        get: "/v1/{parent=applications/*}/inputs"
       }
     };
     option (google.api.method_signature) = "parent";
@@ -299,7 +296,7 @@ message AttributeChange {
   option (google.api.resource) = {
     type: "macos.googleapis.com/AttributeChange"
     pattern: "attributeChanges/{attribute_change}"
-    singular: "attribute_change"
+    singular: "attributeChange"
     plural: "attributeChanges"
   };
 
