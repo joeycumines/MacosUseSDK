@@ -21,8 +21,8 @@ option java_multiple_files = true;
 option java_outer_classname = "MacosUseServiceProto";
 option java_package = "com.macosusesdk.v1";
 
-// MacosUse is the primary service for automating macOS applications.
-service MacosUse {
+// MacosUseService is the primary service for automating macOS applications.
+service MacosUseService {
   option (google.api.default_host) = "macos.googleapis.com";
 
   // Opens or activates an application. This is a long-running operation.
@@ -142,6 +142,7 @@ message GetApplicationRequest {
   ];
 }
 
+
 // Request to list applications.
 message ListApplicationsRequest {
   // Maximum number of applications to return.
@@ -169,6 +170,7 @@ message DeleteApplicationRequest {
   ];
 }
 
+
 // Request to create an input.
 message CreateInputRequest {
   // Parent resource. Either "applications/{application}" or "" for desktop inputs.
@@ -184,6 +186,7 @@ message CreateInputRequest {
   string input_id = 3;
 }
 
+
 // Request to get an input.
 message GetInputRequest {
   // Resource name of the input.
@@ -192,6 +195,7 @@ message GetInputRequest {
     (google.api.resource_reference) = { type: "macos.googleapis.com/Input" }
   ];
 }
+
 
 // Request to list inputs.
 message ListInputsRequest {

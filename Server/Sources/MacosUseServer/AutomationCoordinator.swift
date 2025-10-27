@@ -2,33 +2,32 @@ import Foundation
 import AppKit
 import MacosUseSDK
 import CoreGraphics
+import MacosUseSDKProtos
 
-/// Global actor that coordinates all SDK interactions on the main thread.
+/// Actor that coordinates all SDK interactions on the main thread.
 /// This is critical because the MacosUseSDK requires main thread execution
 /// for all UI-related operations.
-@globalActor
-public final class AutomationCoordinator {
+public actor AutomationCoordinator {
     public static let shared = AutomationCoordinator()
     
-    @MainActor
     private init() {
-        fputs("info: [AutomationCoordinator] Initialized on main thread\n", stderr)
+        fputs("info: [AutomationCoordinator] Initialized\n", stderr)
     }
     
     // MARK: - Command Handlers
     
     /// Opens or activates an application and returns target info
     @MainActor
-    public func handleOpenApplication(identifier: String) async throws -> TargetApplicationInfo {
+    public func handleOpenApplication(identifier: String) async throws -> Macosusesdk_V1_Application {
         fputs("info: [AutomationCoordinator] Opening application: \(identifier)\n", stderr)
         
         let result = try await MacosUseSDK.openApplication(identifier: identifier)
         
-        return TargetApplicationInfo(
-            name: "targetApplications/\(result.pid)",
-            pid: result.pid,
-            appName: result.appName
-        )
+        return Macosusesdk_V1_Application.with {
+            $0.name = "applications/\(result.pid)"
+            $0.pid = Int32(result.pid)
+            $0.displayName = result.appName
+        }
     }
     
     /// Executes a global input action (not tied to a specific PID)
@@ -56,12 +55,27 @@ public final class AutomationCoordinator {
         
         let sdkResult = await MacosUseSDK.performAction(action: sdkAction, optionsInput: sdkOptions)
         
-        return try convertFromSDKActionResult(sdkResult)
+        return convertFromSDKActionResult(sdkResult)
     }
     
-    /// Traverses the accessibility tree for a specific application
+    /// Executes an input action globally or on a specific PID
     @MainActor
-    public func handleTraverse(pid: pid_t, visibleOnly: Bool) async throws -> ResponseDataInfo {
+    public func handleExecuteInput(action: Macosusesdk_V1_InputAction, pid: pid_t?, showAnimation: Bool, animationDuration: Double) async throws {
+        fputs("info: [AutomationCoordinator] Executing input action\n", stderr)
+        
+        let sdkAction = try convertFromProtoInputAction(action)
+        
+        if pid != nil {
+            // Execute on specific app - but since it's input, perhaps move mouse or something, but for now, global
+            try await executeInputAction(sdkAction, showAnimation: showAnimation, animationDuration: animationDuration)
+        } else {
+            try await executeInputAction(sdkAction, showAnimation: showAnimation, animationDuration: animationDuration)
+        }
+    }
+    
+    /// Traverses the accessibility tree for a given PID
+    @MainActor
+    public func handleTraverse(pid: pid_t, visibleOnly: Bool) async throws -> Macosusesdk_V1_TraverseAccessibilityResponse {
         fputs("info: [AutomationCoordinator] Traversing accessibility tree for PID \(pid)\n", stderr)
         
         let sdkResponse = try MacosUseSDK.traverseAccessibilityTree(
@@ -69,7 +83,29 @@ public final class AutomationCoordinator {
             onlyVisibleElements: visibleOnly
         )
         
-        return try convertFromSDKResponseData(sdkResponse)
+        // Convert SDK response to proto response
+        let elements = sdkResponse.elements.map { sdkElement in
+            Macosusesdk_Type_Element.with {
+                $0.role = sdkElement.role
+                $0.text = sdkElement.text ?? ""
+                $0.x = sdkElement.x ?? 0
+                $0.y = sdkElement.y ?? 0
+                $0.width = sdkElement.width ?? 0
+                $0.height = sdkElement.height ?? 0
+            }
+        }
+        
+        let statistics = Macosusesdk_Type_TraversalStatistics.with {
+            $0.count = Int32(sdkResponse.elements.count)
+            // Add other stats if available
+        }
+        
+        return Macosusesdk_V1_TraverseAccessibilityResponse.with {
+            $0.appName = sdkResponse.app_name
+            $0.elements = elements
+            $0.statistics = statistics
+            $0.processingTime = sdkResponse.processing_time_seconds
+        }
     }
     
     // MARK: - Private Helpers
@@ -126,7 +162,7 @@ public final class AutomationCoordinator {
 // They will be updated to use actual proto types once generated
 
 extension AutomationCoordinator {
-    private func convertToSDKInputAction(_ action: InputActionInfo) throws -> MacosUseSDK.InputAction {
+    nonisolated private func convertToSDKInputAction(_ action: InputActionInfo) throws -> MacosUseSDK.InputAction {
         switch action.type {
         case .click(let x, let y):
             return .click(point: CGPoint(x: x, y: y))
@@ -144,7 +180,7 @@ extension AutomationCoordinator {
         }
     }
     
-    private func convertToSDKPrimaryAction(_ action: PrimaryActionInfo) throws -> MacosUseSDK.PrimaryAction {
+    nonisolated private func convertToSDKPrimaryAction(_ action: PrimaryActionInfo) throws -> MacosUseSDK.PrimaryAction {
         switch action {
         case .input(let inputAction):
             return .input(action: try convertToSDKInputAction(inputAction))
@@ -153,7 +189,7 @@ extension AutomationCoordinator {
         }
     }
     
-    private func convertToSDKActionOptions(pid: pid_t, options: ActionOptionsInfo) -> MacosUseSDK.ActionOptions {
+    nonisolated private func convertToSDKActionOptions(pid: pid_t, options: ActionOptionsInfo) -> MacosUseSDK.ActionOptions {
         return MacosUseSDK.ActionOptions(
             traverseBefore: options.traverseBefore,
             traverseAfter: options.traverseAfter,
@@ -166,7 +202,7 @@ extension AutomationCoordinator {
         )
     }
     
-    private func convertFromSDKActionResult(_ result: MacosUseSDK.ActionResult) throws -> ActionResultInfo {
+    nonisolated private func convertFromSDKActionResult(_ result: MacosUseSDK.ActionResult) throws -> ActionResultInfo {
         return ActionResultInfo(
             pid: result.openResult?.pid ?? 0,
             appName: result.openResult?.appName ?? "",
@@ -177,15 +213,27 @@ extension AutomationCoordinator {
         )
     }
     
-    private func convertFromSDKResponseData(_ data: MacosUseSDK.ResponseData) throws -> ResponseDataInfo {
-        return ResponseDataInfo(
-            appName: data.appName,
-            elementCount: data.elements.count,
-            processingTime: data.processingTimeSeconds
-        )
+    nonisolated private func convertFromProtoInputAction(_ action: Macosusesdk_V1_InputAction) throws -> MacosUseSDK.InputAction {
+        switch action.inputType {
+        case .click(let point):
+            return .click(point: CGPoint(x: point.x, y: point.y))
+        case .doubleClick(let point):
+            return .doubleClick(point: CGPoint(x: point.x, y: point.y))
+        case .rightClick(let point):
+            return .rightClick(point: CGPoint(x: point.x, y: point.y))
+        case .typeText(let text):
+            return .type(text: text)
+        case .pressKey(let keyPress):
+            let (keyName, flags) = try parseKeyCombo(keyPress.keyCombo)
+            return .press(keyName: keyName, flags: flags)
+        case .moveTo(let point):
+            return .move(to: CGPoint(x: point.x, y: point.y))
+        case .none:
+            throw CoordinatorError.invalidKeyCombo("empty input type")
+        }
     }
     
-    private func parseKeyCombo(_ combo: String) throws -> (keyName: String, flags: CGEventFlags) {
+    nonisolated private func parseKeyCombo(_ combo: String) throws -> (keyName: String, flags: CGEventFlags) {
         var flags: CGEventFlags = []
         let parts = combo.split(separator: "+").map(String.init)
         
@@ -260,7 +308,7 @@ public struct ActionOptionsInfo {
     }
 }
 
-public struct ActionResultInfo {
+public struct ActionResultInfo: Sendable {
     public let pid: pid_t
     public let appName: String
     public let traversalPid: pid_t

@@ -7,23 +7,19 @@ permissions:
   contents: read
 
 jobs:
-  lint-and-breaking:
+  lint:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - name: Checkout
+        uses: actions/checkout@v4
       
-      - uses: bufbuild/buf-setup-action@v1
+      - name: Setup Buf
+        uses: bufbuild/buf-setup-action@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Lint protos
-        run: /tmp/buf lint
+      - name: Buf Lint
+        run: buf lint
       
-      - name: Check breaking changes
-        if: github.event_name == 'pull_request'
-        run: |
-          /tmp/buf breaking --against ".git#branch=${{ github.base_ref }}"
+      - name: Buf Breaking
+        run: buf breaking --against 'https://github.com/${{ github.repository }}.git#ref=main'

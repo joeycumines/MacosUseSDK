@@ -1,28 +1,18 @@
 import Foundation
-
-// MARK: - Server State
+import MacosUseSDKProtos
 
 /// Thread-safe state container using copy-on-write semantics.
 /// This is the immutable "view" of the server state that can be safely shared.
 public struct ServerState: Sendable {
-    /// Map of PID to TargetApplication proto message
-    /// Note: The actual proto types will be used once generated
-    public var targets: [pid_t: TargetApplicationInfo] = [:]
+    /// Map of PID to Application proto message
+    public var applications: [pid_t: Macosusesdk_V1_Application] = [:]
+    /// Map of input name to Input proto message
+    public var inputs: [String: Macosusesdk_V1_Input] = [:]
 }
 
 /// Temporary struct to represent target application info
 /// Will be replaced with generated proto message
-public struct TargetApplicationInfo: Sendable {
-    public let name: String
-    public let pid: pid_t
-    public let appName: String
-    
-    public init(name: String, pid: pid_t, appName: String) {
-        self.name = name
-        self.pid = pid
-        self.appName = appName
-    }
-}
+public typealias TargetApplicationInfo = Macosusesdk_V1_Application
 
 // MARK: - State Store Actor
 
@@ -34,28 +24,51 @@ public actor AppStateStore {
     public init() {}
     
     /// Adds or updates a target application in the state
-    public func addTarget(_ target: TargetApplicationInfo) {
-        state.targets[target.pid] = target
+    public func addTarget(_ target: Macosusesdk_V1_Application) {
+        state.applications[target.pid] = target
     }
     
     /// Removes a target application from the state
     /// - Returns: The removed target, if it existed
-    public func removeTarget(pid: pid_t) -> TargetApplicationInfo? {
-        return state.targets.removeValue(forKey: pid)
+    public func removeTarget(pid: pid_t) -> Macosusesdk_V1_Application? {
+        return state.applications.removeValue(forKey: pid)
     }
     
     /// Gets a specific target application by PID
-    public func getTarget(pid: pid_t) -> TargetApplicationInfo? {
-        return state.targets[pid]
+    public func getTarget(pid: pid_t) -> Macosusesdk_V1_Application? {
+        return state.applications[pid]
     }
     
     /// Lists all tracked target applications
-    public func listTargets() -> [TargetApplicationInfo] {
-        return Array(state.targets.values)
+    public func listTargets() -> [Macosusesdk_V1_Application] {
+        return Array(state.applications.values)
     }
     
     /// Returns a snapshot of the current state
     public func currentState() -> ServerState {
         return state
+    }
+    
+    // MARK: - Input Management
+    
+    /// Adds an input to the state
+    public func addInput(_ input: Macosusesdk_V1_Input) {
+        state.inputs[input.name] = input
+    }
+    
+    /// Gets an input by name
+    public func getInput(name: String) -> Macosusesdk_V1_Input? {
+        return state.inputs[name]
+    }
+    
+    /// Lists inputs for a parent
+    public func listInputs(parent: String) -> [Macosusesdk_V1_Input] {
+        if parent.isEmpty {
+            // Desktop inputs
+            return state.inputs.values.filter { $0.name.hasPrefix("desktopInputs/") }
+        } else {
+            // Application inputs
+            return state.inputs.values.filter { $0.name.hasPrefix("\(parent)/inputs/") }
+        }
     }
 }

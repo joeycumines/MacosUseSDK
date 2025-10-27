@@ -1,12 +1,7 @@
 name: API Linter
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  workflow_call:
 
 permissions:
   contents: read
@@ -14,24 +9,22 @@ permissions:
 jobs:
   api-lint:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
       
-      - uses: actions/setup-go@v5
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
           go-version: '1.23'
+
+      - name: Setup Buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Make script executable
+        run: chmod +x ./hack/google-api-linter.sh
       
-      - name: Install api-linter
-        working-directory: tools
-        run: |
-          go mod download
-          go install github.com/googleapis/api-linter/cmd/api-linter
-      
-      - name: Run api-linter
-        run: |
-          # Note: This will fail initially until we have valid proto files with googleapis imports
-          # The BSR dependency resolution happens in CI
-          api-linter proto/**/*.proto --set-exit-status || true
-          echo "Note: API linting will be fully enforced once proto dependencies are resolved in CI"
+      - name: Run api-linter script
+        run: ./hack/google-api-linter.sh

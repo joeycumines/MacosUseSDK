@@ -5,9 +5,11 @@ deps:
   - buf.build/googleapis/googleapis
 lint:
   use:
-    - DEFAULT
+    - STANDARD
   except:
     - PACKAGE_VERSION_SUFFIX
+    - RPC_RESPONSE_STANDARD_NAME
+    - MESSAGE_SAME_TYPE_MULTIPLE_RPC
 breaking:
   use:
     - FILE

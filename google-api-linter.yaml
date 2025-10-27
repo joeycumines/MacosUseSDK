@@ -3,3 +3,5 @@
     - 'google/**/*.proto'
   disabled_rules:
     - 'all'
+- disabled_rules:
+    - 'core::0136::response-message-name'

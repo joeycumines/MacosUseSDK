@@ -7,13 +7,14 @@ managed:
       value: github.com/joeycumines/MacosUseSDK/gen/go
 inputs:
   - directory: proto
+  - module: buf.build/googleapis/googleapis
 plugins:
   - remote: buf.build/apple/swift
-    out: gen/swift
+    out: Server/Sources/MacosUseSDKProtos
     opt:
       - Visibility=Public
   - remote: buf.build/grpc/swift
-    out: gen/swift
+    out: Server/Sources/MacosUseSDKProtos
     opt:
       - Visibility=Public
       - Server=true

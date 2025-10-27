@@ -1065,8 +1065,8 @@ const file_macosusesdk_v1_macos_use_proto_rawDesc = "" +
 	"\x0fAttributeChange\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1b\n" +
 	"\told_value\x18\x02 \x01(\tR\boldValue\x12\x1b\n" +
-	"\tnew_value\x18\x03 \x01(\tR\bnewValue2\x86\v\n" +
-	"\bMacosUse\x12\xaf\x01\n" +
+	"\tnew_value\x18\x03 \x01(\tR\bnewValue2\x8d\v\n" +
+	"\x0fMacosUseService\x12\xaf\x01\n" +
 	"\x0fOpenApplication\x12&.macosusesdk.v1.OpenApplicationRequest\x1a\x1d.google.longrunning.Operation\"U\xcaA2\n" +
 	"\x17OpenApplicationResponse\x12\x17OpenApplicationMetadata\x82\xd3\xe4\x93\x02\x1a:\x01*\"\x15/v1/applications:open\x12~\n" +
 	"\x0eGetApplication\x12%.macosusesdk.v1.GetApplicationRequest\x1a\x1b.macosusesdk.v1.Application\"(\xdaA\x04name\x82\xd3\xe4\x93\x02\x1b\x12\x19/v1/{name=applications/*}\x12\x7f\n" +
@@ -1133,24 +1133,24 @@ var file_macosusesdk_v1_macos_use_proto_depIdxs = []int32{
 	20, // 10: macosusesdk.v1.ModifiedElement.before:type_name -> macosusesdk.type.Element
 	20, // 11: macosusesdk.v1.ModifiedElement.after:type_name -> macosusesdk.type.Element
 	16, // 12: macosusesdk.v1.ModifiedElement.changes:type_name -> macosusesdk.v1.AttributeChange
-	0,  // 13: macosusesdk.v1.MacosUse.OpenApplication:input_type -> macosusesdk.v1.OpenApplicationRequest
-	3,  // 14: macosusesdk.v1.MacosUse.GetApplication:input_type -> macosusesdk.v1.GetApplicationRequest
-	4,  // 15: macosusesdk.v1.MacosUse.ListApplications:input_type -> macosusesdk.v1.ListApplicationsRequest
-	6,  // 16: macosusesdk.v1.MacosUse.DeleteApplication:input_type -> macosusesdk.v1.DeleteApplicationRequest
-	7,  // 17: macosusesdk.v1.MacosUse.CreateInput:input_type -> macosusesdk.v1.CreateInputRequest
-	8,  // 18: macosusesdk.v1.MacosUse.GetInput:input_type -> macosusesdk.v1.GetInputRequest
-	9,  // 19: macosusesdk.v1.MacosUse.ListInputs:input_type -> macosusesdk.v1.ListInputsRequest
-	11, // 20: macosusesdk.v1.MacosUse.TraverseAccessibility:input_type -> macosusesdk.v1.TraverseAccessibilityRequest
-	13, // 21: macosusesdk.v1.MacosUse.WatchAccessibility:input_type -> macosusesdk.v1.WatchAccessibilityRequest
-	22, // 22: macosusesdk.v1.MacosUse.OpenApplication:output_type -> google.longrunning.Operation
-	17, // 23: macosusesdk.v1.MacosUse.GetApplication:output_type -> macosusesdk.v1.Application
-	5,  // 24: macosusesdk.v1.MacosUse.ListApplications:output_type -> macosusesdk.v1.ListApplicationsResponse
-	23, // 25: macosusesdk.v1.MacosUse.DeleteApplication:output_type -> google.protobuf.Empty
-	18, // 26: macosusesdk.v1.MacosUse.CreateInput:output_type -> macosusesdk.v1.Input
-	18, // 27: macosusesdk.v1.MacosUse.GetInput:output_type -> macosusesdk.v1.Input
-	10, // 28: macosusesdk.v1.MacosUse.ListInputs:output_type -> macosusesdk.v1.ListInputsResponse
-	12, // 29: macosusesdk.v1.MacosUse.TraverseAccessibility:output_type -> macosusesdk.v1.TraverseAccessibilityResponse
-	14, // 30: macosusesdk.v1.MacosUse.WatchAccessibility:output_type -> macosusesdk.v1.WatchAccessibilityResponse
+	0,  // 13: macosusesdk.v1.MacosUseService.OpenApplication:input_type -> macosusesdk.v1.OpenApplicationRequest
+	3,  // 14: macosusesdk.v1.MacosUseService.GetApplication:input_type -> macosusesdk.v1.GetApplicationRequest
+	4,  // 15: macosusesdk.v1.MacosUseService.ListApplications:input_type -> macosusesdk.v1.ListApplicationsRequest
+	6,  // 16: macosusesdk.v1.MacosUseService.DeleteApplication:input_type -> macosusesdk.v1.DeleteApplicationRequest
+	7,  // 17: macosusesdk.v1.MacosUseService.CreateInput:input_type -> macosusesdk.v1.CreateInputRequest
+	8,  // 18: macosusesdk.v1.MacosUseService.GetInput:input_type -> macosusesdk.v1.GetInputRequest
+	9,  // 19: macosusesdk.v1.MacosUseService.ListInputs:input_type -> macosusesdk.v1.ListInputsRequest
+	11, // 20: macosusesdk.v1.MacosUseService.TraverseAccessibility:input_type -> macosusesdk.v1.TraverseAccessibilityRequest
+	13, // 21: macosusesdk.v1.MacosUseService.WatchAccessibility:input_type -> macosusesdk.v1.WatchAccessibilityRequest
+	22, // 22: macosusesdk.v1.MacosUseService.OpenApplication:output_type -> google.longrunning.Operation
+	17, // 23: macosusesdk.v1.MacosUseService.GetApplication:output_type -> macosusesdk.v1.Application
+	5,  // 24: macosusesdk.v1.MacosUseService.ListApplications:output_type -> macosusesdk.v1.ListApplicationsResponse
+	23, // 25: macosusesdk.v1.MacosUseService.DeleteApplication:output_type -> google.protobuf.Empty
+	18, // 26: macosusesdk.v1.MacosUseService.CreateInput:output_type -> macosusesdk.v1.Input
+	18, // 27: macosusesdk.v1.MacosUseService.GetInput:output_type -> macosusesdk.v1.Input
+	10, // 28: macosusesdk.v1.MacosUseService.ListInputs:output_type -> macosusesdk.v1.ListInputsResponse
+	12, // 29: macosusesdk.v1.MacosUseService.TraverseAccessibility:output_type -> macosusesdk.v1.TraverseAccessibilityResponse
+	14, // 30: macosusesdk.v1.MacosUseService.WatchAccessibility:output_type -> macosusesdk.v1.WatchAccessibilityResponse
 	22, // [22:31] is the sub-list for method output_type
 	13, // [13:22] is the sub-list for method input_type
 	13, // [13:13] is the sub-list for extension type_name

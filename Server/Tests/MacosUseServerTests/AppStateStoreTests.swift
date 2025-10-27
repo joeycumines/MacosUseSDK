@@ -1,4 +1,5 @@
 import XCTest
+import MacosUseSDKProtos
 @testable import MacosUseServer
 
 /// Tests for the AppStateStore actor
@@ -6,24 +7,32 @@ final class AppStateStoreTests: XCTestCase {
     
     func testAddAndGetTarget() async {
         let store = AppStateStore()
-        let target = TargetApplicationInfo(
-            name: "targetApplications/123",
-            pid: 123,
-            appName: "TestApp"
-        )
+        let target = Macosusesdk_V1_Application.with {
+            $0.name = "applications/123"
+            $0.pid = 123
+            $0.displayName = "TestApp"
+        }
         
         await store.addTarget(target)
         let retrieved = await store.getTarget(pid: 123)
         
         XCTAssertNotNil(retrieved)
         XCTAssertEqual(retrieved?.pid, 123)
-        XCTAssertEqual(retrieved?.appName, "TestApp")
+        XCTAssertEqual(retrieved?.displayName, "TestApp")
     }
     
     func testListTargets() async {
         let store = AppStateStore()
-        let target1 = TargetApplicationInfo(name: "targetApplications/123", pid: 123, appName: "App1")
-        let target2 = TargetApplicationInfo(name: "targetApplications/456", pid: 456, appName: "App2")
+        let target1 = Macosusesdk_V1_Application.with {
+            $0.name = "applications/123"
+            $0.pid = 123
+            $0.displayName = "App1"
+        }
+        let target2 = Macosusesdk_V1_Application.with {
+            $0.name = "applications/456"
+            $0.pid = 456
+            $0.displayName = "App2"
+        }
         
         await store.addTarget(target1)
         await store.addTarget(target2)
@@ -34,7 +43,11 @@ final class AppStateStoreTests: XCTestCase {
     
     func testRemoveTarget() async {
         let store = AppStateStore()
-        let target = TargetApplicationInfo(name: "targetApplications/123", pid: 123, appName: "TestApp")
+        let target = Macosusesdk_V1_Application.with {
+            $0.name = "applications/123"
+            $0.pid = 123
+            $0.displayName = "TestApp"
+        }
         
         await store.addTarget(target)
         let removed = await store.removeTarget(pid: 123)
@@ -48,12 +61,15 @@ final class AppStateStoreTests: XCTestCase {
     
     func testCurrentState() async {
         let store = AppStateStore()
-        let target = TargetApplicationInfo(name: "targetApplications/123", pid: 123, appName: "TestApp")
+        let target = Macosusesdk_V1_Application.with {
+            $0.name = "applications/123"
+            $0.pid = 123
+            $0.displayName = "TestApp"
+        }
         
         await store.addTarget(target)
         let state = await store.currentState()
         
-        XCTAssertEqual(state.targets.count, 1)
-        XCTAssertNotNil(state.targets[123])
+        XCTAssertEqual(state.applications.count, 1)
+        XCTAssertNotNil(state.applications[123])
     }
-}

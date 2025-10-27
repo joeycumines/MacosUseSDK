@@ -18,11 +18,24 @@ let package = Package(
         .package(name: "MacosUseSDK", path: "../")
     ],
     targets: [
+        // Target for the generated Swift Protobuf and gRPC stubs
+        // This makes the generated code available to the server target
+        .target(
+            name: "MacosUseSDKProtos",
+            dependencies: [
+                .product(name: "GRPC", package: "grpc-swift")
+            ],
+            path: "Sources/MacosUseSDKProtos",
+            exclude: ["google/api/expr/v1beta1/"],
+            sources: ["macosusesdk/", "google/"]
+        ),
+        
         .executableTarget(
             name: "MacosUseServer",
             dependencies: [
                 .product(name: "GRPC", package: "grpc-swift"),
-                "MacosUseSDK"
+                "MacosUseSDK",
+                "MacosUseSDKProtos" // Add dependency on the generated protos
             ],
             path: "Sources/MacosUseServer"
         ),

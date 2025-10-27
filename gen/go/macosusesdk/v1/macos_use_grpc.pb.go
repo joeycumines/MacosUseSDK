@@ -25,23 +25,23 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	MacosUse_OpenApplication_FullMethodName       = "/macosusesdk.v1.MacosUse/OpenApplication"
-	MacosUse_GetApplication_FullMethodName        = "/macosusesdk.v1.MacosUse/GetApplication"
-	MacosUse_ListApplications_FullMethodName      = "/macosusesdk.v1.MacosUse/ListApplications"
-	MacosUse_DeleteApplication_FullMethodName     = "/macosusesdk.v1.MacosUse/DeleteApplication"
-	MacosUse_CreateInput_FullMethodName           = "/macosusesdk.v1.MacosUse/CreateInput"
-	MacosUse_GetInput_FullMethodName              = "/macosusesdk.v1.MacosUse/GetInput"
-	MacosUse_ListInputs_FullMethodName            = "/macosusesdk.v1.MacosUse/ListInputs"
-	MacosUse_TraverseAccessibility_FullMethodName = "/macosusesdk.v1.MacosUse/TraverseAccessibility"
-	MacosUse_WatchAccessibility_FullMethodName    = "/macosusesdk.v1.MacosUse/WatchAccessibility"
+	MacosUseService_OpenApplication_FullMethodName       = "/macosusesdk.v1.MacosUseService/OpenApplication"
+	MacosUseService_GetApplication_FullMethodName        = "/macosusesdk.v1.MacosUseService/GetApplication"
+	MacosUseService_ListApplications_FullMethodName      = "/macosusesdk.v1.MacosUseService/ListApplications"
+	MacosUseService_DeleteApplication_FullMethodName     = "/macosusesdk.v1.MacosUseService/DeleteApplication"
+	MacosUseService_CreateInput_FullMethodName           = "/macosusesdk.v1.MacosUseService/CreateInput"
+	MacosUseService_GetInput_FullMethodName              = "/macosusesdk.v1.MacosUseService/GetInput"
+	MacosUseService_ListInputs_FullMethodName            = "/macosusesdk.v1.MacosUseService/ListInputs"
+	MacosUseService_TraverseAccessibility_FullMethodName = "/macosusesdk.v1.MacosUseService/TraverseAccessibility"
+	MacosUseService_WatchAccessibility_FullMethodName    = "/macosusesdk.v1.MacosUseService/WatchAccessibility"
 )
 
-// MacosUseClient is the client API for MacosUse service.
+// MacosUseServiceClient is the client API for MacosUseService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// MacosUse is the primary service for automating macOS applications.
-type MacosUseClient interface {
+// MacosUseService is the primary service for automating macOS applications.
+type MacosUseServiceClient interface {
 	// Opens or activates an application. This is a long-running operation.
 	OpenApplication(ctx context.Context, in *OpenApplicationRequest, opts ...grpc.CallOption) (*longrunningpb.Operation, error)
 	// Gets a specific application being tracked.
@@ -62,97 +62,97 @@ type MacosUseClient interface {
 	WatchAccessibility(ctx context.Context, in *WatchAccessibilityRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[WatchAccessibilityResponse], error)
 }
 
-type macosUseClient struct {
+type macosUseServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewMacosUseClient(cc grpc.ClientConnInterface) MacosUseClient {
-	return &macosUseClient{cc}
+func NewMacosUseServiceClient(cc grpc.ClientConnInterface) MacosUseServiceClient {
+	return &macosUseServiceClient{cc}
 }
 
-func (c *macosUseClient) OpenApplication(ctx context.Context, in *OpenApplicationRequest, opts ...grpc.CallOption) (*longrunningpb.Operation, error) {
+func (c *macosUseServiceClient) OpenApplication(ctx context.Context, in *OpenApplicationRequest, opts ...grpc.CallOption) (*longrunningpb.Operation, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(longrunningpb.Operation)
-	err := c.cc.Invoke(ctx, MacosUse_OpenApplication_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, MacosUseService_OpenApplication_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *macosUseClient) GetApplication(ctx context.Context, in *GetApplicationRequest, opts ...grpc.CallOption) (*Application, error) {
+func (c *macosUseServiceClient) GetApplication(ctx context.Context, in *GetApplicationRequest, opts ...grpc.CallOption) (*Application, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Application)
-	err := c.cc.Invoke(ctx, MacosUse_GetApplication_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, MacosUseService_GetApplication_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *macosUseClient) ListApplications(ctx context.Context, in *ListApplicationsRequest, opts ...grpc.CallOption) (*ListApplicationsResponse, error) {
+func (c *macosUseServiceClient) ListApplications(ctx context.Context, in *ListApplicationsRequest, opts ...grpc.CallOption) (*ListApplicationsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListApplicationsResponse)
-	err := c.cc.Invoke(ctx, MacosUse_ListApplications_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, MacosUseService_ListApplications_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *macosUseClient) DeleteApplication(ctx context.Context, in *DeleteApplicationRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *macosUseServiceClient) DeleteApplication(ctx context.Context, in *DeleteApplicationRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, MacosUse_DeleteApplication_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, MacosUseService_DeleteApplication_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *macosUseClient) CreateInput(ctx context.Context, in *CreateInputRequest, opts ...grpc.CallOption) (*Input, error) {
+func (c *macosUseServiceClient) CreateInput(ctx context.Context, in *CreateInputRequest, opts ...grpc.CallOption) (*Input, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Input)
-	err := c.cc.Invoke(ctx, MacosUse_CreateInput_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, MacosUseService_CreateInput_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *macosUseClient) GetInput(ctx context.Context, in *GetInputRequest, opts ...grpc.CallOption) (*Input, error) {
+func (c *macosUseServiceClient) GetInput(ctx context.Context, in *GetInputRequest, opts ...grpc.CallOption) (*Input, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Input)
-	err := c.cc.Invoke(ctx, MacosUse_GetInput_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, MacosUseService_GetInput_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *macosUseClient) ListInputs(ctx context.Context, in *ListInputsRequest, opts ...grpc.CallOption) (*ListInputsResponse, error) {
+func (c *macosUseServiceClient) ListInputs(ctx context.Context, in *ListInputsRequest, opts ...grpc.CallOption) (*ListInputsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListInputsResponse)
-	err := c.cc.Invoke(ctx, MacosUse_ListInputs_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, MacosUseService_ListInputs_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *macosUseClient) TraverseAccessibility(ctx context.Context, in *TraverseAccessibilityRequest, opts ...grpc.CallOption) (*TraverseAccessibilityResponse, error) {
+func (c *macosUseServiceClient) TraverseAccessibility(ctx context.Context, in *TraverseAccessibilityRequest, opts ...grpc.CallOption) (*TraverseAccessibilityResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(TraverseAccessibilityResponse)
-	err := c.cc.Invoke(ctx, MacosUse_TraverseAccessibility_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, MacosUseService_TraverseAccessibility_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *macosUseClient) WatchAccessibility(ctx context.Context, in *WatchAccessibilityRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[WatchAccessibilityResponse], error) {
+func (c *macosUseServiceClient) WatchAccessibility(ctx context.Context, in *WatchAccessibilityRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[WatchAccessibilityResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &MacosUse_ServiceDesc.Streams[0], MacosUse_WatchAccessibility_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &MacosUseService_ServiceDesc.Streams[0], MacosUseService_WatchAccessibility_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -167,14 +167,14 @@ func (c *macosUseClient) WatchAccessibility(ctx context.Context, in *WatchAccess
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type MacosUse_WatchAccessibilityClient = grpc.ServerStreamingClient[WatchAccessibilityResponse]
+type MacosUseService_WatchAccessibilityClient = grpc.ServerStreamingClient[WatchAccessibilityResponse]
 
-// MacosUseServer is the server API for MacosUse service.
-// All implementations should embed UnimplementedMacosUseServer
+// MacosUseServiceServer is the server API for MacosUseService service.
+// All implementations should embed UnimplementedMacosUseServiceServer
 // for forward compatibility.
 //
-// MacosUse is the primary service for automating macOS applications.
-type MacosUseServer interface {
+// MacosUseService is the primary service for automating macOS applications.
+type MacosUseServiceServer interface {
 	// Opens or activates an application. This is a long-running operation.
 	OpenApplication(context.Context, *OpenApplicationRequest) (*longrunningpb.Operation, error)
 	// Gets a specific application being tracked.
@@ -195,259 +195,259 @@ type MacosUseServer interface {
 	WatchAccessibility(*WatchAccessibilityRequest, grpc.ServerStreamingServer[WatchAccessibilityResponse]) error
 }
 
-// UnimplementedMacosUseServer should be embedded to have
+// UnimplementedMacosUseServiceServer should be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedMacosUseServer struct{}
+type UnimplementedMacosUseServiceServer struct{}
 
-func (UnimplementedMacosUseServer) OpenApplication(context.Context, *OpenApplicationRequest) (*longrunningpb.Operation, error) {
+func (UnimplementedMacosUseServiceServer) OpenApplication(context.Context, *OpenApplicationRequest) (*longrunningpb.Operation, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method OpenApplication not implemented")
 }
-func (UnimplementedMacosUseServer) GetApplication(context.Context, *GetApplicationRequest) (*Application, error) {
+func (UnimplementedMacosUseServiceServer) GetApplication(context.Context, *GetApplicationRequest) (*Application, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetApplication not implemented")
 }
-func (UnimplementedMacosUseServer) ListApplications(context.Context, *ListApplicationsRequest) (*ListApplicationsResponse, error) {
+func (UnimplementedMacosUseServiceServer) ListApplications(context.Context, *ListApplicationsRequest) (*ListApplicationsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListApplications not implemented")
 }
-func (UnimplementedMacosUseServer) DeleteApplication(context.Context, *DeleteApplicationRequest) (*emptypb.Empty, error) {
+func (UnimplementedMacosUseServiceServer) DeleteApplication(context.Context, *DeleteApplicationRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteApplication not implemented")
 }
-func (UnimplementedMacosUseServer) CreateInput(context.Context, *CreateInputRequest) (*Input, error) {
+func (UnimplementedMacosUseServiceServer) CreateInput(context.Context, *CreateInputRequest) (*Input, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateInput not implemented")
 }
-func (UnimplementedMacosUseServer) GetInput(context.Context, *GetInputRequest) (*Input, error) {
+func (UnimplementedMacosUseServiceServer) GetInput(context.Context, *GetInputRequest) (*Input, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetInput not implemented")
 }
-func (UnimplementedMacosUseServer) ListInputs(context.Context, *ListInputsRequest) (*ListInputsResponse, error) {
+func (UnimplementedMacosUseServiceServer) ListInputs(context.Context, *ListInputsRequest) (*ListInputsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListInputs not implemented")
 }
-func (UnimplementedMacosUseServer) TraverseAccessibility(context.Context, *TraverseAccessibilityRequest) (*TraverseAccessibilityResponse, error) {
+func (UnimplementedMacosUseServiceServer) TraverseAccessibility(context.Context, *TraverseAccessibilityRequest) (*TraverseAccessibilityResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method TraverseAccessibility not implemented")
 }
-func (UnimplementedMacosUseServer) WatchAccessibility(*WatchAccessibilityRequest, grpc.ServerStreamingServer[WatchAccessibilityResponse]) error {
+func (UnimplementedMacosUseServiceServer) WatchAccessibility(*WatchAccessibilityRequest, grpc.ServerStreamingServer[WatchAccessibilityResponse]) error {
 	return status.Errorf(codes.Unimplemented, "method WatchAccessibility not implemented")
 }
-func (UnimplementedMacosUseServer) testEmbeddedByValue() {}
+func (UnimplementedMacosUseServiceServer) testEmbeddedByValue() {}
 
-// UnsafeMacosUseServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to MacosUseServer will
+// UnsafeMacosUseServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to MacosUseServiceServer will
 // result in compilation errors.
-type UnsafeMacosUseServer interface {
-	mustEmbedUnimplementedMacosUseServer()
+type UnsafeMacosUseServiceServer interface {
+	mustEmbedUnimplementedMacosUseServiceServer()
 }
 
-func RegisterMacosUseServer(s grpc.ServiceRegistrar, srv MacosUseServer) {
-	// If the following call pancis, it indicates UnimplementedMacosUseServer was
+func RegisterMacosUseServiceServer(s grpc.ServiceRegistrar, srv MacosUseServiceServer) {
+	// If the following call pancis, it indicates UnimplementedMacosUseServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&MacosUse_ServiceDesc, srv)
+	s.RegisterService(&MacosUseService_ServiceDesc, srv)
 }
 
-func _MacosUse_OpenApplication_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _MacosUseService_OpenApplication_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(OpenApplicationRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MacosUseServer).OpenApplication(ctx, in)
+		return srv.(MacosUseServiceServer).OpenApplication(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MacosUse_OpenApplication_FullMethodName,
+		FullMethod: MacosUseService_OpenApplication_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MacosUseServer).OpenApplication(ctx, req.(*OpenApplicationRequest))
+		return srv.(MacosUseServiceServer).OpenApplication(ctx, req.(*OpenApplicationRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MacosUse_GetApplication_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _MacosUseService_GetApplication_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetApplicationRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MacosUseServer).GetApplication(ctx, in)
+		return srv.(MacosUseServiceServer).GetApplication(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MacosUse_GetApplication_FullMethodName,
+		FullMethod: MacosUseService_GetApplication_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MacosUseServer).GetApplication(ctx, req.(*GetApplicationRequest))
+		return srv.(MacosUseServiceServer).GetApplication(ctx, req.(*GetApplicationRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MacosUse_ListApplications_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _MacosUseService_ListApplications_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListApplicationsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MacosUseServer).ListApplications(ctx, in)
+		return srv.(MacosUseServiceServer).ListApplications(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MacosUse_ListApplications_FullMethodName,
+		FullMethod: MacosUseService_ListApplications_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MacosUseServer).ListApplications(ctx, req.(*ListApplicationsRequest))
+		return srv.(MacosUseServiceServer).ListApplications(ctx, req.(*ListApplicationsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MacosUse_DeleteApplication_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _MacosUseService_DeleteApplication_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteApplicationRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MacosUseServer).DeleteApplication(ctx, in)
+		return srv.(MacosUseServiceServer).DeleteApplication(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MacosUse_DeleteApplication_FullMethodName,
+		FullMethod: MacosUseService_DeleteApplication_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MacosUseServer).DeleteApplication(ctx, req.(*DeleteApplicationRequest))
+		return srv.(MacosUseServiceServer).DeleteApplication(ctx, req.(*DeleteApplicationRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MacosUse_CreateInput_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _MacosUseService_CreateInput_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateInputRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MacosUseServer).CreateInput(ctx, in)
+		return srv.(MacosUseServiceServer).CreateInput(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MacosUse_CreateInput_FullMethodName,
+		FullMethod: MacosUseService_CreateInput_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MacosUseServer).CreateInput(ctx, req.(*CreateInputRequest))
+		return srv.(MacosUseServiceServer).CreateInput(ctx, req.(*CreateInputRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MacosUse_GetInput_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _MacosUseService_GetInput_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetInputRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MacosUseServer).GetInput(ctx, in)
+		return srv.(MacosUseServiceServer).GetInput(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MacosUse_GetInput_FullMethodName,
+		FullMethod: MacosUseService_GetInput_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MacosUseServer).GetInput(ctx, req.(*GetInputRequest))
+		return srv.(MacosUseServiceServer).GetInput(ctx, req.(*GetInputRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MacosUse_ListInputs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _MacosUseService_ListInputs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListInputsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MacosUseServer).ListInputs(ctx, in)
+		return srv.(MacosUseServiceServer).ListInputs(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MacosUse_ListInputs_FullMethodName,
+		FullMethod: MacosUseService_ListInputs_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MacosUseServer).ListInputs(ctx, req.(*ListInputsRequest))
+		return srv.(MacosUseServiceServer).ListInputs(ctx, req.(*ListInputsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MacosUse_TraverseAccessibility_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _MacosUseService_TraverseAccessibility_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(TraverseAccessibilityRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MacosUseServer).TraverseAccessibility(ctx, in)
+		return srv.(MacosUseServiceServer).TraverseAccessibility(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MacosUse_TraverseAccessibility_FullMethodName,
+		FullMethod: MacosUseService_TraverseAccessibility_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MacosUseServer).TraverseAccessibility(ctx, req.(*TraverseAccessibilityRequest))
+		return srv.(MacosUseServiceServer).TraverseAccessibility(ctx, req.(*TraverseAccessibilityRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MacosUse_WatchAccessibility_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _MacosUseService_WatchAccessibility_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(WatchAccessibilityRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(MacosUseServer).WatchAccessibility(m, &grpc.GenericServerStream[WatchAccessibilityRequest, WatchAccessibilityResponse]{ServerStream: stream})
+	return srv.(MacosUseServiceServer).WatchAccessibility(m, &grpc.GenericServerStream[WatchAccessibilityRequest, WatchAccessibilityResponse]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type MacosUse_WatchAccessibilityServer = grpc.ServerStreamingServer[WatchAccessibilityResponse]
+type MacosUseService_WatchAccessibilityServer = grpc.ServerStreamingServer[WatchAccessibilityResponse]
 
-// MacosUse_ServiceDesc is the grpc.ServiceDesc for MacosUse service.
+// MacosUseService_ServiceDesc is the grpc.ServiceDesc for MacosUseService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var MacosUse_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "macosusesdk.v1.MacosUse",
-	HandlerType: (*MacosUseServer)(nil),
+var MacosUseService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "macosusesdk.v1.MacosUseService",
+	HandlerType: (*MacosUseServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "OpenApplication",
-			Handler:    _MacosUse_OpenApplication_Handler,
+			Handler:    _MacosUseService_OpenApplication_Handler,
 		},
 		{
 			MethodName: "GetApplication",
-			Handler:    _MacosUse_GetApplication_Handler,
+			Handler:    _MacosUseService_GetApplication_Handler,
 		},
 		{
 			MethodName: "ListApplications",
-			Handler:    _MacosUse_ListApplications_Handler,
+			Handler:    _MacosUseService_ListApplications_Handler,
 		},
 		{
 			MethodName: "DeleteApplication",
-			Handler:    _MacosUse_DeleteApplication_Handler,
+			Handler:    _MacosUseService_DeleteApplication_Handler,
 		},
 		{
 			MethodName: "CreateInput",
-			Handler:    _MacosUse_CreateInput_Handler,
+			Handler:    _MacosUseService_CreateInput_Handler,
 		},
 		{
 			MethodName: "GetInput",
-			Handler:    _MacosUse_GetInput_Handler,
+			Handler:    _MacosUseService_GetInput_Handler,
 		},
 		{
 			MethodName: "ListInputs",
-			Handler:    _MacosUse_ListInputs_Handler,
+			Handler:    _MacosUseService_ListInputs_Handler,
 		},
 		{
 			MethodName: "TraverseAccessibility",
-			Handler:    _MacosUse_TraverseAccessibility_Handler,
+			Handler:    _MacosUseService_TraverseAccessibility_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "WatchAccessibility",
-			Handler:       _MacosUse_WatchAccessibility_Handler,
+			Handler:       _MacosUseService_WatchAccessibility_Handler,
 			ServerStreams: true,
 		},
 	},
