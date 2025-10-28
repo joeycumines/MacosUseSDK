@@ -102,9 +102,9 @@ public actor AutomationCoordinator {
         }
         
         return Macosusesdk_V1_TraverseAccessibilityResponse.with {
-            $0.appName = sdkResponse.app_name
+            $0.app = sdkResponse.app_name
             $0.elements = elements
-            $0.statistics = statistics
+            $0.stats = statistics
             $0.processingTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
         }
     }

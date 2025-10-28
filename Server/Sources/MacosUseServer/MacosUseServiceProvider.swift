@@ -174,8 +174,8 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
                     } else {
                         $0.modified = trav.elements.map { element in
                             Macosusesdk_V1_ModifiedElement.with {
-                                $0.before = Macosusesdk_Type_Element()
-                                $0.after = element
+                                $0.oldElement = Macosusesdk_Type_Element()
+                                $0.newElement = element
                             }
                         }
                     }
