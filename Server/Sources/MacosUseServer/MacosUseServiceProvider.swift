@@ -3,9 +3,9 @@ import GRPC
 import SwiftProtobuf
 import MacosUseSDKProtos
 
-/// This is the single, correct gRPC provider for the `MacosUseService` service.
+/// This is the single, correct gRPC provider for the `MacosUse` service.
 ///
-/// It implements the generated `Macosusesdk_V1_MacosUseServiceAsyncProvider` protocol
+/// It implements the generated `Macosusesdk_V1_MacosUseAsyncProvider` protocol
 /// and acts as the bridge between gRPC requests and the `AutomationCoordinator`.
 final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     let stateStore: AppStateStore
@@ -49,7 +49,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
                 // mark operation as done with an error in the response's metadata
                 var errOp = await operationStore.getOperation(name: opName) ?? op
                 errOp.done = true
-                errOp.error = SwiftProtobuf.Google_Rpc_Status.with {
+                errOp.error = Google_Rpc_Status.with {
                     $0.code = 13
                     $0.message = "\(error)"
                 }
@@ -174,8 +174,8 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
                     } else {
                         $0.modified = trav.elements.map { element in
                             Macosusesdk_V1_ModifiedElement.with {
-                                $0.previous = Macosusesdk_Type_Element()
-                                $0.current = element
+                                $0.before = Macosusesdk_Type_Element()
+                                $0.after = element
                             }
                         }
                     }

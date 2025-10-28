@@ -240,13 +240,13 @@ message TraverseAccessibilityRequest {
 // Response from traversing accessibility tree.
 message TraverseAccessibilityResponse {
   // Name of the application.
-  string app = 1;
+  string app_name = 1;
 
   // Elements found in the traversal.
   repeated macosusesdk.type.Element elements = 2;
 
   // Statistics about the traversal.
-  macosusesdk.type.TraversalStats stats = 3;
+  macosusesdk.type.TraversalStats statistics = 3;
 
   // Processing time.
   google.protobuf.Timestamp processing_time = 4;
@@ -282,10 +282,10 @@ message WatchAccessibilityResponse {
 // An element that was modified.
 message ModifiedElement {
   // The element before modification.
-  macosusesdk.type.Element previous = 1;
+  macosusesdk.type.Element before = 1;
 
   // The element after modification.
-  macosusesdk.type.Element current = 2;
+  macosusesdk.type.Element after = 2;
 
   // List of changed attributes.
   repeated AttributeChange changes = 3;

@@ -3,6 +3,7 @@ import AppKit
 import MacosUseSDK
 import CoreGraphics
 import MacosUseSDKProtos
+import SwiftProtobuf
 
 /// Actor that coordinates all SDK interactions on the main thread.
 /// This is critical because the MacosUseSDK requires main thread execution
@@ -95,7 +96,7 @@ public actor AutomationCoordinator {
             }
         }
         
-        let statistics = Macosusesdk_Type_TraversalStatistics.with {
+        let statistics = Macosusesdk_Type_TraversalStats.with {
             $0.count = Int32(sdkResponse.elements.count)
             // Add other stats if available
         }
@@ -104,7 +105,7 @@ public actor AutomationCoordinator {
             $0.appName = sdkResponse.app_name
             $0.elements = elements
             $0.statistics = statistics
-            $0.processingTime = sdkResponse.processing_time_seconds
+            $0.processingTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
         }
     }
     
@@ -226,7 +227,7 @@ extension AutomationCoordinator {
         case .pressKey(let keyPress):
             let (keyName, flags) = try parseKeyCombo(keyPress.keyCombo)
             return .press(keyName: keyName, flags: flags)
-        case .moveTo(let point):
+        case .moveMouse(let point):
             return .move(to: CGPoint(x: point.x, y: point.y))
         case .none:
             throw CoordinatorError.invalidKeyCombo("empty input type")
