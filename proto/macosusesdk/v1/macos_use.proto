@@ -40,24 +40,18 @@ service MacosUse {
 
   // Gets a specific application being tracked.
   rpc GetApplication(GetApplicationRequest) returns (Application) {
-    option (google.api.http) = {
-      get: "/v1/{name=applications/*}"
-    };
+    option (google.api.http) = {get: "/v1/{name=applications/*}"};
     option (google.api.method_signature) = "name";
   }
 
   // Lists all applications currently tracked.
   rpc ListApplications(ListApplicationsRequest) returns (ListApplicationsResponse) {
-    option (google.api.http) = {
-      get: "/v1/applications"
-    };
+    option (google.api.http) = {get: "/v1/applications"};
   }
 
   // Stops tracking an application. This does NOT quit the app.
   rpc DeleteApplication(DeleteApplicationRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      delete: "/v1/{name=applications/*}"
-    };
+    option (google.api.http) = {delete: "/v1/{name=applications/*}"};
     option (google.api.method_signature) = "name";
   }
 
@@ -66,7 +60,7 @@ service MacosUse {
     option (google.api.http) = {
       post: "/v1/{parent=applications/*}/inputs"
       body: "input"
-      additional_bindings {
+      additional_bindings: {
         post: "/v1/{parent=applications/*}/inputs"
         body: "input"
       }
@@ -76,9 +70,7 @@ service MacosUse {
 
   // Gets a specific input.
   rpc GetInput(GetInputRequest) returns (Input) {
-    option (google.api.http) = {
-      get: "/v1/{name=applications/*/inputs/*}"
-    };
+    option (google.api.http) = {get: "/v1/{name=applications/*/inputs/*}"};
     option (google.api.method_signature) = "name";
   }
 
@@ -86,9 +78,7 @@ service MacosUse {
   rpc ListInputs(ListInputsRequest) returns (ListInputsResponse) {
     option (google.api.http) = {
       get: "/v1/{parent=applications/*}/inputs"
-      additional_bindings {
-        get: "/v1/{parent=applications/*}/inputs"
-      }
+      additional_bindings: {get: "/v1/{parent=applications/*}/inputs"}
     };
     option (google.api.method_signature) = "parent";
   }
@@ -136,10 +126,9 @@ message GetApplicationRequest {
   // Resource name of the application.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = { type: "macos.googleapis.com/Application" }
+    (google.api.resource_reference) = {type: "macos.googleapis.com/Application"}
   ];
 }
-
 
 // Request to list applications.
 message ListApplicationsRequest {
@@ -164,20 +153,19 @@ message DeleteApplicationRequest {
   // Resource name of the application.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = { type: "macos.googleapis.com/Application" }
+    (google.api.resource_reference) = {type: "macos.googleapis.com/Application"}
   ];
 
   // If set to true, any pending inputs for this application will also be deleted.
   bool force = 2 [(google.api.field_behavior) = OPTIONAL];
 }
 
-
 // Request to create an input.
 message CreateInputRequest {
   // Parent resource. Either "applications/{application}" or "" for desktop inputs.
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = { type: "macos.googleapis.com/Application" }
+    (google.api.resource_reference) = {type: "macos.googleapis.com/Application"}
   ];
 
   // The input to create.
@@ -187,23 +175,21 @@ message CreateInputRequest {
   string input_id = 3 [(google.api.field_behavior) = OPTIONAL];
 }
 
-
 // Request to get an input.
 message GetInputRequest {
   // Resource name of the input.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = { type: "macos.googleapis.com/Input" }
+    (google.api.resource_reference) = {type: "macos.googleapis.com/Input"}
   ];
 }
-
 
 // Request to list inputs.
 message ListInputsRequest {
   // Parent resource. Either "applications/{application}" or "" for desktop inputs.
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = { type: "macos.googleapis.com/Application" }
+    (google.api.resource_reference) = {type: "macos.googleapis.com/Application"}
   ];
 
   // Maximum number of inputs to return.
@@ -230,7 +216,7 @@ message TraverseAccessibilityRequest {
   // Resource name of the application.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = { type: "macos.googleapis.com/Application" }
+    (google.api.resource_reference) = {type: "macos.googleapis.com/Application"}
   ];
 
   // Whether to return only visible elements.
@@ -240,13 +226,13 @@ message TraverseAccessibilityRequest {
 // Response from traversing accessibility tree.
 message TraverseAccessibilityResponse {
   // Name of the application.
-  string app_name = 1;
+  string app = 1;
 
   // Elements found in the traversal.
   repeated macosusesdk.type.Element elements = 2;
 
   // Statistics about the traversal.
-  macosusesdk.type.TraversalStats statistics = 3;
+  macosusesdk.type.TraversalStats stats = 3;
 
   // Processing time.
   google.protobuf.Timestamp processing_time = 4;
@@ -257,7 +243,7 @@ message WatchAccessibilityRequest {
   // Resource name of the application.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = { type: "macos.googleapis.com/Application" }
+    (google.api.resource_reference) = {type: "macos.googleapis.com/Application"}
   ];
 
   // Poll interval in seconds.
@@ -282,10 +268,10 @@ message WatchAccessibilityResponse {
 // An element that was modified.
 message ModifiedElement {
   // The element before modification.
-  macosusesdk.type.Element before = 1;
+  macosusesdk.type.Element old_element = 1;
 
   // The element after modification.
-  macosusesdk.type.Element after = 2;
+  macosusesdk.type.Element new_element = 2;
 
   // List of changed attributes.
   repeated AttributeChange changes = 3;

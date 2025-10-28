@@ -3,6 +3,7 @@ ROOT_MAKEFILE := $(abspath $(lastword $(MAKEFILE_LIST)))
 PROJECT_ROOT := $(patsubst %/,%,$(dir $(ROOT_MAKEFILE)))
 GO_TARGET_PREFIX := go.
 SWIFT_TARGET_PREFIX := swift.
+GO_MODULE_SLUGS_NO_PACKAGES ?= hack.google-api-linter
 
 -include $(PROJECT_ROOT)/config.mk
 include $(PROJECT_ROOT)/make/go.mk

@@ -677,11 +677,11 @@ func (x *TraverseAccessibilityRequest) GetVisibleOnly() bool {
 type TraverseAccessibilityResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Name of the application.
-	AppName string `protobuf:"bytes,1,opt,name=app_name,json=appName,proto3" json:"app_name,omitempty"`
+	App string `protobuf:"bytes,1,opt,name=app,proto3" json:"app,omitempty"`
 	// Elements found in the traversal.
 	Elements []*_type.Element `protobuf:"bytes,2,rep,name=elements,proto3" json:"elements,omitempty"`
 	// Statistics about the traversal.
-	Statistics *_type.TraversalStats `protobuf:"bytes,3,opt,name=statistics,proto3" json:"statistics,omitempty"`
+	Stats *_type.TraversalStats `protobuf:"bytes,3,opt,name=stats,proto3" json:"stats,omitempty"`
 	// Processing time.
 	ProcessingTime *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=processing_time,json=processingTime,proto3" json:"processing_time,omitempty"`
 	unknownFields  protoimpl.UnknownFields
@@ -718,9 +718,9 @@ func (*TraverseAccessibilityResponse) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{12}
 }
 
-func (x *TraverseAccessibilityResponse) GetAppName() string {
+func (x *TraverseAccessibilityResponse) GetApp() string {
 	if x != nil {
-		return x.AppName
+		return x.App
 	}
 	return ""
 }
@@ -732,9 +732,9 @@ func (x *TraverseAccessibilityResponse) GetElements() []*_type.Element {
 	return nil
 }
 
-func (x *TraverseAccessibilityResponse) GetStatistics() *_type.TraversalStats {
+func (x *TraverseAccessibilityResponse) GetStats() *_type.TraversalStats {
 	if x != nil {
-		return x.Statistics
+		return x.Stats
 	}
 	return nil
 }
@@ -878,9 +878,9 @@ func (x *WatchAccessibilityResponse) GetModified() []*ModifiedElement {
 type ModifiedElement struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The element before modification.
-	Before *_type.Element `protobuf:"bytes,1,opt,name=before,proto3" json:"before,omitempty"`
+	OldElement *_type.Element `protobuf:"bytes,1,opt,name=old_element,json=oldElement,proto3" json:"old_element,omitempty"`
 	// The element after modification.
-	After *_type.Element `protobuf:"bytes,2,opt,name=after,proto3" json:"after,omitempty"`
+	NewElement *_type.Element `protobuf:"bytes,2,opt,name=new_element,json=newElement,proto3" json:"new_element,omitempty"`
 	// List of changed attributes.
 	Changes       []*AttributeChange `protobuf:"bytes,3,rep,name=changes,proto3" json:"changes,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -917,16 +917,16 @@ func (*ModifiedElement) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{15}
 }
 
-func (x *ModifiedElement) GetBefore() *_type.Element {
+func (x *ModifiedElement) GetOldElement() *_type.Element {
 	if x != nil {
-		return x.Before
+		return x.OldElement
 	}
 	return nil
 }
 
-func (x *ModifiedElement) GetAfter() *_type.Element {
+func (x *ModifiedElement) GetNewElement() *_type.Element {
 	if x != nil {
-		return x.After
+		return x.NewElement
 	}
 	return nil
 }
@@ -1057,13 +1057,11 @@ const file_macosusesdk_v1_macos_use_proto_rawDesc = "" +
 	"\x1cTraverseAccessibilityRequest\x12<\n" +
 	"\x04name\x18\x01 \x01(\tB(\xe0A\x02\xfaA\"\n" +
 	" macos.googleapis.com/ApplicationR\x04name\x12&\n" +
-	"\fvisible_only\x18\x02 \x01(\bB\x03\xe0A\x01R\vvisibleOnly\"\xf8\x01\n" +
-	"\x1dTraverseAccessibilityResponse\x12\x19\n" +
-	"\bapp_name\x18\x01 \x01(\tR\aappName\x125\n" +
-	"\belements\x18\x02 \x03(\v2\x19.macosusesdk.type.ElementR\belements\x12@\n" +
-	"\n" +
-	"statistics\x18\x03 \x01(\v2 .macosusesdk.type.TraversalStatsR\n" +
-	"statistics\x12C\n" +
+	"\fvisible_only\x18\x02 \x01(\bB\x03\xe0A\x01R\vvisibleOnly\"\xe5\x01\n" +
+	"\x1dTraverseAccessibilityResponse\x12\x10\n" +
+	"\x03app\x18\x01 \x01(\tR\x03app\x125\n" +
+	"\belements\x18\x02 \x03(\v2\x19.macosusesdk.type.ElementR\belements\x126\n" +
+	"\x05stats\x18\x03 \x01(\v2 .macosusesdk.type.TraversalStatsR\x05stats\x12C\n" +
 	"\x0fprocessing_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x0eprocessingTime\"\xab\x01\n" +
 	"\x19WatchAccessibilityRequest\x12<\n" +
 	"\x04name\x18\x01 \x01(\tB(\xe0A\x02\xfaA\"\n" +
@@ -1073,10 +1071,12 @@ const file_macosusesdk_v1_macos_use_proto_rawDesc = "" +
 	"\x1aWatchAccessibilityResponse\x12/\n" +
 	"\x05added\x18\x01 \x03(\v2\x19.macosusesdk.type.ElementR\x05added\x123\n" +
 	"\aremoved\x18\x02 \x03(\v2\x19.macosusesdk.type.ElementR\aremoved\x12;\n" +
-	"\bmodified\x18\x03 \x03(\v2\x1f.macosusesdk.v1.ModifiedElementR\bmodified\"\xb0\x01\n" +
-	"\x0fModifiedElement\x121\n" +
-	"\x06before\x18\x01 \x01(\v2\x19.macosusesdk.type.ElementR\x06before\x12/\n" +
-	"\x05after\x18\x02 \x01(\v2\x19.macosusesdk.type.ElementR\x05after\x129\n" +
+	"\bmodified\x18\x03 \x03(\v2\x1f.macosusesdk.v1.ModifiedElementR\bmodified\"\xc4\x01\n" +
+	"\x0fModifiedElement\x12:\n" +
+	"\vold_element\x18\x01 \x01(\v2\x19.macosusesdk.type.ElementR\n" +
+	"oldElement\x12:\n" +
+	"\vnew_element\x18\x02 \x01(\v2\x19.macosusesdk.type.ElementR\n" +
+	"newElement\x129\n" +
 	"\achanges\x18\x03 \x03(\v2\x1f.macosusesdk.v1.AttributeChangeR\achanges\"\xf5\x01\n" +
 	"\x0fAttributeChange\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12\x1c\n" +
@@ -1143,13 +1143,13 @@ var file_macosusesdk_v1_macos_use_proto_depIdxs = []int32{
 	18, // 2: macosusesdk.v1.CreateInputRequest.input:type_name -> macosusesdk.v1.Input
 	18, // 3: macosusesdk.v1.ListInputsResponse.inputs:type_name -> macosusesdk.v1.Input
 	19, // 4: macosusesdk.v1.TraverseAccessibilityResponse.elements:type_name -> macosusesdk.type.Element
-	20, // 5: macosusesdk.v1.TraverseAccessibilityResponse.statistics:type_name -> macosusesdk.type.TraversalStats
+	20, // 5: macosusesdk.v1.TraverseAccessibilityResponse.stats:type_name -> macosusesdk.type.TraversalStats
 	21, // 6: macosusesdk.v1.TraverseAccessibilityResponse.processing_time:type_name -> google.protobuf.Timestamp
 	19, // 7: macosusesdk.v1.WatchAccessibilityResponse.added:type_name -> macosusesdk.type.Element
 	19, // 8: macosusesdk.v1.WatchAccessibilityResponse.removed:type_name -> macosusesdk.type.Element
 	15, // 9: macosusesdk.v1.WatchAccessibilityResponse.modified:type_name -> macosusesdk.v1.ModifiedElement
-	19, // 10: macosusesdk.v1.ModifiedElement.before:type_name -> macosusesdk.type.Element
-	19, // 11: macosusesdk.v1.ModifiedElement.after:type_name -> macosusesdk.type.Element
+	19, // 10: macosusesdk.v1.ModifiedElement.old_element:type_name -> macosusesdk.type.Element
+	19, // 11: macosusesdk.v1.ModifiedElement.new_element:type_name -> macosusesdk.type.Element
 	16, // 12: macosusesdk.v1.ModifiedElement.changes:type_name -> macosusesdk.v1.AttributeChange
 	0,  // 13: macosusesdk.v1.MacosUse.OpenApplication:input_type -> macosusesdk.v1.OpenApplicationRequest
 	3,  // 14: macosusesdk.v1.MacosUse.GetApplication:input_type -> macosusesdk.v1.GetApplicationRequest

@@ -73,3 +73,4 @@ final class AppStateStoreTests: XCTestCase {
         XCTAssertEqual(state.applications.count, 1)
         XCTAssertNotNil(state.applications[123])
     }
+}
