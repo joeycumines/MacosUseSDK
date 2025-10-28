@@ -364,9 +364,6 @@ public struct Macosusesdk_V1_AttributeChange: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Resource name.
-  public var name: String = String()
-
   /// Name of the attribute that changed.
   public var attribute: String = String()
 
@@ -978,7 +975,7 @@ extension Macosusesdk_V1_ModifiedElement: SwiftProtobuf.Message, SwiftProtobuf._
 
 extension Macosusesdk_V1_AttributeChange: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".AttributeChange"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}attribute\0\u{3}old_value\0\u{3}new_value\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}attribute\0\u{3}old_value\0\u{3}new_value\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -986,33 +983,28 @@ extension Macosusesdk_V1_AttributeChange: SwiftProtobuf.Message, SwiftProtobuf._
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
-      case 2: try { try decoder.decodeSingularStringField(value: &self.attribute) }()
-      case 3: try { try decoder.decodeSingularStringField(value: &self.oldValue) }()
-      case 4: try { try decoder.decodeSingularStringField(value: &self.newValue) }()
+      case 1: try { try decoder.decodeSingularStringField(value: &self.attribute) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.oldValue) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.newValue) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.name.isEmpty {
-      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
-    }
     if !self.attribute.isEmpty {
-      try visitor.visitSingularStringField(value: self.attribute, fieldNumber: 2)
+      try visitor.visitSingularStringField(value: self.attribute, fieldNumber: 1)
     }
     if !self.oldValue.isEmpty {
-      try visitor.visitSingularStringField(value: self.oldValue, fieldNumber: 3)
+      try visitor.visitSingularStringField(value: self.oldValue, fieldNumber: 2)
     }
     if !self.newValue.isEmpty {
-      try visitor.visitSingularStringField(value: self.newValue, fieldNumber: 4)
+      try visitor.visitSingularStringField(value: self.newValue, fieldNumber: 3)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_AttributeChange, rhs: Macosusesdk_V1_AttributeChange) -> Bool {
-    if lhs.name != rhs.name {return false}
     if lhs.attribute != rhs.attribute {return false}
     if lhs.oldValue != rhs.oldValue {return false}
     if lhs.newValue != rhs.newValue {return false}

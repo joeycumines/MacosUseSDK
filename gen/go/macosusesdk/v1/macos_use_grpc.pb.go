@@ -40,7 +40,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// MacosUseService is the primary service for automating macOS applications.
+// MacosUse is the primary service for automating macOS applications.
 type MacosUseClient interface {
 	// Opens or activates an application. This is a long-running operation.
 	OpenApplication(ctx context.Context, in *OpenApplicationRequest, opts ...grpc.CallOption) (*longrunningpb.Operation, error)
@@ -173,7 +173,7 @@ type MacosUse_WatchAccessibilityClient = grpc.ServerStreamingClient[WatchAccessi
 // All implementations should embed UnimplementedMacosUseServer
 // for forward compatibility.
 //
-// MacosUseService is the primary service for automating macOS applications.
+// MacosUse is the primary service for automating macOS applications.
 type MacosUseServer interface {
 	// Opens or activates an application. This is a long-running operation.
 	OpenApplication(context.Context, *OpenApplicationRequest) (*longrunningpb.Operation, error)

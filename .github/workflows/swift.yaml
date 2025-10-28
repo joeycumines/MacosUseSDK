@@ -32,21 +32,13 @@ jobs:
           swift build -c release --product AppOpenerTool
           swift build -c release --product ActionTool
 
-  # This job will build the gRPC server once it's implemented
+  # Build and test the gRPC server
   build-server:
     runs-on: macos-latest
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Setup Buf
-        uses: bufbuild/buf-setup-action@v1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Generate Swift Stubs
-        run: buf generate
       
       - name: Select Xcode version
         run: sudo xcode-select -s /Applications/Xcode_15.2.app/Contents/Developer

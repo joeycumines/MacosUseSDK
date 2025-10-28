@@ -22,13 +22,14 @@ message Input {
   option (google.api.resource) = {
     type: "macos.googleapis.com/Input"
     pattern: "applications/{application}/inputs/{input}"
+    pattern: "desktopInputs/{input}"
     singular: "input"
     plural: "inputs"
   };
 
   // Resource name. Either:
   // - "applications/{application}/inputs/{input}" for app-specific inputs
-  // - "inputs/{input}" for global desktop inputs
+  // - "desktopInputs/{input}" for global desktop inputs
   string name = 1 [(google.api.field_behavior) = IDENTIFIER];
 
   // The specific action to perform or that was performed.

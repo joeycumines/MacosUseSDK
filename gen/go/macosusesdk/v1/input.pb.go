@@ -95,7 +95,7 @@ type Input struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Resource name. Either:
 	// - "applications/{application}/inputs/{input}" for app-specific inputs
-	// - "inputs/{input}" for global desktop inputs
+	// - "desktopInputs/{input}" for global desktop inputs
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The specific action to perform or that was performed.
 	Action *InputAction `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"`
@@ -406,7 +406,7 @@ var File_macosusesdk_v1_input_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_input_proto_rawDesc = "" +
 	"\n" +
-	"\x1amacosusesdk/v1/input.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1fmacosusesdk/type/geometry.proto\"\xff\x03\n" +
+	"\x1amacosusesdk/v1/input.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1fmacosusesdk/type/geometry.proto\"\x96\x04\n" +
 	"\x05Input\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x128\n" +
 	"\x06action\x18\x02 \x01(\v2\x1b.macosusesdk.v1.InputActionB\x03\xe0A\x02R\x06action\x126\n" +
@@ -420,8 +420,8 @@ const file_macosusesdk_v1_input_proto_rawDesc = "" +
 	"\rSTATE_PENDING\x10\x01\x12\x13\n" +
 	"\x0fSTATE_EXECUTING\x10\x02\x12\x13\n" +
 	"\x0fSTATE_COMPLETED\x10\x03\x12\x10\n" +
-	"\fSTATE_FAILED\x10\x04:Y\xeaAV\n" +
-	"\x1amacos.googleapis.com/Input\x12)applications/{application}/inputs/{input}*\x06inputs2\x05input\"\xb8\x03\n" +
+	"\fSTATE_FAILED\x10\x04:p\xeaAm\n" +
+	"\x1amacos.googleapis.com/Input\x12)applications/{application}/inputs/{input}\x12\x15desktopInputs/{input}*\x06inputs2\x05input\"\xb8\x03\n" +
 	"\vInputAction\x12*\n" +
 	"\x0eshow_animation\x18\x01 \x01(\bB\x03\xe0A\x01R\rshowAnimation\x122\n" +
 	"\x12animation_duration\x18\x02 \x01(\x01B\x03\xe0A\x01R\x11animationDuration\x12/\n" +

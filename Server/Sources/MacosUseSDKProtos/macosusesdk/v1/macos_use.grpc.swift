@@ -11,7 +11,7 @@ import NIOConcurrencyHelpers
 import SwiftProtobuf
 
 
-/// MacosUseService is the primary service for automating macOS applications.
+/// MacosUse is the primary service for automating macOS applications.
 ///
 /// To build a server, implement a class that conforms to this protocol.
 public protocol Macosusesdk_V1_MacosUseProvider: CallHandlerProvider {
@@ -144,7 +144,7 @@ extension Macosusesdk_V1_MacosUseProvider {
   }
 }
 
-/// MacosUseService is the primary service for automating macOS applications.
+/// MacosUse is the primary service for automating macOS applications.
 ///
 /// To implement a server, implement an object which conforms to this protocol.
 @available(macOS 10.15, iOS 13, tvOS 13, watchOS 6, *)

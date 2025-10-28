@@ -137,16 +137,15 @@ option java_package = "com.macosusesdk...";
 
 ## Code Generation
 
-Generated code is committed to the repository in `gen/`:
+Generated code is committed to the repository:
 
-- `gen/swift/`: Swift server stubs (grpc-swift)
+- `Server/Sources/MacosUseSDKProtos/`: Swift server stubs (grpc-swift)
 - `gen/go/`: Go client stubs
 
 ### Regenerating Code
 
 ```bash
 buf generate
-buf generate buf.build/googleapis/googleapis --include-imports
 ```
 
 ## Linting

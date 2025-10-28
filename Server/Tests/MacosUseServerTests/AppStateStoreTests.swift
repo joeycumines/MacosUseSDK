@@ -73,4 +73,18 @@ final class AppStateStoreTests: XCTestCase {
         XCTAssertEqual(state.applications.count, 1)
         XCTAssertNotNil(state.applications[123])
     }
+    
+    func testInputManagement() async {
+        let store = AppStateStore()
+        let input = Macosusesdk_V1_Input.with {
+            $0.name = "applications/123/inputs/1"
+            $0.state = .pending
+        }
+        
+        await store.addInput(input)
+        let retrieved = await store.getInput(name: "applications/123/inputs/1")
+        
+        XCTAssertNotNil(retrieved)
+        XCTAssertEqual(retrieved?.state, .pending)
+    }
 }

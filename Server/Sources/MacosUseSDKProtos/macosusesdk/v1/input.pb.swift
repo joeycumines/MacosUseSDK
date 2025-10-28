@@ -33,7 +33,7 @@ public struct Macosusesdk_V1_Input: Sendable {
 
   /// Resource name. Either:
   /// - "applications/{application}/inputs/{input}" for app-specific inputs
-  /// - "inputs/{input}" for global desktop inputs
+  /// - "desktopInputs/{input}" for global desktop inputs
   public var name: String = String()
 
   /// The specific action to perform or that was performed.

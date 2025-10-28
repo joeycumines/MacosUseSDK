@@ -22,7 +22,7 @@ option java_multiple_files = true;
 option java_outer_classname = "MacosUseProto";
 option java_package = "com.macosusesdk.v1";
 
-// MacosUseService is the primary service for automating macOS applications.
+// MacosUse is the primary service for automating macOS applications.
 service MacosUse {
   option (google.api.default_host) = "macos.googleapis.com";
 
@@ -61,7 +61,7 @@ service MacosUse {
       post: "/v1/{parent=applications/*}/inputs"
       body: "input"
       additional_bindings: {
-        post: "/v1/{parent=applications/*}/inputs"
+        post: "/v1/desktopInputs"
         body: "input"
       }
     };
@@ -70,7 +70,12 @@ service MacosUse {
 
   // Gets a specific input.
   rpc GetInput(GetInputRequest) returns (Input) {
-    option (google.api.http) = {get: "/v1/{name=applications/*/inputs/*}"};
+    option (google.api.http) = {
+      get: "/v1/{name=applications/*/inputs/*}"
+      additional_bindings: {
+        get: "/v1/{name=desktopInputs/*}"
+      }
+    };
     option (google.api.method_signature) = "name";
   }
 
@@ -78,7 +83,9 @@ service MacosUse {
   rpc ListInputs(ListInputsRequest) returns (ListInputsResponse) {
     option (google.api.http) = {
       get: "/v1/{parent=applications/*}/inputs"
-      additional_bindings: {get: "/v1/{parent=applications/*}/inputs"}
+      additional_bindings: {
+        get: "/v1/desktopInputs"
+      }
     };
     option (google.api.method_signature) = "parent";
   }
@@ -165,7 +172,7 @@ message CreateInputRequest {
   // Parent resource. Either "applications/{application}" or "" for desktop inputs.
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Application"}
+    (google.api.resource_reference) = {child_type: "macos.googleapis.com/Input"}
   ];
 
   // The input to create.
@@ -189,7 +196,7 @@ message ListInputsRequest {
   // Parent resource. Either "applications/{application}" or "" for desktop inputs.
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Application"}
+    (google.api.resource_reference) = {child_type: "macos.googleapis.com/Input"}
   ];
 
   // Maximum number of inputs to return.
@@ -279,22 +286,12 @@ message ModifiedElement {
 
 // A change to an element attribute.
 message AttributeChange {
-  option (google.api.resource) = {
-    type: "macos.googleapis.com/AttributeChange"
-    pattern: "attributeChanges/{attribute_change}"
-    singular: "attributeChange"
-    plural: "attributeChanges"
-  };
-
-  // Resource name.
-  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
-
   // Name of the attribute that changed.
-  string attribute = 2;
+  string attribute = 1;
 
   // Old value of the attribute.
-  string old_value = 3;
+  string old_value = 2;
 
   // New value of the attribute.
-  string new_value = 4;
+  string new_value = 3;
 }
