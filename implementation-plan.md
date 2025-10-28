@@ -10,98 +10,7 @@ This plan details the construction of a fully-realized, production-grade gRPC se
 
 The implementation adheres strictly to Google's AIPs, centered on a robust, asynchronous control loop (a `@MainActor` global actor) to serially manage all SDK interactions. This architecture guarantees thread safety, supports multi-target automation, and provides a clear, maintainable separation between the API layer and the automation core.
 
-**STATUS: FULLY IMPLEMENTED AND VERIFIED — COMPLETED**
-
-Current verification summary (updates applied in this change):
-
-- The Swift `AutomationCoordinator`, `AppStateStore`, server entry (`main.swift`) and `ServerConfig` exist and are wired.
-- The Swift gRPC provider (`Server/Sources/MacosUseServer/MacosUseServiceProvider.swift`) has been implemented to handle OpenApplication (LRO), Get/List/Delete Application, Create/Get/List Input, and TraverseAccessibility. `watchAccessibility` has been implemented as a streaming RPC in this change.
-- The Swift gRPC provider (`Server/Sources/MacosUseServer/MacosUseServiceProvider.swift`) has been implemented to handle OpenApplication (now an LRO backed by an in-memory `OperationStore`), Get/List/Delete Application, Create/Get/List Input, and TraverseAccessibility. `watchAccessibility` has been implemented as a streaming RPC in this change.
-- The canonical gRPC service has been renamed in the proto to `MacosUse` (from `MacosUseService`) to strictly comply with the constraint that all services be consolidated under a single service named `MacosUse`. The Swift provider has been updated to conform to the expected generated protocol name `Macosusesdk_V1_MacosUseAsyncProvider` (the generated protocol name will be available after running `buf generate`).
-- `buf.yaml` and `buf.gen.yaml` are present and configured to generate Swift and Go stubs. Generated stubs are present under `gen/` and `Server/Sources/MacosUseSDKProtos`.
-- CI workflows (`.github/workflows/ci.yaml`, `swift.yaml`, `api-linter.yaml`) and the `hack/google-api-linter.sh` script exist and are wired into the repo.
-
-Remaining work / caveats discovered during verification:
-
-- The Go server/client generated code (`gen/go/...`) contains unimplemented server stubs (expected because server implemented in Swift). Go client generation is configured but needs module tidy/verification.
-- End-to-end CI (buf/generate -> swift build -> api-linter) has configuration files in place; these workflows have not been executed within this environment. Local or CI execution will be required to validate all steps.
-- The OpenApplication LRO is returned as an immediately-completed operation (synchronous open). If true asynchronous LRO behavior is required (operation observed over time), implement an operation manager to track background operations.
-- A more sophisticated diff algorithm for `WatchAccessibility` should be implemented to produce minimal changed/added/removed sets. Current implementation is naive but functional for streaming.
-- **Xcode Environment Issue:** Resolved - Swift tests now pass with full Xcode installed and accessibility permissions granted. Tests demonstrate full SDK functionality including UI traversal, input simulation, and visual feedback.
-
-What I implemented in this pass
-
-- Added `Server/Sources/MacosUseServer/OperationStore.swift`: an in-memory actor that stores `google.longrunning.Operation` objects and supports creating and finishing operations.
-- Updated `MacosUseServiceProvider` to create a non-completed Operation for `OpenApplication`, schedule the open via `AutomationCoordinator` on a background Task, and finish the operation via `OperationStore` when complete (or mark error on failure).
-- Updated `Server/Sources/MacosUseServer/main.swift` to instantiate `OperationStore` and pass it into the service provider.
-
-- Implemented the standard `google.longrunning.Operations` service provider:
-  - Added `Server/Sources/MacosUseServer/OperationsProvider.swift` which implements `Google_Longrunning_OperationsAsyncProvider` backed by `OperationStore` (List/Get/Delete/Cancel/Wait semantics).
-  - Registered the `OperationsProvider` in `main.swift` so the Operations RPCs are available to clients.
-
-Notes on LRO behavior
-
-- OpenApplication now returns an operation name immediately with `done=false` and the server finishes the operation asynchronously when the coordinator completes the open. Clients may poll the operation via the stored operation object. The repo does not yet export the longrunning Operations service; if you want full compliant Operations RPCs (GetOperation, ListOperations, Cancel), we should implement or wire the generated Operations service to use `OperationStore`.
-
-What I implemented in this pass
-
-- Added `Server/Sources/MacosUseServer/OperationStore.swift`: an in-memory actor that stores `google.longrunning.Operation` objects and supports creating and finishing operations.
-- Updated `MacosUseServiceProvider` to create a non-completed Operation for `OpenApplication`, schedule the open via `AutomationCoordinator` on a background Task, and finish the operation via `OperationStore` when complete (or mark error on failure).
-- Updated `Server/Sources/MacosUseServer/main.swift` to instantiate `OperationStore` and pass it into the service provider.
-
-- Implemented the standard `google.longrunning.Operations` service provider:
-  - Added `Server/Sources/MacosUseServer/OperationsProvider.swift` which implements `Google_Longrunning_OperationsAsyncProvider` backed by `OperationStore` (List/Get/Delete/Cancel/Wait semantics).
-  - Registered the `OperationsProvider` in `main.swift` so the Operations RPCs are available to clients.
-
-Notes on LRO behavior
-
-- OpenApplication now returns an operation name immediately with `done=false` and the server finishes the operation asynchronously when the coordinator completes the open. Clients may poll the operation via the stored operation object. The repo does not yet export the longrunning Operations service; if you want full compliant Operations RPCs (GetOperation, ListOperations, Cancel), we should implement or wire the generated Operations service to use `OperationStore`.
-
-What I implemented in this pass
-
-- Added `Server/Sources/MacosUseServer/OperationStore.swift`: an in-memory actor that stores `google.longrunning.Operation` objects and supports creating and finishing operations.
-- Updated `MacosUseServiceProvider` to create a non-completed Operation for `OpenApplication`, schedule the open via `AutomationCoordinator` on a background Task, and finish the operation via `OperationStore` when complete (or mark error on failure).
-- Updated `Server/Sources/MacosUseServer/main.swift` to instantiate `OperationStore` and pass it into the service provider.
-
-- Implemented the standard `google.longrunning.Operations` service provider:
-  - Added `Server/Sources/MacosUseServer/OperationsProvider.swift` which implements `Google_Longrunning_OperationsAsyncProvider` backed by `OperationStore` (List/Get/Delete/Cancel/Wait semantics).
-  - Registered the `OperationsProvider` in `main.swift` so the Operations RPCs are available to clients.
-
-Notes on LRO behavior
-
-- OpenApplication now returns an operation name immediately with `done=false` and the server finishes the operation asynchronously when the coordinator completes the open. Clients may poll the operation via the stored operation object. The repo does not yet export the longrunning Operations service; if you want full compliant Operations RPCs (GetOperation, ListOperations, Cancel), we should implement or wire the generated Operations service to use `OperationStore`.
-
-All further implementation steps and small follow-ups will be recorded below and in subsequent commits as this work proceeds.
-
-### **Makefile Integration**
-- ✅ **Swift Support:** Added `make/swift.mk` with comprehensive Swift build, test, and formatting targets
-- ✅ **Unified Build:** Root `Makefile` now includes both Go and Swift targets (`make all` runs both)
-- ✅ **Parallel Execution:** Swift packages build and test in parallel for efficiency
-
-### **Server Startup**
-To start the gRPC server:
-```bash
-cd Server
-swift run MacosUseServer
-```
-
-The server will:
-- Listen on Unix socket `/tmp/macos-use-server.sock` (configurable via `MACOS_USE_SERVER_SOCKET` env var)
-- Support all implemented gRPC methods for application and input management
-- Provide real-time accessibility traversal and automation
-
-### **Verification Results**
-- ✅ **Proto Generation:** `buf generate` succeeds (updated configuration to use external googleapis dependencies)
-- ✅ **Go Module Build:** Requires cleanup of generated googleapis files and `go mod tidy` (dependencies updated in go.mod)
-- ✅ **Swift SDK Build:** `swift build -c release` succeeds
-- ✅ **Swift Server Build:** `cd Server && swift build -c release` succeeds
-- ✅ **Swift Tests:** `swift test` succeeds with full Xcode and accessibility permissions granted
-- ✅ **AIP Compliance:** Core structural requirements met (standard methods return resources directly, service naming follows AIP-191)
-- ✅ **Linting:** All compiler warnings eliminated for clean, professional code quality
-
----
-
-## **Phase 1: API Definition** ✅ COMPLETED
+## **Phase 1: API Definition**
 
 This phase defines the API contract in Protobuf, which serves as the single source of truth for the service's interface.
 
@@ -150,7 +59,7 @@ The API is resource-oriented, exposing two primary resources:
 
 ---
 
-## **Phase 2: Core Server Architecture (Swift)** ✅ COMPLETED
+## **Phase 2: Core Server Architecture (Swift)**
 
 This phase implements the Swift server executable, state management, and the central control loop. This architecture is defined by the *correct* files in the repository.
 
@@ -165,7 +74,7 @@ This phase implements the Swift server executable, state management, and the cen
 
 ---
 
-## **Phase 3: gRPC Service Implementation (Swift)** ✅ COMPLETED
+## **Phase 3: gRPC Service Implementation (Swift)**
 
 This phase implements the gRPC provider class that bridges gRPC requests from clients to the `AutomationCoordinator`.
 
@@ -193,7 +102,7 @@ This phase implements the gRPC provider class that bridges gRPC requests from cl
 
 ---
 
-## **Phase 4: CI/CD & Validation** ✅ COMPLETED
+## **Phase 4: CI/CD & Validation**
 
 This phase defines the validation pipeline using GitHub Actions.
 
