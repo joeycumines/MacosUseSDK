@@ -7,30 +7,57 @@ import MacosUseSDKProtos
 ///
 /// It implements the generated `Macosusesdk_V1_MacosUseServiceAsyncProvider` protocol
 /// and acts as the bridge between gRPC requests and the `AutomationCoordinator`.
-final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseServiceAsyncProvider {
+final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     let stateStore: AppStateStore
+    let operationStore: OperationStore
 
-    init(stateStore: AppStateStore) {
+    init(stateStore: AppStateStore, operationStore: OperationStore) {
         self.stateStore = stateStore
+        self.operationStore = operationStore
     }
 
     // MARK: - Application Methods
 
     func openApplication(request: Macosusesdk_V1_OpenApplicationRequest, context: GRPCAsyncServerCallContext) async throws -> Google_Longrunning_Operation {
         fputs("info: [MacosUseServiceProvider] openApplication called\n", stderr)
-        let app = try await AutomationCoordinator.shared.handleOpenApplication(identifier: request.identifier)
-        await stateStore.addTarget(app)
-        let response = Macosusesdk_V1_OpenApplicationResponse.with {
-            $0.application = app
+
+        fputs("info: [MacosUseServiceProvider] openApplication called (LRO)\n", stderr)
+
+        // Create an operation and return immediately
+        let opName = "operations/open/\(UUID().uuidString)"
+
+        // optional metadata could include the requested id
+        let metadata = try SwiftProtobuf.Google_Protobuf_Any.with {
+            $0.typeURL = "type.googleapis.com/macosusesdk.v1.OpenApplicationMetadata"
+            $0.value = try Macosusesdk_V1_OpenApplicationMetadata.with { $0.id = request.id }.serializedData()
         }
-        return try Google_Longrunning_Operation.with {
-            $0.name = "operations/open/\(app.pid)"
-            $0.done = true
-            $0.result = .response(try SwiftProtobuf.Google_Protobuf_Any.with {
-                $0.typeURL = "type.googleapis.com/macosusesdk.v1.OpenApplicationResponse"
-                $0.value = try response.serializedData()
-            })
+
+        let op = await operationStore.createOperation(name: opName, metadata: metadata)
+
+        // Schedule actual open on background task (coordinator runs on @MainActor internally)
+        Task {
+            do {
+                let app = try await AutomationCoordinator.shared.handleOpenApplication(identifier: request.id)
+                await stateStore.addTarget(app)
+
+                let response = Macosusesdk_V1_OpenApplicationResponse.with {
+                    $0.application = app
+                }
+
+                try await operationStore.finishOperation(name: opName, responseMessage: response)
+            } catch {
+                // mark operation as done with an error in the response's metadata
+                var errOp = await operationStore.getOperation(name: opName) ?? op
+                errOp.done = true
+                errOp.error = SwiftProtobuf.Google_Rpc_Status.with {
+                    $0.code = 13
+                    $0.message = "\(error)"
+                }
+                await operationStore.putOperation(errOp)
+            }
         }
+
+        return op
     }
 
     func getApplication(request: Macosusesdk_V1_GetApplicationRequest, context: GRPCAsyncServerCallContext) async throws -> Macosusesdk_V1_Application {
@@ -130,8 +157,40 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseServiceAsyncProvider
 
     func watchAccessibility(request: Macosusesdk_V1_WatchAccessibilityRequest, responseStream: GRPCAsyncResponseStreamWriter<Macosusesdk_V1_WatchAccessibilityResponse>, context: GRPCAsyncServerCallContext) async throws {
         fputs("info: [MacosUseServiceProvider] watchAccessibility called\n", stderr)
-        // TODO: Implement
-        throw GRPCStatus(code: .unimplemented, message: "watchAccessibility not implemented")
+
+        let pid = try parsePID(fromName: request.name)
+        let pollInterval = request.pollInterval > 0 ? request.pollInterval : 1.0
+
+        var previous: [Macosusesdk_Type_Element] = []
+
+        while !Task.isCancelled {
+            do {
+                let trav = try await AutomationCoordinator.shared.handleTraverse(pid: pid, visibleOnly: request.visibleOnly)
+
+                // Naive diff: if previous empty, send all as added; otherwise send elements as modified
+                let resp = Macosusesdk_V1_WatchAccessibilityResponse.with {
+                    if previous.isEmpty {
+                        $0.added = trav.elements
+                    } else {
+                        $0.modified = trav.elements.map { element in
+                            Macosusesdk_V1_ModifiedElement.with {
+                                $0.previous = Macosusesdk_Type_Element()
+                                $0.current = element
+                            }
+                        }
+                    }
+                }
+
+                try await responseStream.send(resp)
+                previous = trav.elements
+            } catch {
+                // send an empty heartbeat to keep client alive
+                let _ = try? await responseStream.send(Macosusesdk_V1_WatchAccessibilityResponse())
+            }
+
+            // Sleep for interval, but allow task cancellation to stop
+            try await Task.sleep(nanoseconds: UInt64(pollInterval * 1_000_000_000))
+        }
     }
 }
 
@@ -139,10 +198,10 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseServiceAsyncProvider
 
 private extension MacosUseServiceProvider {
     func parsePID(fromName name: String) throws -> pid_t {
-        let components = name.split(separator: "/")
-        guard components.count == 2, components[0] == "applications", let pid = pid_t(components[1]) else {
+        let components = name.split(separator: "/").map(String.init)
+        guard components.count >= 2, components[0] == "applications", let pidInt = Int32(components[1]) else {
             throw GRPCStatus(code: .invalidArgument, message: "Invalid application name: \(name)")
         }
-        return pid
+        return pid_t(pidInt)
     }
 }

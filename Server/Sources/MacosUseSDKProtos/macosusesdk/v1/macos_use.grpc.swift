@@ -14,8 +14,8 @@ import SwiftProtobuf
 /// MacosUseService is the primary service for automating macOS applications.
 ///
 /// To build a server, implement a class that conforms to this protocol.
-public protocol Macosusesdk_V1_MacosUseServiceProvider: CallHandlerProvider {
-  var interceptors: Macosusesdk_V1_MacosUseServiceServerInterceptorFactoryProtocol? { get }
+public protocol Macosusesdk_V1_MacosUseProvider: CallHandlerProvider {
+  var interceptors: Macosusesdk_V1_MacosUseServerInterceptorFactoryProtocol? { get }
 
   /// Opens or activates an application. This is a long-running operation.
   func openApplication(request: Macosusesdk_V1_OpenApplicationRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Google_Longrunning_Operation>
@@ -45,9 +45,9 @@ public protocol Macosusesdk_V1_MacosUseServiceProvider: CallHandlerProvider {
   func watchAccessibility(request: Macosusesdk_V1_WatchAccessibilityRequest, context: StreamingResponseCallContext<Macosusesdk_V1_WatchAccessibilityResponse>) -> EventLoopFuture<GRPCStatus>
 }
 
-extension Macosusesdk_V1_MacosUseServiceProvider {
+extension Macosusesdk_V1_MacosUseProvider {
   public var serviceName: Substring {
-    return Macosusesdk_V1_MacosUseServiceServerMetadata.serviceDescriptor.fullName[...]
+    return Macosusesdk_V1_MacosUseServerMetadata.serviceDescriptor.fullName[...]
   }
 
   /// Determines, calls and returns the appropriate request handler, depending on the request's method.
@@ -148,9 +148,9 @@ extension Macosusesdk_V1_MacosUseServiceProvider {
 ///
 /// To implement a server, implement an object which conforms to this protocol.
 @available(macOS 10.15, iOS 13, tvOS 13, watchOS 6, *)
-public protocol Macosusesdk_V1_MacosUseServiceAsyncProvider: CallHandlerProvider, Sendable {
+public protocol Macosusesdk_V1_MacosUseAsyncProvider: CallHandlerProvider, Sendable {
   static var serviceDescriptor: GRPCServiceDescriptor { get }
-  var interceptors: Macosusesdk_V1_MacosUseServiceServerInterceptorFactoryProtocol? { get }
+  var interceptors: Macosusesdk_V1_MacosUseServerInterceptorFactoryProtocol? { get }
 
   /// Opens or activates an application. This is a long-running operation.
   func openApplication(
@@ -209,16 +209,16 @@ public protocol Macosusesdk_V1_MacosUseServiceAsyncProvider: CallHandlerProvider
 }
 
 @available(macOS 10.15, iOS 13, tvOS 13, watchOS 6, *)
-extension Macosusesdk_V1_MacosUseServiceAsyncProvider {
+extension Macosusesdk_V1_MacosUseAsyncProvider {
   public static var serviceDescriptor: GRPCServiceDescriptor {
-    return Macosusesdk_V1_MacosUseServiceServerMetadata.serviceDescriptor
+    return Macosusesdk_V1_MacosUseServerMetadata.serviceDescriptor
   }
 
   public var serviceName: Substring {
-    return Macosusesdk_V1_MacosUseServiceServerMetadata.serviceDescriptor.fullName[...]
+    return Macosusesdk_V1_MacosUseServerMetadata.serviceDescriptor.fullName[...]
   }
 
-  public var interceptors: Macosusesdk_V1_MacosUseServiceServerInterceptorFactoryProtocol? {
+  public var interceptors: Macosusesdk_V1_MacosUseServerInterceptorFactoryProtocol? {
     return nil
   }
 
@@ -314,7 +314,7 @@ extension Macosusesdk_V1_MacosUseServiceAsyncProvider {
   }
 }
 
-public protocol Macosusesdk_V1_MacosUseServiceServerInterceptorFactoryProtocol: Sendable {
+public protocol Macosusesdk_V1_MacosUseServerInterceptorFactoryProtocol: Sendable {
 
   /// - Returns: Interceptors to use when handling 'openApplication'.
   ///   Defaults to calling `self.makeInterceptors()`.
@@ -353,75 +353,75 @@ public protocol Macosusesdk_V1_MacosUseServiceServerInterceptorFactoryProtocol: 
   func makeWatchAccessibilityInterceptors() -> [ServerInterceptor<Macosusesdk_V1_WatchAccessibilityRequest, Macosusesdk_V1_WatchAccessibilityResponse>]
 }
 
-public enum Macosusesdk_V1_MacosUseServiceServerMetadata {
+public enum Macosusesdk_V1_MacosUseServerMetadata {
   public static let serviceDescriptor = GRPCServiceDescriptor(
-    name: "MacosUseService",
-    fullName: "macosusesdk.v1.MacosUseService",
+    name: "MacosUse",
+    fullName: "macosusesdk.v1.MacosUse",
     methods: [
-      Macosusesdk_V1_MacosUseServiceServerMetadata.Methods.openApplication,
-      Macosusesdk_V1_MacosUseServiceServerMetadata.Methods.getApplication,
-      Macosusesdk_V1_MacosUseServiceServerMetadata.Methods.listApplications,
-      Macosusesdk_V1_MacosUseServiceServerMetadata.Methods.deleteApplication,
-      Macosusesdk_V1_MacosUseServiceServerMetadata.Methods.createInput,
-      Macosusesdk_V1_MacosUseServiceServerMetadata.Methods.getInput,
-      Macosusesdk_V1_MacosUseServiceServerMetadata.Methods.listInputs,
-      Macosusesdk_V1_MacosUseServiceServerMetadata.Methods.traverseAccessibility,
-      Macosusesdk_V1_MacosUseServiceServerMetadata.Methods.watchAccessibility,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.openApplication,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.getApplication,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.listApplications,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.deleteApplication,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.createInput,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.getInput,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.listInputs,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.traverseAccessibility,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.watchAccessibility,
     ]
   )
 
   public enum Methods {
     public static let openApplication = GRPCMethodDescriptor(
       name: "OpenApplication",
-      path: "/macosusesdk.v1.MacosUseService/OpenApplication",
+      path: "/macosusesdk.v1.MacosUse/OpenApplication",
       type: GRPCCallType.unary
     )
 
     public static let getApplication = GRPCMethodDescriptor(
       name: "GetApplication",
-      path: "/macosusesdk.v1.MacosUseService/GetApplication",
+      path: "/macosusesdk.v1.MacosUse/GetApplication",
       type: GRPCCallType.unary
     )
 
     public static let listApplications = GRPCMethodDescriptor(
       name: "ListApplications",
-      path: "/macosusesdk.v1.MacosUseService/ListApplications",
+      path: "/macosusesdk.v1.MacosUse/ListApplications",
       type: GRPCCallType.unary
     )
 
     public static let deleteApplication = GRPCMethodDescriptor(
       name: "DeleteApplication",
-      path: "/macosusesdk.v1.MacosUseService/DeleteApplication",
+      path: "/macosusesdk.v1.MacosUse/DeleteApplication",
       type: GRPCCallType.unary
     )
 
     public static let createInput = GRPCMethodDescriptor(
       name: "CreateInput",
-      path: "/macosusesdk.v1.MacosUseService/CreateInput",
+      path: "/macosusesdk.v1.MacosUse/CreateInput",
       type: GRPCCallType.unary
     )
 
     public static let getInput = GRPCMethodDescriptor(
       name: "GetInput",
-      path: "/macosusesdk.v1.MacosUseService/GetInput",
+      path: "/macosusesdk.v1.MacosUse/GetInput",
       type: GRPCCallType.unary
     )
 
     public static let listInputs = GRPCMethodDescriptor(
       name: "ListInputs",
-      path: "/macosusesdk.v1.MacosUseService/ListInputs",
+      path: "/macosusesdk.v1.MacosUse/ListInputs",
       type: GRPCCallType.unary
     )
 
     public static let traverseAccessibility = GRPCMethodDescriptor(
       name: "TraverseAccessibility",
-      path: "/macosusesdk.v1.MacosUseService/TraverseAccessibility",
+      path: "/macosusesdk.v1.MacosUse/TraverseAccessibility",
       type: GRPCCallType.unary
     )
 
     public static let watchAccessibility = GRPCMethodDescriptor(
       name: "WatchAccessibility",
-      path: "/macosusesdk.v1.MacosUseService/WatchAccessibility",
+      path: "/macosusesdk.v1.MacosUse/WatchAccessibility",
       type: GRPCCallType.serverStreaming
     )
   }

@@ -941,12 +941,14 @@ func (x *ModifiedElement) GetChanges() []*AttributeChange {
 // A change to an element attribute.
 type AttributeChange struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Name of the attribute.
+	// Resource name.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	// Old value.
-	OldValue string `protobuf:"bytes,2,opt,name=old_value,json=oldValue,proto3" json:"old_value,omitempty"`
-	// New value.
-	NewValue      string `protobuf:"bytes,3,opt,name=new_value,json=newValue,proto3" json:"new_value,omitempty"`
+	// Name of the attribute that changed.
+	Attribute string `protobuf:"bytes,2,opt,name=attribute,proto3" json:"attribute,omitempty"`
+	// Old value of the attribute.
+	OldValue string `protobuf:"bytes,3,opt,name=old_value,json=oldValue,proto3" json:"old_value,omitempty"`
+	// New value of the attribute.
+	NewValue      string `protobuf:"bytes,4,opt,name=new_value,json=newValue,proto3" json:"new_value,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -984,6 +986,13 @@ func (*AttributeChange) Descriptor() ([]byte, []int) {
 func (x *AttributeChange) GetName() string {
 	if x != nil {
 		return x.Name
+	}
+	return ""
+}
+
+func (x *AttributeChange) GetAttribute() string {
+	if x != nil {
+		return x.Attribute
 	}
 	return ""
 }
@@ -1066,23 +1075,25 @@ const file_macosusesdk_v1_macos_use_proto_rawDesc = "" +
 	"\x0fModifiedElement\x125\n" +
 	"\bprevious\x18\x01 \x01(\v2\x19.macosusesdk.type.ElementR\bprevious\x123\n" +
 	"\acurrent\x18\x02 \x01(\v2\x19.macosusesdk.type.ElementR\acurrent\x129\n" +
-	"\achanges\x18\x03 \x03(\v2\x1f.macosusesdk.v1.AttributeChangeR\achanges\"_\n" +
-	"\x0fAttributeChange\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1b\n" +
-	"\told_value\x18\x02 \x01(\tR\boldValue\x12\x1b\n" +
-	"\tnew_value\x18\x03 \x01(\tR\bnewValue2\x9e\v\n" +
-	"\x0fMacosUseService\x12\xba\x01\n" +
+	"\achanges\x18\x03 \x03(\v2\x1f.macosusesdk.v1.AttributeChangeR\achanges\"\xf5\x01\n" +
+	"\x0fAttributeChange\x12\x17\n" +
+	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12\x1c\n" +
+	"\tattribute\x18\x02 \x01(\tR\tattribute\x12\x1b\n" +
+	"\told_value\x18\x03 \x01(\tR\boldValue\x12\x1b\n" +
+	"\tnew_value\x18\x04 \x01(\tR\bnewValue:q\xeaAn\n" +
+	"$macos.googleapis.com/AttributeChange\x12#attributeChanges/{attribute_change}*\x10attributeChanges2\x0fattributeChange2\xb7\v\n" +
+	"\bMacosUse\x12\xba\x01\n" +
 	"\x0fOpenApplication\x12&.macosusesdk.v1.OpenApplicationRequest\x1a\x1d.google.longrunning.Operation\"`\xcaA2\n" +
 	"\x17OpenApplicationResponse\x12\x17OpenApplicationMetadata\x82\xd3\xe4\x93\x02%:\x01*\" /v1/applications:openApplication\x12~\n" +
 	"\x0eGetApplication\x12%.macosusesdk.v1.GetApplicationRequest\x1a\x1b.macosusesdk.v1.Application\"(\xdaA\x04name\x82\xd3\xe4\x93\x02\x1b\x12\x19/v1/{name=applications/*}\x12\x7f\n" +
 	"\x10ListApplications\x12'.macosusesdk.v1.ListApplicationsRequest\x1a(.macosusesdk.v1.ListApplicationsResponse\"\x18\x82\xd3\xe4\x93\x02\x12\x12\x10/v1/applications\x12\x7f\n" +
-	"\x11DeleteApplication\x12(.macosusesdk.v1.DeleteApplicationRequest\x1a\x16.google.protobuf.Empty\"(\xdaA\x04name\x82\xd3\xe4\x93\x02\x1b*\x19/v1/{name=applications/*}\x12\xb1\x01\n" +
-	"\vCreateInput\x12\".macosusesdk.v1.CreateInputRequest\x1a\x15.macosusesdk.v1.Input\"g\xdaA\x15parent,input,input_id\x82\xd3\xe4\x93\x02I:\x05inputZ\x1c:\x05input\"\x13/v1/{parent}/inputs\"\"/v1/{parent=applications/*}/inputs\x12\x8c\x01\n" +
-	"\bGetInput\x12\x1f.macosusesdk.v1.GetInputRequest\x1a\x15.macosusesdk.v1.Input\"H\xdaA\x04name\x82\xd3\xe4\x93\x02;Z\x15\x12\x13/v1/{name=inputs/*}\x12\"/v1/{name=applications/*/inputs/*}\x12\x9f\x01\n" +
+	"\x11DeleteApplication\x12(.macosusesdk.v1.DeleteApplicationRequest\x1a\x16.google.protobuf.Empty\"(\xdaA\x04name\x82\xd3\xe4\x93\x02\x1b*\x19/v1/{name=applications/*}\x12\xc0\x01\n" +
+	"\vCreateInput\x12\".macosusesdk.v1.CreateInputRequest\x1a\x15.macosusesdk.v1.Input\"v\xdaA\x15parent,input,input_id\x82\xd3\xe4\x93\x02X:\x05inputZ+:\x05input\"\"/v1/{parent=applications/*}/inputs\"\"/v1/{parent=applications/*}/inputs\x12u\n" +
+	"\bGetInput\x12\x1f.macosusesdk.v1.GetInputRequest\x1a\x15.macosusesdk.v1.Input\"1\xdaA\x04name\x82\xd3\xe4\x93\x02$\x12\"/v1/{name=applications/*/inputs/*}\x12\xae\x01\n" +
 	"\n" +
-	"ListInputs\x12!.macosusesdk.v1.ListInputsRequest\x1a\".macosusesdk.v1.ListInputsResponse\"J\xdaA\x06parent\x82\xd3\xe4\x93\x02;Z\x15\x12\x13/v1/{parent}/inputs\x12\"/v1/{parent=applications/*}/inputs\x12\xaa\x01\n" +
-	"\x15TraverseAccessibility\x12,.macosusesdk.v1.TraverseAccessibilityRequest\x1a-.macosusesdk.v1.TraverseAccessibilityResponse\"4\xdaA\x04name\x82\xd3\xe4\x93\x02':\x01*\"\"/v1/{name=applications/*}:traverse\x12\xa0\x01\n" +
-	"\x12WatchAccessibility\x12).macosusesdk.v1.WatchAccessibilityRequest\x1a*.macosusesdk.v1.WatchAccessibilityResponse\"1\xdaA\x04name\x82\xd3\xe4\x93\x02$:\x01*\"\x1f/v1/{name=applications/*}:watch0\x01\x1a\x17\xcaA\x14macos.googleapis.comB\xc4\x01\n" +
+	"ListInputs\x12!.macosusesdk.v1.ListInputsRequest\x1a\".macosusesdk.v1.ListInputsResponse\"Y\xdaA\x06parent\x82\xd3\xe4\x93\x02JZ$\x12\"/v1/{parent=applications/*}/inputs\x12\"/v1/{parent=applications/*}/inputs\x12\xb7\x01\n" +
+	"\x15TraverseAccessibility\x12,.macosusesdk.v1.TraverseAccessibilityRequest\x1a-.macosusesdk.v1.TraverseAccessibilityResponse\"A\xdaA\x04name\x82\xd3\xe4\x93\x024:\x01*\"//v1/{name=applications/*}:traverseAccessibility\x12\xad\x01\n" +
+	"\x12WatchAccessibility\x12).macosusesdk.v1.WatchAccessibilityRequest\x1a*.macosusesdk.v1.WatchAccessibilityResponse\">\xdaA\x04name\x82\xd3\xe4\x93\x021:\x01*\",/v1/{name=applications/*}:watchAccessibility0\x01\x1a\x17\xcaA\x14macos.googleapis.comB\xc4\x01\n" +
 	"\x12com.macosusesdk.v1B\rMacosUseProtoP\x01ZFgithub.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1\xa2\x02\x03MXX\xaa\x02\x0eMacosusesdk.V1\xca\x02\x0eMacosusesdk\\V1\xe2\x02\x1aMacosusesdk\\V1\\GPBMetadata\xea\x02\x0fMacosusesdk::V1b\x06proto3"
 
 var (
@@ -1138,24 +1149,24 @@ var file_macosusesdk_v1_macos_use_proto_depIdxs = []int32{
 	19, // 10: macosusesdk.v1.ModifiedElement.previous:type_name -> macosusesdk.type.Element
 	19, // 11: macosusesdk.v1.ModifiedElement.current:type_name -> macosusesdk.type.Element
 	16, // 12: macosusesdk.v1.ModifiedElement.changes:type_name -> macosusesdk.v1.AttributeChange
-	0,  // 13: macosusesdk.v1.MacosUseService.OpenApplication:input_type -> macosusesdk.v1.OpenApplicationRequest
-	3,  // 14: macosusesdk.v1.MacosUseService.GetApplication:input_type -> macosusesdk.v1.GetApplicationRequest
-	4,  // 15: macosusesdk.v1.MacosUseService.ListApplications:input_type -> macosusesdk.v1.ListApplicationsRequest
-	6,  // 16: macosusesdk.v1.MacosUseService.DeleteApplication:input_type -> macosusesdk.v1.DeleteApplicationRequest
-	7,  // 17: macosusesdk.v1.MacosUseService.CreateInput:input_type -> macosusesdk.v1.CreateInputRequest
-	8,  // 18: macosusesdk.v1.MacosUseService.GetInput:input_type -> macosusesdk.v1.GetInputRequest
-	9,  // 19: macosusesdk.v1.MacosUseService.ListInputs:input_type -> macosusesdk.v1.ListInputsRequest
-	11, // 20: macosusesdk.v1.MacosUseService.TraverseAccessibility:input_type -> macosusesdk.v1.TraverseAccessibilityRequest
-	13, // 21: macosusesdk.v1.MacosUseService.WatchAccessibility:input_type -> macosusesdk.v1.WatchAccessibilityRequest
-	22, // 22: macosusesdk.v1.MacosUseService.OpenApplication:output_type -> google.longrunning.Operation
-	17, // 23: macosusesdk.v1.MacosUseService.GetApplication:output_type -> macosusesdk.v1.Application
-	5,  // 24: macosusesdk.v1.MacosUseService.ListApplications:output_type -> macosusesdk.v1.ListApplicationsResponse
-	23, // 25: macosusesdk.v1.MacosUseService.DeleteApplication:output_type -> google.protobuf.Empty
-	18, // 26: macosusesdk.v1.MacosUseService.CreateInput:output_type -> macosusesdk.v1.Input
-	18, // 27: macosusesdk.v1.MacosUseService.GetInput:output_type -> macosusesdk.v1.Input
-	10, // 28: macosusesdk.v1.MacosUseService.ListInputs:output_type -> macosusesdk.v1.ListInputsResponse
-	12, // 29: macosusesdk.v1.MacosUseService.TraverseAccessibility:output_type -> macosusesdk.v1.TraverseAccessibilityResponse
-	14, // 30: macosusesdk.v1.MacosUseService.WatchAccessibility:output_type -> macosusesdk.v1.WatchAccessibilityResponse
+	0,  // 13: macosusesdk.v1.MacosUse.OpenApplication:input_type -> macosusesdk.v1.OpenApplicationRequest
+	3,  // 14: macosusesdk.v1.MacosUse.GetApplication:input_type -> macosusesdk.v1.GetApplicationRequest
+	4,  // 15: macosusesdk.v1.MacosUse.ListApplications:input_type -> macosusesdk.v1.ListApplicationsRequest
+	6,  // 16: macosusesdk.v1.MacosUse.DeleteApplication:input_type -> macosusesdk.v1.DeleteApplicationRequest
+	7,  // 17: macosusesdk.v1.MacosUse.CreateInput:input_type -> macosusesdk.v1.CreateInputRequest
+	8,  // 18: macosusesdk.v1.MacosUse.GetInput:input_type -> macosusesdk.v1.GetInputRequest
+	9,  // 19: macosusesdk.v1.MacosUse.ListInputs:input_type -> macosusesdk.v1.ListInputsRequest
+	11, // 20: macosusesdk.v1.MacosUse.TraverseAccessibility:input_type -> macosusesdk.v1.TraverseAccessibilityRequest
+	13, // 21: macosusesdk.v1.MacosUse.WatchAccessibility:input_type -> macosusesdk.v1.WatchAccessibilityRequest
+	22, // 22: macosusesdk.v1.MacosUse.OpenApplication:output_type -> google.longrunning.Operation
+	17, // 23: macosusesdk.v1.MacosUse.GetApplication:output_type -> macosusesdk.v1.Application
+	5,  // 24: macosusesdk.v1.MacosUse.ListApplications:output_type -> macosusesdk.v1.ListApplicationsResponse
+	23, // 25: macosusesdk.v1.MacosUse.DeleteApplication:output_type -> google.protobuf.Empty
+	18, // 26: macosusesdk.v1.MacosUse.CreateInput:output_type -> macosusesdk.v1.Input
+	18, // 27: macosusesdk.v1.MacosUse.GetInput:output_type -> macosusesdk.v1.Input
+	10, // 28: macosusesdk.v1.MacosUse.ListInputs:output_type -> macosusesdk.v1.ListInputsResponse
+	12, // 29: macosusesdk.v1.MacosUse.TraverseAccessibility:output_type -> macosusesdk.v1.TraverseAccessibilityResponse
+	14, // 30: macosusesdk.v1.MacosUse.WatchAccessibility:output_type -> macosusesdk.v1.WatchAccessibilityResponse
 	22, // [22:31] is the sub-list for method output_type
 	13, // [13:22] is the sub-list for method input_type
 	13, // [13:13] is the sub-list for extension type_name

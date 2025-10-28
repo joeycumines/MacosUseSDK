@@ -29,16 +29,23 @@ func main() async throws {
     let stateStore = AppStateStore()
     fputs("info: [MacosUseServer] State store initialized\n", stderr)
     
+    // Create the operation store
+    let operationStore = OperationStore()
+
     // Create the single, correct service provider
-    let macosUseService = MacosUseServiceProvider(stateStore: stateStore)
+    let macosUseService = MacosUseServiceProvider(stateStore: stateStore, operationStore: operationStore)
     fputs("info: [MacosUseServer] Service provider created\n", stderr)
-    
+
+    // Create Operations provider and register it so clients may poll LROs
+    let operationsProvider = OperationsProvider(operationStore: operationStore)
+    fputs("info: [MacosUseServer] Operations provider created\n", stderr)
+
     // TODO: Set up and start gRPC server once proto stubs are generated
     // The server setup will look like:
     let group = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
-    
+
     let serverBuilder = Server.insecure(group: group)
-        .withServiceProviders([macosUseService])
+        .withServiceProviders([macosUseService, operationsProvider])
     
     if let socketPath = config.unixSocketPath {
         // Clean up old socket file if it exists

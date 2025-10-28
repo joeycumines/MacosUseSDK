@@ -23,7 +23,7 @@ option java_outer_classname = "MacosUseProto";
 option java_package = "com.macosusesdk.v1";
 
 // MacosUseService is the primary service for automating macOS applications.
-service MacosUseService {
+service MacosUse {
   option (google.api.default_host) = "macos.googleapis.com";
 
   // Opens or activates an application. This is a long-running operation.
