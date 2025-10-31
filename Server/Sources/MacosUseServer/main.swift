@@ -40,28 +40,28 @@ func main() async throws {
     let operationsProvider = OperationsProvider(operationStore: operationStore)
     fputs("info: [MacosUseServer] Operations provider created\n", stderr)
 
-    // TODO: Set up and start gRPC server once proto stubs are generated
-    // The server setup will look like:
+    // Set up and start gRPC server
     let group = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
 
     let serverBuilder = Server.insecure(group: group)
         .withServiceProviders([macosUseService, operationsProvider])
     
+    let server: Server
     if let socketPath = config.unixSocketPath {
         // Clean up old socket file if it exists
         var isDir: ObjCBool = false
         if FileManager.default.fileExists(atPath: socketPath, isDirectory: &isDir) {
             try FileManager.default.removeItem(atPath: socketPath)
         }
-        _ = try await serverBuilder.bind(unixDomainSocketPath: socketPath).get()
+        server = try await serverBuilder.bind(unixDomainSocketPath: socketPath).get()
     } else {
-        _ = try await serverBuilder.bind(host: config.listenAddress, port: config.port).get()
+        server = try await serverBuilder.bind(host: config.listenAddress, port: config.port).get()
     }
     
     fputs("info: [MacosUseServer] gRPC server started\n", stderr)
     
-    // Keep the server running
-    try await Task.sleep(nanoseconds: UInt64.max)
+    // Wait for the server to stop (which will be forever unless interrupted)
+    try await server.onClose.get()
 }
 
 try await main()

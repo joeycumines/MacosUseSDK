@@ -11,6 +11,14 @@ The gRPC server MUST:
 - Support automating MULTIPLE windows at once
 - Be performant
 - Support use cases like automating actions, inclusive of identifying UI elements, reading text from UI elements, entering input into UI elements and interacting in arbitrary ways
+- Support "complicated interactions with apps on Mac OS including interacting with Windows"
+- Support integration with developer tools like VS Code, including:
+  - Complex multi-window interactions
+  - Advanced element targeting and querying
+  - Sophisticated automation workflows
+  - Real-time observation and monitoring
+- Be production-ready, NOT just proof-of-concept
+- This is approximately 85% INCOMPLETE as of 2025-01-XX - basic scaffolding exists but most functionality is missing
 
 The gRPC API MUST:
 - Follow Google's AIPs in ALL regards (2025 / latest, up to date standards)
@@ -21,6 +29,27 @@ The gRPC API MUST:
 - Support sophisticated, well-conceived concurrency patterns
 - Use `buf` linting BUT be aware that there ARE conflicts with Google's AIPs. When in doubt, use Google's AIPs as the source of truth.
 - Configure and use https://linter.aip.dev/ UNLESS it is not possible to do so. The `api-linter` command MUST NOT have its dependencies pinned within the same Go module as the Go stubs. To be clear this is Google's linter for the AIPs, and is distinct from `buf lint`, and takes PRECEDENCE over `buf lint` where there are conflicts.
+- Include ALL necessary resources as first-class addressable entities:
+  - Window resource (MISSING - critical for multi-window automation)
+  - Element resource (MISSING - critical for element targeting)
+  - Observation resource (MISSING - for streaming change detection)
+  - Session resource (MISSING - for transaction support)
+  - Query methods (MISSING - for sophisticated element search)
+  - Screenshot methods (MISSING - for visual verification)
+  - Clipboard methods (MISSING - for clipboard operations)
+  - File methods (MISSING - for file dialog automation)
+  - Macro resource (MISSING - for workflow automation)
+  - Script methods (MISSING - for AppleScript/JXA execution)
+  - Metrics methods (MISSING - for performance monitoring)
+- Support advanced input types beyond basic click/type:
+  - Keyboard combinations with modifiers (Command, Option, Control, Shift)
+  - Special keys (Function keys, media keys)
+  - Mouse operations (drag, right-click, scroll, hover)
+  - Multi-touch gestures
+- Implement element targeting/selector system for robust element identification
+- Support streaming observations for real-time change detection and monitoring
+- Support sessions and transactions for atomic multi-step operations
+- Support performance metrics and diagnostics for operational visibility
 
 Testing and Tooling:
 - Implement comprehensive unit tests, at bare minimum
