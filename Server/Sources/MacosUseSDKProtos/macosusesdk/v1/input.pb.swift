@@ -25,15 +25,13 @@ fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAP
 }
 
 /// A resource representing an input action that was or will be executed.
-/// Inputs form a timeline for each application or globally for the desktop.
+/// Inputs form a timeline for each application.
 public struct Macosusesdk_V1_Input: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Resource name. Either:
-  /// - "applications/{application}/inputs/{input}" for app-specific inputs
-  /// - "desktopInputs/{input}" for global desktop inputs
+  /// Resource name in the format "applications/{application}/inputs/{input}".
   public var name: String = String()
 
   /// The specific action to perform or that was performed.
@@ -470,24 +468,24 @@ public struct Macosusesdk_V1_MouseDrag: Sendable {
   // methods supported on all messages.
 
   /// Starting position.
-  public var from: Macosusesdk_Type_Point {
-    get {return _from ?? Macosusesdk_Type_Point()}
-    set {_from = newValue}
+  public var startPosition: Macosusesdk_Type_Point {
+    get {return _startPosition ?? Macosusesdk_Type_Point()}
+    set {_startPosition = newValue}
   }
-  /// Returns true if `from` has been explicitly set.
-  public var hasFrom: Bool {return self._from != nil}
-  /// Clears the value of `from`. Subsequent reads from it will return its default value.
-  public mutating func clearFrom() {self._from = nil}
+  /// Returns true if `startPosition` has been explicitly set.
+  public var hasStartPosition: Bool {return self._startPosition != nil}
+  /// Clears the value of `startPosition`. Subsequent reads from it will return its default value.
+  public mutating func clearStartPosition() {self._startPosition = nil}
 
   /// Ending position.
-  public var to: Macosusesdk_Type_Point {
-    get {return _to ?? Macosusesdk_Type_Point()}
-    set {_to = newValue}
+  public var endPosition: Macosusesdk_Type_Point {
+    get {return _endPosition ?? Macosusesdk_Type_Point()}
+    set {_endPosition = newValue}
   }
-  /// Returns true if `to` has been explicitly set.
-  public var hasTo: Bool {return self._to != nil}
-  /// Clears the value of `to`. Subsequent reads from it will return its default value.
-  public mutating func clearTo() {self._to = nil}
+  /// Returns true if `endPosition` has been explicitly set.
+  public var hasEndPosition: Bool {return self._endPosition != nil}
+  /// Clears the value of `endPosition`. Subsequent reads from it will return its default value.
+  public mutating func clearEndPosition() {self._endPosition = nil}
 
   /// Duration of drag in seconds.
   public var duration: Double = 0
@@ -499,8 +497,8 @@ public struct Macosusesdk_V1_MouseDrag: Sendable {
 
   public init() {}
 
-  fileprivate var _from: Macosusesdk_Type_Point? = nil
-  fileprivate var _to: Macosusesdk_Type_Point? = nil
+  fileprivate var _startPosition: Macosusesdk_Type_Point? = nil
+  fileprivate var _endPosition: Macosusesdk_Type_Point? = nil
 }
 
 /// Scroll action.
@@ -1133,7 +1131,7 @@ extension Macosusesdk_V1_MouseMove: SwiftProtobuf.Message, SwiftProtobuf._Messag
 
 extension Macosusesdk_V1_MouseDrag: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".MouseDrag"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}from\0\u{1}to\0\u{1}duration\0\u{1}button\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}start_position\0\u{3}end_position\0\u{1}duration\0\u{1}button\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1141,8 +1139,8 @@ extension Macosusesdk_V1_MouseDrag: SwiftProtobuf.Message, SwiftProtobuf._Messag
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularMessageField(value: &self._from) }()
-      case 2: try { try decoder.decodeSingularMessageField(value: &self._to) }()
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._startPosition) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._endPosition) }()
       case 3: try { try decoder.decodeSingularDoubleField(value: &self.duration) }()
       case 4: try { try decoder.decodeSingularEnumField(value: &self.button) }()
       default: break
@@ -1155,10 +1153,10 @@ extension Macosusesdk_V1_MouseDrag: SwiftProtobuf.Message, SwiftProtobuf._Messag
     // allocates stack space for every if/case branch local when no optimizations
     // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
     // https://github.com/apple/swift-protobuf/issues/1182
-    try { if let v = self._from {
+    try { if let v = self._startPosition {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
     } }()
-    try { if let v = self._to {
+    try { if let v = self._endPosition {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
     } }()
     if self.duration.bitPattern != 0 {
@@ -1171,8 +1169,8 @@ extension Macosusesdk_V1_MouseDrag: SwiftProtobuf.Message, SwiftProtobuf._Messag
   }
 
   public static func ==(lhs: Macosusesdk_V1_MouseDrag, rhs: Macosusesdk_V1_MouseDrag) -> Bool {
-    if lhs._from != rhs._from {return false}
-    if lhs._to != rhs._to {return false}
+    if lhs._startPosition != rhs._startPosition {return false}
+    if lhs._endPosition != rhs._endPosition {return false}
     if lhs.duration != rhs.duration {return false}
     if lhs.button != rhs.button {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}

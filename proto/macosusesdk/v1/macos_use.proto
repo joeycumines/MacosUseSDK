@@ -71,29 +71,19 @@ service MacosUse {
     option (google.api.http) = {
       post: "/v1/{parent=applications/*}/inputs"
       body: "input"
-      additional_bindings: {
-        post: "/v1/desktopInputs"
-        body: "input"
-      }
     };
     option (google.api.method_signature) = "parent,input,input_id";
   }
 
   // Gets a specific input.
   rpc GetInput(GetInputRequest) returns (Input) {
-    option (google.api.http) = {
-      get: "/v1/{name=applications/*/inputs/*}"
-      additional_bindings: {get: "/v1/{name=desktopInputs/*}"}
-    };
+    option (google.api.http) = {get: "/v1/{name=applications/*/inputs/*}"};
     option (google.api.method_signature) = "name";
   }
 
   // Lists inputs for an application or globally.
   rpc ListInputs(ListInputsRequest) returns (ListInputsResponse) {
-    option (google.api.http) = {
-      get: "/v1/{parent=applications/*}/inputs"
-      additional_bindings: {get: "/v1/desktopInputs"}
-    };
+    option (google.api.http) = {get: "/v1/{parent=applications/*}/inputs"};
     option (google.api.method_signature) = "parent";
   }
 
@@ -116,7 +106,6 @@ service MacosUse {
   }
 
   // ===== Window Operations =====
-
   // Gets a specific window.
   rpc GetWindow(GetWindowRequest) returns (Window) {
     option (google.api.http) = {get: "/v1/{name=applications/*/windows/*}"};
@@ -175,7 +164,7 @@ service MacosUse {
   }
 
   // Closes a window.
-  rpc CloseWindow(CloseWindowRequest) returns (google.protobuf.Empty) {
+  rpc CloseWindow(CloseWindowRequest) returns (CloseWindowResponse) {
     option (google.api.http) = {
       post: "/v1/{name=applications/*/windows/*}:close"
       body: "*"
@@ -184,7 +173,6 @@ service MacosUse {
   }
 
   // ===== Element Operations =====
-
   // Finds elements matching a selector.
   rpc FindElements(FindElementsRequest) returns (FindElementsResponse) {
     option (google.api.http) = {
@@ -199,12 +187,12 @@ service MacosUse {
   }
 
   // Finds elements within a screen region.
-  rpc FindElementsInRegion(FindElementsInRegionRequest) returns (FindElementsInRegionResponse) {
+  rpc FindRegionElements(FindRegionElementsRequest) returns (FindRegionElementsResponse) {
     option (google.api.http) = {
-      post: "/v1/{parent=applications/*}:findElementsInRegion"
+      post: "/v1/{parent=applications/*}:findRegionElements"
       body: "*"
       additional_bindings: {
-        post: "/v1/{parent=applications/*/windows/*}:findElementsInRegion"
+        post: "/v1/{parent=applications/*/windows/*}:findRegionElements"
         body: "*"
       }
     };
@@ -212,12 +200,9 @@ service MacosUse {
   }
 
   // Gets a specific element.
-  rpc GetElement(GetElementRequest) returns (GetElementResponse) {
-    option (google.api.http) = {
-      get: "/v1/{parent=applications/*}/elements/{element_id}"
-      additional_bindings: {get: "/v1/{parent=applications/*/windows/*}/elements/{element_id}"}
-    };
-    option (google.api.method_signature) = "parent,element_id";
+  rpc GetElement(GetElementRequest) returns (macosusesdk.type.Element) {
+    option (google.api.http) = {get: "/v1/{name=applications/*/elements/*}"};
+    option (google.api.method_signature) = "name";
   }
 
   // Clicks an element.
@@ -232,25 +217,22 @@ service MacosUse {
     };
   }
 
-  // Sets an element's value.
-  rpc SetElementValue(SetElementValueRequest) returns (SetElementValueResponse) {
+  // Writes an element's value.
+  rpc WriteElementValue(WriteElementValueRequest) returns (WriteElementValueResponse) {
     option (google.api.http) = {
-      post: "/v1/{parent=applications/*}:setElementValue"
+      post: "/v1/{parent=applications/*}:writeElementValue"
       body: "*"
       additional_bindings: {
-        post: "/v1/{parent=applications/*/windows/*}:setElementValue"
+        post: "/v1/{parent=applications/*/windows/*}:writeElementValue"
         body: "*"
       }
     };
   }
 
   // Gets available actions for an element.
-  rpc GetElementActions(GetElementActionsRequest) returns (GetElementActionsResponse) {
-    option (google.api.http) = {
-      get: "/v1/{parent=applications/*}/elements/{element_id}/actions"
-      additional_bindings: {get: "/v1/{parent=applications/*/windows/*}/elements/{element_id}/actions"}
-    };
-    option (google.api.method_signature) = "parent,element_id";
+  rpc GetElementActions(GetElementActionsRequest) returns (ElementActions) {
+    option (google.api.http) = {get: "/v1/{name=applications/*/elements/*}/actions"};
+    option (google.api.method_signature) = "name";
   }
 
   // Performs an accessibility action on an element.
@@ -266,39 +248,38 @@ service MacosUse {
   }
 
   // Waits for an element to appear (long-running operation).
-  rpc WaitForElement(WaitForElementRequest) returns (google.longrunning.Operation) {
+  rpc WaitElement(WaitElementRequest) returns (google.longrunning.Operation) {
     option (google.api.http) = {
-      post: "/v1/{parent=applications/*}:waitForElement"
+      post: "/v1/{parent=applications/*}:waitElement"
       body: "*"
       additional_bindings: {
-        post: "/v1/{parent=applications/*/windows/*}:waitForElement"
+        post: "/v1/{parent=applications/*/windows/*}:waitElement"
         body: "*"
       }
     };
     option (google.longrunning.operation_info) = {
-      response_type: "WaitForElementResponse"
-      metadata_type: "WaitForElementMetadata"
+      response_type: "WaitElementResponse"
+      metadata_type: "WaitElementMetadata"
     };
   }
 
   // Waits for an element to reach a specific state (long-running operation).
-  rpc WaitForElementState(WaitForElementStateRequest) returns (google.longrunning.Operation) {
+  rpc WaitElementState(WaitElementStateRequest) returns (google.longrunning.Operation) {
     option (google.api.http) = {
-      post: "/v1/{parent=applications/*}:waitForElementState"
+      post: "/v1/{parent=applications/*}:waitElementState"
       body: "*"
       additional_bindings: {
-        post: "/v1/{parent=applications/*/windows/*}:waitForElementState"
+        post: "/v1/{parent=applications/*/windows/*}:waitElementState"
         body: "*"
       }
     };
     option (google.longrunning.operation_info) = {
-      response_type: "WaitForElementStateResponse"
-      metadata_type: "WaitForElementStateMetadata"
+      response_type: "WaitElementStateResponse"
+      metadata_type: "WaitElementStateMetadata"
     };
   }
 
   // ===== Observation Operations =====
-
   // Creates an observation (long-running operation).
   rpc CreateObservation(CreateObservationRequest) returns (google.longrunning.Operation) {
     option (google.api.http) = {
@@ -334,7 +315,7 @@ service MacosUse {
   }
 
   // Streams observation events.
-  rpc StreamObservations(StreamObservationsRequest) returns (stream ObservationEvent) {
+  rpc StreamObservations(StreamObservationsRequest) returns (stream StreamObservationsResponse) {
     option (google.api.http) = {
       post: "/v1/{name=applications/*/observations/*}:stream"
       body: "*"
@@ -343,7 +324,6 @@ service MacosUse {
   }
 
   // ===== Session Operations =====
-
   // Creates a session.
   rpc CreateSession(CreateSessionRequest) returns (Session) {
     option (google.api.http) = {
@@ -380,35 +360,34 @@ service MacosUse {
   }
 
   // Commits a transaction.
-  rpc CommitTransaction(CommitTransactionRequest) returns (CommitTransactionResponse) {
+  rpc CommitTransaction(CommitTransactionRequest) returns (Transaction) {
     option (google.api.http) = {
-      post: "/v1/{session=sessions/*}:commit"
+      post: "/v1/{name=sessions/*}:commit"
       body: "*"
     };
-    option (google.api.method_signature) = "session,transaction_id";
+    option (google.api.method_signature) = "name,transaction_id";
   }
 
   // Rolls back a transaction.
-  rpc RollbackTransaction(RollbackTransactionRequest) returns (RollbackTransactionResponse) {
+  rpc RollbackTransaction(RollbackTransactionRequest) returns (Transaction) {
     option (google.api.http) = {
-      post: "/v1/{session=sessions/*}:rollback"
+      post: "/v1/{name=sessions/*}:rollback"
       body: "*"
     };
-    option (google.api.method_signature) = "session,transaction_id";
+    option (google.api.method_signature) = "name,revision_id,transaction_id";
   }
 
   // Gets a session state snapshot.
-  rpc GetSessionSnapshot(GetSessionSnapshotRequest) returns (GetSessionSnapshotResponse) {
-    option (google.api.http) = {get: "/v1/{session=sessions/*}/snapshot"};
-    option (google.api.method_signature) = "session";
+  rpc GetSessionSnapshot(GetSessionSnapshotRequest) returns (SessionSnapshot) {
+    option (google.api.http) = {get: "/v1/{name=sessions/*}/snapshot"};
+    option (google.api.method_signature) = "name";
   }
 
   // ===== Screenshot Operations =====
-
   // Captures a full screen screenshot.
   rpc CaptureScreenshot(CaptureScreenshotRequest) returns (CaptureScreenshotResponse) {
     option (google.api.http) = {
-      post: "/v1/screenshots:capture"
+      post: "/v1/screenshots:captureScreenshot"
       body: "*"
     };
   }
@@ -416,7 +395,7 @@ service MacosUse {
   // Captures a screenshot of a specific window.
   rpc CaptureWindowScreenshot(CaptureWindowScreenshotRequest) returns (CaptureWindowScreenshotResponse) {
     option (google.api.http) = {
-      post: "/v1/{window=applications/*/windows/*}:captureScreenshot"
+      post: "/v1/{window=applications/*/windows/*}:captureWindowScreenshot"
       body: "*"
     };
     option (google.api.method_signature) = "window";
@@ -438,40 +417,43 @@ service MacosUse {
   // Captures a screenshot of a screen region.
   rpc CaptureRegionScreenshot(CaptureRegionScreenshotRequest) returns (CaptureRegionScreenshotResponse) {
     option (google.api.http) = {
-      post: "/v1/screenshots:captureRegion"
+      post: "/v1/screenshots:captureRegionScreenshot"
       body: "*"
     };
     option (google.api.method_signature) = "region";
   }
 
   // ===== Clipboard Operations =====
-
   // Gets clipboard contents.
-  rpc GetClipboard(GetClipboardRequest) returns (GetClipboardResponse) {
-    option (google.api.http) = {get: "/v1/clipboard"};
+  rpc GetClipboard(GetClipboardRequest) returns (Clipboard) {
+    option (google.api.http) = {get: "/v1/{name=clipboard}"};
+    option (google.api.method_signature) = "name";
   }
 
-  // Sets clipboard contents.
-  rpc SetClipboard(SetClipboardRequest) returns (SetClipboardResponse) {
+  // Writes clipboard contents.
+  rpc WriteClipboard(WriteClipboardRequest) returns (WriteClipboardResponse) {
     option (google.api.http) = {
-      post: "/v1/clipboard"
-      body: "content"
+      post: "/v1/clipboard:write"
+      body: "*"
     };
     option (google.api.method_signature) = "content";
   }
 
   // Clears clipboard contents.
   rpc ClearClipboard(ClearClipboardRequest) returns (ClearClipboardResponse) {
-    option (google.api.http) = {delete: "/v1/clipboard"};
+    option (google.api.http) = {
+      post: "/v1/clipboard:clear"
+      body: "*"
+    };
   }
 
   // Gets clipboard history (if available).
-  rpc GetClipboardHistory(GetClipboardHistoryRequest) returns (GetClipboardHistoryResponse) {
-    option (google.api.http) = {get: "/v1/clipboard/history"};
+  rpc GetClipboardHistory(GetClipboardHistoryRequest) returns (ClipboardHistory) {
+    option (google.api.http) = {get: "/v1/{name=clipboard/history}"};
+    option (google.api.method_signature) = "name";
   }
 
   // ===== File Operations =====
-
   // Automates an open file dialog.
   rpc AutomateOpenFileDialog(AutomateOpenFileDialogRequest) returns (AutomateOpenFileDialogResponse) {
     option (google.api.http) = {
@@ -518,7 +500,6 @@ service MacosUse {
   }
 
   // ===== Macro Operations =====
-
   // Creates a macro.
   rpc CreateMacro(CreateMacroRequest) returns (Macro) {
     option (google.api.http) = {
@@ -557,7 +538,7 @@ service MacosUse {
   // Executes a macro (long-running operation).
   rpc ExecuteMacro(ExecuteMacroRequest) returns (google.longrunning.Operation) {
     option (google.api.http) = {
-      post: "/v1/{macro=macros/*}:execute"
+      post: "/v1/{macro=macros/*}:executeMacro"
       body: "*"
     };
     option (google.api.method_signature) = "macro";
@@ -568,7 +549,6 @@ service MacosUse {
   }
 
   // ===== Script Operations =====
-
   // Executes an AppleScript.
   rpc ExecuteAppleScript(ExecuteAppleScriptRequest) returns (ExecuteAppleScriptResponse) {
     option (google.api.http) = {
@@ -579,9 +559,9 @@ service MacosUse {
   }
 
   // Executes JavaScript for Automation (JXA).
-  rpc ExecuteJavaScriptForAutomation(ExecuteJavaScriptForAutomationRequest) returns (ExecuteJavaScriptForAutomationResponse) {
+  rpc ExecuteJavaScript(ExecuteJavaScriptRequest) returns (ExecuteJavaScriptResponse) {
     option (google.api.http) = {
-      post: "/v1/scripts:executeJavaScriptForAutomation"
+      post: "/v1/scripts:executeJavaScript"
       body: "*"
     };
     option (google.api.method_signature) = "script";
@@ -599,27 +579,29 @@ service MacosUse {
   // Validates a script without executing.
   rpc ValidateScript(ValidateScriptRequest) returns (ValidateScriptResponse) {
     option (google.api.http) = {
-      post: "/v1/scripts:validate"
+      post: "/v1/scripts:validateScript"
       body: "*"
     };
     option (google.api.method_signature) = "type,script";
   }
 
   // Gets scripting dictionaries.
-  rpc GetScriptingDictionaries(GetScriptingDictionariesRequest) returns (GetScriptingDictionariesResponse) {
-    option (google.api.http) = {get: "/v1/scripts/dictionaries"};
+  rpc GetScriptingDictionaries(GetScriptingDictionariesRequest) returns (ScriptingDictionaries) {
+    option (google.api.http) = {get: "/v1/{name=scriptingDictionaries}"};
+    option (google.api.method_signature) = "name";
   }
 
   // ===== Metrics Operations =====
-
   // Gets current metrics.
-  rpc GetMetrics(GetMetricsRequest) returns (GetMetricsResponse) {
-    option (google.api.http) = {get: "/v1/metrics"};
+  rpc GetMetrics(GetMetricsRequest) returns (Metrics) {
+    option (google.api.http) = {get: "/v1/{name=metrics}"};
+    option (google.api.method_signature) = "name";
   }
 
   // Gets a performance report.
-  rpc GetPerformanceReport(GetPerformanceReportRequest) returns (GetPerformanceReportResponse) {
-    option (google.api.http) = {get: "/v1/metrics/performanceReport"};
+  rpc GetPerformanceReport(GetPerformanceReportRequest) returns (PerformanceReport) {
+    option (google.api.http) = {get: "/v1/{name=metrics/performanceReport}"};
+    option (google.api.method_signature) = "name";
   }
 
   // Resets metrics.
@@ -807,7 +789,6 @@ message ModifiedElement {
 }
 
 // ===== Window Messages =====
-
 // Request to get a window.
 message GetWindowRequest {
   // Resource name of the window.
@@ -910,8 +891,13 @@ message CloseWindowRequest {
   bool force = 2 [(google.api.field_behavior) = OPTIONAL];
 }
 
-// ===== Observation Messages =====
+// Response from closing a window.
+message CloseWindowResponse {
+  // Whether the operation succeeded.
+  bool success = 1;
+}
 
+// ===== Observation Messages =====
 // Request to create an observation.
 message CreateObservationRequest {
   // Parent application.
@@ -958,12 +944,6 @@ message ListObservationsRequest {
 
   // Page token from a previous ListObservations call.
   string page_token = 3 [(google.api.field_behavior) = OPTIONAL];
-
-  // Filter by observation type.
-  ObservationType type_filter = 4 [(google.api.field_behavior) = OPTIONAL];
-
-  // Filter by observation state.
-  Observation.State state_filter = 5 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from listing observations.
@@ -993,8 +973,13 @@ message StreamObservationsRequest {
   ];
 }
 
-// ===== Session Messages =====
+// Response from streaming observations.
+message StreamObservationsResponse {
+  // The observation event.
+  ObservationEvent event = 1;
+}
 
+// ===== Session Messages =====
 // Request to create a session.
 message CreateSessionRequest {
   // The session to create.
@@ -1020,9 +1005,6 @@ message ListSessionsRequest {
 
   // Page token from a previous ListSessions call.
   string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
-
-  // Filter by session state.
-  Session.State state_filter = 3 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from listing sessions.
@@ -1047,7 +1029,6 @@ message DeleteSessionRequest {
 }
 
 // ===== Macro Messages =====
-
 // Request to create a macro.
 message CreateMacroRequest {
   // The macro to create.
@@ -1073,9 +1054,6 @@ message ListMacrosRequest {
 
   // Page token from a previous ListMacros call.
   string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
-
-  // Filter by tags.
-  repeated string tags = 3 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from listing macros.
@@ -1103,4 +1081,7 @@ message DeleteMacroRequest {
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {type: "macos.googleapis.com/Macro"}
   ];
+
+  // If true, delete child resources (executions, logs).
+  bool force = 2 [(google.api.field_behavior) = OPTIONAL];
 }

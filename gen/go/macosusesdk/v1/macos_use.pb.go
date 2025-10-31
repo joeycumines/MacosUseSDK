@@ -939,6 +939,7 @@ func (x *ModifiedElement) GetChanges() []*AttributeChange {
 	return nil
 }
 
+// ===== Window Messages =====
 // Request to get a window.
 type GetWindowRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -1425,6 +1426,53 @@ func (x *CloseWindowRequest) GetForce() bool {
 	return false
 }
 
+// Response from closing a window.
+type CloseWindowResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Whether the operation succeeded.
+	Success       bool `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CloseWindowResponse) Reset() {
+	*x = CloseWindowResponse{}
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CloseWindowResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CloseWindowResponse) ProtoMessage() {}
+
+func (x *CloseWindowResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CloseWindowResponse.ProtoReflect.Descriptor instead.
+func (*CloseWindowResponse) Descriptor() ([]byte, []int) {
+	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *CloseWindowResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+// ===== Observation Messages =====
 // Request to create an observation.
 type CreateObservationRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -1440,7 +1488,7 @@ type CreateObservationRequest struct {
 
 func (x *CreateObservationRequest) Reset() {
 	*x = CreateObservationRequest{}
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[25]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1452,7 +1500,7 @@ func (x *CreateObservationRequest) String() string {
 func (*CreateObservationRequest) ProtoMessage() {}
 
 func (x *CreateObservationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[25]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1465,7 +1513,7 @@ func (x *CreateObservationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateObservationRequest.ProtoReflect.Descriptor instead.
 func (*CreateObservationRequest) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{25}
+	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *CreateObservationRequest) GetParent() string {
@@ -1502,7 +1550,7 @@ type CreateObservationMetadata struct {
 
 func (x *CreateObservationMetadata) Reset() {
 	*x = CreateObservationMetadata{}
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[26]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1514,7 +1562,7 @@ func (x *CreateObservationMetadata) String() string {
 func (*CreateObservationMetadata) ProtoMessage() {}
 
 func (x *CreateObservationMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[26]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1527,7 +1575,7 @@ func (x *CreateObservationMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateObservationMetadata.ProtoReflect.Descriptor instead.
 func (*CreateObservationMetadata) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{26}
+	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *CreateObservationMetadata) GetObservation() string {
@@ -1555,7 +1603,7 @@ type GetObservationRequest struct {
 
 func (x *GetObservationRequest) Reset() {
 	*x = GetObservationRequest{}
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[27]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1567,7 +1615,7 @@ func (x *GetObservationRequest) String() string {
 func (*GetObservationRequest) ProtoMessage() {}
 
 func (x *GetObservationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[27]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1580,7 +1628,7 @@ func (x *GetObservationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetObservationRequest.ProtoReflect.Descriptor instead.
 func (*GetObservationRequest) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{27}
+	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *GetObservationRequest) GetName() string {
@@ -1598,18 +1646,14 @@ type ListObservationsRequest struct {
 	// Maximum number of observations to return.
 	PageSize int32 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	// Page token from a previous ListObservations call.
-	PageToken string `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
-	// Filter by observation type.
-	TypeFilter ObservationType `protobuf:"varint,4,opt,name=type_filter,json=typeFilter,proto3,enum=macosusesdk.v1.ObservationType" json:"type_filter,omitempty"`
-	// Filter by observation state.
-	StateFilter   Observation_State `protobuf:"varint,5,opt,name=state_filter,json=stateFilter,proto3,enum=macosusesdk.v1.Observation_State" json:"state_filter,omitempty"`
+	PageToken     string `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListObservationsRequest) Reset() {
 	*x = ListObservationsRequest{}
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[28]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1621,7 +1665,7 @@ func (x *ListObservationsRequest) String() string {
 func (*ListObservationsRequest) ProtoMessage() {}
 
 func (x *ListObservationsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[28]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1634,7 +1678,7 @@ func (x *ListObservationsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListObservationsRequest.ProtoReflect.Descriptor instead.
 func (*ListObservationsRequest) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{28}
+	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *ListObservationsRequest) GetParent() string {
@@ -1658,20 +1702,6 @@ func (x *ListObservationsRequest) GetPageToken() string {
 	return ""
 }
 
-func (x *ListObservationsRequest) GetTypeFilter() ObservationType {
-	if x != nil {
-		return x.TypeFilter
-	}
-	return ObservationType_OBSERVATION_TYPE_UNSPECIFIED
-}
-
-func (x *ListObservationsRequest) GetStateFilter() Observation_State {
-	if x != nil {
-		return x.StateFilter
-	}
-	return Observation_STATE_UNSPECIFIED
-}
-
 // Response from listing observations.
 type ListObservationsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -1685,7 +1715,7 @@ type ListObservationsResponse struct {
 
 func (x *ListObservationsResponse) Reset() {
 	*x = ListObservationsResponse{}
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[29]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1697,7 +1727,7 @@ func (x *ListObservationsResponse) String() string {
 func (*ListObservationsResponse) ProtoMessage() {}
 
 func (x *ListObservationsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[29]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1710,7 +1740,7 @@ func (x *ListObservationsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListObservationsResponse.ProtoReflect.Descriptor instead.
 func (*ListObservationsResponse) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{29}
+	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *ListObservationsResponse) GetObservations() []*Observation {
@@ -1738,7 +1768,7 @@ type CancelObservationRequest struct {
 
 func (x *CancelObservationRequest) Reset() {
 	*x = CancelObservationRequest{}
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[30]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1750,7 +1780,7 @@ func (x *CancelObservationRequest) String() string {
 func (*CancelObservationRequest) ProtoMessage() {}
 
 func (x *CancelObservationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[30]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1763,7 +1793,7 @@ func (x *CancelObservationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelObservationRequest.ProtoReflect.Descriptor instead.
 func (*CancelObservationRequest) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{30}
+	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *CancelObservationRequest) GetName() string {
@@ -1784,7 +1814,7 @@ type StreamObservationsRequest struct {
 
 func (x *StreamObservationsRequest) Reset() {
 	*x = StreamObservationsRequest{}
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[31]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1796,7 +1826,7 @@ func (x *StreamObservationsRequest) String() string {
 func (*StreamObservationsRequest) ProtoMessage() {}
 
 func (x *StreamObservationsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[31]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1809,7 +1839,7 @@ func (x *StreamObservationsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StreamObservationsRequest.ProtoReflect.Descriptor instead.
 func (*StreamObservationsRequest) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{31}
+	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *StreamObservationsRequest) GetName() string {
@@ -1819,6 +1849,53 @@ func (x *StreamObservationsRequest) GetName() string {
 	return ""
 }
 
+// Response from streaming observations.
+type StreamObservationsResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The observation event.
+	Event         *ObservationEvent `protobuf:"bytes,1,opt,name=event,proto3" json:"event,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StreamObservationsResponse) Reset() {
+	*x = StreamObservationsResponse{}
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StreamObservationsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StreamObservationsResponse) ProtoMessage() {}
+
+func (x *StreamObservationsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StreamObservationsResponse.ProtoReflect.Descriptor instead.
+func (*StreamObservationsResponse) Descriptor() ([]byte, []int) {
+	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *StreamObservationsResponse) GetEvent() *ObservationEvent {
+	if x != nil {
+		return x.Event
+	}
+	return nil
+}
+
+// ===== Session Messages =====
 // Request to create a session.
 type CreateSessionRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -1832,7 +1909,7 @@ type CreateSessionRequest struct {
 
 func (x *CreateSessionRequest) Reset() {
 	*x = CreateSessionRequest{}
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[32]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1844,7 +1921,7 @@ func (x *CreateSessionRequest) String() string {
 func (*CreateSessionRequest) ProtoMessage() {}
 
 func (x *CreateSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[32]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1857,7 +1934,7 @@ func (x *CreateSessionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateSessionRequest.ProtoReflect.Descriptor instead.
 func (*CreateSessionRequest) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{32}
+	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *CreateSessionRequest) GetSession() *Session {
@@ -1885,7 +1962,7 @@ type GetSessionRequest struct {
 
 func (x *GetSessionRequest) Reset() {
 	*x = GetSessionRequest{}
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[33]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1897,7 +1974,7 @@ func (x *GetSessionRequest) String() string {
 func (*GetSessionRequest) ProtoMessage() {}
 
 func (x *GetSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[33]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1910,7 +1987,7 @@ func (x *GetSessionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSessionRequest.ProtoReflect.Descriptor instead.
 func (*GetSessionRequest) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{33}
+	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *GetSessionRequest) GetName() string {
@@ -1926,16 +2003,14 @@ type ListSessionsRequest struct {
 	// Maximum number of sessions to return.
 	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	// Page token from a previous ListSessions call.
-	PageToken string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
-	// Filter by session state.
-	StateFilter   Session_State `protobuf:"varint,3,opt,name=state_filter,json=stateFilter,proto3,enum=macosusesdk.v1.Session_State" json:"state_filter,omitempty"`
+	PageToken     string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListSessionsRequest) Reset() {
 	*x = ListSessionsRequest{}
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[34]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1947,7 +2022,7 @@ func (x *ListSessionsRequest) String() string {
 func (*ListSessionsRequest) ProtoMessage() {}
 
 func (x *ListSessionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[34]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1960,7 +2035,7 @@ func (x *ListSessionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSessionsRequest.ProtoReflect.Descriptor instead.
 func (*ListSessionsRequest) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{34}
+	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *ListSessionsRequest) GetPageSize() int32 {
@@ -1977,13 +2052,6 @@ func (x *ListSessionsRequest) GetPageToken() string {
 	return ""
 }
 
-func (x *ListSessionsRequest) GetStateFilter() Session_State {
-	if x != nil {
-		return x.StateFilter
-	}
-	return Session_STATE_UNSPECIFIED
-}
-
 // Response from listing sessions.
 type ListSessionsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -1997,7 +2065,7 @@ type ListSessionsResponse struct {
 
 func (x *ListSessionsResponse) Reset() {
 	*x = ListSessionsResponse{}
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[35]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2009,7 +2077,7 @@ func (x *ListSessionsResponse) String() string {
 func (*ListSessionsResponse) ProtoMessage() {}
 
 func (x *ListSessionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[35]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2022,7 +2090,7 @@ func (x *ListSessionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSessionsResponse.ProtoReflect.Descriptor instead.
 func (*ListSessionsResponse) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{35}
+	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *ListSessionsResponse) GetSessions() []*Session {
@@ -2052,7 +2120,7 @@ type DeleteSessionRequest struct {
 
 func (x *DeleteSessionRequest) Reset() {
 	*x = DeleteSessionRequest{}
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[36]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2064,7 +2132,7 @@ func (x *DeleteSessionRequest) String() string {
 func (*DeleteSessionRequest) ProtoMessage() {}
 
 func (x *DeleteSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[36]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2077,7 +2145,7 @@ func (x *DeleteSessionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteSessionRequest.ProtoReflect.Descriptor instead.
 func (*DeleteSessionRequest) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{36}
+	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *DeleteSessionRequest) GetName() string {
@@ -2094,6 +2162,7 @@ func (x *DeleteSessionRequest) GetForce() bool {
 	return false
 }
 
+// ===== Macro Messages =====
 // Request to create a macro.
 type CreateMacroRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -2107,7 +2176,7 @@ type CreateMacroRequest struct {
 
 func (x *CreateMacroRequest) Reset() {
 	*x = CreateMacroRequest{}
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[37]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2119,7 +2188,7 @@ func (x *CreateMacroRequest) String() string {
 func (*CreateMacroRequest) ProtoMessage() {}
 
 func (x *CreateMacroRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[37]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2132,7 +2201,7 @@ func (x *CreateMacroRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateMacroRequest.ProtoReflect.Descriptor instead.
 func (*CreateMacroRequest) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{37}
+	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *CreateMacroRequest) GetMacro() *Macro {
@@ -2160,7 +2229,7 @@ type GetMacroRequest struct {
 
 func (x *GetMacroRequest) Reset() {
 	*x = GetMacroRequest{}
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[38]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2172,7 +2241,7 @@ func (x *GetMacroRequest) String() string {
 func (*GetMacroRequest) ProtoMessage() {}
 
 func (x *GetMacroRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[38]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2185,7 +2254,7 @@ func (x *GetMacroRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMacroRequest.ProtoReflect.Descriptor instead.
 func (*GetMacroRequest) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{38}
+	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *GetMacroRequest) GetName() string {
@@ -2201,16 +2270,14 @@ type ListMacrosRequest struct {
 	// Maximum number of macros to return.
 	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	// Page token from a previous ListMacros call.
-	PageToken string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
-	// Filter by tags.
-	Tags          []string `protobuf:"bytes,3,rep,name=tags,proto3" json:"tags,omitempty"`
+	PageToken     string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListMacrosRequest) Reset() {
 	*x = ListMacrosRequest{}
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[39]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2222,7 +2289,7 @@ func (x *ListMacrosRequest) String() string {
 func (*ListMacrosRequest) ProtoMessage() {}
 
 func (x *ListMacrosRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[39]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2235,7 +2302,7 @@ func (x *ListMacrosRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMacrosRequest.ProtoReflect.Descriptor instead.
 func (*ListMacrosRequest) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{39}
+	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *ListMacrosRequest) GetPageSize() int32 {
@@ -2252,13 +2319,6 @@ func (x *ListMacrosRequest) GetPageToken() string {
 	return ""
 }
 
-func (x *ListMacrosRequest) GetTags() []string {
-	if x != nil {
-		return x.Tags
-	}
-	return nil
-}
-
 // Response from listing macros.
 type ListMacrosResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -2272,7 +2332,7 @@ type ListMacrosResponse struct {
 
 func (x *ListMacrosResponse) Reset() {
 	*x = ListMacrosResponse{}
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[40]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2284,7 +2344,7 @@ func (x *ListMacrosResponse) String() string {
 func (*ListMacrosResponse) ProtoMessage() {}
 
 func (x *ListMacrosResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[40]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2297,7 +2357,7 @@ func (x *ListMacrosResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMacrosResponse.ProtoReflect.Descriptor instead.
 func (*ListMacrosResponse) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{40}
+	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *ListMacrosResponse) GetMacros() []*Macro {
@@ -2327,7 +2387,7 @@ type UpdateMacroRequest struct {
 
 func (x *UpdateMacroRequest) Reset() {
 	*x = UpdateMacroRequest{}
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[41]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2339,7 +2399,7 @@ func (x *UpdateMacroRequest) String() string {
 func (*UpdateMacroRequest) ProtoMessage() {}
 
 func (x *UpdateMacroRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[41]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2352,7 +2412,7 @@ func (x *UpdateMacroRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateMacroRequest.ProtoReflect.Descriptor instead.
 func (*UpdateMacroRequest) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{41}
+	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *UpdateMacroRequest) GetMacro() *Macro {
@@ -2373,14 +2433,16 @@ func (x *UpdateMacroRequest) GetUpdateMask() *fieldmaskpb.FieldMask {
 type DeleteMacroRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Resource name of the macro.
-	Name          string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// If true, delete child resources (executions, logs).
+	Force         bool `protobuf:"varint,2,opt,name=force,proto3" json:"force,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *DeleteMacroRequest) Reset() {
 	*x = DeleteMacroRequest{}
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[42]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2392,7 +2454,7 @@ func (x *DeleteMacroRequest) String() string {
 func (*DeleteMacroRequest) ProtoMessage() {}
 
 func (x *DeleteMacroRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[42]
+	mi := &file_macosusesdk_v1_macos_use_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2405,7 +2467,7 @@ func (x *DeleteMacroRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteMacroRequest.ProtoReflect.Descriptor instead.
 func (*DeleteMacroRequest) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{42}
+	return file_macosusesdk_v1_macos_use_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *DeleteMacroRequest) GetName() string {
@@ -2413,6 +2475,13 @@ func (x *DeleteMacroRequest) GetName() string {
 		return x.Name
 	}
 	return ""
+}
+
+func (x *DeleteMacroRequest) GetForce() bool {
+	if x != nil {
+		return x.Force
+	}
+	return false
 }
 
 var File_macosusesdk_v1_macos_use_proto protoreflect.FileDescriptor
@@ -2514,7 +2583,9 @@ const file_macosusesdk_v1_macos_use_proto_rawDesc = "" +
 	"\x12CloseWindowRequest\x127\n" +
 	"\x04name\x18\x01 \x01(\tB#\xe0A\x02\xfaA\x1d\n" +
 	"\x1bmacos.googleapis.com/WindowR\x04name\x12\x19\n" +
-	"\x05force\x18\x02 \x01(\bB\x03\xe0A\x01R\x05force\"\xcc\x01\n" +
+	"\x05force\x18\x02 \x01(\bB\x03\xe0A\x01R\x05force\"/\n" +
+	"\x13CloseWindowResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xcc\x01\n" +
 	"\x18CreateObservationRequest\x12@\n" +
 	"\x06parent\x18\x01 \x01(\tB(\xe0A\x02\xfaA\"\n" +
 	" macos.googleapis.com/ApplicationR\x06parent\x12B\n" +
@@ -2526,16 +2597,13 @@ const file_macosusesdk_v1_macos_use_proto_rawDesc = "" +
 	"\x04type\x18\x02 \x01(\x0e2\x1f.macosusesdk.v1.ObservationTypeR\x04type\"U\n" +
 	"\x15GetObservationRequest\x12<\n" +
 	"\x04name\x18\x01 \x01(\tB(\xe0A\x02\xfaA\"\n" +
-	" macos.googleapis.com/ObservationR\x04name\"\xb3\x02\n" +
+	" macos.googleapis.com/ObservationR\x04name\"\xa1\x01\n" +
 	"\x17ListObservationsRequest\x12@\n" +
 	"\x06parent\x18\x01 \x01(\tB(\xe0A\x02\xfaA\"\n" +
 	" macos.googleapis.com/ApplicationR\x06parent\x12 \n" +
 	"\tpage_size\x18\x02 \x01(\x05B\x03\xe0A\x01R\bpageSize\x12\"\n" +
 	"\n" +
-	"page_token\x18\x03 \x01(\tB\x03\xe0A\x01R\tpageToken\x12E\n" +
-	"\vtype_filter\x18\x04 \x01(\x0e2\x1f.macosusesdk.v1.ObservationTypeB\x03\xe0A\x01R\n" +
-	"typeFilter\x12I\n" +
-	"\fstate_filter\x18\x05 \x01(\x0e2!.macosusesdk.v1.Observation.StateB\x03\xe0A\x01R\vstateFilter\"\x83\x01\n" +
+	"page_token\x18\x03 \x01(\tB\x03\xe0A\x01R\tpageToken\"\x83\x01\n" +
 	"\x18ListObservationsResponse\x12?\n" +
 	"\fobservations\x18\x01 \x03(\v2\x1b.macosusesdk.v1.ObservationR\fobservations\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"X\n" +
@@ -2544,19 +2612,20 @@ const file_macosusesdk_v1_macos_use_proto_rawDesc = "" +
 	" macos.googleapis.com/ObservationR\x04name\"Y\n" +
 	"\x19StreamObservationsRequest\x12<\n" +
 	"\x04name\x18\x01 \x01(\tB(\xe0A\x02\xfaA\"\n" +
-	" macos.googleapis.com/ObservationR\x04name\"r\n" +
+	" macos.googleapis.com/ObservationR\x04name\"T\n" +
+	"\x1aStreamObservationsResponse\x126\n" +
+	"\x05event\x18\x01 \x01(\v2 .macosusesdk.v1.ObservationEventR\x05event\"r\n" +
 	"\x14CreateSessionRequest\x126\n" +
 	"\asession\x18\x01 \x01(\v2\x17.macosusesdk.v1.SessionB\x03\xe0A\x02R\asession\x12\"\n" +
 	"\n" +
 	"session_id\x18\x02 \x01(\tB\x03\xe0A\x01R\tsessionId\"M\n" +
 	"\x11GetSessionRequest\x128\n" +
 	"\x04name\x18\x01 \x01(\tB$\xe0A\x02\xfaA\x1e\n" +
-	"\x1cmacos.googleapis.com/SessionR\x04name\"\xa2\x01\n" +
+	"\x1cmacos.googleapis.com/SessionR\x04name\"[\n" +
 	"\x13ListSessionsRequest\x12 \n" +
 	"\tpage_size\x18\x01 \x01(\x05B\x03\xe0A\x01R\bpageSize\x12\"\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tB\x03\xe0A\x01R\tpageToken\x12E\n" +
-	"\fstate_filter\x18\x03 \x01(\x0e2\x1d.macosusesdk.v1.Session.StateB\x03\xe0A\x01R\vstateFilter\"s\n" +
+	"page_token\x18\x02 \x01(\tB\x03\xe0A\x01R\tpageToken\"s\n" +
 	"\x14ListSessionsResponse\x123\n" +
 	"\bsessions\x18\x01 \x03(\v2\x17.macosusesdk.v1.SessionR\bsessions\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"k\n" +
@@ -2569,32 +2638,32 @@ const file_macosusesdk_v1_macos_use_proto_rawDesc = "" +
 	"\bmacro_id\x18\x02 \x01(\tB\x03\xe0A\x01R\amacroId\"I\n" +
 	"\x0fGetMacroRequest\x126\n" +
 	"\x04name\x18\x01 \x01(\tB\"\xe0A\x02\xfaA\x1c\n" +
-	"\x1amacos.googleapis.com/MacroR\x04name\"r\n" +
+	"\x1amacos.googleapis.com/MacroR\x04name\"Y\n" +
 	"\x11ListMacrosRequest\x12 \n" +
 	"\tpage_size\x18\x01 \x01(\x05B\x03\xe0A\x01R\bpageSize\x12\"\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tB\x03\xe0A\x01R\tpageToken\x12\x17\n" +
-	"\x04tags\x18\x03 \x03(\tB\x03\xe0A\x01R\x04tags\"k\n" +
+	"page_token\x18\x02 \x01(\tB\x03\xe0A\x01R\tpageToken\"k\n" +
 	"\x12ListMacrosResponse\x12-\n" +
 	"\x06macros\x18\x01 \x03(\v2\x15.macosusesdk.v1.MacroR\x06macros\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\x88\x01\n" +
 	"\x12UpdateMacroRequest\x120\n" +
 	"\x05macro\x18\x01 \x01(\v2\x15.macosusesdk.v1.MacroB\x03\xe0A\x02R\x05macro\x12@\n" +
 	"\vupdate_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskB\x03\xe0A\x01R\n" +
-	"updateMask\"L\n" +
+	"updateMask\"g\n" +
 	"\x12DeleteMacroRequest\x126\n" +
 	"\x04name\x18\x01 \x01(\tB\"\xe0A\x02\xfaA\x1c\n" +
-	"\x1amacos.googleapis.com/MacroR\x04name2\xa2V\n" +
+	"\x1amacos.googleapis.com/MacroR\x04name\x12\x19\n" +
+	"\x05force\x18\x02 \x01(\bB\x03\xe0A\x01R\x05force2\xe8S\n" +
 	"\bMacosUse\x12\xba\x01\n" +
 	"\x0fOpenApplication\x12&.macosusesdk.v1.OpenApplicationRequest\x1a\x1d.google.longrunning.Operation\"`\xcaA2\n" +
 	"\x17OpenApplicationResponse\x12\x17OpenApplicationMetadata\x82\xd3\xe4\x93\x02%:\x01*\" /v1/applications:openApplication\x12~\n" +
 	"\x0eGetApplication\x12%.macosusesdk.v1.GetApplicationRequest\x1a\x1b.macosusesdk.v1.Application\"(\xdaA\x04name\x82\xd3\xe4\x93\x02\x1b\x12\x19/v1/{name=applications/*}\x12\x7f\n" +
 	"\x10ListApplications\x12'.macosusesdk.v1.ListApplicationsRequest\x1a(.macosusesdk.v1.ListApplicationsResponse\"\x18\x82\xd3\xe4\x93\x02\x12\x12\x10/v1/applications\x12\x7f\n" +
-	"\x11DeleteApplication\x12(.macosusesdk.v1.DeleteApplicationRequest\x1a\x16.google.protobuf.Empty\"(\xdaA\x04name\x82\xd3\xe4\x93\x02\x1b*\x19/v1/{name=applications/*}\x12\xaf\x01\n" +
-	"\vCreateInput\x12\".macosusesdk.v1.CreateInputRequest\x1a\x15.macosusesdk.v1.Input\"e\xdaA\x15parent,input,input_id\x82\xd3\xe4\x93\x02G:\x05inputZ\x1a:\x05input\"\x11/v1/desktopInputs\"\"/v1/{parent=applications/*}/inputs\x12\x93\x01\n" +
-	"\bGetInput\x12\x1f.macosusesdk.v1.GetInputRequest\x1a\x15.macosusesdk.v1.Input\"O\xdaA\x04name\x82\xd3\xe4\x93\x02BZ\x1c\x12\x1a/v1/{name=desktopInputs/*}\x12\"/v1/{name=applications/*/inputs/*}\x12\x9d\x01\n" +
+	"\x11DeleteApplication\x12(.macosusesdk.v1.DeleteApplicationRequest\x1a\x16.google.protobuf.Empty\"(\xdaA\x04name\x82\xd3\xe4\x93\x02\x1b*\x19/v1/{name=applications/*}\x12\x93\x01\n" +
+	"\vCreateInput\x12\".macosusesdk.v1.CreateInputRequest\x1a\x15.macosusesdk.v1.Input\"I\xdaA\x15parent,input,input_id\x82\xd3\xe4\x93\x02+:\x05input\"\"/v1/{parent=applications/*}/inputs\x12u\n" +
+	"\bGetInput\x12\x1f.macosusesdk.v1.GetInputRequest\x1a\x15.macosusesdk.v1.Input\"1\xdaA\x04name\x82\xd3\xe4\x93\x02$\x12\"/v1/{name=applications/*/inputs/*}\x12\x88\x01\n" +
 	"\n" +
-	"ListInputs\x12!.macosusesdk.v1.ListInputsRequest\x1a\".macosusesdk.v1.ListInputsResponse\"H\xdaA\x06parent\x82\xd3\xe4\x93\x029Z\x13\x12\x11/v1/desktopInputs\x12\"/v1/{parent=applications/*}/inputs\x12\xb7\x01\n" +
+	"ListInputs\x12!.macosusesdk.v1.ListInputsRequest\x1a\".macosusesdk.v1.ListInputsResponse\"3\xdaA\x06parent\x82\xd3\xe4\x93\x02$\x12\"/v1/{parent=applications/*}/inputs\x12\xb7\x01\n" +
 	"\x15TraverseAccessibility\x12,.macosusesdk.v1.TraverseAccessibilityRequest\x1a-.macosusesdk.v1.TraverseAccessibilityResponse\"A\xdaA\x04name\x82\xd3\xe4\x93\x024:\x01*\"//v1/{name=applications/*}:traverseAccessibility\x12\xad\x01\n" +
 	"\x12WatchAccessibility\x12).macosusesdk.v1.WatchAccessibilityRequest\x1a*.macosusesdk.v1.WatchAccessibilityResponse\">\xdaA\x04name\x82\xd3\xe4\x93\x021:\x01*\",/v1/{name=applications/*}:watchAccessibility0\x01\x12y\n" +
 	"\tGetWindow\x12 .macosusesdk.v1.GetWindowRequest\x1a\x16.macosusesdk.v1.Window\"2\xdaA\x04name\x82\xd3\xe4\x93\x02%\x12#/v1/{name=applications/*/windows/*}\x12\x8c\x01\n" +
@@ -2604,43 +2673,43 @@ const file_macosusesdk_v1_macos_use_proto_rawDesc = "" +
 	"MoveWindow\x12!.macosusesdk.v1.MoveWindowRequest\x1a\x16.macosusesdk.v1.Window\">\xdaA\bname,x,y\x82\xd3\xe4\x93\x02-:\x01*\"(/v1/{name=applications/*/windows/*}:move\x12\x96\x01\n" +
 	"\fResizeWindow\x12#.macosusesdk.v1.ResizeWindowRequest\x1a\x16.macosusesdk.v1.Window\"I\xdaA\x11name,width,height\x82\xd3\xe4\x93\x02/:\x01*\"*/v1/{name=applications/*/windows/*}:resize\x12\x8f\x01\n" +
 	"\x0eMinimizeWindow\x12%.macosusesdk.v1.MinimizeWindowRequest\x1a\x16.macosusesdk.v1.Window\">\xdaA\x04name\x82\xd3\xe4\x93\x021:\x01*\",/v1/{name=applications/*/windows/*}:minimize\x12\x8c\x01\n" +
-	"\rRestoreWindow\x12$.macosusesdk.v1.RestoreWindowRequest\x1a\x16.macosusesdk.v1.Window\"=\xdaA\x04name\x82\xd3\xe4\x93\x020:\x01*\"+/v1/{name=applications/*/windows/*}:restore\x12}\n" +
-	"\vCloseWindow\x12\".macosusesdk.v1.CloseWindowRequest\x1a\x16.google.protobuf.Empty\"2\xdaA\x04name\x82\xd3\xe4\x93\x02%*#/v1/{name=applications/*/windows/*}\x12\xd9\x01\n" +
-	"\fFindElements\x12#.macosusesdk.v1.FindElementsRequest\x1a$.macosusesdk.v1.FindElementsResponse\"~\xdaA\x0fparent,selector\x82\xd3\xe4\x93\x02f:\x01*Z7:\x01*\"2/v1/{parent=applications/*/windows/*}:findElements\"(/v1/{parent=applications/*}:findElements\x12\x80\x02\n" +
-	"\x14FindElementsInRegion\x12+.macosusesdk.v1.FindElementsInRegionRequest\x1a,.macosusesdk.v1.FindElementsInRegionResponse\"\x8c\x01\xdaA\rparent,region\x82\xd3\xe4\x93\x02v:\x01*Z?:\x01*\":/v1/{parent=applications/*/windows/*}:findElementsInRegion\"0/v1/{parent=applications/*}:findElementsInRegion\x12\xd1\x01\n" +
+	"\rRestoreWindow\x12$.macosusesdk.v1.RestoreWindowRequest\x1a\x16.macosusesdk.v1.Window\"=\xdaA\x04name\x82\xd3\xe4\x93\x020:\x01*\"+/v1/{name=applications/*/windows/*}:restore\x12\x93\x01\n" +
+	"\vCloseWindow\x12\".macosusesdk.v1.CloseWindowRequest\x1a#.macosusesdk.v1.CloseWindowResponse\";\xdaA\x04name\x82\xd3\xe4\x93\x02.:\x01*\")/v1/{name=applications/*/windows/*}:close\x12\xd9\x01\n" +
+	"\fFindElements\x12#.macosusesdk.v1.FindElementsRequest\x1a$.macosusesdk.v1.FindElementsResponse\"~\xdaA\x0fparent,selector\x82\xd3\xe4\x93\x02f:\x01*Z7:\x01*\"2/v1/{parent=applications/*/windows/*}:findElements\"(/v1/{parent=applications/*}:findElements\x12\xf6\x01\n" +
+	"\x12FindRegionElements\x12).macosusesdk.v1.FindRegionElementsRequest\x1a*.macosusesdk.v1.FindRegionElementsResponse\"\x88\x01\xdaA\rparent,region\x82\xd3\xe4\x93\x02r:\x01*Z=:\x01*\"8/v1/{parent=applications/*/windows/*}:findRegionElements\"./v1/{parent=applications/*}:findRegionElements\x12\x7f\n" +
 	"\n" +
-	"GetElement\x12!.macosusesdk.v1.GetElementRequest\x1a\".macosusesdk.v1.GetElementResponse\"|\xdaA\x11parent,element_id\x82\xd3\xe4\x93\x02b:\x01*Z5:\x01*\"0/v1/{parent=applications/*/windows/*}:getElement\"&/v1/{parent=applications/*}:getElement\x12\xc7\x01\n" +
-	"\fClickElement\x12#.macosusesdk.v1.ClickElementRequest\x1a$.macosusesdk.v1.ClickElementResponse\"l\x82\xd3\xe4\x93\x02f:\x01*Z7:\x01*\"2/v1/{parent=applications/*/windows/*}:clickElement\"(/v1/{parent=applications/*}:clickElement\x12\xd6\x01\n" +
-	"\x0fSetElementValue\x12&.macosusesdk.v1.SetElementValueRequest\x1a'.macosusesdk.v1.SetElementValueResponse\"r\x82\xd3\xe4\x93\x02l:\x01*Z::\x01*\"5/v1/{parent=applications/*/windows/*}:setElementValue\"+/v1/{parent=applications/*}:setElementValue\x12\xe0\x01\n" +
-	"\x11GetElementActions\x12(.macosusesdk.v1.GetElementActionsRequest\x1a).macosusesdk.v1.GetElementActionsResponse\"v\x82\xd3\xe4\x93\x02p:\x01*Z<:\x01*\"7/v1/{parent=applications/*/windows/*}:getElementActions\"-/v1/{parent=applications/*}:getElementActions\x12\xef\x01\n" +
-	"\x14PerformElementAction\x12+.macosusesdk.v1.PerformElementActionRequest\x1a,.macosusesdk.v1.PerformElementActionResponse\"|\x82\xd3\xe4\x93\x02v:\x01*Z?:\x01*\":/v1/{parent=applications/*/windows/*}:performElementAction\"0/v1/{parent=applications/*}:performElementAction\x12\xfc\x01\n" +
-	"\x0eWaitForElement\x12%.macosusesdk.v1.WaitForElementRequest\x1a\x1d.google.longrunning.Operation\"\xa3\x01\xcaA0\n" +
-	"\x16WaitForElementResponse\x12\x16WaitForElementMetadata\x82\xd3\xe4\x93\x02j:\x01*Z9:\x01*\"4/v1/{parent=applications/*/windows/*}:waitForElement\"*/v1/{parent=applications/*}:waitForElement\x12\x9a\x02\n" +
-	"\x13WaitForElementState\x12*.macosusesdk.v1.WaitForElementStateRequest\x1a\x1d.google.longrunning.Operation\"\xb7\x01\xcaA:\n" +
-	"\x1bWaitForElementStateResponse\x12\x1bWaitForElementStateMetadata\x82\xd3\xe4\x93\x02t:\x01*Z>:\x01*\"9/v1/{parent=applications/*/windows/*}:waitForElementState\"//v1/{parent=applications/*}:waitForElementState\x12\xeb\x01\n" +
+	"GetElement\x12!.macosusesdk.v1.GetElementRequest\x1a\x19.macosusesdk.type.Element\"3\xdaA\x04name\x82\xd3\xe4\x93\x02&\x12$/v1/{name=applications/*/elements/*}\x12\xc7\x01\n" +
+	"\fClickElement\x12#.macosusesdk.v1.ClickElementRequest\x1a$.macosusesdk.v1.ClickElementResponse\"l\x82\xd3\xe4\x93\x02f:\x01*Z7:\x01*\"2/v1/{parent=applications/*/windows/*}:clickElement\"(/v1/{parent=applications/*}:clickElement\x12\xe0\x01\n" +
+	"\x11WriteElementValue\x12(.macosusesdk.v1.WriteElementValueRequest\x1a).macosusesdk.v1.WriteElementValueResponse\"v\x82\xd3\xe4\x93\x02p:\x01*Z<:\x01*\"7/v1/{parent=applications/*/windows/*}:writeElementValue\"-/v1/{parent=applications/*}:writeElementValue\x12\x9a\x01\n" +
+	"\x11GetElementActions\x12(.macosusesdk.v1.GetElementActionsRequest\x1a\x1e.macosusesdk.v1.ElementActions\";\xdaA\x04name\x82\xd3\xe4\x93\x02.\x12,/v1/{name=applications/*/elements/*}/actions\x12\xef\x01\n" +
+	"\x14PerformElementAction\x12+.macosusesdk.v1.PerformElementActionRequest\x1a,.macosusesdk.v1.PerformElementActionResponse\"|\x82\xd3\xe4\x93\x02v:\x01*Z?:\x01*\":/v1/{parent=applications/*/windows/*}:performElementAction\"0/v1/{parent=applications/*}:performElementAction\x12\xea\x01\n" +
+	"\vWaitElement\x12\".macosusesdk.v1.WaitElementRequest\x1a\x1d.google.longrunning.Operation\"\x97\x01\xcaA*\n" +
+	"\x13WaitElementResponse\x12\x13WaitElementMetadata\x82\xd3\xe4\x93\x02d:\x01*Z6:\x01*\"1/v1/{parent=applications/*/windows/*}:waitElement\"'/v1/{parent=applications/*}:waitElement\x12\x88\x02\n" +
+	"\x10WaitElementState\x12'.macosusesdk.v1.WaitElementStateRequest\x1a\x1d.google.longrunning.Operation\"\xab\x01\xcaA4\n" +
+	"\x18WaitElementStateResponse\x12\x18WaitElementStateMetadata\x82\xd3\xe4\x93\x02n:\x01*Z;:\x01*\"6/v1/{parent=applications/*/windows/*}:waitElementState\",/v1/{parent=applications/*}:waitElementState\x12\xeb\x01\n" +
 	"\x11CreateObservation\x12(.macosusesdk.v1.CreateObservationRequest\x1a\x1d.google.longrunning.Operation\"\x8c\x01\xcaA(\n" +
 	"\vObservation\x12\x19CreateObservationMetadata\xdaA!parent,observation,observation_id\x82\xd3\xe4\x93\x027:\vobservation\"(/v1/{parent=applications/*}/observations\x12\x8d\x01\n" +
 	"\x0eGetObservation\x12%.macosusesdk.v1.GetObservationRequest\x1a\x1b.macosusesdk.v1.Observation\"7\xdaA\x04name\x82\xd3\xe4\x93\x02*\x12(/v1/{name=applications/*/observations/*}\x12\xa0\x01\n" +
 	"\x10ListObservations\x12'.macosusesdk.v1.ListObservationsRequest\x1a(.macosusesdk.v1.ListObservationsResponse\"9\xdaA\x06parent\x82\xd3\xe4\x93\x02*\x12(/v1/{parent=applications/*}/observations\x12\x9d\x01\n" +
-	"\x11CancelObservation\x12(.macosusesdk.v1.CancelObservationRequest\x1a\x1b.macosusesdk.v1.Observation\"A\xdaA\x04name\x82\xd3\xe4\x93\x024:\x01*\"//v1/{name=applications/*/observations/*}:cancel\x12\xa6\x01\n" +
-	"\x12StreamObservations\x12).macosusesdk.v1.StreamObservationsRequest\x1a .macosusesdk.v1.ObservationEvent\"A\xdaA\x04name\x82\xd3\xe4\x93\x024:\x01*\"//v1/{name=applications/*/observations/*}:stream0\x01\x12\x82\x01\n" +
+	"\x11CancelObservation\x12(.macosusesdk.v1.CancelObservationRequest\x1a\x1b.macosusesdk.v1.Observation\"A\xdaA\x04name\x82\xd3\xe4\x93\x024:\x01*\"//v1/{name=applications/*/observations/*}:cancel\x12\xb0\x01\n" +
+	"\x12StreamObservations\x12).macosusesdk.v1.StreamObservationsRequest\x1a*.macosusesdk.v1.StreamObservationsResponse\"A\xdaA\x04name\x82\xd3\xe4\x93\x024:\x01*\"//v1/{name=applications/*/observations/*}:stream0\x01\x12\x82\x01\n" +
 	"\rCreateSession\x12$.macosusesdk.v1.CreateSessionRequest\x1a\x17.macosusesdk.v1.Session\"2\xdaA\x12session,session_id\x82\xd3\xe4\x93\x02\x17:\asession\"\f/v1/sessions\x12n\n" +
 	"\n" +
 	"GetSession\x12!.macosusesdk.v1.GetSessionRequest\x1a\x17.macosusesdk.v1.Session\"$\xdaA\x04name\x82\xd3\xe4\x93\x02\x17\x12\x15/v1/{name=sessions/*}\x12o\n" +
 	"\fListSessions\x12#.macosusesdk.v1.ListSessionsRequest\x1a$.macosusesdk.v1.ListSessionsResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/v1/sessions\x12s\n" +
 	"\rDeleteSession\x12$.macosusesdk.v1.DeleteSessionRequest\x1a\x16.google.protobuf.Empty\"$\xdaA\x04name\x82\xd3\xe4\x93\x02\x17*\x15/v1/{name=sessions/*}\x12\xa5\x01\n" +
-	"\x10BeginTransaction\x12'.macosusesdk.v1.BeginTransactionRequest\x1a(.macosusesdk.v1.BeginTransactionResponse\">\xdaA\asession\x82\xd3\xe4\x93\x02.:\x01*\")/v1/{session=sessions/*}:beginTransaction\x12\xb8\x01\n" +
-	"\x11CommitTransaction\x12(.macosusesdk.v1.CommitTransactionRequest\x1a).macosusesdk.v1.CommitTransactionResponse\"N\xdaA\x16session,transaction_id\x82\xd3\xe4\x93\x02/:\x01*\"*/v1/{session=sessions/*}:commitTransaction\x12\xc0\x01\n" +
-	"\x13RollbackTransaction\x12*.macosusesdk.v1.RollbackTransactionRequest\x1a+.macosusesdk.v1.RollbackTransactionResponse\"P\xdaA\x16session,transaction_id\x82\xd3\xe4\x93\x021:\x01*\",/v1/{session=sessions/*}:rollbackTransaction\x12\xa6\x01\n" +
-	"\x12GetSessionSnapshot\x12).macosusesdk.v1.GetSessionSnapshotRequest\x1a*.macosusesdk.v1.GetSessionSnapshotResponse\"9\xdaA\asession\x82\xd3\xe4\x93\x02):\x01*\"$/v1/{session=sessions/*}:getSnapshot\x12\x8c\x01\n" +
-	"\x11CaptureScreenshot\x12(.macosusesdk.v1.CaptureScreenshotRequest\x1a).macosusesdk.v1.CaptureScreenshotResponse\"\"\x82\xd3\xe4\x93\x02\x1c:\x01*\"\x17/v1/screenshots:capture\x12\xc7\x01\n" +
-	"\x17CaptureWindowScreenshot\x12..macosusesdk.v1.CaptureWindowScreenshotRequest\x1a/.macosusesdk.v1.CaptureWindowScreenshotResponse\"K\xdaA\x06window\x82\xd3\xe4\x93\x02<:\x01*\"7/v1/{window=applications/*/windows/*}:captureScreenshot\x12\x98\x02\n" +
-	"\x18CaptureElementScreenshot\x12/.macosusesdk.v1.CaptureElementScreenshotRequest\x1a0.macosusesdk.v1.CaptureElementScreenshotResponse\"\x98\x01\xdaA\x11parent,element_id\x82\xd3\xe4\x93\x02~:\x01*ZC:\x01*\">/v1/{parent=applications/*/windows/*}:captureElementScreenshot\"4/v1/{parent=applications/*}:captureElementScreenshot\x12\xad\x01\n" +
-	"\x17CaptureRegionScreenshot\x12..macosusesdk.v1.CaptureRegionScreenshotRequest\x1a/.macosusesdk.v1.CaptureRegionScreenshotResponse\"1\xdaA\x06region\x82\xd3\xe4\x93\x02\":\x01*\"\x1d/v1/screenshots:captureRegion\x12p\n" +
-	"\fGetClipboard\x12#.macosusesdk.v1.GetClipboardRequest\x1a$.macosusesdk.v1.GetClipboardResponse\"\x15\x82\xd3\xe4\x93\x02\x0f\x12\r/v1/clipboard\x12\x83\x01\n" +
-	"\fSetClipboard\x12#.macosusesdk.v1.SetClipboardRequest\x1a$.macosusesdk.v1.SetClipboardResponse\"(\xdaA\acontent\x82\xd3\xe4\x93\x02\x18:\acontent\"\r/v1/clipboard\x12v\n" +
-	"\x0eClearClipboard\x12%.macosusesdk.v1.ClearClipboardRequest\x1a&.macosusesdk.v1.ClearClipboardResponse\"\x15\x82\xd3\xe4\x93\x02\x0f*\r/v1/clipboard\x12\x8d\x01\n" +
-	"\x13GetClipboardHistory\x12*.macosusesdk.v1.GetClipboardHistoryRequest\x1a+.macosusesdk.v1.GetClipboardHistoryResponse\"\x1d\x82\xd3\xe4\x93\x02\x17\x12\x15/v1/clipboard/history\x12\xd3\x01\n" +
+	"\x10BeginTransaction\x12'.macosusesdk.v1.BeginTransactionRequest\x1a(.macosusesdk.v1.BeginTransactionResponse\">\xdaA\asession\x82\xd3\xe4\x93\x02.:\x01*\")/v1/{session=sessions/*}:beginTransaction\x12\x99\x01\n" +
+	"\x11CommitTransaction\x12(.macosusesdk.v1.CommitTransactionRequest\x1a\x1b.macosusesdk.v1.Transaction\"=\xdaA\x13name,transaction_id\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/v1/{name=sessions/*}:commit\x12\xab\x01\n" +
+	"\x13RollbackTransaction\x12*.macosusesdk.v1.RollbackTransactionRequest\x1a\x1b.macosusesdk.v1.Transaction\"K\xdaA\x1fname,revision_id,transaction_id\x82\xd3\xe4\x93\x02#:\x01*\"\x1e/v1/{name=sessions/*}:rollback\x12\x8f\x01\n" +
+	"\x12GetSessionSnapshot\x12).macosusesdk.v1.GetSessionSnapshotRequest\x1a\x1f.macosusesdk.v1.SessionSnapshot\"-\xdaA\x04name\x82\xd3\xe4\x93\x02 \x12\x1e/v1/{name=sessions/*}/snapshot\x12\x96\x01\n" +
+	"\x11CaptureScreenshot\x12(.macosusesdk.v1.CaptureScreenshotRequest\x1a).macosusesdk.v1.CaptureScreenshotResponse\",\x82\xd3\xe4\x93\x02&:\x01*\"!/v1/screenshots:captureScreenshot\x12\xcd\x01\n" +
+	"\x17CaptureWindowScreenshot\x12..macosusesdk.v1.CaptureWindowScreenshotRequest\x1a/.macosusesdk.v1.CaptureWindowScreenshotResponse\"Q\xdaA\x06window\x82\xd3\xe4\x93\x02B:\x01*\"=/v1/{window=applications/*/windows/*}:captureWindowScreenshot\x12\x98\x02\n" +
+	"\x18CaptureElementScreenshot\x12/.macosusesdk.v1.CaptureElementScreenshotRequest\x1a0.macosusesdk.v1.CaptureElementScreenshotResponse\"\x98\x01\xdaA\x11parent,element_id\x82\xd3\xe4\x93\x02~:\x01*ZC:\x01*\">/v1/{parent=applications/*/windows/*}:captureElementScreenshot\"4/v1/{parent=applications/*}:captureElementScreenshot\x12\xb7\x01\n" +
+	"\x17CaptureRegionScreenshot\x12..macosusesdk.v1.CaptureRegionScreenshotRequest\x1a/.macosusesdk.v1.CaptureRegionScreenshotResponse\";\xdaA\x06region\x82\xd3\xe4\x93\x02,:\x01*\"'/v1/screenshots:captureRegionScreenshot\x12s\n" +
+	"\fGetClipboard\x12#.macosusesdk.v1.GetClipboardRequest\x1a\x19.macosusesdk.v1.Clipboard\"#\xdaA\x04name\x82\xd3\xe4\x93\x02\x16\x12\x14/v1/{name=clipboard}\x12\x89\x01\n" +
+	"\x0eWriteClipboard\x12%.macosusesdk.v1.WriteClipboardRequest\x1a&.macosusesdk.v1.WriteClipboardResponse\"(\xdaA\acontent\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/v1/clipboard:write\x12\x7f\n" +
+	"\x0eClearClipboard\x12%.macosusesdk.v1.ClearClipboardRequest\x1a&.macosusesdk.v1.ClearClipboardResponse\"\x1e\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/v1/clipboard:clear\x12\x90\x01\n" +
+	"\x13GetClipboardHistory\x12*.macosusesdk.v1.GetClipboardHistoryRequest\x1a .macosusesdk.v1.ClipboardHistory\"+\xdaA\x04name\x82\xd3\xe4\x93\x02\x1e\x12\x1c/v1/{name=clipboard/history}\x12\xd3\x01\n" +
 	"\x16AutomateOpenFileDialog\x12-.macosusesdk.v1.AutomateOpenFileDialogRequest\x1a..macosusesdk.v1.AutomateOpenFileDialogResponse\"Z\xdaA\x15application,file_path\x82\xd3\xe4\x93\x02<:\x01*\"7/v1/{application=applications/*}:automateOpenFileDialog\x12\xd3\x01\n" +
 	"\x16AutomateSaveFileDialog\x12-.macosusesdk.v1.AutomateSaveFileDialogRequest\x1a..macosusesdk.v1.AutomateSaveFileDialogResponse\"Z\xdaA\x15application,file_path\x82\xd3\xe4\x93\x02<:\x01*\"7/v1/{application=applications/*}:automateSaveFileDialog\x12\xa3\x01\n" +
 	"\n" +
@@ -2654,18 +2723,17 @@ const file_macosusesdk_v1_macos_use_proto_rawDesc = "" +
 	"ListMacros\x12!.macosusesdk.v1.ListMacrosRequest\x1a\".macosusesdk.v1.ListMacrosResponse\"\x12\x82\xd3\xe4\x93\x02\f\x12\n" +
 	"/v1/macros\x12\x86\x01\n" +
 	"\vUpdateMacro\x12\".macosusesdk.v1.UpdateMacroRequest\x1a\x15.macosusesdk.v1.Macro\"<\xdaA\x11macro,update_mask\x82\xd3\xe4\x93\x02\":\x05macro2\x19/v1/{macro.name=macros/*}\x12m\n" +
-	"\vDeleteMacro\x12\".macosusesdk.v1.DeleteMacroRequest\x1a\x16.google.protobuf.Empty\"\"\xdaA\x04name\x82\xd3\xe4\x93\x02\x15*\x13/v1/{name=macros/*}\x12\xb2\x01\n" +
-	"\fExecuteMacro\x12#.macosusesdk.v1.ExecuteMacroRequest\x1a\x1d.google.longrunning.Operation\"^\xcaA,\n" +
-	"\x14ExecuteMacroResponse\x12\x14ExecuteMacroMetadata\xdaA\x05macro\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/v1/{macro=macros/*}:execute\x12\x9f\x01\n" +
-	"\x12ExecuteAppleScript\x12).macosusesdk.v1.ExecuteAppleScriptRequest\x1a*.macosusesdk.v1.ExecuteAppleScriptResponse\"2\xdaA\x06script\x82\xd3\xe4\x93\x02#:\x01*\"\x1e/v1/scripts:executeAppleScript\x12\xcf\x01\n" +
-	"\x1eExecuteJavaScriptForAutomation\x125.macosusesdk.v1.ExecuteJavaScriptForAutomationRequest\x1a6.macosusesdk.v1.ExecuteJavaScriptForAutomationResponse\">\xdaA\x06script\x82\xd3\xe4\x93\x02/:\x01*\"*/v1/scripts:executeJavaScriptForAutomation\x12\xa4\x01\n" +
-	"\x13ExecuteShellCommand\x12*.macosusesdk.v1.ExecuteShellCommandRequest\x1a+.macosusesdk.v1.ExecuteShellCommandResponse\"4\xdaA\acommand\x82\xd3\xe4\x93\x02$:\x01*\"\x1f/v1/scripts:executeShellCommand\x12\x8e\x01\n" +
-	"\x0eValidateScript\x12%.macosusesdk.v1.ValidateScriptRequest\x1a&.macosusesdk.v1.ValidateScriptResponse\"-\xdaA\vtype,script\x82\xd3\xe4\x93\x02\x19:\x01*\"\x14/v1/scripts:validate\x12\x9f\x01\n" +
-	"\x18GetScriptingDictionaries\x12/.macosusesdk.v1.GetScriptingDictionariesRequest\x1a0.macosusesdk.v1.GetScriptingDictionariesResponse\" \x82\xd3\xe4\x93\x02\x1a\x12\x18/v1/scripts/dictionaries\x12h\n" +
+	"\vDeleteMacro\x12\".macosusesdk.v1.DeleteMacroRequest\x1a\x16.google.protobuf.Empty\"\"\xdaA\x04name\x82\xd3\xe4\x93\x02\x15*\x13/v1/{name=macros/*}\x12\xb7\x01\n" +
+	"\fExecuteMacro\x12#.macosusesdk.v1.ExecuteMacroRequest\x1a\x1d.google.longrunning.Operation\"c\xcaA,\n" +
+	"\x14ExecuteMacroResponse\x12\x14ExecuteMacroMetadata\xdaA\x05macro\x82\xd3\xe4\x93\x02&:\x01*\"!/v1/{macro=macros/*}:executeMacro\x12\x9f\x01\n" +
+	"\x12ExecuteAppleScript\x12).macosusesdk.v1.ExecuteAppleScriptRequest\x1a*.macosusesdk.v1.ExecuteAppleScriptResponse\"2\xdaA\x06script\x82\xd3\xe4\x93\x02#:\x01*\"\x1e/v1/scripts:executeAppleScript\x12\x9b\x01\n" +
+	"\x11ExecuteJavaScript\x12(.macosusesdk.v1.ExecuteJavaScriptRequest\x1a).macosusesdk.v1.ExecuteJavaScriptResponse\"1\xdaA\x06script\x82\xd3\xe4\x93\x02\":\x01*\"\x1d/v1/scripts:executeJavaScript\x12\xa4\x01\n" +
+	"\x13ExecuteShellCommand\x12*.macosusesdk.v1.ExecuteShellCommandRequest\x1a+.macosusesdk.v1.ExecuteShellCommandResponse\"4\xdaA\acommand\x82\xd3\xe4\x93\x02$:\x01*\"\x1f/v1/scripts:executeShellCommand\x12\x94\x01\n" +
+	"\x0eValidateScript\x12%.macosusesdk.v1.ValidateScriptRequest\x1a&.macosusesdk.v1.ValidateScriptResponse\"3\xdaA\vtype,script\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/v1/scripts:validateScript\x12\xa3\x01\n" +
+	"\x18GetScriptingDictionaries\x12/.macosusesdk.v1.GetScriptingDictionariesRequest\x1a%.macosusesdk.v1.ScriptingDictionaries\"/\xdaA\x04name\x82\xd3\xe4\x93\x02\"\x12 /v1/{name=scriptingDictionaries}\x12k\n" +
 	"\n" +
-	"GetMetrics\x12!.macosusesdk.v1.GetMetricsRequest\x1a\".macosusesdk.v1.GetMetricsResponse\"\x13\x82\xd3\xe4\x93\x02\r\x12\v/v1/metrics\x12\xab\x01\n" +
-	"\x14GetPerformanceReport\x12+.macosusesdk.v1.GetPerformanceReportRequest\x1a,.macosusesdk.v1.GetPerformanceReportResponse\"8\xdaA\n" +
-	"time_range\x82\xd3\xe4\x93\x02%:\x01*\" /v1/metrics:getPerformanceReport\x12w\n" +
+	"GetMetrics\x12!.macosusesdk.v1.GetMetricsRequest\x1a\x17.macosusesdk.v1.Metrics\"!\xdaA\x04name\x82\xd3\xe4\x93\x02\x14\x12\x12/v1/{name=metrics}\x12\x9b\x01\n" +
+	"\x14GetPerformanceReport\x12+.macosusesdk.v1.GetPerformanceReportRequest\x1a!.macosusesdk.v1.PerformanceReport\"3\xdaA\x04name\x82\xd3\xe4\x93\x02&\x12$/v1/{name=metrics/performanceReport}\x12w\n" +
 	"\fResetMetrics\x12#.macosusesdk.v1.ResetMetricsRequest\x1a$.macosusesdk.v1.ResetMetricsResponse\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*\"\x11/v1/metrics:reset\x1a\x17\xcaA\x14macos.googleapis.comB\xc4\x01\n" +
 	"\x12com.macosusesdk.v1B\rMacosUseProtoP\x01ZFgithub.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1\xa2\x02\x03MXX\xaa\x02\x0eMacosusesdk.V1\xca\x02\x0eMacosusesdk\\V1\xe2\x02\x1aMacosusesdk\\V1\\GPBMetadata\xea\x02\x0fMacosusesdk::V1b\x06proto3"
 
@@ -2681,300 +2749,296 @@ func file_macosusesdk_v1_macos_use_proto_rawDescGZIP() []byte {
 	return file_macosusesdk_v1_macos_use_proto_rawDescData
 }
 
-var file_macosusesdk_v1_macos_use_proto_msgTypes = make([]protoimpl.MessageInfo, 43)
+var file_macosusesdk_v1_macos_use_proto_msgTypes = make([]protoimpl.MessageInfo, 45)
 var file_macosusesdk_v1_macos_use_proto_goTypes = []any{
-	(*OpenApplicationRequest)(nil),                 // 0: macosusesdk.v1.OpenApplicationRequest
-	(*OpenApplicationResponse)(nil),                // 1: macosusesdk.v1.OpenApplicationResponse
-	(*OpenApplicationMetadata)(nil),                // 2: macosusesdk.v1.OpenApplicationMetadata
-	(*GetApplicationRequest)(nil),                  // 3: macosusesdk.v1.GetApplicationRequest
-	(*ListApplicationsRequest)(nil),                // 4: macosusesdk.v1.ListApplicationsRequest
-	(*ListApplicationsResponse)(nil),               // 5: macosusesdk.v1.ListApplicationsResponse
-	(*DeleteApplicationRequest)(nil),               // 6: macosusesdk.v1.DeleteApplicationRequest
-	(*CreateInputRequest)(nil),                     // 7: macosusesdk.v1.CreateInputRequest
-	(*GetInputRequest)(nil),                        // 8: macosusesdk.v1.GetInputRequest
-	(*ListInputsRequest)(nil),                      // 9: macosusesdk.v1.ListInputsRequest
-	(*ListInputsResponse)(nil),                     // 10: macosusesdk.v1.ListInputsResponse
-	(*TraverseAccessibilityRequest)(nil),           // 11: macosusesdk.v1.TraverseAccessibilityRequest
-	(*TraverseAccessibilityResponse)(nil),          // 12: macosusesdk.v1.TraverseAccessibilityResponse
-	(*WatchAccessibilityRequest)(nil),              // 13: macosusesdk.v1.WatchAccessibilityRequest
-	(*WatchAccessibilityResponse)(nil),             // 14: macosusesdk.v1.WatchAccessibilityResponse
-	(*ModifiedElement)(nil),                        // 15: macosusesdk.v1.ModifiedElement
-	(*GetWindowRequest)(nil),                       // 16: macosusesdk.v1.GetWindowRequest
-	(*ListWindowsRequest)(nil),                     // 17: macosusesdk.v1.ListWindowsRequest
-	(*ListWindowsResponse)(nil),                    // 18: macosusesdk.v1.ListWindowsResponse
-	(*FocusWindowRequest)(nil),                     // 19: macosusesdk.v1.FocusWindowRequest
-	(*MoveWindowRequest)(nil),                      // 20: macosusesdk.v1.MoveWindowRequest
-	(*ResizeWindowRequest)(nil),                    // 21: macosusesdk.v1.ResizeWindowRequest
-	(*MinimizeWindowRequest)(nil),                  // 22: macosusesdk.v1.MinimizeWindowRequest
-	(*RestoreWindowRequest)(nil),                   // 23: macosusesdk.v1.RestoreWindowRequest
-	(*CloseWindowRequest)(nil),                     // 24: macosusesdk.v1.CloseWindowRequest
-	(*CreateObservationRequest)(nil),               // 25: macosusesdk.v1.CreateObservationRequest
-	(*CreateObservationMetadata)(nil),              // 26: macosusesdk.v1.CreateObservationMetadata
-	(*GetObservationRequest)(nil),                  // 27: macosusesdk.v1.GetObservationRequest
-	(*ListObservationsRequest)(nil),                // 28: macosusesdk.v1.ListObservationsRequest
-	(*ListObservationsResponse)(nil),               // 29: macosusesdk.v1.ListObservationsResponse
-	(*CancelObservationRequest)(nil),               // 30: macosusesdk.v1.CancelObservationRequest
-	(*StreamObservationsRequest)(nil),              // 31: macosusesdk.v1.StreamObservationsRequest
-	(*CreateSessionRequest)(nil),                   // 32: macosusesdk.v1.CreateSessionRequest
-	(*GetSessionRequest)(nil),                      // 33: macosusesdk.v1.GetSessionRequest
-	(*ListSessionsRequest)(nil),                    // 34: macosusesdk.v1.ListSessionsRequest
-	(*ListSessionsResponse)(nil),                   // 35: macosusesdk.v1.ListSessionsResponse
-	(*DeleteSessionRequest)(nil),                   // 36: macosusesdk.v1.DeleteSessionRequest
-	(*CreateMacroRequest)(nil),                     // 37: macosusesdk.v1.CreateMacroRequest
-	(*GetMacroRequest)(nil),                        // 38: macosusesdk.v1.GetMacroRequest
-	(*ListMacrosRequest)(nil),                      // 39: macosusesdk.v1.ListMacrosRequest
-	(*ListMacrosResponse)(nil),                     // 40: macosusesdk.v1.ListMacrosResponse
-	(*UpdateMacroRequest)(nil),                     // 41: macosusesdk.v1.UpdateMacroRequest
-	(*DeleteMacroRequest)(nil),                     // 42: macosusesdk.v1.DeleteMacroRequest
-	(*Application)(nil),                            // 43: macosusesdk.v1.Application
-	(*Input)(nil),                                  // 44: macosusesdk.v1.Input
-	(*_type.Element)(nil),                          // 45: macosusesdk.type.Element
-	(*_type.TraversalStats)(nil),                   // 46: macosusesdk.type.TraversalStats
-	(*timestamppb.Timestamp)(nil),                  // 47: google.protobuf.Timestamp
-	(*AttributeChange)(nil),                        // 48: macosusesdk.v1.AttributeChange
-	(*Window)(nil),                                 // 49: macosusesdk.v1.Window
-	(*Observation)(nil),                            // 50: macosusesdk.v1.Observation
-	(ObservationType)(0),                           // 51: macosusesdk.v1.ObservationType
-	(Observation_State)(0),                         // 52: macosusesdk.v1.Observation.State
-	(*Session)(nil),                                // 53: macosusesdk.v1.Session
-	(Session_State)(0),                             // 54: macosusesdk.v1.Session.State
-	(*Macro)(nil),                                  // 55: macosusesdk.v1.Macro
-	(*fieldmaskpb.FieldMask)(nil),                  // 56: google.protobuf.FieldMask
-	(*FindElementsRequest)(nil),                    // 57: macosusesdk.v1.FindElementsRequest
-	(*FindElementsInRegionRequest)(nil),            // 58: macosusesdk.v1.FindElementsInRegionRequest
-	(*GetElementRequest)(nil),                      // 59: macosusesdk.v1.GetElementRequest
-	(*ClickElementRequest)(nil),                    // 60: macosusesdk.v1.ClickElementRequest
-	(*SetElementValueRequest)(nil),                 // 61: macosusesdk.v1.SetElementValueRequest
-	(*GetElementActionsRequest)(nil),               // 62: macosusesdk.v1.GetElementActionsRequest
-	(*PerformElementActionRequest)(nil),            // 63: macosusesdk.v1.PerformElementActionRequest
-	(*WaitForElementRequest)(nil),                  // 64: macosusesdk.v1.WaitForElementRequest
-	(*WaitForElementStateRequest)(nil),             // 65: macosusesdk.v1.WaitForElementStateRequest
-	(*BeginTransactionRequest)(nil),                // 66: macosusesdk.v1.BeginTransactionRequest
-	(*CommitTransactionRequest)(nil),               // 67: macosusesdk.v1.CommitTransactionRequest
-	(*RollbackTransactionRequest)(nil),             // 68: macosusesdk.v1.RollbackTransactionRequest
-	(*GetSessionSnapshotRequest)(nil),              // 69: macosusesdk.v1.GetSessionSnapshotRequest
-	(*CaptureScreenshotRequest)(nil),               // 70: macosusesdk.v1.CaptureScreenshotRequest
-	(*CaptureWindowScreenshotRequest)(nil),         // 71: macosusesdk.v1.CaptureWindowScreenshotRequest
-	(*CaptureElementScreenshotRequest)(nil),        // 72: macosusesdk.v1.CaptureElementScreenshotRequest
-	(*CaptureRegionScreenshotRequest)(nil),         // 73: macosusesdk.v1.CaptureRegionScreenshotRequest
-	(*GetClipboardRequest)(nil),                    // 74: macosusesdk.v1.GetClipboardRequest
-	(*SetClipboardRequest)(nil),                    // 75: macosusesdk.v1.SetClipboardRequest
-	(*ClearClipboardRequest)(nil),                  // 76: macosusesdk.v1.ClearClipboardRequest
-	(*GetClipboardHistoryRequest)(nil),             // 77: macosusesdk.v1.GetClipboardHistoryRequest
-	(*AutomateOpenFileDialogRequest)(nil),          // 78: macosusesdk.v1.AutomateOpenFileDialogRequest
-	(*AutomateSaveFileDialogRequest)(nil),          // 79: macosusesdk.v1.AutomateSaveFileDialogRequest
-	(*SelectFileRequest)(nil),                      // 80: macosusesdk.v1.SelectFileRequest
-	(*SelectDirectoryRequest)(nil),                 // 81: macosusesdk.v1.SelectDirectoryRequest
-	(*DragFilesRequest)(nil),                       // 82: macosusesdk.v1.DragFilesRequest
-	(*ExecuteMacroRequest)(nil),                    // 83: macosusesdk.v1.ExecuteMacroRequest
-	(*ExecuteAppleScriptRequest)(nil),              // 84: macosusesdk.v1.ExecuteAppleScriptRequest
-	(*ExecuteJavaScriptForAutomationRequest)(nil),  // 85: macosusesdk.v1.ExecuteJavaScriptForAutomationRequest
-	(*ExecuteShellCommandRequest)(nil),             // 86: macosusesdk.v1.ExecuteShellCommandRequest
-	(*ValidateScriptRequest)(nil),                  // 87: macosusesdk.v1.ValidateScriptRequest
-	(*GetScriptingDictionariesRequest)(nil),        // 88: macosusesdk.v1.GetScriptingDictionariesRequest
-	(*GetMetricsRequest)(nil),                      // 89: macosusesdk.v1.GetMetricsRequest
-	(*GetPerformanceReportRequest)(nil),            // 90: macosusesdk.v1.GetPerformanceReportRequest
-	(*ResetMetricsRequest)(nil),                    // 91: macosusesdk.v1.ResetMetricsRequest
-	(*longrunningpb.Operation)(nil),                // 92: google.longrunning.Operation
-	(*emptypb.Empty)(nil),                          // 93: google.protobuf.Empty
-	(*FindElementsResponse)(nil),                   // 94: macosusesdk.v1.FindElementsResponse
-	(*FindElementsInRegionResponse)(nil),           // 95: macosusesdk.v1.FindElementsInRegionResponse
-	(*GetElementResponse)(nil),                     // 96: macosusesdk.v1.GetElementResponse
-	(*ClickElementResponse)(nil),                   // 97: macosusesdk.v1.ClickElementResponse
-	(*SetElementValueResponse)(nil),                // 98: macosusesdk.v1.SetElementValueResponse
-	(*GetElementActionsResponse)(nil),              // 99: macosusesdk.v1.GetElementActionsResponse
-	(*PerformElementActionResponse)(nil),           // 100: macosusesdk.v1.PerformElementActionResponse
-	(*ObservationEvent)(nil),                       // 101: macosusesdk.v1.ObservationEvent
-	(*BeginTransactionResponse)(nil),               // 102: macosusesdk.v1.BeginTransactionResponse
-	(*CommitTransactionResponse)(nil),              // 103: macosusesdk.v1.CommitTransactionResponse
-	(*RollbackTransactionResponse)(nil),            // 104: macosusesdk.v1.RollbackTransactionResponse
-	(*GetSessionSnapshotResponse)(nil),             // 105: macosusesdk.v1.GetSessionSnapshotResponse
-	(*CaptureScreenshotResponse)(nil),              // 106: macosusesdk.v1.CaptureScreenshotResponse
-	(*CaptureWindowScreenshotResponse)(nil),        // 107: macosusesdk.v1.CaptureWindowScreenshotResponse
-	(*CaptureElementScreenshotResponse)(nil),       // 108: macosusesdk.v1.CaptureElementScreenshotResponse
-	(*CaptureRegionScreenshotResponse)(nil),        // 109: macosusesdk.v1.CaptureRegionScreenshotResponse
-	(*GetClipboardResponse)(nil),                   // 110: macosusesdk.v1.GetClipboardResponse
-	(*SetClipboardResponse)(nil),                   // 111: macosusesdk.v1.SetClipboardResponse
-	(*ClearClipboardResponse)(nil),                 // 112: macosusesdk.v1.ClearClipboardResponse
-	(*GetClipboardHistoryResponse)(nil),            // 113: macosusesdk.v1.GetClipboardHistoryResponse
-	(*AutomateOpenFileDialogResponse)(nil),         // 114: macosusesdk.v1.AutomateOpenFileDialogResponse
-	(*AutomateSaveFileDialogResponse)(nil),         // 115: macosusesdk.v1.AutomateSaveFileDialogResponse
-	(*SelectFileResponse)(nil),                     // 116: macosusesdk.v1.SelectFileResponse
-	(*SelectDirectoryResponse)(nil),                // 117: macosusesdk.v1.SelectDirectoryResponse
-	(*DragFilesResponse)(nil),                      // 118: macosusesdk.v1.DragFilesResponse
-	(*ExecuteAppleScriptResponse)(nil),             // 119: macosusesdk.v1.ExecuteAppleScriptResponse
-	(*ExecuteJavaScriptForAutomationResponse)(nil), // 120: macosusesdk.v1.ExecuteJavaScriptForAutomationResponse
-	(*ExecuteShellCommandResponse)(nil),            // 121: macosusesdk.v1.ExecuteShellCommandResponse
-	(*ValidateScriptResponse)(nil),                 // 122: macosusesdk.v1.ValidateScriptResponse
-	(*GetScriptingDictionariesResponse)(nil),       // 123: macosusesdk.v1.GetScriptingDictionariesResponse
-	(*GetMetricsResponse)(nil),                     // 124: macosusesdk.v1.GetMetricsResponse
-	(*GetPerformanceReportResponse)(nil),           // 125: macosusesdk.v1.GetPerformanceReportResponse
-	(*ResetMetricsResponse)(nil),                   // 126: macosusesdk.v1.ResetMetricsResponse
+	(*OpenApplicationRequest)(nil),           // 0: macosusesdk.v1.OpenApplicationRequest
+	(*OpenApplicationResponse)(nil),          // 1: macosusesdk.v1.OpenApplicationResponse
+	(*OpenApplicationMetadata)(nil),          // 2: macosusesdk.v1.OpenApplicationMetadata
+	(*GetApplicationRequest)(nil),            // 3: macosusesdk.v1.GetApplicationRequest
+	(*ListApplicationsRequest)(nil),          // 4: macosusesdk.v1.ListApplicationsRequest
+	(*ListApplicationsResponse)(nil),         // 5: macosusesdk.v1.ListApplicationsResponse
+	(*DeleteApplicationRequest)(nil),         // 6: macosusesdk.v1.DeleteApplicationRequest
+	(*CreateInputRequest)(nil),               // 7: macosusesdk.v1.CreateInputRequest
+	(*GetInputRequest)(nil),                  // 8: macosusesdk.v1.GetInputRequest
+	(*ListInputsRequest)(nil),                // 9: macosusesdk.v1.ListInputsRequest
+	(*ListInputsResponse)(nil),               // 10: macosusesdk.v1.ListInputsResponse
+	(*TraverseAccessibilityRequest)(nil),     // 11: macosusesdk.v1.TraverseAccessibilityRequest
+	(*TraverseAccessibilityResponse)(nil),    // 12: macosusesdk.v1.TraverseAccessibilityResponse
+	(*WatchAccessibilityRequest)(nil),        // 13: macosusesdk.v1.WatchAccessibilityRequest
+	(*WatchAccessibilityResponse)(nil),       // 14: macosusesdk.v1.WatchAccessibilityResponse
+	(*ModifiedElement)(nil),                  // 15: macosusesdk.v1.ModifiedElement
+	(*GetWindowRequest)(nil),                 // 16: macosusesdk.v1.GetWindowRequest
+	(*ListWindowsRequest)(nil),               // 17: macosusesdk.v1.ListWindowsRequest
+	(*ListWindowsResponse)(nil),              // 18: macosusesdk.v1.ListWindowsResponse
+	(*FocusWindowRequest)(nil),               // 19: macosusesdk.v1.FocusWindowRequest
+	(*MoveWindowRequest)(nil),                // 20: macosusesdk.v1.MoveWindowRequest
+	(*ResizeWindowRequest)(nil),              // 21: macosusesdk.v1.ResizeWindowRequest
+	(*MinimizeWindowRequest)(nil),            // 22: macosusesdk.v1.MinimizeWindowRequest
+	(*RestoreWindowRequest)(nil),             // 23: macosusesdk.v1.RestoreWindowRequest
+	(*CloseWindowRequest)(nil),               // 24: macosusesdk.v1.CloseWindowRequest
+	(*CloseWindowResponse)(nil),              // 25: macosusesdk.v1.CloseWindowResponse
+	(*CreateObservationRequest)(nil),         // 26: macosusesdk.v1.CreateObservationRequest
+	(*CreateObservationMetadata)(nil),        // 27: macosusesdk.v1.CreateObservationMetadata
+	(*GetObservationRequest)(nil),            // 28: macosusesdk.v1.GetObservationRequest
+	(*ListObservationsRequest)(nil),          // 29: macosusesdk.v1.ListObservationsRequest
+	(*ListObservationsResponse)(nil),         // 30: macosusesdk.v1.ListObservationsResponse
+	(*CancelObservationRequest)(nil),         // 31: macosusesdk.v1.CancelObservationRequest
+	(*StreamObservationsRequest)(nil),        // 32: macosusesdk.v1.StreamObservationsRequest
+	(*StreamObservationsResponse)(nil),       // 33: macosusesdk.v1.StreamObservationsResponse
+	(*CreateSessionRequest)(nil),             // 34: macosusesdk.v1.CreateSessionRequest
+	(*GetSessionRequest)(nil),                // 35: macosusesdk.v1.GetSessionRequest
+	(*ListSessionsRequest)(nil),              // 36: macosusesdk.v1.ListSessionsRequest
+	(*ListSessionsResponse)(nil),             // 37: macosusesdk.v1.ListSessionsResponse
+	(*DeleteSessionRequest)(nil),             // 38: macosusesdk.v1.DeleteSessionRequest
+	(*CreateMacroRequest)(nil),               // 39: macosusesdk.v1.CreateMacroRequest
+	(*GetMacroRequest)(nil),                  // 40: macosusesdk.v1.GetMacroRequest
+	(*ListMacrosRequest)(nil),                // 41: macosusesdk.v1.ListMacrosRequest
+	(*ListMacrosResponse)(nil),               // 42: macosusesdk.v1.ListMacrosResponse
+	(*UpdateMacroRequest)(nil),               // 43: macosusesdk.v1.UpdateMacroRequest
+	(*DeleteMacroRequest)(nil),               // 44: macosusesdk.v1.DeleteMacroRequest
+	(*Application)(nil),                      // 45: macosusesdk.v1.Application
+	(*Input)(nil),                            // 46: macosusesdk.v1.Input
+	(*_type.Element)(nil),                    // 47: macosusesdk.type.Element
+	(*_type.TraversalStats)(nil),             // 48: macosusesdk.type.TraversalStats
+	(*timestamppb.Timestamp)(nil),            // 49: google.protobuf.Timestamp
+	(*AttributeChange)(nil),                  // 50: macosusesdk.v1.AttributeChange
+	(*Window)(nil),                           // 51: macosusesdk.v1.Window
+	(*Observation)(nil),                      // 52: macosusesdk.v1.Observation
+	(ObservationType)(0),                     // 53: macosusesdk.v1.ObservationType
+	(*ObservationEvent)(nil),                 // 54: macosusesdk.v1.ObservationEvent
+	(*Session)(nil),                          // 55: macosusesdk.v1.Session
+	(*Macro)(nil),                            // 56: macosusesdk.v1.Macro
+	(*fieldmaskpb.FieldMask)(nil),            // 57: google.protobuf.FieldMask
+	(*FindElementsRequest)(nil),              // 58: macosusesdk.v1.FindElementsRequest
+	(*FindRegionElementsRequest)(nil),        // 59: macosusesdk.v1.FindRegionElementsRequest
+	(*GetElementRequest)(nil),                // 60: macosusesdk.v1.GetElementRequest
+	(*ClickElementRequest)(nil),              // 61: macosusesdk.v1.ClickElementRequest
+	(*WriteElementValueRequest)(nil),         // 62: macosusesdk.v1.WriteElementValueRequest
+	(*GetElementActionsRequest)(nil),         // 63: macosusesdk.v1.GetElementActionsRequest
+	(*PerformElementActionRequest)(nil),      // 64: macosusesdk.v1.PerformElementActionRequest
+	(*WaitElementRequest)(nil),               // 65: macosusesdk.v1.WaitElementRequest
+	(*WaitElementStateRequest)(nil),          // 66: macosusesdk.v1.WaitElementStateRequest
+	(*BeginTransactionRequest)(nil),          // 67: macosusesdk.v1.BeginTransactionRequest
+	(*CommitTransactionRequest)(nil),         // 68: macosusesdk.v1.CommitTransactionRequest
+	(*RollbackTransactionRequest)(nil),       // 69: macosusesdk.v1.RollbackTransactionRequest
+	(*GetSessionSnapshotRequest)(nil),        // 70: macosusesdk.v1.GetSessionSnapshotRequest
+	(*CaptureScreenshotRequest)(nil),         // 71: macosusesdk.v1.CaptureScreenshotRequest
+	(*CaptureWindowScreenshotRequest)(nil),   // 72: macosusesdk.v1.CaptureWindowScreenshotRequest
+	(*CaptureElementScreenshotRequest)(nil),  // 73: macosusesdk.v1.CaptureElementScreenshotRequest
+	(*CaptureRegionScreenshotRequest)(nil),   // 74: macosusesdk.v1.CaptureRegionScreenshotRequest
+	(*GetClipboardRequest)(nil),              // 75: macosusesdk.v1.GetClipboardRequest
+	(*WriteClipboardRequest)(nil),            // 76: macosusesdk.v1.WriteClipboardRequest
+	(*ClearClipboardRequest)(nil),            // 77: macosusesdk.v1.ClearClipboardRequest
+	(*GetClipboardHistoryRequest)(nil),       // 78: macosusesdk.v1.GetClipboardHistoryRequest
+	(*AutomateOpenFileDialogRequest)(nil),    // 79: macosusesdk.v1.AutomateOpenFileDialogRequest
+	(*AutomateSaveFileDialogRequest)(nil),    // 80: macosusesdk.v1.AutomateSaveFileDialogRequest
+	(*SelectFileRequest)(nil),                // 81: macosusesdk.v1.SelectFileRequest
+	(*SelectDirectoryRequest)(nil),           // 82: macosusesdk.v1.SelectDirectoryRequest
+	(*DragFilesRequest)(nil),                 // 83: macosusesdk.v1.DragFilesRequest
+	(*ExecuteMacroRequest)(nil),              // 84: macosusesdk.v1.ExecuteMacroRequest
+	(*ExecuteAppleScriptRequest)(nil),        // 85: macosusesdk.v1.ExecuteAppleScriptRequest
+	(*ExecuteJavaScriptRequest)(nil),         // 86: macosusesdk.v1.ExecuteJavaScriptRequest
+	(*ExecuteShellCommandRequest)(nil),       // 87: macosusesdk.v1.ExecuteShellCommandRequest
+	(*ValidateScriptRequest)(nil),            // 88: macosusesdk.v1.ValidateScriptRequest
+	(*GetScriptingDictionariesRequest)(nil),  // 89: macosusesdk.v1.GetScriptingDictionariesRequest
+	(*GetMetricsRequest)(nil),                // 90: macosusesdk.v1.GetMetricsRequest
+	(*GetPerformanceReportRequest)(nil),      // 91: macosusesdk.v1.GetPerformanceReportRequest
+	(*ResetMetricsRequest)(nil),              // 92: macosusesdk.v1.ResetMetricsRequest
+	(*longrunningpb.Operation)(nil),          // 93: google.longrunning.Operation
+	(*emptypb.Empty)(nil),                    // 94: google.protobuf.Empty
+	(*FindElementsResponse)(nil),             // 95: macosusesdk.v1.FindElementsResponse
+	(*FindRegionElementsResponse)(nil),       // 96: macosusesdk.v1.FindRegionElementsResponse
+	(*ClickElementResponse)(nil),             // 97: macosusesdk.v1.ClickElementResponse
+	(*WriteElementValueResponse)(nil),        // 98: macosusesdk.v1.WriteElementValueResponse
+	(*ElementActions)(nil),                   // 99: macosusesdk.v1.ElementActions
+	(*PerformElementActionResponse)(nil),     // 100: macosusesdk.v1.PerformElementActionResponse
+	(*BeginTransactionResponse)(nil),         // 101: macosusesdk.v1.BeginTransactionResponse
+	(*Transaction)(nil),                      // 102: macosusesdk.v1.Transaction
+	(*SessionSnapshot)(nil),                  // 103: macosusesdk.v1.SessionSnapshot
+	(*CaptureScreenshotResponse)(nil),        // 104: macosusesdk.v1.CaptureScreenshotResponse
+	(*CaptureWindowScreenshotResponse)(nil),  // 105: macosusesdk.v1.CaptureWindowScreenshotResponse
+	(*CaptureElementScreenshotResponse)(nil), // 106: macosusesdk.v1.CaptureElementScreenshotResponse
+	(*CaptureRegionScreenshotResponse)(nil),  // 107: macosusesdk.v1.CaptureRegionScreenshotResponse
+	(*Clipboard)(nil),                        // 108: macosusesdk.v1.Clipboard
+	(*WriteClipboardResponse)(nil),           // 109: macosusesdk.v1.WriteClipboardResponse
+	(*ClearClipboardResponse)(nil),           // 110: macosusesdk.v1.ClearClipboardResponse
+	(*ClipboardHistory)(nil),                 // 111: macosusesdk.v1.ClipboardHistory
+	(*AutomateOpenFileDialogResponse)(nil),   // 112: macosusesdk.v1.AutomateOpenFileDialogResponse
+	(*AutomateSaveFileDialogResponse)(nil),   // 113: macosusesdk.v1.AutomateSaveFileDialogResponse
+	(*SelectFileResponse)(nil),               // 114: macosusesdk.v1.SelectFileResponse
+	(*SelectDirectoryResponse)(nil),          // 115: macosusesdk.v1.SelectDirectoryResponse
+	(*DragFilesResponse)(nil),                // 116: macosusesdk.v1.DragFilesResponse
+	(*ExecuteAppleScriptResponse)(nil),       // 117: macosusesdk.v1.ExecuteAppleScriptResponse
+	(*ExecuteJavaScriptResponse)(nil),        // 118: macosusesdk.v1.ExecuteJavaScriptResponse
+	(*ExecuteShellCommandResponse)(nil),      // 119: macosusesdk.v1.ExecuteShellCommandResponse
+	(*ValidateScriptResponse)(nil),           // 120: macosusesdk.v1.ValidateScriptResponse
+	(*ScriptingDictionaries)(nil),            // 121: macosusesdk.v1.ScriptingDictionaries
+	(*Metrics)(nil),                          // 122: macosusesdk.v1.Metrics
+	(*PerformanceReport)(nil),                // 123: macosusesdk.v1.PerformanceReport
+	(*ResetMetricsResponse)(nil),             // 124: macosusesdk.v1.ResetMetricsResponse
 }
 var file_macosusesdk_v1_macos_use_proto_depIdxs = []int32{
-	43,  // 0: macosusesdk.v1.OpenApplicationResponse.application:type_name -> macosusesdk.v1.Application
-	43,  // 1: macosusesdk.v1.ListApplicationsResponse.applications:type_name -> macosusesdk.v1.Application
-	44,  // 2: macosusesdk.v1.CreateInputRequest.input:type_name -> macosusesdk.v1.Input
-	44,  // 3: macosusesdk.v1.ListInputsResponse.inputs:type_name -> macosusesdk.v1.Input
-	45,  // 4: macosusesdk.v1.TraverseAccessibilityResponse.elements:type_name -> macosusesdk.type.Element
-	46,  // 5: macosusesdk.v1.TraverseAccessibilityResponse.stats:type_name -> macosusesdk.type.TraversalStats
-	47,  // 6: macosusesdk.v1.TraverseAccessibilityResponse.processing_time:type_name -> google.protobuf.Timestamp
-	45,  // 7: macosusesdk.v1.WatchAccessibilityResponse.added:type_name -> macosusesdk.type.Element
-	45,  // 8: macosusesdk.v1.WatchAccessibilityResponse.removed:type_name -> macosusesdk.type.Element
+	45,  // 0: macosusesdk.v1.OpenApplicationResponse.application:type_name -> macosusesdk.v1.Application
+	45,  // 1: macosusesdk.v1.ListApplicationsResponse.applications:type_name -> macosusesdk.v1.Application
+	46,  // 2: macosusesdk.v1.CreateInputRequest.input:type_name -> macosusesdk.v1.Input
+	46,  // 3: macosusesdk.v1.ListInputsResponse.inputs:type_name -> macosusesdk.v1.Input
+	47,  // 4: macosusesdk.v1.TraverseAccessibilityResponse.elements:type_name -> macosusesdk.type.Element
+	48,  // 5: macosusesdk.v1.TraverseAccessibilityResponse.stats:type_name -> macosusesdk.type.TraversalStats
+	49,  // 6: macosusesdk.v1.TraverseAccessibilityResponse.processing_time:type_name -> google.protobuf.Timestamp
+	47,  // 7: macosusesdk.v1.WatchAccessibilityResponse.added:type_name -> macosusesdk.type.Element
+	47,  // 8: macosusesdk.v1.WatchAccessibilityResponse.removed:type_name -> macosusesdk.type.Element
 	15,  // 9: macosusesdk.v1.WatchAccessibilityResponse.modified:type_name -> macosusesdk.v1.ModifiedElement
-	45,  // 10: macosusesdk.v1.ModifiedElement.old_element:type_name -> macosusesdk.type.Element
-	45,  // 11: macosusesdk.v1.ModifiedElement.new_element:type_name -> macosusesdk.type.Element
-	48,  // 12: macosusesdk.v1.ModifiedElement.changes:type_name -> macosusesdk.v1.AttributeChange
-	49,  // 13: macosusesdk.v1.ListWindowsResponse.windows:type_name -> macosusesdk.v1.Window
-	50,  // 14: macosusesdk.v1.CreateObservationRequest.observation:type_name -> macosusesdk.v1.Observation
-	51,  // 15: macosusesdk.v1.CreateObservationMetadata.type:type_name -> macosusesdk.v1.ObservationType
-	51,  // 16: macosusesdk.v1.ListObservationsRequest.type_filter:type_name -> macosusesdk.v1.ObservationType
-	52,  // 17: macosusesdk.v1.ListObservationsRequest.state_filter:type_name -> macosusesdk.v1.Observation.State
-	50,  // 18: macosusesdk.v1.ListObservationsResponse.observations:type_name -> macosusesdk.v1.Observation
-	53,  // 19: macosusesdk.v1.CreateSessionRequest.session:type_name -> macosusesdk.v1.Session
-	54,  // 20: macosusesdk.v1.ListSessionsRequest.state_filter:type_name -> macosusesdk.v1.Session.State
-	53,  // 21: macosusesdk.v1.ListSessionsResponse.sessions:type_name -> macosusesdk.v1.Session
-	55,  // 22: macosusesdk.v1.CreateMacroRequest.macro:type_name -> macosusesdk.v1.Macro
-	55,  // 23: macosusesdk.v1.ListMacrosResponse.macros:type_name -> macosusesdk.v1.Macro
-	55,  // 24: macosusesdk.v1.UpdateMacroRequest.macro:type_name -> macosusesdk.v1.Macro
-	56,  // 25: macosusesdk.v1.UpdateMacroRequest.update_mask:type_name -> google.protobuf.FieldMask
-	0,   // 26: macosusesdk.v1.MacosUse.OpenApplication:input_type -> macosusesdk.v1.OpenApplicationRequest
-	3,   // 27: macosusesdk.v1.MacosUse.GetApplication:input_type -> macosusesdk.v1.GetApplicationRequest
-	4,   // 28: macosusesdk.v1.MacosUse.ListApplications:input_type -> macosusesdk.v1.ListApplicationsRequest
-	6,   // 29: macosusesdk.v1.MacosUse.DeleteApplication:input_type -> macosusesdk.v1.DeleteApplicationRequest
-	7,   // 30: macosusesdk.v1.MacosUse.CreateInput:input_type -> macosusesdk.v1.CreateInputRequest
-	8,   // 31: macosusesdk.v1.MacosUse.GetInput:input_type -> macosusesdk.v1.GetInputRequest
-	9,   // 32: macosusesdk.v1.MacosUse.ListInputs:input_type -> macosusesdk.v1.ListInputsRequest
-	11,  // 33: macosusesdk.v1.MacosUse.TraverseAccessibility:input_type -> macosusesdk.v1.TraverseAccessibilityRequest
-	13,  // 34: macosusesdk.v1.MacosUse.WatchAccessibility:input_type -> macosusesdk.v1.WatchAccessibilityRequest
-	16,  // 35: macosusesdk.v1.MacosUse.GetWindow:input_type -> macosusesdk.v1.GetWindowRequest
-	17,  // 36: macosusesdk.v1.MacosUse.ListWindows:input_type -> macosusesdk.v1.ListWindowsRequest
-	19,  // 37: macosusesdk.v1.MacosUse.FocusWindow:input_type -> macosusesdk.v1.FocusWindowRequest
-	20,  // 38: macosusesdk.v1.MacosUse.MoveWindow:input_type -> macosusesdk.v1.MoveWindowRequest
-	21,  // 39: macosusesdk.v1.MacosUse.ResizeWindow:input_type -> macosusesdk.v1.ResizeWindowRequest
-	22,  // 40: macosusesdk.v1.MacosUse.MinimizeWindow:input_type -> macosusesdk.v1.MinimizeWindowRequest
-	23,  // 41: macosusesdk.v1.MacosUse.RestoreWindow:input_type -> macosusesdk.v1.RestoreWindowRequest
-	24,  // 42: macosusesdk.v1.MacosUse.CloseWindow:input_type -> macosusesdk.v1.CloseWindowRequest
-	57,  // 43: macosusesdk.v1.MacosUse.FindElements:input_type -> macosusesdk.v1.FindElementsRequest
-	58,  // 44: macosusesdk.v1.MacosUse.FindElementsInRegion:input_type -> macosusesdk.v1.FindElementsInRegionRequest
-	59,  // 45: macosusesdk.v1.MacosUse.GetElement:input_type -> macosusesdk.v1.GetElementRequest
-	60,  // 46: macosusesdk.v1.MacosUse.ClickElement:input_type -> macosusesdk.v1.ClickElementRequest
-	61,  // 47: macosusesdk.v1.MacosUse.SetElementValue:input_type -> macosusesdk.v1.SetElementValueRequest
-	62,  // 48: macosusesdk.v1.MacosUse.GetElementActions:input_type -> macosusesdk.v1.GetElementActionsRequest
-	63,  // 49: macosusesdk.v1.MacosUse.PerformElementAction:input_type -> macosusesdk.v1.PerformElementActionRequest
-	64,  // 50: macosusesdk.v1.MacosUse.WaitForElement:input_type -> macosusesdk.v1.WaitForElementRequest
-	65,  // 51: macosusesdk.v1.MacosUse.WaitForElementState:input_type -> macosusesdk.v1.WaitForElementStateRequest
-	25,  // 52: macosusesdk.v1.MacosUse.CreateObservation:input_type -> macosusesdk.v1.CreateObservationRequest
-	27,  // 53: macosusesdk.v1.MacosUse.GetObservation:input_type -> macosusesdk.v1.GetObservationRequest
-	28,  // 54: macosusesdk.v1.MacosUse.ListObservations:input_type -> macosusesdk.v1.ListObservationsRequest
-	30,  // 55: macosusesdk.v1.MacosUse.CancelObservation:input_type -> macosusesdk.v1.CancelObservationRequest
-	31,  // 56: macosusesdk.v1.MacosUse.StreamObservations:input_type -> macosusesdk.v1.StreamObservationsRequest
-	32,  // 57: macosusesdk.v1.MacosUse.CreateSession:input_type -> macosusesdk.v1.CreateSessionRequest
-	33,  // 58: macosusesdk.v1.MacosUse.GetSession:input_type -> macosusesdk.v1.GetSessionRequest
-	34,  // 59: macosusesdk.v1.MacosUse.ListSessions:input_type -> macosusesdk.v1.ListSessionsRequest
-	36,  // 60: macosusesdk.v1.MacosUse.DeleteSession:input_type -> macosusesdk.v1.DeleteSessionRequest
-	66,  // 61: macosusesdk.v1.MacosUse.BeginTransaction:input_type -> macosusesdk.v1.BeginTransactionRequest
-	67,  // 62: macosusesdk.v1.MacosUse.CommitTransaction:input_type -> macosusesdk.v1.CommitTransactionRequest
-	68,  // 63: macosusesdk.v1.MacosUse.RollbackTransaction:input_type -> macosusesdk.v1.RollbackTransactionRequest
-	69,  // 64: macosusesdk.v1.MacosUse.GetSessionSnapshot:input_type -> macosusesdk.v1.GetSessionSnapshotRequest
-	70,  // 65: macosusesdk.v1.MacosUse.CaptureScreenshot:input_type -> macosusesdk.v1.CaptureScreenshotRequest
-	71,  // 66: macosusesdk.v1.MacosUse.CaptureWindowScreenshot:input_type -> macosusesdk.v1.CaptureWindowScreenshotRequest
-	72,  // 67: macosusesdk.v1.MacosUse.CaptureElementScreenshot:input_type -> macosusesdk.v1.CaptureElementScreenshotRequest
-	73,  // 68: macosusesdk.v1.MacosUse.CaptureRegionScreenshot:input_type -> macosusesdk.v1.CaptureRegionScreenshotRequest
-	74,  // 69: macosusesdk.v1.MacosUse.GetClipboard:input_type -> macosusesdk.v1.GetClipboardRequest
-	75,  // 70: macosusesdk.v1.MacosUse.SetClipboard:input_type -> macosusesdk.v1.SetClipboardRequest
-	76,  // 71: macosusesdk.v1.MacosUse.ClearClipboard:input_type -> macosusesdk.v1.ClearClipboardRequest
-	77,  // 72: macosusesdk.v1.MacosUse.GetClipboardHistory:input_type -> macosusesdk.v1.GetClipboardHistoryRequest
-	78,  // 73: macosusesdk.v1.MacosUse.AutomateOpenFileDialog:input_type -> macosusesdk.v1.AutomateOpenFileDialogRequest
-	79,  // 74: macosusesdk.v1.MacosUse.AutomateSaveFileDialog:input_type -> macosusesdk.v1.AutomateSaveFileDialogRequest
-	80,  // 75: macosusesdk.v1.MacosUse.SelectFile:input_type -> macosusesdk.v1.SelectFileRequest
-	81,  // 76: macosusesdk.v1.MacosUse.SelectDirectory:input_type -> macosusesdk.v1.SelectDirectoryRequest
-	82,  // 77: macosusesdk.v1.MacosUse.DragFiles:input_type -> macosusesdk.v1.DragFilesRequest
-	37,  // 78: macosusesdk.v1.MacosUse.CreateMacro:input_type -> macosusesdk.v1.CreateMacroRequest
-	38,  // 79: macosusesdk.v1.MacosUse.GetMacro:input_type -> macosusesdk.v1.GetMacroRequest
-	39,  // 80: macosusesdk.v1.MacosUse.ListMacros:input_type -> macosusesdk.v1.ListMacrosRequest
-	41,  // 81: macosusesdk.v1.MacosUse.UpdateMacro:input_type -> macosusesdk.v1.UpdateMacroRequest
-	42,  // 82: macosusesdk.v1.MacosUse.DeleteMacro:input_type -> macosusesdk.v1.DeleteMacroRequest
-	83,  // 83: macosusesdk.v1.MacosUse.ExecuteMacro:input_type -> macosusesdk.v1.ExecuteMacroRequest
-	84,  // 84: macosusesdk.v1.MacosUse.ExecuteAppleScript:input_type -> macosusesdk.v1.ExecuteAppleScriptRequest
-	85,  // 85: macosusesdk.v1.MacosUse.ExecuteJavaScriptForAutomation:input_type -> macosusesdk.v1.ExecuteJavaScriptForAutomationRequest
-	86,  // 86: macosusesdk.v1.MacosUse.ExecuteShellCommand:input_type -> macosusesdk.v1.ExecuteShellCommandRequest
-	87,  // 87: macosusesdk.v1.MacosUse.ValidateScript:input_type -> macosusesdk.v1.ValidateScriptRequest
-	88,  // 88: macosusesdk.v1.MacosUse.GetScriptingDictionaries:input_type -> macosusesdk.v1.GetScriptingDictionariesRequest
-	89,  // 89: macosusesdk.v1.MacosUse.GetMetrics:input_type -> macosusesdk.v1.GetMetricsRequest
-	90,  // 90: macosusesdk.v1.MacosUse.GetPerformanceReport:input_type -> macosusesdk.v1.GetPerformanceReportRequest
-	91,  // 91: macosusesdk.v1.MacosUse.ResetMetrics:input_type -> macosusesdk.v1.ResetMetricsRequest
-	92,  // 92: macosusesdk.v1.MacosUse.OpenApplication:output_type -> google.longrunning.Operation
-	43,  // 93: macosusesdk.v1.MacosUse.GetApplication:output_type -> macosusesdk.v1.Application
-	5,   // 94: macosusesdk.v1.MacosUse.ListApplications:output_type -> macosusesdk.v1.ListApplicationsResponse
-	93,  // 95: macosusesdk.v1.MacosUse.DeleteApplication:output_type -> google.protobuf.Empty
-	44,  // 96: macosusesdk.v1.MacosUse.CreateInput:output_type -> macosusesdk.v1.Input
-	44,  // 97: macosusesdk.v1.MacosUse.GetInput:output_type -> macosusesdk.v1.Input
-	10,  // 98: macosusesdk.v1.MacosUse.ListInputs:output_type -> macosusesdk.v1.ListInputsResponse
-	12,  // 99: macosusesdk.v1.MacosUse.TraverseAccessibility:output_type -> macosusesdk.v1.TraverseAccessibilityResponse
-	14,  // 100: macosusesdk.v1.MacosUse.WatchAccessibility:output_type -> macosusesdk.v1.WatchAccessibilityResponse
-	49,  // 101: macosusesdk.v1.MacosUse.GetWindow:output_type -> macosusesdk.v1.Window
-	18,  // 102: macosusesdk.v1.MacosUse.ListWindows:output_type -> macosusesdk.v1.ListWindowsResponse
-	49,  // 103: macosusesdk.v1.MacosUse.FocusWindow:output_type -> macosusesdk.v1.Window
-	49,  // 104: macosusesdk.v1.MacosUse.MoveWindow:output_type -> macosusesdk.v1.Window
-	49,  // 105: macosusesdk.v1.MacosUse.ResizeWindow:output_type -> macosusesdk.v1.Window
-	49,  // 106: macosusesdk.v1.MacosUse.MinimizeWindow:output_type -> macosusesdk.v1.Window
-	49,  // 107: macosusesdk.v1.MacosUse.RestoreWindow:output_type -> macosusesdk.v1.Window
-	93,  // 108: macosusesdk.v1.MacosUse.CloseWindow:output_type -> google.protobuf.Empty
-	94,  // 109: macosusesdk.v1.MacosUse.FindElements:output_type -> macosusesdk.v1.FindElementsResponse
-	95,  // 110: macosusesdk.v1.MacosUse.FindElementsInRegion:output_type -> macosusesdk.v1.FindElementsInRegionResponse
-	96,  // 111: macosusesdk.v1.MacosUse.GetElement:output_type -> macosusesdk.v1.GetElementResponse
-	97,  // 112: macosusesdk.v1.MacosUse.ClickElement:output_type -> macosusesdk.v1.ClickElementResponse
-	98,  // 113: macosusesdk.v1.MacosUse.SetElementValue:output_type -> macosusesdk.v1.SetElementValueResponse
-	99,  // 114: macosusesdk.v1.MacosUse.GetElementActions:output_type -> macosusesdk.v1.GetElementActionsResponse
-	100, // 115: macosusesdk.v1.MacosUse.PerformElementAction:output_type -> macosusesdk.v1.PerformElementActionResponse
-	92,  // 116: macosusesdk.v1.MacosUse.WaitForElement:output_type -> google.longrunning.Operation
-	92,  // 117: macosusesdk.v1.MacosUse.WaitForElementState:output_type -> google.longrunning.Operation
-	92,  // 118: macosusesdk.v1.MacosUse.CreateObservation:output_type -> google.longrunning.Operation
-	50,  // 119: macosusesdk.v1.MacosUse.GetObservation:output_type -> macosusesdk.v1.Observation
-	29,  // 120: macosusesdk.v1.MacosUse.ListObservations:output_type -> macosusesdk.v1.ListObservationsResponse
-	50,  // 121: macosusesdk.v1.MacosUse.CancelObservation:output_type -> macosusesdk.v1.Observation
-	101, // 122: macosusesdk.v1.MacosUse.StreamObservations:output_type -> macosusesdk.v1.ObservationEvent
-	53,  // 123: macosusesdk.v1.MacosUse.CreateSession:output_type -> macosusesdk.v1.Session
-	53,  // 124: macosusesdk.v1.MacosUse.GetSession:output_type -> macosusesdk.v1.Session
-	35,  // 125: macosusesdk.v1.MacosUse.ListSessions:output_type -> macosusesdk.v1.ListSessionsResponse
-	93,  // 126: macosusesdk.v1.MacosUse.DeleteSession:output_type -> google.protobuf.Empty
-	102, // 127: macosusesdk.v1.MacosUse.BeginTransaction:output_type -> macosusesdk.v1.BeginTransactionResponse
-	103, // 128: macosusesdk.v1.MacosUse.CommitTransaction:output_type -> macosusesdk.v1.CommitTransactionResponse
-	104, // 129: macosusesdk.v1.MacosUse.RollbackTransaction:output_type -> macosusesdk.v1.RollbackTransactionResponse
-	105, // 130: macosusesdk.v1.MacosUse.GetSessionSnapshot:output_type -> macosusesdk.v1.GetSessionSnapshotResponse
-	106, // 131: macosusesdk.v1.MacosUse.CaptureScreenshot:output_type -> macosusesdk.v1.CaptureScreenshotResponse
-	107, // 132: macosusesdk.v1.MacosUse.CaptureWindowScreenshot:output_type -> macosusesdk.v1.CaptureWindowScreenshotResponse
-	108, // 133: macosusesdk.v1.MacosUse.CaptureElementScreenshot:output_type -> macosusesdk.v1.CaptureElementScreenshotResponse
-	109, // 134: macosusesdk.v1.MacosUse.CaptureRegionScreenshot:output_type -> macosusesdk.v1.CaptureRegionScreenshotResponse
-	110, // 135: macosusesdk.v1.MacosUse.GetClipboard:output_type -> macosusesdk.v1.GetClipboardResponse
-	111, // 136: macosusesdk.v1.MacosUse.SetClipboard:output_type -> macosusesdk.v1.SetClipboardResponse
-	112, // 137: macosusesdk.v1.MacosUse.ClearClipboard:output_type -> macosusesdk.v1.ClearClipboardResponse
-	113, // 138: macosusesdk.v1.MacosUse.GetClipboardHistory:output_type -> macosusesdk.v1.GetClipboardHistoryResponse
-	114, // 139: macosusesdk.v1.MacosUse.AutomateOpenFileDialog:output_type -> macosusesdk.v1.AutomateOpenFileDialogResponse
-	115, // 140: macosusesdk.v1.MacosUse.AutomateSaveFileDialog:output_type -> macosusesdk.v1.AutomateSaveFileDialogResponse
-	116, // 141: macosusesdk.v1.MacosUse.SelectFile:output_type -> macosusesdk.v1.SelectFileResponse
-	117, // 142: macosusesdk.v1.MacosUse.SelectDirectory:output_type -> macosusesdk.v1.SelectDirectoryResponse
-	118, // 143: macosusesdk.v1.MacosUse.DragFiles:output_type -> macosusesdk.v1.DragFilesResponse
-	55,  // 144: macosusesdk.v1.MacosUse.CreateMacro:output_type -> macosusesdk.v1.Macro
-	55,  // 145: macosusesdk.v1.MacosUse.GetMacro:output_type -> macosusesdk.v1.Macro
-	40,  // 146: macosusesdk.v1.MacosUse.ListMacros:output_type -> macosusesdk.v1.ListMacrosResponse
-	55,  // 147: macosusesdk.v1.MacosUse.UpdateMacro:output_type -> macosusesdk.v1.Macro
-	93,  // 148: macosusesdk.v1.MacosUse.DeleteMacro:output_type -> google.protobuf.Empty
-	92,  // 149: macosusesdk.v1.MacosUse.ExecuteMacro:output_type -> google.longrunning.Operation
-	119, // 150: macosusesdk.v1.MacosUse.ExecuteAppleScript:output_type -> macosusesdk.v1.ExecuteAppleScriptResponse
-	120, // 151: macosusesdk.v1.MacosUse.ExecuteJavaScriptForAutomation:output_type -> macosusesdk.v1.ExecuteJavaScriptForAutomationResponse
-	121, // 152: macosusesdk.v1.MacosUse.ExecuteShellCommand:output_type -> macosusesdk.v1.ExecuteShellCommandResponse
-	122, // 153: macosusesdk.v1.MacosUse.ValidateScript:output_type -> macosusesdk.v1.ValidateScriptResponse
-	123, // 154: macosusesdk.v1.MacosUse.GetScriptingDictionaries:output_type -> macosusesdk.v1.GetScriptingDictionariesResponse
-	124, // 155: macosusesdk.v1.MacosUse.GetMetrics:output_type -> macosusesdk.v1.GetMetricsResponse
-	125, // 156: macosusesdk.v1.MacosUse.GetPerformanceReport:output_type -> macosusesdk.v1.GetPerformanceReportResponse
-	126, // 157: macosusesdk.v1.MacosUse.ResetMetrics:output_type -> macosusesdk.v1.ResetMetricsResponse
-	92,  // [92:158] is the sub-list for method output_type
-	26,  // [26:92] is the sub-list for method input_type
-	26,  // [26:26] is the sub-list for extension type_name
-	26,  // [26:26] is the sub-list for extension extendee
-	0,   // [0:26] is the sub-list for field type_name
+	47,  // 10: macosusesdk.v1.ModifiedElement.old_element:type_name -> macosusesdk.type.Element
+	47,  // 11: macosusesdk.v1.ModifiedElement.new_element:type_name -> macosusesdk.type.Element
+	50,  // 12: macosusesdk.v1.ModifiedElement.changes:type_name -> macosusesdk.v1.AttributeChange
+	51,  // 13: macosusesdk.v1.ListWindowsResponse.windows:type_name -> macosusesdk.v1.Window
+	52,  // 14: macosusesdk.v1.CreateObservationRequest.observation:type_name -> macosusesdk.v1.Observation
+	53,  // 15: macosusesdk.v1.CreateObservationMetadata.type:type_name -> macosusesdk.v1.ObservationType
+	52,  // 16: macosusesdk.v1.ListObservationsResponse.observations:type_name -> macosusesdk.v1.Observation
+	54,  // 17: macosusesdk.v1.StreamObservationsResponse.event:type_name -> macosusesdk.v1.ObservationEvent
+	55,  // 18: macosusesdk.v1.CreateSessionRequest.session:type_name -> macosusesdk.v1.Session
+	55,  // 19: macosusesdk.v1.ListSessionsResponse.sessions:type_name -> macosusesdk.v1.Session
+	56,  // 20: macosusesdk.v1.CreateMacroRequest.macro:type_name -> macosusesdk.v1.Macro
+	56,  // 21: macosusesdk.v1.ListMacrosResponse.macros:type_name -> macosusesdk.v1.Macro
+	56,  // 22: macosusesdk.v1.UpdateMacroRequest.macro:type_name -> macosusesdk.v1.Macro
+	57,  // 23: macosusesdk.v1.UpdateMacroRequest.update_mask:type_name -> google.protobuf.FieldMask
+	0,   // 24: macosusesdk.v1.MacosUse.OpenApplication:input_type -> macosusesdk.v1.OpenApplicationRequest
+	3,   // 25: macosusesdk.v1.MacosUse.GetApplication:input_type -> macosusesdk.v1.GetApplicationRequest
+	4,   // 26: macosusesdk.v1.MacosUse.ListApplications:input_type -> macosusesdk.v1.ListApplicationsRequest
+	6,   // 27: macosusesdk.v1.MacosUse.DeleteApplication:input_type -> macosusesdk.v1.DeleteApplicationRequest
+	7,   // 28: macosusesdk.v1.MacosUse.CreateInput:input_type -> macosusesdk.v1.CreateInputRequest
+	8,   // 29: macosusesdk.v1.MacosUse.GetInput:input_type -> macosusesdk.v1.GetInputRequest
+	9,   // 30: macosusesdk.v1.MacosUse.ListInputs:input_type -> macosusesdk.v1.ListInputsRequest
+	11,  // 31: macosusesdk.v1.MacosUse.TraverseAccessibility:input_type -> macosusesdk.v1.TraverseAccessibilityRequest
+	13,  // 32: macosusesdk.v1.MacosUse.WatchAccessibility:input_type -> macosusesdk.v1.WatchAccessibilityRequest
+	16,  // 33: macosusesdk.v1.MacosUse.GetWindow:input_type -> macosusesdk.v1.GetWindowRequest
+	17,  // 34: macosusesdk.v1.MacosUse.ListWindows:input_type -> macosusesdk.v1.ListWindowsRequest
+	19,  // 35: macosusesdk.v1.MacosUse.FocusWindow:input_type -> macosusesdk.v1.FocusWindowRequest
+	20,  // 36: macosusesdk.v1.MacosUse.MoveWindow:input_type -> macosusesdk.v1.MoveWindowRequest
+	21,  // 37: macosusesdk.v1.MacosUse.ResizeWindow:input_type -> macosusesdk.v1.ResizeWindowRequest
+	22,  // 38: macosusesdk.v1.MacosUse.MinimizeWindow:input_type -> macosusesdk.v1.MinimizeWindowRequest
+	23,  // 39: macosusesdk.v1.MacosUse.RestoreWindow:input_type -> macosusesdk.v1.RestoreWindowRequest
+	24,  // 40: macosusesdk.v1.MacosUse.CloseWindow:input_type -> macosusesdk.v1.CloseWindowRequest
+	58,  // 41: macosusesdk.v1.MacosUse.FindElements:input_type -> macosusesdk.v1.FindElementsRequest
+	59,  // 42: macosusesdk.v1.MacosUse.FindRegionElements:input_type -> macosusesdk.v1.FindRegionElementsRequest
+	60,  // 43: macosusesdk.v1.MacosUse.GetElement:input_type -> macosusesdk.v1.GetElementRequest
+	61,  // 44: macosusesdk.v1.MacosUse.ClickElement:input_type -> macosusesdk.v1.ClickElementRequest
+	62,  // 45: macosusesdk.v1.MacosUse.WriteElementValue:input_type -> macosusesdk.v1.WriteElementValueRequest
+	63,  // 46: macosusesdk.v1.MacosUse.GetElementActions:input_type -> macosusesdk.v1.GetElementActionsRequest
+	64,  // 47: macosusesdk.v1.MacosUse.PerformElementAction:input_type -> macosusesdk.v1.PerformElementActionRequest
+	65,  // 48: macosusesdk.v1.MacosUse.WaitElement:input_type -> macosusesdk.v1.WaitElementRequest
+	66,  // 49: macosusesdk.v1.MacosUse.WaitElementState:input_type -> macosusesdk.v1.WaitElementStateRequest
+	26,  // 50: macosusesdk.v1.MacosUse.CreateObservation:input_type -> macosusesdk.v1.CreateObservationRequest
+	28,  // 51: macosusesdk.v1.MacosUse.GetObservation:input_type -> macosusesdk.v1.GetObservationRequest
+	29,  // 52: macosusesdk.v1.MacosUse.ListObservations:input_type -> macosusesdk.v1.ListObservationsRequest
+	31,  // 53: macosusesdk.v1.MacosUse.CancelObservation:input_type -> macosusesdk.v1.CancelObservationRequest
+	32,  // 54: macosusesdk.v1.MacosUse.StreamObservations:input_type -> macosusesdk.v1.StreamObservationsRequest
+	34,  // 55: macosusesdk.v1.MacosUse.CreateSession:input_type -> macosusesdk.v1.CreateSessionRequest
+	35,  // 56: macosusesdk.v1.MacosUse.GetSession:input_type -> macosusesdk.v1.GetSessionRequest
+	36,  // 57: macosusesdk.v1.MacosUse.ListSessions:input_type -> macosusesdk.v1.ListSessionsRequest
+	38,  // 58: macosusesdk.v1.MacosUse.DeleteSession:input_type -> macosusesdk.v1.DeleteSessionRequest
+	67,  // 59: macosusesdk.v1.MacosUse.BeginTransaction:input_type -> macosusesdk.v1.BeginTransactionRequest
+	68,  // 60: macosusesdk.v1.MacosUse.CommitTransaction:input_type -> macosusesdk.v1.CommitTransactionRequest
+	69,  // 61: macosusesdk.v1.MacosUse.RollbackTransaction:input_type -> macosusesdk.v1.RollbackTransactionRequest
+	70,  // 62: macosusesdk.v1.MacosUse.GetSessionSnapshot:input_type -> macosusesdk.v1.GetSessionSnapshotRequest
+	71,  // 63: macosusesdk.v1.MacosUse.CaptureScreenshot:input_type -> macosusesdk.v1.CaptureScreenshotRequest
+	72,  // 64: macosusesdk.v1.MacosUse.CaptureWindowScreenshot:input_type -> macosusesdk.v1.CaptureWindowScreenshotRequest
+	73,  // 65: macosusesdk.v1.MacosUse.CaptureElementScreenshot:input_type -> macosusesdk.v1.CaptureElementScreenshotRequest
+	74,  // 66: macosusesdk.v1.MacosUse.CaptureRegionScreenshot:input_type -> macosusesdk.v1.CaptureRegionScreenshotRequest
+	75,  // 67: macosusesdk.v1.MacosUse.GetClipboard:input_type -> macosusesdk.v1.GetClipboardRequest
+	76,  // 68: macosusesdk.v1.MacosUse.WriteClipboard:input_type -> macosusesdk.v1.WriteClipboardRequest
+	77,  // 69: macosusesdk.v1.MacosUse.ClearClipboard:input_type -> macosusesdk.v1.ClearClipboardRequest
+	78,  // 70: macosusesdk.v1.MacosUse.GetClipboardHistory:input_type -> macosusesdk.v1.GetClipboardHistoryRequest
+	79,  // 71: macosusesdk.v1.MacosUse.AutomateOpenFileDialog:input_type -> macosusesdk.v1.AutomateOpenFileDialogRequest
+	80,  // 72: macosusesdk.v1.MacosUse.AutomateSaveFileDialog:input_type -> macosusesdk.v1.AutomateSaveFileDialogRequest
+	81,  // 73: macosusesdk.v1.MacosUse.SelectFile:input_type -> macosusesdk.v1.SelectFileRequest
+	82,  // 74: macosusesdk.v1.MacosUse.SelectDirectory:input_type -> macosusesdk.v1.SelectDirectoryRequest
+	83,  // 75: macosusesdk.v1.MacosUse.DragFiles:input_type -> macosusesdk.v1.DragFilesRequest
+	39,  // 76: macosusesdk.v1.MacosUse.CreateMacro:input_type -> macosusesdk.v1.CreateMacroRequest
+	40,  // 77: macosusesdk.v1.MacosUse.GetMacro:input_type -> macosusesdk.v1.GetMacroRequest
+	41,  // 78: macosusesdk.v1.MacosUse.ListMacros:input_type -> macosusesdk.v1.ListMacrosRequest
+	43,  // 79: macosusesdk.v1.MacosUse.UpdateMacro:input_type -> macosusesdk.v1.UpdateMacroRequest
+	44,  // 80: macosusesdk.v1.MacosUse.DeleteMacro:input_type -> macosusesdk.v1.DeleteMacroRequest
+	84,  // 81: macosusesdk.v1.MacosUse.ExecuteMacro:input_type -> macosusesdk.v1.ExecuteMacroRequest
+	85,  // 82: macosusesdk.v1.MacosUse.ExecuteAppleScript:input_type -> macosusesdk.v1.ExecuteAppleScriptRequest
+	86,  // 83: macosusesdk.v1.MacosUse.ExecuteJavaScript:input_type -> macosusesdk.v1.ExecuteJavaScriptRequest
+	87,  // 84: macosusesdk.v1.MacosUse.ExecuteShellCommand:input_type -> macosusesdk.v1.ExecuteShellCommandRequest
+	88,  // 85: macosusesdk.v1.MacosUse.ValidateScript:input_type -> macosusesdk.v1.ValidateScriptRequest
+	89,  // 86: macosusesdk.v1.MacosUse.GetScriptingDictionaries:input_type -> macosusesdk.v1.GetScriptingDictionariesRequest
+	90,  // 87: macosusesdk.v1.MacosUse.GetMetrics:input_type -> macosusesdk.v1.GetMetricsRequest
+	91,  // 88: macosusesdk.v1.MacosUse.GetPerformanceReport:input_type -> macosusesdk.v1.GetPerformanceReportRequest
+	92,  // 89: macosusesdk.v1.MacosUse.ResetMetrics:input_type -> macosusesdk.v1.ResetMetricsRequest
+	93,  // 90: macosusesdk.v1.MacosUse.OpenApplication:output_type -> google.longrunning.Operation
+	45,  // 91: macosusesdk.v1.MacosUse.GetApplication:output_type -> macosusesdk.v1.Application
+	5,   // 92: macosusesdk.v1.MacosUse.ListApplications:output_type -> macosusesdk.v1.ListApplicationsResponse
+	94,  // 93: macosusesdk.v1.MacosUse.DeleteApplication:output_type -> google.protobuf.Empty
+	46,  // 94: macosusesdk.v1.MacosUse.CreateInput:output_type -> macosusesdk.v1.Input
+	46,  // 95: macosusesdk.v1.MacosUse.GetInput:output_type -> macosusesdk.v1.Input
+	10,  // 96: macosusesdk.v1.MacosUse.ListInputs:output_type -> macosusesdk.v1.ListInputsResponse
+	12,  // 97: macosusesdk.v1.MacosUse.TraverseAccessibility:output_type -> macosusesdk.v1.TraverseAccessibilityResponse
+	14,  // 98: macosusesdk.v1.MacosUse.WatchAccessibility:output_type -> macosusesdk.v1.WatchAccessibilityResponse
+	51,  // 99: macosusesdk.v1.MacosUse.GetWindow:output_type -> macosusesdk.v1.Window
+	18,  // 100: macosusesdk.v1.MacosUse.ListWindows:output_type -> macosusesdk.v1.ListWindowsResponse
+	51,  // 101: macosusesdk.v1.MacosUse.FocusWindow:output_type -> macosusesdk.v1.Window
+	51,  // 102: macosusesdk.v1.MacosUse.MoveWindow:output_type -> macosusesdk.v1.Window
+	51,  // 103: macosusesdk.v1.MacosUse.ResizeWindow:output_type -> macosusesdk.v1.Window
+	51,  // 104: macosusesdk.v1.MacosUse.MinimizeWindow:output_type -> macosusesdk.v1.Window
+	51,  // 105: macosusesdk.v1.MacosUse.RestoreWindow:output_type -> macosusesdk.v1.Window
+	25,  // 106: macosusesdk.v1.MacosUse.CloseWindow:output_type -> macosusesdk.v1.CloseWindowResponse
+	95,  // 107: macosusesdk.v1.MacosUse.FindElements:output_type -> macosusesdk.v1.FindElementsResponse
+	96,  // 108: macosusesdk.v1.MacosUse.FindRegionElements:output_type -> macosusesdk.v1.FindRegionElementsResponse
+	47,  // 109: macosusesdk.v1.MacosUse.GetElement:output_type -> macosusesdk.type.Element
+	97,  // 110: macosusesdk.v1.MacosUse.ClickElement:output_type -> macosusesdk.v1.ClickElementResponse
+	98,  // 111: macosusesdk.v1.MacosUse.WriteElementValue:output_type -> macosusesdk.v1.WriteElementValueResponse
+	99,  // 112: macosusesdk.v1.MacosUse.GetElementActions:output_type -> macosusesdk.v1.ElementActions
+	100, // 113: macosusesdk.v1.MacosUse.PerformElementAction:output_type -> macosusesdk.v1.PerformElementActionResponse
+	93,  // 114: macosusesdk.v1.MacosUse.WaitElement:output_type -> google.longrunning.Operation
+	93,  // 115: macosusesdk.v1.MacosUse.WaitElementState:output_type -> google.longrunning.Operation
+	93,  // 116: macosusesdk.v1.MacosUse.CreateObservation:output_type -> google.longrunning.Operation
+	52,  // 117: macosusesdk.v1.MacosUse.GetObservation:output_type -> macosusesdk.v1.Observation
+	30,  // 118: macosusesdk.v1.MacosUse.ListObservations:output_type -> macosusesdk.v1.ListObservationsResponse
+	52,  // 119: macosusesdk.v1.MacosUse.CancelObservation:output_type -> macosusesdk.v1.Observation
+	33,  // 120: macosusesdk.v1.MacosUse.StreamObservations:output_type -> macosusesdk.v1.StreamObservationsResponse
+	55,  // 121: macosusesdk.v1.MacosUse.CreateSession:output_type -> macosusesdk.v1.Session
+	55,  // 122: macosusesdk.v1.MacosUse.GetSession:output_type -> macosusesdk.v1.Session
+	37,  // 123: macosusesdk.v1.MacosUse.ListSessions:output_type -> macosusesdk.v1.ListSessionsResponse
+	94,  // 124: macosusesdk.v1.MacosUse.DeleteSession:output_type -> google.protobuf.Empty
+	101, // 125: macosusesdk.v1.MacosUse.BeginTransaction:output_type -> macosusesdk.v1.BeginTransactionResponse
+	102, // 126: macosusesdk.v1.MacosUse.CommitTransaction:output_type -> macosusesdk.v1.Transaction
+	102, // 127: macosusesdk.v1.MacosUse.RollbackTransaction:output_type -> macosusesdk.v1.Transaction
+	103, // 128: macosusesdk.v1.MacosUse.GetSessionSnapshot:output_type -> macosusesdk.v1.SessionSnapshot
+	104, // 129: macosusesdk.v1.MacosUse.CaptureScreenshot:output_type -> macosusesdk.v1.CaptureScreenshotResponse
+	105, // 130: macosusesdk.v1.MacosUse.CaptureWindowScreenshot:output_type -> macosusesdk.v1.CaptureWindowScreenshotResponse
+	106, // 131: macosusesdk.v1.MacosUse.CaptureElementScreenshot:output_type -> macosusesdk.v1.CaptureElementScreenshotResponse
+	107, // 132: macosusesdk.v1.MacosUse.CaptureRegionScreenshot:output_type -> macosusesdk.v1.CaptureRegionScreenshotResponse
+	108, // 133: macosusesdk.v1.MacosUse.GetClipboard:output_type -> macosusesdk.v1.Clipboard
+	109, // 134: macosusesdk.v1.MacosUse.WriteClipboard:output_type -> macosusesdk.v1.WriteClipboardResponse
+	110, // 135: macosusesdk.v1.MacosUse.ClearClipboard:output_type -> macosusesdk.v1.ClearClipboardResponse
+	111, // 136: macosusesdk.v1.MacosUse.GetClipboardHistory:output_type -> macosusesdk.v1.ClipboardHistory
+	112, // 137: macosusesdk.v1.MacosUse.AutomateOpenFileDialog:output_type -> macosusesdk.v1.AutomateOpenFileDialogResponse
+	113, // 138: macosusesdk.v1.MacosUse.AutomateSaveFileDialog:output_type -> macosusesdk.v1.AutomateSaveFileDialogResponse
+	114, // 139: macosusesdk.v1.MacosUse.SelectFile:output_type -> macosusesdk.v1.SelectFileResponse
+	115, // 140: macosusesdk.v1.MacosUse.SelectDirectory:output_type -> macosusesdk.v1.SelectDirectoryResponse
+	116, // 141: macosusesdk.v1.MacosUse.DragFiles:output_type -> macosusesdk.v1.DragFilesResponse
+	56,  // 142: macosusesdk.v1.MacosUse.CreateMacro:output_type -> macosusesdk.v1.Macro
+	56,  // 143: macosusesdk.v1.MacosUse.GetMacro:output_type -> macosusesdk.v1.Macro
+	42,  // 144: macosusesdk.v1.MacosUse.ListMacros:output_type -> macosusesdk.v1.ListMacrosResponse
+	56,  // 145: macosusesdk.v1.MacosUse.UpdateMacro:output_type -> macosusesdk.v1.Macro
+	94,  // 146: macosusesdk.v1.MacosUse.DeleteMacro:output_type -> google.protobuf.Empty
+	93,  // 147: macosusesdk.v1.MacosUse.ExecuteMacro:output_type -> google.longrunning.Operation
+	117, // 148: macosusesdk.v1.MacosUse.ExecuteAppleScript:output_type -> macosusesdk.v1.ExecuteAppleScriptResponse
+	118, // 149: macosusesdk.v1.MacosUse.ExecuteJavaScript:output_type -> macosusesdk.v1.ExecuteJavaScriptResponse
+	119, // 150: macosusesdk.v1.MacosUse.ExecuteShellCommand:output_type -> macosusesdk.v1.ExecuteShellCommandResponse
+	120, // 151: macosusesdk.v1.MacosUse.ValidateScript:output_type -> macosusesdk.v1.ValidateScriptResponse
+	121, // 152: macosusesdk.v1.MacosUse.GetScriptingDictionaries:output_type -> macosusesdk.v1.ScriptingDictionaries
+	122, // 153: macosusesdk.v1.MacosUse.GetMetrics:output_type -> macosusesdk.v1.Metrics
+	123, // 154: macosusesdk.v1.MacosUse.GetPerformanceReport:output_type -> macosusesdk.v1.PerformanceReport
+	124, // 155: macosusesdk.v1.MacosUse.ResetMetrics:output_type -> macosusesdk.v1.ResetMetricsResponse
+	90,  // [90:156] is the sub-list for method output_type
+	24,  // [24:90] is the sub-list for method input_type
+	24,  // [24:24] is the sub-list for extension type_name
+	24,  // [24:24] is the sub-list for extension extendee
+	0,   // [0:24] is the sub-list for field type_name
 }
 
 func init() { file_macosusesdk_v1_macos_use_proto_init() }
@@ -3000,7 +3064,7 @@ func file_macosusesdk_v1_macos_use_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_macosusesdk_v1_macos_use_proto_rawDesc), len(file_macosusesdk_v1_macos_use_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   43,
+			NumMessages:   45,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

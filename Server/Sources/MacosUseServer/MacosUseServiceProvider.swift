@@ -526,7 +526,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
 
   func closeWindow(
     request: Macosusesdk_V1_CloseWindowRequest, context: GRPCAsyncServerCallContext
-  ) async throws -> SwiftProtobuf.Google_Protobuf_Empty {
+  ) async throws -> Macosusesdk_V1_CloseWindowResponse {
     fputs("info: [MacosUseServiceProvider] closeWindow called\n", stderr)
     
     // Parse "applications/{pid}/windows/{windowId}"
@@ -567,7 +567,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
       throw GRPCStatus(code: .internalError, message: "Failed to close window: \(pressResult.rawValue)")
     }
     
-    return SwiftProtobuf.Google_Protobuf_Empty()
+    return Macosusesdk_V1_CloseWindowResponse()
   }
 
   // MARK: - Element Methods
@@ -578,15 +578,15 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     throw GRPCStatus(code: .unimplemented, message: "findElements not yet implemented")
   }
 
-  func findElementsInRegion(
-    request: Macosusesdk_V1_FindElementsInRegionRequest, context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_FindElementsInRegionResponse {
-    throw GRPCStatus(code: .unimplemented, message: "findElementsInRegion not yet implemented")
+  func findRegionElements(
+    request: Macosusesdk_V1_FindRegionElementsRequest, context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_FindRegionElementsResponse {
+    throw GRPCStatus(code: .unimplemented, message: "findRegionElements not yet implemented")
   }
 
   func getElement(
     request: Macosusesdk_V1_GetElementRequest, context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_GetElementResponse {
+  ) async throws -> Macosusesdk_Type_Element {
     throw GRPCStatus(code: .unimplemented, message: "getElement not yet implemented")
   }
 
@@ -596,15 +596,15 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     throw GRPCStatus(code: .unimplemented, message: "clickElement not yet implemented")
   }
 
-  func setElementValue(
-    request: Macosusesdk_V1_SetElementValueRequest, context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_SetElementValueResponse {
-    throw GRPCStatus(code: .unimplemented, message: "setElementValue not yet implemented")
+  func writeElementValue(
+    request: Macosusesdk_V1_WriteElementValueRequest, context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_WriteElementValueResponse {
+    throw GRPCStatus(code: .unimplemented, message: "writeElementValue not yet implemented")
   }
 
   func getElementActions(
     request: Macosusesdk_V1_GetElementActionsRequest, context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_GetElementActionsResponse {
+  ) async throws -> Macosusesdk_V1_ElementActions {
     throw GRPCStatus(code: .unimplemented, message: "getElementActions not yet implemented")
   }
 
@@ -614,16 +614,16 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     throw GRPCStatus(code: .unimplemented, message: "performElementAction not yet implemented")
   }
 
-  func waitForElement(
-    request: Macosusesdk_V1_WaitForElementRequest, context: GRPCAsyncServerCallContext
+  func waitElement(
+    request: Macosusesdk_V1_WaitElementRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Google_Longrunning_Operation {
-    throw GRPCStatus(code: .unimplemented, message: "waitForElement not yet implemented")
+    throw GRPCStatus(code: .unimplemented, message: "waitElement not yet implemented")
   }
 
-  func waitForElementState(
-    request: Macosusesdk_V1_WaitForElementStateRequest, context: GRPCAsyncServerCallContext
+  func waitElementState(
+    request: Macosusesdk_V1_WaitElementStateRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Google_Longrunning_Operation {
-    throw GRPCStatus(code: .unimplemented, message: "waitForElementState not yet implemented")
+    throw GRPCStatus(code: .unimplemented, message: "waitElementState not yet implemented")
   }
 
   // MARK: - Observation Methods
@@ -654,7 +654,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
 
   func streamObservations(
     request: Macosusesdk_V1_StreamObservationsRequest,
-    responseStream: GRPCAsyncResponseStreamWriter<Macosusesdk_V1_ObservationEvent>,
+    responseStream: GRPCAsyncResponseStreamWriter<Macosusesdk_V1_StreamObservationsResponse>,
     context: GRPCAsyncServerCallContext
   ) async throws {
     throw GRPCStatus(code: .unimplemented, message: "streamObservations not yet implemented")
@@ -694,19 +694,19 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
 
   func commitTransaction(
     request: Macosusesdk_V1_CommitTransactionRequest, context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_CommitTransactionResponse {
+  ) async throws -> Macosusesdk_V1_Transaction {
     throw GRPCStatus(code: .unimplemented, message: "commitTransaction not yet implemented")
   }
 
   func rollbackTransaction(
     request: Macosusesdk_V1_RollbackTransactionRequest, context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_RollbackTransactionResponse {
+  ) async throws -> Macosusesdk_V1_Transaction {
     throw GRPCStatus(code: .unimplemented, message: "rollbackTransaction not yet implemented")
   }
 
   func getSessionSnapshot(
     request: Macosusesdk_V1_GetSessionSnapshotRequest, context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_GetSessionSnapshotResponse {
+  ) async throws -> Macosusesdk_V1_SessionSnapshot {
     throw GRPCStatus(code: .unimplemented, message: "getSessionSnapshot not yet implemented")
   }
 
@@ -740,14 +740,14 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
 
   func getClipboard(
     request: Macosusesdk_V1_GetClipboardRequest, context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_GetClipboardResponse {
+  ) async throws -> Macosusesdk_V1_Clipboard {
     throw GRPCStatus(code: .unimplemented, message: "getClipboard not yet implemented")
   }
 
-  func setClipboard(
-    request: Macosusesdk_V1_SetClipboardRequest, context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_SetClipboardResponse {
-    throw GRPCStatus(code: .unimplemented, message: "setClipboard not yet implemented")
+  func writeClipboard(
+    request: Macosusesdk_V1_WriteClipboardRequest, context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_WriteClipboardResponse {
+    throw GRPCStatus(code: .unimplemented, message: "writeClipboard not yet implemented")
   }
 
   func clearClipboard(
@@ -758,7 +758,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
 
   func getClipboardHistory(
     request: Macosusesdk_V1_GetClipboardHistoryRequest, context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_GetClipboardHistoryResponse {
+  ) async throws -> Macosusesdk_V1_ClipboardHistory {
     throw GRPCStatus(code: .unimplemented, message: "getClipboardHistory not yet implemented")
   }
 
@@ -840,12 +840,12 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     throw GRPCStatus(code: .unimplemented, message: "executeAppleScript not yet implemented")
   }
 
-  func executeJavaScriptForAutomation(
-    request: Macosusesdk_V1_ExecuteJavaScriptForAutomationRequest,
+  func executeJavaScript(
+    request: Macosusesdk_V1_ExecuteJavaScriptRequest,
     context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_ExecuteJavaScriptForAutomationResponse {
+  ) async throws -> Macosusesdk_V1_ExecuteJavaScriptResponse {
     throw GRPCStatus(
-      code: .unimplemented, message: "executeJavaScriptForAutomation not yet implemented")
+      code: .unimplemented, message: "executeJavaScript not yet implemented")
   }
 
   func executeShellCommand(
@@ -862,7 +862,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
 
   func getScriptingDictionaries(
     request: Macosusesdk_V1_GetScriptingDictionariesRequest, context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_GetScriptingDictionariesResponse {
+  ) async throws -> Macosusesdk_V1_ScriptingDictionaries {
     throw GRPCStatus(
       code: .unimplemented, message: "getScriptingDictionaries not yet implemented")
   }
@@ -871,13 +871,13 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
 
   func getMetrics(
     request: Macosusesdk_V1_GetMetricsRequest, context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_GetMetricsResponse {
+  ) async throws -> Macosusesdk_V1_Metrics {
     throw GRPCStatus(code: .unimplemented, message: "getMetrics not yet implemented")
   }
 
   func getPerformanceReport(
     request: Macosusesdk_V1_GetPerformanceReportRequest, context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_GetPerformanceReportResponse {
+  ) async throws -> Macosusesdk_V1_PerformanceReport {
     throw GRPCStatus(code: .unimplemented, message: "getPerformanceReport not yet implemented")
   }
 

@@ -79,7 +79,7 @@ public struct Macosusesdk_V1_FindElementsResponse: Sendable {
 }
 
 /// Request to find elements within a screen region.
-public struct Macosusesdk_V1_FindElementsInRegionRequest: Sendable {
+public struct Macosusesdk_V1_FindRegionElementsRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -122,8 +122,7 @@ public struct Macosusesdk_V1_FindElementsInRegionRequest: Sendable {
 }
 
 /// Response from finding elements in a region.
-/// Response from finding elements in a region.
-public struct Macosusesdk_V1_FindElementsInRegionResponse: Sendable {
+public struct Macosusesdk_V1_FindRegionElementsResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -139,44 +138,19 @@ public struct Macosusesdk_V1_FindElementsInRegionResponse: Sendable {
   public init() {}
 }
 
-/// Request to get a specific element by ID.
+/// Request to get a specific element by its resource name.
 public struct Macosusesdk_V1_GetElementRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Parent context (application or window).
-  public var parent: String = String()
-
-  /// Element ID (from Element.element_id).
-  public var elementID: String = String()
+  /// The name of the element to retrieve.
+  /// Format: applications/{application}/elements/{element}
+  public var name: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
-}
-
-/// Response from getting an element.
-public struct Macosusesdk_V1_GetElementResponse: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  /// The requested element, or null if not found.
-  public var element: Macosusesdk_Type_Element {
-    get {return _element ?? Macosusesdk_Type_Element()}
-    set {_element = newValue}
-  }
-  /// Returns true if `element` has been explicitly set.
-  public var hasElement: Bool {return self._element != nil}
-  /// Clears the value of `element`. Subsequent reads from it will return its default value.
-  public mutating func clearElement() {self._element = nil}
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  public init() {}
-
-  fileprivate var _element: Macosusesdk_Type_Element? = nil
 }
 
 /// Request to click an element.
@@ -303,8 +277,8 @@ public struct Macosusesdk_V1_ClickElementResponse: Sendable {
   fileprivate var _element: Macosusesdk_Type_Element? = nil
 }
 
-/// Request to set an element's value.
-public struct Macosusesdk_V1_SetElementValueRequest: Sendable {
+/// Request to write an element's value.
+public struct Macosusesdk_V1_WriteElementValueRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -313,7 +287,7 @@ public struct Macosusesdk_V1_SetElementValueRequest: Sendable {
   public var parent: String = String()
 
   /// Element ID or selector.
-  public var target: Macosusesdk_V1_SetElementValueRequest.OneOf_Target? = nil
+  public var target: Macosusesdk_V1_WriteElementValueRequest.OneOf_Target? = nil
 
   /// Element ID to modify.
   public var elementID: String {
@@ -333,7 +307,7 @@ public struct Macosusesdk_V1_SetElementValueRequest: Sendable {
     set {target = .selector(newValue)}
   }
 
-  /// Value to set.
+  /// Value to write.
   public var value: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -350,8 +324,8 @@ public struct Macosusesdk_V1_SetElementValueRequest: Sendable {
   public init() {}
 }
 
-/// Response from setting an element's value.
-public struct Macosusesdk_V1_SetElementValueResponse: Sendable {
+/// Response from writing an element's value.
+public struct Macosusesdk_V1_WriteElementValueResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -382,46 +356,17 @@ public struct Macosusesdk_V1_GetElementActionsRequest: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Parent context.
-  public var parent: String = String()
-
-  /// Element ID or selector.
-  public var target: Macosusesdk_V1_GetElementActionsRequest.OneOf_Target? = nil
-
-  /// Element ID.
-  public var elementID: String {
-    get {
-      if case .elementID(let v)? = target {return v}
-      return String()
-    }
-    set {target = .elementID(newValue)}
-  }
-
-  /// Selector to find element.
-  public var selector: Macosusesdk_Type_ElementSelector {
-    get {
-      if case .selector(let v)? = target {return v}
-      return Macosusesdk_Type_ElementSelector()
-    }
-    set {target = .selector(newValue)}
-  }
+  /// The name of the element to get actions for.
+  /// Format: applications/{application}/elements/{element}
+  public var name: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  /// Element ID or selector.
-  public enum OneOf_Target: Equatable, Sendable {
-    /// Element ID.
-    case elementID(String)
-    /// Selector to find element.
-    case selector(Macosusesdk_Type_ElementSelector)
-
-  }
 
   public init() {}
 }
 
-/// Response from getting element actions.
-public struct Macosusesdk_V1_GetElementActionsResponse: Sendable {
+/// Available actions for an element.
+public struct Macosusesdk_V1_ElementActions: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -429,21 +374,9 @@ public struct Macosusesdk_V1_GetElementActionsResponse: Sendable {
   /// Available action names.
   public var actions: [String] = []
 
-  /// The element.
-  public var element: Macosusesdk_Type_Element {
-    get {return _element ?? Macosusesdk_Type_Element()}
-    set {_element = newValue}
-  }
-  /// Returns true if `element` has been explicitly set.
-  public var hasElement: Bool {return self._element != nil}
-  /// Clears the value of `element`. Subsequent reads from it will return its default value.
-  public mutating func clearElement() {self._element = nil}
-
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
-
-  fileprivate var _element: Macosusesdk_Type_Element? = nil
 }
 
 /// Request to perform an accessibility action on an element.
@@ -520,7 +453,7 @@ public struct Macosusesdk_V1_PerformElementActionResponse: Sendable {
 }
 
 /// Request to wait for an element to appear (long-running operation).
-public struct Macosusesdk_V1_WaitForElementRequest: Sendable {
+public struct Macosusesdk_V1_WaitElementRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -552,7 +485,7 @@ public struct Macosusesdk_V1_WaitForElementRequest: Sendable {
 }
 
 /// Response from waiting for an element.
-public struct Macosusesdk_V1_WaitForElementResponse: Sendable {
+public struct Macosusesdk_V1_WaitElementResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -574,8 +507,8 @@ public struct Macosusesdk_V1_WaitForElementResponse: Sendable {
   fileprivate var _element: Macosusesdk_Type_Element? = nil
 }
 
-/// Metadata for WaitForElement long-running operation.
-public struct Macosusesdk_V1_WaitForElementMetadata: Sendable {
+/// Metadata for WaitElement long-running operation.
+public struct Macosusesdk_V1_WaitElementMetadata: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -601,7 +534,7 @@ public struct Macosusesdk_V1_WaitForElementMetadata: Sendable {
 }
 
 /// Request to wait for an element to reach a specific state.
-public struct Macosusesdk_V1_WaitForElementStateRequest: Sendable {
+public struct Macosusesdk_V1_WaitElementStateRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -610,7 +543,7 @@ public struct Macosusesdk_V1_WaitForElementStateRequest: Sendable {
   public var parent: String = String()
 
   /// Element ID or selector.
-  public var target: Macosusesdk_V1_WaitForElementStateRequest.OneOf_Target? = nil
+  public var target: Macosusesdk_V1_WaitElementStateRequest.OneOf_Target? = nil
 
   /// Element ID.
   public var elementID: String {
@@ -742,8 +675,11 @@ public struct Macosusesdk_V1_AttributeCondition: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Attribute name.
+  /// Resource name.
   public var name: String = String()
+
+  /// Attribute name.
+  public var attribute: String = String()
 
   /// Expected attribute value.
   public var value: String = String()
@@ -754,7 +690,7 @@ public struct Macosusesdk_V1_AttributeCondition: Sendable {
 }
 
 /// Response from waiting for element state.
-public struct Macosusesdk_V1_WaitForElementStateResponse: Sendable {
+public struct Macosusesdk_V1_WaitElementStateResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -776,8 +712,8 @@ public struct Macosusesdk_V1_WaitForElementStateResponse: Sendable {
   fileprivate var _element: Macosusesdk_Type_Element? = nil
 }
 
-/// Metadata for WaitForElementState operation.
-public struct Macosusesdk_V1_WaitForElementStateMetadata: Sendable {
+/// Metadata for WaitElementState operation.
+public struct Macosusesdk_V1_WaitElementStateMetadata: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -895,8 +831,8 @@ extension Macosusesdk_V1_FindElementsResponse: SwiftProtobuf.Message, SwiftProto
   }
 }
 
-extension Macosusesdk_V1_FindElementsInRegionRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".FindElementsInRegionRequest"
+extension Macosusesdk_V1_FindRegionElementsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".FindRegionElementsRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{1}region\0\u{1}selector\0\u{3}page_size\0\u{3}page_token\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -938,7 +874,7 @@ extension Macosusesdk_V1_FindElementsInRegionRequest: SwiftProtobuf.Message, Swi
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Macosusesdk_V1_FindElementsInRegionRequest, rhs: Macosusesdk_V1_FindElementsInRegionRequest) -> Bool {
+  public static func ==(lhs: Macosusesdk_V1_FindRegionElementsRequest, rhs: Macosusesdk_V1_FindRegionElementsRequest) -> Bool {
     if lhs.parent != rhs.parent {return false}
     if lhs._region != rhs._region {return false}
     if lhs._selector != rhs._selector {return false}
@@ -949,8 +885,8 @@ extension Macosusesdk_V1_FindElementsInRegionRequest: SwiftProtobuf.Message, Swi
   }
 }
 
-extension Macosusesdk_V1_FindElementsInRegionResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".FindElementsInRegionResponse"
+extension Macosusesdk_V1_FindRegionElementsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".FindRegionElementsResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}elements\0\u{3}next_page_token\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -976,7 +912,7 @@ extension Macosusesdk_V1_FindElementsInRegionResponse: SwiftProtobuf.Message, Sw
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Macosusesdk_V1_FindElementsInRegionResponse, rhs: Macosusesdk_V1_FindElementsInRegionResponse) -> Bool {
+  public static func ==(lhs: Macosusesdk_V1_FindRegionElementsResponse, rhs: Macosusesdk_V1_FindRegionElementsResponse) -> Bool {
     if lhs.elements != rhs.elements {return false}
     if lhs.nextPageToken != rhs.nextPageToken {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
@@ -986,7 +922,7 @@ extension Macosusesdk_V1_FindElementsInRegionResponse: SwiftProtobuf.Message, Sw
 
 extension Macosusesdk_V1_GetElementRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".GetElementRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}element_id\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -994,60 +930,21 @@ extension Macosusesdk_V1_GetElementRequest: SwiftProtobuf.Message, SwiftProtobuf
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.parent) }()
-      case 2: try { try decoder.decodeSingularStringField(value: &self.elementID) }()
+      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.parent.isEmpty {
-      try visitor.visitSingularStringField(value: self.parent, fieldNumber: 1)
-    }
-    if !self.elementID.isEmpty {
-      try visitor.visitSingularStringField(value: self.elementID, fieldNumber: 2)
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_GetElementRequest, rhs: Macosusesdk_V1_GetElementRequest) -> Bool {
-    if lhs.parent != rhs.parent {return false}
-    if lhs.elementID != rhs.elementID {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
-}
-
-extension Macosusesdk_V1_GetElementResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".GetElementResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}element\0")
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularMessageField(value: &self._element) }()
-      default: break
-      }
-    }
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    try { if let v = self._element {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
-    } }()
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Macosusesdk_V1_GetElementResponse, rhs: Macosusesdk_V1_GetElementResponse) -> Bool {
-    if lhs._element != rhs._element {return false}
+    if lhs.name != rhs.name {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -1168,8 +1065,8 @@ extension Macosusesdk_V1_ClickElementResponse: SwiftProtobuf.Message, SwiftProto
   }
 }
 
-extension Macosusesdk_V1_SetElementValueRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".SetElementValueRequest"
+extension Macosusesdk_V1_WriteElementValueRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".WriteElementValueRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}element_id\0\u{1}selector\0\u{1}value\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -1231,7 +1128,7 @@ extension Macosusesdk_V1_SetElementValueRequest: SwiftProtobuf.Message, SwiftPro
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Macosusesdk_V1_SetElementValueRequest, rhs: Macosusesdk_V1_SetElementValueRequest) -> Bool {
+  public static func ==(lhs: Macosusesdk_V1_WriteElementValueRequest, rhs: Macosusesdk_V1_WriteElementValueRequest) -> Bool {
     if lhs.parent != rhs.parent {return false}
     if lhs.target != rhs.target {return false}
     if lhs.value != rhs.value {return false}
@@ -1240,8 +1137,8 @@ extension Macosusesdk_V1_SetElementValueRequest: SwiftProtobuf.Message, SwiftPro
   }
 }
 
-extension Macosusesdk_V1_SetElementValueResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".SetElementValueResponse"
+extension Macosusesdk_V1_WriteElementValueResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".WriteElementValueResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}element\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -1271,7 +1168,7 @@ extension Macosusesdk_V1_SetElementValueResponse: SwiftProtobuf.Message, SwiftPr
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Macosusesdk_V1_SetElementValueResponse, rhs: Macosusesdk_V1_SetElementValueResponse) -> Bool {
+  public static func ==(lhs: Macosusesdk_V1_WriteElementValueResponse, rhs: Macosusesdk_V1_WriteElementValueResponse) -> Bool {
     if lhs.success != rhs.success {return false}
     if lhs._element != rhs._element {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
@@ -1281,7 +1178,7 @@ extension Macosusesdk_V1_SetElementValueResponse: SwiftProtobuf.Message, SwiftPr
 
 extension Macosusesdk_V1_GetElementActionsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".GetElementActionsRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}element_id\0\u{1}selector\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1289,66 +1186,29 @@ extension Macosusesdk_V1_GetElementActionsRequest: SwiftProtobuf.Message, SwiftP
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.parent) }()
-      case 2: try {
-        var v: String?
-        try decoder.decodeSingularStringField(value: &v)
-        if let v = v {
-          if self.target != nil {try decoder.handleConflictingOneOf()}
-          self.target = .elementID(v)
-        }
-      }()
-      case 3: try {
-        var v: Macosusesdk_Type_ElementSelector?
-        var hadOneofValue = false
-        if let current = self.target {
-          hadOneofValue = true
-          if case .selector(let m) = current {v = m}
-        }
-        try decoder.decodeSingularMessageField(value: &v)
-        if let v = v {
-          if hadOneofValue {try decoder.handleConflictingOneOf()}
-          self.target = .selector(v)
-        }
-      }()
+      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    if !self.parent.isEmpty {
-      try visitor.visitSingularStringField(value: self.parent, fieldNumber: 1)
-    }
-    switch self.target {
-    case .elementID?: try {
-      guard case .elementID(let v)? = self.target else { preconditionFailure() }
-      try visitor.visitSingularStringField(value: v, fieldNumber: 2)
-    }()
-    case .selector?: try {
-      guard case .selector(let v)? = self.target else { preconditionFailure() }
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
-    }()
-    case nil: break
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_GetElementActionsRequest, rhs: Macosusesdk_V1_GetElementActionsRequest) -> Bool {
-    if lhs.parent != rhs.parent {return false}
-    if lhs.target != rhs.target {return false}
+    if lhs.name != rhs.name {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
-extension Macosusesdk_V1_GetElementActionsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".GetElementActionsResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}actions\0\u{1}element\0")
+extension Macosusesdk_V1_ElementActions: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ElementActions"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}actions\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1357,29 +1217,20 @@ extension Macosusesdk_V1_GetElementActionsResponse: SwiftProtobuf.Message, Swift
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
       case 1: try { try decoder.decodeRepeatedStringField(value: &self.actions) }()
-      case 2: try { try decoder.decodeSingularMessageField(value: &self._element) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
     if !self.actions.isEmpty {
       try visitor.visitRepeatedStringField(value: self.actions, fieldNumber: 1)
     }
-    try { if let v = self._element {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
-    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Macosusesdk_V1_GetElementActionsResponse, rhs: Macosusesdk_V1_GetElementActionsResponse) -> Bool {
+  public static func ==(lhs: Macosusesdk_V1_ElementActions, rhs: Macosusesdk_V1_ElementActions) -> Bool {
     if lhs.actions != rhs.actions {return false}
-    if lhs._element != rhs._element {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -1496,8 +1347,8 @@ extension Macosusesdk_V1_PerformElementActionResponse: SwiftProtobuf.Message, Sw
   }
 }
 
-extension Macosusesdk_V1_WaitForElementRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".WaitForElementRequest"
+extension Macosusesdk_V1_WaitElementRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".WaitElementRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{1}selector\0\u{1}timeout\0\u{3}poll_interval\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -1535,7 +1386,7 @@ extension Macosusesdk_V1_WaitForElementRequest: SwiftProtobuf.Message, SwiftProt
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Macosusesdk_V1_WaitForElementRequest, rhs: Macosusesdk_V1_WaitForElementRequest) -> Bool {
+  public static func ==(lhs: Macosusesdk_V1_WaitElementRequest, rhs: Macosusesdk_V1_WaitElementRequest) -> Bool {
     if lhs.parent != rhs.parent {return false}
     if lhs._selector != rhs._selector {return false}
     if lhs.timeout != rhs.timeout {return false}
@@ -1545,8 +1396,8 @@ extension Macosusesdk_V1_WaitForElementRequest: SwiftProtobuf.Message, SwiftProt
   }
 }
 
-extension Macosusesdk_V1_WaitForElementResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".WaitForElementResponse"
+extension Macosusesdk_V1_WaitElementResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".WaitElementResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}element\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -1572,15 +1423,15 @@ extension Macosusesdk_V1_WaitForElementResponse: SwiftProtobuf.Message, SwiftPro
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Macosusesdk_V1_WaitForElementResponse, rhs: Macosusesdk_V1_WaitForElementResponse) -> Bool {
+  public static func ==(lhs: Macosusesdk_V1_WaitElementResponse, rhs: Macosusesdk_V1_WaitElementResponse) -> Bool {
     if lhs._element != rhs._element {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
-extension Macosusesdk_V1_WaitForElementMetadata: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".WaitForElementMetadata"
+extension Macosusesdk_V1_WaitElementMetadata: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".WaitElementMetadata"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}selector\0\u{1}attempts\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -1610,7 +1461,7 @@ extension Macosusesdk_V1_WaitForElementMetadata: SwiftProtobuf.Message, SwiftPro
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Macosusesdk_V1_WaitForElementMetadata, rhs: Macosusesdk_V1_WaitForElementMetadata) -> Bool {
+  public static func ==(lhs: Macosusesdk_V1_WaitElementMetadata, rhs: Macosusesdk_V1_WaitElementMetadata) -> Bool {
     if lhs._selector != rhs._selector {return false}
     if lhs.attempts != rhs.attempts {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
@@ -1618,8 +1469,8 @@ extension Macosusesdk_V1_WaitForElementMetadata: SwiftProtobuf.Message, SwiftPro
   }
 }
 
-extension Macosusesdk_V1_WaitForElementStateRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".WaitForElementStateRequest"
+extension Macosusesdk_V1_WaitElementStateRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".WaitElementStateRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}element_id\0\u{1}selector\0\u{1}condition\0\u{1}timeout\0\u{3}poll_interval\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -1689,7 +1540,7 @@ extension Macosusesdk_V1_WaitForElementStateRequest: SwiftProtobuf.Message, Swif
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Macosusesdk_V1_WaitForElementStateRequest, rhs: Macosusesdk_V1_WaitForElementStateRequest) -> Bool {
+  public static func ==(lhs: Macosusesdk_V1_WaitElementStateRequest, rhs: Macosusesdk_V1_WaitElementStateRequest) -> Bool {
     if lhs.parent != rhs.parent {return false}
     if lhs.target != rhs.target {return false}
     if lhs._condition != rhs._condition {return false}
@@ -1800,7 +1651,7 @@ extension Macosusesdk_V1_StateCondition: SwiftProtobuf.Message, SwiftProtobuf._M
 
 extension Macosusesdk_V1_AttributeCondition: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".AttributeCondition"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}value\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}attribute\0\u{1}value\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1809,7 +1660,8 @@ extension Macosusesdk_V1_AttributeCondition: SwiftProtobuf.Message, SwiftProtobu
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
-      case 2: try { try decoder.decodeSingularStringField(value: &self.value) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.attribute) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.value) }()
       default: break
       }
     }
@@ -1819,22 +1671,26 @@ extension Macosusesdk_V1_AttributeCondition: SwiftProtobuf.Message, SwiftProtobu
     if !self.name.isEmpty {
       try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
     }
+    if !self.attribute.isEmpty {
+      try visitor.visitSingularStringField(value: self.attribute, fieldNumber: 2)
+    }
     if !self.value.isEmpty {
-      try visitor.visitSingularStringField(value: self.value, fieldNumber: 2)
+      try visitor.visitSingularStringField(value: self.value, fieldNumber: 3)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_AttributeCondition, rhs: Macosusesdk_V1_AttributeCondition) -> Bool {
     if lhs.name != rhs.name {return false}
+    if lhs.attribute != rhs.attribute {return false}
     if lhs.value != rhs.value {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
-extension Macosusesdk_V1_WaitForElementStateResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".WaitForElementStateResponse"
+extension Macosusesdk_V1_WaitElementStateResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".WaitElementStateResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}element\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -1860,15 +1716,15 @@ extension Macosusesdk_V1_WaitForElementStateResponse: SwiftProtobuf.Message, Swi
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Macosusesdk_V1_WaitForElementStateResponse, rhs: Macosusesdk_V1_WaitForElementStateResponse) -> Bool {
+  public static func ==(lhs: Macosusesdk_V1_WaitElementStateResponse, rhs: Macosusesdk_V1_WaitElementStateResponse) -> Bool {
     if lhs._element != rhs._element {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
-extension Macosusesdk_V1_WaitForElementStateMetadata: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".WaitForElementStateMetadata"
+extension Macosusesdk_V1_WaitElementStateMetadata: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".WaitElementStateMetadata"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}condition\0\u{1}attempts\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -1898,7 +1754,7 @@ extension Macosusesdk_V1_WaitForElementStateMetadata: SwiftProtobuf.Message, Swi
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Macosusesdk_V1_WaitForElementStateMetadata, rhs: Macosusesdk_V1_WaitForElementStateMetadata) -> Bool {
+  public static func ==(lhs: Macosusesdk_V1_WaitElementStateMetadata, rhs: Macosusesdk_V1_WaitElementStateMetadata) -> Bool {
     if lhs._condition != rhs._condition {return false}
     if lhs.attempts != rhs.attempts {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}

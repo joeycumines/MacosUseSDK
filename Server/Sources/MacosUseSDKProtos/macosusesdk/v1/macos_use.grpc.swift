@@ -44,6 +44,7 @@ public protocol Macosusesdk_V1_MacosUseProvider: CallHandlerProvider {
   /// Streams accessibility tree changes for an application.
   func watchAccessibility(request: Macosusesdk_V1_WatchAccessibilityRequest, context: StreamingResponseCallContext<Macosusesdk_V1_WatchAccessibilityResponse>) -> EventLoopFuture<GRPCStatus>
 
+  /// ===== Window Operations =====
   /// Gets a specific window.
   func getWindow(request: Macosusesdk_V1_GetWindowRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_Window>
 
@@ -66,35 +67,37 @@ public protocol Macosusesdk_V1_MacosUseProvider: CallHandlerProvider {
   func restoreWindow(request: Macosusesdk_V1_RestoreWindowRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_Window>
 
   /// Closes a window.
-  func closeWindow(request: Macosusesdk_V1_CloseWindowRequest, context: StatusOnlyCallContext) -> EventLoopFuture<SwiftProtobuf.Google_Protobuf_Empty>
+  func closeWindow(request: Macosusesdk_V1_CloseWindowRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_CloseWindowResponse>
 
+  /// ===== Element Operations =====
   /// Finds elements matching a selector.
   func findElements(request: Macosusesdk_V1_FindElementsRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_FindElementsResponse>
 
   /// Finds elements within a screen region.
-  func findElementsInRegion(request: Macosusesdk_V1_FindElementsInRegionRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_FindElementsInRegionResponse>
+  func findRegionElements(request: Macosusesdk_V1_FindRegionElementsRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_FindRegionElementsResponse>
 
   /// Gets a specific element.
-  func getElement(request: Macosusesdk_V1_GetElementRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_GetElementResponse>
+  func getElement(request: Macosusesdk_V1_GetElementRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_Type_Element>
 
   /// Clicks an element.
   func clickElement(request: Macosusesdk_V1_ClickElementRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_ClickElementResponse>
 
-  /// Sets an element's value.
-  func setElementValue(request: Macosusesdk_V1_SetElementValueRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_SetElementValueResponse>
+  /// Writes an element's value.
+  func writeElementValue(request: Macosusesdk_V1_WriteElementValueRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_WriteElementValueResponse>
 
   /// Gets available actions for an element.
-  func getElementActions(request: Macosusesdk_V1_GetElementActionsRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_GetElementActionsResponse>
+  func getElementActions(request: Macosusesdk_V1_GetElementActionsRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_ElementActions>
 
   /// Performs an accessibility action on an element.
   func performElementAction(request: Macosusesdk_V1_PerformElementActionRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_PerformElementActionResponse>
 
   /// Waits for an element to appear (long-running operation).
-  func waitForElement(request: Macosusesdk_V1_WaitForElementRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Google_Longrunning_Operation>
+  func waitElement(request: Macosusesdk_V1_WaitElementRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Google_Longrunning_Operation>
 
   /// Waits for an element to reach a specific state (long-running operation).
-  func waitForElementState(request: Macosusesdk_V1_WaitForElementStateRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Google_Longrunning_Operation>
+  func waitElementState(request: Macosusesdk_V1_WaitElementStateRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Google_Longrunning_Operation>
 
+  /// ===== Observation Operations =====
   /// Creates an observation (long-running operation).
   func createObservation(request: Macosusesdk_V1_CreateObservationRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Google_Longrunning_Operation>
 
@@ -108,8 +111,9 @@ public protocol Macosusesdk_V1_MacosUseProvider: CallHandlerProvider {
   func cancelObservation(request: Macosusesdk_V1_CancelObservationRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_Observation>
 
   /// Streams observation events.
-  func streamObservations(request: Macosusesdk_V1_StreamObservationsRequest, context: StreamingResponseCallContext<Macosusesdk_V1_ObservationEvent>) -> EventLoopFuture<GRPCStatus>
+  func streamObservations(request: Macosusesdk_V1_StreamObservationsRequest, context: StreamingResponseCallContext<Macosusesdk_V1_StreamObservationsResponse>) -> EventLoopFuture<GRPCStatus>
 
+  /// ===== Session Operations =====
   /// Creates a session.
   func createSession(request: Macosusesdk_V1_CreateSessionRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_Session>
 
@@ -126,14 +130,15 @@ public protocol Macosusesdk_V1_MacosUseProvider: CallHandlerProvider {
   func beginTransaction(request: Macosusesdk_V1_BeginTransactionRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_BeginTransactionResponse>
 
   /// Commits a transaction.
-  func commitTransaction(request: Macosusesdk_V1_CommitTransactionRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_CommitTransactionResponse>
+  func commitTransaction(request: Macosusesdk_V1_CommitTransactionRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_Transaction>
 
   /// Rolls back a transaction.
-  func rollbackTransaction(request: Macosusesdk_V1_RollbackTransactionRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_RollbackTransactionResponse>
+  func rollbackTransaction(request: Macosusesdk_V1_RollbackTransactionRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_Transaction>
 
   /// Gets a session state snapshot.
-  func getSessionSnapshot(request: Macosusesdk_V1_GetSessionSnapshotRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_GetSessionSnapshotResponse>
+  func getSessionSnapshot(request: Macosusesdk_V1_GetSessionSnapshotRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_SessionSnapshot>
 
+  /// ===== Screenshot Operations =====
   /// Captures a full screen screenshot.
   func captureScreenshot(request: Macosusesdk_V1_CaptureScreenshotRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_CaptureScreenshotResponse>
 
@@ -146,18 +151,20 @@ public protocol Macosusesdk_V1_MacosUseProvider: CallHandlerProvider {
   /// Captures a screenshot of a screen region.
   func captureRegionScreenshot(request: Macosusesdk_V1_CaptureRegionScreenshotRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_CaptureRegionScreenshotResponse>
 
+  /// ===== Clipboard Operations =====
   /// Gets clipboard contents.
-  func getClipboard(request: Macosusesdk_V1_GetClipboardRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_GetClipboardResponse>
+  func getClipboard(request: Macosusesdk_V1_GetClipboardRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_Clipboard>
 
-  /// Sets clipboard contents.
-  func setClipboard(request: Macosusesdk_V1_SetClipboardRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_SetClipboardResponse>
+  /// Writes clipboard contents.
+  func writeClipboard(request: Macosusesdk_V1_WriteClipboardRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_WriteClipboardResponse>
 
   /// Clears clipboard contents.
   func clearClipboard(request: Macosusesdk_V1_ClearClipboardRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_ClearClipboardResponse>
 
   /// Gets clipboard history (if available).
-  func getClipboardHistory(request: Macosusesdk_V1_GetClipboardHistoryRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_GetClipboardHistoryResponse>
+  func getClipboardHistory(request: Macosusesdk_V1_GetClipboardHistoryRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_ClipboardHistory>
 
+  /// ===== File Operations =====
   /// Automates an open file dialog.
   func automateOpenFileDialog(request: Macosusesdk_V1_AutomateOpenFileDialogRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_AutomateOpenFileDialogResponse>
 
@@ -173,6 +180,7 @@ public protocol Macosusesdk_V1_MacosUseProvider: CallHandlerProvider {
   /// Drags and drops files.
   func dragFiles(request: Macosusesdk_V1_DragFilesRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_DragFilesResponse>
 
+  /// ===== Macro Operations =====
   /// Creates a macro.
   func createMacro(request: Macosusesdk_V1_CreateMacroRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_Macro>
 
@@ -191,11 +199,12 @@ public protocol Macosusesdk_V1_MacosUseProvider: CallHandlerProvider {
   /// Executes a macro (long-running operation).
   func executeMacro(request: Macosusesdk_V1_ExecuteMacroRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Google_Longrunning_Operation>
 
+  /// ===== Script Operations =====
   /// Executes an AppleScript.
   func executeAppleScript(request: Macosusesdk_V1_ExecuteAppleScriptRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_ExecuteAppleScriptResponse>
 
   /// Executes JavaScript for Automation (JXA).
-  func executeJavaScriptForAutomation(request: Macosusesdk_V1_ExecuteJavaScriptForAutomationRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_ExecuteJavaScriptForAutomationResponse>
+  func executeJavaScript(request: Macosusesdk_V1_ExecuteJavaScriptRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_ExecuteJavaScriptResponse>
 
   /// Executes a shell command.
   func executeShellCommand(request: Macosusesdk_V1_ExecuteShellCommandRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_ExecuteShellCommandResponse>
@@ -204,13 +213,14 @@ public protocol Macosusesdk_V1_MacosUseProvider: CallHandlerProvider {
   func validateScript(request: Macosusesdk_V1_ValidateScriptRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_ValidateScriptResponse>
 
   /// Gets scripting dictionaries.
-  func getScriptingDictionaries(request: Macosusesdk_V1_GetScriptingDictionariesRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_GetScriptingDictionariesResponse>
+  func getScriptingDictionaries(request: Macosusesdk_V1_GetScriptingDictionariesRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_ScriptingDictionaries>
 
+  /// ===== Metrics Operations =====
   /// Gets current metrics.
-  func getMetrics(request: Macosusesdk_V1_GetMetricsRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_GetMetricsResponse>
+  func getMetrics(request: Macosusesdk_V1_GetMetricsRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_Metrics>
 
   /// Gets a performance report.
-  func getPerformanceReport(request: Macosusesdk_V1_GetPerformanceReportRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_GetPerformanceReportResponse>
+  func getPerformanceReport(request: Macosusesdk_V1_GetPerformanceReportRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_PerformanceReport>
 
   /// Resets metrics.
   func resetMetrics(request: Macosusesdk_V1_ResetMetricsRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_ResetMetricsResponse>
@@ -376,7 +386,7 @@ extension Macosusesdk_V1_MacosUseProvider {
       return UnaryServerHandler(
         context: context,
         requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_CloseWindowRequest>(),
-        responseSerializer: ProtobufSerializer<SwiftProtobuf.Google_Protobuf_Empty>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_CloseWindowResponse>(),
         interceptors: self.interceptors?.makeCloseWindowInterceptors() ?? [],
         userFunction: self.closeWindow(request:context:)
       )
@@ -390,20 +400,20 @@ extension Macosusesdk_V1_MacosUseProvider {
         userFunction: self.findElements(request:context:)
       )
 
-    case "FindElementsInRegion":
+    case "FindRegionElements":
       return UnaryServerHandler(
         context: context,
-        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_FindElementsInRegionRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_FindElementsInRegionResponse>(),
-        interceptors: self.interceptors?.makeFindElementsInRegionInterceptors() ?? [],
-        userFunction: self.findElementsInRegion(request:context:)
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_FindRegionElementsRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_FindRegionElementsResponse>(),
+        interceptors: self.interceptors?.makeFindRegionElementsInterceptors() ?? [],
+        userFunction: self.findRegionElements(request:context:)
       )
 
     case "GetElement":
       return UnaryServerHandler(
         context: context,
         requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetElementRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetElementResponse>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_Type_Element>(),
         interceptors: self.interceptors?.makeGetElementInterceptors() ?? [],
         userFunction: self.getElement(request:context:)
       )
@@ -417,20 +427,20 @@ extension Macosusesdk_V1_MacosUseProvider {
         userFunction: self.clickElement(request:context:)
       )
 
-    case "SetElementValue":
+    case "WriteElementValue":
       return UnaryServerHandler(
         context: context,
-        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_SetElementValueRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_SetElementValueResponse>(),
-        interceptors: self.interceptors?.makeSetElementValueInterceptors() ?? [],
-        userFunction: self.setElementValue(request:context:)
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_WriteElementValueRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_WriteElementValueResponse>(),
+        interceptors: self.interceptors?.makeWriteElementValueInterceptors() ?? [],
+        userFunction: self.writeElementValue(request:context:)
       )
 
     case "GetElementActions":
       return UnaryServerHandler(
         context: context,
         requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetElementActionsRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetElementActionsResponse>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ElementActions>(),
         interceptors: self.interceptors?.makeGetElementActionsInterceptors() ?? [],
         userFunction: self.getElementActions(request:context:)
       )
@@ -444,22 +454,22 @@ extension Macosusesdk_V1_MacosUseProvider {
         userFunction: self.performElementAction(request:context:)
       )
 
-    case "WaitForElement":
+    case "WaitElement":
       return UnaryServerHandler(
         context: context,
-        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_WaitForElementRequest>(),
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_WaitElementRequest>(),
         responseSerializer: ProtobufSerializer<Google_Longrunning_Operation>(),
-        interceptors: self.interceptors?.makeWaitForElementInterceptors() ?? [],
-        userFunction: self.waitForElement(request:context:)
+        interceptors: self.interceptors?.makeWaitElementInterceptors() ?? [],
+        userFunction: self.waitElement(request:context:)
       )
 
-    case "WaitForElementState":
+    case "WaitElementState":
       return UnaryServerHandler(
         context: context,
-        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_WaitForElementStateRequest>(),
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_WaitElementStateRequest>(),
         responseSerializer: ProtobufSerializer<Google_Longrunning_Operation>(),
-        interceptors: self.interceptors?.makeWaitForElementStateInterceptors() ?? [],
-        userFunction: self.waitForElementState(request:context:)
+        interceptors: self.interceptors?.makeWaitElementStateInterceptors() ?? [],
+        userFunction: self.waitElementState(request:context:)
       )
 
     case "CreateObservation":
@@ -502,7 +512,7 @@ extension Macosusesdk_V1_MacosUseProvider {
       return ServerStreamingServerHandler(
         context: context,
         requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_StreamObservationsRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ObservationEvent>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_StreamObservationsResponse>(),
         interceptors: self.interceptors?.makeStreamObservationsInterceptors() ?? [],
         userFunction: self.streamObservations(request:context:)
       )
@@ -556,7 +566,7 @@ extension Macosusesdk_V1_MacosUseProvider {
       return UnaryServerHandler(
         context: context,
         requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_CommitTransactionRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_CommitTransactionResponse>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Transaction>(),
         interceptors: self.interceptors?.makeCommitTransactionInterceptors() ?? [],
         userFunction: self.commitTransaction(request:context:)
       )
@@ -565,7 +575,7 @@ extension Macosusesdk_V1_MacosUseProvider {
       return UnaryServerHandler(
         context: context,
         requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_RollbackTransactionRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_RollbackTransactionResponse>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Transaction>(),
         interceptors: self.interceptors?.makeRollbackTransactionInterceptors() ?? [],
         userFunction: self.rollbackTransaction(request:context:)
       )
@@ -574,7 +584,7 @@ extension Macosusesdk_V1_MacosUseProvider {
       return UnaryServerHandler(
         context: context,
         requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetSessionSnapshotRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetSessionSnapshotResponse>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_SessionSnapshot>(),
         interceptors: self.interceptors?.makeGetSessionSnapshotInterceptors() ?? [],
         userFunction: self.getSessionSnapshot(request:context:)
       )
@@ -619,18 +629,18 @@ extension Macosusesdk_V1_MacosUseProvider {
       return UnaryServerHandler(
         context: context,
         requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetClipboardRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetClipboardResponse>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Clipboard>(),
         interceptors: self.interceptors?.makeGetClipboardInterceptors() ?? [],
         userFunction: self.getClipboard(request:context:)
       )
 
-    case "SetClipboard":
+    case "WriteClipboard":
       return UnaryServerHandler(
         context: context,
-        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_SetClipboardRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_SetClipboardResponse>(),
-        interceptors: self.interceptors?.makeSetClipboardInterceptors() ?? [],
-        userFunction: self.setClipboard(request:context:)
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_WriteClipboardRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_WriteClipboardResponse>(),
+        interceptors: self.interceptors?.makeWriteClipboardInterceptors() ?? [],
+        userFunction: self.writeClipboard(request:context:)
       )
 
     case "ClearClipboard":
@@ -646,7 +656,7 @@ extension Macosusesdk_V1_MacosUseProvider {
       return UnaryServerHandler(
         context: context,
         requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetClipboardHistoryRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetClipboardHistoryResponse>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ClipboardHistory>(),
         interceptors: self.interceptors?.makeGetClipboardHistoryInterceptors() ?? [],
         userFunction: self.getClipboardHistory(request:context:)
       )
@@ -759,13 +769,13 @@ extension Macosusesdk_V1_MacosUseProvider {
         userFunction: self.executeAppleScript(request:context:)
       )
 
-    case "ExecuteJavaScriptForAutomation":
+    case "ExecuteJavaScript":
       return UnaryServerHandler(
         context: context,
-        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ExecuteJavaScriptForAutomationRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ExecuteJavaScriptForAutomationResponse>(),
-        interceptors: self.interceptors?.makeExecuteJavaScriptForAutomationInterceptors() ?? [],
-        userFunction: self.executeJavaScriptForAutomation(request:context:)
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ExecuteJavaScriptRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ExecuteJavaScriptResponse>(),
+        interceptors: self.interceptors?.makeExecuteJavaScriptInterceptors() ?? [],
+        userFunction: self.executeJavaScript(request:context:)
       )
 
     case "ExecuteShellCommand":
@@ -790,7 +800,7 @@ extension Macosusesdk_V1_MacosUseProvider {
       return UnaryServerHandler(
         context: context,
         requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetScriptingDictionariesRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetScriptingDictionariesResponse>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ScriptingDictionaries>(),
         interceptors: self.interceptors?.makeGetScriptingDictionariesInterceptors() ?? [],
         userFunction: self.getScriptingDictionaries(request:context:)
       )
@@ -799,7 +809,7 @@ extension Macosusesdk_V1_MacosUseProvider {
       return UnaryServerHandler(
         context: context,
         requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetMetricsRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetMetricsResponse>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Metrics>(),
         interceptors: self.interceptors?.makeGetMetricsInterceptors() ?? [],
         userFunction: self.getMetrics(request:context:)
       )
@@ -808,7 +818,7 @@ extension Macosusesdk_V1_MacosUseProvider {
       return UnaryServerHandler(
         context: context,
         requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetPerformanceReportRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetPerformanceReportResponse>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_PerformanceReport>(),
         interceptors: self.interceptors?.makeGetPerformanceReportInterceptors() ?? [],
         userFunction: self.getPerformanceReport(request:context:)
       )
@@ -891,6 +901,7 @@ public protocol Macosusesdk_V1_MacosUseAsyncProvider: CallHandlerProvider, Senda
     context: GRPCAsyncServerCallContext
   ) async throws
 
+  /// ===== Window Operations =====
   /// Gets a specific window.
   func getWindow(
     request: Macosusesdk_V1_GetWindowRequest,
@@ -937,8 +948,9 @@ public protocol Macosusesdk_V1_MacosUseAsyncProvider: CallHandlerProvider, Senda
   func closeWindow(
     request: Macosusesdk_V1_CloseWindowRequest,
     context: GRPCAsyncServerCallContext
-  ) async throws -> SwiftProtobuf.Google_Protobuf_Empty
+  ) async throws -> Macosusesdk_V1_CloseWindowResponse
 
+  /// ===== Element Operations =====
   /// Finds elements matching a selector.
   func findElements(
     request: Macosusesdk_V1_FindElementsRequest,
@@ -946,16 +958,16 @@ public protocol Macosusesdk_V1_MacosUseAsyncProvider: CallHandlerProvider, Senda
   ) async throws -> Macosusesdk_V1_FindElementsResponse
 
   /// Finds elements within a screen region.
-  func findElementsInRegion(
-    request: Macosusesdk_V1_FindElementsInRegionRequest,
+  func findRegionElements(
+    request: Macosusesdk_V1_FindRegionElementsRequest,
     context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_FindElementsInRegionResponse
+  ) async throws -> Macosusesdk_V1_FindRegionElementsResponse
 
   /// Gets a specific element.
   func getElement(
     request: Macosusesdk_V1_GetElementRequest,
     context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_GetElementResponse
+  ) async throws -> Macosusesdk_Type_Element
 
   /// Clicks an element.
   func clickElement(
@@ -963,17 +975,17 @@ public protocol Macosusesdk_V1_MacosUseAsyncProvider: CallHandlerProvider, Senda
     context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_ClickElementResponse
 
-  /// Sets an element's value.
-  func setElementValue(
-    request: Macosusesdk_V1_SetElementValueRequest,
+  /// Writes an element's value.
+  func writeElementValue(
+    request: Macosusesdk_V1_WriteElementValueRequest,
     context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_SetElementValueResponse
+  ) async throws -> Macosusesdk_V1_WriteElementValueResponse
 
   /// Gets available actions for an element.
   func getElementActions(
     request: Macosusesdk_V1_GetElementActionsRequest,
     context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_GetElementActionsResponse
+  ) async throws -> Macosusesdk_V1_ElementActions
 
   /// Performs an accessibility action on an element.
   func performElementAction(
@@ -982,17 +994,18 @@ public protocol Macosusesdk_V1_MacosUseAsyncProvider: CallHandlerProvider, Senda
   ) async throws -> Macosusesdk_V1_PerformElementActionResponse
 
   /// Waits for an element to appear (long-running operation).
-  func waitForElement(
-    request: Macosusesdk_V1_WaitForElementRequest,
+  func waitElement(
+    request: Macosusesdk_V1_WaitElementRequest,
     context: GRPCAsyncServerCallContext
   ) async throws -> Google_Longrunning_Operation
 
   /// Waits for an element to reach a specific state (long-running operation).
-  func waitForElementState(
-    request: Macosusesdk_V1_WaitForElementStateRequest,
+  func waitElementState(
+    request: Macosusesdk_V1_WaitElementStateRequest,
     context: GRPCAsyncServerCallContext
   ) async throws -> Google_Longrunning_Operation
 
+  /// ===== Observation Operations =====
   /// Creates an observation (long-running operation).
   func createObservation(
     request: Macosusesdk_V1_CreateObservationRequest,
@@ -1020,10 +1033,11 @@ public protocol Macosusesdk_V1_MacosUseAsyncProvider: CallHandlerProvider, Senda
   /// Streams observation events.
   func streamObservations(
     request: Macosusesdk_V1_StreamObservationsRequest,
-    responseStream: GRPCAsyncResponseStreamWriter<Macosusesdk_V1_ObservationEvent>,
+    responseStream: GRPCAsyncResponseStreamWriter<Macosusesdk_V1_StreamObservationsResponse>,
     context: GRPCAsyncServerCallContext
   ) async throws
 
+  /// ===== Session Operations =====
   /// Creates a session.
   func createSession(
     request: Macosusesdk_V1_CreateSessionRequest,
@@ -1058,20 +1072,21 @@ public protocol Macosusesdk_V1_MacosUseAsyncProvider: CallHandlerProvider, Senda
   func commitTransaction(
     request: Macosusesdk_V1_CommitTransactionRequest,
     context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_CommitTransactionResponse
+  ) async throws -> Macosusesdk_V1_Transaction
 
   /// Rolls back a transaction.
   func rollbackTransaction(
     request: Macosusesdk_V1_RollbackTransactionRequest,
     context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_RollbackTransactionResponse
+  ) async throws -> Macosusesdk_V1_Transaction
 
   /// Gets a session state snapshot.
   func getSessionSnapshot(
     request: Macosusesdk_V1_GetSessionSnapshotRequest,
     context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_GetSessionSnapshotResponse
+  ) async throws -> Macosusesdk_V1_SessionSnapshot
 
+  /// ===== Screenshot Operations =====
   /// Captures a full screen screenshot.
   func captureScreenshot(
     request: Macosusesdk_V1_CaptureScreenshotRequest,
@@ -1096,17 +1111,18 @@ public protocol Macosusesdk_V1_MacosUseAsyncProvider: CallHandlerProvider, Senda
     context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_CaptureRegionScreenshotResponse
 
+  /// ===== Clipboard Operations =====
   /// Gets clipboard contents.
   func getClipboard(
     request: Macosusesdk_V1_GetClipboardRequest,
     context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_GetClipboardResponse
+  ) async throws -> Macosusesdk_V1_Clipboard
 
-  /// Sets clipboard contents.
-  func setClipboard(
-    request: Macosusesdk_V1_SetClipboardRequest,
+  /// Writes clipboard contents.
+  func writeClipboard(
+    request: Macosusesdk_V1_WriteClipboardRequest,
     context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_SetClipboardResponse
+  ) async throws -> Macosusesdk_V1_WriteClipboardResponse
 
   /// Clears clipboard contents.
   func clearClipboard(
@@ -1118,8 +1134,9 @@ public protocol Macosusesdk_V1_MacosUseAsyncProvider: CallHandlerProvider, Senda
   func getClipboardHistory(
     request: Macosusesdk_V1_GetClipboardHistoryRequest,
     context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_GetClipboardHistoryResponse
+  ) async throws -> Macosusesdk_V1_ClipboardHistory
 
+  /// ===== File Operations =====
   /// Automates an open file dialog.
   func automateOpenFileDialog(
     request: Macosusesdk_V1_AutomateOpenFileDialogRequest,
@@ -1150,6 +1167,7 @@ public protocol Macosusesdk_V1_MacosUseAsyncProvider: CallHandlerProvider, Senda
     context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_DragFilesResponse
 
+  /// ===== Macro Operations =====
   /// Creates a macro.
   func createMacro(
     request: Macosusesdk_V1_CreateMacroRequest,
@@ -1186,6 +1204,7 @@ public protocol Macosusesdk_V1_MacosUseAsyncProvider: CallHandlerProvider, Senda
     context: GRPCAsyncServerCallContext
   ) async throws -> Google_Longrunning_Operation
 
+  /// ===== Script Operations =====
   /// Executes an AppleScript.
   func executeAppleScript(
     request: Macosusesdk_V1_ExecuteAppleScriptRequest,
@@ -1193,10 +1212,10 @@ public protocol Macosusesdk_V1_MacosUseAsyncProvider: CallHandlerProvider, Senda
   ) async throws -> Macosusesdk_V1_ExecuteAppleScriptResponse
 
   /// Executes JavaScript for Automation (JXA).
-  func executeJavaScriptForAutomation(
-    request: Macosusesdk_V1_ExecuteJavaScriptForAutomationRequest,
+  func executeJavaScript(
+    request: Macosusesdk_V1_ExecuteJavaScriptRequest,
     context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_ExecuteJavaScriptForAutomationResponse
+  ) async throws -> Macosusesdk_V1_ExecuteJavaScriptResponse
 
   /// Executes a shell command.
   func executeShellCommand(
@@ -1214,19 +1233,20 @@ public protocol Macosusesdk_V1_MacosUseAsyncProvider: CallHandlerProvider, Senda
   func getScriptingDictionaries(
     request: Macosusesdk_V1_GetScriptingDictionariesRequest,
     context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_GetScriptingDictionariesResponse
+  ) async throws -> Macosusesdk_V1_ScriptingDictionaries
 
+  /// ===== Metrics Operations =====
   /// Gets current metrics.
   func getMetrics(
     request: Macosusesdk_V1_GetMetricsRequest,
     context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_GetMetricsResponse
+  ) async throws -> Macosusesdk_V1_Metrics
 
   /// Gets a performance report.
   func getPerformanceReport(
     request: Macosusesdk_V1_GetPerformanceReportRequest,
     context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_GetPerformanceReportResponse
+  ) async throws -> Macosusesdk_V1_PerformanceReport
 
   /// Resets metrics.
   func resetMetrics(
@@ -1402,7 +1422,7 @@ extension Macosusesdk_V1_MacosUseAsyncProvider {
       return GRPCAsyncServerHandler(
         context: context,
         requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_CloseWindowRequest>(),
-        responseSerializer: ProtobufSerializer<SwiftProtobuf.Google_Protobuf_Empty>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_CloseWindowResponse>(),
         interceptors: self.interceptors?.makeCloseWindowInterceptors() ?? [],
         wrapping: { try await self.closeWindow(request: $0, context: $1) }
       )
@@ -1416,20 +1436,20 @@ extension Macosusesdk_V1_MacosUseAsyncProvider {
         wrapping: { try await self.findElements(request: $0, context: $1) }
       )
 
-    case "FindElementsInRegion":
+    case "FindRegionElements":
       return GRPCAsyncServerHandler(
         context: context,
-        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_FindElementsInRegionRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_FindElementsInRegionResponse>(),
-        interceptors: self.interceptors?.makeFindElementsInRegionInterceptors() ?? [],
-        wrapping: { try await self.findElementsInRegion(request: $0, context: $1) }
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_FindRegionElementsRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_FindRegionElementsResponse>(),
+        interceptors: self.interceptors?.makeFindRegionElementsInterceptors() ?? [],
+        wrapping: { try await self.findRegionElements(request: $0, context: $1) }
       )
 
     case "GetElement":
       return GRPCAsyncServerHandler(
         context: context,
         requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetElementRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetElementResponse>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_Type_Element>(),
         interceptors: self.interceptors?.makeGetElementInterceptors() ?? [],
         wrapping: { try await self.getElement(request: $0, context: $1) }
       )
@@ -1443,20 +1463,20 @@ extension Macosusesdk_V1_MacosUseAsyncProvider {
         wrapping: { try await self.clickElement(request: $0, context: $1) }
       )
 
-    case "SetElementValue":
+    case "WriteElementValue":
       return GRPCAsyncServerHandler(
         context: context,
-        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_SetElementValueRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_SetElementValueResponse>(),
-        interceptors: self.interceptors?.makeSetElementValueInterceptors() ?? [],
-        wrapping: { try await self.setElementValue(request: $0, context: $1) }
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_WriteElementValueRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_WriteElementValueResponse>(),
+        interceptors: self.interceptors?.makeWriteElementValueInterceptors() ?? [],
+        wrapping: { try await self.writeElementValue(request: $0, context: $1) }
       )
 
     case "GetElementActions":
       return GRPCAsyncServerHandler(
         context: context,
         requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetElementActionsRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetElementActionsResponse>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ElementActions>(),
         interceptors: self.interceptors?.makeGetElementActionsInterceptors() ?? [],
         wrapping: { try await self.getElementActions(request: $0, context: $1) }
       )
@@ -1470,22 +1490,22 @@ extension Macosusesdk_V1_MacosUseAsyncProvider {
         wrapping: { try await self.performElementAction(request: $0, context: $1) }
       )
 
-    case "WaitForElement":
+    case "WaitElement":
       return GRPCAsyncServerHandler(
         context: context,
-        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_WaitForElementRequest>(),
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_WaitElementRequest>(),
         responseSerializer: ProtobufSerializer<Google_Longrunning_Operation>(),
-        interceptors: self.interceptors?.makeWaitForElementInterceptors() ?? [],
-        wrapping: { try await self.waitForElement(request: $0, context: $1) }
+        interceptors: self.interceptors?.makeWaitElementInterceptors() ?? [],
+        wrapping: { try await self.waitElement(request: $0, context: $1) }
       )
 
-    case "WaitForElementState":
+    case "WaitElementState":
       return GRPCAsyncServerHandler(
         context: context,
-        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_WaitForElementStateRequest>(),
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_WaitElementStateRequest>(),
         responseSerializer: ProtobufSerializer<Google_Longrunning_Operation>(),
-        interceptors: self.interceptors?.makeWaitForElementStateInterceptors() ?? [],
-        wrapping: { try await self.waitForElementState(request: $0, context: $1) }
+        interceptors: self.interceptors?.makeWaitElementStateInterceptors() ?? [],
+        wrapping: { try await self.waitElementState(request: $0, context: $1) }
       )
 
     case "CreateObservation":
@@ -1528,7 +1548,7 @@ extension Macosusesdk_V1_MacosUseAsyncProvider {
       return GRPCAsyncServerHandler(
         context: context,
         requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_StreamObservationsRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ObservationEvent>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_StreamObservationsResponse>(),
         interceptors: self.interceptors?.makeStreamObservationsInterceptors() ?? [],
         wrapping: { try await self.streamObservations(request: $0, responseStream: $1, context: $2) }
       )
@@ -1582,7 +1602,7 @@ extension Macosusesdk_V1_MacosUseAsyncProvider {
       return GRPCAsyncServerHandler(
         context: context,
         requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_CommitTransactionRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_CommitTransactionResponse>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Transaction>(),
         interceptors: self.interceptors?.makeCommitTransactionInterceptors() ?? [],
         wrapping: { try await self.commitTransaction(request: $0, context: $1) }
       )
@@ -1591,7 +1611,7 @@ extension Macosusesdk_V1_MacosUseAsyncProvider {
       return GRPCAsyncServerHandler(
         context: context,
         requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_RollbackTransactionRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_RollbackTransactionResponse>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Transaction>(),
         interceptors: self.interceptors?.makeRollbackTransactionInterceptors() ?? [],
         wrapping: { try await self.rollbackTransaction(request: $0, context: $1) }
       )
@@ -1600,7 +1620,7 @@ extension Macosusesdk_V1_MacosUseAsyncProvider {
       return GRPCAsyncServerHandler(
         context: context,
         requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetSessionSnapshotRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetSessionSnapshotResponse>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_SessionSnapshot>(),
         interceptors: self.interceptors?.makeGetSessionSnapshotInterceptors() ?? [],
         wrapping: { try await self.getSessionSnapshot(request: $0, context: $1) }
       )
@@ -1645,18 +1665,18 @@ extension Macosusesdk_V1_MacosUseAsyncProvider {
       return GRPCAsyncServerHandler(
         context: context,
         requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetClipboardRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetClipboardResponse>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Clipboard>(),
         interceptors: self.interceptors?.makeGetClipboardInterceptors() ?? [],
         wrapping: { try await self.getClipboard(request: $0, context: $1) }
       )
 
-    case "SetClipboard":
+    case "WriteClipboard":
       return GRPCAsyncServerHandler(
         context: context,
-        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_SetClipboardRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_SetClipboardResponse>(),
-        interceptors: self.interceptors?.makeSetClipboardInterceptors() ?? [],
-        wrapping: { try await self.setClipboard(request: $0, context: $1) }
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_WriteClipboardRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_WriteClipboardResponse>(),
+        interceptors: self.interceptors?.makeWriteClipboardInterceptors() ?? [],
+        wrapping: { try await self.writeClipboard(request: $0, context: $1) }
       )
 
     case "ClearClipboard":
@@ -1672,7 +1692,7 @@ extension Macosusesdk_V1_MacosUseAsyncProvider {
       return GRPCAsyncServerHandler(
         context: context,
         requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetClipboardHistoryRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetClipboardHistoryResponse>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ClipboardHistory>(),
         interceptors: self.interceptors?.makeGetClipboardHistoryInterceptors() ?? [],
         wrapping: { try await self.getClipboardHistory(request: $0, context: $1) }
       )
@@ -1785,13 +1805,13 @@ extension Macosusesdk_V1_MacosUseAsyncProvider {
         wrapping: { try await self.executeAppleScript(request: $0, context: $1) }
       )
 
-    case "ExecuteJavaScriptForAutomation":
+    case "ExecuteJavaScript":
       return GRPCAsyncServerHandler(
         context: context,
-        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ExecuteJavaScriptForAutomationRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ExecuteJavaScriptForAutomationResponse>(),
-        interceptors: self.interceptors?.makeExecuteJavaScriptForAutomationInterceptors() ?? [],
-        wrapping: { try await self.executeJavaScriptForAutomation(request: $0, context: $1) }
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ExecuteJavaScriptRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ExecuteJavaScriptResponse>(),
+        interceptors: self.interceptors?.makeExecuteJavaScriptInterceptors() ?? [],
+        wrapping: { try await self.executeJavaScript(request: $0, context: $1) }
       )
 
     case "ExecuteShellCommand":
@@ -1816,7 +1836,7 @@ extension Macosusesdk_V1_MacosUseAsyncProvider {
       return GRPCAsyncServerHandler(
         context: context,
         requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetScriptingDictionariesRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetScriptingDictionariesResponse>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ScriptingDictionaries>(),
         interceptors: self.interceptors?.makeGetScriptingDictionariesInterceptors() ?? [],
         wrapping: { try await self.getScriptingDictionaries(request: $0, context: $1) }
       )
@@ -1825,7 +1845,7 @@ extension Macosusesdk_V1_MacosUseAsyncProvider {
       return GRPCAsyncServerHandler(
         context: context,
         requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetMetricsRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetMetricsResponse>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Metrics>(),
         interceptors: self.interceptors?.makeGetMetricsInterceptors() ?? [],
         wrapping: { try await self.getMetrics(request: $0, context: $1) }
       )
@@ -1834,7 +1854,7 @@ extension Macosusesdk_V1_MacosUseAsyncProvider {
       return GRPCAsyncServerHandler(
         context: context,
         requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetPerformanceReportRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetPerformanceReportResponse>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_PerformanceReport>(),
         interceptors: self.interceptors?.makeGetPerformanceReportInterceptors() ?? [],
         wrapping: { try await self.getPerformanceReport(request: $0, context: $1) }
       )
@@ -1922,43 +1942,43 @@ public protocol Macosusesdk_V1_MacosUseServerInterceptorFactoryProtocol: Sendabl
 
   /// - Returns: Interceptors to use when handling 'closeWindow'.
   ///   Defaults to calling `self.makeInterceptors()`.
-  func makeCloseWindowInterceptors() -> [ServerInterceptor<Macosusesdk_V1_CloseWindowRequest, SwiftProtobuf.Google_Protobuf_Empty>]
+  func makeCloseWindowInterceptors() -> [ServerInterceptor<Macosusesdk_V1_CloseWindowRequest, Macosusesdk_V1_CloseWindowResponse>]
 
   /// - Returns: Interceptors to use when handling 'findElements'.
   ///   Defaults to calling `self.makeInterceptors()`.
   func makeFindElementsInterceptors() -> [ServerInterceptor<Macosusesdk_V1_FindElementsRequest, Macosusesdk_V1_FindElementsResponse>]
 
-  /// - Returns: Interceptors to use when handling 'findElementsInRegion'.
+  /// - Returns: Interceptors to use when handling 'findRegionElements'.
   ///   Defaults to calling `self.makeInterceptors()`.
-  func makeFindElementsInRegionInterceptors() -> [ServerInterceptor<Macosusesdk_V1_FindElementsInRegionRequest, Macosusesdk_V1_FindElementsInRegionResponse>]
+  func makeFindRegionElementsInterceptors() -> [ServerInterceptor<Macosusesdk_V1_FindRegionElementsRequest, Macosusesdk_V1_FindRegionElementsResponse>]
 
   /// - Returns: Interceptors to use when handling 'getElement'.
   ///   Defaults to calling `self.makeInterceptors()`.
-  func makeGetElementInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetElementRequest, Macosusesdk_V1_GetElementResponse>]
+  func makeGetElementInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetElementRequest, Macosusesdk_Type_Element>]
 
   /// - Returns: Interceptors to use when handling 'clickElement'.
   ///   Defaults to calling `self.makeInterceptors()`.
   func makeClickElementInterceptors() -> [ServerInterceptor<Macosusesdk_V1_ClickElementRequest, Macosusesdk_V1_ClickElementResponse>]
 
-  /// - Returns: Interceptors to use when handling 'setElementValue'.
+  /// - Returns: Interceptors to use when handling 'writeElementValue'.
   ///   Defaults to calling `self.makeInterceptors()`.
-  func makeSetElementValueInterceptors() -> [ServerInterceptor<Macosusesdk_V1_SetElementValueRequest, Macosusesdk_V1_SetElementValueResponse>]
+  func makeWriteElementValueInterceptors() -> [ServerInterceptor<Macosusesdk_V1_WriteElementValueRequest, Macosusesdk_V1_WriteElementValueResponse>]
 
   /// - Returns: Interceptors to use when handling 'getElementActions'.
   ///   Defaults to calling `self.makeInterceptors()`.
-  func makeGetElementActionsInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetElementActionsRequest, Macosusesdk_V1_GetElementActionsResponse>]
+  func makeGetElementActionsInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetElementActionsRequest, Macosusesdk_V1_ElementActions>]
 
   /// - Returns: Interceptors to use when handling 'performElementAction'.
   ///   Defaults to calling `self.makeInterceptors()`.
   func makePerformElementActionInterceptors() -> [ServerInterceptor<Macosusesdk_V1_PerformElementActionRequest, Macosusesdk_V1_PerformElementActionResponse>]
 
-  /// - Returns: Interceptors to use when handling 'waitForElement'.
+  /// - Returns: Interceptors to use when handling 'waitElement'.
   ///   Defaults to calling `self.makeInterceptors()`.
-  func makeWaitForElementInterceptors() -> [ServerInterceptor<Macosusesdk_V1_WaitForElementRequest, Google_Longrunning_Operation>]
+  func makeWaitElementInterceptors() -> [ServerInterceptor<Macosusesdk_V1_WaitElementRequest, Google_Longrunning_Operation>]
 
-  /// - Returns: Interceptors to use when handling 'waitForElementState'.
+  /// - Returns: Interceptors to use when handling 'waitElementState'.
   ///   Defaults to calling `self.makeInterceptors()`.
-  func makeWaitForElementStateInterceptors() -> [ServerInterceptor<Macosusesdk_V1_WaitForElementStateRequest, Google_Longrunning_Operation>]
+  func makeWaitElementStateInterceptors() -> [ServerInterceptor<Macosusesdk_V1_WaitElementStateRequest, Google_Longrunning_Operation>]
 
   /// - Returns: Interceptors to use when handling 'createObservation'.
   ///   Defaults to calling `self.makeInterceptors()`.
@@ -1978,7 +1998,7 @@ public protocol Macosusesdk_V1_MacosUseServerInterceptorFactoryProtocol: Sendabl
 
   /// - Returns: Interceptors to use when handling 'streamObservations'.
   ///   Defaults to calling `self.makeInterceptors()`.
-  func makeStreamObservationsInterceptors() -> [ServerInterceptor<Macosusesdk_V1_StreamObservationsRequest, Macosusesdk_V1_ObservationEvent>]
+  func makeStreamObservationsInterceptors() -> [ServerInterceptor<Macosusesdk_V1_StreamObservationsRequest, Macosusesdk_V1_StreamObservationsResponse>]
 
   /// - Returns: Interceptors to use when handling 'createSession'.
   ///   Defaults to calling `self.makeInterceptors()`.
@@ -2002,15 +2022,15 @@ public protocol Macosusesdk_V1_MacosUseServerInterceptorFactoryProtocol: Sendabl
 
   /// - Returns: Interceptors to use when handling 'commitTransaction'.
   ///   Defaults to calling `self.makeInterceptors()`.
-  func makeCommitTransactionInterceptors() -> [ServerInterceptor<Macosusesdk_V1_CommitTransactionRequest, Macosusesdk_V1_CommitTransactionResponse>]
+  func makeCommitTransactionInterceptors() -> [ServerInterceptor<Macosusesdk_V1_CommitTransactionRequest, Macosusesdk_V1_Transaction>]
 
   /// - Returns: Interceptors to use when handling 'rollbackTransaction'.
   ///   Defaults to calling `self.makeInterceptors()`.
-  func makeRollbackTransactionInterceptors() -> [ServerInterceptor<Macosusesdk_V1_RollbackTransactionRequest, Macosusesdk_V1_RollbackTransactionResponse>]
+  func makeRollbackTransactionInterceptors() -> [ServerInterceptor<Macosusesdk_V1_RollbackTransactionRequest, Macosusesdk_V1_Transaction>]
 
   /// - Returns: Interceptors to use when handling 'getSessionSnapshot'.
   ///   Defaults to calling `self.makeInterceptors()`.
-  func makeGetSessionSnapshotInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetSessionSnapshotRequest, Macosusesdk_V1_GetSessionSnapshotResponse>]
+  func makeGetSessionSnapshotInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetSessionSnapshotRequest, Macosusesdk_V1_SessionSnapshot>]
 
   /// - Returns: Interceptors to use when handling 'captureScreenshot'.
   ///   Defaults to calling `self.makeInterceptors()`.
@@ -2030,11 +2050,11 @@ public protocol Macosusesdk_V1_MacosUseServerInterceptorFactoryProtocol: Sendabl
 
   /// - Returns: Interceptors to use when handling 'getClipboard'.
   ///   Defaults to calling `self.makeInterceptors()`.
-  func makeGetClipboardInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetClipboardRequest, Macosusesdk_V1_GetClipboardResponse>]
+  func makeGetClipboardInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetClipboardRequest, Macosusesdk_V1_Clipboard>]
 
-  /// - Returns: Interceptors to use when handling 'setClipboard'.
+  /// - Returns: Interceptors to use when handling 'writeClipboard'.
   ///   Defaults to calling `self.makeInterceptors()`.
-  func makeSetClipboardInterceptors() -> [ServerInterceptor<Macosusesdk_V1_SetClipboardRequest, Macosusesdk_V1_SetClipboardResponse>]
+  func makeWriteClipboardInterceptors() -> [ServerInterceptor<Macosusesdk_V1_WriteClipboardRequest, Macosusesdk_V1_WriteClipboardResponse>]
 
   /// - Returns: Interceptors to use when handling 'clearClipboard'.
   ///   Defaults to calling `self.makeInterceptors()`.
@@ -2042,7 +2062,7 @@ public protocol Macosusesdk_V1_MacosUseServerInterceptorFactoryProtocol: Sendabl
 
   /// - Returns: Interceptors to use when handling 'getClipboardHistory'.
   ///   Defaults to calling `self.makeInterceptors()`.
-  func makeGetClipboardHistoryInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetClipboardHistoryRequest, Macosusesdk_V1_GetClipboardHistoryResponse>]
+  func makeGetClipboardHistoryInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetClipboardHistoryRequest, Macosusesdk_V1_ClipboardHistory>]
 
   /// - Returns: Interceptors to use when handling 'automateOpenFileDialog'.
   ///   Defaults to calling `self.makeInterceptors()`.
@@ -2092,9 +2112,9 @@ public protocol Macosusesdk_V1_MacosUseServerInterceptorFactoryProtocol: Sendabl
   ///   Defaults to calling `self.makeInterceptors()`.
   func makeExecuteAppleScriptInterceptors() -> [ServerInterceptor<Macosusesdk_V1_ExecuteAppleScriptRequest, Macosusesdk_V1_ExecuteAppleScriptResponse>]
 
-  /// - Returns: Interceptors to use when handling 'executeJavaScriptForAutomation'.
+  /// - Returns: Interceptors to use when handling 'executeJavaScript'.
   ///   Defaults to calling `self.makeInterceptors()`.
-  func makeExecuteJavaScriptForAutomationInterceptors() -> [ServerInterceptor<Macosusesdk_V1_ExecuteJavaScriptForAutomationRequest, Macosusesdk_V1_ExecuteJavaScriptForAutomationResponse>]
+  func makeExecuteJavaScriptInterceptors() -> [ServerInterceptor<Macosusesdk_V1_ExecuteJavaScriptRequest, Macosusesdk_V1_ExecuteJavaScriptResponse>]
 
   /// - Returns: Interceptors to use when handling 'executeShellCommand'.
   ///   Defaults to calling `self.makeInterceptors()`.
@@ -2106,15 +2126,15 @@ public protocol Macosusesdk_V1_MacosUseServerInterceptorFactoryProtocol: Sendabl
 
   /// - Returns: Interceptors to use when handling 'getScriptingDictionaries'.
   ///   Defaults to calling `self.makeInterceptors()`.
-  func makeGetScriptingDictionariesInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetScriptingDictionariesRequest, Macosusesdk_V1_GetScriptingDictionariesResponse>]
+  func makeGetScriptingDictionariesInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetScriptingDictionariesRequest, Macosusesdk_V1_ScriptingDictionaries>]
 
   /// - Returns: Interceptors to use when handling 'getMetrics'.
   ///   Defaults to calling `self.makeInterceptors()`.
-  func makeGetMetricsInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetMetricsRequest, Macosusesdk_V1_GetMetricsResponse>]
+  func makeGetMetricsInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetMetricsRequest, Macosusesdk_V1_Metrics>]
 
   /// - Returns: Interceptors to use when handling 'getPerformanceReport'.
   ///   Defaults to calling `self.makeInterceptors()`.
-  func makeGetPerformanceReportInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetPerformanceReportRequest, Macosusesdk_V1_GetPerformanceReportResponse>]
+  func makeGetPerformanceReportInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetPerformanceReportRequest, Macosusesdk_V1_PerformanceReport>]
 
   /// - Returns: Interceptors to use when handling 'resetMetrics'.
   ///   Defaults to calling `self.makeInterceptors()`.
@@ -2144,14 +2164,14 @@ public enum Macosusesdk_V1_MacosUseServerMetadata {
       Macosusesdk_V1_MacosUseServerMetadata.Methods.restoreWindow,
       Macosusesdk_V1_MacosUseServerMetadata.Methods.closeWindow,
       Macosusesdk_V1_MacosUseServerMetadata.Methods.findElements,
-      Macosusesdk_V1_MacosUseServerMetadata.Methods.findElementsInRegion,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.findRegionElements,
       Macosusesdk_V1_MacosUseServerMetadata.Methods.getElement,
       Macosusesdk_V1_MacosUseServerMetadata.Methods.clickElement,
-      Macosusesdk_V1_MacosUseServerMetadata.Methods.setElementValue,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.writeElementValue,
       Macosusesdk_V1_MacosUseServerMetadata.Methods.getElementActions,
       Macosusesdk_V1_MacosUseServerMetadata.Methods.performElementAction,
-      Macosusesdk_V1_MacosUseServerMetadata.Methods.waitForElement,
-      Macosusesdk_V1_MacosUseServerMetadata.Methods.waitForElementState,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.waitElement,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.waitElementState,
       Macosusesdk_V1_MacosUseServerMetadata.Methods.createObservation,
       Macosusesdk_V1_MacosUseServerMetadata.Methods.getObservation,
       Macosusesdk_V1_MacosUseServerMetadata.Methods.listObservations,
@@ -2170,7 +2190,7 @@ public enum Macosusesdk_V1_MacosUseServerMetadata {
       Macosusesdk_V1_MacosUseServerMetadata.Methods.captureElementScreenshot,
       Macosusesdk_V1_MacosUseServerMetadata.Methods.captureRegionScreenshot,
       Macosusesdk_V1_MacosUseServerMetadata.Methods.getClipboard,
-      Macosusesdk_V1_MacosUseServerMetadata.Methods.setClipboard,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.writeClipboard,
       Macosusesdk_V1_MacosUseServerMetadata.Methods.clearClipboard,
       Macosusesdk_V1_MacosUseServerMetadata.Methods.getClipboardHistory,
       Macosusesdk_V1_MacosUseServerMetadata.Methods.automateOpenFileDialog,
@@ -2185,7 +2205,7 @@ public enum Macosusesdk_V1_MacosUseServerMetadata {
       Macosusesdk_V1_MacosUseServerMetadata.Methods.deleteMacro,
       Macosusesdk_V1_MacosUseServerMetadata.Methods.executeMacro,
       Macosusesdk_V1_MacosUseServerMetadata.Methods.executeAppleScript,
-      Macosusesdk_V1_MacosUseServerMetadata.Methods.executeJavaScriptForAutomation,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.executeJavaScript,
       Macosusesdk_V1_MacosUseServerMetadata.Methods.executeShellCommand,
       Macosusesdk_V1_MacosUseServerMetadata.Methods.validateScript,
       Macosusesdk_V1_MacosUseServerMetadata.Methods.getScriptingDictionaries,
@@ -2304,9 +2324,9 @@ public enum Macosusesdk_V1_MacosUseServerMetadata {
       type: GRPCCallType.unary
     )
 
-    public static let findElementsInRegion = GRPCMethodDescriptor(
-      name: "FindElementsInRegion",
-      path: "/macosusesdk.v1.MacosUse/FindElementsInRegion",
+    public static let findRegionElements = GRPCMethodDescriptor(
+      name: "FindRegionElements",
+      path: "/macosusesdk.v1.MacosUse/FindRegionElements",
       type: GRPCCallType.unary
     )
 
@@ -2322,9 +2342,9 @@ public enum Macosusesdk_V1_MacosUseServerMetadata {
       type: GRPCCallType.unary
     )
 
-    public static let setElementValue = GRPCMethodDescriptor(
-      name: "SetElementValue",
-      path: "/macosusesdk.v1.MacosUse/SetElementValue",
+    public static let writeElementValue = GRPCMethodDescriptor(
+      name: "WriteElementValue",
+      path: "/macosusesdk.v1.MacosUse/WriteElementValue",
       type: GRPCCallType.unary
     )
 
@@ -2340,15 +2360,15 @@ public enum Macosusesdk_V1_MacosUseServerMetadata {
       type: GRPCCallType.unary
     )
 
-    public static let waitForElement = GRPCMethodDescriptor(
-      name: "WaitForElement",
-      path: "/macosusesdk.v1.MacosUse/WaitForElement",
+    public static let waitElement = GRPCMethodDescriptor(
+      name: "WaitElement",
+      path: "/macosusesdk.v1.MacosUse/WaitElement",
       type: GRPCCallType.unary
     )
 
-    public static let waitForElementState = GRPCMethodDescriptor(
-      name: "WaitForElementState",
-      path: "/macosusesdk.v1.MacosUse/WaitForElementState",
+    public static let waitElementState = GRPCMethodDescriptor(
+      name: "WaitElementState",
+      path: "/macosusesdk.v1.MacosUse/WaitElementState",
       type: GRPCCallType.unary
     )
 
@@ -2460,9 +2480,9 @@ public enum Macosusesdk_V1_MacosUseServerMetadata {
       type: GRPCCallType.unary
     )
 
-    public static let setClipboard = GRPCMethodDescriptor(
-      name: "SetClipboard",
-      path: "/macosusesdk.v1.MacosUse/SetClipboard",
+    public static let writeClipboard = GRPCMethodDescriptor(
+      name: "WriteClipboard",
+      path: "/macosusesdk.v1.MacosUse/WriteClipboard",
       type: GRPCCallType.unary
     )
 
@@ -2550,9 +2570,9 @@ public enum Macosusesdk_V1_MacosUseServerMetadata {
       type: GRPCCallType.unary
     )
 
-    public static let executeJavaScriptForAutomation = GRPCMethodDescriptor(
-      name: "ExecuteJavaScriptForAutomation",
-      path: "/macosusesdk.v1.MacosUse/ExecuteJavaScriptForAutomation",
+    public static let executeJavaScript = GRPCMethodDescriptor(
+      name: "ExecuteJavaScript",
+      path: "/macosusesdk.v1.MacosUse/ExecuteJavaScript",
       type: GRPCCallType.unary
     )
 

@@ -53,7 +53,7 @@ message FindElementsResponse {
 }
 
 // Request to find elements within a screen region.
-message FindElementsInRegionRequest {
+message FindRegionElementsRequest {
   // Parent context (same as FindElementsRequest).
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
@@ -73,8 +73,7 @@ message FindElementsInRegionRequest {
 }
 
 // Response from finding elements in a region.
-// Response from finding elements in a region.
-message FindElementsInRegionResponse {
+message FindRegionElementsResponse {
   // Elements within the region.
   repeated macosusesdk.type.Element elements = 1;
 
@@ -137,8 +136,8 @@ message ClickElementResponse {
   macosusesdk.type.Element element = 2;
 }
 
-// Request to set an element's value.
-message SetElementValueRequest {
+// Request to write an element's value.
+message WriteElementValueRequest {
   // Parent context.
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
@@ -154,12 +153,12 @@ message SetElementValueRequest {
     macosusesdk.type.ElementSelector selector = 3;
   }
 
-  // Value to set.
-  string value = 4 [(google.api.field_behavior) = REQUIRED];
+  // Value to write.
+  string value = 4 [(google.api.field_behavior) = OPTIONAL];
 }
 
-// Response from setting an element's value.
-message SetElementValueResponse {
+// Response from writing an element's value.
+message WriteElementValueResponse {
   // Whether the operation was successful.
   bool success = 1;
 
@@ -177,8 +176,8 @@ message GetElementActionsRequest {
   ];
 }
 
-// Response from getting element actions.
-message GetElementActionsResponse {
+// Available actions for an element.
+message ElementActions {
   // Available action names.
   repeated string actions = 1;
 }
@@ -214,7 +213,7 @@ message PerformElementActionResponse {
 }
 
 // Request to wait for an element to appear (long-running operation).
-message WaitForElementRequest {
+message WaitElementRequest {
   // Parent context.
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
@@ -232,13 +231,13 @@ message WaitForElementRequest {
 }
 
 // Response from waiting for an element.
-message WaitForElementResponse {
+message WaitElementResponse {
   // The element that appeared.
   macosusesdk.type.Element element = 1;
 }
 
-// Metadata for WaitForElement long-running operation.
-message WaitForElementMetadata {
+// Metadata for WaitElement long-running operation.
+message WaitElementMetadata {
   // The selector being waited for.
   macosusesdk.type.ElementSelector selector = 1;
 
@@ -247,7 +246,7 @@ message WaitForElementMetadata {
 }
 
 // Request to wait for an element to reach a specific state.
-message WaitForElementStateRequest {
+message WaitElementStateRequest {
   // Parent context.
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
@@ -298,23 +297,29 @@ message StateCondition {
 message AttributeCondition {
   option (google.api.resource) = {
     type: "macos.googleapis.com/AttributeCondition"
-    pattern: "attributeConditions/{condition}"
+    pattern: "attributeConditions/{attribute_condition}"
+    singular: "attributeCondition"
+    plural: "attributeConditions"
   };
+  
+  // Resource name.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+  
   // Attribute name.
-  string name = 1;
+  string attribute = 2 [(google.api.field_behavior) = REQUIRED];
 
   // Expected attribute value.
-  string value = 2;
+  string value = 3 [(google.api.field_behavior) = REQUIRED];
 }
 
 // Response from waiting for element state.
-message WaitForElementStateResponse {
+message WaitElementStateResponse {
   // The element in the expected state.
   macosusesdk.type.Element element = 1;
 }
 
-// Metadata for WaitForElementState operation.
-message WaitForElementStateMetadata {
+// Metadata for WaitElementState operation.
+message WaitElementStateMetadata {
   // The condition being waited for.
   StateCondition condition = 1;
 

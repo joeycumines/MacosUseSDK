@@ -153,10 +153,9 @@ func (PerformanceTrends_TrendDirection) EnumDescriptor() ([]byte, []int) {
 // Request to get current metrics.
 type GetMetricsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Metric types to include (empty = all).
-	Types []MetricType `protobuf:"varint,1,rep,packed,name=types,proto3,enum=macosusesdk.v1.MetricType" json:"types,omitempty"`
-	// Time range for metrics.
-	TimeRange     *TimeRange `protobuf:"bytes,2,opt,name=time_range,json=timeRange,proto3" json:"time_range,omitempty"`
+	// The name of the metrics resource.
+	// Format: metrics (singleton)
+	Name          string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -191,25 +190,18 @@ func (*GetMetricsRequest) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_metrics_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *GetMetricsRequest) GetTypes() []MetricType {
+func (x *GetMetricsRequest) GetName() string {
 	if x != nil {
-		return x.Types
+		return x.Name
 	}
-	return nil
+	return ""
 }
 
-func (x *GetMetricsRequest) GetTimeRange() *TimeRange {
-	if x != nil {
-		return x.TimeRange
-	}
-	return nil
-}
-
-// Response with metrics.
-type GetMetricsResponse struct {
+// Metrics.
+type Metrics struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// When metrics were collected.
-	Timestamp *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	ReportTime *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=report_time,json=reportTime,proto3" json:"report_time,omitempty"`
 	// Operation metrics.
 	Operations *OperationMetrics `protobuf:"bytes,2,opt,name=operations,proto3" json:"operations,omitempty"`
 	// Resource utilization metrics.
@@ -224,20 +216,20 @@ type GetMetricsResponse struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetMetricsResponse) Reset() {
-	*x = GetMetricsResponse{}
+func (x *Metrics) Reset() {
+	*x = Metrics{}
 	mi := &file_macosusesdk_v1_metrics_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetMetricsResponse) String() string {
+func (x *Metrics) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetMetricsResponse) ProtoMessage() {}
+func (*Metrics) ProtoMessage() {}
 
-func (x *GetMetricsResponse) ProtoReflect() protoreflect.Message {
+func (x *Metrics) ProtoReflect() protoreflect.Message {
 	mi := &file_macosusesdk_v1_metrics_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -249,47 +241,47 @@ func (x *GetMetricsResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetMetricsResponse.ProtoReflect.Descriptor instead.
-func (*GetMetricsResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use Metrics.ProtoReflect.Descriptor instead.
+func (*Metrics) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_metrics_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *GetMetricsResponse) GetTimestamp() *timestamppb.Timestamp {
+func (x *Metrics) GetReportTime() *timestamppb.Timestamp {
 	if x != nil {
-		return x.Timestamp
+		return x.ReportTime
 	}
 	return nil
 }
 
-func (x *GetMetricsResponse) GetOperations() *OperationMetrics {
+func (x *Metrics) GetOperations() *OperationMetrics {
 	if x != nil {
 		return x.Operations
 	}
 	return nil
 }
 
-func (x *GetMetricsResponse) GetResources() *ResourceMetrics {
+func (x *Metrics) GetResources() *ResourceMetrics {
 	if x != nil {
 		return x.Resources
 	}
 	return nil
 }
 
-func (x *GetMetricsResponse) GetCache() *CacheMetrics {
+func (x *Metrics) GetCache() *CacheMetrics {
 	if x != nil {
 		return x.Cache
 	}
 	return nil
 }
 
-func (x *GetMetricsResponse) GetRateLimits() *RateLimitMetrics {
+func (x *Metrics) GetRateLimits() *RateLimitMetrics {
 	if x != nil {
 		return x.RateLimits
 	}
 	return nil
 }
 
-func (x *GetMetricsResponse) GetAccessibility() *AccessibilityMetrics {
+func (x *Metrics) GetAccessibility() *AccessibilityMetrics {
 	if x != nil {
 		return x.Accessibility
 	}
@@ -368,10 +360,10 @@ type OperationMetrics struct {
 	P95Latency *durationpb.Duration `protobuf:"bytes,6,opt,name=p95_latency,json=p95Latency,proto3" json:"p95_latency,omitempty"`
 	// 99th percentile latency.
 	P99Latency *durationpb.Duration `protobuf:"bytes,7,opt,name=p99_latency,json=p99Latency,proto3" json:"p99_latency,omitempty"`
-	// Metrics by operation type.
-	ByOperation   map[string]*OperationTypeMetrics `protobuf:"bytes,8,rep,name=by_operation,json=byOperation,proto3" json:"by_operation,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// Metrics breakdown per operation type.
+	OperationsBreakdown map[string]*OperationTypeMetrics `protobuf:"bytes,8,rep,name=operations_breakdown,json=operationsBreakdown,proto3" json:"operations_breakdown,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *OperationMetrics) Reset() {
@@ -453,9 +445,9 @@ func (x *OperationMetrics) GetP99Latency() *durationpb.Duration {
 	return nil
 }
 
-func (x *OperationMetrics) GetByOperation() map[string]*OperationTypeMetrics {
+func (x *OperationMetrics) GetOperationsBreakdown() map[string]*OperationTypeMetrics {
 	if x != nil {
-		return x.ByOperation
+		return x.OperationsBreakdown
 	}
 	return nil
 }
@@ -657,10 +649,10 @@ type CacheMetrics struct {
 	MemoryUsed int64 `protobuf:"varint,5,opt,name=memory_used,json=memoryUsed,proto3" json:"memory_used,omitempty"`
 	// Eviction count.
 	Evictions int64 `protobuf:"varint,6,opt,name=evictions,proto3" json:"evictions,omitempty"`
-	// Metrics by cache type.
-	ByCache       map[string]*CacheTypeMetrics `protobuf:"bytes,7,rep,name=by_cache,json=byCache,proto3" json:"by_cache,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// Metrics breakdown per cache type.
+	CachesBreakdown map[string]*CacheTypeMetrics `protobuf:"bytes,7,rep,name=caches_breakdown,json=cachesBreakdown,proto3" json:"caches_breakdown,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *CacheMetrics) Reset() {
@@ -735,9 +727,9 @@ func (x *CacheMetrics) GetEvictions() int64 {
 	return 0
 }
 
-func (x *CacheMetrics) GetByCache() map[string]*CacheTypeMetrics {
+func (x *CacheMetrics) GetCachesBreakdown() map[string]*CacheTypeMetrics {
 	if x != nil {
-		return x.ByCache
+		return x.CachesBreakdown
 	}
 	return nil
 }
@@ -745,8 +737,8 @@ func (x *CacheMetrics) GetByCache() map[string]*CacheTypeMetrics {
 // Metrics for a specific cache type.
 type CacheTypeMetrics struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Cache name.
-	CacheName string `protobuf:"bytes,1,opt,name=cache_name,json=cacheName,proto3" json:"cache_name,omitempty"`
+	// Cache.
+	Cache string `protobuf:"bytes,1,opt,name=cache,proto3" json:"cache,omitempty"`
 	// Hit count.
 	Hits int64 `protobuf:"varint,2,opt,name=hits,proto3" json:"hits,omitempty"`
 	// Miss count.
@@ -789,9 +781,9 @@ func (*CacheTypeMetrics) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_metrics_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *CacheTypeMetrics) GetCacheName() string {
+func (x *CacheTypeMetrics) GetCache() string {
 	if x != nil {
-		return x.CacheName
+		return x.Cache
 	}
 	return ""
 }
@@ -837,10 +829,10 @@ type RateLimitMetrics struct {
 	CurrentRate float64 `protobuf:"fixed64,4,opt,name=current_rate,json=currentRate,proto3" json:"current_rate,omitempty"`
 	// Rate limit (requests per second).
 	RateLimit float64 `protobuf:"fixed64,5,opt,name=rate_limit,json=rateLimit,proto3" json:"rate_limit,omitempty"`
-	// Metrics by client.
-	ByClient      map[string]*ClientRateLimitMetrics `protobuf:"bytes,6,rep,name=by_client,json=byClient,proto3" json:"by_client,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// Metrics breakdown per client.
+	ClientsBreakdown map[string]*ClientRateLimitMetrics `protobuf:"bytes,6,rep,name=clients_breakdown,json=clientsBreakdown,proto3" json:"clients_breakdown,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *RateLimitMetrics) Reset() {
@@ -908,9 +900,9 @@ func (x *RateLimitMetrics) GetRateLimit() float64 {
 	return 0
 }
 
-func (x *RateLimitMetrics) GetByClient() map[string]*ClientRateLimitMetrics {
+func (x *RateLimitMetrics) GetClientsBreakdown() map[string]*ClientRateLimitMetrics {
 	if x != nil {
-		return x.ByClient
+		return x.ClientsBreakdown
 	}
 	return nil
 }
@@ -1001,10 +993,10 @@ type AccessibilityMetrics struct {
 	NotificationsReceived int64 `protobuf:"varint,4,opt,name=notifications_received,json=notificationsReceived,proto3" json:"notifications_received,omitempty"`
 	// Active observations.
 	ActiveObservations int32 `protobuf:"varint,5,opt,name=active_observations,json=activeObservations,proto3" json:"active_observations,omitempty"`
-	// Average element lookup time.
-	AvgLookupTime *durationpb.Duration `protobuf:"bytes,6,opt,name=avg_lookup_time,json=avgLookupTime,proto3" json:"avg_lookup_time,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// Average element lookup duration.
+	AvgLookupDuration *durationpb.Duration `protobuf:"bytes,6,opt,name=avg_lookup_duration,json=avgLookupDuration,proto3" json:"avg_lookup_duration,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *AccessibilityMetrics) Reset() {
@@ -1072,9 +1064,9 @@ func (x *AccessibilityMetrics) GetActiveObservations() int32 {
 	return 0
 }
 
-func (x *AccessibilityMetrics) GetAvgLookupTime() *durationpb.Duration {
+func (x *AccessibilityMetrics) GetAvgLookupDuration() *durationpb.Duration {
 	if x != nil {
-		return x.AvgLookupTime
+		return x.AvgLookupDuration
 	}
 	return nil
 }
@@ -1082,12 +1074,9 @@ func (x *AccessibilityMetrics) GetAvgLookupTime() *durationpb.Duration {
 // Request to get a performance report.
 type GetPerformanceReportRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Time range for report.
-	TimeRange *TimeRange `protobuf:"bytes,1,opt,name=time_range,json=timeRange,proto3" json:"time_range,omitempty"`
-	// Whether to include detailed breakdown.
-	IncludeDetails bool `protobuf:"varint,2,opt,name=include_details,json=includeDetails,proto3" json:"include_details,omitempty"`
-	// Operations to include (empty = all).
-	Operations    []string `protobuf:"bytes,3,rep,name=operations,proto3" json:"operations,omitempty"`
+	// The name of the performance report resource.
+	// Format: metrics/performanceReport (singleton)
+	Name          string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1122,37 +1111,23 @@ func (*GetPerformanceReportRequest) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_metrics_proto_rawDescGZIP(), []int{11}
 }
 
-func (x *GetPerformanceReportRequest) GetTimeRange() *TimeRange {
+func (x *GetPerformanceReportRequest) GetName() string {
 	if x != nil {
-		return x.TimeRange
+		return x.Name
 	}
-	return nil
+	return ""
 }
 
-func (x *GetPerformanceReportRequest) GetIncludeDetails() bool {
-	if x != nil {
-		return x.IncludeDetails
-	}
-	return false
-}
-
-func (x *GetPerformanceReportRequest) GetOperations() []string {
-	if x != nil {
-		return x.Operations
-	}
-	return nil
-}
-
-// Response with performance report.
-type GetPerformanceReportResponse struct {
+// Performance report.
+type PerformanceReport struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Report time range.
 	TimeRange *TimeRange `protobuf:"bytes,1,opt,name=time_range,json=timeRange,proto3" json:"time_range,omitempty"`
 	// When the report was generated.
-	GeneratedAt *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=generated_at,json=generatedAt,proto3" json:"generated_at,omitempty"`
+	GeneratedTime *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=generated_time,json=generatedTime,proto3" json:"generated_time,omitempty"`
 	// Summary metrics.
-	Summary *GetMetricsResponse `protobuf:"bytes,3,opt,name=summary,proto3" json:"summary,omitempty"`
-	// Detailed breakdown (if requested).
+	Summary *Metrics `protobuf:"bytes,3,opt,name=summary,proto3" json:"summary,omitempty"`
+	// Detailed breakdown.
 	Details []*PerformanceDataPoint `protobuf:"bytes,4,rep,name=details,proto3" json:"details,omitempty"`
 	// Performance trends.
 	Trends *PerformanceTrends `protobuf:"bytes,5,opt,name=trends,proto3" json:"trends,omitempty"`
@@ -1162,20 +1137,20 @@ type GetPerformanceReportResponse struct {
 	sizeCache       protoimpl.SizeCache
 }
 
-func (x *GetPerformanceReportResponse) Reset() {
-	*x = GetPerformanceReportResponse{}
+func (x *PerformanceReport) Reset() {
+	*x = PerformanceReport{}
 	mi := &file_macosusesdk_v1_metrics_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetPerformanceReportResponse) String() string {
+func (x *PerformanceReport) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetPerformanceReportResponse) ProtoMessage() {}
+func (*PerformanceReport) ProtoMessage() {}
 
-func (x *GetPerformanceReportResponse) ProtoReflect() protoreflect.Message {
+func (x *PerformanceReport) ProtoReflect() protoreflect.Message {
 	mi := &file_macosusesdk_v1_metrics_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1187,47 +1162,47 @@ func (x *GetPerformanceReportResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetPerformanceReportResponse.ProtoReflect.Descriptor instead.
-func (*GetPerformanceReportResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use PerformanceReport.ProtoReflect.Descriptor instead.
+func (*PerformanceReport) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_metrics_proto_rawDescGZIP(), []int{12}
 }
 
-func (x *GetPerformanceReportResponse) GetTimeRange() *TimeRange {
+func (x *PerformanceReport) GetTimeRange() *TimeRange {
 	if x != nil {
 		return x.TimeRange
 	}
 	return nil
 }
 
-func (x *GetPerformanceReportResponse) GetGeneratedAt() *timestamppb.Timestamp {
+func (x *PerformanceReport) GetGeneratedTime() *timestamppb.Timestamp {
 	if x != nil {
-		return x.GeneratedAt
+		return x.GeneratedTime
 	}
 	return nil
 }
 
-func (x *GetPerformanceReportResponse) GetSummary() *GetMetricsResponse {
+func (x *PerformanceReport) GetSummary() *Metrics {
 	if x != nil {
 		return x.Summary
 	}
 	return nil
 }
 
-func (x *GetPerformanceReportResponse) GetDetails() []*PerformanceDataPoint {
+func (x *PerformanceReport) GetDetails() []*PerformanceDataPoint {
 	if x != nil {
 		return x.Details
 	}
 	return nil
 }
 
-func (x *GetPerformanceReportResponse) GetTrends() *PerformanceTrends {
+func (x *PerformanceReport) GetTrends() *PerformanceTrends {
 	if x != nil {
 		return x.Trends
 	}
 	return nil
 }
 
-func (x *GetPerformanceReportResponse) GetRecommendations() []string {
+func (x *PerformanceReport) GetRecommendations() []string {
 	if x != nil {
 		return x.Recommendations
 	}
@@ -1238,9 +1213,9 @@ func (x *GetPerformanceReportResponse) GetRecommendations() []string {
 type PerformanceDataPoint struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// When this data point was recorded.
-	Timestamp *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	RecordedTime *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=recorded_time,json=recordedTime,proto3" json:"recorded_time,omitempty"`
 	// Metrics at this point.
-	Metrics       *GetMetricsResponse `protobuf:"bytes,2,opt,name=metrics,proto3" json:"metrics,omitempty"`
+	Metrics       *Metrics `protobuf:"bytes,2,opt,name=metrics,proto3" json:"metrics,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1275,14 +1250,14 @@ func (*PerformanceDataPoint) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_metrics_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *PerformanceDataPoint) GetTimestamp() *timestamppb.Timestamp {
+func (x *PerformanceDataPoint) GetRecordedTime() *timestamppb.Timestamp {
 	if x != nil {
-		return x.Timestamp
+		return x.RecordedTime
 	}
 	return nil
 }
 
-func (x *PerformanceDataPoint) GetMetrics() *GetMetricsResponse {
+func (x *PerformanceDataPoint) GetMetrics() *Metrics {
 	if x != nil {
 		return x.Metrics
 	}
@@ -1467,13 +1442,13 @@ var File_macosusesdk_v1_metrics_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_metrics_proto_rawDesc = "" +
 	"\n" +
-	"\x1cmacosusesdk/v1/metrics.proto\x12\x0emacosusesdk.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/protobuf/duration.proto\"\x89\x01\n" +
-	"\x11GetMetricsRequest\x125\n" +
-	"\x05types\x18\x01 \x03(\x0e2\x1a.macosusesdk.v1.MetricTypeB\x03\xe0A\x01R\x05types\x12=\n" +
-	"\n" +
-	"time_range\x18\x02 \x01(\v2\x19.macosusesdk.v1.TimeRangeB\x03\xe0A\x01R\ttimeRange\"\x92\x03\n" +
-	"\x12GetMetricsResponse\x128\n" +
-	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12@\n" +
+	"\x1cmacosusesdk/v1/metrics.proto\x12\x0emacosusesdk.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"2\n" +
+	"\x11GetMetricsRequest\x12\x1d\n" +
+	"\x04name\x18\x01 \x01(\tB\t\xe0A\x02\xfaA\x03\n" +
+	"\x01*R\x04name\"\x8a\x03\n" +
+	"\aMetrics\x12;\n" +
+	"\vreport_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"reportTime\x12@\n" +
 	"\n" +
 	"operations\x18\x02 \x01(\v2 .macosusesdk.v1.OperationMetricsR\n" +
 	"operations\x12=\n" +
@@ -1481,11 +1456,11 @@ const file_macosusesdk_v1_metrics_proto_rawDesc = "" +
 	"\x05cache\x18\x04 \x01(\v2\x1c.macosusesdk.v1.CacheMetricsR\x05cache\x12A\n" +
 	"\vrate_limits\x18\x05 \x01(\v2 .macosusesdk.v1.RateLimitMetricsR\n" +
 	"rateLimits\x12J\n" +
-	"\raccessibility\x18\x06 \x01(\v2$.macosusesdk.v1.AccessibilityMetricsR\raccessibility\"}\n" +
-	"\tTimeRange\x129\n" +
+	"\raccessibility\x18\x06 \x01(\v2$.macosusesdk.v1.AccessibilityMetricsR\raccessibility\"\x87\x01\n" +
+	"\tTimeRange\x12>\n" +
 	"\n" +
-	"start_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\tstartTime\x125\n" +
-	"\bend_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\aendTime\"\xa9\x04\n" +
+	"start_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x02R\tstartTime\x12:\n" +
+	"\bend_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x02R\aendTime\"\xc9\x04\n" +
 	"\x10OperationMetrics\x12\x1f\n" +
 	"\vtotal_count\x18\x01 \x01(\x03R\n" +
 	"totalCount\x12#\n" +
@@ -1498,9 +1473,9 @@ const file_macosusesdk_v1_metrics_proto_rawDesc = "" +
 	"\vp95_latency\x18\x06 \x01(\v2\x19.google.protobuf.DurationR\n" +
 	"p95Latency\x12:\n" +
 	"\vp99_latency\x18\a \x01(\v2\x19.google.protobuf.DurationR\n" +
-	"p99Latency\x12T\n" +
-	"\fby_operation\x18\b \x03(\v21.macosusesdk.v1.OperationMetrics.ByOperationEntryR\vbyOperation\x1ad\n" +
-	"\x10ByOperationEntry\x12\x10\n" +
+	"p99Latency\x12l\n" +
+	"\x14operations_breakdown\x18\b \x03(\v29.macosusesdk.v1.OperationMetrics.OperationsBreakdownEntryR\x13operationsBreakdown\x1al\n" +
+	"\x18OperationsBreakdownEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12:\n" +
 	"\x05value\x18\x02 \x01(\v2$.macosusesdk.v1.OperationTypeMetricsR\x05value:\x028\x01\"\xc8\x02\n" +
 	"\x14OperationTypeMetrics\x12%\n" +
@@ -1522,7 +1497,7 @@ const file_macosusesdk_v1_metrics_proto_rawDesc = "" +
 	"\tcpu_usage\x18\x03 \x01(\x01R\bcpuUsage\x12!\n" +
 	"\fthread_count\x18\x04 \x01(\x05R\vthreadCount\x12)\n" +
 	"\x10connection_count\x18\x05 \x01(\x05R\x0fconnectionCount\x122\n" +
-	"\x15file_descriptor_count\x18\x06 \x01(\x05R\x13fileDescriptorCount\"\xcc\x02\n" +
+	"\x15file_descriptor_count\x18\x06 \x01(\x05R\x13fileDescriptorCount\"\xec\x02\n" +
 	"\fCacheMetrics\x12\x12\n" +
 	"\x04hits\x18\x01 \x01(\x03R\x04hits\x12\x16\n" +
 	"\x06misses\x18\x02 \x01(\x03R\x06misses\x12\x19\n" +
@@ -1530,60 +1505,55 @@ const file_macosusesdk_v1_metrics_proto_rawDesc = "" +
 	"\x04size\x18\x04 \x01(\x03R\x04size\x12\x1f\n" +
 	"\vmemory_used\x18\x05 \x01(\x03R\n" +
 	"memoryUsed\x12\x1c\n" +
-	"\tevictions\x18\x06 \x01(\x03R\tevictions\x12D\n" +
-	"\bby_cache\x18\a \x03(\v2).macosusesdk.v1.CacheMetrics.ByCacheEntryR\abyCache\x1a\\\n" +
-	"\fByCacheEntry\x12\x10\n" +
+	"\tevictions\x18\x06 \x01(\x03R\tevictions\x12\\\n" +
+	"\x10caches_breakdown\x18\a \x03(\v21.macosusesdk.v1.CacheMetrics.CachesBreakdownEntryR\x0fcachesBreakdown\x1ad\n" +
+	"\x14CachesBreakdownEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x126\n" +
-	"\x05value\x18\x02 \x01(\v2 .macosusesdk.v1.CacheTypeMetricsR\x05value:\x028\x01\"\x92\x01\n" +
-	"\x10CacheTypeMetrics\x12\x1d\n" +
-	"\n" +
-	"cache_name\x18\x01 \x01(\tR\tcacheName\x12\x12\n" +
+	"\x05value\x18\x02 \x01(\v2 .macosusesdk.v1.CacheTypeMetricsR\x05value:\x028\x01\"\x89\x01\n" +
+	"\x10CacheTypeMetrics\x12\x14\n" +
+	"\x05cache\x18\x01 \x01(\tR\x05cache\x12\x12\n" +
 	"\x04hits\x18\x02 \x01(\x03R\x04hits\x12\x16\n" +
 	"\x06misses\x18\x03 \x01(\x03R\x06misses\x12\x12\n" +
 	"\x04size\x18\x04 \x01(\x03R\x04size\x12\x1f\n" +
 	"\vmemory_used\x18\x05 \x01(\x03R\n" +
-	"memoryUsed\"\x81\x03\n" +
+	"memoryUsed\"\xa1\x03\n" +
 	"\x10RateLimitMetrics\x12%\n" +
 	"\x0etotal_requests\x18\x01 \x01(\x03R\rtotalRequests\x12-\n" +
 	"\x12throttled_requests\x18\x02 \x01(\x03R\x11throttledRequests\x12#\n" +
 	"\rthrottle_rate\x18\x03 \x01(\x01R\fthrottleRate\x12!\n" +
 	"\fcurrent_rate\x18\x04 \x01(\x01R\vcurrentRate\x12\x1d\n" +
 	"\n" +
-	"rate_limit\x18\x05 \x01(\x01R\trateLimit\x12K\n" +
-	"\tby_client\x18\x06 \x03(\v2..macosusesdk.v1.RateLimitMetrics.ByClientEntryR\bbyClient\x1ac\n" +
-	"\rByClientEntry\x12\x10\n" +
+	"rate_limit\x18\x05 \x01(\x01R\trateLimit\x12c\n" +
+	"\x11clients_breakdown\x18\x06 \x03(\v26.macosusesdk.v1.RateLimitMetrics.ClientsBreakdownEntryR\x10clientsBreakdown\x1ak\n" +
+	"\x15ClientsBreakdownEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12<\n" +
 	"\x05value\x18\x02 \x01(\v2&.macosusesdk.v1.ClientRateLimitMetricsR\x05value:\x028\x01\"\xae\x01\n" +
 	"\x16ClientRateLimitMetrics\x12\x1b\n" +
 	"\tclient_id\x18\x01 \x01(\tR\bclientId\x12%\n" +
 	"\x0etotal_requests\x18\x02 \x01(\x03R\rtotalRequests\x12-\n" +
 	"\x12throttled_requests\x18\x03 \x01(\x03R\x11throttledRequests\x12!\n" +
-	"\fcurrent_rate\x18\x04 \x01(\x01R\vcurrentRate\"\xba\x02\n" +
+	"\fcurrent_rate\x18\x04 \x01(\x01R\vcurrentRate\"\xc2\x02\n" +
 	"\x14AccessibilityMetrics\x12-\n" +
 	"\x12elements_traversed\x18\x01 \x01(\x03R\x11elementsTraversed\x12$\n" +
 	"\x0eavg_tree_depth\x18\x02 \x01(\x01R\favgTreeDepth\x12\"\n" +
 	"\ravg_tree_size\x18\x03 \x01(\x01R\vavgTreeSize\x125\n" +
 	"\x16notifications_received\x18\x04 \x01(\x03R\x15notificationsReceived\x12/\n" +
-	"\x13active_observations\x18\x05 \x01(\x05R\x12activeObservations\x12A\n" +
-	"\x0favg_lookup_time\x18\x06 \x01(\v2\x19.google.protobuf.DurationR\ravgLookupTime\"\xaf\x01\n" +
-	"\x1bGetPerformanceReportRequest\x12=\n" +
+	"\x13active_observations\x18\x05 \x01(\x05R\x12activeObservations\x12I\n" +
+	"\x13avg_lookup_duration\x18\x06 \x01(\v2\x19.google.protobuf.DurationR\x11avgLookupDuration\"<\n" +
+	"\x1bGetPerformanceReportRequest\x12\x1d\n" +
+	"\x04name\x18\x01 \x01(\tB\t\xe0A\x02\xfaA\x03\n" +
+	"\x01*R\x04name\"\xe8\x02\n" +
+	"\x11PerformanceReport\x128\n" +
 	"\n" +
-	"time_range\x18\x01 \x01(\v2\x19.macosusesdk.v1.TimeRangeB\x03\xe0A\x02R\ttimeRange\x12,\n" +
-	"\x0finclude_details\x18\x02 \x01(\bB\x03\xe0A\x01R\x0eincludeDetails\x12#\n" +
-	"\n" +
-	"operations\x18\x03 \x03(\tB\x03\xe0A\x01R\n" +
-	"operations\"\xfa\x02\n" +
-	"\x1cGetPerformanceReportResponse\x128\n" +
-	"\n" +
-	"time_range\x18\x01 \x01(\v2\x19.macosusesdk.v1.TimeRangeR\ttimeRange\x12=\n" +
-	"\fgenerated_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\vgeneratedAt\x12<\n" +
-	"\asummary\x18\x03 \x01(\v2\".macosusesdk.v1.GetMetricsResponseR\asummary\x12>\n" +
+	"time_range\x18\x01 \x01(\v2\x19.macosusesdk.v1.TimeRangeR\ttimeRange\x12A\n" +
+	"\x0egenerated_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\rgeneratedTime\x121\n" +
+	"\asummary\x18\x03 \x01(\v2\x17.macosusesdk.v1.MetricsR\asummary\x12>\n" +
 	"\adetails\x18\x04 \x03(\v2$.macosusesdk.v1.PerformanceDataPointR\adetails\x129\n" +
 	"\x06trends\x18\x05 \x01(\v2!.macosusesdk.v1.PerformanceTrendsR\x06trends\x12(\n" +
-	"\x0frecommendations\x18\x06 \x03(\tR\x0frecommendations\"\x8e\x01\n" +
-	"\x14PerformanceDataPoint\x128\n" +
-	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12<\n" +
-	"\ametrics\x18\x02 \x01(\v2\".macosusesdk.v1.GetMetricsResponseR\ametrics\"\xf3\x03\n" +
+	"\x0frecommendations\x18\x06 \x03(\tR\x0frecommendations\"\x8a\x01\n" +
+	"\x14PerformanceDataPoint\x12?\n" +
+	"\rrecorded_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\frecordedTime\x121\n" +
+	"\ametrics\x18\x02 \x01(\v2\x17.macosusesdk.v1.MetricsR\ametrics\"\xf3\x03\n" +
 	"\x11PerformanceTrends\x12U\n" +
 	"\rlatency_trend\x18\x01 \x01(\x0e20.macosusesdk.v1.PerformanceTrends.TrendDirectionR\flatencyTrend\x12Q\n" +
 	"\verror_trend\x18\x02 \x01(\x0e20.macosusesdk.v1.PerformanceTrends.TrendDirectionR\n" +
@@ -1630,7 +1600,7 @@ var file_macosusesdk_v1_metrics_proto_goTypes = []any{
 	(MetricType)(0),                       // 0: macosusesdk.v1.MetricType
 	(PerformanceTrends_TrendDirection)(0), // 1: macosusesdk.v1.PerformanceTrends.TrendDirection
 	(*GetMetricsRequest)(nil),             // 2: macosusesdk.v1.GetMetricsRequest
-	(*GetMetricsResponse)(nil),            // 3: macosusesdk.v1.GetMetricsResponse
+	(*Metrics)(nil),                       // 3: macosusesdk.v1.Metrics
 	(*TimeRange)(nil),                     // 4: macosusesdk.v1.TimeRange
 	(*OperationMetrics)(nil),              // 5: macosusesdk.v1.OperationMetrics
 	(*OperationTypeMetrics)(nil),          // 6: macosusesdk.v1.OperationTypeMetrics
@@ -1641,61 +1611,58 @@ var file_macosusesdk_v1_metrics_proto_goTypes = []any{
 	(*ClientRateLimitMetrics)(nil),        // 11: macosusesdk.v1.ClientRateLimitMetrics
 	(*AccessibilityMetrics)(nil),          // 12: macosusesdk.v1.AccessibilityMetrics
 	(*GetPerformanceReportRequest)(nil),   // 13: macosusesdk.v1.GetPerformanceReportRequest
-	(*GetPerformanceReportResponse)(nil),  // 14: macosusesdk.v1.GetPerformanceReportResponse
+	(*PerformanceReport)(nil),             // 14: macosusesdk.v1.PerformanceReport
 	(*PerformanceDataPoint)(nil),          // 15: macosusesdk.v1.PerformanceDataPoint
 	(*PerformanceTrends)(nil),             // 16: macosusesdk.v1.PerformanceTrends
 	(*ResetMetricsRequest)(nil),           // 17: macosusesdk.v1.ResetMetricsRequest
 	(*ResetMetricsResponse)(nil),          // 18: macosusesdk.v1.ResetMetricsResponse
-	nil,                                   // 19: macosusesdk.v1.OperationMetrics.ByOperationEntry
+	nil,                                   // 19: macosusesdk.v1.OperationMetrics.OperationsBreakdownEntry
 	nil,                                   // 20: macosusesdk.v1.OperationTypeMetrics.ErrorsEntry
-	nil,                                   // 21: macosusesdk.v1.CacheMetrics.ByCacheEntry
-	nil,                                   // 22: macosusesdk.v1.RateLimitMetrics.ByClientEntry
+	nil,                                   // 21: macosusesdk.v1.CacheMetrics.CachesBreakdownEntry
+	nil,                                   // 22: macosusesdk.v1.RateLimitMetrics.ClientsBreakdownEntry
 	(*timestamppb.Timestamp)(nil),         // 23: google.protobuf.Timestamp
 	(*durationpb.Duration)(nil),           // 24: google.protobuf.Duration
 }
 var file_macosusesdk_v1_metrics_proto_depIdxs = []int32{
-	0,  // 0: macosusesdk.v1.GetMetricsRequest.types:type_name -> macosusesdk.v1.MetricType
-	4,  // 1: macosusesdk.v1.GetMetricsRequest.time_range:type_name -> macosusesdk.v1.TimeRange
-	23, // 2: macosusesdk.v1.GetMetricsResponse.timestamp:type_name -> google.protobuf.Timestamp
-	5,  // 3: macosusesdk.v1.GetMetricsResponse.operations:type_name -> macosusesdk.v1.OperationMetrics
-	7,  // 4: macosusesdk.v1.GetMetricsResponse.resources:type_name -> macosusesdk.v1.ResourceMetrics
-	8,  // 5: macosusesdk.v1.GetMetricsResponse.cache:type_name -> macosusesdk.v1.CacheMetrics
-	10, // 6: macosusesdk.v1.GetMetricsResponse.rate_limits:type_name -> macosusesdk.v1.RateLimitMetrics
-	12, // 7: macosusesdk.v1.GetMetricsResponse.accessibility:type_name -> macosusesdk.v1.AccessibilityMetrics
-	23, // 8: macosusesdk.v1.TimeRange.start_time:type_name -> google.protobuf.Timestamp
-	23, // 9: macosusesdk.v1.TimeRange.end_time:type_name -> google.protobuf.Timestamp
-	24, // 10: macosusesdk.v1.OperationMetrics.avg_latency:type_name -> google.protobuf.Duration
-	24, // 11: macosusesdk.v1.OperationMetrics.p50_latency:type_name -> google.protobuf.Duration
-	24, // 12: macosusesdk.v1.OperationMetrics.p95_latency:type_name -> google.protobuf.Duration
-	24, // 13: macosusesdk.v1.OperationMetrics.p99_latency:type_name -> google.protobuf.Duration
-	19, // 14: macosusesdk.v1.OperationMetrics.by_operation:type_name -> macosusesdk.v1.OperationMetrics.ByOperationEntry
-	24, // 15: macosusesdk.v1.OperationTypeMetrics.avg_latency:type_name -> google.protobuf.Duration
-	20, // 16: macosusesdk.v1.OperationTypeMetrics.errors:type_name -> macosusesdk.v1.OperationTypeMetrics.ErrorsEntry
-	21, // 17: macosusesdk.v1.CacheMetrics.by_cache:type_name -> macosusesdk.v1.CacheMetrics.ByCacheEntry
-	22, // 18: macosusesdk.v1.RateLimitMetrics.by_client:type_name -> macosusesdk.v1.RateLimitMetrics.ByClientEntry
-	24, // 19: macosusesdk.v1.AccessibilityMetrics.avg_lookup_time:type_name -> google.protobuf.Duration
-	4,  // 20: macosusesdk.v1.GetPerformanceReportRequest.time_range:type_name -> macosusesdk.v1.TimeRange
-	4,  // 21: macosusesdk.v1.GetPerformanceReportResponse.time_range:type_name -> macosusesdk.v1.TimeRange
-	23, // 22: macosusesdk.v1.GetPerformanceReportResponse.generated_at:type_name -> google.protobuf.Timestamp
-	3,  // 23: macosusesdk.v1.GetPerformanceReportResponse.summary:type_name -> macosusesdk.v1.GetMetricsResponse
-	15, // 24: macosusesdk.v1.GetPerformanceReportResponse.details:type_name -> macosusesdk.v1.PerformanceDataPoint
-	16, // 25: macosusesdk.v1.GetPerformanceReportResponse.trends:type_name -> macosusesdk.v1.PerformanceTrends
-	23, // 26: macosusesdk.v1.PerformanceDataPoint.timestamp:type_name -> google.protobuf.Timestamp
-	3,  // 27: macosusesdk.v1.PerformanceDataPoint.metrics:type_name -> macosusesdk.v1.GetMetricsResponse
-	1,  // 28: macosusesdk.v1.PerformanceTrends.latency_trend:type_name -> macosusesdk.v1.PerformanceTrends.TrendDirection
-	1,  // 29: macosusesdk.v1.PerformanceTrends.error_trend:type_name -> macosusesdk.v1.PerformanceTrends.TrendDirection
-	1,  // 30: macosusesdk.v1.PerformanceTrends.memory_trend:type_name -> macosusesdk.v1.PerformanceTrends.TrendDirection
-	1,  // 31: macosusesdk.v1.PerformanceTrends.cache_trend:type_name -> macosusesdk.v1.PerformanceTrends.TrendDirection
-	0,  // 32: macosusesdk.v1.ResetMetricsRequest.types:type_name -> macosusesdk.v1.MetricType
-	0,  // 33: macosusesdk.v1.ResetMetricsResponse.reset_types:type_name -> macosusesdk.v1.MetricType
-	6,  // 34: macosusesdk.v1.OperationMetrics.ByOperationEntry.value:type_name -> macosusesdk.v1.OperationTypeMetrics
-	9,  // 35: macosusesdk.v1.CacheMetrics.ByCacheEntry.value:type_name -> macosusesdk.v1.CacheTypeMetrics
-	11, // 36: macosusesdk.v1.RateLimitMetrics.ByClientEntry.value:type_name -> macosusesdk.v1.ClientRateLimitMetrics
-	37, // [37:37] is the sub-list for method output_type
-	37, // [37:37] is the sub-list for method input_type
-	37, // [37:37] is the sub-list for extension type_name
-	37, // [37:37] is the sub-list for extension extendee
-	0,  // [0:37] is the sub-list for field type_name
+	23, // 0: macosusesdk.v1.Metrics.report_time:type_name -> google.protobuf.Timestamp
+	5,  // 1: macosusesdk.v1.Metrics.operations:type_name -> macosusesdk.v1.OperationMetrics
+	7,  // 2: macosusesdk.v1.Metrics.resources:type_name -> macosusesdk.v1.ResourceMetrics
+	8,  // 3: macosusesdk.v1.Metrics.cache:type_name -> macosusesdk.v1.CacheMetrics
+	10, // 4: macosusesdk.v1.Metrics.rate_limits:type_name -> macosusesdk.v1.RateLimitMetrics
+	12, // 5: macosusesdk.v1.Metrics.accessibility:type_name -> macosusesdk.v1.AccessibilityMetrics
+	23, // 6: macosusesdk.v1.TimeRange.start_time:type_name -> google.protobuf.Timestamp
+	23, // 7: macosusesdk.v1.TimeRange.end_time:type_name -> google.protobuf.Timestamp
+	24, // 8: macosusesdk.v1.OperationMetrics.avg_latency:type_name -> google.protobuf.Duration
+	24, // 9: macosusesdk.v1.OperationMetrics.p50_latency:type_name -> google.protobuf.Duration
+	24, // 10: macosusesdk.v1.OperationMetrics.p95_latency:type_name -> google.protobuf.Duration
+	24, // 11: macosusesdk.v1.OperationMetrics.p99_latency:type_name -> google.protobuf.Duration
+	19, // 12: macosusesdk.v1.OperationMetrics.operations_breakdown:type_name -> macosusesdk.v1.OperationMetrics.OperationsBreakdownEntry
+	24, // 13: macosusesdk.v1.OperationTypeMetrics.avg_latency:type_name -> google.protobuf.Duration
+	20, // 14: macosusesdk.v1.OperationTypeMetrics.errors:type_name -> macosusesdk.v1.OperationTypeMetrics.ErrorsEntry
+	21, // 15: macosusesdk.v1.CacheMetrics.caches_breakdown:type_name -> macosusesdk.v1.CacheMetrics.CachesBreakdownEntry
+	22, // 16: macosusesdk.v1.RateLimitMetrics.clients_breakdown:type_name -> macosusesdk.v1.RateLimitMetrics.ClientsBreakdownEntry
+	24, // 17: macosusesdk.v1.AccessibilityMetrics.avg_lookup_duration:type_name -> google.protobuf.Duration
+	4,  // 18: macosusesdk.v1.PerformanceReport.time_range:type_name -> macosusesdk.v1.TimeRange
+	23, // 19: macosusesdk.v1.PerformanceReport.generated_time:type_name -> google.protobuf.Timestamp
+	3,  // 20: macosusesdk.v1.PerformanceReport.summary:type_name -> macosusesdk.v1.Metrics
+	15, // 21: macosusesdk.v1.PerformanceReport.details:type_name -> macosusesdk.v1.PerformanceDataPoint
+	16, // 22: macosusesdk.v1.PerformanceReport.trends:type_name -> macosusesdk.v1.PerformanceTrends
+	23, // 23: macosusesdk.v1.PerformanceDataPoint.recorded_time:type_name -> google.protobuf.Timestamp
+	3,  // 24: macosusesdk.v1.PerformanceDataPoint.metrics:type_name -> macosusesdk.v1.Metrics
+	1,  // 25: macosusesdk.v1.PerformanceTrends.latency_trend:type_name -> macosusesdk.v1.PerformanceTrends.TrendDirection
+	1,  // 26: macosusesdk.v1.PerformanceTrends.error_trend:type_name -> macosusesdk.v1.PerformanceTrends.TrendDirection
+	1,  // 27: macosusesdk.v1.PerformanceTrends.memory_trend:type_name -> macosusesdk.v1.PerformanceTrends.TrendDirection
+	1,  // 28: macosusesdk.v1.PerformanceTrends.cache_trend:type_name -> macosusesdk.v1.PerformanceTrends.TrendDirection
+	0,  // 29: macosusesdk.v1.ResetMetricsRequest.types:type_name -> macosusesdk.v1.MetricType
+	0,  // 30: macosusesdk.v1.ResetMetricsResponse.reset_types:type_name -> macosusesdk.v1.MetricType
+	6,  // 31: macosusesdk.v1.OperationMetrics.OperationsBreakdownEntry.value:type_name -> macosusesdk.v1.OperationTypeMetrics
+	9,  // 32: macosusesdk.v1.CacheMetrics.CachesBreakdownEntry.value:type_name -> macosusesdk.v1.CacheTypeMetrics
+	11, // 33: macosusesdk.v1.RateLimitMetrics.ClientsBreakdownEntry.value:type_name -> macosusesdk.v1.ClientRateLimitMetrics
+	34, // [34:34] is the sub-list for method output_type
+	34, // [34:34] is the sub-list for method input_type
+	34, // [34:34] is the sub-list for extension type_name
+	34, // [34:34] is the sub-list for extension extendee
+	0,  // [0:34] is the sub-list for field type_name
 }
 
 func init() { file_macosusesdk_v1_metrics_proto_init() }

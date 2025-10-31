@@ -134,8 +134,8 @@ public struct Macosusesdk_V1_SelectFileRequest: Sendable {
   /// File path to select.
   public var filePath: String = String()
 
-  /// Whether to reveal in Finder after selection.
-  public var revealInFinder: Bool = false
+  /// Whether to reveal Finder after selection.
+  public var revealFinder: Bool = false
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -174,8 +174,8 @@ public struct Macosusesdk_V1_SelectDirectoryRequest: Sendable {
   /// Directory path to select.
   public var directoryPath: String = String()
 
-  /// Whether to create directory if it doesn't exist.
-  public var createIfMissing: Bool = false
+  /// Whether to create directory when it doesn't exist.
+  public var createMissing: Bool = false
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -444,7 +444,7 @@ extension Macosusesdk_V1_AutomateSaveFileDialogResponse: SwiftProtobuf.Message, 
 
 extension Macosusesdk_V1_SelectFileRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".SelectFileRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0\u{3}file_path\0\u{3}reveal_in_finder\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0\u{3}file_path\0\u{3}reveal_finder\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -454,7 +454,7 @@ extension Macosusesdk_V1_SelectFileRequest: SwiftProtobuf.Message, SwiftProtobuf
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularStringField(value: &self.application) }()
       case 2: try { try decoder.decodeSingularStringField(value: &self.filePath) }()
-      case 3: try { try decoder.decodeSingularBoolField(value: &self.revealInFinder) }()
+      case 3: try { try decoder.decodeSingularBoolField(value: &self.revealFinder) }()
       default: break
       }
     }
@@ -467,8 +467,8 @@ extension Macosusesdk_V1_SelectFileRequest: SwiftProtobuf.Message, SwiftProtobuf
     if !self.filePath.isEmpty {
       try visitor.visitSingularStringField(value: self.filePath, fieldNumber: 2)
     }
-    if self.revealInFinder != false {
-      try visitor.visitSingularBoolField(value: self.revealInFinder, fieldNumber: 3)
+    if self.revealFinder != false {
+      try visitor.visitSingularBoolField(value: self.revealFinder, fieldNumber: 3)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -476,7 +476,7 @@ extension Macosusesdk_V1_SelectFileRequest: SwiftProtobuf.Message, SwiftProtobuf
   public static func ==(lhs: Macosusesdk_V1_SelectFileRequest, rhs: Macosusesdk_V1_SelectFileRequest) -> Bool {
     if lhs.application != rhs.application {return false}
     if lhs.filePath != rhs.filePath {return false}
-    if lhs.revealInFinder != rhs.revealInFinder {return false}
+    if lhs.revealFinder != rhs.revealFinder {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -524,7 +524,7 @@ extension Macosusesdk_V1_SelectFileResponse: SwiftProtobuf.Message, SwiftProtobu
 
 extension Macosusesdk_V1_SelectDirectoryRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".SelectDirectoryRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0\u{3}directory_path\0\u{3}create_if_missing\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0\u{3}directory_path\0\u{3}create_missing\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -534,7 +534,7 @@ extension Macosusesdk_V1_SelectDirectoryRequest: SwiftProtobuf.Message, SwiftPro
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularStringField(value: &self.application) }()
       case 2: try { try decoder.decodeSingularStringField(value: &self.directoryPath) }()
-      case 3: try { try decoder.decodeSingularBoolField(value: &self.createIfMissing) }()
+      case 3: try { try decoder.decodeSingularBoolField(value: &self.createMissing) }()
       default: break
       }
     }
@@ -547,8 +547,8 @@ extension Macosusesdk_V1_SelectDirectoryRequest: SwiftProtobuf.Message, SwiftPro
     if !self.directoryPath.isEmpty {
       try visitor.visitSingularStringField(value: self.directoryPath, fieldNumber: 2)
     }
-    if self.createIfMissing != false {
-      try visitor.visitSingularBoolField(value: self.createIfMissing, fieldNumber: 3)
+    if self.createMissing != false {
+      try visitor.visitSingularBoolField(value: self.createMissing, fieldNumber: 3)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -556,7 +556,7 @@ extension Macosusesdk_V1_SelectDirectoryRequest: SwiftProtobuf.Message, SwiftPro
   public static func ==(lhs: Macosusesdk_V1_SelectDirectoryRequest, rhs: Macosusesdk_V1_SelectDirectoryRequest) -> Bool {
     if lhs.application != rhs.application {return false}
     if lhs.directoryPath != rhs.directoryPath {return false}
-    if lhs.createIfMissing != rhs.createIfMissing {return false}
+    if lhs.createMissing != rhs.createMissing {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

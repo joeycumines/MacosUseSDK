@@ -157,10 +157,10 @@ type ExecuteAppleScriptResponse struct {
 	Output string `protobuf:"bytes,2,opt,name=output,proto3" json:"output,omitempty"`
 	// Error message if failed.
 	Error string `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
-	// Execution time in seconds.
-	ExecutionTime float64 `protobuf:"fixed64,4,opt,name=execution_time,json=executionTime,proto3" json:"execution_time,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// Execution duration.
+	ExecutionDuration *durationpb.Duration `protobuf:"bytes,4,opt,name=execution_duration,json=executionDuration,proto3" json:"execution_duration,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *ExecuteAppleScriptResponse) Reset() {
@@ -214,15 +214,15 @@ func (x *ExecuteAppleScriptResponse) GetError() string {
 	return ""
 }
 
-func (x *ExecuteAppleScriptResponse) GetExecutionTime() float64 {
+func (x *ExecuteAppleScriptResponse) GetExecutionDuration() *durationpb.Duration {
 	if x != nil {
-		return x.ExecutionTime
+		return x.ExecutionDuration
 	}
-	return 0
+	return nil
 }
 
 // Request to execute JavaScript for Automation (JXA).
-type ExecuteJavaScriptForAutomationRequest struct {
+type ExecuteJavaScriptRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// JavaScript source code.
 	Script string `protobuf:"bytes,1,opt,name=script,proto3" json:"script,omitempty"`
@@ -234,20 +234,20 @@ type ExecuteJavaScriptForAutomationRequest struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ExecuteJavaScriptForAutomationRequest) Reset() {
-	*x = ExecuteJavaScriptForAutomationRequest{}
+func (x *ExecuteJavaScriptRequest) Reset() {
+	*x = ExecuteJavaScriptRequest{}
 	mi := &file_macosusesdk_v1_script_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ExecuteJavaScriptForAutomationRequest) String() string {
+func (x *ExecuteJavaScriptRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ExecuteJavaScriptForAutomationRequest) ProtoMessage() {}
+func (*ExecuteJavaScriptRequest) ProtoMessage() {}
 
-func (x *ExecuteJavaScriptForAutomationRequest) ProtoReflect() protoreflect.Message {
+func (x *ExecuteJavaScriptRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_macosusesdk_v1_script_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -259,26 +259,26 @@ func (x *ExecuteJavaScriptForAutomationRequest) ProtoReflect() protoreflect.Mess
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ExecuteJavaScriptForAutomationRequest.ProtoReflect.Descriptor instead.
-func (*ExecuteJavaScriptForAutomationRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use ExecuteJavaScriptRequest.ProtoReflect.Descriptor instead.
+func (*ExecuteJavaScriptRequest) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_script_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *ExecuteJavaScriptForAutomationRequest) GetScript() string {
+func (x *ExecuteJavaScriptRequest) GetScript() string {
 	if x != nil {
 		return x.Script
 	}
 	return ""
 }
 
-func (x *ExecuteJavaScriptForAutomationRequest) GetTimeout() *durationpb.Duration {
+func (x *ExecuteJavaScriptRequest) GetTimeout() *durationpb.Duration {
 	if x != nil {
 		return x.Timeout
 	}
 	return nil
 }
 
-func (x *ExecuteJavaScriptForAutomationRequest) GetCompileOnly() bool {
+func (x *ExecuteJavaScriptRequest) GetCompileOnly() bool {
 	if x != nil {
 		return x.CompileOnly
 	}
@@ -286,7 +286,7 @@ func (x *ExecuteJavaScriptForAutomationRequest) GetCompileOnly() bool {
 }
 
 // Response from executing JXA.
-type ExecuteJavaScriptForAutomationResponse struct {
+type ExecuteJavaScriptResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Whether execution succeeded.
 	Success bool `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
@@ -294,26 +294,26 @@ type ExecuteJavaScriptForAutomationResponse struct {
 	Output string `protobuf:"bytes,2,opt,name=output,proto3" json:"output,omitempty"`
 	// Error message if failed.
 	Error string `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
-	// Execution time in seconds.
-	ExecutionTime float64 `protobuf:"fixed64,4,opt,name=execution_time,json=executionTime,proto3" json:"execution_time,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// Execution duration.
+	ExecutionDuration *durationpb.Duration `protobuf:"bytes,4,opt,name=execution_duration,json=executionDuration,proto3" json:"execution_duration,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
-func (x *ExecuteJavaScriptForAutomationResponse) Reset() {
-	*x = ExecuteJavaScriptForAutomationResponse{}
+func (x *ExecuteJavaScriptResponse) Reset() {
+	*x = ExecuteJavaScriptResponse{}
 	mi := &file_macosusesdk_v1_script_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ExecuteJavaScriptForAutomationResponse) String() string {
+func (x *ExecuteJavaScriptResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ExecuteJavaScriptForAutomationResponse) ProtoMessage() {}
+func (*ExecuteJavaScriptResponse) ProtoMessage() {}
 
-func (x *ExecuteJavaScriptForAutomationResponse) ProtoReflect() protoreflect.Message {
+func (x *ExecuteJavaScriptResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_macosusesdk_v1_script_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -325,37 +325,37 @@ func (x *ExecuteJavaScriptForAutomationResponse) ProtoReflect() protoreflect.Mes
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ExecuteJavaScriptForAutomationResponse.ProtoReflect.Descriptor instead.
-func (*ExecuteJavaScriptForAutomationResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use ExecuteJavaScriptResponse.ProtoReflect.Descriptor instead.
+func (*ExecuteJavaScriptResponse) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_script_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *ExecuteJavaScriptForAutomationResponse) GetSuccess() bool {
+func (x *ExecuteJavaScriptResponse) GetSuccess() bool {
 	if x != nil {
 		return x.Success
 	}
 	return false
 }
 
-func (x *ExecuteJavaScriptForAutomationResponse) GetOutput() string {
+func (x *ExecuteJavaScriptResponse) GetOutput() string {
 	if x != nil {
 		return x.Output
 	}
 	return ""
 }
 
-func (x *ExecuteJavaScriptForAutomationResponse) GetError() string {
+func (x *ExecuteJavaScriptResponse) GetError() string {
 	if x != nil {
 		return x.Error
 	}
 	return ""
 }
 
-func (x *ExecuteJavaScriptForAutomationResponse) GetExecutionTime() float64 {
+func (x *ExecuteJavaScriptResponse) GetExecutionDuration() *durationpb.Duration {
 	if x != nil {
-		return x.ExecutionTime
+		return x.ExecutionDuration
 	}
-	return 0
+	return nil
 }
 
 // Request to execute a shell command.
@@ -364,7 +364,7 @@ type ExecuteShellCommandRequest struct {
 	// Shell command to execute.
 	Command string `protobuf:"bytes,1,opt,name=command,proto3" json:"command,omitempty"`
 	// Arguments for the command.
-	Arguments []string `protobuf:"bytes,2,rep,name=arguments,proto3" json:"arguments,omitempty"`
+	Args []string `protobuf:"bytes,2,rep,name=args,proto3" json:"args,omitempty"`
 	// Working directory for command execution.
 	WorkingDirectory string `protobuf:"bytes,3,opt,name=working_directory,json=workingDirectory,proto3" json:"working_directory,omitempty"`
 	// Environment variables (key-value pairs).
@@ -416,9 +416,9 @@ func (x *ExecuteShellCommandRequest) GetCommand() string {
 	return ""
 }
 
-func (x *ExecuteShellCommandRequest) GetArguments() []string {
+func (x *ExecuteShellCommandRequest) GetArgs() []string {
 	if x != nil {
-		return x.Arguments
+		return x.Args
 	}
 	return nil
 }
@@ -469,8 +469,8 @@ type ExecuteShellCommandResponse struct {
 	Stderr string `protobuf:"bytes,3,opt,name=stderr,proto3" json:"stderr,omitempty"`
 	// Exit code from command.
 	ExitCode int32 `protobuf:"varint,4,opt,name=exit_code,json=exitCode,proto3" json:"exit_code,omitempty"`
-	// Execution time in seconds.
-	ExecutionTime float64 `protobuf:"fixed64,5,opt,name=execution_time,json=executionTime,proto3" json:"execution_time,omitempty"`
+	// Execution duration.
+	ExecutionDuration *durationpb.Duration `protobuf:"bytes,5,opt,name=execution_duration,json=executionDuration,proto3" json:"execution_duration,omitempty"`
 	// Error message if execution failed (not command failure).
 	Error         string `protobuf:"bytes,6,opt,name=error,proto3" json:"error,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -535,11 +535,11 @@ func (x *ExecuteShellCommandResponse) GetExitCode() int32 {
 	return 0
 }
 
-func (x *ExecuteShellCommandResponse) GetExecutionTime() float64 {
+func (x *ExecuteShellCommandResponse) GetExecutionDuration() *durationpb.Duration {
 	if x != nil {
-		return x.ExecutionTime
+		return x.ExecutionDuration
 	}
-	return 0
+	return nil
 }
 
 func (x *ExecuteShellCommandResponse) GetError() string {
@@ -671,10 +671,11 @@ func (x *ValidateScriptResponse) GetWarnings() []string {
 // Request to get available scripting dictionaries.
 type GetScriptingDictionariesRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Application name to get dictionary for (optional, empty = all).
-	ApplicationName string `protobuf:"bytes,1,opt,name=application_name,json=applicationName,proto3" json:"application_name,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// The name of the scripting dictionaries resource.
+	// Format: scriptingDictionaries (singleton)
+	Name          string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetScriptingDictionariesRequest) Reset() {
@@ -707,15 +708,15 @@ func (*GetScriptingDictionariesRequest) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_script_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *GetScriptingDictionariesRequest) GetApplicationName() string {
+func (x *GetScriptingDictionariesRequest) GetName() string {
 	if x != nil {
-		return x.ApplicationName
+		return x.Name
 	}
 	return ""
 }
 
-// Response with scripting dictionaries.
-type GetScriptingDictionariesResponse struct {
+// Scripting dictionaries.
+type ScriptingDictionaries struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Available scripting dictionaries.
 	Dictionaries  []*ScriptingDictionary `protobuf:"bytes,1,rep,name=dictionaries,proto3" json:"dictionaries,omitempty"`
@@ -723,20 +724,20 @@ type GetScriptingDictionariesResponse struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetScriptingDictionariesResponse) Reset() {
-	*x = GetScriptingDictionariesResponse{}
+func (x *ScriptingDictionaries) Reset() {
+	*x = ScriptingDictionaries{}
 	mi := &file_macosusesdk_v1_script_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetScriptingDictionariesResponse) String() string {
+func (x *ScriptingDictionaries) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetScriptingDictionariesResponse) ProtoMessage() {}
+func (*ScriptingDictionaries) ProtoMessage() {}
 
-func (x *GetScriptingDictionariesResponse) ProtoReflect() protoreflect.Message {
+func (x *ScriptingDictionaries) ProtoReflect() protoreflect.Message {
 	mi := &file_macosusesdk_v1_script_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -748,12 +749,12 @@ func (x *GetScriptingDictionariesResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetScriptingDictionariesResponse.ProtoReflect.Descriptor instead.
-func (*GetScriptingDictionariesResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use ScriptingDictionaries.ProtoReflect.Descriptor instead.
+func (*ScriptingDictionaries) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_script_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *GetScriptingDictionariesResponse) GetDictionaries() []*ScriptingDictionary {
+func (x *ScriptingDictionaries) GetDictionaries() []*ScriptingDictionary {
 	if x != nil {
 		return x.Dictionaries
 	}
@@ -763,8 +764,8 @@ func (x *GetScriptingDictionariesResponse) GetDictionaries() []*ScriptingDiction
 // Scripting dictionary for an application.
 type ScriptingDictionary struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Application name.
-	ApplicationName string `protobuf:"bytes,1,opt,name=application_name,json=applicationName,proto3" json:"application_name,omitempty"`
+	// Application.
+	Application string `protobuf:"bytes,1,opt,name=application,proto3" json:"application,omitempty"`
 	// Application bundle identifier.
 	BundleId string `protobuf:"bytes,2,opt,name=bundle_id,json=bundleId,proto3" json:"bundle_id,omitempty"`
 	// Whether the application supports AppleScript.
@@ -809,9 +810,9 @@ func (*ScriptingDictionary) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_script_proto_rawDescGZIP(), []int{10}
 }
 
-func (x *ScriptingDictionary) GetApplicationName() string {
+func (x *ScriptingDictionary) GetApplication() string {
 	if x != nil {
-		return x.ApplicationName
+		return x.Application
 	}
 	return ""
 }
@@ -855,28 +856,28 @@ var File_macosusesdk_v1_script_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_script_proto_rawDesc = "" +
 	"\n" +
-	"\x1bmacosusesdk/v1/script.proto\x12\x0emacosusesdk.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1egoogle/protobuf/duration.proto\"\x9a\x01\n" +
+	"\x1bmacosusesdk/v1/script.proto\x12\x0emacosusesdk.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1egoogle/protobuf/duration.proto\"\x9a\x01\n" +
 	"\x19ExecuteAppleScriptRequest\x12\x1b\n" +
 	"\x06script\x18\x01 \x01(\tB\x03\xe0A\x02R\x06script\x128\n" +
 	"\atimeout\x18\x02 \x01(\v2\x19.google.protobuf.DurationB\x03\xe0A\x01R\atimeout\x12&\n" +
-	"\fcompile_only\x18\x03 \x01(\bB\x03\xe0A\x01R\vcompileOnly\"\x8b\x01\n" +
+	"\fcompile_only\x18\x03 \x01(\bB\x03\xe0A\x01R\vcompileOnly\"\xb3\x01\n" +
 	"\x1aExecuteAppleScriptResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x16\n" +
 	"\x06output\x18\x02 \x01(\tR\x06output\x12\x14\n" +
-	"\x05error\x18\x03 \x01(\tR\x05error\x12%\n" +
-	"\x0eexecution_time\x18\x04 \x01(\x01R\rexecutionTime\"\xa6\x01\n" +
-	"%ExecuteJavaScriptForAutomationRequest\x12\x1b\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error\x12M\n" +
+	"\x12execution_duration\x18\x04 \x01(\v2\x19.google.protobuf.DurationB\x03\xe0A\x03R\x11executionDuration\"\x99\x01\n" +
+	"\x18ExecuteJavaScriptRequest\x12\x1b\n" +
 	"\x06script\x18\x01 \x01(\tB\x03\xe0A\x02R\x06script\x128\n" +
 	"\atimeout\x18\x02 \x01(\v2\x19.google.protobuf.DurationB\x03\xe0A\x01R\atimeout\x12&\n" +
-	"\fcompile_only\x18\x03 \x01(\bB\x03\xe0A\x01R\vcompileOnly\"\x97\x01\n" +
-	"&ExecuteJavaScriptForAutomationResponse\x12\x18\n" +
+	"\fcompile_only\x18\x03 \x01(\bB\x03\xe0A\x01R\vcompileOnly\"\xb2\x01\n" +
+	"\x19ExecuteJavaScriptResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x16\n" +
 	"\x06output\x18\x02 \x01(\tR\x06output\x12\x14\n" +
-	"\x05error\x18\x03 \x01(\tR\x05error\x12%\n" +
-	"\x0eexecution_time\x18\x04 \x01(\x01R\rexecutionTime\"\xa4\x03\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error\x12M\n" +
+	"\x12execution_duration\x18\x04 \x01(\v2\x19.google.protobuf.DurationB\x03\xe0A\x03R\x11executionDuration\"\x9a\x03\n" +
 	"\x1aExecuteShellCommandRequest\x12\x1d\n" +
-	"\acommand\x18\x01 \x01(\tB\x03\xe0A\x02R\acommand\x12!\n" +
-	"\targuments\x18\x02 \x03(\tB\x03\xe0A\x01R\targuments\x120\n" +
+	"\acommand\x18\x01 \x01(\tB\x03\xe0A\x02R\acommand\x12\x17\n" +
+	"\x04args\x18\x02 \x03(\tB\x03\xe0A\x01R\x04args\x120\n" +
 	"\x11working_directory\x18\x03 \x01(\tB\x03\xe0A\x01R\x10workingDirectory\x12b\n" +
 	"\venvironment\x18\x04 \x03(\v2;.macosusesdk.v1.ExecuteShellCommandRequest.EnvironmentEntryB\x03\xe0A\x01R\venvironment\x128\n" +
 	"\atimeout\x18\x05 \x01(\v2\x19.google.protobuf.DurationB\x03\xe0A\x01R\atimeout\x12\x19\n" +
@@ -884,27 +885,28 @@ const file_macosusesdk_v1_script_proto_rawDesc = "" +
 	"\x05shell\x18\a \x01(\tB\x03\xe0A\x01R\x05shell\x1a>\n" +
 	"\x10EnvironmentEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xc1\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xee\x01\n" +
 	"\x1bExecuteShellCommandResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x16\n" +
 	"\x06stdout\x18\x02 \x01(\tR\x06stdout\x12\x16\n" +
 	"\x06stderr\x18\x03 \x01(\tR\x06stderr\x12\x1b\n" +
-	"\texit_code\x18\x04 \x01(\x05R\bexitCode\x12%\n" +
-	"\x0eexecution_time\x18\x05 \x01(\x01R\rexecutionTime\x12\x14\n" +
-	"\x05error\x18\x06 \x01(\tR\x05error\"i\n" +
+	"\texit_code\x18\x04 \x01(\x05R\bexitCode\x12M\n" +
+	"\x12execution_duration\x18\x05 \x01(\v2\x19.google.protobuf.DurationB\x03\xe0A\x03R\x11executionDuration\x12\x19\n" +
+	"\x05error\x18\x06 \x01(\tB\x03\xe0A\x03R\x05error\"i\n" +
 	"\x15ValidateScriptRequest\x123\n" +
 	"\x04type\x18\x01 \x01(\x0e2\x1a.macosusesdk.v1.ScriptTypeB\x03\xe0A\x02R\x04type\x12\x1b\n" +
 	"\x06script\x18\x02 \x01(\tB\x03\xe0A\x02R\x06script\"b\n" +
 	"\x16ValidateScriptResponse\x12\x14\n" +
 	"\x05valid\x18\x01 \x01(\bR\x05valid\x12\x16\n" +
 	"\x06errors\x18\x02 \x03(\tR\x06errors\x12\x1a\n" +
-	"\bwarnings\x18\x03 \x03(\tR\bwarnings\"Q\n" +
-	"\x1fGetScriptingDictionariesRequest\x12.\n" +
-	"\x10application_name\x18\x01 \x01(\tB\x03\xe0A\x01R\x0fapplicationName\"k\n" +
-	" GetScriptingDictionariesResponse\x12G\n" +
-	"\fdictionaries\x18\x01 \x03(\v2#.macosusesdk.v1.ScriptingDictionaryR\fdictionaries\"\xe9\x01\n" +
-	"\x13ScriptingDictionary\x12)\n" +
-	"\x10application_name\x18\x01 \x01(\tR\x0fapplicationName\x12\x1b\n" +
+	"\bwarnings\x18\x03 \x03(\tR\bwarnings\"@\n" +
+	"\x1fGetScriptingDictionariesRequest\x12\x1d\n" +
+	"\x04name\x18\x01 \x01(\tB\t\xe0A\x02\xfaA\x03\n" +
+	"\x01*R\x04name\"`\n" +
+	"\x15ScriptingDictionaries\x12G\n" +
+	"\fdictionaries\x18\x01 \x03(\v2#.macosusesdk.v1.ScriptingDictionaryR\fdictionaries\"\xe0\x01\n" +
+	"\x13ScriptingDictionary\x12 \n" +
+	"\vapplication\x18\x01 \x01(\tR\vapplication\x12\x1b\n" +
 	"\tbundle_id\x18\x02 \x01(\tR\bbundleId\x121\n" +
 	"\x14supports_applescript\x18\x03 \x01(\bR\x13supportsApplescript\x12!\n" +
 	"\fsupports_jxa\x18\x04 \x01(\bR\vsupportsJxa\x12\x1a\n" +
@@ -933,33 +935,36 @@ func file_macosusesdk_v1_script_proto_rawDescGZIP() []byte {
 var file_macosusesdk_v1_script_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_macosusesdk_v1_script_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_macosusesdk_v1_script_proto_goTypes = []any{
-	(ScriptType)(0),                                // 0: macosusesdk.v1.ScriptType
-	(*ExecuteAppleScriptRequest)(nil),              // 1: macosusesdk.v1.ExecuteAppleScriptRequest
-	(*ExecuteAppleScriptResponse)(nil),             // 2: macosusesdk.v1.ExecuteAppleScriptResponse
-	(*ExecuteJavaScriptForAutomationRequest)(nil),  // 3: macosusesdk.v1.ExecuteJavaScriptForAutomationRequest
-	(*ExecuteJavaScriptForAutomationResponse)(nil), // 4: macosusesdk.v1.ExecuteJavaScriptForAutomationResponse
-	(*ExecuteShellCommandRequest)(nil),             // 5: macosusesdk.v1.ExecuteShellCommandRequest
-	(*ExecuteShellCommandResponse)(nil),            // 6: macosusesdk.v1.ExecuteShellCommandResponse
-	(*ValidateScriptRequest)(nil),                  // 7: macosusesdk.v1.ValidateScriptRequest
-	(*ValidateScriptResponse)(nil),                 // 8: macosusesdk.v1.ValidateScriptResponse
-	(*GetScriptingDictionariesRequest)(nil),        // 9: macosusesdk.v1.GetScriptingDictionariesRequest
-	(*GetScriptingDictionariesResponse)(nil),       // 10: macosusesdk.v1.GetScriptingDictionariesResponse
-	(*ScriptingDictionary)(nil),                    // 11: macosusesdk.v1.ScriptingDictionary
-	nil,                                            // 12: macosusesdk.v1.ExecuteShellCommandRequest.EnvironmentEntry
-	(*durationpb.Duration)(nil),                    // 13: google.protobuf.Duration
+	(ScriptType)(0),                         // 0: macosusesdk.v1.ScriptType
+	(*ExecuteAppleScriptRequest)(nil),       // 1: macosusesdk.v1.ExecuteAppleScriptRequest
+	(*ExecuteAppleScriptResponse)(nil),      // 2: macosusesdk.v1.ExecuteAppleScriptResponse
+	(*ExecuteJavaScriptRequest)(nil),        // 3: macosusesdk.v1.ExecuteJavaScriptRequest
+	(*ExecuteJavaScriptResponse)(nil),       // 4: macosusesdk.v1.ExecuteJavaScriptResponse
+	(*ExecuteShellCommandRequest)(nil),      // 5: macosusesdk.v1.ExecuteShellCommandRequest
+	(*ExecuteShellCommandResponse)(nil),     // 6: macosusesdk.v1.ExecuteShellCommandResponse
+	(*ValidateScriptRequest)(nil),           // 7: macosusesdk.v1.ValidateScriptRequest
+	(*ValidateScriptResponse)(nil),          // 8: macosusesdk.v1.ValidateScriptResponse
+	(*GetScriptingDictionariesRequest)(nil), // 9: macosusesdk.v1.GetScriptingDictionariesRequest
+	(*ScriptingDictionaries)(nil),           // 10: macosusesdk.v1.ScriptingDictionaries
+	(*ScriptingDictionary)(nil),             // 11: macosusesdk.v1.ScriptingDictionary
+	nil,                                     // 12: macosusesdk.v1.ExecuteShellCommandRequest.EnvironmentEntry
+	(*durationpb.Duration)(nil),             // 13: google.protobuf.Duration
 }
 var file_macosusesdk_v1_script_proto_depIdxs = []int32{
 	13, // 0: macosusesdk.v1.ExecuteAppleScriptRequest.timeout:type_name -> google.protobuf.Duration
-	13, // 1: macosusesdk.v1.ExecuteJavaScriptForAutomationRequest.timeout:type_name -> google.protobuf.Duration
-	12, // 2: macosusesdk.v1.ExecuteShellCommandRequest.environment:type_name -> macosusesdk.v1.ExecuteShellCommandRequest.EnvironmentEntry
-	13, // 3: macosusesdk.v1.ExecuteShellCommandRequest.timeout:type_name -> google.protobuf.Duration
-	0,  // 4: macosusesdk.v1.ValidateScriptRequest.type:type_name -> macosusesdk.v1.ScriptType
-	11, // 5: macosusesdk.v1.GetScriptingDictionariesResponse.dictionaries:type_name -> macosusesdk.v1.ScriptingDictionary
-	6,  // [6:6] is the sub-list for method output_type
-	6,  // [6:6] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	13, // 1: macosusesdk.v1.ExecuteAppleScriptResponse.execution_duration:type_name -> google.protobuf.Duration
+	13, // 2: macosusesdk.v1.ExecuteJavaScriptRequest.timeout:type_name -> google.protobuf.Duration
+	13, // 3: macosusesdk.v1.ExecuteJavaScriptResponse.execution_duration:type_name -> google.protobuf.Duration
+	12, // 4: macosusesdk.v1.ExecuteShellCommandRequest.environment:type_name -> macosusesdk.v1.ExecuteShellCommandRequest.EnvironmentEntry
+	13, // 5: macosusesdk.v1.ExecuteShellCommandRequest.timeout:type_name -> google.protobuf.Duration
+	13, // 6: macosusesdk.v1.ExecuteShellCommandResponse.execution_duration:type_name -> google.protobuf.Duration
+	0,  // 7: macosusesdk.v1.ValidateScriptRequest.type:type_name -> macosusesdk.v1.ScriptType
+	11, // 8: macosusesdk.v1.ScriptingDictionaries.dictionaries:type_name -> macosusesdk.v1.ScriptingDictionary
+	9,  // [9:9] is the sub-list for method output_type
+	9,  // [9:9] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_macosusesdk_v1_script_proto_init() }

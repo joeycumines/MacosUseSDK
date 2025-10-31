@@ -17,19 +17,16 @@ option java_outer_classname = "InputProto";
 option java_package = "com.macosusesdk.v1";
 
 // A resource representing an input action that was or will be executed.
-// Inputs form a timeline for each application or globally for the desktop.
+// Inputs form a timeline for each application.
 message Input {
   option (google.api.resource) = {
     type: "macos.googleapis.com/Input"
     pattern: "applications/{application}/inputs/{input}"
-    pattern: "desktopInputs/{input}"
     singular: "input"
     plural: "inputs"
   };
 
-  // Resource name. Either:
-  // - "applications/{application}/inputs/{input}" for app-specific inputs
-  // - "desktopInputs/{input}" for global desktop inputs
+  // Resource name in the format "applications/{application}/inputs/{input}".
   string name = 1 [(google.api.field_behavior) = IDENTIFIER];
 
   // The specific action to perform or that was performed.

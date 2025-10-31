@@ -366,6 +366,7 @@ public struct Macosusesdk_V1_ModifiedElement: @unchecked Sendable {
   fileprivate var _storage = _StorageClass.defaultInstance
 }
 
+/// ===== Window Messages =====
 /// Request to get a window.
 public struct Macosusesdk_V1_GetWindowRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
@@ -516,6 +517,21 @@ public struct Macosusesdk_V1_CloseWindowRequest: Sendable {
   public init() {}
 }
 
+/// Response from closing a window.
+public struct Macosusesdk_V1_CloseWindowResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Whether the operation succeeded.
+  public var success: Bool = false
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// ===== Observation Messages =====
 /// Request to create an observation.
 public struct Macosusesdk_V1_CreateObservationRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
@@ -591,12 +607,6 @@ public struct Macosusesdk_V1_ListObservationsRequest: Sendable {
   /// Page token from a previous ListObservations call.
   public var pageToken: String = String()
 
-  /// Filter by observation type.
-  public var typeFilter: Macosusesdk_V1_ObservationType = .unspecified
-
-  /// Filter by observation state.
-  public var stateFilter: Macosusesdk_V1_Observation.State = .unspecified
-
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
@@ -647,6 +657,30 @@ public struct Macosusesdk_V1_StreamObservationsRequest: Sendable {
   public init() {}
 }
 
+/// Response from streaming observations.
+public struct Macosusesdk_V1_StreamObservationsResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// The observation event.
+  public var event: Macosusesdk_V1_ObservationEvent {
+    get {return _event ?? Macosusesdk_V1_ObservationEvent()}
+    set {_event = newValue}
+  }
+  /// Returns true if `event` has been explicitly set.
+  public var hasEvent: Bool {return self._event != nil}
+  /// Clears the value of `event`. Subsequent reads from it will return its default value.
+  public mutating func clearEvent() {self._event = nil}
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _event: Macosusesdk_V1_ObservationEvent? = nil
+}
+
+/// ===== Session Messages =====
 /// Request to create a session.
 public struct Macosusesdk_V1_CreateSessionRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
@@ -699,9 +733,6 @@ public struct Macosusesdk_V1_ListSessionsRequest: Sendable {
   /// Page token from a previous ListSessions call.
   public var pageToken: String = String()
 
-  /// Filter by session state.
-  public var stateFilter: Macosusesdk_V1_Session.State = .unspecified
-
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
@@ -741,6 +772,7 @@ public struct Macosusesdk_V1_DeleteSessionRequest: Sendable {
   public init() {}
 }
 
+/// ===== Macro Messages =====
 /// Request to create a macro.
 public struct Macosusesdk_V1_CreateMacroRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
@@ -792,9 +824,6 @@ public struct Macosusesdk_V1_ListMacrosRequest: Sendable {
 
   /// Page token from a previous ListMacros call.
   public var pageToken: String = String()
-
-  /// Filter by tags.
-  public var tags: [String] = []
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -860,6 +889,9 @@ public struct Macosusesdk_V1_DeleteMacroRequest: Sendable {
 
   /// Resource name of the macro.
   public var name: String = String()
+
+  /// If true, delete child resources (executions, logs).
+  public var force: Bool = false
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -1851,6 +1883,36 @@ extension Macosusesdk_V1_CloseWindowRequest: SwiftProtobuf.Message, SwiftProtobu
   }
 }
 
+extension Macosusesdk_V1_CloseWindowResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".CloseWindowResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.success != false {
+      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_CloseWindowResponse, rhs: Macosusesdk_V1_CloseWindowResponse) -> Bool {
+    if lhs.success != rhs.success {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
 extension Macosusesdk_V1_CreateObservationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CreateObservationRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{1}observation\0\u{3}observation_id\0")
@@ -1962,7 +2024,7 @@ extension Macosusesdk_V1_GetObservationRequest: SwiftProtobuf.Message, SwiftProt
 
 extension Macosusesdk_V1_ListObservationsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListObservationsRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}page_size\0\u{3}page_token\0\u{3}type_filter\0\u{3}state_filter\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}page_size\0\u{3}page_token\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1973,8 +2035,6 @@ extension Macosusesdk_V1_ListObservationsRequest: SwiftProtobuf.Message, SwiftPr
       case 1: try { try decoder.decodeSingularStringField(value: &self.parent) }()
       case 2: try { try decoder.decodeSingularInt32Field(value: &self.pageSize) }()
       case 3: try { try decoder.decodeSingularStringField(value: &self.pageToken) }()
-      case 4: try { try decoder.decodeSingularEnumField(value: &self.typeFilter) }()
-      case 5: try { try decoder.decodeSingularEnumField(value: &self.stateFilter) }()
       default: break
       }
     }
@@ -1990,12 +2050,6 @@ extension Macosusesdk_V1_ListObservationsRequest: SwiftProtobuf.Message, SwiftPr
     if !self.pageToken.isEmpty {
       try visitor.visitSingularStringField(value: self.pageToken, fieldNumber: 3)
     }
-    if self.typeFilter != .unspecified {
-      try visitor.visitSingularEnumField(value: self.typeFilter, fieldNumber: 4)
-    }
-    if self.stateFilter != .unspecified {
-      try visitor.visitSingularEnumField(value: self.stateFilter, fieldNumber: 5)
-    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -2003,8 +2057,6 @@ extension Macosusesdk_V1_ListObservationsRequest: SwiftProtobuf.Message, SwiftPr
     if lhs.parent != rhs.parent {return false}
     if lhs.pageSize != rhs.pageSize {return false}
     if lhs.pageToken != rhs.pageToken {return false}
-    if lhs.typeFilter != rhs.typeFilter {return false}
-    if lhs.stateFilter != rhs.stateFilter {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -2105,6 +2157,40 @@ extension Macosusesdk_V1_StreamObservationsRequest: SwiftProtobuf.Message, Swift
   }
 }
 
+extension Macosusesdk_V1_StreamObservationsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".StreamObservationsResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}event\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._event) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._event {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_StreamObservationsResponse, rhs: Macosusesdk_V1_StreamObservationsResponse) -> Bool {
+    if lhs._event != rhs._event {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
 extension Macosusesdk_V1_CreateSessionRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CreateSessionRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}session\0\u{3}session_id\0")
@@ -2176,7 +2262,7 @@ extension Macosusesdk_V1_GetSessionRequest: SwiftProtobuf.Message, SwiftProtobuf
 
 extension Macosusesdk_V1_ListSessionsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListSessionsRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}page_size\0\u{3}page_token\0\u{3}state_filter\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}page_size\0\u{3}page_token\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -2186,7 +2272,6 @@ extension Macosusesdk_V1_ListSessionsRequest: SwiftProtobuf.Message, SwiftProtob
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularInt32Field(value: &self.pageSize) }()
       case 2: try { try decoder.decodeSingularStringField(value: &self.pageToken) }()
-      case 3: try { try decoder.decodeSingularEnumField(value: &self.stateFilter) }()
       default: break
       }
     }
@@ -2199,16 +2284,12 @@ extension Macosusesdk_V1_ListSessionsRequest: SwiftProtobuf.Message, SwiftProtob
     if !self.pageToken.isEmpty {
       try visitor.visitSingularStringField(value: self.pageToken, fieldNumber: 2)
     }
-    if self.stateFilter != .unspecified {
-      try visitor.visitSingularEnumField(value: self.stateFilter, fieldNumber: 3)
-    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_ListSessionsRequest, rhs: Macosusesdk_V1_ListSessionsRequest) -> Bool {
     if lhs.pageSize != rhs.pageSize {return false}
     if lhs.pageToken != rhs.pageToken {return false}
-    if lhs.stateFilter != rhs.stateFilter {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -2355,7 +2436,7 @@ extension Macosusesdk_V1_GetMacroRequest: SwiftProtobuf.Message, SwiftProtobuf._
 
 extension Macosusesdk_V1_ListMacrosRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListMacrosRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}page_size\0\u{3}page_token\0\u{1}tags\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}page_size\0\u{3}page_token\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -2365,7 +2446,6 @@ extension Macosusesdk_V1_ListMacrosRequest: SwiftProtobuf.Message, SwiftProtobuf
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularInt32Field(value: &self.pageSize) }()
       case 2: try { try decoder.decodeSingularStringField(value: &self.pageToken) }()
-      case 3: try { try decoder.decodeRepeatedStringField(value: &self.tags) }()
       default: break
       }
     }
@@ -2378,16 +2458,12 @@ extension Macosusesdk_V1_ListMacrosRequest: SwiftProtobuf.Message, SwiftProtobuf
     if !self.pageToken.isEmpty {
       try visitor.visitSingularStringField(value: self.pageToken, fieldNumber: 2)
     }
-    if !self.tags.isEmpty {
-      try visitor.visitRepeatedStringField(value: self.tags, fieldNumber: 3)
-    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_ListMacrosRequest, rhs: Macosusesdk_V1_ListMacrosRequest) -> Bool {
     if lhs.pageSize != rhs.pageSize {return false}
     if lhs.pageToken != rhs.pageToken {return false}
-    if lhs.tags != rhs.tags {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -2469,7 +2545,7 @@ extension Macosusesdk_V1_UpdateMacroRequest: SwiftProtobuf.Message, SwiftProtobu
 
 extension Macosusesdk_V1_DeleteMacroRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".DeleteMacroRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}force\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -2478,6 +2554,7 @@ extension Macosusesdk_V1_DeleteMacroRequest: SwiftProtobuf.Message, SwiftProtobu
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      case 2: try { try decoder.decodeSingularBoolField(value: &self.force) }()
       default: break
       }
     }
@@ -2487,11 +2564,15 @@ extension Macosusesdk_V1_DeleteMacroRequest: SwiftProtobuf.Message, SwiftProtobu
     if !self.name.isEmpty {
       try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
     }
+    if self.force != false {
+      try visitor.visitSingularBoolField(value: self.force, fieldNumber: 2)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_DeleteMacroRequest, rhs: Macosusesdk_V1_DeleteMacroRequest) -> Bool {
     if lhs.name != rhs.name {return false}
+    if lhs.force != rhs.force {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

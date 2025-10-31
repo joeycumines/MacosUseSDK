@@ -15,6 +15,7 @@ import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
@@ -498,7 +499,7 @@ type WaitCondition struct {
 	//
 	//	*WaitCondition_ElementSelector
 	//	*WaitCondition_WindowTitle
-	//	*WaitCondition_ApplicationName
+	//	*WaitCondition_Application
 	Condition isWaitCondition_Condition `protobuf_oneof:"condition"`
 	// Timeout in seconds.
 	Timeout       float64 `protobuf:"fixed64,10,opt,name=timeout,proto3" json:"timeout,omitempty"`
@@ -561,10 +562,10 @@ func (x *WaitCondition) GetWindowTitle() string {
 	return ""
 }
 
-func (x *WaitCondition) GetApplicationName() string {
+func (x *WaitCondition) GetApplication() string {
 	if x != nil {
-		if x, ok := x.Condition.(*WaitCondition_ApplicationName); ok {
-			return x.ApplicationName
+		if x, ok := x.Condition.(*WaitCondition_Application); ok {
+			return x.Application
 		}
 	}
 	return ""
@@ -591,16 +592,16 @@ type WaitCondition_WindowTitle struct {
 	WindowTitle string `protobuf:"bytes,2,opt,name=window_title,json=windowTitle,proto3,oneof"`
 }
 
-type WaitCondition_ApplicationName struct {
+type WaitCondition_Application struct {
 	// Wait for application to launch.
-	ApplicationName string `protobuf:"bytes,3,opt,name=application_name,json=applicationName,proto3,oneof"`
+	Application string `protobuf:"bytes,3,opt,name=application,proto3,oneof"`
 }
 
 func (*WaitCondition_ElementSelector) isWaitCondition_Condition() {}
 
 func (*WaitCondition_WindowTitle) isWaitCondition_Condition() {}
 
-func (*WaitCondition_ApplicationName) isWaitCondition_Condition() {}
+func (*WaitCondition_Application) isWaitCondition_Condition() {}
 
 // Conditional action (if-then-else).
 type ConditionalAction struct {
@@ -923,7 +924,7 @@ type LoopAction struct {
 	//
 	//	*LoopAction_Count
 	//	*LoopAction_WhileCondition
-	//	*LoopAction_ForEach
+	//	*LoopAction_Foreach
 	LoopType isLoopAction_LoopType `protobuf_oneof:"loop_type"`
 	// Actions to execute in each iteration.
 	Actions       []*MacroAction `protobuf:"bytes,10,rep,name=actions,proto3" json:"actions,omitempty"`
@@ -986,10 +987,10 @@ func (x *LoopAction) GetWhileCondition() *MacroCondition {
 	return nil
 }
 
-func (x *LoopAction) GetForEach() *ForEachLoop {
+func (x *LoopAction) GetForeach() *ForEachLoop {
 	if x != nil {
-		if x, ok := x.LoopType.(*LoopAction_ForEach); ok {
-			return x.ForEach
+		if x, ok := x.LoopType.(*LoopAction_Foreach); ok {
+			return x.Foreach
 		}
 	}
 	return nil
@@ -1016,16 +1017,16 @@ type LoopAction_WhileCondition struct {
 	WhileCondition *MacroCondition `protobuf:"bytes,2,opt,name=while_condition,json=whileCondition,proto3,oneof"`
 }
 
-type LoopAction_ForEach struct {
-	// Loop for each item in collection.
-	ForEach *ForEachLoop `protobuf:"bytes,3,opt,name=for_each,json=forEach,proto3,oneof"`
+type LoopAction_Foreach struct {
+	// Loop over each item in collection.
+	Foreach *ForEachLoop `protobuf:"bytes,3,opt,name=foreach,proto3,oneof"`
 }
 
 func (*LoopAction_Count) isLoopAction_LoopType() {}
 
 func (*LoopAction_WhileCondition) isLoopAction_LoopType() {}
 
-func (*LoopAction_ForEach) isLoopAction_LoopType() {}
+func (*LoopAction_Foreach) isLoopAction_LoopType() {}
 
 // For-each loop over collection.
 type ForEachLoop struct {
@@ -1331,7 +1332,7 @@ type MethodCall struct {
 	// Method name (e.g., "ClickElement", "SetElementValue").
 	Method string `protobuf:"bytes,1,opt,name=method,proto3" json:"method,omitempty"`
 	// Method arguments (key-value pairs).
-	Arguments     map[string]string `protobuf:"bytes,2,rep,name=arguments,proto3" json:"arguments,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Args          map[string]string `protobuf:"bytes,2,rep,name=args,proto3" json:"args,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1373,9 +1374,9 @@ func (x *MethodCall) GetMethod() string {
 	return ""
 }
 
-func (x *MethodCall) GetArguments() map[string]string {
+func (x *MethodCall) GetArgs() map[string]string {
 	if x != nil {
-		return x.Arguments
+		return x.Args
 	}
 	return nil
 }
@@ -1383,8 +1384,8 @@ func (x *MethodCall) GetArguments() map[string]string {
 // Macro parameter definition.
 type MacroParameter struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Parameter name.
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Parameter key/identifier.
+	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	// Parameter type.
 	Type MacroParameter_ParameterType `protobuf:"varint,2,opt,name=type,proto3,enum=macosusesdk.v1.MacroParameter_ParameterType" json:"type,omitempty"`
 	// Default value (optional).
@@ -1427,9 +1428,9 @@ func (*MacroParameter) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *MacroParameter) GetName() string {
+func (x *MacroParameter) GetKey() string {
 	if x != nil {
-		return x.Name
+		return x.Key
 	}
 	return ""
 }
@@ -1615,8 +1616,8 @@ type ExecuteMacroResponse struct {
 	Success bool `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
 	// Number of actions executed.
 	ActionsExecuted int32 `protobuf:"varint,2,opt,name=actions_executed,json=actionsExecuted,proto3" json:"actions_executed,omitempty"`
-	// Execution time in seconds.
-	ExecutionTime float64 `protobuf:"fixed64,3,opt,name=execution_time,json=executionTime,proto3" json:"execution_time,omitempty"`
+	// Execution duration.
+	ExecutionDuration *durationpb.Duration `protobuf:"bytes,3,opt,name=execution_duration,json=executionDuration,proto3" json:"execution_duration,omitempty"`
 	// Error message if failed.
 	Error string `protobuf:"bytes,4,opt,name=error,proto3" json:"error,omitempty"`
 	// Execution log (if recording was enabled).
@@ -1669,11 +1670,11 @@ func (x *ExecuteMacroResponse) GetActionsExecuted() int32 {
 	return 0
 }
 
-func (x *ExecuteMacroResponse) GetExecutionTime() float64 {
+func (x *ExecuteMacroResponse) GetExecutionDuration() *durationpb.Duration {
 	if x != nil {
-		return x.ExecutionTime
+		return x.ExecutionDuration
 	}
-	return 0
+	return nil
 }
 
 func (x *ExecuteMacroResponse) GetError() string {
@@ -1693,18 +1694,20 @@ func (x *ExecuteMacroResponse) GetLog() []*ExecutionLogEntry {
 // Log entry for macro execution.
 type ExecutionLogEntry struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// Resource name.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// When the action executed.
-	Timestamp *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	ExecutionTime *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=execution_time,json=executionTime,proto3" json:"execution_time,omitempty"`
 	// Action index in macro.
-	ActionIndex int32 `protobuf:"varint,2,opt,name=action_index,json=actionIndex,proto3" json:"action_index,omitempty"`
+	ActionIndex int32 `protobuf:"varint,3,opt,name=action_index,json=actionIndex,proto3" json:"action_index,omitempty"`
 	// Action description.
-	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	Description string `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
 	// Whether action succeeded.
-	Success bool `protobuf:"varint,4,opt,name=success,proto3" json:"success,omitempty"`
+	Success bool `protobuf:"varint,5,opt,name=success,proto3" json:"success,omitempty"`
 	// Error message if failed.
-	Error string `protobuf:"bytes,5,opt,name=error,proto3" json:"error,omitempty"`
+	Error string `protobuf:"bytes,6,opt,name=error,proto3" json:"error,omitempty"`
 	// Duration in seconds.
-	Duration      float64 `protobuf:"fixed64,6,opt,name=duration,proto3" json:"duration,omitempty"`
+	Duration      float64 `protobuf:"fixed64,7,opt,name=duration,proto3" json:"duration,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1739,9 +1742,16 @@ func (*ExecutionLogEntry) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{17}
 }
 
-func (x *ExecutionLogEntry) GetTimestamp() *timestamppb.Timestamp {
+func (x *ExecutionLogEntry) GetName() string {
 	if x != nil {
-		return x.Timestamp
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ExecutionLogEntry) GetExecutionTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExecutionTime
 	}
 	return nil
 }
@@ -1790,10 +1800,10 @@ type ExecuteMacroMetadata struct {
 	CurrentAction int32 `protobuf:"varint,2,opt,name=current_action,json=currentAction,proto3" json:"current_action,omitempty"`
 	// Total actions in macro.
 	TotalActions int32 `protobuf:"varint,3,opt,name=total_actions,json=totalActions,proto3" json:"total_actions,omitempty"`
-	// Elapsed time in seconds.
-	ElapsedTime   float64 `protobuf:"fixed64,4,opt,name=elapsed_time,json=elapsedTime,proto3" json:"elapsed_time,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// Elapsed duration.
+	ElapsedDuration *durationpb.Duration `protobuf:"bytes,4,opt,name=elapsed_duration,json=elapsedDuration,proto3" json:"elapsed_duration,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *ExecuteMacroMetadata) Reset() {
@@ -1847,18 +1857,18 @@ func (x *ExecuteMacroMetadata) GetTotalActions() int32 {
 	return 0
 }
 
-func (x *ExecuteMacroMetadata) GetElapsedTime() float64 {
+func (x *ExecuteMacroMetadata) GetElapsedDuration() *durationpb.Duration {
 	if x != nil {
-		return x.ElapsedTime
+		return x.ElapsedDuration
 	}
-	return 0
+	return nil
 }
 
 var File_macosusesdk_v1_macro_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_macro_proto_rawDesc = "" +
 	"\n" +
-	"\x1amacosusesdk/v1/macro.proto\x12\x0emacosusesdk.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a#google/longrunning/operations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1amacosusesdk/v1/input.proto\"\xfb\x03\n" +
+	"\x1amacosusesdk/v1/macro.proto\x12\x0emacosusesdk.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a#google/longrunning/operations.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1amacosusesdk/v1/input.proto\"\xfb\x03\n" +
 	"\x05Macro\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12&\n" +
 	"\fdisplay_name\x18\x02 \x01(\tB\x03\xe0A\x02R\vdisplayName\x12%\n" +
@@ -1873,7 +1883,7 @@ const file_macosusesdk_v1_macro_proto_rawDesc = "" +
 	"updateTime\x12,\n" +
 	"\x0fexecution_count\x18\b \x01(\x03B\x03\xe0A\x03R\x0eexecutionCount\x12\x17\n" +
 	"\x04tags\x18\t \x03(\tB\x03\xe0A\x01R\x04tags:>\xeaA;\n" +
-	"\x1amacos.googleapis.com/Macro\x12\x0emacros/{macro}*\x06macros2\x05macro\"\x90\x03\n" +
+	"\x1amacos.googleapis.com/Macro\x12\x0emacros/{macro}*\x06macros2\x05macro\"\x95\x03\n" +
 	"\vMacroAction\x123\n" +
 	"\x05input\x18\x01 \x01(\v2\x1b.macosusesdk.v1.InputActionH\x00R\x05input\x120\n" +
 	"\x04wait\x18\x02 \x01(\v2\x1a.macosusesdk.v1.WaitActionH\x00R\x04wait\x12E\n" +
@@ -1881,86 +1891,86 @@ const file_macosusesdk_v1_macro_proto_rawDesc = "" +
 	"\x04loop\x18\x04 \x01(\v2\x1a.macosusesdk.v1.LoopActionH\x00R\x04loop\x126\n" +
 	"\x06assign\x18\x05 \x01(\v2\x1c.macosusesdk.v1.AssignActionH\x00R\x06assign\x12=\n" +
 	"\vmethod_call\x18\x06 \x01(\v2\x1a.macosusesdk.v1.MethodCallH\x00R\n" +
-	"methodCall\x12 \n" +
+	"methodCall\x12%\n" +
 	"\vdescription\x18\n" +
-	" \x01(\tR\vdescriptionB\b\n" +
-	"\x06action\"e\n" +
+	" \x01(\tB\x03\xe0A\x01R\vdescriptionB\b\n" +
+	"\x06action\"o\n" +
 	"\n" +
-	"WaitAction\x12\x1a\n" +
-	"\bduration\x18\x01 \x01(\x01R\bduration\x12;\n" +
-	"\tcondition\x18\x02 \x01(\v2\x1d.macosusesdk.v1.WaitConditionR\tcondition\"\xb5\x01\n" +
+	"WaitAction\x12\x1f\n" +
+	"\bduration\x18\x01 \x01(\x01B\x03\xe0A\x02R\bduration\x12@\n" +
+	"\tcondition\x18\x02 \x01(\v2\x1d.macosusesdk.v1.WaitConditionB\x03\xe0A\x01R\tcondition\"\xb1\x01\n" +
 	"\rWaitCondition\x12+\n" +
 	"\x10element_selector\x18\x01 \x01(\tH\x00R\x0felementSelector\x12#\n" +
-	"\fwindow_title\x18\x02 \x01(\tH\x00R\vwindowTitle\x12+\n" +
-	"\x10application_name\x18\x03 \x01(\tH\x00R\x0fapplicationName\x12\x18\n" +
+	"\fwindow_title\x18\x02 \x01(\tH\x00R\vwindowTitle\x12\"\n" +
+	"\vapplication\x18\x03 \x01(\tH\x00R\vapplication\x12\x1d\n" +
 	"\atimeout\x18\n" +
-	" \x01(\x01R\atimeoutB\v\n" +
-	"\tcondition\"\xd1\x01\n" +
-	"\x11ConditionalAction\x12<\n" +
-	"\tcondition\x18\x01 \x01(\v2\x1e.macosusesdk.v1.MacroConditionR\tcondition\x12>\n" +
-	"\fthen_actions\x18\x02 \x03(\v2\x1b.macosusesdk.v1.MacroActionR\vthenActions\x12>\n" +
-	"\felse_actions\x18\x03 \x03(\v2\x1b.macosusesdk.v1.MacroActionR\velseActions\"\xaf\x02\n" +
+	" \x01(\x01B\x03\xe0A\x01R\atimeoutB\v\n" +
+	"\tcondition\"\xe0\x01\n" +
+	"\x11ConditionalAction\x12A\n" +
+	"\tcondition\x18\x01 \x01(\v2\x1e.macosusesdk.v1.MacroConditionB\x03\xe0A\x02R\tcondition\x12C\n" +
+	"\fthen_actions\x18\x02 \x03(\v2\x1b.macosusesdk.v1.MacroActionB\x03\xe0A\x02R\vthenActions\x12C\n" +
+	"\felse_actions\x18\x03 \x03(\v2\x1b.macosusesdk.v1.MacroActionB\x03\xe0A\x01R\velseActions\"\xaf\x02\n" +
 	"\x0eMacroCondition\x12'\n" +
 	"\x0eelement_exists\x18\x01 \x01(\tH\x00R\relementExists\x12%\n" +
 	"\rwindow_exists\x18\x02 \x01(\tH\x00R\fwindowExists\x121\n" +
 	"\x13application_running\x18\x03 \x01(\tH\x00R\x12applicationRunning\x12L\n" +
 	"\x0fvariable_equals\x18\x04 \x01(\v2!.macosusesdk.v1.VariableConditionH\x00R\x0evariableEquals\x12?\n" +
 	"\bcompound\x18\x05 \x01(\v2!.macosusesdk.v1.CompoundConditionH\x00R\bcompoundB\v\n" +
-	"\tcondition\"E\n" +
-	"\x11VariableCondition\x12\x1a\n" +
-	"\bvariable\x18\x01 \x01(\tR\bvariable\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value\"\xf6\x01\n" +
-	"\x11CompoundCondition\x12F\n" +
-	"\boperator\x18\x01 \x01(\x0e2*.macosusesdk.v1.CompoundCondition.OperatorR\boperator\x12>\n" +
+	"\tcondition\"O\n" +
+	"\x11VariableCondition\x12\x1f\n" +
+	"\bvariable\x18\x01 \x01(\tB\x03\xe0A\x02R\bvariable\x12\x19\n" +
+	"\x05value\x18\x02 \x01(\tB\x03\xe0A\x02R\x05value\"\x80\x02\n" +
+	"\x11CompoundCondition\x12K\n" +
+	"\boperator\x18\x01 \x01(\x0e2*.macosusesdk.v1.CompoundCondition.OperatorB\x03\xe0A\x02R\boperator\x12C\n" +
 	"\n" +
-	"conditions\x18\x02 \x03(\v2\x1e.macosusesdk.v1.MacroConditionR\n" +
+	"conditions\x18\x02 \x03(\v2\x1e.macosusesdk.v1.MacroConditionB\x03\xe0A\x02R\n" +
 	"conditions\"Y\n" +
 	"\bOperator\x12\x18\n" +
 	"\x14OPERATOR_UNSPECIFIED\x10\x00\x12\x10\n" +
 	"\fOPERATOR_AND\x10\x01\x12\x0f\n" +
 	"\vOPERATOR_OR\x10\x02\x12\x10\n" +
-	"\fOPERATOR_NOT\x10\x03\"\xed\x01\n" +
+	"\fOPERATOR_NOT\x10\x03\"\xf1\x01\n" +
 	"\n" +
 	"LoopAction\x12\x16\n" +
 	"\x05count\x18\x01 \x01(\x05H\x00R\x05count\x12I\n" +
-	"\x0fwhile_condition\x18\x02 \x01(\v2\x1e.macosusesdk.v1.MacroConditionH\x00R\x0ewhileCondition\x128\n" +
-	"\bfor_each\x18\x03 \x01(\v2\x1b.macosusesdk.v1.ForEachLoopH\x00R\aforEach\x125\n" +
+	"\x0fwhile_condition\x18\x02 \x01(\v2\x1e.macosusesdk.v1.MacroConditionH\x00R\x0ewhileCondition\x127\n" +
+	"\aforeach\x18\x03 \x01(\v2\x1b.macosusesdk.v1.ForEachLoopH\x00R\aforeach\x12:\n" +
 	"\aactions\x18\n" +
-	" \x03(\v2\x1b.macosusesdk.v1.MacroActionR\aactionsB\v\n" +
-	"\tloop_type\"\xb0\x01\n" +
+	" \x03(\v2\x1b.macosusesdk.v1.MacroActionB\x03\xe0A\x02R\aactionsB\v\n" +
+	"\tloop_type\"\xb5\x01\n" +
 	"\vForEachLoop\x12+\n" +
 	"\x10element_selector\x18\x01 \x01(\tH\x00R\x0felementSelector\x12'\n" +
 	"\x0ewindow_pattern\x18\x02 \x01(\tH\x00R\rwindowPattern\x12\x18\n" +
-	"\x06values\x18\x03 \x01(\tH\x00R\x06values\x12#\n" +
+	"\x06values\x18\x03 \x01(\tH\x00R\x06values\x12(\n" +
 	"\ritem_variable\x18\n" +
-	" \x01(\tR\fitemVariableB\f\n" +
+	" \x01(\tB\x03\xe0A\x02R\fitemVariableB\f\n" +
 	"\n" +
-	"collection\"\xe7\x01\n" +
-	"\fAssignAction\x12\x1a\n" +
-	"\bvariable\x18\x01 \x01(\tR\bvariable\x12\x1a\n" +
+	"collection\"\xec\x01\n" +
+	"\fAssignAction\x12\x1f\n" +
+	"\bvariable\x18\x01 \x01(\tB\x03\xe0A\x02R\bvariable\x12\x1a\n" +
 	"\aliteral\x18\x02 \x01(\tH\x00R\aliteral\x12T\n" +
 	"\x11element_attribute\x18\x03 \x01(\v2%.macosusesdk.v1.ElementAttributeValueH\x00R\x10elementAttribute\x12\x1e\n" +
 	"\tparameter\x18\x04 \x01(\tH\x00R\tparameter\x12 \n" +
 	"\n" +
 	"expression\x18\x05 \x01(\tH\x00R\n" +
 	"expressionB\a\n" +
-	"\x05value\"`\n" +
-	"\x15ElementAttributeValue\x12)\n" +
-	"\x10element_selector\x18\x01 \x01(\tR\x0felementSelector\x12\x1c\n" +
-	"\tattribute\x18\x02 \x01(\tR\tattribute\"\xab\x01\n" +
+	"\x05value\"j\n" +
+	"\x15ElementAttributeValue\x12.\n" +
+	"\x10element_selector\x18\x01 \x01(\tB\x03\xe0A\x02R\x0felementSelector\x12!\n" +
+	"\tattribute\x18\x02 \x01(\tB\x03\xe0A\x02R\tattribute\"\xa1\x01\n" +
 	"\n" +
-	"MethodCall\x12\x16\n" +
-	"\x06method\x18\x01 \x01(\tR\x06method\x12G\n" +
-	"\targuments\x18\x02 \x03(\v2).macosusesdk.v1.MethodCall.ArgumentsEntryR\targuments\x1a<\n" +
-	"\x0eArgumentsEntry\x12\x10\n" +
+	"MethodCall\x12\x1b\n" +
+	"\x06method\x18\x01 \x01(\tB\x03\xe0A\x02R\x06method\x12=\n" +
+	"\x04args\x18\x02 \x03(\v2$.macosusesdk.v1.MethodCall.ArgsEntryB\x03\xe0A\x01R\x04args\x1a7\n" +
+	"\tArgsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x84\x03\n" +
-	"\x0eMacroParameter\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12@\n" +
-	"\x04type\x18\x02 \x01(\x0e2,.macosusesdk.v1.MacroParameter.ParameterTypeR\x04type\x12#\n" +
-	"\rdefault_value\x18\x03 \x01(\tR\fdefaultValue\x12 \n" +
-	"\vdescription\x18\x04 \x01(\tR\vdescription\x12\x1a\n" +
-	"\brequired\x18\x05 \x01(\bR\brequired\"\xb8\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x9b\x03\n" +
+	"\x0eMacroParameter\x12\x15\n" +
+	"\x03key\x18\x01 \x01(\tB\x03\xe0A\x02R\x03key\x12E\n" +
+	"\x04type\x18\x02 \x01(\x0e2,.macosusesdk.v1.MacroParameter.ParameterTypeB\x03\xe0A\x02R\x04type\x12(\n" +
+	"\rdefault_value\x18\x03 \x01(\tB\x03\xe0A\x01R\fdefaultValue\x12%\n" +
+	"\vdescription\x18\x04 \x01(\tB\x03\xe0A\x01R\vdescription\x12\x1f\n" +
+	"\brequired\x18\x05 \x01(\bB\x03\xe0A\x02R\brequired\"\xb8\x01\n" +
 	"\rParameterType\x12\x1e\n" +
 	"\x1aPARAMETER_TYPE_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15PARAMETER_TYPE_STRING\x10\x01\x12\x1a\n" +
@@ -1977,31 +1987,33 @@ const file_macosusesdk_v1_macro_proto_rawDesc = "" +
 	"\aoptions\x18\x04 \x01(\v2 .macosusesdk.v1.ExecutionOptionsB\x03\xe0A\x01R\aoptions\x1aB\n" +
 	"\x14ParameterValuesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x99\x01\n" +
-	"\x10ExecutionOptions\x12\x14\n" +
-	"\x05speed\x18\x01 \x01(\x01R\x05speed\x12*\n" +
-	"\x11continue_on_error\x18\x02 \x01(\bR\x0fcontinueOnError\x12\x18\n" +
-	"\atimeout\x18\x03 \x01(\x01R\atimeout\x12)\n" +
-	"\x10record_execution\x18\x04 \x01(\bR\x0frecordExecution\"\xcd\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xad\x01\n" +
+	"\x10ExecutionOptions\x12\x19\n" +
+	"\x05speed\x18\x01 \x01(\x01B\x03\xe0A\x01R\x05speed\x12/\n" +
+	"\x11continue_on_error\x18\x02 \x01(\bB\x03\xe0A\x01R\x0fcontinueOnError\x12\x1d\n" +
+	"\atimeout\x18\x03 \x01(\x01B\x03\xe0A\x01R\atimeout\x12.\n" +
+	"\x10record_execution\x18\x04 \x01(\bB\x03\xe0A\x01R\x0frecordExecution\"\xf0\x01\n" +
 	"\x14ExecuteMacroResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12)\n" +
-	"\x10actions_executed\x18\x02 \x01(\x05R\x0factionsExecuted\x12%\n" +
-	"\x0eexecution_time\x18\x03 \x01(\x01R\rexecutionTime\x12\x14\n" +
+	"\x10actions_executed\x18\x02 \x01(\x05R\x0factionsExecuted\x12H\n" +
+	"\x12execution_duration\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\x11executionDuration\x12\x14\n" +
 	"\x05error\x18\x04 \x01(\tR\x05error\x123\n" +
-	"\x03log\x18\x05 \x03(\v2!.macosusesdk.v1.ExecutionLogEntryR\x03log\"\xde\x01\n" +
-	"\x11ExecutionLogEntry\x128\n" +
-	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12!\n" +
-	"\faction_index\x18\x02 \x01(\x05R\vactionIndex\x12 \n" +
-	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\x18\n" +
-	"\asuccess\x18\x04 \x01(\bR\asuccess\x12\x14\n" +
-	"\x05error\x18\x05 \x01(\tR\x05error\x12\x1a\n" +
-	"\bduration\x18\x06 \x01(\x01R\bduration\"\xbc\x01\n" +
+	"\x03log\x18\x05 \x03(\v2!.macosusesdk.v1.ExecutionLogEntryR\x03log\"\xb3\x03\n" +
+	"\x11ExecutionLogEntry\x12\x17\n" +
+	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12F\n" +
+	"\x0eexecution_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\rexecutionTime\x12&\n" +
+	"\faction_index\x18\x03 \x01(\x05B\x03\xe0A\x03R\vactionIndex\x12%\n" +
+	"\vdescription\x18\x04 \x01(\tB\x03\xe0A\x03R\vdescription\x12\x1d\n" +
+	"\asuccess\x18\x05 \x01(\bB\x03\xe0A\x03R\asuccess\x12\x19\n" +
+	"\x05error\x18\x06 \x01(\tB\x03\xe0A\x03R\x05error\x12\x1f\n" +
+	"\bduration\x18\a \x01(\x01B\x03\xe0A\x03R\bduration:\x92\x01\xeaA\x8e\x01\n" +
+	"&macos.googleapis.com/ExecutionLogEntry\x12<macros/{macro}/executions/{execution}/logEntries/{log_entry}*\x13executionLogEntries2\x11executionLogEntry\"\xdf\x01\n" +
 	"\x14ExecuteMacroMetadata\x125\n" +
 	"\x05macro\x18\x01 \x01(\tB\x1f\xfaA\x1c\n" +
 	"\x1amacos.googleapis.com/MacroR\x05macro\x12%\n" +
 	"\x0ecurrent_action\x18\x02 \x01(\x05R\rcurrentAction\x12#\n" +
-	"\rtotal_actions\x18\x03 \x01(\x05R\ftotalActions\x12!\n" +
-	"\felapsed_time\x18\x04 \x01(\x01R\velapsedTimeB\xc1\x01\n" +
+	"\rtotal_actions\x18\x03 \x01(\x05R\ftotalActions\x12D\n" +
+	"\x10elapsed_duration\x18\x04 \x01(\v2\x19.google.protobuf.DurationR\x0felapsedDurationB\xc1\x01\n" +
 	"\x12com.macosusesdk.v1B\n" +
 	"MacroProtoP\x01ZFgithub.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1\xa2\x02\x03MXX\xaa\x02\x0eMacosusesdk.V1\xca\x02\x0eMacosusesdk\\V1\xe2\x02\x1aMacosusesdk\\V1\\GPBMetadata\xea\x02\x0fMacosusesdk::V1b\x06proto3"
 
@@ -2041,10 +2053,11 @@ var file_macosusesdk_v1_macro_proto_goTypes = []any{
 	(*ExecuteMacroResponse)(nil),      // 18: macosusesdk.v1.ExecuteMacroResponse
 	(*ExecutionLogEntry)(nil),         // 19: macosusesdk.v1.ExecutionLogEntry
 	(*ExecuteMacroMetadata)(nil),      // 20: macosusesdk.v1.ExecuteMacroMetadata
-	nil,                               // 21: macosusesdk.v1.MethodCall.ArgumentsEntry
+	nil,                               // 21: macosusesdk.v1.MethodCall.ArgsEntry
 	nil,                               // 22: macosusesdk.v1.ExecuteMacroRequest.ParameterValuesEntry
 	(*timestamppb.Timestamp)(nil),     // 23: google.protobuf.Timestamp
 	(*InputAction)(nil),               // 24: macosusesdk.v1.InputAction
+	(*durationpb.Duration)(nil),       // 25: google.protobuf.Duration
 }
 var file_macosusesdk_v1_macro_proto_depIdxs = []int32{
 	3,  // 0: macosusesdk.v1.Macro.actions:type_name -> macosusesdk.v1.MacroAction
@@ -2066,20 +2079,22 @@ var file_macosusesdk_v1_macro_proto_depIdxs = []int32{
 	0,  // 16: macosusesdk.v1.CompoundCondition.operator:type_name -> macosusesdk.v1.CompoundCondition.Operator
 	7,  // 17: macosusesdk.v1.CompoundCondition.conditions:type_name -> macosusesdk.v1.MacroCondition
 	7,  // 18: macosusesdk.v1.LoopAction.while_condition:type_name -> macosusesdk.v1.MacroCondition
-	11, // 19: macosusesdk.v1.LoopAction.for_each:type_name -> macosusesdk.v1.ForEachLoop
+	11, // 19: macosusesdk.v1.LoopAction.foreach:type_name -> macosusesdk.v1.ForEachLoop
 	3,  // 20: macosusesdk.v1.LoopAction.actions:type_name -> macosusesdk.v1.MacroAction
 	13, // 21: macosusesdk.v1.AssignAction.element_attribute:type_name -> macosusesdk.v1.ElementAttributeValue
-	21, // 22: macosusesdk.v1.MethodCall.arguments:type_name -> macosusesdk.v1.MethodCall.ArgumentsEntry
+	21, // 22: macosusesdk.v1.MethodCall.args:type_name -> macosusesdk.v1.MethodCall.ArgsEntry
 	1,  // 23: macosusesdk.v1.MacroParameter.type:type_name -> macosusesdk.v1.MacroParameter.ParameterType
 	22, // 24: macosusesdk.v1.ExecuteMacroRequest.parameter_values:type_name -> macosusesdk.v1.ExecuteMacroRequest.ParameterValuesEntry
 	17, // 25: macosusesdk.v1.ExecuteMacroRequest.options:type_name -> macosusesdk.v1.ExecutionOptions
-	19, // 26: macosusesdk.v1.ExecuteMacroResponse.log:type_name -> macosusesdk.v1.ExecutionLogEntry
-	23, // 27: macosusesdk.v1.ExecutionLogEntry.timestamp:type_name -> google.protobuf.Timestamp
-	28, // [28:28] is the sub-list for method output_type
-	28, // [28:28] is the sub-list for method input_type
-	28, // [28:28] is the sub-list for extension type_name
-	28, // [28:28] is the sub-list for extension extendee
-	0,  // [0:28] is the sub-list for field type_name
+	25, // 26: macosusesdk.v1.ExecuteMacroResponse.execution_duration:type_name -> google.protobuf.Duration
+	19, // 27: macosusesdk.v1.ExecuteMacroResponse.log:type_name -> macosusesdk.v1.ExecutionLogEntry
+	23, // 28: macosusesdk.v1.ExecutionLogEntry.execution_time:type_name -> google.protobuf.Timestamp
+	25, // 29: macosusesdk.v1.ExecuteMacroMetadata.elapsed_duration:type_name -> google.protobuf.Duration
+	30, // [30:30] is the sub-list for method output_type
+	30, // [30:30] is the sub-list for method input_type
+	30, // [30:30] is the sub-list for extension type_name
+	30, // [30:30] is the sub-list for extension extendee
+	0,  // [0:30] is the sub-list for field type_name
 }
 
 func init() { file_macosusesdk_v1_macro_proto_init() }
@@ -2099,7 +2114,7 @@ func file_macosusesdk_v1_macro_proto_init() {
 	file_macosusesdk_v1_macro_proto_msgTypes[3].OneofWrappers = []any{
 		(*WaitCondition_ElementSelector)(nil),
 		(*WaitCondition_WindowTitle)(nil),
-		(*WaitCondition_ApplicationName)(nil),
+		(*WaitCondition_Application)(nil),
 	}
 	file_macosusesdk_v1_macro_proto_msgTypes[5].OneofWrappers = []any{
 		(*MacroCondition_ElementExists)(nil),
@@ -2111,7 +2126,7 @@ func file_macosusesdk_v1_macro_proto_init() {
 	file_macosusesdk_v1_macro_proto_msgTypes[8].OneofWrappers = []any{
 		(*LoopAction_Count)(nil),
 		(*LoopAction_WhileCondition)(nil),
-		(*LoopAction_ForEach)(nil),
+		(*LoopAction_Foreach)(nil),
 	}
 	file_macosusesdk_v1_macro_proto_msgTypes[9].OneofWrappers = []any{
 		(*ForEachLoop_ElementSelector)(nil),

@@ -93,41 +93,30 @@ public struct Macosusesdk_V1_GetMetricsRequest: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Metric types to include (empty = all).
-  public var types: [Macosusesdk_V1_MetricType] = []
-
-  /// Time range for metrics.
-  public var timeRange: Macosusesdk_V1_TimeRange {
-    get {return _timeRange ?? Macosusesdk_V1_TimeRange()}
-    set {_timeRange = newValue}
-  }
-  /// Returns true if `timeRange` has been explicitly set.
-  public var hasTimeRange: Bool {return self._timeRange != nil}
-  /// Clears the value of `timeRange`. Subsequent reads from it will return its default value.
-  public mutating func clearTimeRange() {self._timeRange = nil}
+  /// The name of the metrics resource.
+  /// Format: metrics (singleton)
+  public var name: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
-
-  fileprivate var _timeRange: Macosusesdk_V1_TimeRange? = nil
 }
 
-/// Response with metrics.
-public struct Macosusesdk_V1_GetMetricsResponse: @unchecked Sendable {
+/// Metrics.
+public struct Macosusesdk_V1_Metrics: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
   /// When metrics were collected.
-  public var timestamp: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {return _storage._timestamp ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
-    set {_uniqueStorage()._timestamp = newValue}
+  public var reportTime: SwiftProtobuf.Google_Protobuf_Timestamp {
+    get {return _storage._reportTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_uniqueStorage()._reportTime = newValue}
   }
-  /// Returns true if `timestamp` has been explicitly set.
-  public var hasTimestamp: Bool {return _storage._timestamp != nil}
-  /// Clears the value of `timestamp`. Subsequent reads from it will return its default value.
-  public mutating func clearTimestamp() {_uniqueStorage()._timestamp = nil}
+  /// Returns true if `reportTime` has been explicitly set.
+  public var hasReportTime: Bool {return _storage._reportTime != nil}
+  /// Clears the value of `reportTime`. Subsequent reads from it will return its default value.
+  public mutating func clearReportTime() {_uniqueStorage()._reportTime = nil}
 
   /// Operation metrics.
   public var operations: Macosusesdk_V1_OperationMetrics {
@@ -275,8 +264,8 @@ public struct Macosusesdk_V1_OperationMetrics: Sendable {
   /// Clears the value of `p99Latency`. Subsequent reads from it will return its default value.
   public mutating func clearP99Latency() {self._p99Latency = nil}
 
-  /// Metrics by operation type.
-  public var byOperation: Dictionary<String,Macosusesdk_V1_OperationTypeMetrics> = [:]
+  /// Metrics breakdown per operation type.
+  public var operationsBreakdown: Dictionary<String,Macosusesdk_V1_OperationTypeMetrics> = [:]
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -379,8 +368,8 @@ public struct Macosusesdk_V1_CacheMetrics: Sendable {
   /// Eviction count.
   public var evictions: Int64 = 0
 
-  /// Metrics by cache type.
-  public var byCache: Dictionary<String,Macosusesdk_V1_CacheTypeMetrics> = [:]
+  /// Metrics breakdown per cache type.
+  public var cachesBreakdown: Dictionary<String,Macosusesdk_V1_CacheTypeMetrics> = [:]
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -393,8 +382,8 @@ public struct Macosusesdk_V1_CacheTypeMetrics: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Cache name.
-  public var cacheName: String = String()
+  /// Cache.
+  public var cache: String = String()
 
   /// Hit count.
   public var hits: Int64 = 0
@@ -434,8 +423,8 @@ public struct Macosusesdk_V1_RateLimitMetrics: Sendable {
   /// Rate limit (requests per second).
   public var rateLimit: Double = 0
 
-  /// Metrics by client.
-  public var byClient: Dictionary<String,Macosusesdk_V1_ClientRateLimitMetrics> = [:]
+  /// Metrics breakdown per client.
+  public var clientsBreakdown: Dictionary<String,Macosusesdk_V1_ClientRateLimitMetrics> = [:]
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -486,21 +475,21 @@ public struct Macosusesdk_V1_AccessibilityMetrics: Sendable {
   /// Active observations.
   public var activeObservations: Int32 = 0
 
-  /// Average element lookup time.
-  public var avgLookupTime: SwiftProtobuf.Google_Protobuf_Duration {
-    get {return _avgLookupTime ?? SwiftProtobuf.Google_Protobuf_Duration()}
-    set {_avgLookupTime = newValue}
+  /// Average element lookup duration.
+  public var avgLookupDuration: SwiftProtobuf.Google_Protobuf_Duration {
+    get {return _avgLookupDuration ?? SwiftProtobuf.Google_Protobuf_Duration()}
+    set {_avgLookupDuration = newValue}
   }
-  /// Returns true if `avgLookupTime` has been explicitly set.
-  public var hasAvgLookupTime: Bool {return self._avgLookupTime != nil}
-  /// Clears the value of `avgLookupTime`. Subsequent reads from it will return its default value.
-  public mutating func clearAvgLookupTime() {self._avgLookupTime = nil}
+  /// Returns true if `avgLookupDuration` has been explicitly set.
+  public var hasAvgLookupDuration: Bool {return self._avgLookupDuration != nil}
+  /// Clears the value of `avgLookupDuration`. Subsequent reads from it will return its default value.
+  public mutating func clearAvgLookupDuration() {self._avgLookupDuration = nil}
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
 
-  fileprivate var _avgLookupTime: SwiftProtobuf.Google_Protobuf_Duration? = nil
+  fileprivate var _avgLookupDuration: SwiftProtobuf.Google_Protobuf_Duration? = nil
 }
 
 /// Request to get a performance report.
@@ -509,31 +498,17 @@ public struct Macosusesdk_V1_GetPerformanceReportRequest: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Time range for report.
-  public var timeRange: Macosusesdk_V1_TimeRange {
-    get {return _timeRange ?? Macosusesdk_V1_TimeRange()}
-    set {_timeRange = newValue}
-  }
-  /// Returns true if `timeRange` has been explicitly set.
-  public var hasTimeRange: Bool {return self._timeRange != nil}
-  /// Clears the value of `timeRange`. Subsequent reads from it will return its default value.
-  public mutating func clearTimeRange() {self._timeRange = nil}
-
-  /// Whether to include detailed breakdown.
-  public var includeDetails: Bool = false
-
-  /// Operations to include (empty = all).
-  public var operations: [String] = []
+  /// The name of the performance report resource.
+  /// Format: metrics/performanceReport (singleton)
+  public var name: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
-
-  fileprivate var _timeRange: Macosusesdk_V1_TimeRange? = nil
 }
 
-/// Response with performance report.
-public struct Macosusesdk_V1_GetPerformanceReportResponse: Sendable {
+/// Performance report.
+public struct Macosusesdk_V1_PerformanceReport: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -549,18 +524,18 @@ public struct Macosusesdk_V1_GetPerformanceReportResponse: Sendable {
   public mutating func clearTimeRange() {self._timeRange = nil}
 
   /// When the report was generated.
-  public var generatedAt: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {return _generatedAt ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
-    set {_generatedAt = newValue}
+  public var generatedTime: SwiftProtobuf.Google_Protobuf_Timestamp {
+    get {return _generatedTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_generatedTime = newValue}
   }
-  /// Returns true if `generatedAt` has been explicitly set.
-  public var hasGeneratedAt: Bool {return self._generatedAt != nil}
-  /// Clears the value of `generatedAt`. Subsequent reads from it will return its default value.
-  public mutating func clearGeneratedAt() {self._generatedAt = nil}
+  /// Returns true if `generatedTime` has been explicitly set.
+  public var hasGeneratedTime: Bool {return self._generatedTime != nil}
+  /// Clears the value of `generatedTime`. Subsequent reads from it will return its default value.
+  public mutating func clearGeneratedTime() {self._generatedTime = nil}
 
   /// Summary metrics.
-  public var summary: Macosusesdk_V1_GetMetricsResponse {
-    get {return _summary ?? Macosusesdk_V1_GetMetricsResponse()}
+  public var summary: Macosusesdk_V1_Metrics {
+    get {return _summary ?? Macosusesdk_V1_Metrics()}
     set {_summary = newValue}
   }
   /// Returns true if `summary` has been explicitly set.
@@ -568,7 +543,7 @@ public struct Macosusesdk_V1_GetPerformanceReportResponse: Sendable {
   /// Clears the value of `summary`. Subsequent reads from it will return its default value.
   public mutating func clearSummary() {self._summary = nil}
 
-  /// Detailed breakdown (if requested).
+  /// Detailed breakdown.
   public var details: [Macosusesdk_V1_PerformanceDataPoint] = []
 
   /// Performance trends.
@@ -589,8 +564,8 @@ public struct Macosusesdk_V1_GetPerformanceReportResponse: Sendable {
   public init() {}
 
   fileprivate var _timeRange: Macosusesdk_V1_TimeRange? = nil
-  fileprivate var _generatedAt: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
-  fileprivate var _summary: Macosusesdk_V1_GetMetricsResponse? = nil
+  fileprivate var _generatedTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+  fileprivate var _summary: Macosusesdk_V1_Metrics? = nil
   fileprivate var _trends: Macosusesdk_V1_PerformanceTrends? = nil
 }
 
@@ -601,18 +576,18 @@ public struct Macosusesdk_V1_PerformanceDataPoint: Sendable {
   // methods supported on all messages.
 
   /// When this data point was recorded.
-  public var timestamp: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {return _timestamp ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
-    set {_timestamp = newValue}
+  public var recordedTime: SwiftProtobuf.Google_Protobuf_Timestamp {
+    get {return _recordedTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_recordedTime = newValue}
   }
-  /// Returns true if `timestamp` has been explicitly set.
-  public var hasTimestamp: Bool {return self._timestamp != nil}
-  /// Clears the value of `timestamp`. Subsequent reads from it will return its default value.
-  public mutating func clearTimestamp() {self._timestamp = nil}
+  /// Returns true if `recordedTime` has been explicitly set.
+  public var hasRecordedTime: Bool {return self._recordedTime != nil}
+  /// Clears the value of `recordedTime`. Subsequent reads from it will return its default value.
+  public mutating func clearRecordedTime() {self._recordedTime = nil}
 
   /// Metrics at this point.
-  public var metrics: Macosusesdk_V1_GetMetricsResponse {
-    get {return _metrics ?? Macosusesdk_V1_GetMetricsResponse()}
+  public var metrics: Macosusesdk_V1_Metrics {
+    get {return _metrics ?? Macosusesdk_V1_Metrics()}
     set {_metrics = newValue}
   }
   /// Returns true if `metrics` has been explicitly set.
@@ -624,8 +599,8 @@ public struct Macosusesdk_V1_PerformanceDataPoint: Sendable {
 
   public init() {}
 
-  fileprivate var _timestamp: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
-  fileprivate var _metrics: Macosusesdk_V1_GetMetricsResponse? = nil
+  fileprivate var _recordedTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+  fileprivate var _metrics: Macosusesdk_V1_Metrics? = nil
 }
 
 /// Performance trend analysis.
@@ -743,7 +718,7 @@ extension Macosusesdk_V1_MetricType: SwiftProtobuf._ProtoNameProviding {
 
 extension Macosusesdk_V1_GetMetricsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".GetMetricsRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}types\0\u{3}time_range\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -751,41 +726,32 @@ extension Macosusesdk_V1_GetMetricsRequest: SwiftProtobuf.Message, SwiftProtobuf
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeRepeatedEnumField(value: &self.types) }()
-      case 2: try { try decoder.decodeSingularMessageField(value: &self._timeRange) }()
+      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    if !self.types.isEmpty {
-      try visitor.visitPackedEnumField(value: self.types, fieldNumber: 1)
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
     }
-    try { if let v = self._timeRange {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
-    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_GetMetricsRequest, rhs: Macosusesdk_V1_GetMetricsRequest) -> Bool {
-    if lhs.types != rhs.types {return false}
-    if lhs._timeRange != rhs._timeRange {return false}
+    if lhs.name != rhs.name {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
-extension Macosusesdk_V1_GetMetricsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".GetMetricsResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}timestamp\0\u{1}operations\0\u{1}resources\0\u{1}cache\0\u{3}rate_limits\0\u{1}accessibility\0")
+extension Macosusesdk_V1_Metrics: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".Metrics"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}report_time\0\u{1}operations\0\u{1}resources\0\u{1}cache\0\u{3}rate_limits\0\u{1}accessibility\0")
 
   fileprivate class _StorageClass {
-    var _timestamp: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+    var _reportTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
     var _operations: Macosusesdk_V1_OperationMetrics? = nil
     var _resources: Macosusesdk_V1_ResourceMetrics? = nil
     var _cache: Macosusesdk_V1_CacheMetrics? = nil
@@ -801,7 +767,7 @@ extension Macosusesdk_V1_GetMetricsResponse: SwiftProtobuf.Message, SwiftProtobu
     private init() {}
 
     init(copying source: _StorageClass) {
-      _timestamp = source._timestamp
+      _reportTime = source._reportTime
       _operations = source._operations
       _resources = source._resources
       _cache = source._cache
@@ -825,7 +791,7 @@ extension Macosusesdk_V1_GetMetricsResponse: SwiftProtobuf.Message, SwiftProtobu
         // allocates stack space for every case branch when no optimizations are
         // enabled. https://github.com/apple/swift-protobuf/issues/1034
         switch fieldNumber {
-        case 1: try { try decoder.decodeSingularMessageField(value: &_storage._timestamp) }()
+        case 1: try { try decoder.decodeSingularMessageField(value: &_storage._reportTime) }()
         case 2: try { try decoder.decodeSingularMessageField(value: &_storage._operations) }()
         case 3: try { try decoder.decodeSingularMessageField(value: &_storage._resources) }()
         case 4: try { try decoder.decodeSingularMessageField(value: &_storage._cache) }()
@@ -843,7 +809,7 @@ extension Macosusesdk_V1_GetMetricsResponse: SwiftProtobuf.Message, SwiftProtobu
       // allocates stack space for every if/case branch local when no optimizations
       // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
       // https://github.com/apple/swift-protobuf/issues/1182
-      try { if let v = _storage._timestamp {
+      try { if let v = _storage._reportTime {
         try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
       } }()
       try { if let v = _storage._operations {
@@ -865,12 +831,12 @@ extension Macosusesdk_V1_GetMetricsResponse: SwiftProtobuf.Message, SwiftProtobu
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Macosusesdk_V1_GetMetricsResponse, rhs: Macosusesdk_V1_GetMetricsResponse) -> Bool {
+  public static func ==(lhs: Macosusesdk_V1_Metrics, rhs: Macosusesdk_V1_Metrics) -> Bool {
     if lhs._storage !== rhs._storage {
       let storagesAreEqual: Bool = withExtendedLifetime((lhs._storage, rhs._storage)) { (_args: (_StorageClass, _StorageClass)) in
         let _storage = _args.0
         let rhs_storage = _args.1
-        if _storage._timestamp != rhs_storage._timestamp {return false}
+        if _storage._reportTime != rhs_storage._reportTime {return false}
         if _storage._operations != rhs_storage._operations {return false}
         if _storage._resources != rhs_storage._resources {return false}
         if _storage._cache != rhs_storage._cache {return false}
@@ -926,7 +892,7 @@ extension Macosusesdk_V1_TimeRange: SwiftProtobuf.Message, SwiftProtobuf._Messag
 
 extension Macosusesdk_V1_OperationMetrics: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".OperationMetrics"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}total_count\0\u{3}success_count\0\u{3}failure_count\0\u{3}avg_latency\0\u{3}p50_latency\0\u{3}p95_latency\0\u{3}p99_latency\0\u{3}by_operation\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}total_count\0\u{3}success_count\0\u{3}failure_count\0\u{3}avg_latency\0\u{3}p50_latency\0\u{3}p95_latency\0\u{3}p99_latency\0\u{3}operations_breakdown\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -941,7 +907,7 @@ extension Macosusesdk_V1_OperationMetrics: SwiftProtobuf.Message, SwiftProtobuf.
       case 5: try { try decoder.decodeSingularMessageField(value: &self._p50Latency) }()
       case 6: try { try decoder.decodeSingularMessageField(value: &self._p95Latency) }()
       case 7: try { try decoder.decodeSingularMessageField(value: &self._p99Latency) }()
-      case 8: try { try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMessageMap<SwiftProtobuf.ProtobufString,Macosusesdk_V1_OperationTypeMetrics>.self, value: &self.byOperation) }()
+      case 8: try { try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMessageMap<SwiftProtobuf.ProtobufString,Macosusesdk_V1_OperationTypeMetrics>.self, value: &self.operationsBreakdown) }()
       default: break
       }
     }
@@ -973,8 +939,8 @@ extension Macosusesdk_V1_OperationMetrics: SwiftProtobuf.Message, SwiftProtobuf.
     try { if let v = self._p99Latency {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
     } }()
-    if !self.byOperation.isEmpty {
-      try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMessageMap<SwiftProtobuf.ProtobufString,Macosusesdk_V1_OperationTypeMetrics>.self, value: self.byOperation, fieldNumber: 8)
+    if !self.operationsBreakdown.isEmpty {
+      try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMessageMap<SwiftProtobuf.ProtobufString,Macosusesdk_V1_OperationTypeMetrics>.self, value: self.operationsBreakdown, fieldNumber: 8)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -987,7 +953,7 @@ extension Macosusesdk_V1_OperationMetrics: SwiftProtobuf.Message, SwiftProtobuf.
     if lhs._p50Latency != rhs._p50Latency {return false}
     if lhs._p95Latency != rhs._p95Latency {return false}
     if lhs._p99Latency != rhs._p99Latency {return false}
-    if lhs.byOperation != rhs.byOperation {return false}
+    if lhs.operationsBreakdown != rhs.operationsBreakdown {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -1109,7 +1075,7 @@ extension Macosusesdk_V1_ResourceMetrics: SwiftProtobuf.Message, SwiftProtobuf._
 
 extension Macosusesdk_V1_CacheMetrics: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CacheMetrics"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}hits\0\u{1}misses\0\u{3}hit_rate\0\u{1}size\0\u{3}memory_used\0\u{1}evictions\0\u{3}by_cache\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}hits\0\u{1}misses\0\u{3}hit_rate\0\u{1}size\0\u{3}memory_used\0\u{1}evictions\0\u{3}caches_breakdown\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1123,7 +1089,7 @@ extension Macosusesdk_V1_CacheMetrics: SwiftProtobuf.Message, SwiftProtobuf._Mes
       case 4: try { try decoder.decodeSingularInt64Field(value: &self.size) }()
       case 5: try { try decoder.decodeSingularInt64Field(value: &self.memoryUsed) }()
       case 6: try { try decoder.decodeSingularInt64Field(value: &self.evictions) }()
-      case 7: try { try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMessageMap<SwiftProtobuf.ProtobufString,Macosusesdk_V1_CacheTypeMetrics>.self, value: &self.byCache) }()
+      case 7: try { try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMessageMap<SwiftProtobuf.ProtobufString,Macosusesdk_V1_CacheTypeMetrics>.self, value: &self.cachesBreakdown) }()
       default: break
       }
     }
@@ -1148,8 +1114,8 @@ extension Macosusesdk_V1_CacheMetrics: SwiftProtobuf.Message, SwiftProtobuf._Mes
     if self.evictions != 0 {
       try visitor.visitSingularInt64Field(value: self.evictions, fieldNumber: 6)
     }
-    if !self.byCache.isEmpty {
-      try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMessageMap<SwiftProtobuf.ProtobufString,Macosusesdk_V1_CacheTypeMetrics>.self, value: self.byCache, fieldNumber: 7)
+    if !self.cachesBreakdown.isEmpty {
+      try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMessageMap<SwiftProtobuf.ProtobufString,Macosusesdk_V1_CacheTypeMetrics>.self, value: self.cachesBreakdown, fieldNumber: 7)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -1161,7 +1127,7 @@ extension Macosusesdk_V1_CacheMetrics: SwiftProtobuf.Message, SwiftProtobuf._Mes
     if lhs.size != rhs.size {return false}
     if lhs.memoryUsed != rhs.memoryUsed {return false}
     if lhs.evictions != rhs.evictions {return false}
-    if lhs.byCache != rhs.byCache {return false}
+    if lhs.cachesBreakdown != rhs.cachesBreakdown {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -1169,7 +1135,7 @@ extension Macosusesdk_V1_CacheMetrics: SwiftProtobuf.Message, SwiftProtobuf._Mes
 
 extension Macosusesdk_V1_CacheTypeMetrics: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CacheTypeMetrics"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}cache_name\0\u{1}hits\0\u{1}misses\0\u{1}size\0\u{3}memory_used\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}cache\0\u{1}hits\0\u{1}misses\0\u{1}size\0\u{3}memory_used\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1177,7 +1143,7 @@ extension Macosusesdk_V1_CacheTypeMetrics: SwiftProtobuf.Message, SwiftProtobuf.
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.cacheName) }()
+      case 1: try { try decoder.decodeSingularStringField(value: &self.cache) }()
       case 2: try { try decoder.decodeSingularInt64Field(value: &self.hits) }()
       case 3: try { try decoder.decodeSingularInt64Field(value: &self.misses) }()
       case 4: try { try decoder.decodeSingularInt64Field(value: &self.size) }()
@@ -1188,8 +1154,8 @@ extension Macosusesdk_V1_CacheTypeMetrics: SwiftProtobuf.Message, SwiftProtobuf.
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.cacheName.isEmpty {
-      try visitor.visitSingularStringField(value: self.cacheName, fieldNumber: 1)
+    if !self.cache.isEmpty {
+      try visitor.visitSingularStringField(value: self.cache, fieldNumber: 1)
     }
     if self.hits != 0 {
       try visitor.visitSingularInt64Field(value: self.hits, fieldNumber: 2)
@@ -1207,7 +1173,7 @@ extension Macosusesdk_V1_CacheTypeMetrics: SwiftProtobuf.Message, SwiftProtobuf.
   }
 
   public static func ==(lhs: Macosusesdk_V1_CacheTypeMetrics, rhs: Macosusesdk_V1_CacheTypeMetrics) -> Bool {
-    if lhs.cacheName != rhs.cacheName {return false}
+    if lhs.cache != rhs.cache {return false}
     if lhs.hits != rhs.hits {return false}
     if lhs.misses != rhs.misses {return false}
     if lhs.size != rhs.size {return false}
@@ -1219,7 +1185,7 @@ extension Macosusesdk_V1_CacheTypeMetrics: SwiftProtobuf.Message, SwiftProtobuf.
 
 extension Macosusesdk_V1_RateLimitMetrics: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".RateLimitMetrics"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}total_requests\0\u{3}throttled_requests\0\u{3}throttle_rate\0\u{3}current_rate\0\u{3}rate_limit\0\u{3}by_client\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}total_requests\0\u{3}throttled_requests\0\u{3}throttle_rate\0\u{3}current_rate\0\u{3}rate_limit\0\u{3}clients_breakdown\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1232,7 +1198,7 @@ extension Macosusesdk_V1_RateLimitMetrics: SwiftProtobuf.Message, SwiftProtobuf.
       case 3: try { try decoder.decodeSingularDoubleField(value: &self.throttleRate) }()
       case 4: try { try decoder.decodeSingularDoubleField(value: &self.currentRate) }()
       case 5: try { try decoder.decodeSingularDoubleField(value: &self.rateLimit) }()
-      case 6: try { try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMessageMap<SwiftProtobuf.ProtobufString,Macosusesdk_V1_ClientRateLimitMetrics>.self, value: &self.byClient) }()
+      case 6: try { try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMessageMap<SwiftProtobuf.ProtobufString,Macosusesdk_V1_ClientRateLimitMetrics>.self, value: &self.clientsBreakdown) }()
       default: break
       }
     }
@@ -1254,8 +1220,8 @@ extension Macosusesdk_V1_RateLimitMetrics: SwiftProtobuf.Message, SwiftProtobuf.
     if self.rateLimit.bitPattern != 0 {
       try visitor.visitSingularDoubleField(value: self.rateLimit, fieldNumber: 5)
     }
-    if !self.byClient.isEmpty {
-      try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMessageMap<SwiftProtobuf.ProtobufString,Macosusesdk_V1_ClientRateLimitMetrics>.self, value: self.byClient, fieldNumber: 6)
+    if !self.clientsBreakdown.isEmpty {
+      try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMessageMap<SwiftProtobuf.ProtobufString,Macosusesdk_V1_ClientRateLimitMetrics>.self, value: self.clientsBreakdown, fieldNumber: 6)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -1266,7 +1232,7 @@ extension Macosusesdk_V1_RateLimitMetrics: SwiftProtobuf.Message, SwiftProtobuf.
     if lhs.throttleRate != rhs.throttleRate {return false}
     if lhs.currentRate != rhs.currentRate {return false}
     if lhs.rateLimit != rhs.rateLimit {return false}
-    if lhs.byClient != rhs.byClient {return false}
+    if lhs.clientsBreakdown != rhs.clientsBreakdown {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -1319,7 +1285,7 @@ extension Macosusesdk_V1_ClientRateLimitMetrics: SwiftProtobuf.Message, SwiftPro
 
 extension Macosusesdk_V1_AccessibilityMetrics: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".AccessibilityMetrics"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}elements_traversed\0\u{3}avg_tree_depth\0\u{3}avg_tree_size\0\u{3}notifications_received\0\u{3}active_observations\0\u{3}avg_lookup_time\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}elements_traversed\0\u{3}avg_tree_depth\0\u{3}avg_tree_size\0\u{3}notifications_received\0\u{3}active_observations\0\u{3}avg_lookup_duration\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1332,7 +1298,7 @@ extension Macosusesdk_V1_AccessibilityMetrics: SwiftProtobuf.Message, SwiftProto
       case 3: try { try decoder.decodeSingularDoubleField(value: &self.avgTreeSize) }()
       case 4: try { try decoder.decodeSingularInt64Field(value: &self.notificationsReceived) }()
       case 5: try { try decoder.decodeSingularInt32Field(value: &self.activeObservations) }()
-      case 6: try { try decoder.decodeSingularMessageField(value: &self._avgLookupTime) }()
+      case 6: try { try decoder.decodeSingularMessageField(value: &self._avgLookupDuration) }()
       default: break
       }
     }
@@ -1358,7 +1324,7 @@ extension Macosusesdk_V1_AccessibilityMetrics: SwiftProtobuf.Message, SwiftProto
     if self.activeObservations != 0 {
       try visitor.visitSingularInt32Field(value: self.activeObservations, fieldNumber: 5)
     }
-    try { if let v = self._avgLookupTime {
+    try { if let v = self._avgLookupDuration {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
     } }()
     try unknownFields.traverse(visitor: &visitor)
@@ -1370,7 +1336,7 @@ extension Macosusesdk_V1_AccessibilityMetrics: SwiftProtobuf.Message, SwiftProto
     if lhs.avgTreeSize != rhs.avgTreeSize {return false}
     if lhs.notificationsReceived != rhs.notificationsReceived {return false}
     if lhs.activeObservations != rhs.activeObservations {return false}
-    if lhs._avgLookupTime != rhs._avgLookupTime {return false}
+    if lhs._avgLookupDuration != rhs._avgLookupDuration {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -1378,7 +1344,7 @@ extension Macosusesdk_V1_AccessibilityMetrics: SwiftProtobuf.Message, SwiftProto
 
 extension Macosusesdk_V1_GetPerformanceReportRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".GetPerformanceReportRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}time_range\0\u{3}include_details\0\u{1}operations\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1386,43 +1352,29 @@ extension Macosusesdk_V1_GetPerformanceReportRequest: SwiftProtobuf.Message, Swi
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularMessageField(value: &self._timeRange) }()
-      case 2: try { try decoder.decodeSingularBoolField(value: &self.includeDetails) }()
-      case 3: try { try decoder.decodeRepeatedStringField(value: &self.operations) }()
+      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    try { if let v = self._timeRange {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
-    } }()
-    if self.includeDetails != false {
-      try visitor.visitSingularBoolField(value: self.includeDetails, fieldNumber: 2)
-    }
-    if !self.operations.isEmpty {
-      try visitor.visitRepeatedStringField(value: self.operations, fieldNumber: 3)
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_GetPerformanceReportRequest, rhs: Macosusesdk_V1_GetPerformanceReportRequest) -> Bool {
-    if lhs._timeRange != rhs._timeRange {return false}
-    if lhs.includeDetails != rhs.includeDetails {return false}
-    if lhs.operations != rhs.operations {return false}
+    if lhs.name != rhs.name {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
-extension Macosusesdk_V1_GetPerformanceReportResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".GetPerformanceReportResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}time_range\0\u{3}generated_at\0\u{1}summary\0\u{1}details\0\u{1}trends\0\u{1}recommendations\0")
+extension Macosusesdk_V1_PerformanceReport: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".PerformanceReport"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}time_range\0\u{3}generated_time\0\u{1}summary\0\u{1}details\0\u{1}trends\0\u{1}recommendations\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1431,7 +1383,7 @@ extension Macosusesdk_V1_GetPerformanceReportResponse: SwiftProtobuf.Message, Sw
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularMessageField(value: &self._timeRange) }()
-      case 2: try { try decoder.decodeSingularMessageField(value: &self._generatedAt) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._generatedTime) }()
       case 3: try { try decoder.decodeSingularMessageField(value: &self._summary) }()
       case 4: try { try decoder.decodeRepeatedMessageField(value: &self.details) }()
       case 5: try { try decoder.decodeSingularMessageField(value: &self._trends) }()
@@ -1449,7 +1401,7 @@ extension Macosusesdk_V1_GetPerformanceReportResponse: SwiftProtobuf.Message, Sw
     try { if let v = self._timeRange {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
     } }()
-    try { if let v = self._generatedAt {
+    try { if let v = self._generatedTime {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
     } }()
     try { if let v = self._summary {
@@ -1467,9 +1419,9 @@ extension Macosusesdk_V1_GetPerformanceReportResponse: SwiftProtobuf.Message, Sw
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Macosusesdk_V1_GetPerformanceReportResponse, rhs: Macosusesdk_V1_GetPerformanceReportResponse) -> Bool {
+  public static func ==(lhs: Macosusesdk_V1_PerformanceReport, rhs: Macosusesdk_V1_PerformanceReport) -> Bool {
     if lhs._timeRange != rhs._timeRange {return false}
-    if lhs._generatedAt != rhs._generatedAt {return false}
+    if lhs._generatedTime != rhs._generatedTime {return false}
     if lhs._summary != rhs._summary {return false}
     if lhs.details != rhs.details {return false}
     if lhs._trends != rhs._trends {return false}
@@ -1481,7 +1433,7 @@ extension Macosusesdk_V1_GetPerformanceReportResponse: SwiftProtobuf.Message, Sw
 
 extension Macosusesdk_V1_PerformanceDataPoint: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".PerformanceDataPoint"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}timestamp\0\u{1}metrics\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}recorded_time\0\u{1}metrics\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1489,7 +1441,7 @@ extension Macosusesdk_V1_PerformanceDataPoint: SwiftProtobuf.Message, SwiftProto
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularMessageField(value: &self._timestamp) }()
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._recordedTime) }()
       case 2: try { try decoder.decodeSingularMessageField(value: &self._metrics) }()
       default: break
       }
@@ -1501,7 +1453,7 @@ extension Macosusesdk_V1_PerformanceDataPoint: SwiftProtobuf.Message, SwiftProto
     // allocates stack space for every if/case branch local when no optimizations
     // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
     // https://github.com/apple/swift-protobuf/issues/1182
-    try { if let v = self._timestamp {
+    try { if let v = self._recordedTime {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
     } }()
     try { if let v = self._metrics {
@@ -1511,7 +1463,7 @@ extension Macosusesdk_V1_PerformanceDataPoint: SwiftProtobuf.Message, SwiftProto
   }
 
   public static func ==(lhs: Macosusesdk_V1_PerformanceDataPoint, rhs: Macosusesdk_V1_PerformanceDataPoint) -> Bool {
-    if lhs._timestamp != rhs._timestamp {return false}
+    if lhs._recordedTime != rhs._recordedTime {return false}
     if lhs._metrics != rhs._metrics {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true

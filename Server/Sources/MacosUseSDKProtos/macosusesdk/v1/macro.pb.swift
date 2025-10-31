@@ -223,12 +223,12 @@ public struct Macosusesdk_V1_WaitCondition: Sendable {
   }
 
   /// Wait for application to launch.
-  public var applicationName: String {
+  public var application: String {
     get {
-      if case .applicationName(let v)? = condition {return v}
+      if case .application(let v)? = condition {return v}
       return String()
     }
-    set {condition = .applicationName(newValue)}
+    set {condition = .application(newValue)}
   }
 
   /// Timeout in seconds.
@@ -243,7 +243,7 @@ public struct Macosusesdk_V1_WaitCondition: Sendable {
     /// Wait for window to appear.
     case windowTitle(String)
     /// Wait for application to launch.
-    case applicationName(String)
+    case application(String)
 
   }
 
@@ -465,13 +465,13 @@ public struct Macosusesdk_V1_LoopAction: Sendable {
     set {loopType = .whileCondition(newValue)}
   }
 
-  /// Loop for each item in collection.
-  public var forEach: Macosusesdk_V1_ForEachLoop {
+  /// Loop over each item in collection.
+  public var foreach: Macosusesdk_V1_ForEachLoop {
     get {
-      if case .forEach(let v)? = loopType {return v}
+      if case .foreach(let v)? = loopType {return v}
       return Macosusesdk_V1_ForEachLoop()
     }
-    set {loopType = .forEach(newValue)}
+    set {loopType = .foreach(newValue)}
   }
 
   /// Actions to execute in each iteration.
@@ -485,8 +485,8 @@ public struct Macosusesdk_V1_LoopAction: Sendable {
     case count(Int32)
     /// Loop while condition is true.
     case whileCondition(Macosusesdk_V1_MacroCondition)
-    /// Loop for each item in collection.
-    case forEach(Macosusesdk_V1_ForEachLoop)
+    /// Loop over each item in collection.
+    case foreach(Macosusesdk_V1_ForEachLoop)
 
   }
 
@@ -641,7 +641,7 @@ public struct Macosusesdk_V1_MethodCall: Sendable {
   public var method: String = String()
 
   /// Method arguments (key-value pairs).
-  public var arguments: Dictionary<String,String> = [:]
+  public var args: Dictionary<String,String> = [:]
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -654,8 +654,8 @@ public struct Macosusesdk_V1_MacroParameter: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Parameter name.
-  public var name: String = String()
+  /// Parameter key/identifier.
+  public var key: String = String()
 
   /// Parameter type.
   public var type: Macosusesdk_V1_MacroParameter.ParameterType = .unspecified
@@ -804,8 +804,15 @@ public struct Macosusesdk_V1_ExecuteMacroResponse: Sendable {
   /// Number of actions executed.
   public var actionsExecuted: Int32 = 0
 
-  /// Execution time in seconds.
-  public var executionTime: Double = 0
+  /// Execution duration.
+  public var executionDuration: SwiftProtobuf.Google_Protobuf_Duration {
+    get {return _executionDuration ?? SwiftProtobuf.Google_Protobuf_Duration()}
+    set {_executionDuration = newValue}
+  }
+  /// Returns true if `executionDuration` has been explicitly set.
+  public var hasExecutionDuration: Bool {return self._executionDuration != nil}
+  /// Clears the value of `executionDuration`. Subsequent reads from it will return its default value.
+  public mutating func clearExecutionDuration() {self._executionDuration = nil}
 
   /// Error message if failed.
   public var error: String = String()
@@ -816,6 +823,8 @@ public struct Macosusesdk_V1_ExecuteMacroResponse: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
+
+  fileprivate var _executionDuration: SwiftProtobuf.Google_Protobuf_Duration? = nil
 }
 
 /// Log entry for macro execution.
@@ -824,15 +833,18 @@ public struct Macosusesdk_V1_ExecutionLogEntry: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
+  /// Resource name.
+  public var name: String = String()
+
   /// When the action executed.
-  public var timestamp: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {return _timestamp ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
-    set {_timestamp = newValue}
+  public var executionTime: SwiftProtobuf.Google_Protobuf_Timestamp {
+    get {return _executionTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_executionTime = newValue}
   }
-  /// Returns true if `timestamp` has been explicitly set.
-  public var hasTimestamp: Bool {return self._timestamp != nil}
-  /// Clears the value of `timestamp`. Subsequent reads from it will return its default value.
-  public mutating func clearTimestamp() {self._timestamp = nil}
+  /// Returns true if `executionTime` has been explicitly set.
+  public var hasExecutionTime: Bool {return self._executionTime != nil}
+  /// Clears the value of `executionTime`. Subsequent reads from it will return its default value.
+  public mutating func clearExecutionTime() {self._executionTime = nil}
 
   /// Action index in macro.
   public var actionIndex: Int32 = 0
@@ -853,7 +865,7 @@ public struct Macosusesdk_V1_ExecutionLogEntry: Sendable {
 
   public init() {}
 
-  fileprivate var _timestamp: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+  fileprivate var _executionTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
 }
 
 /// Metadata for ExecuteMacro operation.
@@ -871,12 +883,21 @@ public struct Macosusesdk_V1_ExecuteMacroMetadata: Sendable {
   /// Total actions in macro.
   public var totalActions: Int32 = 0
 
-  /// Elapsed time in seconds.
-  public var elapsedTime: Double = 0
+  /// Elapsed duration.
+  public var elapsedDuration: SwiftProtobuf.Google_Protobuf_Duration {
+    get {return _elapsedDuration ?? SwiftProtobuf.Google_Protobuf_Duration()}
+    set {_elapsedDuration = newValue}
+  }
+  /// Returns true if `elapsedDuration` has been explicitly set.
+  public var hasElapsedDuration: Bool {return self._elapsedDuration != nil}
+  /// Clears the value of `elapsedDuration`. Subsequent reads from it will return its default value.
+  public mutating func clearElapsedDuration() {self._elapsedDuration = nil}
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
+
+  fileprivate var _elapsedDuration: SwiftProtobuf.Google_Protobuf_Duration? = nil
 }
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
@@ -1138,7 +1159,7 @@ extension Macosusesdk_V1_WaitAction: SwiftProtobuf.Message, SwiftProtobuf._Messa
 
 extension Macosusesdk_V1_WaitCondition: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".WaitCondition"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}element_selector\0\u{3}window_title\0\u{3}application_name\0\u{2}\u{7}timeout\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}element_selector\0\u{3}window_title\0\u{1}application\0\u{2}\u{7}timeout\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1167,7 +1188,7 @@ extension Macosusesdk_V1_WaitCondition: SwiftProtobuf.Message, SwiftProtobuf._Me
         try decoder.decodeSingularStringField(value: &v)
         if let v = v {
           if self.condition != nil {try decoder.handleConflictingOneOf()}
-          self.condition = .applicationName(v)
+          self.condition = .application(v)
         }
       }()
       case 10: try { try decoder.decodeSingularDoubleField(value: &self.timeout) }()
@@ -1190,8 +1211,8 @@ extension Macosusesdk_V1_WaitCondition: SwiftProtobuf.Message, SwiftProtobuf._Me
       guard case .windowTitle(let v)? = self.condition else { preconditionFailure() }
       try visitor.visitSingularStringField(value: v, fieldNumber: 2)
     }()
-    case .applicationName?: try {
-      guard case .applicationName(let v)? = self.condition else { preconditionFailure() }
+    case .application?: try {
+      guard case .application(let v)? = self.condition else { preconditionFailure() }
       try visitor.visitSingularStringField(value: v, fieldNumber: 3)
     }()
     case nil: break
@@ -1433,7 +1454,7 @@ extension Macosusesdk_V1_CompoundCondition.Operator: SwiftProtobuf._ProtoNamePro
 
 extension Macosusesdk_V1_LoopAction: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".LoopAction"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}count\0\u{3}while_condition\0\u{3}for_each\0\u{2}\u{7}actions\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}count\0\u{3}while_condition\0\u{1}foreach\0\u{2}\u{7}actions\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1467,12 +1488,12 @@ extension Macosusesdk_V1_LoopAction: SwiftProtobuf.Message, SwiftProtobuf._Messa
         var hadOneofValue = false
         if let current = self.loopType {
           hadOneofValue = true
-          if case .forEach(let m) = current {v = m}
+          if case .foreach(let m) = current {v = m}
         }
         try decoder.decodeSingularMessageField(value: &v)
         if let v = v {
           if hadOneofValue {try decoder.handleConflictingOneOf()}
-          self.loopType = .forEach(v)
+          self.loopType = .foreach(v)
         }
       }()
       case 10: try { try decoder.decodeRepeatedMessageField(value: &self.actions) }()
@@ -1495,8 +1516,8 @@ extension Macosusesdk_V1_LoopAction: SwiftProtobuf.Message, SwiftProtobuf._Messa
       guard case .whileCondition(let v)? = self.loopType else { preconditionFailure() }
       try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
     }()
-    case .forEach?: try {
-      guard case .forEach(let v)? = self.loopType else { preconditionFailure() }
+    case .foreach?: try {
+      guard case .foreach(let v)? = self.loopType else { preconditionFailure() }
       try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
     }()
     case nil: break
@@ -1717,7 +1738,7 @@ extension Macosusesdk_V1_ElementAttributeValue: SwiftProtobuf.Message, SwiftProt
 
 extension Macosusesdk_V1_MethodCall: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".MethodCall"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}method\0\u{1}arguments\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}method\0\u{1}args\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1726,7 +1747,7 @@ extension Macosusesdk_V1_MethodCall: SwiftProtobuf.Message, SwiftProtobuf._Messa
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularStringField(value: &self.method) }()
-      case 2: try { try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufString>.self, value: &self.arguments) }()
+      case 2: try { try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufString>.self, value: &self.args) }()
       default: break
       }
     }
@@ -1736,15 +1757,15 @@ extension Macosusesdk_V1_MethodCall: SwiftProtobuf.Message, SwiftProtobuf._Messa
     if !self.method.isEmpty {
       try visitor.visitSingularStringField(value: self.method, fieldNumber: 1)
     }
-    if !self.arguments.isEmpty {
-      try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufString>.self, value: self.arguments, fieldNumber: 2)
+    if !self.args.isEmpty {
+      try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufString>.self, value: self.args, fieldNumber: 2)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_MethodCall, rhs: Macosusesdk_V1_MethodCall) -> Bool {
     if lhs.method != rhs.method {return false}
-    if lhs.arguments != rhs.arguments {return false}
+    if lhs.args != rhs.args {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -1752,7 +1773,7 @@ extension Macosusesdk_V1_MethodCall: SwiftProtobuf.Message, SwiftProtobuf._Messa
 
 extension Macosusesdk_V1_MacroParameter: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".MacroParameter"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}type\0\u{3}default_value\0\u{1}description\0\u{1}required\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}key\0\u{1}type\0\u{3}default_value\0\u{1}description\0\u{1}required\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1760,7 +1781,7 @@ extension Macosusesdk_V1_MacroParameter: SwiftProtobuf.Message, SwiftProtobuf._M
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      case 1: try { try decoder.decodeSingularStringField(value: &self.key) }()
       case 2: try { try decoder.decodeSingularEnumField(value: &self.type) }()
       case 3: try { try decoder.decodeSingularStringField(value: &self.defaultValue) }()
       case 4: try { try decoder.decodeSingularStringField(value: &self.description_p) }()
@@ -1771,8 +1792,8 @@ extension Macosusesdk_V1_MacroParameter: SwiftProtobuf.Message, SwiftProtobuf._M
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.name.isEmpty {
-      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
+    if !self.key.isEmpty {
+      try visitor.visitSingularStringField(value: self.key, fieldNumber: 1)
     }
     if self.type != .unspecified {
       try visitor.visitSingularEnumField(value: self.type, fieldNumber: 2)
@@ -1790,7 +1811,7 @@ extension Macosusesdk_V1_MacroParameter: SwiftProtobuf.Message, SwiftProtobuf._M
   }
 
   public static func ==(lhs: Macosusesdk_V1_MacroParameter, rhs: Macosusesdk_V1_MacroParameter) -> Bool {
-    if lhs.name != rhs.name {return false}
+    if lhs.key != rhs.key {return false}
     if lhs.type != rhs.type {return false}
     if lhs.defaultValue != rhs.defaultValue {return false}
     if lhs.description_p != rhs.description_p {return false}
@@ -1900,7 +1921,7 @@ extension Macosusesdk_V1_ExecutionOptions: SwiftProtobuf.Message, SwiftProtobuf.
 
 extension Macosusesdk_V1_ExecuteMacroResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ExecuteMacroResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{3}actions_executed\0\u{3}execution_time\0\u{1}error\0\u{1}log\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{3}actions_executed\0\u{3}execution_duration\0\u{1}error\0\u{1}log\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1910,7 +1931,7 @@ extension Macosusesdk_V1_ExecuteMacroResponse: SwiftProtobuf.Message, SwiftProto
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
       case 2: try { try decoder.decodeSingularInt32Field(value: &self.actionsExecuted) }()
-      case 3: try { try decoder.decodeSingularDoubleField(value: &self.executionTime) }()
+      case 3: try { try decoder.decodeSingularMessageField(value: &self._executionDuration) }()
       case 4: try { try decoder.decodeSingularStringField(value: &self.error) }()
       case 5: try { try decoder.decodeRepeatedMessageField(value: &self.log) }()
       default: break
@@ -1919,15 +1940,19 @@ extension Macosusesdk_V1_ExecuteMacroResponse: SwiftProtobuf.Message, SwiftProto
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
     if self.success != false {
       try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
     }
     if self.actionsExecuted != 0 {
       try visitor.visitSingularInt32Field(value: self.actionsExecuted, fieldNumber: 2)
     }
-    if self.executionTime.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.executionTime, fieldNumber: 3)
-    }
+    try { if let v = self._executionDuration {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
+    } }()
     if !self.error.isEmpty {
       try visitor.visitSingularStringField(value: self.error, fieldNumber: 4)
     }
@@ -1940,7 +1965,7 @@ extension Macosusesdk_V1_ExecuteMacroResponse: SwiftProtobuf.Message, SwiftProto
   public static func ==(lhs: Macosusesdk_V1_ExecuteMacroResponse, rhs: Macosusesdk_V1_ExecuteMacroResponse) -> Bool {
     if lhs.success != rhs.success {return false}
     if lhs.actionsExecuted != rhs.actionsExecuted {return false}
-    if lhs.executionTime != rhs.executionTime {return false}
+    if lhs._executionDuration != rhs._executionDuration {return false}
     if lhs.error != rhs.error {return false}
     if lhs.log != rhs.log {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
@@ -1950,7 +1975,7 @@ extension Macosusesdk_V1_ExecuteMacroResponse: SwiftProtobuf.Message, SwiftProto
 
 extension Macosusesdk_V1_ExecutionLogEntry: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ExecutionLogEntry"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}timestamp\0\u{3}action_index\0\u{1}description\0\u{1}success\0\u{1}error\0\u{1}duration\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}execution_time\0\u{3}action_index\0\u{1}description\0\u{1}success\0\u{1}error\0\u{1}duration\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1958,12 +1983,13 @@ extension Macosusesdk_V1_ExecutionLogEntry: SwiftProtobuf.Message, SwiftProtobuf
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularMessageField(value: &self._timestamp) }()
-      case 2: try { try decoder.decodeSingularInt32Field(value: &self.actionIndex) }()
-      case 3: try { try decoder.decodeSingularStringField(value: &self.description_p) }()
-      case 4: try { try decoder.decodeSingularBoolField(value: &self.success) }()
-      case 5: try { try decoder.decodeSingularStringField(value: &self.error) }()
-      case 6: try { try decoder.decodeSingularDoubleField(value: &self.duration) }()
+      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._executionTime) }()
+      case 3: try { try decoder.decodeSingularInt32Field(value: &self.actionIndex) }()
+      case 4: try { try decoder.decodeSingularStringField(value: &self.description_p) }()
+      case 5: try { try decoder.decodeSingularBoolField(value: &self.success) }()
+      case 6: try { try decoder.decodeSingularStringField(value: &self.error) }()
+      case 7: try { try decoder.decodeSingularDoubleField(value: &self.duration) }()
       default: break
       }
     }
@@ -1974,29 +2000,33 @@ extension Macosusesdk_V1_ExecutionLogEntry: SwiftProtobuf.Message, SwiftProtobuf
     // allocates stack space for every if/case branch local when no optimizations
     // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
     // https://github.com/apple/swift-protobuf/issues/1182
-    try { if let v = self._timestamp {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
+    }
+    try { if let v = self._executionTime {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
     } }()
     if self.actionIndex != 0 {
-      try visitor.visitSingularInt32Field(value: self.actionIndex, fieldNumber: 2)
+      try visitor.visitSingularInt32Field(value: self.actionIndex, fieldNumber: 3)
     }
     if !self.description_p.isEmpty {
-      try visitor.visitSingularStringField(value: self.description_p, fieldNumber: 3)
+      try visitor.visitSingularStringField(value: self.description_p, fieldNumber: 4)
     }
     if self.success != false {
-      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 4)
+      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 5)
     }
     if !self.error.isEmpty {
-      try visitor.visitSingularStringField(value: self.error, fieldNumber: 5)
+      try visitor.visitSingularStringField(value: self.error, fieldNumber: 6)
     }
     if self.duration.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.duration, fieldNumber: 6)
+      try visitor.visitSingularDoubleField(value: self.duration, fieldNumber: 7)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_ExecutionLogEntry, rhs: Macosusesdk_V1_ExecutionLogEntry) -> Bool {
-    if lhs._timestamp != rhs._timestamp {return false}
+    if lhs.name != rhs.name {return false}
+    if lhs._executionTime != rhs._executionTime {return false}
     if lhs.actionIndex != rhs.actionIndex {return false}
     if lhs.description_p != rhs.description_p {return false}
     if lhs.success != rhs.success {return false}
@@ -2009,7 +2039,7 @@ extension Macosusesdk_V1_ExecutionLogEntry: SwiftProtobuf.Message, SwiftProtobuf
 
 extension Macosusesdk_V1_ExecuteMacroMetadata: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ExecuteMacroMetadata"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}macro\0\u{3}current_action\0\u{3}total_actions\0\u{3}elapsed_time\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}macro\0\u{3}current_action\0\u{3}total_actions\0\u{3}elapsed_duration\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -2020,13 +2050,17 @@ extension Macosusesdk_V1_ExecuteMacroMetadata: SwiftProtobuf.Message, SwiftProto
       case 1: try { try decoder.decodeSingularStringField(value: &self.macro) }()
       case 2: try { try decoder.decodeSingularInt32Field(value: &self.currentAction) }()
       case 3: try { try decoder.decodeSingularInt32Field(value: &self.totalActions) }()
-      case 4: try { try decoder.decodeSingularDoubleField(value: &self.elapsedTime) }()
+      case 4: try { try decoder.decodeSingularMessageField(value: &self._elapsedDuration) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
     if !self.macro.isEmpty {
       try visitor.visitSingularStringField(value: self.macro, fieldNumber: 1)
     }
@@ -2036,9 +2070,9 @@ extension Macosusesdk_V1_ExecuteMacroMetadata: SwiftProtobuf.Message, SwiftProto
     if self.totalActions != 0 {
       try visitor.visitSingularInt32Field(value: self.totalActions, fieldNumber: 3)
     }
-    if self.elapsedTime.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.elapsedTime, fieldNumber: 4)
-    }
+    try { if let v = self._elapsedDuration {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
+    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -2046,7 +2080,7 @@ extension Macosusesdk_V1_ExecuteMacroMetadata: SwiftProtobuf.Message, SwiftProto
     if lhs.macro != rhs.macro {return false}
     if lhs.currentAction != rhs.currentAction {return false}
     if lhs.totalActions != rhs.totalActions {return false}
-    if lhs.elapsedTime != rhs.elapsedTime {return false}
+    if lhs._elapsedDuration != rhs._elapsedDuration {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

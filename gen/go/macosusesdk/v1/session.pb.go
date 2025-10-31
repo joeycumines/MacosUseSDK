@@ -14,6 +14,7 @@ import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
@@ -92,6 +93,67 @@ func (Session_State) EnumDescriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_session_proto_rawDescGZIP(), []int{0, 0}
 }
 
+// Transaction state.
+type Transaction_State int32
+
+const (
+	// Default unspecified.
+	Transaction_STATE_UNSPECIFIED Transaction_State = 0
+	// Transaction is active.
+	Transaction_STATE_ACTIVE Transaction_State = 1
+	// Transaction is committed.
+	Transaction_STATE_COMMITTED Transaction_State = 2
+	// Transaction is rolled back.
+	Transaction_STATE_ROLLED_BACK Transaction_State = 3
+	// Transaction failed.
+	Transaction_STATE_FAILED Transaction_State = 4
+)
+
+// Enum value maps for Transaction_State.
+var (
+	Transaction_State_name = map[int32]string{
+		0: "STATE_UNSPECIFIED",
+		1: "STATE_ACTIVE",
+		2: "STATE_COMMITTED",
+		3: "STATE_ROLLED_BACK",
+		4: "STATE_FAILED",
+	}
+	Transaction_State_value = map[string]int32{
+		"STATE_UNSPECIFIED": 0,
+		"STATE_ACTIVE":      1,
+		"STATE_COMMITTED":   2,
+		"STATE_ROLLED_BACK": 3,
+		"STATE_FAILED":      4,
+	}
+)
+
+func (x Transaction_State) Enum() *Transaction_State {
+	p := new(Transaction_State)
+	*p = x
+	return p
+}
+
+func (x Transaction_State) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Transaction_State) Descriptor() protoreflect.EnumDescriptor {
+	return file_macosusesdk_v1_session_proto_enumTypes[1].Descriptor()
+}
+
+func (Transaction_State) Type() protoreflect.EnumType {
+	return &file_macosusesdk_v1_session_proto_enumTypes[1]
+}
+
+func (x Transaction_State) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Transaction_State.Descriptor instead.
+func (Transaction_State) EnumDescriptor() ([]byte, []int) {
+	return file_macosusesdk_v1_session_proto_rawDescGZIP(), []int{1, 0}
+}
+
 // Isolation level for transactions.
 type BeginTransactionRequest_IsolationLevel int32
 
@@ -129,11 +191,11 @@ func (x BeginTransactionRequest_IsolationLevel) String() string {
 }
 
 func (BeginTransactionRequest_IsolationLevel) Descriptor() protoreflect.EnumDescriptor {
-	return file_macosusesdk_v1_session_proto_enumTypes[1].Descriptor()
+	return file_macosusesdk_v1_session_proto_enumTypes[2].Descriptor()
 }
 
 func (BeginTransactionRequest_IsolationLevel) Type() protoreflect.EnumType {
-	return &file_macosusesdk_v1_session_proto_enumTypes[1]
+	return &file_macosusesdk_v1_session_proto_enumTypes[2]
 }
 
 func (x BeginTransactionRequest_IsolationLevel) Number() protoreflect.EnumNumber {
@@ -142,7 +204,7 @@ func (x BeginTransactionRequest_IsolationLevel) Number() protoreflect.EnumNumber
 
 // Deprecated: Use BeginTransactionRequest_IsolationLevel.Descriptor instead.
 func (BeginTransactionRequest_IsolationLevel) EnumDescriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_session_proto_rawDescGZIP(), []int{1, 0}
+	return file_macosusesdk_v1_session_proto_rawDescGZIP(), []int{2, 0}
 }
 
 // A resource representing a session for coordinating complex workflows.
@@ -161,12 +223,14 @@ type Session struct {
 	CreateTime *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
 	// When the session was last accessed.
 	LastAccessTime *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=last_access_time,json=lastAccessTime,proto3" json:"last_access_time,omitempty"`
+	// Time-to-live for the session (alternative to expire_time).
+	Ttl *durationpb.Duration `protobuf:"bytes,6,opt,name=ttl,proto3" json:"ttl,omitempty"`
 	// When the session expires (auto-cleanup).
-	ExpireTime *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=expire_time,json=expireTime,proto3" json:"expire_time,omitempty"`
+	ExpireTime *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=expire_time,json=expireTime,proto3" json:"expire_time,omitempty"`
 	// Active transaction ID (if in transaction).
-	TransactionId string `protobuf:"bytes,7,opt,name=transaction_id,json=transactionId,proto3" json:"transaction_id,omitempty"`
+	TransactionId string `protobuf:"bytes,8,opt,name=transaction_id,json=transactionId,proto3" json:"transaction_id,omitempty"`
 	// Session-scoped metadata (key-value pairs).
-	Metadata      map[string]string `protobuf:"bytes,8,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Metadata      map[string]string `protobuf:"bytes,9,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -236,6 +300,13 @@ func (x *Session) GetLastAccessTime() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *Session) GetTtl() *durationpb.Duration {
+	if x != nil {
+		return x.Ttl
+	}
+	return nil
+}
+
 func (x *Session) GetExpireTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.ExpireTime
@@ -257,6 +328,88 @@ func (x *Session) GetMetadata() map[string]string {
 	return nil
 }
 
+// A transaction within a session.
+type Transaction struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Transaction ID.
+	TransactionId string `protobuf:"bytes,1,opt,name=transaction_id,json=transactionId,proto3" json:"transaction_id,omitempty"`
+	// Session this transaction belongs to.
+	Session string `protobuf:"bytes,2,opt,name=session,proto3" json:"session,omitempty"`
+	// Transaction state.
+	State Transaction_State `protobuf:"varint,3,opt,name=state,proto3,enum=macosusesdk.v1.Transaction_State" json:"state,omitempty"`
+	// When the transaction started.
+	StartTime *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
+	// Number of operations in the transaction.
+	OperationsCount int32 `protobuf:"varint,5,opt,name=operations_count,json=operationsCount,proto3" json:"operations_count,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *Transaction) Reset() {
+	*x = Transaction{}
+	mi := &file_macosusesdk_v1_session_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Transaction) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Transaction) ProtoMessage() {}
+
+func (x *Transaction) ProtoReflect() protoreflect.Message {
+	mi := &file_macosusesdk_v1_session_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Transaction.ProtoReflect.Descriptor instead.
+func (*Transaction) Descriptor() ([]byte, []int) {
+	return file_macosusesdk_v1_session_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *Transaction) GetTransactionId() string {
+	if x != nil {
+		return x.TransactionId
+	}
+	return ""
+}
+
+func (x *Transaction) GetSession() string {
+	if x != nil {
+		return x.Session
+	}
+	return ""
+}
+
+func (x *Transaction) GetState() Transaction_State {
+	if x != nil {
+		return x.State
+	}
+	return Transaction_STATE_UNSPECIFIED
+}
+
+func (x *Transaction) GetStartTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.StartTime
+	}
+	return nil
+}
+
+func (x *Transaction) GetOperationsCount() int32 {
+	if x != nil {
+		return x.OperationsCount
+	}
+	return 0
+}
+
 // Request to begin a transaction within a session.
 type BeginTransactionRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -272,7 +425,7 @@ type BeginTransactionRequest struct {
 
 func (x *BeginTransactionRequest) Reset() {
 	*x = BeginTransactionRequest{}
-	mi := &file_macosusesdk_v1_session_proto_msgTypes[1]
+	mi := &file_macosusesdk_v1_session_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -284,7 +437,7 @@ func (x *BeginTransactionRequest) String() string {
 func (*BeginTransactionRequest) ProtoMessage() {}
 
 func (x *BeginTransactionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_session_proto_msgTypes[1]
+	mi := &file_macosusesdk_v1_session_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -297,7 +450,7 @@ func (x *BeginTransactionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BeginTransactionRequest.ProtoReflect.Descriptor instead.
 func (*BeginTransactionRequest) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_session_proto_rawDescGZIP(), []int{1}
+	return file_macosusesdk_v1_session_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *BeginTransactionRequest) GetSession() string {
@@ -334,7 +487,7 @@ type BeginTransactionResponse struct {
 
 func (x *BeginTransactionResponse) Reset() {
 	*x = BeginTransactionResponse{}
-	mi := &file_macosusesdk_v1_session_proto_msgTypes[2]
+	mi := &file_macosusesdk_v1_session_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -346,7 +499,7 @@ func (x *BeginTransactionResponse) String() string {
 func (*BeginTransactionResponse) ProtoMessage() {}
 
 func (x *BeginTransactionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_session_proto_msgTypes[2]
+	mi := &file_macosusesdk_v1_session_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -359,7 +512,7 @@ func (x *BeginTransactionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BeginTransactionResponse.ProtoReflect.Descriptor instead.
 func (*BeginTransactionResponse) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_session_proto_rawDescGZIP(), []int{2}
+	return file_macosusesdk_v1_session_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *BeginTransactionResponse) GetTransactionId() string {
@@ -379,8 +532,9 @@ func (x *BeginTransactionResponse) GetSession() *Session {
 // Request to commit a transaction.
 type CommitTransactionRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Session name.
-	Session string `protobuf:"bytes,1,opt,name=session,proto3" json:"session,omitempty"`
+	// The name of the session to commit.
+	// Format: sessions/{session}
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// Transaction ID to commit.
 	TransactionId string `protobuf:"bytes,2,opt,name=transaction_id,json=transactionId,proto3" json:"transaction_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -389,7 +543,7 @@ type CommitTransactionRequest struct {
 
 func (x *CommitTransactionRequest) Reset() {
 	*x = CommitTransactionRequest{}
-	mi := &file_macosusesdk_v1_session_proto_msgTypes[3]
+	mi := &file_macosusesdk_v1_session_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -401,7 +555,7 @@ func (x *CommitTransactionRequest) String() string {
 func (*CommitTransactionRequest) ProtoMessage() {}
 
 func (x *CommitTransactionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_session_proto_msgTypes[3]
+	mi := &file_macosusesdk_v1_session_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -414,12 +568,12 @@ func (x *CommitTransactionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommitTransactionRequest.ProtoReflect.Descriptor instead.
 func (*CommitTransactionRequest) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_session_proto_rawDescGZIP(), []int{3}
+	return file_macosusesdk_v1_session_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *CommitTransactionRequest) GetSession() string {
+func (x *CommitTransactionRequest) GetName() string {
 	if x != nil {
-		return x.Session
+		return x.Name
 	}
 	return ""
 }
@@ -444,7 +598,7 @@ type CommitTransactionResponse struct {
 
 func (x *CommitTransactionResponse) Reset() {
 	*x = CommitTransactionResponse{}
-	mi := &file_macosusesdk_v1_session_proto_msgTypes[4]
+	mi := &file_macosusesdk_v1_session_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -456,7 +610,7 @@ func (x *CommitTransactionResponse) String() string {
 func (*CommitTransactionResponse) ProtoMessage() {}
 
 func (x *CommitTransactionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_session_proto_msgTypes[4]
+	mi := &file_macosusesdk_v1_session_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -469,7 +623,7 @@ func (x *CommitTransactionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommitTransactionResponse.ProtoReflect.Descriptor instead.
 func (*CommitTransactionResponse) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_session_proto_rawDescGZIP(), []int{4}
+	return file_macosusesdk_v1_session_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *CommitTransactionResponse) GetSession() *Session {
@@ -489,17 +643,20 @@ func (x *CommitTransactionResponse) GetOperationsApplied() int32 {
 // Request to rollback a transaction.
 type RollbackTransactionRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Session name.
-	Session string `protobuf:"bytes,1,opt,name=session,proto3" json:"session,omitempty"`
+	// The name of the session to rollback.
+	// Format: sessions/{session}
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The revision to rollback to.
+	RevisionId string `protobuf:"bytes,2,opt,name=revision_id,json=revisionId,proto3" json:"revision_id,omitempty"`
 	// Transaction ID to rollback.
-	TransactionId string `protobuf:"bytes,2,opt,name=transaction_id,json=transactionId,proto3" json:"transaction_id,omitempty"`
+	TransactionId string `protobuf:"bytes,3,opt,name=transaction_id,json=transactionId,proto3" json:"transaction_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *RollbackTransactionRequest) Reset() {
 	*x = RollbackTransactionRequest{}
-	mi := &file_macosusesdk_v1_session_proto_msgTypes[5]
+	mi := &file_macosusesdk_v1_session_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -511,7 +668,7 @@ func (x *RollbackTransactionRequest) String() string {
 func (*RollbackTransactionRequest) ProtoMessage() {}
 
 func (x *RollbackTransactionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_session_proto_msgTypes[5]
+	mi := &file_macosusesdk_v1_session_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -524,12 +681,19 @@ func (x *RollbackTransactionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RollbackTransactionRequest.ProtoReflect.Descriptor instead.
 func (*RollbackTransactionRequest) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_session_proto_rawDescGZIP(), []int{5}
+	return file_macosusesdk_v1_session_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *RollbackTransactionRequest) GetSession() string {
+func (x *RollbackTransactionRequest) GetName() string {
 	if x != nil {
-		return x.Session
+		return x.Name
+	}
+	return ""
+}
+
+func (x *RollbackTransactionRequest) GetRevisionId() string {
+	if x != nil {
+		return x.RevisionId
 	}
 	return ""
 }
@@ -554,7 +718,7 @@ type RollbackTransactionResponse struct {
 
 func (x *RollbackTransactionResponse) Reset() {
 	*x = RollbackTransactionResponse{}
-	mi := &file_macosusesdk_v1_session_proto_msgTypes[6]
+	mi := &file_macosusesdk_v1_session_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -566,7 +730,7 @@ func (x *RollbackTransactionResponse) String() string {
 func (*RollbackTransactionResponse) ProtoMessage() {}
 
 func (x *RollbackTransactionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_session_proto_msgTypes[6]
+	mi := &file_macosusesdk_v1_session_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -579,7 +743,7 @@ func (x *RollbackTransactionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RollbackTransactionResponse.ProtoReflect.Descriptor instead.
 func (*RollbackTransactionResponse) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_session_proto_rawDescGZIP(), []int{6}
+	return file_macosusesdk_v1_session_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *RollbackTransactionResponse) GetSession() *Session {
@@ -599,17 +763,16 @@ func (x *RollbackTransactionResponse) GetOperationsRolledBack() int32 {
 // Request to get a session state snapshot.
 type GetSessionSnapshotRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Session name.
-	Session string `protobuf:"bytes,1,opt,name=session,proto3" json:"session,omitempty"`
-	// Whether to include operation history.
-	IncludeHistory bool `protobuf:"varint,2,opt,name=include_history,json=includeHistory,proto3" json:"include_history,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// The name of the session to snapshot.
+	// Format: sessions/{session}
+	Name          string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetSessionSnapshotRequest) Reset() {
 	*x = GetSessionSnapshotRequest{}
-	mi := &file_macosusesdk_v1_session_proto_msgTypes[7]
+	mi := &file_macosusesdk_v1_session_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -621,7 +784,7 @@ func (x *GetSessionSnapshotRequest) String() string {
 func (*GetSessionSnapshotRequest) ProtoMessage() {}
 
 func (x *GetSessionSnapshotRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_session_proto_msgTypes[7]
+	mi := &file_macosusesdk_v1_session_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -634,25 +797,18 @@ func (x *GetSessionSnapshotRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSessionSnapshotRequest.ProtoReflect.Descriptor instead.
 func (*GetSessionSnapshotRequest) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_session_proto_rawDescGZIP(), []int{7}
+	return file_macosusesdk_v1_session_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *GetSessionSnapshotRequest) GetSession() string {
+func (x *GetSessionSnapshotRequest) GetName() string {
 	if x != nil {
-		return x.Session
+		return x.Name
 	}
 	return ""
 }
 
-func (x *GetSessionSnapshotRequest) GetIncludeHistory() bool {
-	if x != nil {
-		return x.IncludeHistory
-	}
-	return false
-}
-
-// Response with session state snapshot.
-type GetSessionSnapshotResponse struct {
+// Session state snapshot.
+type SessionSnapshot struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Session state.
 	Session *Session `protobuf:"bytes,1,opt,name=session,proto3" json:"session,omitempty"`
@@ -660,27 +816,27 @@ type GetSessionSnapshotResponse struct {
 	Applications []string `protobuf:"bytes,2,rep,name=applications,proto3" json:"applications,omitempty"`
 	// Active observations in session context.
 	Observations []string `protobuf:"bytes,3,rep,name=observations,proto3" json:"observations,omitempty"`
-	// Operation history (if requested).
+	// Operation history.
 	History       []*OperationRecord `protobuf:"bytes,4,rep,name=history,proto3" json:"history,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetSessionSnapshotResponse) Reset() {
-	*x = GetSessionSnapshotResponse{}
-	mi := &file_macosusesdk_v1_session_proto_msgTypes[8]
+func (x *SessionSnapshot) Reset() {
+	*x = SessionSnapshot{}
+	mi := &file_macosusesdk_v1_session_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetSessionSnapshotResponse) String() string {
+func (x *SessionSnapshot) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetSessionSnapshotResponse) ProtoMessage() {}
+func (*SessionSnapshot) ProtoMessage() {}
 
-func (x *GetSessionSnapshotResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_session_proto_msgTypes[8]
+func (x *SessionSnapshot) ProtoReflect() protoreflect.Message {
+	mi := &file_macosusesdk_v1_session_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -691,33 +847,33 @@ func (x *GetSessionSnapshotResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetSessionSnapshotResponse.ProtoReflect.Descriptor instead.
-func (*GetSessionSnapshotResponse) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_session_proto_rawDescGZIP(), []int{8}
+// Deprecated: Use SessionSnapshot.ProtoReflect.Descriptor instead.
+func (*SessionSnapshot) Descriptor() ([]byte, []int) {
+	return file_macosusesdk_v1_session_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *GetSessionSnapshotResponse) GetSession() *Session {
+func (x *SessionSnapshot) GetSession() *Session {
 	if x != nil {
 		return x.Session
 	}
 	return nil
 }
 
-func (x *GetSessionSnapshotResponse) GetApplications() []string {
+func (x *SessionSnapshot) GetApplications() []string {
 	if x != nil {
 		return x.Applications
 	}
 	return nil
 }
 
-func (x *GetSessionSnapshotResponse) GetObservations() []string {
+func (x *SessionSnapshot) GetObservations() []string {
 	if x != nil {
 		return x.Observations
 	}
 	return nil
 }
 
-func (x *GetSessionSnapshotResponse) GetHistory() []*OperationRecord {
+func (x *SessionSnapshot) GetHistory() []*OperationRecord {
 	if x != nil {
 		return x.History
 	}
@@ -728,7 +884,7 @@ func (x *GetSessionSnapshotResponse) GetHistory() []*OperationRecord {
 type OperationRecord struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// When the operation occurred.
-	Timestamp *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	OperationTime *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=operation_time,json=operationTime,proto3" json:"operation_time,omitempty"`
 	// Operation type (method name).
 	OperationType string `protobuf:"bytes,2,opt,name=operation_type,json=operationType,proto3" json:"operation_type,omitempty"`
 	// Resource affected (resource name).
@@ -745,7 +901,7 @@ type OperationRecord struct {
 
 func (x *OperationRecord) Reset() {
 	*x = OperationRecord{}
-	mi := &file_macosusesdk_v1_session_proto_msgTypes[9]
+	mi := &file_macosusesdk_v1_session_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -757,7 +913,7 @@ func (x *OperationRecord) String() string {
 func (*OperationRecord) ProtoMessage() {}
 
 func (x *OperationRecord) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_session_proto_msgTypes[9]
+	mi := &file_macosusesdk_v1_session_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -770,12 +926,12 @@ func (x *OperationRecord) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OperationRecord.ProtoReflect.Descriptor instead.
 func (*OperationRecord) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_session_proto_rawDescGZIP(), []int{9}
+	return file_macosusesdk_v1_session_proto_rawDescGZIP(), []int{10}
 }
 
-func (x *OperationRecord) GetTimestamp() *timestamppb.Timestamp {
+func (x *OperationRecord) GetOperationTime() *timestamppb.Timestamp {
 	if x != nil {
-		return x.Timestamp
+		return x.OperationTime
 	}
 	return nil
 }
@@ -819,18 +975,19 @@ var File_macosusesdk_v1_session_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_session_proto_rawDesc = "" +
 	"\n" +
-	"\x1cmacosusesdk/v1/session.proto\x12\x0emacosusesdk.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd6\x05\n" +
+	"\x1cmacosusesdk/v1/session.proto\x12\x0emacosusesdk.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x8b\x06\n" +
 	"\aSession\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12&\n" +
 	"\fdisplay_name\x18\x02 \x01(\tB\x03\xe0A\x01R\vdisplayName\x128\n" +
 	"\x05state\x18\x03 \x01(\x0e2\x1d.macosusesdk.v1.Session.StateB\x03\xe0A\x03R\x05state\x12@\n" +
 	"\vcreate_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\n" +
 	"createTime\x12I\n" +
-	"\x10last_access_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\x0elastAccessTime\x12@\n" +
-	"\vexpire_time\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x01R\n" +
+	"\x10last_access_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\x0elastAccessTime\x123\n" +
+	"\x03ttl\x18\x06 \x01(\v2\x19.google.protobuf.DurationB\x06\xe0A\x04\xe0A\x01R\x03ttl\x12@\n" +
+	"\vexpire_time\x18\a \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\n" +
 	"expireTime\x12*\n" +
-	"\x0etransaction_id\x18\a \x01(\tB\x03\xe0A\x03R\rtransactionId\x12F\n" +
-	"\bmetadata\x18\b \x03(\v2%.macosusesdk.v1.Session.MetadataEntryB\x03\xe0A\x01R\bmetadata\x1a;\n" +
+	"\x0etransaction_id\x18\b \x01(\tB\x03\xe0A\x03R\rtransactionId\x12F\n" +
+	"\bmetadata\x18\t \x03(\v2%.macosusesdk.v1.Session.MetadataEntryB\x03\xe0A\x01R\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x85\x01\n" +
@@ -841,7 +998,21 @@ const file_macosusesdk_v1_session_proto_rawDesc = "" +
 	"\x10STATE_TERMINATED\x10\x03\x12\x11\n" +
 	"\rSTATE_EXPIRED\x10\x04\x12\x10\n" +
 	"\fSTATE_FAILED\x10\x05:H\xeaAE\n" +
-	"\x1cmacos.googleapis.com/Session\x12\x12sessions/{session}*\bsessions2\asession\"\xd7\x02\n" +
+	"\x1cmacos.googleapis.com/Session\x12\x12sessions/{session}*\bsessions2\asession\"\x97\x03\n" +
+	"\vTransaction\x12*\n" +
+	"\x0etransaction_id\x18\x01 \x01(\tB\x03\xe0A\x03R\rtransactionId\x12>\n" +
+	"\asession\x18\x02 \x01(\tB$\xe0A\x03\xfaA\x1e\n" +
+	"\x1cmacos.googleapis.com/SessionR\asession\x12<\n" +
+	"\x05state\x18\x03 \x01(\x0e2!.macosusesdk.v1.Transaction.StateB\x03\xe0A\x03R\x05state\x12>\n" +
+	"\n" +
+	"start_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\tstartTime\x12.\n" +
+	"\x10operations_count\x18\x05 \x01(\x05B\x03\xe0A\x03R\x0foperationsCount\"n\n" +
+	"\x05State\x12\x15\n" +
+	"\x11STATE_UNSPECIFIED\x10\x00\x12\x10\n" +
+	"\fSTATE_ACTIVE\x10\x01\x12\x13\n" +
+	"\x0fSTATE_COMMITTED\x10\x02\x12\x15\n" +
+	"\x11STATE_ROLLED_BACK\x10\x03\x12\x10\n" +
+	"\fSTATE_FAILED\x10\x04\"\xd7\x02\n" +
 	"\x17BeginTransactionRequest\x12>\n" +
 	"\asession\x18\x01 \x01(\tB$\xe0A\x02\xfaA\x1e\n" +
 	"\x1cmacos.googleapis.com/SessionR\asession\x12d\n" +
@@ -853,32 +1024,33 @@ const file_macosusesdk_v1_session_proto_rawDesc = "" +
 	"\x1eISOLATION_LEVEL_READ_COMMITTED\x10\x02\"t\n" +
 	"\x18BeginTransactionResponse\x12%\n" +
 	"\x0etransaction_id\x18\x01 \x01(\tR\rtransactionId\x121\n" +
-	"\asession\x18\x02 \x01(\v2\x17.macosusesdk.v1.SessionR\asession\"\x86\x01\n" +
-	"\x18CommitTransactionRequest\x12>\n" +
-	"\asession\x18\x01 \x01(\tB$\xe0A\x02\xfaA\x1e\n" +
-	"\x1cmacos.googleapis.com/SessionR\asession\x12*\n" +
+	"\asession\x18\x02 \x01(\v2\x17.macosusesdk.v1.SessionR\asession\"\x80\x01\n" +
+	"\x18CommitTransactionRequest\x128\n" +
+	"\x04name\x18\x01 \x01(\tB$\xe0A\x02\xfaA\x1e\n" +
+	"\x1cmacos.googleapis.com/SessionR\x04name\x12*\n" +
 	"\x0etransaction_id\x18\x02 \x01(\tB\x03\xe0A\x02R\rtransactionId\"}\n" +
 	"\x19CommitTransactionResponse\x121\n" +
 	"\asession\x18\x01 \x01(\v2\x17.macosusesdk.v1.SessionR\asession\x12-\n" +
-	"\x12operations_applied\x18\x02 \x01(\x05R\x11operationsApplied\"\x88\x01\n" +
-	"\x1aRollbackTransactionRequest\x12>\n" +
-	"\asession\x18\x01 \x01(\tB$\xe0A\x02\xfaA\x1e\n" +
-	"\x1cmacos.googleapis.com/SessionR\asession\x12*\n" +
-	"\x0etransaction_id\x18\x02 \x01(\tB\x03\xe0A\x02R\rtransactionId\"\x86\x01\n" +
+	"\x12operations_applied\x18\x02 \x01(\x05R\x11operationsApplied\"\xa8\x01\n" +
+	"\x1aRollbackTransactionRequest\x128\n" +
+	"\x04name\x18\x01 \x01(\tB$\xe0A\x02\xfaA\x1e\n" +
+	"\x1cmacos.googleapis.com/SessionR\x04name\x12$\n" +
+	"\vrevision_id\x18\x02 \x01(\tB\x03\xe0A\x02R\n" +
+	"revisionId\x12*\n" +
+	"\x0etransaction_id\x18\x03 \x01(\tB\x03\xe0A\x02R\rtransactionId\"\x86\x01\n" +
 	"\x1bRollbackTransactionResponse\x121\n" +
 	"\asession\x18\x01 \x01(\v2\x17.macosusesdk.v1.SessionR\asession\x124\n" +
-	"\x16operations_rolled_back\x18\x02 \x01(\x05R\x14operationsRolledBack\"\x89\x01\n" +
-	"\x19GetSessionSnapshotRequest\x12>\n" +
-	"\asession\x18\x01 \x01(\tB$\xe0A\x02\xfaA\x1e\n" +
-	"\x1cmacos.googleapis.com/SessionR\asession\x12,\n" +
-	"\x0finclude_history\x18\x02 \x01(\bB\x03\xe0A\x01R\x0eincludeHistory\"\xd2\x01\n" +
-	"\x1aGetSessionSnapshotResponse\x121\n" +
+	"\x16operations_rolled_back\x18\x02 \x01(\x05R\x14operationsRolledBack\"U\n" +
+	"\x19GetSessionSnapshotRequest\x128\n" +
+	"\x04name\x18\x01 \x01(\tB$\xe0A\x02\xfaA\x1e\n" +
+	"\x1cmacos.googleapis.com/SessionR\x04name\"\xc7\x01\n" +
+	"\x0fSessionSnapshot\x121\n" +
 	"\asession\x18\x01 \x01(\v2\x17.macosusesdk.v1.SessionR\asession\x12\"\n" +
 	"\fapplications\x18\x02 \x03(\tR\fapplications\x12\"\n" +
 	"\fobservations\x18\x03 \x03(\tR\fobservations\x129\n" +
-	"\ahistory\x18\x04 \x03(\v2\x1f.macosusesdk.v1.OperationRecordR\ahistory\"\xe5\x01\n" +
-	"\x0fOperationRecord\x128\n" +
-	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12%\n" +
+	"\ahistory\x18\x04 \x03(\v2\x1f.macosusesdk.v1.OperationRecordR\ahistory\"\xee\x01\n" +
+	"\x0fOperationRecord\x12A\n" +
+	"\x0eoperation_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\roperationTime\x12%\n" +
 	"\x0eoperation_type\x18\x02 \x01(\tR\roperationType\x12\x1a\n" +
 	"\bresource\x18\x03 \x01(\tR\bresource\x12\x18\n" +
 	"\asuccess\x18\x04 \x01(\bR\asuccess\x12\x14\n" +
@@ -898,42 +1070,48 @@ func file_macosusesdk_v1_session_proto_rawDescGZIP() []byte {
 	return file_macosusesdk_v1_session_proto_rawDescData
 }
 
-var file_macosusesdk_v1_session_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_macosusesdk_v1_session_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_macosusesdk_v1_session_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_macosusesdk_v1_session_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_macosusesdk_v1_session_proto_goTypes = []any{
 	(Session_State)(0),                          // 0: macosusesdk.v1.Session.State
-	(BeginTransactionRequest_IsolationLevel)(0), // 1: macosusesdk.v1.BeginTransactionRequest.IsolationLevel
-	(*Session)(nil),                             // 2: macosusesdk.v1.Session
-	(*BeginTransactionRequest)(nil),             // 3: macosusesdk.v1.BeginTransactionRequest
-	(*BeginTransactionResponse)(nil),            // 4: macosusesdk.v1.BeginTransactionResponse
-	(*CommitTransactionRequest)(nil),            // 5: macosusesdk.v1.CommitTransactionRequest
-	(*CommitTransactionResponse)(nil),           // 6: macosusesdk.v1.CommitTransactionResponse
-	(*RollbackTransactionRequest)(nil),          // 7: macosusesdk.v1.RollbackTransactionRequest
-	(*RollbackTransactionResponse)(nil),         // 8: macosusesdk.v1.RollbackTransactionResponse
-	(*GetSessionSnapshotRequest)(nil),           // 9: macosusesdk.v1.GetSessionSnapshotRequest
-	(*GetSessionSnapshotResponse)(nil),          // 10: macosusesdk.v1.GetSessionSnapshotResponse
-	(*OperationRecord)(nil),                     // 11: macosusesdk.v1.OperationRecord
-	nil,                                         // 12: macosusesdk.v1.Session.MetadataEntry
-	(*timestamppb.Timestamp)(nil),               // 13: google.protobuf.Timestamp
+	(Transaction_State)(0),                      // 1: macosusesdk.v1.Transaction.State
+	(BeginTransactionRequest_IsolationLevel)(0), // 2: macosusesdk.v1.BeginTransactionRequest.IsolationLevel
+	(*Session)(nil),                             // 3: macosusesdk.v1.Session
+	(*Transaction)(nil),                         // 4: macosusesdk.v1.Transaction
+	(*BeginTransactionRequest)(nil),             // 5: macosusesdk.v1.BeginTransactionRequest
+	(*BeginTransactionResponse)(nil),            // 6: macosusesdk.v1.BeginTransactionResponse
+	(*CommitTransactionRequest)(nil),            // 7: macosusesdk.v1.CommitTransactionRequest
+	(*CommitTransactionResponse)(nil),           // 8: macosusesdk.v1.CommitTransactionResponse
+	(*RollbackTransactionRequest)(nil),          // 9: macosusesdk.v1.RollbackTransactionRequest
+	(*RollbackTransactionResponse)(nil),         // 10: macosusesdk.v1.RollbackTransactionResponse
+	(*GetSessionSnapshotRequest)(nil),           // 11: macosusesdk.v1.GetSessionSnapshotRequest
+	(*SessionSnapshot)(nil),                     // 12: macosusesdk.v1.SessionSnapshot
+	(*OperationRecord)(nil),                     // 13: macosusesdk.v1.OperationRecord
+	nil,                                         // 14: macosusesdk.v1.Session.MetadataEntry
+	(*timestamppb.Timestamp)(nil),               // 15: google.protobuf.Timestamp
+	(*durationpb.Duration)(nil),                 // 16: google.protobuf.Duration
 }
 var file_macosusesdk_v1_session_proto_depIdxs = []int32{
 	0,  // 0: macosusesdk.v1.Session.state:type_name -> macosusesdk.v1.Session.State
-	13, // 1: macosusesdk.v1.Session.create_time:type_name -> google.protobuf.Timestamp
-	13, // 2: macosusesdk.v1.Session.last_access_time:type_name -> google.protobuf.Timestamp
-	13, // 3: macosusesdk.v1.Session.expire_time:type_name -> google.protobuf.Timestamp
-	12, // 4: macosusesdk.v1.Session.metadata:type_name -> macosusesdk.v1.Session.MetadataEntry
-	1,  // 5: macosusesdk.v1.BeginTransactionRequest.isolation_level:type_name -> macosusesdk.v1.BeginTransactionRequest.IsolationLevel
-	2,  // 6: macosusesdk.v1.BeginTransactionResponse.session:type_name -> macosusesdk.v1.Session
-	2,  // 7: macosusesdk.v1.CommitTransactionResponse.session:type_name -> macosusesdk.v1.Session
-	2,  // 8: macosusesdk.v1.RollbackTransactionResponse.session:type_name -> macosusesdk.v1.Session
-	2,  // 9: macosusesdk.v1.GetSessionSnapshotResponse.session:type_name -> macosusesdk.v1.Session
-	11, // 10: macosusesdk.v1.GetSessionSnapshotResponse.history:type_name -> macosusesdk.v1.OperationRecord
-	13, // 11: macosusesdk.v1.OperationRecord.timestamp:type_name -> google.protobuf.Timestamp
-	12, // [12:12] is the sub-list for method output_type
-	12, // [12:12] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	15, // 1: macosusesdk.v1.Session.create_time:type_name -> google.protobuf.Timestamp
+	15, // 2: macosusesdk.v1.Session.last_access_time:type_name -> google.protobuf.Timestamp
+	16, // 3: macosusesdk.v1.Session.ttl:type_name -> google.protobuf.Duration
+	15, // 4: macosusesdk.v1.Session.expire_time:type_name -> google.protobuf.Timestamp
+	14, // 5: macosusesdk.v1.Session.metadata:type_name -> macosusesdk.v1.Session.MetadataEntry
+	1,  // 6: macosusesdk.v1.Transaction.state:type_name -> macosusesdk.v1.Transaction.State
+	15, // 7: macosusesdk.v1.Transaction.start_time:type_name -> google.protobuf.Timestamp
+	2,  // 8: macosusesdk.v1.BeginTransactionRequest.isolation_level:type_name -> macosusesdk.v1.BeginTransactionRequest.IsolationLevel
+	3,  // 9: macosusesdk.v1.BeginTransactionResponse.session:type_name -> macosusesdk.v1.Session
+	3,  // 10: macosusesdk.v1.CommitTransactionResponse.session:type_name -> macosusesdk.v1.Session
+	3,  // 11: macosusesdk.v1.RollbackTransactionResponse.session:type_name -> macosusesdk.v1.Session
+	3,  // 12: macosusesdk.v1.SessionSnapshot.session:type_name -> macosusesdk.v1.Session
+	13, // 13: macosusesdk.v1.SessionSnapshot.history:type_name -> macosusesdk.v1.OperationRecord
+	15, // 14: macosusesdk.v1.OperationRecord.operation_time:type_name -> google.protobuf.Timestamp
+	15, // [15:15] is the sub-list for method output_type
+	15, // [15:15] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_macosusesdk_v1_session_proto_init() }
@@ -946,8 +1124,8 @@ func file_macosusesdk_v1_session_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_macosusesdk_v1_session_proto_rawDesc), len(file_macosusesdk_v1_session_proto_rawDesc)),
-			NumEnums:      2,
-			NumMessages:   11,
+			NumEnums:      3,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

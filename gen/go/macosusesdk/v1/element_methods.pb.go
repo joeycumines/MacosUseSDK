@@ -82,7 +82,7 @@ func (x ClickElementRequest_ClickType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ClickElementRequest_ClickType.Descriptor instead.
 func (ClickElementRequest_ClickType) EnumDescriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{6, 0}
+	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{5, 0}
 }
 
 // Request to find elements matching a selector.
@@ -225,7 +225,7 @@ func (x *FindElementsResponse) GetNextPageToken() string {
 }
 
 // Request to find elements within a screen region.
-type FindElementsInRegionRequest struct {
+type FindRegionElementsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Parent context (same as FindElementsRequest).
 	Parent string `protobuf:"bytes,1,opt,name=parent,proto3" json:"parent,omitempty"`
@@ -241,20 +241,20 @@ type FindElementsInRegionRequest struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *FindElementsInRegionRequest) Reset() {
-	*x = FindElementsInRegionRequest{}
+func (x *FindRegionElementsRequest) Reset() {
+	*x = FindRegionElementsRequest{}
 	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *FindElementsInRegionRequest) String() string {
+func (x *FindRegionElementsRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*FindElementsInRegionRequest) ProtoMessage() {}
+func (*FindRegionElementsRequest) ProtoMessage() {}
 
-func (x *FindElementsInRegionRequest) ProtoReflect() protoreflect.Message {
+func (x *FindRegionElementsRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -266,40 +266,40 @@ func (x *FindElementsInRegionRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use FindElementsInRegionRequest.ProtoReflect.Descriptor instead.
-func (*FindElementsInRegionRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use FindRegionElementsRequest.ProtoReflect.Descriptor instead.
+func (*FindRegionElementsRequest) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *FindElementsInRegionRequest) GetParent() string {
+func (x *FindRegionElementsRequest) GetParent() string {
 	if x != nil {
 		return x.Parent
 	}
 	return ""
 }
 
-func (x *FindElementsInRegionRequest) GetRegion() *Region {
+func (x *FindRegionElementsRequest) GetRegion() *Region {
 	if x != nil {
 		return x.Region
 	}
 	return nil
 }
 
-func (x *FindElementsInRegionRequest) GetSelector() *_type.ElementSelector {
+func (x *FindRegionElementsRequest) GetSelector() *_type.ElementSelector {
 	if x != nil {
 		return x.Selector
 	}
 	return nil
 }
 
-func (x *FindElementsInRegionRequest) GetPageSize() int32 {
+func (x *FindRegionElementsRequest) GetPageSize() int32 {
 	if x != nil {
 		return x.PageSize
 	}
 	return 0
 }
 
-func (x *FindElementsInRegionRequest) GetPageToken() string {
+func (x *FindRegionElementsRequest) GetPageToken() string {
 	if x != nil {
 		return x.PageToken
 	}
@@ -307,8 +307,7 @@ func (x *FindElementsInRegionRequest) GetPageToken() string {
 }
 
 // Response from finding elements in a region.
-// Response from finding elements in a region.
-type FindElementsInRegionResponse struct {
+type FindRegionElementsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Elements within the region.
 	Elements []*_type.Element `protobuf:"bytes,1,rep,name=elements,proto3" json:"elements,omitempty"`
@@ -318,20 +317,20 @@ type FindElementsInRegionResponse struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *FindElementsInRegionResponse) Reset() {
-	*x = FindElementsInRegionResponse{}
+func (x *FindRegionElementsResponse) Reset() {
+	*x = FindRegionElementsResponse{}
 	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *FindElementsInRegionResponse) String() string {
+func (x *FindRegionElementsResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*FindElementsInRegionResponse) ProtoMessage() {}
+func (*FindRegionElementsResponse) ProtoMessage() {}
 
-func (x *FindElementsInRegionResponse) ProtoReflect() protoreflect.Message {
+func (x *FindRegionElementsResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -343,32 +342,31 @@ func (x *FindElementsInRegionResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use FindElementsInRegionResponse.ProtoReflect.Descriptor instead.
-func (*FindElementsInRegionResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use FindRegionElementsResponse.ProtoReflect.Descriptor instead.
+func (*FindRegionElementsResponse) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *FindElementsInRegionResponse) GetElements() []*_type.Element {
+func (x *FindRegionElementsResponse) GetElements() []*_type.Element {
 	if x != nil {
 		return x.Elements
 	}
 	return nil
 }
 
-func (x *FindElementsInRegionResponse) GetNextPageToken() string {
+func (x *FindRegionElementsResponse) GetNextPageToken() string {
 	if x != nil {
 		return x.NextPageToken
 	}
 	return ""
 }
 
-// Request to get a specific element by ID.
+// Request to get a specific element by its resource name.
 type GetElementRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Parent context (application or window).
-	Parent string `protobuf:"bytes,1,opt,name=parent,proto3" json:"parent,omitempty"`
-	// Element ID (from Element.element_id).
-	ElementId     string `protobuf:"bytes,2,opt,name=element_id,json=elementId,proto3" json:"element_id,omitempty"`
+	// The name of the element to retrieve.
+	// Format: applications/{application}/elements/{element}
+	Name          string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -403,64 +401,11 @@ func (*GetElementRequest) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *GetElementRequest) GetParent() string {
+func (x *GetElementRequest) GetName() string {
 	if x != nil {
-		return x.Parent
+		return x.Name
 	}
 	return ""
-}
-
-func (x *GetElementRequest) GetElementId() string {
-	if x != nil {
-		return x.ElementId
-	}
-	return ""
-}
-
-// Response from getting an element.
-type GetElementResponse struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// The requested element, or null if not found.
-	Element       *_type.Element `protobuf:"bytes,1,opt,name=element,proto3" json:"element,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetElementResponse) Reset() {
-	*x = GetElementResponse{}
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetElementResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetElementResponse) ProtoMessage() {}
-
-func (x *GetElementResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[5]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetElementResponse.ProtoReflect.Descriptor instead.
-func (*GetElementResponse) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *GetElementResponse) GetElement() *_type.Element {
-	if x != nil {
-		return x.Element
-	}
-	return nil
 }
 
 // Request to click an element.
@@ -483,7 +428,7 @@ type ClickElementRequest struct {
 
 func (x *ClickElementRequest) Reset() {
 	*x = ClickElementRequest{}
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[6]
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -495,7 +440,7 @@ func (x *ClickElementRequest) String() string {
 func (*ClickElementRequest) ProtoMessage() {}
 
 func (x *ClickElementRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[6]
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -508,7 +453,7 @@ func (x *ClickElementRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClickElementRequest.ProtoReflect.Descriptor instead.
 func (*ClickElementRequest) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{6}
+	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ClickElementRequest) GetParent() string {
@@ -581,7 +526,7 @@ type ClickElementResponse struct {
 
 func (x *ClickElementResponse) Reset() {
 	*x = ClickElementResponse{}
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[7]
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -593,7 +538,7 @@ func (x *ClickElementResponse) String() string {
 func (*ClickElementResponse) ProtoMessage() {}
 
 func (x *ClickElementResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[7]
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -606,7 +551,7 @@ func (x *ClickElementResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClickElementResponse.ProtoReflect.Descriptor instead.
 func (*ClickElementResponse) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{7}
+	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ClickElementResponse) GetSuccess() bool {
@@ -623,8 +568,8 @@ func (x *ClickElementResponse) GetElement() *_type.Element {
 	return nil
 }
 
-// Request to set an element's value.
-type SetElementValueRequest struct {
+// Request to write an element's value.
+type WriteElementValueRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Parent context.
 	Parent string `protobuf:"bytes,1,opt,name=parent,proto3" json:"parent,omitempty"`
@@ -632,30 +577,30 @@ type SetElementValueRequest struct {
 	//
 	// Types that are valid to be assigned to Target:
 	//
-	//	*SetElementValueRequest_ElementId
-	//	*SetElementValueRequest_Selector
-	Target isSetElementValueRequest_Target `protobuf_oneof:"target"`
-	// Value to set.
+	//	*WriteElementValueRequest_ElementId
+	//	*WriteElementValueRequest_Selector
+	Target isWriteElementValueRequest_Target `protobuf_oneof:"target"`
+	// Value to write.
 	Value         string `protobuf:"bytes,4,opt,name=value,proto3" json:"value,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *SetElementValueRequest) Reset() {
-	*x = SetElementValueRequest{}
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[8]
+func (x *WriteElementValueRequest) Reset() {
+	*x = WriteElementValueRequest{}
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SetElementValueRequest) String() string {
+func (x *WriteElementValueRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SetElementValueRequest) ProtoMessage() {}
+func (*WriteElementValueRequest) ProtoMessage() {}
 
-func (x *SetElementValueRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[8]
+func (x *WriteElementValueRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -666,70 +611,70 @@ func (x *SetElementValueRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SetElementValueRequest.ProtoReflect.Descriptor instead.
-func (*SetElementValueRequest) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{8}
+// Deprecated: Use WriteElementValueRequest.ProtoReflect.Descriptor instead.
+func (*WriteElementValueRequest) Descriptor() ([]byte, []int) {
+	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *SetElementValueRequest) GetParent() string {
+func (x *WriteElementValueRequest) GetParent() string {
 	if x != nil {
 		return x.Parent
 	}
 	return ""
 }
 
-func (x *SetElementValueRequest) GetTarget() isSetElementValueRequest_Target {
+func (x *WriteElementValueRequest) GetTarget() isWriteElementValueRequest_Target {
 	if x != nil {
 		return x.Target
 	}
 	return nil
 }
 
-func (x *SetElementValueRequest) GetElementId() string {
+func (x *WriteElementValueRequest) GetElementId() string {
 	if x != nil {
-		if x, ok := x.Target.(*SetElementValueRequest_ElementId); ok {
+		if x, ok := x.Target.(*WriteElementValueRequest_ElementId); ok {
 			return x.ElementId
 		}
 	}
 	return ""
 }
 
-func (x *SetElementValueRequest) GetSelector() *_type.ElementSelector {
+func (x *WriteElementValueRequest) GetSelector() *_type.ElementSelector {
 	if x != nil {
-		if x, ok := x.Target.(*SetElementValueRequest_Selector); ok {
+		if x, ok := x.Target.(*WriteElementValueRequest_Selector); ok {
 			return x.Selector
 		}
 	}
 	return nil
 }
 
-func (x *SetElementValueRequest) GetValue() string {
+func (x *WriteElementValueRequest) GetValue() string {
 	if x != nil {
 		return x.Value
 	}
 	return ""
 }
 
-type isSetElementValueRequest_Target interface {
-	isSetElementValueRequest_Target()
+type isWriteElementValueRequest_Target interface {
+	isWriteElementValueRequest_Target()
 }
 
-type SetElementValueRequest_ElementId struct {
+type WriteElementValueRequest_ElementId struct {
 	// Element ID to modify.
 	ElementId string `protobuf:"bytes,2,opt,name=element_id,json=elementId,proto3,oneof"`
 }
 
-type SetElementValueRequest_Selector struct {
+type WriteElementValueRequest_Selector struct {
 	// Selector to find element to modify.
 	Selector *_type.ElementSelector `protobuf:"bytes,3,opt,name=selector,proto3,oneof"`
 }
 
-func (*SetElementValueRequest_ElementId) isSetElementValueRequest_Target() {}
+func (*WriteElementValueRequest_ElementId) isWriteElementValueRequest_Target() {}
 
-func (*SetElementValueRequest_Selector) isSetElementValueRequest_Target() {}
+func (*WriteElementValueRequest_Selector) isWriteElementValueRequest_Target() {}
 
-// Response from setting an element's value.
-type SetElementValueResponse struct {
+// Response from writing an element's value.
+type WriteElementValueResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Whether the operation was successful.
 	Success bool `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
@@ -739,21 +684,21 @@ type SetElementValueResponse struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *SetElementValueResponse) Reset() {
-	*x = SetElementValueResponse{}
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[9]
+func (x *WriteElementValueResponse) Reset() {
+	*x = WriteElementValueResponse{}
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SetElementValueResponse) String() string {
+func (x *WriteElementValueResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SetElementValueResponse) ProtoMessage() {}
+func (*WriteElementValueResponse) ProtoMessage() {}
 
-func (x *SetElementValueResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[9]
+func (x *WriteElementValueResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -764,19 +709,19 @@ func (x *SetElementValueResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SetElementValueResponse.ProtoReflect.Descriptor instead.
-func (*SetElementValueResponse) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{9}
+// Deprecated: Use WriteElementValueResponse.ProtoReflect.Descriptor instead.
+func (*WriteElementValueResponse) Descriptor() ([]byte, []int) {
+	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *SetElementValueResponse) GetSuccess() bool {
+func (x *WriteElementValueResponse) GetSuccess() bool {
 	if x != nil {
 		return x.Success
 	}
 	return false
 }
 
-func (x *SetElementValueResponse) GetElement() *_type.Element {
+func (x *WriteElementValueResponse) GetElement() *_type.Element {
 	if x != nil {
 		return x.Element
 	}
@@ -786,22 +731,16 @@ func (x *SetElementValueResponse) GetElement() *_type.Element {
 // Request to get available actions for an element.
 type GetElementActionsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Parent context.
-	Parent string `protobuf:"bytes,1,opt,name=parent,proto3" json:"parent,omitempty"`
-	// Element ID or selector.
-	//
-	// Types that are valid to be assigned to Target:
-	//
-	//	*GetElementActionsRequest_ElementId
-	//	*GetElementActionsRequest_Selector
-	Target        isGetElementActionsRequest_Target `protobuf_oneof:"target"`
+	// The name of the element to get actions for.
+	// Format: applications/{application}/elements/{element}
+	Name          string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetElementActionsRequest) Reset() {
 	*x = GetElementActionsRequest{}
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[10]
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -813,7 +752,7 @@ func (x *GetElementActionsRequest) String() string {
 func (*GetElementActionsRequest) ProtoMessage() {}
 
 func (x *GetElementActionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[10]
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -826,85 +765,40 @@ func (x *GetElementActionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetElementActionsRequest.ProtoReflect.Descriptor instead.
 func (*GetElementActionsRequest) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{10}
+	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *GetElementActionsRequest) GetParent() string {
+func (x *GetElementActionsRequest) GetName() string {
 	if x != nil {
-		return x.Parent
+		return x.Name
 	}
 	return ""
 }
 
-func (x *GetElementActionsRequest) GetTarget() isGetElementActionsRequest_Target {
-	if x != nil {
-		return x.Target
-	}
-	return nil
-}
-
-func (x *GetElementActionsRequest) GetElementId() string {
-	if x != nil {
-		if x, ok := x.Target.(*GetElementActionsRequest_ElementId); ok {
-			return x.ElementId
-		}
-	}
-	return ""
-}
-
-func (x *GetElementActionsRequest) GetSelector() *_type.ElementSelector {
-	if x != nil {
-		if x, ok := x.Target.(*GetElementActionsRequest_Selector); ok {
-			return x.Selector
-		}
-	}
-	return nil
-}
-
-type isGetElementActionsRequest_Target interface {
-	isGetElementActionsRequest_Target()
-}
-
-type GetElementActionsRequest_ElementId struct {
-	// Element ID.
-	ElementId string `protobuf:"bytes,2,opt,name=element_id,json=elementId,proto3,oneof"`
-}
-
-type GetElementActionsRequest_Selector struct {
-	// Selector to find element.
-	Selector *_type.ElementSelector `protobuf:"bytes,3,opt,name=selector,proto3,oneof"`
-}
-
-func (*GetElementActionsRequest_ElementId) isGetElementActionsRequest_Target() {}
-
-func (*GetElementActionsRequest_Selector) isGetElementActionsRequest_Target() {}
-
-// Response from getting element actions.
-type GetElementActionsResponse struct {
+// Available actions for an element.
+type ElementActions struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Available action names.
-	Actions []string `protobuf:"bytes,1,rep,name=actions,proto3" json:"actions,omitempty"`
-	// The element.
-	Element       *_type.Element `protobuf:"bytes,2,opt,name=element,proto3" json:"element,omitempty"`
+	Actions       []string `protobuf:"bytes,1,rep,name=actions,proto3" json:"actions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetElementActionsResponse) Reset() {
-	*x = GetElementActionsResponse{}
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[11]
+func (x *ElementActions) Reset() {
+	*x = ElementActions{}
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetElementActionsResponse) String() string {
+func (x *ElementActions) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetElementActionsResponse) ProtoMessage() {}
+func (*ElementActions) ProtoMessage() {}
 
-func (x *GetElementActionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[11]
+func (x *ElementActions) ProtoReflect() protoreflect.Message {
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -915,21 +809,14 @@ func (x *GetElementActionsResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetElementActionsResponse.ProtoReflect.Descriptor instead.
-func (*GetElementActionsResponse) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{11}
+// Deprecated: Use ElementActions.ProtoReflect.Descriptor instead.
+func (*ElementActions) Descriptor() ([]byte, []int) {
+	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{10}
 }
 
-func (x *GetElementActionsResponse) GetActions() []string {
+func (x *ElementActions) GetActions() []string {
 	if x != nil {
 		return x.Actions
-	}
-	return nil
-}
-
-func (x *GetElementActionsResponse) GetElement() *_type.Element {
-	if x != nil {
-		return x.Element
 	}
 	return nil
 }
@@ -954,7 +841,7 @@ type PerformElementActionRequest struct {
 
 func (x *PerformElementActionRequest) Reset() {
 	*x = PerformElementActionRequest{}
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[12]
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -966,7 +853,7 @@ func (x *PerformElementActionRequest) String() string {
 func (*PerformElementActionRequest) ProtoMessage() {}
 
 func (x *PerformElementActionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[12]
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -979,7 +866,7 @@ func (x *PerformElementActionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PerformElementActionRequest.ProtoReflect.Descriptor instead.
 func (*PerformElementActionRequest) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{12}
+	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *PerformElementActionRequest) GetParent() string {
@@ -1052,7 +939,7 @@ type PerformElementActionResponse struct {
 
 func (x *PerformElementActionResponse) Reset() {
 	*x = PerformElementActionResponse{}
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[13]
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1064,7 +951,7 @@ func (x *PerformElementActionResponse) String() string {
 func (*PerformElementActionResponse) ProtoMessage() {}
 
 func (x *PerformElementActionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[13]
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1077,7 +964,7 @@ func (x *PerformElementActionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PerformElementActionResponse.ProtoReflect.Descriptor instead.
 func (*PerformElementActionResponse) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{13}
+	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *PerformElementActionResponse) GetSuccess() bool {
@@ -1095,7 +982,7 @@ func (x *PerformElementActionResponse) GetElement() *_type.Element {
 }
 
 // Request to wait for an element to appear (long-running operation).
-type WaitForElementRequest struct {
+type WaitElementRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Parent context.
 	Parent string `protobuf:"bytes,1,opt,name=parent,proto3" json:"parent,omitempty"`
@@ -1109,21 +996,21 @@ type WaitForElementRequest struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *WaitForElementRequest) Reset() {
-	*x = WaitForElementRequest{}
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[14]
+func (x *WaitElementRequest) Reset() {
+	*x = WaitElementRequest{}
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *WaitForElementRequest) String() string {
+func (x *WaitElementRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*WaitForElementRequest) ProtoMessage() {}
+func (*WaitElementRequest) ProtoMessage() {}
 
-func (x *WaitForElementRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[14]
+func (x *WaitElementRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1134,33 +1021,33 @@ func (x *WaitForElementRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use WaitForElementRequest.ProtoReflect.Descriptor instead.
-func (*WaitForElementRequest) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{14}
+// Deprecated: Use WaitElementRequest.ProtoReflect.Descriptor instead.
+func (*WaitElementRequest) Descriptor() ([]byte, []int) {
+	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *WaitForElementRequest) GetParent() string {
+func (x *WaitElementRequest) GetParent() string {
 	if x != nil {
 		return x.Parent
 	}
 	return ""
 }
 
-func (x *WaitForElementRequest) GetSelector() *_type.ElementSelector {
+func (x *WaitElementRequest) GetSelector() *_type.ElementSelector {
 	if x != nil {
 		return x.Selector
 	}
 	return nil
 }
 
-func (x *WaitForElementRequest) GetTimeout() float64 {
+func (x *WaitElementRequest) GetTimeout() float64 {
 	if x != nil {
 		return x.Timeout
 	}
 	return 0
 }
 
-func (x *WaitForElementRequest) GetPollInterval() float64 {
+func (x *WaitElementRequest) GetPollInterval() float64 {
 	if x != nil {
 		return x.PollInterval
 	}
@@ -1168,7 +1055,7 @@ func (x *WaitForElementRequest) GetPollInterval() float64 {
 }
 
 // Response from waiting for an element.
-type WaitForElementResponse struct {
+type WaitElementResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The element that appeared.
 	Element       *_type.Element `protobuf:"bytes,1,opt,name=element,proto3" json:"element,omitempty"`
@@ -1176,21 +1063,21 @@ type WaitForElementResponse struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *WaitForElementResponse) Reset() {
-	*x = WaitForElementResponse{}
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[15]
+func (x *WaitElementResponse) Reset() {
+	*x = WaitElementResponse{}
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *WaitForElementResponse) String() string {
+func (x *WaitElementResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*WaitForElementResponse) ProtoMessage() {}
+func (*WaitElementResponse) ProtoMessage() {}
 
-func (x *WaitForElementResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[15]
+func (x *WaitElementResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1201,20 +1088,20 @@ func (x *WaitForElementResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use WaitForElementResponse.ProtoReflect.Descriptor instead.
-func (*WaitForElementResponse) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{15}
+// Deprecated: Use WaitElementResponse.ProtoReflect.Descriptor instead.
+func (*WaitElementResponse) Descriptor() ([]byte, []int) {
+	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{14}
 }
 
-func (x *WaitForElementResponse) GetElement() *_type.Element {
+func (x *WaitElementResponse) GetElement() *_type.Element {
 	if x != nil {
 		return x.Element
 	}
 	return nil
 }
 
-// Metadata for WaitForElement long-running operation.
-type WaitForElementMetadata struct {
+// Metadata for WaitElement long-running operation.
+type WaitElementMetadata struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The selector being waited for.
 	Selector *_type.ElementSelector `protobuf:"bytes,1,opt,name=selector,proto3" json:"selector,omitempty"`
@@ -1224,21 +1111,21 @@ type WaitForElementMetadata struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *WaitForElementMetadata) Reset() {
-	*x = WaitForElementMetadata{}
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[16]
+func (x *WaitElementMetadata) Reset() {
+	*x = WaitElementMetadata{}
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *WaitForElementMetadata) String() string {
+func (x *WaitElementMetadata) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*WaitForElementMetadata) ProtoMessage() {}
+func (*WaitElementMetadata) ProtoMessage() {}
 
-func (x *WaitForElementMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[16]
+func (x *WaitElementMetadata) ProtoReflect() protoreflect.Message {
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1249,19 +1136,19 @@ func (x *WaitForElementMetadata) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use WaitForElementMetadata.ProtoReflect.Descriptor instead.
-func (*WaitForElementMetadata) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{16}
+// Deprecated: Use WaitElementMetadata.ProtoReflect.Descriptor instead.
+func (*WaitElementMetadata) Descriptor() ([]byte, []int) {
+	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{15}
 }
 
-func (x *WaitForElementMetadata) GetSelector() *_type.ElementSelector {
+func (x *WaitElementMetadata) GetSelector() *_type.ElementSelector {
 	if x != nil {
 		return x.Selector
 	}
 	return nil
 }
 
-func (x *WaitForElementMetadata) GetAttempts() int32 {
+func (x *WaitElementMetadata) GetAttempts() int32 {
 	if x != nil {
 		return x.Attempts
 	}
@@ -1269,7 +1156,7 @@ func (x *WaitForElementMetadata) GetAttempts() int32 {
 }
 
 // Request to wait for an element to reach a specific state.
-type WaitForElementStateRequest struct {
+type WaitElementStateRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Parent context.
 	Parent string `protobuf:"bytes,1,opt,name=parent,proto3" json:"parent,omitempty"`
@@ -1277,9 +1164,9 @@ type WaitForElementStateRequest struct {
 	//
 	// Types that are valid to be assigned to Target:
 	//
-	//	*WaitForElementStateRequest_ElementId
-	//	*WaitForElementStateRequest_Selector
-	Target isWaitForElementStateRequest_Target `protobuf_oneof:"target"`
+	//	*WaitElementStateRequest_ElementId
+	//	*WaitElementStateRequest_Selector
+	Target isWaitElementStateRequest_Target `protobuf_oneof:"target"`
 	// State condition to wait for.
 	Condition *StateCondition `protobuf:"bytes,4,opt,name=condition,proto3" json:"condition,omitempty"`
 	// Maximum time to wait in seconds (default: 30).
@@ -1290,21 +1177,21 @@ type WaitForElementStateRequest struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *WaitForElementStateRequest) Reset() {
-	*x = WaitForElementStateRequest{}
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[17]
+func (x *WaitElementStateRequest) Reset() {
+	*x = WaitElementStateRequest{}
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *WaitForElementStateRequest) String() string {
+func (x *WaitElementStateRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*WaitForElementStateRequest) ProtoMessage() {}
+func (*WaitElementStateRequest) ProtoMessage() {}
 
-func (x *WaitForElementStateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[17]
+func (x *WaitElementStateRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1315,81 +1202,81 @@ func (x *WaitForElementStateRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use WaitForElementStateRequest.ProtoReflect.Descriptor instead.
-func (*WaitForElementStateRequest) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{17}
+// Deprecated: Use WaitElementStateRequest.ProtoReflect.Descriptor instead.
+func (*WaitElementStateRequest) Descriptor() ([]byte, []int) {
+	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{16}
 }
 
-func (x *WaitForElementStateRequest) GetParent() string {
+func (x *WaitElementStateRequest) GetParent() string {
 	if x != nil {
 		return x.Parent
 	}
 	return ""
 }
 
-func (x *WaitForElementStateRequest) GetTarget() isWaitForElementStateRequest_Target {
+func (x *WaitElementStateRequest) GetTarget() isWaitElementStateRequest_Target {
 	if x != nil {
 		return x.Target
 	}
 	return nil
 }
 
-func (x *WaitForElementStateRequest) GetElementId() string {
+func (x *WaitElementStateRequest) GetElementId() string {
 	if x != nil {
-		if x, ok := x.Target.(*WaitForElementStateRequest_ElementId); ok {
+		if x, ok := x.Target.(*WaitElementStateRequest_ElementId); ok {
 			return x.ElementId
 		}
 	}
 	return ""
 }
 
-func (x *WaitForElementStateRequest) GetSelector() *_type.ElementSelector {
+func (x *WaitElementStateRequest) GetSelector() *_type.ElementSelector {
 	if x != nil {
-		if x, ok := x.Target.(*WaitForElementStateRequest_Selector); ok {
+		if x, ok := x.Target.(*WaitElementStateRequest_Selector); ok {
 			return x.Selector
 		}
 	}
 	return nil
 }
 
-func (x *WaitForElementStateRequest) GetCondition() *StateCondition {
+func (x *WaitElementStateRequest) GetCondition() *StateCondition {
 	if x != nil {
 		return x.Condition
 	}
 	return nil
 }
 
-func (x *WaitForElementStateRequest) GetTimeout() float64 {
+func (x *WaitElementStateRequest) GetTimeout() float64 {
 	if x != nil {
 		return x.Timeout
 	}
 	return 0
 }
 
-func (x *WaitForElementStateRequest) GetPollInterval() float64 {
+func (x *WaitElementStateRequest) GetPollInterval() float64 {
 	if x != nil {
 		return x.PollInterval
 	}
 	return 0
 }
 
-type isWaitForElementStateRequest_Target interface {
-	isWaitForElementStateRequest_Target()
+type isWaitElementStateRequest_Target interface {
+	isWaitElementStateRequest_Target()
 }
 
-type WaitForElementStateRequest_ElementId struct {
+type WaitElementStateRequest_ElementId struct {
 	// Element ID.
 	ElementId string `protobuf:"bytes,2,opt,name=element_id,json=elementId,proto3,oneof"`
 }
 
-type WaitForElementStateRequest_Selector struct {
+type WaitElementStateRequest_Selector struct {
 	// Selector to find element.
 	Selector *_type.ElementSelector `protobuf:"bytes,3,opt,name=selector,proto3,oneof"`
 }
 
-func (*WaitForElementStateRequest_ElementId) isWaitForElementStateRequest_Target() {}
+func (*WaitElementStateRequest_ElementId) isWaitElementStateRequest_Target() {}
 
-func (*WaitForElementStateRequest_Selector) isWaitForElementStateRequest_Target() {}
+func (*WaitElementStateRequest_Selector) isWaitElementStateRequest_Target() {}
 
 // State condition for waiting.
 type StateCondition struct {
@@ -1410,7 +1297,7 @@ type StateCondition struct {
 
 func (x *StateCondition) Reset() {
 	*x = StateCondition{}
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[18]
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1422,7 +1309,7 @@ func (x *StateCondition) String() string {
 func (*StateCondition) ProtoMessage() {}
 
 func (x *StateCondition) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[18]
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1435,7 +1322,7 @@ func (x *StateCondition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StateCondition.ProtoReflect.Descriptor instead.
 func (*StateCondition) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{18}
+	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *StateCondition) GetCondition() isStateCondition_Condition {
@@ -1532,17 +1419,19 @@ func (*StateCondition_Attribute) isStateCondition_Condition() {}
 // Attribute condition for waiting.
 type AttributeCondition struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Attribute name.
+	// Resource name.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Attribute name.
+	Attribute string `protobuf:"bytes,2,opt,name=attribute,proto3" json:"attribute,omitempty"`
 	// Expected attribute value.
-	Value         string `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	Value         string `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *AttributeCondition) Reset() {
 	*x = AttributeCondition{}
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[19]
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1554,7 +1443,7 @@ func (x *AttributeCondition) String() string {
 func (*AttributeCondition) ProtoMessage() {}
 
 func (x *AttributeCondition) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[19]
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1567,12 +1456,19 @@ func (x *AttributeCondition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AttributeCondition.ProtoReflect.Descriptor instead.
 func (*AttributeCondition) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{19}
+	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *AttributeCondition) GetName() string {
 	if x != nil {
 		return x.Name
+	}
+	return ""
+}
+
+func (x *AttributeCondition) GetAttribute() string {
+	if x != nil {
+		return x.Attribute
 	}
 	return ""
 }
@@ -1585,7 +1481,7 @@ func (x *AttributeCondition) GetValue() string {
 }
 
 // Response from waiting for element state.
-type WaitForElementStateResponse struct {
+type WaitElementStateResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The element in the expected state.
 	Element       *_type.Element `protobuf:"bytes,1,opt,name=element,proto3" json:"element,omitempty"`
@@ -1593,21 +1489,21 @@ type WaitForElementStateResponse struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *WaitForElementStateResponse) Reset() {
-	*x = WaitForElementStateResponse{}
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[20]
+func (x *WaitElementStateResponse) Reset() {
+	*x = WaitElementStateResponse{}
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *WaitForElementStateResponse) String() string {
+func (x *WaitElementStateResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*WaitForElementStateResponse) ProtoMessage() {}
+func (*WaitElementStateResponse) ProtoMessage() {}
 
-func (x *WaitForElementStateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[20]
+func (x *WaitElementStateResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1618,20 +1514,20 @@ func (x *WaitForElementStateResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use WaitForElementStateResponse.ProtoReflect.Descriptor instead.
-func (*WaitForElementStateResponse) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{20}
+// Deprecated: Use WaitElementStateResponse.ProtoReflect.Descriptor instead.
+func (*WaitElementStateResponse) Descriptor() ([]byte, []int) {
+	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{19}
 }
 
-func (x *WaitForElementStateResponse) GetElement() *_type.Element {
+func (x *WaitElementStateResponse) GetElement() *_type.Element {
 	if x != nil {
 		return x.Element
 	}
 	return nil
 }
 
-// Metadata for WaitForElementState operation.
-type WaitForElementStateMetadata struct {
+// Metadata for WaitElementState operation.
+type WaitElementStateMetadata struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The condition being waited for.
 	Condition *StateCondition `protobuf:"bytes,1,opt,name=condition,proto3" json:"condition,omitempty"`
@@ -1641,21 +1537,21 @@ type WaitForElementStateMetadata struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *WaitForElementStateMetadata) Reset() {
-	*x = WaitForElementStateMetadata{}
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[21]
+func (x *WaitElementStateMetadata) Reset() {
+	*x = WaitElementStateMetadata{}
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *WaitForElementStateMetadata) String() string {
+func (x *WaitElementStateMetadata) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*WaitForElementStateMetadata) ProtoMessage() {}
+func (*WaitElementStateMetadata) ProtoMessage() {}
 
-func (x *WaitForElementStateMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[21]
+func (x *WaitElementStateMetadata) ProtoReflect() protoreflect.Message {
+	mi := &file_macosusesdk_v1_element_methods_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1666,19 +1562,19 @@ func (x *WaitForElementStateMetadata) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use WaitForElementStateMetadata.ProtoReflect.Descriptor instead.
-func (*WaitForElementStateMetadata) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{21}
+// Deprecated: Use WaitElementStateMetadata.ProtoReflect.Descriptor instead.
+func (*WaitElementStateMetadata) Descriptor() ([]byte, []int) {
+	return file_macosusesdk_v1_element_methods_proto_rawDescGZIP(), []int{20}
 }
 
-func (x *WaitForElementStateMetadata) GetCondition() *StateCondition {
+func (x *WaitElementStateMetadata) GetCondition() *StateCondition {
 	if x != nil {
 		return x.Condition
 	}
 	return nil
 }
 
-func (x *WaitForElementStateMetadata) GetAttempts() int32 {
+func (x *WaitElementStateMetadata) GetAttempts() int32 {
 	if x != nil {
 		return x.Attempts
 	}
@@ -1700,25 +1596,21 @@ const file_macosusesdk_v1_element_methods_proto_rawDesc = "" +
 	"\fvisible_only\x18\x05 \x01(\bB\x03\xe0A\x01R\vvisibleOnly\"u\n" +
 	"\x14FindElementsResponse\x125\n" +
 	"\belements\x18\x01 \x03(\v2\x19.macosusesdk.type.ElementR\belements\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xff\x01\n" +
-	"\x1bFindElementsInRegionRequest\x12!\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xfd\x01\n" +
+	"\x19FindRegionElementsRequest\x12!\n" +
 	"\x06parent\x18\x01 \x01(\tB\t\xe0A\x02\xfaA\x03\n" +
 	"\x01*R\x06parent\x123\n" +
 	"\x06region\x18\x02 \x01(\v2\x16.macosusesdk.v1.RegionB\x03\xe0A\x02R\x06region\x12B\n" +
 	"\bselector\x18\x03 \x01(\v2!.macosusesdk.type.ElementSelectorB\x03\xe0A\x01R\bselector\x12 \n" +
 	"\tpage_size\x18\x04 \x01(\x05B\x03\xe0A\x01R\bpageSize\x12\"\n" +
 	"\n" +
-	"page_token\x18\x05 \x01(\tB\x03\xe0A\x01R\tpageToken\"}\n" +
-	"\x1cFindElementsInRegionResponse\x125\n" +
+	"page_token\x18\x05 \x01(\tB\x03\xe0A\x01R\tpageToken\"{\n" +
+	"\x1aFindRegionElementsResponse\x125\n" +
 	"\belements\x18\x01 \x03(\v2\x19.macosusesdk.type.ElementR\belements\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"Z\n" +
-	"\x11GetElementRequest\x12!\n" +
-	"\x06parent\x18\x01 \x01(\tB\t\xe0A\x02\xfaA\x03\n" +
-	"\x01*R\x06parent\x12\"\n" +
-	"\n" +
-	"element_id\x18\x02 \x01(\tB\x03\xe0A\x02R\telementId\"I\n" +
-	"\x12GetElementResponse\x123\n" +
-	"\aelement\x18\x01 \x01(\v2\x19.macosusesdk.type.ElementR\aelement\"\xe4\x02\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"S\n" +
+	"\x11GetElementRequest\x12>\n" +
+	"\x04name\x18\x01 \x01(\tB*\xe0A\x02\xfaA$\n" +
+	"\"macosusesdk.googleapis.com/ElementR\x04name\"\xe4\x02\n" +
 	"\x13ClickElementRequest\x12!\n" +
 	"\x06parent\x18\x01 \x01(\tB\t\xe0A\x02\xfaA\x03\n" +
 	"\x01*R\x06parent\x12\x1f\n" +
@@ -1735,28 +1627,23 @@ const file_macosusesdk_v1_element_methods_proto_rawDesc = "" +
 	"\x06target\"e\n" +
 	"\x14ClickElementResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x123\n" +
-	"\aelement\x18\x02 \x01(\v2\x19.macosusesdk.type.ElementR\aelement\"\xc2\x01\n" +
-	"\x16SetElementValueRequest\x12!\n" +
+	"\aelement\x18\x02 \x01(\v2\x19.macosusesdk.type.ElementR\aelement\"\xc4\x01\n" +
+	"\x18WriteElementValueRequest\x12!\n" +
 	"\x06parent\x18\x01 \x01(\tB\t\xe0A\x02\xfaA\x03\n" +
 	"\x01*R\x06parent\x12\x1f\n" +
 	"\n" +
 	"element_id\x18\x02 \x01(\tH\x00R\telementId\x12?\n" +
 	"\bselector\x18\x03 \x01(\v2!.macosusesdk.type.ElementSelectorH\x00R\bselector\x12\x19\n" +
-	"\x05value\x18\x04 \x01(\tB\x03\xe0A\x02R\x05valueB\b\n" +
-	"\x06target\"h\n" +
-	"\x17SetElementValueResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\x123\n" +
-	"\aelement\x18\x02 \x01(\v2\x19.macosusesdk.type.ElementR\aelement\"\xa9\x01\n" +
-	"\x18GetElementActionsRequest\x12!\n" +
-	"\x06parent\x18\x01 \x01(\tB\t\xe0A\x02\xfaA\x03\n" +
-	"\x01*R\x06parent\x12\x1f\n" +
-	"\n" +
-	"element_id\x18\x02 \x01(\tH\x00R\telementId\x12?\n" +
-	"\bselector\x18\x03 \x01(\v2!.macosusesdk.type.ElementSelectorH\x00R\bselectorB\b\n" +
+	"\x05value\x18\x04 \x01(\tB\x03\xe0A\x01R\x05valueB\b\n" +
 	"\x06target\"j\n" +
-	"\x19GetElementActionsResponse\x12\x18\n" +
-	"\aactions\x18\x01 \x03(\tR\aactions\x123\n" +
-	"\aelement\x18\x02 \x01(\v2\x19.macosusesdk.type.ElementR\aelement\"\xc9\x01\n" +
+	"\x19WriteElementValueResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x123\n" +
+	"\aelement\x18\x02 \x01(\v2\x19.macosusesdk.type.ElementR\aelement\"Z\n" +
+	"\x18GetElementActionsRequest\x12>\n" +
+	"\x04name\x18\x01 \x01(\tB*\xe0A\x02\xfaA$\n" +
+	"\"macosusesdk.googleapis.com/ElementR\x04name\"*\n" +
+	"\x0eElementActions\x12\x18\n" +
+	"\aactions\x18\x01 \x03(\tR\aactions\"\xc9\x01\n" +
 	"\x1bPerformElementActionRequest\x12!\n" +
 	"\x06parent\x18\x01 \x01(\tB\t\xe0A\x02\xfaA\x03\n" +
 	"\x01*R\x06parent\x12\x1f\n" +
@@ -1767,19 +1654,19 @@ const file_macosusesdk_v1_element_methods_proto_rawDesc = "" +
 	"\x06target\"m\n" +
 	"\x1cPerformElementActionResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x123\n" +
-	"\aelement\x18\x02 \x01(\v2\x19.macosusesdk.type.ElementR\aelement\"\xc7\x01\n" +
-	"\x15WaitForElementRequest\x12!\n" +
+	"\aelement\x18\x02 \x01(\v2\x19.macosusesdk.type.ElementR\aelement\"\xc4\x01\n" +
+	"\x12WaitElementRequest\x12!\n" +
 	"\x06parent\x18\x01 \x01(\tB\t\xe0A\x02\xfaA\x03\n" +
 	"\x01*R\x06parent\x12B\n" +
 	"\bselector\x18\x02 \x01(\v2!.macosusesdk.type.ElementSelectorB\x03\xe0A\x02R\bselector\x12\x1d\n" +
 	"\atimeout\x18\x03 \x01(\x01B\x03\xe0A\x01R\atimeout\x12(\n" +
-	"\rpoll_interval\x18\x04 \x01(\x01B\x03\xe0A\x01R\fpollInterval\"M\n" +
-	"\x16WaitForElementResponse\x123\n" +
-	"\aelement\x18\x01 \x01(\v2\x19.macosusesdk.type.ElementR\aelement\"s\n" +
-	"\x16WaitForElementMetadata\x12=\n" +
+	"\rpoll_interval\x18\x04 \x01(\x01B\x03\xe0A\x01R\fpollInterval\"J\n" +
+	"\x13WaitElementResponse\x123\n" +
+	"\aelement\x18\x01 \x01(\v2\x19.macosusesdk.type.ElementR\aelement\"p\n" +
+	"\x13WaitElementMetadata\x12=\n" +
 	"\bselector\x18\x01 \x01(\v2!.macosusesdk.type.ElementSelectorR\bselector\x12\x1a\n" +
-	"\battempts\x18\x02 \x01(\x05R\battempts\"\xb7\x02\n" +
-	"\x1aWaitForElementStateRequest\x12!\n" +
+	"\battempts\x18\x02 \x01(\x05R\battempts\"\xb4\x02\n" +
+	"\x17WaitElementStateRequest\x12!\n" +
 	"\x06parent\x18\x01 \x01(\tB\t\xe0A\x02\xfaA\x03\n" +
 	"\x01*R\x06parent\x12\x1f\n" +
 	"\n" +
@@ -1796,13 +1683,15 @@ const file_macosusesdk_v1_element_methods_proto_rawDesc = "" +
 	"textEquals\x12%\n" +
 	"\rtext_contains\x18\x04 \x01(\tH\x00R\ftextContains\x12B\n" +
 	"\tattribute\x18\x05 \x01(\v2\".macosusesdk.v1.AttributeConditionH\x00R\tattributeB\v\n" +
-	"\tcondition\">\n" +
-	"\x12AttributeCondition\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value\"R\n" +
-	"\x1bWaitForElementStateResponse\x123\n" +
-	"\aelement\x18\x01 \x01(\v2\x19.macosusesdk.type.ElementR\aelement\"w\n" +
-	"\x1bWaitForElementStateMetadata\x12<\n" +
+	"\tcondition\"\xee\x01\n" +
+	"\x12AttributeCondition\x12\x17\n" +
+	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12!\n" +
+	"\tattribute\x18\x02 \x01(\tB\x03\xe0A\x02R\tattribute\x12\x19\n" +
+	"\x05value\x18\x03 \x01(\tB\x03\xe0A\x02R\x05value:\x80\x01\xeaA}\n" +
+	"'macos.googleapis.com/AttributeCondition\x12)attributeConditions/{attribute_condition}*\x13attributeConditions2\x12attributeCondition\"O\n" +
+	"\x18WaitElementStateResponse\x123\n" +
+	"\aelement\x18\x01 \x01(\v2\x19.macosusesdk.type.ElementR\aelement\"t\n" +
+	"\x18WaitElementStateMetadata\x12<\n" +
 	"\tcondition\x18\x01 \x01(\v2\x1e.macosusesdk.v1.StateConditionR\tcondition\x12\x1a\n" +
 	"\battempts\x18\x02 \x01(\x05R\battemptsB\xca\x01\n" +
 	"\x12com.macosusesdk.v1B\x13ElementMethodsProtoP\x01ZFgithub.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1\xa2\x02\x03MXX\xaa\x02\x0eMacosusesdk.V1\xca\x02\x0eMacosusesdk\\V1\xe2\x02\x1aMacosusesdk\\V1\\GPBMetadata\xea\x02\x0fMacosusesdk::V1b\x06proto3"
@@ -1820,64 +1709,60 @@ func file_macosusesdk_v1_element_methods_proto_rawDescGZIP() []byte {
 }
 
 var file_macosusesdk_v1_element_methods_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_macosusesdk_v1_element_methods_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
+var file_macosusesdk_v1_element_methods_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_macosusesdk_v1_element_methods_proto_goTypes = []any{
 	(ClickElementRequest_ClickType)(0),   // 0: macosusesdk.v1.ClickElementRequest.ClickType
 	(*FindElementsRequest)(nil),          // 1: macosusesdk.v1.FindElementsRequest
 	(*FindElementsResponse)(nil),         // 2: macosusesdk.v1.FindElementsResponse
-	(*FindElementsInRegionRequest)(nil),  // 3: macosusesdk.v1.FindElementsInRegionRequest
-	(*FindElementsInRegionResponse)(nil), // 4: macosusesdk.v1.FindElementsInRegionResponse
+	(*FindRegionElementsRequest)(nil),    // 3: macosusesdk.v1.FindRegionElementsRequest
+	(*FindRegionElementsResponse)(nil),   // 4: macosusesdk.v1.FindRegionElementsResponse
 	(*GetElementRequest)(nil),            // 5: macosusesdk.v1.GetElementRequest
-	(*GetElementResponse)(nil),           // 6: macosusesdk.v1.GetElementResponse
-	(*ClickElementRequest)(nil),          // 7: macosusesdk.v1.ClickElementRequest
-	(*ClickElementResponse)(nil),         // 8: macosusesdk.v1.ClickElementResponse
-	(*SetElementValueRequest)(nil),       // 9: macosusesdk.v1.SetElementValueRequest
-	(*SetElementValueResponse)(nil),      // 10: macosusesdk.v1.SetElementValueResponse
-	(*GetElementActionsRequest)(nil),     // 11: macosusesdk.v1.GetElementActionsRequest
-	(*GetElementActionsResponse)(nil),    // 12: macosusesdk.v1.GetElementActionsResponse
-	(*PerformElementActionRequest)(nil),  // 13: macosusesdk.v1.PerformElementActionRequest
-	(*PerformElementActionResponse)(nil), // 14: macosusesdk.v1.PerformElementActionResponse
-	(*WaitForElementRequest)(nil),        // 15: macosusesdk.v1.WaitForElementRequest
-	(*WaitForElementResponse)(nil),       // 16: macosusesdk.v1.WaitForElementResponse
-	(*WaitForElementMetadata)(nil),       // 17: macosusesdk.v1.WaitForElementMetadata
-	(*WaitForElementStateRequest)(nil),   // 18: macosusesdk.v1.WaitForElementStateRequest
-	(*StateCondition)(nil),               // 19: macosusesdk.v1.StateCondition
-	(*AttributeCondition)(nil),           // 20: macosusesdk.v1.AttributeCondition
-	(*WaitForElementStateResponse)(nil),  // 21: macosusesdk.v1.WaitForElementStateResponse
-	(*WaitForElementStateMetadata)(nil),  // 22: macosusesdk.v1.WaitForElementStateMetadata
-	(*_type.ElementSelector)(nil),        // 23: macosusesdk.type.ElementSelector
-	(*_type.Element)(nil),                // 24: macosusesdk.type.Element
-	(*Region)(nil),                       // 25: macosusesdk.v1.Region
+	(*ClickElementRequest)(nil),          // 6: macosusesdk.v1.ClickElementRequest
+	(*ClickElementResponse)(nil),         // 7: macosusesdk.v1.ClickElementResponse
+	(*WriteElementValueRequest)(nil),     // 8: macosusesdk.v1.WriteElementValueRequest
+	(*WriteElementValueResponse)(nil),    // 9: macosusesdk.v1.WriteElementValueResponse
+	(*GetElementActionsRequest)(nil),     // 10: macosusesdk.v1.GetElementActionsRequest
+	(*ElementActions)(nil),               // 11: macosusesdk.v1.ElementActions
+	(*PerformElementActionRequest)(nil),  // 12: macosusesdk.v1.PerformElementActionRequest
+	(*PerformElementActionResponse)(nil), // 13: macosusesdk.v1.PerformElementActionResponse
+	(*WaitElementRequest)(nil),           // 14: macosusesdk.v1.WaitElementRequest
+	(*WaitElementResponse)(nil),          // 15: macosusesdk.v1.WaitElementResponse
+	(*WaitElementMetadata)(nil),          // 16: macosusesdk.v1.WaitElementMetadata
+	(*WaitElementStateRequest)(nil),      // 17: macosusesdk.v1.WaitElementStateRequest
+	(*StateCondition)(nil),               // 18: macosusesdk.v1.StateCondition
+	(*AttributeCondition)(nil),           // 19: macosusesdk.v1.AttributeCondition
+	(*WaitElementStateResponse)(nil),     // 20: macosusesdk.v1.WaitElementStateResponse
+	(*WaitElementStateMetadata)(nil),     // 21: macosusesdk.v1.WaitElementStateMetadata
+	(*_type.ElementSelector)(nil),        // 22: macosusesdk.type.ElementSelector
+	(*_type.Element)(nil),                // 23: macosusesdk.type.Element
+	(*Region)(nil),                       // 24: macosusesdk.v1.Region
 }
 var file_macosusesdk_v1_element_methods_proto_depIdxs = []int32{
-	23, // 0: macosusesdk.v1.FindElementsRequest.selector:type_name -> macosusesdk.type.ElementSelector
-	24, // 1: macosusesdk.v1.FindElementsResponse.elements:type_name -> macosusesdk.type.Element
-	25, // 2: macosusesdk.v1.FindElementsInRegionRequest.region:type_name -> macosusesdk.v1.Region
-	23, // 3: macosusesdk.v1.FindElementsInRegionRequest.selector:type_name -> macosusesdk.type.ElementSelector
-	24, // 4: macosusesdk.v1.FindElementsInRegionResponse.elements:type_name -> macosusesdk.type.Element
-	24, // 5: macosusesdk.v1.GetElementResponse.element:type_name -> macosusesdk.type.Element
-	23, // 6: macosusesdk.v1.ClickElementRequest.selector:type_name -> macosusesdk.type.ElementSelector
-	0,  // 7: macosusesdk.v1.ClickElementRequest.click_type:type_name -> macosusesdk.v1.ClickElementRequest.ClickType
-	24, // 8: macosusesdk.v1.ClickElementResponse.element:type_name -> macosusesdk.type.Element
-	23, // 9: macosusesdk.v1.SetElementValueRequest.selector:type_name -> macosusesdk.type.ElementSelector
-	24, // 10: macosusesdk.v1.SetElementValueResponse.element:type_name -> macosusesdk.type.Element
-	23, // 11: macosusesdk.v1.GetElementActionsRequest.selector:type_name -> macosusesdk.type.ElementSelector
-	24, // 12: macosusesdk.v1.GetElementActionsResponse.element:type_name -> macosusesdk.type.Element
-	23, // 13: macosusesdk.v1.PerformElementActionRequest.selector:type_name -> macosusesdk.type.ElementSelector
-	24, // 14: macosusesdk.v1.PerformElementActionResponse.element:type_name -> macosusesdk.type.Element
-	23, // 15: macosusesdk.v1.WaitForElementRequest.selector:type_name -> macosusesdk.type.ElementSelector
-	24, // 16: macosusesdk.v1.WaitForElementResponse.element:type_name -> macosusesdk.type.Element
-	23, // 17: macosusesdk.v1.WaitForElementMetadata.selector:type_name -> macosusesdk.type.ElementSelector
-	23, // 18: macosusesdk.v1.WaitForElementStateRequest.selector:type_name -> macosusesdk.type.ElementSelector
-	19, // 19: macosusesdk.v1.WaitForElementStateRequest.condition:type_name -> macosusesdk.v1.StateCondition
-	20, // 20: macosusesdk.v1.StateCondition.attribute:type_name -> macosusesdk.v1.AttributeCondition
-	24, // 21: macosusesdk.v1.WaitForElementStateResponse.element:type_name -> macosusesdk.type.Element
-	19, // 22: macosusesdk.v1.WaitForElementStateMetadata.condition:type_name -> macosusesdk.v1.StateCondition
-	23, // [23:23] is the sub-list for method output_type
-	23, // [23:23] is the sub-list for method input_type
-	23, // [23:23] is the sub-list for extension type_name
-	23, // [23:23] is the sub-list for extension extendee
-	0,  // [0:23] is the sub-list for field type_name
+	22, // 0: macosusesdk.v1.FindElementsRequest.selector:type_name -> macosusesdk.type.ElementSelector
+	23, // 1: macosusesdk.v1.FindElementsResponse.elements:type_name -> macosusesdk.type.Element
+	24, // 2: macosusesdk.v1.FindRegionElementsRequest.region:type_name -> macosusesdk.v1.Region
+	22, // 3: macosusesdk.v1.FindRegionElementsRequest.selector:type_name -> macosusesdk.type.ElementSelector
+	23, // 4: macosusesdk.v1.FindRegionElementsResponse.elements:type_name -> macosusesdk.type.Element
+	22, // 5: macosusesdk.v1.ClickElementRequest.selector:type_name -> macosusesdk.type.ElementSelector
+	0,  // 6: macosusesdk.v1.ClickElementRequest.click_type:type_name -> macosusesdk.v1.ClickElementRequest.ClickType
+	23, // 7: macosusesdk.v1.ClickElementResponse.element:type_name -> macosusesdk.type.Element
+	22, // 8: macosusesdk.v1.WriteElementValueRequest.selector:type_name -> macosusesdk.type.ElementSelector
+	23, // 9: macosusesdk.v1.WriteElementValueResponse.element:type_name -> macosusesdk.type.Element
+	22, // 10: macosusesdk.v1.PerformElementActionRequest.selector:type_name -> macosusesdk.type.ElementSelector
+	23, // 11: macosusesdk.v1.PerformElementActionResponse.element:type_name -> macosusesdk.type.Element
+	22, // 12: macosusesdk.v1.WaitElementRequest.selector:type_name -> macosusesdk.type.ElementSelector
+	23, // 13: macosusesdk.v1.WaitElementResponse.element:type_name -> macosusesdk.type.Element
+	22, // 14: macosusesdk.v1.WaitElementMetadata.selector:type_name -> macosusesdk.type.ElementSelector
+	22, // 15: macosusesdk.v1.WaitElementStateRequest.selector:type_name -> macosusesdk.type.ElementSelector
+	18, // 16: macosusesdk.v1.WaitElementStateRequest.condition:type_name -> macosusesdk.v1.StateCondition
+	19, // 17: macosusesdk.v1.StateCondition.attribute:type_name -> macosusesdk.v1.AttributeCondition
+	23, // 18: macosusesdk.v1.WaitElementStateResponse.element:type_name -> macosusesdk.type.Element
+	18, // 19: macosusesdk.v1.WaitElementStateMetadata.condition:type_name -> macosusesdk.v1.StateCondition
+	20, // [20:20] is the sub-list for method output_type
+	20, // [20:20] is the sub-list for method input_type
+	20, // [20:20] is the sub-list for extension type_name
+	20, // [20:20] is the sub-list for extension extendee
+	0,  // [0:20] is the sub-list for field type_name
 }
 
 func init() { file_macosusesdk_v1_element_methods_proto_init() }
@@ -1886,27 +1771,23 @@ func file_macosusesdk_v1_element_methods_proto_init() {
 		return
 	}
 	file_macosusesdk_v1_screenshot_proto_init()
-	file_macosusesdk_v1_element_methods_proto_msgTypes[6].OneofWrappers = []any{
+	file_macosusesdk_v1_element_methods_proto_msgTypes[5].OneofWrappers = []any{
 		(*ClickElementRequest_ElementId)(nil),
 		(*ClickElementRequest_Selector)(nil),
 	}
-	file_macosusesdk_v1_element_methods_proto_msgTypes[8].OneofWrappers = []any{
-		(*SetElementValueRequest_ElementId)(nil),
-		(*SetElementValueRequest_Selector)(nil),
+	file_macosusesdk_v1_element_methods_proto_msgTypes[7].OneofWrappers = []any{
+		(*WriteElementValueRequest_ElementId)(nil),
+		(*WriteElementValueRequest_Selector)(nil),
 	}
-	file_macosusesdk_v1_element_methods_proto_msgTypes[10].OneofWrappers = []any{
-		(*GetElementActionsRequest_ElementId)(nil),
-		(*GetElementActionsRequest_Selector)(nil),
-	}
-	file_macosusesdk_v1_element_methods_proto_msgTypes[12].OneofWrappers = []any{
+	file_macosusesdk_v1_element_methods_proto_msgTypes[11].OneofWrappers = []any{
 		(*PerformElementActionRequest_ElementId)(nil),
 		(*PerformElementActionRequest_Selector)(nil),
 	}
-	file_macosusesdk_v1_element_methods_proto_msgTypes[17].OneofWrappers = []any{
-		(*WaitForElementStateRequest_ElementId)(nil),
-		(*WaitForElementStateRequest_Selector)(nil),
+	file_macosusesdk_v1_element_methods_proto_msgTypes[16].OneofWrappers = []any{
+		(*WaitElementStateRequest_ElementId)(nil),
+		(*WaitElementStateRequest_Selector)(nil),
 	}
-	file_macosusesdk_v1_element_methods_proto_msgTypes[18].OneofWrappers = []any{
+	file_macosusesdk_v1_element_methods_proto_msgTypes[17].OneofWrappers = []any{
 		(*StateCondition_Enabled)(nil),
 		(*StateCondition_Focused)(nil),
 		(*StateCondition_TextEquals)(nil),
@@ -1919,7 +1800,7 @@ func file_macosusesdk_v1_element_methods_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_macosusesdk_v1_element_methods_proto_rawDesc), len(file_macosusesdk_v1_element_methods_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   22,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

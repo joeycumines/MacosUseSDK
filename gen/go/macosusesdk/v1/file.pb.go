@@ -343,10 +343,10 @@ type SelectFileRequest struct {
 	Application string `protobuf:"bytes,1,opt,name=application,proto3" json:"application,omitempty"`
 	// File path to select.
 	FilePath string `protobuf:"bytes,2,opt,name=file_path,json=filePath,proto3" json:"file_path,omitempty"`
-	// Whether to reveal in Finder after selection.
-	RevealInFinder bool `protobuf:"varint,3,opt,name=reveal_in_finder,json=revealInFinder,proto3" json:"reveal_in_finder,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// Whether to reveal Finder after selection.
+	RevealFinder  bool `protobuf:"varint,3,opt,name=reveal_finder,json=revealFinder,proto3" json:"reveal_finder,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *SelectFileRequest) Reset() {
@@ -393,9 +393,9 @@ func (x *SelectFileRequest) GetFilePath() string {
 	return ""
 }
 
-func (x *SelectFileRequest) GetRevealInFinder() bool {
+func (x *SelectFileRequest) GetRevealFinder() bool {
 	if x != nil {
-		return x.RevealInFinder
+		return x.RevealFinder
 	}
 	return false
 }
@@ -471,10 +471,10 @@ type SelectDirectoryRequest struct {
 	Application string `protobuf:"bytes,1,opt,name=application,proto3" json:"application,omitempty"`
 	// Directory path to select.
 	DirectoryPath string `protobuf:"bytes,2,opt,name=directory_path,json=directoryPath,proto3" json:"directory_path,omitempty"`
-	// Whether to create directory if it doesn't exist.
-	CreateIfMissing bool `protobuf:"varint,3,opt,name=create_if_missing,json=createIfMissing,proto3" json:"create_if_missing,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// Whether to create directory when it doesn't exist.
+	CreateMissing bool `protobuf:"varint,3,opt,name=create_missing,json=createMissing,proto3" json:"create_missing,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *SelectDirectoryRequest) Reset() {
@@ -521,9 +521,9 @@ func (x *SelectDirectoryRequest) GetDirectoryPath() string {
 	return ""
 }
 
-func (x *SelectDirectoryRequest) GetCreateIfMissing() bool {
+func (x *SelectDirectoryRequest) GetCreateMissing() bool {
 	if x != nil {
-		return x.CreateIfMissing
+		return x.CreateMissing
 	}
 	return false
 }
@@ -767,21 +767,21 @@ const file_macosusesdk_v1_file_proto_rawDesc = "" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1d\n" +
 	"\n" +
 	"saved_path\x18\x02 \x01(\tR\tsavedPath\x12\x14\n" +
-	"\x05error\x18\x03 \x01(\tR\x05error\"\xb0\x01\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error\"\xab\x01\n" +
 	"\x11SelectFileRequest\x12J\n" +
 	"\vapplication\x18\x01 \x01(\tB(\xe0A\x02\xfaA\"\n" +
 	" macos.googleapis.com/ApplicationR\vapplication\x12 \n" +
-	"\tfile_path\x18\x02 \x01(\tB\x03\xe0A\x02R\bfilePath\x12-\n" +
-	"\x10reveal_in_finder\x18\x03 \x01(\bB\x03\xe0A\x01R\x0erevealInFinder\"i\n" +
+	"\tfile_path\x18\x02 \x01(\tB\x03\xe0A\x02R\bfilePath\x12(\n" +
+	"\rreveal_finder\x18\x03 \x01(\bB\x03\xe0A\x01R\frevealFinder\"i\n" +
 	"\x12SelectFileResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12#\n" +
 	"\rselected_path\x18\x02 \x01(\tR\fselectedPath\x12\x14\n" +
-	"\x05error\x18\x03 \x01(\tR\x05error\"\xc1\x01\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error\"\xbc\x01\n" +
 	"\x16SelectDirectoryRequest\x12J\n" +
 	"\vapplication\x18\x01 \x01(\tB(\xe0A\x02\xfaA\"\n" +
 	" macos.googleapis.com/ApplicationR\vapplication\x12*\n" +
-	"\x0edirectory_path\x18\x02 \x01(\tB\x03\xe0A\x02R\rdirectoryPath\x12/\n" +
-	"\x11create_if_missing\x18\x03 \x01(\bB\x03\xe0A\x01R\x0fcreateIfMissing\"\x88\x01\n" +
+	"\x0edirectory_path\x18\x02 \x01(\tB\x03\xe0A\x02R\rdirectoryPath\x12*\n" +
+	"\x0ecreate_missing\x18\x03 \x01(\bB\x03\xe0A\x01R\rcreateMissing\"\x88\x01\n" +
 	"\x17SelectDirectoryResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12#\n" +
 	"\rselected_path\x18\x02 \x01(\tR\fselectedPath\x12\x18\n" +

@@ -8,27 +8,13 @@ package macosusesdk.v1;
 
 import "google/api/annotations.proto";
 import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
 import "google/protobuf/duration.proto";
 
 option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
 option java_multiple_files = true;
 option java_outer_classname = "ScriptProto";
 option java_package = "com.macosusesdk.v1";
-
-// Script type enumeration.
-enum ScriptType {
-  // Default unspecified type.
-  SCRIPT_TYPE_UNSPECIFIED = 0;
-
-  // AppleScript.
-  SCRIPT_TYPE_APPLESCRIPT = 1;
-
-  // JavaScript for Automation (JXA).
-  SCRIPT_TYPE_JXA = 2;
-
-  // Shell script (bash).
-  SCRIPT_TYPE_SHELL = 3;
-}
 
 // Request to execute an AppleScript.
 message ExecuteAppleScriptRequest {
@@ -53,12 +39,12 @@ message ExecuteAppleScriptResponse {
   // Error message if failed.
   string error = 3;
 
-  // Execution time.
-  google.protobuf.Duration execution_time = 4;
+  // Execution duration.
+  google.protobuf.Duration execution_duration = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to execute JavaScript for Automation (JXA).
-message ExecuteJavaScriptForAutomationRequest {
+message ExecuteJavaScriptRequest {
   // JavaScript source code.
   string script = 1 [(google.api.field_behavior) = REQUIRED];
 
@@ -70,7 +56,7 @@ message ExecuteJavaScriptForAutomationRequest {
 }
 
 // Response from executing JXA.
-message ExecuteJavaScriptForAutomationResponse {
+message ExecuteJavaScriptResponse {
   // Whether execution succeeded.
   bool success = 1;
 
@@ -80,8 +66,8 @@ message ExecuteJavaScriptForAutomationResponse {
   // Error message if failed.
   string error = 3;
 
-  // Execution time.
-  google.protobuf.Duration execution_time = 4;
+  // Execution duration.
+  google.protobuf.Duration execution_duration = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to execute a shell command.
@@ -122,11 +108,11 @@ message ExecuteShellCommandResponse {
   // Exit code from command.
   int32 exit_code = 4;
 
-  // Execution time.
-  google.protobuf.Duration execution_time = 5;
+  // Execution duration.
+  google.protobuf.Duration execution_duration = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Error message if execution failed (not command failure).
-  string error = 6;
+  string error = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to validate a script without executing.
@@ -152,12 +138,16 @@ message ValidateScriptResponse {
 
 // Request to get available scripting dictionaries.
 message GetScriptingDictionariesRequest {
-  // Application to get dictionary for (optional, empty = all).
-  string application = 1 [(google.api.field_behavior) = OPTIONAL];
+  // The name of the scripting dictionaries resource.
+  // Format: scriptingDictionaries (singleton)
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "*"}
+  ];
 }
 
-// Response with scripting dictionaries.
-message GetScriptingDictionariesResponse {
+// Scripting dictionaries.
+message ScriptingDictionaries {
   // Available scripting dictionaries.
   repeated ScriptingDictionary dictionaries = 1;
 }
@@ -181,4 +171,19 @@ message ScriptingDictionary {
 
   // Available scripting classes.
   repeated string classes = 6;
+}
+
+// Script type enumeration.
+enum ScriptType {
+  // Default unspecified type.
+  SCRIPT_TYPE_UNSPECIFIED = 0;
+
+  // AppleScript.
+  SCRIPT_TYPE_APPLESCRIPT = 1;
+
+  // JavaScript for Automation (JXA).
+  SCRIPT_TYPE_JXA = 2;
+
+  // Shell script (bash).
+  SCRIPT_TYPE_SHELL = 3;
 }

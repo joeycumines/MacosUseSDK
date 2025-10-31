@@ -119,16 +119,25 @@ public struct Macosusesdk_V1_ExecuteAppleScriptResponse: Sendable {
   /// Error message if failed.
   public var error: String = String()
 
-  /// Execution time in seconds.
-  public var executionTime: Double = 0
+  /// Execution duration.
+  public var executionDuration: SwiftProtobuf.Google_Protobuf_Duration {
+    get {return _executionDuration ?? SwiftProtobuf.Google_Protobuf_Duration()}
+    set {_executionDuration = newValue}
+  }
+  /// Returns true if `executionDuration` has been explicitly set.
+  public var hasExecutionDuration: Bool {return self._executionDuration != nil}
+  /// Clears the value of `executionDuration`. Subsequent reads from it will return its default value.
+  public mutating func clearExecutionDuration() {self._executionDuration = nil}
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
+
+  fileprivate var _executionDuration: SwiftProtobuf.Google_Protobuf_Duration? = nil
 }
 
 /// Request to execute JavaScript for Automation (JXA).
-public struct Macosusesdk_V1_ExecuteJavaScriptForAutomationRequest: Sendable {
+public struct Macosusesdk_V1_ExecuteJavaScriptRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -157,7 +166,7 @@ public struct Macosusesdk_V1_ExecuteJavaScriptForAutomationRequest: Sendable {
 }
 
 /// Response from executing JXA.
-public struct Macosusesdk_V1_ExecuteJavaScriptForAutomationResponse: Sendable {
+public struct Macosusesdk_V1_ExecuteJavaScriptResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -171,12 +180,21 @@ public struct Macosusesdk_V1_ExecuteJavaScriptForAutomationResponse: Sendable {
   /// Error message if failed.
   public var error: String = String()
 
-  /// Execution time in seconds.
-  public var executionTime: Double = 0
+  /// Execution duration.
+  public var executionDuration: SwiftProtobuf.Google_Protobuf_Duration {
+    get {return _executionDuration ?? SwiftProtobuf.Google_Protobuf_Duration()}
+    set {_executionDuration = newValue}
+  }
+  /// Returns true if `executionDuration` has been explicitly set.
+  public var hasExecutionDuration: Bool {return self._executionDuration != nil}
+  /// Clears the value of `executionDuration`. Subsequent reads from it will return its default value.
+  public mutating func clearExecutionDuration() {self._executionDuration = nil}
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
+
+  fileprivate var _executionDuration: SwiftProtobuf.Google_Protobuf_Duration? = nil
 }
 
 /// Request to execute a shell command.
@@ -189,7 +207,7 @@ public struct Macosusesdk_V1_ExecuteShellCommandRequest: Sendable {
   public var command: String = String()
 
   /// Arguments for the command.
-  public var arguments: [String] = []
+  public var args: [String] = []
 
   /// Working directory for command execution.
   public var workingDirectory: String = String()
@@ -238,8 +256,15 @@ public struct Macosusesdk_V1_ExecuteShellCommandResponse: Sendable {
   /// Exit code from command.
   public var exitCode: Int32 = 0
 
-  /// Execution time in seconds.
-  public var executionTime: Double = 0
+  /// Execution duration.
+  public var executionDuration: SwiftProtobuf.Google_Protobuf_Duration {
+    get {return _executionDuration ?? SwiftProtobuf.Google_Protobuf_Duration()}
+    set {_executionDuration = newValue}
+  }
+  /// Returns true if `executionDuration` has been explicitly set.
+  public var hasExecutionDuration: Bool {return self._executionDuration != nil}
+  /// Clears the value of `executionDuration`. Subsequent reads from it will return its default value.
+  public mutating func clearExecutionDuration() {self._executionDuration = nil}
 
   /// Error message if execution failed (not command failure).
   public var error: String = String()
@@ -247,6 +272,8 @@ public struct Macosusesdk_V1_ExecuteShellCommandResponse: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
+
+  fileprivate var _executionDuration: SwiftProtobuf.Google_Protobuf_Duration? = nil
 }
 
 /// Request to validate a script without executing.
@@ -292,16 +319,17 @@ public struct Macosusesdk_V1_GetScriptingDictionariesRequest: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Application name to get dictionary for (optional, empty = all).
-  public var applicationName: String = String()
+  /// The name of the scripting dictionaries resource.
+  /// Format: scriptingDictionaries (singleton)
+  public var name: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
 }
 
-/// Response with scripting dictionaries.
-public struct Macosusesdk_V1_GetScriptingDictionariesResponse: Sendable {
+/// Scripting dictionaries.
+public struct Macosusesdk_V1_ScriptingDictionaries: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -320,8 +348,8 @@ public struct Macosusesdk_V1_ScriptingDictionary: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Application name.
-  public var applicationName: String = String()
+  /// Application.
+  public var application: String = String()
 
   /// Application bundle identifier.
   public var bundleID: String = String()
@@ -397,7 +425,7 @@ extension Macosusesdk_V1_ExecuteAppleScriptRequest: SwiftProtobuf.Message, Swift
 
 extension Macosusesdk_V1_ExecuteAppleScriptResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ExecuteAppleScriptResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}output\0\u{1}error\0\u{3}execution_time\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}output\0\u{1}error\0\u{3}execution_duration\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -408,13 +436,17 @@ extension Macosusesdk_V1_ExecuteAppleScriptResponse: SwiftProtobuf.Message, Swif
       case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
       case 2: try { try decoder.decodeSingularStringField(value: &self.output) }()
       case 3: try { try decoder.decodeSingularStringField(value: &self.error) }()
-      case 4: try { try decoder.decodeSingularDoubleField(value: &self.executionTime) }()
+      case 4: try { try decoder.decodeSingularMessageField(value: &self._executionDuration) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
     if self.success != false {
       try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
     }
@@ -424,9 +456,9 @@ extension Macosusesdk_V1_ExecuteAppleScriptResponse: SwiftProtobuf.Message, Swif
     if !self.error.isEmpty {
       try visitor.visitSingularStringField(value: self.error, fieldNumber: 3)
     }
-    if self.executionTime.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.executionTime, fieldNumber: 4)
-    }
+    try { if let v = self._executionDuration {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
+    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -434,14 +466,14 @@ extension Macosusesdk_V1_ExecuteAppleScriptResponse: SwiftProtobuf.Message, Swif
     if lhs.success != rhs.success {return false}
     if lhs.output != rhs.output {return false}
     if lhs.error != rhs.error {return false}
-    if lhs.executionTime != rhs.executionTime {return false}
+    if lhs._executionDuration != rhs._executionDuration {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
-extension Macosusesdk_V1_ExecuteJavaScriptForAutomationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".ExecuteJavaScriptForAutomationRequest"
+extension Macosusesdk_V1_ExecuteJavaScriptRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ExecuteJavaScriptRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}script\0\u{1}timeout\0\u{3}compile_only\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -475,7 +507,7 @@ extension Macosusesdk_V1_ExecuteJavaScriptForAutomationRequest: SwiftProtobuf.Me
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Macosusesdk_V1_ExecuteJavaScriptForAutomationRequest, rhs: Macosusesdk_V1_ExecuteJavaScriptForAutomationRequest) -> Bool {
+  public static func ==(lhs: Macosusesdk_V1_ExecuteJavaScriptRequest, rhs: Macosusesdk_V1_ExecuteJavaScriptRequest) -> Bool {
     if lhs.script != rhs.script {return false}
     if lhs._timeout != rhs._timeout {return false}
     if lhs.compileOnly != rhs.compileOnly {return false}
@@ -484,9 +516,9 @@ extension Macosusesdk_V1_ExecuteJavaScriptForAutomationRequest: SwiftProtobuf.Me
   }
 }
 
-extension Macosusesdk_V1_ExecuteJavaScriptForAutomationResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".ExecuteJavaScriptForAutomationResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}output\0\u{1}error\0\u{3}execution_time\0")
+extension Macosusesdk_V1_ExecuteJavaScriptResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ExecuteJavaScriptResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}output\0\u{1}error\0\u{3}execution_duration\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -497,13 +529,17 @@ extension Macosusesdk_V1_ExecuteJavaScriptForAutomationResponse: SwiftProtobuf.M
       case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
       case 2: try { try decoder.decodeSingularStringField(value: &self.output) }()
       case 3: try { try decoder.decodeSingularStringField(value: &self.error) }()
-      case 4: try { try decoder.decodeSingularDoubleField(value: &self.executionTime) }()
+      case 4: try { try decoder.decodeSingularMessageField(value: &self._executionDuration) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
     if self.success != false {
       try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
     }
@@ -513,17 +549,17 @@ extension Macosusesdk_V1_ExecuteJavaScriptForAutomationResponse: SwiftProtobuf.M
     if !self.error.isEmpty {
       try visitor.visitSingularStringField(value: self.error, fieldNumber: 3)
     }
-    if self.executionTime.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.executionTime, fieldNumber: 4)
-    }
+    try { if let v = self._executionDuration {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
+    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Macosusesdk_V1_ExecuteJavaScriptForAutomationResponse, rhs: Macosusesdk_V1_ExecuteJavaScriptForAutomationResponse) -> Bool {
+  public static func ==(lhs: Macosusesdk_V1_ExecuteJavaScriptResponse, rhs: Macosusesdk_V1_ExecuteJavaScriptResponse) -> Bool {
     if lhs.success != rhs.success {return false}
     if lhs.output != rhs.output {return false}
     if lhs.error != rhs.error {return false}
-    if lhs.executionTime != rhs.executionTime {return false}
+    if lhs._executionDuration != rhs._executionDuration {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -531,7 +567,7 @@ extension Macosusesdk_V1_ExecuteJavaScriptForAutomationResponse: SwiftProtobuf.M
 
 extension Macosusesdk_V1_ExecuteShellCommandRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ExecuteShellCommandRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}command\0\u{1}arguments\0\u{3}working_directory\0\u{1}environment\0\u{1}timeout\0\u{1}stdin\0\u{1}shell\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}command\0\u{1}args\0\u{3}working_directory\0\u{1}environment\0\u{1}timeout\0\u{1}stdin\0\u{1}shell\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -540,7 +576,7 @@ extension Macosusesdk_V1_ExecuteShellCommandRequest: SwiftProtobuf.Message, Swif
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularStringField(value: &self.command) }()
-      case 2: try { try decoder.decodeRepeatedStringField(value: &self.arguments) }()
+      case 2: try { try decoder.decodeRepeatedStringField(value: &self.args) }()
       case 3: try { try decoder.decodeSingularStringField(value: &self.workingDirectory) }()
       case 4: try { try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufString>.self, value: &self.environment) }()
       case 5: try { try decoder.decodeSingularMessageField(value: &self._timeout) }()
@@ -559,8 +595,8 @@ extension Macosusesdk_V1_ExecuteShellCommandRequest: SwiftProtobuf.Message, Swif
     if !self.command.isEmpty {
       try visitor.visitSingularStringField(value: self.command, fieldNumber: 1)
     }
-    if !self.arguments.isEmpty {
-      try visitor.visitRepeatedStringField(value: self.arguments, fieldNumber: 2)
+    if !self.args.isEmpty {
+      try visitor.visitRepeatedStringField(value: self.args, fieldNumber: 2)
     }
     if !self.workingDirectory.isEmpty {
       try visitor.visitSingularStringField(value: self.workingDirectory, fieldNumber: 3)
@@ -582,7 +618,7 @@ extension Macosusesdk_V1_ExecuteShellCommandRequest: SwiftProtobuf.Message, Swif
 
   public static func ==(lhs: Macosusesdk_V1_ExecuteShellCommandRequest, rhs: Macosusesdk_V1_ExecuteShellCommandRequest) -> Bool {
     if lhs.command != rhs.command {return false}
-    if lhs.arguments != rhs.arguments {return false}
+    if lhs.args != rhs.args {return false}
     if lhs.workingDirectory != rhs.workingDirectory {return false}
     if lhs.environment != rhs.environment {return false}
     if lhs._timeout != rhs._timeout {return false}
@@ -595,7 +631,7 @@ extension Macosusesdk_V1_ExecuteShellCommandRequest: SwiftProtobuf.Message, Swif
 
 extension Macosusesdk_V1_ExecuteShellCommandResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ExecuteShellCommandResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}stdout\0\u{1}stderr\0\u{3}exit_code\0\u{3}execution_time\0\u{1}error\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}stdout\0\u{1}stderr\0\u{3}exit_code\0\u{3}execution_duration\0\u{1}error\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -607,7 +643,7 @@ extension Macosusesdk_V1_ExecuteShellCommandResponse: SwiftProtobuf.Message, Swi
       case 2: try { try decoder.decodeSingularStringField(value: &self.stdout) }()
       case 3: try { try decoder.decodeSingularStringField(value: &self.stderr) }()
       case 4: try { try decoder.decodeSingularInt32Field(value: &self.exitCode) }()
-      case 5: try { try decoder.decodeSingularDoubleField(value: &self.executionTime) }()
+      case 5: try { try decoder.decodeSingularMessageField(value: &self._executionDuration) }()
       case 6: try { try decoder.decodeSingularStringField(value: &self.error) }()
       default: break
       }
@@ -615,6 +651,10 @@ extension Macosusesdk_V1_ExecuteShellCommandResponse: SwiftProtobuf.Message, Swi
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
     if self.success != false {
       try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
     }
@@ -627,9 +667,9 @@ extension Macosusesdk_V1_ExecuteShellCommandResponse: SwiftProtobuf.Message, Swi
     if self.exitCode != 0 {
       try visitor.visitSingularInt32Field(value: self.exitCode, fieldNumber: 4)
     }
-    if self.executionTime.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.executionTime, fieldNumber: 5)
-    }
+    try { if let v = self._executionDuration {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
+    } }()
     if !self.error.isEmpty {
       try visitor.visitSingularStringField(value: self.error, fieldNumber: 6)
     }
@@ -641,7 +681,7 @@ extension Macosusesdk_V1_ExecuteShellCommandResponse: SwiftProtobuf.Message, Swi
     if lhs.stdout != rhs.stdout {return false}
     if lhs.stderr != rhs.stderr {return false}
     if lhs.exitCode != rhs.exitCode {return false}
-    if lhs.executionTime != rhs.executionTime {return false}
+    if lhs._executionDuration != rhs._executionDuration {return false}
     if lhs.error != rhs.error {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
@@ -725,7 +765,7 @@ extension Macosusesdk_V1_ValidateScriptResponse: SwiftProtobuf.Message, SwiftPro
 
 extension Macosusesdk_V1_GetScriptingDictionariesRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".GetScriptingDictionariesRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}application_name\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -733,28 +773,28 @@ extension Macosusesdk_V1_GetScriptingDictionariesRequest: SwiftProtobuf.Message,
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.applicationName) }()
+      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.applicationName.isEmpty {
-      try visitor.visitSingularStringField(value: self.applicationName, fieldNumber: 1)
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_GetScriptingDictionariesRequest, rhs: Macosusesdk_V1_GetScriptingDictionariesRequest) -> Bool {
-    if lhs.applicationName != rhs.applicationName {return false}
+    if lhs.name != rhs.name {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
-extension Macosusesdk_V1_GetScriptingDictionariesResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".GetScriptingDictionariesResponse"
+extension Macosusesdk_V1_ScriptingDictionaries: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ScriptingDictionaries"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}dictionaries\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -776,7 +816,7 @@ extension Macosusesdk_V1_GetScriptingDictionariesResponse: SwiftProtobuf.Message
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Macosusesdk_V1_GetScriptingDictionariesResponse, rhs: Macosusesdk_V1_GetScriptingDictionariesResponse) -> Bool {
+  public static func ==(lhs: Macosusesdk_V1_ScriptingDictionaries, rhs: Macosusesdk_V1_ScriptingDictionaries) -> Bool {
     if lhs.dictionaries != rhs.dictionaries {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
@@ -785,7 +825,7 @@ extension Macosusesdk_V1_GetScriptingDictionariesResponse: SwiftProtobuf.Message
 
 extension Macosusesdk_V1_ScriptingDictionary: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ScriptingDictionary"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}application_name\0\u{3}bundle_id\0\u{3}supports_applescript\0\u{3}supports_jxa\0\u{1}commands\0\u{1}classes\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0\u{3}bundle_id\0\u{3}supports_applescript\0\u{3}supports_jxa\0\u{1}commands\0\u{1}classes\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -793,7 +833,7 @@ extension Macosusesdk_V1_ScriptingDictionary: SwiftProtobuf.Message, SwiftProtob
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.applicationName) }()
+      case 1: try { try decoder.decodeSingularStringField(value: &self.application) }()
       case 2: try { try decoder.decodeSingularStringField(value: &self.bundleID) }()
       case 3: try { try decoder.decodeSingularBoolField(value: &self.supportsApplescript) }()
       case 4: try { try decoder.decodeSingularBoolField(value: &self.supportsJxa) }()
@@ -805,8 +845,8 @@ extension Macosusesdk_V1_ScriptingDictionary: SwiftProtobuf.Message, SwiftProtob
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.applicationName.isEmpty {
-      try visitor.visitSingularStringField(value: self.applicationName, fieldNumber: 1)
+    if !self.application.isEmpty {
+      try visitor.visitSingularStringField(value: self.application, fieldNumber: 1)
     }
     if !self.bundleID.isEmpty {
       try visitor.visitSingularStringField(value: self.bundleID, fieldNumber: 2)
@@ -827,7 +867,7 @@ extension Macosusesdk_V1_ScriptingDictionary: SwiftProtobuf.Message, SwiftProtob
   }
 
   public static func ==(lhs: Macosusesdk_V1_ScriptingDictionary, rhs: Macosusesdk_V1_ScriptingDictionary) -> Bool {
-    if lhs.applicationName != rhs.applicationName {return false}
+    if lhs.application != rhs.application {return false}
     if lhs.bundleID != rhs.bundleID {return false}
     if lhs.supportsApplescript != rhs.supportsApplescript {return false}
     if lhs.supportsJxa != rhs.supportsJxa {return false}

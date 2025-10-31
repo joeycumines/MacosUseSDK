@@ -14,6 +14,7 @@ import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -98,8 +99,9 @@ func (ContentType) EnumDescriptor() ([]byte, []int) {
 // Request to get clipboard contents.
 type GetClipboardRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Preferred content type (if available).
-	PreferredType ContentType `protobuf:"varint,1,opt,name=preferred_type,json=preferredType,proto3,enum=macosusesdk.v1.ContentType" json:"preferred_type,omitempty"`
+	// The name of the clipboard resource.
+	// Format: clipboard (singleton)
+	Name          string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -134,15 +136,15 @@ func (*GetClipboardRequest) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_clipboard_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *GetClipboardRequest) GetPreferredType() ContentType {
+func (x *GetClipboardRequest) GetName() string {
 	if x != nil {
-		return x.PreferredType
+		return x.Name
 	}
-	return ContentType_CONTENT_TYPE_UNSPECIFIED
+	return ""
 }
 
-// Response from getting clipboard contents.
-type GetClipboardResponse struct {
+// Clipboard contents.
+type Clipboard struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Clipboard content.
 	Content *ClipboardContent `protobuf:"bytes,1,opt,name=content,proto3" json:"content,omitempty"`
@@ -152,20 +154,20 @@ type GetClipboardResponse struct {
 	sizeCache      protoimpl.SizeCache
 }
 
-func (x *GetClipboardResponse) Reset() {
-	*x = GetClipboardResponse{}
+func (x *Clipboard) Reset() {
+	*x = Clipboard{}
 	mi := &file_macosusesdk_v1_clipboard_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetClipboardResponse) String() string {
+func (x *Clipboard) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetClipboardResponse) ProtoMessage() {}
+func (*Clipboard) ProtoMessage() {}
 
-func (x *GetClipboardResponse) ProtoReflect() protoreflect.Message {
+func (x *Clipboard) ProtoReflect() protoreflect.Message {
 	mi := &file_macosusesdk_v1_clipboard_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -177,19 +179,19 @@ func (x *GetClipboardResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetClipboardResponse.ProtoReflect.Descriptor instead.
-func (*GetClipboardResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use Clipboard.ProtoReflect.Descriptor instead.
+func (*Clipboard) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_clipboard_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *GetClipboardResponse) GetContent() *ClipboardContent {
+func (x *Clipboard) GetContent() *ClipboardContent {
 	if x != nil {
 		return x.Content
 	}
 	return nil
 }
 
-func (x *GetClipboardResponse) GetAvailableTypes() []ContentType {
+func (x *Clipboard) GetAvailableTypes() []ContentType {
 	if x != nil {
 		return x.AvailableTypes
 	}
@@ -406,10 +408,10 @@ func (x *FilePaths) GetPaths() []string {
 	return nil
 }
 
-// Request to set clipboard contents.
-type SetClipboardRequest struct {
+// Request to write clipboard contents.
+type WriteClipboardRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Content to set on clipboard.
+	// Content to write on clipboard.
 	Content *ClipboardContent `protobuf:"bytes,1,opt,name=content,proto3" json:"content,omitempty"`
 	// Whether to clear existing clipboard content first.
 	ClearExisting bool `protobuf:"varint,2,opt,name=clear_existing,json=clearExisting,proto3" json:"clear_existing,omitempty"`
@@ -417,20 +419,20 @@ type SetClipboardRequest struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *SetClipboardRequest) Reset() {
-	*x = SetClipboardRequest{}
+func (x *WriteClipboardRequest) Reset() {
+	*x = WriteClipboardRequest{}
 	mi := &file_macosusesdk_v1_clipboard_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SetClipboardRequest) String() string {
+func (x *WriteClipboardRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SetClipboardRequest) ProtoMessage() {}
+func (*WriteClipboardRequest) ProtoMessage() {}
 
-func (x *SetClipboardRequest) ProtoReflect() protoreflect.Message {
+func (x *WriteClipboardRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_macosusesdk_v1_clipboard_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -442,50 +444,50 @@ func (x *SetClipboardRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SetClipboardRequest.ProtoReflect.Descriptor instead.
-func (*SetClipboardRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use WriteClipboardRequest.ProtoReflect.Descriptor instead.
+func (*WriteClipboardRequest) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_clipboard_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *SetClipboardRequest) GetContent() *ClipboardContent {
+func (x *WriteClipboardRequest) GetContent() *ClipboardContent {
 	if x != nil {
 		return x.Content
 	}
 	return nil
 }
 
-func (x *SetClipboardRequest) GetClearExisting() bool {
+func (x *WriteClipboardRequest) GetClearExisting() bool {
 	if x != nil {
 		return x.ClearExisting
 	}
 	return false
 }
 
-// Response from setting clipboard contents.
-type SetClipboardResponse struct {
+// Response from writing clipboard contents.
+type WriteClipboardResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Whether the operation succeeded.
 	Success bool `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	// Content type that was set.
+	// Content type that was written.
 	Type          ContentType `protobuf:"varint,2,opt,name=type,proto3,enum=macosusesdk.v1.ContentType" json:"type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *SetClipboardResponse) Reset() {
-	*x = SetClipboardResponse{}
+func (x *WriteClipboardResponse) Reset() {
+	*x = WriteClipboardResponse{}
 	mi := &file_macosusesdk_v1_clipboard_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SetClipboardResponse) String() string {
+func (x *WriteClipboardResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SetClipboardResponse) ProtoMessage() {}
+func (*WriteClipboardResponse) ProtoMessage() {}
 
-func (x *SetClipboardResponse) ProtoReflect() protoreflect.Message {
+func (x *WriteClipboardResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_macosusesdk_v1_clipboard_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -497,19 +499,19 @@ func (x *SetClipboardResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SetClipboardResponse.ProtoReflect.Descriptor instead.
-func (*SetClipboardResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use WriteClipboardResponse.ProtoReflect.Descriptor instead.
+func (*WriteClipboardResponse) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_clipboard_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *SetClipboardResponse) GetSuccess() bool {
+func (x *WriteClipboardResponse) GetSuccess() bool {
 	if x != nil {
 		return x.Success
 	}
 	return false
 }
 
-func (x *SetClipboardResponse) GetType() ContentType {
+func (x *WriteClipboardResponse) GetType() ContentType {
 	if x != nil {
 		return x.Type
 	}
@@ -602,10 +604,9 @@ func (x *ClearClipboardResponse) GetSuccess() bool {
 // Request to get clipboard history (if available).
 type GetClipboardHistoryRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Maximum number of items to return.
-	MaxItems int32 `protobuf:"varint,1,opt,name=max_items,json=maxItems,proto3" json:"max_items,omitempty"`
-	// Filter by content type.
-	TypeFilter    ContentType `protobuf:"varint,2,opt,name=type_filter,json=typeFilter,proto3,enum=macosusesdk.v1.ContentType" json:"type_filter,omitempty"`
+	// The name of the clipboard history resource.
+	// Format: clipboard/history (singleton)
+	Name          string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -640,22 +641,15 @@ func (*GetClipboardHistoryRequest) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_clipboard_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *GetClipboardHistoryRequest) GetMaxItems() int32 {
+func (x *GetClipboardHistoryRequest) GetName() string {
 	if x != nil {
-		return x.MaxItems
+		return x.Name
 	}
-	return 0
+	return ""
 }
 
-func (x *GetClipboardHistoryRequest) GetTypeFilter() ContentType {
-	if x != nil {
-		return x.TypeFilter
-	}
-	return ContentType_CONTENT_TYPE_UNSPECIFIED
-}
-
-// Response with clipboard history.
-type GetClipboardHistoryResponse struct {
+// Clipboard history.
+type ClipboardHistory struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Historical clipboard entries (most recent first).
 	Entries       []*ClipboardHistoryEntry `protobuf:"bytes,1,rep,name=entries,proto3" json:"entries,omitempty"`
@@ -663,20 +657,20 @@ type GetClipboardHistoryResponse struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetClipboardHistoryResponse) Reset() {
-	*x = GetClipboardHistoryResponse{}
+func (x *ClipboardHistory) Reset() {
+	*x = ClipboardHistory{}
 	mi := &file_macosusesdk_v1_clipboard_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetClipboardHistoryResponse) String() string {
+func (x *ClipboardHistory) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetClipboardHistoryResponse) ProtoMessage() {}
+func (*ClipboardHistory) ProtoMessage() {}
 
-func (x *GetClipboardHistoryResponse) ProtoReflect() protoreflect.Message {
+func (x *ClipboardHistory) ProtoReflect() protoreflect.Message {
 	mi := &file_macosusesdk_v1_clipboard_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -688,12 +682,12 @@ func (x *GetClipboardHistoryResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetClipboardHistoryResponse.ProtoReflect.Descriptor instead.
-func (*GetClipboardHistoryResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use ClipboardHistory.ProtoReflect.Descriptor instead.
+func (*ClipboardHistory) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_clipboard_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *GetClipboardHistoryResponse) GetEntries() []*ClipboardHistoryEntry {
+func (x *ClipboardHistory) GetEntries() []*ClipboardHistoryEntry {
 	if x != nil {
 		return x.Entries
 	}
@@ -704,7 +698,7 @@ func (x *GetClipboardHistoryResponse) GetEntries() []*ClipboardHistoryEntry {
 type ClipboardHistoryEntry struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// When this content was copied.
-	Timestamp int64 `protobuf:"varint,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	CopiedTime *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=copied_time,json=copiedTime,proto3" json:"copied_time,omitempty"`
 	// Clipboard content.
 	Content *ClipboardContent `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
 	// Source application (if known).
@@ -743,11 +737,11 @@ func (*ClipboardHistoryEntry) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_clipboard_proto_rawDescGZIP(), []int{10}
 }
 
-func (x *ClipboardHistoryEntry) GetTimestamp() int64 {
+func (x *ClipboardHistoryEntry) GetCopiedTime() *timestamppb.Timestamp {
 	if x != nil {
-		return x.Timestamp
+		return x.CopiedTime
 	}
-	return 0
+	return nil
 }
 
 func (x *ClipboardHistoryEntry) GetContent() *ClipboardContent {
@@ -768,14 +762,15 @@ var File_macosusesdk_v1_clipboard_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_clipboard_proto_rawDesc = "" +
 	"\n" +
-	"\x1emacosusesdk/v1/clipboard.proto\x12\x0emacosusesdk.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\"^\n" +
-	"\x13GetClipboardRequest\x12G\n" +
-	"\x0epreferred_type\x18\x01 \x01(\x0e2\x1b.macosusesdk.v1.ContentTypeB\x03\xe0A\x01R\rpreferredType\"\x98\x01\n" +
-	"\x14GetClipboardResponse\x12:\n" +
+	"\x1emacosusesdk/v1/clipboard.proto\x12\x0emacosusesdk.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"4\n" +
+	"\x13GetClipboardRequest\x12\x1d\n" +
+	"\x04name\x18\x01 \x01(\tB\t\xe0A\x02\xfaA\x03\n" +
+	"\x01*R\x04name\"\x8d\x01\n" +
+	"\tClipboard\x12:\n" +
 	"\acontent\x18\x01 \x01(\v2 .macosusesdk.v1.ClipboardContentR\acontent\x12D\n" +
-	"\x0favailable_types\x18\x02 \x03(\x0e2\x1b.macosusesdk.v1.ContentTypeR\x0eavailableTypes\"\xed\x01\n" +
-	"\x10ClipboardContent\x12/\n" +
-	"\x04type\x18\x01 \x01(\x0e2\x1b.macosusesdk.v1.ContentTypeR\x04type\x12\x14\n" +
+	"\x0favailable_types\x18\x02 \x03(\x0e2\x1b.macosusesdk.v1.ContentTypeR\x0eavailableTypes\"\xf2\x01\n" +
+	"\x10ClipboardContent\x124\n" +
+	"\x04type\x18\x01 \x01(\x0e2\x1b.macosusesdk.v1.ContentTypeB\x03\xe0A\x02R\x04type\x12\x14\n" +
 	"\x04text\x18\n" +
 	" \x01(\tH\x00R\x04text\x12\x12\n" +
 	"\x03rtf\x18\v \x01(\fH\x00R\x03rtf\x12\x14\n" +
@@ -783,26 +778,26 @@ const file_macosusesdk_v1_clipboard_proto_rawDesc = "" +
 	"\x05image\x18\r \x01(\fH\x00R\x05image\x121\n" +
 	"\x05files\x18\x0e \x01(\v2\x19.macosusesdk.v1.FilePathsH\x00R\x05files\x12\x12\n" +
 	"\x03url\x18\x0f \x01(\tH\x00R\x03urlB\t\n" +
-	"\acontent\"!\n" +
-	"\tFilePaths\x12\x14\n" +
-	"\x05paths\x18\x01 \x03(\tR\x05paths\"\x82\x01\n" +
-	"\x13SetClipboardRequest\x12?\n" +
-	"\acontent\x18\x01 \x01(\v2 .macosusesdk.v1.ClipboardContentB\x03\xe0A\x02R\acontent\x12*\n" +
-	"\x0eclear_existing\x18\x02 \x01(\bB\x03\xe0A\x01R\rclearExisting\"a\n" +
-	"\x14SetClipboardResponse\x12\x18\n" +
+	"\acontent\"&\n" +
+	"\tFilePaths\x12\x19\n" +
+	"\x05paths\x18\x01 \x03(\tB\x03\xe0A\x02R\x05paths\"\x84\x01\n" +
+	"\x15WriteClipboardRequest\x12?\n" +
+	"\acontent\x18\x01 \x01(\v2 .macosusesdk.v1.ClipboardContentB\x03\xe0A\x01R\acontent\x12*\n" +
+	"\x0eclear_existing\x18\x02 \x01(\bB\x03\xe0A\x01R\rclearExisting\"c\n" +
+	"\x16WriteClipboardResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12/\n" +
 	"\x04type\x18\x02 \x01(\x0e2\x1b.macosusesdk.v1.ContentTypeR\x04type\"\x17\n" +
 	"\x15ClearClipboardRequest\"2\n" +
 	"\x16ClearClipboardResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"\x81\x01\n" +
-	"\x1aGetClipboardHistoryRequest\x12 \n" +
-	"\tmax_items\x18\x01 \x01(\x05B\x03\xe0A\x01R\bmaxItems\x12A\n" +
-	"\vtype_filter\x18\x02 \x01(\x0e2\x1b.macosusesdk.v1.ContentTypeB\x03\xe0A\x01R\n" +
-	"typeFilter\"^\n" +
-	"\x1bGetClipboardHistoryResponse\x12?\n" +
-	"\aentries\x18\x01 \x03(\v2%.macosusesdk.v1.ClipboardHistoryEntryR\aentries\"\xa0\x01\n" +
-	"\x15ClipboardHistoryEntry\x12\x1c\n" +
-	"\ttimestamp\x18\x01 \x01(\x03R\ttimestamp\x12:\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\";\n" +
+	"\x1aGetClipboardHistoryRequest\x12\x1d\n" +
+	"\x04name\x18\x01 \x01(\tB\t\xe0A\x02\xfaA\x03\n" +
+	"\x01*R\x04name\"S\n" +
+	"\x10ClipboardHistory\x12?\n" +
+	"\aentries\x18\x01 \x03(\v2%.macosusesdk.v1.ClipboardHistoryEntryR\aentries\"\xbf\x01\n" +
+	"\x15ClipboardHistoryEntry\x12;\n" +
+	"\vcopied_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"copiedTime\x12:\n" +
 	"\acontent\x18\x02 \x01(\v2 .macosusesdk.v1.ClipboardContentR\acontent\x12-\n" +
 	"\x12source_application\x18\x03 \x01(\tR\x11sourceApplication*\xb5\x01\n" +
 	"\vContentType\x12\x1c\n" +
@@ -830,35 +825,35 @@ func file_macosusesdk_v1_clipboard_proto_rawDescGZIP() []byte {
 var file_macosusesdk_v1_clipboard_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_macosusesdk_v1_clipboard_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_macosusesdk_v1_clipboard_proto_goTypes = []any{
-	(ContentType)(0),                    // 0: macosusesdk.v1.ContentType
-	(*GetClipboardRequest)(nil),         // 1: macosusesdk.v1.GetClipboardRequest
-	(*GetClipboardResponse)(nil),        // 2: macosusesdk.v1.GetClipboardResponse
-	(*ClipboardContent)(nil),            // 3: macosusesdk.v1.ClipboardContent
-	(*FilePaths)(nil),                   // 4: macosusesdk.v1.FilePaths
-	(*SetClipboardRequest)(nil),         // 5: macosusesdk.v1.SetClipboardRequest
-	(*SetClipboardResponse)(nil),        // 6: macosusesdk.v1.SetClipboardResponse
-	(*ClearClipboardRequest)(nil),       // 7: macosusesdk.v1.ClearClipboardRequest
-	(*ClearClipboardResponse)(nil),      // 8: macosusesdk.v1.ClearClipboardResponse
-	(*GetClipboardHistoryRequest)(nil),  // 9: macosusesdk.v1.GetClipboardHistoryRequest
-	(*GetClipboardHistoryResponse)(nil), // 10: macosusesdk.v1.GetClipboardHistoryResponse
-	(*ClipboardHistoryEntry)(nil),       // 11: macosusesdk.v1.ClipboardHistoryEntry
+	(ContentType)(0),                   // 0: macosusesdk.v1.ContentType
+	(*GetClipboardRequest)(nil),        // 1: macosusesdk.v1.GetClipboardRequest
+	(*Clipboard)(nil),                  // 2: macosusesdk.v1.Clipboard
+	(*ClipboardContent)(nil),           // 3: macosusesdk.v1.ClipboardContent
+	(*FilePaths)(nil),                  // 4: macosusesdk.v1.FilePaths
+	(*WriteClipboardRequest)(nil),      // 5: macosusesdk.v1.WriteClipboardRequest
+	(*WriteClipboardResponse)(nil),     // 6: macosusesdk.v1.WriteClipboardResponse
+	(*ClearClipboardRequest)(nil),      // 7: macosusesdk.v1.ClearClipboardRequest
+	(*ClearClipboardResponse)(nil),     // 8: macosusesdk.v1.ClearClipboardResponse
+	(*GetClipboardHistoryRequest)(nil), // 9: macosusesdk.v1.GetClipboardHistoryRequest
+	(*ClipboardHistory)(nil),           // 10: macosusesdk.v1.ClipboardHistory
+	(*ClipboardHistoryEntry)(nil),      // 11: macosusesdk.v1.ClipboardHistoryEntry
+	(*timestamppb.Timestamp)(nil),      // 12: google.protobuf.Timestamp
 }
 var file_macosusesdk_v1_clipboard_proto_depIdxs = []int32{
-	0,  // 0: macosusesdk.v1.GetClipboardRequest.preferred_type:type_name -> macosusesdk.v1.ContentType
-	3,  // 1: macosusesdk.v1.GetClipboardResponse.content:type_name -> macosusesdk.v1.ClipboardContent
-	0,  // 2: macosusesdk.v1.GetClipboardResponse.available_types:type_name -> macosusesdk.v1.ContentType
-	0,  // 3: macosusesdk.v1.ClipboardContent.type:type_name -> macosusesdk.v1.ContentType
-	4,  // 4: macosusesdk.v1.ClipboardContent.files:type_name -> macosusesdk.v1.FilePaths
-	3,  // 5: macosusesdk.v1.SetClipboardRequest.content:type_name -> macosusesdk.v1.ClipboardContent
-	0,  // 6: macosusesdk.v1.SetClipboardResponse.type:type_name -> macosusesdk.v1.ContentType
-	0,  // 7: macosusesdk.v1.GetClipboardHistoryRequest.type_filter:type_name -> macosusesdk.v1.ContentType
-	11, // 8: macosusesdk.v1.GetClipboardHistoryResponse.entries:type_name -> macosusesdk.v1.ClipboardHistoryEntry
-	3,  // 9: macosusesdk.v1.ClipboardHistoryEntry.content:type_name -> macosusesdk.v1.ClipboardContent
-	10, // [10:10] is the sub-list for method output_type
-	10, // [10:10] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	3,  // 0: macosusesdk.v1.Clipboard.content:type_name -> macosusesdk.v1.ClipboardContent
+	0,  // 1: macosusesdk.v1.Clipboard.available_types:type_name -> macosusesdk.v1.ContentType
+	0,  // 2: macosusesdk.v1.ClipboardContent.type:type_name -> macosusesdk.v1.ContentType
+	4,  // 3: macosusesdk.v1.ClipboardContent.files:type_name -> macosusesdk.v1.FilePaths
+	3,  // 4: macosusesdk.v1.WriteClipboardRequest.content:type_name -> macosusesdk.v1.ClipboardContent
+	0,  // 5: macosusesdk.v1.WriteClipboardResponse.type:type_name -> macosusesdk.v1.ContentType
+	11, // 6: macosusesdk.v1.ClipboardHistory.entries:type_name -> macosusesdk.v1.ClipboardHistoryEntry
+	12, // 7: macosusesdk.v1.ClipboardHistoryEntry.copied_time:type_name -> google.protobuf.Timestamp
+	3,  // 8: macosusesdk.v1.ClipboardHistoryEntry.content:type_name -> macosusesdk.v1.ClipboardContent
+	9,  // [9:9] is the sub-list for method output_type
+	9,  // [9:9] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_macosusesdk_v1_clipboard_proto_init() }

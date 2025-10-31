@@ -8,6 +8,7 @@ package macosusesdk.v1;
 
 import "google/api/annotations.proto";
 import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -18,15 +19,16 @@ option java_package = "com.macosusesdk.v1";
 
 // Request to get current metrics.
 message GetMetricsRequest {
-  // Metric types to include (empty = all).
-  repeated MetricType types = 1 [(google.api.field_behavior) = OPTIONAL];
-
-  // Time range for metrics.
-  TimeRange time_range = 2 [(google.api.field_behavior) = OPTIONAL];
+  // The name of the metrics resource.
+  // Format: metrics (singleton)
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "*"}
+  ];
 }
 
-// Response with metrics.
-message GetMetricsResponse {
+// Metrics.
+message Metrics {
   // When metrics were collected.
   google.protobuf.Timestamp report_time = 1;
 
@@ -49,10 +51,10 @@ message GetMetricsResponse {
 // Time range for metric queries.
 message TimeRange {
   // Start time (inclusive).
-  google.protobuf.Timestamp start_time = 1;
+  google.protobuf.Timestamp start_time = 1 [(google.api.field_behavior) = REQUIRED];
 
   // End time (exclusive).
-  google.protobuf.Timestamp end_time = 2;
+  google.protobuf.Timestamp end_time = 2 [(google.api.field_behavior) = REQUIRED];
 }
 
 // Metrics for API operations.
@@ -219,24 +221,22 @@ message AccessibilityMetrics {
   // Active observations.
   int32 active_observations = 5;
 
-  // Average element lookup time.
-  google.protobuf.Duration avg_lookup_time = 6;
+  // Average element lookup duration.
+  google.protobuf.Duration avg_lookup_duration = 6;
 }
 
 // Request to get a performance report.
 message GetPerformanceReportRequest {
-  // Time range for report.
-  TimeRange time_range = 1 [(google.api.field_behavior) = REQUIRED];
-
-  // Whether to include detailed breakdown.
-  bool include_details = 2 [(google.api.field_behavior) = OPTIONAL];
-
-  // Operations to include (empty = all).
-  repeated string operations = 3 [(google.api.field_behavior) = OPTIONAL];
+  // The name of the performance report resource.
+  // Format: metrics/performanceReport (singleton)
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "*"}
+  ];
 }
 
-// Response with performance report.
-message GetPerformanceReportResponse {
+// Performance report.
+message PerformanceReport {
   // Report time range.
   TimeRange time_range = 1;
 
@@ -244,9 +244,9 @@ message GetPerformanceReportResponse {
   google.protobuf.Timestamp generated_time = 2;
 
   // Summary metrics.
-  GetMetricsResponse summary = 3;
+  Metrics summary = 3;
 
-  // Detailed breakdown (if requested).
+  // Detailed breakdown.
   repeated PerformanceDataPoint details = 4;
 
   // Performance trends.
@@ -259,8 +259,10 @@ message GetPerformanceReportResponse {
 // A single performance data point.
 message PerformanceDataPoint {
   // When this data point was recorded.
-  google.protobuf.Timestamp recorded_time = 1; // Metrics at this point.
-  GetMetricsResponse metrics = 2;
+  google.protobuf.Timestamp recorded_time = 1;
+  
+  // Metrics at this point.
+  Metrics metrics = 2;
 }
 
 // Performance trend analysis.

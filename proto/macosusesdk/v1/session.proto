@@ -9,6 +9,7 @@ package macosusesdk.v1;
 import "google/api/annotations.proto";
 import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
+import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
@@ -43,14 +44,20 @@ message Session {
   // When the session was last accessed.
   google.protobuf.Timestamp last_access_time = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
 
+  // Time-to-live for the session (alternative to expire_time).
+  google.protobuf.Duration ttl = 6 [
+    (google.api.field_behavior) = INPUT_ONLY,
+    (google.api.field_behavior) = OPTIONAL
+  ];
+
   // When the session expires (auto-cleanup).
-  google.protobuf.Timestamp expire_time = 6 [(google.api.field_behavior) = OPTIONAL];
+  google.protobuf.Timestamp expire_time = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Active transaction ID (if in transaction).
-  string transaction_id = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+  string transaction_id = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Session-scoped metadata (key-value pairs).
-  map<string, string> metadata = 8 [(google.api.field_behavior) = OPTIONAL];
+  map<string, string> metadata = 9 [(google.api.field_behavior) = OPTIONAL];
 
   // State of a session.
   enum State {
@@ -71,6 +78,45 @@ message Session {
 
     // Session has failed.
     STATE_FAILED = 5;
+  }
+}
+
+// A transaction within a session.
+message Transaction {
+  // Transaction ID.
+  string transaction_id = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Session this transaction belongs to.
+  string session = 2 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.resource_reference) = {type: "macos.googleapis.com/Session"}
+  ];
+
+  // Transaction state.
+  State state = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the transaction started.
+  google.protobuf.Timestamp start_time = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Number of operations in the transaction.
+  int32 operations_count = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Transaction state.
+  enum State {
+    // Default unspecified.
+    STATE_UNSPECIFIED = 0;
+
+    // Transaction is active.
+    STATE_ACTIVE = 1;
+
+    // Transaction is committed.
+    STATE_COMMITTED = 2;
+
+    // Transaction is rolled back.
+    STATE_ROLLED_BACK = 3;
+
+    // Transaction failed.
+    STATE_FAILED = 4;
   }
 }
 
@@ -112,8 +158,9 @@ message BeginTransactionResponse {
 
 // Request to commit a transaction.
 message CommitTransactionRequest {
-  // Session name.
-  string session = 1 [
+  // The name of the session to commit.
+  // Format: sessions/{session}
+  string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {type: "macos.googleapis.com/Session"}
   ];
@@ -133,14 +180,18 @@ message CommitTransactionResponse {
 
 // Request to rollback a transaction.
 message RollbackTransactionRequest {
-  // Session name.
-  string session = 1 [
+  // The name of the session to rollback.
+  // Format: sessions/{session}
+  string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {type: "macos.googleapis.com/Session"}
   ];
 
+  // The revision to rollback to.
+  string revision_id = 2 [(google.api.field_behavior) = REQUIRED];
+
   // Transaction ID to rollback.
-  string transaction_id = 2 [(google.api.field_behavior) = REQUIRED];
+  string transaction_id = 3 [(google.api.field_behavior) = REQUIRED];
 }
 
 // Response from rolling back a transaction.
@@ -154,18 +205,16 @@ message RollbackTransactionResponse {
 
 // Request to get a session state snapshot.
 message GetSessionSnapshotRequest {
-  // Session name.
-  string session = 1 [
+  // The name of the session to snapshot.
+  // Format: sessions/{session}
+  string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {type: "macos.googleapis.com/Session"}
   ];
-
-  // Whether to include operation history.
-  bool include_history = 2 [(google.api.field_behavior) = OPTIONAL];
 }
 
-// Response with session state snapshot.
-message GetSessionSnapshotResponse {
+// Session state snapshot.
+message SessionSnapshot {
   // Session state.
   Session session = 1;
 
@@ -175,7 +224,7 @@ message GetSessionSnapshotResponse {
   // Active observations in session context.
   repeated string observations = 3;
 
-  // Operation history (if requested).
+  // Operation history.
   repeated OperationRecord history = 4;
 }
 

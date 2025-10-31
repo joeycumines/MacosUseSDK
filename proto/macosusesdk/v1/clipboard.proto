@@ -8,6 +8,7 @@ package macosusesdk.v1;
 
 import "google/api/annotations.proto";
 import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
@@ -17,12 +18,16 @@ option java_package = "com.macosusesdk.v1";
 
 // Request to get clipboard contents.
 message GetClipboardRequest {
-  // Preferred content type (if available).
-  ContentType preferred_type = 1 [(google.api.field_behavior) = OPTIONAL];
+  // The name of the clipboard resource.
+  // Format: clipboard (singleton)
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "*"}
+  ];
 }
 
-// Response from getting clipboard contents.
-message GetClipboardResponse {
+// Clipboard contents.
+message Clipboard {
   // Clipboard content.
   ClipboardContent content = 1;
 
@@ -33,7 +38,7 @@ message GetClipboardResponse {
 // Clipboard content (one of the supported types).
 message ClipboardContent {
   // Content type.
-  ContentType type = 1;
+  ContentType type = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The actual content (type-specific).
   oneof content {
@@ -60,31 +65,29 @@ message ClipboardContent {
 // File paths for clipboard file content.
 message FilePaths {
   // List of file paths.
-  repeated string paths = 1;
+  repeated string paths = 1 [(google.api.field_behavior) = REQUIRED];
 }
 
-// Request to set clipboard contents.
-message SetClipboardRequest {
-  // Content to set on clipboard.
-  ClipboardContent content = 1 [(google.api.field_behavior) = REQUIRED];
+// Request to write clipboard contents.
+message WriteClipboardRequest {
+  // Content to write on clipboard.
+  ClipboardContent content = 1 [(google.api.field_behavior) = OPTIONAL];
 
   // Whether to clear existing clipboard content first.
   bool clear_existing = 2 [(google.api.field_behavior) = OPTIONAL];
 }
 
-// Response from setting clipboard contents.
-message SetClipboardResponse {
+// Response from writing clipboard contents.
+message WriteClipboardResponse {
   // Whether the operation succeeded.
   bool success = 1;
 
-  // Content type that was set.
+  // Content type that was written.
   ContentType type = 2;
 }
 
 // Request to clear clipboard contents.
-message ClearClipboardRequest {
-  // No parameters needed.
-}
+message ClearClipboardRequest {}
 
 // Response from clearing clipboard.
 message ClearClipboardResponse {
@@ -94,15 +97,16 @@ message ClearClipboardResponse {
 
 // Request to get clipboard history (if available).
 message GetClipboardHistoryRequest {
-  // Maximum number of items to return.
-  int32 max_items = 1 [(google.api.field_behavior) = OPTIONAL];
-
-  // Filter by content type.
-  ContentType type_filter = 2 [(google.api.field_behavior) = OPTIONAL];
+  // The name of the clipboard history resource.
+  // Format: clipboard/history (singleton)
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "*"}
+  ];
 }
 
-// Response with clipboard history.
-message GetClipboardHistoryResponse {
+// Clipboard history.
+message ClipboardHistory {
   // Historical clipboard entries (most recent first).
   repeated ClipboardHistoryEntry entries = 1;
 }

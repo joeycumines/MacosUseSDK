@@ -13,6 +13,7 @@ package macosusesdkv1
 import (
 	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
 	context "context"
+	_type "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -25,72 +26,72 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	MacosUse_OpenApplication_FullMethodName                = "/macosusesdk.v1.MacosUse/OpenApplication"
-	MacosUse_GetApplication_FullMethodName                 = "/macosusesdk.v1.MacosUse/GetApplication"
-	MacosUse_ListApplications_FullMethodName               = "/macosusesdk.v1.MacosUse/ListApplications"
-	MacosUse_DeleteApplication_FullMethodName              = "/macosusesdk.v1.MacosUse/DeleteApplication"
-	MacosUse_CreateInput_FullMethodName                    = "/macosusesdk.v1.MacosUse/CreateInput"
-	MacosUse_GetInput_FullMethodName                       = "/macosusesdk.v1.MacosUse/GetInput"
-	MacosUse_ListInputs_FullMethodName                     = "/macosusesdk.v1.MacosUse/ListInputs"
-	MacosUse_TraverseAccessibility_FullMethodName          = "/macosusesdk.v1.MacosUse/TraverseAccessibility"
-	MacosUse_WatchAccessibility_FullMethodName             = "/macosusesdk.v1.MacosUse/WatchAccessibility"
-	MacosUse_GetWindow_FullMethodName                      = "/macosusesdk.v1.MacosUse/GetWindow"
-	MacosUse_ListWindows_FullMethodName                    = "/macosusesdk.v1.MacosUse/ListWindows"
-	MacosUse_FocusWindow_FullMethodName                    = "/macosusesdk.v1.MacosUse/FocusWindow"
-	MacosUse_MoveWindow_FullMethodName                     = "/macosusesdk.v1.MacosUse/MoveWindow"
-	MacosUse_ResizeWindow_FullMethodName                   = "/macosusesdk.v1.MacosUse/ResizeWindow"
-	MacosUse_MinimizeWindow_FullMethodName                 = "/macosusesdk.v1.MacosUse/MinimizeWindow"
-	MacosUse_RestoreWindow_FullMethodName                  = "/macosusesdk.v1.MacosUse/RestoreWindow"
-	MacosUse_CloseWindow_FullMethodName                    = "/macosusesdk.v1.MacosUse/CloseWindow"
-	MacosUse_FindElements_FullMethodName                   = "/macosusesdk.v1.MacosUse/FindElements"
-	MacosUse_FindElementsInRegion_FullMethodName           = "/macosusesdk.v1.MacosUse/FindElementsInRegion"
-	MacosUse_GetElement_FullMethodName                     = "/macosusesdk.v1.MacosUse/GetElement"
-	MacosUse_ClickElement_FullMethodName                   = "/macosusesdk.v1.MacosUse/ClickElement"
-	MacosUse_SetElementValue_FullMethodName                = "/macosusesdk.v1.MacosUse/SetElementValue"
-	MacosUse_GetElementActions_FullMethodName              = "/macosusesdk.v1.MacosUse/GetElementActions"
-	MacosUse_PerformElementAction_FullMethodName           = "/macosusesdk.v1.MacosUse/PerformElementAction"
-	MacosUse_WaitForElement_FullMethodName                 = "/macosusesdk.v1.MacosUse/WaitForElement"
-	MacosUse_WaitForElementState_FullMethodName            = "/macosusesdk.v1.MacosUse/WaitForElementState"
-	MacosUse_CreateObservation_FullMethodName              = "/macosusesdk.v1.MacosUse/CreateObservation"
-	MacosUse_GetObservation_FullMethodName                 = "/macosusesdk.v1.MacosUse/GetObservation"
-	MacosUse_ListObservations_FullMethodName               = "/macosusesdk.v1.MacosUse/ListObservations"
-	MacosUse_CancelObservation_FullMethodName              = "/macosusesdk.v1.MacosUse/CancelObservation"
-	MacosUse_StreamObservations_FullMethodName             = "/macosusesdk.v1.MacosUse/StreamObservations"
-	MacosUse_CreateSession_FullMethodName                  = "/macosusesdk.v1.MacosUse/CreateSession"
-	MacosUse_GetSession_FullMethodName                     = "/macosusesdk.v1.MacosUse/GetSession"
-	MacosUse_ListSessions_FullMethodName                   = "/macosusesdk.v1.MacosUse/ListSessions"
-	MacosUse_DeleteSession_FullMethodName                  = "/macosusesdk.v1.MacosUse/DeleteSession"
-	MacosUse_BeginTransaction_FullMethodName               = "/macosusesdk.v1.MacosUse/BeginTransaction"
-	MacosUse_CommitTransaction_FullMethodName              = "/macosusesdk.v1.MacosUse/CommitTransaction"
-	MacosUse_RollbackTransaction_FullMethodName            = "/macosusesdk.v1.MacosUse/RollbackTransaction"
-	MacosUse_GetSessionSnapshot_FullMethodName             = "/macosusesdk.v1.MacosUse/GetSessionSnapshot"
-	MacosUse_CaptureScreenshot_FullMethodName              = "/macosusesdk.v1.MacosUse/CaptureScreenshot"
-	MacosUse_CaptureWindowScreenshot_FullMethodName        = "/macosusesdk.v1.MacosUse/CaptureWindowScreenshot"
-	MacosUse_CaptureElementScreenshot_FullMethodName       = "/macosusesdk.v1.MacosUse/CaptureElementScreenshot"
-	MacosUse_CaptureRegionScreenshot_FullMethodName        = "/macosusesdk.v1.MacosUse/CaptureRegionScreenshot"
-	MacosUse_GetClipboard_FullMethodName                   = "/macosusesdk.v1.MacosUse/GetClipboard"
-	MacosUse_SetClipboard_FullMethodName                   = "/macosusesdk.v1.MacosUse/SetClipboard"
-	MacosUse_ClearClipboard_FullMethodName                 = "/macosusesdk.v1.MacosUse/ClearClipboard"
-	MacosUse_GetClipboardHistory_FullMethodName            = "/macosusesdk.v1.MacosUse/GetClipboardHistory"
-	MacosUse_AutomateOpenFileDialog_FullMethodName         = "/macosusesdk.v1.MacosUse/AutomateOpenFileDialog"
-	MacosUse_AutomateSaveFileDialog_FullMethodName         = "/macosusesdk.v1.MacosUse/AutomateSaveFileDialog"
-	MacosUse_SelectFile_FullMethodName                     = "/macosusesdk.v1.MacosUse/SelectFile"
-	MacosUse_SelectDirectory_FullMethodName                = "/macosusesdk.v1.MacosUse/SelectDirectory"
-	MacosUse_DragFiles_FullMethodName                      = "/macosusesdk.v1.MacosUse/DragFiles"
-	MacosUse_CreateMacro_FullMethodName                    = "/macosusesdk.v1.MacosUse/CreateMacro"
-	MacosUse_GetMacro_FullMethodName                       = "/macosusesdk.v1.MacosUse/GetMacro"
-	MacosUse_ListMacros_FullMethodName                     = "/macosusesdk.v1.MacosUse/ListMacros"
-	MacosUse_UpdateMacro_FullMethodName                    = "/macosusesdk.v1.MacosUse/UpdateMacro"
-	MacosUse_DeleteMacro_FullMethodName                    = "/macosusesdk.v1.MacosUse/DeleteMacro"
-	MacosUse_ExecuteMacro_FullMethodName                   = "/macosusesdk.v1.MacosUse/ExecuteMacro"
-	MacosUse_ExecuteAppleScript_FullMethodName             = "/macosusesdk.v1.MacosUse/ExecuteAppleScript"
-	MacosUse_ExecuteJavaScriptForAutomation_FullMethodName = "/macosusesdk.v1.MacosUse/ExecuteJavaScriptForAutomation"
-	MacosUse_ExecuteShellCommand_FullMethodName            = "/macosusesdk.v1.MacosUse/ExecuteShellCommand"
-	MacosUse_ValidateScript_FullMethodName                 = "/macosusesdk.v1.MacosUse/ValidateScript"
-	MacosUse_GetScriptingDictionaries_FullMethodName       = "/macosusesdk.v1.MacosUse/GetScriptingDictionaries"
-	MacosUse_GetMetrics_FullMethodName                     = "/macosusesdk.v1.MacosUse/GetMetrics"
-	MacosUse_GetPerformanceReport_FullMethodName           = "/macosusesdk.v1.MacosUse/GetPerformanceReport"
-	MacosUse_ResetMetrics_FullMethodName                   = "/macosusesdk.v1.MacosUse/ResetMetrics"
+	MacosUse_OpenApplication_FullMethodName          = "/macosusesdk.v1.MacosUse/OpenApplication"
+	MacosUse_GetApplication_FullMethodName           = "/macosusesdk.v1.MacosUse/GetApplication"
+	MacosUse_ListApplications_FullMethodName         = "/macosusesdk.v1.MacosUse/ListApplications"
+	MacosUse_DeleteApplication_FullMethodName        = "/macosusesdk.v1.MacosUse/DeleteApplication"
+	MacosUse_CreateInput_FullMethodName              = "/macosusesdk.v1.MacosUse/CreateInput"
+	MacosUse_GetInput_FullMethodName                 = "/macosusesdk.v1.MacosUse/GetInput"
+	MacosUse_ListInputs_FullMethodName               = "/macosusesdk.v1.MacosUse/ListInputs"
+	MacosUse_TraverseAccessibility_FullMethodName    = "/macosusesdk.v1.MacosUse/TraverseAccessibility"
+	MacosUse_WatchAccessibility_FullMethodName       = "/macosusesdk.v1.MacosUse/WatchAccessibility"
+	MacosUse_GetWindow_FullMethodName                = "/macosusesdk.v1.MacosUse/GetWindow"
+	MacosUse_ListWindows_FullMethodName              = "/macosusesdk.v1.MacosUse/ListWindows"
+	MacosUse_FocusWindow_FullMethodName              = "/macosusesdk.v1.MacosUse/FocusWindow"
+	MacosUse_MoveWindow_FullMethodName               = "/macosusesdk.v1.MacosUse/MoveWindow"
+	MacosUse_ResizeWindow_FullMethodName             = "/macosusesdk.v1.MacosUse/ResizeWindow"
+	MacosUse_MinimizeWindow_FullMethodName           = "/macosusesdk.v1.MacosUse/MinimizeWindow"
+	MacosUse_RestoreWindow_FullMethodName            = "/macosusesdk.v1.MacosUse/RestoreWindow"
+	MacosUse_CloseWindow_FullMethodName              = "/macosusesdk.v1.MacosUse/CloseWindow"
+	MacosUse_FindElements_FullMethodName             = "/macosusesdk.v1.MacosUse/FindElements"
+	MacosUse_FindRegionElements_FullMethodName       = "/macosusesdk.v1.MacosUse/FindRegionElements"
+	MacosUse_GetElement_FullMethodName               = "/macosusesdk.v1.MacosUse/GetElement"
+	MacosUse_ClickElement_FullMethodName             = "/macosusesdk.v1.MacosUse/ClickElement"
+	MacosUse_WriteElementValue_FullMethodName        = "/macosusesdk.v1.MacosUse/WriteElementValue"
+	MacosUse_GetElementActions_FullMethodName        = "/macosusesdk.v1.MacosUse/GetElementActions"
+	MacosUse_PerformElementAction_FullMethodName     = "/macosusesdk.v1.MacosUse/PerformElementAction"
+	MacosUse_WaitElement_FullMethodName              = "/macosusesdk.v1.MacosUse/WaitElement"
+	MacosUse_WaitElementState_FullMethodName         = "/macosusesdk.v1.MacosUse/WaitElementState"
+	MacosUse_CreateObservation_FullMethodName        = "/macosusesdk.v1.MacosUse/CreateObservation"
+	MacosUse_GetObservation_FullMethodName           = "/macosusesdk.v1.MacosUse/GetObservation"
+	MacosUse_ListObservations_FullMethodName         = "/macosusesdk.v1.MacosUse/ListObservations"
+	MacosUse_CancelObservation_FullMethodName        = "/macosusesdk.v1.MacosUse/CancelObservation"
+	MacosUse_StreamObservations_FullMethodName       = "/macosusesdk.v1.MacosUse/StreamObservations"
+	MacosUse_CreateSession_FullMethodName            = "/macosusesdk.v1.MacosUse/CreateSession"
+	MacosUse_GetSession_FullMethodName               = "/macosusesdk.v1.MacosUse/GetSession"
+	MacosUse_ListSessions_FullMethodName             = "/macosusesdk.v1.MacosUse/ListSessions"
+	MacosUse_DeleteSession_FullMethodName            = "/macosusesdk.v1.MacosUse/DeleteSession"
+	MacosUse_BeginTransaction_FullMethodName         = "/macosusesdk.v1.MacosUse/BeginTransaction"
+	MacosUse_CommitTransaction_FullMethodName        = "/macosusesdk.v1.MacosUse/CommitTransaction"
+	MacosUse_RollbackTransaction_FullMethodName      = "/macosusesdk.v1.MacosUse/RollbackTransaction"
+	MacosUse_GetSessionSnapshot_FullMethodName       = "/macosusesdk.v1.MacosUse/GetSessionSnapshot"
+	MacosUse_CaptureScreenshot_FullMethodName        = "/macosusesdk.v1.MacosUse/CaptureScreenshot"
+	MacosUse_CaptureWindowScreenshot_FullMethodName  = "/macosusesdk.v1.MacosUse/CaptureWindowScreenshot"
+	MacosUse_CaptureElementScreenshot_FullMethodName = "/macosusesdk.v1.MacosUse/CaptureElementScreenshot"
+	MacosUse_CaptureRegionScreenshot_FullMethodName  = "/macosusesdk.v1.MacosUse/CaptureRegionScreenshot"
+	MacosUse_GetClipboard_FullMethodName             = "/macosusesdk.v1.MacosUse/GetClipboard"
+	MacosUse_WriteClipboard_FullMethodName           = "/macosusesdk.v1.MacosUse/WriteClipboard"
+	MacosUse_ClearClipboard_FullMethodName           = "/macosusesdk.v1.MacosUse/ClearClipboard"
+	MacosUse_GetClipboardHistory_FullMethodName      = "/macosusesdk.v1.MacosUse/GetClipboardHistory"
+	MacosUse_AutomateOpenFileDialog_FullMethodName   = "/macosusesdk.v1.MacosUse/AutomateOpenFileDialog"
+	MacosUse_AutomateSaveFileDialog_FullMethodName   = "/macosusesdk.v1.MacosUse/AutomateSaveFileDialog"
+	MacosUse_SelectFile_FullMethodName               = "/macosusesdk.v1.MacosUse/SelectFile"
+	MacosUse_SelectDirectory_FullMethodName          = "/macosusesdk.v1.MacosUse/SelectDirectory"
+	MacosUse_DragFiles_FullMethodName                = "/macosusesdk.v1.MacosUse/DragFiles"
+	MacosUse_CreateMacro_FullMethodName              = "/macosusesdk.v1.MacosUse/CreateMacro"
+	MacosUse_GetMacro_FullMethodName                 = "/macosusesdk.v1.MacosUse/GetMacro"
+	MacosUse_ListMacros_FullMethodName               = "/macosusesdk.v1.MacosUse/ListMacros"
+	MacosUse_UpdateMacro_FullMethodName              = "/macosusesdk.v1.MacosUse/UpdateMacro"
+	MacosUse_DeleteMacro_FullMethodName              = "/macosusesdk.v1.MacosUse/DeleteMacro"
+	MacosUse_ExecuteMacro_FullMethodName             = "/macosusesdk.v1.MacosUse/ExecuteMacro"
+	MacosUse_ExecuteAppleScript_FullMethodName       = "/macosusesdk.v1.MacosUse/ExecuteAppleScript"
+	MacosUse_ExecuteJavaScript_FullMethodName        = "/macosusesdk.v1.MacosUse/ExecuteJavaScript"
+	MacosUse_ExecuteShellCommand_FullMethodName      = "/macosusesdk.v1.MacosUse/ExecuteShellCommand"
+	MacosUse_ValidateScript_FullMethodName           = "/macosusesdk.v1.MacosUse/ValidateScript"
+	MacosUse_GetScriptingDictionaries_FullMethodName = "/macosusesdk.v1.MacosUse/GetScriptingDictionaries"
+	MacosUse_GetMetrics_FullMethodName               = "/macosusesdk.v1.MacosUse/GetMetrics"
+	MacosUse_GetPerformanceReport_FullMethodName     = "/macosusesdk.v1.MacosUse/GetPerformanceReport"
+	MacosUse_ResetMetrics_FullMethodName             = "/macosusesdk.v1.MacosUse/ResetMetrics"
 )
 
 // MacosUseClient is the client API for MacosUse service.
@@ -117,6 +118,7 @@ type MacosUseClient interface {
 	TraverseAccessibility(ctx context.Context, in *TraverseAccessibilityRequest, opts ...grpc.CallOption) (*TraverseAccessibilityResponse, error)
 	// Streams accessibility tree changes for an application.
 	WatchAccessibility(ctx context.Context, in *WatchAccessibilityRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[WatchAccessibilityResponse], error)
+	// ===== Window Operations =====
 	// Gets a specific window.
 	GetWindow(ctx context.Context, in *GetWindowRequest, opts ...grpc.CallOption) (*Window, error)
 	// Lists windows for an application.
@@ -132,25 +134,27 @@ type MacosUseClient interface {
 	// Restores a minimized window.
 	RestoreWindow(ctx context.Context, in *RestoreWindowRequest, opts ...grpc.CallOption) (*Window, error)
 	// Closes a window.
-	CloseWindow(ctx context.Context, in *CloseWindowRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	CloseWindow(ctx context.Context, in *CloseWindowRequest, opts ...grpc.CallOption) (*CloseWindowResponse, error)
+	// ===== Element Operations =====
 	// Finds elements matching a selector.
 	FindElements(ctx context.Context, in *FindElementsRequest, opts ...grpc.CallOption) (*FindElementsResponse, error)
 	// Finds elements within a screen region.
-	FindElementsInRegion(ctx context.Context, in *FindElementsInRegionRequest, opts ...grpc.CallOption) (*FindElementsInRegionResponse, error)
+	FindRegionElements(ctx context.Context, in *FindRegionElementsRequest, opts ...grpc.CallOption) (*FindRegionElementsResponse, error)
 	// Gets a specific element.
-	GetElement(ctx context.Context, in *GetElementRequest, opts ...grpc.CallOption) (*GetElementResponse, error)
+	GetElement(ctx context.Context, in *GetElementRequest, opts ...grpc.CallOption) (*_type.Element, error)
 	// Clicks an element.
 	ClickElement(ctx context.Context, in *ClickElementRequest, opts ...grpc.CallOption) (*ClickElementResponse, error)
-	// Sets an element's value.
-	SetElementValue(ctx context.Context, in *SetElementValueRequest, opts ...grpc.CallOption) (*SetElementValueResponse, error)
+	// Writes an element's value.
+	WriteElementValue(ctx context.Context, in *WriteElementValueRequest, opts ...grpc.CallOption) (*WriteElementValueResponse, error)
 	// Gets available actions for an element.
-	GetElementActions(ctx context.Context, in *GetElementActionsRequest, opts ...grpc.CallOption) (*GetElementActionsResponse, error)
+	GetElementActions(ctx context.Context, in *GetElementActionsRequest, opts ...grpc.CallOption) (*ElementActions, error)
 	// Performs an accessibility action on an element.
 	PerformElementAction(ctx context.Context, in *PerformElementActionRequest, opts ...grpc.CallOption) (*PerformElementActionResponse, error)
 	// Waits for an element to appear (long-running operation).
-	WaitForElement(ctx context.Context, in *WaitForElementRequest, opts ...grpc.CallOption) (*longrunningpb.Operation, error)
+	WaitElement(ctx context.Context, in *WaitElementRequest, opts ...grpc.CallOption) (*longrunningpb.Operation, error)
 	// Waits for an element to reach a specific state (long-running operation).
-	WaitForElementState(ctx context.Context, in *WaitForElementStateRequest, opts ...grpc.CallOption) (*longrunningpb.Operation, error)
+	WaitElementState(ctx context.Context, in *WaitElementStateRequest, opts ...grpc.CallOption) (*longrunningpb.Operation, error)
+	// ===== Observation Operations =====
 	// Creates an observation (long-running operation).
 	CreateObservation(ctx context.Context, in *CreateObservationRequest, opts ...grpc.CallOption) (*longrunningpb.Operation, error)
 	// Gets an observation.
@@ -160,7 +164,8 @@ type MacosUseClient interface {
 	// Cancels an observation.
 	CancelObservation(ctx context.Context, in *CancelObservationRequest, opts ...grpc.CallOption) (*Observation, error)
 	// Streams observation events.
-	StreamObservations(ctx context.Context, in *StreamObservationsRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ObservationEvent], error)
+	StreamObservations(ctx context.Context, in *StreamObservationsRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[StreamObservationsResponse], error)
+	// ===== Session Operations =====
 	// Creates a session.
 	CreateSession(ctx context.Context, in *CreateSessionRequest, opts ...grpc.CallOption) (*Session, error)
 	// Gets a session.
@@ -172,11 +177,12 @@ type MacosUseClient interface {
 	// Begins a transaction within a session.
 	BeginTransaction(ctx context.Context, in *BeginTransactionRequest, opts ...grpc.CallOption) (*BeginTransactionResponse, error)
 	// Commits a transaction.
-	CommitTransaction(ctx context.Context, in *CommitTransactionRequest, opts ...grpc.CallOption) (*CommitTransactionResponse, error)
+	CommitTransaction(ctx context.Context, in *CommitTransactionRequest, opts ...grpc.CallOption) (*Transaction, error)
 	// Rolls back a transaction.
-	RollbackTransaction(ctx context.Context, in *RollbackTransactionRequest, opts ...grpc.CallOption) (*RollbackTransactionResponse, error)
+	RollbackTransaction(ctx context.Context, in *RollbackTransactionRequest, opts ...grpc.CallOption) (*Transaction, error)
 	// Gets a session state snapshot.
-	GetSessionSnapshot(ctx context.Context, in *GetSessionSnapshotRequest, opts ...grpc.CallOption) (*GetSessionSnapshotResponse, error)
+	GetSessionSnapshot(ctx context.Context, in *GetSessionSnapshotRequest, opts ...grpc.CallOption) (*SessionSnapshot, error)
+	// ===== Screenshot Operations =====
 	// Captures a full screen screenshot.
 	CaptureScreenshot(ctx context.Context, in *CaptureScreenshotRequest, opts ...grpc.CallOption) (*CaptureScreenshotResponse, error)
 	// Captures a screenshot of a specific window.
@@ -185,14 +191,16 @@ type MacosUseClient interface {
 	CaptureElementScreenshot(ctx context.Context, in *CaptureElementScreenshotRequest, opts ...grpc.CallOption) (*CaptureElementScreenshotResponse, error)
 	// Captures a screenshot of a screen region.
 	CaptureRegionScreenshot(ctx context.Context, in *CaptureRegionScreenshotRequest, opts ...grpc.CallOption) (*CaptureRegionScreenshotResponse, error)
+	// ===== Clipboard Operations =====
 	// Gets clipboard contents.
-	GetClipboard(ctx context.Context, in *GetClipboardRequest, opts ...grpc.CallOption) (*GetClipboardResponse, error)
-	// Sets clipboard contents.
-	SetClipboard(ctx context.Context, in *SetClipboardRequest, opts ...grpc.CallOption) (*SetClipboardResponse, error)
+	GetClipboard(ctx context.Context, in *GetClipboardRequest, opts ...grpc.CallOption) (*Clipboard, error)
+	// Writes clipboard contents.
+	WriteClipboard(ctx context.Context, in *WriteClipboardRequest, opts ...grpc.CallOption) (*WriteClipboardResponse, error)
 	// Clears clipboard contents.
 	ClearClipboard(ctx context.Context, in *ClearClipboardRequest, opts ...grpc.CallOption) (*ClearClipboardResponse, error)
 	// Gets clipboard history (if available).
-	GetClipboardHistory(ctx context.Context, in *GetClipboardHistoryRequest, opts ...grpc.CallOption) (*GetClipboardHistoryResponse, error)
+	GetClipboardHistory(ctx context.Context, in *GetClipboardHistoryRequest, opts ...grpc.CallOption) (*ClipboardHistory, error)
+	// ===== File Operations =====
 	// Automates an open file dialog.
 	AutomateOpenFileDialog(ctx context.Context, in *AutomateOpenFileDialogRequest, opts ...grpc.CallOption) (*AutomateOpenFileDialogResponse, error)
 	// Automates a save file dialog.
@@ -203,6 +211,7 @@ type MacosUseClient interface {
 	SelectDirectory(ctx context.Context, in *SelectDirectoryRequest, opts ...grpc.CallOption) (*SelectDirectoryResponse, error)
 	// Drags and drops files.
 	DragFiles(ctx context.Context, in *DragFilesRequest, opts ...grpc.CallOption) (*DragFilesResponse, error)
+	// ===== Macro Operations =====
 	// Creates a macro.
 	CreateMacro(ctx context.Context, in *CreateMacroRequest, opts ...grpc.CallOption) (*Macro, error)
 	// Gets a macro.
@@ -215,20 +224,22 @@ type MacosUseClient interface {
 	DeleteMacro(ctx context.Context, in *DeleteMacroRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Executes a macro (long-running operation).
 	ExecuteMacro(ctx context.Context, in *ExecuteMacroRequest, opts ...grpc.CallOption) (*longrunningpb.Operation, error)
+	// ===== Script Operations =====
 	// Executes an AppleScript.
 	ExecuteAppleScript(ctx context.Context, in *ExecuteAppleScriptRequest, opts ...grpc.CallOption) (*ExecuteAppleScriptResponse, error)
 	// Executes JavaScript for Automation (JXA).
-	ExecuteJavaScriptForAutomation(ctx context.Context, in *ExecuteJavaScriptForAutomationRequest, opts ...grpc.CallOption) (*ExecuteJavaScriptForAutomationResponse, error)
+	ExecuteJavaScript(ctx context.Context, in *ExecuteJavaScriptRequest, opts ...grpc.CallOption) (*ExecuteJavaScriptResponse, error)
 	// Executes a shell command.
 	ExecuteShellCommand(ctx context.Context, in *ExecuteShellCommandRequest, opts ...grpc.CallOption) (*ExecuteShellCommandResponse, error)
 	// Validates a script without executing.
 	ValidateScript(ctx context.Context, in *ValidateScriptRequest, opts ...grpc.CallOption) (*ValidateScriptResponse, error)
 	// Gets scripting dictionaries.
-	GetScriptingDictionaries(ctx context.Context, in *GetScriptingDictionariesRequest, opts ...grpc.CallOption) (*GetScriptingDictionariesResponse, error)
+	GetScriptingDictionaries(ctx context.Context, in *GetScriptingDictionariesRequest, opts ...grpc.CallOption) (*ScriptingDictionaries, error)
+	// ===== Metrics Operations =====
 	// Gets current metrics.
-	GetMetrics(ctx context.Context, in *GetMetricsRequest, opts ...grpc.CallOption) (*GetMetricsResponse, error)
+	GetMetrics(ctx context.Context, in *GetMetricsRequest, opts ...grpc.CallOption) (*Metrics, error)
 	// Gets a performance report.
-	GetPerformanceReport(ctx context.Context, in *GetPerformanceReportRequest, opts ...grpc.CallOption) (*GetPerformanceReportResponse, error)
+	GetPerformanceReport(ctx context.Context, in *GetPerformanceReportRequest, opts ...grpc.CallOption) (*PerformanceReport, error)
 	// Resets metrics.
 	ResetMetrics(ctx context.Context, in *ResetMetricsRequest, opts ...grpc.CallOption) (*ResetMetricsResponse, error)
 }
@@ -410,9 +421,9 @@ func (c *macosUseClient) RestoreWindow(ctx context.Context, in *RestoreWindowReq
 	return out, nil
 }
 
-func (c *macosUseClient) CloseWindow(ctx context.Context, in *CloseWindowRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *macosUseClient) CloseWindow(ctx context.Context, in *CloseWindowRequest, opts ...grpc.CallOption) (*CloseWindowResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(emptypb.Empty)
+	out := new(CloseWindowResponse)
 	err := c.cc.Invoke(ctx, MacosUse_CloseWindow_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -430,19 +441,19 @@ func (c *macosUseClient) FindElements(ctx context.Context, in *FindElementsReque
 	return out, nil
 }
 
-func (c *macosUseClient) FindElementsInRegion(ctx context.Context, in *FindElementsInRegionRequest, opts ...grpc.CallOption) (*FindElementsInRegionResponse, error) {
+func (c *macosUseClient) FindRegionElements(ctx context.Context, in *FindRegionElementsRequest, opts ...grpc.CallOption) (*FindRegionElementsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(FindElementsInRegionResponse)
-	err := c.cc.Invoke(ctx, MacosUse_FindElementsInRegion_FullMethodName, in, out, cOpts...)
+	out := new(FindRegionElementsResponse)
+	err := c.cc.Invoke(ctx, MacosUse_FindRegionElements_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *macosUseClient) GetElement(ctx context.Context, in *GetElementRequest, opts ...grpc.CallOption) (*GetElementResponse, error) {
+func (c *macosUseClient) GetElement(ctx context.Context, in *GetElementRequest, opts ...grpc.CallOption) (*_type.Element, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetElementResponse)
+	out := new(_type.Element)
 	err := c.cc.Invoke(ctx, MacosUse_GetElement_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -460,19 +471,19 @@ func (c *macosUseClient) ClickElement(ctx context.Context, in *ClickElementReque
 	return out, nil
 }
 
-func (c *macosUseClient) SetElementValue(ctx context.Context, in *SetElementValueRequest, opts ...grpc.CallOption) (*SetElementValueResponse, error) {
+func (c *macosUseClient) WriteElementValue(ctx context.Context, in *WriteElementValueRequest, opts ...grpc.CallOption) (*WriteElementValueResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(SetElementValueResponse)
-	err := c.cc.Invoke(ctx, MacosUse_SetElementValue_FullMethodName, in, out, cOpts...)
+	out := new(WriteElementValueResponse)
+	err := c.cc.Invoke(ctx, MacosUse_WriteElementValue_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *macosUseClient) GetElementActions(ctx context.Context, in *GetElementActionsRequest, opts ...grpc.CallOption) (*GetElementActionsResponse, error) {
+func (c *macosUseClient) GetElementActions(ctx context.Context, in *GetElementActionsRequest, opts ...grpc.CallOption) (*ElementActions, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetElementActionsResponse)
+	out := new(ElementActions)
 	err := c.cc.Invoke(ctx, MacosUse_GetElementActions_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -490,20 +501,20 @@ func (c *macosUseClient) PerformElementAction(ctx context.Context, in *PerformEl
 	return out, nil
 }
 
-func (c *macosUseClient) WaitForElement(ctx context.Context, in *WaitForElementRequest, opts ...grpc.CallOption) (*longrunningpb.Operation, error) {
+func (c *macosUseClient) WaitElement(ctx context.Context, in *WaitElementRequest, opts ...grpc.CallOption) (*longrunningpb.Operation, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(longrunningpb.Operation)
-	err := c.cc.Invoke(ctx, MacosUse_WaitForElement_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, MacosUse_WaitElement_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *macosUseClient) WaitForElementState(ctx context.Context, in *WaitForElementStateRequest, opts ...grpc.CallOption) (*longrunningpb.Operation, error) {
+func (c *macosUseClient) WaitElementState(ctx context.Context, in *WaitElementStateRequest, opts ...grpc.CallOption) (*longrunningpb.Operation, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(longrunningpb.Operation)
-	err := c.cc.Invoke(ctx, MacosUse_WaitForElementState_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, MacosUse_WaitElementState_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -550,13 +561,13 @@ func (c *macosUseClient) CancelObservation(ctx context.Context, in *CancelObserv
 	return out, nil
 }
 
-func (c *macosUseClient) StreamObservations(ctx context.Context, in *StreamObservationsRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ObservationEvent], error) {
+func (c *macosUseClient) StreamObservations(ctx context.Context, in *StreamObservationsRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[StreamObservationsResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	stream, err := c.cc.NewStream(ctx, &MacosUse_ServiceDesc.Streams[1], MacosUse_StreamObservations_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &grpc.GenericClientStream[StreamObservationsRequest, ObservationEvent]{ClientStream: stream}
+	x := &grpc.GenericClientStream[StreamObservationsRequest, StreamObservationsResponse]{ClientStream: stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -567,7 +578,7 @@ func (c *macosUseClient) StreamObservations(ctx context.Context, in *StreamObser
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type MacosUse_StreamObservationsClient = grpc.ServerStreamingClient[ObservationEvent]
+type MacosUse_StreamObservationsClient = grpc.ServerStreamingClient[StreamObservationsResponse]
 
 func (c *macosUseClient) CreateSession(ctx context.Context, in *CreateSessionRequest, opts ...grpc.CallOption) (*Session, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
@@ -619,9 +630,9 @@ func (c *macosUseClient) BeginTransaction(ctx context.Context, in *BeginTransact
 	return out, nil
 }
 
-func (c *macosUseClient) CommitTransaction(ctx context.Context, in *CommitTransactionRequest, opts ...grpc.CallOption) (*CommitTransactionResponse, error) {
+func (c *macosUseClient) CommitTransaction(ctx context.Context, in *CommitTransactionRequest, opts ...grpc.CallOption) (*Transaction, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommitTransactionResponse)
+	out := new(Transaction)
 	err := c.cc.Invoke(ctx, MacosUse_CommitTransaction_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -629,9 +640,9 @@ func (c *macosUseClient) CommitTransaction(ctx context.Context, in *CommitTransa
 	return out, nil
 }
 
-func (c *macosUseClient) RollbackTransaction(ctx context.Context, in *RollbackTransactionRequest, opts ...grpc.CallOption) (*RollbackTransactionResponse, error) {
+func (c *macosUseClient) RollbackTransaction(ctx context.Context, in *RollbackTransactionRequest, opts ...grpc.CallOption) (*Transaction, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RollbackTransactionResponse)
+	out := new(Transaction)
 	err := c.cc.Invoke(ctx, MacosUse_RollbackTransaction_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -639,9 +650,9 @@ func (c *macosUseClient) RollbackTransaction(ctx context.Context, in *RollbackTr
 	return out, nil
 }
 
-func (c *macosUseClient) GetSessionSnapshot(ctx context.Context, in *GetSessionSnapshotRequest, opts ...grpc.CallOption) (*GetSessionSnapshotResponse, error) {
+func (c *macosUseClient) GetSessionSnapshot(ctx context.Context, in *GetSessionSnapshotRequest, opts ...grpc.CallOption) (*SessionSnapshot, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetSessionSnapshotResponse)
+	out := new(SessionSnapshot)
 	err := c.cc.Invoke(ctx, MacosUse_GetSessionSnapshot_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -689,9 +700,9 @@ func (c *macosUseClient) CaptureRegionScreenshot(ctx context.Context, in *Captur
 	return out, nil
 }
 
-func (c *macosUseClient) GetClipboard(ctx context.Context, in *GetClipboardRequest, opts ...grpc.CallOption) (*GetClipboardResponse, error) {
+func (c *macosUseClient) GetClipboard(ctx context.Context, in *GetClipboardRequest, opts ...grpc.CallOption) (*Clipboard, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetClipboardResponse)
+	out := new(Clipboard)
 	err := c.cc.Invoke(ctx, MacosUse_GetClipboard_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -699,10 +710,10 @@ func (c *macosUseClient) GetClipboard(ctx context.Context, in *GetClipboardReque
 	return out, nil
 }
 
-func (c *macosUseClient) SetClipboard(ctx context.Context, in *SetClipboardRequest, opts ...grpc.CallOption) (*SetClipboardResponse, error) {
+func (c *macosUseClient) WriteClipboard(ctx context.Context, in *WriteClipboardRequest, opts ...grpc.CallOption) (*WriteClipboardResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(SetClipboardResponse)
-	err := c.cc.Invoke(ctx, MacosUse_SetClipboard_FullMethodName, in, out, cOpts...)
+	out := new(WriteClipboardResponse)
+	err := c.cc.Invoke(ctx, MacosUse_WriteClipboard_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -719,9 +730,9 @@ func (c *macosUseClient) ClearClipboard(ctx context.Context, in *ClearClipboardR
 	return out, nil
 }
 
-func (c *macosUseClient) GetClipboardHistory(ctx context.Context, in *GetClipboardHistoryRequest, opts ...grpc.CallOption) (*GetClipboardHistoryResponse, error) {
+func (c *macosUseClient) GetClipboardHistory(ctx context.Context, in *GetClipboardHistoryRequest, opts ...grpc.CallOption) (*ClipboardHistory, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetClipboardHistoryResponse)
+	out := new(ClipboardHistory)
 	err := c.cc.Invoke(ctx, MacosUse_GetClipboardHistory_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -849,10 +860,10 @@ func (c *macosUseClient) ExecuteAppleScript(ctx context.Context, in *ExecuteAppl
 	return out, nil
 }
 
-func (c *macosUseClient) ExecuteJavaScriptForAutomation(ctx context.Context, in *ExecuteJavaScriptForAutomationRequest, opts ...grpc.CallOption) (*ExecuteJavaScriptForAutomationResponse, error) {
+func (c *macosUseClient) ExecuteJavaScript(ctx context.Context, in *ExecuteJavaScriptRequest, opts ...grpc.CallOption) (*ExecuteJavaScriptResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ExecuteJavaScriptForAutomationResponse)
-	err := c.cc.Invoke(ctx, MacosUse_ExecuteJavaScriptForAutomation_FullMethodName, in, out, cOpts...)
+	out := new(ExecuteJavaScriptResponse)
+	err := c.cc.Invoke(ctx, MacosUse_ExecuteJavaScript_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -879,9 +890,9 @@ func (c *macosUseClient) ValidateScript(ctx context.Context, in *ValidateScriptR
 	return out, nil
 }
 
-func (c *macosUseClient) GetScriptingDictionaries(ctx context.Context, in *GetScriptingDictionariesRequest, opts ...grpc.CallOption) (*GetScriptingDictionariesResponse, error) {
+func (c *macosUseClient) GetScriptingDictionaries(ctx context.Context, in *GetScriptingDictionariesRequest, opts ...grpc.CallOption) (*ScriptingDictionaries, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetScriptingDictionariesResponse)
+	out := new(ScriptingDictionaries)
 	err := c.cc.Invoke(ctx, MacosUse_GetScriptingDictionaries_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -889,9 +900,9 @@ func (c *macosUseClient) GetScriptingDictionaries(ctx context.Context, in *GetSc
 	return out, nil
 }
 
-func (c *macosUseClient) GetMetrics(ctx context.Context, in *GetMetricsRequest, opts ...grpc.CallOption) (*GetMetricsResponse, error) {
+func (c *macosUseClient) GetMetrics(ctx context.Context, in *GetMetricsRequest, opts ...grpc.CallOption) (*Metrics, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetMetricsResponse)
+	out := new(Metrics)
 	err := c.cc.Invoke(ctx, MacosUse_GetMetrics_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -899,9 +910,9 @@ func (c *macosUseClient) GetMetrics(ctx context.Context, in *GetMetricsRequest, 
 	return out, nil
 }
 
-func (c *macosUseClient) GetPerformanceReport(ctx context.Context, in *GetPerformanceReportRequest, opts ...grpc.CallOption) (*GetPerformanceReportResponse, error) {
+func (c *macosUseClient) GetPerformanceReport(ctx context.Context, in *GetPerformanceReportRequest, opts ...grpc.CallOption) (*PerformanceReport, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetPerformanceReportResponse)
+	out := new(PerformanceReport)
 	err := c.cc.Invoke(ctx, MacosUse_GetPerformanceReport_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -943,6 +954,7 @@ type MacosUseServer interface {
 	TraverseAccessibility(context.Context, *TraverseAccessibilityRequest) (*TraverseAccessibilityResponse, error)
 	// Streams accessibility tree changes for an application.
 	WatchAccessibility(*WatchAccessibilityRequest, grpc.ServerStreamingServer[WatchAccessibilityResponse]) error
+	// ===== Window Operations =====
 	// Gets a specific window.
 	GetWindow(context.Context, *GetWindowRequest) (*Window, error)
 	// Lists windows for an application.
@@ -958,25 +970,27 @@ type MacosUseServer interface {
 	// Restores a minimized window.
 	RestoreWindow(context.Context, *RestoreWindowRequest) (*Window, error)
 	// Closes a window.
-	CloseWindow(context.Context, *CloseWindowRequest) (*emptypb.Empty, error)
+	CloseWindow(context.Context, *CloseWindowRequest) (*CloseWindowResponse, error)
+	// ===== Element Operations =====
 	// Finds elements matching a selector.
 	FindElements(context.Context, *FindElementsRequest) (*FindElementsResponse, error)
 	// Finds elements within a screen region.
-	FindElementsInRegion(context.Context, *FindElementsInRegionRequest) (*FindElementsInRegionResponse, error)
+	FindRegionElements(context.Context, *FindRegionElementsRequest) (*FindRegionElementsResponse, error)
 	// Gets a specific element.
-	GetElement(context.Context, *GetElementRequest) (*GetElementResponse, error)
+	GetElement(context.Context, *GetElementRequest) (*_type.Element, error)
 	// Clicks an element.
 	ClickElement(context.Context, *ClickElementRequest) (*ClickElementResponse, error)
-	// Sets an element's value.
-	SetElementValue(context.Context, *SetElementValueRequest) (*SetElementValueResponse, error)
+	// Writes an element's value.
+	WriteElementValue(context.Context, *WriteElementValueRequest) (*WriteElementValueResponse, error)
 	// Gets available actions for an element.
-	GetElementActions(context.Context, *GetElementActionsRequest) (*GetElementActionsResponse, error)
+	GetElementActions(context.Context, *GetElementActionsRequest) (*ElementActions, error)
 	// Performs an accessibility action on an element.
 	PerformElementAction(context.Context, *PerformElementActionRequest) (*PerformElementActionResponse, error)
 	// Waits for an element to appear (long-running operation).
-	WaitForElement(context.Context, *WaitForElementRequest) (*longrunningpb.Operation, error)
+	WaitElement(context.Context, *WaitElementRequest) (*longrunningpb.Operation, error)
 	// Waits for an element to reach a specific state (long-running operation).
-	WaitForElementState(context.Context, *WaitForElementStateRequest) (*longrunningpb.Operation, error)
+	WaitElementState(context.Context, *WaitElementStateRequest) (*longrunningpb.Operation, error)
+	// ===== Observation Operations =====
 	// Creates an observation (long-running operation).
 	CreateObservation(context.Context, *CreateObservationRequest) (*longrunningpb.Operation, error)
 	// Gets an observation.
@@ -986,7 +1000,8 @@ type MacosUseServer interface {
 	// Cancels an observation.
 	CancelObservation(context.Context, *CancelObservationRequest) (*Observation, error)
 	// Streams observation events.
-	StreamObservations(*StreamObservationsRequest, grpc.ServerStreamingServer[ObservationEvent]) error
+	StreamObservations(*StreamObservationsRequest, grpc.ServerStreamingServer[StreamObservationsResponse]) error
+	// ===== Session Operations =====
 	// Creates a session.
 	CreateSession(context.Context, *CreateSessionRequest) (*Session, error)
 	// Gets a session.
@@ -998,11 +1013,12 @@ type MacosUseServer interface {
 	// Begins a transaction within a session.
 	BeginTransaction(context.Context, *BeginTransactionRequest) (*BeginTransactionResponse, error)
 	// Commits a transaction.
-	CommitTransaction(context.Context, *CommitTransactionRequest) (*CommitTransactionResponse, error)
+	CommitTransaction(context.Context, *CommitTransactionRequest) (*Transaction, error)
 	// Rolls back a transaction.
-	RollbackTransaction(context.Context, *RollbackTransactionRequest) (*RollbackTransactionResponse, error)
+	RollbackTransaction(context.Context, *RollbackTransactionRequest) (*Transaction, error)
 	// Gets a session state snapshot.
-	GetSessionSnapshot(context.Context, *GetSessionSnapshotRequest) (*GetSessionSnapshotResponse, error)
+	GetSessionSnapshot(context.Context, *GetSessionSnapshotRequest) (*SessionSnapshot, error)
+	// ===== Screenshot Operations =====
 	// Captures a full screen screenshot.
 	CaptureScreenshot(context.Context, *CaptureScreenshotRequest) (*CaptureScreenshotResponse, error)
 	// Captures a screenshot of a specific window.
@@ -1011,14 +1027,16 @@ type MacosUseServer interface {
 	CaptureElementScreenshot(context.Context, *CaptureElementScreenshotRequest) (*CaptureElementScreenshotResponse, error)
 	// Captures a screenshot of a screen region.
 	CaptureRegionScreenshot(context.Context, *CaptureRegionScreenshotRequest) (*CaptureRegionScreenshotResponse, error)
+	// ===== Clipboard Operations =====
 	// Gets clipboard contents.
-	GetClipboard(context.Context, *GetClipboardRequest) (*GetClipboardResponse, error)
-	// Sets clipboard contents.
-	SetClipboard(context.Context, *SetClipboardRequest) (*SetClipboardResponse, error)
+	GetClipboard(context.Context, *GetClipboardRequest) (*Clipboard, error)
+	// Writes clipboard contents.
+	WriteClipboard(context.Context, *WriteClipboardRequest) (*WriteClipboardResponse, error)
 	// Clears clipboard contents.
 	ClearClipboard(context.Context, *ClearClipboardRequest) (*ClearClipboardResponse, error)
 	// Gets clipboard history (if available).
-	GetClipboardHistory(context.Context, *GetClipboardHistoryRequest) (*GetClipboardHistoryResponse, error)
+	GetClipboardHistory(context.Context, *GetClipboardHistoryRequest) (*ClipboardHistory, error)
+	// ===== File Operations =====
 	// Automates an open file dialog.
 	AutomateOpenFileDialog(context.Context, *AutomateOpenFileDialogRequest) (*AutomateOpenFileDialogResponse, error)
 	// Automates a save file dialog.
@@ -1029,6 +1047,7 @@ type MacosUseServer interface {
 	SelectDirectory(context.Context, *SelectDirectoryRequest) (*SelectDirectoryResponse, error)
 	// Drags and drops files.
 	DragFiles(context.Context, *DragFilesRequest) (*DragFilesResponse, error)
+	// ===== Macro Operations =====
 	// Creates a macro.
 	CreateMacro(context.Context, *CreateMacroRequest) (*Macro, error)
 	// Gets a macro.
@@ -1041,20 +1060,22 @@ type MacosUseServer interface {
 	DeleteMacro(context.Context, *DeleteMacroRequest) (*emptypb.Empty, error)
 	// Executes a macro (long-running operation).
 	ExecuteMacro(context.Context, *ExecuteMacroRequest) (*longrunningpb.Operation, error)
+	// ===== Script Operations =====
 	// Executes an AppleScript.
 	ExecuteAppleScript(context.Context, *ExecuteAppleScriptRequest) (*ExecuteAppleScriptResponse, error)
 	// Executes JavaScript for Automation (JXA).
-	ExecuteJavaScriptForAutomation(context.Context, *ExecuteJavaScriptForAutomationRequest) (*ExecuteJavaScriptForAutomationResponse, error)
+	ExecuteJavaScript(context.Context, *ExecuteJavaScriptRequest) (*ExecuteJavaScriptResponse, error)
 	// Executes a shell command.
 	ExecuteShellCommand(context.Context, *ExecuteShellCommandRequest) (*ExecuteShellCommandResponse, error)
 	// Validates a script without executing.
 	ValidateScript(context.Context, *ValidateScriptRequest) (*ValidateScriptResponse, error)
 	// Gets scripting dictionaries.
-	GetScriptingDictionaries(context.Context, *GetScriptingDictionariesRequest) (*GetScriptingDictionariesResponse, error)
+	GetScriptingDictionaries(context.Context, *GetScriptingDictionariesRequest) (*ScriptingDictionaries, error)
+	// ===== Metrics Operations =====
 	// Gets current metrics.
-	GetMetrics(context.Context, *GetMetricsRequest) (*GetMetricsResponse, error)
+	GetMetrics(context.Context, *GetMetricsRequest) (*Metrics, error)
 	// Gets a performance report.
-	GetPerformanceReport(context.Context, *GetPerformanceReportRequest) (*GetPerformanceReportResponse, error)
+	GetPerformanceReport(context.Context, *GetPerformanceReportRequest) (*PerformanceReport, error)
 	// Resets metrics.
 	ResetMetrics(context.Context, *ResetMetricsRequest) (*ResetMetricsResponse, error)
 }
@@ -1114,35 +1135,35 @@ func (UnimplementedMacosUseServer) MinimizeWindow(context.Context, *MinimizeWind
 func (UnimplementedMacosUseServer) RestoreWindow(context.Context, *RestoreWindowRequest) (*Window, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RestoreWindow not implemented")
 }
-func (UnimplementedMacosUseServer) CloseWindow(context.Context, *CloseWindowRequest) (*emptypb.Empty, error) {
+func (UnimplementedMacosUseServer) CloseWindow(context.Context, *CloseWindowRequest) (*CloseWindowResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CloseWindow not implemented")
 }
 func (UnimplementedMacosUseServer) FindElements(context.Context, *FindElementsRequest) (*FindElementsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FindElements not implemented")
 }
-func (UnimplementedMacosUseServer) FindElementsInRegion(context.Context, *FindElementsInRegionRequest) (*FindElementsInRegionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method FindElementsInRegion not implemented")
+func (UnimplementedMacosUseServer) FindRegionElements(context.Context, *FindRegionElementsRequest) (*FindRegionElementsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindRegionElements not implemented")
 }
-func (UnimplementedMacosUseServer) GetElement(context.Context, *GetElementRequest) (*GetElementResponse, error) {
+func (UnimplementedMacosUseServer) GetElement(context.Context, *GetElementRequest) (*_type.Element, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetElement not implemented")
 }
 func (UnimplementedMacosUseServer) ClickElement(context.Context, *ClickElementRequest) (*ClickElementResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ClickElement not implemented")
 }
-func (UnimplementedMacosUseServer) SetElementValue(context.Context, *SetElementValueRequest) (*SetElementValueResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SetElementValue not implemented")
+func (UnimplementedMacosUseServer) WriteElementValue(context.Context, *WriteElementValueRequest) (*WriteElementValueResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method WriteElementValue not implemented")
 }
-func (UnimplementedMacosUseServer) GetElementActions(context.Context, *GetElementActionsRequest) (*GetElementActionsResponse, error) {
+func (UnimplementedMacosUseServer) GetElementActions(context.Context, *GetElementActionsRequest) (*ElementActions, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetElementActions not implemented")
 }
 func (UnimplementedMacosUseServer) PerformElementAction(context.Context, *PerformElementActionRequest) (*PerformElementActionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PerformElementAction not implemented")
 }
-func (UnimplementedMacosUseServer) WaitForElement(context.Context, *WaitForElementRequest) (*longrunningpb.Operation, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method WaitForElement not implemented")
+func (UnimplementedMacosUseServer) WaitElement(context.Context, *WaitElementRequest) (*longrunningpb.Operation, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method WaitElement not implemented")
 }
-func (UnimplementedMacosUseServer) WaitForElementState(context.Context, *WaitForElementStateRequest) (*longrunningpb.Operation, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method WaitForElementState not implemented")
+func (UnimplementedMacosUseServer) WaitElementState(context.Context, *WaitElementStateRequest) (*longrunningpb.Operation, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method WaitElementState not implemented")
 }
 func (UnimplementedMacosUseServer) CreateObservation(context.Context, *CreateObservationRequest) (*longrunningpb.Operation, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateObservation not implemented")
@@ -1156,7 +1177,7 @@ func (UnimplementedMacosUseServer) ListObservations(context.Context, *ListObserv
 func (UnimplementedMacosUseServer) CancelObservation(context.Context, *CancelObservationRequest) (*Observation, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CancelObservation not implemented")
 }
-func (UnimplementedMacosUseServer) StreamObservations(*StreamObservationsRequest, grpc.ServerStreamingServer[ObservationEvent]) error {
+func (UnimplementedMacosUseServer) StreamObservations(*StreamObservationsRequest, grpc.ServerStreamingServer[StreamObservationsResponse]) error {
 	return status.Errorf(codes.Unimplemented, "method StreamObservations not implemented")
 }
 func (UnimplementedMacosUseServer) CreateSession(context.Context, *CreateSessionRequest) (*Session, error) {
@@ -1174,13 +1195,13 @@ func (UnimplementedMacosUseServer) DeleteSession(context.Context, *DeleteSession
 func (UnimplementedMacosUseServer) BeginTransaction(context.Context, *BeginTransactionRequest) (*BeginTransactionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BeginTransaction not implemented")
 }
-func (UnimplementedMacosUseServer) CommitTransaction(context.Context, *CommitTransactionRequest) (*CommitTransactionResponse, error) {
+func (UnimplementedMacosUseServer) CommitTransaction(context.Context, *CommitTransactionRequest) (*Transaction, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CommitTransaction not implemented")
 }
-func (UnimplementedMacosUseServer) RollbackTransaction(context.Context, *RollbackTransactionRequest) (*RollbackTransactionResponse, error) {
+func (UnimplementedMacosUseServer) RollbackTransaction(context.Context, *RollbackTransactionRequest) (*Transaction, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RollbackTransaction not implemented")
 }
-func (UnimplementedMacosUseServer) GetSessionSnapshot(context.Context, *GetSessionSnapshotRequest) (*GetSessionSnapshotResponse, error) {
+func (UnimplementedMacosUseServer) GetSessionSnapshot(context.Context, *GetSessionSnapshotRequest) (*SessionSnapshot, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSessionSnapshot not implemented")
 }
 func (UnimplementedMacosUseServer) CaptureScreenshot(context.Context, *CaptureScreenshotRequest) (*CaptureScreenshotResponse, error) {
@@ -1195,16 +1216,16 @@ func (UnimplementedMacosUseServer) CaptureElementScreenshot(context.Context, *Ca
 func (UnimplementedMacosUseServer) CaptureRegionScreenshot(context.Context, *CaptureRegionScreenshotRequest) (*CaptureRegionScreenshotResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CaptureRegionScreenshot not implemented")
 }
-func (UnimplementedMacosUseServer) GetClipboard(context.Context, *GetClipboardRequest) (*GetClipboardResponse, error) {
+func (UnimplementedMacosUseServer) GetClipboard(context.Context, *GetClipboardRequest) (*Clipboard, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetClipboard not implemented")
 }
-func (UnimplementedMacosUseServer) SetClipboard(context.Context, *SetClipboardRequest) (*SetClipboardResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SetClipboard not implemented")
+func (UnimplementedMacosUseServer) WriteClipboard(context.Context, *WriteClipboardRequest) (*WriteClipboardResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method WriteClipboard not implemented")
 }
 func (UnimplementedMacosUseServer) ClearClipboard(context.Context, *ClearClipboardRequest) (*ClearClipboardResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ClearClipboard not implemented")
 }
-func (UnimplementedMacosUseServer) GetClipboardHistory(context.Context, *GetClipboardHistoryRequest) (*GetClipboardHistoryResponse, error) {
+func (UnimplementedMacosUseServer) GetClipboardHistory(context.Context, *GetClipboardHistoryRequest) (*ClipboardHistory, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetClipboardHistory not implemented")
 }
 func (UnimplementedMacosUseServer) AutomateOpenFileDialog(context.Context, *AutomateOpenFileDialogRequest) (*AutomateOpenFileDialogResponse, error) {
@@ -1243,8 +1264,8 @@ func (UnimplementedMacosUseServer) ExecuteMacro(context.Context, *ExecuteMacroRe
 func (UnimplementedMacosUseServer) ExecuteAppleScript(context.Context, *ExecuteAppleScriptRequest) (*ExecuteAppleScriptResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ExecuteAppleScript not implemented")
 }
-func (UnimplementedMacosUseServer) ExecuteJavaScriptForAutomation(context.Context, *ExecuteJavaScriptForAutomationRequest) (*ExecuteJavaScriptForAutomationResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ExecuteJavaScriptForAutomation not implemented")
+func (UnimplementedMacosUseServer) ExecuteJavaScript(context.Context, *ExecuteJavaScriptRequest) (*ExecuteJavaScriptResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ExecuteJavaScript not implemented")
 }
 func (UnimplementedMacosUseServer) ExecuteShellCommand(context.Context, *ExecuteShellCommandRequest) (*ExecuteShellCommandResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ExecuteShellCommand not implemented")
@@ -1252,13 +1273,13 @@ func (UnimplementedMacosUseServer) ExecuteShellCommand(context.Context, *Execute
 func (UnimplementedMacosUseServer) ValidateScript(context.Context, *ValidateScriptRequest) (*ValidateScriptResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ValidateScript not implemented")
 }
-func (UnimplementedMacosUseServer) GetScriptingDictionaries(context.Context, *GetScriptingDictionariesRequest) (*GetScriptingDictionariesResponse, error) {
+func (UnimplementedMacosUseServer) GetScriptingDictionaries(context.Context, *GetScriptingDictionariesRequest) (*ScriptingDictionaries, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetScriptingDictionaries not implemented")
 }
-func (UnimplementedMacosUseServer) GetMetrics(context.Context, *GetMetricsRequest) (*GetMetricsResponse, error) {
+func (UnimplementedMacosUseServer) GetMetrics(context.Context, *GetMetricsRequest) (*Metrics, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMetrics not implemented")
 }
-func (UnimplementedMacosUseServer) GetPerformanceReport(context.Context, *GetPerformanceReportRequest) (*GetPerformanceReportResponse, error) {
+func (UnimplementedMacosUseServer) GetPerformanceReport(context.Context, *GetPerformanceReportRequest) (*PerformanceReport, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPerformanceReport not implemented")
 }
 func (UnimplementedMacosUseServer) ResetMetrics(context.Context, *ResetMetricsRequest) (*ResetMetricsResponse, error) {
@@ -1601,20 +1622,20 @@ func _MacosUse_FindElements_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MacosUse_FindElementsInRegion_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(FindElementsInRegionRequest)
+func _MacosUse_FindRegionElements_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindRegionElementsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MacosUseServer).FindElementsInRegion(ctx, in)
+		return srv.(MacosUseServer).FindRegionElements(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MacosUse_FindElementsInRegion_FullMethodName,
+		FullMethod: MacosUse_FindRegionElements_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MacosUseServer).FindElementsInRegion(ctx, req.(*FindElementsInRegionRequest))
+		return srv.(MacosUseServer).FindRegionElements(ctx, req.(*FindRegionElementsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1655,20 +1676,20 @@ func _MacosUse_ClickElement_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MacosUse_SetElementValue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SetElementValueRequest)
+func _MacosUse_WriteElementValue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(WriteElementValueRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MacosUseServer).SetElementValue(ctx, in)
+		return srv.(MacosUseServer).WriteElementValue(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MacosUse_SetElementValue_FullMethodName,
+		FullMethod: MacosUse_WriteElementValue_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MacosUseServer).SetElementValue(ctx, req.(*SetElementValueRequest))
+		return srv.(MacosUseServer).WriteElementValue(ctx, req.(*WriteElementValueRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1709,38 +1730,38 @@ func _MacosUse_PerformElementAction_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MacosUse_WaitForElement_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(WaitForElementRequest)
+func _MacosUse_WaitElement_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(WaitElementRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MacosUseServer).WaitForElement(ctx, in)
+		return srv.(MacosUseServer).WaitElement(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MacosUse_WaitForElement_FullMethodName,
+		FullMethod: MacosUse_WaitElement_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MacosUseServer).WaitForElement(ctx, req.(*WaitForElementRequest))
+		return srv.(MacosUseServer).WaitElement(ctx, req.(*WaitElementRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MacosUse_WaitForElementState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(WaitForElementStateRequest)
+func _MacosUse_WaitElementState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(WaitElementStateRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MacosUseServer).WaitForElementState(ctx, in)
+		return srv.(MacosUseServer).WaitElementState(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MacosUse_WaitForElementState_FullMethodName,
+		FullMethod: MacosUse_WaitElementState_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MacosUseServer).WaitForElementState(ctx, req.(*WaitForElementStateRequest))
+		return srv.(MacosUseServer).WaitElementState(ctx, req.(*WaitElementStateRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1822,11 +1843,11 @@ func _MacosUse_StreamObservations_Handler(srv interface{}, stream grpc.ServerStr
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(MacosUseServer).StreamObservations(m, &grpc.GenericServerStream[StreamObservationsRequest, ObservationEvent]{ServerStream: stream})
+	return srv.(MacosUseServer).StreamObservations(m, &grpc.GenericServerStream[StreamObservationsRequest, StreamObservationsResponse]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type MacosUse_StreamObservationsServer = grpc.ServerStreamingServer[ObservationEvent]
+type MacosUse_StreamObservationsServer = grpc.ServerStreamingServer[StreamObservationsResponse]
 
 func _MacosUse_CreateSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateSessionRequest)
@@ -2062,20 +2083,20 @@ func _MacosUse_GetClipboard_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MacosUse_SetClipboard_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SetClipboardRequest)
+func _MacosUse_WriteClipboard_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(WriteClipboardRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MacosUseServer).SetClipboard(ctx, in)
+		return srv.(MacosUseServer).WriteClipboard(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MacosUse_SetClipboard_FullMethodName,
+		FullMethod: MacosUse_WriteClipboard_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MacosUseServer).SetClipboard(ctx, req.(*SetClipboardRequest))
+		return srv.(MacosUseServer).WriteClipboard(ctx, req.(*WriteClipboardRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2332,20 +2353,20 @@ func _MacosUse_ExecuteAppleScript_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MacosUse_ExecuteJavaScriptForAutomation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ExecuteJavaScriptForAutomationRequest)
+func _MacosUse_ExecuteJavaScript_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExecuteJavaScriptRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MacosUseServer).ExecuteJavaScriptForAutomation(ctx, in)
+		return srv.(MacosUseServer).ExecuteJavaScript(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MacosUse_ExecuteJavaScriptForAutomation_FullMethodName,
+		FullMethod: MacosUse_ExecuteJavaScript_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MacosUseServer).ExecuteJavaScriptForAutomation(ctx, req.(*ExecuteJavaScriptForAutomationRequest))
+		return srv.(MacosUseServer).ExecuteJavaScript(ctx, req.(*ExecuteJavaScriptRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2534,8 +2555,8 @@ var MacosUse_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _MacosUse_FindElements_Handler,
 		},
 		{
-			MethodName: "FindElementsInRegion",
-			Handler:    _MacosUse_FindElementsInRegion_Handler,
+			MethodName: "FindRegionElements",
+			Handler:    _MacosUse_FindRegionElements_Handler,
 		},
 		{
 			MethodName: "GetElement",
@@ -2546,8 +2567,8 @@ var MacosUse_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _MacosUse_ClickElement_Handler,
 		},
 		{
-			MethodName: "SetElementValue",
-			Handler:    _MacosUse_SetElementValue_Handler,
+			MethodName: "WriteElementValue",
+			Handler:    _MacosUse_WriteElementValue_Handler,
 		},
 		{
 			MethodName: "GetElementActions",
@@ -2558,12 +2579,12 @@ var MacosUse_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _MacosUse_PerformElementAction_Handler,
 		},
 		{
-			MethodName: "WaitForElement",
-			Handler:    _MacosUse_WaitForElement_Handler,
+			MethodName: "WaitElement",
+			Handler:    _MacosUse_WaitElement_Handler,
 		},
 		{
-			MethodName: "WaitForElementState",
-			Handler:    _MacosUse_WaitForElementState_Handler,
+			MethodName: "WaitElementState",
+			Handler:    _MacosUse_WaitElementState_Handler,
 		},
 		{
 			MethodName: "CreateObservation",
@@ -2634,8 +2655,8 @@ var MacosUse_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _MacosUse_GetClipboard_Handler,
 		},
 		{
-			MethodName: "SetClipboard",
-			Handler:    _MacosUse_SetClipboard_Handler,
+			MethodName: "WriteClipboard",
+			Handler:    _MacosUse_WriteClipboard_Handler,
 		},
 		{
 			MethodName: "ClearClipboard",
@@ -2694,8 +2715,8 @@ var MacosUse_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _MacosUse_ExecuteAppleScript_Handler,
 		},
 		{
-			MethodName: "ExecuteJavaScriptForAutomation",
-			Handler:    _MacosUse_ExecuteJavaScriptForAutomation_Handler,
+			MethodName: "ExecuteJavaScript",
+			Handler:    _MacosUse_ExecuteJavaScript_Handler,
 		},
 		{
 			MethodName: "ExecuteShellCommand",

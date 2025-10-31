@@ -100,16 +100,17 @@ public struct Macosusesdk_V1_GetClipboardRequest: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Preferred content type (if available).
-  public var preferredType: Macosusesdk_V1_ContentType = .unspecified
+  /// The name of the clipboard resource.
+  /// Format: clipboard (singleton)
+  public var name: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
 }
 
-/// Response from getting clipboard contents.
-public struct Macosusesdk_V1_GetClipboardResponse: Sendable {
+/// Clipboard contents.
+public struct Macosusesdk_V1_Clipboard: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -236,13 +237,13 @@ public struct Macosusesdk_V1_FilePaths: Sendable {
   public init() {}
 }
 
-/// Request to set clipboard contents.
-public struct Macosusesdk_V1_SetClipboardRequest: Sendable {
+/// Request to write clipboard contents.
+public struct Macosusesdk_V1_WriteClipboardRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Content to set on clipboard.
+  /// Content to write on clipboard.
   public var content: Macosusesdk_V1_ClipboardContent {
     get {return _content ?? Macosusesdk_V1_ClipboardContent()}
     set {_content = newValue}
@@ -262,8 +263,8 @@ public struct Macosusesdk_V1_SetClipboardRequest: Sendable {
   fileprivate var _content: Macosusesdk_V1_ClipboardContent? = nil
 }
 
-/// Response from setting clipboard contents.
-public struct Macosusesdk_V1_SetClipboardResponse: Sendable {
+/// Response from writing clipboard contents.
+public struct Macosusesdk_V1_WriteClipboardResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -271,7 +272,7 @@ public struct Macosusesdk_V1_SetClipboardResponse: Sendable {
   /// Whether the operation succeeded.
   public var success: Bool = false
 
-  /// Content type that was set.
+  /// Content type that was written.
   public var type: Macosusesdk_V1_ContentType = .unspecified
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -310,19 +311,17 @@ public struct Macosusesdk_V1_GetClipboardHistoryRequest: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Maximum number of items to return.
-  public var maxItems: Int32 = 0
-
-  /// Filter by content type.
-  public var typeFilter: Macosusesdk_V1_ContentType = .unspecified
+  /// The name of the clipboard history resource.
+  /// Format: clipboard/history (singleton)
+  public var name: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
 }
 
-/// Response with clipboard history.
-public struct Macosusesdk_V1_GetClipboardHistoryResponse: Sendable {
+/// Clipboard history.
+public struct Macosusesdk_V1_ClipboardHistory: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -342,7 +341,14 @@ public struct Macosusesdk_V1_ClipboardHistoryEntry: Sendable {
   // methods supported on all messages.
 
   /// When this content was copied.
-  public var timestamp: Int64 = 0
+  public var copiedTime: SwiftProtobuf.Google_Protobuf_Timestamp {
+    get {return _copiedTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_copiedTime = newValue}
+  }
+  /// Returns true if `copiedTime` has been explicitly set.
+  public var hasCopiedTime: Bool {return self._copiedTime != nil}
+  /// Clears the value of `copiedTime`. Subsequent reads from it will return its default value.
+  public mutating func clearCopiedTime() {self._copiedTime = nil}
 
   /// Clipboard content.
   public var content: Macosusesdk_V1_ClipboardContent {
@@ -361,6 +367,7 @@ public struct Macosusesdk_V1_ClipboardHistoryEntry: Sendable {
 
   public init() {}
 
+  fileprivate var _copiedTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
   fileprivate var _content: Macosusesdk_V1_ClipboardContent? = nil
 }
 
@@ -374,7 +381,7 @@ extension Macosusesdk_V1_ContentType: SwiftProtobuf._ProtoNameProviding {
 
 extension Macosusesdk_V1_GetClipboardRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".GetClipboardRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}preferred_type\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -382,28 +389,28 @@ extension Macosusesdk_V1_GetClipboardRequest: SwiftProtobuf.Message, SwiftProtob
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularEnumField(value: &self.preferredType) }()
+      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.preferredType != .unspecified {
-      try visitor.visitSingularEnumField(value: self.preferredType, fieldNumber: 1)
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_GetClipboardRequest, rhs: Macosusesdk_V1_GetClipboardRequest) -> Bool {
-    if lhs.preferredType != rhs.preferredType {return false}
+    if lhs.name != rhs.name {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
-extension Macosusesdk_V1_GetClipboardResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".GetClipboardResponse"
+extension Macosusesdk_V1_Clipboard: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".Clipboard"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}content\0\u{3}available_types\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -433,7 +440,7 @@ extension Macosusesdk_V1_GetClipboardResponse: SwiftProtobuf.Message, SwiftProto
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Macosusesdk_V1_GetClipboardResponse, rhs: Macosusesdk_V1_GetClipboardResponse) -> Bool {
+  public static func ==(lhs: Macosusesdk_V1_Clipboard, rhs: Macosusesdk_V1_Clipboard) -> Bool {
     if lhs._content != rhs._content {return false}
     if lhs.availableTypes != rhs.availableTypes {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
@@ -586,8 +593,8 @@ extension Macosusesdk_V1_FilePaths: SwiftProtobuf.Message, SwiftProtobuf._Messag
   }
 }
 
-extension Macosusesdk_V1_SetClipboardRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".SetClipboardRequest"
+extension Macosusesdk_V1_WriteClipboardRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".WriteClipboardRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}content\0\u{3}clear_existing\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -617,7 +624,7 @@ extension Macosusesdk_V1_SetClipboardRequest: SwiftProtobuf.Message, SwiftProtob
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Macosusesdk_V1_SetClipboardRequest, rhs: Macosusesdk_V1_SetClipboardRequest) -> Bool {
+  public static func ==(lhs: Macosusesdk_V1_WriteClipboardRequest, rhs: Macosusesdk_V1_WriteClipboardRequest) -> Bool {
     if lhs._content != rhs._content {return false}
     if lhs.clearExisting_p != rhs.clearExisting_p {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
@@ -625,8 +632,8 @@ extension Macosusesdk_V1_SetClipboardRequest: SwiftProtobuf.Message, SwiftProtob
   }
 }
 
-extension Macosusesdk_V1_SetClipboardResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".SetClipboardResponse"
+extension Macosusesdk_V1_WriteClipboardResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".WriteClipboardResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}type\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -652,7 +659,7 @@ extension Macosusesdk_V1_SetClipboardResponse: SwiftProtobuf.Message, SwiftProto
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Macosusesdk_V1_SetClipboardResponse, rhs: Macosusesdk_V1_SetClipboardResponse) -> Bool {
+  public static func ==(lhs: Macosusesdk_V1_WriteClipboardResponse, rhs: Macosusesdk_V1_WriteClipboardResponse) -> Bool {
     if lhs.success != rhs.success {return false}
     if lhs.type != rhs.type {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
@@ -711,7 +718,7 @@ extension Macosusesdk_V1_ClearClipboardResponse: SwiftProtobuf.Message, SwiftPro
 
 extension Macosusesdk_V1_GetClipboardHistoryRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".GetClipboardHistoryRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}max_items\0\u{3}type_filter\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -719,33 +726,28 @@ extension Macosusesdk_V1_GetClipboardHistoryRequest: SwiftProtobuf.Message, Swif
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularInt32Field(value: &self.maxItems) }()
-      case 2: try { try decoder.decodeSingularEnumField(value: &self.typeFilter) }()
+      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.maxItems != 0 {
-      try visitor.visitSingularInt32Field(value: self.maxItems, fieldNumber: 1)
-    }
-    if self.typeFilter != .unspecified {
-      try visitor.visitSingularEnumField(value: self.typeFilter, fieldNumber: 2)
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_GetClipboardHistoryRequest, rhs: Macosusesdk_V1_GetClipboardHistoryRequest) -> Bool {
-    if lhs.maxItems != rhs.maxItems {return false}
-    if lhs.typeFilter != rhs.typeFilter {return false}
+    if lhs.name != rhs.name {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
-extension Macosusesdk_V1_GetClipboardHistoryResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".GetClipboardHistoryResponse"
+extension Macosusesdk_V1_ClipboardHistory: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ClipboardHistory"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}entries\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -767,7 +769,7 @@ extension Macosusesdk_V1_GetClipboardHistoryResponse: SwiftProtobuf.Message, Swi
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Macosusesdk_V1_GetClipboardHistoryResponse, rhs: Macosusesdk_V1_GetClipboardHistoryResponse) -> Bool {
+  public static func ==(lhs: Macosusesdk_V1_ClipboardHistory, rhs: Macosusesdk_V1_ClipboardHistory) -> Bool {
     if lhs.entries != rhs.entries {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
@@ -776,7 +778,7 @@ extension Macosusesdk_V1_GetClipboardHistoryResponse: SwiftProtobuf.Message, Swi
 
 extension Macosusesdk_V1_ClipboardHistoryEntry: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ClipboardHistoryEntry"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}timestamp\0\u{1}content\0\u{3}source_application\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}copied_time\0\u{1}content\0\u{3}source_application\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -784,7 +786,7 @@ extension Macosusesdk_V1_ClipboardHistoryEntry: SwiftProtobuf.Message, SwiftProt
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularInt64Field(value: &self.timestamp) }()
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._copiedTime) }()
       case 2: try { try decoder.decodeSingularMessageField(value: &self._content) }()
       case 3: try { try decoder.decodeSingularStringField(value: &self.sourceApplication) }()
       default: break
@@ -797,9 +799,9 @@ extension Macosusesdk_V1_ClipboardHistoryEntry: SwiftProtobuf.Message, SwiftProt
     // allocates stack space for every if/case branch local when no optimizations
     // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
     // https://github.com/apple/swift-protobuf/issues/1182
-    if self.timestamp != 0 {
-      try visitor.visitSingularInt64Field(value: self.timestamp, fieldNumber: 1)
-    }
+    try { if let v = self._copiedTime {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
     try { if let v = self._content {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
     } }()
@@ -810,7 +812,7 @@ extension Macosusesdk_V1_ClipboardHistoryEntry: SwiftProtobuf.Message, SwiftProt
   }
 
   public static func ==(lhs: Macosusesdk_V1_ClipboardHistoryEntry, rhs: Macosusesdk_V1_ClipboardHistoryEntry) -> Bool {
-    if lhs.timestamp != rhs.timestamp {return false}
+    if lhs._copiedTime != rhs._copiedTime {return false}
     if lhs._content != rhs._content {return false}
     if lhs.sourceApplication != rhs.sourceApplication {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}

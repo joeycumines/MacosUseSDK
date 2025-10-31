@@ -10,6 +10,7 @@ import "google/api/annotations.proto";
 import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 import "google/longrunning/operations.proto";
+import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 import "macosusesdk/v1/input.proto";
 
@@ -81,16 +82,16 @@ message MacroAction {
   }
 
   // Human-readable description of this action.
-  string description = 10;
+  string description = 10 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Wait/delay action.
 message WaitAction {
   // Duration to wait in seconds.
-  double duration = 1;
+  double duration = 1 [(google.api.field_behavior) = REQUIRED];
 
   // Optional condition to wait for.
-  WaitCondition condition = 2;
+  WaitCondition condition = 2 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Condition to wait for.
@@ -108,19 +109,19 @@ message WaitCondition {
   }
 
   // Timeout in seconds.
-  double timeout = 10;
+  double timeout = 10 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Conditional action (if-then-else).
 message ConditionalAction {
   // Condition to evaluate.
-  MacroCondition condition = 1;
+  MacroCondition condition = 1 [(google.api.field_behavior) = REQUIRED];
 
   // Actions to execute if condition is true.
-  repeated MacroAction then_actions = 2;
+  repeated MacroAction then_actions = 2 [(google.api.field_behavior) = REQUIRED];
 
   // Actions to execute if condition is false.
-  repeated MacroAction else_actions = 3;
+  repeated MacroAction else_actions = 3 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Condition for conditional actions.
@@ -147,19 +148,19 @@ message MacroCondition {
 // Variable equality condition.
 message VariableCondition {
   // Variable name.
-  string variable = 1;
+  string variable = 1 [(google.api.field_behavior) = REQUIRED];
 
   // Expected value.
-  string value = 2;
+  string value = 2 [(google.api.field_behavior) = REQUIRED];
 }
 
 // Compound condition (AND/OR/NOT).
 message CompoundCondition {
   // Operator.
-  Operator operator = 1;
+  Operator operator = 1 [(google.api.field_behavior) = REQUIRED];
 
   // Sub-conditions.
-  repeated MacroCondition conditions = 2;
+  repeated MacroCondition conditions = 2 [(google.api.field_behavior) = REQUIRED];
 
   // Logical operator.
   enum Operator {
@@ -192,7 +193,7 @@ message LoopAction {
   }
 
   // Actions to execute in each iteration.
-  repeated MacroAction actions = 10;
+  repeated MacroAction actions = 10 [(google.api.field_behavior) = REQUIRED];
 }
 
 // For-each loop over collection.
@@ -210,13 +211,13 @@ message ForEachLoop {
   }
 
   // Variable name for current item.
-  string item_variable = 10;
+  string item_variable = 10 [(google.api.field_behavior) = REQUIRED];
 }
 
 // Variable assignment action.
 message AssignAction {
   // Variable name.
-  string variable = 1;
+  string variable = 1 [(google.api.field_behavior) = REQUIRED];
 
   // Value source.
   oneof value {
@@ -237,37 +238,37 @@ message AssignAction {
 // Value from element attribute.
 message ElementAttributeValue {
   // Element selector.
-  string element_selector = 1;
+  string element_selector = 1 [(google.api.field_behavior) = REQUIRED];
 
   // Attribute name.
-  string attribute = 2;
+  string attribute = 2 [(google.api.field_behavior) = REQUIRED];
 }
 
 // Custom method call action.
 message MethodCall {
   // Method name (e.g., "ClickElement", "SetElementValue").
-  string method = 1;
+  string method = 1 [(google.api.field_behavior) = REQUIRED];
 
   // Method arguments (key-value pairs).
-  map<string, string> args = 2;
+  map<string, string> args = 2 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Macro parameter definition.
 message MacroParameter {
-  // Parameter name.
-  string name = 1;
+  // Parameter key/identifier.
+  string key = 1 [(google.api.field_behavior) = REQUIRED];
 
   // Parameter type.
-  ParameterType type = 2;
+  ParameterType type = 2 [(google.api.field_behavior) = REQUIRED];
 
   // Default value (optional).
-  string default_value = 3;
+  string default_value = 3 [(google.api.field_behavior) = OPTIONAL];
 
   // Parameter description.
-  string description = 4;
+  string description = 4 [(google.api.field_behavior) = OPTIONAL];
 
   // Whether parameter is required.
-  bool required = 5;
+  bool required = 5 [(google.api.field_behavior) = REQUIRED];
 
   // Parameter type enumeration.
   enum ParameterType {
@@ -315,16 +316,16 @@ message ExecuteMacroRequest {
 // Options for macro execution.
 message ExecutionOptions {
   // Execution speed multiplier (1.0 = normal speed).
-  double speed = 1;
+  double speed = 1 [(google.api.field_behavior) = OPTIONAL];
 
   // Whether to continue on error.
-  bool continue_on_error = 2;
+  bool continue_on_error = 2 [(google.api.field_behavior) = OPTIONAL];
 
   // Maximum execution time in seconds.
-  double timeout = 3;
+  double timeout = 3 [(google.api.field_behavior) = OPTIONAL];
 
   // Whether to record execution for debugging.
-  bool record_execution = 4;
+  bool record_execution = 4 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from executing a macro.
@@ -335,8 +336,8 @@ message ExecuteMacroResponse {
   // Number of actions executed.
   int32 actions_executed = 2;
 
-  // Execution time in seconds.
-  double execution_time = 3;
+  // Execution duration.
+  google.protobuf.Duration execution_duration = 3;
 
   // Error message if failed.
   string error = 4;
@@ -349,25 +350,31 @@ message ExecuteMacroResponse {
 message ExecutionLogEntry {
   option (google.api.resource) = {
     type: "macos.googleapis.com/ExecutionLogEntry"
-    pattern: "macros/{macro}/executions/{execution}/entries/{entry}"
+    pattern: "macros/{macro}/executions/{execution}/logEntries/{log_entry}"
+    singular: "executionLogEntry"
+    plural: "executionLogEntries"
   };
+  
+  // Resource name.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+  
   // When the action executed.
-  google.protobuf.Timestamp timestamp = 1;
+  google.protobuf.Timestamp execution_time = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Action index in macro.
-  int32 action_index = 2;
+  int32 action_index = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Action description.
-  string description = 3;
+  string description = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Whether action succeeded.
-  bool success = 4;
+  bool success = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Error message if failed.
-  string error = 5;
+  string error = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Duration in seconds.
-  double duration = 6;
+  double duration = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Metadata for ExecuteMacro operation.
@@ -381,6 +388,6 @@ message ExecuteMacroMetadata {
   // Total actions in macro.
   int32 total_actions = 3;
 
-  // Elapsed time in seconds.
-  double elapsed_time = 4;
+  // Elapsed duration.
+  google.protobuf.Duration elapsed_duration = 4;
 }

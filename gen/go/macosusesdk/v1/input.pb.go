@@ -342,12 +342,10 @@ func (Gesture_Direction) EnumDescriptor() ([]byte, []int) {
 }
 
 // A resource representing an input action that was or will be executed.
-// Inputs form a timeline for each application or globally for the desktop.
+// Inputs form a timeline for each application.
 type Input struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Resource name. Either:
-	// - "applications/{application}/inputs/{input}" for app-specific inputs
-	// - "desktopInputs/{input}" for global desktop inputs
+	// Resource name in the format "applications/{application}/inputs/{input}".
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The specific action to perform or that was performed.
 	Action *InputAction `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"`
@@ -884,9 +882,9 @@ func (x *MouseMove) GetDuration() float64 {
 type MouseDrag struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Starting position.
-	From *_type.Point `protobuf:"bytes,1,opt,name=from,proto3" json:"from,omitempty"`
+	StartPosition *_type.Point `protobuf:"bytes,1,opt,name=start_position,json=startPosition,proto3" json:"start_position,omitempty"`
 	// Ending position.
-	To *_type.Point `protobuf:"bytes,2,opt,name=to,proto3" json:"to,omitempty"`
+	EndPosition *_type.Point `protobuf:"bytes,2,opt,name=end_position,json=endPosition,proto3" json:"end_position,omitempty"`
 	// Duration of drag in seconds.
 	Duration float64 `protobuf:"fixed64,3,opt,name=duration,proto3" json:"duration,omitempty"`
 	// Mouse button to use for drag.
@@ -925,16 +923,16 @@ func (*MouseDrag) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_input_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *MouseDrag) GetFrom() *_type.Point {
+func (x *MouseDrag) GetStartPosition() *_type.Point {
 	if x != nil {
-		return x.From
+		return x.StartPosition
 	}
 	return nil
 }
 
-func (x *MouseDrag) GetTo() *_type.Point {
+func (x *MouseDrag) GetEndPosition() *_type.Point {
 	if x != nil {
-		return x.To
+		return x.EndPosition
 	}
 	return nil
 }
@@ -1176,7 +1174,7 @@ var File_macosusesdk_v1_input_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_input_proto_rawDesc = "" +
 	"\n" +
-	"\x1amacosusesdk/v1/input.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1fmacosusesdk/type/geometry.proto\"\x96\x04\n" +
+	"\x1amacosusesdk/v1/input.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1fmacosusesdk/type/geometry.proto\"\xff\x03\n" +
 	"\x05Input\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x128\n" +
 	"\x06action\x18\x02 \x01(\v2\x1b.macosusesdk.v1.InputActionB\x03\xe0A\x02R\x06action\x126\n" +
@@ -1190,8 +1188,8 @@ const file_macosusesdk_v1_input_proto_rawDesc = "" +
 	"\rSTATE_PENDING\x10\x01\x12\x13\n" +
 	"\x0fSTATE_EXECUTING\x10\x02\x12\x13\n" +
 	"\x0fSTATE_COMPLETED\x10\x03\x12\x10\n" +
-	"\fSTATE_FAILED\x10\x04:p\xeaAm\n" +
-	"\x1amacos.googleapis.com/Input\x12)applications/{application}/inputs/{input}\x12\x15desktopInputs/{input}*\x06inputs2\x05input\"\xa5\x04\n" +
+	"\fSTATE_FAILED\x10\x04:Y\xeaAV\n" +
+	"\x1amacos.googleapis.com/Input\x12)applications/{application}/inputs/{input}*\x06inputs2\x05input\"\xa5\x04\n" +
 	"\vInputAction\x12*\n" +
 	"\x0eshow_animation\x18\x01 \x01(\bB\x03\xe0A\x01R\rshowAnimation\x122\n" +
 	"\x12animation_duration\x18\x02 \x01(\x01B\x03\xe0A\x01R\x11animationDuration\x122\n" +
@@ -1237,10 +1235,10 @@ const file_macosusesdk_v1_input_proto_rawDesc = "" +
 	"\x12MODIFIER_CAPS_LOCK\x10\x06\"f\n" +
 	"\tMouseMove\x128\n" +
 	"\bposition\x18\x01 \x01(\v2\x17.macosusesdk.type.PointB\x03\xe0A\x02R\bposition\x12\x1f\n" +
-	"\bduration\x18\x02 \x01(\x01B\x03\xe0A\x01R\bduration\"\xcf\x01\n" +
-	"\tMouseDrag\x120\n" +
-	"\x04from\x18\x01 \x01(\v2\x17.macosusesdk.type.PointB\x03\xe0A\x02R\x04from\x12,\n" +
-	"\x02to\x18\x02 \x01(\v2\x17.macosusesdk.type.PointB\x03\xe0A\x02R\x02to\x12\x1f\n" +
+	"\bduration\x18\x02 \x01(\x01B\x03\xe0A\x01R\bduration\"\xf5\x01\n" +
+	"\tMouseDrag\x12C\n" +
+	"\x0estart_position\x18\x01 \x01(\v2\x17.macosusesdk.type.PointB\x03\xe0A\x02R\rstartPosition\x12?\n" +
+	"\fend_position\x18\x02 \x01(\v2\x17.macosusesdk.type.PointB\x03\xe0A\x02R\vendPosition\x12\x1f\n" +
 	"\bduration\x18\x03 \x01(\x01B\x03\xe0A\x01R\bduration\x12A\n" +
 	"\x06button\x18\x04 \x01(\x0e2$.macosusesdk.v1.MouseClick.ClickTypeB\x03\xe0A\x01R\x06button\"\xa9\x01\n" +
 	"\x06Scroll\x128\n" +
@@ -1326,8 +1324,8 @@ var file_macosusesdk_v1_input_proto_depIdxs = []int32{
 	1,  // 13: macosusesdk.v1.MouseClick.click_type:type_name -> macosusesdk.v1.MouseClick.ClickType
 	2,  // 14: macosusesdk.v1.KeyPress.modifiers:type_name -> macosusesdk.v1.KeyPress.Modifier
 	16, // 15: macosusesdk.v1.MouseMove.position:type_name -> macosusesdk.type.Point
-	16, // 16: macosusesdk.v1.MouseDrag.from:type_name -> macosusesdk.type.Point
-	16, // 17: macosusesdk.v1.MouseDrag.to:type_name -> macosusesdk.type.Point
+	16, // 16: macosusesdk.v1.MouseDrag.start_position:type_name -> macosusesdk.type.Point
+	16, // 17: macosusesdk.v1.MouseDrag.end_position:type_name -> macosusesdk.type.Point
 	1,  // 18: macosusesdk.v1.MouseDrag.button:type_name -> macosusesdk.v1.MouseClick.ClickType
 	16, // 19: macosusesdk.v1.Scroll.position:type_name -> macosusesdk.type.Point
 	16, // 20: macosusesdk.v1.Hover.position:type_name -> macosusesdk.type.Point
