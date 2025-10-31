@@ -77,27 +77,207 @@ message InputAction {
   // The specific input type and parameters.
   oneof input_type {
     // Click at a specific point.
-    macosusesdk.type.Point click = 10;
-
-    // Double-click at a specific point.
-    macosusesdk.type.Point double_click = 11;
-
-    // Right-click at a specific point.
-    macosusesdk.type.Point right_click = 12;
+    MouseClick click = 10;
 
     // Type the specified text.
-    string type_text = 13;
+    TextInput type_text = 11;
 
     // Press a key combination.
-    KeyPress press_key = 14;
+    KeyPress press_key = 12;
 
     // Move mouse to a specific point.
-    macosusesdk.type.Point move_mouse = 15;
+    MouseMove move_mouse = 13;
+
+    // Drag from one point to another.
+    MouseDrag drag = 14;
+
+    // Scroll operation.
+    Scroll scroll = 15;
+
+    // Hover at a point for duration.
+    Hover hover = 16;
+
+    // Multi-touch gesture.
+    Gesture gesture = 17;
   }
 }
 
-// A key press with optional modifiers.
+// Mouse click action.
+message MouseClick {
+  // Position to click.
+  macosusesdk.type.Point position = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Click type.
+  ClickType click_type = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Number of clicks (1 for single, 2 for double, etc.).
+  int32 click_count = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Click type enumeration.
+  enum ClickType {
+    // Default left click.
+    CLICK_TYPE_UNSPECIFIED = 0;
+
+    // Left mouse button.
+    CLICK_TYPE_LEFT = 1;
+
+    // Right mouse button.
+    CLICK_TYPE_RIGHT = 2;
+
+    // Middle mouse button.
+    CLICK_TYPE_MIDDLE = 3;
+  }
+}
+
+// Text input action.
+message TextInput {
+  // Text to type.
+  string text = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Whether to use IME for input (for non-ASCII text).
+  bool use_ime = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Delay between characters in seconds.
+  double char_delay = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Key press with optional modifiers.
 message KeyPress {
-  // Key combination string (e.g., "return", "a", "cmd+c").
-  string key_combo = 1 [(google.api.field_behavior) = REQUIRED];
+  // Key code or name (e.g., "return", "a", "f1").
+  string key = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Modifier keys to hold during press.
+  repeated Modifier modifiers = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Modifier key enumeration.
+  enum Modifier {
+    // Default unspecified modifier.
+    MODIFIER_UNSPECIFIED = 0;
+
+    // Command (⌘) key.
+    MODIFIER_COMMAND = 1;
+
+    // Option (⌥) key.
+    MODIFIER_OPTION = 2;
+
+    // Control (⌃) key.
+    MODIFIER_CONTROL = 3;
+
+    // Shift (⇧) key.
+    MODIFIER_SHIFT = 4;
+
+    // Function (fn) key.
+    MODIFIER_FUNCTION = 5;
+
+    // Caps Lock.
+    MODIFIER_CAPS_LOCK = 6;
+  }
+}
+
+// Mouse move action.
+message MouseMove {
+  // Target position.
+  macosusesdk.type.Point position = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Duration of movement in seconds (for smooth animation).
+  double duration = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Mouse drag action.
+message MouseDrag {
+  // Starting position.
+  macosusesdk.type.Point from = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Ending position.
+  macosusesdk.type.Point to = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Duration of drag in seconds.
+  double duration = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Mouse button to use for drag.
+  MouseClick.ClickType button = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Scroll action.
+message Scroll {
+  // Position to scroll at (optional, uses current mouse position if not set).
+  macosusesdk.type.Point position = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Horizontal scroll amount (positive = right, negative = left).
+  double horizontal = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Vertical scroll amount (positive = up, negative = down).
+  double vertical = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Duration of scroll in seconds (for momentum effect).
+  double duration = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Hover action.
+message Hover {
+  // Position to hover at.
+  macosusesdk.type.Point position = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Duration to hover in seconds.
+  double duration = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Multi-touch gesture.
+message Gesture {
+  // Center point of the gesture.
+  macosusesdk.type.Point center = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Gesture type.
+  GestureType gesture_type = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Scale factor (for pinch/zoom gestures).
+  double scale = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Rotation angle in degrees (for rotation gestures).
+  double rotation = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Number of fingers (for swipe gestures).
+  int32 finger_count = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Direction for swipe gestures.
+  Direction direction = 6 [(google.api.field_behavior) = OPTIONAL];
+
+  // Gesture type enumeration.
+  enum GestureType {
+    // Default unspecified gesture.
+    GESTURE_TYPE_UNSPECIFIED = 0;
+
+    // Pinch (zoom out).
+    GESTURE_TYPE_PINCH = 1;
+
+    // Zoom (zoom in).
+    GESTURE_TYPE_ZOOM = 2;
+
+    // Rotate.
+    GESTURE_TYPE_ROTATE = 3;
+
+    // Swipe.
+    GESTURE_TYPE_SWIPE = 4;
+
+    // Force touch (pressure-sensitive).
+    GESTURE_TYPE_FORCE_TOUCH = 5;
+  }
+
+  // Direction enumeration for swipes.
+  enum Direction {
+    // Default unspecified direction.
+    DIRECTION_UNSPECIFIED = 0;
+
+    // Swipe up.
+    DIRECTION_UP = 1;
+
+    // Swipe down.
+    DIRECTION_DOWN = 2;
+
+    // Swipe left.
+    DIRECTION_LEFT = 3;
+
+    // Swipe right.
+    DIRECTION_RIGHT = 4;
+  }
 }

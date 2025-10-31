@@ -281,7 +281,7 @@ func cleanupApplication(t *testing.T, ctx context.Context, client pb.MacosUseCli
 	t.Logf("Cleaning up application: %s", app.Name)
 
 	// Try to quit the application first
-	quitScript := fmt.Sprintf(`tell application "System Events" to quit application "Calculator"`)
+	quitScript := `tell application "System Events" to quit application "Calculator"`
 	exec.Command("osascript", "-e", quitScript).Run()
 	time.Sleep(500 * time.Millisecond)
 

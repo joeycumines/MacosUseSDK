@@ -1,0 +1,81 @@
+// Copyright 2025 MacosUseSDK
+//
+// Element selector types for querying UI elements
+
+syntax = "proto3";
+
+package macosusesdk.type;
+
+option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type;macosusesdktype";
+option java_multiple_files = true;
+option java_outer_classname = "SelectorProto";
+option java_package = "com.macosusesdk.type";
+
+// Selector for finding UI elements.
+message ElementSelector {
+  // Selector criteria (at least one must be specified).
+  oneof criteria {
+    // Select by role (e.g., "button", "textField").
+    string role = 1;
+
+    // Select by text content (exact match).
+    string text = 2;
+
+    // Select by text containing a substring.
+    string text_contains = 3;
+
+    // Select by text matching a regular expression.
+    string text_regex = 4;
+
+    // Select by position on screen.
+    PositionSelector position = 5;
+
+    // Select by attributes.
+    AttributeSelector attributes = 6;
+
+    // Compound selector (combine multiple criteria).
+    CompoundSelector compound = 7;
+  }
+}
+
+// Select element by screen position.
+message PositionSelector {
+  // X coordinate (screen coordinates).
+  double x = 1;
+
+  // Y coordinate (screen coordinates).
+  double y = 2;
+
+  // Tolerance for matching position (in pixels).
+  double tolerance = 3;
+}
+
+// Select element by accessibility attributes.
+message AttributeSelector {
+  // Attributes to match (all must match).
+  map<string, string> attributes = 1;
+}
+
+// Compound selector combining multiple criteria.
+message CompoundSelector {
+  // Operator for combining selectors.
+  Operator operator = 1;
+
+  // Selectors to combine.
+  repeated ElementSelector selectors = 2;
+
+  // Operator for combining selectors.
+  enum Operator {
+    // Default unspecified operator.
+    OPERATOR_UNSPECIFIED = 0;
+
+    // All selectors must match (AND).
+    OPERATOR_AND = 1;
+
+    // At least one selector must match (OR).
+    OPERATOR_OR = 2;
+
+    // Selector must not match (NOT - only valid with single selector).
+    OPERATOR_NOT = 3;
+  }
+}

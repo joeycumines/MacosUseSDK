@@ -30,6 +30,25 @@ message Element {
 
   // Height of the element.
   optional double height = 6;
+
+  // Unique identifier for this element within its window/app context.
+  // This is a server-generated ephemeral ID that may change between traversals.
+  string element_id = 7;
+
+  // Whether the element is enabled for interaction.
+  optional bool enabled = 8;
+
+  // Whether the element has keyboard focus.
+  optional bool focused = 9;
+
+  // Hierarchy path from root to this element (indices at each level).
+  repeated int32 path = 10;
+
+  // Additional accessibility attributes as key-value pairs.
+  map<string, string> attributes = 11;
+
+  // Available accessibility actions for this element.
+  repeated string actions = 12;
 }
 
 // Statistics about a traversal operation.

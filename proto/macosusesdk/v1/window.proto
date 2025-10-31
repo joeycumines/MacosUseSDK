@@ -1,0 +1,87 @@
+// Copyright 2025 MacosUseSDK
+//
+// Window resource definition
+
+syntax = "proto3";
+
+package macosusesdk.v1;
+
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "macosusesdk/type/geometry.proto";
+
+option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
+option java_multiple_files = true;
+option java_outer_classname = "WindowProto";
+option java_package = "com.macosusesdk.v1";
+
+// A resource representing an individual window within an application.
+message Window {
+  option (google.api.resource) = {
+    type: "macos.googleapis.com/Window"
+    pattern: "applications/{application}/windows/{window}"
+    singular: "window"
+    plural: "windows"
+  };
+
+  // Resource name in the format "applications/{application}/windows/{window}"
+  // where {application} is the process ID and {window} is the window ID.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // The title of the window.
+  string title = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Bounding rectangle of the window.
+  Bounds bounds = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Z-order index (higher values are in front).
+  int32 z_index = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether the window is currently visible.
+  bool visible = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether the window is minimized.
+  bool minimized = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether the window is focused.
+  bool focused = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether the window is in full-screen mode.
+  bool fullscreen = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Window attributes and state.
+  WindowState state = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Bounding rectangle for window positioning.
+message Bounds {
+  // X coordinate of the window's origin.
+  double x = 1;
+
+  // Y coordinate of the window's origin.
+  double y = 2;
+
+  // Width of the window.
+  double width = 3;
+
+  // Height of the window.
+  double height = 4;
+}
+
+// State information about a window.
+message WindowState {
+  // Whether the window can be resized.
+  bool resizable = 1;
+
+  // Whether the window can be minimized.
+  bool minimizable = 2;
+
+  // Whether the window can be closed.
+  bool closable = 3;
+
+  // Whether the window is a modal dialog.
+  bool modal = 4;
+
+  // Whether the window is a floating window.
+  bool floating = 5;
+}

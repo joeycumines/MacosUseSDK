@@ -1,0 +1,352 @@
+// Copyright 2025 MacosUseSDK
+//
+// Element query and interaction methods
+
+syntax = "proto3";
+
+package macosusesdk.v1;
+
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/longrunning/operations.proto";
+import "macosusesdk/type/element.proto";
+import "macosusesdk/type/geometry.proto";
+import "macosusesdk/type/selector.proto";
+
+option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
+option java_multiple_files = true;
+option java_outer_classname = "ElementMethodsProto";
+option java_package = "com.macosusesdk.v1";
+
+// Request to find elements matching a selector.
+message FindElementsRequest {
+  // Parent context. Either:
+  // - "applications/{application}" to search within an app
+  // - "applications/{application}/windows/{window}" to search within a window
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "*"}
+  ];
+
+  // Selector for finding elements.
+  macosusesdk.type.ElementSelector selector = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Maximum number of elements to return.
+  int32 page_size = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Page token from a previous FindElements call.
+  string page_token = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to search only visible elements.
+  bool visible_only = 5 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from finding elements.
+message FindElementsResponse {
+  // Elements matching the selector.
+  repeated macosusesdk.type.Element elements = 1;
+
+  // Token to retrieve the next page of results.
+  string next_page_token = 2;
+}
+
+// Request to find elements within a screen region.
+message FindElementsInRegionRequest {
+  // Parent context (same as FindElementsRequest).
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "*"}
+  ];
+
+  // Region to search within (screen coordinates).
+  Region region = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Optional selector for additional filtering.
+  macosusesdk.type.ElementSelector selector = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Maximum number of elements to return.
+  int32 page_size = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Page token from a previous call.
+  string page_token = 5 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Screen region for spatial searches.
+message Region {
+  // X coordinate of the region's origin.
+  double x = 1;
+
+  // Y coordinate of the region's origin.
+  double y = 2;
+
+  // Width of the region.
+  double width = 3;
+
+  // Height of the region.
+  double height = 4;
+}
+
+// Response from finding elements in a region.
+message FindElementsInRegionResponse {
+  // Elements within the region.
+  repeated macosusesdk.type.Element elements = 1;
+
+  // Token to retrieve the next page of results.
+  string next_page_token = 2;
+}
+
+// Request to get a specific element by ID.
+message GetElementRequest {
+  // Parent context (application or window).
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "*"}
+  ];
+
+  // Element ID (from Element.element_id).
+  string element_id = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Response from getting an element.
+message GetElementResponse {
+  // The requested element, or null if not found.
+  macosusesdk.type.Element element = 1;
+}
+
+// Request to click an element.
+message ClickElementRequest {
+  // Parent context.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "*"}
+  ];
+
+  // Element ID or selector.
+  oneof target {
+    // Element ID to click.
+    string element_id = 2;
+
+    // Selector to find element to click.
+    macosusesdk.type.ElementSelector selector = 3;
+  }
+
+  // Click type (single, double, right-click).
+  ClickType click_type = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Click type enumeration.
+  enum ClickType {
+    // Default single click.
+    CLICK_TYPE_UNSPECIFIED = 0;
+
+    // Single left-click.
+    CLICK_TYPE_SINGLE = 1;
+
+    // Double-click.
+    CLICK_TYPE_DOUBLE = 2;
+
+    // Right-click.
+    CLICK_TYPE_RIGHT = 3;
+  }
+}
+
+// Response from clicking an element.
+message ClickElementResponse {
+  // Whether the click was successful.
+  bool success = 1;
+
+  // The element that was clicked.
+  macosusesdk.type.Element element = 2;
+}
+
+// Request to set an element's value.
+message SetElementValueRequest {
+  // Parent context.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "*"}
+  ];
+
+  // Element ID or selector.
+  oneof target {
+    // Element ID to modify.
+    string element_id = 2;
+
+    // Selector to find element to modify.
+    macosusesdk.type.ElementSelector selector = 3;
+  }
+
+  // Value to set.
+  string value = 4 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Response from setting an element's value.
+message SetElementValueResponse {
+  // Whether the operation was successful.
+  bool success = 1;
+
+  // The element that was modified.
+  macosusesdk.type.Element element = 2;
+}
+
+// Request to get available actions for an element.
+message GetElementActionsRequest {
+  // Parent context.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "*"}
+  ];
+
+  // Element ID or selector.
+  oneof target {
+    // Element ID.
+    string element_id = 2;
+
+    // Selector to find element.
+    macosusesdk.type.ElementSelector selector = 3;
+  }
+}
+
+// Response from getting element actions.
+message GetElementActionsResponse {
+  // Available action names.
+  repeated string actions = 1;
+
+  // The element.
+  macosusesdk.type.Element element = 2;
+}
+
+// Request to perform an accessibility action on an element.
+message PerformElementActionRequest {
+  // Parent context.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "*"}
+  ];
+
+  // Element ID or selector.
+  oneof target {
+    // Element ID.
+    string element_id = 2;
+
+    // Selector to find element.
+    macosusesdk.type.ElementSelector selector = 3;
+  }
+
+  // Action name to perform.
+  string action = 4 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Response from performing an element action.
+message PerformElementActionResponse {
+  // Whether the action was successful.
+  bool success = 1;
+
+  // The element.
+  macosusesdk.type.Element element = 2;
+}
+
+// Request to wait for an element to appear (long-running operation).
+message WaitForElementRequest {
+  // Parent context.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "*"}
+  ];
+
+  // Selector for the element to wait for.
+  macosusesdk.type.ElementSelector selector = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Maximum time to wait in seconds (default: 30).
+  double timeout = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Poll interval in seconds (default: 0.5).
+  double poll_interval = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from waiting for an element.
+message WaitForElementResponse {
+  // The element that appeared.
+  macosusesdk.type.Element element = 1;
+}
+
+// Metadata for WaitForElement long-running operation.
+message WaitForElementMetadata {
+  // The selector being waited for.
+  macosusesdk.type.ElementSelector selector = 1;
+
+  // Number of poll attempts so far.
+  int32 attempts = 2;
+}
+
+// Request to wait for an element to reach a specific state.
+message WaitForElementStateRequest {
+  // Parent context.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "*"}
+  ];
+
+  // Element ID or selector.
+  oneof target {
+    // Element ID.
+    string element_id = 2;
+
+    // Selector to find element.
+    macosusesdk.type.ElementSelector selector = 3;
+  }
+
+  // State condition to wait for.
+  StateCondition condition = 4 [(google.api.field_behavior) = REQUIRED];
+
+  // Maximum time to wait in seconds (default: 30).
+  double timeout = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Poll interval in seconds (default: 0.5).
+  double poll_interval = 6 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// State condition for waiting.
+message StateCondition {
+  // Condition type.
+  oneof condition {
+    // Wait for element to be enabled.
+    bool enabled = 1;
+
+    // Wait for element to be focused.
+    bool focused = 2;
+
+    // Wait for element text to match.
+    string text_equals = 3;
+
+    // Wait for element text to contain substring.
+    string text_contains = 4;
+
+    // Wait for element to have specific attribute value.
+    AttributeCondition attribute = 5;
+  }
+}
+
+// Attribute condition for waiting.
+message AttributeCondition {
+  // Attribute name.
+  string name = 1;
+
+  // Expected attribute value.
+  string value = 2;
+}
+
+// Response from waiting for element state.
+message WaitForElementStateResponse {
+  // The element in the expected state.
+  macosusesdk.type.Element element = 1;
+}
+
+// Metadata for WaitForElementState operation.
+message WaitForElementStateMetadata {
+  // The condition being waited for.
+  StateCondition condition = 1;
+
+  // Number of poll attempts so far.
+  int32 attempts = 2;
+}
