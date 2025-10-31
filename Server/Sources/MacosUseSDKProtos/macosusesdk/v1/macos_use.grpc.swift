@@ -43,6 +43,177 @@ public protocol Macosusesdk_V1_MacosUseProvider: CallHandlerProvider {
 
   /// Streams accessibility tree changes for an application.
   func watchAccessibility(request: Macosusesdk_V1_WatchAccessibilityRequest, context: StreamingResponseCallContext<Macosusesdk_V1_WatchAccessibilityResponse>) -> EventLoopFuture<GRPCStatus>
+
+  /// Gets a specific window.
+  func getWindow(request: Macosusesdk_V1_GetWindowRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_Window>
+
+  /// Lists windows for an application.
+  func listWindows(request: Macosusesdk_V1_ListWindowsRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_ListWindowsResponse>
+
+  /// Focuses a specific window.
+  func focusWindow(request: Macosusesdk_V1_FocusWindowRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_Window>
+
+  /// Moves a window to a new position.
+  func moveWindow(request: Macosusesdk_V1_MoveWindowRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_Window>
+
+  /// Resizes a window.
+  func resizeWindow(request: Macosusesdk_V1_ResizeWindowRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_Window>
+
+  /// Minimizes a window.
+  func minimizeWindow(request: Macosusesdk_V1_MinimizeWindowRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_Window>
+
+  /// Restores a minimized window.
+  func restoreWindow(request: Macosusesdk_V1_RestoreWindowRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_Window>
+
+  /// Closes a window.
+  func closeWindow(request: Macosusesdk_V1_CloseWindowRequest, context: StatusOnlyCallContext) -> EventLoopFuture<SwiftProtobuf.Google_Protobuf_Empty>
+
+  /// Finds elements matching a selector.
+  func findElements(request: Macosusesdk_V1_FindElementsRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_FindElementsResponse>
+
+  /// Finds elements within a screen region.
+  func findElementsInRegion(request: Macosusesdk_V1_FindElementsInRegionRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_FindElementsInRegionResponse>
+
+  /// Gets a specific element.
+  func getElement(request: Macosusesdk_V1_GetElementRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_GetElementResponse>
+
+  /// Clicks an element.
+  func clickElement(request: Macosusesdk_V1_ClickElementRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_ClickElementResponse>
+
+  /// Sets an element's value.
+  func setElementValue(request: Macosusesdk_V1_SetElementValueRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_SetElementValueResponse>
+
+  /// Gets available actions for an element.
+  func getElementActions(request: Macosusesdk_V1_GetElementActionsRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_GetElementActionsResponse>
+
+  /// Performs an accessibility action on an element.
+  func performElementAction(request: Macosusesdk_V1_PerformElementActionRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_PerformElementActionResponse>
+
+  /// Waits for an element to appear (long-running operation).
+  func waitForElement(request: Macosusesdk_V1_WaitForElementRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Google_Longrunning_Operation>
+
+  /// Waits for an element to reach a specific state (long-running operation).
+  func waitForElementState(request: Macosusesdk_V1_WaitForElementStateRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Google_Longrunning_Operation>
+
+  /// Creates an observation (long-running operation).
+  func createObservation(request: Macosusesdk_V1_CreateObservationRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Google_Longrunning_Operation>
+
+  /// Gets an observation.
+  func getObservation(request: Macosusesdk_V1_GetObservationRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_Observation>
+
+  /// Lists observations for an application.
+  func listObservations(request: Macosusesdk_V1_ListObservationsRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_ListObservationsResponse>
+
+  /// Cancels an observation.
+  func cancelObservation(request: Macosusesdk_V1_CancelObservationRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_Observation>
+
+  /// Streams observation events.
+  func streamObservations(request: Macosusesdk_V1_StreamObservationsRequest, context: StreamingResponseCallContext<Macosusesdk_V1_ObservationEvent>) -> EventLoopFuture<GRPCStatus>
+
+  /// Creates a session.
+  func createSession(request: Macosusesdk_V1_CreateSessionRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_Session>
+
+  /// Gets a session.
+  func getSession(request: Macosusesdk_V1_GetSessionRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_Session>
+
+  /// Lists sessions.
+  func listSessions(request: Macosusesdk_V1_ListSessionsRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_ListSessionsResponse>
+
+  /// Deletes a session.
+  func deleteSession(request: Macosusesdk_V1_DeleteSessionRequest, context: StatusOnlyCallContext) -> EventLoopFuture<SwiftProtobuf.Google_Protobuf_Empty>
+
+  /// Begins a transaction within a session.
+  func beginTransaction(request: Macosusesdk_V1_BeginTransactionRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_BeginTransactionResponse>
+
+  /// Commits a transaction.
+  func commitTransaction(request: Macosusesdk_V1_CommitTransactionRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_CommitTransactionResponse>
+
+  /// Rolls back a transaction.
+  func rollbackTransaction(request: Macosusesdk_V1_RollbackTransactionRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_RollbackTransactionResponse>
+
+  /// Gets a session state snapshot.
+  func getSessionSnapshot(request: Macosusesdk_V1_GetSessionSnapshotRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_GetSessionSnapshotResponse>
+
+  /// Captures a full screen screenshot.
+  func captureScreenshot(request: Macosusesdk_V1_CaptureScreenshotRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_CaptureScreenshotResponse>
+
+  /// Captures a screenshot of a specific window.
+  func captureWindowScreenshot(request: Macosusesdk_V1_CaptureWindowScreenshotRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_CaptureWindowScreenshotResponse>
+
+  /// Captures a screenshot of a specific element.
+  func captureElementScreenshot(request: Macosusesdk_V1_CaptureElementScreenshotRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_CaptureElementScreenshotResponse>
+
+  /// Captures a screenshot of a screen region.
+  func captureRegionScreenshot(request: Macosusesdk_V1_CaptureRegionScreenshotRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_CaptureRegionScreenshotResponse>
+
+  /// Gets clipboard contents.
+  func getClipboard(request: Macosusesdk_V1_GetClipboardRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_GetClipboardResponse>
+
+  /// Sets clipboard contents.
+  func setClipboard(request: Macosusesdk_V1_SetClipboardRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_SetClipboardResponse>
+
+  /// Clears clipboard contents.
+  func clearClipboard(request: Macosusesdk_V1_ClearClipboardRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_ClearClipboardResponse>
+
+  /// Gets clipboard history (if available).
+  func getClipboardHistory(request: Macosusesdk_V1_GetClipboardHistoryRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_GetClipboardHistoryResponse>
+
+  /// Automates an open file dialog.
+  func automateOpenFileDialog(request: Macosusesdk_V1_AutomateOpenFileDialogRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_AutomateOpenFileDialogResponse>
+
+  /// Automates a save file dialog.
+  func automateSaveFileDialog(request: Macosusesdk_V1_AutomateSaveFileDialogRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_AutomateSaveFileDialogResponse>
+
+  /// Selects a file programmatically.
+  func selectFile(request: Macosusesdk_V1_SelectFileRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_SelectFileResponse>
+
+  /// Selects a directory.
+  func selectDirectory(request: Macosusesdk_V1_SelectDirectoryRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_SelectDirectoryResponse>
+
+  /// Drags and drops files.
+  func dragFiles(request: Macosusesdk_V1_DragFilesRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_DragFilesResponse>
+
+  /// Creates a macro.
+  func createMacro(request: Macosusesdk_V1_CreateMacroRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_Macro>
+
+  /// Gets a macro.
+  func getMacro(request: Macosusesdk_V1_GetMacroRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_Macro>
+
+  /// Lists macros.
+  func listMacros(request: Macosusesdk_V1_ListMacrosRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_ListMacrosResponse>
+
+  /// Updates a macro.
+  func updateMacro(request: Macosusesdk_V1_UpdateMacroRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_Macro>
+
+  /// Deletes a macro.
+  func deleteMacro(request: Macosusesdk_V1_DeleteMacroRequest, context: StatusOnlyCallContext) -> EventLoopFuture<SwiftProtobuf.Google_Protobuf_Empty>
+
+  /// Executes a macro (long-running operation).
+  func executeMacro(request: Macosusesdk_V1_ExecuteMacroRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Google_Longrunning_Operation>
+
+  /// Executes an AppleScript.
+  func executeAppleScript(request: Macosusesdk_V1_ExecuteAppleScriptRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_ExecuteAppleScriptResponse>
+
+  /// Executes JavaScript for Automation (JXA).
+  func executeJavaScriptForAutomation(request: Macosusesdk_V1_ExecuteJavaScriptForAutomationRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_ExecuteJavaScriptForAutomationResponse>
+
+  /// Executes a shell command.
+  func executeShellCommand(request: Macosusesdk_V1_ExecuteShellCommandRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_ExecuteShellCommandResponse>
+
+  /// Validates a script without executing.
+  func validateScript(request: Macosusesdk_V1_ValidateScriptRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_ValidateScriptResponse>
+
+  /// Gets scripting dictionaries.
+  func getScriptingDictionaries(request: Macosusesdk_V1_GetScriptingDictionariesRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_GetScriptingDictionariesResponse>
+
+  /// Gets current metrics.
+  func getMetrics(request: Macosusesdk_V1_GetMetricsRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_GetMetricsResponse>
+
+  /// Gets a performance report.
+  func getPerformanceReport(request: Macosusesdk_V1_GetPerformanceReportRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_GetPerformanceReportResponse>
+
+  /// Resets metrics.
+  func resetMetrics(request: Macosusesdk_V1_ResetMetricsRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_ResetMetricsResponse>
 }
 
 extension Macosusesdk_V1_MacosUseProvider {
@@ -138,6 +309,519 @@ extension Macosusesdk_V1_MacosUseProvider {
         userFunction: self.watchAccessibility(request:context:)
       )
 
+    case "GetWindow":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetWindowRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Window>(),
+        interceptors: self.interceptors?.makeGetWindowInterceptors() ?? [],
+        userFunction: self.getWindow(request:context:)
+      )
+
+    case "ListWindows":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ListWindowsRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ListWindowsResponse>(),
+        interceptors: self.interceptors?.makeListWindowsInterceptors() ?? [],
+        userFunction: self.listWindows(request:context:)
+      )
+
+    case "FocusWindow":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_FocusWindowRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Window>(),
+        interceptors: self.interceptors?.makeFocusWindowInterceptors() ?? [],
+        userFunction: self.focusWindow(request:context:)
+      )
+
+    case "MoveWindow":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_MoveWindowRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Window>(),
+        interceptors: self.interceptors?.makeMoveWindowInterceptors() ?? [],
+        userFunction: self.moveWindow(request:context:)
+      )
+
+    case "ResizeWindow":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ResizeWindowRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Window>(),
+        interceptors: self.interceptors?.makeResizeWindowInterceptors() ?? [],
+        userFunction: self.resizeWindow(request:context:)
+      )
+
+    case "MinimizeWindow":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_MinimizeWindowRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Window>(),
+        interceptors: self.interceptors?.makeMinimizeWindowInterceptors() ?? [],
+        userFunction: self.minimizeWindow(request:context:)
+      )
+
+    case "RestoreWindow":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_RestoreWindowRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Window>(),
+        interceptors: self.interceptors?.makeRestoreWindowInterceptors() ?? [],
+        userFunction: self.restoreWindow(request:context:)
+      )
+
+    case "CloseWindow":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_CloseWindowRequest>(),
+        responseSerializer: ProtobufSerializer<SwiftProtobuf.Google_Protobuf_Empty>(),
+        interceptors: self.interceptors?.makeCloseWindowInterceptors() ?? [],
+        userFunction: self.closeWindow(request:context:)
+      )
+
+    case "FindElements":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_FindElementsRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_FindElementsResponse>(),
+        interceptors: self.interceptors?.makeFindElementsInterceptors() ?? [],
+        userFunction: self.findElements(request:context:)
+      )
+
+    case "FindElementsInRegion":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_FindElementsInRegionRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_FindElementsInRegionResponse>(),
+        interceptors: self.interceptors?.makeFindElementsInRegionInterceptors() ?? [],
+        userFunction: self.findElementsInRegion(request:context:)
+      )
+
+    case "GetElement":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetElementRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetElementResponse>(),
+        interceptors: self.interceptors?.makeGetElementInterceptors() ?? [],
+        userFunction: self.getElement(request:context:)
+      )
+
+    case "ClickElement":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ClickElementRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ClickElementResponse>(),
+        interceptors: self.interceptors?.makeClickElementInterceptors() ?? [],
+        userFunction: self.clickElement(request:context:)
+      )
+
+    case "SetElementValue":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_SetElementValueRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_SetElementValueResponse>(),
+        interceptors: self.interceptors?.makeSetElementValueInterceptors() ?? [],
+        userFunction: self.setElementValue(request:context:)
+      )
+
+    case "GetElementActions":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetElementActionsRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetElementActionsResponse>(),
+        interceptors: self.interceptors?.makeGetElementActionsInterceptors() ?? [],
+        userFunction: self.getElementActions(request:context:)
+      )
+
+    case "PerformElementAction":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_PerformElementActionRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_PerformElementActionResponse>(),
+        interceptors: self.interceptors?.makePerformElementActionInterceptors() ?? [],
+        userFunction: self.performElementAction(request:context:)
+      )
+
+    case "WaitForElement":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_WaitForElementRequest>(),
+        responseSerializer: ProtobufSerializer<Google_Longrunning_Operation>(),
+        interceptors: self.interceptors?.makeWaitForElementInterceptors() ?? [],
+        userFunction: self.waitForElement(request:context:)
+      )
+
+    case "WaitForElementState":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_WaitForElementStateRequest>(),
+        responseSerializer: ProtobufSerializer<Google_Longrunning_Operation>(),
+        interceptors: self.interceptors?.makeWaitForElementStateInterceptors() ?? [],
+        userFunction: self.waitForElementState(request:context:)
+      )
+
+    case "CreateObservation":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_CreateObservationRequest>(),
+        responseSerializer: ProtobufSerializer<Google_Longrunning_Operation>(),
+        interceptors: self.interceptors?.makeCreateObservationInterceptors() ?? [],
+        userFunction: self.createObservation(request:context:)
+      )
+
+    case "GetObservation":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetObservationRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Observation>(),
+        interceptors: self.interceptors?.makeGetObservationInterceptors() ?? [],
+        userFunction: self.getObservation(request:context:)
+      )
+
+    case "ListObservations":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ListObservationsRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ListObservationsResponse>(),
+        interceptors: self.interceptors?.makeListObservationsInterceptors() ?? [],
+        userFunction: self.listObservations(request:context:)
+      )
+
+    case "CancelObservation":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_CancelObservationRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Observation>(),
+        interceptors: self.interceptors?.makeCancelObservationInterceptors() ?? [],
+        userFunction: self.cancelObservation(request:context:)
+      )
+
+    case "StreamObservations":
+      return ServerStreamingServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_StreamObservationsRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ObservationEvent>(),
+        interceptors: self.interceptors?.makeStreamObservationsInterceptors() ?? [],
+        userFunction: self.streamObservations(request:context:)
+      )
+
+    case "CreateSession":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_CreateSessionRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Session>(),
+        interceptors: self.interceptors?.makeCreateSessionInterceptors() ?? [],
+        userFunction: self.createSession(request:context:)
+      )
+
+    case "GetSession":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetSessionRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Session>(),
+        interceptors: self.interceptors?.makeGetSessionInterceptors() ?? [],
+        userFunction: self.getSession(request:context:)
+      )
+
+    case "ListSessions":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ListSessionsRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ListSessionsResponse>(),
+        interceptors: self.interceptors?.makeListSessionsInterceptors() ?? [],
+        userFunction: self.listSessions(request:context:)
+      )
+
+    case "DeleteSession":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_DeleteSessionRequest>(),
+        responseSerializer: ProtobufSerializer<SwiftProtobuf.Google_Protobuf_Empty>(),
+        interceptors: self.interceptors?.makeDeleteSessionInterceptors() ?? [],
+        userFunction: self.deleteSession(request:context:)
+      )
+
+    case "BeginTransaction":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_BeginTransactionRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_BeginTransactionResponse>(),
+        interceptors: self.interceptors?.makeBeginTransactionInterceptors() ?? [],
+        userFunction: self.beginTransaction(request:context:)
+      )
+
+    case "CommitTransaction":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_CommitTransactionRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_CommitTransactionResponse>(),
+        interceptors: self.interceptors?.makeCommitTransactionInterceptors() ?? [],
+        userFunction: self.commitTransaction(request:context:)
+      )
+
+    case "RollbackTransaction":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_RollbackTransactionRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_RollbackTransactionResponse>(),
+        interceptors: self.interceptors?.makeRollbackTransactionInterceptors() ?? [],
+        userFunction: self.rollbackTransaction(request:context:)
+      )
+
+    case "GetSessionSnapshot":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetSessionSnapshotRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetSessionSnapshotResponse>(),
+        interceptors: self.interceptors?.makeGetSessionSnapshotInterceptors() ?? [],
+        userFunction: self.getSessionSnapshot(request:context:)
+      )
+
+    case "CaptureScreenshot":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_CaptureScreenshotRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_CaptureScreenshotResponse>(),
+        interceptors: self.interceptors?.makeCaptureScreenshotInterceptors() ?? [],
+        userFunction: self.captureScreenshot(request:context:)
+      )
+
+    case "CaptureWindowScreenshot":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_CaptureWindowScreenshotRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_CaptureWindowScreenshotResponse>(),
+        interceptors: self.interceptors?.makeCaptureWindowScreenshotInterceptors() ?? [],
+        userFunction: self.captureWindowScreenshot(request:context:)
+      )
+
+    case "CaptureElementScreenshot":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_CaptureElementScreenshotRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_CaptureElementScreenshotResponse>(),
+        interceptors: self.interceptors?.makeCaptureElementScreenshotInterceptors() ?? [],
+        userFunction: self.captureElementScreenshot(request:context:)
+      )
+
+    case "CaptureRegionScreenshot":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_CaptureRegionScreenshotRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_CaptureRegionScreenshotResponse>(),
+        interceptors: self.interceptors?.makeCaptureRegionScreenshotInterceptors() ?? [],
+        userFunction: self.captureRegionScreenshot(request:context:)
+      )
+
+    case "GetClipboard":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetClipboardRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetClipboardResponse>(),
+        interceptors: self.interceptors?.makeGetClipboardInterceptors() ?? [],
+        userFunction: self.getClipboard(request:context:)
+      )
+
+    case "SetClipboard":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_SetClipboardRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_SetClipboardResponse>(),
+        interceptors: self.interceptors?.makeSetClipboardInterceptors() ?? [],
+        userFunction: self.setClipboard(request:context:)
+      )
+
+    case "ClearClipboard":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ClearClipboardRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ClearClipboardResponse>(),
+        interceptors: self.interceptors?.makeClearClipboardInterceptors() ?? [],
+        userFunction: self.clearClipboard(request:context:)
+      )
+
+    case "GetClipboardHistory":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetClipboardHistoryRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetClipboardHistoryResponse>(),
+        interceptors: self.interceptors?.makeGetClipboardHistoryInterceptors() ?? [],
+        userFunction: self.getClipboardHistory(request:context:)
+      )
+
+    case "AutomateOpenFileDialog":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_AutomateOpenFileDialogRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_AutomateOpenFileDialogResponse>(),
+        interceptors: self.interceptors?.makeAutomateOpenFileDialogInterceptors() ?? [],
+        userFunction: self.automateOpenFileDialog(request:context:)
+      )
+
+    case "AutomateSaveFileDialog":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_AutomateSaveFileDialogRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_AutomateSaveFileDialogResponse>(),
+        interceptors: self.interceptors?.makeAutomateSaveFileDialogInterceptors() ?? [],
+        userFunction: self.automateSaveFileDialog(request:context:)
+      )
+
+    case "SelectFile":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_SelectFileRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_SelectFileResponse>(),
+        interceptors: self.interceptors?.makeSelectFileInterceptors() ?? [],
+        userFunction: self.selectFile(request:context:)
+      )
+
+    case "SelectDirectory":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_SelectDirectoryRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_SelectDirectoryResponse>(),
+        interceptors: self.interceptors?.makeSelectDirectoryInterceptors() ?? [],
+        userFunction: self.selectDirectory(request:context:)
+      )
+
+    case "DragFiles":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_DragFilesRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_DragFilesResponse>(),
+        interceptors: self.interceptors?.makeDragFilesInterceptors() ?? [],
+        userFunction: self.dragFiles(request:context:)
+      )
+
+    case "CreateMacro":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_CreateMacroRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Macro>(),
+        interceptors: self.interceptors?.makeCreateMacroInterceptors() ?? [],
+        userFunction: self.createMacro(request:context:)
+      )
+
+    case "GetMacro":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetMacroRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Macro>(),
+        interceptors: self.interceptors?.makeGetMacroInterceptors() ?? [],
+        userFunction: self.getMacro(request:context:)
+      )
+
+    case "ListMacros":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ListMacrosRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ListMacrosResponse>(),
+        interceptors: self.interceptors?.makeListMacrosInterceptors() ?? [],
+        userFunction: self.listMacros(request:context:)
+      )
+
+    case "UpdateMacro":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_UpdateMacroRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Macro>(),
+        interceptors: self.interceptors?.makeUpdateMacroInterceptors() ?? [],
+        userFunction: self.updateMacro(request:context:)
+      )
+
+    case "DeleteMacro":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_DeleteMacroRequest>(),
+        responseSerializer: ProtobufSerializer<SwiftProtobuf.Google_Protobuf_Empty>(),
+        interceptors: self.interceptors?.makeDeleteMacroInterceptors() ?? [],
+        userFunction: self.deleteMacro(request:context:)
+      )
+
+    case "ExecuteMacro":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ExecuteMacroRequest>(),
+        responseSerializer: ProtobufSerializer<Google_Longrunning_Operation>(),
+        interceptors: self.interceptors?.makeExecuteMacroInterceptors() ?? [],
+        userFunction: self.executeMacro(request:context:)
+      )
+
+    case "ExecuteAppleScript":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ExecuteAppleScriptRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ExecuteAppleScriptResponse>(),
+        interceptors: self.interceptors?.makeExecuteAppleScriptInterceptors() ?? [],
+        userFunction: self.executeAppleScript(request:context:)
+      )
+
+    case "ExecuteJavaScriptForAutomation":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ExecuteJavaScriptForAutomationRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ExecuteJavaScriptForAutomationResponse>(),
+        interceptors: self.interceptors?.makeExecuteJavaScriptForAutomationInterceptors() ?? [],
+        userFunction: self.executeJavaScriptForAutomation(request:context:)
+      )
+
+    case "ExecuteShellCommand":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ExecuteShellCommandRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ExecuteShellCommandResponse>(),
+        interceptors: self.interceptors?.makeExecuteShellCommandInterceptors() ?? [],
+        userFunction: self.executeShellCommand(request:context:)
+      )
+
+    case "ValidateScript":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ValidateScriptRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ValidateScriptResponse>(),
+        interceptors: self.interceptors?.makeValidateScriptInterceptors() ?? [],
+        userFunction: self.validateScript(request:context:)
+      )
+
+    case "GetScriptingDictionaries":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetScriptingDictionariesRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetScriptingDictionariesResponse>(),
+        interceptors: self.interceptors?.makeGetScriptingDictionariesInterceptors() ?? [],
+        userFunction: self.getScriptingDictionaries(request:context:)
+      )
+
+    case "GetMetrics":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetMetricsRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetMetricsResponse>(),
+        interceptors: self.interceptors?.makeGetMetricsInterceptors() ?? [],
+        userFunction: self.getMetrics(request:context:)
+      )
+
+    case "GetPerformanceReport":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetPerformanceReportRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetPerformanceReportResponse>(),
+        interceptors: self.interceptors?.makeGetPerformanceReportInterceptors() ?? [],
+        userFunction: self.getPerformanceReport(request:context:)
+      )
+
+    case "ResetMetrics":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ResetMetricsRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ResetMetricsResponse>(),
+        interceptors: self.interceptors?.makeResetMetricsInterceptors() ?? [],
+        userFunction: self.resetMetrics(request:context:)
+      )
+
     default:
       return nil
     }
@@ -206,6 +890,349 @@ public protocol Macosusesdk_V1_MacosUseAsyncProvider: CallHandlerProvider, Senda
     responseStream: GRPCAsyncResponseStreamWriter<Macosusesdk_V1_WatchAccessibilityResponse>,
     context: GRPCAsyncServerCallContext
   ) async throws
+
+  /// Gets a specific window.
+  func getWindow(
+    request: Macosusesdk_V1_GetWindowRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_Window
+
+  /// Lists windows for an application.
+  func listWindows(
+    request: Macosusesdk_V1_ListWindowsRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_ListWindowsResponse
+
+  /// Focuses a specific window.
+  func focusWindow(
+    request: Macosusesdk_V1_FocusWindowRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_Window
+
+  /// Moves a window to a new position.
+  func moveWindow(
+    request: Macosusesdk_V1_MoveWindowRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_Window
+
+  /// Resizes a window.
+  func resizeWindow(
+    request: Macosusesdk_V1_ResizeWindowRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_Window
+
+  /// Minimizes a window.
+  func minimizeWindow(
+    request: Macosusesdk_V1_MinimizeWindowRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_Window
+
+  /// Restores a minimized window.
+  func restoreWindow(
+    request: Macosusesdk_V1_RestoreWindowRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_Window
+
+  /// Closes a window.
+  func closeWindow(
+    request: Macosusesdk_V1_CloseWindowRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> SwiftProtobuf.Google_Protobuf_Empty
+
+  /// Finds elements matching a selector.
+  func findElements(
+    request: Macosusesdk_V1_FindElementsRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_FindElementsResponse
+
+  /// Finds elements within a screen region.
+  func findElementsInRegion(
+    request: Macosusesdk_V1_FindElementsInRegionRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_FindElementsInRegionResponse
+
+  /// Gets a specific element.
+  func getElement(
+    request: Macosusesdk_V1_GetElementRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_GetElementResponse
+
+  /// Clicks an element.
+  func clickElement(
+    request: Macosusesdk_V1_ClickElementRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_ClickElementResponse
+
+  /// Sets an element's value.
+  func setElementValue(
+    request: Macosusesdk_V1_SetElementValueRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_SetElementValueResponse
+
+  /// Gets available actions for an element.
+  func getElementActions(
+    request: Macosusesdk_V1_GetElementActionsRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_GetElementActionsResponse
+
+  /// Performs an accessibility action on an element.
+  func performElementAction(
+    request: Macosusesdk_V1_PerformElementActionRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_PerformElementActionResponse
+
+  /// Waits for an element to appear (long-running operation).
+  func waitForElement(
+    request: Macosusesdk_V1_WaitForElementRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Google_Longrunning_Operation
+
+  /// Waits for an element to reach a specific state (long-running operation).
+  func waitForElementState(
+    request: Macosusesdk_V1_WaitForElementStateRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Google_Longrunning_Operation
+
+  /// Creates an observation (long-running operation).
+  func createObservation(
+    request: Macosusesdk_V1_CreateObservationRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Google_Longrunning_Operation
+
+  /// Gets an observation.
+  func getObservation(
+    request: Macosusesdk_V1_GetObservationRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_Observation
+
+  /// Lists observations for an application.
+  func listObservations(
+    request: Macosusesdk_V1_ListObservationsRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_ListObservationsResponse
+
+  /// Cancels an observation.
+  func cancelObservation(
+    request: Macosusesdk_V1_CancelObservationRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_Observation
+
+  /// Streams observation events.
+  func streamObservations(
+    request: Macosusesdk_V1_StreamObservationsRequest,
+    responseStream: GRPCAsyncResponseStreamWriter<Macosusesdk_V1_ObservationEvent>,
+    context: GRPCAsyncServerCallContext
+  ) async throws
+
+  /// Creates a session.
+  func createSession(
+    request: Macosusesdk_V1_CreateSessionRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_Session
+
+  /// Gets a session.
+  func getSession(
+    request: Macosusesdk_V1_GetSessionRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_Session
+
+  /// Lists sessions.
+  func listSessions(
+    request: Macosusesdk_V1_ListSessionsRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_ListSessionsResponse
+
+  /// Deletes a session.
+  func deleteSession(
+    request: Macosusesdk_V1_DeleteSessionRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> SwiftProtobuf.Google_Protobuf_Empty
+
+  /// Begins a transaction within a session.
+  func beginTransaction(
+    request: Macosusesdk_V1_BeginTransactionRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_BeginTransactionResponse
+
+  /// Commits a transaction.
+  func commitTransaction(
+    request: Macosusesdk_V1_CommitTransactionRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_CommitTransactionResponse
+
+  /// Rolls back a transaction.
+  func rollbackTransaction(
+    request: Macosusesdk_V1_RollbackTransactionRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_RollbackTransactionResponse
+
+  /// Gets a session state snapshot.
+  func getSessionSnapshot(
+    request: Macosusesdk_V1_GetSessionSnapshotRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_GetSessionSnapshotResponse
+
+  /// Captures a full screen screenshot.
+  func captureScreenshot(
+    request: Macosusesdk_V1_CaptureScreenshotRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_CaptureScreenshotResponse
+
+  /// Captures a screenshot of a specific window.
+  func captureWindowScreenshot(
+    request: Macosusesdk_V1_CaptureWindowScreenshotRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_CaptureWindowScreenshotResponse
+
+  /// Captures a screenshot of a specific element.
+  func captureElementScreenshot(
+    request: Macosusesdk_V1_CaptureElementScreenshotRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_CaptureElementScreenshotResponse
+
+  /// Captures a screenshot of a screen region.
+  func captureRegionScreenshot(
+    request: Macosusesdk_V1_CaptureRegionScreenshotRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_CaptureRegionScreenshotResponse
+
+  /// Gets clipboard contents.
+  func getClipboard(
+    request: Macosusesdk_V1_GetClipboardRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_GetClipboardResponse
+
+  /// Sets clipboard contents.
+  func setClipboard(
+    request: Macosusesdk_V1_SetClipboardRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_SetClipboardResponse
+
+  /// Clears clipboard contents.
+  func clearClipboard(
+    request: Macosusesdk_V1_ClearClipboardRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_ClearClipboardResponse
+
+  /// Gets clipboard history (if available).
+  func getClipboardHistory(
+    request: Macosusesdk_V1_GetClipboardHistoryRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_GetClipboardHistoryResponse
+
+  /// Automates an open file dialog.
+  func automateOpenFileDialog(
+    request: Macosusesdk_V1_AutomateOpenFileDialogRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_AutomateOpenFileDialogResponse
+
+  /// Automates a save file dialog.
+  func automateSaveFileDialog(
+    request: Macosusesdk_V1_AutomateSaveFileDialogRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_AutomateSaveFileDialogResponse
+
+  /// Selects a file programmatically.
+  func selectFile(
+    request: Macosusesdk_V1_SelectFileRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_SelectFileResponse
+
+  /// Selects a directory.
+  func selectDirectory(
+    request: Macosusesdk_V1_SelectDirectoryRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_SelectDirectoryResponse
+
+  /// Drags and drops files.
+  func dragFiles(
+    request: Macosusesdk_V1_DragFilesRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_DragFilesResponse
+
+  /// Creates a macro.
+  func createMacro(
+    request: Macosusesdk_V1_CreateMacroRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_Macro
+
+  /// Gets a macro.
+  func getMacro(
+    request: Macosusesdk_V1_GetMacroRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_Macro
+
+  /// Lists macros.
+  func listMacros(
+    request: Macosusesdk_V1_ListMacrosRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_ListMacrosResponse
+
+  /// Updates a macro.
+  func updateMacro(
+    request: Macosusesdk_V1_UpdateMacroRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_Macro
+
+  /// Deletes a macro.
+  func deleteMacro(
+    request: Macosusesdk_V1_DeleteMacroRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> SwiftProtobuf.Google_Protobuf_Empty
+
+  /// Executes a macro (long-running operation).
+  func executeMacro(
+    request: Macosusesdk_V1_ExecuteMacroRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Google_Longrunning_Operation
+
+  /// Executes an AppleScript.
+  func executeAppleScript(
+    request: Macosusesdk_V1_ExecuteAppleScriptRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_ExecuteAppleScriptResponse
+
+  /// Executes JavaScript for Automation (JXA).
+  func executeJavaScriptForAutomation(
+    request: Macosusesdk_V1_ExecuteJavaScriptForAutomationRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_ExecuteJavaScriptForAutomationResponse
+
+  /// Executes a shell command.
+  func executeShellCommand(
+    request: Macosusesdk_V1_ExecuteShellCommandRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_ExecuteShellCommandResponse
+
+  /// Validates a script without executing.
+  func validateScript(
+    request: Macosusesdk_V1_ValidateScriptRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_ValidateScriptResponse
+
+  /// Gets scripting dictionaries.
+  func getScriptingDictionaries(
+    request: Macosusesdk_V1_GetScriptingDictionariesRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_GetScriptingDictionariesResponse
+
+  /// Gets current metrics.
+  func getMetrics(
+    request: Macosusesdk_V1_GetMetricsRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_GetMetricsResponse
+
+  /// Gets a performance report.
+  func getPerformanceReport(
+    request: Macosusesdk_V1_GetPerformanceReportRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_GetPerformanceReportResponse
+
+  /// Resets metrics.
+  func resetMetrics(
+    request: Macosusesdk_V1_ResetMetricsRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> Macosusesdk_V1_ResetMetricsResponse
 }
 
 @available(macOS 10.15, iOS 13, tvOS 13, watchOS 6, *)
@@ -308,6 +1335,519 @@ extension Macosusesdk_V1_MacosUseAsyncProvider {
         wrapping: { try await self.watchAccessibility(request: $0, responseStream: $1, context: $2) }
       )
 
+    case "GetWindow":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetWindowRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Window>(),
+        interceptors: self.interceptors?.makeGetWindowInterceptors() ?? [],
+        wrapping: { try await self.getWindow(request: $0, context: $1) }
+      )
+
+    case "ListWindows":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ListWindowsRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ListWindowsResponse>(),
+        interceptors: self.interceptors?.makeListWindowsInterceptors() ?? [],
+        wrapping: { try await self.listWindows(request: $0, context: $1) }
+      )
+
+    case "FocusWindow":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_FocusWindowRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Window>(),
+        interceptors: self.interceptors?.makeFocusWindowInterceptors() ?? [],
+        wrapping: { try await self.focusWindow(request: $0, context: $1) }
+      )
+
+    case "MoveWindow":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_MoveWindowRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Window>(),
+        interceptors: self.interceptors?.makeMoveWindowInterceptors() ?? [],
+        wrapping: { try await self.moveWindow(request: $0, context: $1) }
+      )
+
+    case "ResizeWindow":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ResizeWindowRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Window>(),
+        interceptors: self.interceptors?.makeResizeWindowInterceptors() ?? [],
+        wrapping: { try await self.resizeWindow(request: $0, context: $1) }
+      )
+
+    case "MinimizeWindow":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_MinimizeWindowRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Window>(),
+        interceptors: self.interceptors?.makeMinimizeWindowInterceptors() ?? [],
+        wrapping: { try await self.minimizeWindow(request: $0, context: $1) }
+      )
+
+    case "RestoreWindow":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_RestoreWindowRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Window>(),
+        interceptors: self.interceptors?.makeRestoreWindowInterceptors() ?? [],
+        wrapping: { try await self.restoreWindow(request: $0, context: $1) }
+      )
+
+    case "CloseWindow":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_CloseWindowRequest>(),
+        responseSerializer: ProtobufSerializer<SwiftProtobuf.Google_Protobuf_Empty>(),
+        interceptors: self.interceptors?.makeCloseWindowInterceptors() ?? [],
+        wrapping: { try await self.closeWindow(request: $0, context: $1) }
+      )
+
+    case "FindElements":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_FindElementsRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_FindElementsResponse>(),
+        interceptors: self.interceptors?.makeFindElementsInterceptors() ?? [],
+        wrapping: { try await self.findElements(request: $0, context: $1) }
+      )
+
+    case "FindElementsInRegion":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_FindElementsInRegionRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_FindElementsInRegionResponse>(),
+        interceptors: self.interceptors?.makeFindElementsInRegionInterceptors() ?? [],
+        wrapping: { try await self.findElementsInRegion(request: $0, context: $1) }
+      )
+
+    case "GetElement":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetElementRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetElementResponse>(),
+        interceptors: self.interceptors?.makeGetElementInterceptors() ?? [],
+        wrapping: { try await self.getElement(request: $0, context: $1) }
+      )
+
+    case "ClickElement":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ClickElementRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ClickElementResponse>(),
+        interceptors: self.interceptors?.makeClickElementInterceptors() ?? [],
+        wrapping: { try await self.clickElement(request: $0, context: $1) }
+      )
+
+    case "SetElementValue":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_SetElementValueRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_SetElementValueResponse>(),
+        interceptors: self.interceptors?.makeSetElementValueInterceptors() ?? [],
+        wrapping: { try await self.setElementValue(request: $0, context: $1) }
+      )
+
+    case "GetElementActions":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetElementActionsRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetElementActionsResponse>(),
+        interceptors: self.interceptors?.makeGetElementActionsInterceptors() ?? [],
+        wrapping: { try await self.getElementActions(request: $0, context: $1) }
+      )
+
+    case "PerformElementAction":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_PerformElementActionRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_PerformElementActionResponse>(),
+        interceptors: self.interceptors?.makePerformElementActionInterceptors() ?? [],
+        wrapping: { try await self.performElementAction(request: $0, context: $1) }
+      )
+
+    case "WaitForElement":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_WaitForElementRequest>(),
+        responseSerializer: ProtobufSerializer<Google_Longrunning_Operation>(),
+        interceptors: self.interceptors?.makeWaitForElementInterceptors() ?? [],
+        wrapping: { try await self.waitForElement(request: $0, context: $1) }
+      )
+
+    case "WaitForElementState":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_WaitForElementStateRequest>(),
+        responseSerializer: ProtobufSerializer<Google_Longrunning_Operation>(),
+        interceptors: self.interceptors?.makeWaitForElementStateInterceptors() ?? [],
+        wrapping: { try await self.waitForElementState(request: $0, context: $1) }
+      )
+
+    case "CreateObservation":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_CreateObservationRequest>(),
+        responseSerializer: ProtobufSerializer<Google_Longrunning_Operation>(),
+        interceptors: self.interceptors?.makeCreateObservationInterceptors() ?? [],
+        wrapping: { try await self.createObservation(request: $0, context: $1) }
+      )
+
+    case "GetObservation":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetObservationRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Observation>(),
+        interceptors: self.interceptors?.makeGetObservationInterceptors() ?? [],
+        wrapping: { try await self.getObservation(request: $0, context: $1) }
+      )
+
+    case "ListObservations":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ListObservationsRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ListObservationsResponse>(),
+        interceptors: self.interceptors?.makeListObservationsInterceptors() ?? [],
+        wrapping: { try await self.listObservations(request: $0, context: $1) }
+      )
+
+    case "CancelObservation":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_CancelObservationRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Observation>(),
+        interceptors: self.interceptors?.makeCancelObservationInterceptors() ?? [],
+        wrapping: { try await self.cancelObservation(request: $0, context: $1) }
+      )
+
+    case "StreamObservations":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_StreamObservationsRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ObservationEvent>(),
+        interceptors: self.interceptors?.makeStreamObservationsInterceptors() ?? [],
+        wrapping: { try await self.streamObservations(request: $0, responseStream: $1, context: $2) }
+      )
+
+    case "CreateSession":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_CreateSessionRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Session>(),
+        interceptors: self.interceptors?.makeCreateSessionInterceptors() ?? [],
+        wrapping: { try await self.createSession(request: $0, context: $1) }
+      )
+
+    case "GetSession":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetSessionRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Session>(),
+        interceptors: self.interceptors?.makeGetSessionInterceptors() ?? [],
+        wrapping: { try await self.getSession(request: $0, context: $1) }
+      )
+
+    case "ListSessions":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ListSessionsRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ListSessionsResponse>(),
+        interceptors: self.interceptors?.makeListSessionsInterceptors() ?? [],
+        wrapping: { try await self.listSessions(request: $0, context: $1) }
+      )
+
+    case "DeleteSession":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_DeleteSessionRequest>(),
+        responseSerializer: ProtobufSerializer<SwiftProtobuf.Google_Protobuf_Empty>(),
+        interceptors: self.interceptors?.makeDeleteSessionInterceptors() ?? [],
+        wrapping: { try await self.deleteSession(request: $0, context: $1) }
+      )
+
+    case "BeginTransaction":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_BeginTransactionRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_BeginTransactionResponse>(),
+        interceptors: self.interceptors?.makeBeginTransactionInterceptors() ?? [],
+        wrapping: { try await self.beginTransaction(request: $0, context: $1) }
+      )
+
+    case "CommitTransaction":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_CommitTransactionRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_CommitTransactionResponse>(),
+        interceptors: self.interceptors?.makeCommitTransactionInterceptors() ?? [],
+        wrapping: { try await self.commitTransaction(request: $0, context: $1) }
+      )
+
+    case "RollbackTransaction":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_RollbackTransactionRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_RollbackTransactionResponse>(),
+        interceptors: self.interceptors?.makeRollbackTransactionInterceptors() ?? [],
+        wrapping: { try await self.rollbackTransaction(request: $0, context: $1) }
+      )
+
+    case "GetSessionSnapshot":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetSessionSnapshotRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetSessionSnapshotResponse>(),
+        interceptors: self.interceptors?.makeGetSessionSnapshotInterceptors() ?? [],
+        wrapping: { try await self.getSessionSnapshot(request: $0, context: $1) }
+      )
+
+    case "CaptureScreenshot":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_CaptureScreenshotRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_CaptureScreenshotResponse>(),
+        interceptors: self.interceptors?.makeCaptureScreenshotInterceptors() ?? [],
+        wrapping: { try await self.captureScreenshot(request: $0, context: $1) }
+      )
+
+    case "CaptureWindowScreenshot":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_CaptureWindowScreenshotRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_CaptureWindowScreenshotResponse>(),
+        interceptors: self.interceptors?.makeCaptureWindowScreenshotInterceptors() ?? [],
+        wrapping: { try await self.captureWindowScreenshot(request: $0, context: $1) }
+      )
+
+    case "CaptureElementScreenshot":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_CaptureElementScreenshotRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_CaptureElementScreenshotResponse>(),
+        interceptors: self.interceptors?.makeCaptureElementScreenshotInterceptors() ?? [],
+        wrapping: { try await self.captureElementScreenshot(request: $0, context: $1) }
+      )
+
+    case "CaptureRegionScreenshot":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_CaptureRegionScreenshotRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_CaptureRegionScreenshotResponse>(),
+        interceptors: self.interceptors?.makeCaptureRegionScreenshotInterceptors() ?? [],
+        wrapping: { try await self.captureRegionScreenshot(request: $0, context: $1) }
+      )
+
+    case "GetClipboard":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetClipboardRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetClipboardResponse>(),
+        interceptors: self.interceptors?.makeGetClipboardInterceptors() ?? [],
+        wrapping: { try await self.getClipboard(request: $0, context: $1) }
+      )
+
+    case "SetClipboard":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_SetClipboardRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_SetClipboardResponse>(),
+        interceptors: self.interceptors?.makeSetClipboardInterceptors() ?? [],
+        wrapping: { try await self.setClipboard(request: $0, context: $1) }
+      )
+
+    case "ClearClipboard":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ClearClipboardRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ClearClipboardResponse>(),
+        interceptors: self.interceptors?.makeClearClipboardInterceptors() ?? [],
+        wrapping: { try await self.clearClipboard(request: $0, context: $1) }
+      )
+
+    case "GetClipboardHistory":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetClipboardHistoryRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetClipboardHistoryResponse>(),
+        interceptors: self.interceptors?.makeGetClipboardHistoryInterceptors() ?? [],
+        wrapping: { try await self.getClipboardHistory(request: $0, context: $1) }
+      )
+
+    case "AutomateOpenFileDialog":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_AutomateOpenFileDialogRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_AutomateOpenFileDialogResponse>(),
+        interceptors: self.interceptors?.makeAutomateOpenFileDialogInterceptors() ?? [],
+        wrapping: { try await self.automateOpenFileDialog(request: $0, context: $1) }
+      )
+
+    case "AutomateSaveFileDialog":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_AutomateSaveFileDialogRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_AutomateSaveFileDialogResponse>(),
+        interceptors: self.interceptors?.makeAutomateSaveFileDialogInterceptors() ?? [],
+        wrapping: { try await self.automateSaveFileDialog(request: $0, context: $1) }
+      )
+
+    case "SelectFile":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_SelectFileRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_SelectFileResponse>(),
+        interceptors: self.interceptors?.makeSelectFileInterceptors() ?? [],
+        wrapping: { try await self.selectFile(request: $0, context: $1) }
+      )
+
+    case "SelectDirectory":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_SelectDirectoryRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_SelectDirectoryResponse>(),
+        interceptors: self.interceptors?.makeSelectDirectoryInterceptors() ?? [],
+        wrapping: { try await self.selectDirectory(request: $0, context: $1) }
+      )
+
+    case "DragFiles":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_DragFilesRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_DragFilesResponse>(),
+        interceptors: self.interceptors?.makeDragFilesInterceptors() ?? [],
+        wrapping: { try await self.dragFiles(request: $0, context: $1) }
+      )
+
+    case "CreateMacro":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_CreateMacroRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Macro>(),
+        interceptors: self.interceptors?.makeCreateMacroInterceptors() ?? [],
+        wrapping: { try await self.createMacro(request: $0, context: $1) }
+      )
+
+    case "GetMacro":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetMacroRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Macro>(),
+        interceptors: self.interceptors?.makeGetMacroInterceptors() ?? [],
+        wrapping: { try await self.getMacro(request: $0, context: $1) }
+      )
+
+    case "ListMacros":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ListMacrosRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ListMacrosResponse>(),
+        interceptors: self.interceptors?.makeListMacrosInterceptors() ?? [],
+        wrapping: { try await self.listMacros(request: $0, context: $1) }
+      )
+
+    case "UpdateMacro":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_UpdateMacroRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Macro>(),
+        interceptors: self.interceptors?.makeUpdateMacroInterceptors() ?? [],
+        wrapping: { try await self.updateMacro(request: $0, context: $1) }
+      )
+
+    case "DeleteMacro":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_DeleteMacroRequest>(),
+        responseSerializer: ProtobufSerializer<SwiftProtobuf.Google_Protobuf_Empty>(),
+        interceptors: self.interceptors?.makeDeleteMacroInterceptors() ?? [],
+        wrapping: { try await self.deleteMacro(request: $0, context: $1) }
+      )
+
+    case "ExecuteMacro":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ExecuteMacroRequest>(),
+        responseSerializer: ProtobufSerializer<Google_Longrunning_Operation>(),
+        interceptors: self.interceptors?.makeExecuteMacroInterceptors() ?? [],
+        wrapping: { try await self.executeMacro(request: $0, context: $1) }
+      )
+
+    case "ExecuteAppleScript":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ExecuteAppleScriptRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ExecuteAppleScriptResponse>(),
+        interceptors: self.interceptors?.makeExecuteAppleScriptInterceptors() ?? [],
+        wrapping: { try await self.executeAppleScript(request: $0, context: $1) }
+      )
+
+    case "ExecuteJavaScriptForAutomation":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ExecuteJavaScriptForAutomationRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ExecuteJavaScriptForAutomationResponse>(),
+        interceptors: self.interceptors?.makeExecuteJavaScriptForAutomationInterceptors() ?? [],
+        wrapping: { try await self.executeJavaScriptForAutomation(request: $0, context: $1) }
+      )
+
+    case "ExecuteShellCommand":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ExecuteShellCommandRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ExecuteShellCommandResponse>(),
+        interceptors: self.interceptors?.makeExecuteShellCommandInterceptors() ?? [],
+        wrapping: { try await self.executeShellCommand(request: $0, context: $1) }
+      )
+
+    case "ValidateScript":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ValidateScriptRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ValidateScriptResponse>(),
+        interceptors: self.interceptors?.makeValidateScriptInterceptors() ?? [],
+        wrapping: { try await self.validateScript(request: $0, context: $1) }
+      )
+
+    case "GetScriptingDictionaries":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetScriptingDictionariesRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetScriptingDictionariesResponse>(),
+        interceptors: self.interceptors?.makeGetScriptingDictionariesInterceptors() ?? [],
+        wrapping: { try await self.getScriptingDictionaries(request: $0, context: $1) }
+      )
+
+    case "GetMetrics":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetMetricsRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetMetricsResponse>(),
+        interceptors: self.interceptors?.makeGetMetricsInterceptors() ?? [],
+        wrapping: { try await self.getMetrics(request: $0, context: $1) }
+      )
+
+    case "GetPerformanceReport":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetPerformanceReportRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_GetPerformanceReportResponse>(),
+        interceptors: self.interceptors?.makeGetPerformanceReportInterceptors() ?? [],
+        wrapping: { try await self.getPerformanceReport(request: $0, context: $1) }
+      )
+
+    case "ResetMetrics":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ResetMetricsRequest>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_ResetMetricsResponse>(),
+        interceptors: self.interceptors?.makeResetMetricsInterceptors() ?? [],
+        wrapping: { try await self.resetMetrics(request: $0, context: $1) }
+      )
+
     default:
       return nil
     }
@@ -351,6 +1891,234 @@ public protocol Macosusesdk_V1_MacosUseServerInterceptorFactoryProtocol: Sendabl
   /// - Returns: Interceptors to use when handling 'watchAccessibility'.
   ///   Defaults to calling `self.makeInterceptors()`.
   func makeWatchAccessibilityInterceptors() -> [ServerInterceptor<Macosusesdk_V1_WatchAccessibilityRequest, Macosusesdk_V1_WatchAccessibilityResponse>]
+
+  /// - Returns: Interceptors to use when handling 'getWindow'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeGetWindowInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetWindowRequest, Macosusesdk_V1_Window>]
+
+  /// - Returns: Interceptors to use when handling 'listWindows'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeListWindowsInterceptors() -> [ServerInterceptor<Macosusesdk_V1_ListWindowsRequest, Macosusesdk_V1_ListWindowsResponse>]
+
+  /// - Returns: Interceptors to use when handling 'focusWindow'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeFocusWindowInterceptors() -> [ServerInterceptor<Macosusesdk_V1_FocusWindowRequest, Macosusesdk_V1_Window>]
+
+  /// - Returns: Interceptors to use when handling 'moveWindow'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeMoveWindowInterceptors() -> [ServerInterceptor<Macosusesdk_V1_MoveWindowRequest, Macosusesdk_V1_Window>]
+
+  /// - Returns: Interceptors to use when handling 'resizeWindow'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeResizeWindowInterceptors() -> [ServerInterceptor<Macosusesdk_V1_ResizeWindowRequest, Macosusesdk_V1_Window>]
+
+  /// - Returns: Interceptors to use when handling 'minimizeWindow'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeMinimizeWindowInterceptors() -> [ServerInterceptor<Macosusesdk_V1_MinimizeWindowRequest, Macosusesdk_V1_Window>]
+
+  /// - Returns: Interceptors to use when handling 'restoreWindow'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeRestoreWindowInterceptors() -> [ServerInterceptor<Macosusesdk_V1_RestoreWindowRequest, Macosusesdk_V1_Window>]
+
+  /// - Returns: Interceptors to use when handling 'closeWindow'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeCloseWindowInterceptors() -> [ServerInterceptor<Macosusesdk_V1_CloseWindowRequest, SwiftProtobuf.Google_Protobuf_Empty>]
+
+  /// - Returns: Interceptors to use when handling 'findElements'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeFindElementsInterceptors() -> [ServerInterceptor<Macosusesdk_V1_FindElementsRequest, Macosusesdk_V1_FindElementsResponse>]
+
+  /// - Returns: Interceptors to use when handling 'findElementsInRegion'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeFindElementsInRegionInterceptors() -> [ServerInterceptor<Macosusesdk_V1_FindElementsInRegionRequest, Macosusesdk_V1_FindElementsInRegionResponse>]
+
+  /// - Returns: Interceptors to use when handling 'getElement'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeGetElementInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetElementRequest, Macosusesdk_V1_GetElementResponse>]
+
+  /// - Returns: Interceptors to use when handling 'clickElement'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeClickElementInterceptors() -> [ServerInterceptor<Macosusesdk_V1_ClickElementRequest, Macosusesdk_V1_ClickElementResponse>]
+
+  /// - Returns: Interceptors to use when handling 'setElementValue'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeSetElementValueInterceptors() -> [ServerInterceptor<Macosusesdk_V1_SetElementValueRequest, Macosusesdk_V1_SetElementValueResponse>]
+
+  /// - Returns: Interceptors to use when handling 'getElementActions'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeGetElementActionsInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetElementActionsRequest, Macosusesdk_V1_GetElementActionsResponse>]
+
+  /// - Returns: Interceptors to use when handling 'performElementAction'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makePerformElementActionInterceptors() -> [ServerInterceptor<Macosusesdk_V1_PerformElementActionRequest, Macosusesdk_V1_PerformElementActionResponse>]
+
+  /// - Returns: Interceptors to use when handling 'waitForElement'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeWaitForElementInterceptors() -> [ServerInterceptor<Macosusesdk_V1_WaitForElementRequest, Google_Longrunning_Operation>]
+
+  /// - Returns: Interceptors to use when handling 'waitForElementState'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeWaitForElementStateInterceptors() -> [ServerInterceptor<Macosusesdk_V1_WaitForElementStateRequest, Google_Longrunning_Operation>]
+
+  /// - Returns: Interceptors to use when handling 'createObservation'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeCreateObservationInterceptors() -> [ServerInterceptor<Macosusesdk_V1_CreateObservationRequest, Google_Longrunning_Operation>]
+
+  /// - Returns: Interceptors to use when handling 'getObservation'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeGetObservationInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetObservationRequest, Macosusesdk_V1_Observation>]
+
+  /// - Returns: Interceptors to use when handling 'listObservations'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeListObservationsInterceptors() -> [ServerInterceptor<Macosusesdk_V1_ListObservationsRequest, Macosusesdk_V1_ListObservationsResponse>]
+
+  /// - Returns: Interceptors to use when handling 'cancelObservation'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeCancelObservationInterceptors() -> [ServerInterceptor<Macosusesdk_V1_CancelObservationRequest, Macosusesdk_V1_Observation>]
+
+  /// - Returns: Interceptors to use when handling 'streamObservations'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeStreamObservationsInterceptors() -> [ServerInterceptor<Macosusesdk_V1_StreamObservationsRequest, Macosusesdk_V1_ObservationEvent>]
+
+  /// - Returns: Interceptors to use when handling 'createSession'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeCreateSessionInterceptors() -> [ServerInterceptor<Macosusesdk_V1_CreateSessionRequest, Macosusesdk_V1_Session>]
+
+  /// - Returns: Interceptors to use when handling 'getSession'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeGetSessionInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetSessionRequest, Macosusesdk_V1_Session>]
+
+  /// - Returns: Interceptors to use when handling 'listSessions'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeListSessionsInterceptors() -> [ServerInterceptor<Macosusesdk_V1_ListSessionsRequest, Macosusesdk_V1_ListSessionsResponse>]
+
+  /// - Returns: Interceptors to use when handling 'deleteSession'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeDeleteSessionInterceptors() -> [ServerInterceptor<Macosusesdk_V1_DeleteSessionRequest, SwiftProtobuf.Google_Protobuf_Empty>]
+
+  /// - Returns: Interceptors to use when handling 'beginTransaction'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeBeginTransactionInterceptors() -> [ServerInterceptor<Macosusesdk_V1_BeginTransactionRequest, Macosusesdk_V1_BeginTransactionResponse>]
+
+  /// - Returns: Interceptors to use when handling 'commitTransaction'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeCommitTransactionInterceptors() -> [ServerInterceptor<Macosusesdk_V1_CommitTransactionRequest, Macosusesdk_V1_CommitTransactionResponse>]
+
+  /// - Returns: Interceptors to use when handling 'rollbackTransaction'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeRollbackTransactionInterceptors() -> [ServerInterceptor<Macosusesdk_V1_RollbackTransactionRequest, Macosusesdk_V1_RollbackTransactionResponse>]
+
+  /// - Returns: Interceptors to use when handling 'getSessionSnapshot'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeGetSessionSnapshotInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetSessionSnapshotRequest, Macosusesdk_V1_GetSessionSnapshotResponse>]
+
+  /// - Returns: Interceptors to use when handling 'captureScreenshot'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeCaptureScreenshotInterceptors() -> [ServerInterceptor<Macosusesdk_V1_CaptureScreenshotRequest, Macosusesdk_V1_CaptureScreenshotResponse>]
+
+  /// - Returns: Interceptors to use when handling 'captureWindowScreenshot'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeCaptureWindowScreenshotInterceptors() -> [ServerInterceptor<Macosusesdk_V1_CaptureWindowScreenshotRequest, Macosusesdk_V1_CaptureWindowScreenshotResponse>]
+
+  /// - Returns: Interceptors to use when handling 'captureElementScreenshot'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeCaptureElementScreenshotInterceptors() -> [ServerInterceptor<Macosusesdk_V1_CaptureElementScreenshotRequest, Macosusesdk_V1_CaptureElementScreenshotResponse>]
+
+  /// - Returns: Interceptors to use when handling 'captureRegionScreenshot'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeCaptureRegionScreenshotInterceptors() -> [ServerInterceptor<Macosusesdk_V1_CaptureRegionScreenshotRequest, Macosusesdk_V1_CaptureRegionScreenshotResponse>]
+
+  /// - Returns: Interceptors to use when handling 'getClipboard'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeGetClipboardInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetClipboardRequest, Macosusesdk_V1_GetClipboardResponse>]
+
+  /// - Returns: Interceptors to use when handling 'setClipboard'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeSetClipboardInterceptors() -> [ServerInterceptor<Macosusesdk_V1_SetClipboardRequest, Macosusesdk_V1_SetClipboardResponse>]
+
+  /// - Returns: Interceptors to use when handling 'clearClipboard'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeClearClipboardInterceptors() -> [ServerInterceptor<Macosusesdk_V1_ClearClipboardRequest, Macosusesdk_V1_ClearClipboardResponse>]
+
+  /// - Returns: Interceptors to use when handling 'getClipboardHistory'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeGetClipboardHistoryInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetClipboardHistoryRequest, Macosusesdk_V1_GetClipboardHistoryResponse>]
+
+  /// - Returns: Interceptors to use when handling 'automateOpenFileDialog'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeAutomateOpenFileDialogInterceptors() -> [ServerInterceptor<Macosusesdk_V1_AutomateOpenFileDialogRequest, Macosusesdk_V1_AutomateOpenFileDialogResponse>]
+
+  /// - Returns: Interceptors to use when handling 'automateSaveFileDialog'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeAutomateSaveFileDialogInterceptors() -> [ServerInterceptor<Macosusesdk_V1_AutomateSaveFileDialogRequest, Macosusesdk_V1_AutomateSaveFileDialogResponse>]
+
+  /// - Returns: Interceptors to use when handling 'selectFile'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeSelectFileInterceptors() -> [ServerInterceptor<Macosusesdk_V1_SelectFileRequest, Macosusesdk_V1_SelectFileResponse>]
+
+  /// - Returns: Interceptors to use when handling 'selectDirectory'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeSelectDirectoryInterceptors() -> [ServerInterceptor<Macosusesdk_V1_SelectDirectoryRequest, Macosusesdk_V1_SelectDirectoryResponse>]
+
+  /// - Returns: Interceptors to use when handling 'dragFiles'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeDragFilesInterceptors() -> [ServerInterceptor<Macosusesdk_V1_DragFilesRequest, Macosusesdk_V1_DragFilesResponse>]
+
+  /// - Returns: Interceptors to use when handling 'createMacro'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeCreateMacroInterceptors() -> [ServerInterceptor<Macosusesdk_V1_CreateMacroRequest, Macosusesdk_V1_Macro>]
+
+  /// - Returns: Interceptors to use when handling 'getMacro'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeGetMacroInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetMacroRequest, Macosusesdk_V1_Macro>]
+
+  /// - Returns: Interceptors to use when handling 'listMacros'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeListMacrosInterceptors() -> [ServerInterceptor<Macosusesdk_V1_ListMacrosRequest, Macosusesdk_V1_ListMacrosResponse>]
+
+  /// - Returns: Interceptors to use when handling 'updateMacro'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeUpdateMacroInterceptors() -> [ServerInterceptor<Macosusesdk_V1_UpdateMacroRequest, Macosusesdk_V1_Macro>]
+
+  /// - Returns: Interceptors to use when handling 'deleteMacro'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeDeleteMacroInterceptors() -> [ServerInterceptor<Macosusesdk_V1_DeleteMacroRequest, SwiftProtobuf.Google_Protobuf_Empty>]
+
+  /// - Returns: Interceptors to use when handling 'executeMacro'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeExecuteMacroInterceptors() -> [ServerInterceptor<Macosusesdk_V1_ExecuteMacroRequest, Google_Longrunning_Operation>]
+
+  /// - Returns: Interceptors to use when handling 'executeAppleScript'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeExecuteAppleScriptInterceptors() -> [ServerInterceptor<Macosusesdk_V1_ExecuteAppleScriptRequest, Macosusesdk_V1_ExecuteAppleScriptResponse>]
+
+  /// - Returns: Interceptors to use when handling 'executeJavaScriptForAutomation'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeExecuteJavaScriptForAutomationInterceptors() -> [ServerInterceptor<Macosusesdk_V1_ExecuteJavaScriptForAutomationRequest, Macosusesdk_V1_ExecuteJavaScriptForAutomationResponse>]
+
+  /// - Returns: Interceptors to use when handling 'executeShellCommand'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeExecuteShellCommandInterceptors() -> [ServerInterceptor<Macosusesdk_V1_ExecuteShellCommandRequest, Macosusesdk_V1_ExecuteShellCommandResponse>]
+
+  /// - Returns: Interceptors to use when handling 'validateScript'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeValidateScriptInterceptors() -> [ServerInterceptor<Macosusesdk_V1_ValidateScriptRequest, Macosusesdk_V1_ValidateScriptResponse>]
+
+  /// - Returns: Interceptors to use when handling 'getScriptingDictionaries'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeGetScriptingDictionariesInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetScriptingDictionariesRequest, Macosusesdk_V1_GetScriptingDictionariesResponse>]
+
+  /// - Returns: Interceptors to use when handling 'getMetrics'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeGetMetricsInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetMetricsRequest, Macosusesdk_V1_GetMetricsResponse>]
+
+  /// - Returns: Interceptors to use when handling 'getPerformanceReport'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeGetPerformanceReportInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetPerformanceReportRequest, Macosusesdk_V1_GetPerformanceReportResponse>]
+
+  /// - Returns: Interceptors to use when handling 'resetMetrics'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeResetMetricsInterceptors() -> [ServerInterceptor<Macosusesdk_V1_ResetMetricsRequest, Macosusesdk_V1_ResetMetricsResponse>]
 }
 
 public enum Macosusesdk_V1_MacosUseServerMetadata {
@@ -367,6 +2135,63 @@ public enum Macosusesdk_V1_MacosUseServerMetadata {
       Macosusesdk_V1_MacosUseServerMetadata.Methods.listInputs,
       Macosusesdk_V1_MacosUseServerMetadata.Methods.traverseAccessibility,
       Macosusesdk_V1_MacosUseServerMetadata.Methods.watchAccessibility,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.getWindow,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.listWindows,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.focusWindow,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.moveWindow,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.resizeWindow,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.minimizeWindow,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.restoreWindow,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.closeWindow,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.findElements,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.findElementsInRegion,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.getElement,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.clickElement,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.setElementValue,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.getElementActions,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.performElementAction,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.waitForElement,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.waitForElementState,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.createObservation,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.getObservation,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.listObservations,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.cancelObservation,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.streamObservations,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.createSession,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.getSession,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.listSessions,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.deleteSession,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.beginTransaction,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.commitTransaction,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.rollbackTransaction,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.getSessionSnapshot,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.captureScreenshot,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.captureWindowScreenshot,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.captureElementScreenshot,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.captureRegionScreenshot,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.getClipboard,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.setClipboard,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.clearClipboard,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.getClipboardHistory,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.automateOpenFileDialog,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.automateSaveFileDialog,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.selectFile,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.selectDirectory,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.dragFiles,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.createMacro,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.getMacro,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.listMacros,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.updateMacro,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.deleteMacro,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.executeMacro,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.executeAppleScript,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.executeJavaScriptForAutomation,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.executeShellCommand,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.validateScript,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.getScriptingDictionaries,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.getMetrics,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.getPerformanceReport,
+      Macosusesdk_V1_MacosUseServerMetadata.Methods.resetMetrics,
     ]
   )
 
@@ -423,6 +2248,348 @@ public enum Macosusesdk_V1_MacosUseServerMetadata {
       name: "WatchAccessibility",
       path: "/macosusesdk.v1.MacosUse/WatchAccessibility",
       type: GRPCCallType.serverStreaming
+    )
+
+    public static let getWindow = GRPCMethodDescriptor(
+      name: "GetWindow",
+      path: "/macosusesdk.v1.MacosUse/GetWindow",
+      type: GRPCCallType.unary
+    )
+
+    public static let listWindows = GRPCMethodDescriptor(
+      name: "ListWindows",
+      path: "/macosusesdk.v1.MacosUse/ListWindows",
+      type: GRPCCallType.unary
+    )
+
+    public static let focusWindow = GRPCMethodDescriptor(
+      name: "FocusWindow",
+      path: "/macosusesdk.v1.MacosUse/FocusWindow",
+      type: GRPCCallType.unary
+    )
+
+    public static let moveWindow = GRPCMethodDescriptor(
+      name: "MoveWindow",
+      path: "/macosusesdk.v1.MacosUse/MoveWindow",
+      type: GRPCCallType.unary
+    )
+
+    public static let resizeWindow = GRPCMethodDescriptor(
+      name: "ResizeWindow",
+      path: "/macosusesdk.v1.MacosUse/ResizeWindow",
+      type: GRPCCallType.unary
+    )
+
+    public static let minimizeWindow = GRPCMethodDescriptor(
+      name: "MinimizeWindow",
+      path: "/macosusesdk.v1.MacosUse/MinimizeWindow",
+      type: GRPCCallType.unary
+    )
+
+    public static let restoreWindow = GRPCMethodDescriptor(
+      name: "RestoreWindow",
+      path: "/macosusesdk.v1.MacosUse/RestoreWindow",
+      type: GRPCCallType.unary
+    )
+
+    public static let closeWindow = GRPCMethodDescriptor(
+      name: "CloseWindow",
+      path: "/macosusesdk.v1.MacosUse/CloseWindow",
+      type: GRPCCallType.unary
+    )
+
+    public static let findElements = GRPCMethodDescriptor(
+      name: "FindElements",
+      path: "/macosusesdk.v1.MacosUse/FindElements",
+      type: GRPCCallType.unary
+    )
+
+    public static let findElementsInRegion = GRPCMethodDescriptor(
+      name: "FindElementsInRegion",
+      path: "/macosusesdk.v1.MacosUse/FindElementsInRegion",
+      type: GRPCCallType.unary
+    )
+
+    public static let getElement = GRPCMethodDescriptor(
+      name: "GetElement",
+      path: "/macosusesdk.v1.MacosUse/GetElement",
+      type: GRPCCallType.unary
+    )
+
+    public static let clickElement = GRPCMethodDescriptor(
+      name: "ClickElement",
+      path: "/macosusesdk.v1.MacosUse/ClickElement",
+      type: GRPCCallType.unary
+    )
+
+    public static let setElementValue = GRPCMethodDescriptor(
+      name: "SetElementValue",
+      path: "/macosusesdk.v1.MacosUse/SetElementValue",
+      type: GRPCCallType.unary
+    )
+
+    public static let getElementActions = GRPCMethodDescriptor(
+      name: "GetElementActions",
+      path: "/macosusesdk.v1.MacosUse/GetElementActions",
+      type: GRPCCallType.unary
+    )
+
+    public static let performElementAction = GRPCMethodDescriptor(
+      name: "PerformElementAction",
+      path: "/macosusesdk.v1.MacosUse/PerformElementAction",
+      type: GRPCCallType.unary
+    )
+
+    public static let waitForElement = GRPCMethodDescriptor(
+      name: "WaitForElement",
+      path: "/macosusesdk.v1.MacosUse/WaitForElement",
+      type: GRPCCallType.unary
+    )
+
+    public static let waitForElementState = GRPCMethodDescriptor(
+      name: "WaitForElementState",
+      path: "/macosusesdk.v1.MacosUse/WaitForElementState",
+      type: GRPCCallType.unary
+    )
+
+    public static let createObservation = GRPCMethodDescriptor(
+      name: "CreateObservation",
+      path: "/macosusesdk.v1.MacosUse/CreateObservation",
+      type: GRPCCallType.unary
+    )
+
+    public static let getObservation = GRPCMethodDescriptor(
+      name: "GetObservation",
+      path: "/macosusesdk.v1.MacosUse/GetObservation",
+      type: GRPCCallType.unary
+    )
+
+    public static let listObservations = GRPCMethodDescriptor(
+      name: "ListObservations",
+      path: "/macosusesdk.v1.MacosUse/ListObservations",
+      type: GRPCCallType.unary
+    )
+
+    public static let cancelObservation = GRPCMethodDescriptor(
+      name: "CancelObservation",
+      path: "/macosusesdk.v1.MacosUse/CancelObservation",
+      type: GRPCCallType.unary
+    )
+
+    public static let streamObservations = GRPCMethodDescriptor(
+      name: "StreamObservations",
+      path: "/macosusesdk.v1.MacosUse/StreamObservations",
+      type: GRPCCallType.serverStreaming
+    )
+
+    public static let createSession = GRPCMethodDescriptor(
+      name: "CreateSession",
+      path: "/macosusesdk.v1.MacosUse/CreateSession",
+      type: GRPCCallType.unary
+    )
+
+    public static let getSession = GRPCMethodDescriptor(
+      name: "GetSession",
+      path: "/macosusesdk.v1.MacosUse/GetSession",
+      type: GRPCCallType.unary
+    )
+
+    public static let listSessions = GRPCMethodDescriptor(
+      name: "ListSessions",
+      path: "/macosusesdk.v1.MacosUse/ListSessions",
+      type: GRPCCallType.unary
+    )
+
+    public static let deleteSession = GRPCMethodDescriptor(
+      name: "DeleteSession",
+      path: "/macosusesdk.v1.MacosUse/DeleteSession",
+      type: GRPCCallType.unary
+    )
+
+    public static let beginTransaction = GRPCMethodDescriptor(
+      name: "BeginTransaction",
+      path: "/macosusesdk.v1.MacosUse/BeginTransaction",
+      type: GRPCCallType.unary
+    )
+
+    public static let commitTransaction = GRPCMethodDescriptor(
+      name: "CommitTransaction",
+      path: "/macosusesdk.v1.MacosUse/CommitTransaction",
+      type: GRPCCallType.unary
+    )
+
+    public static let rollbackTransaction = GRPCMethodDescriptor(
+      name: "RollbackTransaction",
+      path: "/macosusesdk.v1.MacosUse/RollbackTransaction",
+      type: GRPCCallType.unary
+    )
+
+    public static let getSessionSnapshot = GRPCMethodDescriptor(
+      name: "GetSessionSnapshot",
+      path: "/macosusesdk.v1.MacosUse/GetSessionSnapshot",
+      type: GRPCCallType.unary
+    )
+
+    public static let captureScreenshot = GRPCMethodDescriptor(
+      name: "CaptureScreenshot",
+      path: "/macosusesdk.v1.MacosUse/CaptureScreenshot",
+      type: GRPCCallType.unary
+    )
+
+    public static let captureWindowScreenshot = GRPCMethodDescriptor(
+      name: "CaptureWindowScreenshot",
+      path: "/macosusesdk.v1.MacosUse/CaptureWindowScreenshot",
+      type: GRPCCallType.unary
+    )
+
+    public static let captureElementScreenshot = GRPCMethodDescriptor(
+      name: "CaptureElementScreenshot",
+      path: "/macosusesdk.v1.MacosUse/CaptureElementScreenshot",
+      type: GRPCCallType.unary
+    )
+
+    public static let captureRegionScreenshot = GRPCMethodDescriptor(
+      name: "CaptureRegionScreenshot",
+      path: "/macosusesdk.v1.MacosUse/CaptureRegionScreenshot",
+      type: GRPCCallType.unary
+    )
+
+    public static let getClipboard = GRPCMethodDescriptor(
+      name: "GetClipboard",
+      path: "/macosusesdk.v1.MacosUse/GetClipboard",
+      type: GRPCCallType.unary
+    )
+
+    public static let setClipboard = GRPCMethodDescriptor(
+      name: "SetClipboard",
+      path: "/macosusesdk.v1.MacosUse/SetClipboard",
+      type: GRPCCallType.unary
+    )
+
+    public static let clearClipboard = GRPCMethodDescriptor(
+      name: "ClearClipboard",
+      path: "/macosusesdk.v1.MacosUse/ClearClipboard",
+      type: GRPCCallType.unary
+    )
+
+    public static let getClipboardHistory = GRPCMethodDescriptor(
+      name: "GetClipboardHistory",
+      path: "/macosusesdk.v1.MacosUse/GetClipboardHistory",
+      type: GRPCCallType.unary
+    )
+
+    public static let automateOpenFileDialog = GRPCMethodDescriptor(
+      name: "AutomateOpenFileDialog",
+      path: "/macosusesdk.v1.MacosUse/AutomateOpenFileDialog",
+      type: GRPCCallType.unary
+    )
+
+    public static let automateSaveFileDialog = GRPCMethodDescriptor(
+      name: "AutomateSaveFileDialog",
+      path: "/macosusesdk.v1.MacosUse/AutomateSaveFileDialog",
+      type: GRPCCallType.unary
+    )
+
+    public static let selectFile = GRPCMethodDescriptor(
+      name: "SelectFile",
+      path: "/macosusesdk.v1.MacosUse/SelectFile",
+      type: GRPCCallType.unary
+    )
+
+    public static let selectDirectory = GRPCMethodDescriptor(
+      name: "SelectDirectory",
+      path: "/macosusesdk.v1.MacosUse/SelectDirectory",
+      type: GRPCCallType.unary
+    )
+
+    public static let dragFiles = GRPCMethodDescriptor(
+      name: "DragFiles",
+      path: "/macosusesdk.v1.MacosUse/DragFiles",
+      type: GRPCCallType.unary
+    )
+
+    public static let createMacro = GRPCMethodDescriptor(
+      name: "CreateMacro",
+      path: "/macosusesdk.v1.MacosUse/CreateMacro",
+      type: GRPCCallType.unary
+    )
+
+    public static let getMacro = GRPCMethodDescriptor(
+      name: "GetMacro",
+      path: "/macosusesdk.v1.MacosUse/GetMacro",
+      type: GRPCCallType.unary
+    )
+
+    public static let listMacros = GRPCMethodDescriptor(
+      name: "ListMacros",
+      path: "/macosusesdk.v1.MacosUse/ListMacros",
+      type: GRPCCallType.unary
+    )
+
+    public static let updateMacro = GRPCMethodDescriptor(
+      name: "UpdateMacro",
+      path: "/macosusesdk.v1.MacosUse/UpdateMacro",
+      type: GRPCCallType.unary
+    )
+
+    public static let deleteMacro = GRPCMethodDescriptor(
+      name: "DeleteMacro",
+      path: "/macosusesdk.v1.MacosUse/DeleteMacro",
+      type: GRPCCallType.unary
+    )
+
+    public static let executeMacro = GRPCMethodDescriptor(
+      name: "ExecuteMacro",
+      path: "/macosusesdk.v1.MacosUse/ExecuteMacro",
+      type: GRPCCallType.unary
+    )
+
+    public static let executeAppleScript = GRPCMethodDescriptor(
+      name: "ExecuteAppleScript",
+      path: "/macosusesdk.v1.MacosUse/ExecuteAppleScript",
+      type: GRPCCallType.unary
+    )
+
+    public static let executeJavaScriptForAutomation = GRPCMethodDescriptor(
+      name: "ExecuteJavaScriptForAutomation",
+      path: "/macosusesdk.v1.MacosUse/ExecuteJavaScriptForAutomation",
+      type: GRPCCallType.unary
+    )
+
+    public static let executeShellCommand = GRPCMethodDescriptor(
+      name: "ExecuteShellCommand",
+      path: "/macosusesdk.v1.MacosUse/ExecuteShellCommand",
+      type: GRPCCallType.unary
+    )
+
+    public static let validateScript = GRPCMethodDescriptor(
+      name: "ValidateScript",
+      path: "/macosusesdk.v1.MacosUse/ValidateScript",
+      type: GRPCCallType.unary
+    )
+
+    public static let getScriptingDictionaries = GRPCMethodDescriptor(
+      name: "GetScriptingDictionaries",
+      path: "/macosusesdk.v1.MacosUse/GetScriptingDictionaries",
+      type: GRPCCallType.unary
+    )
+
+    public static let getMetrics = GRPCMethodDescriptor(
+      name: "GetMetrics",
+      path: "/macosusesdk.v1.MacosUse/GetMetrics",
+      type: GRPCCallType.unary
+    )
+
+    public static let getPerformanceReport = GRPCMethodDescriptor(
+      name: "GetPerformanceReport",
+      path: "/macosusesdk.v1.MacosUse/GetPerformanceReport",
+      type: GRPCCallType.unary
+    )
+
+    public static let resetMetrics = GRPCMethodDescriptor(
+      name: "ResetMetrics",
+      path: "/macosusesdk.v1.MacosUse/ResetMetrics",
+      type: GRPCCallType.unary
     )
   }
 }

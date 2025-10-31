@@ -1,0 +1,175 @@
+// Copyright 2025 MacosUseSDK
+//
+// File dialog automation and file operations
+
+syntax = "proto3";
+
+package macosusesdk.v1;
+
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+
+option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
+option java_multiple_files = true;
+option java_outer_classname = "FileProto";
+option java_package = "com.macosusesdk.v1";
+
+// Request to automate an open file dialog.
+message AutomateOpenFileDialogRequest {
+  // Application context.
+  string application = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macos.googleapis.com/Application"}
+  ];
+
+  // File path to select (if known).
+  string file_path = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Default directory to navigate to.
+  string default_directory = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // File type filters (e.g., ["*.txt", "*.pdf"]).
+  repeated string file_filters = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Timeout for dialog to appear (seconds).
+  double timeout = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to allow multiple file selection.
+  bool allow_multiple = 6 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from automating an open file dialog.
+message AutomateOpenFileDialogResponse {
+  // Whether the operation succeeded.
+  bool success = 1;
+
+  // Selected file path(s).
+  repeated string selected_paths = 2;
+
+  // Error message if failed.
+  string error = 3;
+}
+
+// Request to automate a save file dialog.
+message AutomateSaveFileDialogRequest {
+  // Application context.
+  string application = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macos.googleapis.com/Application"}
+  ];
+
+  // File path to save to.
+  string file_path = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Default directory to navigate to.
+  string default_directory = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Default filename.
+  string default_filename = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Timeout for dialog to appear (seconds).
+  double timeout = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to confirm overwrite.
+  bool confirm_overwrite = 6 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from automating a save file dialog.
+message AutomateSaveFileDialogResponse {
+  // Whether the operation succeeded.
+  bool success = 1;
+
+  // Final save path.
+  string saved_path = 2;
+
+  // Error message if failed.
+  string error = 3;
+}
+
+// Request to select a file programmatically.
+message SelectFileRequest {
+  // Application context.
+  string application = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macos.googleapis.com/Application"}
+  ];
+
+  // File path to select.
+  string file_path = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Whether to reveal Finder after selection.
+  bool reveal_finder = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from selecting a file.
+message SelectFileResponse {
+  // Whether the operation succeeded.
+  bool success = 1;
+
+  // Selected file path.
+  string selected_path = 2;
+
+  // Error message if failed.
+  string error = 3;
+}
+
+// Request to select a directory.
+message SelectDirectoryRequest {
+  // Application context.
+  string application = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macos.googleapis.com/Application"}
+  ];
+
+  // Directory path to select.
+  string directory_path = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Whether to create directory when it doesn't exist.
+  bool create_missing = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from selecting a directory.
+message SelectDirectoryResponse {
+  // Whether the operation succeeded.
+  bool success = 1;
+
+  // Selected directory path.
+  string selected_path = 2;
+
+  // Whether the directory was created.
+  bool created = 3;
+
+  // Error message if failed.
+  string error = 4;
+}
+
+// Request to drag and drop files.
+message DragFilesRequest {
+  // Application context.
+  string application = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macos.googleapis.com/Application"}
+  ];
+
+  // File paths to drag.
+  repeated string file_paths = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Target element ID to drop on.
+  string target_element_id = 3 [(google.api.field_behavior) = REQUIRED];
+
+  // Drag duration in seconds.
+  double duration = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from dragging files.
+message DragFilesResponse {
+  // Whether the operation succeeded.
+  bool success = 1;
+
+  // Number of files dropped.
+  int32 files_dropped = 2;
+
+  // Error message if failed.
+  string error = 3;
+}

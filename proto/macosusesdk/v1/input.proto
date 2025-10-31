@@ -186,10 +186,10 @@ message MouseMove {
 // Mouse drag action.
 message MouseDrag {
   // Starting position.
-  macosusesdk.type.Point from = 1 [(google.api.field_behavior) = REQUIRED];
+  macosusesdk.type.Point start_position = 1 [(google.api.field_behavior) = REQUIRED];
 
   // Ending position.
-  macosusesdk.type.Point to = 2 [(google.api.field_behavior) = REQUIRED];
+  macosusesdk.type.Point end_position = 2 [(google.api.field_behavior) = REQUIRED];
 
   // Duration of drag in seconds.
   double duration = 3 [(google.api.field_behavior) = OPTIONAL];

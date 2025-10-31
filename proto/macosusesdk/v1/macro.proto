@@ -1,0 +1,386 @@
+// Copyright 2025 MacosUseSDK
+//
+// Macro resource for recordable action sequences
+
+syntax = "proto3";
+
+package macosusesdk.v1;
+
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/longrunning/operations.proto";
+import "google/protobuf/timestamp.proto";
+import "macosusesdk/v1/input.proto";
+
+option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
+option java_multiple_files = true;
+option java_outer_classname = "MacroProto";
+option java_package = "com.macosusesdk.v1";
+
+// A resource representing a recorded sequence of actions.
+// Macros can be replayed to automate repetitive tasks.
+message Macro {
+  option (google.api.resource) = {
+    type: "macos.googleapis.com/Macro"
+    pattern: "macros/{macro}"
+    singular: "macro"
+    plural: "macros"
+  };
+
+  // Resource name in the format "macros/{macro}"
+  // where {macro} is a unique macro identifier.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // Display name for the macro.
+  string display_name = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Description of what the macro does.
+  string description = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Sequence of actions in the macro.
+  repeated MacroAction actions = 4 [(google.api.field_behavior) = REQUIRED];
+
+  // Macro parameters (for parameterized macros).
+  repeated MacroParameter parameters = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // When the macro was created.
+  google.protobuf.Timestamp create_time = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the macro was last modified.
+  google.protobuf.Timestamp update_time = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Number of times the macro has been executed.
+  int64 execution_count = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Tags for categorization.
+  repeated string tags = 9 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// A single action within a macro.
+message MacroAction {
+  // Action type.
+  oneof action {
+    // Input action (click, type, etc.).
+    InputAction input = 1;
+
+    // Wait/delay action.
+    WaitAction wait = 2;
+
+    // Conditional action (if-then).
+    ConditionalAction conditional = 3;
+
+    // Loop action (repeat).
+    LoopAction loop = 4;
+
+    // Variable assignment.
+    AssignAction assign = 5;
+
+    // Custom method call.
+    MethodCall method_call = 6;
+  }
+
+  // Human-readable description of this action.
+  string description = 10;
+}
+
+// Wait/delay action.
+message WaitAction {
+  // Duration to wait in seconds.
+  double duration = 1;
+
+  // Optional condition to wait for.
+  WaitCondition condition = 2;
+}
+
+// Condition to wait for.
+message WaitCondition {
+  // Condition type.
+  oneof condition {
+    // Wait for element to appear.
+    string element_selector = 1;
+
+    // Wait for window to appear.
+    string window_title = 2;
+
+    // Wait for application to launch.
+    string application = 3;
+  }
+
+  // Timeout in seconds.
+  double timeout = 10;
+}
+
+// Conditional action (if-then-else).
+message ConditionalAction {
+  // Condition to evaluate.
+  MacroCondition condition = 1;
+
+  // Actions to execute if condition is true.
+  repeated MacroAction then_actions = 2;
+
+  // Actions to execute if condition is false.
+  repeated MacroAction else_actions = 3;
+}
+
+// Condition for conditional actions.
+message MacroCondition {
+  // Condition type.
+  oneof condition {
+    // Element exists.
+    string element_exists = 1;
+
+    // Window exists.
+    string window_exists = 2;
+
+    // Application is running.
+    string application_running = 3;
+
+    // Variable equals value.
+    VariableCondition variable_equals = 4;
+
+    // Compound condition.
+    CompoundCondition compound = 5;
+  }
+}
+
+// Variable equality condition.
+message VariableCondition {
+  // Variable name.
+  string variable = 1;
+
+  // Expected value.
+  string value = 2;
+}
+
+// Compound condition (AND/OR/NOT).
+message CompoundCondition {
+  // Operator.
+  Operator operator = 1;
+
+  // Sub-conditions.
+  repeated MacroCondition conditions = 2;
+
+  // Logical operator.
+  enum Operator {
+    // Default unspecified.
+    OPERATOR_UNSPECIFIED = 0;
+
+    // All conditions must be true.
+    OPERATOR_AND = 1;
+
+    // At least one condition must be true.
+    OPERATOR_OR = 2;
+
+    // Condition must be false (only with single condition).
+    OPERATOR_NOT = 3;
+  }
+}
+
+// Loop action (repeat).
+message LoopAction {
+  // Loop type.
+  oneof loop_type {
+    // Fixed iteration count.
+    int32 count = 1;
+
+    // Loop while condition is true.
+    MacroCondition while_condition = 2;
+
+    // Loop over each item in collection.
+    ForEachLoop foreach = 3;
+  }
+
+  // Actions to execute in each iteration.
+  repeated MacroAction actions = 10;
+}
+
+// For-each loop over collection.
+message ForEachLoop {
+  // Collection to iterate over.
+  oneof collection {
+    // List of elements.
+    string element_selector = 1;
+
+    // List of windows.
+    string window_pattern = 2;
+
+    // List of values (newline or comma-separated).
+    string values = 3;
+  }
+
+  // Variable name for current item.
+  string item_variable = 10;
+}
+
+// Variable assignment action.
+message AssignAction {
+  // Variable name.
+  string variable = 1;
+
+  // Value source.
+  oneof value {
+    // Literal string value.
+    string literal = 2;
+
+    // Value from element attribute.
+    ElementAttributeValue element_attribute = 3;
+
+    // Value from parameter.
+    string parameter = 4;
+
+    // Result of expression.
+    string expression = 5;
+  }
+}
+
+// Value from element attribute.
+message ElementAttributeValue {
+  // Element selector.
+  string element_selector = 1;
+
+  // Attribute name.
+  string attribute = 2;
+}
+
+// Custom method call action.
+message MethodCall {
+  // Method name (e.g., "ClickElement", "SetElementValue").
+  string method = 1;
+
+  // Method arguments (key-value pairs).
+  map<string, string> args = 2;
+}
+
+// Macro parameter definition.
+message MacroParameter {
+  // Parameter name.
+  string name = 1;
+
+  // Parameter type.
+  ParameterType type = 2;
+
+  // Default value (optional).
+  string default_value = 3;
+
+  // Parameter description.
+  string description = 4;
+
+  // Whether parameter is required.
+  bool required = 5;
+
+  // Parameter type enumeration.
+  enum ParameterType {
+    // Default unspecified type.
+    PARAMETER_TYPE_UNSPECIFIED = 0;
+
+    // String value.
+    PARAMETER_TYPE_STRING = 1;
+
+    // Integer value.
+    PARAMETER_TYPE_INTEGER = 2;
+
+    // Boolean value.
+    PARAMETER_TYPE_BOOLEAN = 3;
+
+    // Element selector.
+    PARAMETER_TYPE_SELECTOR = 4;
+
+    // File path.
+    PARAMETER_TYPE_PATH = 5;
+  }
+}
+
+// Request to execute a macro (long-running operation).
+message ExecuteMacroRequest {
+  // Macro to execute.
+  string macro = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macos.googleapis.com/Macro"}
+  ];
+
+  // Parameter values (for parameterized macros).
+  map<string, string> parameter_values = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Application context (if needed).
+  string application = 3 [
+    (google.api.field_behavior) = OPTIONAL,
+    (google.api.resource_reference) = {type: "macos.googleapis.com/Application"}
+  ];
+
+  // Execution options.
+  ExecutionOptions options = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Options for macro execution.
+message ExecutionOptions {
+  // Execution speed multiplier (1.0 = normal speed).
+  double speed = 1;
+
+  // Whether to continue on error.
+  bool continue_on_error = 2;
+
+  // Maximum execution time in seconds.
+  double timeout = 3;
+
+  // Whether to record execution for debugging.
+  bool record_execution = 4;
+}
+
+// Response from executing a macro.
+message ExecuteMacroResponse {
+  // Whether execution succeeded.
+  bool success = 1;
+
+  // Number of actions executed.
+  int32 actions_executed = 2;
+
+  // Execution time in seconds.
+  double execution_time = 3;
+
+  // Error message if failed.
+  string error = 4;
+
+  // Execution log (if recording was enabled).
+  repeated ExecutionLogEntry log = 5;
+}
+
+// Log entry for macro execution.
+message ExecutionLogEntry {
+  option (google.api.resource) = {
+    type: "macos.googleapis.com/ExecutionLogEntry"
+    pattern: "macros/{macro}/executions/{execution}/entries/{entry}"
+  };
+  // When the action executed.
+  google.protobuf.Timestamp timestamp = 1;
+
+  // Action index in macro.
+  int32 action_index = 2;
+
+  // Action description.
+  string description = 3;
+
+  // Whether action succeeded.
+  bool success = 4;
+
+  // Error message if failed.
+  string error = 5;
+
+  // Duration in seconds.
+  double duration = 6;
+}
+
+// Metadata for ExecuteMacro operation.
+message ExecuteMacroMetadata {
+  // Macro being executed.
+  string macro = 1 [(google.api.resource_reference) = {type: "macos.googleapis.com/Macro"}];
+
+  // Current action index.
+  int32 current_action = 2;
+
+  // Total actions in macro.
+  int32 total_actions = 3;
+
+  // Elapsed time in seconds.
+  double elapsed_time = 4;
+}

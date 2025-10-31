@@ -327,7 +327,9 @@ func performInput(t *testing.T, ctx context.Context, client pb.MacosUseClient, a
 		Input: &pb.Input{
 			Action: &pb.InputAction{
 				InputType: &pb.InputAction_TypeText{
-					TypeText: text,
+					TypeText: &pb.TextInput{
+						Text: text,
+					},
 				},
 			},
 		},

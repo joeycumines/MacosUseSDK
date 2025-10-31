@@ -13,6 +13,7 @@ import "google/longrunning/operations.proto";
 import "macosusesdk/type/element.proto";
 import "macosusesdk/type/geometry.proto";
 import "macosusesdk/type/selector.proto";
+import "macosusesdk/v1/screenshot.proto";
 
 option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
 option java_multiple_files = true;
@@ -67,26 +68,11 @@ message FindElementsInRegionRequest {
 
   // Maximum number of elements to return.
   int32 page_size = 4 [(google.api.field_behavior) = OPTIONAL];
-
   // Page token from a previous call.
   string page_token = 5 [(google.api.field_behavior) = OPTIONAL];
 }
 
-// Screen region for spatial searches.
-message Region {
-  // X coordinate of the region's origin.
-  double x = 1;
-
-  // Y coordinate of the region's origin.
-  double y = 2;
-
-  // Width of the region.
-  double width = 3;
-
-  // Height of the region.
-  double height = 4;
-}
-
+// Response from finding elements in a region.
 // Response from finding elements in a region.
 message FindElementsInRegionResponse {
   // Elements within the region.
@@ -329,6 +315,10 @@ message StateCondition {
 
 // Attribute condition for waiting.
 message AttributeCondition {
+  option (google.api.resource) = {
+    type: "macos.googleapis.com/AttributeCondition"
+    pattern: "attributeConditions/{condition}"
+  };
   // Attribute name.
   string name = 1;
 

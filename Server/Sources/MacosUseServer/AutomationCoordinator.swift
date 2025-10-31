@@ -238,22 +238,56 @@ extension AutomationCoordinator {
     -> MacosUseSDK.InputAction
   {
     switch action.inputType {
-    case .click(let point):
-      return .click(point: CGPoint(x: point.x, y: point.y))
-    case .doubleClick(let point):
-      return .doubleClick(point: CGPoint(x: point.x, y: point.y))
-    case .rightClick(let point):
-      return .rightClick(point: CGPoint(x: point.x, y: point.y))
-    case .typeText(let text):
-      return .type(text: text)
+    case .click(let mouseClick):
+      guard mouseClick.hasPosition else {
+        throw CoordinatorError.invalidKeyCombo("click missing position")
+      }
+      let clickType = mouseClick.clickType
+      let clickCount = mouseClick.clickCount
+      
+      if clickType == .right {
+        return .rightClick(point: CGPoint(x: mouseClick.position.x, y: mouseClick.position.y))
+      } else if clickCount == 2 {
+        return .doubleClick(point: CGPoint(x: mouseClick.position.x, y: mouseClick.position.y))
+      } else {
+        return .click(point: CGPoint(x: mouseClick.position.x, y: mouseClick.position.y))
+      }
+    case .typeText(let textInput):
+      return .type(text: textInput.text)
     case .pressKey(let keyPress):
-      let (keyName, flags) = try parseKeyCombo(keyPress.keyCombo)
-      return .press(keyName: keyName, flags: flags)
-    case .moveMouse(let point):
-      return .move(to: CGPoint(x: point.x, y: point.y))
+      let flags = try convertModifiers(keyPress.modifiers)
+      return .press(keyName: keyPress.key, flags: flags)
+    case .moveMouse(let mouseMove):
+      guard mouseMove.hasPosition else {
+        throw CoordinatorError.invalidKeyCombo("move missing position")
+      }
+      return .move(to: CGPoint(x: mouseMove.position.x, y: mouseMove.position.y))
     case .none:
       throw CoordinatorError.invalidKeyCombo("empty input type")
+    default:
+      throw CoordinatorError.invalidKeyCombo("unsupported input type")
     }
+  }
+  
+  nonisolated private func convertModifiers(_ modifiers: [Macosusesdk_V1_KeyPress.Modifier]) throws -> CGEventFlags {
+    var flags: CGEventFlags = []
+    for modifier in modifiers {
+      switch modifier {
+      case .command:
+        flags.insert(.maskCommand)
+      case .option:
+        flags.insert(.maskAlternate)
+      case .control:
+        flags.insert(.maskControl)
+      case .shift:
+        flags.insert(.maskShift)
+      case .function:
+        flags.insert(.maskSecondaryFn)
+      default:
+        break
+      }
+    }
+    return flags
   }
 
   nonisolated private func parseKeyCombo(_ combo: String) throws -> (

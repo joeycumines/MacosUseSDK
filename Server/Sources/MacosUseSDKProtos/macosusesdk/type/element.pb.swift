@@ -83,6 +83,39 @@ public struct Macosusesdk_Type_Element: Sendable {
   /// Clears the value of `height`. Subsequent reads from it will return its default value.
   public mutating func clearHeight() {self._height = nil}
 
+  /// Unique identifier for this element within its window/app context.
+  /// This is a server-generated ephemeral ID that may change between traversals.
+  public var elementID: String = String()
+
+  /// Whether the element is enabled for interaction.
+  public var enabled: Bool {
+    get {return _enabled ?? false}
+    set {_enabled = newValue}
+  }
+  /// Returns true if `enabled` has been explicitly set.
+  public var hasEnabled: Bool {return self._enabled != nil}
+  /// Clears the value of `enabled`. Subsequent reads from it will return its default value.
+  public mutating func clearEnabled() {self._enabled = nil}
+
+  /// Whether the element has keyboard focus.
+  public var focused: Bool {
+    get {return _focused ?? false}
+    set {_focused = newValue}
+  }
+  /// Returns true if `focused` has been explicitly set.
+  public var hasFocused: Bool {return self._focused != nil}
+  /// Clears the value of `focused`. Subsequent reads from it will return its default value.
+  public mutating func clearFocused() {self._focused = nil}
+
+  /// Hierarchy path from root to this element (indices at each level).
+  public var path: [Int32] = []
+
+  /// Additional accessibility attributes as key-value pairs.
+  public var attributes: Dictionary<String,String> = [:]
+
+  /// Available accessibility actions for this element.
+  public var actions: [String] = []
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
@@ -92,6 +125,8 @@ public struct Macosusesdk_Type_Element: Sendable {
   fileprivate var _y: Double? = nil
   fileprivate var _width: Double? = nil
   fileprivate var _height: Double? = nil
+  fileprivate var _enabled: Bool? = nil
+  fileprivate var _focused: Bool? = nil
 }
 
 /// Statistics about a traversal operation.
@@ -135,7 +170,7 @@ fileprivate let _protobuf_package = "macosusesdk.type"
 
 extension Macosusesdk_Type_Element: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Element"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}role\0\u{1}text\0\u{1}x\0\u{1}y\0\u{1}width\0\u{1}height\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}role\0\u{1}text\0\u{1}x\0\u{1}y\0\u{1}width\0\u{1}height\0\u{3}element_id\0\u{1}enabled\0\u{1}focused\0\u{1}path\0\u{1}attributes\0\u{1}actions\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -149,6 +184,12 @@ extension Macosusesdk_Type_Element: SwiftProtobuf.Message, SwiftProtobuf._Messag
       case 4: try { try decoder.decodeSingularDoubleField(value: &self._y) }()
       case 5: try { try decoder.decodeSingularDoubleField(value: &self._width) }()
       case 6: try { try decoder.decodeSingularDoubleField(value: &self._height) }()
+      case 7: try { try decoder.decodeSingularStringField(value: &self.elementID) }()
+      case 8: try { try decoder.decodeSingularBoolField(value: &self._enabled) }()
+      case 9: try { try decoder.decodeSingularBoolField(value: &self._focused) }()
+      case 10: try { try decoder.decodeRepeatedInt32Field(value: &self.path) }()
+      case 11: try { try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufString>.self, value: &self.attributes) }()
+      case 12: try { try decoder.decodeRepeatedStringField(value: &self.actions) }()
       default: break
       }
     }
@@ -177,6 +218,24 @@ extension Macosusesdk_Type_Element: SwiftProtobuf.Message, SwiftProtobuf._Messag
     try { if let v = self._height {
       try visitor.visitSingularDoubleField(value: v, fieldNumber: 6)
     } }()
+    if !self.elementID.isEmpty {
+      try visitor.visitSingularStringField(value: self.elementID, fieldNumber: 7)
+    }
+    try { if let v = self._enabled {
+      try visitor.visitSingularBoolField(value: v, fieldNumber: 8)
+    } }()
+    try { if let v = self._focused {
+      try visitor.visitSingularBoolField(value: v, fieldNumber: 9)
+    } }()
+    if !self.path.isEmpty {
+      try visitor.visitPackedInt32Field(value: self.path, fieldNumber: 10)
+    }
+    if !self.attributes.isEmpty {
+      try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufString>.self, value: self.attributes, fieldNumber: 11)
+    }
+    if !self.actions.isEmpty {
+      try visitor.visitRepeatedStringField(value: self.actions, fieldNumber: 12)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -187,6 +246,12 @@ extension Macosusesdk_Type_Element: SwiftProtobuf.Message, SwiftProtobuf._Messag
     if lhs._y != rhs._y {return false}
     if lhs._width != rhs._width {return false}
     if lhs._height != rhs._height {return false}
+    if lhs.elementID != rhs.elementID {return false}
+    if lhs._enabled != rhs._enabled {return false}
+    if lhs._focused != rhs._focused {return false}
+    if lhs.path != rhs.path {return false}
+    if lhs.attributes != rhs.attributes {return false}
+    if lhs.actions != rhs.actions {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

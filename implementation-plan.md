@@ -1,6 +1,6 @@
 # Implementation Plan: MacosUseSDK gRPC Service
 
-**STATUS:** INCOMPLETE - This is a comprehensive plan for a production-ready macOS automation API. Current implementation has basic scaffolding only.
+**STATUS:** IN PROGRESS - Proto layer complete (50+ RPC methods). API linter warnings reduced from ~209 to ~125 (40% reduction). **Window operations implemented: GetWindow, ListWindows, FocusWindow, MoveWindow, ResizeWindow, MinimizeWindow, RestoreWindow, CloseWindow using AXUIElement APIs.** WindowRegistry actor created and integrated. All 9 tests passing (2 SDK, 7 Server). Build successful with ApplicationServices import for Accessibility APIs.
 
 ---
 
@@ -356,19 +356,26 @@ Build a production-grade gRPC server exposing the complete MacosUseSDK functiona
 - Error handling for terminated apps
 - Resource cleanup on app quit
 
-### **3.2 Window Service** (MISSING)
-#### **NEEDED** - Complete implementation:
-- `GetWindow` - Window details
-- `ListWindows` - All windows (per-app or global)
-- `FocusWindow` - Bring to front
-- `MoveWindow` - Reposition
-- `ResizeWindow` - Change size
-- `MinimizeWindow` / `RestoreWindow`
-- `CloseWindow` - Close window
-- `GetWindowBounds` - Precise positioning
-- `SetWindowBounds` - Set position/size atomically
-- `GetWindowState` - Visibility, minimized, etc.
-- `WatchWindows` (server-streaming) - Window changes
+### **3.2 Window Service** (IMPLEMENTED - 8/8 core methods)
+#### ✅ **COMPLETED**:
+- ✅ `GetWindow` - Parses resource name, uses WindowRegistry to fetch window info, returns Window proto with bounds/title/layer/visibility
+- ✅ `ListWindows` - Lists all windows for given application PID using WindowRegistry
+- ✅ `FocusWindow` - Uses AXUIElementSetAttributeValue with kAXMainAttribute to focus window
+- ✅ `MoveWindow` - Uses AXValueCreate(.cgPoint) and AXUIElementSetAttributeValue with kAXPositionAttribute
+- ✅ `ResizeWindow` - Uses AXValueCreate(.cgSize) and AXUIElementSetAttributeValue with kAXSizeAttribute
+- ✅ `MinimizeWindow` - Sets kAXMinimizedAttribute to true
+- ✅ `RestoreWindow` - Sets kAXMinimizedAttribute to false
+- ✅ `CloseWindow` - Gets close button via kAXCloseButtonAttribute, performs kAXPressAction
+
+#### Known Limitations:
+- Window matching currently uses first window from AXWindows array (TODO: implement proper windowId matching by comparing bounds/attributes)
+- minimized/focused/fullscreen/state fields in getWindow return hardcoded values (TODO: query AXMinimized, check focus, check fullscreen state, query WindowState attributes)
+
+#### **NEEDED** - Advanced features:
+- `GetWindowBounds` - Precise positioning (can be implemented as alias to GetWindow)
+- `SetWindowBounds` - Set position/size atomically (can combine MoveWindow + ResizeWindow)
+- `GetWindowState` - Visibility, minimized, etc. (expand GetWindow to query all state attributes)
+- `WatchWindows` (server-streaming) - Window changes (requires NotificationManager for AX notifications)
 
 ### **3.3 Element Service** (MISSING)
 #### **NEEDED** - Complete implementation:
@@ -778,42 +785,75 @@ Operational visibility and diagnostics.
 - ✅ gRPC server infrastructure
 - ✅ Basic Application resource (Open, Get, List, Delete)
 - ✅ Basic Input resource (Create, Get, List)
+- ✅ **Complete Window resource (Get, List, Focus, Move, Resize, Minimize, Restore, Close - 8/8 methods)**
 - ✅ TraverseAccessibility (read-only)
 - ✅ LRO pattern (OpenApplication with correct proto type URLs)
 - ✅ Integration test suite (Calculator automation tests pass)
 - ✅ Text input via AppleScript
 - ✅ Server startup and connection handling
 - ✅ Proper LRO response marshaling
+- ✅ **COMPLETE PROTO DEFINITION LAYER (50+ methods defined)**
+- ✅ **All proto files created and compiling**
+- ✅ **Advanced InputAction types (MouseClick, TextInput, KeyPress, MouseMove, MouseDrag, Scroll, Hover, Gesture)**
+- ✅ **Server stubs for all 50+ methods**
+- ✅ **AutomationCoordinator updated for new proto structure**
+- ✅ **WindowRegistry actor (thread-safe window tracking with CGWindowListCopyWindowInfo)**
+- ✅ **All tests passing (9 total: 2 SDK, 7 Server)**
+- ✅ **ApplicationServices import for AXUIElement APIs**
 
-### **What's Missing (EXTENSIVE)**
-- ❌ Window resource (no window management at all)
-- ❌ Element resource (elements not addressable)
-- ❌ Advanced input (no modifiers, drag, scroll)
-- ❌ Element targeting (no selector syntax)
-- ❌ Observations (no streaming, no change detection)
-- ❌ Sessions (no transaction support)
-- ❌ Multi-window coordination
-- ❌ Element queries (no sophisticated search)
-- ❌ Visual feedback (screenshots, OCR)
-- ❌ Clipboard operations
-- ❌ File operations
-- ❌ Macros/scripts
-- ❌ Performance metrics
+### **What's Missing (Implementation Layer)**
+- ✅ Window operations (8/8 core methods implemented)
+- ❌ Window operation enhancements (proper windowId matching, complete state query, streaming)
+- ❌ Element operations (9 methods - stubs exist, need implementation)
+- ❌ Observation streaming (5 methods - stubs exist, need implementation)
+- ❌ Session/transaction support (8 methods - stubs exist, need implementation)
+- ❌ Screenshot capture (4 methods - stubs exist, need implementation)
+- ❌ Clipboard operations (4 methods - stubs exist, need implementation)
+- ❌ File dialog automation (5 methods - stubs exist, need implementation)
+- ❌ Macro execution (6 methods - stubs exist, need implementation)
+- ❌ Script execution (5 methods - stubs exist, need implementation)
+- ❌ Metrics collection (3 methods - stubs exist, need implementation)
+- ❌ Element targeting/selector system
+- ❌ Multi-window coordination workflows
 - ❌ VS Code integration patterns
-- ❌ Comprehensive testing (only basic test exists)
+- ❌ Comprehensive integration tests (only Calculator test exists, need ~20 more tests)
 
 ### **Gap Analysis**
-The current implementation is approximately **15% complete**. We have:
-- Basic scaffolding (server, 2 resources, 1 LRO)
-- Proof of connectivity (integration test passes)
+The current implementation is approximately **20% complete**. We have:
+- ✅ Complete proto definition layer (100%)
+- ✅ All RPC method signatures (100%)
+- ✅ Basic server infrastructure (100%)
+- ✅ Stub implementations (100%)
+- ✅ Code generation pipeline (100%)
+- ⚠️ Business logic implementation (15% - App operations + Input operations + Window operations work, 40+ methods still stubs)
+- ⚠️ Testing infrastructure (10% - only 9 tests, need ~50 more)
+- ❌ Advanced features (0% - selectors, observations, sessions, macros, scripts, metrics all unimplemented)
 
-We are missing:
-- 9+ major resource types
-- 50+ API methods
-- 15+ server components
-- Complete testing infrastructure
-- VS Code integration patterns
-- Production-ready features (sessions, transactions, metrics)
+### **Proto Definition Phase: COMPLETE**
+- ✅ 7 new proto files created (session, screenshot, clipboard, file, macro, script, metrics)
+- ✅ Enhanced input.proto with 8 comprehensive InputAction types
+- ✅ Updated macos_use.proto with 50+ new RPC methods across 9 categories:
+  * Window Operations (8 methods)
+  * Element Operations (9 methods)
+  * Observation Operations (5 methods)
+  * Session Operations (8 methods)
+  * Screenshot Operations (4 methods)
+  * Clipboard Operations (4 methods)
+  * File Operations (5 methods)
+  * Macro Operations (6 methods)
+  * Script Operations (5 methods)
+  * Metrics Operations (3 methods)
+- ✅ All proto files compile successfully
+- ✅ Stubs regenerated (Go + Swift)
+- ✅ Integration test updated for new proto structure
+- ✅ Swift server updated for new proto structure
+- ✅ All 50+ stub implementations added to MacosUseServiceProvider
+- ⚠️ API linter warnings documented (stylistic issues for future cleanup)
+
+We are now ready for:
+- Incremental implementation of 50+ stub methods
+- Expansion of integration tests
+- Advanced server components (WindowRegistry, ElementCache, ObservationManager, etc.)
 
 ---
 

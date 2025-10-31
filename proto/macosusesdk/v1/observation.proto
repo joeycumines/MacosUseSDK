@@ -16,6 +16,27 @@ option java_multiple_files = true;
 option java_outer_classname = "ObservationProto";
 option java_package = "com.macosusesdk.v1";
 
+// Type of observation to perform.
+enum ObservationType {
+  // Default unspecified type.
+  OBSERVATION_TYPE_UNSPECIFIED = 0;
+
+  // Observe element changes (additions, removals, modifications).
+  OBSERVATION_TYPE_ELEMENT_CHANGES = 1;
+
+  // Observe window changes (creation, destruction, movement, resize).
+  OBSERVATION_TYPE_WINDOW_CHANGES = 2;
+
+  // Observe application state changes.
+  OBSERVATION_TYPE_APPLICATION_CHANGES = 3;
+
+  // Observe specific element attribute changes.
+  OBSERVATION_TYPE_ATTRIBUTE_CHANGES = 4;
+
+  // Observe accessibility tree structure changes.
+  OBSERVATION_TYPE_TREE_CHANGES = 5;
+}
+
 // An observation monitors UI changes and streams events.
 message Observation {
   option (google.api.resource) = {
@@ -66,27 +87,6 @@ message Observation {
     // Observation failed with an error.
     STATE_FAILED = 5;
   }
-}
-
-// Type of observation to perform.
-enum ObservationType {
-  // Default unspecified type.
-  OBSERVATION_TYPE_UNSPECIFIED = 0;
-
-  // Observe element changes (additions, removals, modifications).
-  OBSERVATION_TYPE_ELEMENT_CHANGES = 1;
-
-  // Observe window changes (creation, destruction, movement, resize).
-  OBSERVATION_TYPE_WINDOW_CHANGES = 2;
-
-  // Observe application state changes.
-  OBSERVATION_TYPE_APPLICATION_CHANGES = 3;
-
-  // Observe specific element attribute changes.
-  OBSERVATION_TYPE_ATTRIBUTE_CHANGES = 4;
-
-  // Observe accessibility tree structure changes.
-  OBSERVATION_TYPE_TREE_CHANGES = 5;
 }
 
 // Filter for observations.

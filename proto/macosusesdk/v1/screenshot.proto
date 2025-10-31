@@ -1,0 +1,206 @@
+// Copyright 2025 MacosUseSDK
+//
+// Screenshot capture methods
+
+syntax = "proto3";
+
+package macosusesdk.v1;
+
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "macosusesdk/type/geometry.proto";
+
+option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
+option java_multiple_files = true;
+option java_outer_classname = "ScreenshotProto";
+option java_package = "com.macosusesdk.v1";
+
+// Request to capture a screenshot of the entire screen.
+message CaptureScreenshotRequest {
+  // Image format.
+  ImageFormat format = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // JPEG quality (1-100, only for JPEG format).
+  int32 quality = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Include display index in filename.
+  int32 display = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to include OCR text extraction.
+  bool include_ocr_text = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from capturing a screenshot.
+message CaptureScreenshotResponse {
+  // Image data (encoded according to format).
+  bytes image_data = 1;
+
+  // Image format used.
+  ImageFormat format = 2;
+
+  // Image width in pixels.
+  int32 width = 3;
+
+  // Image height in pixels.
+  int32 height = 4;
+
+  // OCR-extracted text (if requested).
+  string ocr_text = 5;
+}
+
+// Request to capture a screenshot of a specific window.
+message CaptureWindowScreenshotRequest {
+  // Window to capture.
+  string window = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macos.googleapis.com/Window"}
+  ];
+
+  // Image format.
+  ImageFormat format = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // JPEG quality (1-100, only for JPEG format).
+  int32 quality = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to include window shadow.
+  bool include_shadow = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to include OCR text extraction.
+  bool include_ocr_text = 5 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from capturing a window screenshot.
+message CaptureWindowScreenshotResponse {
+  // Image data (encoded according to format).
+  bytes image_data = 1;
+
+  // Image format used.
+  ImageFormat format = 2;
+
+  // Image width in pixels.
+  int32 width = 3;
+
+  // Image height in pixels.
+  int32 height = 4;
+
+  // Window that was captured.
+  string window = 5 [(google.api.resource_reference) = {type: "macos.googleapis.com/Window"}];
+
+  // OCR-extracted text (if requested).
+  string ocr_text = 6;
+}
+
+// Request to capture a screenshot of a specific element.
+message CaptureElementScreenshotRequest {
+  // Parent context (application or window).
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "*"}
+  ];
+
+  // Element ID to capture.
+  string element_id = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Image format.
+  ImageFormat format = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // JPEG quality (1-100, only for JPEG format).
+  int32 quality = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Padding around element in pixels.
+  int32 padding = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to include OCR text extraction.
+  bool include_ocr_text = 6 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from capturing an element screenshot.
+message CaptureElementScreenshotResponse {
+  // Image data (encoded according to format).
+  bytes image_data = 1;
+
+  // Image format used.
+  ImageFormat format = 2;
+
+  // Image width in pixels.
+  int32 width = 3;
+
+  // Image height in pixels.
+  int32 height = 4;
+
+  // Element ID that was captured.
+  string element_id = 5;
+
+  // OCR-extracted text (if requested).
+  string ocr_text = 6;
+}
+
+// Request to capture a screenshot of a screen region.
+message CaptureRegionScreenshotRequest {
+  // Region to capture (screen coordinates).
+  Region region = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Image format.
+  ImageFormat format = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // JPEG quality (1-100, only for JPEG format).
+  int32 quality = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Display index (for multi-monitor setups).
+  int32 display = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to include OCR text extraction.
+  bool include_ocr_text = 5 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Screen region for screenshot capture.
+message Region {
+  // X coordinate of the region's origin (screen coordinates).
+  double x = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Y coordinate of the region's origin (screen coordinates).
+  double y = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Width of the region.
+  double width = 3 [(google.api.field_behavior) = REQUIRED];
+
+  // Height of the region.
+  double height = 4 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Response from capturing a region screenshot.
+message CaptureRegionScreenshotResponse {
+  // Image data (encoded according to format).
+  bytes image_data = 1;
+
+  // Image format used.
+  ImageFormat format = 2;
+
+  // Image width in pixels.
+  int32 width = 3;
+
+  // Image height in pixels.
+  int32 height = 4;
+
+  // Region that was captured.
+  Region region = 5;
+
+  // OCR-extracted text (if requested).
+  string ocr_text = 6;
+}
+
+// Image format for screenshots.
+enum ImageFormat {
+  // Default format (PNG).
+  IMAGE_FORMAT_UNSPECIFIED = 0;
+
+  // PNG format (lossless).
+  IMAGE_FORMAT_PNG = 1;
+
+  // JPEG format (lossy, smaller size).
+  IMAGE_FORMAT_JPEG = 2;
+
+  // TIFF format (lossless, larger size).
+  IMAGE_FORMAT_TIFF = 3;
+}

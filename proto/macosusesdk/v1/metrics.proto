@@ -1,0 +1,330 @@
+// Copyright 2025 MacosUseSDK
+//
+// Performance metrics and monitoring
+
+syntax = "proto3";
+
+package macosusesdk.v1;
+
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+
+option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
+option java_multiple_files = true;
+option java_outer_classname = "MetricsProto";
+option java_package = "com.macosusesdk.v1";
+
+// Request to get current metrics.
+message GetMetricsRequest {
+  // Metric types to include (empty = all).
+  repeated MetricType types = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Time range for metrics.
+  TimeRange time_range = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response with metrics.
+message GetMetricsResponse {
+  // When metrics were collected.
+  google.protobuf.Timestamp report_time = 1;
+
+  // Operation metrics.
+  OperationMetrics operations = 2;
+
+  // Resource utilization metrics.
+  ResourceMetrics resources = 3;
+
+  // Cache performance metrics.
+  CacheMetrics cache = 4;
+
+  // Rate limiting metrics.
+  RateLimitMetrics rate_limits = 5;
+
+  // Accessibility metrics.
+  AccessibilityMetrics accessibility = 6;
+}
+
+// Time range for metric queries.
+message TimeRange {
+  // Start time (inclusive).
+  google.protobuf.Timestamp start_time = 1;
+
+  // End time (exclusive).
+  google.protobuf.Timestamp end_time = 2;
+}
+
+// Metrics for API operations.
+message OperationMetrics {
+  // Total operations executed.
+  int64 total_count = 1;
+
+  // Successful operations.
+  int64 success_count = 2;
+
+  // Failed operations.
+  int64 failure_count = 3;
+
+  // Average operation latency.
+  google.protobuf.Duration avg_latency = 4;
+
+  // 50th percentile latency (median).
+  google.protobuf.Duration p50_latency = 5;
+
+  // 95th percentile latency.
+  google.protobuf.Duration p95_latency = 6;
+
+  // 99th percentile latency.
+  google.protobuf.Duration p99_latency = 7;
+
+  // Metrics breakdown per operation type.
+  map<string, OperationTypeMetrics> operations_breakdown = 8;
+}
+
+// Metrics for a specific operation type.
+message OperationTypeMetrics {
+  // Operation type (method name).
+  string operation_type = 1;
+
+  // Total count.
+  int64 count = 2;
+
+  // Success count.
+  int64 success = 3;
+
+  // Failure count.
+  int64 failure = 4;
+
+  // Average latency.
+  google.protobuf.Duration avg_latency = 5;
+
+  // Error breakdown.
+  map<string, int64> errors = 6;
+}
+
+// Resource utilization metrics.
+message ResourceMetrics {
+  // Memory usage in bytes.
+  int64 memory_used = 1;
+
+  // Peak memory usage in bytes.
+  int64 memory_peak = 2;
+
+  // CPU usage percentage (0-100).
+  double cpu_usage = 3;
+
+  // Thread count.
+  int32 thread_count = 4;
+
+  // Active connections.
+  int32 connection_count = 5;
+
+  // Open file descriptors.
+  int32 file_descriptor_count = 6;
+}
+
+// Cache performance metrics.
+message CacheMetrics {
+  // Cache hit count.
+  int64 hits = 1;
+
+  // Cache miss count.
+  int64 misses = 2;
+
+  // Cache hit rate (0.0-1.0).
+  double hit_rate = 3;
+
+  // Cache size (number of entries).
+  int64 size = 4;
+
+  // Cache memory usage in bytes.
+  int64 memory_used = 5;
+
+  // Eviction count.
+  int64 evictions = 6;
+
+  // Metrics breakdown per cache type.
+  map<string, CacheTypeMetrics> caches_breakdown = 7;
+}
+
+// Metrics for a specific cache type.
+message CacheTypeMetrics {
+  // Cache.
+  string cache = 1;
+
+  // Hit count.
+  int64 hits = 2;
+
+  // Miss count.
+  int64 misses = 3;
+
+  // Cache size.
+  int64 size = 4;
+
+  // Memory used in bytes.
+  int64 memory_used = 5;
+}
+
+// Rate limiting metrics.
+message RateLimitMetrics {
+  // Total requests.
+  int64 total_requests = 1;
+
+  // Throttled requests.
+  int64 throttled_requests = 2;
+
+  // Throttle rate (0.0-1.0).
+  double throttle_rate = 3;
+
+  // Current rate (requests per second).
+  double current_rate = 4;
+
+  // Rate limit (requests per second).
+  double rate_limit = 5;
+
+  // Metrics breakdown per client.
+  map<string, ClientRateLimitMetrics> clients_breakdown = 6;
+}
+
+// Rate limit metrics for a specific client.
+message ClientRateLimitMetrics {
+  // Client identifier.
+  string client_id = 1;
+
+  // Total requests.
+  int64 total_requests = 2;
+
+  // Throttled requests.
+  int64 throttled_requests = 3;
+
+  // Current rate.
+  double current_rate = 4;
+}
+
+// Accessibility-specific metrics.
+message AccessibilityMetrics {
+  // Total elements traversed.
+  int64 elements_traversed = 1;
+
+  // Average tree depth.
+  double avg_tree_depth = 2;
+
+  // Average tree size (element count).
+  double avg_tree_size = 3;
+
+  // Accessibility notifications received.
+  int64 notifications_received = 4;
+
+  // Active observations.
+  int32 active_observations = 5;
+
+  // Average element lookup time.
+  google.protobuf.Duration avg_lookup_time = 6;
+}
+
+// Request to get a performance report.
+message GetPerformanceReportRequest {
+  // Time range for report.
+  TimeRange time_range = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Whether to include detailed breakdown.
+  bool include_details = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Operations to include (empty = all).
+  repeated string operations = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response with performance report.
+message GetPerformanceReportResponse {
+  // Report time range.
+  TimeRange time_range = 1;
+
+  // When the report was generated.
+  google.protobuf.Timestamp generated_time = 2;
+
+  // Summary metrics.
+  GetMetricsResponse summary = 3;
+
+  // Detailed breakdown (if requested).
+  repeated PerformanceDataPoint details = 4;
+
+  // Performance trends.
+  PerformanceTrends trends = 5;
+
+  // Recommendations for optimization.
+  repeated string recommendations = 6;
+}
+
+// A single performance data point.
+message PerformanceDataPoint {
+  // When this data point was recorded.
+  google.protobuf.Timestamp recorded_time = 1;  // Metrics at this point.
+  GetMetricsResponse metrics = 2;
+}
+
+// Performance trend analysis.
+message PerformanceTrends {
+  // Latency trend (improving, degrading, stable).
+  TrendDirection latency_trend = 1;
+
+  // Error rate trend.
+  TrendDirection error_trend = 2;
+
+  // Memory usage trend.
+  TrendDirection memory_trend = 3;
+
+  // Cache hit rate trend.
+  TrendDirection cache_trend = 4;
+
+  // Trend direction.
+  enum TrendDirection {
+    // Default unspecified.
+    TREND_DIRECTION_UNSPECIFIED = 0;
+
+    // Improving.
+    TREND_DIRECTION_IMPROVING = 1;
+
+    // Stable.
+    TREND_DIRECTION_STABLE = 2;
+
+    // Degrading.
+    TREND_DIRECTION_DEGRADING = 3;
+  }
+}
+
+// Request to reset metrics.
+message ResetMetricsRequest {
+  // Metric types to reset (empty = all).
+  repeated MetricType types = 1 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from resetting metrics.
+message ResetMetricsResponse {
+  // Whether reset succeeded.
+  bool success = 1;
+
+  // Metrics that were reset.
+  repeated MetricType reset_types = 2;
+}
+
+// Metric type enumeration.
+enum MetricType {
+  // Default unspecified type.
+  METRIC_TYPE_UNSPECIFIED = 0;
+
+  // Operation metrics.
+  METRIC_TYPE_OPERATIONS = 1;
+
+  // Resource metrics.
+  METRIC_TYPE_RESOURCES = 2;
+
+  // Cache metrics.
+  METRIC_TYPE_CACHE = 3;
+
+  // Rate limit metrics.
+  METRIC_TYPE_RATE_LIMITS = 4;
+
+  // Accessibility metrics.
+  METRIC_TYPE_ACCESSIBILITY = 5;
+}

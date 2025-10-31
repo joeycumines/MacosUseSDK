@@ -39,7 +39,20 @@ type Element struct {
 	// Width of the element.
 	Width *float64 `protobuf:"fixed64,5,opt,name=width,proto3,oneof" json:"width,omitempty"`
 	// Height of the element.
-	Height        *float64 `protobuf:"fixed64,6,opt,name=height,proto3,oneof" json:"height,omitempty"`
+	Height *float64 `protobuf:"fixed64,6,opt,name=height,proto3,oneof" json:"height,omitempty"`
+	// Unique identifier for this element within its window/app context.
+	// This is a server-generated ephemeral ID that may change between traversals.
+	ElementId string `protobuf:"bytes,7,opt,name=element_id,json=elementId,proto3" json:"element_id,omitempty"`
+	// Whether the element is enabled for interaction.
+	Enabled *bool `protobuf:"varint,8,opt,name=enabled,proto3,oneof" json:"enabled,omitempty"`
+	// Whether the element has keyboard focus.
+	Focused *bool `protobuf:"varint,9,opt,name=focused,proto3,oneof" json:"focused,omitempty"`
+	// Hierarchy path from root to this element (indices at each level).
+	Path []int32 `protobuf:"varint,10,rep,packed,name=path,proto3" json:"path,omitempty"`
+	// Additional accessibility attributes as key-value pairs.
+	Attributes map[string]string `protobuf:"bytes,11,rep,name=attributes,proto3" json:"attributes,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// Available accessibility actions for this element.
+	Actions       []string `protobuf:"bytes,12,rep,name=actions,proto3" json:"actions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -114,6 +127,48 @@ func (x *Element) GetHeight() float64 {
 		return *x.Height
 	}
 	return 0
+}
+
+func (x *Element) GetElementId() string {
+	if x != nil {
+		return x.ElementId
+	}
+	return ""
+}
+
+func (x *Element) GetEnabled() bool {
+	if x != nil && x.Enabled != nil {
+		return *x.Enabled
+	}
+	return false
+}
+
+func (x *Element) GetFocused() bool {
+	if x != nil && x.Focused != nil {
+		return *x.Focused
+	}
+	return false
+}
+
+func (x *Element) GetPath() []int32 {
+	if x != nil {
+		return x.Path
+	}
+	return nil
+}
+
+func (x *Element) GetAttributes() map[string]string {
+	if x != nil {
+		return x.Attributes
+	}
+	return nil
+}
+
+func (x *Element) GetActions() []string {
+	if x != nil {
+		return x.Actions
+	}
+	return nil
 }
 
 // Statistics about a traversal operation.
@@ -229,19 +284,36 @@ var File_macosusesdk_type_element_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_type_element_proto_rawDesc = "" +
 	"\n" +
-	"\x1emacosusesdk/type/element.proto\x12\x10macosusesdk.type\"\xbe\x01\n" +
+	"\x1emacosusesdk/type/element.proto\x12\x10macosusesdk.type\"\xeb\x03\n" +
 	"\aElement\x12\x12\n" +
 	"\x04role\x18\x01 \x01(\tR\x04role\x12\x17\n" +
 	"\x04text\x18\x02 \x01(\tH\x00R\x04text\x88\x01\x01\x12\x11\n" +
 	"\x01x\x18\x03 \x01(\x01H\x01R\x01x\x88\x01\x01\x12\x11\n" +
 	"\x01y\x18\x04 \x01(\x01H\x02R\x01y\x88\x01\x01\x12\x19\n" +
 	"\x05width\x18\x05 \x01(\x01H\x03R\x05width\x88\x01\x01\x12\x1b\n" +
-	"\x06height\x18\x06 \x01(\x01H\x04R\x06height\x88\x01\x01B\a\n" +
+	"\x06height\x18\x06 \x01(\x01H\x04R\x06height\x88\x01\x01\x12\x1d\n" +
+	"\n" +
+	"element_id\x18\a \x01(\tR\telementId\x12\x1d\n" +
+	"\aenabled\x18\b \x01(\bH\x05R\aenabled\x88\x01\x01\x12\x1d\n" +
+	"\afocused\x18\t \x01(\bH\x06R\afocused\x88\x01\x01\x12\x12\n" +
+	"\x04path\x18\n" +
+	" \x03(\x05R\x04path\x12I\n" +
+	"\n" +
+	"attributes\x18\v \x03(\v2).macosusesdk.type.Element.AttributesEntryR\n" +
+	"attributes\x12\x18\n" +
+	"\aactions\x18\f \x03(\tR\aactions\x1a=\n" +
+	"\x0fAttributesEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\a\n" +
 	"\x05_textB\x04\n" +
 	"\x02_xB\x04\n" +
 	"\x02_yB\b\n" +
 	"\x06_widthB\t\n" +
-	"\a_height\"\xe2\x03\n" +
+	"\a_heightB\n" +
+	"\n" +
+	"\b_enabledB\n" +
+	"\n" +
+	"\b_focused\"\xe2\x03\n" +
 	"\x0eTraversalStats\x12\x14\n" +
 	"\x05count\x18\x01 \x01(\x05R\x05count\x12%\n" +
 	"\x0eexcluded_count\x18\x02 \x01(\x05R\rexcludedCount\x12:\n" +
@@ -269,19 +341,21 @@ func file_macosusesdk_type_element_proto_rawDescGZIP() []byte {
 	return file_macosusesdk_type_element_proto_rawDescData
 }
 
-var file_macosusesdk_type_element_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_macosusesdk_type_element_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_macosusesdk_type_element_proto_goTypes = []any{
 	(*Element)(nil),        // 0: macosusesdk.type.Element
 	(*TraversalStats)(nil), // 1: macosusesdk.type.TraversalStats
-	nil,                    // 2: macosusesdk.type.TraversalStats.RoleCountsEntry
+	nil,                    // 2: macosusesdk.type.Element.AttributesEntry
+	nil,                    // 3: macosusesdk.type.TraversalStats.RoleCountsEntry
 }
 var file_macosusesdk_type_element_proto_depIdxs = []int32{
-	2, // 0: macosusesdk.type.TraversalStats.role_counts:type_name -> macosusesdk.type.TraversalStats.RoleCountsEntry
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	2, // 0: macosusesdk.type.Element.attributes:type_name -> macosusesdk.type.Element.AttributesEntry
+	3, // 1: macosusesdk.type.TraversalStats.role_counts:type_name -> macosusesdk.type.TraversalStats.RoleCountsEntry
+	2, // [2:2] is the sub-list for method output_type
+	2, // [2:2] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_macosusesdk_type_element_proto_init() }
@@ -296,7 +370,7 @@ func file_macosusesdk_type_element_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_macosusesdk_type_element_proto_rawDesc), len(file_macosusesdk_type_element_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

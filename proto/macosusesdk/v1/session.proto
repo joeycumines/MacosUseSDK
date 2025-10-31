@@ -1,0 +1,201 @@
+// Copyright 2025 MacosUseSDK
+//
+// Session resource for workflow management and transactions
+
+syntax = "proto3";
+
+package macosusesdk.v1;
+
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
+option java_multiple_files = true;
+option java_outer_classname = "SessionProto";
+option java_package = "com.macosusesdk.v1";
+
+// A resource representing a session for coordinating complex workflows.
+// Sessions maintain context across multiple operations and support
+// transaction-like semantics for atomic operation groups.
+message Session {
+  option (google.api.resource) = {
+    type: "macos.googleapis.com/Session"
+    pattern: "sessions/{session}"
+    singular: "session"
+    plural: "sessions"
+  };
+
+  // Resource name in the format "sessions/{session}"
+  // where {session} is a unique session identifier.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // Display name for the session.
+  string display_name = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Current state of the session.
+  State state = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the session was created.
+  google.protobuf.Timestamp create_time = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the session was last accessed.
+  google.protobuf.Timestamp last_access_time = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the session expires (auto-cleanup).
+  google.protobuf.Timestamp expire_time = 6 [(google.api.field_behavior) = OPTIONAL];
+
+  // Active transaction ID (if in transaction).
+  string transaction_id = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Session-scoped metadata (key-value pairs).
+  map<string, string> metadata = 8 [(google.api.field_behavior) = OPTIONAL];
+
+  // State of a session.
+  enum State {
+    // Default unspecified state.
+    STATE_UNSPECIFIED = 0;
+
+    // Session is active and ready for operations.
+    STATE_ACTIVE = 1;
+
+    // Session is in a transaction.
+    STATE_IN_TRANSACTION = 2;
+
+    // Session has been terminated.
+    STATE_TERMINATED = 3;
+
+    // Session has expired.
+    STATE_EXPIRED = 4;
+
+    // Session has failed.
+    STATE_FAILED = 5;
+  }
+}
+
+// Request to begin a transaction within a session.
+message BeginTransactionRequest {
+  // Session name.
+  string session = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macos.googleapis.com/Session"}
+  ];
+
+  // Transaction isolation level.
+  IsolationLevel isolation_level = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Transaction timeout in seconds (default: 300).
+  double timeout = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Isolation level for transactions.
+  enum IsolationLevel {
+    // Default isolation level (SERIALIZABLE).
+    ISOLATION_LEVEL_UNSPECIFIED = 0;
+
+    // All operations appear atomic (full snapshot/restore on rollback).
+    ISOLATION_LEVEL_SERIALIZABLE = 1;
+
+    // Operations may see partial changes (best-effort rollback).
+    ISOLATION_LEVEL_READ_COMMITTED = 2;
+  }
+}
+
+// Response from beginning a transaction.
+message BeginTransactionResponse {
+  // Transaction ID for subsequent operations.
+  string transaction_id = 1;
+
+  // Session with updated state.
+  Session session = 2;
+}
+
+// Request to commit a transaction.
+message CommitTransactionRequest {
+  // Session name.
+  string session = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macos.googleapis.com/Session"}
+  ];
+
+  // Transaction ID to commit.
+  string transaction_id = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Response from committing a transaction.
+message CommitTransactionResponse {
+  // Session with updated state.
+  Session session = 1;
+
+  // Number of operations applied.
+  int32 operations_applied = 2;
+}
+
+// Request to rollback a transaction.
+message RollbackTransactionRequest {
+  // Session name.
+  string session = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macos.googleapis.com/Session"}
+  ];
+
+  // Transaction ID to rollback.
+  string transaction_id = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Response from rolling back a transaction.
+message RollbackTransactionResponse {
+  // Session with updated state.
+  Session session = 1;
+
+  // Number of operations rolled back.
+  int32 operations_rolled_back = 2;
+}
+
+// Request to get a session state snapshot.
+message GetSessionSnapshotRequest {
+  // Session name.
+  string session = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macos.googleapis.com/Session"}
+  ];
+
+  // Whether to include operation history.
+  bool include_history = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response with session state snapshot.
+message GetSessionSnapshotResponse {
+  // Session state.
+  Session session = 1;
+
+  // Active applications in session context.
+  repeated string applications = 2;
+
+  // Active observations in session context.
+  repeated string observations = 3;
+
+  // Operation history (if requested).
+  repeated OperationRecord history = 4;
+}
+
+// Record of an operation within a session.
+message OperationRecord {
+  // When the operation occurred.
+  google.protobuf.Timestamp operation_time = 1;
+
+  // Operation type (method name).
+  string operation_type = 2;
+
+  // Resource affected (resource name).
+  string resource = 3;
+
+  // Whether the operation succeeded.
+  bool success = 4;
+
+  // Error message (if failed).
+  string error = 5;
+
+  // Transaction ID (if in transaction).
+  string transaction_id = 6;
+}
