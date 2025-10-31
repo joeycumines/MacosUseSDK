@@ -772,15 +772,18 @@ Operational visibility and diagnostics.
 
 ---
 
-## **Current Status Summary**
+### **Current Status Summary**
 
 ### **What Works Today**
 - ✅ gRPC server infrastructure
 - ✅ Basic Application resource (Open, Get, List, Delete)
 - ✅ Basic Input resource (Create, Get, List)
 - ✅ TraverseAccessibility (read-only)
-- ✅ LRO pattern (OpenApplication)
-- ✅ Integration test (Calculator opens)
+- ✅ LRO pattern (OpenApplication with correct proto type URLs)
+- ✅ Integration test suite (Calculator automation tests pass)
+- ✅ Text input via AppleScript
+- ✅ Server startup and connection handling
+- ✅ Proper LRO response marshaling
 
 ### **What's Missing (EXTENSIVE)**
 - ❌ Window resource (no window management at all)

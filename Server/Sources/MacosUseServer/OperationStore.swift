@@ -32,8 +32,9 @@ public actor OperationStore {
     }
 
     let data = try responseMessage.serializedData()
+    let protoTypeName = type(of: responseMessage).protoMessageName
     let any = SwiftProtobuf.Google_Protobuf_Any.with {
-      $0.typeURL = "type.googleapis.com/\(String(describing: type(of: responseMessage)))"
+      $0.typeURL = "type.googleapis.com/\(protoTypeName)"
       $0.value = data
     }
     op.done = true
