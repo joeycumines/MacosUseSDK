@@ -83,9 +83,7 @@ service MacosUse {
   rpc GetInput(GetInputRequest) returns (Input) {
     option (google.api.http) = {
       get: "/v1/{name=applications/*/inputs/*}"
-      additional_bindings: {
-        get: "/v1/{name=desktopInputs/*}"
-      }
+      additional_bindings: {get: "/v1/{name=desktopInputs/*}"}
     };
     option (google.api.method_signature) = "name";
   }
@@ -94,9 +92,7 @@ service MacosUse {
   rpc ListInputs(ListInputsRequest) returns (ListInputsResponse) {
     option (google.api.http) = {
       get: "/v1/{parent=applications/*}/inputs"
-      additional_bindings: {
-        get: "/v1/desktopInputs"
-      }
+      additional_bindings: {get: "/v1/desktopInputs"}
     };
     option (google.api.method_signature) = "parent";
   }
@@ -219,9 +215,7 @@ service MacosUse {
   rpc GetElement(GetElementRequest) returns (GetElementResponse) {
     option (google.api.http) = {
       get: "/v1/{parent=applications/*}/elements/{element_id}"
-      additional_bindings: {
-        get: "/v1/{parent=applications/*/windows/*}/elements/{element_id}"
-      }
+      additional_bindings: {get: "/v1/{parent=applications/*/windows/*}/elements/{element_id}"}
     };
     option (google.api.method_signature) = "parent,element_id";
   }
@@ -254,9 +248,7 @@ service MacosUse {
   rpc GetElementActions(GetElementActionsRequest) returns (GetElementActionsResponse) {
     option (google.api.http) = {
       get: "/v1/{parent=applications/*}/elements/{element_id}/actions"
-      additional_bindings: {
-        get: "/v1/{parent=applications/*/windows/*}/elements/{element_id}/actions"
-      }
+      additional_bindings: {get: "/v1/{parent=applications/*/windows/*}/elements/{element_id}/actions"}
     };
     option (google.api.method_signature) = "parent,element_id";
   }
@@ -407,9 +399,7 @@ service MacosUse {
 
   // Gets a session state snapshot.
   rpc GetSessionSnapshot(GetSessionSnapshotRequest) returns (GetSessionSnapshotResponse) {
-    option (google.api.http) = {
-      get: "/v1/{session=sessions/*}/snapshot"
-    };
+    option (google.api.http) = {get: "/v1/{session=sessions/*}/snapshot"};
     option (google.api.method_signature) = "session";
   }
 
@@ -629,9 +619,7 @@ service MacosUse {
 
   // Gets a performance report.
   rpc GetPerformanceReport(GetPerformanceReportRequest) returns (GetPerformanceReportResponse) {
-    option (google.api.http) = {
-      get: "/v1/metrics/performanceReport"
-    };
+    option (google.api.http) = {get: "/v1/metrics/performanceReport"};
   }
 
   // Resets metrics.

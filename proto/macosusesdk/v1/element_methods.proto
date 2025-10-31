@@ -82,22 +82,14 @@ message FindElementsInRegionResponse {
   string next_page_token = 2;
 }
 
-// Request to get a specific element by ID.
+// Request to get a specific element by its resource name.
 message GetElementRequest {
-  // Parent context (application or window).
-  string parent = 1 [
+  // The name of the element to retrieve.
+  // Format: applications/{application}/elements/{element}
+  string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "*"}
+    (google.api.resource_reference) = {type: "macosusesdk.googleapis.com/Element"}
   ];
-
-  // Element ID (from Element.element_id).
-  string element_id = 2 [(google.api.field_behavior) = REQUIRED];
-}
-
-// Response from getting an element.
-message GetElementResponse {
-  // The requested element, or null if not found.
-  macosusesdk.type.Element element = 1;
 }
 
 // Request to click an element.
@@ -177,29 +169,18 @@ message SetElementValueResponse {
 
 // Request to get available actions for an element.
 message GetElementActionsRequest {
-  // Parent context.
-  string parent = 1 [
+  // The name of the element to get actions for.
+  // Format: applications/{application}/elements/{element}
+  string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "*"}
+    (google.api.resource_reference) = {type: "macosusesdk.googleapis.com/Element"}
   ];
-
-  // Element ID or selector.
-  oneof target {
-    // Element ID.
-    string element_id = 2;
-
-    // Selector to find element.
-    macosusesdk.type.ElementSelector selector = 3;
-  }
 }
 
 // Response from getting element actions.
 message GetElementActionsResponse {
   // Available action names.
   repeated string actions = 1;
-
-  // The element.
-  macosusesdk.type.Element element = 2;
 }
 
 // Request to perform an accessibility action on an element.

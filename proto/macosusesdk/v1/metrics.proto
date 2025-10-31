@@ -8,8 +8,8 @@ package macosusesdk.v1;
 
 import "google/api/annotations.proto";
 import "google/api/field_behavior.proto";
-import "google/protobuf/timestamp.proto";
 import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
 option java_multiple_files = true;
@@ -259,7 +259,7 @@ message GetPerformanceReportResponse {
 // A single performance data point.
 message PerformanceDataPoint {
   // When this data point was recorded.
-  google.protobuf.Timestamp recorded_time = 1;  // Metrics at this point.
+  google.protobuf.Timestamp recorded_time = 1; // Metrics at this point.
   GetMetricsResponse metrics = 2;
 }
 
