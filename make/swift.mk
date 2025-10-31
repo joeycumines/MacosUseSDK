@@ -33,3 +33,9 @@ swift.build.Server: ## Build the Server Swift package
 .PHONY: swift.test.Server
 swift.test.Server: ## Test the Server Swift package
 	cd Server && $(SWIFT) test
+
+.PHONY: swift.fmt
+swift.fmt: ## Format Swift code using swift-format
+	# Use in-place formatting so files are updated rather than only printing the
+	# formatted output. '-i' edits files in place.
+	$(SWIFT) format --recursive -i .

@@ -10,8 +10,8 @@ import (
 	"time"
 
 	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
 	typepb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
+	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
