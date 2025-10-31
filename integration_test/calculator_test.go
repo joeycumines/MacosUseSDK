@@ -279,12 +279,12 @@ func cleanupApplication(t *testing.T, ctx context.Context, client pb.MacosUseCli
 	}
 
 	t.Logf("Cleaning up application: %s", app.Name)
-	
+
 	// Try to quit the application first
 	quitScript := fmt.Sprintf(`tell application "System Events" to quit application "Calculator"`)
 	exec.Command("osascript", "-e", quitScript).Run()
 	time.Sleep(500 * time.Millisecond)
-	
+
 	_, err := client.DeleteApplication(ctx, &pb.DeleteApplicationRequest{
 		Name: app.Name,
 	})
@@ -311,7 +311,7 @@ tell application "System Events"
 		keystroke "c"
 	end tell
 end tell`
-	
+
 	cmd := exec.Command("osascript", "-e", script)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
@@ -370,7 +370,7 @@ func findCalculatorDisplay(elements []*typepb.Element) string {
 	// Strategy: Look for the largest numeric text element
 	// Calculator's main display shows the result prominently
 	var candidates []string
-	
+
 	for _, elem := range elements {
 		if elem == nil {
 			continue
