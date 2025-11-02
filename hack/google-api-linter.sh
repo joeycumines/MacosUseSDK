@@ -12,8 +12,7 @@ LINTER_MODULE_DIR="$REPO_ROOT/hack/google-api-linter"
 CONFIG_FILE="$REPO_ROOT/google-api-linter.yaml"
 
 # 2. Create a temporary directory
-TEMP_DIR=$(mktemp -d)
-if [ $? -ne 0 ]; then
+if ! TEMP_DIR=$(mktemp -d); then
   echo "::error::Failed to create temporary directory."
   exit 1
 fi
@@ -22,15 +21,13 @@ fi
 trap 'exit_code=0; trap - EXIT; rm -rf "$TEMP_DIR"; exit "$?"' EXIT TERM INT
 
 # 4. Export main protos (from 'proto' directory) to the temp dir
-(cd "$REPO_ROOT" && buf export . --output "$TEMP_DIR")
-if [ $? -ne 0 ]; then
+if ! (cd "$REPO_ROOT" && buf export . --output "$TEMP_DIR"); then
   echo "::error::'buf export .' (main protos) failed."
   exit 1
 fi
 
 # 5. Export googleapis dependencies to the temp dir
-(cd "$REPO_ROOT" && buf export buf.build/googleapis/googleapis --output "$TEMP_DIR")
-if [ $? -ne 0 ]; then
+if ! (cd "$REPO_ROOT" && buf export buf.build/googleapis/googleapis --output "$TEMP_DIR"); then
   echo "::error::'buf export googleapis' failed."
   exit 1
 fi
