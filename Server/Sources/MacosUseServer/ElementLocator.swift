@@ -135,6 +135,36 @@ public actor ElementLocator {
     }
   }
 
+  private func traverseWithPaths(pid: pid_t, visibleOnly: Bool) async throws -> [(Macosusesdk_Type_Element, [Int32])] {
+    // Get elements with AX references
+    let elementsWithAX = try await traverseWithAXElements(pid: pid, visibleOnly: visibleOnly)
+    
+    // Convert to proto elements and register them with AXUIElement references
+    var elementsWithPaths: [(Macosusesdk_Type_Element, [Int32])] = []
+    
+    for (index, (elementData, axElement)) in elementsWithAX.enumerated() {
+      // Convert ElementData to proto
+      let protoElement = Macosusesdk_Type_Element.with {
+        $0.role = elementData.role
+        $0.text = elementData.text ?? ""
+        $0.x = elementData.x ?? 0
+        $0.y = elementData.y ?? 0
+        $0.width = elementData.width ?? 0
+        $0.height = elementData.height ?? 0
+      }
+      
+      // Register element with AXUIElement reference
+      let elementId = ElementRegistry.shared.registerElement(protoElement, axElement: axElement, pid: pid)
+      var elementWithId = protoElement
+      elementWithId.elementId = elementId
+      
+      // For now, use sequential index as path (FIXME: implement proper hierarchical paths)
+      elementsWithPaths.append((elementWithId, [Int32(index)]))
+    }
+    
+    return elementsWithPaths
+  }
+
   private func traverseWithAXElements(pid: pid_t, visibleOnly: Bool) async throws -> [(ElementData, AXUIElement)] {
     // This is a temporary implementation that duplicates traversal logic
     // In a proper implementation, we'd modify the SDK to return AXUIElement references
