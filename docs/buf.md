@@ -1,5 +1,318 @@
 # Buf CLI Documentation
 
+## Condensed
+
+### Global
+- Usage: buf [flags] [command]
+- Global flags:
+  - --debug
+  - --help, -h
+  - --help-tree
+  - --log-format string (text,color,json) — default "color"
+  - --timeout duration (default 2m0s)
+  - --version
+
+Error/format flags (used across commands): --error-format string (text,json,msvs,junit,github-actions,gitlab-code-quality,config-ignore-yaml where applicable)
+
+---
+
+### Top-level commands
+- beta — unstable subcommands
+- breaking — verify no breaking changes
+- build — build Protobuf into a Buf image or file descriptor set
+- completion — generate shell completion
+- config — work with buf.yaml
+- convert — convert message binary/text/JSON/yaml
+- curl — invoke RPC method (like curl)
+- dep — dependencies (graph/prune/update)
+- export — export .proto files from an input
+- format — format Protobuf files
+- generate — generate code with protoc plugins (detailed below)
+- help — help about commands
+- lint — lint Protobuf files
+- ls-files — list Protobuf files
+- lsp — language server (serve)
+- plugin — check-plugin management (prune/update)
+- stats — get statistics for a source/module
+
+(Commands related to registries, pushing to remote registries, login/logout, organization/module/plugin management, SDK resolution, and pricing were removed.)
+
+---
+
+### beta (subset of subcommands)
+- Usage: buf beta [flags] [command]
+- Kept commands:
+  - buf-plugin-v1, buf-plugin-v1beta1, buf-plugin-v2 — run buf as a check plugin
+    - Flags: --format string (default "binary"), --protocol, --spec
+  - studio-agent — run an HTTP(S) server as the Studio agent
+    - Key flags:
+      - --bind string (default "127.0.0.1")
+      - --port string (default "8080")
+      - --origin string (default "https://buf.build")
+      - --private-network
+      - TLS: --ca-cert, --server-cert, --server-key, --client-cert, --client-key
+      - --disallowed-header strings, --forward-header key=val pairs
+
+---
+
+### breaking
+- Purpose: ensure input has no breaking changes versus --against input
+- Usage: buf breaking <input> --against <against-input> [flags]
+- Input formats: binpb, dir, git, json, mod, protofile, tar, txtpb, yaml, zip
+- Key flags:
+  - --against string (required unless --against-registry set — registry options were removed)
+  - --config string
+  - --disable-symlinks
+  - --error-format string
+  - --exclude-imports
+  - --exclude-path strings (multiple allowed)
+  - --limit-to-input-files
+  - --path strings (limit)
+  - --help, -h
+
+---
+
+### build
+- Purpose: build Protobuf files into a Buf image (or FileDescriptorSet)
+- Usage: buf build <input> [flags]
+- Input formats: dir, git, json, mod, protofile, tar, zip
+- Key flags:
+  - --as-file-descriptor-set
+  - --config string
+  - --disable-symlinks
+  - --error-format string
+  - --exclude-path strings
+  - --output string (defaults stdout)
+  - --path strings
+  - --help, -h
+
+---
+
+### completion
+- Usage: buf completion <shell> [flags]
+- Shells: bash, fish, powershell, zsh
+- Flags: --no-descriptions, -h
+
+---
+
+### config
+Subcommands: init, ls-breaking-rules, ls-lint-rules, ls-modules, migrate
+- buf config init
+  - Usage: buf config init [flags]
+  - Flags: --doc
+- buf config ls-breaking-rules
+  - Usage: buf config ls-breaking-rules [flags]
+  - Flags: --config, --version (default v1)
+- buf config ls-lint-rules
+  - Usage: buf config ls-lint-rules [flags]
+  - Flags: --config, --version (default v1)
+- buf config ls-modules
+  - Usage: buf config ls-modules [flags]
+  - Flags: --config
+- buf config migrate
+  - Usage: buf config migrate [flags]
+  - Flags: --config
+
+(All subcommands accept global flags.)
+
+---
+
+### convert
+- Purpose: convert message between binpb, json, txtpb, yaml
+- Usage: buf convert <input> [flags]
+- Key flags:
+  - --from string (binpb,json,txtpb,yaml) — default "json"
+  - --to string (binpb,json,txtpb,yaml) — default "json"
+  - --type string (fully qualified message type)
+  - --config string
+  - --disable-symlinks
+  - --error-format string
+  - --exclude-path strings
+  - --path strings
+
+---
+
+### curl
+- Purpose: invoke an RPC method
+- Usage: buf curl <method> [flags]
+- Key flags (summary):
+  - Networking/TLS: --cacert, --cert, --key, --insecure, --unix-socket
+  - Timeouts: --connect-timeout, --max-time
+  - Request: --data (binary file), --data-format (binpb,json,txtpb,yaml), --get, --header strings
+  - Protocols: --protocol (grpc,grpc-web,connect) — default "grpc"
+  - Reflection: --reflect (use server reflection), --reflect-header strings, --reflect-timeout
+  - Schema/Server: --schema string (module for schema; required if method not fully-qualified), --server string
+  - Output: --output string, --emit-defaults, --verbosity (none,verbose)
+  - TLS versions: --tls-min-version, --tls-max-version (1.0..1.3)
+  - --user-agent
+
+---
+
+### dep
+- Subcommands: graph, prune, update
+- Usage: buf dep [command] [flags]
+- buf dep graph <directory> — prints dependency graph; flags: --config
+- buf dep prune <directory> — prune unused dependencies; flags: --config
+- buf dep update <directory> — update dependencies; flags: --config
+
+---
+
+### export
+- Purpose: export .proto files from an input
+- Usage: buf export <input> [flags]
+- Key flags:
+  - --all (include imports)
+  - --config string
+  - --disable-symlinks
+  - --error-format string
+  - --exclude-path strings
+  - --output string (default ".")
+  - --path strings
+
+---
+
+### format
+- Purpose: format Protobuf files
+- Usage: buf format <input> [flags]
+- Key flags:
+  - --config string
+  - --diff (display diffs instead of rewriting)
+  - --disable-symlinks
+  - --error-format string
+  - --exclude-path strings
+  - --exit-code (non-zero if files not formatted)
+  - --path strings
+  - --write (apply changes to files)
+
+---
+
+### generate (condensed complete spec)
+- Purpose: generate code using generation template (buf.gen.yaml or provided template)
+- Usage: buf generate <input> [flags]
+- Template core shape (minimal):
+  - version: v1beta1 | v1 | v2 (required)
+  - clean: true|false (optional) — delete outputs before running
+  - plugins: list of plugin entries. Each plugin entry may be:
+    - remote: "<remote/owner/plugin[:version]>" (remote plugin; uses "all" or remote-specific invocation)
+      - out: relative output dir
+      - revision: integer (optional)
+      - opt: string or list of strings (options)
+      - include_imports: bool
+      - include_wkt: bool
+      - types / exclude_types: lists (optional)
+      - strategy: "directory" | "all" (default "directory")
+    - local: name or path (string or list for full invocation)
+      - out, opt, include_imports, include_wkt, types, exclude_types, strategy
+    - protoc_builtin: plugin name (e.g., java)
+      - out, protoc_path (optional)
+  - managed: (optional)
+    - enabled: true|false
+    - override: list of override rules:
+      - file_option: <option-name> and value (file options list: java_package, go_package, optimize_for, csharp_namespace, etc.)
+      - field_option: <field-option> and value (e.g., jstype)
+      - module/path can narrow scope; last matching rule wins
+    - disable: list of conditions to disable managed mode (module, path, or file_option)
+  - inputs: optional list — directory, git_repo (url, branch, subdir, depth), module (module ref with types, exclude_types, paths, exclude_paths), tarball/zip_archive (strip_components, compression), proto_file (include_package_files), binary_image/json_image/text_image/yaml_image (compression)
+- Notes:
+  - Default behavior: buf generate reads `buf.gen.yaml` in current dir and uses current directory as input
+  - --template accepts a file or inline YAML/JSON data
+  - Plugins invoked per-template order; invocation is per-directory in parallel (strategy "directory") unless "all"
+  - Insertion points: processed in template order
+- Important flags:
+  - --clean
+  - --config string
+  - --disable-symlinks
+  - --error-format string
+  - --exclude-path strings
+  - --exclude-type strings (package,message,enum,extension,service,method)
+  - --include-imports (also required for --include-wkt)
+  - --include-wkt
+  - -o, --output string (base directory prepended to plugin outs)
+  - --path strings
+  - --template string (file or inline YAML/JSON)
+  - --type strings (types to include)
+  - --help, -h
+
+Examples (concise):
+- Default: uses buf.gen.yaml and current dir:
+  - buf generate
+- Inline template:
+  - buf generate --template '{"version":"v2","plugins":[{"local":"protoc-gen-go","out":"gen/go"}]}'
+- Generate to directory with template:
+  - buf generate --template bar.yaml -o bar https://github.com/foo/bar.git
+
+---
+
+### help
+- Usage: buf help [command] [flags]
+
+---
+
+### lint
+- Purpose: run lint rules on Protobuf
+- Usage: buf lint <input> [flags]
+- Key flags:
+  - --config string
+  - --disable-symlinks
+  - --error-format string (adds config-ignore-yaml option)
+  - --exclude-path strings
+  - --path strings
+
+---
+
+### ls-files
+- Purpose: list .proto files from an input
+- Usage: buf ls-files <input> [flags]
+- Key flags:
+  - --config string
+  - --disable-symlinks
+  - --exclude-path strings
+  - --format string (text,json,import) — default "text"
+  - --include-importable (include all importable files)
+  - --include-imports
+  - --path strings
+
+---
+
+### lsp
+- Purpose: Buf Language Server
+- Subcommand:
+  - serve — start language server
+    - Usage: buf lsp serve [flags]
+    - Flags: --pipe string (path to UNIX socket; uses stdio if unset)
+
+---
+
+### plugin (check plugins, local management)
+- Purpose: manage check plugins configured in `buf.yaml` / `buf.lock`
+- Kept subcommands:
+  - prune <directory> — remove unused plugins from buf.lock
+  - update <directory> — update pinned remote plugin digests in buf.lock
+- Removed: any push-to-registry plugin operations
+- Flags: -h, --help
+
+---
+
+### stats
+- Purpose: get statistics for a source/module
+- Usage: buf stats <source> [flags]
+- Input formats: dir, git, mod, protofile, tar, zip
+- Key flags:
+  - --disable-symlinks
+  - --format string (text,json) — default "text"
+
+---
+
+### Examples / common usage patterns
+- Build module/image: buf build .
+- Format files in-place: buf format --write .
+- Lint: buf lint .
+- Generate with template file: buf generate --template buf.gen.yaml .
+- Convert JSON message to binary: buf convert --from json --to binpb --type foo.v1.Msg
+- Call RPC (with reflection): buf curl --reflect //package.Service/Method --server localhost:50051
+- Show dependency graph: buf dep graph .
+- List proto files including imports: buf ls-files . --include-imports
+
 ## Main Help
 
 ```
