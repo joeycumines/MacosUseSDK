@@ -36,7 +36,7 @@ public actor ElementRegistry {
   ///   - axElement: Optional AXUIElement reference
   ///   - pid: The process ID this element belongs to
   /// - Returns: The generated element ID
-  public func registerElement(
+  @MainActor public func registerElement(
     _ element: Macosusesdk_Type_Element,
     axElement: AXUIElement? = nil,
     pid: pid_t
@@ -94,7 +94,7 @@ public actor ElementRegistry {
   ///   - element: New element data
   ///   - axElement: Optional new AXUIElement reference
   /// - Returns: True if update succeeded
-  public func updateElement(
+  @MainActor public func updateElement(
     _ elementId: String,
     element: Macosusesdk_Type_Element,
     axElement: AXUIElement? = nil

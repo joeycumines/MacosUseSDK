@@ -2,7 +2,7 @@
 // https://docs.swift.org/swift-book
 
 import AppKit  // For NSWorkspace, NSRunningApplication, NSApplication
-import ApplicationServices  // For Accessibility API (AXUIElement, etc.)
+@preconcurrency import ApplicationServices  // For Accessibility API (AXUIElement, etc.)
 import Foundation  // For basic types, JSONEncoder, Date
 
 // --- Error Enum ---
@@ -36,6 +36,10 @@ public struct ElementData: Codable, Hashable, Sendable {
   public var y: Double?
   public var width: Double?
   public var height: Double?
+  public var axElement: AXUIElement?
+  public var enabled: Bool?
+  public var focused: Bool?
+  public var attributes: [String: String]
 
   // Implement Hashable for use in Set
   public func hash(into hasher: inout Hasher) {
@@ -49,6 +53,10 @@ public struct ElementData: Codable, Hashable, Sendable {
   public static func == (lhs: ElementData, rhs: ElementData) -> Bool {
     lhs.role == rhs.role && lhs.text == rhs.text && lhs.x == rhs.x && lhs.y == rhs.y
       && lhs.width == rhs.width && lhs.height == rhs.height
+  }
+
+  enum CodingKeys: String, CodingKey {
+    case role, text, x, y, width, height, enabled, focused, attributes
   }
 }
 
@@ -223,6 +231,12 @@ private class AccessibilityTraversalOperation {
     return nil
   }
 
+  // Extract bool value
+  func getBoolValue(_ value: CFTypeRef?) -> Bool? {
+    guard let value = value, CFGetTypeID(value) == CFBooleanGetTypeID() else { return nil }
+    return CFBooleanGetValue(value as! CFBoolean)
+  }
+
   // Extract CGPoint
   func getCGPointValue(_ value: CFTypeRef?) -> CGPoint? {
     guard let value = value, CFGetTypeID(value) == AXValueGetTypeID() else { return nil }
@@ -250,13 +264,16 @@ private class AccessibilityTraversalOperation {
   // Extract attributes, text, and geometry
   func extractElementAttributes(element: AXUIElement) -> (
     role: String, roleDesc: String?, text: String?, allTextParts: [String], position: CGPoint?,
-    size: CGSize?
+    size: CGSize?, enabled: Bool?, focused: Bool?, attributes: [String: String]
   ) {
     var role = "AXUnknown"
     var roleDesc: String? = nil
     var textParts: [String] = []
     var position: CGPoint? = nil
     var size: CGSize? = nil
+    var enabled: Bool? = nil
+    var focused: Bool? = nil
+    var attributes: [String: String] = [:]
 
     if let roleValue = copyAttributeValue(element: element, attribute: kAXRoleAttribute as String) {
       role = getStringValue(roleValue) ?? "AXUnknown"
@@ -287,19 +304,36 @@ private class AccessibilityTraversalOperation {
       element: element, attribute: kAXPositionAttribute as String)
     {
       position = getCGPointValue(posValue)
-      // if position == nil { fputs("debug: failed to get position for element (role: \(role))\n", stderr) }
-    } else {
-      // fputs("debug: position attribute ('\(kAXPositionAttribute)') not found or unsupported for element (role: \(role))\n", stderr)
     }
 
     if let sizeValue = copyAttributeValue(element: element, attribute: kAXSizeAttribute as String) {
       size = getCGSizeValue(sizeValue)
-      // if size == nil { fputs("debug: failed to get size for element (role: \(role))\n", stderr) }
-    } else {
-      // fputs("debug: size attribute ('\(kAXSizeAttribute)') not found or unsupported for element (role: \(role))\n", stderr)
     }
 
-    return (role, roleDesc, combinedText, textParts, position, size)
+    if let enabledValue = copyAttributeValue(element: element, attribute: kAXEnabledAttribute as String) {
+      enabled = getBoolValue(enabledValue)
+    }
+
+    if let focusedValue = copyAttributeValue(element: element, attribute: kAXFocusedAttribute as String) {
+      focused = getBoolValue(focusedValue)
+    }
+
+    // Add some common attributes
+    let commonAttributes = [
+      kAXTitleAttribute as String,
+      kAXValueAttribute as String,
+      kAXDescriptionAttribute as String,
+      kAXHelpAttribute as String,
+    ]
+    for attr in commonAttributes {
+      if let attrValue = copyAttributeValue(element: element, attribute: attr),
+        let strValue = getStringValue(attrValue)
+      {
+        attributes[attr] = strValue
+      }
+    }
+
+    return (role, roleDesc, combinedText, textParts, position, size, enabled, focused, attributes)
   }
 
   // Recursive traversal function (now a method)
@@ -312,7 +346,7 @@ private class AccessibilityTraversalOperation {
     visitedElements.insert(element)
 
     // 2. Process the current element
-    let (role, roleDesc, combinedText, _, position, size) = extractElementAttributes(
+    let (role, roleDesc, combinedText, _, position, size, enabled, focused, attributes) = extractElementAttributes(
       element: element)
     let hasText = combinedText != nil && !combinedText!.isEmpty
     let isNonInteractable = nonInteractableRoles.contains(role)
@@ -355,7 +389,8 @@ private class AccessibilityTraversalOperation {
     if shouldCollectElement {
       let elementData = ElementData(
         role: displayRole, text: combinedText,
-        x: finalX, y: finalY, width: finalWidth, height: finalHeight
+        x: finalX, y: finalY, width: finalWidth, height: finalHeight,
+        axElement: element, enabled: enabled, focused: focused, attributes: attributes
       )
 
       if collectedElements.insert(elementData).inserted {

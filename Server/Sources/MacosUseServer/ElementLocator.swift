@@ -136,62 +136,34 @@ public actor ElementLocator {
   }
 
   private func traverseWithPaths(pid: pid_t, visibleOnly: Bool) async throws -> [(Macosusesdk_Type_Element, [Int32])] {
-    // Get elements with AX references
-    let elementsWithAX = try await traverseWithAXElements(pid: pid, visibleOnly: visibleOnly)
-    
-    // Convert to proto elements and register them with AXUIElement references
-    var elementsWithPaths: [(Macosusesdk_Type_Element, [Int32])] = []
-    
-    for (index, (elementData, axElement)) in elementsWithAX.enumerated() {
-      // Convert ElementData to proto
-      let protoElement = Macosusesdk_Type_Element.with {
-        $0.role = elementData.role
-        $0.text = elementData.text ?? ""
-        $0.x = elementData.x ?? 0
-        $0.y = elementData.y ?? 0
-        $0.width = elementData.width ?? 0
-        $0.height = elementData.height ?? 0
+    return try await MainActor.run {
+      let sdkResponse = try MacosUseSDK.traverseAccessibilityTree(pid: pid, onlyVisibleElements: visibleOnly)
+      
+      var elementsWithPaths: [(Macosusesdk_Type_Element, [Int32])] = []
+      
+      for (index, elementData) in sdkResponse.elements.enumerated() {
+        let protoElement = Macosusesdk_Type_Element.with {
+          $0.role = elementData.role
+          if let text = elementData.text { $0.text = text }
+          if let x = elementData.x { $0.x = x }
+          if let y = elementData.y { $0.y = y }
+          if let width = elementData.width { $0.width = width }
+          if let height = elementData.height { $0.height = height }
+          if let enabled = elementData.enabled { $0.enabled = enabled }
+          if let focused = elementData.focused { $0.focused = focused }
+          $0.attributes = elementData.attributes
+        }
+        
+        let elementId = await ElementRegistry.shared.registerElement(protoElement, axElement: elementData.axElement, pid: pid)
+        var elementWithId = protoElement
+        elementWithId.elementId = elementId
+        
+        // For now, use sequential index as path (FIXME: implement proper hierarchical paths)
+        elementsWithPaths.append((elementWithId, [Int32(index)]))
       }
       
-      // Register element with AXUIElement reference
-      let elementId = ElementRegistry.shared.registerElement(protoElement, axElement: axElement, pid: pid)
-      var elementWithId = protoElement
-      elementWithId.elementId = elementId
-      
-      // For now, use sequential index as path (FIXME: implement proper hierarchical paths)
-      elementsWithPaths.append((elementWithId, [Int32(index)]))
+      return elementsWithPaths
     }
-    
-    return elementsWithPaths
-  }
-
-  private func traverseWithAXElements(pid: pid_t, visibleOnly: Bool) async throws -> [(ElementData, AXUIElement)] {
-    // This is a temporary implementation that duplicates traversal logic
-    // In a proper implementation, we'd modify the SDK to return AXUIElement references
-    
-    // For now, we'll use the existing SDK traversal and create dummy AXUIElements
-    // This is a workaround until the SDK is modified to preserve AXUIElement references
-    let traversalResponse = try await AutomationCoordinator.shared.handleTraverse(pid: pid, visibleOnly: visibleOnly)
-    
-    // Convert proto elements back to ElementData (lossy conversion)
-    let elementsWithAX: [(ElementData, AXUIElement)] = traversalResponse.elements.map { protoElement in
-      let elementData = ElementData(
-        role: protoElement.role,
-        text: protoElement.text.isEmpty ? nil : protoElement.text,
-        x: protoElement.x == 0 ? nil : protoElement.x,
-        y: protoElement.y == 0 ? nil : protoElement.y,
-        width: protoElement.width == 0 ? nil : protoElement.width,
-        height: protoElement.height == 0 ? nil : protoElement.height
-      )
-      
-      // FIXME: Create a proper AXUIElement reference
-      // For now, create a dummy AXUIElement - this won't work for actions
-      let dummyAXElement = AXUIElementCreateSystemWide()
-      
-      return (elementData, dummyAXElement)
-    }
-    
-    return elementsWithAX
   }
 
   private func matchesSelector(_ element: Macosusesdk_Type_Element, selector: Macosusesdk_Type_ElementSelector) -> Bool {

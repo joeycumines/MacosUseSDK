@@ -809,10 +809,16 @@ Operational visibility and diagnostics.
 - ✅ **getElementActions**: Now attempts to query actual AXUIElement for kAXActionsAttribute before falling back to role-based guesses
 
 ### **REMAINING CRITICAL ISSUES** ❌
-- **AXUIElement lifecycle**: Elements are registered with `axElement: nil` because SDK doesn't return AXUIElement references - **ALL ELEMENT ACTIONS USE STALE COORDINATES**
+- **AXUIElement lifecycle broken**: Elements are registered with `axElement: nil` because SDK doesn't return AXUIElement references - **ALL ELEMENT ACTIONS USE STALE COORDINATES**
 - **Invalid hierarchy paths**: `traverseWithPaths` returns sequential indices instead of proper hierarchical paths
 - **Window bounds uniqueness**: `findWindowElement` assumes bounds are unique (potential for wrong window selection)
 - **Element staleness**: Methods using `elementId` trust cached elements without re-validation
+- **Detailed Flaws from Analysis**:
+  - **Flaw 1: The Source (`ElementLocator.swift`)**: `traverseWithAXElements` calls `AutomationCoordinator.shared.handleTraverse`, which returns proto elements, not live `AXUIElement` objects. Creates `dummyAXElement` with FIXME admitting it "won't work for actions."
+  - **Flaw 2: The Compounding Error (`MacosUseServiceProvider.swift`)**: `findElements` and `findRegionElements` call `ElementLocator.shared.findElements`, which registers dummy element. Then re-maps results and registers AGAIN with `axElement: nil`, guaranteeing `nil` `AXUIElement` in registry.
+  - **Flaw 3: The Consequence (Non-Functional Actions)**: `getElementActions` always fails to query AXUIElement (nil), falls back to role-based guessing. `performElementAction` simulates "press" by clicking stale coordinates, not semantic AXAction. `waitElementState` broken as `traverseWithPaths` doesn't populate `enabled`, `focused`, `attributes`.
+  - **Logical Contradiction: Element Data Mismatch**: `traverseWithPaths` converts `ElementData` to proto with `??` coalescing, mapping `nil` to `""` or `0`, breaking selectors that expect `nil`.
+  - **High-Risk Window Matching**: `findWindowElement` trusts bounds uniqueness, may select wrong `AXUIElement` if identical bounds.
 
 ### **What's Missing (Implementation Layer)**
 - ✅ Window operations (8/8 core methods implemented with proper windowId matching)

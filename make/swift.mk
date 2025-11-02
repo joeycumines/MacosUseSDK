@@ -2,7 +2,7 @@
 
 SWIFT ?= swift
 
-##@ Swift Package Targets
+##@ Swift Targets
 
 .PHONY: swift.all
 swift.all: swift.build swift.test ## Build and test all Swift packages
