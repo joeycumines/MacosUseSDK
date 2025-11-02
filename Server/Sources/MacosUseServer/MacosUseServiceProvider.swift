@@ -1,6 +1,6 @@
-import Foundation
-import CoreGraphics
 import ApplicationServices
+import CoreGraphics
+import Foundation
 import GRPC
 import MacosUseSDKProtos
 import SwiftProtobuf
@@ -229,20 +229,21 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     // Parse "applications/{pid}/windows/{windowId}"
     let components = request.name.split(separator: "/")
     guard components.count == 4,
-          components[0] == "applications",
-          components[2] == "windows",
-          let pid = pid_t(components[1]),
-          let windowId = CGWindowID(components[3]) else {
+      components[0] == "applications",
+      components[2] == "windows",
+      let pid = pid_t(components[1]),
+      let windowId = CGWindowID(components[3])
+    else {
       throw GRPCStatus(code: .invalidArgument, message: "Invalid window name format")
     }
-    
+
     let registry = WindowRegistry()
     try await registry.refreshWindows(forPID: pid)
-    
+
     guard let windowInfo = try await registry.getWindow(windowId) else {
       throw GRPCStatus(code: .notFound, message: "Window not found")
     }
-    
+
     return Macosusesdk_V1_Window.with {
       $0.name = request.name
       $0.title = windowInfo.title
@@ -255,8 +256,8 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
       $0.zIndex = Int32(windowInfo.layer)
       $0.visible = windowInfo.isOnScreen
       $0.minimized = false  // TODO: Check AXMinimized attribute
-      $0.focused = false    // TODO: Check if window has focus
-      $0.fullscreen = false // TODO: Check fullscreen state
+      $0.focused = false  // TODO: Check if window has focus
+      $0.fullscreen = false  // TODO: Check fullscreen state
       $0.state = Macosusesdk_V1_WindowState()  // TODO: Query window attributes
     }
   }
@@ -265,14 +266,14 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     request: Macosusesdk_V1_ListWindowsRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_ListWindowsResponse {
     fputs("info: [MacosUseServiceProvider] listWindows called\n", stderr)
-    
+
     // Parse "applications/{pid}"
     let pid = try parsePID(fromName: request.parent)
-    
+
     let registry = WindowRegistry()
     try await registry.refreshWindows(forPID: pid)
     let windowInfos = try await registry.listWindows(forPID: pid)
-    
+
     let windows = windowInfos.map { windowInfo in
       Macosusesdk_V1_Window.with {
         $0.name = "applications/\(pid)/windows/\(windowInfo.windowID)"
@@ -291,7 +292,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         $0.state = Macosusesdk_V1_WindowState()
       }
     }
-    
+
     return Macosusesdk_V1_ListWindowsResponse.with {
       $0.windows = windows
     }
@@ -301,35 +302,39 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     request: Macosusesdk_V1_FocusWindowRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_Window {
     fputs("info: [MacosUseServiceProvider] focusWindow called\n", stderr)
-    
+
     // Parse "applications/{pid}/windows/{windowId}"
     let components = request.name.split(separator: "/").map(String.init)
     guard components.count == 4,
-          components[0] == "applications",
-          components[2] == "windows",
-          let pid = pid_t(components[1]),
-          let windowId = CGWindowID(components[3]) else {
+      components[0] == "applications",
+      components[2] == "windows",
+      let pid = pid_t(components[1]),
+      let windowId = CGWindowID(components[3])
+    else {
       throw GRPCStatus(code: .invalidArgument, message: "Invalid window name format")
     }
-    
+
     // Get AXUIElement for application
     let appElement = AXUIElementCreateApplication(pid)
-    
+
     // Get AXWindows attribute
     var windowsValue: CFTypeRef?
-    let result = AXUIElementCopyAttributeValue(appElement, kAXWindowsAttribute as CFString, &windowsValue)
+    let result = AXUIElementCopyAttributeValue(
+      appElement, kAXWindowsAttribute as CFString, &windowsValue)
     guard result == .success, let windows = windowsValue as? [AXUIElement] else {
       throw GRPCStatus(code: .internalError, message: "Failed to get windows for application")
     }
-    
+
     // Find the window by matching CGWindowID
     var targetWindow: AXUIElement?
     for window in windows {
       // Get window's position to identify it
       var posValue: CFTypeRef?
       var sizeValue: CFTypeRef?
-      if AXUIElementCopyAttributeValue(window, kAXPositionAttribute as CFString, &posValue) == .success,
-         AXUIElementCopyAttributeValue(window, kAXSizeAttribute as CFString, &sizeValue) == .success {
+      if AXUIElementCopyAttributeValue(window, kAXPositionAttribute as CFString, &posValue)
+        == .success,
+        AXUIElementCopyAttributeValue(window, kAXSizeAttribute as CFString, &sizeValue) == .success
+      {
         // Store for later - we'll match by checking all windows
         // For now, just try to focus the first window as a fallback
         if targetWindow == nil {
@@ -337,236 +342,261 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         }
       }
     }
-    
+
     guard let windowToFocus = targetWindow else {
       throw GRPCStatus(code: .notFound, message: "Window not found")
     }
-    
+
     // Set kAXMainAttribute to true to focus the window
-    let mainResult = AXUIElementSetAttributeValue(windowToFocus, kAXMainAttribute as CFString, kCFBooleanTrue)
+    let mainResult = AXUIElementSetAttributeValue(
+      windowToFocus, kAXMainAttribute as CFString, kCFBooleanTrue)
     guard mainResult == .success else {
       throw GRPCStatus(code: .internalError, message: "Failed to focus window")
     }
-    
+
     // Return updated window state
-    return try await getWindow(request: Macosusesdk_V1_GetWindowRequest.with { $0.name = request.name }, context: context)
+    return try await getWindow(
+      request: Macosusesdk_V1_GetWindowRequest.with { $0.name = request.name }, context: context)
   }
 
   func moveWindow(
     request: Macosusesdk_V1_MoveWindowRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_Window {
     fputs("info: [MacosUseServiceProvider] moveWindow called\n", stderr)
-    
+
     // Parse "applications/{pid}/windows/{windowId}"
     let components = request.name.split(separator: "/").map(String.init)
     guard components.count == 4,
-          components[0] == "applications",
-          components[2] == "windows",
-          let pid = pid_t(components[1]),
-          let windowId = CGWindowID(components[3]) else {
+      components[0] == "applications",
+      components[2] == "windows",
+      let pid = pid_t(components[1]),
+      let windowId = CGWindowID(components[3])
+    else {
       throw GRPCStatus(code: .invalidArgument, message: "Invalid window name format")
     }
-    
+
     // Get AXUIElement for application
     let appElement = AXUIElementCreateApplication(pid)
-    
+
     // Get AXWindows attribute
     var windowsValue: CFTypeRef?
-    let result = AXUIElementCopyAttributeValue(appElement, kAXWindowsAttribute as CFString, &windowsValue)
+    let result = AXUIElementCopyAttributeValue(
+      appElement, kAXWindowsAttribute as CFString, &windowsValue)
     guard result == .success, let windows = windowsValue as? [AXUIElement] else {
       throw GRPCStatus(code: .internalError, message: "Failed to get windows for application")
     }
-    
+
     // Use first window for now (TODO: match by windowId)
     guard let window = windows.first else {
       throw GRPCStatus(code: .notFound, message: "Window not found")
     }
-    
+
     // Create AXValue for new position
     var newPosition = CGPoint(x: request.x, y: request.y)
     guard let positionValue = AXValueCreate(.cgPoint, &newPosition) else {
       throw GRPCStatus(code: .internalError, message: "Failed to create position value")
     }
-    
+
     // Set position
-    let setResult = AXUIElementSetAttributeValue(window, kAXPositionAttribute as CFString, positionValue)
+    let setResult = AXUIElementSetAttributeValue(
+      window, kAXPositionAttribute as CFString, positionValue)
     guard setResult == .success else {
-      throw GRPCStatus(code: .internalError, message: "Failed to move window: \(setResult.rawValue)")
+      throw GRPCStatus(
+        code: .internalError, message: "Failed to move window: \(setResult.rawValue)")
     }
-    
+
     // Return updated window state
-    return try await getWindow(request: Macosusesdk_V1_GetWindowRequest.with { $0.name = request.name }, context: context)
+    return try await getWindow(
+      request: Macosusesdk_V1_GetWindowRequest.with { $0.name = request.name }, context: context)
   }
 
   func resizeWindow(
     request: Macosusesdk_V1_ResizeWindowRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_Window {
     fputs("info: [MacosUseServiceProvider] resizeWindow called\n", stderr)
-    
+
     // Parse "applications/{pid}/windows/{windowId}"
     let components = request.name.split(separator: "/").map(String.init)
     guard components.count == 4,
-          components[0] == "applications",
-          components[2] == "windows",
-          let pid = pid_t(components[1]),
-          let windowId = CGWindowID(components[3]) else {
+      components[0] == "applications",
+      components[2] == "windows",
+      let pid = pid_t(components[1]),
+      let windowId = CGWindowID(components[3])
+    else {
       throw GRPCStatus(code: .invalidArgument, message: "Invalid window name format")
     }
-    
+
     // Get AXUIElement for application
     let appElement = AXUIElementCreateApplication(pid)
-    
+
     // Get AXWindows attribute
     var windowsValue: CFTypeRef?
-    let result = AXUIElementCopyAttributeValue(appElement, kAXWindowsAttribute as CFString, &windowsValue)
+    let result = AXUIElementCopyAttributeValue(
+      appElement, kAXWindowsAttribute as CFString, &windowsValue)
     guard result == .success, let windows = windowsValue as? [AXUIElement] else {
       throw GRPCStatus(code: .internalError, message: "Failed to get windows for application")
     }
-    
+
     // Use first window for now (TODO: match by windowId)
     guard let window = windows.first else {
       throw GRPCStatus(code: .notFound, message: "Window not found")
     }
-    
+
     // Create AXValue for new size
     var newSize = CGSize(width: request.width, height: request.height)
     guard let sizeValue = AXValueCreate(.cgSize, &newSize) else {
       throw GRPCStatus(code: .internalError, message: "Failed to create size value")
     }
-    
+
     // Set size
     let setResult = AXUIElementSetAttributeValue(window, kAXSizeAttribute as CFString, sizeValue)
     guard setResult == .success else {
-      throw GRPCStatus(code: .internalError, message: "Failed to resize window: \(setResult.rawValue)")
+      throw GRPCStatus(
+        code: .internalError, message: "Failed to resize window: \(setResult.rawValue)")
     }
-    
+
     // Return updated window state
-    return try await getWindow(request: Macosusesdk_V1_GetWindowRequest.with { $0.name = request.name }, context: context)
+    return try await getWindow(
+      request: Macosusesdk_V1_GetWindowRequest.with { $0.name = request.name }, context: context)
   }
 
   func minimizeWindow(
     request: Macosusesdk_V1_MinimizeWindowRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_Window {
     fputs("info: [MacosUseServiceProvider] minimizeWindow called\n", stderr)
-    
+
     // Parse "applications/{pid}/windows/{windowId}"
     let components = request.name.split(separator: "/").map(String.init)
     guard components.count == 4,
-          components[0] == "applications",
-          components[2] == "windows",
-          let pid = pid_t(components[1]),
-          let windowId = CGWindowID(components[3]) else {
+      components[0] == "applications",
+      components[2] == "windows",
+      let pid = pid_t(components[1]),
+      let windowId = CGWindowID(components[3])
+    else {
       throw GRPCStatus(code: .invalidArgument, message: "Invalid window name format")
     }
-    
+
     // Get AXUIElement for application
     let appElement = AXUIElementCreateApplication(pid)
-    
+
     // Get AXWindows attribute
     var windowsValue: CFTypeRef?
-    let result = AXUIElementCopyAttributeValue(appElement, kAXWindowsAttribute as CFString, &windowsValue)
+    let result = AXUIElementCopyAttributeValue(
+      appElement, kAXWindowsAttribute as CFString, &windowsValue)
     guard result == .success, let windows = windowsValue as? [AXUIElement] else {
       throw GRPCStatus(code: .internalError, message: "Failed to get windows for application")
     }
-    
+
     // Use first window for now (TODO: match by windowId)
     guard let window = windows.first else {
       throw GRPCStatus(code: .notFound, message: "Window not found")
     }
-    
+
     // Set kAXMinimizedAttribute to true
-    let setResult = AXUIElementSetAttributeValue(window, kAXMinimizedAttribute as CFString, kCFBooleanTrue)
+    let setResult = AXUIElementSetAttributeValue(
+      window, kAXMinimizedAttribute as CFString, kCFBooleanTrue)
     guard setResult == .success else {
-      throw GRPCStatus(code: .internalError, message: "Failed to minimize window: \(setResult.rawValue)")
+      throw GRPCStatus(
+        code: .internalError, message: "Failed to minimize window: \(setResult.rawValue)")
     }
-    
+
     // Return updated window state
-    return try await getWindow(request: Macosusesdk_V1_GetWindowRequest.with { $0.name = request.name }, context: context)
+    return try await getWindow(
+      request: Macosusesdk_V1_GetWindowRequest.with { $0.name = request.name }, context: context)
   }
 
   func restoreWindow(
     request: Macosusesdk_V1_RestoreWindowRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_Window {
     fputs("info: [MacosUseServiceProvider] restoreWindow called\n", stderr)
-    
+
     // Parse "applications/{pid}/windows/{windowId}"
     let components = request.name.split(separator: "/").map(String.init)
     guard components.count == 4,
-          components[0] == "applications",
-          components[2] == "windows",
-          let pid = pid_t(components[1]),
-          let windowId = CGWindowID(components[3]) else {
+      components[0] == "applications",
+      components[2] == "windows",
+      let pid = pid_t(components[1]),
+      let windowId = CGWindowID(components[3])
+    else {
       throw GRPCStatus(code: .invalidArgument, message: "Invalid window name format")
     }
-    
+
     // Get AXUIElement for application
     let appElement = AXUIElementCreateApplication(pid)
-    
+
     // Get AXWindows attribute
     var windowsValue: CFTypeRef?
-    let result = AXUIElementCopyAttributeValue(appElement, kAXWindowsAttribute as CFString, &windowsValue)
+    let result = AXUIElementCopyAttributeValue(
+      appElement, kAXWindowsAttribute as CFString, &windowsValue)
     guard result == .success, let windows = windowsValue as? [AXUIElement] else {
       throw GRPCStatus(code: .internalError, message: "Failed to get windows for application")
     }
-    
+
     // Use first window for now (TODO: match by windowId)
     guard let window = windows.first else {
       throw GRPCStatus(code: .notFound, message: "Window not found")
     }
-    
+
     // Set kAXMinimizedAttribute to false
-    let setResult = AXUIElementSetAttributeValue(window, kAXMinimizedAttribute as CFString, kCFBooleanFalse)
+    let setResult = AXUIElementSetAttributeValue(
+      window, kAXMinimizedAttribute as CFString, kCFBooleanFalse)
     guard setResult == .success else {
-      throw GRPCStatus(code: .internalError, message: "Failed to restore window: \(setResult.rawValue)")
+      throw GRPCStatus(
+        code: .internalError, message: "Failed to restore window: \(setResult.rawValue)")
     }
-    
+
     // Return updated window state
-    return try await getWindow(request: Macosusesdk_V1_GetWindowRequest.with { $0.name = request.name }, context: context)
+    return try await getWindow(
+      request: Macosusesdk_V1_GetWindowRequest.with { $0.name = request.name }, context: context)
   }
 
   func closeWindow(
     request: Macosusesdk_V1_CloseWindowRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_CloseWindowResponse {
     fputs("info: [MacosUseServiceProvider] closeWindow called\n", stderr)
-    
+
     // Parse "applications/{pid}/windows/{windowId}"
     let components = request.name.split(separator: "/").map(String.init)
     guard components.count == 4,
-          components[0] == "applications",
-          components[2] == "windows",
-          let pid = pid_t(components[1]),
-          let windowId = CGWindowID(components[3]) else {
+      components[0] == "applications",
+      components[2] == "windows",
+      let pid = pid_t(components[1]),
+      let windowId = CGWindowID(components[3])
+    else {
       throw GRPCStatus(code: .invalidArgument, message: "Invalid window name format")
     }
-    
+
     // Get AXUIElement for application
     let appElement = AXUIElementCreateApplication(pid)
-    
+
     // Get AXWindows attribute
     var windowsValue: CFTypeRef?
-    let result = AXUIElementCopyAttributeValue(appElement, kAXWindowsAttribute as CFString, &windowsValue)
+    let result = AXUIElementCopyAttributeValue(
+      appElement, kAXWindowsAttribute as CFString, &windowsValue)
     guard result == .success, let windows = windowsValue as? [AXUIElement] else {
       throw GRPCStatus(code: .internalError, message: "Failed to get windows for application")
     }
-    
+
     // Use first window for now (TODO: match by windowId)
     guard let window = windows.first else {
       throw GRPCStatus(code: .notFound, message: "Window not found")
     }
-    
+
     // Get close button
     var closeButtonValue: CFTypeRef?
-    let closeResult = AXUIElementCopyAttributeValue(window, kAXCloseButtonAttribute as CFString, &closeButtonValue)
+    let closeResult = AXUIElementCopyAttributeValue(
+      window, kAXCloseButtonAttribute as CFString, &closeButtonValue)
     guard closeResult == .success, let closeButton = closeButtonValue as! AXUIElement? else {
       throw GRPCStatus(code: .internalError, message: "Failed to get close button")
     }
-    
+
     // Press the close button
     let pressResult = AXUIElementPerformAction(closeButton, kAXPressAction as CFString)
     guard pressResult == .success else {
-      throw GRPCStatus(code: .internalError, message: "Failed to close window: \(pressResult.rawValue)")
+      throw GRPCStatus(
+        code: .internalError, message: "Failed to close window: \(pressResult.rawValue)")
     }
-    
+
     return Macosusesdk_V1_CloseWindowResponse()
   }
 

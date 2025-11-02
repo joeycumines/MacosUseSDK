@@ -301,10 +301,10 @@ message AttributeCondition {
     singular: "attributeCondition"
     plural: "attributeConditions"
   };
-  
+
   // Resource name.
   string name = 1 [(google.api.field_behavior) = IDENTIFIER];
-  
+
   // Attribute name.
   string attribute = 2 [(google.api.field_behavior) = REQUIRED];
 

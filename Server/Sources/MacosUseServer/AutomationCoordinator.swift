@@ -244,7 +244,7 @@ extension AutomationCoordinator {
       }
       let clickType = mouseClick.clickType
       let clickCount = mouseClick.clickCount
-      
+
       if clickType == .right {
         return .rightClick(point: CGPoint(x: mouseClick.position.x, y: mouseClick.position.y))
       } else if clickCount == 2 {
@@ -268,8 +268,10 @@ extension AutomationCoordinator {
       throw CoordinatorError.invalidKeyCombo("unsupported input type")
     }
   }
-  
-  nonisolated private func convertModifiers(_ modifiers: [Macosusesdk_V1_KeyPress.Modifier]) throws -> CGEventFlags {
+
+  nonisolated private func convertModifiers(_ modifiers: [Macosusesdk_V1_KeyPress.Modifier]) throws
+    -> CGEventFlags
+  {
     var flags: CGEventFlags = []
     for modifier in modifiers {
       switch modifier {

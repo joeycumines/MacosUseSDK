@@ -260,7 +260,7 @@ message PerformanceReport {
 message PerformanceDataPoint {
   // When this data point was recorded.
   google.protobuf.Timestamp recorded_time = 1;
-  
+
   // Metrics at this point.
   Metrics metrics = 2;
 }
