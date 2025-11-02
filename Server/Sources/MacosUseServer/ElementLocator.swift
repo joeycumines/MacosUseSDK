@@ -1,5 +1,6 @@
 import ApplicationServices
 import Foundation
+import MacosUseSDK
 
 /// Actor responsible for locating UI elements using selectors.
 /// Integrates with the accessibility tree traversal to find elements
@@ -29,19 +30,11 @@ public actor ElementLocator {
     // Parse parent to get PID and optional window ID
     let (pid, windowId) = try parseParent(parent)
 
-    // Get the accessibility tree for the application
-    let traversalResponse = try await AutomationCoordinator.shared.handleTraverse(
-      pid: pid, visibleOnly: visibleOnly)
-
-    // Convert traversal elements to our format with paths
-    var elementsWithPaths: [(Macosusesdk_Type_Element, [Int32])] = []
-
-    // For now, we'll need to traverse again to get paths, or modify the traversal to include paths
-    // Let's create a custom traversal that includes paths
-    let elementsWithPathsResult = try await traverseWithPaths(pid: pid, visibleOnly: visibleOnly)
+    // Get elements with paths
+    let elementsWithPaths = try await traverseWithPaths(pid: pid, visibleOnly: visibleOnly)
 
     // Filter elements based on selector
-    let matchingElements = elementsWithPathsResult.filter { element, path in
+    let matchingElements = elementsWithPaths.filter { element, path in
       matchesSelector(element, selector: selector)
     }
 
@@ -112,11 +105,8 @@ public actor ElementLocator {
 
     let elementId = components[3]
 
-    // For now, we need to search through all elements to find the one with matching ID
-    // In a real implementation, we'd have an ElementRegistry that maps IDs to elements
-    let traversalResponse = try await AutomationCoordinator.shared.handleTraverse(pid: pid, visibleOnly: false)
-
-    guard let element = traversalResponse.elements.first(where: { $0.elementId == elementId }) else {
+    // Get element from registry
+    guard let element = ElementRegistry.shared.getElement(elementId) else {
       throw GRPCStatus(code: .notFound, message: "Element not found")
     }
 
@@ -145,14 +135,33 @@ public actor ElementLocator {
     }
   }
 
-  private func traverseWithPaths(pid: pid_t, visibleOnly: Bool) async throws -> [(Macosusesdk_Type_Element, [Int32])] {
-    // This is a simplified version. In a real implementation, we'd modify the traversal
-    // to include hierarchy paths. For now, we'll assign sequential indices.
+  private func traverseWithAXElements(pid: pid_t, visibleOnly: Bool) async throws -> [(ElementData, AXUIElement)] {
+    // This is a temporary implementation that duplicates traversal logic
+    // In a proper implementation, we'd modify the SDK to return AXUIElement references
+    
+    // For now, we'll use the existing SDK traversal and create dummy AXUIElements
+    // This is a workaround until the SDK is modified to preserve AXUIElement references
     let traversalResponse = try await AutomationCoordinator.shared.handleTraverse(pid: pid, visibleOnly: visibleOnly)
-
-    return traversalResponse.elements.enumerated().map { index, element in
-      (element, [Int32(index)])
+    
+    // Convert proto elements back to ElementData (lossy conversion)
+    let elementsWithAX: [(ElementData, AXUIElement)] = traversalResponse.elements.map { protoElement in
+      let elementData = ElementData(
+        role: protoElement.role,
+        text: protoElement.text.isEmpty ? nil : protoElement.text,
+        x: protoElement.x == 0 ? nil : protoElement.x,
+        y: protoElement.y == 0 ? nil : protoElement.y,
+        width: protoElement.width == 0 ? nil : protoElement.width,
+        height: protoElement.height == 0 ? nil : protoElement.height
+      )
+      
+      // FIXME: Create a proper AXUIElement reference
+      // For now, create a dummy AXUIElement - this won't work for actions
+      let dummyAXElement = AXUIElementCreateSystemWide()
+      
+      return (elementData, dummyAXElement)
     }
+    
+    return elementsWithAX
   }
 
   private func matchesSelector(_ element: Macosusesdk_Type_Element, selector: Macosusesdk_Type_ElementSelector) -> Bool {

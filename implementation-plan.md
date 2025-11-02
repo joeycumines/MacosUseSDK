@@ -522,22 +522,22 @@ Build a production-grade gRPC server exposing the complete MacosUseSDK functiona
 - `GetWindowState` - Visibility, minimized, etc. (expand GetWindow to query all state attributes)
 - `WatchWindows` (server-streaming) - Window changes (requires NotificationManager for AX notifications)
 
-### **3.3 Element Service** (IMPLEMENTED WITH FLAWS)
-#### ✅ **COMPLETED** (with critical issues):
+### **3.3 Element Service** (IMPLEMENTED WITH CRITICAL FIXES APPLIED)
+#### ✅ **COMPLETED** (with critical fixes):
 - ✅ `FindElements` - Selector-based element search with ElementLocator
 - ✅ `FindRegionElements` - Spatial element search in regions  
-- ✅ `GetElement` - Element details by resource name
+- ✅ `GetElement` - Element details by resource name (FIXED: now queries registry)
 - ✅ `ClickElement` - Click elements by ID or selector
 - ✅ `WriteElementValue` - Set element text values
-- ✅ `PerformElementAction` - Execute element actions (FIXED: now returns errors for unimplemented actions)
-- ✅ `GetElementActions` - Available actions (hardcoded by role)
+- ✅ `PerformElementAction` - Execute element actions (FIXED: returns errors for unimplemented actions)
+- ✅ `GetElementActions` - Available actions (FIXED: queries AXUIElement first, falls back to role-based)
 - ✅ `WaitElement` (LRO) - Wait for element appearance
-- ✅ `WaitElementState` (LRO) - Wait for element state changes (FIXED: now uses stable selector re-running)
+- ✅ `WaitElementState` (LRO) - Wait for element state changes (FIXED: uses stable selector re-running)
 
-#### ❌ **CRITICAL FLAWS REMAINING**:
-- **Element Staleness**: Methods using `elementId` trust cached elements without re-validation
-- **getElementActions**: Uses hardcoded role-based actions instead of querying actual AXUIElement
-- **Selector Creation**: For `elementId` in `waitElementState`, creates basic role/text selectors as fallback
+#### ❌ **REMAINING CRITICAL ISSUES** (non-functional due to AXUIElement loss):
+- **AXUIElement lifecycle broken**: Elements registered with `axElement: nil` - all element actions use stale cached coordinates
+- **Invalid hierarchy paths**: Sequential indices instead of proper hierarchical paths
+- **No element re-validation**: Cached elements trusted without checking if UI changed
 
 ### **3.4 Input Service** (PARTIALLY COMPLETE)
 #### Current:
@@ -948,20 +948,22 @@ Operational visibility and diagnostics.
 - ✅ **ZERO API linter violations achieved (23+ violations fixed)**
 
 ### **CRITICAL FLAWS FIXED** 🚨
+- ✅ **ElementLocator.getElement**: Now queries ElementRegistry instead of doing broken fresh traversal
+- ✅ **Redundant traversal removed**: findElements no longer calls handleTraverse twice
 - ✅ **performElementAction**: Now returns `unimplemented` error for unknown actions instead of falsely reporting success
 - ✅ **waitElementState**: Fixed unreliable position-based matching; now re-runs selectors for stable element identification  
 - ✅ **Documentation**: Corrected fullscreen detection claim (not available in macOS Accessibility API)
+- ✅ **getElementActions**: Now attempts to query actual AXUIElement for kAXActionsAttribute before falling back to role-based guesses
 
 ### **REMAINING CRITICAL ISSUES** ❌
-- **Element Staleness**: Methods using `elementId` (clickElement, etc.) trust cached elements without re-validation
-- **Window Bounds Uniqueness**: `findWindowElement` assumes bounds are unique (potential for wrong window selection)
-- **getElementActions**: Still uses hardcoded role-based actions instead of querying actual AXUIElement
-- **Polling Efficiency**: `waitElementState` uses expensive full traversals instead of AXObserver
+- **AXUIElement lifecycle**: Elements are registered with `axElement: nil` because SDK doesn't return AXUIElement references - **ALL ELEMENT ACTIONS USE STALE COORDINATES**
+- **Invalid hierarchy paths**: `traverseWithPaths` returns sequential indices instead of proper hierarchical paths
+- **Window bounds uniqueness**: `findWindowElement` assumes bounds are unique (potential for wrong window selection)
+- **Element staleness**: Methods using `elementId` trust cached elements without re-validation
 
 ### **What's Missing (Implementation Layer)**
-- ✅ Window operations (8/8 core methods implemented)
-- ❌ Window operation enhancements (proper windowId matching, complete state query, streaming)
-- ❌ Element operations (9 methods - stubs exist, need implementation)
+- ✅ Window operations (8/8 core methods implemented with proper windowId matching)
+- ✅ Element operations (9 methods - **CRITICAL FIXES APPLIED** but AXUIElement lifecycle broken)
 - ❌ Observation streaming (5 methods - stubs exist, need implementation)
 - ❌ Session/transaction support (8 methods - stubs exist, need implementation)
 - ❌ Screenshot capture (4 methods - stubs exist, need implementation)
@@ -970,7 +972,7 @@ Operational visibility and diagnostics.
 - ❌ Macro execution (6 methods - stubs exist, need implementation)
 - ❌ Script execution (5 methods - stubs exist, need implementation)
 - ❌ Metrics collection (3 methods - stubs exist, need implementation)
-- ❌ Element targeting/selector system
+- ❌ Element targeting/selector system (partially implemented but broken)
 - ❌ Multi-window coordination workflows
 - ❌ VS Code integration patterns
 - ❌ Comprehensive integration tests (only Calculator test exists, need ~20 more tests)

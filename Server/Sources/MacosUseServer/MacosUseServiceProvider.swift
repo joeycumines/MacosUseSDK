@@ -776,9 +776,18 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
       throw GRPCStatus(code: .notFound, message: "Element not found")
     }
 
-    // Return actions based on element role
-    // This is a simplified implementation - in a real implementation,
-    // we'd get the actual AXUIElement and query its actions
+    // Try to get actions from AXUIElement first
+    if let axElement = ElementRegistry.shared.getAXElement(elementId) {
+      var actionsValue: CFTypeRef?
+      if AXUIElementCopyAttributeValue(axElement, kAXActionsAttribute as CFString, &actionsValue) == .success,
+         let actionsArray = actionsValue as? [String] {
+        return Macosusesdk_V1_ElementActions.with {
+          $0.actions = actionsArray
+        }
+      }
+    }
+
+    // Fallback to role-based actions
     let actions = getActionsForRole(element.role)
 
     return Macosusesdk_V1_ElementActions.with {
