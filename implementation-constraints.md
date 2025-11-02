@@ -113,3 +113,9 @@ CI/CD Workflows:
 - For multi-command scripts, typically use `set -x`
 
 IMPORTANT: You, the implementer, are expected to read and CONTINUALLY refine [implementation-plan.md](./implementation-plan.md).
+
+### **Additional Constraints (2025-11-02)**
+
+- **FORBIDDEN FROM USING A DIRECT SHELL:** All commands MUST be executed by defining a custom target in `config.mk` and executing it with `mcp-server-make`.
+- **DO NOT BREAK THE BUILD:** Run the core `all` target constantly. Use `mcp-server-make all`. This is not a suggestion. It is your only way of knowing you haven't failed again. Add a `TODO` to run it after every major change.
+- **ALL `config.mk` recipes MUST use `| tee /tmp/build.log | tail -n 100` or a similar pattern:** To mitigate excessive output. I don't want to hear you whining.
