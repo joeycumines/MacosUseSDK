@@ -5,6 +5,29 @@ import AppKit  // For NSWorkspace, NSRunningApplication, NSApplication
 @preconcurrency import ApplicationServices  // For Accessibility API (AXUIElement, etc.)
 import Foundation  // For basic types, JSONEncoder, Date
 
+// Mark AXUIElement as Sendable - it's safe because it's an opaque CFTypeRef
+// managed by the Accessibility framework. We only store/pass references.
+extension AXUIElement: @unchecked Sendable {}
+
+// Wrapper to provide Hashable conformance for AXUIElement
+// AXUIElement is a CFTypeRef which is thread-safe by nature
+public struct SendableAXUIElement: @unchecked Sendable, Hashable {
+  public let element: AXUIElement
+  
+  public init(_ element: AXUIElement) {
+    self.element = element
+  }
+  
+  // Implement Hashable using CFHash for CFTypeRef
+  public func hash(into hasher: inout Hasher) {
+    hasher.combine(CFHash(element))
+  }
+  
+  public static func == (lhs: SendableAXUIElement, rhs: SendableAXUIElement) -> Bool {
+    return CFEqual(lhs.element, rhs.element)
+  }
+}
+
 // --- Error Enum ---
 public enum MacosUseSDKError: Error, LocalizedError {
   case accessibilityDenied
@@ -36,7 +59,7 @@ public struct ElementData: Codable, Hashable, Sendable {
   public var y: Double?
   public var width: Double?
   public var height: Double?
-  public var axElement: AXUIElement?
+  public var axElement: SendableAXUIElement?
   public var enabled: Bool?
   public var focused: Bool?
   public var attributes: [String: String]
@@ -55,8 +78,10 @@ public struct ElementData: Codable, Hashable, Sendable {
       && lhs.width == rhs.width && lhs.height == rhs.height
   }
 
+  // Add this enum to exclude axElement from Codable
   enum CodingKeys: String, CodingKey {
     case role, text, x, y, width, height, enabled, focused, attributes
+    // axElement is deliberately excluded - it cannot be encoded/decoded
   }
 }
 
@@ -390,7 +415,7 @@ private class AccessibilityTraversalOperation {
       let elementData = ElementData(
         role: displayRole, text: combinedText,
         x: finalX, y: finalY, width: finalWidth, height: finalHeight,
-        axElement: element, enabled: enabled, focused: focused, attributes: attributes
+        axElement: SendableAXUIElement(element), enabled: enabled, focused: focused, attributes: attributes
       )
 
       if collectedElements.insert(elementData).inserted {

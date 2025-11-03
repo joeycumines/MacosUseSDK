@@ -522,13 +522,16 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     )
 
     // Convert to proto elements and register them
-    let elements = elementsWithPaths.map { element, path in
-      var protoElement = element
+    var elements: [Macosusesdk_Type_Element] = []
+    let pid = try parsePID(fromName: request.parent)
+    for (element, path) in elementsWithPaths {
+      let protoElement = element
       // Generate and assign element ID
-      let elementId = ElementRegistry.shared.registerElement(protoElement, pid: try parsePID(fromName: request.parent))
-      protoElement.elementId = elementId
-      protoElement.path = path
-      return protoElement
+      let elementId = await ElementRegistry.shared.registerElement(protoElement, pid: pid)
+      var protoWithId = protoElement
+      protoWithId.elementID = elementId
+      protoWithId.path = path
+      elements.append(protoWithId)
     }
 
     return Macosusesdk_V1_FindElementsResponse.with {
@@ -544,7 +547,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     fputs("info: [MacosUseServiceProvider] findRegionElements called\n", stderr)
 
     // Validate selector if provided
-    let selector = request.selector != nil ? try SelectorParser.shared.parseSelector(request.selector) : nil
+    let selector = request.hasSelector ? try SelectorParser.shared.parseSelector(request.selector) : nil
 
     // Find elements in region using ElementLocator
     let elementsWithPaths = try await ElementLocator.shared.findElementsInRegion(
@@ -556,13 +559,16 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     )
 
     // Convert to proto elements and register them
-    let elements = elementsWithPaths.map { element, path in
-      var protoElement = element
+    var elements: [Macosusesdk_Type_Element] = []
+    let pid = try parsePID(fromName: request.parent)
+    for (element, path) in elementsWithPaths {
+      let protoElement = element
       // Generate and assign element ID
-      let elementId = ElementRegistry.shared.registerElement(protoElement, pid: try parsePID(fromName: request.parent))
-      protoElement.elementId = elementId
-      protoElement.path = path
-      return protoElement
+      let elementId = await ElementRegistry.shared.registerElement(protoElement, pid: pid)
+      var protoWithId = protoElement
+      protoWithId.elementID = elementId
+      protoWithId.path = path
+      elements.append(protoWithId)
     }
 
     return Macosusesdk_V1_FindRegionElementsResponse.with {
@@ -590,9 +596,9 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
 
     // Find the element to click
     switch request.target {
-    case .elementId(let elementId):
+    case .elementID(let elementId):
       // Get element by ID
-      guard let foundElement = ElementRegistry.shared.getElement(elementId) else {
+      guard let foundElement = await ElementRegistry.shared.getElement(elementId) else {
         throw GRPCStatus(code: .notFound, message: "Element not found")
       }
       element = foundElement
@@ -620,22 +626,23 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     // Get element position for clicking
-    guard let x = element.x, let y = element.y else {
+    guard element.hasX && element.hasY else {
       throw GRPCStatus(code: .failedPrecondition, message: "Element has no position information")
     }
+    let x = element.x
+    let y = element.y
 
     // Determine click type
     let clickType = request.clickType
-    let point = CGPoint(x: x, y: y)
 
     // Perform the click using AutomationCoordinator
     switch clickType {
-    case .single, .unspecified:
+    case .single, .unspecified, .UNRECOGNIZED(_):
       try await AutomationCoordinator.shared.handleExecuteInput(
         action: Macosusesdk_V1_InputAction.with {
           $0.inputType = .click(Macosusesdk_V1_MouseClick.with {
-            $0.position = Macosusesdk_V1_Position.with { $0.x = x; $0.y = y }
-            $0.clickType = .single
+            $0.position = Macosusesdk_Type_Point.with { $0.x = x; $0.y = y }
+            $0.clickType = .left
             $0.clickCount = 1
           })
         },
@@ -648,8 +655,8 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
       try await AutomationCoordinator.shared.handleExecuteInput(
         action: Macosusesdk_V1_InputAction.with {
           $0.inputType = .click(Macosusesdk_V1_MouseClick.with {
-            $0.position = Macosusesdk_V1_Position.with { $0.x = x; $0.y = y }
-            $0.clickType = .single
+            $0.position = Macosusesdk_Type_Point.with { $0.x = x; $0.y = y }
+            $0.clickType = .left
             $0.clickCount = 2
           })
         },
@@ -662,7 +669,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
       try await AutomationCoordinator.shared.handleExecuteInput(
         action: Macosusesdk_V1_InputAction.with {
           $0.inputType = .click(Macosusesdk_V1_MouseClick.with {
-            $0.position = Macosusesdk_V1_Position.with { $0.x = x; $0.y = y }
+            $0.position = Macosusesdk_Type_Point.with { $0.x = x; $0.y = y }
             $0.clickType = .right
             $0.clickCount = 1
           })
@@ -689,8 +696,8 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
 
     // Find the element to modify
     switch request.target {
-    case .elementId(let elementId):
-      guard let foundElement = ElementRegistry.shared.getElement(elementId) else {
+    case .elementID(let elementId):
+      guard let foundElement = await ElementRegistry.shared.getElement(elementId) else {
         throw GRPCStatus(code: .notFound, message: "Element not found")
       }
       element = foundElement
@@ -728,7 +735,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
       action: Macosusesdk_V1_InputAction.with {
         $0.inputType = .click(Macosusesdk_V1_MouseClick.with {
           $0.position = Macosusesdk_Type_Point.with { $0.x = x; $0.y = y }
-          $0.clickType = .single
+          $0.clickType = .left
           $0.clickCount = 1
         })
       },
@@ -772,15 +779,22 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     let elementId = components[3]
 
     // Get element from registry
-    guard let element = ElementRegistry.shared.getElement(elementId) else {
+    guard let element = await ElementRegistry.shared.getElement(elementId) else {
       throw GRPCStatus(code: .notFound, message: "Element not found")
     }
 
     // Try to get actions from AXUIElement first
-    if let axElement = ElementRegistry.shared.getAXElement(elementId) {
-      var actionsValue: CFTypeRef?
-      if AXUIElementCopyAttributeValue(axElement, kAXActionsAttribute as CFString, &actionsValue) == .success,
-         let actionsArray = actionsValue as? [String] {
+    if let axElement = await ElementRegistry.shared.getAXElement(elementId) {
+      // Query the AXUIElement for its actions on the main thread
+      let actionsArray: [String]? = await MainActor.run {
+        var value: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(axElement, "AXActions" as CFString, &value) == .success else {
+          return nil
+        }
+        return value as? [String]
+      }
+      
+      if let actionsArray = actionsArray {
         return Macosusesdk_V1_ElementActions.with {
           $0.actions = actionsArray
         }
@@ -801,15 +815,17 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     fputs("info: [MacosUseServiceProvider] performElementAction called\n", stderr)
 
     let element: Macosusesdk_Type_Element
+    let elementID: String
     let pid: pid_t
 
     // Find the element
     switch request.target {
-    case .elementID(let elementID):
-      guard let foundElement = ElementRegistry.shared.getElement(elementID) else {
+    case .elementID(let id):
+      guard let foundElement = await ElementRegistry.shared.getElement(id) else {
         throw GRPCStatus(code: .notFound, message: "Element not found")
       }
       element = foundElement
+      elementID = id
       pid = try parsePID(fromName: request.parent)
 
     case .selector(let selector):
@@ -826,28 +842,60 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
       }
 
       element = firstElement.element
+      elementID = element.elementID
       pid = try parsePID(fromName: request.parent)
 
     case .none:
       throw GRPCStatus(code: .invalidArgument, message: "Either element_id or selector must be specified")
     }
 
-    // For now, we'll simulate actions based on common patterns
-    // In a real implementation, we'd get the AXUIElement and perform the actual action
+    // Try to get the AXUIElement and perform semantic action
+    if let axElement = await ElementRegistry.shared.getAXElement(elementID) {
+      let actionName: String
+      
+      // Map common action names to AX action constants
+      switch request.action.lowercased() {
+      case "press", "click":
+        actionName = kAXPressAction as String
+      case "showmenu", "openmenu":
+        actionName = kAXShowMenuAction as String
+      default:
+        actionName = request.action
+      }
+      
+      // Perform the AX action (must be on main thread)
+      let result = await MainActor.run {
+        AXUIElementPerformAction(axElement, actionName as CFString)
+      }
+      
+      if result == .success {
+        return Macosusesdk_V1_PerformElementActionResponse.with {
+          $0.success = true
+          $0.element = element
+        }
+      }
+      
+      // If action failed but element has position, fall through to coordinate-based fallback
+      if !element.hasX || !element.hasY {
+        throw GRPCStatus(code: .internalError, message: "AX action failed: \(result.rawValue) and no position available for fallback")
+      }
+    }
+
+    // Fallback to coordinate-based simulation if AXUIElement is nil or action failed
+    guard element.hasX && element.hasY else {
+      throw GRPCStatus(code: .failedPrecondition, message: "Element has no AXUIElement and no position for action")
+    }
+    
+    let x = element.x
+    let y = element.y
+
     switch request.action.lowercased() {
     case "press", "click":
-      // Perform click
-      guard element.hasX && element.hasY else {
-        throw GRPCStatus(code: .failedPrecondition, message: "Element has no position for action")
-      }
-      let x = element.x
-      let y = element.y
-
       try await AutomationCoordinator.shared.handleExecuteInput(
         action: Macosusesdk_V1_InputAction.with {
           $0.inputType = .click(Macosusesdk_V1_MouseClick.with {
             $0.position = Macosusesdk_Type_Point.with { $0.x = x; $0.y = y }
-            $0.clickType = .single
+            $0.clickType = .left
             $0.clickCount = 1
           })
         },
@@ -857,13 +905,6 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
       )
 
     case "showmenu", "openmenu":
-      // Right-click to show context menu
-      guard element.hasX && element.hasY else {
-        throw GRPCStatus(code: .failedPrecondition, message: "Element has no position for action")
-      }
-      let x = element.x
-      let y = element.y
-
       try await AutomationCoordinator.shared.handleExecuteInput(
         action: Macosusesdk_V1_InputAction.with {
           $0.inputType = .click(Macosusesdk_V1_MouseClick.with {
@@ -878,7 +919,6 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
       )
 
     default:
-      // For other actions, return unimplemented error
       throw GRPCStatus(code: .unimplemented, message: "Action '\(request.action)' is not implemented")
     }
 
@@ -920,14 +960,14 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
           attempts += 1
 
           // Update metadata with attempt count
-          var updatedMetadata = Macosusesdk_V1_WaitElementMetadata.with {
+          let updatedMetadata = Macosusesdk_V1_WaitElementMetadata.with {
             $0.selector = selector
             $0.attempts = Int32(attempts)
           }
           var updatedOp = await operationStore.getOperation(name: opName) ?? op
           updatedOp.metadata = try SwiftProtobuf.Google_Protobuf_Any.with {
             $0.typeURL = "type.googleapis.com/macosusesdk.v1.WaitElementMetadata"
-            $0.value = updatedMetadata.serializedData()
+            $0.value = try updatedMetadata.serializedData()
           }
           await operationStore.putOperation(updatedOp)
 
@@ -942,8 +982,8 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
           if let firstElement = elementsWithPaths.first {
             // Element found! Complete the operation
             var elementWithId = firstElement.element
-            let elementId = ElementRegistry.shared.registerElement(elementWithId, pid: try parsePID(fromName: request.parent))
-            elementWithId.elementId = elementId
+            let elementId = await ElementRegistry.shared.registerElement(elementWithId, pid: try parsePID(fromName: request.parent))
+            elementWithId.elementID = elementId
             elementWithId.path = firstElement.path
 
             let response = Macosusesdk_V1_WaitElementResponse.with {
@@ -972,7 +1012,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         var errOp = await operationStore.getOperation(name: opName) ?? op
         errOp.done = true
         errOp.error = Google_Rpc_Status.with {
-          $0.code = Int32(GRPCStatus.Code.internal.rawValue)
+          $0.code = Int32(GRPCStatus.Code.internalError.rawValue)
           $0.message = "\(error)"
         }
         await operationStore.putOperation(errOp)
@@ -993,7 +1033,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
 
     switch request.target {
     case .elementID(let elementID):
-      guard let foundElement = ElementRegistry.shared.getElement(elementID) else {
+      guard let foundElement = await ElementRegistry.shared.getElement(elementID) else {
         throw GRPCStatus(code: .notFound, message: "Element not found")
       }
       pid = try parsePID(fromName: request.parent)
@@ -1003,12 +1043,12 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
       selectorToUse = Macosusesdk_Type_ElementSelector.with {
         $0.criteria = .role(foundElement.role)
         // Add more criteria if available for uniqueness
-        if let text = foundElement.text, !text.isEmpty {
+        if foundElement.hasText && !foundElement.text.isEmpty {
           $0.criteria = .compound(Macosusesdk_Type_CompoundSelector.with {
             $0.operator = .and
             $0.selectors = [
               Macosusesdk_Type_ElementSelector.with { $0.criteria = .role(foundElement.role) },
-              Macosusesdk_Type_ElementSelector.with { $0.criteria = .text(text) }
+              Macosusesdk_Type_ElementSelector.with { $0.criteria = .text(foundElement.text) }
             ]
           })
         }
@@ -1046,14 +1086,14 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
           attempts += 1
 
           // Update metadata with attempt count
-          var updatedMetadata = Macosusesdk_V1_WaitElementStateMetadata.with {
+          let updatedMetadata = Macosusesdk_V1_WaitElementStateMetadata.with {
             $0.condition = request.condition
             $0.attempts = Int32(attempts)
           }
           var updatedOp = await operationStore.getOperation(name: opName) ?? op
           updatedOp.metadata = try SwiftProtobuf.Google_Protobuf_Any.with {
             $0.typeURL = "type.googleapis.com/macosusesdk.v1.WaitElementStateMetadata"
-            $0.value = updatedMetadata.serializedData()
+            $0.value = try updatedMetadata.serializedData()
           }
           await operationStore.putOperation(updatedOp)
 
@@ -1070,8 +1110,8 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
 
             // Condition met! Complete the operation
             var elementWithId = currentElementWithPath.element
-            let elementId = ElementRegistry.shared.registerElement(elementWithId, pid: pid)
-            elementWithId.elementId = elementId
+            let elementId = await ElementRegistry.shared.registerElement(elementWithId, pid: pid)
+            elementWithId.elementID = elementId
             elementWithId.path = currentElementWithPath.path
 
             let response = Macosusesdk_V1_WaitElementStateResponse.with {
@@ -1100,7 +1140,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         var errOp = await operationStore.getOperation(name: opName) ?? op
         errOp.done = true
         errOp.error = Google_Rpc_Status.with {
-          $0.code = Int32(GRPCStatus.Code.internal.rawValue)
+          $0.code = Int32(GRPCStatus.Code.internalError.rawValue)
           $0.message = "\(error)"
         }
         await operationStore.putOperation(errOp)
@@ -1438,7 +1478,7 @@ extension MacosUseServiceProvider {
   fileprivate func getWindowState(window: AXUIElement) -> (minimized: Bool, focused: Bool, fullscreen: Bool) {
     var minimized = false
     var focused = false
-    var fullscreen = false
+    let fullscreen = false
 
     // Check minimized
     var minValue: CFTypeRef?

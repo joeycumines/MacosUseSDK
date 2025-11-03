@@ -1,6 +1,8 @@
 import ApplicationServices
 import Foundation
+import GRPC
 import MacosUseSDK
+import MacosUseSDKProtos
 
 /// Actor responsible for locating UI elements using selectors.
 /// Integrates with the accessibility tree traversal to find elements
@@ -106,7 +108,7 @@ public actor ElementLocator {
     let elementId = components[3]
 
     // Get element from registry
-    guard let element = ElementRegistry.shared.getElement(elementId) else {
+    guard let element = await ElementRegistry.shared.getElement(elementId) else {
       throw GRPCStatus(code: .notFound, message: "Element not found")
     }
 
@@ -136,34 +138,34 @@ public actor ElementLocator {
   }
 
   private func traverseWithPaths(pid: pid_t, visibleOnly: Bool) async throws -> [(Macosusesdk_Type_Element, [Int32])] {
-    return try await MainActor.run {
-      let sdkResponse = try MacosUseSDK.traverseAccessibilityTree(pid: pid, onlyVisibleElements: visibleOnly)
-      
-      var elementsWithPaths: [(Macosusesdk_Type_Element, [Int32])] = []
-      
-      for (index, elementData) in sdkResponse.elements.enumerated() {
-        let protoElement = Macosusesdk_Type_Element.with {
-          $0.role = elementData.role
-          if let text = elementData.text { $0.text = text }
-          if let x = elementData.x { $0.x = x }
-          if let y = elementData.y { $0.y = y }
-          if let width = elementData.width { $0.width = width }
-          if let height = elementData.height { $0.height = height }
-          if let enabled = elementData.enabled { $0.enabled = enabled }
-          if let focused = elementData.focused { $0.focused = focused }
-          $0.attributes = elementData.attributes
-        }
-        
-        let elementId = await ElementRegistry.shared.registerElement(protoElement, axElement: elementData.axElement, pid: pid)
-        var elementWithId = protoElement
-        elementWithId.elementId = elementId
-        
-        // For now, use sequential index as path (FIXME: implement proper hierarchical paths)
-        elementsWithPaths.append((elementWithId, [Int32(index)]))
+    let sdkResponse = try await MainActor.run {
+      try MacosUseSDK.traverseAccessibilityTree(pid: pid, onlyVisibleElements: visibleOnly)
+    }
+    
+    var elementsWithPaths: [(Macosusesdk_Type_Element, [Int32])] = []
+    
+    for (index, elementData) in sdkResponse.elements.enumerated() {
+      let protoElement = Macosusesdk_Type_Element.with {
+        $0.role = elementData.role
+        if let text = elementData.text { $0.text = text }
+        if let x = elementData.x { $0.x = x }
+        if let y = elementData.y { $0.y = y }
+        if let width = elementData.width { $0.width = width }
+        if let height = elementData.height { $0.height = height }
+        if let enabled = elementData.enabled { $0.enabled = enabled }
+        if let focused = elementData.focused { $0.focused = focused }
+        $0.attributes = elementData.attributes
       }
       
-      return elementsWithPaths
+      let elementId = await ElementRegistry.shared.registerElement(protoElement, axElement: elementData.axElement?.element, pid: pid)
+      var elementWithId = protoElement
+      elementWithId.elementID = elementId
+      
+      // For now, use sequential index as path (FIXME: implement proper hierarchical paths)
+      elementsWithPaths.append((elementWithId, [Int32(index)]))
     }
+    
+    return elementsWithPaths
   }
 
   private func matchesSelector(_ element: Macosusesdk_Type_Element, selector: Macosusesdk_Type_ElementSelector) -> Bool {
@@ -175,23 +177,23 @@ public actor ElementLocator {
       return element.text == text
 
     case .textContains(let substring):
-      guard let elementText = element.text else { return false }
-      return elementText.contains(substring)
+      guard element.hasText else { return false }
+      return element.text.contains(substring)
 
     case .textRegex(let pattern):
-      guard let elementText = element.text else { return false }
+      guard element.hasText else { return false }
       do {
         let regex = try NSRegularExpression(pattern: pattern, options: [])
-        let range = NSRange(location: 0, length: elementText.utf16.count)
-        return regex.firstMatch(in: elementText, options: [], range: range) != nil
+        let range = NSRange(location: 0, length: element.text.utf16.count)
+        return regex.firstMatch(in: element.text, options: [], range: range) != nil
       } catch {
         fputs("warning: [ElementLocator] Invalid regex pattern: \(pattern)\n", stderr)
         return false
       }
 
     case .position(let positionSelector):
-      guard let elementX = element.x, let elementY = element.y else { return false }
-      let distance = hypot(elementX - positionSelector.x, elementY - positionSelector.y)
+      guard element.hasX && element.hasY else { return false }
+      let distance = hypot(element.x - positionSelector.x, element.y - positionSelector.y)
       return distance <= positionSelector.tolerance
 
     case .attributes(let attributeSelector):
@@ -212,6 +214,8 @@ public actor ElementLocator {
       case .not:
         // NOT with single selector
         return compoundSelector.selectors.count == 1 && !subMatches[0]
+      case .UNRECOGNIZED:
+        return false
       }
 
     case .none:
@@ -220,13 +224,12 @@ public actor ElementLocator {
   }
 
   private func isElementInRegion(_ element: Macosusesdk_Type_Element, region: Macosusesdk_V1_Region) -> Bool {
-    guard let x = element.x, let y = element.y,
-          let width = element.width, let height = element.height else {
+    guard element.hasX && element.hasY && element.hasWidth && element.hasHeight else {
       return false
     }
 
     // Check if element bounds intersect with region
-    let elementRect = CGRect(x: x, y: y, width: width, height: height)
+    let elementRect = CGRect(x: element.x, y: element.y, width: element.width, height: element.height)
     let regionRect = CGRect(x: region.x, y: region.y, width: region.width, height: region.height)
 
     return elementRect.intersects(regionRect)

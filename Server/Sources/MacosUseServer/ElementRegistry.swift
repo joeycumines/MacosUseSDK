@@ -1,5 +1,6 @@
 import ApplicationServices
 import Foundation
+import MacosUseSDKProtos
 
 /// Actor responsible for tracking element IDs and providing stable references.
 /// Elements are ephemeral and IDs are generated server-side. This registry
@@ -36,7 +37,7 @@ public actor ElementRegistry {
   ///   - axElement: Optional AXUIElement reference
   ///   - pid: The process ID this element belongs to
   /// - Returns: The generated element ID
-  @MainActor public func registerElement(
+  public func registerElement(
     _ element: Macosusesdk_Type_Element,
     axElement: AXUIElement? = nil,
     pid: pid_t
@@ -94,7 +95,7 @@ public actor ElementRegistry {
   ///   - element: New element data
   ///   - axElement: Optional new AXUIElement reference
   /// - Returns: True if update succeeded
-  @MainActor public func updateElement(
+  public func updateElement(
     _ elementId: String,
     element: Macosusesdk_Type_Element,
     axElement: AXUIElement? = nil
