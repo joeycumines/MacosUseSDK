@@ -2729,7 +2729,7 @@ public struct Macosusesdk_V1_GetScriptingDictionariesRequest: Sendable {
   // methods supported on all messages.
 
   /// The name of the scripting dictionaries resource.
-  /// Format: scriptingDictionaries (singleton)2+
+  /// Format: scriptingDictionaries (singleton)
   public var name: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()

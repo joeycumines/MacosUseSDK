@@ -7055,7 +7055,7 @@ func (x *ValidateScriptResponse) GetWarnings() []string {
 type GetScriptingDictionariesRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The name of the scripting dictionaries resource.
-	// Format: scriptingDictionaries (singleton)2+
+	// Format: scriptingDictionaries (singleton)
 	Name          string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
