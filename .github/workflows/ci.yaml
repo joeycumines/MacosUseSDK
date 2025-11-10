@@ -1,5 +1,4 @@
 name: CI
-
 on:
   push:
     branches:
@@ -8,27 +7,22 @@ on:
     branches:
       - main
   workflow_dispatch:
-
 permissions:
   contents: read
-
 jobs:
   buf:
     uses: ./.github/workflows/buf.yaml
     secrets: inherit
-
   swift:
     uses: ./.github/workflows/swift.yaml
     secrets: inherit
-
   api-linter:
     uses: ./.github/workflows/api-linter.yaml
     secrets: inherit
-
   summary:
     if: always()
     runs-on: ubuntu-latest
-    needs: [buf, swift, api-linter]
+    needs: [ buf, swift, api-linter ]
     steps:
       - name: Check CI Status
         run: |

@@ -1,48 +1,35 @@
 name: Swift
-
 on:
   workflow_call:
-
 permissions:
   contents: read
-
 jobs:
   test:
     runs-on: macos-latest
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Select Xcode version
-        run: sudo xcode-select -s /Applications/Xcode_15.2.app/Contents/Developer
-      
+      - uses: actions/checkout@v5
       - name: Build SDK
         run: swift build -c release
-      
       - name: Run SDK tests
         run: swift test
-      
       - name: Build all tools
-        run: |
+        run: |-
+          set -xe || exit 1
           swift build -c release --product TraversalTool
           swift build -c release --product HighlightTraversalTool
           swift build -c release --product InputControllerTool
           swift build -c release --product VisualInputTool
           swift build -c release --product AppOpenerTool
           swift build -c release --product ActionTool
-
   # Build and test the gRPC server
   build-server:
     runs-on: macos-latest
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Select Xcode version
-        run: sudo xcode-select -s /Applications/Xcode_15.2.app/Contents/Developer
-      
+      - uses: actions/checkout@v5
       - name: Check if server exists
         id: check_server
         run: |
@@ -51,12 +38,10 @@ jobs:
           else
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
-      
       - name: Build Server
         if: steps.check_server.outputs.exists == 'true'
         working-directory: Server
         run: swift build -c release
-      
       - name: Test Server
         if: steps.check_server.outputs.exists == 'true'
         working-directory: Server

@@ -1,30 +1,15 @@
 name: API Linter
-
 on:
   workflow_call:
-
 permissions:
   contents: read
-
 jobs:
   api-lint:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+      - uses: bufbuild/buf-action@v1
         with:
-          go-version: '1.23'
-
-      - name: Setup Buf
-        uses: bufbuild/buf-setup-action@v1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Make script executable
-        run: chmod +x ./hack/google-api-linter.sh
-      
-      - name: Run api-linter script
-        run: ./hack/google-api-linter.sh
+          setup_only: true
+      - run: make google-api-linter
