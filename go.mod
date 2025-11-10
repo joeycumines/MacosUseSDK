@@ -1,6 +1,6 @@
 module github.com/joeycumines/MacosUseSDK
 
-go 1.24.7
+go 1.25.4
 
 require (
 	cloud.google.com/go/longrunning v0.7.0
