@@ -547,14 +547,15 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     fputs("info: [MacosUseServiceProvider] findRegionElements called\n", stderr)
 
     // Validate selector if provided
-    let selector = request.hasSelector ? try SelectorParser.shared.parseSelector(request.selector) : nil
+    let selector =
+      request.hasSelector ? try SelectorParser.shared.parseSelector(request.selector) : nil
 
     // Find elements in region using ElementLocator
     let elementsWithPaths = try await ElementLocator.shared.findElementsInRegion(
       region: request.region,
       selector: selector,
       parent: request.parent,
-      visibleOnly: false, // Region search doesn't have visibleOnly parameter
+      visibleOnly: false,  // Region search doesn't have visibleOnly parameter
       maxResults: Int(request.pageSize)
     )
 
@@ -622,7 +623,8 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
       pid = try parsePID(fromName: request.parent)
 
     case .none:
-      throw GRPCStatus(code: .invalidArgument, message: "Either element_id or selector must be specified")
+      throw GRPCStatus(
+        code: .invalidArgument, message: "Either element_id or selector must be specified")
     }
 
     // Get element position for clicking
@@ -640,11 +642,15 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     case .single, .unspecified, .UNRECOGNIZED(_):
       try await AutomationCoordinator.shared.handleExecuteInput(
         action: Macosusesdk_V1_InputAction.with {
-          $0.inputType = .click(Macosusesdk_V1_MouseClick.with {
-            $0.position = Macosusesdk_Type_Point.with { $0.x = x; $0.y = y }
-            $0.clickType = .left
-            $0.clickCount = 1
-          })
+          $0.inputType = .click(
+            Macosusesdk_V1_MouseClick.with {
+              $0.position = Macosusesdk_Type_Point.with {
+                $0.x = x
+                $0.y = y
+              }
+              $0.clickType = .left
+              $0.clickCount = 1
+            })
         },
         pid: pid,
         showAnimation: false,
@@ -654,11 +660,15 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     case .double:
       try await AutomationCoordinator.shared.handleExecuteInput(
         action: Macosusesdk_V1_InputAction.with {
-          $0.inputType = .click(Macosusesdk_V1_MouseClick.with {
-            $0.position = Macosusesdk_Type_Point.with { $0.x = x; $0.y = y }
-            $0.clickType = .left
-            $0.clickCount = 2
-          })
+          $0.inputType = .click(
+            Macosusesdk_V1_MouseClick.with {
+              $0.position = Macosusesdk_Type_Point.with {
+                $0.x = x
+                $0.y = y
+              }
+              $0.clickType = .left
+              $0.clickCount = 2
+            })
         },
         pid: pid,
         showAnimation: false,
@@ -668,11 +678,15 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     case .right:
       try await AutomationCoordinator.shared.handleExecuteInput(
         action: Macosusesdk_V1_InputAction.with {
-          $0.inputType = .click(Macosusesdk_V1_MouseClick.with {
-            $0.position = Macosusesdk_Type_Point.with { $0.x = x; $0.y = y }
-            $0.clickType = .right
-            $0.clickCount = 1
-          })
+          $0.inputType = .click(
+            Macosusesdk_V1_MouseClick.with {
+              $0.position = Macosusesdk_Type_Point.with {
+                $0.x = x
+                $0.y = y
+              }
+              $0.clickType = .right
+              $0.clickCount = 1
+            })
         },
         pid: pid,
         showAnimation: false,
@@ -720,7 +734,8 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
       pid = try parsePID(fromName: request.parent)
 
     case .none:
-      throw GRPCStatus(code: .invalidArgument, message: "Either element_id or selector must be specified")
+      throw GRPCStatus(
+        code: .invalidArgument, message: "Either element_id or selector must be specified")
     }
 
     // Get element position for typing
@@ -733,11 +748,15 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     // Click on the element first to focus it
     try await AutomationCoordinator.shared.handleExecuteInput(
       action: Macosusesdk_V1_InputAction.with {
-        $0.inputType = .click(Macosusesdk_V1_MouseClick.with {
-          $0.position = Macosusesdk_Type_Point.with { $0.x = x; $0.y = y }
-          $0.clickType = .left
-          $0.clickCount = 1
-        })
+        $0.inputType = .click(
+          Macosusesdk_V1_MouseClick.with {
+            $0.position = Macosusesdk_Type_Point.with {
+              $0.x = x
+              $0.y = y
+            }
+            $0.clickType = .left
+            $0.clickCount = 1
+          })
       },
       pid: pid,
       showAnimation: false,
@@ -747,9 +766,10 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     // Type the value
     try await AutomationCoordinator.shared.handleExecuteInput(
       action: Macosusesdk_V1_InputAction.with {
-        $0.inputType = .typeText(Macosusesdk_V1_TextInput.with {
-          $0.text = request.value
-        })
+        $0.inputType = .typeText(
+          Macosusesdk_V1_TextInput.with {
+            $0.text = request.value
+          })
       },
       pid: pid,
       showAnimation: false,
@@ -788,12 +808,13 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
       // Query the AXUIElement for its actions on the main thread
       let actionsArray: [String]? = await MainActor.run {
         var value: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(axElement, "AXActions" as CFString, &value) == .success else {
+        guard AXUIElementCopyAttributeValue(axElement, "AXActions" as CFString, &value) == .success
+        else {
           return nil
         }
         return value as? [String]
       }
-      
+
       if let actionsArray = actionsArray {
         return Macosusesdk_V1_ElementActions.with {
           $0.actions = actionsArray
@@ -846,13 +867,14 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
       pid = try parsePID(fromName: request.parent)
 
     case .none:
-      throw GRPCStatus(code: .invalidArgument, message: "Either element_id or selector must be specified")
+      throw GRPCStatus(
+        code: .invalidArgument, message: "Either element_id or selector must be specified")
     }
 
     // Try to get the AXUIElement and perform semantic action
     if let axElement = await ElementRegistry.shared.getAXElement(elementID) {
       let actionName: String
-      
+
       // Map common action names to AX action constants
       switch request.action.lowercased() {
       case "press", "click":
@@ -862,30 +884,33 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
       default:
         actionName = request.action
       }
-      
+
       // Perform the AX action (must be on main thread)
       let result = await MainActor.run {
         AXUIElementPerformAction(axElement, actionName as CFString)
       }
-      
+
       if result == .success {
         return Macosusesdk_V1_PerformElementActionResponse.with {
           $0.success = true
           $0.element = element
         }
       }
-      
+
       // If action failed but element has position, fall through to coordinate-based fallback
       if !element.hasX || !element.hasY {
-        throw GRPCStatus(code: .internalError, message: "AX action failed: \(result.rawValue) and no position available for fallback")
+        throw GRPCStatus(
+          code: .internalError,
+          message: "AX action failed: \(result.rawValue) and no position available for fallback")
       }
     }
 
     // Fallback to coordinate-based simulation if AXUIElement is nil or action failed
     guard element.hasX && element.hasY else {
-      throw GRPCStatus(code: .failedPrecondition, message: "Element has no AXUIElement and no position for action")
+      throw GRPCStatus(
+        code: .failedPrecondition, message: "Element has no AXUIElement and no position for action")
     }
-    
+
     let x = element.x
     let y = element.y
 
@@ -893,11 +918,15 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     case "press", "click":
       try await AutomationCoordinator.shared.handleExecuteInput(
         action: Macosusesdk_V1_InputAction.with {
-          $0.inputType = .click(Macosusesdk_V1_MouseClick.with {
-            $0.position = Macosusesdk_Type_Point.with { $0.x = x; $0.y = y }
-            $0.clickType = .left
-            $0.clickCount = 1
-          })
+          $0.inputType = .click(
+            Macosusesdk_V1_MouseClick.with {
+              $0.position = Macosusesdk_Type_Point.with {
+                $0.x = x
+                $0.y = y
+              }
+              $0.clickType = .left
+              $0.clickCount = 1
+            })
         },
         pid: pid,
         showAnimation: false,
@@ -907,11 +936,15 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     case "showmenu", "openmenu":
       try await AutomationCoordinator.shared.handleExecuteInput(
         action: Macosusesdk_V1_InputAction.with {
-          $0.inputType = .click(Macosusesdk_V1_MouseClick.with {
-            $0.position = Macosusesdk_Type_Point.with { $0.x = x; $0.y = y }
-            $0.clickType = .right
-            $0.clickCount = 1
-          })
+          $0.inputType = .click(
+            Macosusesdk_V1_MouseClick.with {
+              $0.position = Macosusesdk_Type_Point.with {
+                $0.x = x
+                $0.y = y
+              }
+              $0.clickType = .right
+              $0.clickCount = 1
+            })
         },
         pid: pid,
         showAnimation: false,
@@ -919,7 +952,8 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
       )
 
     default:
-      throw GRPCStatus(code: .unimplemented, message: "Action '\(request.action)' is not implemented")
+      throw GRPCStatus(
+        code: .unimplemented, message: "Action '\(request.action)' is not implemented")
     }
 
     return Macosusesdk_V1_PerformElementActionResponse.with {
@@ -982,7 +1016,8 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
           if let firstElement = elementsWithPaths.first {
             // Element found! Complete the operation
             var elementWithId = firstElement.element
-            let elementId = await ElementRegistry.shared.registerElement(elementWithId, pid: try parsePID(fromName: request.parent))
+            let elementId = await ElementRegistry.shared.registerElement(
+              elementWithId, pid: try parsePID(fromName: request.parent))
             elementWithId.elementID = elementId
             elementWithId.path = firstElement.path
 
@@ -1037,20 +1072,21 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         throw GRPCStatus(code: .notFound, message: "Element not found")
       }
       pid = try parsePID(fromName: request.parent)
-      
+
       // Create a selector based on the element's stable attributes
       // This is a fallback - ideally we'd store the original selector
       selectorToUse = Macosusesdk_Type_ElementSelector.with {
         $0.criteria = .role(foundElement.role)
         // Add more criteria if available for uniqueness
         if foundElement.hasText && !foundElement.text.isEmpty {
-          $0.criteria = .compound(Macosusesdk_Type_CompoundSelector.with {
-            $0.operator = .and
-            $0.selectors = [
-              Macosusesdk_Type_ElementSelector.with { $0.criteria = .role(foundElement.role) },
-              Macosusesdk_Type_ElementSelector.with { $0.criteria = .text(foundElement.text) }
-            ]
-          })
+          $0.criteria = .compound(
+            Macosusesdk_Type_CompoundSelector.with {
+              $0.operator = .and
+              $0.selectors = [
+                Macosusesdk_Type_ElementSelector.with { $0.criteria = .role(foundElement.role) },
+                Macosusesdk_Type_ElementSelector.with { $0.criteria = .text(foundElement.text) },
+              ]
+            })
         }
       }
 
@@ -1059,7 +1095,8 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
       pid = try parsePID(fromName: request.parent)
 
     case .none:
-      throw GRPCStatus(code: .invalidArgument, message: "Either element_id or selector must be specified")
+      throw GRPCStatus(
+        code: .invalidArgument, message: "Either element_id or selector must be specified")
     }
 
     // Create LRO
@@ -1106,7 +1143,8 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
           )
 
           if let currentElementWithPath = elementsWithPaths.first,
-             elementMatchesCondition(currentElementWithPath.element, condition: request.condition) {
+            elementMatchesCondition(currentElementWithPath.element, condition: request.condition)
+          {
 
             // Condition met! Complete the operation
             var elementWithId = currentElementWithPath.element
@@ -1437,19 +1475,28 @@ extension MacosUseServiceProvider {
     }
 
     // Get CGWindowList for matching
-    guard let windowList = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else {
+    guard
+      let windowList = CGWindowListCopyWindowInfo(
+        [.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]]
+    else {
       throw GRPCStatus(code: .internalError, message: "Failed to get window list")
     }
 
     // Find window with matching CGWindowID
-    guard let cgWindow = windowList.first(where: { ($0[kCGWindowNumber as String] as? Int32) == Int32(windowId) }) else {
-      throw GRPCStatus(code: .notFound, message: "Window with ID \(windowId) not found in CGWindowList")
+    guard
+      let cgWindow = windowList.first(where: {
+        ($0[kCGWindowNumber as String] as? Int32) == Int32(windowId)
+      })
+    else {
+      throw GRPCStatus(
+        code: .notFound, message: "Window with ID \(windowId) not found in CGWindowList")
     }
 
     // Get bounds from CGWindow
     guard let cgBounds = cgWindow[kCGWindowBounds as String] as? [String: CGFloat],
-          let cgX = cgBounds["X"], let cgY = cgBounds["Y"],
-          let cgWidth = cgBounds["Width"], let cgHeight = cgBounds["Height"] else {
+      let cgX = cgBounds["X"], let cgY = cgBounds["Y"],
+      let cgWidth = cgBounds["Width"], let cgHeight = cgBounds["Height"]
+    else {
       throw GRPCStatus(code: .internalError, message: "Failed to get bounds from CGWindow")
     }
 
@@ -1457,15 +1504,18 @@ extension MacosUseServiceProvider {
     for window in windows {
       var posValue: CFTypeRef?
       var sizeValue: CFTypeRef?
-      if AXUIElementCopyAttributeValue(window, kAXPositionAttribute as CFString, &posValue) == .success,
-         AXUIElementCopyAttributeValue(window, kAXSizeAttribute as CFString, &sizeValue) == .success,
-         let pos = posValue as! AXValue?, let size = sizeValue as! AXValue? {
+      if AXUIElementCopyAttributeValue(window, kAXPositionAttribute as CFString, &posValue)
+        == .success,
+        AXUIElementCopyAttributeValue(window, kAXSizeAttribute as CFString, &sizeValue) == .success,
+        let pos = posValue as! AXValue?, let size = sizeValue as! AXValue?
+      {
         var axPos = CGPoint()
         var axSize = CGSize()
         if AXValueGetValue(pos, .cgPoint, &axPos), AXValueGetValue(size, .cgSize, &axSize) {
           // Check if bounds match (with small tolerance for floating point)
-          if abs(axPos.x - cgX) < 1 && abs(axPos.y - cgY) < 1 &&
-             abs(axSize.width - cgWidth) < 1 && abs(axSize.height - cgHeight) < 1 {
+          if abs(axPos.x - cgX) < 1 && abs(axPos.y - cgY) < 1 && abs(axSize.width - cgWidth) < 1
+            && abs(axSize.height - cgHeight) < 1
+          {
             return window
           }
         }
@@ -1475,22 +1525,27 @@ extension MacosUseServiceProvider {
     throw GRPCStatus(code: .notFound, message: "AXUIElement not found for window ID \(windowId)")
   }
 
-  fileprivate func getWindowState(window: AXUIElement) -> (minimized: Bool, focused: Bool, fullscreen: Bool) {
+  fileprivate func getWindowState(window: AXUIElement) -> (
+    minimized: Bool, focused: Bool, fullscreen: Bool
+  ) {
     var minimized = false
     var focused = false
     let fullscreen = false
 
     // Check minimized
     var minValue: CFTypeRef?
-    if AXUIElementCopyAttributeValue(window, kAXMinimizedAttribute as CFString, &minValue) == .success,
-       let minBool = minValue as? Bool {
+    if AXUIElementCopyAttributeValue(window, kAXMinimizedAttribute as CFString, &minValue)
+      == .success,
+      let minBool = minValue as? Bool
+    {
       minimized = minBool
     }
 
     // Check focused (main window)
     var mainValue: CFTypeRef?
     if AXUIElementCopyAttributeValue(window, kAXMainAttribute as CFString, &mainValue) == .success,
-       let mainBool = mainValue as? Bool {
+      let mainBool = mainValue as? Bool
+    {
       focused = mainBool
     }
 
@@ -1519,11 +1574,13 @@ extension MacosUseServiceProvider {
     case "text", "textfield", "textarea":
       return ["focus", "select"]
     default:
-      return ["press"] // Default action
+      return ["press"]  // Default action
     }
   }
 
-  fileprivate func findMatchingElement(_ targetElement: Macosusesdk_Type_Element, in elements: [Macosusesdk_Type_Element]) -> Macosusesdk_Type_Element? {
+  fileprivate func findMatchingElement(
+    _ targetElement: Macosusesdk_Type_Element, in elements: [Macosusesdk_Type_Element]
+  ) -> Macosusesdk_Type_Element? {
     // Simple matching by position (not ideal but works for basic cases)
     guard targetElement.hasX && targetElement.hasY else { return nil }
     let targetX = targetElement.x
@@ -1538,7 +1595,9 @@ extension MacosUseServiceProvider {
     }
   }
 
-  fileprivate func elementMatchesCondition(_ element: Macosusesdk_Type_Element, condition: Macosusesdk_V1_StateCondition) -> Bool {
+  fileprivate func elementMatchesCondition(
+    _ element: Macosusesdk_Type_Element, condition: Macosusesdk_V1_StateCondition
+  ) -> Bool {
     switch condition.condition {
     case .enabled(let expectedEnabled):
       return element.enabled == expectedEnabled

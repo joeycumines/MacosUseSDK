@@ -41,7 +41,8 @@ public actor ElementLocator {
     }
 
     // Apply max results limit if specified
-    let limitedResults = maxResults > 0 ? Array(matchingElements.prefix(maxResults)) : matchingElements
+    let limitedResults =
+      maxResults > 0 ? Array(matchingElements.prefix(maxResults)) : matchingElements
 
     fputs("info: [ElementLocator] Found \(limitedResults.count) matching elements\n", stderr)
     return limitedResults
@@ -126,7 +127,8 @@ public actor ElementLocator {
         throw GRPCStatus(code: .invalidArgument, message: "Invalid application PID")
       }
       return (pid, nil)
-    } else if components.count == 4 && components[0] == "applications" && components[2] == "windows" {
+    } else if components.count == 4 && components[0] == "applications" && components[2] == "windows"
+    {
       // "applications/{pid}/windows/{windowId}" - search within specific window
       guard let pid = pid_t(components[1]), let windowId = CGWindowID(components[3]) else {
         throw GRPCStatus(code: .invalidArgument, message: "Invalid window resource name")
@@ -137,13 +139,15 @@ public actor ElementLocator {
     }
   }
 
-  private func traverseWithPaths(pid: pid_t, visibleOnly: Bool) async throws -> [(Macosusesdk_Type_Element, [Int32])] {
+  private func traverseWithPaths(pid: pid_t, visibleOnly: Bool) async throws -> [(
+    Macosusesdk_Type_Element, [Int32]
+  )] {
     let sdkResponse = try await MainActor.run {
       try MacosUseSDK.traverseAccessibilityTree(pid: pid, onlyVisibleElements: visibleOnly)
     }
-    
+
     var elementsWithPaths: [(Macosusesdk_Type_Element, [Int32])] = []
-    
+
     for (index, elementData) in sdkResponse.elements.enumerated() {
       let protoElement = Macosusesdk_Type_Element.with {
         $0.role = elementData.role
@@ -156,19 +160,22 @@ public actor ElementLocator {
         if let focused = elementData.focused { $0.focused = focused }
         $0.attributes = elementData.attributes
       }
-      
-      let elementId = await ElementRegistry.shared.registerElement(protoElement, axElement: elementData.axElement?.element, pid: pid)
+
+      let elementId = await ElementRegistry.shared.registerElement(
+        protoElement, axElement: elementData.axElement?.element, pid: pid)
       var elementWithId = protoElement
       elementWithId.elementID = elementId
-      
+
       // For now, use sequential index as path (FIXME: implement proper hierarchical paths)
       elementsWithPaths.append((elementWithId, [Int32(index)]))
     }
-    
+
     return elementsWithPaths
   }
 
-  private func matchesSelector(_ element: Macosusesdk_Type_Element, selector: Macosusesdk_Type_ElementSelector) -> Bool {
+  private func matchesSelector(
+    _ element: Macosusesdk_Type_Element, selector: Macosusesdk_Type_ElementSelector
+  ) -> Bool {
     switch selector.criteria {
     case .role(let role):
       return element.role.lowercased() == role.lowercased()
@@ -219,17 +226,20 @@ public actor ElementLocator {
       }
 
     case .none:
-      return true // Match all elements if no criteria specified
+      return true  // Match all elements if no criteria specified
     }
   }
 
-  private func isElementInRegion(_ element: Macosusesdk_Type_Element, region: Macosusesdk_V1_Region) -> Bool {
+  private func isElementInRegion(_ element: Macosusesdk_Type_Element, region: Macosusesdk_V1_Region)
+    -> Bool
+  {
     guard element.hasX && element.hasY && element.hasWidth && element.hasHeight else {
       return false
     }
 
     // Check if element bounds intersect with region
-    let elementRect = CGRect(x: element.x, y: element.y, width: element.width, height: element.height)
+    let elementRect = CGRect(
+      x: element.x, y: element.y, width: element.width, height: element.height)
     let regionRect = CGRect(x: region.x, y: region.y, width: region.width, height: region.height)
 
     return elementRect.intersects(regionRect)

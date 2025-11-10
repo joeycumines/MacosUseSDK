@@ -8,7 +8,6 @@ package macosusesdk.v1;
 
 import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
-import "macosusesdk/type/geometry.proto";
 
 option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
 option java_multiple_files = true;

@@ -13,16 +13,16 @@ extension AXUIElement: @unchecked Sendable {}
 // AXUIElement is a CFTypeRef which is thread-safe by nature
 public struct SendableAXUIElement: @unchecked Sendable, Hashable {
   public let element: AXUIElement
-  
+
   public init(_ element: AXUIElement) {
     self.element = element
   }
-  
+
   // Implement Hashable using CFHash for CFTypeRef
   public func hash(into hasher: inout Hasher) {
     hasher.combine(CFHash(element))
   }
-  
+
   public static func == (lhs: SendableAXUIElement, rhs: SendableAXUIElement) -> Bool {
     return CFEqual(lhs.element, rhs.element)
   }
@@ -335,11 +335,15 @@ private class AccessibilityTraversalOperation {
       size = getCGSizeValue(sizeValue)
     }
 
-    if let enabledValue = copyAttributeValue(element: element, attribute: kAXEnabledAttribute as String) {
+    if let enabledValue = copyAttributeValue(
+      element: element, attribute: kAXEnabledAttribute as String)
+    {
       enabled = getBoolValue(enabledValue)
     }
 
-    if let focusedValue = copyAttributeValue(element: element, attribute: kAXFocusedAttribute as String) {
+    if let focusedValue = copyAttributeValue(
+      element: element, attribute: kAXFocusedAttribute as String)
+    {
       focused = getBoolValue(focusedValue)
     }
 
@@ -371,8 +375,9 @@ private class AccessibilityTraversalOperation {
     visitedElements.insert(element)
 
     // 2. Process the current element
-    let (role, roleDesc, combinedText, _, position, size, enabled, focused, attributes) = extractElementAttributes(
-      element: element)
+    let (role, roleDesc, combinedText, _, position, size, enabled, focused, attributes) =
+      extractElementAttributes(
+        element: element)
     let hasText = combinedText != nil && !combinedText!.isEmpty
     let isNonInteractable = nonInteractableRoles.contains(role)
     let roleWithoutAX = role.starts(with: "AX") ? String(role.dropFirst(2)) : role
@@ -415,7 +420,8 @@ private class AccessibilityTraversalOperation {
       let elementData = ElementData(
         role: displayRole, text: combinedText,
         x: finalX, y: finalY, width: finalWidth, height: finalHeight,
-        axElement: SendableAXUIElement(element), enabled: enabled, focused: focused, attributes: attributes
+        axElement: SendableAXUIElement(element), enabled: enabled, focused: focused,
+        attributes: attributes
       )
 
       if collectedElements.insert(elementData).inserted {

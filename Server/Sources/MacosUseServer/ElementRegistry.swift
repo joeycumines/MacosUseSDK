@@ -66,7 +66,8 @@ public actor ElementRegistry {
 
     // Check if expired
     if Date().timeIntervalSince(cached.timestamp) > cacheExpiration {
-      fputs("warning: [ElementRegistry] Element \(elementId) expired, removing from cache\n", stderr)
+      fputs(
+        "warning: [ElementRegistry] Element \(elementId) expired, removing from cache\n", stderr)
       elementCache.removeValue(forKey: elementId)
       return nil
     }
@@ -150,7 +151,7 @@ public actor ElementRegistry {
     return [
       "total_elements": totalElements,
       "expired_elements": expiredElements,
-      "active_elements": totalElements - expiredElements
+      "active_elements": totalElements - expiredElements,
     ]
   }
 
@@ -159,7 +160,7 @@ public actor ElementRegistry {
   private func generateElementId() -> String {
     // Generate a unique ID using timestamp and random component
     let timestamp = Int(Date().timeIntervalSince1970 * 1000)
-    let random = Int.random(in: 0..<1000000)
+    let random = Int.random(in: 0..<1_000_000)
     return "elem_\(timestamp)_\(random)"
   }
 
