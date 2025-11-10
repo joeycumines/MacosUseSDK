@@ -28,6 +28,9 @@ generate: buf.generate go.generate ## Generate all code.
 .PHONY: gen
 gen: generate ## Alias for 'generate'.
 
+.PHONY: update
+update: buf.update go.update ## Update all dependencies.
+
 .PHONY: google-api-linter
 google-api-linter: ## Lint the proto files.
 	hack/google-api-linter.sh

@@ -11,7 +11,6 @@
 package macosusesdkv1
 
 import (
-	_ "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -844,7 +843,7 @@ var File_macosusesdk_v1_screenshot_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_screenshot_proto_rawDesc = "" +
 	"\n" +
-	"\x1fmacosusesdk/v1/screenshot.proto\x12\x0emacosusesdk.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fmacosusesdk/type/geometry.proto\"\xc1\x01\n" +
+	"\x1fmacosusesdk/v1/screenshot.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\"\xc1\x01\n" +
 	"\x18CaptureScreenshotRequest\x128\n" +
 	"\x06format\x18\x01 \x01(\x0e2\x1b.macosusesdk.v1.ImageFormatB\x03\xe0A\x01R\x06format\x12\x1d\n" +
 	"\aquality\x18\x02 \x01(\x05B\x03\xe0A\x01R\aquality\x12\x1d\n" +

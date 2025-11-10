@@ -856,7 +856,7 @@ var File_macosusesdk_v1_script_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_script_proto_rawDesc = "" +
 	"\n" +
-	"\x1bmacosusesdk/v1/script.proto\x12\x0emacosusesdk.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1egoogle/protobuf/duration.proto\"\x9a\x01\n" +
+	"\x1bmacosusesdk/v1/script.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1egoogle/protobuf/duration.proto\"\x9a\x01\n" +
 	"\x19ExecuteAppleScriptRequest\x12\x1b\n" +
 	"\x06script\x18\x01 \x01(\tB\x03\xe0A\x02R\x06script\x128\n" +
 	"\atimeout\x18\x02 \x01(\v2\x19.google.protobuf.DurationB\x03\xe0A\x01R\atimeout\x12&\n" +

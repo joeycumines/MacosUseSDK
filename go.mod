@@ -4,7 +4,7 @@ go 1.25.4
 
 require (
 	cloud.google.com/go/longrunning v0.7.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20251022142026-3a174f9686a8
+	google.golang.org/genproto/googleapis/api v0.0.0-20251110190251-83f479183930
 	google.golang.org/grpc v1.76.0
 	google.golang.org/protobuf v1.36.10
 )
@@ -23,14 +23,14 @@ require (
 	golang.org/x/exp/typeparams v0.0.0-20251023183803-a4bb9ffd2546 // indirect
 	golang.org/x/mod v0.29.0 // indirect
 	golang.org/x/net v0.46.0 // indirect
-	golang.org/x/sync v0.17.0 // indirect
-	golang.org/x/sys v0.37.0 // indirect
+	golang.org/x/sync v0.18.0 // indirect
+	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/text v0.30.0 // indirect
 	golang.org/x/tools v0.38.0 // indirect
 	golang.org/x/tools/cmd/godoc v0.1.0-deprecated // indirect
 	golang.org/x/tools/go/expect v0.1.1-deprecated // indirect
 	golang.org/x/tools/godoc v0.1.0-deprecated // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20251022142026-3a174f9686a8 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251110190251-83f479183930 // indirect
 	honnef.co/go/tools v0.6.1 // indirect
 )
 

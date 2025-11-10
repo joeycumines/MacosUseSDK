@@ -975,7 +975,7 @@ var File_macosusesdk_v1_session_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_session_proto_rawDesc = "" +
 	"\n" +
-	"\x1cmacosusesdk/v1/session.proto\x12\x0emacosusesdk.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x8b\x06\n" +
+	"\x1cmacosusesdk/v1/session.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x8b\x06\n" +
 	"\aSession\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12&\n" +
 	"\fdisplay_name\x18\x02 \x01(\tB\x03\xe0A\x01R\vdisplayName\x128\n" +

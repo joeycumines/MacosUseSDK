@@ -11,7 +11,6 @@
 package macosusesdkv1
 
 import (
-	_ "cloud.google.com/go/longrunning/autogen/longrunningpb"
 	_type "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -1585,7 +1584,7 @@ var File_macosusesdk_v1_element_methods_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_element_methods_proto_rawDesc = "" +
 	"\n" +
-	"$macosusesdk/v1/element_methods.proto\x12\x0emacosusesdk.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a#google/longrunning/operations.proto\x1a\x1emacosusesdk/type/element.proto\x1a\x1fmacosusesdk/type/geometry.proto\x1a\x1fmacosusesdk/type/selector.proto\x1a\x1fmacosusesdk/v1/screenshot.proto\"\xea\x01\n" +
+	"$macosusesdk/v1/element_methods.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1emacosusesdk/type/element.proto\x1a\x1fmacosusesdk/type/selector.proto\x1a\x1fmacosusesdk/v1/screenshot.proto\"\xea\x01\n" +
 	"\x13FindElementsRequest\x12!\n" +
 	"\x06parent\x18\x01 \x01(\tB\t\xe0A\x02\xfaA\x03\n" +
 	"\x01*R\x06parent\x12B\n" +

@@ -11,7 +11,6 @@
 package macosusesdkv1
 
 import (
-	_ "cloud.google.com/go/longrunning/autogen/longrunningpb"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -1868,7 +1867,7 @@ var File_macosusesdk_v1_macro_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_macro_proto_rawDesc = "" +
 	"\n" +
-	"\x1amacosusesdk/v1/macro.proto\x12\x0emacosusesdk.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a#google/longrunning/operations.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1amacosusesdk/v1/input.proto\"\xfb\x03\n" +
+	"\x1amacosusesdk/v1/macro.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1amacosusesdk/v1/input.proto\"\xfb\x03\n" +
 	"\x05Macro\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12&\n" +
 	"\fdisplay_name\x18\x02 \x01(\tB\x03\xe0A\x02R\vdisplayName\x12%\n" +

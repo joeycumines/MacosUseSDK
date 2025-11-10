@@ -762,7 +762,7 @@ var File_macosusesdk_v1_clipboard_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_clipboard_proto_rawDesc = "" +
 	"\n" +
-	"\x1emacosusesdk/v1/clipboard.proto\x12\x0emacosusesdk.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"4\n" +
+	"\x1emacosusesdk/v1/clipboard.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"4\n" +
 	"\x13GetClipboardRequest\x12\x1d\n" +
 	"\x04name\x18\x01 \x01(\tB\t\xe0A\x02\xfaA\x03\n" +
 	"\x01*R\x04name\"\x8d\x01\n" +

@@ -742,7 +742,7 @@ var File_macosusesdk_v1_file_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_file_proto_rawDesc = "" +
 	"\n" +
-	"\x19macosusesdk/v1/file.proto\x12\x0emacosusesdk.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\"\xb2\x02\n" +
+	"\x19macosusesdk/v1/file.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\"\xb2\x02\n" +
 	"\x1dAutomateOpenFileDialogRequest\x12J\n" +
 	"\vapplication\x18\x01 \x01(\tB(\xe0A\x02\xfaA\"\n" +
 	" macos.googleapis.com/ApplicationR\vapplication\x12 \n" +
