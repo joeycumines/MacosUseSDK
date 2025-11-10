@@ -9,6 +9,8 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-go@v6
+        with:
+          go-version: 'stable'
       - uses: bufbuild/buf-action@v1
         with:
           setup_only: true
