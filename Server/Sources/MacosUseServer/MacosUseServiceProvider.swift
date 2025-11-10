@@ -782,6 +782,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
   }
 
+  @MainActor
   func getElementActions(
     request: Macosusesdk_V1_GetElementActionsRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_ElementActions {
@@ -805,17 +806,16 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
 
     // Try to get actions from AXUIElement first
     if let axElement = await ElementRegistry.shared.getAXElement(elementId) {
-      // Query the AXUIElement for its actions on the main thread
-      let actionsArray: [String]? = await MainActor.run {
-        var value: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(axElement, "AXActions" as CFString, &value) == .success
-        else {
-          return nil
-        }
-        return value as? [String]
+      // Query the AXUIElement for its actions
+      var value: CFTypeRef?
+      guard AXUIElementCopyAttributeValue(axElement, "AXActions" as CFString, &value) == .success
+      else {
+        // Fallback to role-based if query fails
+        let actions = getActionsForRole(element.role)
+        return Macosusesdk_V1_ElementActions.with { $0.actions = actions }
       }
 
-      if let actionsArray = actionsArray {
+      if let actionsArray = value as? [String] {
         return Macosusesdk_V1_ElementActions.with {
           $0.actions = actionsArray
         }
@@ -830,6 +830,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
   }
 
+  @MainActor
   func performElementAction(
     request: Macosusesdk_V1_PerformElementActionRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_PerformElementActionResponse {
@@ -885,10 +886,8 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         actionName = request.action
       }
 
-      // Perform the AX action (must be on main thread)
-      let result = await MainActor.run {
-        AXUIElementPerformAction(axElement, actionName as CFString)
-      }
+      // Perform the AX action
+      let result = AXUIElementPerformAction(axElement, actionName as CFString)
 
       if result == .success {
         return Macosusesdk_V1_PerformElementActionResponse.with {

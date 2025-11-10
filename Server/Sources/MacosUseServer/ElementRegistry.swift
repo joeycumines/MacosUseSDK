@@ -78,11 +78,16 @@ public actor ElementRegistry {
   /// Get the AXUIElement reference for an element ID.
   /// - Parameter elementId: The element ID
   /// - Returns: The AXUIElement if available and not expired
-  public func getAXElement(_ elementId: String) -> AXUIElement? {
-    guard let cached = elementCache[elementId] else { return nil }
+  /// - Note: This MUST be called from MainActor context since AXUIElement requires it
+  public func getAXElement(_ elementId: String) async -> AXUIElement? {
+    guard let cached = elementCache[elementId] else {
+      fputs("warning: [ElementRegistry] Element \(elementId) not found\n", stderr)
+      return nil
+    }
 
     // Check if expired
     if Date().timeIntervalSince(cached.timestamp) > cacheExpiration {
+      fputs("warning: [ElementRegistry] Element \(elementId) expired\n", stderr)
       elementCache.removeValue(forKey: elementId)
       return nil
     }
