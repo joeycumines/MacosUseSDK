@@ -10,7 +10,7 @@
 
 // Copyright 2025 MacosUseSDK
 //
-// Clipboard operations
+// Clipboard resources and types
 
 import Foundation
 import SwiftProtobuf
@@ -92,21 +92,6 @@ public enum Macosusesdk_V1_ContentType: SwiftProtobuf.Enum, Swift.CaseIterable {
     .url,
   ]
 
-}
-
-/// Request to get clipboard contents.
-public struct Macosusesdk_V1_GetClipboardRequest: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  /// The name of the clipboard resource.
-  /// Format: clipboard (singleton)
-  public var name: String = String()
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  public init() {}
 }
 
 /// Clipboard contents.
@@ -237,89 +222,6 @@ public struct Macosusesdk_V1_FilePaths: Sendable {
   public init() {}
 }
 
-/// Request to write clipboard contents.
-public struct Macosusesdk_V1_WriteClipboardRequest: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  /// Content to write on clipboard.
-  public var content: Macosusesdk_V1_ClipboardContent {
-    get {return _content ?? Macosusesdk_V1_ClipboardContent()}
-    set {_content = newValue}
-  }
-  /// Returns true if `content` has been explicitly set.
-  public var hasContent: Bool {return self._content != nil}
-  /// Clears the value of `content`. Subsequent reads from it will return its default value.
-  public mutating func clearContent() {self._content = nil}
-
-  /// Whether to clear existing clipboard content first.
-  public var clearExisting_p: Bool = false
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  public init() {}
-
-  fileprivate var _content: Macosusesdk_V1_ClipboardContent? = nil
-}
-
-/// Response from writing clipboard contents.
-public struct Macosusesdk_V1_WriteClipboardResponse: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  /// Whether the operation succeeded.
-  public var success: Bool = false
-
-  /// Content type that was written.
-  public var type: Macosusesdk_V1_ContentType = .unspecified
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  public init() {}
-}
-
-/// Request to clear clipboard contents.
-public struct Macosusesdk_V1_ClearClipboardRequest: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  public init() {}
-}
-
-/// Response from clearing clipboard.
-public struct Macosusesdk_V1_ClearClipboardResponse: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  /// Whether the operation succeeded.
-  public var success: Bool = false
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  public init() {}
-}
-
-/// Request to get clipboard history (if available).
-public struct Macosusesdk_V1_GetClipboardHistoryRequest: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  /// The name of the clipboard history resource.
-  /// Format: clipboard/history (singleton)
-  public var name: String = String()
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  public init() {}
-}
-
 /// Clipboard history.
 public struct Macosusesdk_V1_ClipboardHistory: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
@@ -377,36 +279,6 @@ fileprivate let _protobuf_package = "macosusesdk.v1"
 
 extension Macosusesdk_V1_ContentType: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0CONTENT_TYPE_UNSPECIFIED\0\u{1}CONTENT_TYPE_TEXT\0\u{1}CONTENT_TYPE_RTF\0\u{1}CONTENT_TYPE_HTML\0\u{1}CONTENT_TYPE_IMAGE\0\u{1}CONTENT_TYPE_FILES\0\u{1}CONTENT_TYPE_URL\0")
-}
-
-extension Macosusesdk_V1_GetClipboardRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".GetClipboardRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
-      default: break
-      }
-    }
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.name.isEmpty {
-      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Macosusesdk_V1_GetClipboardRequest, rhs: Macosusesdk_V1_GetClipboardRequest) -> Bool {
-    if lhs.name != rhs.name {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
 }
 
 extension Macosusesdk_V1_Clipboard: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
@@ -588,159 +460,6 @@ extension Macosusesdk_V1_FilePaths: SwiftProtobuf.Message, SwiftProtobuf._Messag
 
   public static func ==(lhs: Macosusesdk_V1_FilePaths, rhs: Macosusesdk_V1_FilePaths) -> Bool {
     if lhs.paths != rhs.paths {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
-}
-
-extension Macosusesdk_V1_WriteClipboardRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".WriteClipboardRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}content\0\u{3}clear_existing\0")
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularMessageField(value: &self._content) }()
-      case 2: try { try decoder.decodeSingularBoolField(value: &self.clearExisting_p) }()
-      default: break
-      }
-    }
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    try { if let v = self._content {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
-    } }()
-    if self.clearExisting_p != false {
-      try visitor.visitSingularBoolField(value: self.clearExisting_p, fieldNumber: 2)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Macosusesdk_V1_WriteClipboardRequest, rhs: Macosusesdk_V1_WriteClipboardRequest) -> Bool {
-    if lhs._content != rhs._content {return false}
-    if lhs.clearExisting_p != rhs.clearExisting_p {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
-}
-
-extension Macosusesdk_V1_WriteClipboardResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".WriteClipboardResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}type\0")
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
-      case 2: try { try decoder.decodeSingularEnumField(value: &self.type) }()
-      default: break
-      }
-    }
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.success != false {
-      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
-    }
-    if self.type != .unspecified {
-      try visitor.visitSingularEnumField(value: self.type, fieldNumber: 2)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Macosusesdk_V1_WriteClipboardResponse, rhs: Macosusesdk_V1_WriteClipboardResponse) -> Bool {
-    if lhs.success != rhs.success {return false}
-    if lhs.type != rhs.type {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
-}
-
-extension Macosusesdk_V1_ClearClipboardRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".ClearClipboardRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap()
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    // Load everything into unknown fields
-    while try decoder.nextFieldNumber() != nil {}
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Macosusesdk_V1_ClearClipboardRequest, rhs: Macosusesdk_V1_ClearClipboardRequest) -> Bool {
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
-}
-
-extension Macosusesdk_V1_ClearClipboardResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".ClearClipboardResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0")
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
-      default: break
-      }
-    }
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.success != false {
-      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Macosusesdk_V1_ClearClipboardResponse, rhs: Macosusesdk_V1_ClearClipboardResponse) -> Bool {
-    if lhs.success != rhs.success {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
-}
-
-extension Macosusesdk_V1_GetClipboardHistoryRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".GetClipboardHistoryRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
-      default: break
-      }
-    }
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.name.isEmpty {
-      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Macosusesdk_V1_GetClipboardHistoryRequest, rhs: Macosusesdk_V1_GetClipboardHistoryRequest) -> Bool {
-    if lhs.name != rhs.name {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

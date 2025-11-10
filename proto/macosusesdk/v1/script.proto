@@ -1,149 +1,15 @@
 // Copyright 2025 MacosUseSDK
 //
-// Script execution methods for AppleScript, JXA, and shell commands
+// Script-related resources and types
 
 syntax = "proto3";
 
 package macosusesdk.v1;
 
-import "google/api/field_behavior.proto";
-import "google/api/resource.proto";
-import "google/protobuf/duration.proto";
-
 option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
 option java_multiple_files = true;
 option java_outer_classname = "ScriptProto";
 option java_package = "com.macosusesdk.v1";
-
-// Request to execute an AppleScript.
-message ExecuteAppleScriptRequest {
-  // AppleScript source code.
-  string script = 1 [(google.api.field_behavior) = REQUIRED];
-
-  // Timeout for script execution.
-  google.protobuf.Duration timeout = 2 [(google.api.field_behavior) = OPTIONAL];
-
-  // Whether to compile the script (for validation).
-  bool compile_only = 3 [(google.api.field_behavior) = OPTIONAL];
-}
-
-// Response from executing an AppleScript.
-message ExecuteAppleScriptResponse {
-  // Whether execution succeeded.
-  bool success = 1;
-
-  // Script output (return value).
-  string output = 2;
-
-  // Error message if failed.
-  string error = 3;
-
-  // Execution duration.
-  google.protobuf.Duration execution_duration = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
-}
-
-// Request to execute JavaScript for Automation (JXA).
-message ExecuteJavaScriptRequest {
-  // JavaScript source code.
-  string script = 1 [(google.api.field_behavior) = REQUIRED];
-
-  // Timeout for script execution.
-  google.protobuf.Duration timeout = 2 [(google.api.field_behavior) = OPTIONAL];
-
-  // Whether to compile the script (for validation).
-  bool compile_only = 3 [(google.api.field_behavior) = OPTIONAL];
-}
-
-// Response from executing JXA.
-message ExecuteJavaScriptResponse {
-  // Whether execution succeeded.
-  bool success = 1;
-
-  // Script output (return value, JSON-encoded).
-  string output = 2;
-
-  // Error message if failed.
-  string error = 3;
-
-  // Execution duration.
-  google.protobuf.Duration execution_duration = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
-}
-
-// Request to execute a shell command.
-message ExecuteShellCommandRequest {
-  // Shell command to execute.
-  string command = 1 [(google.api.field_behavior) = REQUIRED];
-
-  // Arguments for the command.
-  repeated string args = 2 [(google.api.field_behavior) = OPTIONAL];
-
-  // Working directory for command execution.
-  string working_directory = 3 [(google.api.field_behavior) = OPTIONAL];
-
-  // Environment variables (key-value pairs).
-  map<string, string> environment = 4 [(google.api.field_behavior) = OPTIONAL];
-
-  // Timeout for command execution.
-  google.protobuf.Duration timeout = 5 [(google.api.field_behavior) = OPTIONAL];
-
-  // Input to provide to command via stdin.
-  string stdin = 6 [(google.api.field_behavior) = OPTIONAL];
-
-  // Shell to use (default: /bin/bash).
-  string shell = 7 [(google.api.field_behavior) = OPTIONAL];
-}
-
-// Response from executing a shell command.
-message ExecuteShellCommandResponse {
-  // Whether execution succeeded.
-  bool success = 1;
-
-  // Standard output from command.
-  string stdout = 2;
-
-  // Standard error from command.
-  string stderr = 3;
-
-  // Exit code from command.
-  int32 exit_code = 4;
-
-  // Execution duration.
-  google.protobuf.Duration execution_duration = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
-
-  // Error message if execution failed (not command failure).
-  string error = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
-}
-
-// Request to validate a script without executing.
-message ValidateScriptRequest {
-  // Script type.
-  ScriptType type = 1 [(google.api.field_behavior) = REQUIRED];
-
-  // Script source code.
-  string script = 2 [(google.api.field_behavior) = REQUIRED];
-}
-
-// Response from validating a script.
-message ValidateScriptResponse {
-  // Whether the script is valid.
-  bool valid = 1;
-
-  // Validation error messages (if any).
-  repeated string errors = 2;
-
-  // Validation warnings (if any).
-  repeated string warnings = 3;
-}
-
-// Request to get available scripting dictionaries.
-message GetScriptingDictionariesRequest {
-  // The name of the scripting dictionaries resource.
-  // Format: scriptingDictionaries (singleton)
-  string name = 1 [
-    (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "*"}
-  ];
-}
 
 // Scripting dictionaries.
 message ScriptingDictionaries {

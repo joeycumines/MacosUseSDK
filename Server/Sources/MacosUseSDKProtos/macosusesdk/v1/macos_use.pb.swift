@@ -12,6 +12,7 @@
 //
 // MacosUse service definition
 
+import Foundation
 import SwiftProtobuf
 
 // If the compiler emits an error on this type, it is because this file
@@ -364,6 +365,721 @@ public struct Macosusesdk_V1_ModifiedElement: @unchecked Sendable {
   public init() {}
 
   fileprivate var _storage = _StorageClass.defaultInstance
+}
+
+/// ===== Element Messages =====
+/// Request to find elements matching a selector.
+public struct Macosusesdk_V1_FindElementsRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Parent context. Either:
+  /// - "applications/{application}" to search within an app
+  /// - "applications/{application}/windows/{window}" to search within a window
+  public var parent: String = String()
+
+  /// Selector for finding elements.
+  public var selector: Macosusesdk_Type_ElementSelector {
+    get {return _selector ?? Macosusesdk_Type_ElementSelector()}
+    set {_selector = newValue}
+  }
+  /// Returns true if `selector` has been explicitly set.
+  public var hasSelector: Bool {return self._selector != nil}
+  /// Clears the value of `selector`. Subsequent reads from it will return its default value.
+  public mutating func clearSelector() {self._selector = nil}
+
+  /// Maximum number of elements to return.
+  public var pageSize: Int32 = 0
+
+  /// Page token from a previous FindElements call.
+  public var pageToken: String = String()
+
+  /// Whether to search only visible elements.
+  public var visibleOnly: Bool = false
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _selector: Macosusesdk_Type_ElementSelector? = nil
+}
+
+/// Response from finding elements.
+public struct Macosusesdk_V1_FindElementsResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Elements matching the selector.
+  public var elements: [Macosusesdk_Type_Element] = []
+
+  /// Token to retrieve the next page of results.
+  public var nextPageToken: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Request to find elements within a screen region.
+public struct Macosusesdk_V1_FindRegionElementsRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Parent context (same as FindElementsRequest).
+  public var parent: String = String()
+
+  /// Region to search within (screen coordinates).
+  public var region: Macosusesdk_V1_Region {
+    get {return _region ?? Macosusesdk_V1_Region()}
+    set {_region = newValue}
+  }
+  /// Returns true if `region` has been explicitly set.
+  public var hasRegion: Bool {return self._region != nil}
+  /// Clears the value of `region`. Subsequent reads from it will return its default value.
+  public mutating func clearRegion() {self._region = nil}
+
+  /// Optional selector for additional filtering.
+  public var selector: Macosusesdk_Type_ElementSelector {
+    get {return _selector ?? Macosusesdk_Type_ElementSelector()}
+    set {_selector = newValue}
+  }
+  /// Returns true if `selector` has been explicitly set.
+  public var hasSelector: Bool {return self._selector != nil}
+  /// Clears the value of `selector`. Subsequent reads from it will return its default value.
+  public mutating func clearSelector() {self._selector = nil}
+
+  /// Maximum number of elements to return.
+  public var pageSize: Int32 = 0
+
+  /// Page token from a previous call.
+  public var pageToken: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _region: Macosusesdk_V1_Region? = nil
+  fileprivate var _selector: Macosusesdk_Type_ElementSelector? = nil
+}
+
+/// Response from finding elements in a region.
+public struct Macosusesdk_V1_FindRegionElementsResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Elements within the region.
+  public var elements: [Macosusesdk_Type_Element] = []
+
+  /// Token to retrieve the next page of results.
+  public var nextPageToken: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Request to get a specific element by its resource name.
+public struct Macosusesdk_V1_GetElementRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// The name of the element to retrieve.
+  /// Format: applications/{application}/elements/{element}
+  public var name: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Request to click an element.
+public struct Macosusesdk_V1_ClickElementRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Parent context.
+  public var parent: String = String()
+
+  /// Element ID or selector.
+  public var target: Macosusesdk_V1_ClickElementRequest.OneOf_Target? = nil
+
+  /// Element ID to click.
+  public var elementID: String {
+    get {
+      if case .elementID(let v)? = target {return v}
+      return String()
+    }
+    set {target = .elementID(newValue)}
+  }
+
+  /// Selector to find element to click.
+  public var selector: Macosusesdk_Type_ElementSelector {
+    get {
+      if case .selector(let v)? = target {return v}
+      return Macosusesdk_Type_ElementSelector()
+    }
+    set {target = .selector(newValue)}
+  }
+
+  /// Click type (single, double, right-click).
+  public var clickType: Macosusesdk_V1_ClickElementRequest.ClickType = .unspecified
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  /// Element ID or selector.
+  public enum OneOf_Target: Equatable, Sendable {
+    /// Element ID to click.
+    case elementID(String)
+    /// Selector to find element to click.
+    case selector(Macosusesdk_Type_ElementSelector)
+
+  }
+
+  /// Click type enumeration.
+  public enum ClickType: SwiftProtobuf.Enum, Swift.CaseIterable {
+    public typealias RawValue = Int
+
+    /// Default single click.
+    case unspecified // = 0
+
+    /// Single left-click.
+    case single // = 1
+
+    /// Double-click.
+    case double // = 2
+
+    /// Right-click.
+    case right // = 3
+    case UNRECOGNIZED(Int)
+
+    public init() {
+      self = .unspecified
+    }
+
+    public init?(rawValue: Int) {
+      switch rawValue {
+      case 0: self = .unspecified
+      case 1: self = .single
+      case 2: self = .double
+      case 3: self = .right
+      default: self = .UNRECOGNIZED(rawValue)
+      }
+    }
+
+    public var rawValue: Int {
+      switch self {
+      case .unspecified: return 0
+      case .single: return 1
+      case .double: return 2
+      case .right: return 3
+      case .UNRECOGNIZED(let i): return i
+      }
+    }
+
+    // The compiler won't synthesize support with the UNRECOGNIZED case.
+    public static let allCases: [Macosusesdk_V1_ClickElementRequest.ClickType] = [
+      .unspecified,
+      .single,
+      .double,
+      .right,
+    ]
+
+  }
+
+  public init() {}
+}
+
+/// Response from clicking an element.
+public struct Macosusesdk_V1_ClickElementResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Whether the click was successful.
+  public var success: Bool = false
+
+  /// The element that was clicked.
+  public var element: Macosusesdk_Type_Element {
+    get {return _element ?? Macosusesdk_Type_Element()}
+    set {_element = newValue}
+  }
+  /// Returns true if `element` has been explicitly set.
+  public var hasElement: Bool {return self._element != nil}
+  /// Clears the value of `element`. Subsequent reads from it will return its default value.
+  public mutating func clearElement() {self._element = nil}
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _element: Macosusesdk_Type_Element? = nil
+}
+
+/// Request to write an element's value.
+public struct Macosusesdk_V1_WriteElementValueRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Parent context.
+  public var parent: String = String()
+
+  /// Element ID or selector.
+  public var target: Macosusesdk_V1_WriteElementValueRequest.OneOf_Target? = nil
+
+  /// Element ID to modify.
+  public var elementID: String {
+    get {
+      if case .elementID(let v)? = target {return v}
+      return String()
+    }
+    set {target = .elementID(newValue)}
+  }
+
+  /// Selector to find element to modify.
+  public var selector: Macosusesdk_Type_ElementSelector {
+    get {
+      if case .selector(let v)? = target {return v}
+      return Macosusesdk_Type_ElementSelector()
+    }
+    set {target = .selector(newValue)}
+  }
+
+  /// Value to write.
+  public var value: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  /// Element ID or selector.
+  public enum OneOf_Target: Equatable, Sendable {
+    /// Element ID to modify.
+    case elementID(String)
+    /// Selector to find element to modify.
+    case selector(Macosusesdk_Type_ElementSelector)
+
+  }
+
+  public init() {}
+}
+
+/// Response from writing an element's value.
+public struct Macosusesdk_V1_WriteElementValueResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Whether the operation was successful.
+  public var success: Bool = false
+
+  /// The element that was modified.
+  public var element: Macosusesdk_Type_Element {
+    get {return _element ?? Macosusesdk_Type_Element()}
+    set {_element = newValue}
+  }
+  /// Returns true if `element` has been explicitly set.
+  public var hasElement: Bool {return self._element != nil}
+  /// Clears the value of `element`. Subsequent reads from it will return its default value.
+  public mutating func clearElement() {self._element = nil}
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _element: Macosusesdk_Type_Element? = nil
+}
+
+/// Request to get available actions for an element.
+public struct Macosusesdk_V1_GetElementActionsRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// The name of the element to get actions for.
+  /// Format: applications/{application}/elements/{element}
+  public var name: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Available actions for an element.
+public struct Macosusesdk_V1_ElementActions: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Available action names.
+  public var actions: [String] = []
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Request to perform an accessibility action on an element.
+public struct Macosusesdk_V1_PerformElementActionRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Parent context.
+  public var parent: String = String()
+
+  /// Element ID or selector.
+  public var target: Macosusesdk_V1_PerformElementActionRequest.OneOf_Target? = nil
+
+  /// Element ID.
+  public var elementID: String {
+    get {
+      if case .elementID(let v)? = target {return v}
+      return String()
+    }
+    set {target = .elementID(newValue)}
+  }
+
+  /// Selector to find element.
+  public var selector: Macosusesdk_Type_ElementSelector {
+    get {
+      if case .selector(let v)? = target {return v}
+      return Macosusesdk_Type_ElementSelector()
+    }
+    set {target = .selector(newValue)}
+  }
+
+  /// Action name to perform.
+  public var action: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  /// Element ID or selector.
+  public enum OneOf_Target: Equatable, Sendable {
+    /// Element ID.
+    case elementID(String)
+    /// Selector to find element.
+    case selector(Macosusesdk_Type_ElementSelector)
+
+  }
+
+  public init() {}
+}
+
+/// Response from performing an element action.
+public struct Macosusesdk_V1_PerformElementActionResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Whether the action was successful.
+  public var success: Bool = false
+
+  /// The element.
+  public var element: Macosusesdk_Type_Element {
+    get {return _element ?? Macosusesdk_Type_Element()}
+    set {_element = newValue}
+  }
+  /// Returns true if `element` has been explicitly set.
+  public var hasElement: Bool {return self._element != nil}
+  /// Clears the value of `element`. Subsequent reads from it will return its default value.
+  public mutating func clearElement() {self._element = nil}
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _element: Macosusesdk_Type_Element? = nil
+}
+
+/// Request to wait for an element to appear (long-running operation).
+public struct Macosusesdk_V1_WaitElementRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Parent context.
+  public var parent: String = String()
+
+  /// Selector for the element to wait for.
+  public var selector: Macosusesdk_Type_ElementSelector {
+    get {return _selector ?? Macosusesdk_Type_ElementSelector()}
+    set {_selector = newValue}
+  }
+  /// Returns true if `selector` has been explicitly set.
+  public var hasSelector: Bool {return self._selector != nil}
+  /// Clears the value of `selector`. Subsequent reads from it will return its default value.
+  public mutating func clearSelector() {self._selector = nil}
+
+  /// Maximum time to wait in seconds (default: 30).
+  public var timeout: Double = 0
+
+  /// Poll interval in seconds (default: 0.5).
+  public var pollInterval: Double = 0
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _selector: Macosusesdk_Type_ElementSelector? = nil
+}
+
+/// Response from waiting for an element.
+public struct Macosusesdk_V1_WaitElementResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// The element that appeared.
+  public var element: Macosusesdk_Type_Element {
+    get {return _element ?? Macosusesdk_Type_Element()}
+    set {_element = newValue}
+  }
+  /// Returns true if `element` has been explicitly set.
+  public var hasElement: Bool {return self._element != nil}
+  /// Clears the value of `element`. Subsequent reads from it will return its default value.
+  public mutating func clearElement() {self._element = nil}
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _element: Macosusesdk_Type_Element? = nil
+}
+
+/// Metadata for WaitElement long-running operation.
+public struct Macosusesdk_V1_WaitElementMetadata: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// The selector being waited for.
+  public var selector: Macosusesdk_Type_ElementSelector {
+    get {return _selector ?? Macosusesdk_Type_ElementSelector()}
+    set {_selector = newValue}
+  }
+  /// Returns true if `selector` has been explicitly set.
+  public var hasSelector: Bool {return self._selector != nil}
+  /// Clears the value of `selector`. Subsequent reads from it will return its default value.
+  public mutating func clearSelector() {self._selector = nil}
+
+  /// Number of poll attempts so far.
+  public var attempts: Int32 = 0
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _selector: Macosusesdk_Type_ElementSelector? = nil
+}
+
+/// Request to wait for an element to reach a specific state.
+public struct Macosusesdk_V1_WaitElementStateRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Parent context.
+  public var parent: String = String()
+
+  /// Element ID or selector.
+  public var target: Macosusesdk_V1_WaitElementStateRequest.OneOf_Target? = nil
+
+  /// Element ID.
+  public var elementID: String {
+    get {
+      if case .elementID(let v)? = target {return v}
+      return String()
+    }
+    set {target = .elementID(newValue)}
+  }
+
+  /// Selector to find element.
+  public var selector: Macosusesdk_Type_ElementSelector {
+    get {
+      if case .selector(let v)? = target {return v}
+      return Macosusesdk_Type_ElementSelector()
+    }
+    set {target = .selector(newValue)}
+  }
+
+  /// State condition to wait for.
+  public var condition: Macosusesdk_V1_StateCondition {
+    get {return _condition ?? Macosusesdk_V1_StateCondition()}
+    set {_condition = newValue}
+  }
+  /// Returns true if `condition` has been explicitly set.
+  public var hasCondition: Bool {return self._condition != nil}
+  /// Clears the value of `condition`. Subsequent reads from it will return its default value.
+  public mutating func clearCondition() {self._condition = nil}
+
+  /// Maximum time to wait in seconds (default: 30).
+  public var timeout: Double = 0
+
+  /// Poll interval in seconds (default: 0.5).
+  public var pollInterval: Double = 0
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  /// Element ID or selector.
+  public enum OneOf_Target: Equatable, Sendable {
+    /// Element ID.
+    case elementID(String)
+    /// Selector to find element.
+    case selector(Macosusesdk_Type_ElementSelector)
+
+  }
+
+  public init() {}
+
+  fileprivate var _condition: Macosusesdk_V1_StateCondition? = nil
+}
+
+/// State condition for waiting.
+public struct Macosusesdk_V1_StateCondition: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Condition type.
+  public var condition: Macosusesdk_V1_StateCondition.OneOf_Condition? = nil
+
+  /// Wait for element to be enabled.
+  public var enabled: Bool {
+    get {
+      if case .enabled(let v)? = condition {return v}
+      return false
+    }
+    set {condition = .enabled(newValue)}
+  }
+
+  /// Wait for element to be focused.
+  public var focused: Bool {
+    get {
+      if case .focused(let v)? = condition {return v}
+      return false
+    }
+    set {condition = .focused(newValue)}
+  }
+
+  /// Wait for element text to match.
+  public var textEquals: String {
+    get {
+      if case .textEquals(let v)? = condition {return v}
+      return String()
+    }
+    set {condition = .textEquals(newValue)}
+  }
+
+  /// Wait for element text to contain substring.
+  public var textContains: String {
+    get {
+      if case .textContains(let v)? = condition {return v}
+      return String()
+    }
+    set {condition = .textContains(newValue)}
+  }
+
+  /// Wait for element to have specific attribute value.
+  public var attribute: Macosusesdk_V1_AttributeCondition {
+    get {
+      if case .attribute(let v)? = condition {return v}
+      return Macosusesdk_V1_AttributeCondition()
+    }
+    set {condition = .attribute(newValue)}
+  }
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  /// Condition type.
+  public enum OneOf_Condition: Equatable, Sendable {
+    /// Wait for element to be enabled.
+    case enabled(Bool)
+    /// Wait for element to be focused.
+    case focused(Bool)
+    /// Wait for element text to match.
+    case textEquals(String)
+    /// Wait for element text to contain substring.
+    case textContains(String)
+    /// Wait for element to have specific attribute value.
+    case attribute(Macosusesdk_V1_AttributeCondition)
+
+  }
+
+  public init() {}
+}
+
+/// Attribute condition for waiting.
+public struct Macosusesdk_V1_AttributeCondition: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Resource name.
+  public var name: String = String()
+
+  /// Attribute name.
+  public var attribute: String = String()
+
+  /// Expected attribute value.
+  public var value: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Response from waiting for element state.
+public struct Macosusesdk_V1_WaitElementStateResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// The element in the expected state.
+  public var element: Macosusesdk_Type_Element {
+    get {return _element ?? Macosusesdk_Type_Element()}
+    set {_element = newValue}
+  }
+  /// Returns true if `element` has been explicitly set.
+  public var hasElement: Bool {return self._element != nil}
+  /// Clears the value of `element`. Subsequent reads from it will return its default value.
+  public mutating func clearElement() {self._element = nil}
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _element: Macosusesdk_Type_Element? = nil
+}
+
+/// Metadata for WaitElementState operation.
+public struct Macosusesdk_V1_WaitElementStateMetadata: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// The condition being waited for.
+  public var condition: Macosusesdk_V1_StateCondition {
+    get {return _condition ?? Macosusesdk_V1_StateCondition()}
+    set {_condition = newValue}
+  }
+  /// Returns true if `condition` has been explicitly set.
+  public var hasCondition: Bool {return self._condition != nil}
+  /// Clears the value of `condition`. Subsequent reads from it will return its default value.
+  public mutating func clearCondition() {self._condition = nil}
+
+  /// Number of poll attempts so far.
+  public var attempts: Int32 = 0
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _condition: Macosusesdk_V1_StateCondition? = nil
 }
 
 /// ===== Window Messages =====
@@ -892,6 +1608,1191 @@ public struct Macosusesdk_V1_DeleteMacroRequest: Sendable {
 
   /// If true, delete child resources (executions, logs).
   public var force: Bool = false
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Request to execute a macro (long-running operation).
+public struct Macosusesdk_V1_ExecuteMacroRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Macro to execute.
+  public var macro: String = String()
+
+  /// Parameter values (for parameterized macros).
+  public var parameterValues: Dictionary<String,String> = [:]
+
+  /// Application context (if needed).
+  public var application: String = String()
+
+  /// Execution options.
+  public var options: Macosusesdk_V1_ExecutionOptions {
+    get {return _options ?? Macosusesdk_V1_ExecutionOptions()}
+    set {_options = newValue}
+  }
+  /// Returns true if `options` has been explicitly set.
+  public var hasOptions: Bool {return self._options != nil}
+  /// Clears the value of `options`. Subsequent reads from it will return its default value.
+  public mutating func clearOptions() {self._options = nil}
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _options: Macosusesdk_V1_ExecutionOptions? = nil
+}
+
+/// Options for macro execution.
+public struct Macosusesdk_V1_ExecutionOptions: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Execution speed multiplier (1.0 = normal speed).
+  public var speed: Double = 0
+
+  /// Whether to continue on error.
+  public var continueOnError: Bool = false
+
+  /// Maximum execution time in seconds.
+  public var timeout: Double = 0
+
+  /// Whether to record execution for debugging.
+  public var recordExecution: Bool = false
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Response from executing a macro.
+public struct Macosusesdk_V1_ExecuteMacroResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Whether execution succeeded.
+  public var success: Bool = false
+
+  /// Number of actions executed.
+  public var actionsExecuted: Int32 = 0
+
+  /// Execution duration.
+  public var executionDuration: SwiftProtobuf.Google_Protobuf_Duration {
+    get {return _executionDuration ?? SwiftProtobuf.Google_Protobuf_Duration()}
+    set {_executionDuration = newValue}
+  }
+  /// Returns true if `executionDuration` has been explicitly set.
+  public var hasExecutionDuration: Bool {return self._executionDuration != nil}
+  /// Clears the value of `executionDuration`. Subsequent reads from it will return its default value.
+  public mutating func clearExecutionDuration() {self._executionDuration = nil}
+
+  /// Error message if failed.
+  public var error: String = String()
+
+  /// Execution log (if recording was enabled).
+  public var log: [Macosusesdk_V1_ExecutionLogEntry] = []
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _executionDuration: SwiftProtobuf.Google_Protobuf_Duration? = nil
+}
+
+/// Log entry for macro execution.
+public struct Macosusesdk_V1_ExecutionLogEntry: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Resource name.
+  public var name: String = String()
+
+  /// When the action executed.
+  public var executionTime: SwiftProtobuf.Google_Protobuf_Timestamp {
+    get {return _executionTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_executionTime = newValue}
+  }
+  /// Returns true if `executionTime` has been explicitly set.
+  public var hasExecutionTime: Bool {return self._executionTime != nil}
+  /// Clears the value of `executionTime`. Subsequent reads from it will return its default value.
+  public mutating func clearExecutionTime() {self._executionTime = nil}
+
+  /// Action index in macro.
+  public var actionIndex: Int32 = 0
+
+  /// Action description.
+  public var description_p: String = String()
+
+  /// Whether action succeeded.
+  public var success: Bool = false
+
+  /// Error message if failed.
+  public var error: String = String()
+
+  /// Duration in seconds.
+  public var duration: Double = 0
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _executionTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+}
+
+/// Metadata for ExecuteMacro operation.
+public struct Macosusesdk_V1_ExecuteMacroMetadata: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Macro being executed.
+  public var macro: String = String()
+
+  /// Current action index.
+  public var currentAction: Int32 = 0
+
+  /// Total actions in macro.
+  public var totalActions: Int32 = 0
+
+  /// Elapsed duration.
+  public var elapsedDuration: SwiftProtobuf.Google_Protobuf_Duration {
+    get {return _elapsedDuration ?? SwiftProtobuf.Google_Protobuf_Duration()}
+    set {_elapsedDuration = newValue}
+  }
+  /// Returns true if `elapsedDuration` has been explicitly set.
+  public var hasElapsedDuration: Bool {return self._elapsedDuration != nil}
+  /// Clears the value of `elapsedDuration`. Subsequent reads from it will return its default value.
+  public mutating func clearElapsedDuration() {self._elapsedDuration = nil}
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _elapsedDuration: SwiftProtobuf.Google_Protobuf_Duration? = nil
+}
+
+/// ===== Session Transaction Messages =====
+/// Request to begin a transaction within a session.
+public struct Macosusesdk_V1_BeginTransactionRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Session name.
+  public var session: String = String()
+
+  /// Transaction isolation level.
+  public var isolationLevel: Macosusesdk_V1_BeginTransactionRequest.IsolationLevel = .unspecified
+
+  /// Transaction timeout in seconds (default: 300).
+  public var timeout: Double = 0
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  /// Isolation level for transactions.
+  public enum IsolationLevel: SwiftProtobuf.Enum, Swift.CaseIterable {
+    public typealias RawValue = Int
+
+    /// Default isolation level (SERIALIZABLE).
+    case unspecified // = 0
+
+    /// All operations appear atomic (full snapshot/restore on rollback).
+    case serializable // = 1
+
+    /// Operations may see partial changes (best-effort rollback).
+    case readCommitted // = 2
+    case UNRECOGNIZED(Int)
+
+    public init() {
+      self = .unspecified
+    }
+
+    public init?(rawValue: Int) {
+      switch rawValue {
+      case 0: self = .unspecified
+      case 1: self = .serializable
+      case 2: self = .readCommitted
+      default: self = .UNRECOGNIZED(rawValue)
+      }
+    }
+
+    public var rawValue: Int {
+      switch self {
+      case .unspecified: return 0
+      case .serializable: return 1
+      case .readCommitted: return 2
+      case .UNRECOGNIZED(let i): return i
+      }
+    }
+
+    // The compiler won't synthesize support with the UNRECOGNIZED case.
+    public static let allCases: [Macosusesdk_V1_BeginTransactionRequest.IsolationLevel] = [
+      .unspecified,
+      .serializable,
+      .readCommitted,
+    ]
+
+  }
+
+  public init() {}
+}
+
+/// Response from beginning a transaction.
+public struct Macosusesdk_V1_BeginTransactionResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Transaction ID for subsequent operations.
+  public var transactionID: String = String()
+
+  /// Session with updated state.
+  public var session: Macosusesdk_V1_Session {
+    get {return _session ?? Macosusesdk_V1_Session()}
+    set {_session = newValue}
+  }
+  /// Returns true if `session` has been explicitly set.
+  public var hasSession: Bool {return self._session != nil}
+  /// Clears the value of `session`. Subsequent reads from it will return its default value.
+  public mutating func clearSession() {self._session = nil}
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _session: Macosusesdk_V1_Session? = nil
+}
+
+/// Request to commit a transaction.
+public struct Macosusesdk_V1_CommitTransactionRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// The name of the session to commit.
+  /// Format: sessions/{session}
+  public var name: String = String()
+
+  /// Transaction ID to commit.
+  public var transactionID: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Request to rollback a transaction.
+public struct Macosusesdk_V1_RollbackTransactionRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// The name of the session to rollback.
+  /// Format: sessions/{session}
+  public var name: String = String()
+
+  /// The revision to rollback to.
+  public var revisionID: String = String()
+
+  /// Transaction ID to rollback.
+  public var transactionID: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Request to get a session state snapshot.
+public struct Macosusesdk_V1_GetSessionSnapshotRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// The name of the session to snapshot.
+  /// Format: sessions/{session}
+  public var name: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// ===== Screenshot Messages =====
+/// Request to capture a screenshot of the entire screen.
+public struct Macosusesdk_V1_CaptureScreenshotRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Image format.
+  public var format: Macosusesdk_V1_ImageFormat = .unspecified
+
+  /// JPEG quality (1-100, only for JPEG format).
+  public var quality: Int32 = 0
+
+  /// Include display index in filename.
+  public var display: Int32 = 0
+
+  /// Whether to include OCR text extraction.
+  public var includeOcrText: Bool = false
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Response from capturing a screenshot.
+public struct Macosusesdk_V1_CaptureScreenshotResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Image data (encoded according to format).
+  public var imageData: Data = Data()
+
+  /// Image format used.
+  public var format: Macosusesdk_V1_ImageFormat = .unspecified
+
+  /// Image width in pixels.
+  public var width: Int32 = 0
+
+  /// Image height in pixels.
+  public var height: Int32 = 0
+
+  /// OCR-extracted text (if requested).
+  public var ocrText: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Request to capture a screenshot of a specific window.
+public struct Macosusesdk_V1_CaptureWindowScreenshotRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Window to capture.
+  public var window: String = String()
+
+  /// Image format.
+  public var format: Macosusesdk_V1_ImageFormat = .unspecified
+
+  /// JPEG quality (1-100, only for JPEG format).
+  public var quality: Int32 = 0
+
+  /// Whether to include window shadow.
+  public var includeShadow: Bool = false
+
+  /// Whether to include OCR text extraction.
+  public var includeOcrText: Bool = false
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Response from capturing a window screenshot.
+public struct Macosusesdk_V1_CaptureWindowScreenshotResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Image data (encoded according to format).
+  public var imageData: Data = Data()
+
+  /// Image format used.
+  public var format: Macosusesdk_V1_ImageFormat = .unspecified
+
+  /// Image width in pixels.
+  public var width: Int32 = 0
+
+  /// Image height in pixels.
+  public var height: Int32 = 0
+
+  /// Window that was captured.
+  public var window: String = String()
+
+  /// OCR-extracted text (if requested).
+  public var ocrText: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Request to capture a screenshot of a specific element.
+public struct Macosusesdk_V1_CaptureElementScreenshotRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Parent context (application or window).
+  public var parent: String = String()
+
+  /// Element ID to capture.
+  public var elementID: String = String()
+
+  /// Image format.
+  public var format: Macosusesdk_V1_ImageFormat = .unspecified
+
+  /// JPEG quality (1-100, only for JPEG format).
+  public var quality: Int32 = 0
+
+  /// Padding around element in pixels.
+  public var padding: Int32 = 0
+
+  /// Whether to include OCR text extraction.
+  public var includeOcrText: Bool = false
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Response from capturing an element screenshot.
+public struct Macosusesdk_V1_CaptureElementScreenshotResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Image data (encoded according to format).
+  public var imageData: Data = Data()
+
+  /// Image format used.
+  public var format: Macosusesdk_V1_ImageFormat = .unspecified
+
+  /// Image width in pixels.
+  public var width: Int32 = 0
+
+  /// Image height in pixels.
+  public var height: Int32 = 0
+
+  /// Element ID that was captured.
+  public var elementID: String = String()
+
+  /// OCR-extracted text (if requested).
+  public var ocrText: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Request to capture a screenshot of a screen region.
+public struct Macosusesdk_V1_CaptureRegionScreenshotRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Region to capture (screen coordinates).
+  public var region: Macosusesdk_V1_Region {
+    get {return _region ?? Macosusesdk_V1_Region()}
+    set {_region = newValue}
+  }
+  /// Returns true if `region` has been explicitly set.
+  public var hasRegion: Bool {return self._region != nil}
+  /// Clears the value of `region`. Subsequent reads from it will return its default value.
+  public mutating func clearRegion() {self._region = nil}
+
+  /// Image format.
+  public var format: Macosusesdk_V1_ImageFormat = .unspecified
+
+  /// JPEG quality (1-100, only for JPEG format).
+  public var quality: Int32 = 0
+
+  /// Display index (for multi-monitor setups).
+  public var display: Int32 = 0
+
+  /// Whether to include OCR text extraction.
+  public var includeOcrText: Bool = false
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _region: Macosusesdk_V1_Region? = nil
+}
+
+/// Response from capturing a region screenshot.
+public struct Macosusesdk_V1_CaptureRegionScreenshotResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Image data (encoded according to format).
+  public var imageData: Data = Data()
+
+  /// Image format used.
+  public var format: Macosusesdk_V1_ImageFormat = .unspecified
+
+  /// Image width in pixels.
+  public var width: Int32 = 0
+
+  /// Image height in pixels.
+  public var height: Int32 = 0
+
+  /// Region that was captured.
+  public var region: Macosusesdk_V1_Region {
+    get {return _region ?? Macosusesdk_V1_Region()}
+    set {_region = newValue}
+  }
+  /// Returns true if `region` has been explicitly set.
+  public var hasRegion: Bool {return self._region != nil}
+  /// Clears the value of `region`. Subsequent reads from it will return its default value.
+  public mutating func clearRegion() {self._region = nil}
+
+  /// OCR-extracted text (if requested).
+  public var ocrText: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _region: Macosusesdk_V1_Region? = nil
+}
+
+/// ===== Clipboard Messages =====
+/// Request to get clipboard contents.
+public struct Macosusesdk_V1_GetClipboardRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// The name of the clipboard resource.
+  /// Format: clipboard (singleton)
+  public var name: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Request to write clipboard contents.
+public struct Macosusesdk_V1_WriteClipboardRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Content to write on clipboard.
+  public var content: Macosusesdk_V1_ClipboardContent {
+    get {return _content ?? Macosusesdk_V1_ClipboardContent()}
+    set {_content = newValue}
+  }
+  /// Returns true if `content` has been explicitly set.
+  public var hasContent: Bool {return self._content != nil}
+  /// Clears the value of `content`. Subsequent reads from it will return its default value.
+  public mutating func clearContent() {self._content = nil}
+
+  /// Whether to clear existing clipboard content first.
+  public var clearExisting_p: Bool = false
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _content: Macosusesdk_V1_ClipboardContent? = nil
+}
+
+/// Response from writing clipboard contents.
+public struct Macosusesdk_V1_WriteClipboardResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Whether the operation succeeded.
+  public var success: Bool = false
+
+  /// Content type that was written.
+  public var type: Macosusesdk_V1_ContentType = .unspecified
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Request to clear clipboard contents.
+public struct Macosusesdk_V1_ClearClipboardRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Response from clearing clipboard.
+public struct Macosusesdk_V1_ClearClipboardResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Whether the operation succeeded.
+  public var success: Bool = false
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Request to get clipboard history (if available).
+public struct Macosusesdk_V1_GetClipboardHistoryRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// The name of the clipboard history resource.
+  /// Format: clipboard/history (singleton)
+  public var name: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// ===== File Messages =====
+/// Request to automate an open file dialog.
+public struct Macosusesdk_V1_AutomateOpenFileDialogRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Application context.
+  public var application: String = String()
+
+  /// File path to select (if known).
+  public var filePath: String = String()
+
+  /// Default directory to navigate to.
+  public var defaultDirectory: String = String()
+
+  /// File type filters (e.g., ["*.txt", "*.pdf"]).
+  public var fileFilters: [String] = []
+
+  /// Timeout for dialog to appear (seconds).
+  public var timeout: Double = 0
+
+  /// Whether to allow multiple file selection.
+  public var allowMultiple: Bool = false
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Response from automating an open file dialog.
+public struct Macosusesdk_V1_AutomateOpenFileDialogResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Whether the operation succeeded.
+  public var success: Bool = false
+
+  /// Selected file path(s).
+  public var selectedPaths: [String] = []
+
+  /// Error message if failed.
+  public var error: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Request to automate a save file dialog.
+public struct Macosusesdk_V1_AutomateSaveFileDialogRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Application context.
+  public var application: String = String()
+
+  /// File path to save to.
+  public var filePath: String = String()
+
+  /// Default directory to navigate to.
+  public var defaultDirectory: String = String()
+
+  /// Default filename.
+  public var defaultFilename: String = String()
+
+  /// Timeout for dialog to appear (seconds).
+  public var timeout: Double = 0
+
+  /// Whether to confirm overwrite.
+  public var confirmOverwrite: Bool = false
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Response from automating a save file dialog.
+public struct Macosusesdk_V1_AutomateSaveFileDialogResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Whether the operation succeeded.
+  public var success: Bool = false
+
+  /// Final save path.
+  public var savedPath: String = String()
+
+  /// Error message if failed.
+  public var error: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Request to select a file programmatically.
+public struct Macosusesdk_V1_SelectFileRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Application context.
+  public var application: String = String()
+
+  /// File path to select.
+  public var filePath: String = String()
+
+  /// Whether to reveal Finder after selection.
+  public var revealFinder: Bool = false
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Response from selecting a file.
+public struct Macosusesdk_V1_SelectFileResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Whether the operation succeeded.
+  public var success: Bool = false
+
+  /// Selected file path.
+  public var selectedPath: String = String()
+
+  /// Error message if failed.
+  public var error: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Request to select a directory.
+public struct Macosusesdk_V1_SelectDirectoryRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Application context.
+  public var application: String = String()
+
+  /// Directory path to select.
+  public var directoryPath: String = String()
+
+  /// Whether to create directory when it doesn't exist.
+  public var createMissing: Bool = false
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Response from selecting a directory.
+public struct Macosusesdk_V1_SelectDirectoryResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Whether the operation succeeded.
+  public var success: Bool = false
+
+  /// Selected directory path.
+  public var selectedPath: String = String()
+
+  /// Whether the directory was created.
+  public var created: Bool = false
+
+  /// Error message if failed.
+  public var error: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Request to drag and drop files.
+public struct Macosusesdk_V1_DragFilesRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Application context.
+  public var application: String = String()
+
+  /// File paths to drag.
+  public var filePaths: [String] = []
+
+  /// Target element ID to drop on.
+  public var targetElementID: String = String()
+
+  /// Drag duration in seconds.
+  public var duration: Double = 0
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Response from dragging files.
+public struct Macosusesdk_V1_DragFilesResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Whether the operation succeeded.
+  public var success: Bool = false
+
+  /// Number of files dropped.
+  public var filesDropped: Int32 = 0
+
+  /// Error message if failed.
+  public var error: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// ===== Script Messages =====
+/// Request to execute an AppleScript.
+public struct Macosusesdk_V1_ExecuteAppleScriptRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// AppleScript source code.
+  public var script: String = String()
+
+  /// Timeout for script execution.
+  public var timeout: SwiftProtobuf.Google_Protobuf_Duration {
+    get {return _timeout ?? SwiftProtobuf.Google_Protobuf_Duration()}
+    set {_timeout = newValue}
+  }
+  /// Returns true if `timeout` has been explicitly set.
+  public var hasTimeout: Bool {return self._timeout != nil}
+  /// Clears the value of `timeout`. Subsequent reads from it will return its default value.
+  public mutating func clearTimeout() {self._timeout = nil}
+
+  /// Whether to compile the script (for validation).
+  public var compileOnly: Bool = false
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _timeout: SwiftProtobuf.Google_Protobuf_Duration? = nil
+}
+
+/// Response from executing an AppleScript.
+public struct Macosusesdk_V1_ExecuteAppleScriptResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Whether execution succeeded.
+  public var success: Bool = false
+
+  /// Script output (return value).
+  public var output: String = String()
+
+  /// Error message if failed.
+  public var error: String = String()
+
+  /// Execution duration.
+  public var executionDuration: SwiftProtobuf.Google_Protobuf_Duration {
+    get {return _executionDuration ?? SwiftProtobuf.Google_Protobuf_Duration()}
+    set {_executionDuration = newValue}
+  }
+  /// Returns true if `executionDuration` has been explicitly set.
+  public var hasExecutionDuration: Bool {return self._executionDuration != nil}
+  /// Clears the value of `executionDuration`. Subsequent reads from it will return its default value.
+  public mutating func clearExecutionDuration() {self._executionDuration = nil}
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _executionDuration: SwiftProtobuf.Google_Protobuf_Duration? = nil
+}
+
+/// Request to execute JavaScript for Automation (JXA).
+public struct Macosusesdk_V1_ExecuteJavaScriptRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// JavaScript source code.
+  public var script: String = String()
+
+  /// Timeout for script execution.
+  public var timeout: SwiftProtobuf.Google_Protobuf_Duration {
+    get {return _timeout ?? SwiftProtobuf.Google_Protobuf_Duration()}
+    set {_timeout = newValue}
+  }
+  /// Returns true if `timeout` has been explicitly set.
+  public var hasTimeout: Bool {return self._timeout != nil}
+  /// Clears the value of `timeout`. Subsequent reads from it will return its default value.
+  public mutating func clearTimeout() {self._timeout = nil}
+
+  /// Whether to compile the script (for validation).
+  public var compileOnly: Bool = false
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _timeout: SwiftProtobuf.Google_Protobuf_Duration? = nil
+}
+
+/// Response from executing JXA.
+public struct Macosusesdk_V1_ExecuteJavaScriptResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Whether execution succeeded.
+  public var success: Bool = false
+
+  /// Script output (return value, JSON-encoded).
+  public var output: String = String()
+
+  /// Error message if failed.
+  public var error: String = String()
+
+  /// Execution duration.
+  public var executionDuration: SwiftProtobuf.Google_Protobuf_Duration {
+    get {return _executionDuration ?? SwiftProtobuf.Google_Protobuf_Duration()}
+    set {_executionDuration = newValue}
+  }
+  /// Returns true if `executionDuration` has been explicitly set.
+  public var hasExecutionDuration: Bool {return self._executionDuration != nil}
+  /// Clears the value of `executionDuration`. Subsequent reads from it will return its default value.
+  public mutating func clearExecutionDuration() {self._executionDuration = nil}
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _executionDuration: SwiftProtobuf.Google_Protobuf_Duration? = nil
+}
+
+/// Request to execute a shell command.
+public struct Macosusesdk_V1_ExecuteShellCommandRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Shell command to execute.
+  public var command: String = String()
+
+  /// Arguments for the command.
+  public var args: [String] = []
+
+  /// Working directory for command execution.
+  public var workingDirectory: String = String()
+
+  /// Environment variables (key-value pairs).
+  public var environment: Dictionary<String,String> = [:]
+
+  /// Timeout for command execution.
+  public var timeout: SwiftProtobuf.Google_Protobuf_Duration {
+    get {return _timeout ?? SwiftProtobuf.Google_Protobuf_Duration()}
+    set {_timeout = newValue}
+  }
+  /// Returns true if `timeout` has been explicitly set.
+  public var hasTimeout: Bool {return self._timeout != nil}
+  /// Clears the value of `timeout`. Subsequent reads from it will return its default value.
+  public mutating func clearTimeout() {self._timeout = nil}
+
+  /// Input to provide to command via stdin.
+  public var stdin: String = String()
+
+  /// Shell to use (default: /bin/bash).
+  public var shell: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _timeout: SwiftProtobuf.Google_Protobuf_Duration? = nil
+}
+
+/// Response from executing a shell command.
+public struct Macosusesdk_V1_ExecuteShellCommandResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Whether execution succeeded.
+  public var success: Bool = false
+
+  /// Standard output from command.
+  public var stdout: String = String()
+
+  /// Standard error from command.
+  public var stderr: String = String()
+
+  /// Exit code from command.
+  public var exitCode: Int32 = 0
+
+  /// Execution duration.
+  public var executionDuration: SwiftProtobuf.Google_Protobuf_Duration {
+    get {return _executionDuration ?? SwiftProtobuf.Google_Protobuf_Duration()}
+    set {_executionDuration = newValue}
+  }
+  /// Returns true if `executionDuration` has been explicitly set.
+  public var hasExecutionDuration: Bool {return self._executionDuration != nil}
+  /// Clears the value of `executionDuration`. Subsequent reads from it will return its default value.
+  public mutating func clearExecutionDuration() {self._executionDuration = nil}
+
+  /// Error message if execution failed (not command failure).
+  public var error: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _executionDuration: SwiftProtobuf.Google_Protobuf_Duration? = nil
+}
+
+/// Request to validate a script without executing.
+public struct Macosusesdk_V1_ValidateScriptRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Script type.
+  public var type: Macosusesdk_V1_ScriptType = .unspecified
+
+  /// Script source code.
+  public var script: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Response from validating a script.
+public struct Macosusesdk_V1_ValidateScriptResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Whether the script is valid.
+  public var valid: Bool = false
+
+  /// Validation error messages (if any).
+  public var errors: [String] = []
+
+  /// Validation warnings (if any).
+  public var warnings: [String] = []
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Request to get available scripting dictionaries.
+public struct Macosusesdk_V1_GetScriptingDictionariesRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// The name of the scripting dictionaries resource.
+  /// Format: scriptingDictionaries (singleton)2+
+  public var name: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// ===== Metrics Messages =====
+/// Request to get current metrics.
+public struct Macosusesdk_V1_GetMetricsRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// The name of the metrics resource.
+  /// Format: metrics (singleton)
+  public var name: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Request to get a performance report.
+public struct Macosusesdk_V1_GetPerformanceReportRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// The name of the performance report resource.
+  /// Format: metrics/performanceReport (singleton)
+  public var name: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Request to reset metrics.
+public struct Macosusesdk_V1_ResetMetricsRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Metric types to reset (empty = all).
+  public var types: [Macosusesdk_V1_MetricType] = []
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Response from resetting metrics.
+public struct Macosusesdk_V1_ResetMetricsResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Whether reset succeeded.
+  public var success: Bool = false
+
+  /// Metrics that were reset.
+  public var resetTypes: [Macosusesdk_V1_MetricType] = []
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -1568,6 +3469,1026 @@ extension Macosusesdk_V1_ModifiedElement: SwiftProtobuf.Message, SwiftProtobuf._
       }
       if !storagesAreEqual {return false}
     }
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_FindElementsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".FindElementsRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{1}selector\0\u{3}page_size\0\u{3}page_token\0\u{3}visible_only\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.parent) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._selector) }()
+      case 3: try { try decoder.decodeSingularInt32Field(value: &self.pageSize) }()
+      case 4: try { try decoder.decodeSingularStringField(value: &self.pageToken) }()
+      case 5: try { try decoder.decodeSingularBoolField(value: &self.visibleOnly) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.parent.isEmpty {
+      try visitor.visitSingularStringField(value: self.parent, fieldNumber: 1)
+    }
+    try { if let v = self._selector {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+    } }()
+    if self.pageSize != 0 {
+      try visitor.visitSingularInt32Field(value: self.pageSize, fieldNumber: 3)
+    }
+    if !self.pageToken.isEmpty {
+      try visitor.visitSingularStringField(value: self.pageToken, fieldNumber: 4)
+    }
+    if self.visibleOnly != false {
+      try visitor.visitSingularBoolField(value: self.visibleOnly, fieldNumber: 5)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_FindElementsRequest, rhs: Macosusesdk_V1_FindElementsRequest) -> Bool {
+    if lhs.parent != rhs.parent {return false}
+    if lhs._selector != rhs._selector {return false}
+    if lhs.pageSize != rhs.pageSize {return false}
+    if lhs.pageToken != rhs.pageToken {return false}
+    if lhs.visibleOnly != rhs.visibleOnly {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_FindElementsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".FindElementsResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}elements\0\u{3}next_page_token\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeRepeatedMessageField(value: &self.elements) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.nextPageToken) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.elements.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.elements, fieldNumber: 1)
+    }
+    if !self.nextPageToken.isEmpty {
+      try visitor.visitSingularStringField(value: self.nextPageToken, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_FindElementsResponse, rhs: Macosusesdk_V1_FindElementsResponse) -> Bool {
+    if lhs.elements != rhs.elements {return false}
+    if lhs.nextPageToken != rhs.nextPageToken {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_FindRegionElementsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".FindRegionElementsRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{1}region\0\u{1}selector\0\u{3}page_size\0\u{3}page_token\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.parent) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._region) }()
+      case 3: try { try decoder.decodeSingularMessageField(value: &self._selector) }()
+      case 4: try { try decoder.decodeSingularInt32Field(value: &self.pageSize) }()
+      case 5: try { try decoder.decodeSingularStringField(value: &self.pageToken) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.parent.isEmpty {
+      try visitor.visitSingularStringField(value: self.parent, fieldNumber: 1)
+    }
+    try { if let v = self._region {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+    } }()
+    try { if let v = self._selector {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
+    } }()
+    if self.pageSize != 0 {
+      try visitor.visitSingularInt32Field(value: self.pageSize, fieldNumber: 4)
+    }
+    if !self.pageToken.isEmpty {
+      try visitor.visitSingularStringField(value: self.pageToken, fieldNumber: 5)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_FindRegionElementsRequest, rhs: Macosusesdk_V1_FindRegionElementsRequest) -> Bool {
+    if lhs.parent != rhs.parent {return false}
+    if lhs._region != rhs._region {return false}
+    if lhs._selector != rhs._selector {return false}
+    if lhs.pageSize != rhs.pageSize {return false}
+    if lhs.pageToken != rhs.pageToken {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_FindRegionElementsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".FindRegionElementsResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}elements\0\u{3}next_page_token\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeRepeatedMessageField(value: &self.elements) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.nextPageToken) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.elements.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.elements, fieldNumber: 1)
+    }
+    if !self.nextPageToken.isEmpty {
+      try visitor.visitSingularStringField(value: self.nextPageToken, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_FindRegionElementsResponse, rhs: Macosusesdk_V1_FindRegionElementsResponse) -> Bool {
+    if lhs.elements != rhs.elements {return false}
+    if lhs.nextPageToken != rhs.nextPageToken {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_GetElementRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".GetElementRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_GetElementRequest, rhs: Macosusesdk_V1_GetElementRequest) -> Bool {
+    if lhs.name != rhs.name {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_ClickElementRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ClickElementRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}element_id\0\u{1}selector\0\u{3}click_type\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.parent) }()
+      case 2: try {
+        var v: String?
+        try decoder.decodeSingularStringField(value: &v)
+        if let v = v {
+          if self.target != nil {try decoder.handleConflictingOneOf()}
+          self.target = .elementID(v)
+        }
+      }()
+      case 3: try {
+        var v: Macosusesdk_Type_ElementSelector?
+        var hadOneofValue = false
+        if let current = self.target {
+          hadOneofValue = true
+          if case .selector(let m) = current {v = m}
+        }
+        try decoder.decodeSingularMessageField(value: &v)
+        if let v = v {
+          if hadOneofValue {try decoder.handleConflictingOneOf()}
+          self.target = .selector(v)
+        }
+      }()
+      case 4: try { try decoder.decodeSingularEnumField(value: &self.clickType) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.parent.isEmpty {
+      try visitor.visitSingularStringField(value: self.parent, fieldNumber: 1)
+    }
+    switch self.target {
+    case .elementID?: try {
+      guard case .elementID(let v)? = self.target else { preconditionFailure() }
+      try visitor.visitSingularStringField(value: v, fieldNumber: 2)
+    }()
+    case .selector?: try {
+      guard case .selector(let v)? = self.target else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
+    }()
+    case nil: break
+    }
+    if self.clickType != .unspecified {
+      try visitor.visitSingularEnumField(value: self.clickType, fieldNumber: 4)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_ClickElementRequest, rhs: Macosusesdk_V1_ClickElementRequest) -> Bool {
+    if lhs.parent != rhs.parent {return false}
+    if lhs.target != rhs.target {return false}
+    if lhs.clickType != rhs.clickType {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_ClickElementRequest.ClickType: SwiftProtobuf._ProtoNameProviding {
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0CLICK_TYPE_UNSPECIFIED\0\u{1}CLICK_TYPE_SINGLE\0\u{1}CLICK_TYPE_DOUBLE\0\u{1}CLICK_TYPE_RIGHT\0")
+}
+
+extension Macosusesdk_V1_ClickElementResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ClickElementResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}element\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._element) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if self.success != false {
+      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
+    }
+    try { if let v = self._element {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_ClickElementResponse, rhs: Macosusesdk_V1_ClickElementResponse) -> Bool {
+    if lhs.success != rhs.success {return false}
+    if lhs._element != rhs._element {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_WriteElementValueRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".WriteElementValueRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}element_id\0\u{1}selector\0\u{1}value\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.parent) }()
+      case 2: try {
+        var v: String?
+        try decoder.decodeSingularStringField(value: &v)
+        if let v = v {
+          if self.target != nil {try decoder.handleConflictingOneOf()}
+          self.target = .elementID(v)
+        }
+      }()
+      case 3: try {
+        var v: Macosusesdk_Type_ElementSelector?
+        var hadOneofValue = false
+        if let current = self.target {
+          hadOneofValue = true
+          if case .selector(let m) = current {v = m}
+        }
+        try decoder.decodeSingularMessageField(value: &v)
+        if let v = v {
+          if hadOneofValue {try decoder.handleConflictingOneOf()}
+          self.target = .selector(v)
+        }
+      }()
+      case 4: try { try decoder.decodeSingularStringField(value: &self.value) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.parent.isEmpty {
+      try visitor.visitSingularStringField(value: self.parent, fieldNumber: 1)
+    }
+    switch self.target {
+    case .elementID?: try {
+      guard case .elementID(let v)? = self.target else { preconditionFailure() }
+      try visitor.visitSingularStringField(value: v, fieldNumber: 2)
+    }()
+    case .selector?: try {
+      guard case .selector(let v)? = self.target else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
+    }()
+    case nil: break
+    }
+    if !self.value.isEmpty {
+      try visitor.visitSingularStringField(value: self.value, fieldNumber: 4)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_WriteElementValueRequest, rhs: Macosusesdk_V1_WriteElementValueRequest) -> Bool {
+    if lhs.parent != rhs.parent {return false}
+    if lhs.target != rhs.target {return false}
+    if lhs.value != rhs.value {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_WriteElementValueResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".WriteElementValueResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}element\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._element) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if self.success != false {
+      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
+    }
+    try { if let v = self._element {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_WriteElementValueResponse, rhs: Macosusesdk_V1_WriteElementValueResponse) -> Bool {
+    if lhs.success != rhs.success {return false}
+    if lhs._element != rhs._element {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_GetElementActionsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".GetElementActionsRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_GetElementActionsRequest, rhs: Macosusesdk_V1_GetElementActionsRequest) -> Bool {
+    if lhs.name != rhs.name {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_ElementActions: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ElementActions"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}actions\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeRepeatedStringField(value: &self.actions) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.actions.isEmpty {
+      try visitor.visitRepeatedStringField(value: self.actions, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_ElementActions, rhs: Macosusesdk_V1_ElementActions) -> Bool {
+    if lhs.actions != rhs.actions {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_PerformElementActionRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".PerformElementActionRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}element_id\0\u{1}selector\0\u{1}action\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.parent) }()
+      case 2: try {
+        var v: String?
+        try decoder.decodeSingularStringField(value: &v)
+        if let v = v {
+          if self.target != nil {try decoder.handleConflictingOneOf()}
+          self.target = .elementID(v)
+        }
+      }()
+      case 3: try {
+        var v: Macosusesdk_Type_ElementSelector?
+        var hadOneofValue = false
+        if let current = self.target {
+          hadOneofValue = true
+          if case .selector(let m) = current {v = m}
+        }
+        try decoder.decodeSingularMessageField(value: &v)
+        if let v = v {
+          if hadOneofValue {try decoder.handleConflictingOneOf()}
+          self.target = .selector(v)
+        }
+      }()
+      case 4: try { try decoder.decodeSingularStringField(value: &self.action) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.parent.isEmpty {
+      try visitor.visitSingularStringField(value: self.parent, fieldNumber: 1)
+    }
+    switch self.target {
+    case .elementID?: try {
+      guard case .elementID(let v)? = self.target else { preconditionFailure() }
+      try visitor.visitSingularStringField(value: v, fieldNumber: 2)
+    }()
+    case .selector?: try {
+      guard case .selector(let v)? = self.target else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
+    }()
+    case nil: break
+    }
+    if !self.action.isEmpty {
+      try visitor.visitSingularStringField(value: self.action, fieldNumber: 4)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_PerformElementActionRequest, rhs: Macosusesdk_V1_PerformElementActionRequest) -> Bool {
+    if lhs.parent != rhs.parent {return false}
+    if lhs.target != rhs.target {return false}
+    if lhs.action != rhs.action {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_PerformElementActionResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".PerformElementActionResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}element\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._element) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if self.success != false {
+      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
+    }
+    try { if let v = self._element {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_PerformElementActionResponse, rhs: Macosusesdk_V1_PerformElementActionResponse) -> Bool {
+    if lhs.success != rhs.success {return false}
+    if lhs._element != rhs._element {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_WaitElementRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".WaitElementRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{1}selector\0\u{1}timeout\0\u{3}poll_interval\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.parent) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._selector) }()
+      case 3: try { try decoder.decodeSingularDoubleField(value: &self.timeout) }()
+      case 4: try { try decoder.decodeSingularDoubleField(value: &self.pollInterval) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.parent.isEmpty {
+      try visitor.visitSingularStringField(value: self.parent, fieldNumber: 1)
+    }
+    try { if let v = self._selector {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+    } }()
+    if self.timeout.bitPattern != 0 {
+      try visitor.visitSingularDoubleField(value: self.timeout, fieldNumber: 3)
+    }
+    if self.pollInterval.bitPattern != 0 {
+      try visitor.visitSingularDoubleField(value: self.pollInterval, fieldNumber: 4)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_WaitElementRequest, rhs: Macosusesdk_V1_WaitElementRequest) -> Bool {
+    if lhs.parent != rhs.parent {return false}
+    if lhs._selector != rhs._selector {return false}
+    if lhs.timeout != rhs.timeout {return false}
+    if lhs.pollInterval != rhs.pollInterval {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_WaitElementResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".WaitElementResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}element\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._element) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._element {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_WaitElementResponse, rhs: Macosusesdk_V1_WaitElementResponse) -> Bool {
+    if lhs._element != rhs._element {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_WaitElementMetadata: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".WaitElementMetadata"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}selector\0\u{1}attempts\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._selector) }()
+      case 2: try { try decoder.decodeSingularInt32Field(value: &self.attempts) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._selector {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
+    if self.attempts != 0 {
+      try visitor.visitSingularInt32Field(value: self.attempts, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_WaitElementMetadata, rhs: Macosusesdk_V1_WaitElementMetadata) -> Bool {
+    if lhs._selector != rhs._selector {return false}
+    if lhs.attempts != rhs.attempts {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_WaitElementStateRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".WaitElementStateRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}element_id\0\u{1}selector\0\u{1}condition\0\u{1}timeout\0\u{3}poll_interval\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.parent) }()
+      case 2: try {
+        var v: String?
+        try decoder.decodeSingularStringField(value: &v)
+        if let v = v {
+          if self.target != nil {try decoder.handleConflictingOneOf()}
+          self.target = .elementID(v)
+        }
+      }()
+      case 3: try {
+        var v: Macosusesdk_Type_ElementSelector?
+        var hadOneofValue = false
+        if let current = self.target {
+          hadOneofValue = true
+          if case .selector(let m) = current {v = m}
+        }
+        try decoder.decodeSingularMessageField(value: &v)
+        if let v = v {
+          if hadOneofValue {try decoder.handleConflictingOneOf()}
+          self.target = .selector(v)
+        }
+      }()
+      case 4: try { try decoder.decodeSingularMessageField(value: &self._condition) }()
+      case 5: try { try decoder.decodeSingularDoubleField(value: &self.timeout) }()
+      case 6: try { try decoder.decodeSingularDoubleField(value: &self.pollInterval) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.parent.isEmpty {
+      try visitor.visitSingularStringField(value: self.parent, fieldNumber: 1)
+    }
+    switch self.target {
+    case .elementID?: try {
+      guard case .elementID(let v)? = self.target else { preconditionFailure() }
+      try visitor.visitSingularStringField(value: v, fieldNumber: 2)
+    }()
+    case .selector?: try {
+      guard case .selector(let v)? = self.target else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
+    }()
+    case nil: break
+    }
+    try { if let v = self._condition {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
+    } }()
+    if self.timeout.bitPattern != 0 {
+      try visitor.visitSingularDoubleField(value: self.timeout, fieldNumber: 5)
+    }
+    if self.pollInterval.bitPattern != 0 {
+      try visitor.visitSingularDoubleField(value: self.pollInterval, fieldNumber: 6)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_WaitElementStateRequest, rhs: Macosusesdk_V1_WaitElementStateRequest) -> Bool {
+    if lhs.parent != rhs.parent {return false}
+    if lhs.target != rhs.target {return false}
+    if lhs._condition != rhs._condition {return false}
+    if lhs.timeout != rhs.timeout {return false}
+    if lhs.pollInterval != rhs.pollInterval {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_StateCondition: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".StateCondition"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}enabled\0\u{1}focused\0\u{3}text_equals\0\u{3}text_contains\0\u{1}attribute\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try {
+        var v: Bool?
+        try decoder.decodeSingularBoolField(value: &v)
+        if let v = v {
+          if self.condition != nil {try decoder.handleConflictingOneOf()}
+          self.condition = .enabled(v)
+        }
+      }()
+      case 2: try {
+        var v: Bool?
+        try decoder.decodeSingularBoolField(value: &v)
+        if let v = v {
+          if self.condition != nil {try decoder.handleConflictingOneOf()}
+          self.condition = .focused(v)
+        }
+      }()
+      case 3: try {
+        var v: String?
+        try decoder.decodeSingularStringField(value: &v)
+        if let v = v {
+          if self.condition != nil {try decoder.handleConflictingOneOf()}
+          self.condition = .textEquals(v)
+        }
+      }()
+      case 4: try {
+        var v: String?
+        try decoder.decodeSingularStringField(value: &v)
+        if let v = v {
+          if self.condition != nil {try decoder.handleConflictingOneOf()}
+          self.condition = .textContains(v)
+        }
+      }()
+      case 5: try {
+        var v: Macosusesdk_V1_AttributeCondition?
+        var hadOneofValue = false
+        if let current = self.condition {
+          hadOneofValue = true
+          if case .attribute(let m) = current {v = m}
+        }
+        try decoder.decodeSingularMessageField(value: &v)
+        if let v = v {
+          if hadOneofValue {try decoder.handleConflictingOneOf()}
+          self.condition = .attribute(v)
+        }
+      }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    switch self.condition {
+    case .enabled?: try {
+      guard case .enabled(let v)? = self.condition else { preconditionFailure() }
+      try visitor.visitSingularBoolField(value: v, fieldNumber: 1)
+    }()
+    case .focused?: try {
+      guard case .focused(let v)? = self.condition else { preconditionFailure() }
+      try visitor.visitSingularBoolField(value: v, fieldNumber: 2)
+    }()
+    case .textEquals?: try {
+      guard case .textEquals(let v)? = self.condition else { preconditionFailure() }
+      try visitor.visitSingularStringField(value: v, fieldNumber: 3)
+    }()
+    case .textContains?: try {
+      guard case .textContains(let v)? = self.condition else { preconditionFailure() }
+      try visitor.visitSingularStringField(value: v, fieldNumber: 4)
+    }()
+    case .attribute?: try {
+      guard case .attribute(let v)? = self.condition else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
+    }()
+    case nil: break
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_StateCondition, rhs: Macosusesdk_V1_StateCondition) -> Bool {
+    if lhs.condition != rhs.condition {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_AttributeCondition: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".AttributeCondition"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}attribute\0\u{1}value\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.attribute) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.value) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
+    }
+    if !self.attribute.isEmpty {
+      try visitor.visitSingularStringField(value: self.attribute, fieldNumber: 2)
+    }
+    if !self.value.isEmpty {
+      try visitor.visitSingularStringField(value: self.value, fieldNumber: 3)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_AttributeCondition, rhs: Macosusesdk_V1_AttributeCondition) -> Bool {
+    if lhs.name != rhs.name {return false}
+    if lhs.attribute != rhs.attribute {return false}
+    if lhs.value != rhs.value {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_WaitElementStateResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".WaitElementStateResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}element\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._element) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._element {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_WaitElementStateResponse, rhs: Macosusesdk_V1_WaitElementStateResponse) -> Bool {
+    if lhs._element != rhs._element {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_WaitElementStateMetadata: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".WaitElementStateMetadata"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}condition\0\u{1}attempts\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._condition) }()
+      case 2: try { try decoder.decodeSingularInt32Field(value: &self.attempts) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._condition {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
+    if self.attempts != 0 {
+      try visitor.visitSingularInt32Field(value: self.attempts, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_WaitElementStateMetadata, rhs: Macosusesdk_V1_WaitElementStateMetadata) -> Bool {
+    if lhs._condition != rhs._condition {return false}
+    if lhs.attempts != rhs.attempts {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -2573,6 +5494,2040 @@ extension Macosusesdk_V1_DeleteMacroRequest: SwiftProtobuf.Message, SwiftProtobu
   public static func ==(lhs: Macosusesdk_V1_DeleteMacroRequest, rhs: Macosusesdk_V1_DeleteMacroRequest) -> Bool {
     if lhs.name != rhs.name {return false}
     if lhs.force != rhs.force {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_ExecuteMacroRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ExecuteMacroRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}macro\0\u{3}parameter_values\0\u{1}application\0\u{1}options\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.macro) }()
+      case 2: try { try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufString>.self, value: &self.parameterValues) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.application) }()
+      case 4: try { try decoder.decodeSingularMessageField(value: &self._options) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.macro.isEmpty {
+      try visitor.visitSingularStringField(value: self.macro, fieldNumber: 1)
+    }
+    if !self.parameterValues.isEmpty {
+      try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufString>.self, value: self.parameterValues, fieldNumber: 2)
+    }
+    if !self.application.isEmpty {
+      try visitor.visitSingularStringField(value: self.application, fieldNumber: 3)
+    }
+    try { if let v = self._options {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_ExecuteMacroRequest, rhs: Macosusesdk_V1_ExecuteMacroRequest) -> Bool {
+    if lhs.macro != rhs.macro {return false}
+    if lhs.parameterValues != rhs.parameterValues {return false}
+    if lhs.application != rhs.application {return false}
+    if lhs._options != rhs._options {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_ExecutionOptions: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ExecutionOptions"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}speed\0\u{3}continue_on_error\0\u{1}timeout\0\u{3}record_execution\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularDoubleField(value: &self.speed) }()
+      case 2: try { try decoder.decodeSingularBoolField(value: &self.continueOnError) }()
+      case 3: try { try decoder.decodeSingularDoubleField(value: &self.timeout) }()
+      case 4: try { try decoder.decodeSingularBoolField(value: &self.recordExecution) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.speed.bitPattern != 0 {
+      try visitor.visitSingularDoubleField(value: self.speed, fieldNumber: 1)
+    }
+    if self.continueOnError != false {
+      try visitor.visitSingularBoolField(value: self.continueOnError, fieldNumber: 2)
+    }
+    if self.timeout.bitPattern != 0 {
+      try visitor.visitSingularDoubleField(value: self.timeout, fieldNumber: 3)
+    }
+    if self.recordExecution != false {
+      try visitor.visitSingularBoolField(value: self.recordExecution, fieldNumber: 4)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_ExecutionOptions, rhs: Macosusesdk_V1_ExecutionOptions) -> Bool {
+    if lhs.speed != rhs.speed {return false}
+    if lhs.continueOnError != rhs.continueOnError {return false}
+    if lhs.timeout != rhs.timeout {return false}
+    if lhs.recordExecution != rhs.recordExecution {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_ExecuteMacroResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ExecuteMacroResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{3}actions_executed\0\u{3}execution_duration\0\u{1}error\0\u{1}log\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
+      case 2: try { try decoder.decodeSingularInt32Field(value: &self.actionsExecuted) }()
+      case 3: try { try decoder.decodeSingularMessageField(value: &self._executionDuration) }()
+      case 4: try { try decoder.decodeSingularStringField(value: &self.error) }()
+      case 5: try { try decoder.decodeRepeatedMessageField(value: &self.log) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if self.success != false {
+      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
+    }
+    if self.actionsExecuted != 0 {
+      try visitor.visitSingularInt32Field(value: self.actionsExecuted, fieldNumber: 2)
+    }
+    try { if let v = self._executionDuration {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
+    } }()
+    if !self.error.isEmpty {
+      try visitor.visitSingularStringField(value: self.error, fieldNumber: 4)
+    }
+    if !self.log.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.log, fieldNumber: 5)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_ExecuteMacroResponse, rhs: Macosusesdk_V1_ExecuteMacroResponse) -> Bool {
+    if lhs.success != rhs.success {return false}
+    if lhs.actionsExecuted != rhs.actionsExecuted {return false}
+    if lhs._executionDuration != rhs._executionDuration {return false}
+    if lhs.error != rhs.error {return false}
+    if lhs.log != rhs.log {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_ExecutionLogEntry: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ExecutionLogEntry"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}execution_time\0\u{3}action_index\0\u{1}description\0\u{1}success\0\u{1}error\0\u{1}duration\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._executionTime) }()
+      case 3: try { try decoder.decodeSingularInt32Field(value: &self.actionIndex) }()
+      case 4: try { try decoder.decodeSingularStringField(value: &self.description_p) }()
+      case 5: try { try decoder.decodeSingularBoolField(value: &self.success) }()
+      case 6: try { try decoder.decodeSingularStringField(value: &self.error) }()
+      case 7: try { try decoder.decodeSingularDoubleField(value: &self.duration) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
+    }
+    try { if let v = self._executionTime {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+    } }()
+    if self.actionIndex != 0 {
+      try visitor.visitSingularInt32Field(value: self.actionIndex, fieldNumber: 3)
+    }
+    if !self.description_p.isEmpty {
+      try visitor.visitSingularStringField(value: self.description_p, fieldNumber: 4)
+    }
+    if self.success != false {
+      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 5)
+    }
+    if !self.error.isEmpty {
+      try visitor.visitSingularStringField(value: self.error, fieldNumber: 6)
+    }
+    if self.duration.bitPattern != 0 {
+      try visitor.visitSingularDoubleField(value: self.duration, fieldNumber: 7)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_ExecutionLogEntry, rhs: Macosusesdk_V1_ExecutionLogEntry) -> Bool {
+    if lhs.name != rhs.name {return false}
+    if lhs._executionTime != rhs._executionTime {return false}
+    if lhs.actionIndex != rhs.actionIndex {return false}
+    if lhs.description_p != rhs.description_p {return false}
+    if lhs.success != rhs.success {return false}
+    if lhs.error != rhs.error {return false}
+    if lhs.duration != rhs.duration {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_ExecuteMacroMetadata: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ExecuteMacroMetadata"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}macro\0\u{3}current_action\0\u{3}total_actions\0\u{3}elapsed_duration\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.macro) }()
+      case 2: try { try decoder.decodeSingularInt32Field(value: &self.currentAction) }()
+      case 3: try { try decoder.decodeSingularInt32Field(value: &self.totalActions) }()
+      case 4: try { try decoder.decodeSingularMessageField(value: &self._elapsedDuration) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.macro.isEmpty {
+      try visitor.visitSingularStringField(value: self.macro, fieldNumber: 1)
+    }
+    if self.currentAction != 0 {
+      try visitor.visitSingularInt32Field(value: self.currentAction, fieldNumber: 2)
+    }
+    if self.totalActions != 0 {
+      try visitor.visitSingularInt32Field(value: self.totalActions, fieldNumber: 3)
+    }
+    try { if let v = self._elapsedDuration {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_ExecuteMacroMetadata, rhs: Macosusesdk_V1_ExecuteMacroMetadata) -> Bool {
+    if lhs.macro != rhs.macro {return false}
+    if lhs.currentAction != rhs.currentAction {return false}
+    if lhs.totalActions != rhs.totalActions {return false}
+    if lhs._elapsedDuration != rhs._elapsedDuration {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_BeginTransactionRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".BeginTransactionRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}session\0\u{3}isolation_level\0\u{1}timeout\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.session) }()
+      case 2: try { try decoder.decodeSingularEnumField(value: &self.isolationLevel) }()
+      case 3: try { try decoder.decodeSingularDoubleField(value: &self.timeout) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.session.isEmpty {
+      try visitor.visitSingularStringField(value: self.session, fieldNumber: 1)
+    }
+    if self.isolationLevel != .unspecified {
+      try visitor.visitSingularEnumField(value: self.isolationLevel, fieldNumber: 2)
+    }
+    if self.timeout.bitPattern != 0 {
+      try visitor.visitSingularDoubleField(value: self.timeout, fieldNumber: 3)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_BeginTransactionRequest, rhs: Macosusesdk_V1_BeginTransactionRequest) -> Bool {
+    if lhs.session != rhs.session {return false}
+    if lhs.isolationLevel != rhs.isolationLevel {return false}
+    if lhs.timeout != rhs.timeout {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_BeginTransactionRequest.IsolationLevel: SwiftProtobuf._ProtoNameProviding {
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0ISOLATION_LEVEL_UNSPECIFIED\0\u{1}ISOLATION_LEVEL_SERIALIZABLE\0\u{1}ISOLATION_LEVEL_READ_COMMITTED\0")
+}
+
+extension Macosusesdk_V1_BeginTransactionResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".BeginTransactionResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}transaction_id\0\u{1}session\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.transactionID) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._session) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.transactionID.isEmpty {
+      try visitor.visitSingularStringField(value: self.transactionID, fieldNumber: 1)
+    }
+    try { if let v = self._session {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_BeginTransactionResponse, rhs: Macosusesdk_V1_BeginTransactionResponse) -> Bool {
+    if lhs.transactionID != rhs.transactionID {return false}
+    if lhs._session != rhs._session {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_CommitTransactionRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".CommitTransactionRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}transaction_id\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.transactionID) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
+    }
+    if !self.transactionID.isEmpty {
+      try visitor.visitSingularStringField(value: self.transactionID, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_CommitTransactionRequest, rhs: Macosusesdk_V1_CommitTransactionRequest) -> Bool {
+    if lhs.name != rhs.name {return false}
+    if lhs.transactionID != rhs.transactionID {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_RollbackTransactionRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".RollbackTransactionRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}revision_id\0\u{3}transaction_id\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.revisionID) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.transactionID) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
+    }
+    if !self.revisionID.isEmpty {
+      try visitor.visitSingularStringField(value: self.revisionID, fieldNumber: 2)
+    }
+    if !self.transactionID.isEmpty {
+      try visitor.visitSingularStringField(value: self.transactionID, fieldNumber: 3)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_RollbackTransactionRequest, rhs: Macosusesdk_V1_RollbackTransactionRequest) -> Bool {
+    if lhs.name != rhs.name {return false}
+    if lhs.revisionID != rhs.revisionID {return false}
+    if lhs.transactionID != rhs.transactionID {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_GetSessionSnapshotRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".GetSessionSnapshotRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_GetSessionSnapshotRequest, rhs: Macosusesdk_V1_GetSessionSnapshotRequest) -> Bool {
+    if lhs.name != rhs.name {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_CaptureScreenshotRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".CaptureScreenshotRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}format\0\u{1}quality\0\u{1}display\0\u{3}include_ocr_text\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularEnumField(value: &self.format) }()
+      case 2: try { try decoder.decodeSingularInt32Field(value: &self.quality) }()
+      case 3: try { try decoder.decodeSingularInt32Field(value: &self.display) }()
+      case 4: try { try decoder.decodeSingularBoolField(value: &self.includeOcrText) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.format != .unspecified {
+      try visitor.visitSingularEnumField(value: self.format, fieldNumber: 1)
+    }
+    if self.quality != 0 {
+      try visitor.visitSingularInt32Field(value: self.quality, fieldNumber: 2)
+    }
+    if self.display != 0 {
+      try visitor.visitSingularInt32Field(value: self.display, fieldNumber: 3)
+    }
+    if self.includeOcrText != false {
+      try visitor.visitSingularBoolField(value: self.includeOcrText, fieldNumber: 4)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_CaptureScreenshotRequest, rhs: Macosusesdk_V1_CaptureScreenshotRequest) -> Bool {
+    if lhs.format != rhs.format {return false}
+    if lhs.quality != rhs.quality {return false}
+    if lhs.display != rhs.display {return false}
+    if lhs.includeOcrText != rhs.includeOcrText {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_CaptureScreenshotResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".CaptureScreenshotResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}image_data\0\u{1}format\0\u{1}width\0\u{1}height\0\u{3}ocr_text\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBytesField(value: &self.imageData) }()
+      case 2: try { try decoder.decodeSingularEnumField(value: &self.format) }()
+      case 3: try { try decoder.decodeSingularInt32Field(value: &self.width) }()
+      case 4: try { try decoder.decodeSingularInt32Field(value: &self.height) }()
+      case 5: try { try decoder.decodeSingularStringField(value: &self.ocrText) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.imageData.isEmpty {
+      try visitor.visitSingularBytesField(value: self.imageData, fieldNumber: 1)
+    }
+    if self.format != .unspecified {
+      try visitor.visitSingularEnumField(value: self.format, fieldNumber: 2)
+    }
+    if self.width != 0 {
+      try visitor.visitSingularInt32Field(value: self.width, fieldNumber: 3)
+    }
+    if self.height != 0 {
+      try visitor.visitSingularInt32Field(value: self.height, fieldNumber: 4)
+    }
+    if !self.ocrText.isEmpty {
+      try visitor.visitSingularStringField(value: self.ocrText, fieldNumber: 5)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_CaptureScreenshotResponse, rhs: Macosusesdk_V1_CaptureScreenshotResponse) -> Bool {
+    if lhs.imageData != rhs.imageData {return false}
+    if lhs.format != rhs.format {return false}
+    if lhs.width != rhs.width {return false}
+    if lhs.height != rhs.height {return false}
+    if lhs.ocrText != rhs.ocrText {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_CaptureWindowScreenshotRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".CaptureWindowScreenshotRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}window\0\u{1}format\0\u{1}quality\0\u{3}include_shadow\0\u{3}include_ocr_text\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.window) }()
+      case 2: try { try decoder.decodeSingularEnumField(value: &self.format) }()
+      case 3: try { try decoder.decodeSingularInt32Field(value: &self.quality) }()
+      case 4: try { try decoder.decodeSingularBoolField(value: &self.includeShadow) }()
+      case 5: try { try decoder.decodeSingularBoolField(value: &self.includeOcrText) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.window.isEmpty {
+      try visitor.visitSingularStringField(value: self.window, fieldNumber: 1)
+    }
+    if self.format != .unspecified {
+      try visitor.visitSingularEnumField(value: self.format, fieldNumber: 2)
+    }
+    if self.quality != 0 {
+      try visitor.visitSingularInt32Field(value: self.quality, fieldNumber: 3)
+    }
+    if self.includeShadow != false {
+      try visitor.visitSingularBoolField(value: self.includeShadow, fieldNumber: 4)
+    }
+    if self.includeOcrText != false {
+      try visitor.visitSingularBoolField(value: self.includeOcrText, fieldNumber: 5)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_CaptureWindowScreenshotRequest, rhs: Macosusesdk_V1_CaptureWindowScreenshotRequest) -> Bool {
+    if lhs.window != rhs.window {return false}
+    if lhs.format != rhs.format {return false}
+    if lhs.quality != rhs.quality {return false}
+    if lhs.includeShadow != rhs.includeShadow {return false}
+    if lhs.includeOcrText != rhs.includeOcrText {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_CaptureWindowScreenshotResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".CaptureWindowScreenshotResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}image_data\0\u{1}format\0\u{1}width\0\u{1}height\0\u{1}window\0\u{3}ocr_text\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBytesField(value: &self.imageData) }()
+      case 2: try { try decoder.decodeSingularEnumField(value: &self.format) }()
+      case 3: try { try decoder.decodeSingularInt32Field(value: &self.width) }()
+      case 4: try { try decoder.decodeSingularInt32Field(value: &self.height) }()
+      case 5: try { try decoder.decodeSingularStringField(value: &self.window) }()
+      case 6: try { try decoder.decodeSingularStringField(value: &self.ocrText) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.imageData.isEmpty {
+      try visitor.visitSingularBytesField(value: self.imageData, fieldNumber: 1)
+    }
+    if self.format != .unspecified {
+      try visitor.visitSingularEnumField(value: self.format, fieldNumber: 2)
+    }
+    if self.width != 0 {
+      try visitor.visitSingularInt32Field(value: self.width, fieldNumber: 3)
+    }
+    if self.height != 0 {
+      try visitor.visitSingularInt32Field(value: self.height, fieldNumber: 4)
+    }
+    if !self.window.isEmpty {
+      try visitor.visitSingularStringField(value: self.window, fieldNumber: 5)
+    }
+    if !self.ocrText.isEmpty {
+      try visitor.visitSingularStringField(value: self.ocrText, fieldNumber: 6)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_CaptureWindowScreenshotResponse, rhs: Macosusesdk_V1_CaptureWindowScreenshotResponse) -> Bool {
+    if lhs.imageData != rhs.imageData {return false}
+    if lhs.format != rhs.format {return false}
+    if lhs.width != rhs.width {return false}
+    if lhs.height != rhs.height {return false}
+    if lhs.window != rhs.window {return false}
+    if lhs.ocrText != rhs.ocrText {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_CaptureElementScreenshotRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".CaptureElementScreenshotRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}element_id\0\u{1}format\0\u{1}quality\0\u{1}padding\0\u{3}include_ocr_text\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.parent) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.elementID) }()
+      case 3: try { try decoder.decodeSingularEnumField(value: &self.format) }()
+      case 4: try { try decoder.decodeSingularInt32Field(value: &self.quality) }()
+      case 5: try { try decoder.decodeSingularInt32Field(value: &self.padding) }()
+      case 6: try { try decoder.decodeSingularBoolField(value: &self.includeOcrText) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.parent.isEmpty {
+      try visitor.visitSingularStringField(value: self.parent, fieldNumber: 1)
+    }
+    if !self.elementID.isEmpty {
+      try visitor.visitSingularStringField(value: self.elementID, fieldNumber: 2)
+    }
+    if self.format != .unspecified {
+      try visitor.visitSingularEnumField(value: self.format, fieldNumber: 3)
+    }
+    if self.quality != 0 {
+      try visitor.visitSingularInt32Field(value: self.quality, fieldNumber: 4)
+    }
+    if self.padding != 0 {
+      try visitor.visitSingularInt32Field(value: self.padding, fieldNumber: 5)
+    }
+    if self.includeOcrText != false {
+      try visitor.visitSingularBoolField(value: self.includeOcrText, fieldNumber: 6)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_CaptureElementScreenshotRequest, rhs: Macosusesdk_V1_CaptureElementScreenshotRequest) -> Bool {
+    if lhs.parent != rhs.parent {return false}
+    if lhs.elementID != rhs.elementID {return false}
+    if lhs.format != rhs.format {return false}
+    if lhs.quality != rhs.quality {return false}
+    if lhs.padding != rhs.padding {return false}
+    if lhs.includeOcrText != rhs.includeOcrText {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_CaptureElementScreenshotResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".CaptureElementScreenshotResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}image_data\0\u{1}format\0\u{1}width\0\u{1}height\0\u{3}element_id\0\u{3}ocr_text\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBytesField(value: &self.imageData) }()
+      case 2: try { try decoder.decodeSingularEnumField(value: &self.format) }()
+      case 3: try { try decoder.decodeSingularInt32Field(value: &self.width) }()
+      case 4: try { try decoder.decodeSingularInt32Field(value: &self.height) }()
+      case 5: try { try decoder.decodeSingularStringField(value: &self.elementID) }()
+      case 6: try { try decoder.decodeSingularStringField(value: &self.ocrText) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.imageData.isEmpty {
+      try visitor.visitSingularBytesField(value: self.imageData, fieldNumber: 1)
+    }
+    if self.format != .unspecified {
+      try visitor.visitSingularEnumField(value: self.format, fieldNumber: 2)
+    }
+    if self.width != 0 {
+      try visitor.visitSingularInt32Field(value: self.width, fieldNumber: 3)
+    }
+    if self.height != 0 {
+      try visitor.visitSingularInt32Field(value: self.height, fieldNumber: 4)
+    }
+    if !self.elementID.isEmpty {
+      try visitor.visitSingularStringField(value: self.elementID, fieldNumber: 5)
+    }
+    if !self.ocrText.isEmpty {
+      try visitor.visitSingularStringField(value: self.ocrText, fieldNumber: 6)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_CaptureElementScreenshotResponse, rhs: Macosusesdk_V1_CaptureElementScreenshotResponse) -> Bool {
+    if lhs.imageData != rhs.imageData {return false}
+    if lhs.format != rhs.format {return false}
+    if lhs.width != rhs.width {return false}
+    if lhs.height != rhs.height {return false}
+    if lhs.elementID != rhs.elementID {return false}
+    if lhs.ocrText != rhs.ocrText {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_CaptureRegionScreenshotRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".CaptureRegionScreenshotRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}region\0\u{1}format\0\u{1}quality\0\u{1}display\0\u{3}include_ocr_text\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._region) }()
+      case 2: try { try decoder.decodeSingularEnumField(value: &self.format) }()
+      case 3: try { try decoder.decodeSingularInt32Field(value: &self.quality) }()
+      case 4: try { try decoder.decodeSingularInt32Field(value: &self.display) }()
+      case 5: try { try decoder.decodeSingularBoolField(value: &self.includeOcrText) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._region {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
+    if self.format != .unspecified {
+      try visitor.visitSingularEnumField(value: self.format, fieldNumber: 2)
+    }
+    if self.quality != 0 {
+      try visitor.visitSingularInt32Field(value: self.quality, fieldNumber: 3)
+    }
+    if self.display != 0 {
+      try visitor.visitSingularInt32Field(value: self.display, fieldNumber: 4)
+    }
+    if self.includeOcrText != false {
+      try visitor.visitSingularBoolField(value: self.includeOcrText, fieldNumber: 5)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_CaptureRegionScreenshotRequest, rhs: Macosusesdk_V1_CaptureRegionScreenshotRequest) -> Bool {
+    if lhs._region != rhs._region {return false}
+    if lhs.format != rhs.format {return false}
+    if lhs.quality != rhs.quality {return false}
+    if lhs.display != rhs.display {return false}
+    if lhs.includeOcrText != rhs.includeOcrText {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_CaptureRegionScreenshotResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".CaptureRegionScreenshotResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}image_data\0\u{1}format\0\u{1}width\0\u{1}height\0\u{1}region\0\u{3}ocr_text\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBytesField(value: &self.imageData) }()
+      case 2: try { try decoder.decodeSingularEnumField(value: &self.format) }()
+      case 3: try { try decoder.decodeSingularInt32Field(value: &self.width) }()
+      case 4: try { try decoder.decodeSingularInt32Field(value: &self.height) }()
+      case 5: try { try decoder.decodeSingularMessageField(value: &self._region) }()
+      case 6: try { try decoder.decodeSingularStringField(value: &self.ocrText) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.imageData.isEmpty {
+      try visitor.visitSingularBytesField(value: self.imageData, fieldNumber: 1)
+    }
+    if self.format != .unspecified {
+      try visitor.visitSingularEnumField(value: self.format, fieldNumber: 2)
+    }
+    if self.width != 0 {
+      try visitor.visitSingularInt32Field(value: self.width, fieldNumber: 3)
+    }
+    if self.height != 0 {
+      try visitor.visitSingularInt32Field(value: self.height, fieldNumber: 4)
+    }
+    try { if let v = self._region {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
+    } }()
+    if !self.ocrText.isEmpty {
+      try visitor.visitSingularStringField(value: self.ocrText, fieldNumber: 6)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_CaptureRegionScreenshotResponse, rhs: Macosusesdk_V1_CaptureRegionScreenshotResponse) -> Bool {
+    if lhs.imageData != rhs.imageData {return false}
+    if lhs.format != rhs.format {return false}
+    if lhs.width != rhs.width {return false}
+    if lhs.height != rhs.height {return false}
+    if lhs._region != rhs._region {return false}
+    if lhs.ocrText != rhs.ocrText {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_GetClipboardRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".GetClipboardRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_GetClipboardRequest, rhs: Macosusesdk_V1_GetClipboardRequest) -> Bool {
+    if lhs.name != rhs.name {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_WriteClipboardRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".WriteClipboardRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}content\0\u{3}clear_existing\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._content) }()
+      case 2: try { try decoder.decodeSingularBoolField(value: &self.clearExisting_p) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._content {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
+    if self.clearExisting_p != false {
+      try visitor.visitSingularBoolField(value: self.clearExisting_p, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_WriteClipboardRequest, rhs: Macosusesdk_V1_WriteClipboardRequest) -> Bool {
+    if lhs._content != rhs._content {return false}
+    if lhs.clearExisting_p != rhs.clearExisting_p {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_WriteClipboardResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".WriteClipboardResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}type\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
+      case 2: try { try decoder.decodeSingularEnumField(value: &self.type) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.success != false {
+      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
+    }
+    if self.type != .unspecified {
+      try visitor.visitSingularEnumField(value: self.type, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_WriteClipboardResponse, rhs: Macosusesdk_V1_WriteClipboardResponse) -> Bool {
+    if lhs.success != rhs.success {return false}
+    if lhs.type != rhs.type {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_ClearClipboardRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ClearClipboardRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap()
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    // Load everything into unknown fields
+    while try decoder.nextFieldNumber() != nil {}
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_ClearClipboardRequest, rhs: Macosusesdk_V1_ClearClipboardRequest) -> Bool {
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_ClearClipboardResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ClearClipboardResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.success != false {
+      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_ClearClipboardResponse, rhs: Macosusesdk_V1_ClearClipboardResponse) -> Bool {
+    if lhs.success != rhs.success {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_GetClipboardHistoryRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".GetClipboardHistoryRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_GetClipboardHistoryRequest, rhs: Macosusesdk_V1_GetClipboardHistoryRequest) -> Bool {
+    if lhs.name != rhs.name {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_AutomateOpenFileDialogRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".AutomateOpenFileDialogRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0\u{3}file_path\0\u{3}default_directory\0\u{3}file_filters\0\u{1}timeout\0\u{3}allow_multiple\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.application) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.filePath) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.defaultDirectory) }()
+      case 4: try { try decoder.decodeRepeatedStringField(value: &self.fileFilters) }()
+      case 5: try { try decoder.decodeSingularDoubleField(value: &self.timeout) }()
+      case 6: try { try decoder.decodeSingularBoolField(value: &self.allowMultiple) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.application.isEmpty {
+      try visitor.visitSingularStringField(value: self.application, fieldNumber: 1)
+    }
+    if !self.filePath.isEmpty {
+      try visitor.visitSingularStringField(value: self.filePath, fieldNumber: 2)
+    }
+    if !self.defaultDirectory.isEmpty {
+      try visitor.visitSingularStringField(value: self.defaultDirectory, fieldNumber: 3)
+    }
+    if !self.fileFilters.isEmpty {
+      try visitor.visitRepeatedStringField(value: self.fileFilters, fieldNumber: 4)
+    }
+    if self.timeout.bitPattern != 0 {
+      try visitor.visitSingularDoubleField(value: self.timeout, fieldNumber: 5)
+    }
+    if self.allowMultiple != false {
+      try visitor.visitSingularBoolField(value: self.allowMultiple, fieldNumber: 6)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_AutomateOpenFileDialogRequest, rhs: Macosusesdk_V1_AutomateOpenFileDialogRequest) -> Bool {
+    if lhs.application != rhs.application {return false}
+    if lhs.filePath != rhs.filePath {return false}
+    if lhs.defaultDirectory != rhs.defaultDirectory {return false}
+    if lhs.fileFilters != rhs.fileFilters {return false}
+    if lhs.timeout != rhs.timeout {return false}
+    if lhs.allowMultiple != rhs.allowMultiple {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_AutomateOpenFileDialogResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".AutomateOpenFileDialogResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{3}selected_paths\0\u{1}error\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
+      case 2: try { try decoder.decodeRepeatedStringField(value: &self.selectedPaths) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.error) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.success != false {
+      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
+    }
+    if !self.selectedPaths.isEmpty {
+      try visitor.visitRepeatedStringField(value: self.selectedPaths, fieldNumber: 2)
+    }
+    if !self.error.isEmpty {
+      try visitor.visitSingularStringField(value: self.error, fieldNumber: 3)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_AutomateOpenFileDialogResponse, rhs: Macosusesdk_V1_AutomateOpenFileDialogResponse) -> Bool {
+    if lhs.success != rhs.success {return false}
+    if lhs.selectedPaths != rhs.selectedPaths {return false}
+    if lhs.error != rhs.error {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_AutomateSaveFileDialogRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".AutomateSaveFileDialogRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0\u{3}file_path\0\u{3}default_directory\0\u{3}default_filename\0\u{1}timeout\0\u{3}confirm_overwrite\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.application) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.filePath) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.defaultDirectory) }()
+      case 4: try { try decoder.decodeSingularStringField(value: &self.defaultFilename) }()
+      case 5: try { try decoder.decodeSingularDoubleField(value: &self.timeout) }()
+      case 6: try { try decoder.decodeSingularBoolField(value: &self.confirmOverwrite) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.application.isEmpty {
+      try visitor.visitSingularStringField(value: self.application, fieldNumber: 1)
+    }
+    if !self.filePath.isEmpty {
+      try visitor.visitSingularStringField(value: self.filePath, fieldNumber: 2)
+    }
+    if !self.defaultDirectory.isEmpty {
+      try visitor.visitSingularStringField(value: self.defaultDirectory, fieldNumber: 3)
+    }
+    if !self.defaultFilename.isEmpty {
+      try visitor.visitSingularStringField(value: self.defaultFilename, fieldNumber: 4)
+    }
+    if self.timeout.bitPattern != 0 {
+      try visitor.visitSingularDoubleField(value: self.timeout, fieldNumber: 5)
+    }
+    if self.confirmOverwrite != false {
+      try visitor.visitSingularBoolField(value: self.confirmOverwrite, fieldNumber: 6)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_AutomateSaveFileDialogRequest, rhs: Macosusesdk_V1_AutomateSaveFileDialogRequest) -> Bool {
+    if lhs.application != rhs.application {return false}
+    if lhs.filePath != rhs.filePath {return false}
+    if lhs.defaultDirectory != rhs.defaultDirectory {return false}
+    if lhs.defaultFilename != rhs.defaultFilename {return false}
+    if lhs.timeout != rhs.timeout {return false}
+    if lhs.confirmOverwrite != rhs.confirmOverwrite {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_AutomateSaveFileDialogResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".AutomateSaveFileDialogResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{3}saved_path\0\u{1}error\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.savedPath) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.error) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.success != false {
+      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
+    }
+    if !self.savedPath.isEmpty {
+      try visitor.visitSingularStringField(value: self.savedPath, fieldNumber: 2)
+    }
+    if !self.error.isEmpty {
+      try visitor.visitSingularStringField(value: self.error, fieldNumber: 3)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_AutomateSaveFileDialogResponse, rhs: Macosusesdk_V1_AutomateSaveFileDialogResponse) -> Bool {
+    if lhs.success != rhs.success {return false}
+    if lhs.savedPath != rhs.savedPath {return false}
+    if lhs.error != rhs.error {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_SelectFileRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".SelectFileRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0\u{3}file_path\0\u{3}reveal_finder\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.application) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.filePath) }()
+      case 3: try { try decoder.decodeSingularBoolField(value: &self.revealFinder) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.application.isEmpty {
+      try visitor.visitSingularStringField(value: self.application, fieldNumber: 1)
+    }
+    if !self.filePath.isEmpty {
+      try visitor.visitSingularStringField(value: self.filePath, fieldNumber: 2)
+    }
+    if self.revealFinder != false {
+      try visitor.visitSingularBoolField(value: self.revealFinder, fieldNumber: 3)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_SelectFileRequest, rhs: Macosusesdk_V1_SelectFileRequest) -> Bool {
+    if lhs.application != rhs.application {return false}
+    if lhs.filePath != rhs.filePath {return false}
+    if lhs.revealFinder != rhs.revealFinder {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_SelectFileResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".SelectFileResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{3}selected_path\0\u{1}error\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.selectedPath) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.error) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.success != false {
+      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
+    }
+    if !self.selectedPath.isEmpty {
+      try visitor.visitSingularStringField(value: self.selectedPath, fieldNumber: 2)
+    }
+    if !self.error.isEmpty {
+      try visitor.visitSingularStringField(value: self.error, fieldNumber: 3)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_SelectFileResponse, rhs: Macosusesdk_V1_SelectFileResponse) -> Bool {
+    if lhs.success != rhs.success {return false}
+    if lhs.selectedPath != rhs.selectedPath {return false}
+    if lhs.error != rhs.error {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_SelectDirectoryRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".SelectDirectoryRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0\u{3}directory_path\0\u{3}create_missing\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.application) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.directoryPath) }()
+      case 3: try { try decoder.decodeSingularBoolField(value: &self.createMissing) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.application.isEmpty {
+      try visitor.visitSingularStringField(value: self.application, fieldNumber: 1)
+    }
+    if !self.directoryPath.isEmpty {
+      try visitor.visitSingularStringField(value: self.directoryPath, fieldNumber: 2)
+    }
+    if self.createMissing != false {
+      try visitor.visitSingularBoolField(value: self.createMissing, fieldNumber: 3)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_SelectDirectoryRequest, rhs: Macosusesdk_V1_SelectDirectoryRequest) -> Bool {
+    if lhs.application != rhs.application {return false}
+    if lhs.directoryPath != rhs.directoryPath {return false}
+    if lhs.createMissing != rhs.createMissing {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_SelectDirectoryResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".SelectDirectoryResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{3}selected_path\0\u{1}created\0\u{1}error\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.selectedPath) }()
+      case 3: try { try decoder.decodeSingularBoolField(value: &self.created) }()
+      case 4: try { try decoder.decodeSingularStringField(value: &self.error) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.success != false {
+      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
+    }
+    if !self.selectedPath.isEmpty {
+      try visitor.visitSingularStringField(value: self.selectedPath, fieldNumber: 2)
+    }
+    if self.created != false {
+      try visitor.visitSingularBoolField(value: self.created, fieldNumber: 3)
+    }
+    if !self.error.isEmpty {
+      try visitor.visitSingularStringField(value: self.error, fieldNumber: 4)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_SelectDirectoryResponse, rhs: Macosusesdk_V1_SelectDirectoryResponse) -> Bool {
+    if lhs.success != rhs.success {return false}
+    if lhs.selectedPath != rhs.selectedPath {return false}
+    if lhs.created != rhs.created {return false}
+    if lhs.error != rhs.error {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_DragFilesRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".DragFilesRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0\u{3}file_paths\0\u{3}target_element_id\0\u{1}duration\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.application) }()
+      case 2: try { try decoder.decodeRepeatedStringField(value: &self.filePaths) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.targetElementID) }()
+      case 4: try { try decoder.decodeSingularDoubleField(value: &self.duration) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.application.isEmpty {
+      try visitor.visitSingularStringField(value: self.application, fieldNumber: 1)
+    }
+    if !self.filePaths.isEmpty {
+      try visitor.visitRepeatedStringField(value: self.filePaths, fieldNumber: 2)
+    }
+    if !self.targetElementID.isEmpty {
+      try visitor.visitSingularStringField(value: self.targetElementID, fieldNumber: 3)
+    }
+    if self.duration.bitPattern != 0 {
+      try visitor.visitSingularDoubleField(value: self.duration, fieldNumber: 4)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_DragFilesRequest, rhs: Macosusesdk_V1_DragFilesRequest) -> Bool {
+    if lhs.application != rhs.application {return false}
+    if lhs.filePaths != rhs.filePaths {return false}
+    if lhs.targetElementID != rhs.targetElementID {return false}
+    if lhs.duration != rhs.duration {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_DragFilesResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".DragFilesResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{3}files_dropped\0\u{1}error\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
+      case 2: try { try decoder.decodeSingularInt32Field(value: &self.filesDropped) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.error) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.success != false {
+      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
+    }
+    if self.filesDropped != 0 {
+      try visitor.visitSingularInt32Field(value: self.filesDropped, fieldNumber: 2)
+    }
+    if !self.error.isEmpty {
+      try visitor.visitSingularStringField(value: self.error, fieldNumber: 3)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_DragFilesResponse, rhs: Macosusesdk_V1_DragFilesResponse) -> Bool {
+    if lhs.success != rhs.success {return false}
+    if lhs.filesDropped != rhs.filesDropped {return false}
+    if lhs.error != rhs.error {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_ExecuteAppleScriptRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ExecuteAppleScriptRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}script\0\u{1}timeout\0\u{3}compile_only\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.script) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._timeout) }()
+      case 3: try { try decoder.decodeSingularBoolField(value: &self.compileOnly) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.script.isEmpty {
+      try visitor.visitSingularStringField(value: self.script, fieldNumber: 1)
+    }
+    try { if let v = self._timeout {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+    } }()
+    if self.compileOnly != false {
+      try visitor.visitSingularBoolField(value: self.compileOnly, fieldNumber: 3)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_ExecuteAppleScriptRequest, rhs: Macosusesdk_V1_ExecuteAppleScriptRequest) -> Bool {
+    if lhs.script != rhs.script {return false}
+    if lhs._timeout != rhs._timeout {return false}
+    if lhs.compileOnly != rhs.compileOnly {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_ExecuteAppleScriptResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ExecuteAppleScriptResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}output\0\u{1}error\0\u{3}execution_duration\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.output) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.error) }()
+      case 4: try { try decoder.decodeSingularMessageField(value: &self._executionDuration) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if self.success != false {
+      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
+    }
+    if !self.output.isEmpty {
+      try visitor.visitSingularStringField(value: self.output, fieldNumber: 2)
+    }
+    if !self.error.isEmpty {
+      try visitor.visitSingularStringField(value: self.error, fieldNumber: 3)
+    }
+    try { if let v = self._executionDuration {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_ExecuteAppleScriptResponse, rhs: Macosusesdk_V1_ExecuteAppleScriptResponse) -> Bool {
+    if lhs.success != rhs.success {return false}
+    if lhs.output != rhs.output {return false}
+    if lhs.error != rhs.error {return false}
+    if lhs._executionDuration != rhs._executionDuration {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_ExecuteJavaScriptRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ExecuteJavaScriptRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}script\0\u{1}timeout\0\u{3}compile_only\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.script) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._timeout) }()
+      case 3: try { try decoder.decodeSingularBoolField(value: &self.compileOnly) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.script.isEmpty {
+      try visitor.visitSingularStringField(value: self.script, fieldNumber: 1)
+    }
+    try { if let v = self._timeout {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+    } }()
+    if self.compileOnly != false {
+      try visitor.visitSingularBoolField(value: self.compileOnly, fieldNumber: 3)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_ExecuteJavaScriptRequest, rhs: Macosusesdk_V1_ExecuteJavaScriptRequest) -> Bool {
+    if lhs.script != rhs.script {return false}
+    if lhs._timeout != rhs._timeout {return false}
+    if lhs.compileOnly != rhs.compileOnly {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_ExecuteJavaScriptResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ExecuteJavaScriptResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}output\0\u{1}error\0\u{3}execution_duration\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.output) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.error) }()
+      case 4: try { try decoder.decodeSingularMessageField(value: &self._executionDuration) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if self.success != false {
+      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
+    }
+    if !self.output.isEmpty {
+      try visitor.visitSingularStringField(value: self.output, fieldNumber: 2)
+    }
+    if !self.error.isEmpty {
+      try visitor.visitSingularStringField(value: self.error, fieldNumber: 3)
+    }
+    try { if let v = self._executionDuration {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_ExecuteJavaScriptResponse, rhs: Macosusesdk_V1_ExecuteJavaScriptResponse) -> Bool {
+    if lhs.success != rhs.success {return false}
+    if lhs.output != rhs.output {return false}
+    if lhs.error != rhs.error {return false}
+    if lhs._executionDuration != rhs._executionDuration {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_ExecuteShellCommandRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ExecuteShellCommandRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}command\0\u{1}args\0\u{3}working_directory\0\u{1}environment\0\u{1}timeout\0\u{1}stdin\0\u{1}shell\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.command) }()
+      case 2: try { try decoder.decodeRepeatedStringField(value: &self.args) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.workingDirectory) }()
+      case 4: try { try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufString>.self, value: &self.environment) }()
+      case 5: try { try decoder.decodeSingularMessageField(value: &self._timeout) }()
+      case 6: try { try decoder.decodeSingularStringField(value: &self.stdin) }()
+      case 7: try { try decoder.decodeSingularStringField(value: &self.shell) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.command.isEmpty {
+      try visitor.visitSingularStringField(value: self.command, fieldNumber: 1)
+    }
+    if !self.args.isEmpty {
+      try visitor.visitRepeatedStringField(value: self.args, fieldNumber: 2)
+    }
+    if !self.workingDirectory.isEmpty {
+      try visitor.visitSingularStringField(value: self.workingDirectory, fieldNumber: 3)
+    }
+    if !self.environment.isEmpty {
+      try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufString>.self, value: self.environment, fieldNumber: 4)
+    }
+    try { if let v = self._timeout {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
+    } }()
+    if !self.stdin.isEmpty {
+      try visitor.visitSingularStringField(value: self.stdin, fieldNumber: 6)
+    }
+    if !self.shell.isEmpty {
+      try visitor.visitSingularStringField(value: self.shell, fieldNumber: 7)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_ExecuteShellCommandRequest, rhs: Macosusesdk_V1_ExecuteShellCommandRequest) -> Bool {
+    if lhs.command != rhs.command {return false}
+    if lhs.args != rhs.args {return false}
+    if lhs.workingDirectory != rhs.workingDirectory {return false}
+    if lhs.environment != rhs.environment {return false}
+    if lhs._timeout != rhs._timeout {return false}
+    if lhs.stdin != rhs.stdin {return false}
+    if lhs.shell != rhs.shell {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_ExecuteShellCommandResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ExecuteShellCommandResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}stdout\0\u{1}stderr\0\u{3}exit_code\0\u{3}execution_duration\0\u{1}error\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.stdout) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.stderr) }()
+      case 4: try { try decoder.decodeSingularInt32Field(value: &self.exitCode) }()
+      case 5: try { try decoder.decodeSingularMessageField(value: &self._executionDuration) }()
+      case 6: try { try decoder.decodeSingularStringField(value: &self.error) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if self.success != false {
+      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
+    }
+    if !self.stdout.isEmpty {
+      try visitor.visitSingularStringField(value: self.stdout, fieldNumber: 2)
+    }
+    if !self.stderr.isEmpty {
+      try visitor.visitSingularStringField(value: self.stderr, fieldNumber: 3)
+    }
+    if self.exitCode != 0 {
+      try visitor.visitSingularInt32Field(value: self.exitCode, fieldNumber: 4)
+    }
+    try { if let v = self._executionDuration {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
+    } }()
+    if !self.error.isEmpty {
+      try visitor.visitSingularStringField(value: self.error, fieldNumber: 6)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_ExecuteShellCommandResponse, rhs: Macosusesdk_V1_ExecuteShellCommandResponse) -> Bool {
+    if lhs.success != rhs.success {return false}
+    if lhs.stdout != rhs.stdout {return false}
+    if lhs.stderr != rhs.stderr {return false}
+    if lhs.exitCode != rhs.exitCode {return false}
+    if lhs._executionDuration != rhs._executionDuration {return false}
+    if lhs.error != rhs.error {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_ValidateScriptRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ValidateScriptRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}type\0\u{1}script\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularEnumField(value: &self.type) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.script) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.type != .unspecified {
+      try visitor.visitSingularEnumField(value: self.type, fieldNumber: 1)
+    }
+    if !self.script.isEmpty {
+      try visitor.visitSingularStringField(value: self.script, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_ValidateScriptRequest, rhs: Macosusesdk_V1_ValidateScriptRequest) -> Bool {
+    if lhs.type != rhs.type {return false}
+    if lhs.script != rhs.script {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_ValidateScriptResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ValidateScriptResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}valid\0\u{1}errors\0\u{1}warnings\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBoolField(value: &self.valid) }()
+      case 2: try { try decoder.decodeRepeatedStringField(value: &self.errors) }()
+      case 3: try { try decoder.decodeRepeatedStringField(value: &self.warnings) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.valid != false {
+      try visitor.visitSingularBoolField(value: self.valid, fieldNumber: 1)
+    }
+    if !self.errors.isEmpty {
+      try visitor.visitRepeatedStringField(value: self.errors, fieldNumber: 2)
+    }
+    if !self.warnings.isEmpty {
+      try visitor.visitRepeatedStringField(value: self.warnings, fieldNumber: 3)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_ValidateScriptResponse, rhs: Macosusesdk_V1_ValidateScriptResponse) -> Bool {
+    if lhs.valid != rhs.valid {return false}
+    if lhs.errors != rhs.errors {return false}
+    if lhs.warnings != rhs.warnings {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_GetScriptingDictionariesRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".GetScriptingDictionariesRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_GetScriptingDictionariesRequest, rhs: Macosusesdk_V1_GetScriptingDictionariesRequest) -> Bool {
+    if lhs.name != rhs.name {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_GetMetricsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".GetMetricsRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_GetMetricsRequest, rhs: Macosusesdk_V1_GetMetricsRequest) -> Bool {
+    if lhs.name != rhs.name {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_GetPerformanceReportRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".GetPerformanceReportRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_GetPerformanceReportRequest, rhs: Macosusesdk_V1_GetPerformanceReportRequest) -> Bool {
+    if lhs.name != rhs.name {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_ResetMetricsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ResetMetricsRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}types\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeRepeatedEnumField(value: &self.types) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.types.isEmpty {
+      try visitor.visitPackedEnumField(value: self.types, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_ResetMetricsRequest, rhs: Macosusesdk_V1_ResetMetricsRequest) -> Bool {
+    if lhs.types != rhs.types {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_ResetMetricsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ResetMetricsResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{3}reset_types\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
+      case 2: try { try decoder.decodeRepeatedEnumField(value: &self.resetTypes) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.success != false {
+      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
+    }
+    if !self.resetTypes.isEmpty {
+      try visitor.visitPackedEnumField(value: self.resetTypes, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_ResetMetricsResponse, rhs: Macosusesdk_V1_ResetMetricsResponse) -> Bool {
+    if lhs.success != rhs.success {return false}
+    if lhs.resetTypes != rhs.resetTypes {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

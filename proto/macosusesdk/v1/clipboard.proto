@@ -1,29 +1,18 @@
 // Copyright 2025 MacosUseSDK
 //
-// Clipboard operations
+// Clipboard resources and types
 
 syntax = "proto3";
 
 package macosusesdk.v1;
 
 import "google/api/field_behavior.proto";
-import "google/api/resource.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
 option java_multiple_files = true;
 option java_outer_classname = "ClipboardProto";
 option java_package = "com.macosusesdk.v1";
-
-// Request to get clipboard contents.
-message GetClipboardRequest {
-  // The name of the clipboard resource.
-  // Format: clipboard (singleton)
-  string name = 1 [
-    (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "*"}
-  ];
-}
 
 // Clipboard contents.
 message Clipboard {
@@ -65,43 +54,6 @@ message ClipboardContent {
 message FilePaths {
   // List of file paths.
   repeated string paths = 1 [(google.api.field_behavior) = REQUIRED];
-}
-
-// Request to write clipboard contents.
-message WriteClipboardRequest {
-  // Content to write on clipboard.
-  ClipboardContent content = 1 [(google.api.field_behavior) = OPTIONAL];
-
-  // Whether to clear existing clipboard content first.
-  bool clear_existing = 2 [(google.api.field_behavior) = OPTIONAL];
-}
-
-// Response from writing clipboard contents.
-message WriteClipboardResponse {
-  // Whether the operation succeeded.
-  bool success = 1;
-
-  // Content type that was written.
-  ContentType type = 2;
-}
-
-// Request to clear clipboard contents.
-message ClearClipboardRequest {}
-
-// Response from clearing clipboard.
-message ClearClipboardResponse {
-  // Whether the operation succeeded.
-  bool success = 1;
-}
-
-// Request to get clipboard history (if available).
-message GetClipboardHistoryRequest {
-  // The name of the clipboard history resource.
-  // Format: clipboard/history (singleton)
-  string name = 1 [
-    (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "*"}
-  ];
 }
 
 // Clipboard history.

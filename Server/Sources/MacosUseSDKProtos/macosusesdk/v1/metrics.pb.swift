@@ -10,7 +10,7 @@
 
 // Copyright 2025 MacosUseSDK
 //
-// Performance metrics and monitoring
+// Performance metrics and monitoring resources
 
 import SwiftProtobuf
 
@@ -85,21 +85,6 @@ public enum Macosusesdk_V1_MetricType: SwiftProtobuf.Enum, Swift.CaseIterable {
     .accessibility,
   ]
 
-}
-
-/// Request to get current metrics.
-public struct Macosusesdk_V1_GetMetricsRequest: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  /// The name of the metrics resource.
-  /// Format: metrics (singleton)
-  public var name: String = String()
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  public init() {}
 }
 
 /// Metrics.
@@ -492,21 +477,6 @@ public struct Macosusesdk_V1_AccessibilityMetrics: Sendable {
   fileprivate var _avgLookupDuration: SwiftProtobuf.Google_Protobuf_Duration? = nil
 }
 
-/// Request to get a performance report.
-public struct Macosusesdk_V1_GetPerformanceReportRequest: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  /// The name of the performance report resource.
-  /// Format: metrics/performanceReport (singleton)
-  public var name: String = String()
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  public init() {}
-}
-
 /// Performance report.
 public struct Macosusesdk_V1_PerformanceReport: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
@@ -677,73 +647,12 @@ public struct Macosusesdk_V1_PerformanceTrends: Sendable {
   public init() {}
 }
 
-/// Request to reset metrics.
-public struct Macosusesdk_V1_ResetMetricsRequest: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  /// Metric types to reset (empty = all).
-  public var types: [Macosusesdk_V1_MetricType] = []
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  public init() {}
-}
-
-/// Response from resetting metrics.
-public struct Macosusesdk_V1_ResetMetricsResponse: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  /// Whether reset succeeded.
-  public var success: Bool = false
-
-  /// Metrics that were reset.
-  public var resetTypes: [Macosusesdk_V1_MetricType] = []
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  public init() {}
-}
-
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
 fileprivate let _protobuf_package = "macosusesdk.v1"
 
 extension Macosusesdk_V1_MetricType: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0METRIC_TYPE_UNSPECIFIED\0\u{1}METRIC_TYPE_OPERATIONS\0\u{1}METRIC_TYPE_RESOURCES\0\u{1}METRIC_TYPE_CACHE\0\u{1}METRIC_TYPE_RATE_LIMITS\0\u{1}METRIC_TYPE_ACCESSIBILITY\0")
-}
-
-extension Macosusesdk_V1_GetMetricsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".GetMetricsRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
-      default: break
-      }
-    }
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.name.isEmpty {
-      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Macosusesdk_V1_GetMetricsRequest, rhs: Macosusesdk_V1_GetMetricsRequest) -> Bool {
-    if lhs.name != rhs.name {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
 }
 
 extension Macosusesdk_V1_Metrics: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
@@ -1342,36 +1251,6 @@ extension Macosusesdk_V1_AccessibilityMetrics: SwiftProtobuf.Message, SwiftProto
   }
 }
 
-extension Macosusesdk_V1_GetPerformanceReportRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".GetPerformanceReportRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
-      default: break
-      }
-    }
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.name.isEmpty {
-      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Macosusesdk_V1_GetPerformanceReportRequest, rhs: Macosusesdk_V1_GetPerformanceReportRequest) -> Bool {
-    if lhs.name != rhs.name {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
-}
-
 extension Macosusesdk_V1_PerformanceReport: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".PerformanceReport"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}time_range\0\u{3}generated_time\0\u{1}summary\0\u{1}details\0\u{1}trends\0\u{1}recommendations\0")
@@ -1517,69 +1396,4 @@ extension Macosusesdk_V1_PerformanceTrends: SwiftProtobuf.Message, SwiftProtobuf
 
 extension Macosusesdk_V1_PerformanceTrends.TrendDirection: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0TREND_DIRECTION_UNSPECIFIED\0\u{1}TREND_DIRECTION_IMPROVING\0\u{1}TREND_DIRECTION_STABLE\0\u{1}TREND_DIRECTION_DEGRADING\0")
-}
-
-extension Macosusesdk_V1_ResetMetricsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".ResetMetricsRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}types\0")
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeRepeatedEnumField(value: &self.types) }()
-      default: break
-      }
-    }
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.types.isEmpty {
-      try visitor.visitPackedEnumField(value: self.types, fieldNumber: 1)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Macosusesdk_V1_ResetMetricsRequest, rhs: Macosusesdk_V1_ResetMetricsRequest) -> Bool {
-    if lhs.types != rhs.types {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
-}
-
-extension Macosusesdk_V1_ResetMetricsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".ResetMetricsResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{3}reset_types\0")
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
-      case 2: try { try decoder.decodeRepeatedEnumField(value: &self.resetTypes) }()
-      default: break
-      }
-    }
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.success != false {
-      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
-    }
-    if !self.resetTypes.isEmpty {
-      try visitor.visitPackedEnumField(value: self.resetTypes, fieldNumber: 2)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Macosusesdk_V1_ResetMetricsResponse, rhs: Macosusesdk_V1_ResetMetricsResponse) -> Bool {
-    if lhs.success != rhs.success {return false}
-    if lhs.resetTypes != rhs.resetTypes {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
 }

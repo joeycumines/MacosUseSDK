@@ -62,16 +62,6 @@ public struct Macosusesdk_V1_Session: Sendable {
   /// Clears the value of `lastAccessTime`. Subsequent reads from it will return its default value.
   public mutating func clearLastAccessTime() {self._lastAccessTime = nil}
 
-  /// Time-to-live for the session (alternative to expire_time).
-  public var ttl: SwiftProtobuf.Google_Protobuf_Duration {
-    get {return _ttl ?? SwiftProtobuf.Google_Protobuf_Duration()}
-    set {_ttl = newValue}
-  }
-  /// Returns true if `ttl` has been explicitly set.
-  public var hasTtl: Bool {return self._ttl != nil}
-  /// Clears the value of `ttl`. Subsequent reads from it will return its default value.
-  public mutating func clearTtl() {self._ttl = nil}
-
   /// When the session expires (auto-cleanup).
   public var expireTime: SwiftProtobuf.Google_Protobuf_Timestamp {
     get {return _expireTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
@@ -157,7 +147,6 @@ public struct Macosusesdk_V1_Session: Sendable {
 
   fileprivate var _createTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
   fileprivate var _lastAccessTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
-  fileprivate var _ttl: SwiftProtobuf.Google_Protobuf_Duration? = nil
   fileprivate var _expireTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
 }
 
@@ -253,203 +242,6 @@ public struct Macosusesdk_V1_Transaction: Sendable {
   fileprivate var _startTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
 }
 
-/// Request to begin a transaction within a session.
-public struct Macosusesdk_V1_BeginTransactionRequest: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  /// Session name.
-  public var session: String = String()
-
-  /// Transaction isolation level.
-  public var isolationLevel: Macosusesdk_V1_BeginTransactionRequest.IsolationLevel = .unspecified
-
-  /// Transaction timeout in seconds (default: 300).
-  public var timeout: Double = 0
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  /// Isolation level for transactions.
-  public enum IsolationLevel: SwiftProtobuf.Enum, Swift.CaseIterable {
-    public typealias RawValue = Int
-
-    /// Default isolation level (SERIALIZABLE).
-    case unspecified // = 0
-
-    /// All operations appear atomic (full snapshot/restore on rollback).
-    case serializable // = 1
-
-    /// Operations may see partial changes (best-effort rollback).
-    case readCommitted // = 2
-    case UNRECOGNIZED(Int)
-
-    public init() {
-      self = .unspecified
-    }
-
-    public init?(rawValue: Int) {
-      switch rawValue {
-      case 0: self = .unspecified
-      case 1: self = .serializable
-      case 2: self = .readCommitted
-      default: self = .UNRECOGNIZED(rawValue)
-      }
-    }
-
-    public var rawValue: Int {
-      switch self {
-      case .unspecified: return 0
-      case .serializable: return 1
-      case .readCommitted: return 2
-      case .UNRECOGNIZED(let i): return i
-      }
-    }
-
-    // The compiler won't synthesize support with the UNRECOGNIZED case.
-    public static let allCases: [Macosusesdk_V1_BeginTransactionRequest.IsolationLevel] = [
-      .unspecified,
-      .serializable,
-      .readCommitted,
-    ]
-
-  }
-
-  public init() {}
-}
-
-/// Response from beginning a transaction.
-public struct Macosusesdk_V1_BeginTransactionResponse: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  /// Transaction ID for subsequent operations.
-  public var transactionID: String = String()
-
-  /// Session with updated state.
-  public var session: Macosusesdk_V1_Session {
-    get {return _session ?? Macosusesdk_V1_Session()}
-    set {_session = newValue}
-  }
-  /// Returns true if `session` has been explicitly set.
-  public var hasSession: Bool {return self._session != nil}
-  /// Clears the value of `session`. Subsequent reads from it will return its default value.
-  public mutating func clearSession() {self._session = nil}
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  public init() {}
-
-  fileprivate var _session: Macosusesdk_V1_Session? = nil
-}
-
-/// Request to commit a transaction.
-public struct Macosusesdk_V1_CommitTransactionRequest: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  /// The name of the session to commit.
-  /// Format: sessions/{session}
-  public var name: String = String()
-
-  /// Transaction ID to commit.
-  public var transactionID: String = String()
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  public init() {}
-}
-
-/// Response from committing a transaction.
-public struct Macosusesdk_V1_CommitTransactionResponse: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  /// Session with updated state.
-  public var session: Macosusesdk_V1_Session {
-    get {return _session ?? Macosusesdk_V1_Session()}
-    set {_session = newValue}
-  }
-  /// Returns true if `session` has been explicitly set.
-  public var hasSession: Bool {return self._session != nil}
-  /// Clears the value of `session`. Subsequent reads from it will return its default value.
-  public mutating func clearSession() {self._session = nil}
-
-  /// Number of operations applied.
-  public var operationsApplied: Int32 = 0
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  public init() {}
-
-  fileprivate var _session: Macosusesdk_V1_Session? = nil
-}
-
-/// Request to rollback a transaction.
-public struct Macosusesdk_V1_RollbackTransactionRequest: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  /// The name of the session to rollback.
-  /// Format: sessions/{session}
-  public var name: String = String()
-
-  /// The revision to rollback to.
-  public var revisionID: String = String()
-
-  /// Transaction ID to rollback.
-  public var transactionID: String = String()
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  public init() {}
-}
-
-/// Response from rolling back a transaction.
-public struct Macosusesdk_V1_RollbackTransactionResponse: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  /// Session with updated state.
-  public var session: Macosusesdk_V1_Session {
-    get {return _session ?? Macosusesdk_V1_Session()}
-    set {_session = newValue}
-  }
-  /// Returns true if `session` has been explicitly set.
-  public var hasSession: Bool {return self._session != nil}
-  /// Clears the value of `session`. Subsequent reads from it will return its default value.
-  public mutating func clearSession() {self._session = nil}
-
-  /// Number of operations rolled back.
-  public var operationsRolledBack: Int32 = 0
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  public init() {}
-
-  fileprivate var _session: Macosusesdk_V1_Session? = nil
-}
-
-/// Request to get a session state snapshot.
-public struct Macosusesdk_V1_GetSessionSnapshotRequest: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  /// The name of the session to snapshot.
-  /// Format: sessions/{session}
-  public var name: String = String()
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  public init() {}
-}
-
 /// Session state snapshot.
 public struct Macosusesdk_V1_SessionSnapshot: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
@@ -526,7 +318,7 @@ fileprivate let _protobuf_package = "macosusesdk.v1"
 
 extension Macosusesdk_V1_Session: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Session"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}display_name\0\u{1}state\0\u{3}create_time\0\u{3}last_access_time\0\u{1}ttl\0\u{3}expire_time\0\u{3}transaction_id\0\u{1}metadata\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}display_name\0\u{1}state\0\u{3}create_time\0\u{3}last_access_time\0\u{4}\u{2}expire_time\0\u{3}transaction_id\0\u{1}metadata\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -539,7 +331,6 @@ extension Macosusesdk_V1_Session: SwiftProtobuf.Message, SwiftProtobuf._MessageI
       case 3: try { try decoder.decodeSingularEnumField(value: &self.state) }()
       case 4: try { try decoder.decodeSingularMessageField(value: &self._createTime) }()
       case 5: try { try decoder.decodeSingularMessageField(value: &self._lastAccessTime) }()
-      case 6: try { try decoder.decodeSingularMessageField(value: &self._ttl) }()
       case 7: try { try decoder.decodeSingularMessageField(value: &self._expireTime) }()
       case 8: try { try decoder.decodeSingularStringField(value: &self.transactionID) }()
       case 9: try { try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufString>.self, value: &self.metadata) }()
@@ -568,9 +359,6 @@ extension Macosusesdk_V1_Session: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     try { if let v = self._lastAccessTime {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
     } }()
-    try { if let v = self._ttl {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
-    } }()
     try { if let v = self._expireTime {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
     } }()
@@ -589,7 +377,6 @@ extension Macosusesdk_V1_Session: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     if lhs.state != rhs.state {return false}
     if lhs._createTime != rhs._createTime {return false}
     if lhs._lastAccessTime != rhs._lastAccessTime {return false}
-    if lhs._ttl != rhs._ttl {return false}
     if lhs._expireTime != rhs._expireTime {return false}
     if lhs.transactionID != rhs.transactionID {return false}
     if lhs.metadata != rhs.metadata {return false}
@@ -658,272 +445,6 @@ extension Macosusesdk_V1_Transaction: SwiftProtobuf.Message, SwiftProtobuf._Mess
 
 extension Macosusesdk_V1_Transaction.State: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0STATE_UNSPECIFIED\0\u{1}STATE_ACTIVE\0\u{1}STATE_COMMITTED\0\u{1}STATE_ROLLED_BACK\0\u{1}STATE_FAILED\0")
-}
-
-extension Macosusesdk_V1_BeginTransactionRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".BeginTransactionRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}session\0\u{3}isolation_level\0\u{1}timeout\0")
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.session) }()
-      case 2: try { try decoder.decodeSingularEnumField(value: &self.isolationLevel) }()
-      case 3: try { try decoder.decodeSingularDoubleField(value: &self.timeout) }()
-      default: break
-      }
-    }
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.session.isEmpty {
-      try visitor.visitSingularStringField(value: self.session, fieldNumber: 1)
-    }
-    if self.isolationLevel != .unspecified {
-      try visitor.visitSingularEnumField(value: self.isolationLevel, fieldNumber: 2)
-    }
-    if self.timeout.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.timeout, fieldNumber: 3)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Macosusesdk_V1_BeginTransactionRequest, rhs: Macosusesdk_V1_BeginTransactionRequest) -> Bool {
-    if lhs.session != rhs.session {return false}
-    if lhs.isolationLevel != rhs.isolationLevel {return false}
-    if lhs.timeout != rhs.timeout {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
-}
-
-extension Macosusesdk_V1_BeginTransactionRequest.IsolationLevel: SwiftProtobuf._ProtoNameProviding {
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0ISOLATION_LEVEL_UNSPECIFIED\0\u{1}ISOLATION_LEVEL_SERIALIZABLE\0\u{1}ISOLATION_LEVEL_READ_COMMITTED\0")
-}
-
-extension Macosusesdk_V1_BeginTransactionResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".BeginTransactionResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}transaction_id\0\u{1}session\0")
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.transactionID) }()
-      case 2: try { try decoder.decodeSingularMessageField(value: &self._session) }()
-      default: break
-      }
-    }
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    if !self.transactionID.isEmpty {
-      try visitor.visitSingularStringField(value: self.transactionID, fieldNumber: 1)
-    }
-    try { if let v = self._session {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
-    } }()
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Macosusesdk_V1_BeginTransactionResponse, rhs: Macosusesdk_V1_BeginTransactionResponse) -> Bool {
-    if lhs.transactionID != rhs.transactionID {return false}
-    if lhs._session != rhs._session {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
-}
-
-extension Macosusesdk_V1_CommitTransactionRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".CommitTransactionRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}transaction_id\0")
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
-      case 2: try { try decoder.decodeSingularStringField(value: &self.transactionID) }()
-      default: break
-      }
-    }
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.name.isEmpty {
-      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
-    }
-    if !self.transactionID.isEmpty {
-      try visitor.visitSingularStringField(value: self.transactionID, fieldNumber: 2)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Macosusesdk_V1_CommitTransactionRequest, rhs: Macosusesdk_V1_CommitTransactionRequest) -> Bool {
-    if lhs.name != rhs.name {return false}
-    if lhs.transactionID != rhs.transactionID {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
-}
-
-extension Macosusesdk_V1_CommitTransactionResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".CommitTransactionResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}session\0\u{3}operations_applied\0")
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularMessageField(value: &self._session) }()
-      case 2: try { try decoder.decodeSingularInt32Field(value: &self.operationsApplied) }()
-      default: break
-      }
-    }
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    try { if let v = self._session {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
-    } }()
-    if self.operationsApplied != 0 {
-      try visitor.visitSingularInt32Field(value: self.operationsApplied, fieldNumber: 2)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Macosusesdk_V1_CommitTransactionResponse, rhs: Macosusesdk_V1_CommitTransactionResponse) -> Bool {
-    if lhs._session != rhs._session {return false}
-    if lhs.operationsApplied != rhs.operationsApplied {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
-}
-
-extension Macosusesdk_V1_RollbackTransactionRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".RollbackTransactionRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}revision_id\0\u{3}transaction_id\0")
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
-      case 2: try { try decoder.decodeSingularStringField(value: &self.revisionID) }()
-      case 3: try { try decoder.decodeSingularStringField(value: &self.transactionID) }()
-      default: break
-      }
-    }
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.name.isEmpty {
-      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
-    }
-    if !self.revisionID.isEmpty {
-      try visitor.visitSingularStringField(value: self.revisionID, fieldNumber: 2)
-    }
-    if !self.transactionID.isEmpty {
-      try visitor.visitSingularStringField(value: self.transactionID, fieldNumber: 3)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Macosusesdk_V1_RollbackTransactionRequest, rhs: Macosusesdk_V1_RollbackTransactionRequest) -> Bool {
-    if lhs.name != rhs.name {return false}
-    if lhs.revisionID != rhs.revisionID {return false}
-    if lhs.transactionID != rhs.transactionID {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
-}
-
-extension Macosusesdk_V1_RollbackTransactionResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".RollbackTransactionResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}session\0\u{3}operations_rolled_back\0")
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularMessageField(value: &self._session) }()
-      case 2: try { try decoder.decodeSingularInt32Field(value: &self.operationsRolledBack) }()
-      default: break
-      }
-    }
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    try { if let v = self._session {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
-    } }()
-    if self.operationsRolledBack != 0 {
-      try visitor.visitSingularInt32Field(value: self.operationsRolledBack, fieldNumber: 2)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Macosusesdk_V1_RollbackTransactionResponse, rhs: Macosusesdk_V1_RollbackTransactionResponse) -> Bool {
-    if lhs._session != rhs._session {return false}
-    if lhs.operationsRolledBack != rhs.operationsRolledBack {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
-}
-
-extension Macosusesdk_V1_GetSessionSnapshotRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".GetSessionSnapshotRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
-      default: break
-      }
-    }
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.name.isEmpty {
-      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Macosusesdk_V1_GetSessionSnapshotRequest, rhs: Macosusesdk_V1_GetSessionSnapshotRequest) -> Bool {
-    if lhs.name != rhs.name {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
 }
 
 extension Macosusesdk_V1_SessionSnapshot: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {

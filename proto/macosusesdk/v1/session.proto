@@ -8,7 +8,6 @@ package macosusesdk.v1;
 
 import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
-import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
@@ -42,12 +41,6 @@ message Session {
 
   // When the session was last accessed.
   google.protobuf.Timestamp last_access_time = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
-
-  // Time-to-live for the session (alternative to expire_time).
-  google.protobuf.Duration ttl = 6 [
-    (google.api.field_behavior) = INPUT_ONLY,
-    (google.api.field_behavior) = OPTIONAL
-  ];
 
   // When the session expires (auto-cleanup).
   google.protobuf.Timestamp expire_time = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
@@ -117,99 +110,6 @@ message Transaction {
     // Transaction failed.
     STATE_FAILED = 4;
   }
-}
-
-// Request to begin a transaction within a session.
-message BeginTransactionRequest {
-  // Session name.
-  string session = 1 [
-    (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Session"}
-  ];
-
-  // Transaction isolation level.
-  IsolationLevel isolation_level = 2 [(google.api.field_behavior) = OPTIONAL];
-
-  // Transaction timeout in seconds (default: 300).
-  double timeout = 3 [(google.api.field_behavior) = OPTIONAL];
-
-  // Isolation level for transactions.
-  enum IsolationLevel {
-    // Default isolation level (SERIALIZABLE).
-    ISOLATION_LEVEL_UNSPECIFIED = 0;
-
-    // All operations appear atomic (full snapshot/restore on rollback).
-    ISOLATION_LEVEL_SERIALIZABLE = 1;
-
-    // Operations may see partial changes (best-effort rollback).
-    ISOLATION_LEVEL_READ_COMMITTED = 2;
-  }
-}
-
-// Response from beginning a transaction.
-message BeginTransactionResponse {
-  // Transaction ID for subsequent operations.
-  string transaction_id = 1;
-
-  // Session with updated state.
-  Session session = 2;
-}
-
-// Request to commit a transaction.
-message CommitTransactionRequest {
-  // The name of the session to commit.
-  // Format: sessions/{session}
-  string name = 1 [
-    (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Session"}
-  ];
-
-  // Transaction ID to commit.
-  string transaction_id = 2 [(google.api.field_behavior) = REQUIRED];
-}
-
-// Response from committing a transaction.
-message CommitTransactionResponse {
-  // Session with updated state.
-  Session session = 1;
-
-  // Number of operations applied.
-  int32 operations_applied = 2;
-}
-
-// Request to rollback a transaction.
-message RollbackTransactionRequest {
-  // The name of the session to rollback.
-  // Format: sessions/{session}
-  string name = 1 [
-    (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Session"}
-  ];
-
-  // The revision to rollback to.
-  string revision_id = 2 [(google.api.field_behavior) = REQUIRED];
-
-  // Transaction ID to rollback.
-  string transaction_id = 3 [(google.api.field_behavior) = REQUIRED];
-}
-
-// Response from rolling back a transaction.
-message RollbackTransactionResponse {
-  // Session with updated state.
-  Session session = 1;
-
-  // Number of operations rolled back.
-  int32 operations_rolled_back = 2;
-}
-
-// Request to get a session state snapshot.
-message GetSessionSnapshotRequest {
-  // The name of the session to snapshot.
-  // Format: sessions/{session}
-  string name = 1 [
-    (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Session"}
-  ];
 }
 
 // Session state snapshot.

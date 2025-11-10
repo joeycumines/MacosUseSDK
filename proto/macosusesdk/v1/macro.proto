@@ -8,7 +8,6 @@ package macosusesdk.v1;
 
 import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
-import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 import "macosusesdk/v1/input.proto";
 
@@ -288,104 +287,4 @@ message MacroParameter {
     // File path.
     PARAMETER_TYPE_PATH = 5;
   }
-}
-
-// Request to execute a macro (long-running operation).
-message ExecuteMacroRequest {
-  // Macro to execute.
-  string macro = 1 [
-    (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Macro"}
-  ];
-
-  // Parameter values (for parameterized macros).
-  map<string, string> parameter_values = 2 [(google.api.field_behavior) = OPTIONAL];
-
-  // Application context (if needed).
-  string application = 3 [
-    (google.api.field_behavior) = OPTIONAL,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Application"}
-  ];
-
-  // Execution options.
-  ExecutionOptions options = 4 [(google.api.field_behavior) = OPTIONAL];
-}
-
-// Options for macro execution.
-message ExecutionOptions {
-  // Execution speed multiplier (1.0 = normal speed).
-  double speed = 1 [(google.api.field_behavior) = OPTIONAL];
-
-  // Whether to continue on error.
-  bool continue_on_error = 2 [(google.api.field_behavior) = OPTIONAL];
-
-  // Maximum execution time in seconds.
-  double timeout = 3 [(google.api.field_behavior) = OPTIONAL];
-
-  // Whether to record execution for debugging.
-  bool record_execution = 4 [(google.api.field_behavior) = OPTIONAL];
-}
-
-// Response from executing a macro.
-message ExecuteMacroResponse {
-  // Whether execution succeeded.
-  bool success = 1;
-
-  // Number of actions executed.
-  int32 actions_executed = 2;
-
-  // Execution duration.
-  google.protobuf.Duration execution_duration = 3;
-
-  // Error message if failed.
-  string error = 4;
-
-  // Execution log (if recording was enabled).
-  repeated ExecutionLogEntry log = 5;
-}
-
-// Log entry for macro execution.
-message ExecutionLogEntry {
-  option (google.api.resource) = {
-    type: "macos.googleapis.com/ExecutionLogEntry"
-    pattern: "macros/{macro}/executions/{execution}/logEntries/{log_entry}"
-    singular: "executionLogEntry"
-    plural: "executionLogEntries"
-  };
-
-  // Resource name.
-  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
-
-  // When the action executed.
-  google.protobuf.Timestamp execution_time = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
-
-  // Action index in macro.
-  int32 action_index = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
-
-  // Action description.
-  string description = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
-
-  // Whether action succeeded.
-  bool success = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
-
-  // Error message if failed.
-  string error = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
-
-  // Duration in seconds.
-  double duration = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
-}
-
-// Metadata for ExecuteMacro operation.
-message ExecuteMacroMetadata {
-  // Macro being executed.
-  string macro = 1 [(google.api.resource_reference) = {type: "macos.googleapis.com/Macro"}];
-
-  // Current action index.
-  int32 current_action = 2;
-
-  // Total actions in macro.
-  int32 total_actions = 3;
-
-  // Elapsed duration.
-  google.protobuf.Duration elapsed_duration = 4;
 }

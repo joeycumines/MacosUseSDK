@@ -1,13 +1,12 @@
 // Copyright 2025 MacosUseSDK
 //
-// Performance metrics and monitoring
+// Performance metrics and monitoring resources
 
 syntax = "proto3";
 
 package macosusesdk.v1;
 
 import "google/api/field_behavior.proto";
-import "google/api/resource.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -15,16 +14,6 @@ option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;ma
 option java_multiple_files = true;
 option java_outer_classname = "MetricsProto";
 option java_package = "com.macosusesdk.v1";
-
-// Request to get current metrics.
-message GetMetricsRequest {
-  // The name of the metrics resource.
-  // Format: metrics (singleton)
-  string name = 1 [
-    (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "*"}
-  ];
-}
 
 // Metrics.
 message Metrics {
@@ -224,16 +213,6 @@ message AccessibilityMetrics {
   google.protobuf.Duration avg_lookup_duration = 6;
 }
 
-// Request to get a performance report.
-message GetPerformanceReportRequest {
-  // The name of the performance report resource.
-  // Format: metrics/performanceReport (singleton)
-  string name = 1 [
-    (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "*"}
-  ];
-}
-
 // Performance report.
 message PerformanceReport {
   // Report time range.
@@ -292,21 +271,6 @@ message PerformanceTrends {
     // Degrading.
     TREND_DIRECTION_DEGRADING = 3;
   }
-}
-
-// Request to reset metrics.
-message ResetMetricsRequest {
-  // Metric types to reset (empty = all).
-  repeated MetricType types = 1 [(google.api.field_behavior) = OPTIONAL];
-}
-
-// Response from resetting metrics.
-message ResetMetricsResponse {
-  // Whether reset succeeded.
-  bool success = 1;
-
-  // Metrics that were reset.
-  repeated MetricType reset_types = 2;
 }
 
 // Metric type enumeration.

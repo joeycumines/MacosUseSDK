@@ -14,7 +14,6 @@ import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
@@ -1462,412 +1461,11 @@ func (x *MacroParameter) GetRequired() bool {
 	return false
 }
 
-// Request to execute a macro (long-running operation).
-type ExecuteMacroRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Macro to execute.
-	Macro string `protobuf:"bytes,1,opt,name=macro,proto3" json:"macro,omitempty"`
-	// Parameter values (for parameterized macros).
-	ParameterValues map[string]string `protobuf:"bytes,2,rep,name=parameter_values,json=parameterValues,proto3" json:"parameter_values,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// Application context (if needed).
-	Application string `protobuf:"bytes,3,opt,name=application,proto3" json:"application,omitempty"`
-	// Execution options.
-	Options       *ExecutionOptions `protobuf:"bytes,4,opt,name=options,proto3" json:"options,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ExecuteMacroRequest) Reset() {
-	*x = ExecuteMacroRequest{}
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[14]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ExecuteMacroRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ExecuteMacroRequest) ProtoMessage() {}
-
-func (x *ExecuteMacroRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[14]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ExecuteMacroRequest.ProtoReflect.Descriptor instead.
-func (*ExecuteMacroRequest) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{14}
-}
-
-func (x *ExecuteMacroRequest) GetMacro() string {
-	if x != nil {
-		return x.Macro
-	}
-	return ""
-}
-
-func (x *ExecuteMacroRequest) GetParameterValues() map[string]string {
-	if x != nil {
-		return x.ParameterValues
-	}
-	return nil
-}
-
-func (x *ExecuteMacroRequest) GetApplication() string {
-	if x != nil {
-		return x.Application
-	}
-	return ""
-}
-
-func (x *ExecuteMacroRequest) GetOptions() *ExecutionOptions {
-	if x != nil {
-		return x.Options
-	}
-	return nil
-}
-
-// Options for macro execution.
-type ExecutionOptions struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Execution speed multiplier (1.0 = normal speed).
-	Speed float64 `protobuf:"fixed64,1,opt,name=speed,proto3" json:"speed,omitempty"`
-	// Whether to continue on error.
-	ContinueOnError bool `protobuf:"varint,2,opt,name=continue_on_error,json=continueOnError,proto3" json:"continue_on_error,omitempty"`
-	// Maximum execution time in seconds.
-	Timeout float64 `protobuf:"fixed64,3,opt,name=timeout,proto3" json:"timeout,omitempty"`
-	// Whether to record execution for debugging.
-	RecordExecution bool `protobuf:"varint,4,opt,name=record_execution,json=recordExecution,proto3" json:"record_execution,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
-}
-
-func (x *ExecutionOptions) Reset() {
-	*x = ExecutionOptions{}
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[15]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ExecutionOptions) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ExecutionOptions) ProtoMessage() {}
-
-func (x *ExecutionOptions) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[15]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ExecutionOptions.ProtoReflect.Descriptor instead.
-func (*ExecutionOptions) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{15}
-}
-
-func (x *ExecutionOptions) GetSpeed() float64 {
-	if x != nil {
-		return x.Speed
-	}
-	return 0
-}
-
-func (x *ExecutionOptions) GetContinueOnError() bool {
-	if x != nil {
-		return x.ContinueOnError
-	}
-	return false
-}
-
-func (x *ExecutionOptions) GetTimeout() float64 {
-	if x != nil {
-		return x.Timeout
-	}
-	return 0
-}
-
-func (x *ExecutionOptions) GetRecordExecution() bool {
-	if x != nil {
-		return x.RecordExecution
-	}
-	return false
-}
-
-// Response from executing a macro.
-type ExecuteMacroResponse struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Whether execution succeeded.
-	Success bool `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	// Number of actions executed.
-	ActionsExecuted int32 `protobuf:"varint,2,opt,name=actions_executed,json=actionsExecuted,proto3" json:"actions_executed,omitempty"`
-	// Execution duration.
-	ExecutionDuration *durationpb.Duration `protobuf:"bytes,3,opt,name=execution_duration,json=executionDuration,proto3" json:"execution_duration,omitempty"`
-	// Error message if failed.
-	Error string `protobuf:"bytes,4,opt,name=error,proto3" json:"error,omitempty"`
-	// Execution log (if recording was enabled).
-	Log           []*ExecutionLogEntry `protobuf:"bytes,5,rep,name=log,proto3" json:"log,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ExecuteMacroResponse) Reset() {
-	*x = ExecuteMacroResponse{}
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[16]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ExecuteMacroResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ExecuteMacroResponse) ProtoMessage() {}
-
-func (x *ExecuteMacroResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[16]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ExecuteMacroResponse.ProtoReflect.Descriptor instead.
-func (*ExecuteMacroResponse) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{16}
-}
-
-func (x *ExecuteMacroResponse) GetSuccess() bool {
-	if x != nil {
-		return x.Success
-	}
-	return false
-}
-
-func (x *ExecuteMacroResponse) GetActionsExecuted() int32 {
-	if x != nil {
-		return x.ActionsExecuted
-	}
-	return 0
-}
-
-func (x *ExecuteMacroResponse) GetExecutionDuration() *durationpb.Duration {
-	if x != nil {
-		return x.ExecutionDuration
-	}
-	return nil
-}
-
-func (x *ExecuteMacroResponse) GetError() string {
-	if x != nil {
-		return x.Error
-	}
-	return ""
-}
-
-func (x *ExecuteMacroResponse) GetLog() []*ExecutionLogEntry {
-	if x != nil {
-		return x.Log
-	}
-	return nil
-}
-
-// Log entry for macro execution.
-type ExecutionLogEntry struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Resource name.
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	// When the action executed.
-	ExecutionTime *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=execution_time,json=executionTime,proto3" json:"execution_time,omitempty"`
-	// Action index in macro.
-	ActionIndex int32 `protobuf:"varint,3,opt,name=action_index,json=actionIndex,proto3" json:"action_index,omitempty"`
-	// Action description.
-	Description string `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
-	// Whether action succeeded.
-	Success bool `protobuf:"varint,5,opt,name=success,proto3" json:"success,omitempty"`
-	// Error message if failed.
-	Error string `protobuf:"bytes,6,opt,name=error,proto3" json:"error,omitempty"`
-	// Duration in seconds.
-	Duration      float64 `protobuf:"fixed64,7,opt,name=duration,proto3" json:"duration,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ExecutionLogEntry) Reset() {
-	*x = ExecutionLogEntry{}
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[17]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ExecutionLogEntry) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ExecutionLogEntry) ProtoMessage() {}
-
-func (x *ExecutionLogEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[17]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ExecutionLogEntry.ProtoReflect.Descriptor instead.
-func (*ExecutionLogEntry) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{17}
-}
-
-func (x *ExecutionLogEntry) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *ExecutionLogEntry) GetExecutionTime() *timestamppb.Timestamp {
-	if x != nil {
-		return x.ExecutionTime
-	}
-	return nil
-}
-
-func (x *ExecutionLogEntry) GetActionIndex() int32 {
-	if x != nil {
-		return x.ActionIndex
-	}
-	return 0
-}
-
-func (x *ExecutionLogEntry) GetDescription() string {
-	if x != nil {
-		return x.Description
-	}
-	return ""
-}
-
-func (x *ExecutionLogEntry) GetSuccess() bool {
-	if x != nil {
-		return x.Success
-	}
-	return false
-}
-
-func (x *ExecutionLogEntry) GetError() string {
-	if x != nil {
-		return x.Error
-	}
-	return ""
-}
-
-func (x *ExecutionLogEntry) GetDuration() float64 {
-	if x != nil {
-		return x.Duration
-	}
-	return 0
-}
-
-// Metadata for ExecuteMacro operation.
-type ExecuteMacroMetadata struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Macro being executed.
-	Macro string `protobuf:"bytes,1,opt,name=macro,proto3" json:"macro,omitempty"`
-	// Current action index.
-	CurrentAction int32 `protobuf:"varint,2,opt,name=current_action,json=currentAction,proto3" json:"current_action,omitempty"`
-	// Total actions in macro.
-	TotalActions int32 `protobuf:"varint,3,opt,name=total_actions,json=totalActions,proto3" json:"total_actions,omitempty"`
-	// Elapsed duration.
-	ElapsedDuration *durationpb.Duration `protobuf:"bytes,4,opt,name=elapsed_duration,json=elapsedDuration,proto3" json:"elapsed_duration,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
-}
-
-func (x *ExecuteMacroMetadata) Reset() {
-	*x = ExecuteMacroMetadata{}
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[18]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ExecuteMacroMetadata) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ExecuteMacroMetadata) ProtoMessage() {}
-
-func (x *ExecuteMacroMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[18]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ExecuteMacroMetadata.ProtoReflect.Descriptor instead.
-func (*ExecuteMacroMetadata) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{18}
-}
-
-func (x *ExecuteMacroMetadata) GetMacro() string {
-	if x != nil {
-		return x.Macro
-	}
-	return ""
-}
-
-func (x *ExecuteMacroMetadata) GetCurrentAction() int32 {
-	if x != nil {
-		return x.CurrentAction
-	}
-	return 0
-}
-
-func (x *ExecuteMacroMetadata) GetTotalActions() int32 {
-	if x != nil {
-		return x.TotalActions
-	}
-	return 0
-}
-
-func (x *ExecuteMacroMetadata) GetElapsedDuration() *durationpb.Duration {
-	if x != nil {
-		return x.ElapsedDuration
-	}
-	return nil
-}
-
 var File_macosusesdk_v1_macro_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_macro_proto_rawDesc = "" +
 	"\n" +
-	"\x1amacosusesdk/v1/macro.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1amacosusesdk/v1/input.proto\"\xfb\x03\n" +
+	"\x1amacosusesdk/v1/macro.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1amacosusesdk/v1/input.proto\"\xfb\x03\n" +
 	"\x05Macro\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12&\n" +
 	"\fdisplay_name\x18\x02 \x01(\tB\x03\xe0A\x02R\vdisplayName\x12%\n" +
@@ -1976,43 +1574,7 @@ const file_macosusesdk_v1_macro_proto_rawDesc = "" +
 	"\x16PARAMETER_TYPE_INTEGER\x10\x02\x12\x1a\n" +
 	"\x16PARAMETER_TYPE_BOOLEAN\x10\x03\x12\x1b\n" +
 	"\x17PARAMETER_TYPE_SELECTOR\x10\x04\x12\x17\n" +
-	"\x13PARAMETER_TYPE_PATH\x10\x05\"\x8a\x03\n" +
-	"\x13ExecuteMacroRequest\x128\n" +
-	"\x05macro\x18\x01 \x01(\tB\"\xe0A\x02\xfaA\x1c\n" +
-	"\x1amacos.googleapis.com/MacroR\x05macro\x12h\n" +
-	"\x10parameter_values\x18\x02 \x03(\v28.macosusesdk.v1.ExecuteMacroRequest.ParameterValuesEntryB\x03\xe0A\x01R\x0fparameterValues\x12J\n" +
-	"\vapplication\x18\x03 \x01(\tB(\xe0A\x01\xfaA\"\n" +
-	" macos.googleapis.com/ApplicationR\vapplication\x12?\n" +
-	"\aoptions\x18\x04 \x01(\v2 .macosusesdk.v1.ExecutionOptionsB\x03\xe0A\x01R\aoptions\x1aB\n" +
-	"\x14ParameterValuesEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xad\x01\n" +
-	"\x10ExecutionOptions\x12\x19\n" +
-	"\x05speed\x18\x01 \x01(\x01B\x03\xe0A\x01R\x05speed\x12/\n" +
-	"\x11continue_on_error\x18\x02 \x01(\bB\x03\xe0A\x01R\x0fcontinueOnError\x12\x1d\n" +
-	"\atimeout\x18\x03 \x01(\x01B\x03\xe0A\x01R\atimeout\x12.\n" +
-	"\x10record_execution\x18\x04 \x01(\bB\x03\xe0A\x01R\x0frecordExecution\"\xf0\x01\n" +
-	"\x14ExecuteMacroResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\x12)\n" +
-	"\x10actions_executed\x18\x02 \x01(\x05R\x0factionsExecuted\x12H\n" +
-	"\x12execution_duration\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\x11executionDuration\x12\x14\n" +
-	"\x05error\x18\x04 \x01(\tR\x05error\x123\n" +
-	"\x03log\x18\x05 \x03(\v2!.macosusesdk.v1.ExecutionLogEntryR\x03log\"\xb3\x03\n" +
-	"\x11ExecutionLogEntry\x12\x17\n" +
-	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12F\n" +
-	"\x0eexecution_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\rexecutionTime\x12&\n" +
-	"\faction_index\x18\x03 \x01(\x05B\x03\xe0A\x03R\vactionIndex\x12%\n" +
-	"\vdescription\x18\x04 \x01(\tB\x03\xe0A\x03R\vdescription\x12\x1d\n" +
-	"\asuccess\x18\x05 \x01(\bB\x03\xe0A\x03R\asuccess\x12\x19\n" +
-	"\x05error\x18\x06 \x01(\tB\x03\xe0A\x03R\x05error\x12\x1f\n" +
-	"\bduration\x18\a \x01(\x01B\x03\xe0A\x03R\bduration:\x92\x01\xeaA\x8e\x01\n" +
-	"&macos.googleapis.com/ExecutionLogEntry\x12<macros/{macro}/executions/{execution}/logEntries/{log_entry}*\x13executionLogEntries2\x11executionLogEntry\"\xdf\x01\n" +
-	"\x14ExecuteMacroMetadata\x125\n" +
-	"\x05macro\x18\x01 \x01(\tB\x1f\xfaA\x1c\n" +
-	"\x1amacos.googleapis.com/MacroR\x05macro\x12%\n" +
-	"\x0ecurrent_action\x18\x02 \x01(\x05R\rcurrentAction\x12#\n" +
-	"\rtotal_actions\x18\x03 \x01(\x05R\ftotalActions\x12D\n" +
-	"\x10elapsed_duration\x18\x04 \x01(\v2\x19.google.protobuf.DurationR\x0felapsedDurationB\xc1\x01\n" +
+	"\x13PARAMETER_TYPE_PATH\x10\x05B\xc1\x01\n" +
 	"\x12com.macosusesdk.v1B\n" +
 	"MacroProtoP\x01ZFgithub.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1\xa2\x02\x03MXX\xaa\x02\x0eMacosusesdk.V1\xca\x02\x0eMacosusesdk\\V1\xe2\x02\x1aMacosusesdk\\V1\\GPBMetadata\xea\x02\x0fMacosusesdk::V1b\x06proto3"
 
@@ -2029,7 +1591,7 @@ func file_macosusesdk_v1_macro_proto_rawDescGZIP() []byte {
 }
 
 var file_macosusesdk_v1_macro_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_macosusesdk_v1_macro_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_macosusesdk_v1_macro_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_macosusesdk_v1_macro_proto_goTypes = []any{
 	(CompoundCondition_Operator)(0),   // 0: macosusesdk.v1.CompoundCondition.Operator
 	(MacroParameter_ParameterType)(0), // 1: macosusesdk.v1.MacroParameter.ParameterType
@@ -2047,23 +1609,16 @@ var file_macosusesdk_v1_macro_proto_goTypes = []any{
 	(*ElementAttributeValue)(nil),     // 13: macosusesdk.v1.ElementAttributeValue
 	(*MethodCall)(nil),                // 14: macosusesdk.v1.MethodCall
 	(*MacroParameter)(nil),            // 15: macosusesdk.v1.MacroParameter
-	(*ExecuteMacroRequest)(nil),       // 16: macosusesdk.v1.ExecuteMacroRequest
-	(*ExecutionOptions)(nil),          // 17: macosusesdk.v1.ExecutionOptions
-	(*ExecuteMacroResponse)(nil),      // 18: macosusesdk.v1.ExecuteMacroResponse
-	(*ExecutionLogEntry)(nil),         // 19: macosusesdk.v1.ExecutionLogEntry
-	(*ExecuteMacroMetadata)(nil),      // 20: macosusesdk.v1.ExecuteMacroMetadata
-	nil,                               // 21: macosusesdk.v1.MethodCall.ArgsEntry
-	nil,                               // 22: macosusesdk.v1.ExecuteMacroRequest.ParameterValuesEntry
-	(*timestamppb.Timestamp)(nil),     // 23: google.protobuf.Timestamp
-	(*InputAction)(nil),               // 24: macosusesdk.v1.InputAction
-	(*durationpb.Duration)(nil),       // 25: google.protobuf.Duration
+	nil,                               // 16: macosusesdk.v1.MethodCall.ArgsEntry
+	(*timestamppb.Timestamp)(nil),     // 17: google.protobuf.Timestamp
+	(*InputAction)(nil),               // 18: macosusesdk.v1.InputAction
 }
 var file_macosusesdk_v1_macro_proto_depIdxs = []int32{
 	3,  // 0: macosusesdk.v1.Macro.actions:type_name -> macosusesdk.v1.MacroAction
 	15, // 1: macosusesdk.v1.Macro.parameters:type_name -> macosusesdk.v1.MacroParameter
-	23, // 2: macosusesdk.v1.Macro.create_time:type_name -> google.protobuf.Timestamp
-	23, // 3: macosusesdk.v1.Macro.update_time:type_name -> google.protobuf.Timestamp
-	24, // 4: macosusesdk.v1.MacroAction.input:type_name -> macosusesdk.v1.InputAction
+	17, // 2: macosusesdk.v1.Macro.create_time:type_name -> google.protobuf.Timestamp
+	17, // 3: macosusesdk.v1.Macro.update_time:type_name -> google.protobuf.Timestamp
+	18, // 4: macosusesdk.v1.MacroAction.input:type_name -> macosusesdk.v1.InputAction
 	4,  // 5: macosusesdk.v1.MacroAction.wait:type_name -> macosusesdk.v1.WaitAction
 	6,  // 6: macosusesdk.v1.MacroAction.conditional:type_name -> macosusesdk.v1.ConditionalAction
 	10, // 7: macosusesdk.v1.MacroAction.loop:type_name -> macosusesdk.v1.LoopAction
@@ -2081,19 +1636,13 @@ var file_macosusesdk_v1_macro_proto_depIdxs = []int32{
 	11, // 19: macosusesdk.v1.LoopAction.foreach:type_name -> macosusesdk.v1.ForEachLoop
 	3,  // 20: macosusesdk.v1.LoopAction.actions:type_name -> macosusesdk.v1.MacroAction
 	13, // 21: macosusesdk.v1.AssignAction.element_attribute:type_name -> macosusesdk.v1.ElementAttributeValue
-	21, // 22: macosusesdk.v1.MethodCall.args:type_name -> macosusesdk.v1.MethodCall.ArgsEntry
+	16, // 22: macosusesdk.v1.MethodCall.args:type_name -> macosusesdk.v1.MethodCall.ArgsEntry
 	1,  // 23: macosusesdk.v1.MacroParameter.type:type_name -> macosusesdk.v1.MacroParameter.ParameterType
-	22, // 24: macosusesdk.v1.ExecuteMacroRequest.parameter_values:type_name -> macosusesdk.v1.ExecuteMacroRequest.ParameterValuesEntry
-	17, // 25: macosusesdk.v1.ExecuteMacroRequest.options:type_name -> macosusesdk.v1.ExecutionOptions
-	25, // 26: macosusesdk.v1.ExecuteMacroResponse.execution_duration:type_name -> google.protobuf.Duration
-	19, // 27: macosusesdk.v1.ExecuteMacroResponse.log:type_name -> macosusesdk.v1.ExecutionLogEntry
-	23, // 28: macosusesdk.v1.ExecutionLogEntry.execution_time:type_name -> google.protobuf.Timestamp
-	25, // 29: macosusesdk.v1.ExecuteMacroMetadata.elapsed_duration:type_name -> google.protobuf.Duration
-	30, // [30:30] is the sub-list for method output_type
-	30, // [30:30] is the sub-list for method input_type
-	30, // [30:30] is the sub-list for extension type_name
-	30, // [30:30] is the sub-list for extension extendee
-	0,  // [0:30] is the sub-list for field type_name
+	24, // [24:24] is the sub-list for method output_type
+	24, // [24:24] is the sub-list for method input_type
+	24, // [24:24] is the sub-list for extension type_name
+	24, // [24:24] is the sub-list for extension extendee
+	0,  // [0:24] is the sub-list for field type_name
 }
 
 func init() { file_macosusesdk_v1_macro_proto_init() }
@@ -2144,7 +1693,7 @@ func file_macosusesdk_v1_macro_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_macosusesdk_v1_macro_proto_rawDesc), len(file_macosusesdk_v1_macro_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   21,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
