@@ -80,6 +80,79 @@ func (x *Point) GetY() float64 {
 	return 0
 }
 
+// A rectangular region with x, y, width, height (screen coordinates).
+type Region struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// X coordinate of the region's origin (screen coordinates).
+	X float64 `protobuf:"fixed64,1,opt,name=x,proto3" json:"x,omitempty"`
+	// Y coordinate of the region's origin (screen coordinates).
+	Y float64 `protobuf:"fixed64,2,opt,name=y,proto3" json:"y,omitempty"`
+	// Width of the region.
+	Width float64 `protobuf:"fixed64,3,opt,name=width,proto3" json:"width,omitempty"`
+	// Height of the region.
+	Height        float64 `protobuf:"fixed64,4,opt,name=height,proto3" json:"height,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Region) Reset() {
+	*x = Region{}
+	mi := &file_macosusesdk_type_geometry_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Region) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Region) ProtoMessage() {}
+
+func (x *Region) ProtoReflect() protoreflect.Message {
+	mi := &file_macosusesdk_type_geometry_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Region.ProtoReflect.Descriptor instead.
+func (*Region) Descriptor() ([]byte, []int) {
+	return file_macosusesdk_type_geometry_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *Region) GetX() float64 {
+	if x != nil {
+		return x.X
+	}
+	return 0
+}
+
+func (x *Region) GetY() float64 {
+	if x != nil {
+		return x.Y
+	}
+	return 0
+}
+
+func (x *Region) GetWidth() float64 {
+	if x != nil {
+		return x.Width
+	}
+	return 0
+}
+
+func (x *Region) GetHeight() float64 {
+	if x != nil {
+		return x.Height
+	}
+	return 0
+}
+
 var File_macosusesdk_type_geometry_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_type_geometry_proto_rawDesc = "" +
@@ -87,7 +160,12 @@ const file_macosusesdk_type_geometry_proto_rawDesc = "" +
 	"\x1fmacosusesdk/type/geometry.proto\x12\x10macosusesdk.type\"#\n" +
 	"\x05Point\x12\f\n" +
 	"\x01x\x18\x01 \x01(\x01R\x01x\x12\f\n" +
-	"\x01y\x18\x02 \x01(\x01R\x01yB\xc2\x01\n" +
+	"\x01y\x18\x02 \x01(\x01R\x01y\"R\n" +
+	"\x06Region\x12\f\n" +
+	"\x01x\x18\x01 \x01(\x01R\x01x\x12\f\n" +
+	"\x01y\x18\x02 \x01(\x01R\x01y\x12\x14\n" +
+	"\x05width\x18\x03 \x01(\x01R\x05width\x12\x16\n" +
+	"\x06height\x18\x04 \x01(\x01R\x06heightB\xc2\x01\n" +
 	"\x14com.macosusesdk.typeB\rGeometryProtoP\x01Z:github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type\xa2\x02\x03MTX\xaa\x02\x10Macosusesdk.Type\xca\x02\x10Macosusesdk\\Type\xe2\x02\x1cMacosusesdk\\Type\\GPBMetadata\xea\x02\x11Macosusesdk::Typeb\x06proto3"
 
 var (
@@ -102,9 +180,10 @@ func file_macosusesdk_type_geometry_proto_rawDescGZIP() []byte {
 	return file_macosusesdk_type_geometry_proto_rawDescData
 }
 
-var file_macosusesdk_type_geometry_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_macosusesdk_type_geometry_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_macosusesdk_type_geometry_proto_goTypes = []any{
-	(*Point)(nil), // 0: macosusesdk.type.Point
+	(*Point)(nil),  // 0: macosusesdk.type.Point
+	(*Region)(nil), // 1: macosusesdk.type.Region
 }
 var file_macosusesdk_type_geometry_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -125,7 +204,7 @@ func file_macosusesdk_type_geometry_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_macosusesdk_type_geometry_proto_rawDesc), len(file_macosusesdk_type_geometry_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   1,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

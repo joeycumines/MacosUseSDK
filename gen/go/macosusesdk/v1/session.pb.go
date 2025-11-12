@@ -278,8 +278,10 @@ type Transaction struct {
 	StartTime *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
 	// Number of operations in the transaction.
 	OperationsCount int32 `protobuf:"varint,5,opt,name=operations_count,json=operationsCount,proto3" json:"operations_count,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// The updated session on committed or rolled back transaction.
+	UpdatedSession *Session `protobuf:"bytes,6,opt,name=updated_session,json=updatedSession,proto3" json:"updated_session,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *Transaction) Reset() {
@@ -345,6 +347,13 @@ func (x *Transaction) GetOperationsCount() int32 {
 		return x.OperationsCount
 	}
 	return 0
+}
+
+func (x *Transaction) GetUpdatedSession() *Session {
+	if x != nil {
+		return x.UpdatedSession
+	}
+	return nil
 }
 
 // Session state snapshot.
@@ -537,7 +546,7 @@ const file_macosusesdk_v1_session_proto_rawDesc = "" +
 	"\x10STATE_TERMINATED\x10\x03\x12\x11\n" +
 	"\rSTATE_EXPIRED\x10\x04\x12\x10\n" +
 	"\fSTATE_FAILED\x10\x05:H\xeaAE\n" +
-	"\x1cmacos.googleapis.com/Session\x12\x12sessions/{session}*\bsessions2\asession\"\x97\x03\n" +
+	"\x1cmacos.googleapis.com/Session\x12\x12sessions/{session}*\bsessions2\asession\"\xde\x03\n" +
 	"\vTransaction\x12*\n" +
 	"\x0etransaction_id\x18\x01 \x01(\tB\x03\xe0A\x03R\rtransactionId\x12>\n" +
 	"\asession\x18\x02 \x01(\tB$\xe0A\x03\xfaA\x1e\n" +
@@ -545,7 +554,8 @@ const file_macosusesdk_v1_session_proto_rawDesc = "" +
 	"\x05state\x18\x03 \x01(\x0e2!.macosusesdk.v1.Transaction.StateB\x03\xe0A\x03R\x05state\x12>\n" +
 	"\n" +
 	"start_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\tstartTime\x12.\n" +
-	"\x10operations_count\x18\x05 \x01(\x05B\x03\xe0A\x03R\x0foperationsCount\"n\n" +
+	"\x10operations_count\x18\x05 \x01(\x05B\x03\xe0A\x03R\x0foperationsCount\x12E\n" +
+	"\x0fupdated_session\x18\x06 \x01(\v2\x17.macosusesdk.v1.SessionB\x03\xe0A\x03R\x0eupdatedSession\"n\n" +
 	"\x05State\x12\x15\n" +
 	"\x11STATE_UNSPECIFIED\x10\x00\x12\x10\n" +
 	"\fSTATE_ACTIVE\x10\x01\x12\x13\n" +
@@ -598,14 +608,15 @@ var file_macosusesdk_v1_session_proto_depIdxs = []int32{
 	6,  // 4: macosusesdk.v1.Session.metadata:type_name -> macosusesdk.v1.Session.MetadataEntry
 	1,  // 5: macosusesdk.v1.Transaction.state:type_name -> macosusesdk.v1.Transaction.State
 	7,  // 6: macosusesdk.v1.Transaction.start_time:type_name -> google.protobuf.Timestamp
-	2,  // 7: macosusesdk.v1.SessionSnapshot.session:type_name -> macosusesdk.v1.Session
-	5,  // 8: macosusesdk.v1.SessionSnapshot.history:type_name -> macosusesdk.v1.OperationRecord
-	7,  // 9: macosusesdk.v1.OperationRecord.operation_time:type_name -> google.protobuf.Timestamp
-	10, // [10:10] is the sub-list for method output_type
-	10, // [10:10] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	2,  // 7: macosusesdk.v1.Transaction.updated_session:type_name -> macosusesdk.v1.Session
+	2,  // 8: macosusesdk.v1.SessionSnapshot.session:type_name -> macosusesdk.v1.Session
+	5,  // 9: macosusesdk.v1.SessionSnapshot.history:type_name -> macosusesdk.v1.OperationRecord
+	7,  // 10: macosusesdk.v1.OperationRecord.operation_time:type_name -> google.protobuf.Timestamp
+	11, // [11:11] is the sub-list for method output_type
+	11, // [11:11] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_macosusesdk_v1_session_proto_init() }

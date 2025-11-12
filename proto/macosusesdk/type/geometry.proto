@@ -19,3 +19,18 @@ message Point {
   // Y coordinate.
   double y = 2;
 }
+
+// A rectangular region with x, y, width, height (screen coordinates).
+message Region {
+  // X coordinate of the region's origin (screen coordinates).
+  double x = 1;
+
+  // Y coordinate of the region's origin (screen coordinates).
+  double y = 2;
+
+  // Width of the region.
+  double width = 3;
+
+  // Height of the region.
+  double height = 4;
+}

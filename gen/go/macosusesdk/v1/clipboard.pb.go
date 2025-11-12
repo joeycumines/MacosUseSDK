@@ -99,10 +99,12 @@ func (ContentType) EnumDescriptor() ([]byte, []int) {
 // Clipboard contents.
 type Clipboard struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// Resource name (singleton: "clipboard")
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// Clipboard content.
-	Content *ClipboardContent `protobuf:"bytes,1,opt,name=content,proto3" json:"content,omitempty"`
+	Content *ClipboardContent `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
 	// Available content types on clipboard.
-	AvailableTypes []ContentType `protobuf:"varint,2,rep,packed,name=available_types,json=availableTypes,proto3,enum=macosusesdk.v1.ContentType" json:"available_types,omitempty"`
+	AvailableTypes []ContentType `protobuf:"varint,3,rep,packed,name=available_types,json=availableTypes,proto3,enum=macosusesdk.v1.ContentType" json:"available_types,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -135,6 +137,13 @@ func (x *Clipboard) ProtoReflect() protoreflect.Message {
 // Deprecated: Use Clipboard.ProtoReflect.Descriptor instead.
 func (*Clipboard) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_clipboard_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *Clipboard) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
 }
 
 func (x *Clipboard) GetContent() *ClipboardContent {
@@ -475,10 +484,13 @@ var File_macosusesdk_v1_clipboard_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_clipboard_proto_rawDesc = "" +
 	"\n" +
-	"\x1emacosusesdk/v1/clipboard.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x8d\x01\n" +
-	"\tClipboard\x12:\n" +
-	"\acontent\x18\x01 \x01(\v2 .macosusesdk.v1.ClipboardContentR\acontent\x12D\n" +
-	"\x0favailable_types\x18\x02 \x03(\x0e2\x1b.macosusesdk.v1.ContentTypeR\x0eavailableTypes\"\xf2\x01\n" +
+	"\x1emacosusesdk/v1/clipboard.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xed\x01\n" +
+	"\tClipboard\x12\x17\n" +
+	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12:\n" +
+	"\acontent\x18\x02 \x01(\v2 .macosusesdk.v1.ClipboardContentR\acontent\x12D\n" +
+	"\x0favailable_types\x18\x03 \x03(\x0e2\x1b.macosusesdk.v1.ContentTypeR\x0eavailableTypes:E\xeaAB\n" +
+	"\x1emacos.googleapis.com/Clipboard\x12\tclipboard*\n" +
+	"clipboards2\tclipboard\"\xf2\x01\n" +
 	"\x10ClipboardContent\x124\n" +
 	"\x04type\x18\x01 \x01(\x0e2\x1b.macosusesdk.v1.ContentTypeB\x03\xe0A\x02R\x04type\x12\x14\n" +
 	"\x04text\x18\n" +

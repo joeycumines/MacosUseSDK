@@ -93,6 +93,9 @@ message Transaction {
   // Number of operations in the transaction.
   int32 operations_count = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
 
+  // The updated session on committed or rolled back transaction.
+  Session updated_session = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
   // Transaction state.
   enum State {
     // Default unspecified.

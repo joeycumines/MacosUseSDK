@@ -432,8 +432,8 @@ public struct Macosusesdk_V1_FindRegionElementsRequest: Sendable {
   public var parent: String = String()
 
   /// Region to search within (screen coordinates).
-  public var region: Macosusesdk_V1_Region {
-    get {return _region ?? Macosusesdk_V1_Region()}
+  public var region: Macosusesdk_Type_Region {
+    get {return _region ?? Macosusesdk_Type_Region()}
     set {_region = newValue}
   }
   /// Returns true if `region` has been explicitly set.
@@ -461,7 +461,7 @@ public struct Macosusesdk_V1_FindRegionElementsRequest: Sendable {
 
   public init() {}
 
-  fileprivate var _region: Macosusesdk_V1_Region? = nil
+  fileprivate var _region: Macosusesdk_Type_Region? = nil
   fileprivate var _selector: Macosusesdk_Type_ElementSelector? = nil
 }
 
@@ -1887,6 +1887,44 @@ public struct Macosusesdk_V1_CommitTransactionRequest: Sendable {
   public init() {}
 }
 
+/// Response from committing a transaction.
+/// TODO: Delete this and replace it (and its usage) with the new Transaction field Transaction.updated_session. Rollback and Commit should return Transaction. Fine to be a breaking API change, not released yet.
+public struct Macosusesdk_V1_CommitTransactionResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// The updated session with committed state.
+  public var session: Macosusesdk_V1_Session {
+    get {return _session ?? Macosusesdk_V1_Session()}
+    set {_session = newValue}
+  }
+  /// Returns true if `session` has been explicitly set.
+  public var hasSession: Bool {return self._session != nil}
+  /// Clears the value of `session`. Subsequent reads from it will return its default value.
+  public mutating func clearSession() {self._session = nil}
+
+  /// The committed transaction.
+  public var transaction: Macosusesdk_V1_Transaction {
+    get {return _transaction ?? Macosusesdk_V1_Transaction()}
+    set {_transaction = newValue}
+  }
+  /// Returns true if `transaction` has been explicitly set.
+  public var hasTransaction: Bool {return self._transaction != nil}
+  /// Clears the value of `transaction`. Subsequent reads from it will return its default value.
+  public mutating func clearTransaction() {self._transaction = nil}
+
+  /// Number of operations committed.
+  public var operationsCount: Int32 = 0
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _session: Macosusesdk_V1_Session? = nil
+  fileprivate var _transaction: Macosusesdk_V1_Transaction? = nil
+}
+
 /// Request to rollback a transaction.
 public struct Macosusesdk_V1_RollbackTransactionRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
@@ -1906,6 +1944,44 @@ public struct Macosusesdk_V1_RollbackTransactionRequest: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
+}
+
+/// Response from rolling back a transaction.
+/// TODO: Delete this and replace it (and its usage) with the new Transaction field Transaction.updated_session. Rollback and Commit should return Transaction. Fine to be a breaking API change, not released yet.
+public struct Macosusesdk_V1_RollbackTransactionResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// The updated session with rolled back state.
+  public var session: Macosusesdk_V1_Session {
+    get {return _session ?? Macosusesdk_V1_Session()}
+    set {_session = newValue}
+  }
+  /// Returns true if `session` has been explicitly set.
+  public var hasSession: Bool {return self._session != nil}
+  /// Clears the value of `session`. Subsequent reads from it will return its default value.
+  public mutating func clearSession() {self._session = nil}
+
+  /// The rolled back transaction.
+  public var transaction: Macosusesdk_V1_Transaction {
+    get {return _transaction ?? Macosusesdk_V1_Transaction()}
+    set {_transaction = newValue}
+  }
+  /// Returns true if `transaction` has been explicitly set.
+  public var hasTransaction: Bool {return self._transaction != nil}
+  /// Clears the value of `transaction`. Subsequent reads from it will return its default value.
+  public mutating func clearTransaction() {self._transaction = nil}
+
+  /// Number of operations rolled back.
+  public var operationsCount: Int32 = 0
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _session: Macosusesdk_V1_Session? = nil
+  fileprivate var _transaction: Macosusesdk_V1_Transaction? = nil
 }
 
 /// Request to get a session state snapshot.
@@ -2093,8 +2169,8 @@ public struct Macosusesdk_V1_CaptureRegionScreenshotRequest: Sendable {
   // methods supported on all messages.
 
   /// Region to capture (screen coordinates).
-  public var region: Macosusesdk_V1_Region {
-    get {return _region ?? Macosusesdk_V1_Region()}
+  public var region: Macosusesdk_Type_Region {
+    get {return _region ?? Macosusesdk_Type_Region()}
     set {_region = newValue}
   }
   /// Returns true if `region` has been explicitly set.
@@ -2118,7 +2194,7 @@ public struct Macosusesdk_V1_CaptureRegionScreenshotRequest: Sendable {
 
   public init() {}
 
-  fileprivate var _region: Macosusesdk_V1_Region? = nil
+  fileprivate var _region: Macosusesdk_Type_Region? = nil
 }
 
 /// Response from capturing a region screenshot.
@@ -2140,8 +2216,8 @@ public struct Macosusesdk_V1_CaptureRegionScreenshotResponse: Sendable {
   public var height: Int32 = 0
 
   /// Region that was captured.
-  public var region: Macosusesdk_V1_Region {
-    get {return _region ?? Macosusesdk_V1_Region()}
+  public var region: Macosusesdk_Type_Region {
+    get {return _region ?? Macosusesdk_Type_Region()}
     set {_region = newValue}
   }
   /// Returns true if `region` has been explicitly set.
@@ -2156,7 +2232,7 @@ public struct Macosusesdk_V1_CaptureRegionScreenshotResponse: Sendable {
 
   public init() {}
 
-  fileprivate var _region: Macosusesdk_V1_Region? = nil
+  fileprivate var _region: Macosusesdk_Type_Region? = nil
 }
 
 /// ===== Clipboard Messages =====
@@ -5878,6 +5954,50 @@ extension Macosusesdk_V1_CommitTransactionRequest: SwiftProtobuf.Message, SwiftP
   }
 }
 
+extension Macosusesdk_V1_CommitTransactionResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".CommitTransactionResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}session\0\u{1}transaction\0\u{3}operations_count\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._session) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._transaction) }()
+      case 3: try { try decoder.decodeSingularInt32Field(value: &self.operationsCount) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._session {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
+    try { if let v = self._transaction {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+    } }()
+    if self.operationsCount != 0 {
+      try visitor.visitSingularInt32Field(value: self.operationsCount, fieldNumber: 3)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_CommitTransactionResponse, rhs: Macosusesdk_V1_CommitTransactionResponse) -> Bool {
+    if lhs._session != rhs._session {return false}
+    if lhs._transaction != rhs._transaction {return false}
+    if lhs.operationsCount != rhs.operationsCount {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
 extension Macosusesdk_V1_RollbackTransactionRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".RollbackTransactionRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}revision_id\0\u{3}transaction_id\0")
@@ -5913,6 +6033,50 @@ extension Macosusesdk_V1_RollbackTransactionRequest: SwiftProtobuf.Message, Swif
     if lhs.name != rhs.name {return false}
     if lhs.revisionID != rhs.revisionID {return false}
     if lhs.transactionID != rhs.transactionID {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_V1_RollbackTransactionResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".RollbackTransactionResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}session\0\u{1}transaction\0\u{3}operations_count\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._session) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._transaction) }()
+      case 3: try { try decoder.decodeSingularInt32Field(value: &self.operationsCount) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._session {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
+    try { if let v = self._transaction {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+    } }()
+    if self.operationsCount != 0 {
+      try visitor.visitSingularInt32Field(value: self.operationsCount, fieldNumber: 3)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_RollbackTransactionResponse, rhs: Macosusesdk_V1_RollbackTransactionResponse) -> Bool {
+    if lhs._session != rhs._session {return false}
+    if lhs._transaction != rhs._transaction {return false}
+    if lhs.operationsCount != rhs.operationsCount {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

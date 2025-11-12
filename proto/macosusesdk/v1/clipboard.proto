@@ -7,6 +7,7 @@ syntax = "proto3";
 package macosusesdk.v1;
 
 import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
@@ -16,11 +17,21 @@ option java_package = "com.macosusesdk.v1";
 
 // Clipboard contents.
 message Clipboard {
+  option (google.api.resource) = {
+    type: "macos.googleapis.com/Clipboard"
+    pattern: "clipboard"
+    singular: "clipboard"
+    plural: "clipboards"
+  };
+
+  // Resource name (singleton: "clipboard")
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
   // Clipboard content.
-  ClipboardContent content = 1;
+  ClipboardContent content = 2;
 
   // Available content types on clipboard.
-  repeated ContentType available_types = 2;
+  repeated ContentType available_types = 3;
 }
 
 // Clipboard content (one of the supported types).

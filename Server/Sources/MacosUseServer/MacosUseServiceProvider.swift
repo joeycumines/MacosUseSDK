@@ -12,10 +12,12 @@ import SwiftProtobuf
 final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
   let stateStore: AppStateStore
   let operationStore: OperationStore
+  let windowRegistry: WindowRegistry
 
   init(stateStore: AppStateStore, operationStore: OperationStore) {
     self.stateStore = stateStore
     self.operationStore = operationStore
+    self.windowRegistry = WindowRegistry()
   }
 
   // MARK: - Application Methods
@@ -1192,25 +1194,111 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
   func createObservation(
     request: Macosusesdk_V1_CreateObservationRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Google_Longrunning_Operation {
-    throw GRPCStatus(code: .unimplemented, message: "createObservation not yet implemented")
+    fputs("info: [MacosUseServiceProvider] createObservation called (LRO)\n", stderr)
+
+    // Parse parent resource name to get PID
+    let pid = try parsePID(fromName: request.parent)
+
+    // Generate observation ID
+    let observationId =
+      request.observationID.isEmpty ? UUID().uuidString : request.observationID
+    let observationName = "\(request.parent)/observations/\(observationId)"
+
+    // Create operation for LRO
+    let opName = "operations/observation/\(observationId)"
+
+    // Create initial observation in ObservationManager
+    let observation = await ObservationManager.shared.createObservation(
+      name: observationName,
+      type: request.observation.type,
+      parent: request.parent,
+      filter: request.observation.hasFilter ? request.observation.filter : nil,
+      pid: pid
+    )
+
+    // Create metadata
+    let metadata = try SwiftProtobuf.Google_Protobuf_Any.with {
+      $0.typeURL = "type.googleapis.com/macosusesdk.v1.Observation"
+      $0.value = try observation.serializedData()
+    }
+
+    // Create LRO
+    let op = await operationStore.createOperation(name: opName, metadata: metadata)
+
+    // Start observation in background
+    Task {
+      do {
+        // Start the observation
+        try await ObservationManager.shared.startObservation(name: observationName)
+
+        // Get updated observation
+        guard
+          let startedObservation = await ObservationManager.shared.getObservation(
+            name: observationName)
+        else {
+          throw GRPCStatus(code: .internalError, message: "Failed to start observation")
+        }
+
+        // Mark operation as done with observation in response
+        try await operationStore.finishOperation(name: opName, responseMessage: startedObservation)
+
+      } catch {
+        // Mark operation as failed
+        var errOp = await operationStore.getOperation(name: opName) ?? op
+        errOp.done = true
+        errOp.error = Google_Rpc_Status.with {
+          $0.code = Int32(GRPCStatus.Code.internalError.rawValue)
+          $0.message = "\(error)"
+        }
+        await operationStore.putOperation(errOp)
+      }
+    }
+
+    return op
   }
 
   func getObservation(
     request: Macosusesdk_V1_GetObservationRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_Observation {
-    throw GRPCStatus(code: .unimplemented, message: "getObservation not yet implemented")
+    fputs("info: [MacosUseServiceProvider] getObservation called\n", stderr)
+
+    // Get observation from ObservationManager
+    guard let observation = await ObservationManager.shared.getObservation(name: request.name)
+    else {
+      throw GRPCStatus(code: .notFound, message: "Observation not found")
+    }
+
+    return observation
   }
 
   func listObservations(
     request: Macosusesdk_V1_ListObservationsRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_ListObservationsResponse {
-    throw GRPCStatus(code: .unimplemented, message: "listObservations not yet implemented")
+    fputs("info: [MacosUseServiceProvider] listObservations called\n", stderr)
+
+    // List observations for parent
+    let observations = await ObservationManager.shared.listObservations(parent: request.parent)
+
+    return Macosusesdk_V1_ListObservationsResponse.with {
+      $0.observations = observations
+      // TODO: Implement pagination with next_page_token
+      $0.nextPageToken = ""
+    }
   }
 
   func cancelObservation(
     request: Macosusesdk_V1_CancelObservationRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_Observation {
-    throw GRPCStatus(code: .unimplemented, message: "cancelObservation not yet implemented")
+    fputs("info: [MacosUseServiceProvider] cancelObservation called\n", stderr)
+
+    // Cancel observation in ObservationManager
+    guard
+      let observation = await ObservationManager.shared.cancelObservation(name: request.name)
+    else {
+      throw GRPCStatus(code: .notFound, message: "Observation not found")
+    }
+
+    return observation
   }
 
   func streamObservations(
@@ -1218,7 +1306,35 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     responseStream: GRPCAsyncResponseStreamWriter<Macosusesdk_V1_StreamObservationsResponse>,
     context: GRPCAsyncServerCallContext
   ) async throws {
-    throw GRPCStatus(code: .unimplemented, message: "streamObservations not yet implemented")
+    fputs("info: [MacosUseServiceProvider] streamObservations called (streaming)\n", stderr)
+
+    // Verify observation exists
+    guard await ObservationManager.shared.getObservation(name: request.name) != nil else {
+      throw GRPCStatus(code: .notFound, message: "Observation not found")
+    }
+
+    // Create event stream
+    guard let eventStream = await ObservationManager.shared.createEventStream(name: request.name)
+    else {
+      throw GRPCStatus(code: .notFound, message: "Failed to create event stream")
+    }
+
+    // Stream events to client
+    for await event in eventStream {
+      // Check if client disconnected
+      if Task.isCancelled {
+        fputs(
+          "info: [MacosUseServiceProvider] client disconnected from observation stream\n", stderr)
+        break
+      }
+
+      // Send event to client
+      let response = Macosusesdk_V1_StreamObservationsResponse.with {
+        $0.event = event
+      }
+
+      try await responseStream.send(response)
+    }
   }
 
   // MARK: - Session Methods
@@ -1226,49 +1342,163 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
   func createSession(
     request: Macosusesdk_V1_CreateSessionRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_Session {
-    throw GRPCStatus(code: .unimplemented, message: "createSession not yet implemented")
+    fputs("info: [MacosUseServiceProvider] createSession called\n", stderr)
+
+    // Extract session parameters from request
+    let sessionId = request.sessionID.isEmpty ? nil : request.sessionID
+    let displayName =
+      request.session.displayName.isEmpty ? "Unnamed Session" : request.session.displayName
+    let metadata = request.session.metadata
+
+    // Create session in SessionManager
+    let session = await SessionManager.shared.createSession(
+      sessionId: sessionId,
+      displayName: displayName,
+      metadata: metadata
+    )
+
+    return session
   }
 
   func getSession(
     request: Macosusesdk_V1_GetSessionRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_Session {
-    throw GRPCStatus(code: .unimplemented, message: "getSession not yet implemented")
+    fputs("info: [MacosUseServiceProvider] getSession called\n", stderr)
+
+    // Get session from SessionManager
+    guard let session = await SessionManager.shared.getSession(name: request.name) else {
+      throw GRPCStatus(code: .notFound, message: "Session not found: \(request.name)")
+    }
+
+    return session
   }
 
   func listSessions(
     request: Macosusesdk_V1_ListSessionsRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_ListSessionsResponse {
-    throw GRPCStatus(code: .unimplemented, message: "listSessions not yet implemented")
+    fputs("info: [MacosUseServiceProvider] listSessions called\n", stderr)
+
+    // List sessions from SessionManager with pagination
+    let pageSize = Int(request.pageSize)
+    let pageToken = request.pageToken.isEmpty ? nil : request.pageToken
+
+    let (sessions, nextToken) = await SessionManager.shared.listSessions(
+      pageSize: pageSize,
+      pageToken: pageToken
+    )
+
+    return Macosusesdk_V1_ListSessionsResponse.with {
+      $0.sessions = sessions
+      $0.nextPageToken = nextToken ?? ""
+    }
   }
 
   func deleteSession(
     request: Macosusesdk_V1_DeleteSessionRequest, context: GRPCAsyncServerCallContext
   ) async throws -> SwiftProtobuf.Google_Protobuf_Empty {
-    throw GRPCStatus(code: .unimplemented, message: "deleteSession not yet implemented")
+    fputs("info: [MacosUseServiceProvider] deleteSession called\n", stderr)
+
+    // Delete session from SessionManager
+    let deleted = await SessionManager.shared.deleteSession(name: request.name)
+
+    if !deleted {
+      throw GRPCStatus(code: .notFound, message: "Session not found: \(request.name)")
+    }
+
+    return SwiftProtobuf.Google_Protobuf_Empty()
   }
 
   func beginTransaction(
     request: Macosusesdk_V1_BeginTransactionRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_BeginTransactionResponse {
-    throw GRPCStatus(code: .unimplemented, message: "beginTransaction not yet implemented")
+    fputs("info: [MacosUseServiceProvider] beginTransaction called\n", stderr)
+
+    do {
+      // Begin transaction in SessionManager
+      let isolationLevel =
+        request.isolationLevel == .unspecified ? .serializable : request.isolationLevel
+      let timeout = request.timeout > 0 ? request.timeout : 300.0
+
+      let (transactionId, session) = try await SessionManager.shared.beginTransaction(
+        sessionName: request.session,
+        isolationLevel: isolationLevel,
+        timeout: timeout
+      )
+
+      return Macosusesdk_V1_BeginTransactionResponse.with {
+        $0.transactionID = transactionId
+        $0.session = session
+      }
+    } catch let error as SessionError {
+      throw GRPCStatus(code: .failedPrecondition, message: error.description)
+    } catch {
+      throw GRPCStatus(code: .internalError, message: "Failed to begin transaction: \(error)")
+    }
   }
 
   func commitTransaction(
     request: Macosusesdk_V1_CommitTransactionRequest, context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_Transaction {
-    throw GRPCStatus(code: .unimplemented, message: "commitTransaction not yet implemented")
+  ) async throws -> Macosusesdk_V1_CommitTransactionResponse {
+    fputs("info: [MacosUseServiceProvider] commitTransaction called\n", stderr)
+
+    do {
+      // Commit transaction in SessionManager
+      let (session, transaction, operationsCount) = try await SessionManager.shared
+        .commitTransaction(
+          sessionName: request.name,
+          transactionId: request.transactionID
+        )
+
+      return Macosusesdk_V1_CommitTransactionResponse.with {
+        $0.session = session
+        $0.transaction = transaction
+        $0.operationsCount = operationsCount
+      }
+    } catch let error as SessionError {
+      throw GRPCStatus(code: .failedPrecondition, message: error.description)
+    } catch {
+      throw GRPCStatus(code: .internalError, message: "Failed to commit transaction: \(error)")
+    }
   }
 
   func rollbackTransaction(
     request: Macosusesdk_V1_RollbackTransactionRequest, context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_Transaction {
-    throw GRPCStatus(code: .unimplemented, message: "rollbackTransaction not yet implemented")
+  ) async throws -> Macosusesdk_V1_RollbackTransactionResponse {
+    fputs("info: [MacosUseServiceProvider] rollbackTransaction called\n", stderr)
+
+    do {
+      // Rollback transaction in SessionManager
+      let (session, transaction, operationsCount) = try await SessionManager.shared
+        .rollbackTransaction(
+          sessionName: request.name,
+          transactionId: request.transactionID,
+          revisionId: request.revisionID
+        )
+
+      return Macosusesdk_V1_RollbackTransactionResponse.with {
+        $0.session = session
+        $0.transaction = transaction
+        $0.operationsCount = operationsCount
+      }
+    } catch let error as SessionError {
+      throw GRPCStatus(code: .failedPrecondition, message: error.description)
+    } catch {
+      throw GRPCStatus(code: .internalError, message: "Failed to rollback transaction: \(error)")
+    }
   }
 
   func getSessionSnapshot(
     request: Macosusesdk_V1_GetSessionSnapshotRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_SessionSnapshot {
-    throw GRPCStatus(code: .unimplemented, message: "getSessionSnapshot not yet implemented")
+    fputs("info: [MacosUseServiceProvider] getSessionSnapshot called\n", stderr)
+
+    // Get session snapshot from SessionManager
+    guard let snapshot = await SessionManager.shared.getSessionSnapshot(sessionName: request.name)
+    else {
+      throw GRPCStatus(code: .notFound, message: "Session not found: \(request.name)")
+    }
+
+    return snapshot
   }
 
   // MARK: - Screenshot Methods
@@ -1276,25 +1506,211 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
   func captureScreenshot(
     request: Macosusesdk_V1_CaptureScreenshotRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_CaptureScreenshotResponse {
-    throw GRPCStatus(code: .unimplemented, message: "captureScreenshot not yet implemented")
+    fputs("info: [captureScreenshot] Capturing screen screenshot\n", stderr)
+
+    // Determine display ID (0 = main display, nil = all displays)
+    let displayID: CGDirectDisplayID? =
+      request.display > 0
+      ? CGDirectDisplayID(request.display)
+      : nil
+
+    // Determine format (default to PNG)
+    let format = request.format == .unspecified ? .png : request.format
+
+    // Capture screen
+    let result = try await ScreenshotCapture.captureScreen(
+      displayID: displayID,
+      format: format,
+      quality: request.quality,
+      includeOCR: request.includeOcrText
+    )
+
+    // Build response
+    var response = Macosusesdk_V1_CaptureScreenshotResponse()
+    response.imageData = result.data
+    response.format = format
+    response.width = result.width
+    response.height = result.height
+    if let ocrText = result.ocrText {
+      response.ocrText = ocrText
+    }
+
+    fputs(
+      "info: [captureScreenshot] Captured \(result.width)x\(result.height) screenshot\n", stderr)
+    return response
   }
 
   func captureWindowScreenshot(
     request: Macosusesdk_V1_CaptureWindowScreenshotRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_CaptureWindowScreenshotResponse {
-    throw GRPCStatus(code: .unimplemented, message: "captureWindowScreenshot not yet implemented")
+    fputs("info: [captureWindowScreenshot] Capturing window screenshot\n", stderr)
+
+    // Parse window resource name: applications/{pid}/windows/{windowId}
+    let components = request.window.split(separator: "/")
+    guard components.count == 4,
+      components[0] == "applications",
+      components[2] == "windows",
+      let pid = pid_t(components[1]),
+      let windowIdInt = Int(components[3])
+    else {
+      throw GRPCStatus(
+        code: .invalidArgument,
+        message: "Invalid window resource name: \(request.window)"
+      )
+    }
+
+    // Find window in registry
+    let windowInfo = try await windowRegistry.listWindows(forPID: pid).first {
+      $0.windowID == CGWindowID(windowIdInt)
+    }
+
+    guard let windowInfo = windowInfo else {
+      throw GRPCStatus(
+        code: .notFound,
+        message: "Window not found: \(request.window)"
+      )
+    }
+
+    // Determine format (default to PNG)
+    let format = request.format == .unspecified ? .png : request.format
+
+    // Capture window
+    let result = try await ScreenshotCapture.captureWindow(
+      windowID: windowInfo.windowID,
+      includeShadow: request.includeShadow,
+      format: format,
+      quality: request.quality,
+      includeOCR: request.includeOcrText
+    )
+
+    // Build response
+    var response = Macosusesdk_V1_CaptureWindowScreenshotResponse()
+    response.imageData = result.data
+    response.format = format
+    response.width = result.width
+    response.height = result.height
+    response.window = request.window
+    if let ocrText = result.ocrText {
+      response.ocrText = ocrText
+    }
+
+    fputs(
+      "info: [captureWindowScreenshot] Captured \(result.width)x\(result.height) window screenshot\n",
+      stderr)
+    return response
   }
 
   func captureElementScreenshot(
     request: Macosusesdk_V1_CaptureElementScreenshotRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_CaptureElementScreenshotResponse {
-    throw GRPCStatus(code: .unimplemented, message: "captureElementScreenshot not yet implemented")
+    fputs("info: [captureElementScreenshot] Capturing element screenshot\n", stderr)
+
+    // Get element from registry
+    guard let element = await ElementRegistry.shared.getElement(request.elementID) else {
+      throw GRPCStatus(
+        code: .notFound,
+        message: "Element not found: \(request.elementID)"
+      )
+    }
+
+    // Check element has bounds (x, y, width, height)
+    guard element.hasX, element.hasY, element.hasWidth, element.hasHeight else {
+      throw GRPCStatus(
+        code: .failedPrecondition,
+        message: "Element has no bounds: \(request.elementID)"
+      )
+    }
+
+    // Apply padding if specified
+    let padding = CGFloat(request.padding)
+    let bounds = CGRect(
+      x: element.x - padding,
+      y: element.y - padding,
+      width: element.width + (padding * 2),
+      height: element.height + (padding * 2)
+    )
+
+    // Determine format (default to PNG)
+    let format = request.format == .unspecified ? .png : request.format
+
+    // Capture element region
+    let result = try await ScreenshotCapture.captureRegion(
+      bounds: bounds,
+      format: format,
+      quality: request.quality,
+      includeOCR: request.includeOcrText
+    )
+
+    // Build response
+    var response = Macosusesdk_V1_CaptureElementScreenshotResponse()
+    response.imageData = result.data
+    response.format = format
+    response.width = result.width
+    response.height = result.height
+    response.elementID = request.elementID
+    if let ocrText = result.ocrText {
+      response.ocrText = ocrText
+    }
+
+    fputs(
+      "info: [captureElementScreenshot] Captured \(result.width)x\(result.height) element screenshot\n",
+      stderr)
+    return response
   }
 
   func captureRegionScreenshot(
     request: Macosusesdk_V1_CaptureRegionScreenshotRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_CaptureRegionScreenshotResponse {
-    throw GRPCStatus(code: .unimplemented, message: "captureRegionScreenshot not yet implemented")
+    fputs("info: [captureRegionScreenshot] Capturing region screenshot\n", stderr)
+
+    // Validate region
+    guard request.hasRegion else {
+      throw GRPCStatus(
+        code: .invalidArgument,
+        message: "Region is required"
+      )
+    }
+
+    // Convert proto Region to CGRect
+    let bounds = CGRect(
+      x: request.region.x,
+      y: request.region.y,
+      width: request.region.width,
+      height: request.region.height
+    )
+
+    // Determine display ID (for multi-monitor setups)
+    let displayID: CGDirectDisplayID? =
+      request.display > 0
+      ? CGDirectDisplayID(request.display)
+      : nil
+
+    // Determine format (default to PNG)
+    let format = request.format == .unspecified ? .png : request.format
+
+    // Capture region
+    let result = try await ScreenshotCapture.captureRegion(
+      bounds: bounds,
+      displayID: displayID,
+      format: format,
+      quality: request.quality,
+      includeOCR: request.includeOcrText
+    )
+
+    // Build response
+    var response = Macosusesdk_V1_CaptureRegionScreenshotResponse()
+    response.imageData = result.data
+    response.format = format
+    response.width = result.width
+    response.height = result.height
+    if let ocrText = result.ocrText {
+      response.ocrText = ocrText
+    }
+
+    fputs(
+      "info: [captureRegionScreenshot] Captured \(result.width)x\(result.height) region screenshot\n",
+      stderr)
+    return response
   }
 
   // MARK: - Clipboard Methods
@@ -1302,25 +1718,68 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
   func getClipboard(
     request: Macosusesdk_V1_GetClipboardRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_Clipboard {
-    throw GRPCStatus(code: .unimplemented, message: "getClipboard not yet implemented")
+    fputs("info: [MacosUseServiceProvider] getClipboard called\n", stderr)
+
+    // Validate resource name (singleton: "clipboard")
+    guard request.name == "clipboard" else {
+      throw GRPCStatus(code: .invalidArgument, message: "Invalid clipboard name: \(request.name)")
+    }
+
+    return await ClipboardManager.shared.readClipboard()
   }
 
   func writeClipboard(
     request: Macosusesdk_V1_WriteClipboardRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_WriteClipboardResponse {
-    throw GRPCStatus(code: .unimplemented, message: "writeClipboard not yet implemented")
+    fputs("info: [MacosUseServiceProvider] writeClipboard called\n", stderr)
+
+    // Validate content
+    guard request.hasContent else {
+      throw GRPCStatus(code: .invalidArgument, message: "Content is required")
+    }
+
+    do {
+      // Write to clipboard
+      let clipboard = try await ClipboardManager.shared.writeClipboard(
+        content: request.content,
+        clearExisting: request.clearExisting_p
+      )
+
+      return Macosusesdk_V1_WriteClipboardResponse.with {
+        $0.success = true
+        $0.type = clipboard.content.type
+      }
+    } catch let error as ClipboardError {
+      throw GRPCStatus(code: .internalError, message: error.description)
+    } catch {
+      throw GRPCStatus(code: .internalError, message: "Failed to write clipboard: \(error)")
+    }
   }
 
   func clearClipboard(
     request: Macosusesdk_V1_ClearClipboardRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_ClearClipboardResponse {
-    throw GRPCStatus(code: .unimplemented, message: "clearClipboard not yet implemented")
+    fputs("info: [MacosUseServiceProvider] clearClipboard called\n", stderr)
+
+    await ClipboardManager.shared.clearClipboard()
+
+    return Macosusesdk_V1_ClearClipboardResponse.with {
+      $0.success = true
+    }
   }
 
   func getClipboardHistory(
     request: Macosusesdk_V1_GetClipboardHistoryRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_ClipboardHistory {
-    throw GRPCStatus(code: .unimplemented, message: "getClipboardHistory not yet implemented")
+    fputs("info: [MacosUseServiceProvider] getClipboardHistory called\n", stderr)
+
+    // Validate resource name (singleton: "clipboard/history")
+    guard request.name == "clipboard/history" else {
+      throw GRPCStatus(
+        code: .invalidArgument, message: "Invalid clipboard history name: \(request.name)")
+    }
+
+    return await ClipboardHistoryManager.shared.getHistory()
   }
 
   // MARK: - File Dialog Methods
@@ -1328,31 +1787,182 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
   func automateOpenFileDialog(
     request: Macosusesdk_V1_AutomateOpenFileDialogRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_AutomateOpenFileDialogResponse {
-    throw GRPCStatus(code: .unimplemented, message: "automateOpenFileDialog not yet implemented")
+    fputs("info: [MacosUseServiceProvider] automateOpenFileDialog called\n", stderr)
+
+    do {
+      let selectedPaths = try await FileDialogAutomation.shared.automateOpenFileDialog(
+        filePath: request.filePath.isEmpty ? nil : request.filePath,
+        defaultDirectory: request.defaultDirectory.isEmpty ? nil : request.defaultDirectory,
+        fileFilters: request.fileFilters,
+        allowMultiple: request.allowMultiple
+      )
+
+      return Macosusesdk_V1_AutomateOpenFileDialogResponse.with {
+        $0.success = true
+        $0.selectedPaths = selectedPaths
+      }
+    } catch let error as FileDialogError {
+      return Macosusesdk_V1_AutomateOpenFileDialogResponse.with {
+        $0.success = false
+        $0.error = error.description
+      }
+    } catch {
+      return Macosusesdk_V1_AutomateOpenFileDialogResponse.with {
+        $0.success = false
+        $0.error = "Failed to automate open file dialog: \(error.localizedDescription)"
+      }
+    }
   }
 
   func automateSaveFileDialog(
     request: Macosusesdk_V1_AutomateSaveFileDialogRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_AutomateSaveFileDialogResponse {
-    throw GRPCStatus(code: .unimplemented, message: "automateSaveFileDialog not yet implemented")
+    fputs("info: [MacosUseServiceProvider] automateSaveFileDialog called\n", stderr)
+
+    do {
+      let savedPath = try await FileDialogAutomation.shared.automateSaveFileDialog(
+        filePath: request.filePath,
+        defaultDirectory: request.defaultDirectory.isEmpty ? nil : request.defaultDirectory,
+        defaultFilename: request.defaultFilename.isEmpty ? nil : request.defaultFilename,
+        confirmOverwrite: request.confirmOverwrite
+      )
+
+      return Macosusesdk_V1_AutomateSaveFileDialogResponse.with {
+        $0.success = true
+        $0.savedPath = savedPath
+      }
+    } catch let error as FileDialogError {
+      return Macosusesdk_V1_AutomateSaveFileDialogResponse.with {
+        $0.success = false
+        $0.error = error.description
+      }
+    } catch {
+      return Macosusesdk_V1_AutomateSaveFileDialogResponse.with {
+        $0.success = false
+        $0.error = "Failed to automate save file dialog: \(error.localizedDescription)"
+      }
+    }
   }
 
   func selectFile(
     request: Macosusesdk_V1_SelectFileRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_SelectFileResponse {
-    throw GRPCStatus(code: .unimplemented, message: "selectFile not yet implemented")
+    fputs("info: [MacosUseServiceProvider] selectFile called\n", stderr)
+
+    do {
+      let selectedPath = try await FileDialogAutomation.shared.selectFile(
+        filePath: request.filePath,
+        revealInFinder: request.revealFinder
+      )
+
+      return Macosusesdk_V1_SelectFileResponse.with {
+        $0.success = true
+        $0.selectedPath = selectedPath
+      }
+    } catch let error as FileDialogError {
+      return Macosusesdk_V1_SelectFileResponse.with {
+        $0.success = false
+        $0.error = error.description
+      }
+    } catch {
+      return Macosusesdk_V1_SelectFileResponse.with {
+        $0.success = false
+        $0.error = "Failed to select file: \(error.localizedDescription)"
+      }
+    }
   }
 
   func selectDirectory(
     request: Macosusesdk_V1_SelectDirectoryRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_SelectDirectoryResponse {
-    throw GRPCStatus(code: .unimplemented, message: "selectDirectory not yet implemented")
+    fputs("info: [MacosUseServiceProvider] selectDirectory called\n", stderr)
+
+    do {
+      let (selectedPath, wasCreated) = try await FileDialogAutomation.shared.selectDirectory(
+        directoryPath: request.directoryPath,
+        createMissing: request.createMissing
+      )
+
+      return Macosusesdk_V1_SelectDirectoryResponse.with {
+        $0.success = true
+        $0.selectedPath = selectedPath
+        $0.created = wasCreated
+      }
+    } catch let error as FileDialogError {
+      return Macosusesdk_V1_SelectDirectoryResponse.with {
+        $0.success = false
+        $0.error = error.description
+      }
+    } catch {
+      return Macosusesdk_V1_SelectDirectoryResponse.with {
+        $0.success = false
+        $0.error = "Failed to select directory: \(error.localizedDescription)"
+      }
+    }
   }
 
   func dragFiles(
     request: Macosusesdk_V1_DragFilesRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_DragFilesResponse {
-    throw GRPCStatus(code: .unimplemented, message: "dragFiles not yet implemented")
+    fputs("info: [MacosUseServiceProvider] dragFiles called\n", stderr)
+
+    // Validate inputs
+    guard !request.filePaths.isEmpty else {
+      return Macosusesdk_V1_DragFilesResponse.with {
+        $0.success = false
+        $0.error = "At least one file path is required"
+      }
+    }
+
+    guard !request.targetElementID.isEmpty else {
+      return Macosusesdk_V1_DragFilesResponse.with {
+        $0.success = false
+        $0.error = "Target element ID is required"
+      }
+    }
+
+    // Get target element from registry
+    guard let targetElement = await ElementRegistry.shared.getElement(request.targetElementID)
+    else {
+      return Macosusesdk_V1_DragFilesResponse.with {
+        $0.success = false
+        $0.error = "Target element not found: \(request.targetElementID)"
+      }
+    }
+
+    // Ensure element has position
+    guard targetElement.hasX && targetElement.hasY else {
+      return Macosusesdk_V1_DragFilesResponse.with {
+        $0.success = false
+        $0.error = "Target element has no position information"
+      }
+    }
+
+    let targetPoint = CGPoint(x: targetElement.x, y: targetElement.y)
+    let duration = request.duration > 0 ? request.duration : 0.5
+
+    do {
+      try await FileDialogAutomation.shared.dragFilesToElement(
+        filePaths: request.filePaths,
+        targetElement: targetPoint,
+        duration: duration
+      )
+
+      return Macosusesdk_V1_DragFilesResponse.with {
+        $0.success = true
+        $0.filesDropped = Int32(request.filePaths.count)
+      }
+    } catch let error as FileDialogError {
+      return Macosusesdk_V1_DragFilesResponse.with {
+        $0.success = false
+        $0.error = error.description
+      }
+    } catch {
+      return Macosusesdk_V1_DragFilesResponse.with {
+        $0.success = false
+        $0.error = "Failed to drag files: \(error.localizedDescription)"
+      }
+    }
   }
 
   // MARK: - Macro Methods
@@ -1371,26 +1981,178 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
 
   func listMacros(
     request: Macosusesdk_V1_ListMacrosRequest, context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_ListMacrosResponse {
-    throw GRPCStatus(code: .unimplemented, message: "listMacros not yet implemented")
+  ) async throws -> Macrosusesdk_V1_ListMacrosResponse {
+    fputs("info: [MacosUseServiceProvider] listMacros called\n", stderr)
+
+    // List macros with pagination
+    let pageSize = Int(request.pageSize > 0 ? request.pageSize : 50)
+    let pageToken = request.pageToken.isEmpty ? nil : request.pageToken
+
+    let (macros, nextToken) = await MacroRegistry.shared.listMacros(
+      pageSize: pageSize,
+      pageToken: pageToken
+    )
+
+    return Macrosusesdk_V1_ListMacrosResponse.with {
+      $0.macros = macros
+      $0.nextPageToken = nextToken ?? ""
+    }
   }
 
   func updateMacro(
     request: Macosusesdk_V1_UpdateMacroRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_Macro {
-    throw GRPCStatus(code: .unimplemented, message: "updateMacro not yet implemented")
+    fputs("info: [MacosUseServiceProvider] updateMacro called\n", stderr)
+
+    // Parse field mask to determine what to update
+    let updateMask = request.updateMask
+
+    // Extract fields to update from request.macro
+    var displayName: String? = nil
+    var description: String? = nil
+    var actions: [Macrosusesdk_V1_MacroAction]? = nil
+    var parameters: [Macrosusesdk_V1_MacroParameter]? = nil
+    var tags: [String]? = nil
+
+    // Apply field mask (if empty, update all provided fields)
+    if updateMask.paths.isEmpty {
+      // Update all non-empty fields
+      if !request.macro.displayName.isEmpty {
+        displayName = request.macro.displayName
+      }
+      if !request.macro.description_p.isEmpty {
+        description = request.macro.description_p
+      }
+      if !request.macro.actions.isEmpty {
+        actions = request.macro.actions
+      }
+      if !request.macro.parameters.isEmpty {
+        parameters = request.macro.parameters
+      }
+      if !request.macro.tags.isEmpty {
+        tags = request.macro.tags
+      }
+    } else {
+      // Update only specified fields
+      for path in updateMask.paths {
+        switch path {
+        case "display_name":
+          displayName = request.macro.displayName
+        case "description":
+          description = request.macro.description_p
+        case "actions":
+          actions = request.macro.actions
+        case "parameters":
+          parameters = request.macro.parameters
+        case "tags":
+          tags = request.macro.tags
+        default:
+          throw GRPCStatus(code: .invalidArgument, message: "Invalid field path: \(path)")
+        }
+      }
+    }
+
+    // Update macro in registry
+    guard
+      let updatedMacro = await MacroRegistry.shared.updateMacro(
+        name: request.macro.name,
+        displayName: displayName,
+        description: description,
+        actions: actions,
+        parameters: parameters,
+        tags: tags
+      )
+    else {
+      throw GRPCStatus(code: .notFound, message: "Macro not found: \(request.macro.name)")
+    }
+
+    return updatedMacro
   }
 
   func deleteMacro(
     request: Macosusesdk_V1_DeleteMacroRequest, context: GRPCAsyncServerCallContext
   ) async throws -> SwiftProtobuf.Google_Protobuf_Empty {
-    throw GRPCStatus(code: .unimplemented, message: "deleteMacro not yet implemented")
+    fputs("info: [MacosUseServiceProvider] deleteMacro called\n", stderr)
+
+    // Delete macro from registry
+    let deleted = await MacroRegistry.shared.deleteMacro(name: request.name)
+
+    if !deleted {
+      throw GRPCStatus(code: .notFound, message: "Macro not found: \(request.name)")
+    }
+
+    return SwiftProtobuf.Google_Protobuf_Empty()
   }
 
   func executeMacro(
     request: Macosusesdk_V1_ExecuteMacroRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Google_Longrunning_Operation {
-    throw GRPCStatus(code: .unimplemented, message: "executeMacro not yet implemented")
+    fputs("info: [MacosUseServiceProvider] executeMacro called (LRO)\n", stderr)
+
+    // Get macro from registry
+    guard let macro = await MacroRegistry.shared.getMacro(name: request.name) else {
+      throw GRPCStatus(code: .notFound, message: "Macro not found: \(request.name)")
+    }
+
+    // Create LRO
+    let opName = "operations/executeMacro/\(UUID().uuidString)"
+    let metadata = try SwiftProtobuf.Google_Protobuf_Any.with {
+      $0.typeURL = "type.googleapis.com/macosusesdk.v1.ExecuteMacroMetadata"
+      $0.value = try Macrosusesdk_V1_ExecuteMacroMetadata.with {
+        $0.macroName = request.name
+        $0.startTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
+      }.serializedData()
+    }
+
+    let op = await operationStore.createOperation(name: opName, metadata: metadata)
+
+    // Execute macro in background
+    Task {
+      do {
+        let timeout = request.timeout > 0 ? request.timeout : 300.0
+
+        // Execute macro
+        try await MacroExecutor.shared.executeMacro(
+          macro: macro,
+          parameters: request.parameters,
+          parent: request.parent,
+          timeout: timeout
+        )
+
+        // Increment execution count
+        await MacroRegistry.shared.incrementExecutionCount(name: request.name)
+
+        // Complete operation
+        let response = Macrosusesdk_V1_ExecuteMacroResponse.with {
+          $0.success = true
+          $0.macroName = request.name
+        }
+
+        try await operationStore.finishOperation(name: opName, responseMessage: response)
+
+      } catch let error as MacroExecutionError {
+        // Mark operation as failed with macro error
+        var errOp = await operationStore.getOperation(name: opName) ?? op
+        errOp.done = true
+        errOp.error = Google_Rpc_Status.with {
+          $0.code = Int32(GRPCStatus.Code.internalError.rawValue)
+          $0.message = error.description
+        }
+        await operationStore.putOperation(errOp)
+
+      } catch {
+        // Mark operation as failed with generic error
+        var errOp = await operationStore.getOperation(name: opName) ?? op
+        errOp.done = true
+        errOp.error = Google_Rpc_Status.with {
+          $0.code = Int32(GRPCStatus.Code.internalError.rawValue)
+          $0.message = "\(error)"
+        }
+        await operationStore.putOperation(errOp)
+      }
+    }
+
+    return op
   }
 
   // MARK: - Script Methods
@@ -1398,34 +2160,282 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
   func executeAppleScript(
     request: Macosusesdk_V1_ExecuteAppleScriptRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_ExecuteAppleScriptResponse {
-    throw GRPCStatus(code: .unimplemented, message: "executeAppleScript not yet implemented")
+    fputs("info: [MacosUseServiceProvider] executeAppleScript called\n", stderr)
+
+    // Parse timeout from Duration
+    let timeout: TimeInterval
+    if request.hasTimeout {
+      timeout = Double(request.timeout.seconds) + (Double(request.timeout.nanos) / 1_000_000_000)
+    } else {
+      timeout = 30.0  // Default 30 seconds
+    }
+
+    do {
+      // Execute AppleScript using ScriptExecutor
+      let result = try await ScriptExecutor.shared.executeAppleScript(
+        request.script,
+        timeout: timeout,
+        compileOnly: request.compileOnly
+      )
+
+      return Macosusesdk_V1_ExecuteAppleScriptResponse.with {
+        $0.success = result.success
+        $0.output = result.output
+        if let error = result.error {
+          $0.error = error
+        }
+        $0.executionDuration = SwiftProtobuf.Google_Protobuf_Duration.with {
+          $0.seconds = Int64(result.duration)
+          $0.nanos = Int32((result.duration.truncatingRemainder(dividingBy: 1.0)) * 1_000_000_000)
+        }
+      }
+    } catch let error as ScriptExecutionError {
+      return Macosusesdk_V1_ExecuteAppleScriptResponse.with {
+        $0.success = false
+        $0.output = ""
+        $0.error = error.description
+        $0.executionDuration = SwiftProtobuf.Google_Protobuf_Duration()
+      }
+    } catch {
+      return Macosusesdk_V1_ExecuteAppleScriptResponse.with {
+        $0.success = false
+        $0.output = ""
+        $0.error = "Unexpected error: \(error.localizedDescription)"
+        $0.executionDuration = SwiftProtobuf.Google_Protobuf_Duration()
+      }
+    }
   }
 
   func executeJavaScript(
     request: Macosusesdk_V1_ExecuteJavaScriptRequest,
     context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_ExecuteJavaScriptResponse {
-    throw GRPCStatus(
-      code: .unimplemented, message: "executeJavaScript not yet implemented")
+    fputs("info: [MacosUseServiceProvider] executeJavaScript called\n", stderr)
+
+    // Parse timeout from Duration
+    let timeout: TimeInterval
+    if request.hasTimeout {
+      timeout = Double(request.timeout.seconds) + (Double(request.timeout.nanos) / 1_000_000_000)
+    } else {
+      timeout = 30.0  // Default 30 seconds
+    }
+
+    do {
+      // Execute JavaScript using ScriptExecutor
+      let result = try await ScriptExecutor.shared.executeJavaScript(
+        request.script,
+        timeout: timeout,
+        compileOnly: request.compileOnly
+      )
+
+      return Macosusesdk_V1_ExecuteJavaScriptResponse.with {
+        $0.success = result.success
+        $0.output = result.output
+        if let error = result.error {
+          $0.error = error
+        }
+        $0.executionDuration = SwiftProtobuf.Google_Protobuf_Duration.with {
+          $0.seconds = Int64(result.duration)
+          $0.nanos = Int32((result.duration.truncatingRemainder(dividingBy: 1.0)) * 1_000_000_000)
+        }
+      }
+    } catch let error as ScriptExecutionError {
+      return Macosusesdk_V1_ExecuteJavaScriptResponse.with {
+        $0.success = false
+        $0.output = ""
+        $0.error = error.description
+        $0.executionDuration = SwiftProtobuf.Google_Protobuf_Duration()
+      }
+    } catch {
+      return Macosusesdk_V1_ExecuteJavaScriptResponse.with {
+        $0.success = false
+        $0.output = ""
+        $0.error = "Unexpected error: \(error.localizedDescription)"
+        $0.executionDuration = SwiftProtobuf.Google_Protobuf_Duration()
+      }
+    }
   }
 
   func executeShellCommand(
     request: Macosusesdk_V1_ExecuteShellCommandRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_ExecuteShellCommandResponse {
-    throw GRPCStatus(code: .unimplemented, message: "executeShellCommand not yet implemented")
+    fputs("info: [MacosUseServiceProvider] executeShellCommand called\n", stderr)
+
+    // Parse timeout from Duration
+    let timeout: TimeInterval
+    if request.hasTimeout {
+      timeout = Double(request.timeout.seconds) + (Double(request.timeout.nanos) / 1_000_000_000)
+    } else {
+      timeout = 30.0  // Default 30 seconds
+    }
+
+    // Extract shell (default to /bin/bash)
+    let shell = request.shell.isEmpty ? "/bin/bash" : request.shell
+
+    // Extract working directory (optional)
+    let workingDir = request.workingDirectory.isEmpty ? nil : request.workingDirectory
+
+    // Extract environment (optional)
+    let environment =
+      request.environment.isEmpty
+      ? nil : Dictionary(uniqueKeysWithValues: request.environment.map { ($0.key, $0.value) })
+
+    // Extract stdin (optional)
+    let stdin = request.stdin.isEmpty ? nil : request.stdin
+
+    do {
+      // Execute shell command using ScriptExecutor
+      let result = try await ScriptExecutor.shared.executeShellCommand(
+        request.command,
+        args: Array(request.args),
+        workingDirectory: workingDir,
+        environment: environment,
+        timeout: timeout,
+        stdin: stdin,
+        shell: shell
+      )
+
+      return Macosusesdk_V1_ExecuteShellCommandResponse.with {
+        $0.success = result.success
+        $0.stdout = result.stdout
+        $0.stderr = result.stderr
+        $0.exitCode = result.exitCode
+        $0.executionDuration = SwiftProtobuf.Google_Protobuf_Duration.with {
+          $0.seconds = Int64(result.duration)
+          $0.nanos = Int32((result.duration.truncatingRemainder(dividingBy: 1.0)) * 1_000_000_000)
+        }
+        if let error = result.error {
+          $0.error = error
+        }
+      }
+    } catch let error as ScriptExecutionError {
+      return Macosusesdk_V1_ExecuteShellCommandResponse.with {
+        $0.success = false
+        $0.stdout = ""
+        $0.stderr = ""
+        $0.exitCode = -1
+        $0.error = error.description
+        $0.executionDuration = SwiftProtobuf.Google_Protobuf_Duration()
+      }
+    } catch {
+      return Macosusesdk_V1_ExecuteShellCommandResponse.with {
+        $0.success = false
+        $0.stdout = ""
+        $0.stderr = ""
+        $0.exitCode = -1
+        $0.error = "Unexpected error: \(error.localizedDescription)"
+        $0.executionDuration = SwiftProtobuf.Google_Protobuf_Duration()
+      }
+    }
   }
 
   func validateScript(
     request: Macosusesdk_V1_ValidateScriptRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_ValidateScriptResponse {
-    throw GRPCStatus(code: .unimplemented, message: "validateScript not yet implemented")
+    fputs("info: [MacosUseServiceProvider] validateScript called\n", stderr)
+
+    // Convert proto ScriptType to internal ScriptType
+    let scriptType: ScriptType
+    switch request.type {
+    case .applescript:
+      scriptType = .appleScript
+    case .jxa:
+      scriptType = .jxa
+    case .shell:
+      scriptType = .shell
+    case .unspecified, .UNRECOGNIZED(_):
+      throw GRPCStatus(code: .invalidArgument, message: "Script type must be specified")
+    }
+
+    do {
+      // Validate script using ScriptExecutor
+      let result = try await ScriptExecutor.shared.validateScript(request.script, type: scriptType)
+
+      return Macosusesdk_V1_ValidateScriptResponse.with {
+        $0.valid = result.valid
+        $0.errors = result.errors
+        $0.warnings = result.warnings
+      }
+    } catch let error as ScriptExecutionError {
+      return Macosusesdk_V1_ValidateScriptResponse.with {
+        $0.valid = false
+        $0.errors = [error.description]
+        $0.warnings = []
+      }
+    } catch {
+      return Macosusesdk_V1_ValidateScriptResponse.with {
+        $0.valid = false
+        $0.errors = ["Unexpected error: \(error.localizedDescription)"]
+        $0.warnings = []
+      }
+    }
   }
 
   func getScriptingDictionaries(
     request: Macosusesdk_V1_GetScriptingDictionariesRequest, context: GRPCAsyncServerCallContext
   ) async throws -> Macosusesdk_V1_ScriptingDictionaries {
-    throw GRPCStatus(
-      code: .unimplemented, message: "getScriptingDictionaries not yet implemented")
+    fputs("info: [MacosUseServiceProvider] getScriptingDictionaries called\n", stderr)
+
+    // Validate resource name (singleton: "scriptingDictionaries")
+    guard request.name == "scriptingDictionaries" else {
+      throw GRPCStatus(
+        code: .invalidArgument, message: "Invalid scripting dictionaries name: \(request.name)")
+    }
+
+    // Get all tracked applications
+    let applications = await stateStore.listTargets()
+
+    var dictionaries: [Macosusesdk_V1_ScriptingDictionary] = []
+
+    // For each application, check if it has scripting support
+    for app in applications {
+      // Note: Application proto doesn't have bundleID field,
+      // so we extract it from the app name if available
+      let bundleId = "unknown"  // TODO: Store bundleID in Application proto or metadata
+
+      // Create dictionary entry for the application
+      let dictionary = Macosusesdk_V1_ScriptingDictionary.with {
+        $0.application = app.name
+        $0.bundleID = bundleId
+        // Most macOS applications support AppleScript
+        $0.supportsApplescript = true
+        // JXA is supported by apps that support AppleScript
+        $0.supportsJxa = true
+        // Note: Getting actual scripting commands/classes would require
+        // parsing the application's scripting dictionary (sdef file)
+        // which is complex - for now, return common commands
+        $0.commands = ["activate", "quit", "open", "close", "save"]
+        $0.classes = ["application", "window", "document"]
+      }
+      dictionaries.append(dictionary)
+    }
+
+    // Add system-level applications that are always available
+    let systemApps = [
+      ("Finder", "com.apple.finder"),
+      ("System Events", "com.apple.systemevents"),
+      ("Safari", "com.apple.Safari"),
+      ("Terminal", "com.apple.Terminal"),
+    ]
+
+    for (name, bundleId) in systemApps {
+      // Check if already in list
+      if !dictionaries.contains(where: { $0.bundleID == bundleId }) {
+        let dictionary = Macosusesdk_V1_ScriptingDictionary.with {
+          $0.application = name
+          $0.bundleID = bundleId
+          $0.supportsApplescript = true
+          $0.supportsJxa = true
+          $0.commands = ["activate", "quit", "open", "close"]
+          $0.classes = ["application", "window"]
+        }
+        dictionaries.append(dictionary)
+      }
+    }
+
+    return Macosusesdk_V1_ScriptingDictionaries.with {
+      $0.dictionaries = dictionaries
+    }
   }
 
   // MARK: - Metrics Methods

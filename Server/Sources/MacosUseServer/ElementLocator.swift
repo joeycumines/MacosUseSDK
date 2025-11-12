@@ -57,7 +57,7 @@ public actor ElementLocator {
   ///   - maxResults: Maximum number of elements to return
   /// - Returns: Array of elements within the region
   public func findElementsInRegion(
-    region: Macosusesdk_V1_Region,
+    region: Macosusesdk_Type_Region,
     selector: Macosusesdk_Type_ElementSelector?,
     parent: String,
     visibleOnly: Bool = false,
@@ -230,7 +230,9 @@ public actor ElementLocator {
     }
   }
 
-  private func isElementInRegion(_ element: Macosusesdk_Type_Element, region: Macosusesdk_V1_Region)
+  private func isElementInRegion(
+    _ element: Macosusesdk_Type_Element, region: Macosusesdk_Type_Region
+  )
     -> Bool
   {
     guard element.hasX && element.hasY && element.hasWidth && element.hasHeight else {

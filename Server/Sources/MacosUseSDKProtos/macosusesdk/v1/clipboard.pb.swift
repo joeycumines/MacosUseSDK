@@ -100,6 +100,9 @@ public struct Macosusesdk_V1_Clipboard: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
+  /// Resource name (singleton: "clipboard")
+  public var name: String = String()
+
   /// Clipboard content.
   public var content: Macosusesdk_V1_ClipboardContent {
     get {return _content ?? Macosusesdk_V1_ClipboardContent()}
@@ -283,7 +286,7 @@ extension Macosusesdk_V1_ContentType: SwiftProtobuf._ProtoNameProviding {
 
 extension Macosusesdk_V1_Clipboard: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Clipboard"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}content\0\u{3}available_types\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}content\0\u{3}available_types\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -291,8 +294,9 @@ extension Macosusesdk_V1_Clipboard: SwiftProtobuf.Message, SwiftProtobuf._Messag
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularMessageField(value: &self._content) }()
-      case 2: try { try decoder.decodeRepeatedEnumField(value: &self.availableTypes) }()
+      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._content) }()
+      case 3: try { try decoder.decodeRepeatedEnumField(value: &self.availableTypes) }()
       default: break
       }
     }
@@ -303,16 +307,20 @@ extension Macosusesdk_V1_Clipboard: SwiftProtobuf.Message, SwiftProtobuf._Messag
     // allocates stack space for every if/case branch local when no optimizations
     // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
     // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
+    }
     try { if let v = self._content {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
     } }()
     if !self.availableTypes.isEmpty {
-      try visitor.visitPackedEnumField(value: self.availableTypes, fieldNumber: 2)
+      try visitor.visitPackedEnumField(value: self.availableTypes, fieldNumber: 3)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_Clipboard, rhs: Macosusesdk_V1_Clipboard) -> Bool {
+    if lhs.name != rhs.name {return false}
     if lhs._content != rhs._content {return false}
     if lhs.availableTypes != rhs.availableTypes {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}

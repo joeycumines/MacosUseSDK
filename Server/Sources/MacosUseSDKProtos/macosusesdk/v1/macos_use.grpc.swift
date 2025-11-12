@@ -130,10 +130,10 @@ public protocol Macosusesdk_V1_MacosUseProvider: CallHandlerProvider {
   func beginTransaction(request: Macosusesdk_V1_BeginTransactionRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_BeginTransactionResponse>
 
   /// Commits a transaction.
-  func commitTransaction(request: Macosusesdk_V1_CommitTransactionRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_Transaction>
+  func commitTransaction(request: Macosusesdk_V1_CommitTransactionRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_CommitTransactionResponse>
 
   /// Rolls back a transaction.
-  func rollbackTransaction(request: Macosusesdk_V1_RollbackTransactionRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_Transaction>
+  func rollbackTransaction(request: Macosusesdk_V1_RollbackTransactionRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_RollbackTransactionResponse>
 
   /// Gets a session state snapshot.
   func getSessionSnapshot(request: Macosusesdk_V1_GetSessionSnapshotRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_SessionSnapshot>
@@ -566,7 +566,7 @@ extension Macosusesdk_V1_MacosUseProvider {
       return UnaryServerHandler(
         context: context,
         requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_CommitTransactionRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Transaction>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_CommitTransactionResponse>(),
         interceptors: self.interceptors?.makeCommitTransactionInterceptors() ?? [],
         userFunction: self.commitTransaction(request:context:)
       )
@@ -575,7 +575,7 @@ extension Macosusesdk_V1_MacosUseProvider {
       return UnaryServerHandler(
         context: context,
         requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_RollbackTransactionRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Transaction>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_RollbackTransactionResponse>(),
         interceptors: self.interceptors?.makeRollbackTransactionInterceptors() ?? [],
         userFunction: self.rollbackTransaction(request:context:)
       )
@@ -1072,13 +1072,13 @@ public protocol Macosusesdk_V1_MacosUseAsyncProvider: CallHandlerProvider, Senda
   func commitTransaction(
     request: Macosusesdk_V1_CommitTransactionRequest,
     context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_Transaction
+  ) async throws -> Macosusesdk_V1_CommitTransactionResponse
 
   /// Rolls back a transaction.
   func rollbackTransaction(
     request: Macosusesdk_V1_RollbackTransactionRequest,
     context: GRPCAsyncServerCallContext
-  ) async throws -> Macosusesdk_V1_Transaction
+  ) async throws -> Macosusesdk_V1_RollbackTransactionResponse
 
   /// Gets a session state snapshot.
   func getSessionSnapshot(
@@ -1602,7 +1602,7 @@ extension Macosusesdk_V1_MacosUseAsyncProvider {
       return GRPCAsyncServerHandler(
         context: context,
         requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_CommitTransactionRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Transaction>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_CommitTransactionResponse>(),
         interceptors: self.interceptors?.makeCommitTransactionInterceptors() ?? [],
         wrapping: { try await self.commitTransaction(request: $0, context: $1) }
       )
@@ -1611,7 +1611,7 @@ extension Macosusesdk_V1_MacosUseAsyncProvider {
       return GRPCAsyncServerHandler(
         context: context,
         requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_RollbackTransactionRequest>(),
-        responseSerializer: ProtobufSerializer<Macosusesdk_V1_Transaction>(),
+        responseSerializer: ProtobufSerializer<Macosusesdk_V1_RollbackTransactionResponse>(),
         interceptors: self.interceptors?.makeRollbackTransactionInterceptors() ?? [],
         wrapping: { try await self.rollbackTransaction(request: $0, context: $1) }
       )
@@ -2022,11 +2022,11 @@ public protocol Macosusesdk_V1_MacosUseServerInterceptorFactoryProtocol: Sendabl
 
   /// - Returns: Interceptors to use when handling 'commitTransaction'.
   ///   Defaults to calling `self.makeInterceptors()`.
-  func makeCommitTransactionInterceptors() -> [ServerInterceptor<Macosusesdk_V1_CommitTransactionRequest, Macosusesdk_V1_Transaction>]
+  func makeCommitTransactionInterceptors() -> [ServerInterceptor<Macosusesdk_V1_CommitTransactionRequest, Macosusesdk_V1_CommitTransactionResponse>]
 
   /// - Returns: Interceptors to use when handling 'rollbackTransaction'.
   ///   Defaults to calling `self.makeInterceptors()`.
-  func makeRollbackTransactionInterceptors() -> [ServerInterceptor<Macosusesdk_V1_RollbackTransactionRequest, Macosusesdk_V1_Transaction>]
+  func makeRollbackTransactionInterceptors() -> [ServerInterceptor<Macosusesdk_V1_RollbackTransactionRequest, Macosusesdk_V1_RollbackTransactionResponse>]
 
   /// - Returns: Interceptors to use when handling 'getSessionSnapshot'.
   ///   Defaults to calling `self.makeInterceptors()`.

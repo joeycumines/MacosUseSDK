@@ -151,32 +151,54 @@ public struct Macosusesdk_V1_Session: Sendable {
 }
 
 /// A transaction within a session.
-public struct Macosusesdk_V1_Transaction: Sendable {
+public struct Macosusesdk_V1_Transaction: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
   /// Transaction ID.
-  public var transactionID: String = String()
+  public var transactionID: String {
+    get {return _storage._transactionID}
+    set {_uniqueStorage()._transactionID = newValue}
+  }
 
   /// Session this transaction belongs to.
-  public var session: String = String()
+  public var session: String {
+    get {return _storage._session}
+    set {_uniqueStorage()._session = newValue}
+  }
 
   /// Transaction state.
-  public var state: Macosusesdk_V1_Transaction.State = .unspecified
+  public var state: Macosusesdk_V1_Transaction.State {
+    get {return _storage._state}
+    set {_uniqueStorage()._state = newValue}
+  }
 
   /// When the transaction started.
   public var startTime: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {return _startTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
-    set {_startTime = newValue}
+    get {return _storage._startTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_uniqueStorage()._startTime = newValue}
   }
   /// Returns true if `startTime` has been explicitly set.
-  public var hasStartTime: Bool {return self._startTime != nil}
+  public var hasStartTime: Bool {return _storage._startTime != nil}
   /// Clears the value of `startTime`. Subsequent reads from it will return its default value.
-  public mutating func clearStartTime() {self._startTime = nil}
+  public mutating func clearStartTime() {_uniqueStorage()._startTime = nil}
 
   /// Number of operations in the transaction.
-  public var operationsCount: Int32 = 0
+  public var operationsCount: Int32 {
+    get {return _storage._operationsCount}
+    set {_uniqueStorage()._operationsCount = newValue}
+  }
+
+  /// The updated session on committed or rolled back transaction.
+  public var updatedSession: Macosusesdk_V1_Session {
+    get {return _storage._updatedSession ?? Macosusesdk_V1_Session()}
+    set {_uniqueStorage()._updatedSession = newValue}
+  }
+  /// Returns true if `updatedSession` has been explicitly set.
+  public var hasUpdatedSession: Bool {return _storage._updatedSession != nil}
+  /// Clears the value of `updatedSession`. Subsequent reads from it will return its default value.
+  public mutating func clearUpdatedSession() {_uniqueStorage()._updatedSession = nil}
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -239,7 +261,7 @@ public struct Macosusesdk_V1_Transaction: Sendable {
 
   public init() {}
 
-  fileprivate var _startTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+  fileprivate var _storage = _StorageClass.defaultInstance
 }
 
 /// Session state snapshot.
@@ -391,53 +413,104 @@ extension Macosusesdk_V1_Session.State: SwiftProtobuf._ProtoNameProviding {
 
 extension Macosusesdk_V1_Transaction: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Transaction"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}transaction_id\0\u{1}session\0\u{1}state\0\u{3}start_time\0\u{3}operations_count\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}transaction_id\0\u{1}session\0\u{1}state\0\u{3}start_time\0\u{3}operations_count\0\u{3}updated_session\0")
+
+  fileprivate class _StorageClass {
+    var _transactionID: String = String()
+    var _session: String = String()
+    var _state: Macosusesdk_V1_Transaction.State = .unspecified
+    var _startTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+    var _operationsCount: Int32 = 0
+    var _updatedSession: Macosusesdk_V1_Session? = nil
+
+      // This property is used as the initial default value for new instances of the type.
+      // The type itself is protecting the reference to its storage via CoW semantics.
+      // This will force a copy to be made of this reference when the first mutation occurs;
+      // hence, it is safe to mark this as `nonisolated(unsafe)`.
+      static nonisolated(unsafe) let defaultInstance = _StorageClass()
+
+    private init() {}
+
+    init(copying source: _StorageClass) {
+      _transactionID = source._transactionID
+      _session = source._session
+      _state = source._state
+      _startTime = source._startTime
+      _operationsCount = source._operationsCount
+      _updatedSession = source._updatedSession
+    }
+  }
+
+  fileprivate mutating func _uniqueStorage() -> _StorageClass {
+    if !isKnownUniquelyReferenced(&_storage) {
+      _storage = _StorageClass(copying: _storage)
+    }
+    return _storage
+  }
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.transactionID) }()
-      case 2: try { try decoder.decodeSingularStringField(value: &self.session) }()
-      case 3: try { try decoder.decodeSingularEnumField(value: &self.state) }()
-      case 4: try { try decoder.decodeSingularMessageField(value: &self._startTime) }()
-      case 5: try { try decoder.decodeSingularInt32Field(value: &self.operationsCount) }()
-      default: break
+    _ = _uniqueStorage()
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      while let fieldNumber = try decoder.nextFieldNumber() {
+        // The use of inline closures is to circumvent an issue where the compiler
+        // allocates stack space for every case branch when no optimizations are
+        // enabled. https://github.com/apple/swift-protobuf/issues/1034
+        switch fieldNumber {
+        case 1: try { try decoder.decodeSingularStringField(value: &_storage._transactionID) }()
+        case 2: try { try decoder.decodeSingularStringField(value: &_storage._session) }()
+        case 3: try { try decoder.decodeSingularEnumField(value: &_storage._state) }()
+        case 4: try { try decoder.decodeSingularMessageField(value: &_storage._startTime) }()
+        case 5: try { try decoder.decodeSingularInt32Field(value: &_storage._operationsCount) }()
+        case 6: try { try decoder.decodeSingularMessageField(value: &_storage._updatedSession) }()
+        default: break
+        }
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    if !self.transactionID.isEmpty {
-      try visitor.visitSingularStringField(value: self.transactionID, fieldNumber: 1)
-    }
-    if !self.session.isEmpty {
-      try visitor.visitSingularStringField(value: self.session, fieldNumber: 2)
-    }
-    if self.state != .unspecified {
-      try visitor.visitSingularEnumField(value: self.state, fieldNumber: 3)
-    }
-    try { if let v = self._startTime {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
-    } }()
-    if self.operationsCount != 0 {
-      try visitor.visitSingularInt32Field(value: self.operationsCount, fieldNumber: 5)
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every if/case branch local when no optimizations
+      // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+      // https://github.com/apple/swift-protobuf/issues/1182
+      if !_storage._transactionID.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._transactionID, fieldNumber: 1)
+      }
+      if !_storage._session.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._session, fieldNumber: 2)
+      }
+      if _storage._state != .unspecified {
+        try visitor.visitSingularEnumField(value: _storage._state, fieldNumber: 3)
+      }
+      try { if let v = _storage._startTime {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
+      } }()
+      if _storage._operationsCount != 0 {
+        try visitor.visitSingularInt32Field(value: _storage._operationsCount, fieldNumber: 5)
+      }
+      try { if let v = _storage._updatedSession {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
+      } }()
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_Transaction, rhs: Macosusesdk_V1_Transaction) -> Bool {
-    if lhs.transactionID != rhs.transactionID {return false}
-    if lhs.session != rhs.session {return false}
-    if lhs.state != rhs.state {return false}
-    if lhs._startTime != rhs._startTime {return false}
-    if lhs.operationsCount != rhs.operationsCount {return false}
+    if lhs._storage !== rhs._storage {
+      let storagesAreEqual: Bool = withExtendedLifetime((lhs._storage, rhs._storage)) { (_args: (_StorageClass, _StorageClass)) in
+        let _storage = _args.0
+        let rhs_storage = _args.1
+        if _storage._transactionID != rhs_storage._transactionID {return false}
+        if _storage._session != rhs_storage._session {return false}
+        if _storage._state != rhs_storage._state {return false}
+        if _storage._startTime != rhs_storage._startTime {return false}
+        if _storage._operationsCount != rhs_storage._operationsCount {return false}
+        if _storage._updatedSession != rhs_storage._updatedSession {return false}
+        return true
+      }
+      if !storagesAreEqual {return false}
+    }
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

@@ -41,6 +41,29 @@ public struct Macosusesdk_Type_Point: Sendable {
   public init() {}
 }
 
+/// A rectangular region with x, y, width, height (screen coordinates).
+public struct Macosusesdk_Type_Region: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// X coordinate of the region's origin (screen coordinates).
+  public var x: Double = 0
+
+  /// Y coordinate of the region's origin (screen coordinates).
+  public var y: Double = 0
+
+  /// Width of the region.
+  public var width: Double = 0
+
+  /// Height of the region.
+  public var height: Double = 0
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
 fileprivate let _protobuf_package = "macosusesdk.type"
@@ -75,6 +98,51 @@ extension Macosusesdk_Type_Point: SwiftProtobuf.Message, SwiftProtobuf._MessageI
   public static func ==(lhs: Macosusesdk_Type_Point, rhs: Macosusesdk_Type_Point) -> Bool {
     if lhs.x != rhs.x {return false}
     if lhs.y != rhs.y {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Macosusesdk_Type_Region: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".Region"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}x\0\u{1}y\0\u{1}width\0\u{1}height\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularDoubleField(value: &self.x) }()
+      case 2: try { try decoder.decodeSingularDoubleField(value: &self.y) }()
+      case 3: try { try decoder.decodeSingularDoubleField(value: &self.width) }()
+      case 4: try { try decoder.decodeSingularDoubleField(value: &self.height) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.x.bitPattern != 0 {
+      try visitor.visitSingularDoubleField(value: self.x, fieldNumber: 1)
+    }
+    if self.y.bitPattern != 0 {
+      try visitor.visitSingularDoubleField(value: self.y, fieldNumber: 2)
+    }
+    if self.width.bitPattern != 0 {
+      try visitor.visitSingularDoubleField(value: self.width, fieldNumber: 3)
+    }
+    if self.height.bitPattern != 0 {
+      try visitor.visitSingularDoubleField(value: self.height, fieldNumber: 4)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_Type_Region, rhs: Macosusesdk_Type_Region) -> Bool {
+    if lhs.x != rhs.x {return false}
+    if lhs.y != rhs.y {return false}
+    if lhs.width != rhs.width {return false}
+    if lhs.height != rhs.height {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
