@@ -8,7 +8,7 @@
 // For information on using the generated types, please see the documentation:
 //   https://github.com/apple/swift-protobuf/
 
-// Copyright 2025 MacosUseSDK
+// Copyright 2025 Joseph Cumines
 //
 // Script-related resources and types
 

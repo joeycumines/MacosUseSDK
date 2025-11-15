@@ -1,4 +1,4 @@
-// Copyright 2025 MacosUseSDK
+// Copyright 2025 Joseph Cumines
 //
 // Screenshot-related types
 

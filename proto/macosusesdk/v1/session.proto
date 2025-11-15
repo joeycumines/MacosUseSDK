@@ -1,4 +1,4 @@
-// Copyright 2025 MacosUseSDK
+// Copyright 2025 Joseph Cumines
 //
 // Session resource for workflow management and transactions
 
