@@ -4,7 +4,7 @@ on:
 permissions:
   contents: read
 jobs:
-  by:
+  main:
     runs-on: macos-latest
     permissions:
       contents: read
