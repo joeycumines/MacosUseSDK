@@ -450,7 +450,30 @@ func TestMain(m *testing.M) {
 		os.Exit(0)
 	}
 
+	// Pre-flight cleanup: Kill golden applications to ensure clean slate
+	fmt.Fprintln(os.Stderr, "TestMain: Pre-flight cleanup - killing golden applications...")
+	killGoldenApplications()
+
 	// Run tests
 	code := m.Run()
+
+	// Post-flight cleanup would go here if needed
+	// (Current tests use defer cleanup patterns)
+
 	os.Exit(code)
+}
+
+// killGoldenApplications forcefully terminates all golden test applications.
+// Golden Applications:
+// - TextEdit (com.apple.TextEdit)
+// - Calculator (com.apple.calculator)
+// - Finder (com.apple.finder) - NOTE: Avoiding Finder kill to prevent system issues
+func killGoldenApplications() {
+	apps := []string{"Calculator", "TextEdit"}
+	for _, app := range apps {
+		cmd := exec.Command("killall", "-9", app)
+		_ = cmd.Run() // Ignore errors (app may not be running)
+	}
+	// Give OS time to clean up processes
+	time.Sleep(500 * time.Millisecond)
 }
