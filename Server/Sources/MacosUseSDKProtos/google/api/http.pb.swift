@@ -29,35 +29,35 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
-  struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
-  typealias Version = _2
+private struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+    struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
+    typealias Version = _2
 }
 
 /// Defines the HTTP configuration for an API service. It contains a list of
 /// [HttpRule][google.api.HttpRule], each specifying the mapping of an RPC method
 /// to one or more HTTP REST API methods.
 public struct Google_Api_Http: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  /// A list of HTTP configuration rules that apply to individual API methods.
-  ///
-  /// **NOTE:** All service configuration rules follow "last one wins" order.
-  public var rules: [Google_Api_HttpRule] = []
+    /// A list of HTTP configuration rules that apply to individual API methods.
+    ///
+    /// **NOTE:** All service configuration rules follow "last one wins" order.
+    public var rules: [Google_Api_HttpRule] = []
 
-  /// When set to true, URL path parameters will be fully URI-decoded except in
-  /// cases of single segment matches in reserved expansion, where "%2F" will be
-  /// left encoded.
-  ///
-  /// The default behavior is to not decode RFC 6570 reserved characters in multi
-  /// segment matches.
-  public var fullyDecodeReservedExpansion: Bool = false
+    /// When set to true, URL path parameters will be fully URI-decoded except in
+    /// cases of single segment matches in reserved expansion, where "%2F" will be
+    /// left encoded.
+    ///
+    /// The default behavior is to not decode RFC 6570 reserved characters in multi
+    /// segment matches.
+    public var fullyDecodeReservedExpansion: Bool = false
 
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
+    public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  public init() {}
+    public init() {}
 }
 
 /// gRPC Transcoding
@@ -325,344 +325,343 @@ public struct Google_Api_Http: Sendable {
 /// the request or response body to a repeated field. However, some gRPC
 /// Transcoding implementations may not support this feature.
 public struct Google_Api_HttpRule: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  /// Selects a method to which this rule applies.
-  ///
-  /// Refer to [selector][google.api.DocumentationRule.selector] for syntax
-  /// details.
-  public var selector: String = String()
+    /// Selects a method to which this rule applies.
+    ///
+    /// Refer to [selector][google.api.DocumentationRule.selector] for syntax
+    /// details.
+    public var selector: String = .init()
 
-  /// Determines the URL pattern is matched by this rules. This pattern can be
-  /// used with any of the {get|put|post|delete|patch} methods. A custom method
-  /// can be defined using the 'custom' field.
-  public var pattern: Google_Api_HttpRule.OneOf_Pattern? = nil
+    /// Determines the URL pattern is matched by this rules. This pattern can be
+    /// used with any of the {get|put|post|delete|patch} methods. A custom method
+    /// can be defined using the 'custom' field.
+    public var pattern: Google_Api_HttpRule.OneOf_Pattern?
 
-  /// Maps to HTTP GET. Used for listing and getting information about
-  /// resources.
-  public var get: String {
-    get {
-      if case .get(let v)? = pattern {return v}
-      return String()
-    }
-    set {pattern = .get(newValue)}
-  }
-
-  /// Maps to HTTP PUT. Used for replacing a resource.
-  public var put: String {
-    get {
-      if case .put(let v)? = pattern {return v}
-      return String()
-    }
-    set {pattern = .put(newValue)}
-  }
-
-  /// Maps to HTTP POST. Used for creating a resource or performing an action.
-  public var post: String {
-    get {
-      if case .post(let v)? = pattern {return v}
-      return String()
-    }
-    set {pattern = .post(newValue)}
-  }
-
-  /// Maps to HTTP DELETE. Used for deleting a resource.
-  public var delete: String {
-    get {
-      if case .delete(let v)? = pattern {return v}
-      return String()
-    }
-    set {pattern = .delete(newValue)}
-  }
-
-  /// Maps to HTTP PATCH. Used for updating a resource.
-  public var patch: String {
-    get {
-      if case .patch(let v)? = pattern {return v}
-      return String()
-    }
-    set {pattern = .patch(newValue)}
-  }
-
-  /// The custom pattern is used for specifying an HTTP method that is not
-  /// included in the `pattern` field, such as HEAD, or "*" to leave the
-  /// HTTP method unspecified for this rule. The wild-card rule is useful
-  /// for services that provide content to Web (HTML) clients.
-  public var custom: Google_Api_CustomHttpPattern {
-    get {
-      if case .custom(let v)? = pattern {return v}
-      return Google_Api_CustomHttpPattern()
-    }
-    set {pattern = .custom(newValue)}
-  }
-
-  /// The name of the request field whose value is mapped to the HTTP request
-  /// body, or `*` for mapping all request fields not captured by the path
-  /// pattern to the HTTP body, or omitted for not having any HTTP request body.
-  ///
-  /// NOTE: the referred field must be present at the top-level of the request
-  /// message type.
-  public var body: String = String()
-
-  /// Optional. The name of the response field whose value is mapped to the HTTP
-  /// response body. When omitted, the entire response message will be used
-  /// as the HTTP response body.
-  ///
-  /// NOTE: The referred field must be present at the top-level of the response
-  /// message type.
-  public var responseBody: String = String()
-
-  /// Additional HTTP bindings for the selector. Nested bindings must
-  /// not contain an `additional_bindings` field themselves (that is,
-  /// the nesting may only be one level deep).
-  public var additionalBindings: [Google_Api_HttpRule] = []
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  /// Determines the URL pattern is matched by this rules. This pattern can be
-  /// used with any of the {get|put|post|delete|patch} methods. A custom method
-  /// can be defined using the 'custom' field.
-  public enum OneOf_Pattern: Equatable, Sendable {
     /// Maps to HTTP GET. Used for listing and getting information about
     /// resources.
-    case get(String)
+    public var get: String {
+        get {
+            if case let .get(v)? = pattern { return v }
+            return String()
+        }
+        set { pattern = .get(newValue) }
+    }
+
     /// Maps to HTTP PUT. Used for replacing a resource.
-    case put(String)
+    public var put: String {
+        get {
+            if case let .put(v)? = pattern { return v }
+            return String()
+        }
+        set { pattern = .put(newValue) }
+    }
+
     /// Maps to HTTP POST. Used for creating a resource or performing an action.
-    case post(String)
+    public var post: String {
+        get {
+            if case let .post(v)? = pattern { return v }
+            return String()
+        }
+        set { pattern = .post(newValue) }
+    }
+
     /// Maps to HTTP DELETE. Used for deleting a resource.
-    case delete(String)
+    public var delete: String {
+        get {
+            if case let .delete(v)? = pattern { return v }
+            return String()
+        }
+        set { pattern = .delete(newValue) }
+    }
+
     /// Maps to HTTP PATCH. Used for updating a resource.
-    case patch(String)
+    public var patch: String {
+        get {
+            if case let .patch(v)? = pattern { return v }
+            return String()
+        }
+        set { pattern = .patch(newValue) }
+    }
+
     /// The custom pattern is used for specifying an HTTP method that is not
     /// included in the `pattern` field, such as HEAD, or "*" to leave the
     /// HTTP method unspecified for this rule. The wild-card rule is useful
     /// for services that provide content to Web (HTML) clients.
-    case custom(Google_Api_CustomHttpPattern)
+    public var custom: Google_Api_CustomHttpPattern {
+        get {
+            if case let .custom(v)? = pattern { return v }
+            return Google_Api_CustomHttpPattern()
+        }
+        set { pattern = .custom(newValue) }
+    }
 
-  }
+    /// The name of the request field whose value is mapped to the HTTP request
+    /// body, or `*` for mapping all request fields not captured by the path
+    /// pattern to the HTTP body, or omitted for not having any HTTP request body.
+    ///
+    /// NOTE: the referred field must be present at the top-level of the request
+    /// message type.
+    public var body: String = .init()
 
-  public init() {}
+    /// Optional. The name of the response field whose value is mapped to the HTTP
+    /// response body. When omitted, the entire response message will be used
+    /// as the HTTP response body.
+    ///
+    /// NOTE: The referred field must be present at the top-level of the response
+    /// message type.
+    public var responseBody: String = .init()
+
+    /// Additional HTTP bindings for the selector. Nested bindings must
+    /// not contain an `additional_bindings` field themselves (that is,
+    /// the nesting may only be one level deep).
+    public var additionalBindings: [Google_Api_HttpRule] = []
+
+    public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+    /// Determines the URL pattern is matched by this rules. This pattern can be
+    /// used with any of the {get|put|post|delete|patch} methods. A custom method
+    /// can be defined using the 'custom' field.
+    public enum OneOf_Pattern: Equatable, Sendable {
+        /// Maps to HTTP GET. Used for listing and getting information about
+        /// resources.
+        case get(String)
+        /// Maps to HTTP PUT. Used for replacing a resource.
+        case put(String)
+        /// Maps to HTTP POST. Used for creating a resource or performing an action.
+        case post(String)
+        /// Maps to HTTP DELETE. Used for deleting a resource.
+        case delete(String)
+        /// Maps to HTTP PATCH. Used for updating a resource.
+        case patch(String)
+        /// The custom pattern is used for specifying an HTTP method that is not
+        /// included in the `pattern` field, such as HEAD, or "*" to leave the
+        /// HTTP method unspecified for this rule. The wild-card rule is useful
+        /// for services that provide content to Web (HTML) clients.
+        case custom(Google_Api_CustomHttpPattern)
+    }
+
+    public init() {}
 }
 
 /// A custom pattern is used for defining custom HTTP verb.
 public struct Google_Api_CustomHttpPattern: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  /// The name of this custom HTTP verb.
-  public var kind: String = String()
+    /// The name of this custom HTTP verb.
+    public var kind: String = .init()
 
-  /// The path matched by this custom verb.
-  public var path: String = String()
+    /// The path matched by this custom verb.
+    public var path: String = .init()
 
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
+    public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  public init() {}
+    public init() {}
 }
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
-fileprivate let _protobuf_package = "google.api"
+private let _protobuf_package = "google.api"
 
 extension Google_Api_Http: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".Http"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}rules\0\u{3}fully_decode_reserved_expansion\0")
+    public static let protoMessageName: String = _protobuf_package + ".Http"
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}rules\0\u{3}fully_decode_reserved_expansion\0")
 
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeRepeatedMessageField(value: &self.rules) }()
-      case 2: try { try decoder.decodeSingularBoolField(value: &self.fullyDecodeReservedExpansion) }()
-      default: break
-      }
+    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeRepeatedMessageField(value: &rules)
+            case 2: try decoder.decodeSingularBoolField(value: &fullyDecodeReservedExpansion)
+            default: break
+            }
+        }
     }
-  }
 
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.rules.isEmpty {
-      try visitor.visitRepeatedMessageField(value: self.rules, fieldNumber: 1)
+    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
+        if !rules.isEmpty {
+            try visitor.visitRepeatedMessageField(value: rules, fieldNumber: 1)
+        }
+        if fullyDecodeReservedExpansion != false {
+            try visitor.visitSingularBoolField(value: fullyDecodeReservedExpansion, fieldNumber: 2)
+        }
+        try unknownFields.traverse(visitor: &visitor)
     }
-    if self.fullyDecodeReservedExpansion != false {
-      try visitor.visitSingularBoolField(value: self.fullyDecodeReservedExpansion, fieldNumber: 2)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
 
-  public static func ==(lhs: Google_Api_Http, rhs: Google_Api_Http) -> Bool {
-    if lhs.rules != rhs.rules {return false}
-    if lhs.fullyDecodeReservedExpansion != rhs.fullyDecodeReservedExpansion {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    public static func == (lhs: Google_Api_Http, rhs: Google_Api_Http) -> Bool {
+        if lhs.rules != rhs.rules { return false }
+        if lhs.fullyDecodeReservedExpansion != rhs.fullyDecodeReservedExpansion { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
 
 extension Google_Api_HttpRule: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".HttpRule"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}selector\0\u{1}get\0\u{1}put\0\u{1}post\0\u{1}delete\0\u{1}patch\0\u{1}body\0\u{1}custom\0\u{4}\u{3}additional_bindings\0\u{3}response_body\0")
+    public static let protoMessageName: String = _protobuf_package + ".HttpRule"
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}selector\0\u{1}get\0\u{1}put\0\u{1}post\0\u{1}delete\0\u{1}patch\0\u{1}body\0\u{1}custom\0\u{4}\u{3}additional_bindings\0\u{3}response_body\0")
 
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.selector) }()
-      case 2: try {
-        var v: String?
-        try decoder.decodeSingularStringField(value: &v)
-        if let v = v {
-          if self.pattern != nil {try decoder.handleConflictingOneOf()}
-          self.pattern = .get(v)
+    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularStringField(value: &selector)
+            case 2: try {
+                    var v: String?
+                    try decoder.decodeSingularStringField(value: &v)
+                    if let v {
+                        if self.pattern != nil { try decoder.handleConflictingOneOf() }
+                        self.pattern = .get(v)
+                    }
+                }()
+            case 3: try {
+                    var v: String?
+                    try decoder.decodeSingularStringField(value: &v)
+                    if let v {
+                        if self.pattern != nil { try decoder.handleConflictingOneOf() }
+                        self.pattern = .put(v)
+                    }
+                }()
+            case 4: try {
+                    var v: String?
+                    try decoder.decodeSingularStringField(value: &v)
+                    if let v {
+                        if self.pattern != nil { try decoder.handleConflictingOneOf() }
+                        self.pattern = .post(v)
+                    }
+                }()
+            case 5: try {
+                    var v: String?
+                    try decoder.decodeSingularStringField(value: &v)
+                    if let v {
+                        if self.pattern != nil { try decoder.handleConflictingOneOf() }
+                        self.pattern = .delete(v)
+                    }
+                }()
+            case 6: try {
+                    var v: String?
+                    try decoder.decodeSingularStringField(value: &v)
+                    if let v {
+                        if self.pattern != nil { try decoder.handleConflictingOneOf() }
+                        self.pattern = .patch(v)
+                    }
+                }()
+            case 7: try decoder.decodeSingularStringField(value: &body)
+            case 8: try {
+                    var v: Google_Api_CustomHttpPattern?
+                    var hadOneofValue = false
+                    if let current = self.pattern {
+                        hadOneofValue = true
+                        if case let .custom(m) = current { v = m }
+                    }
+                    try decoder.decodeSingularMessageField(value: &v)
+                    if let v {
+                        if hadOneofValue { try decoder.handleConflictingOneOf() }
+                        self.pattern = .custom(v)
+                    }
+                }()
+            case 11: try decoder.decodeRepeatedMessageField(value: &additionalBindings)
+            case 12: try decoder.decodeSingularStringField(value: &responseBody)
+            default: break
+            }
         }
-      }()
-      case 3: try {
-        var v: String?
-        try decoder.decodeSingularStringField(value: &v)
-        if let v = v {
-          if self.pattern != nil {try decoder.handleConflictingOneOf()}
-          self.pattern = .put(v)
-        }
-      }()
-      case 4: try {
-        var v: String?
-        try decoder.decodeSingularStringField(value: &v)
-        if let v = v {
-          if self.pattern != nil {try decoder.handleConflictingOneOf()}
-          self.pattern = .post(v)
-        }
-      }()
-      case 5: try {
-        var v: String?
-        try decoder.decodeSingularStringField(value: &v)
-        if let v = v {
-          if self.pattern != nil {try decoder.handleConflictingOneOf()}
-          self.pattern = .delete(v)
-        }
-      }()
-      case 6: try {
-        var v: String?
-        try decoder.decodeSingularStringField(value: &v)
-        if let v = v {
-          if self.pattern != nil {try decoder.handleConflictingOneOf()}
-          self.pattern = .patch(v)
-        }
-      }()
-      case 7: try { try decoder.decodeSingularStringField(value: &self.body) }()
-      case 8: try {
-        var v: Google_Api_CustomHttpPattern?
-        var hadOneofValue = false
-        if let current = self.pattern {
-          hadOneofValue = true
-          if case .custom(let m) = current {v = m}
-        }
-        try decoder.decodeSingularMessageField(value: &v)
-        if let v = v {
-          if hadOneofValue {try decoder.handleConflictingOneOf()}
-          self.pattern = .custom(v)
-        }
-      }()
-      case 11: try { try decoder.decodeRepeatedMessageField(value: &self.additionalBindings) }()
-      case 12: try { try decoder.decodeSingularStringField(value: &self.responseBody) }()
-      default: break
-      }
     }
-  }
 
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    if !self.selector.isEmpty {
-      try visitor.visitSingularStringField(value: self.selector, fieldNumber: 1)
+    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
+        // The use of inline closures is to circumvent an issue where the compiler
+        // allocates stack space for every if/case branch local when no optimizations
+        // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+        // https://github.com/apple/swift-protobuf/issues/1182
+        if !selector.isEmpty {
+            try visitor.visitSingularStringField(value: selector, fieldNumber: 1)
+        }
+        switch pattern {
+        case .get?: try {
+                guard case let .get(v)? = self.pattern else { preconditionFailure() }
+                try visitor.visitSingularStringField(value: v, fieldNumber: 2)
+            }()
+        case .put?: try {
+                guard case let .put(v)? = self.pattern else { preconditionFailure() }
+                try visitor.visitSingularStringField(value: v, fieldNumber: 3)
+            }()
+        case .post?: try {
+                guard case let .post(v)? = self.pattern else { preconditionFailure() }
+                try visitor.visitSingularStringField(value: v, fieldNumber: 4)
+            }()
+        case .delete?: try {
+                guard case let .delete(v)? = self.pattern else { preconditionFailure() }
+                try visitor.visitSingularStringField(value: v, fieldNumber: 5)
+            }()
+        case .patch?: try {
+                guard case let .patch(v)? = self.pattern else { preconditionFailure() }
+                try visitor.visitSingularStringField(value: v, fieldNumber: 6)
+            }()
+        default: break
+        }
+        if !body.isEmpty {
+            try visitor.visitSingularStringField(value: body, fieldNumber: 7)
+        }
+        try { if case let .custom(v)? = self.pattern {
+            try visitor.visitSingularMessageField(value: v, fieldNumber: 8)
+        } }()
+        if !additionalBindings.isEmpty {
+            try visitor.visitRepeatedMessageField(value: additionalBindings, fieldNumber: 11)
+        }
+        if !responseBody.isEmpty {
+            try visitor.visitSingularStringField(value: responseBody, fieldNumber: 12)
+        }
+        try unknownFields.traverse(visitor: &visitor)
     }
-    switch self.pattern {
-    case .get?: try {
-      guard case .get(let v)? = self.pattern else { preconditionFailure() }
-      try visitor.visitSingularStringField(value: v, fieldNumber: 2)
-    }()
-    case .put?: try {
-      guard case .put(let v)? = self.pattern else { preconditionFailure() }
-      try visitor.visitSingularStringField(value: v, fieldNumber: 3)
-    }()
-    case .post?: try {
-      guard case .post(let v)? = self.pattern else { preconditionFailure() }
-      try visitor.visitSingularStringField(value: v, fieldNumber: 4)
-    }()
-    case .delete?: try {
-      guard case .delete(let v)? = self.pattern else { preconditionFailure() }
-      try visitor.visitSingularStringField(value: v, fieldNumber: 5)
-    }()
-    case .patch?: try {
-      guard case .patch(let v)? = self.pattern else { preconditionFailure() }
-      try visitor.visitSingularStringField(value: v, fieldNumber: 6)
-    }()
-    default: break
-    }
-    if !self.body.isEmpty {
-      try visitor.visitSingularStringField(value: self.body, fieldNumber: 7)
-    }
-    try { if case .custom(let v)? = self.pattern {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 8)
-    } }()
-    if !self.additionalBindings.isEmpty {
-      try visitor.visitRepeatedMessageField(value: self.additionalBindings, fieldNumber: 11)
-    }
-    if !self.responseBody.isEmpty {
-      try visitor.visitSingularStringField(value: self.responseBody, fieldNumber: 12)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
 
-  public static func ==(lhs: Google_Api_HttpRule, rhs: Google_Api_HttpRule) -> Bool {
-    if lhs.selector != rhs.selector {return false}
-    if lhs.pattern != rhs.pattern {return false}
-    if lhs.body != rhs.body {return false}
-    if lhs.responseBody != rhs.responseBody {return false}
-    if lhs.additionalBindings != rhs.additionalBindings {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    public static func == (lhs: Google_Api_HttpRule, rhs: Google_Api_HttpRule) -> Bool {
+        if lhs.selector != rhs.selector { return false }
+        if lhs.pattern != rhs.pattern { return false }
+        if lhs.body != rhs.body { return false }
+        if lhs.responseBody != rhs.responseBody { return false }
+        if lhs.additionalBindings != rhs.additionalBindings { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
 
 extension Google_Api_CustomHttpPattern: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".CustomHttpPattern"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}kind\0\u{1}path\0")
+    public static let protoMessageName: String = _protobuf_package + ".CustomHttpPattern"
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}kind\0\u{1}path\0")
 
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.kind) }()
-      case 2: try { try decoder.decodeSingularStringField(value: &self.path) }()
-      default: break
-      }
+    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularStringField(value: &kind)
+            case 2: try decoder.decodeSingularStringField(value: &path)
+            default: break
+            }
+        }
     }
-  }
 
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.kind.isEmpty {
-      try visitor.visitSingularStringField(value: self.kind, fieldNumber: 1)
+    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
+        if !kind.isEmpty {
+            try visitor.visitSingularStringField(value: kind, fieldNumber: 1)
+        }
+        if !path.isEmpty {
+            try visitor.visitSingularStringField(value: path, fieldNumber: 2)
+        }
+        try unknownFields.traverse(visitor: &visitor)
     }
-    if !self.path.isEmpty {
-      try visitor.visitSingularStringField(value: self.path, fieldNumber: 2)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
 
-  public static func ==(lhs: Google_Api_CustomHttpPattern, rhs: Google_Api_CustomHttpPattern) -> Bool {
-    if lhs.kind != rhs.kind {return false}
-    if lhs.path != rhs.path {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    public static func == (lhs: Google_Api_CustomHttpPattern, rhs: Google_Api_CustomHttpPattern) -> Bool {
+        if lhs.kind != rhs.kind { return false }
+        if lhs.path != rhs.path { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }

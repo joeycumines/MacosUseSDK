@@ -19,450 +19,448 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
-  struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
-  typealias Version = _2
+private struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+    struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
+    typealias Version = _2
 }
 
 /// Selector for finding UI elements.
 public struct Macosusesdk_Type_ElementSelector: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  /// Selector criteria (at least one must be specified).
-  public var criteria: Macosusesdk_Type_ElementSelector.OneOf_Criteria? = nil
+    /// Selector criteria (at least one must be specified).
+    public var criteria: Macosusesdk_Type_ElementSelector.OneOf_Criteria?
 
-  /// Select by role (e.g., "button", "textField").
-  public var role: String {
-    get {
-      if case .role(let v)? = criteria {return v}
-      return String()
-    }
-    set {criteria = .role(newValue)}
-  }
-
-  /// Select by text content (exact match).
-  public var text: String {
-    get {
-      if case .text(let v)? = criteria {return v}
-      return String()
-    }
-    set {criteria = .text(newValue)}
-  }
-
-  /// Select by text containing a substring.
-  public var textContains: String {
-    get {
-      if case .textContains(let v)? = criteria {return v}
-      return String()
-    }
-    set {criteria = .textContains(newValue)}
-  }
-
-  /// Select by text matching a regular expression.
-  public var textRegex: String {
-    get {
-      if case .textRegex(let v)? = criteria {return v}
-      return String()
-    }
-    set {criteria = .textRegex(newValue)}
-  }
-
-  /// Select by position on screen.
-  public var position: Macosusesdk_Type_PositionSelector {
-    get {
-      if case .position(let v)? = criteria {return v}
-      return Macosusesdk_Type_PositionSelector()
-    }
-    set {criteria = .position(newValue)}
-  }
-
-  /// Select by attributes.
-  public var attributes: Macosusesdk_Type_AttributeSelector {
-    get {
-      if case .attributes(let v)? = criteria {return v}
-      return Macosusesdk_Type_AttributeSelector()
-    }
-    set {criteria = .attributes(newValue)}
-  }
-
-  /// Compound selector (combine multiple criteria).
-  public var compound: Macosusesdk_Type_CompoundSelector {
-    get {
-      if case .compound(let v)? = criteria {return v}
-      return Macosusesdk_Type_CompoundSelector()
-    }
-    set {criteria = .compound(newValue)}
-  }
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  /// Selector criteria (at least one must be specified).
-  public enum OneOf_Criteria: Equatable, Sendable {
     /// Select by role (e.g., "button", "textField").
-    case role(String)
+    public var role: String {
+        get {
+            if case let .role(v)? = criteria { return v }
+            return String()
+        }
+        set { criteria = .role(newValue) }
+    }
+
     /// Select by text content (exact match).
-    case text(String)
+    public var text: String {
+        get {
+            if case let .text(v)? = criteria { return v }
+            return String()
+        }
+        set { criteria = .text(newValue) }
+    }
+
     /// Select by text containing a substring.
-    case textContains(String)
+    public var textContains: String {
+        get {
+            if case let .textContains(v)? = criteria { return v }
+            return String()
+        }
+        set { criteria = .textContains(newValue) }
+    }
+
     /// Select by text matching a regular expression.
-    case textRegex(String)
+    public var textRegex: String {
+        get {
+            if case let .textRegex(v)? = criteria { return v }
+            return String()
+        }
+        set { criteria = .textRegex(newValue) }
+    }
+
     /// Select by position on screen.
-    case position(Macosusesdk_Type_PositionSelector)
+    public var position: Macosusesdk_Type_PositionSelector {
+        get {
+            if case let .position(v)? = criteria { return v }
+            return Macosusesdk_Type_PositionSelector()
+        }
+        set { criteria = .position(newValue) }
+    }
+
     /// Select by attributes.
-    case attributes(Macosusesdk_Type_AttributeSelector)
+    public var attributes: Macosusesdk_Type_AttributeSelector {
+        get {
+            if case let .attributes(v)? = criteria { return v }
+            return Macosusesdk_Type_AttributeSelector()
+        }
+        set { criteria = .attributes(newValue) }
+    }
+
     /// Compound selector (combine multiple criteria).
-    case compound(Macosusesdk_Type_CompoundSelector)
+    public var compound: Macosusesdk_Type_CompoundSelector {
+        get {
+            if case let .compound(v)? = criteria { return v }
+            return Macosusesdk_Type_CompoundSelector()
+        }
+        set { criteria = .compound(newValue) }
+    }
 
-  }
+    public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  public init() {}
+    /// Selector criteria (at least one must be specified).
+    public enum OneOf_Criteria: Equatable, Sendable {
+        /// Select by role (e.g., "button", "textField").
+        case role(String)
+        /// Select by text content (exact match).
+        case text(String)
+        /// Select by text containing a substring.
+        case textContains(String)
+        /// Select by text matching a regular expression.
+        case textRegex(String)
+        /// Select by position on screen.
+        case position(Macosusesdk_Type_PositionSelector)
+        /// Select by attributes.
+        case attributes(Macosusesdk_Type_AttributeSelector)
+        /// Compound selector (combine multiple criteria).
+        case compound(Macosusesdk_Type_CompoundSelector)
+    }
+
+    public init() {}
 }
 
 /// Select element by screen position.
 public struct Macosusesdk_Type_PositionSelector: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  /// X coordinate (screen coordinates).
-  public var x: Double = 0
+    /// X coordinate (screen coordinates).
+    public var x: Double = 0
 
-  /// Y coordinate (screen coordinates).
-  public var y: Double = 0
+    /// Y coordinate (screen coordinates).
+    public var y: Double = 0
 
-  /// Tolerance for matching position (in pixels).
-  public var tolerance: Double = 0
+    /// Tolerance for matching position (in pixels).
+    public var tolerance: Double = 0
 
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
+    public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  public init() {}
+    public init() {}
 }
 
 /// Select element by accessibility attributes.
 public struct Macosusesdk_Type_AttributeSelector: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  /// Attributes to match (all must match).
-  public var attributes: Dictionary<String,String> = [:]
+    /// Attributes to match (all must match).
+    public var attributes: [String: String] = [:]
 
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
+    public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  public init() {}
+    public init() {}
 }
 
 /// Compound selector combining multiple criteria.
 public struct Macosusesdk_Type_CompoundSelector: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  /// Operator for combining selectors.
-  public var `operator`: Macosusesdk_Type_CompoundSelector.Operator = .unspecified
+    /// Operator for combining selectors.
+    public var `operator`: Macosusesdk_Type_CompoundSelector.Operator = .unspecified
 
-  /// Selectors to combine.
-  public var selectors: [Macosusesdk_Type_ElementSelector] = []
+    /// Selectors to combine.
+    public var selectors: [Macosusesdk_Type_ElementSelector] = []
 
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
+    public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  /// Operator for combining selectors.
-  public enum Operator: SwiftProtobuf.Enum, Swift.CaseIterable {
-    public typealias RawValue = Int
+    /// Operator for combining selectors.
+    public enum Operator: SwiftProtobuf.Enum, Swift.CaseIterable {
+        public typealias RawValue = Int
 
-    /// Default unspecified operator.
-    case unspecified // = 0
+        /// Default unspecified operator.
+        case unspecified // = 0
 
-    /// All selectors must match (AND).
-    case and // = 1
+        /// All selectors must match (AND).
+        case and // = 1
 
-    /// At least one selector must match (OR).
-    case or // = 2
+        /// At least one selector must match (OR).
+        case or // = 2
 
-    /// Selector must not match (NOT - only valid with single selector).
-    case not // = 3
-    case UNRECOGNIZED(Int)
+        /// Selector must not match (NOT - only valid with single selector).
+        case not // = 3
+        case UNRECOGNIZED(Int)
 
-    public init() {
-      self = .unspecified
+        public init() {
+            self = .unspecified
+        }
+
+        public init?(rawValue: Int) {
+            switch rawValue {
+            case 0: self = .unspecified
+            case 1: self = .and
+            case 2: self = .or
+            case 3: self = .not
+            default: self = .UNRECOGNIZED(rawValue)
+            }
+        }
+
+        public var rawValue: Int {
+            switch self {
+            case .unspecified: 0
+            case .and: 1
+            case .or: 2
+            case .not: 3
+            case let .UNRECOGNIZED(i): i
+            }
+        }
+
+        // The compiler won't synthesize support with the UNRECOGNIZED case.
+        public static let allCases: [Macosusesdk_Type_CompoundSelector.Operator] = [
+            .unspecified,
+            .and,
+            .or,
+            .not,
+        ]
     }
 
-    public init?(rawValue: Int) {
-      switch rawValue {
-      case 0: self = .unspecified
-      case 1: self = .and
-      case 2: self = .or
-      case 3: self = .not
-      default: self = .UNRECOGNIZED(rawValue)
-      }
-    }
-
-    public var rawValue: Int {
-      switch self {
-      case .unspecified: return 0
-      case .and: return 1
-      case .or: return 2
-      case .not: return 3
-      case .UNRECOGNIZED(let i): return i
-      }
-    }
-
-    // The compiler won't synthesize support with the UNRECOGNIZED case.
-    public static let allCases: [Macosusesdk_Type_CompoundSelector.Operator] = [
-      .unspecified,
-      .and,
-      .or,
-      .not,
-    ]
-
-  }
-
-  public init() {}
+    public init() {}
 }
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
-fileprivate let _protobuf_package = "macosusesdk.type"
+private let _protobuf_package = "macosusesdk.type"
 
 extension Macosusesdk_Type_ElementSelector: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".ElementSelector"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}role\0\u{1}text\0\u{3}text_contains\0\u{3}text_regex\0\u{1}position\0\u{1}attributes\0\u{1}compound\0")
+    public static let protoMessageName: String = _protobuf_package + ".ElementSelector"
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}role\0\u{1}text\0\u{3}text_contains\0\u{3}text_regex\0\u{1}position\0\u{1}attributes\0\u{1}compound\0")
 
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try {
-        var v: String?
-        try decoder.decodeSingularStringField(value: &v)
-        if let v = v {
-          if self.criteria != nil {try decoder.handleConflictingOneOf()}
-          self.criteria = .role(v)
+    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try {
+                    var v: String?
+                    try decoder.decodeSingularStringField(value: &v)
+                    if let v {
+                        if self.criteria != nil { try decoder.handleConflictingOneOf() }
+                        self.criteria = .role(v)
+                    }
+                }()
+            case 2: try {
+                    var v: String?
+                    try decoder.decodeSingularStringField(value: &v)
+                    if let v {
+                        if self.criteria != nil { try decoder.handleConflictingOneOf() }
+                        self.criteria = .text(v)
+                    }
+                }()
+            case 3: try {
+                    var v: String?
+                    try decoder.decodeSingularStringField(value: &v)
+                    if let v {
+                        if self.criteria != nil { try decoder.handleConflictingOneOf() }
+                        self.criteria = .textContains(v)
+                    }
+                }()
+            case 4: try {
+                    var v: String?
+                    try decoder.decodeSingularStringField(value: &v)
+                    if let v {
+                        if self.criteria != nil { try decoder.handleConflictingOneOf() }
+                        self.criteria = .textRegex(v)
+                    }
+                }()
+            case 5: try {
+                    var v: Macosusesdk_Type_PositionSelector?
+                    var hadOneofValue = false
+                    if let current = self.criteria {
+                        hadOneofValue = true
+                        if case let .position(m) = current { v = m }
+                    }
+                    try decoder.decodeSingularMessageField(value: &v)
+                    if let v {
+                        if hadOneofValue { try decoder.handleConflictingOneOf() }
+                        self.criteria = .position(v)
+                    }
+                }()
+            case 6: try {
+                    var v: Macosusesdk_Type_AttributeSelector?
+                    var hadOneofValue = false
+                    if let current = self.criteria {
+                        hadOneofValue = true
+                        if case let .attributes(m) = current { v = m }
+                    }
+                    try decoder.decodeSingularMessageField(value: &v)
+                    if let v {
+                        if hadOneofValue { try decoder.handleConflictingOneOf() }
+                        self.criteria = .attributes(v)
+                    }
+                }()
+            case 7: try {
+                    var v: Macosusesdk_Type_CompoundSelector?
+                    var hadOneofValue = false
+                    if let current = self.criteria {
+                        hadOneofValue = true
+                        if case let .compound(m) = current { v = m }
+                    }
+                    try decoder.decodeSingularMessageField(value: &v)
+                    if let v {
+                        if hadOneofValue { try decoder.handleConflictingOneOf() }
+                        self.criteria = .compound(v)
+                    }
+                }()
+            default: break
+            }
         }
-      }()
-      case 2: try {
-        var v: String?
-        try decoder.decodeSingularStringField(value: &v)
-        if let v = v {
-          if self.criteria != nil {try decoder.handleConflictingOneOf()}
-          self.criteria = .text(v)
-        }
-      }()
-      case 3: try {
-        var v: String?
-        try decoder.decodeSingularStringField(value: &v)
-        if let v = v {
-          if self.criteria != nil {try decoder.handleConflictingOneOf()}
-          self.criteria = .textContains(v)
-        }
-      }()
-      case 4: try {
-        var v: String?
-        try decoder.decodeSingularStringField(value: &v)
-        if let v = v {
-          if self.criteria != nil {try decoder.handleConflictingOneOf()}
-          self.criteria = .textRegex(v)
-        }
-      }()
-      case 5: try {
-        var v: Macosusesdk_Type_PositionSelector?
-        var hadOneofValue = false
-        if let current = self.criteria {
-          hadOneofValue = true
-          if case .position(let m) = current {v = m}
-        }
-        try decoder.decodeSingularMessageField(value: &v)
-        if let v = v {
-          if hadOneofValue {try decoder.handleConflictingOneOf()}
-          self.criteria = .position(v)
-        }
-      }()
-      case 6: try {
-        var v: Macosusesdk_Type_AttributeSelector?
-        var hadOneofValue = false
-        if let current = self.criteria {
-          hadOneofValue = true
-          if case .attributes(let m) = current {v = m}
-        }
-        try decoder.decodeSingularMessageField(value: &v)
-        if let v = v {
-          if hadOneofValue {try decoder.handleConflictingOneOf()}
-          self.criteria = .attributes(v)
-        }
-      }()
-      case 7: try {
-        var v: Macosusesdk_Type_CompoundSelector?
-        var hadOneofValue = false
-        if let current = self.criteria {
-          hadOneofValue = true
-          if case .compound(let m) = current {v = m}
-        }
-        try decoder.decodeSingularMessageField(value: &v)
-        if let v = v {
-          if hadOneofValue {try decoder.handleConflictingOneOf()}
-          self.criteria = .compound(v)
-        }
-      }()
-      default: break
-      }
     }
-  }
 
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    switch self.criteria {
-    case .role?: try {
-      guard case .role(let v)? = self.criteria else { preconditionFailure() }
-      try visitor.visitSingularStringField(value: v, fieldNumber: 1)
-    }()
-    case .text?: try {
-      guard case .text(let v)? = self.criteria else { preconditionFailure() }
-      try visitor.visitSingularStringField(value: v, fieldNumber: 2)
-    }()
-    case .textContains?: try {
-      guard case .textContains(let v)? = self.criteria else { preconditionFailure() }
-      try visitor.visitSingularStringField(value: v, fieldNumber: 3)
-    }()
-    case .textRegex?: try {
-      guard case .textRegex(let v)? = self.criteria else { preconditionFailure() }
-      try visitor.visitSingularStringField(value: v, fieldNumber: 4)
-    }()
-    case .position?: try {
-      guard case .position(let v)? = self.criteria else { preconditionFailure() }
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
-    }()
-    case .attributes?: try {
-      guard case .attributes(let v)? = self.criteria else { preconditionFailure() }
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
-    }()
-    case .compound?: try {
-      guard case .compound(let v)? = self.criteria else { preconditionFailure() }
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
-    }()
-    case nil: break
+    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
+        // The use of inline closures is to circumvent an issue where the compiler
+        // allocates stack space for every if/case branch local when no optimizations
+        // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+        // https://github.com/apple/swift-protobuf/issues/1182
+        switch criteria {
+        case .role?: try {
+                guard case let .role(v)? = self.criteria else { preconditionFailure() }
+                try visitor.visitSingularStringField(value: v, fieldNumber: 1)
+            }()
+        case .text?: try {
+                guard case let .text(v)? = self.criteria else { preconditionFailure() }
+                try visitor.visitSingularStringField(value: v, fieldNumber: 2)
+            }()
+        case .textContains?: try {
+                guard case let .textContains(v)? = self.criteria else { preconditionFailure() }
+                try visitor.visitSingularStringField(value: v, fieldNumber: 3)
+            }()
+        case .textRegex?: try {
+                guard case let .textRegex(v)? = self.criteria else { preconditionFailure() }
+                try visitor.visitSingularStringField(value: v, fieldNumber: 4)
+            }()
+        case .position?: try {
+                guard case let .position(v)? = self.criteria else { preconditionFailure() }
+                try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
+            }()
+        case .attributes?: try {
+                guard case let .attributes(v)? = self.criteria else { preconditionFailure() }
+                try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
+            }()
+        case .compound?: try {
+                guard case let .compound(v)? = self.criteria else { preconditionFailure() }
+                try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
+            }()
+        case nil: break
+        }
+        try unknownFields.traverse(visitor: &visitor)
     }
-    try unknownFields.traverse(visitor: &visitor)
-  }
 
-  public static func ==(lhs: Macosusesdk_Type_ElementSelector, rhs: Macosusesdk_Type_ElementSelector) -> Bool {
-    if lhs.criteria != rhs.criteria {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    public static func == (lhs: Macosusesdk_Type_ElementSelector, rhs: Macosusesdk_Type_ElementSelector) -> Bool {
+        if lhs.criteria != rhs.criteria { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
 
 extension Macosusesdk_Type_PositionSelector: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".PositionSelector"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}x\0\u{1}y\0\u{1}tolerance\0")
+    public static let protoMessageName: String = _protobuf_package + ".PositionSelector"
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}x\0\u{1}y\0\u{1}tolerance\0")
 
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularDoubleField(value: &self.x) }()
-      case 2: try { try decoder.decodeSingularDoubleField(value: &self.y) }()
-      case 3: try { try decoder.decodeSingularDoubleField(value: &self.tolerance) }()
-      default: break
-      }
+    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularDoubleField(value: &x)
+            case 2: try decoder.decodeSingularDoubleField(value: &y)
+            case 3: try decoder.decodeSingularDoubleField(value: &tolerance)
+            default: break
+            }
+        }
     }
-  }
 
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.x.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.x, fieldNumber: 1)
+    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
+        if x.bitPattern != 0 {
+            try visitor.visitSingularDoubleField(value: x, fieldNumber: 1)
+        }
+        if y.bitPattern != 0 {
+            try visitor.visitSingularDoubleField(value: y, fieldNumber: 2)
+        }
+        if tolerance.bitPattern != 0 {
+            try visitor.visitSingularDoubleField(value: tolerance, fieldNumber: 3)
+        }
+        try unknownFields.traverse(visitor: &visitor)
     }
-    if self.y.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.y, fieldNumber: 2)
-    }
-    if self.tolerance.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.tolerance, fieldNumber: 3)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
 
-  public static func ==(lhs: Macosusesdk_Type_PositionSelector, rhs: Macosusesdk_Type_PositionSelector) -> Bool {
-    if lhs.x != rhs.x {return false}
-    if lhs.y != rhs.y {return false}
-    if lhs.tolerance != rhs.tolerance {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    public static func == (lhs: Macosusesdk_Type_PositionSelector, rhs: Macosusesdk_Type_PositionSelector) -> Bool {
+        if lhs.x != rhs.x { return false }
+        if lhs.y != rhs.y { return false }
+        if lhs.tolerance != rhs.tolerance { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
 
 extension Macosusesdk_Type_AttributeSelector: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".AttributeSelector"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}attributes\0")
+    public static let protoMessageName: String = _protobuf_package + ".AttributeSelector"
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}attributes\0")
 
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufString>.self, value: &self.attributes) }()
-      default: break
-      }
+    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString, SwiftProtobuf.ProtobufString>.self, value: &attributes)
+            default: break
+            }
+        }
     }
-  }
 
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.attributes.isEmpty {
-      try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufString>.self, value: self.attributes, fieldNumber: 1)
+    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
+        if !attributes.isEmpty {
+            try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString, SwiftProtobuf.ProtobufString>.self, value: attributes, fieldNumber: 1)
+        }
+        try unknownFields.traverse(visitor: &visitor)
     }
-    try unknownFields.traverse(visitor: &visitor)
-  }
 
-  public static func ==(lhs: Macosusesdk_Type_AttributeSelector, rhs: Macosusesdk_Type_AttributeSelector) -> Bool {
-    if lhs.attributes != rhs.attributes {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    public static func == (lhs: Macosusesdk_Type_AttributeSelector, rhs: Macosusesdk_Type_AttributeSelector) -> Bool {
+        if lhs.attributes != rhs.attributes { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
 
 extension Macosusesdk_Type_CompoundSelector: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".CompoundSelector"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}operator\0\u{1}selectors\0")
+    public static let protoMessageName: String = _protobuf_package + ".CompoundSelector"
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}operator\0\u{1}selectors\0")
 
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularEnumField(value: &self.`operator`) }()
-      case 2: try { try decoder.decodeRepeatedMessageField(value: &self.selectors) }()
-      default: break
-      }
+    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularEnumField(value: &self.operator)
+            case 2: try decoder.decodeRepeatedMessageField(value: &selectors)
+            default: break
+            }
+        }
     }
-  }
 
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.`operator` != .unspecified {
-      try visitor.visitSingularEnumField(value: self.`operator`, fieldNumber: 1)
+    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
+        if self.operator != .unspecified {
+            try visitor.visitSingularEnumField(value: self.operator, fieldNumber: 1)
+        }
+        if !selectors.isEmpty {
+            try visitor.visitRepeatedMessageField(value: selectors, fieldNumber: 2)
+        }
+        try unknownFields.traverse(visitor: &visitor)
     }
-    if !self.selectors.isEmpty {
-      try visitor.visitRepeatedMessageField(value: self.selectors, fieldNumber: 2)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
 
-  public static func ==(lhs: Macosusesdk_Type_CompoundSelector, rhs: Macosusesdk_Type_CompoundSelector) -> Bool {
-    if lhs.`operator` != rhs.`operator` {return false}
-    if lhs.selectors != rhs.selectors {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    public static func == (lhs: Macosusesdk_Type_CompoundSelector, rhs: Macosusesdk_Type_CompoundSelector) -> Bool {
+        if lhs.operator != rhs.operator { return false }
+        if lhs.selectors != rhs.selectors { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
 
 extension Macosusesdk_Type_CompoundSelector.Operator: SwiftProtobuf._ProtoNameProviding {
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0OPERATOR_UNSPECIFIED\0\u{1}OPERATOR_AND\0\u{1}OPERATOR_OR\0\u{1}OPERATOR_NOT\0")
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0OPERATOR_UNSPECIFIED\0\u{1}OPERATOR_AND\0\u{1}OPERATOR_OR\0\u{1}OPERATOR_NOT\0")
 }

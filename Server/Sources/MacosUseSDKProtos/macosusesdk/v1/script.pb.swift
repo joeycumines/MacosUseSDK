@@ -19,194 +19,193 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
-  struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
-  typealias Version = _2
+private struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+    struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
+    typealias Version = _2
 }
 
 /// Script type enumeration.
 public enum Macosusesdk_V1_ScriptType: SwiftProtobuf.Enum, Swift.CaseIterable {
-  public typealias RawValue = Int
+    public typealias RawValue = Int
 
-  /// Default unspecified type.
-  case unspecified // = 0
+    /// Default unspecified type.
+    case unspecified // = 0
 
-  /// AppleScript.
-  case applescript // = 1
+    /// AppleScript.
+    case applescript // = 1
 
-  /// JavaScript for Automation (JXA).
-  case jxa // = 2
+    /// JavaScript for Automation (JXA).
+    case jxa // = 2
 
-  /// Shell script (bash).
-  case shell // = 3
-  case UNRECOGNIZED(Int)
+    /// Shell script (bash).
+    case shell // = 3
+    case UNRECOGNIZED(Int)
 
-  public init() {
-    self = .unspecified
-  }
-
-  public init?(rawValue: Int) {
-    switch rawValue {
-    case 0: self = .unspecified
-    case 1: self = .applescript
-    case 2: self = .jxa
-    case 3: self = .shell
-    default: self = .UNRECOGNIZED(rawValue)
+    public init() {
+        self = .unspecified
     }
-  }
 
-  public var rawValue: Int {
-    switch self {
-    case .unspecified: return 0
-    case .applescript: return 1
-    case .jxa: return 2
-    case .shell: return 3
-    case .UNRECOGNIZED(let i): return i
+    public init?(rawValue: Int) {
+        switch rawValue {
+        case 0: self = .unspecified
+        case 1: self = .applescript
+        case 2: self = .jxa
+        case 3: self = .shell
+        default: self = .UNRECOGNIZED(rawValue)
+        }
     }
-  }
 
-  // The compiler won't synthesize support with the UNRECOGNIZED case.
-  public static let allCases: [Macosusesdk_V1_ScriptType] = [
-    .unspecified,
-    .applescript,
-    .jxa,
-    .shell,
-  ]
+    public var rawValue: Int {
+        switch self {
+        case .unspecified: 0
+        case .applescript: 1
+        case .jxa: 2
+        case .shell: 3
+        case let .UNRECOGNIZED(i): i
+        }
+    }
 
+    // The compiler won't synthesize support with the UNRECOGNIZED case.
+    public static let allCases: [Macosusesdk_V1_ScriptType] = [
+        .unspecified,
+        .applescript,
+        .jxa,
+        .shell,
+    ]
 }
 
 /// Scripting dictionaries.
 public struct Macosusesdk_V1_ScriptingDictionaries: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  /// Available scripting dictionaries.
-  public var dictionaries: [Macosusesdk_V1_ScriptingDictionary] = []
+    /// Available scripting dictionaries.
+    public var dictionaries: [Macosusesdk_V1_ScriptingDictionary] = []
 
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
+    public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  public init() {}
+    public init() {}
 }
 
 /// Scripting dictionary for an application.
 public struct Macosusesdk_V1_ScriptingDictionary: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  /// Application.
-  public var application: String = String()
+    /// Application.
+    public var application: String = .init()
 
-  /// Application bundle identifier.
-  public var bundleID: String = String()
+    /// Application bundle identifier.
+    public var bundleID: String = .init()
 
-  /// Whether the application supports AppleScript.
-  public var supportsApplescript: Bool = false
+    /// Whether the application supports AppleScript.
+    public var supportsApplescript: Bool = false
 
-  /// Whether the application supports JXA.
-  public var supportsJxa: Bool = false
+    /// Whether the application supports JXA.
+    public var supportsJxa: Bool = false
 
-  /// Available scripting commands.
-  public var commands: [String] = []
+    /// Available scripting commands.
+    public var commands: [String] = []
 
-  /// Available scripting classes.
-  public var classes: [String] = []
+    /// Available scripting classes.
+    public var classes: [String] = []
 
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
+    public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  public init() {}
+    public init() {}
 }
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
-fileprivate let _protobuf_package = "macosusesdk.v1"
+private let _protobuf_package = "macosusesdk.v1"
 
 extension Macosusesdk_V1_ScriptType: SwiftProtobuf._ProtoNameProviding {
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0SCRIPT_TYPE_UNSPECIFIED\0\u{1}SCRIPT_TYPE_APPLESCRIPT\0\u{1}SCRIPT_TYPE_JXA\0\u{1}SCRIPT_TYPE_SHELL\0")
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0SCRIPT_TYPE_UNSPECIFIED\0\u{1}SCRIPT_TYPE_APPLESCRIPT\0\u{1}SCRIPT_TYPE_JXA\0\u{1}SCRIPT_TYPE_SHELL\0")
 }
 
 extension Macosusesdk_V1_ScriptingDictionaries: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".ScriptingDictionaries"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}dictionaries\0")
+    public static let protoMessageName: String = _protobuf_package + ".ScriptingDictionaries"
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}dictionaries\0")
 
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeRepeatedMessageField(value: &self.dictionaries) }()
-      default: break
-      }
+    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeRepeatedMessageField(value: &dictionaries)
+            default: break
+            }
+        }
     }
-  }
 
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.dictionaries.isEmpty {
-      try visitor.visitRepeatedMessageField(value: self.dictionaries, fieldNumber: 1)
+    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
+        if !dictionaries.isEmpty {
+            try visitor.visitRepeatedMessageField(value: dictionaries, fieldNumber: 1)
+        }
+        try unknownFields.traverse(visitor: &visitor)
     }
-    try unknownFields.traverse(visitor: &visitor)
-  }
 
-  public static func ==(lhs: Macosusesdk_V1_ScriptingDictionaries, rhs: Macosusesdk_V1_ScriptingDictionaries) -> Bool {
-    if lhs.dictionaries != rhs.dictionaries {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    public static func == (lhs: Macosusesdk_V1_ScriptingDictionaries, rhs: Macosusesdk_V1_ScriptingDictionaries) -> Bool {
+        if lhs.dictionaries != rhs.dictionaries { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
 
 extension Macosusesdk_V1_ScriptingDictionary: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".ScriptingDictionary"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0\u{3}bundle_id\0\u{3}supports_applescript\0\u{3}supports_jxa\0\u{1}commands\0\u{1}classes\0")
+    public static let protoMessageName: String = _protobuf_package + ".ScriptingDictionary"
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0\u{3}bundle_id\0\u{3}supports_applescript\0\u{3}supports_jxa\0\u{1}commands\0\u{1}classes\0")
 
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.application) }()
-      case 2: try { try decoder.decodeSingularStringField(value: &self.bundleID) }()
-      case 3: try { try decoder.decodeSingularBoolField(value: &self.supportsApplescript) }()
-      case 4: try { try decoder.decodeSingularBoolField(value: &self.supportsJxa) }()
-      case 5: try { try decoder.decodeRepeatedStringField(value: &self.commands) }()
-      case 6: try { try decoder.decodeRepeatedStringField(value: &self.classes) }()
-      default: break
-      }
+    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularStringField(value: &application)
+            case 2: try decoder.decodeSingularStringField(value: &bundleID)
+            case 3: try decoder.decodeSingularBoolField(value: &supportsApplescript)
+            case 4: try decoder.decodeSingularBoolField(value: &supportsJxa)
+            case 5: try decoder.decodeRepeatedStringField(value: &commands)
+            case 6: try decoder.decodeRepeatedStringField(value: &classes)
+            default: break
+            }
+        }
     }
-  }
 
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.application.isEmpty {
-      try visitor.visitSingularStringField(value: self.application, fieldNumber: 1)
+    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
+        if !application.isEmpty {
+            try visitor.visitSingularStringField(value: application, fieldNumber: 1)
+        }
+        if !bundleID.isEmpty {
+            try visitor.visitSingularStringField(value: bundleID, fieldNumber: 2)
+        }
+        if supportsApplescript != false {
+            try visitor.visitSingularBoolField(value: supportsApplescript, fieldNumber: 3)
+        }
+        if supportsJxa != false {
+            try visitor.visitSingularBoolField(value: supportsJxa, fieldNumber: 4)
+        }
+        if !commands.isEmpty {
+            try visitor.visitRepeatedStringField(value: commands, fieldNumber: 5)
+        }
+        if !classes.isEmpty {
+            try visitor.visitRepeatedStringField(value: classes, fieldNumber: 6)
+        }
+        try unknownFields.traverse(visitor: &visitor)
     }
-    if !self.bundleID.isEmpty {
-      try visitor.visitSingularStringField(value: self.bundleID, fieldNumber: 2)
-    }
-    if self.supportsApplescript != false {
-      try visitor.visitSingularBoolField(value: self.supportsApplescript, fieldNumber: 3)
-    }
-    if self.supportsJxa != false {
-      try visitor.visitSingularBoolField(value: self.supportsJxa, fieldNumber: 4)
-    }
-    if !self.commands.isEmpty {
-      try visitor.visitRepeatedStringField(value: self.commands, fieldNumber: 5)
-    }
-    if !self.classes.isEmpty {
-      try visitor.visitRepeatedStringField(value: self.classes, fieldNumber: 6)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
 
-  public static func ==(lhs: Macosusesdk_V1_ScriptingDictionary, rhs: Macosusesdk_V1_ScriptingDictionary) -> Bool {
-    if lhs.application != rhs.application {return false}
-    if lhs.bundleID != rhs.bundleID {return false}
-    if lhs.supportsApplescript != rhs.supportsApplescript {return false}
-    if lhs.supportsJxa != rhs.supportsJxa {return false}
-    if lhs.commands != rhs.commands {return false}
-    if lhs.classes != rhs.classes {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    public static func == (lhs: Macosusesdk_V1_ScriptingDictionary, rhs: Macosusesdk_V1_ScriptingDictionary) -> Bool {
+        if lhs.application != rhs.application { return false }
+        if lhs.bundleID != rhs.bundleID { return false }
+        if lhs.supportsApplescript != rhs.supportsApplescript { return false }
+        if lhs.supportsJxa != rhs.supportsJxa { return false }
+        if lhs.commands != rhs.commands { return false }
+        if lhs.classes != rhs.classes { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }

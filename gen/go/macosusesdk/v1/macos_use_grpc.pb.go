@@ -177,9 +177,9 @@ type MacosUseClient interface {
 	// Begins a transaction within a session.
 	BeginTransaction(ctx context.Context, in *BeginTransactionRequest, opts ...grpc.CallOption) (*BeginTransactionResponse, error)
 	// Commits a transaction.
-	CommitTransaction(ctx context.Context, in *CommitTransactionRequest, opts ...grpc.CallOption) (*CommitTransactionResponse, error)
+	CommitTransaction(ctx context.Context, in *CommitTransactionRequest, opts ...grpc.CallOption) (*Transaction, error)
 	// Rolls back a transaction.
-	RollbackTransaction(ctx context.Context, in *RollbackTransactionRequest, opts ...grpc.CallOption) (*RollbackTransactionResponse, error)
+	RollbackTransaction(ctx context.Context, in *RollbackTransactionRequest, opts ...grpc.CallOption) (*Transaction, error)
 	// Gets a session state snapshot.
 	GetSessionSnapshot(ctx context.Context, in *GetSessionSnapshotRequest, opts ...grpc.CallOption) (*SessionSnapshot, error)
 	// ===== Screenshot Operations =====
@@ -630,9 +630,9 @@ func (c *macosUseClient) BeginTransaction(ctx context.Context, in *BeginTransact
 	return out, nil
 }
 
-func (c *macosUseClient) CommitTransaction(ctx context.Context, in *CommitTransactionRequest, opts ...grpc.CallOption) (*CommitTransactionResponse, error) {
+func (c *macosUseClient) CommitTransaction(ctx context.Context, in *CommitTransactionRequest, opts ...grpc.CallOption) (*Transaction, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommitTransactionResponse)
+	out := new(Transaction)
 	err := c.cc.Invoke(ctx, MacosUse_CommitTransaction_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -640,9 +640,9 @@ func (c *macosUseClient) CommitTransaction(ctx context.Context, in *CommitTransa
 	return out, nil
 }
 
-func (c *macosUseClient) RollbackTransaction(ctx context.Context, in *RollbackTransactionRequest, opts ...grpc.CallOption) (*RollbackTransactionResponse, error) {
+func (c *macosUseClient) RollbackTransaction(ctx context.Context, in *RollbackTransactionRequest, opts ...grpc.CallOption) (*Transaction, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RollbackTransactionResponse)
+	out := new(Transaction)
 	err := c.cc.Invoke(ctx, MacosUse_RollbackTransaction_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -1013,9 +1013,9 @@ type MacosUseServer interface {
 	// Begins a transaction within a session.
 	BeginTransaction(context.Context, *BeginTransactionRequest) (*BeginTransactionResponse, error)
 	// Commits a transaction.
-	CommitTransaction(context.Context, *CommitTransactionRequest) (*CommitTransactionResponse, error)
+	CommitTransaction(context.Context, *CommitTransactionRequest) (*Transaction, error)
 	// Rolls back a transaction.
-	RollbackTransaction(context.Context, *RollbackTransactionRequest) (*RollbackTransactionResponse, error)
+	RollbackTransaction(context.Context, *RollbackTransactionRequest) (*Transaction, error)
 	// Gets a session state snapshot.
 	GetSessionSnapshot(context.Context, *GetSessionSnapshotRequest) (*SessionSnapshot, error)
 	// ===== Screenshot Operations =====
@@ -1195,10 +1195,10 @@ func (UnimplementedMacosUseServer) DeleteSession(context.Context, *DeleteSession
 func (UnimplementedMacosUseServer) BeginTransaction(context.Context, *BeginTransactionRequest) (*BeginTransactionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BeginTransaction not implemented")
 }
-func (UnimplementedMacosUseServer) CommitTransaction(context.Context, *CommitTransactionRequest) (*CommitTransactionResponse, error) {
+func (UnimplementedMacosUseServer) CommitTransaction(context.Context, *CommitTransactionRequest) (*Transaction, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CommitTransaction not implemented")
 }
-func (UnimplementedMacosUseServer) RollbackTransaction(context.Context, *RollbackTransactionRequest) (*RollbackTransactionResponse, error) {
+func (UnimplementedMacosUseServer) RollbackTransaction(context.Context, *RollbackTransactionRequest) (*Transaction, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RollbackTransaction not implemented")
 }
 func (UnimplementedMacosUseServer) GetSessionSnapshot(context.Context, *GetSessionSnapshotRequest) (*SessionSnapshot, error) {

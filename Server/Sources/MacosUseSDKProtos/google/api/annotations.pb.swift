@@ -29,9 +29,9 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
-  struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
-  typealias Version = _2
+private struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+    struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
+    typealias Version = _2
 }
 
 // MARK: - Extension support defined in annotations.proto.
@@ -43,24 +43,24 @@ fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAP
 // declaration. To avoid naming collisions, the names are prefixed with the name of
 // the scope where the extend directive occurs.
 
-extension SwiftProtobuf.Google_Protobuf_MethodOptions {
+public extension SwiftProtobuf.Google_Protobuf_MethodOptions {
+    /// See `HttpRule`.
+    var Google_Api_http: Google_Api_HttpRule {
+        get { getExtensionValue(ext: Google_Api_Extensions_http) ?? Google_Api_HttpRule() }
+        set { setExtensionValue(ext: Google_Api_Extensions_http, value: newValue) }
+    }
 
-  /// See `HttpRule`.
-  public var Google_Api_http: Google_Api_HttpRule {
-    get {return getExtensionValue(ext: Google_Api_Extensions_http) ?? Google_Api_HttpRule()}
-    set {setExtensionValue(ext: Google_Api_Extensions_http, value: newValue)}
-  }
-  /// Returns true if extension `Google_Api_Extensions_http`
-  /// has been explicitly set.
-  public var hasGoogle_Api_http: Bool {
-    return hasExtensionValue(ext: Google_Api_Extensions_http)
-  }
-  /// Clears the value of extension `Google_Api_Extensions_http`.
-  /// Subsequent reads from it will return its default value.
-  public mutating func clearGoogle_Api_http() {
-    clearExtensionValue(ext: Google_Api_Extensions_http)
-  }
+    /// Returns true if extension `Google_Api_Extensions_http`
+    /// has been explicitly set.
+    var hasGoogle_Api_http: Bool {
+        hasExtensionValue(ext: Google_Api_Extensions_http)
+    }
 
+    /// Clears the value of extension `Google_Api_Extensions_http`.
+    /// Subsequent reads from it will return its default value.
+    mutating func clearGoogle_Api_http() {
+        clearExtensionValue(ext: Google_Api_Extensions_http)
+    }
 }
 
 // MARK: - File's ExtensionMap: Google_Api_Annotations_Extensions
@@ -70,7 +70,7 @@ extension SwiftProtobuf.Google_Protobuf_MethodOptions {
 /// in parsing, or it can be combined with other `SwiftProtobuf.SimpleExtensionMap`s to create
 /// a larger `SwiftProtobuf.SimpleExtensionMap`.
 public let Google_Api_Annotations_Extensions: SwiftProtobuf.SimpleExtensionMap = [
-  Google_Api_Extensions_http
+    Google_Api_Extensions_http,
 ]
 
 // Extension Objects - The only reason these might be needed is when manually
@@ -79,6 +79,6 @@ public let Google_Api_Annotations_Extensions: SwiftProtobuf.SimpleExtensionMap =
 
 /// See `HttpRule`.
 public let Google_Api_Extensions_http = SwiftProtobuf.MessageExtension<SwiftProtobuf.OptionalMessageExtensionField<Google_Api_HttpRule>, SwiftProtobuf.Google_Protobuf_MethodOptions>(
-  _protobuf_fieldNumber: 72295728,
-  fieldName: "google.api.http"
+    _protobuf_fieldNumber: 72_295_728,
+    fieldName: "google.api.http",
 )

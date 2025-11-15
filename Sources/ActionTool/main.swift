@@ -1,3 +1,5 @@
+// swiftlint:disable all -- Largely unchanged from upstream.
+
 import CoreGraphics  // For CGPoint, CGEventFlags
 import Foundation  // For exit, FileHandle
 import MacosUseSDK

@@ -19,1381 +19,1399 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
-  struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
-  typealias Version = _2
+private struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+    struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
+    typealias Version = _2
 }
 
 /// Metric type enumeration.
 public enum Macosusesdk_V1_MetricType: SwiftProtobuf.Enum, Swift.CaseIterable {
-  public typealias RawValue = Int
+    public typealias RawValue = Int
 
-  /// Default unspecified type.
-  case unspecified // = 0
+    /// Default unspecified type.
+    case unspecified // = 0
 
-  /// Operation metrics.
-  case operations // = 1
+    /// Operation metrics.
+    case operations // = 1
 
-  /// Resource metrics.
-  case resources // = 2
+    /// Resource metrics.
+    case resources // = 2
 
-  /// Cache metrics.
-  case cache // = 3
+    /// Cache metrics.
+    case cache // = 3
 
-  /// Rate limit metrics.
-  case rateLimits // = 4
+    /// Rate limit metrics.
+    case rateLimits // = 4
 
-  /// Accessibility metrics.
-  case accessibility // = 5
-  case UNRECOGNIZED(Int)
+    /// Accessibility metrics.
+    case accessibility // = 5
+    case UNRECOGNIZED(Int)
 
-  public init() {
-    self = .unspecified
-  }
-
-  public init?(rawValue: Int) {
-    switch rawValue {
-    case 0: self = .unspecified
-    case 1: self = .operations
-    case 2: self = .resources
-    case 3: self = .cache
-    case 4: self = .rateLimits
-    case 5: self = .accessibility
-    default: self = .UNRECOGNIZED(rawValue)
+    public init() {
+        self = .unspecified
     }
-  }
 
-  public var rawValue: Int {
-    switch self {
-    case .unspecified: return 0
-    case .operations: return 1
-    case .resources: return 2
-    case .cache: return 3
-    case .rateLimits: return 4
-    case .accessibility: return 5
-    case .UNRECOGNIZED(let i): return i
+    public init?(rawValue: Int) {
+        switch rawValue {
+        case 0: self = .unspecified
+        case 1: self = .operations
+        case 2: self = .resources
+        case 3: self = .cache
+        case 4: self = .rateLimits
+        case 5: self = .accessibility
+        default: self = .UNRECOGNIZED(rawValue)
+        }
     }
-  }
 
-  // The compiler won't synthesize support with the UNRECOGNIZED case.
-  public static let allCases: [Macosusesdk_V1_MetricType] = [
-    .unspecified,
-    .operations,
-    .resources,
-    .cache,
-    .rateLimits,
-    .accessibility,
-  ]
+    public var rawValue: Int {
+        switch self {
+        case .unspecified: 0
+        case .operations: 1
+        case .resources: 2
+        case .cache: 3
+        case .rateLimits: 4
+        case .accessibility: 5
+        case let .UNRECOGNIZED(i): i
+        }
+    }
 
+    // The compiler won't synthesize support with the UNRECOGNIZED case.
+    public static let allCases: [Macosusesdk_V1_MetricType] = [
+        .unspecified,
+        .operations,
+        .resources,
+        .cache,
+        .rateLimits,
+        .accessibility,
+    ]
 }
 
 /// Metrics.
 public struct Macosusesdk_V1_Metrics: @unchecked Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  /// When metrics were collected.
-  public var reportTime: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {return _storage._reportTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
-    set {_uniqueStorage()._reportTime = newValue}
-  }
-  /// Returns true if `reportTime` has been explicitly set.
-  public var hasReportTime: Bool {return _storage._reportTime != nil}
-  /// Clears the value of `reportTime`. Subsequent reads from it will return its default value.
-  public mutating func clearReportTime() {_uniqueStorage()._reportTime = nil}
+    /// When metrics were collected.
+    public var reportTime: SwiftProtobuf.Google_Protobuf_Timestamp {
+        get { _storage._reportTime ?? SwiftProtobuf.Google_Protobuf_Timestamp() }
+        set { _uniqueStorage()._reportTime = newValue }
+    }
 
-  /// Operation metrics.
-  public var operations: Macosusesdk_V1_OperationMetrics {
-    get {return _storage._operations ?? Macosusesdk_V1_OperationMetrics()}
-    set {_uniqueStorage()._operations = newValue}
-  }
-  /// Returns true if `operations` has been explicitly set.
-  public var hasOperations: Bool {return _storage._operations != nil}
-  /// Clears the value of `operations`. Subsequent reads from it will return its default value.
-  public mutating func clearOperations() {_uniqueStorage()._operations = nil}
+    /// Returns true if `reportTime` has been explicitly set.
+    public var hasReportTime: Bool { _storage._reportTime != nil }
+    /// Clears the value of `reportTime`. Subsequent reads from it will return its default value.
+    public mutating func clearReportTime() { _uniqueStorage()._reportTime = nil }
 
-  /// Resource utilization metrics.
-  public var resources: Macosusesdk_V1_ResourceMetrics {
-    get {return _storage._resources ?? Macosusesdk_V1_ResourceMetrics()}
-    set {_uniqueStorage()._resources = newValue}
-  }
-  /// Returns true if `resources` has been explicitly set.
-  public var hasResources: Bool {return _storage._resources != nil}
-  /// Clears the value of `resources`. Subsequent reads from it will return its default value.
-  public mutating func clearResources() {_uniqueStorage()._resources = nil}
+    /// Operation metrics.
+    public var operations: Macosusesdk_V1_OperationMetrics {
+        get { _storage._operations ?? Macosusesdk_V1_OperationMetrics() }
+        set { _uniqueStorage()._operations = newValue }
+    }
 
-  /// Cache performance metrics.
-  public var cache: Macosusesdk_V1_CacheMetrics {
-    get {return _storage._cache ?? Macosusesdk_V1_CacheMetrics()}
-    set {_uniqueStorage()._cache = newValue}
-  }
-  /// Returns true if `cache` has been explicitly set.
-  public var hasCache: Bool {return _storage._cache != nil}
-  /// Clears the value of `cache`. Subsequent reads from it will return its default value.
-  public mutating func clearCache() {_uniqueStorage()._cache = nil}
+    /// Returns true if `operations` has been explicitly set.
+    public var hasOperations: Bool { _storage._operations != nil }
+    /// Clears the value of `operations`. Subsequent reads from it will return its default value.
+    public mutating func clearOperations() { _uniqueStorage()._operations = nil }
 
-  /// Rate limiting metrics.
-  public var rateLimits: Macosusesdk_V1_RateLimitMetrics {
-    get {return _storage._rateLimits ?? Macosusesdk_V1_RateLimitMetrics()}
-    set {_uniqueStorage()._rateLimits = newValue}
-  }
-  /// Returns true if `rateLimits` has been explicitly set.
-  public var hasRateLimits: Bool {return _storage._rateLimits != nil}
-  /// Clears the value of `rateLimits`. Subsequent reads from it will return its default value.
-  public mutating func clearRateLimits() {_uniqueStorage()._rateLimits = nil}
+    /// Resource utilization metrics.
+    public var resources: Macosusesdk_V1_ResourceMetrics {
+        get { _storage._resources ?? Macosusesdk_V1_ResourceMetrics() }
+        set { _uniqueStorage()._resources = newValue }
+    }
 
-  /// Accessibility metrics.
-  public var accessibility: Macosusesdk_V1_AccessibilityMetrics {
-    get {return _storage._accessibility ?? Macosusesdk_V1_AccessibilityMetrics()}
-    set {_uniqueStorage()._accessibility = newValue}
-  }
-  /// Returns true if `accessibility` has been explicitly set.
-  public var hasAccessibility: Bool {return _storage._accessibility != nil}
-  /// Clears the value of `accessibility`. Subsequent reads from it will return its default value.
-  public mutating func clearAccessibility() {_uniqueStorage()._accessibility = nil}
+    /// Returns true if `resources` has been explicitly set.
+    public var hasResources: Bool { _storage._resources != nil }
+    /// Clears the value of `resources`. Subsequent reads from it will return its default value.
+    public mutating func clearResources() { _uniqueStorage()._resources = nil }
 
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
+    /// Cache performance metrics.
+    public var cache: Macosusesdk_V1_CacheMetrics {
+        get { _storage._cache ?? Macosusesdk_V1_CacheMetrics() }
+        set { _uniqueStorage()._cache = newValue }
+    }
 
-  public init() {}
+    /// Returns true if `cache` has been explicitly set.
+    public var hasCache: Bool { _storage._cache != nil }
+    /// Clears the value of `cache`. Subsequent reads from it will return its default value.
+    public mutating func clearCache() { _uniqueStorage()._cache = nil }
 
-  fileprivate var _storage = _StorageClass.defaultInstance
+    /// Rate limiting metrics.
+    public var rateLimits: Macosusesdk_V1_RateLimitMetrics {
+        get { _storage._rateLimits ?? Macosusesdk_V1_RateLimitMetrics() }
+        set { _uniqueStorage()._rateLimits = newValue }
+    }
+
+    /// Returns true if `rateLimits` has been explicitly set.
+    public var hasRateLimits: Bool { _storage._rateLimits != nil }
+    /// Clears the value of `rateLimits`. Subsequent reads from it will return its default value.
+    public mutating func clearRateLimits() { _uniqueStorage()._rateLimits = nil }
+
+    /// Accessibility metrics.
+    public var accessibility: Macosusesdk_V1_AccessibilityMetrics {
+        get { _storage._accessibility ?? Macosusesdk_V1_AccessibilityMetrics() }
+        set { _uniqueStorage()._accessibility = newValue }
+    }
+
+    /// Returns true if `accessibility` has been explicitly set.
+    public var hasAccessibility: Bool { _storage._accessibility != nil }
+    /// Clears the value of `accessibility`. Subsequent reads from it will return its default value.
+    public mutating func clearAccessibility() { _uniqueStorage()._accessibility = nil }
+
+    public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+    public init() {}
+
+    fileprivate var _storage = _StorageClass.defaultInstance
 }
 
 /// Time range for metric queries.
 public struct Macosusesdk_V1_TimeRange: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  /// Start time (inclusive).
-  public var startTime: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {return _startTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
-    set {_startTime = newValue}
-  }
-  /// Returns true if `startTime` has been explicitly set.
-  public var hasStartTime: Bool {return self._startTime != nil}
-  /// Clears the value of `startTime`. Subsequent reads from it will return its default value.
-  public mutating func clearStartTime() {self._startTime = nil}
+    /// Start time (inclusive).
+    public var startTime: SwiftProtobuf.Google_Protobuf_Timestamp {
+        get { _startTime ?? SwiftProtobuf.Google_Protobuf_Timestamp() }
+        set { _startTime = newValue }
+    }
 
-  /// End time (exclusive).
-  public var endTime: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {return _endTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
-    set {_endTime = newValue}
-  }
-  /// Returns true if `endTime` has been explicitly set.
-  public var hasEndTime: Bool {return self._endTime != nil}
-  /// Clears the value of `endTime`. Subsequent reads from it will return its default value.
-  public mutating func clearEndTime() {self._endTime = nil}
+    /// Returns true if `startTime` has been explicitly set.
+    public var hasStartTime: Bool { _startTime != nil }
+    /// Clears the value of `startTime`. Subsequent reads from it will return its default value.
+    public mutating func clearStartTime() { _startTime = nil }
 
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
+    /// End time (exclusive).
+    public var endTime: SwiftProtobuf.Google_Protobuf_Timestamp {
+        get { _endTime ?? SwiftProtobuf.Google_Protobuf_Timestamp() }
+        set { _endTime = newValue }
+    }
 
-  public init() {}
+    /// Returns true if `endTime` has been explicitly set.
+    public var hasEndTime: Bool { _endTime != nil }
+    /// Clears the value of `endTime`. Subsequent reads from it will return its default value.
+    public mutating func clearEndTime() { _endTime = nil }
 
-  fileprivate var _startTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
-  fileprivate var _endTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+    public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+    public init() {}
+
+    fileprivate var _startTime: SwiftProtobuf.Google_Protobuf_Timestamp?
+    fileprivate var _endTime: SwiftProtobuf.Google_Protobuf_Timestamp?
 }
 
 /// Metrics for API operations.
 public struct Macosusesdk_V1_OperationMetrics: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  /// Total operations executed.
-  public var totalCount: Int64 = 0
+    /// Total operations executed.
+    public var totalCount: Int64 = 0
 
-  /// Successful operations.
-  public var successCount: Int64 = 0
+    /// Successful operations.
+    public var successCount: Int64 = 0
 
-  /// Failed operations.
-  public var failureCount: Int64 = 0
+    /// Failed operations.
+    public var failureCount: Int64 = 0
 
-  /// Average operation latency.
-  public var avgLatency: SwiftProtobuf.Google_Protobuf_Duration {
-    get {return _avgLatency ?? SwiftProtobuf.Google_Protobuf_Duration()}
-    set {_avgLatency = newValue}
-  }
-  /// Returns true if `avgLatency` has been explicitly set.
-  public var hasAvgLatency: Bool {return self._avgLatency != nil}
-  /// Clears the value of `avgLatency`. Subsequent reads from it will return its default value.
-  public mutating func clearAvgLatency() {self._avgLatency = nil}
+    /// Average operation latency.
+    public var avgLatency: SwiftProtobuf.Google_Protobuf_Duration {
+        get { _avgLatency ?? SwiftProtobuf.Google_Protobuf_Duration() }
+        set { _avgLatency = newValue }
+    }
 
-  /// 50th percentile latency (median).
-  public var p50Latency: SwiftProtobuf.Google_Protobuf_Duration {
-    get {return _p50Latency ?? SwiftProtobuf.Google_Protobuf_Duration()}
-    set {_p50Latency = newValue}
-  }
-  /// Returns true if `p50Latency` has been explicitly set.
-  public var hasP50Latency: Bool {return self._p50Latency != nil}
-  /// Clears the value of `p50Latency`. Subsequent reads from it will return its default value.
-  public mutating func clearP50Latency() {self._p50Latency = nil}
+    /// Returns true if `avgLatency` has been explicitly set.
+    public var hasAvgLatency: Bool { _avgLatency != nil }
+    /// Clears the value of `avgLatency`. Subsequent reads from it will return its default value.
+    public mutating func clearAvgLatency() { _avgLatency = nil }
 
-  /// 95th percentile latency.
-  public var p95Latency: SwiftProtobuf.Google_Protobuf_Duration {
-    get {return _p95Latency ?? SwiftProtobuf.Google_Protobuf_Duration()}
-    set {_p95Latency = newValue}
-  }
-  /// Returns true if `p95Latency` has been explicitly set.
-  public var hasP95Latency: Bool {return self._p95Latency != nil}
-  /// Clears the value of `p95Latency`. Subsequent reads from it will return its default value.
-  public mutating func clearP95Latency() {self._p95Latency = nil}
+    /// 50th percentile latency (median).
+    public var p50Latency: SwiftProtobuf.Google_Protobuf_Duration {
+        get { _p50Latency ?? SwiftProtobuf.Google_Protobuf_Duration() }
+        set { _p50Latency = newValue }
+    }
 
-  /// 99th percentile latency.
-  public var p99Latency: SwiftProtobuf.Google_Protobuf_Duration {
-    get {return _p99Latency ?? SwiftProtobuf.Google_Protobuf_Duration()}
-    set {_p99Latency = newValue}
-  }
-  /// Returns true if `p99Latency` has been explicitly set.
-  public var hasP99Latency: Bool {return self._p99Latency != nil}
-  /// Clears the value of `p99Latency`. Subsequent reads from it will return its default value.
-  public mutating func clearP99Latency() {self._p99Latency = nil}
+    /// Returns true if `p50Latency` has been explicitly set.
+    public var hasP50Latency: Bool { _p50Latency != nil }
+    /// Clears the value of `p50Latency`. Subsequent reads from it will return its default value.
+    public mutating func clearP50Latency() { _p50Latency = nil }
 
-  /// Metrics breakdown per operation type.
-  public var operationsBreakdown: Dictionary<String,Macosusesdk_V1_OperationTypeMetrics> = [:]
+    /// 95th percentile latency.
+    public var p95Latency: SwiftProtobuf.Google_Protobuf_Duration {
+        get { _p95Latency ?? SwiftProtobuf.Google_Protobuf_Duration() }
+        set { _p95Latency = newValue }
+    }
 
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
+    /// Returns true if `p95Latency` has been explicitly set.
+    public var hasP95Latency: Bool { _p95Latency != nil }
+    /// Clears the value of `p95Latency`. Subsequent reads from it will return its default value.
+    public mutating func clearP95Latency() { _p95Latency = nil }
 
-  public init() {}
+    /// 99th percentile latency.
+    public var p99Latency: SwiftProtobuf.Google_Protobuf_Duration {
+        get { _p99Latency ?? SwiftProtobuf.Google_Protobuf_Duration() }
+        set { _p99Latency = newValue }
+    }
 
-  fileprivate var _avgLatency: SwiftProtobuf.Google_Protobuf_Duration? = nil
-  fileprivate var _p50Latency: SwiftProtobuf.Google_Protobuf_Duration? = nil
-  fileprivate var _p95Latency: SwiftProtobuf.Google_Protobuf_Duration? = nil
-  fileprivate var _p99Latency: SwiftProtobuf.Google_Protobuf_Duration? = nil
+    /// Returns true if `p99Latency` has been explicitly set.
+    public var hasP99Latency: Bool { _p99Latency != nil }
+    /// Clears the value of `p99Latency`. Subsequent reads from it will return its default value.
+    public mutating func clearP99Latency() { _p99Latency = nil }
+
+    /// Metrics breakdown per operation type.
+    public var operationsBreakdown: [String: Macosusesdk_V1_OperationTypeMetrics] = [:]
+
+    public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+    public init() {}
+
+    fileprivate var _avgLatency: SwiftProtobuf.Google_Protobuf_Duration?
+    fileprivate var _p50Latency: SwiftProtobuf.Google_Protobuf_Duration?
+    fileprivate var _p95Latency: SwiftProtobuf.Google_Protobuf_Duration?
+    fileprivate var _p99Latency: SwiftProtobuf.Google_Protobuf_Duration?
 }
 
 /// Metrics for a specific operation type.
 public struct Macosusesdk_V1_OperationTypeMetrics: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  /// Operation type (method name).
-  public var operationType: String = String()
+    /// Operation type (method name).
+    public var operationType: String = .init()
 
-  /// Total count.
-  public var count: Int64 = 0
+    /// Total count.
+    public var count: Int64 = 0
 
-  /// Success count.
-  public var success: Int64 = 0
+    /// Success count.
+    public var success: Int64 = 0
 
-  /// Failure count.
-  public var failure: Int64 = 0
+    /// Failure count.
+    public var failure: Int64 = 0
 
-  /// Average latency.
-  public var avgLatency: SwiftProtobuf.Google_Protobuf_Duration {
-    get {return _avgLatency ?? SwiftProtobuf.Google_Protobuf_Duration()}
-    set {_avgLatency = newValue}
-  }
-  /// Returns true if `avgLatency` has been explicitly set.
-  public var hasAvgLatency: Bool {return self._avgLatency != nil}
-  /// Clears the value of `avgLatency`. Subsequent reads from it will return its default value.
-  public mutating func clearAvgLatency() {self._avgLatency = nil}
+    /// Average latency.
+    public var avgLatency: SwiftProtobuf.Google_Protobuf_Duration {
+        get { _avgLatency ?? SwiftProtobuf.Google_Protobuf_Duration() }
+        set { _avgLatency = newValue }
+    }
 
-  /// Error breakdown.
-  public var errors: Dictionary<String,Int64> = [:]
+    /// Returns true if `avgLatency` has been explicitly set.
+    public var hasAvgLatency: Bool { _avgLatency != nil }
+    /// Clears the value of `avgLatency`. Subsequent reads from it will return its default value.
+    public mutating func clearAvgLatency() { _avgLatency = nil }
 
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
+    /// Error breakdown.
+    public var errors: [String: Int64] = [:]
 
-  public init() {}
+    public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  fileprivate var _avgLatency: SwiftProtobuf.Google_Protobuf_Duration? = nil
+    public init() {}
+
+    fileprivate var _avgLatency: SwiftProtobuf.Google_Protobuf_Duration?
 }
 
 /// Resource utilization metrics.
 public struct Macosusesdk_V1_ResourceMetrics: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  /// Memory usage in bytes.
-  public var memoryUsed: Int64 = 0
+    /// Memory usage in bytes.
+    public var memoryUsed: Int64 = 0
 
-  /// Peak memory usage in bytes.
-  public var memoryPeak: Int64 = 0
+    /// Peak memory usage in bytes.
+    public var memoryPeak: Int64 = 0
 
-  /// CPU usage percentage (0-100).
-  public var cpuUsage: Double = 0
+    /// CPU usage percentage (0-100).
+    public var cpuUsage: Double = 0
 
-  /// Thread count.
-  public var threadCount: Int32 = 0
+    /// Thread count.
+    public var threadCount: Int32 = 0
 
-  /// Active connections.
-  public var connectionCount: Int32 = 0
+    /// Active connections.
+    public var connectionCount: Int32 = 0
 
-  /// Open file descriptors.
-  public var fileDescriptorCount: Int32 = 0
+    /// Open file descriptors.
+    public var fileDescriptorCount: Int32 = 0
 
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
+    public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  public init() {}
+    public init() {}
 }
 
 /// Cache performance metrics.
 public struct Macosusesdk_V1_CacheMetrics: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  /// Cache hit count.
-  public var hits: Int64 = 0
+    /// Cache hit count.
+    public var hits: Int64 = 0
 
-  /// Cache miss count.
-  public var misses: Int64 = 0
+    /// Cache miss count.
+    public var misses: Int64 = 0
 
-  /// Cache hit rate (0.0-1.0).
-  public var hitRate: Double = 0
+    /// Cache hit rate (0.0-1.0).
+    public var hitRate: Double = 0
 
-  /// Cache size (number of entries).
-  public var size: Int64 = 0
+    /// Cache size (number of entries).
+    public var size: Int64 = 0
 
-  /// Cache memory usage in bytes.
-  public var memoryUsed: Int64 = 0
+    /// Cache memory usage in bytes.
+    public var memoryUsed: Int64 = 0
 
-  /// Eviction count.
-  public var evictions: Int64 = 0
+    /// Eviction count.
+    public var evictions: Int64 = 0
 
-  /// Metrics breakdown per cache type.
-  public var cachesBreakdown: Dictionary<String,Macosusesdk_V1_CacheTypeMetrics> = [:]
+    /// Metrics breakdown per cache type.
+    public var cachesBreakdown: [String: Macosusesdk_V1_CacheTypeMetrics] = [:]
 
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
+    public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  public init() {}
+    public init() {}
 }
 
 /// Metrics for a specific cache type.
 public struct Macosusesdk_V1_CacheTypeMetrics: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  /// Cache.
-  public var cache: String = String()
+    /// Cache.
+    public var cache: String = .init()
 
-  /// Hit count.
-  public var hits: Int64 = 0
+    /// Hit count.
+    public var hits: Int64 = 0
 
-  /// Miss count.
-  public var misses: Int64 = 0
+    /// Miss count.
+    public var misses: Int64 = 0
 
-  /// Cache size.
-  public var size: Int64 = 0
+    /// Cache size.
+    public var size: Int64 = 0
 
-  /// Memory used in bytes.
-  public var memoryUsed: Int64 = 0
+    /// Memory used in bytes.
+    public var memoryUsed: Int64 = 0
 
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
+    public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  public init() {}
+    public init() {}
 }
 
 /// Rate limiting metrics.
 public struct Macosusesdk_V1_RateLimitMetrics: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  /// Total requests.
-  public var totalRequests: Int64 = 0
+    /// Total requests.
+    public var totalRequests: Int64 = 0
 
-  /// Throttled requests.
-  public var throttledRequests: Int64 = 0
+    /// Throttled requests.
+    public var throttledRequests: Int64 = 0
 
-  /// Throttle rate (0.0-1.0).
-  public var throttleRate: Double = 0
+    /// Throttle rate (0.0-1.0).
+    public var throttleRate: Double = 0
 
-  /// Current rate (requests per second).
-  public var currentRate: Double = 0
+    /// Current rate (requests per second).
+    public var currentRate: Double = 0
 
-  /// Rate limit (requests per second).
-  public var rateLimit: Double = 0
+    /// Rate limit (requests per second).
+    public var rateLimit: Double = 0
 
-  /// Metrics breakdown per client.
-  public var clientsBreakdown: Dictionary<String,Macosusesdk_V1_ClientRateLimitMetrics> = [:]
+    /// Metrics breakdown per client.
+    public var clientsBreakdown: [String: Macosusesdk_V1_ClientRateLimitMetrics] = [:]
 
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
+    public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  public init() {}
+    public init() {}
 }
 
 /// Rate limit metrics for a specific client.
 public struct Macosusesdk_V1_ClientRateLimitMetrics: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  /// Client identifier.
-  public var clientID: String = String()
+    /// Client identifier.
+    public var clientID: String = .init()
 
-  /// Total requests.
-  public var totalRequests: Int64 = 0
+    /// Total requests.
+    public var totalRequests: Int64 = 0
 
-  /// Throttled requests.
-  public var throttledRequests: Int64 = 0
+    /// Throttled requests.
+    public var throttledRequests: Int64 = 0
 
-  /// Current rate.
-  public var currentRate: Double = 0
+    /// Current rate.
+    public var currentRate: Double = 0
 
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
+    public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  public init() {}
+    public init() {}
 }
 
 /// Accessibility-specific metrics.
 public struct Macosusesdk_V1_AccessibilityMetrics: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  /// Total elements traversed.
-  public var elementsTraversed: Int64 = 0
+    /// Total elements traversed.
+    public var elementsTraversed: Int64 = 0
 
-  /// Average tree depth.
-  public var avgTreeDepth: Double = 0
+    /// Average tree depth.
+    public var avgTreeDepth: Double = 0
 
-  /// Average tree size (element count).
-  public var avgTreeSize: Double = 0
+    /// Average tree size (element count).
+    public var avgTreeSize: Double = 0
 
-  /// Accessibility notifications received.
-  public var notificationsReceived: Int64 = 0
+    /// Accessibility notifications received.
+    public var notificationsReceived: Int64 = 0
 
-  /// Active observations.
-  public var activeObservations: Int32 = 0
+    /// Active observations.
+    public var activeObservations: Int32 = 0
 
-  /// Average element lookup duration.
-  public var avgLookupDuration: SwiftProtobuf.Google_Protobuf_Duration {
-    get {return _avgLookupDuration ?? SwiftProtobuf.Google_Protobuf_Duration()}
-    set {_avgLookupDuration = newValue}
-  }
-  /// Returns true if `avgLookupDuration` has been explicitly set.
-  public var hasAvgLookupDuration: Bool {return self._avgLookupDuration != nil}
-  /// Clears the value of `avgLookupDuration`. Subsequent reads from it will return its default value.
-  public mutating func clearAvgLookupDuration() {self._avgLookupDuration = nil}
+    /// Average element lookup duration.
+    public var avgLookupDuration: SwiftProtobuf.Google_Protobuf_Duration {
+        get { _avgLookupDuration ?? SwiftProtobuf.Google_Protobuf_Duration() }
+        set { _avgLookupDuration = newValue }
+    }
 
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
+    /// Returns true if `avgLookupDuration` has been explicitly set.
+    public var hasAvgLookupDuration: Bool { _avgLookupDuration != nil }
+    /// Clears the value of `avgLookupDuration`. Subsequent reads from it will return its default value.
+    public mutating func clearAvgLookupDuration() { _avgLookupDuration = nil }
 
-  public init() {}
+    public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  fileprivate var _avgLookupDuration: SwiftProtobuf.Google_Protobuf_Duration? = nil
+    public init() {}
+
+    fileprivate var _avgLookupDuration: SwiftProtobuf.Google_Protobuf_Duration?
 }
 
 /// Performance report.
 public struct Macosusesdk_V1_PerformanceReport: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  /// Report time range.
-  public var timeRange: Macosusesdk_V1_TimeRange {
-    get {return _timeRange ?? Macosusesdk_V1_TimeRange()}
-    set {_timeRange = newValue}
-  }
-  /// Returns true if `timeRange` has been explicitly set.
-  public var hasTimeRange: Bool {return self._timeRange != nil}
-  /// Clears the value of `timeRange`. Subsequent reads from it will return its default value.
-  public mutating func clearTimeRange() {self._timeRange = nil}
+    /// Report time range.
+    public var timeRange: Macosusesdk_V1_TimeRange {
+        get { _timeRange ?? Macosusesdk_V1_TimeRange() }
+        set { _timeRange = newValue }
+    }
 
-  /// When the report was generated.
-  public var generatedTime: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {return _generatedTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
-    set {_generatedTime = newValue}
-  }
-  /// Returns true if `generatedTime` has been explicitly set.
-  public var hasGeneratedTime: Bool {return self._generatedTime != nil}
-  /// Clears the value of `generatedTime`. Subsequent reads from it will return its default value.
-  public mutating func clearGeneratedTime() {self._generatedTime = nil}
+    /// Returns true if `timeRange` has been explicitly set.
+    public var hasTimeRange: Bool { _timeRange != nil }
+    /// Clears the value of `timeRange`. Subsequent reads from it will return its default value.
+    public mutating func clearTimeRange() { _timeRange = nil }
 
-  /// Summary metrics.
-  public var summary: Macosusesdk_V1_Metrics {
-    get {return _summary ?? Macosusesdk_V1_Metrics()}
-    set {_summary = newValue}
-  }
-  /// Returns true if `summary` has been explicitly set.
-  public var hasSummary: Bool {return self._summary != nil}
-  /// Clears the value of `summary`. Subsequent reads from it will return its default value.
-  public mutating func clearSummary() {self._summary = nil}
+    /// When the report was generated.
+    public var generatedTime: SwiftProtobuf.Google_Protobuf_Timestamp {
+        get { _generatedTime ?? SwiftProtobuf.Google_Protobuf_Timestamp() }
+        set { _generatedTime = newValue }
+    }
 
-  /// Detailed breakdown.
-  public var details: [Macosusesdk_V1_PerformanceDataPoint] = []
+    /// Returns true if `generatedTime` has been explicitly set.
+    public var hasGeneratedTime: Bool { _generatedTime != nil }
+    /// Clears the value of `generatedTime`. Subsequent reads from it will return its default value.
+    public mutating func clearGeneratedTime() { _generatedTime = nil }
 
-  /// Performance trends.
-  public var trends: Macosusesdk_V1_PerformanceTrends {
-    get {return _trends ?? Macosusesdk_V1_PerformanceTrends()}
-    set {_trends = newValue}
-  }
-  /// Returns true if `trends` has been explicitly set.
-  public var hasTrends: Bool {return self._trends != nil}
-  /// Clears the value of `trends`. Subsequent reads from it will return its default value.
-  public mutating func clearTrends() {self._trends = nil}
+    /// Summary metrics.
+    public var summary: Macosusesdk_V1_Metrics {
+        get { _summary ?? Macosusesdk_V1_Metrics() }
+        set { _summary = newValue }
+    }
 
-  /// Recommendations for optimization.
-  public var recommendations: [String] = []
+    /// Returns true if `summary` has been explicitly set.
+    public var hasSummary: Bool { _summary != nil }
+    /// Clears the value of `summary`. Subsequent reads from it will return its default value.
+    public mutating func clearSummary() { _summary = nil }
 
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
+    /// Detailed breakdown.
+    public var details: [Macosusesdk_V1_PerformanceDataPoint] = []
 
-  public init() {}
+    /// Performance trends.
+    public var trends: Macosusesdk_V1_PerformanceTrends {
+        get { _trends ?? Macosusesdk_V1_PerformanceTrends() }
+        set { _trends = newValue }
+    }
 
-  fileprivate var _timeRange: Macosusesdk_V1_TimeRange? = nil
-  fileprivate var _generatedTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
-  fileprivate var _summary: Macosusesdk_V1_Metrics? = nil
-  fileprivate var _trends: Macosusesdk_V1_PerformanceTrends? = nil
+    /// Returns true if `trends` has been explicitly set.
+    public var hasTrends: Bool { _trends != nil }
+    /// Clears the value of `trends`. Subsequent reads from it will return its default value.
+    public mutating func clearTrends() { _trends = nil }
+
+    /// Recommendations for optimization.
+    public var recommendations: [String] = []
+
+    public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+    public init() {}
+
+    fileprivate var _timeRange: Macosusesdk_V1_TimeRange?
+    fileprivate var _generatedTime: SwiftProtobuf.Google_Protobuf_Timestamp?
+    fileprivate var _summary: Macosusesdk_V1_Metrics?
+    fileprivate var _trends: Macosusesdk_V1_PerformanceTrends?
 }
 
 /// A single performance data point.
 public struct Macosusesdk_V1_PerformanceDataPoint: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  /// When this data point was recorded.
-  public var recordedTime: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {return _recordedTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
-    set {_recordedTime = newValue}
-  }
-  /// Returns true if `recordedTime` has been explicitly set.
-  public var hasRecordedTime: Bool {return self._recordedTime != nil}
-  /// Clears the value of `recordedTime`. Subsequent reads from it will return its default value.
-  public mutating func clearRecordedTime() {self._recordedTime = nil}
+    /// When this data point was recorded.
+    public var recordedTime: SwiftProtobuf.Google_Protobuf_Timestamp {
+        get { _recordedTime ?? SwiftProtobuf.Google_Protobuf_Timestamp() }
+        set { _recordedTime = newValue }
+    }
 
-  /// Metrics at this point.
-  public var metrics: Macosusesdk_V1_Metrics {
-    get {return _metrics ?? Macosusesdk_V1_Metrics()}
-    set {_metrics = newValue}
-  }
-  /// Returns true if `metrics` has been explicitly set.
-  public var hasMetrics: Bool {return self._metrics != nil}
-  /// Clears the value of `metrics`. Subsequent reads from it will return its default value.
-  public mutating func clearMetrics() {self._metrics = nil}
+    /// Returns true if `recordedTime` has been explicitly set.
+    public var hasRecordedTime: Bool { _recordedTime != nil }
+    /// Clears the value of `recordedTime`. Subsequent reads from it will return its default value.
+    public mutating func clearRecordedTime() { _recordedTime = nil }
 
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
+    /// Metrics at this point.
+    public var metrics: Macosusesdk_V1_Metrics {
+        get { _metrics ?? Macosusesdk_V1_Metrics() }
+        set { _metrics = newValue }
+    }
 
-  public init() {}
+    /// Returns true if `metrics` has been explicitly set.
+    public var hasMetrics: Bool { _metrics != nil }
+    /// Clears the value of `metrics`. Subsequent reads from it will return its default value.
+    public mutating func clearMetrics() { _metrics = nil }
 
-  fileprivate var _recordedTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
-  fileprivate var _metrics: Macosusesdk_V1_Metrics? = nil
+    public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+    public init() {}
+
+    fileprivate var _recordedTime: SwiftProtobuf.Google_Protobuf_Timestamp?
+    fileprivate var _metrics: Macosusesdk_V1_Metrics?
 }
 
 /// Performance trend analysis.
 public struct Macosusesdk_V1_PerformanceTrends: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  /// Latency trend (improving, degrading, stable).
-  public var latencyTrend: Macosusesdk_V1_PerformanceTrends.TrendDirection = .unspecified
+    /// Latency trend (improving, degrading, stable).
+    public var latencyTrend: Macosusesdk_V1_PerformanceTrends.TrendDirection = .unspecified
 
-  /// Error rate trend.
-  public var errorTrend: Macosusesdk_V1_PerformanceTrends.TrendDirection = .unspecified
+    /// Error rate trend.
+    public var errorTrend: Macosusesdk_V1_PerformanceTrends.TrendDirection = .unspecified
 
-  /// Memory usage trend.
-  public var memoryTrend: Macosusesdk_V1_PerformanceTrends.TrendDirection = .unspecified
+    /// Memory usage trend.
+    public var memoryTrend: Macosusesdk_V1_PerformanceTrends.TrendDirection = .unspecified
 
-  /// Cache hit rate trend.
-  public var cacheTrend: Macosusesdk_V1_PerformanceTrends.TrendDirection = .unspecified
+    /// Cache hit rate trend.
+    public var cacheTrend: Macosusesdk_V1_PerformanceTrends.TrendDirection = .unspecified
 
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
+    public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  /// Trend direction.
-  public enum TrendDirection: SwiftProtobuf.Enum, Swift.CaseIterable {
-    public typealias RawValue = Int
+    /// Trend direction.
+    public enum TrendDirection: SwiftProtobuf.Enum, Swift.CaseIterable {
+        public typealias RawValue = Int
 
-    /// Default unspecified.
-    case unspecified // = 0
+        /// Default unspecified.
+        case unspecified // = 0
 
-    /// Improving.
-    case improving // = 1
+        /// Improving.
+        case improving // = 1
 
-    /// Stable.
-    case stable // = 2
+        /// Stable.
+        case stable // = 2
 
-    /// Degrading.
-    case degrading // = 3
-    case UNRECOGNIZED(Int)
+        /// Degrading.
+        case degrading // = 3
+        case UNRECOGNIZED(Int)
 
-    public init() {
-      self = .unspecified
+        public init() {
+            self = .unspecified
+        }
+
+        public init?(rawValue: Int) {
+            switch rawValue {
+            case 0: self = .unspecified
+            case 1: self = .improving
+            case 2: self = .stable
+            case 3: self = .degrading
+            default: self = .UNRECOGNIZED(rawValue)
+            }
+        }
+
+        public var rawValue: Int {
+            switch self {
+            case .unspecified: 0
+            case .improving: 1
+            case .stable: 2
+            case .degrading: 3
+            case let .UNRECOGNIZED(i): i
+            }
+        }
+
+        // The compiler won't synthesize support with the UNRECOGNIZED case.
+        public static let allCases: [Macosusesdk_V1_PerformanceTrends.TrendDirection] = [
+            .unspecified,
+            .improving,
+            .stable,
+            .degrading,
+        ]
     }
 
-    public init?(rawValue: Int) {
-      switch rawValue {
-      case 0: self = .unspecified
-      case 1: self = .improving
-      case 2: self = .stable
-      case 3: self = .degrading
-      default: self = .UNRECOGNIZED(rawValue)
-      }
-    }
-
-    public var rawValue: Int {
-      switch self {
-      case .unspecified: return 0
-      case .improving: return 1
-      case .stable: return 2
-      case .degrading: return 3
-      case .UNRECOGNIZED(let i): return i
-      }
-    }
-
-    // The compiler won't synthesize support with the UNRECOGNIZED case.
-    public static let allCases: [Macosusesdk_V1_PerformanceTrends.TrendDirection] = [
-      .unspecified,
-      .improving,
-      .stable,
-      .degrading,
-    ]
-
-  }
-
-  public init() {}
+    public init() {}
 }
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
-fileprivate let _protobuf_package = "macosusesdk.v1"
+private let _protobuf_package = "macosusesdk.v1"
 
 extension Macosusesdk_V1_MetricType: SwiftProtobuf._ProtoNameProviding {
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0METRIC_TYPE_UNSPECIFIED\0\u{1}METRIC_TYPE_OPERATIONS\0\u{1}METRIC_TYPE_RESOURCES\0\u{1}METRIC_TYPE_CACHE\0\u{1}METRIC_TYPE_RATE_LIMITS\0\u{1}METRIC_TYPE_ACCESSIBILITY\0")
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0METRIC_TYPE_UNSPECIFIED\0\u{1}METRIC_TYPE_OPERATIONS\0\u{1}METRIC_TYPE_RESOURCES\0\u{1}METRIC_TYPE_CACHE\0\u{1}METRIC_TYPE_RATE_LIMITS\0\u{1}METRIC_TYPE_ACCESSIBILITY\0")
 }
 
 extension Macosusesdk_V1_Metrics: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".Metrics"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}report_time\0\u{1}operations\0\u{1}resources\0\u{1}cache\0\u{3}rate_limits\0\u{1}accessibility\0")
+    public static let protoMessageName: String = _protobuf_package + ".Metrics"
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}report_time\0\u{1}operations\0\u{1}resources\0\u{1}cache\0\u{3}rate_limits\0\u{1}accessibility\0")
 
-  fileprivate class _StorageClass {
-    var _reportTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
-    var _operations: Macosusesdk_V1_OperationMetrics? = nil
-    var _resources: Macosusesdk_V1_ResourceMetrics? = nil
-    var _cache: Macosusesdk_V1_CacheMetrics? = nil
-    var _rateLimits: Macosusesdk_V1_RateLimitMetrics? = nil
-    var _accessibility: Macosusesdk_V1_AccessibilityMetrics? = nil
+    fileprivate class _StorageClass {
+        var _reportTime: SwiftProtobuf.Google_Protobuf_Timestamp?
+        var _operations: Macosusesdk_V1_OperationMetrics?
+        var _resources: Macosusesdk_V1_ResourceMetrics?
+        var _cache: Macosusesdk_V1_CacheMetrics?
+        var _rateLimits: Macosusesdk_V1_RateLimitMetrics?
+        var _accessibility: Macosusesdk_V1_AccessibilityMetrics?
 
-      // This property is used as the initial default value for new instances of the type.
-      // The type itself is protecting the reference to its storage via CoW semantics.
-      // This will force a copy to be made of this reference when the first mutation occurs;
-      // hence, it is safe to mark this as `nonisolated(unsafe)`.
-      static nonisolated(unsafe) let defaultInstance = _StorageClass()
+        // This property is used as the initial default value for new instances of the type.
+        // The type itself is protecting the reference to its storage via CoW semantics.
+        // This will force a copy to be made of this reference when the first mutation occurs;
+        // hence, it is safe to mark this as `nonisolated(unsafe)`.
+        nonisolated(unsafe) static let defaultInstance = _StorageClass()
 
-    private init() {}
+        private init() {}
 
-    init(copying source: _StorageClass) {
-      _reportTime = source._reportTime
-      _operations = source._operations
-      _resources = source._resources
-      _cache = source._cache
-      _rateLimits = source._rateLimits
-      _accessibility = source._accessibility
-    }
-  }
-
-  fileprivate mutating func _uniqueStorage() -> _StorageClass {
-    if !isKnownUniquelyReferenced(&_storage) {
-      _storage = _StorageClass(copying: _storage)
-    }
-    return _storage
-  }
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    _ = _uniqueStorage()
-    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
-      while let fieldNumber = try decoder.nextFieldNumber() {
-        // The use of inline closures is to circumvent an issue where the compiler
-        // allocates stack space for every case branch when no optimizations are
-        // enabled. https://github.com/apple/swift-protobuf/issues/1034
-        switch fieldNumber {
-        case 1: try { try decoder.decodeSingularMessageField(value: &_storage._reportTime) }()
-        case 2: try { try decoder.decodeSingularMessageField(value: &_storage._operations) }()
-        case 3: try { try decoder.decodeSingularMessageField(value: &_storage._resources) }()
-        case 4: try { try decoder.decodeSingularMessageField(value: &_storage._cache) }()
-        case 5: try { try decoder.decodeSingularMessageField(value: &_storage._rateLimits) }()
-        case 6: try { try decoder.decodeSingularMessageField(value: &_storage._accessibility) }()
-        default: break
+        init(copying source: _StorageClass) {
+            _reportTime = source._reportTime
+            _operations = source._operations
+            _resources = source._resources
+            _cache = source._cache
+            _rateLimits = source._rateLimits
+            _accessibility = source._accessibility
         }
-      }
     }
-  }
 
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every if/case branch local when no optimizations
-      // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-      // https://github.com/apple/swift-protobuf/issues/1182
-      try { if let v = _storage._reportTime {
-        try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
-      } }()
-      try { if let v = _storage._operations {
-        try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
-      } }()
-      try { if let v = _storage._resources {
-        try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
-      } }()
-      try { if let v = _storage._cache {
-        try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
-      } }()
-      try { if let v = _storage._rateLimits {
-        try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
-      } }()
-      try { if let v = _storage._accessibility {
-        try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
-      } }()
+    fileprivate mutating func _uniqueStorage() -> _StorageClass {
+        if !isKnownUniquelyReferenced(&_storage) {
+            _storage = _StorageClass(copying: _storage)
+        }
+        return _storage
     }
-    try unknownFields.traverse(visitor: &visitor)
-  }
 
-  public static func ==(lhs: Macosusesdk_V1_Metrics, rhs: Macosusesdk_V1_Metrics) -> Bool {
-    if lhs._storage !== rhs._storage {
-      let storagesAreEqual: Bool = withExtendedLifetime((lhs._storage, rhs._storage)) { (_args: (_StorageClass, _StorageClass)) in
-        let _storage = _args.0
-        let rhs_storage = _args.1
-        if _storage._reportTime != rhs_storage._reportTime {return false}
-        if _storage._operations != rhs_storage._operations {return false}
-        if _storage._resources != rhs_storage._resources {return false}
-        if _storage._cache != rhs_storage._cache {return false}
-        if _storage._rateLimits != rhs_storage._rateLimits {return false}
-        if _storage._accessibility != rhs_storage._accessibility {return false}
+    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
+        _ = _uniqueStorage()
+        try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+            while let fieldNumber = try decoder.nextFieldNumber() {
+                // The use of inline closures is to circumvent an issue where the compiler
+                // allocates stack space for every case branch when no optimizations are
+                // enabled. https://github.com/apple/swift-protobuf/issues/1034
+                switch fieldNumber {
+                case 1: try decoder.decodeSingularMessageField(value: &_storage._reportTime)
+                case 2: try decoder.decodeSingularMessageField(value: &_storage._operations)
+                case 3: try decoder.decodeSingularMessageField(value: &_storage._resources)
+                case 4: try decoder.decodeSingularMessageField(value: &_storage._cache)
+                case 5: try decoder.decodeSingularMessageField(value: &_storage._rateLimits)
+                case 6: try decoder.decodeSingularMessageField(value: &_storage._accessibility)
+                default: break
+                }
+            }
+        }
+    }
+
+    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
+        try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every if/case branch local when no optimizations
+            // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+            // https://github.com/apple/swift-protobuf/issues/1182
+            try { if let v = _storage._reportTime {
+                try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+            } }()
+            try { if let v = _storage._operations {
+                try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+            } }()
+            try { if let v = _storage._resources {
+                try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
+            } }()
+            try { if let v = _storage._cache {
+                try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
+            } }()
+            try { if let v = _storage._rateLimits {
+                try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
+            } }()
+            try { if let v = _storage._accessibility {
+                try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
+            } }()
+        }
+        try unknownFields.traverse(visitor: &visitor)
+    }
+
+    public static func == (lhs: Macosusesdk_V1_Metrics, rhs: Macosusesdk_V1_Metrics) -> Bool {
+        if lhs._storage !== rhs._storage {
+            let storagesAreEqual: Bool = withExtendedLifetime((lhs._storage, rhs._storage)) { (_args: (_StorageClass, _StorageClass)) in
+                let _storage = _args.0
+                let rhs_storage = _args.1
+                if _storage._reportTime != rhs_storage._reportTime { return false }
+                if _storage._operations != rhs_storage._operations { return false }
+                if _storage._resources != rhs_storage._resources { return false }
+                if _storage._cache != rhs_storage._cache { return false }
+                if _storage._rateLimits != rhs_storage._rateLimits { return false }
+                if _storage._accessibility != rhs_storage._accessibility { return false }
+                return true
+            }
+            if !storagesAreEqual { return false }
+        }
+        if lhs.unknownFields != rhs.unknownFields { return false }
         return true
-      }
-      if !storagesAreEqual {return false}
     }
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
 }
 
 extension Macosusesdk_V1_TimeRange: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".TimeRange"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}start_time\0\u{3}end_time\0")
+    public static let protoMessageName: String = _protobuf_package + ".TimeRange"
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}start_time\0\u{3}end_time\0")
 
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularMessageField(value: &self._startTime) }()
-      case 2: try { try decoder.decodeSingularMessageField(value: &self._endTime) }()
-      default: break
-      }
+    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularMessageField(value: &_startTime)
+            case 2: try decoder.decodeSingularMessageField(value: &_endTime)
+            default: break
+            }
+        }
     }
-  }
 
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    try { if let v = self._startTime {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
-    } }()
-    try { if let v = self._endTime {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
-    } }()
-    try unknownFields.traverse(visitor: &visitor)
-  }
+    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
+        // The use of inline closures is to circumvent an issue where the compiler
+        // allocates stack space for every if/case branch local when no optimizations
+        // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+        // https://github.com/apple/swift-protobuf/issues/1182
+        if let v = _startTime {
+            try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+        }
+        try { if let v = self._endTime {
+            try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+        } }()
+        try unknownFields.traverse(visitor: &visitor)
+    }
 
-  public static func ==(lhs: Macosusesdk_V1_TimeRange, rhs: Macosusesdk_V1_TimeRange) -> Bool {
-    if lhs._startTime != rhs._startTime {return false}
-    if lhs._endTime != rhs._endTime {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    public static func == (lhs: Macosusesdk_V1_TimeRange, rhs: Macosusesdk_V1_TimeRange) -> Bool {
+        if lhs._startTime != rhs._startTime { return false }
+        if lhs._endTime != rhs._endTime { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
 
 extension Macosusesdk_V1_OperationMetrics: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".OperationMetrics"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}total_count\0\u{3}success_count\0\u{3}failure_count\0\u{3}avg_latency\0\u{3}p50_latency\0\u{3}p95_latency\0\u{3}p99_latency\0\u{3}operations_breakdown\0")
+    public static let protoMessageName: String = _protobuf_package + ".OperationMetrics"
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}total_count\0\u{3}success_count\0\u{3}failure_count\0\u{3}avg_latency\0\u{3}p50_latency\0\u{3}p95_latency\0\u{3}p99_latency\0\u{3}operations_breakdown\0")
 
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularInt64Field(value: &self.totalCount) }()
-      case 2: try { try decoder.decodeSingularInt64Field(value: &self.successCount) }()
-      case 3: try { try decoder.decodeSingularInt64Field(value: &self.failureCount) }()
-      case 4: try { try decoder.decodeSingularMessageField(value: &self._avgLatency) }()
-      case 5: try { try decoder.decodeSingularMessageField(value: &self._p50Latency) }()
-      case 6: try { try decoder.decodeSingularMessageField(value: &self._p95Latency) }()
-      case 7: try { try decoder.decodeSingularMessageField(value: &self._p99Latency) }()
-      case 8: try { try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMessageMap<SwiftProtobuf.ProtobufString,Macosusesdk_V1_OperationTypeMetrics>.self, value: &self.operationsBreakdown) }()
-      default: break
-      }
+    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularInt64Field(value: &totalCount)
+            case 2: try decoder.decodeSingularInt64Field(value: &successCount)
+            case 3: try decoder.decodeSingularInt64Field(value: &failureCount)
+            case 4: try decoder.decodeSingularMessageField(value: &_avgLatency)
+            case 5: try decoder.decodeSingularMessageField(value: &_p50Latency)
+            case 6: try decoder.decodeSingularMessageField(value: &_p95Latency)
+            case 7: try decoder.decodeSingularMessageField(value: &_p99Latency)
+            case 8: try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMessageMap<SwiftProtobuf.ProtobufString, Macosusesdk_V1_OperationTypeMetrics>.self, value: &operationsBreakdown)
+            default: break
+            }
+        }
     }
-  }
 
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    if self.totalCount != 0 {
-      try visitor.visitSingularInt64Field(value: self.totalCount, fieldNumber: 1)
+    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
+        // The use of inline closures is to circumvent an issue where the compiler
+        // allocates stack space for every if/case branch local when no optimizations
+        // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+        // https://github.com/apple/swift-protobuf/issues/1182
+        if totalCount != 0 {
+            try visitor.visitSingularInt64Field(value: totalCount, fieldNumber: 1)
+        }
+        if successCount != 0 {
+            try visitor.visitSingularInt64Field(value: successCount, fieldNumber: 2)
+        }
+        if failureCount != 0 {
+            try visitor.visitSingularInt64Field(value: failureCount, fieldNumber: 3)
+        }
+        try { if let v = self._avgLatency {
+            try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
+        } }()
+        try { if let v = self._p50Latency {
+            try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
+        } }()
+        try { if let v = self._p95Latency {
+            try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
+        } }()
+        try { if let v = self._p99Latency {
+            try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
+        } }()
+        if !operationsBreakdown.isEmpty {
+            try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMessageMap<SwiftProtobuf.ProtobufString, Macosusesdk_V1_OperationTypeMetrics>.self, value: operationsBreakdown, fieldNumber: 8)
+        }
+        try unknownFields.traverse(visitor: &visitor)
     }
-    if self.successCount != 0 {
-      try visitor.visitSingularInt64Field(value: self.successCount, fieldNumber: 2)
-    }
-    if self.failureCount != 0 {
-      try visitor.visitSingularInt64Field(value: self.failureCount, fieldNumber: 3)
-    }
-    try { if let v = self._avgLatency {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
-    } }()
-    try { if let v = self._p50Latency {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
-    } }()
-    try { if let v = self._p95Latency {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
-    } }()
-    try { if let v = self._p99Latency {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
-    } }()
-    if !self.operationsBreakdown.isEmpty {
-      try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMessageMap<SwiftProtobuf.ProtobufString,Macosusesdk_V1_OperationTypeMetrics>.self, value: self.operationsBreakdown, fieldNumber: 8)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
 
-  public static func ==(lhs: Macosusesdk_V1_OperationMetrics, rhs: Macosusesdk_V1_OperationMetrics) -> Bool {
-    if lhs.totalCount != rhs.totalCount {return false}
-    if lhs.successCount != rhs.successCount {return false}
-    if lhs.failureCount != rhs.failureCount {return false}
-    if lhs._avgLatency != rhs._avgLatency {return false}
-    if lhs._p50Latency != rhs._p50Latency {return false}
-    if lhs._p95Latency != rhs._p95Latency {return false}
-    if lhs._p99Latency != rhs._p99Latency {return false}
-    if lhs.operationsBreakdown != rhs.operationsBreakdown {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    public static func == (lhs: Macosusesdk_V1_OperationMetrics, rhs: Macosusesdk_V1_OperationMetrics) -> Bool {
+        if lhs.totalCount != rhs.totalCount { return false }
+        if lhs.successCount != rhs.successCount { return false }
+        if lhs.failureCount != rhs.failureCount { return false }
+        if lhs._avgLatency != rhs._avgLatency { return false }
+        if lhs._p50Latency != rhs._p50Latency { return false }
+        if lhs._p95Latency != rhs._p95Latency { return false }
+        if lhs._p99Latency != rhs._p99Latency { return false }
+        if lhs.operationsBreakdown != rhs.operationsBreakdown { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
 
 extension Macosusesdk_V1_OperationTypeMetrics: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".OperationTypeMetrics"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}operation_type\0\u{1}count\0\u{1}success\0\u{1}failure\0\u{3}avg_latency\0\u{1}errors\0")
+    public static let protoMessageName: String = _protobuf_package + ".OperationTypeMetrics"
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}operation_type\0\u{1}count\0\u{1}success\0\u{1}failure\0\u{3}avg_latency\0\u{1}errors\0")
 
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.operationType) }()
-      case 2: try { try decoder.decodeSingularInt64Field(value: &self.count) }()
-      case 3: try { try decoder.decodeSingularInt64Field(value: &self.success) }()
-      case 4: try { try decoder.decodeSingularInt64Field(value: &self.failure) }()
-      case 5: try { try decoder.decodeSingularMessageField(value: &self._avgLatency) }()
-      case 6: try { try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufInt64>.self, value: &self.errors) }()
-      default: break
-      }
+    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularStringField(value: &operationType)
+            case 2: try decoder.decodeSingularInt64Field(value: &count)
+            case 3: try decoder.decodeSingularInt64Field(value: &success)
+            case 4: try decoder.decodeSingularInt64Field(value: &failure)
+            case 5: try decoder.decodeSingularMessageField(value: &_avgLatency)
+            case 6: try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString, SwiftProtobuf.ProtobufInt64>.self, value: &errors)
+            default: break
+            }
+        }
     }
-  }
 
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    if !self.operationType.isEmpty {
-      try visitor.visitSingularStringField(value: self.operationType, fieldNumber: 1)
+    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
+        // The use of inline closures is to circumvent an issue where the compiler
+        // allocates stack space for every if/case branch local when no optimizations
+        // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+        // https://github.com/apple/swift-protobuf/issues/1182
+        if !operationType.isEmpty {
+            try visitor.visitSingularStringField(value: operationType, fieldNumber: 1)
+        }
+        if count != 0 {
+            try visitor.visitSingularInt64Field(value: count, fieldNumber: 2)
+        }
+        if success != 0 {
+            try visitor.visitSingularInt64Field(value: success, fieldNumber: 3)
+        }
+        if failure != 0 {
+            try visitor.visitSingularInt64Field(value: failure, fieldNumber: 4)
+        }
+        try { if let v = self._avgLatency {
+            try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
+        } }()
+        if !errors.isEmpty {
+            try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString, SwiftProtobuf.ProtobufInt64>.self, value: errors, fieldNumber: 6)
+        }
+        try unknownFields.traverse(visitor: &visitor)
     }
-    if self.count != 0 {
-      try visitor.visitSingularInt64Field(value: self.count, fieldNumber: 2)
-    }
-    if self.success != 0 {
-      try visitor.visitSingularInt64Field(value: self.success, fieldNumber: 3)
-    }
-    if self.failure != 0 {
-      try visitor.visitSingularInt64Field(value: self.failure, fieldNumber: 4)
-    }
-    try { if let v = self._avgLatency {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
-    } }()
-    if !self.errors.isEmpty {
-      try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufInt64>.self, value: self.errors, fieldNumber: 6)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
 
-  public static func ==(lhs: Macosusesdk_V1_OperationTypeMetrics, rhs: Macosusesdk_V1_OperationTypeMetrics) -> Bool {
-    if lhs.operationType != rhs.operationType {return false}
-    if lhs.count != rhs.count {return false}
-    if lhs.success != rhs.success {return false}
-    if lhs.failure != rhs.failure {return false}
-    if lhs._avgLatency != rhs._avgLatency {return false}
-    if lhs.errors != rhs.errors {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    public static func == (lhs: Macosusesdk_V1_OperationTypeMetrics, rhs: Macosusesdk_V1_OperationTypeMetrics) -> Bool {
+        if lhs.operationType != rhs.operationType { return false }
+        if lhs.count != rhs.count { return false }
+        if lhs.success != rhs.success { return false }
+        if lhs.failure != rhs.failure { return false }
+        if lhs._avgLatency != rhs._avgLatency { return false }
+        if lhs.errors != rhs.errors { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
 
 extension Macosusesdk_V1_ResourceMetrics: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".ResourceMetrics"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}memory_used\0\u{3}memory_peak\0\u{3}cpu_usage\0\u{3}thread_count\0\u{3}connection_count\0\u{3}file_descriptor_count\0")
+    public static let protoMessageName: String = _protobuf_package + ".ResourceMetrics"
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}memory_used\0\u{3}memory_peak\0\u{3}cpu_usage\0\u{3}thread_count\0\u{3}connection_count\0\u{3}file_descriptor_count\0")
 
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularInt64Field(value: &self.memoryUsed) }()
-      case 2: try { try decoder.decodeSingularInt64Field(value: &self.memoryPeak) }()
-      case 3: try { try decoder.decodeSingularDoubleField(value: &self.cpuUsage) }()
-      case 4: try { try decoder.decodeSingularInt32Field(value: &self.threadCount) }()
-      case 5: try { try decoder.decodeSingularInt32Field(value: &self.connectionCount) }()
-      case 6: try { try decoder.decodeSingularInt32Field(value: &self.fileDescriptorCount) }()
-      default: break
-      }
+    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularInt64Field(value: &memoryUsed)
+            case 2: try decoder.decodeSingularInt64Field(value: &memoryPeak)
+            case 3: try decoder.decodeSingularDoubleField(value: &cpuUsage)
+            case 4: try decoder.decodeSingularInt32Field(value: &threadCount)
+            case 5: try decoder.decodeSingularInt32Field(value: &connectionCount)
+            case 6: try decoder.decodeSingularInt32Field(value: &fileDescriptorCount)
+            default: break
+            }
+        }
     }
-  }
 
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.memoryUsed != 0 {
-      try visitor.visitSingularInt64Field(value: self.memoryUsed, fieldNumber: 1)
+    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
+        if memoryUsed != 0 {
+            try visitor.visitSingularInt64Field(value: memoryUsed, fieldNumber: 1)
+        }
+        if memoryPeak != 0 {
+            try visitor.visitSingularInt64Field(value: memoryPeak, fieldNumber: 2)
+        }
+        if cpuUsage.bitPattern != 0 {
+            try visitor.visitSingularDoubleField(value: cpuUsage, fieldNumber: 3)
+        }
+        if threadCount != 0 {
+            try visitor.visitSingularInt32Field(value: threadCount, fieldNumber: 4)
+        }
+        if connectionCount != 0 {
+            try visitor.visitSingularInt32Field(value: connectionCount, fieldNumber: 5)
+        }
+        if fileDescriptorCount != 0 {
+            try visitor.visitSingularInt32Field(value: fileDescriptorCount, fieldNumber: 6)
+        }
+        try unknownFields.traverse(visitor: &visitor)
     }
-    if self.memoryPeak != 0 {
-      try visitor.visitSingularInt64Field(value: self.memoryPeak, fieldNumber: 2)
-    }
-    if self.cpuUsage.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.cpuUsage, fieldNumber: 3)
-    }
-    if self.threadCount != 0 {
-      try visitor.visitSingularInt32Field(value: self.threadCount, fieldNumber: 4)
-    }
-    if self.connectionCount != 0 {
-      try visitor.visitSingularInt32Field(value: self.connectionCount, fieldNumber: 5)
-    }
-    if self.fileDescriptorCount != 0 {
-      try visitor.visitSingularInt32Field(value: self.fileDescriptorCount, fieldNumber: 6)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
 
-  public static func ==(lhs: Macosusesdk_V1_ResourceMetrics, rhs: Macosusesdk_V1_ResourceMetrics) -> Bool {
-    if lhs.memoryUsed != rhs.memoryUsed {return false}
-    if lhs.memoryPeak != rhs.memoryPeak {return false}
-    if lhs.cpuUsage != rhs.cpuUsage {return false}
-    if lhs.threadCount != rhs.threadCount {return false}
-    if lhs.connectionCount != rhs.connectionCount {return false}
-    if lhs.fileDescriptorCount != rhs.fileDescriptorCount {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    public static func == (lhs: Macosusesdk_V1_ResourceMetrics, rhs: Macosusesdk_V1_ResourceMetrics) -> Bool {
+        if lhs.memoryUsed != rhs.memoryUsed { return false }
+        if lhs.memoryPeak != rhs.memoryPeak { return false }
+        if lhs.cpuUsage != rhs.cpuUsage { return false }
+        if lhs.threadCount != rhs.threadCount { return false }
+        if lhs.connectionCount != rhs.connectionCount { return false }
+        if lhs.fileDescriptorCount != rhs.fileDescriptorCount { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
 
 extension Macosusesdk_V1_CacheMetrics: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".CacheMetrics"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}hits\0\u{1}misses\0\u{3}hit_rate\0\u{1}size\0\u{3}memory_used\0\u{1}evictions\0\u{3}caches_breakdown\0")
+    public static let protoMessageName: String = _protobuf_package + ".CacheMetrics"
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}hits\0\u{1}misses\0\u{3}hit_rate\0\u{1}size\0\u{3}memory_used\0\u{1}evictions\0\u{3}caches_breakdown\0")
 
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularInt64Field(value: &self.hits) }()
-      case 2: try { try decoder.decodeSingularInt64Field(value: &self.misses) }()
-      case 3: try { try decoder.decodeSingularDoubleField(value: &self.hitRate) }()
-      case 4: try { try decoder.decodeSingularInt64Field(value: &self.size) }()
-      case 5: try { try decoder.decodeSingularInt64Field(value: &self.memoryUsed) }()
-      case 6: try { try decoder.decodeSingularInt64Field(value: &self.evictions) }()
-      case 7: try { try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMessageMap<SwiftProtobuf.ProtobufString,Macosusesdk_V1_CacheTypeMetrics>.self, value: &self.cachesBreakdown) }()
-      default: break
-      }
+    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularInt64Field(value: &hits)
+            case 2: try decoder.decodeSingularInt64Field(value: &misses)
+            case 3: try decoder.decodeSingularDoubleField(value: &hitRate)
+            case 4: try decoder.decodeSingularInt64Field(value: &size)
+            case 5: try decoder.decodeSingularInt64Field(value: &memoryUsed)
+            case 6: try decoder.decodeSingularInt64Field(value: &evictions)
+            case 7: try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMessageMap<SwiftProtobuf.ProtobufString, Macosusesdk_V1_CacheTypeMetrics>.self, value: &cachesBreakdown)
+            default: break
+            }
+        }
     }
-  }
 
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.hits != 0 {
-      try visitor.visitSingularInt64Field(value: self.hits, fieldNumber: 1)
+    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
+        if hits != 0 {
+            try visitor.visitSingularInt64Field(value: hits, fieldNumber: 1)
+        }
+        if misses != 0 {
+            try visitor.visitSingularInt64Field(value: misses, fieldNumber: 2)
+        }
+        if hitRate.bitPattern != 0 {
+            try visitor.visitSingularDoubleField(value: hitRate, fieldNumber: 3)
+        }
+        if size != 0 {
+            try visitor.visitSingularInt64Field(value: size, fieldNumber: 4)
+        }
+        if memoryUsed != 0 {
+            try visitor.visitSingularInt64Field(value: memoryUsed, fieldNumber: 5)
+        }
+        if evictions != 0 {
+            try visitor.visitSingularInt64Field(value: evictions, fieldNumber: 6)
+        }
+        if !cachesBreakdown.isEmpty {
+            try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMessageMap<SwiftProtobuf.ProtobufString, Macosusesdk_V1_CacheTypeMetrics>.self, value: cachesBreakdown, fieldNumber: 7)
+        }
+        try unknownFields.traverse(visitor: &visitor)
     }
-    if self.misses != 0 {
-      try visitor.visitSingularInt64Field(value: self.misses, fieldNumber: 2)
-    }
-    if self.hitRate.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.hitRate, fieldNumber: 3)
-    }
-    if self.size != 0 {
-      try visitor.visitSingularInt64Field(value: self.size, fieldNumber: 4)
-    }
-    if self.memoryUsed != 0 {
-      try visitor.visitSingularInt64Field(value: self.memoryUsed, fieldNumber: 5)
-    }
-    if self.evictions != 0 {
-      try visitor.visitSingularInt64Field(value: self.evictions, fieldNumber: 6)
-    }
-    if !self.cachesBreakdown.isEmpty {
-      try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMessageMap<SwiftProtobuf.ProtobufString,Macosusesdk_V1_CacheTypeMetrics>.self, value: self.cachesBreakdown, fieldNumber: 7)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
 
-  public static func ==(lhs: Macosusesdk_V1_CacheMetrics, rhs: Macosusesdk_V1_CacheMetrics) -> Bool {
-    if lhs.hits != rhs.hits {return false}
-    if lhs.misses != rhs.misses {return false}
-    if lhs.hitRate != rhs.hitRate {return false}
-    if lhs.size != rhs.size {return false}
-    if lhs.memoryUsed != rhs.memoryUsed {return false}
-    if lhs.evictions != rhs.evictions {return false}
-    if lhs.cachesBreakdown != rhs.cachesBreakdown {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    public static func == (lhs: Macosusesdk_V1_CacheMetrics, rhs: Macosusesdk_V1_CacheMetrics) -> Bool {
+        if lhs.hits != rhs.hits { return false }
+        if lhs.misses != rhs.misses { return false }
+        if lhs.hitRate != rhs.hitRate { return false }
+        if lhs.size != rhs.size { return false }
+        if lhs.memoryUsed != rhs.memoryUsed { return false }
+        if lhs.evictions != rhs.evictions { return false }
+        if lhs.cachesBreakdown != rhs.cachesBreakdown { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
 
 extension Macosusesdk_V1_CacheTypeMetrics: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".CacheTypeMetrics"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}cache\0\u{1}hits\0\u{1}misses\0\u{1}size\0\u{3}memory_used\0")
+    public static let protoMessageName: String = _protobuf_package + ".CacheTypeMetrics"
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}cache\0\u{1}hits\0\u{1}misses\0\u{1}size\0\u{3}memory_used\0")
 
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.cache) }()
-      case 2: try { try decoder.decodeSingularInt64Field(value: &self.hits) }()
-      case 3: try { try decoder.decodeSingularInt64Field(value: &self.misses) }()
-      case 4: try { try decoder.decodeSingularInt64Field(value: &self.size) }()
-      case 5: try { try decoder.decodeSingularInt64Field(value: &self.memoryUsed) }()
-      default: break
-      }
+    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularStringField(value: &cache)
+            case 2: try decoder.decodeSingularInt64Field(value: &hits)
+            case 3: try decoder.decodeSingularInt64Field(value: &misses)
+            case 4: try decoder.decodeSingularInt64Field(value: &size)
+            case 5: try decoder.decodeSingularInt64Field(value: &memoryUsed)
+            default: break
+            }
+        }
     }
-  }
 
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.cache.isEmpty {
-      try visitor.visitSingularStringField(value: self.cache, fieldNumber: 1)
+    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
+        if !cache.isEmpty {
+            try visitor.visitSingularStringField(value: cache, fieldNumber: 1)
+        }
+        if hits != 0 {
+            try visitor.visitSingularInt64Field(value: hits, fieldNumber: 2)
+        }
+        if misses != 0 {
+            try visitor.visitSingularInt64Field(value: misses, fieldNumber: 3)
+        }
+        if size != 0 {
+            try visitor.visitSingularInt64Field(value: size, fieldNumber: 4)
+        }
+        if memoryUsed != 0 {
+            try visitor.visitSingularInt64Field(value: memoryUsed, fieldNumber: 5)
+        }
+        try unknownFields.traverse(visitor: &visitor)
     }
-    if self.hits != 0 {
-      try visitor.visitSingularInt64Field(value: self.hits, fieldNumber: 2)
-    }
-    if self.misses != 0 {
-      try visitor.visitSingularInt64Field(value: self.misses, fieldNumber: 3)
-    }
-    if self.size != 0 {
-      try visitor.visitSingularInt64Field(value: self.size, fieldNumber: 4)
-    }
-    if self.memoryUsed != 0 {
-      try visitor.visitSingularInt64Field(value: self.memoryUsed, fieldNumber: 5)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
 
-  public static func ==(lhs: Macosusesdk_V1_CacheTypeMetrics, rhs: Macosusesdk_V1_CacheTypeMetrics) -> Bool {
-    if lhs.cache != rhs.cache {return false}
-    if lhs.hits != rhs.hits {return false}
-    if lhs.misses != rhs.misses {return false}
-    if lhs.size != rhs.size {return false}
-    if lhs.memoryUsed != rhs.memoryUsed {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    public static func == (lhs: Macosusesdk_V1_CacheTypeMetrics, rhs: Macosusesdk_V1_CacheTypeMetrics) -> Bool {
+        if lhs.cache != rhs.cache { return false }
+        if lhs.hits != rhs.hits { return false }
+        if lhs.misses != rhs.misses { return false }
+        if lhs.size != rhs.size { return false }
+        if lhs.memoryUsed != rhs.memoryUsed { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
 
 extension Macosusesdk_V1_RateLimitMetrics: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".RateLimitMetrics"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}total_requests\0\u{3}throttled_requests\0\u{3}throttle_rate\0\u{3}current_rate\0\u{3}rate_limit\0\u{3}clients_breakdown\0")
+    public static let protoMessageName: String = _protobuf_package + ".RateLimitMetrics"
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}total_requests\0\u{3}throttled_requests\0\u{3}throttle_rate\0\u{3}current_rate\0\u{3}rate_limit\0\u{3}clients_breakdown\0")
 
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularInt64Field(value: &self.totalRequests) }()
-      case 2: try { try decoder.decodeSingularInt64Field(value: &self.throttledRequests) }()
-      case 3: try { try decoder.decodeSingularDoubleField(value: &self.throttleRate) }()
-      case 4: try { try decoder.decodeSingularDoubleField(value: &self.currentRate) }()
-      case 5: try { try decoder.decodeSingularDoubleField(value: &self.rateLimit) }()
-      case 6: try { try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMessageMap<SwiftProtobuf.ProtobufString,Macosusesdk_V1_ClientRateLimitMetrics>.self, value: &self.clientsBreakdown) }()
-      default: break
-      }
+    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularInt64Field(value: &totalRequests)
+            case 2: try decoder.decodeSingularInt64Field(value: &throttledRequests)
+            case 3: try decoder.decodeSingularDoubleField(value: &throttleRate)
+            case 4: try decoder.decodeSingularDoubleField(value: &currentRate)
+            case 5: try decoder.decodeSingularDoubleField(value: &rateLimit)
+            case 6: try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMessageMap<SwiftProtobuf.ProtobufString, Macosusesdk_V1_ClientRateLimitMetrics>.self, value: &clientsBreakdown)
+            default: break
+            }
+        }
     }
-  }
 
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.totalRequests != 0 {
-      try visitor.visitSingularInt64Field(value: self.totalRequests, fieldNumber: 1)
+    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
+        if totalRequests != 0 {
+            try visitor.visitSingularInt64Field(value: totalRequests, fieldNumber: 1)
+        }
+        if throttledRequests != 0 {
+            try visitor.visitSingularInt64Field(value: throttledRequests, fieldNumber: 2)
+        }
+        if throttleRate.bitPattern != 0 {
+            try visitor.visitSingularDoubleField(value: throttleRate, fieldNumber: 3)
+        }
+        if currentRate.bitPattern != 0 {
+            try visitor.visitSingularDoubleField(value: currentRate, fieldNumber: 4)
+        }
+        if rateLimit.bitPattern != 0 {
+            try visitor.visitSingularDoubleField(value: rateLimit, fieldNumber: 5)
+        }
+        if !clientsBreakdown.isEmpty {
+            try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMessageMap<SwiftProtobuf.ProtobufString, Macosusesdk_V1_ClientRateLimitMetrics>.self, value: clientsBreakdown, fieldNumber: 6)
+        }
+        try unknownFields.traverse(visitor: &visitor)
     }
-    if self.throttledRequests != 0 {
-      try visitor.visitSingularInt64Field(value: self.throttledRequests, fieldNumber: 2)
-    }
-    if self.throttleRate.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.throttleRate, fieldNumber: 3)
-    }
-    if self.currentRate.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.currentRate, fieldNumber: 4)
-    }
-    if self.rateLimit.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.rateLimit, fieldNumber: 5)
-    }
-    if !self.clientsBreakdown.isEmpty {
-      try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMessageMap<SwiftProtobuf.ProtobufString,Macosusesdk_V1_ClientRateLimitMetrics>.self, value: self.clientsBreakdown, fieldNumber: 6)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
 
-  public static func ==(lhs: Macosusesdk_V1_RateLimitMetrics, rhs: Macosusesdk_V1_RateLimitMetrics) -> Bool {
-    if lhs.totalRequests != rhs.totalRequests {return false}
-    if lhs.throttledRequests != rhs.throttledRequests {return false}
-    if lhs.throttleRate != rhs.throttleRate {return false}
-    if lhs.currentRate != rhs.currentRate {return false}
-    if lhs.rateLimit != rhs.rateLimit {return false}
-    if lhs.clientsBreakdown != rhs.clientsBreakdown {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    public static func == (lhs: Macosusesdk_V1_RateLimitMetrics, rhs: Macosusesdk_V1_RateLimitMetrics) -> Bool {
+        if lhs.totalRequests != rhs.totalRequests { return false }
+        if lhs.throttledRequests != rhs.throttledRequests { return false }
+        if lhs.throttleRate != rhs.throttleRate { return false }
+        if lhs.currentRate != rhs.currentRate { return false }
+        if lhs.rateLimit != rhs.rateLimit { return false }
+        if lhs.clientsBreakdown != rhs.clientsBreakdown { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
 
 extension Macosusesdk_V1_ClientRateLimitMetrics: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".ClientRateLimitMetrics"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}client_id\0\u{3}total_requests\0\u{3}throttled_requests\0\u{3}current_rate\0")
+    public static let protoMessageName: String = _protobuf_package + ".ClientRateLimitMetrics"
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}client_id\0\u{3}total_requests\0\u{3}throttled_requests\0\u{3}current_rate\0")
 
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.clientID) }()
-      case 2: try { try decoder.decodeSingularInt64Field(value: &self.totalRequests) }()
-      case 3: try { try decoder.decodeSingularInt64Field(value: &self.throttledRequests) }()
-      case 4: try { try decoder.decodeSingularDoubleField(value: &self.currentRate) }()
-      default: break
-      }
+    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularStringField(value: &clientID)
+            case 2: try decoder.decodeSingularInt64Field(value: &totalRequests)
+            case 3: try decoder.decodeSingularInt64Field(value: &throttledRequests)
+            case 4: try decoder.decodeSingularDoubleField(value: &currentRate)
+            default: break
+            }
+        }
     }
-  }
 
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.clientID.isEmpty {
-      try visitor.visitSingularStringField(value: self.clientID, fieldNumber: 1)
+    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
+        if !clientID.isEmpty {
+            try visitor.visitSingularStringField(value: clientID, fieldNumber: 1)
+        }
+        if totalRequests != 0 {
+            try visitor.visitSingularInt64Field(value: totalRequests, fieldNumber: 2)
+        }
+        if throttledRequests != 0 {
+            try visitor.visitSingularInt64Field(value: throttledRequests, fieldNumber: 3)
+        }
+        if currentRate.bitPattern != 0 {
+            try visitor.visitSingularDoubleField(value: currentRate, fieldNumber: 4)
+        }
+        try unknownFields.traverse(visitor: &visitor)
     }
-    if self.totalRequests != 0 {
-      try visitor.visitSingularInt64Field(value: self.totalRequests, fieldNumber: 2)
-    }
-    if self.throttledRequests != 0 {
-      try visitor.visitSingularInt64Field(value: self.throttledRequests, fieldNumber: 3)
-    }
-    if self.currentRate.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.currentRate, fieldNumber: 4)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
 
-  public static func ==(lhs: Macosusesdk_V1_ClientRateLimitMetrics, rhs: Macosusesdk_V1_ClientRateLimitMetrics) -> Bool {
-    if lhs.clientID != rhs.clientID {return false}
-    if lhs.totalRequests != rhs.totalRequests {return false}
-    if lhs.throttledRequests != rhs.throttledRequests {return false}
-    if lhs.currentRate != rhs.currentRate {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    public static func == (lhs: Macosusesdk_V1_ClientRateLimitMetrics, rhs: Macosusesdk_V1_ClientRateLimitMetrics) -> Bool {
+        if lhs.clientID != rhs.clientID { return false }
+        if lhs.totalRequests != rhs.totalRequests { return false }
+        if lhs.throttledRequests != rhs.throttledRequests { return false }
+        if lhs.currentRate != rhs.currentRate { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
 
 extension Macosusesdk_V1_AccessibilityMetrics: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".AccessibilityMetrics"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}elements_traversed\0\u{3}avg_tree_depth\0\u{3}avg_tree_size\0\u{3}notifications_received\0\u{3}active_observations\0\u{3}avg_lookup_duration\0")
+    public static let protoMessageName: String = _protobuf_package + ".AccessibilityMetrics"
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}elements_traversed\0\u{3}avg_tree_depth\0\u{3}avg_tree_size\0\u{3}notifications_received\0\u{3}active_observations\0\u{3}avg_lookup_duration\0")
 
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularInt64Field(value: &self.elementsTraversed) }()
-      case 2: try { try decoder.decodeSingularDoubleField(value: &self.avgTreeDepth) }()
-      case 3: try { try decoder.decodeSingularDoubleField(value: &self.avgTreeSize) }()
-      case 4: try { try decoder.decodeSingularInt64Field(value: &self.notificationsReceived) }()
-      case 5: try { try decoder.decodeSingularInt32Field(value: &self.activeObservations) }()
-      case 6: try { try decoder.decodeSingularMessageField(value: &self._avgLookupDuration) }()
-      default: break
-      }
+    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularInt64Field(value: &elementsTraversed)
+            case 2: try decoder.decodeSingularDoubleField(value: &avgTreeDepth)
+            case 3: try decoder.decodeSingularDoubleField(value: &avgTreeSize)
+            case 4: try decoder.decodeSingularInt64Field(value: &notificationsReceived)
+            case 5: try decoder.decodeSingularInt32Field(value: &activeObservations)
+            case 6: try decoder.decodeSingularMessageField(value: &_avgLookupDuration)
+            default: break
+            }
+        }
     }
-  }
 
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    if self.elementsTraversed != 0 {
-      try visitor.visitSingularInt64Field(value: self.elementsTraversed, fieldNumber: 1)
+    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
+        // The use of inline closures is to circumvent an issue where the compiler
+        // allocates stack space for every if/case branch local when no optimizations
+        // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+        // https://github.com/apple/swift-protobuf/issues/1182
+        if elementsTraversed != 0 {
+            try visitor.visitSingularInt64Field(value: elementsTraversed, fieldNumber: 1)
+        }
+        if avgTreeDepth.bitPattern != 0 {
+            try visitor.visitSingularDoubleField(value: avgTreeDepth, fieldNumber: 2)
+        }
+        if avgTreeSize.bitPattern != 0 {
+            try visitor.visitSingularDoubleField(value: avgTreeSize, fieldNumber: 3)
+        }
+        if notificationsReceived != 0 {
+            try visitor.visitSingularInt64Field(value: notificationsReceived, fieldNumber: 4)
+        }
+        if activeObservations != 0 {
+            try visitor.visitSingularInt32Field(value: activeObservations, fieldNumber: 5)
+        }
+        try { if let v = self._avgLookupDuration {
+            try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
+        } }()
+        try unknownFields.traverse(visitor: &visitor)
     }
-    if self.avgTreeDepth.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.avgTreeDepth, fieldNumber: 2)
-    }
-    if self.avgTreeSize.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.avgTreeSize, fieldNumber: 3)
-    }
-    if self.notificationsReceived != 0 {
-      try visitor.visitSingularInt64Field(value: self.notificationsReceived, fieldNumber: 4)
-    }
-    if self.activeObservations != 0 {
-      try visitor.visitSingularInt32Field(value: self.activeObservations, fieldNumber: 5)
-    }
-    try { if let v = self._avgLookupDuration {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
-    } }()
-    try unknownFields.traverse(visitor: &visitor)
-  }
 
-  public static func ==(lhs: Macosusesdk_V1_AccessibilityMetrics, rhs: Macosusesdk_V1_AccessibilityMetrics) -> Bool {
-    if lhs.elementsTraversed != rhs.elementsTraversed {return false}
-    if lhs.avgTreeDepth != rhs.avgTreeDepth {return false}
-    if lhs.avgTreeSize != rhs.avgTreeSize {return false}
-    if lhs.notificationsReceived != rhs.notificationsReceived {return false}
-    if lhs.activeObservations != rhs.activeObservations {return false}
-    if lhs._avgLookupDuration != rhs._avgLookupDuration {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    public static func == (lhs: Macosusesdk_V1_AccessibilityMetrics, rhs: Macosusesdk_V1_AccessibilityMetrics) -> Bool {
+        if lhs.elementsTraversed != rhs.elementsTraversed { return false }
+        if lhs.avgTreeDepth != rhs.avgTreeDepth { return false }
+        if lhs.avgTreeSize != rhs.avgTreeSize { return false }
+        if lhs.notificationsReceived != rhs.notificationsReceived { return false }
+        if lhs.activeObservations != rhs.activeObservations { return false }
+        if lhs._avgLookupDuration != rhs._avgLookupDuration { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
 
 extension Macosusesdk_V1_PerformanceReport: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".PerformanceReport"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}time_range\0\u{3}generated_time\0\u{1}summary\0\u{1}details\0\u{1}trends\0\u{1}recommendations\0")
+    public static let protoMessageName: String = _protobuf_package + ".PerformanceReport"
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}time_range\0\u{3}generated_time\0\u{1}summary\0\u{1}details\0\u{1}trends\0\u{1}recommendations\0")
 
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularMessageField(value: &self._timeRange) }()
-      case 2: try { try decoder.decodeSingularMessageField(value: &self._generatedTime) }()
-      case 3: try { try decoder.decodeSingularMessageField(value: &self._summary) }()
-      case 4: try { try decoder.decodeRepeatedMessageField(value: &self.details) }()
-      case 5: try { try decoder.decodeSingularMessageField(value: &self._trends) }()
-      case 6: try { try decoder.decodeRepeatedStringField(value: &self.recommendations) }()
-      default: break
-      }
+    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularMessageField(value: &_timeRange)
+            case 2: try decoder.decodeSingularMessageField(value: &_generatedTime)
+            case 3: try decoder.decodeSingularMessageField(value: &_summary)
+            case 4: try decoder.decodeRepeatedMessageField(value: &details)
+            case 5: try decoder.decodeSingularMessageField(value: &_trends)
+            case 6: try decoder.decodeRepeatedStringField(value: &recommendations)
+            default: break
+            }
+        }
     }
-  }
 
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    try { if let v = self._timeRange {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
-    } }()
-    try { if let v = self._generatedTime {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
-    } }()
-    try { if let v = self._summary {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
-    } }()
-    if !self.details.isEmpty {
-      try visitor.visitRepeatedMessageField(value: self.details, fieldNumber: 4)
+    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
+        // The use of inline closures is to circumvent an issue where the compiler
+        // allocates stack space for every if/case branch local when no optimizations
+        // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+        // https://github.com/apple/swift-protobuf/issues/1182
+        if let v = _timeRange {
+            try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+        }
+        try { if let v = self._generatedTime {
+            try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+        } }()
+        try { if let v = self._summary {
+            try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
+        } }()
+        if !details.isEmpty {
+            try visitor.visitRepeatedMessageField(value: details, fieldNumber: 4)
+        }
+        try { if let v = self._trends {
+            try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
+        } }()
+        if !recommendations.isEmpty {
+            try visitor.visitRepeatedStringField(value: recommendations, fieldNumber: 6)
+        }
+        try unknownFields.traverse(visitor: &visitor)
     }
-    try { if let v = self._trends {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
-    } }()
-    if !self.recommendations.isEmpty {
-      try visitor.visitRepeatedStringField(value: self.recommendations, fieldNumber: 6)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
 
-  public static func ==(lhs: Macosusesdk_V1_PerformanceReport, rhs: Macosusesdk_V1_PerformanceReport) -> Bool {
-    if lhs._timeRange != rhs._timeRange {return false}
-    if lhs._generatedTime != rhs._generatedTime {return false}
-    if lhs._summary != rhs._summary {return false}
-    if lhs.details != rhs.details {return false}
-    if lhs._trends != rhs._trends {return false}
-    if lhs.recommendations != rhs.recommendations {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    public static func == (lhs: Macosusesdk_V1_PerformanceReport, rhs: Macosusesdk_V1_PerformanceReport) -> Bool {
+        if lhs._timeRange != rhs._timeRange { return false }
+        if lhs._generatedTime != rhs._generatedTime { return false }
+        if lhs._summary != rhs._summary { return false }
+        if lhs.details != rhs.details { return false }
+        if lhs._trends != rhs._trends { return false }
+        if lhs.recommendations != rhs.recommendations { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
 
 extension Macosusesdk_V1_PerformanceDataPoint: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".PerformanceDataPoint"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}recorded_time\0\u{1}metrics\0")
+    public static let protoMessageName: String = _protobuf_package + ".PerformanceDataPoint"
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}recorded_time\0\u{1}metrics\0")
 
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularMessageField(value: &self._recordedTime) }()
-      case 2: try { try decoder.decodeSingularMessageField(value: &self._metrics) }()
-      default: break
-      }
+    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularMessageField(value: &_recordedTime)
+            case 2: try decoder.decodeSingularMessageField(value: &_metrics)
+            default: break
+            }
+        }
     }
-  }
 
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    try { if let v = self._recordedTime {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
-    } }()
-    try { if let v = self._metrics {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
-    } }()
-    try unknownFields.traverse(visitor: &visitor)
-  }
+    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
+        // The use of inline closures is to circumvent an issue where the compiler
+        // allocates stack space for every if/case branch local when no optimizations
+        // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+        // https://github.com/apple/swift-protobuf/issues/1182
+        if let v = _recordedTime {
+            try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+        }
+        try { if let v = self._metrics {
+            try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+        } }()
+        try unknownFields.traverse(visitor: &visitor)
+    }
 
-  public static func ==(lhs: Macosusesdk_V1_PerformanceDataPoint, rhs: Macosusesdk_V1_PerformanceDataPoint) -> Bool {
-    if lhs._recordedTime != rhs._recordedTime {return false}
-    if lhs._metrics != rhs._metrics {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    public static func == (lhs: Macosusesdk_V1_PerformanceDataPoint, rhs: Macosusesdk_V1_PerformanceDataPoint) -> Bool {
+        if lhs._recordedTime != rhs._recordedTime { return false }
+        if lhs._metrics != rhs._metrics { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
 
 extension Macosusesdk_V1_PerformanceTrends: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".PerformanceTrends"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}latency_trend\0\u{3}error_trend\0\u{3}memory_trend\0\u{3}cache_trend\0")
+    public static let protoMessageName: String = _protobuf_package + ".PerformanceTrends"
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}latency_trend\0\u{3}error_trend\0\u{3}memory_trend\0\u{3}cache_trend\0")
 
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularEnumField(value: &self.latencyTrend) }()
-      case 2: try { try decoder.decodeSingularEnumField(value: &self.errorTrend) }()
-      case 3: try { try decoder.decodeSingularEnumField(value: &self.memoryTrend) }()
-      case 4: try { try decoder.decodeSingularEnumField(value: &self.cacheTrend) }()
-      default: break
-      }
+    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularEnumField(value: &latencyTrend)
+            case 2: try decoder.decodeSingularEnumField(value: &errorTrend)
+            case 3: try decoder.decodeSingularEnumField(value: &memoryTrend)
+            case 4: try decoder.decodeSingularEnumField(value: &cacheTrend)
+            default: break
+            }
+        }
     }
-  }
 
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.latencyTrend != .unspecified {
-      try visitor.visitSingularEnumField(value: self.latencyTrend, fieldNumber: 1)
+    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
+        if latencyTrend != .unspecified {
+            try visitor.visitSingularEnumField(value: latencyTrend, fieldNumber: 1)
+        }
+        if errorTrend != .unspecified {
+            try visitor.visitSingularEnumField(value: errorTrend, fieldNumber: 2)
+        }
+        if memoryTrend != .unspecified {
+            try visitor.visitSingularEnumField(value: memoryTrend, fieldNumber: 3)
+        }
+        if cacheTrend != .unspecified {
+            try visitor.visitSingularEnumField(value: cacheTrend, fieldNumber: 4)
+        }
+        try unknownFields.traverse(visitor: &visitor)
     }
-    if self.errorTrend != .unspecified {
-      try visitor.visitSingularEnumField(value: self.errorTrend, fieldNumber: 2)
-    }
-    if self.memoryTrend != .unspecified {
-      try visitor.visitSingularEnumField(value: self.memoryTrend, fieldNumber: 3)
-    }
-    if self.cacheTrend != .unspecified {
-      try visitor.visitSingularEnumField(value: self.cacheTrend, fieldNumber: 4)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
 
-  public static func ==(lhs: Macosusesdk_V1_PerformanceTrends, rhs: Macosusesdk_V1_PerformanceTrends) -> Bool {
-    if lhs.latencyTrend != rhs.latencyTrend {return false}
-    if lhs.errorTrend != rhs.errorTrend {return false}
-    if lhs.memoryTrend != rhs.memoryTrend {return false}
-    if lhs.cacheTrend != rhs.cacheTrend {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    public static func == (lhs: Macosusesdk_V1_PerformanceTrends, rhs: Macosusesdk_V1_PerformanceTrends) -> Bool {
+        if lhs.latencyTrend != rhs.latencyTrend { return false }
+        if lhs.errorTrend != rhs.errorTrend { return false }
+        if lhs.memoryTrend != rhs.memoryTrend { return false }
+        if lhs.cacheTrend != rhs.cacheTrend { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
 
 extension Macosusesdk_V1_PerformanceTrends.TrendDirection: SwiftProtobuf._ProtoNameProviding {
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0TREND_DIRECTION_UNSPECIFIED\0\u{1}TREND_DIRECTION_IMPROVING\0\u{1}TREND_DIRECTION_STABLE\0\u{1}TREND_DIRECTION_DEGRADING\0")
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0TREND_DIRECTION_UNSPECIFIED\0\u{1}TREND_DIRECTION_IMPROVING\0\u{1}TREND_DIRECTION_STABLE\0\u{1}TREND_DIRECTION_DEGRADING\0")
 }

@@ -29,9 +29,9 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
-  struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
-  typealias Version = _2
+private struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+    struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
+    typealias Version = _2
 }
 
 /// A simple descriptor of a resource type.
@@ -82,234 +82,232 @@ fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAP
 ///       pattern: "organizations/{organization}/logs/{log}"
 ///       pattern: "billingAccounts/{billing_account}/logs/{log}"
 public struct Google_Api_ResourceDescriptor: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  /// The resource type. It must be in the format of
-  /// {service_name}/{resource_type_kind}. The `resource_type_kind` must be
-  /// singular and must not include version numbers.
-  ///
-  /// Example: `storage.googleapis.com/Bucket`
-  ///
-  /// The value of the resource_type_kind must follow the regular expression
-  /// /[A-Za-z][a-zA-Z0-9]+/. It should start with an upper case character and
-  /// should use PascalCase (UpperCamelCase). The maximum number of
-  /// characters allowed for the `resource_type_kind` is 100.
-  public var type: String = String()
-
-  /// Optional. The relative resource name pattern associated with this resource
-  /// type. The DNS prefix of the full resource name shouldn't be specified here.
-  ///
-  /// The path pattern must follow the syntax, which aligns with HTTP binding
-  /// syntax:
-  ///
-  ///     Template = Segment { "/" Segment } ;
-  ///     Segment = LITERAL | Variable ;
-  ///     Variable = "{" LITERAL "}" ;
-  ///
-  /// Examples:
-  ///
-  ///     - "projects/{project}/topics/{topic}"
-  ///     - "projects/{project}/knowledgeBases/{knowledge_base}"
-  ///
-  /// The components in braces correspond to the IDs for each resource in the
-  /// hierarchy. It is expected that, if multiple patterns are provided,
-  /// the same component name (e.g. "project") refers to IDs of the same
-  /// type of resource.
-  public var pattern: [String] = []
-
-  /// Optional. The field on the resource that designates the resource name
-  /// field. If omitted, this is assumed to be "name".
-  public var nameField: String = String()
-
-  /// Optional. The historical or future-looking state of the resource pattern.
-  ///
-  /// Example:
-  ///
-  ///     // The InspectTemplate message originally only supported resource
-  ///     // names with organization, and project was added later.
-  ///     message InspectTemplate {
-  ///       option (google.api.resource) = {
-  ///         type: "dlp.googleapis.com/InspectTemplate"
-  ///         pattern:
-  ///         "organizations/{organization}/inspectTemplates/{inspect_template}"
-  ///         pattern: "projects/{project}/inspectTemplates/{inspect_template}"
-  ///         history: ORIGINALLY_SINGLE_PATTERN
-  ///       };
-  ///     }
-  public var history: Google_Api_ResourceDescriptor.History = .unspecified
-
-  /// The plural name used in the resource name and permission names, such as
-  /// 'projects' for the resource name of 'projects/{project}' and the permission
-  /// name of 'cloudresourcemanager.googleapis.com/projects.get'. One exception
-  /// to this is for Nested Collections that have stuttering names, as defined
-  /// in [AIP-122](https://google.aip.dev/122#nested-collections), where the
-  /// collection ID in the resource name pattern does not necessarily directly
-  /// match the `plural` value.
-  ///
-  /// It is the same concept of the `plural` field in k8s CRD spec
-  /// https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/
-  ///
-  /// Note: The plural form is required even for singleton resources. See
-  /// https://aip.dev/156
-  public var plural: String = String()
-
-  /// The same concept of the `singular` field in k8s CRD spec
-  /// https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/
-  /// Such as "project" for the `resourcemanager.googleapis.com/Project` type.
-  public var singular: String = String()
-
-  /// Style flag(s) for this resource.
-  /// These indicate that a resource is expected to conform to a given
-  /// style. See the specific style flags for additional information.
-  public var style: [Google_Api_ResourceDescriptor.Style] = []
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  /// A description of the historical or future-looking state of the
-  /// resource pattern.
-  public enum History: SwiftProtobuf.Enum, Swift.CaseIterable {
-    public typealias RawValue = Int
-
-    /// The "unset" value.
-    case unspecified // = 0
-
-    /// The resource originally had one pattern and launched as such, and
-    /// additional patterns were added later.
-    case originallySinglePattern // = 1
-
-    /// The resource has one pattern, but the API owner expects to add more
-    /// later. (This is the inverse of ORIGINALLY_SINGLE_PATTERN, and prevents
-    /// that from being necessary once there are multiple patterns.)
-    case futureMultiPattern // = 2
-    case UNRECOGNIZED(Int)
-
-    public init() {
-      self = .unspecified
-    }
-
-    public init?(rawValue: Int) {
-      switch rawValue {
-      case 0: self = .unspecified
-      case 1: self = .originallySinglePattern
-      case 2: self = .futureMultiPattern
-      default: self = .UNRECOGNIZED(rawValue)
-      }
-    }
-
-    public var rawValue: Int {
-      switch self {
-      case .unspecified: return 0
-      case .originallySinglePattern: return 1
-      case .futureMultiPattern: return 2
-      case .UNRECOGNIZED(let i): return i
-      }
-    }
-
-    // The compiler won't synthesize support with the UNRECOGNIZED case.
-    public static let allCases: [Google_Api_ResourceDescriptor.History] = [
-      .unspecified,
-      .originallySinglePattern,
-      .futureMultiPattern,
-    ]
-
-  }
-
-  /// A flag representing a specific style that a resource claims to conform to.
-  public enum Style: SwiftProtobuf.Enum, Swift.CaseIterable {
-    public typealias RawValue = Int
-
-    /// The unspecified value. Do not use.
-    case unspecified // = 0
-
-    /// This resource is intended to be "declarative-friendly".
+    /// The resource type. It must be in the format of
+    /// {service_name}/{resource_type_kind}. The `resource_type_kind` must be
+    /// singular and must not include version numbers.
     ///
-    /// Declarative-friendly resources must be more strictly consistent, and
-    /// setting this to true communicates to tools that this resource should
-    /// adhere to declarative-friendly expectations.
+    /// Example: `storage.googleapis.com/Bucket`
     ///
-    /// Note: This is used by the API linter (linter.aip.dev) to enable
-    /// additional checks.
-    case declarativeFriendly // = 1
-    case UNRECOGNIZED(Int)
+    /// The value of the resource_type_kind must follow the regular expression
+    /// /[A-Za-z][a-zA-Z0-9]+/. It should start with an upper case character and
+    /// should use PascalCase (UpperCamelCase). The maximum number of
+    /// characters allowed for the `resource_type_kind` is 100.
+    public var type: String = .init()
 
-    public init() {
-      self = .unspecified
+    /// Optional. The relative resource name pattern associated with this resource
+    /// type. The DNS prefix of the full resource name shouldn't be specified here.
+    ///
+    /// The path pattern must follow the syntax, which aligns with HTTP binding
+    /// syntax:
+    ///
+    ///     Template = Segment { "/" Segment } ;
+    ///     Segment = LITERAL | Variable ;
+    ///     Variable = "{" LITERAL "}" ;
+    ///
+    /// Examples:
+    ///
+    ///     - "projects/{project}/topics/{topic}"
+    ///     - "projects/{project}/knowledgeBases/{knowledge_base}"
+    ///
+    /// The components in braces correspond to the IDs for each resource in the
+    /// hierarchy. It is expected that, if multiple patterns are provided,
+    /// the same component name (e.g. "project") refers to IDs of the same
+    /// type of resource.
+    public var pattern: [String] = []
+
+    /// Optional. The field on the resource that designates the resource name
+    /// field. If omitted, this is assumed to be "name".
+    public var nameField: String = .init()
+
+    /// Optional. The historical or future-looking state of the resource pattern.
+    ///
+    /// Example:
+    ///
+    ///     // The InspectTemplate message originally only supported resource
+    ///     // names with organization, and project was added later.
+    ///     message InspectTemplate {
+    ///       option (google.api.resource) = {
+    ///         type: "dlp.googleapis.com/InspectTemplate"
+    ///         pattern:
+    ///         "organizations/{organization}/inspectTemplates/{inspect_template}"
+    ///         pattern: "projects/{project}/inspectTemplates/{inspect_template}"
+    ///         history: ORIGINALLY_SINGLE_PATTERN
+    ///       };
+    ///     }
+    public var history: Google_Api_ResourceDescriptor.History = .unspecified
+
+    /// The plural name used in the resource name and permission names, such as
+    /// 'projects' for the resource name of 'projects/{project}' and the permission
+    /// name of 'cloudresourcemanager.googleapis.com/projects.get'. One exception
+    /// to this is for Nested Collections that have stuttering names, as defined
+    /// in [AIP-122](https://google.aip.dev/122#nested-collections), where the
+    /// collection ID in the resource name pattern does not necessarily directly
+    /// match the `plural` value.
+    ///
+    /// It is the same concept of the `plural` field in k8s CRD spec
+    /// https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/
+    ///
+    /// Note: The plural form is required even for singleton resources. See
+    /// https://aip.dev/156
+    public var plural: String = .init()
+
+    /// The same concept of the `singular` field in k8s CRD spec
+    /// https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/
+    /// Such as "project" for the `resourcemanager.googleapis.com/Project` type.
+    public var singular: String = .init()
+
+    /// Style flag(s) for this resource.
+    /// These indicate that a resource is expected to conform to a given
+    /// style. See the specific style flags for additional information.
+    public var style: [Google_Api_ResourceDescriptor.Style] = []
+
+    public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+    /// A description of the historical or future-looking state of the
+    /// resource pattern.
+    public enum History: SwiftProtobuf.Enum, Swift.CaseIterable {
+        public typealias RawValue = Int
+
+        /// The "unset" value.
+        case unspecified // = 0
+
+        /// The resource originally had one pattern and launched as such, and
+        /// additional patterns were added later.
+        case originallySinglePattern // = 1
+
+        /// The resource has one pattern, but the API owner expects to add more
+        /// later. (This is the inverse of ORIGINALLY_SINGLE_PATTERN, and prevents
+        /// that from being necessary once there are multiple patterns.)
+        case futureMultiPattern // = 2
+        case UNRECOGNIZED(Int)
+
+        public init() {
+            self = .unspecified
+        }
+
+        public init?(rawValue: Int) {
+            switch rawValue {
+            case 0: self = .unspecified
+            case 1: self = .originallySinglePattern
+            case 2: self = .futureMultiPattern
+            default: self = .UNRECOGNIZED(rawValue)
+            }
+        }
+
+        public var rawValue: Int {
+            switch self {
+            case .unspecified: 0
+            case .originallySinglePattern: 1
+            case .futureMultiPattern: 2
+            case let .UNRECOGNIZED(i): i
+            }
+        }
+
+        // The compiler won't synthesize support with the UNRECOGNIZED case.
+        public static let allCases: [Google_Api_ResourceDescriptor.History] = [
+            .unspecified,
+            .originallySinglePattern,
+            .futureMultiPattern,
+        ]
     }
 
-    public init?(rawValue: Int) {
-      switch rawValue {
-      case 0: self = .unspecified
-      case 1: self = .declarativeFriendly
-      default: self = .UNRECOGNIZED(rawValue)
-      }
+    /// A flag representing a specific style that a resource claims to conform to.
+    public enum Style: SwiftProtobuf.Enum, Swift.CaseIterable {
+        public typealias RawValue = Int
+
+        /// The unspecified value. Do not use.
+        case unspecified // = 0
+
+        /// This resource is intended to be "declarative-friendly".
+        ///
+        /// Declarative-friendly resources must be more strictly consistent, and
+        /// setting this to true communicates to tools that this resource should
+        /// adhere to declarative-friendly expectations.
+        ///
+        /// Note: This is used by the API linter (linter.aip.dev) to enable
+        /// additional checks.
+        case declarativeFriendly // = 1
+        case UNRECOGNIZED(Int)
+
+        public init() {
+            self = .unspecified
+        }
+
+        public init?(rawValue: Int) {
+            switch rawValue {
+            case 0: self = .unspecified
+            case 1: self = .declarativeFriendly
+            default: self = .UNRECOGNIZED(rawValue)
+            }
+        }
+
+        public var rawValue: Int {
+            switch self {
+            case .unspecified: 0
+            case .declarativeFriendly: 1
+            case let .UNRECOGNIZED(i): i
+            }
+        }
+
+        // The compiler won't synthesize support with the UNRECOGNIZED case.
+        public static let allCases: [Google_Api_ResourceDescriptor.Style] = [
+            .unspecified,
+            .declarativeFriendly,
+        ]
     }
 
-    public var rawValue: Int {
-      switch self {
-      case .unspecified: return 0
-      case .declarativeFriendly: return 1
-      case .UNRECOGNIZED(let i): return i
-      }
-    }
-
-    // The compiler won't synthesize support with the UNRECOGNIZED case.
-    public static let allCases: [Google_Api_ResourceDescriptor.Style] = [
-      .unspecified,
-      .declarativeFriendly,
-    ]
-
-  }
-
-  public init() {}
+    public init() {}
 }
 
 /// Defines a proto annotation that describes a string field that refers to
 /// an API resource.
 public struct Google_Api_ResourceReference: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  /// The resource type that the annotated field references.
-  ///
-  /// Example:
-  ///
-  ///     message Subscription {
-  ///       string topic = 2 [(google.api.resource_reference) = {
-  ///         type: "pubsub.googleapis.com/Topic"
-  ///       }];
-  ///     }
-  ///
-  /// Occasionally, a field may reference an arbitrary resource. In this case,
-  /// APIs use the special value * in their resource reference.
-  ///
-  /// Example:
-  ///
-  ///     message GetIamPolicyRequest {
-  ///       string resource = 2 [(google.api.resource_reference) = {
-  ///         type: "*"
-  ///       }];
-  ///     }
-  public var type: String = String()
+    /// The resource type that the annotated field references.
+    ///
+    /// Example:
+    ///
+    ///     message Subscription {
+    ///       string topic = 2 [(google.api.resource_reference) = {
+    ///         type: "pubsub.googleapis.com/Topic"
+    ///       }];
+    ///     }
+    ///
+    /// Occasionally, a field may reference an arbitrary resource. In this case,
+    /// APIs use the special value * in their resource reference.
+    ///
+    /// Example:
+    ///
+    ///     message GetIamPolicyRequest {
+    ///       string resource = 2 [(google.api.resource_reference) = {
+    ///         type: "*"
+    ///       }];
+    ///     }
+    public var type: String = .init()
 
-  /// The resource type of a child collection that the annotated field
-  /// references. This is useful for annotating the `parent` field that
-  /// doesn't have a fixed resource type.
-  ///
-  /// Example:
-  ///
-  ///     message ListLogEntriesRequest {
-  ///       string parent = 1 [(google.api.resource_reference) = {
-  ///         child_type: "logging.googleapis.com/LogEntry"
-  ///       };
-  ///     }
-  public var childType: String = String()
+    /// The resource type of a child collection that the annotated field
+    /// references. This is useful for annotating the `parent` field that
+    /// doesn't have a fixed resource type.
+    ///
+    /// Example:
+    ///
+    ///     message ListLogEntriesRequest {
+    ///       string parent = 1 [(google.api.resource_reference) = {
+    ///         child_type: "logging.googleapis.com/LogEntry"
+    ///       };
+    ///     }
+    public var childType: String = .init()
 
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
+    public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  public init() {}
+    public init() {}
 }
 
 // MARK: - Extension support defined in resource.proto.
@@ -321,55 +319,55 @@ public struct Google_Api_ResourceReference: Sendable {
 // declaration. To avoid naming collisions, the names are prefixed with the name of
 // the scope where the extend directive occurs.
 
-extension SwiftProtobuf.Google_Protobuf_FieldOptions {
+public extension SwiftProtobuf.Google_Protobuf_FieldOptions {
+    /// An annotation that describes a resource reference, see
+    /// [ResourceReference][].
+    var Google_Api_resourceReference: Google_Api_ResourceReference {
+        get { getExtensionValue(ext: Google_Api_Extensions_resource_reference) ?? Google_Api_ResourceReference() }
+        set { setExtensionValue(ext: Google_Api_Extensions_resource_reference, value: newValue) }
+    }
 
-  /// An annotation that describes a resource reference, see
-  /// [ResourceReference][].
-  public var Google_Api_resourceReference: Google_Api_ResourceReference {
-    get {return getExtensionValue(ext: Google_Api_Extensions_resource_reference) ?? Google_Api_ResourceReference()}
-    set {setExtensionValue(ext: Google_Api_Extensions_resource_reference, value: newValue)}
-  }
-  /// Returns true if extension `Google_Api_Extensions_resource_reference`
-  /// has been explicitly set.
-  public var hasGoogle_Api_resourceReference: Bool {
-    return hasExtensionValue(ext: Google_Api_Extensions_resource_reference)
-  }
-  /// Clears the value of extension `Google_Api_Extensions_resource_reference`.
-  /// Subsequent reads from it will return its default value.
-  public mutating func clearGoogle_Api_resourceReference() {
-    clearExtensionValue(ext: Google_Api_Extensions_resource_reference)
-  }
+    /// Returns true if extension `Google_Api_Extensions_resource_reference`
+    /// has been explicitly set.
+    var hasGoogle_Api_resourceReference: Bool {
+        hasExtensionValue(ext: Google_Api_Extensions_resource_reference)
+    }
+
+    /// Clears the value of extension `Google_Api_Extensions_resource_reference`.
+    /// Subsequent reads from it will return its default value.
+    mutating func clearGoogle_Api_resourceReference() {
+        clearExtensionValue(ext: Google_Api_Extensions_resource_reference)
+    }
 }
 
-extension SwiftProtobuf.Google_Protobuf_FileOptions {
-
-  /// An annotation that describes a resource definition without a corresponding
-  /// message; see [ResourceDescriptor][].
-  public var Google_Api_resourceDefinition: [Google_Api_ResourceDescriptor] {
-    get {return getExtensionValue(ext: Google_Api_Extensions_resource_definition) ?? []}
-    set {setExtensionValue(ext: Google_Api_Extensions_resource_definition, value: newValue)}
-  }
+public extension SwiftProtobuf.Google_Protobuf_FileOptions {
+    /// An annotation that describes a resource definition without a corresponding
+    /// message; see [ResourceDescriptor][].
+    var Google_Api_resourceDefinition: [Google_Api_ResourceDescriptor] {
+        get { getExtensionValue(ext: Google_Api_Extensions_resource_definition) ?? [] }
+        set { setExtensionValue(ext: Google_Api_Extensions_resource_definition, value: newValue) }
+    }
 }
 
-extension SwiftProtobuf.Google_Protobuf_MessageOptions {
+public extension SwiftProtobuf.Google_Protobuf_MessageOptions {
+    /// An annotation that describes a resource definition, see
+    /// [ResourceDescriptor][].
+    var Google_Api_resource: Google_Api_ResourceDescriptor {
+        get { getExtensionValue(ext: Google_Api_Extensions_resource) ?? Google_Api_ResourceDescriptor() }
+        set { setExtensionValue(ext: Google_Api_Extensions_resource, value: newValue) }
+    }
 
-  /// An annotation that describes a resource definition, see
-  /// [ResourceDescriptor][].
-  public var Google_Api_resource: Google_Api_ResourceDescriptor {
-    get {return getExtensionValue(ext: Google_Api_Extensions_resource) ?? Google_Api_ResourceDescriptor()}
-    set {setExtensionValue(ext: Google_Api_Extensions_resource, value: newValue)}
-  }
-  /// Returns true if extension `Google_Api_Extensions_resource`
-  /// has been explicitly set.
-  public var hasGoogle_Api_resource: Bool {
-    return hasExtensionValue(ext: Google_Api_Extensions_resource)
-  }
-  /// Clears the value of extension `Google_Api_Extensions_resource`.
-  /// Subsequent reads from it will return its default value.
-  public mutating func clearGoogle_Api_resource() {
-    clearExtensionValue(ext: Google_Api_Extensions_resource)
-  }
+    /// Returns true if extension `Google_Api_Extensions_resource`
+    /// has been explicitly set.
+    var hasGoogle_Api_resource: Bool {
+        hasExtensionValue(ext: Google_Api_Extensions_resource)
+    }
 
+    /// Clears the value of extension `Google_Api_Extensions_resource`.
+    /// Subsequent reads from it will return its default value.
+    mutating func clearGoogle_Api_resource() {
+        clearExtensionValue(ext: Google_Api_Extensions_resource)
+    }
 }
 
 // MARK: - File's ExtensionMap: Google_Api_Resource_Extensions
@@ -379,9 +377,9 @@ extension SwiftProtobuf.Google_Protobuf_MessageOptions {
 /// in parsing, or it can be combined with other `SwiftProtobuf.SimpleExtensionMap`s to create
 /// a larger `SwiftProtobuf.SimpleExtensionMap`.
 public let Google_Api_Resource_Extensions: SwiftProtobuf.SimpleExtensionMap = [
-  Google_Api_Extensions_resource_reference,
-  Google_Api_Extensions_resource_definition,
-  Google_Api_Extensions_resource
+    Google_Api_Extensions_resource_reference,
+    Google_Api_Extensions_resource_definition,
+    Google_Api_Extensions_resource,
 ]
 
 // Extension Objects - The only reason these might be needed is when manually
@@ -391,127 +389,127 @@ public let Google_Api_Resource_Extensions: SwiftProtobuf.SimpleExtensionMap = [
 /// An annotation that describes a resource reference, see
 /// [ResourceReference][].
 public let Google_Api_Extensions_resource_reference = SwiftProtobuf.MessageExtension<SwiftProtobuf.OptionalMessageExtensionField<Google_Api_ResourceReference>, SwiftProtobuf.Google_Protobuf_FieldOptions>(
-  _protobuf_fieldNumber: 1055,
-  fieldName: "google.api.resource_reference"
+    _protobuf_fieldNumber: 1055,
+    fieldName: "google.api.resource_reference",
 )
 
 /// An annotation that describes a resource definition without a corresponding
 /// message; see [ResourceDescriptor][].
 public let Google_Api_Extensions_resource_definition = SwiftProtobuf.MessageExtension<SwiftProtobuf.RepeatedMessageExtensionField<Google_Api_ResourceDescriptor>, SwiftProtobuf.Google_Protobuf_FileOptions>(
-  _protobuf_fieldNumber: 1053,
-  fieldName: "google.api.resource_definition"
+    _protobuf_fieldNumber: 1053,
+    fieldName: "google.api.resource_definition",
 )
 
 /// An annotation that describes a resource definition, see
 /// [ResourceDescriptor][].
 public let Google_Api_Extensions_resource = SwiftProtobuf.MessageExtension<SwiftProtobuf.OptionalMessageExtensionField<Google_Api_ResourceDescriptor>, SwiftProtobuf.Google_Protobuf_MessageOptions>(
-  _protobuf_fieldNumber: 1053,
-  fieldName: "google.api.resource"
+    _protobuf_fieldNumber: 1053,
+    fieldName: "google.api.resource",
 )
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
-fileprivate let _protobuf_package = "google.api"
+private let _protobuf_package = "google.api"
 
 extension Google_Api_ResourceDescriptor: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".ResourceDescriptor"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}type\0\u{1}pattern\0\u{3}name_field\0\u{1}history\0\u{1}plural\0\u{1}singular\0\u{2}\u{4}style\0")
+    public static let protoMessageName: String = _protobuf_package + ".ResourceDescriptor"
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}type\0\u{1}pattern\0\u{3}name_field\0\u{1}history\0\u{1}plural\0\u{1}singular\0\u{2}\u{4}style\0")
 
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.type) }()
-      case 2: try { try decoder.decodeRepeatedStringField(value: &self.pattern) }()
-      case 3: try { try decoder.decodeSingularStringField(value: &self.nameField) }()
-      case 4: try { try decoder.decodeSingularEnumField(value: &self.history) }()
-      case 5: try { try decoder.decodeSingularStringField(value: &self.plural) }()
-      case 6: try { try decoder.decodeSingularStringField(value: &self.singular) }()
-      case 10: try { try decoder.decodeRepeatedEnumField(value: &self.style) }()
-      default: break
-      }
+    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularStringField(value: &type)
+            case 2: try decoder.decodeRepeatedStringField(value: &pattern)
+            case 3: try decoder.decodeSingularStringField(value: &nameField)
+            case 4: try decoder.decodeSingularEnumField(value: &history)
+            case 5: try decoder.decodeSingularStringField(value: &plural)
+            case 6: try decoder.decodeSingularStringField(value: &singular)
+            case 10: try decoder.decodeRepeatedEnumField(value: &style)
+            default: break
+            }
+        }
     }
-  }
 
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.type.isEmpty {
-      try visitor.visitSingularStringField(value: self.type, fieldNumber: 1)
+    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
+        if !type.isEmpty {
+            try visitor.visitSingularStringField(value: type, fieldNumber: 1)
+        }
+        if !pattern.isEmpty {
+            try visitor.visitRepeatedStringField(value: pattern, fieldNumber: 2)
+        }
+        if !nameField.isEmpty {
+            try visitor.visitSingularStringField(value: nameField, fieldNumber: 3)
+        }
+        if history != .unspecified {
+            try visitor.visitSingularEnumField(value: history, fieldNumber: 4)
+        }
+        if !plural.isEmpty {
+            try visitor.visitSingularStringField(value: plural, fieldNumber: 5)
+        }
+        if !singular.isEmpty {
+            try visitor.visitSingularStringField(value: singular, fieldNumber: 6)
+        }
+        if !style.isEmpty {
+            try visitor.visitPackedEnumField(value: style, fieldNumber: 10)
+        }
+        try unknownFields.traverse(visitor: &visitor)
     }
-    if !self.pattern.isEmpty {
-      try visitor.visitRepeatedStringField(value: self.pattern, fieldNumber: 2)
-    }
-    if !self.nameField.isEmpty {
-      try visitor.visitSingularStringField(value: self.nameField, fieldNumber: 3)
-    }
-    if self.history != .unspecified {
-      try visitor.visitSingularEnumField(value: self.history, fieldNumber: 4)
-    }
-    if !self.plural.isEmpty {
-      try visitor.visitSingularStringField(value: self.plural, fieldNumber: 5)
-    }
-    if !self.singular.isEmpty {
-      try visitor.visitSingularStringField(value: self.singular, fieldNumber: 6)
-    }
-    if !self.style.isEmpty {
-      try visitor.visitPackedEnumField(value: self.style, fieldNumber: 10)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
 
-  public static func ==(lhs: Google_Api_ResourceDescriptor, rhs: Google_Api_ResourceDescriptor) -> Bool {
-    if lhs.type != rhs.type {return false}
-    if lhs.pattern != rhs.pattern {return false}
-    if lhs.nameField != rhs.nameField {return false}
-    if lhs.history != rhs.history {return false}
-    if lhs.plural != rhs.plural {return false}
-    if lhs.singular != rhs.singular {return false}
-    if lhs.style != rhs.style {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    public static func == (lhs: Google_Api_ResourceDescriptor, rhs: Google_Api_ResourceDescriptor) -> Bool {
+        if lhs.type != rhs.type { return false }
+        if lhs.pattern != rhs.pattern { return false }
+        if lhs.nameField != rhs.nameField { return false }
+        if lhs.history != rhs.history { return false }
+        if lhs.plural != rhs.plural { return false }
+        if lhs.singular != rhs.singular { return false }
+        if lhs.style != rhs.style { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }
 
 extension Google_Api_ResourceDescriptor.History: SwiftProtobuf._ProtoNameProviding {
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0HISTORY_UNSPECIFIED\0\u{1}ORIGINALLY_SINGLE_PATTERN\0\u{1}FUTURE_MULTI_PATTERN\0")
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0HISTORY_UNSPECIFIED\0\u{1}ORIGINALLY_SINGLE_PATTERN\0\u{1}FUTURE_MULTI_PATTERN\0")
 }
 
 extension Google_Api_ResourceDescriptor.Style: SwiftProtobuf._ProtoNameProviding {
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0STYLE_UNSPECIFIED\0\u{1}DECLARATIVE_FRIENDLY\0")
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0STYLE_UNSPECIFIED\0\u{1}DECLARATIVE_FRIENDLY\0")
 }
 
 extension Google_Api_ResourceReference: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".ResourceReference"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}type\0\u{3}child_type\0")
+    public static let protoMessageName: String = _protobuf_package + ".ResourceReference"
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}type\0\u{3}child_type\0")
 
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.type) }()
-      case 2: try { try decoder.decodeSingularStringField(value: &self.childType) }()
-      default: break
-      }
+    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularStringField(value: &type)
+            case 2: try decoder.decodeSingularStringField(value: &childType)
+            default: break
+            }
+        }
     }
-  }
 
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.type.isEmpty {
-      try visitor.visitSingularStringField(value: self.type, fieldNumber: 1)
+    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
+        if !type.isEmpty {
+            try visitor.visitSingularStringField(value: type, fieldNumber: 1)
+        }
+        if !childType.isEmpty {
+            try visitor.visitSingularStringField(value: childType, fieldNumber: 2)
+        }
+        try unknownFields.traverse(visitor: &visitor)
     }
-    if !self.childType.isEmpty {
-      try visitor.visitSingularStringField(value: self.childType, fieldNumber: 2)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
 
-  public static func ==(lhs: Google_Api_ResourceReference, rhs: Google_Api_ResourceReference) -> Bool {
-    if lhs.type != rhs.type {return false}
-    if lhs.childType != rhs.childType {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    public static func == (lhs: Google_Api_ResourceReference, rhs: Google_Api_ResourceReference) -> Bool {
+        if lhs.type != rhs.type { return false }
+        if lhs.childType != rhs.childType { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }

@@ -361,7 +361,7 @@ service MacosUse {
   }
 
   // Commits a transaction.
-  rpc CommitTransaction(CommitTransactionRequest) returns (CommitTransactionResponse) {
+  rpc CommitTransaction(CommitTransactionRequest) returns (Transaction) {
     option (google.api.http) = {
       post: "/v1/{name=sessions/*}:commit"
       body: "*"
@@ -370,7 +370,7 @@ service MacosUse {
   }
 
   // Rolls back a transaction.
-  rpc RollbackTransaction(RollbackTransactionRequest) returns (RollbackTransactionResponse) {
+  rpc RollbackTransaction(RollbackTransactionRequest) returns (Transaction) {
     option (google.api.http) = {
       post: "/v1/{name=sessions/*}:rollback"
       body: "*"
@@ -1546,19 +1546,6 @@ message CommitTransactionRequest {
   string transaction_id = 2 [(google.api.field_behavior) = REQUIRED];
 }
 
-// Response from committing a transaction.
-// TODO: Delete this and replace it (and its usage) with the new Transaction field Transaction.updated_session. Rollback and Commit should return Transaction. Fine to be a breaking API change, not released yet.
-message CommitTransactionResponse {
-  // The updated session with committed state.
-  Session session = 1 [(google.api.field_behavior) = REQUIRED];
-
-  // The committed transaction.
-  Transaction transaction = 2 [(google.api.field_behavior) = REQUIRED];
-
-  // Number of operations committed.
-  int32 operations_count = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
-}
-
 // Request to rollback a transaction.
 message RollbackTransactionRequest {
   // The name of the session to rollback.
@@ -1573,19 +1560,6 @@ message RollbackTransactionRequest {
 
   // Transaction ID to rollback.
   string transaction_id = 3 [(google.api.field_behavior) = REQUIRED];
-}
-
-// Response from rolling back a transaction.
-// TODO: Delete this and replace it (and its usage) with the new Transaction field Transaction.updated_session. Rollback and Commit should return Transaction. Fine to be a breaking API change, not released yet.
-message RollbackTransactionResponse {
-  // The updated session with rolled back state.
-  Session session = 1 [(google.api.field_behavior) = REQUIRED];
-
-  // The rolled back transaction.
-  Transaction transaction = 2 [(google.api.field_behavior) = REQUIRED];
-
-  // Number of operations rolled back.
-  int32 operations_count = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to get a session state snapshot.

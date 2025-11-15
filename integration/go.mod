@@ -1,4 +1,4 @@
-module github.com/joeycumines/MacosUseSDK/integration_test
+module github.com/joeycumines/MacosUseSDK/integration
 
 go 1.25.4
 

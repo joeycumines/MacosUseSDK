@@ -7,13 +7,11 @@ DerivedData/
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
 .netrc
 /config.mk
-
-# Generated code (will be committed after generation in CI)
-# Uncomment these if you don't want to commit generated code
-# /gen/
-# Note: We'll commit generated code for now to support development
-
-# Example binaries (compiled executables)
-examples/go-client/go-client
-examples/**/*.exe
-examples/**/*.out
+/scratch.md
+/examples/go-client/go-client
+/examples/**/*.exe
+/examples/**/*.out
+coverage.out
+/coverage-all.out
+coverage.lcov
+/coverage-all.lcov

@@ -1,3 +1,5 @@
+// swiftlint:disable all -- Largely unchanged from upstream.
+
 import AppKit
 import Foundation
 
@@ -78,8 +80,7 @@ private class AppOpenerOperation {
       let potentialURL = URL(fileURLWithPath: appIdentifier)
       var isDirectory: ObjCBool = false
       if FileManager.default.fileExists(atPath: potentialURL.path, isDirectory: &isDirectory)
-        && isDirectory.boolValue && potentialURL.pathExtension == "app"
-      {
+        && isDirectory.boolValue && potentialURL.pathExtension == "app" {
         appURL = potentialURL
         fputs("info: path confirmed as valid application bundle: \(potentialURL.path)\n", stderr)
         if let bundle = Bundle(url: potentialURL) {
@@ -116,8 +117,7 @@ private class AppOpenerOperation {
         ?? workspace.urlForApplication(
           toOpen: URL(fileURLWithPath: "/System/Applications/\(appIdentifier).app"))
         ?? workspace.urlForApplication(
-          toOpen: URL(fileURLWithPath: "/System/Applications/Utilities/\(appIdentifier).app"))
-      {
+          toOpen: URL(fileURLWithPath: "/System/Applications/Utilities/\(appIdentifier).app")) {
         appURL = foundURLByName
         fputs(
           "info: found application url via name search '\(appIdentifier)': \(foundURLByName.path)\n",
@@ -157,8 +157,7 @@ private class AppOpenerOperation {
     // (PID finding logic...)
     if let bID = bundleIdentifier {
       fputs("info: checking running applications for bundle id: \(bID)\n", stderr)
-      if let runningApp = NSRunningApplication.runningApplications(withBundleIdentifier: bID).first
-      {
+      if let runningApp = NSRunningApplication.runningApplications(withBundleIdentifier: bID).first {
         foundPID = runningApp.processIdentifier
         fputs("info: found running instance with pid \(foundPID!) for bundle id \(bID).\n", stderr)
       } else {
@@ -171,8 +170,7 @@ private class AppOpenerOperation {
         "warning: no bundle identifier, attempting lookup by URL: \(finalAppURL.path)\n", stderr)
       for app in workspace.runningApplications {
         if app.bundleURL?.standardizedFileURL == finalAppURL.standardizedFileURL
-          || app.executableURL?.standardizedFileURL == finalAppURL.standardizedFileURL
-        {
+          || app.executableURL?.standardizedFileURL == finalAppURL.standardizedFileURL {
           foundPID = app.processIdentifier
           fputs("info: found running instance with pid \(foundPID!) matching URL.\n", stderr)
           break
@@ -209,7 +207,7 @@ private class AppOpenerOperation {
       logStepCompletion("opening/activating application async call completed")
 
       // --- 4. Determine Final PID ---
-      var finalPID: pid_t? = nil
+      var finalPID: pid_t?
 
       if let pid = foundPID {
         finalPID = pid

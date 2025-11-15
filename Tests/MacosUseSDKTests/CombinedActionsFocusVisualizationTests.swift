@@ -1,3 +1,5 @@
+// swiftlint:disable all -- Largely unchanged from upstream.
+
 import AppKit
 import XCTest
 

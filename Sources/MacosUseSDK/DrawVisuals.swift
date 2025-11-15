@@ -1,3 +1,5 @@
+// swiftlint:disable all -- Largely unchanged from upstream.
+
 // REMOVED: #!/usr/bin/env swift
 // REMOVED: import Cocoa
 import AppKit
@@ -71,7 +73,7 @@ internal class OverlayView: NSView {
       let textFont = NSFont.systemFont(ofSize: 10.0)  // NSFont.smallSystemFontSize)
       let textAttributes: [NSAttributedString.Key: Any] = [
         .font: textFont,
-        .foregroundColor: textColor,
+        .foregroundColor: textColor
       ]
 
       // Calculate available width for text (bounds - frame lines - padding on both sides)
@@ -88,8 +90,7 @@ internal class OverlayView: NSView {
         // Keep removing characters until text + ellipsis fits
         while !stringToDraw.isEmpty
           && (stringToDraw.size(withAttributes: textAttributes).width + ellipsisSize.width
-            > availableWidth)
-        {
+            > availableWidth) {
           stringToDraw.removeLast()
         }
         stringToDraw += ellipsis
@@ -139,7 +140,7 @@ internal class OverlayView: NSView {
       let textAttributes: [NSAttributedString.Key: Any] = [
         .font: textFont,
         .foregroundColor: captionTextColor,
-        .paragraphStyle: paragraphStyle,
+        .paragraphStyle: paragraphStyle
       ]
 
       // Calculate available area for text (bounds - padding)
@@ -401,8 +402,7 @@ public func showVisualFeedback(
 ///                                 Only elements with valid geometry (x, y, width > 0, height > 0) will be highlighted.
 /// - Parameter duration: The time in seconds for which the overlay windows should be visible. Defaults to 3.0 seconds.
 @MainActor  // Ensure UI work happens on the main thread
-public func drawHighlightBoxes(for elementsToHighlightInput: [ElementData], duration: Double = 3.0)
-{
+public func drawHighlightBoxes(for elementsToHighlightInput: [ElementData], duration: Double = 3.0) {
   fputs(
     "info: drawHighlightBoxes called for \(elementsToHighlightInput.count) elements, duration \(duration)s.\n",
     stderr)

@@ -1,3 +1,5 @@
+// swiftlint:disable all -- Largely unchanged from upstream.
+
 import Foundation
 import MacosUseSDK  // Import your library
 
@@ -6,7 +8,7 @@ import MacosUseSDK  // Import your library
 // 1. Argument Parsing
 var arguments = CommandLine.arguments
 var onlyVisible = false
-var pidString: String? = nil
+var pidString: String?
 
 // Remove the executable name
 arguments.removeFirst()

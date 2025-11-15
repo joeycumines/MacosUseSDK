@@ -19,64 +19,63 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
-  struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
-  typealias Version = _2
+private struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+    struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
+    typealias Version = _2
 }
 
 /// Image format for screenshots.
 public enum Macosusesdk_V1_ImageFormat: SwiftProtobuf.Enum, Swift.CaseIterable {
-  public typealias RawValue = Int
+    public typealias RawValue = Int
 
-  /// Default format (PNG).
-  case unspecified // = 0
+    /// Default format (PNG).
+    case unspecified // = 0
 
-  /// PNG format (lossless).
-  case png // = 1
+    /// PNG format (lossless).
+    case png // = 1
 
-  /// JPEG format (lossy, smaller size).
-  case jpeg // = 2
+    /// JPEG format (lossy, smaller size).
+    case jpeg // = 2
 
-  /// TIFF format (lossless, larger size).
-  case tiff // = 3
-  case UNRECOGNIZED(Int)
+    /// TIFF format (lossless, larger size).
+    case tiff // = 3
+    case UNRECOGNIZED(Int)
 
-  public init() {
-    self = .unspecified
-  }
-
-  public init?(rawValue: Int) {
-    switch rawValue {
-    case 0: self = .unspecified
-    case 1: self = .png
-    case 2: self = .jpeg
-    case 3: self = .tiff
-    default: self = .UNRECOGNIZED(rawValue)
+    public init() {
+        self = .unspecified
     }
-  }
 
-  public var rawValue: Int {
-    switch self {
-    case .unspecified: return 0
-    case .png: return 1
-    case .jpeg: return 2
-    case .tiff: return 3
-    case .UNRECOGNIZED(let i): return i
+    public init?(rawValue: Int) {
+        switch rawValue {
+        case 0: self = .unspecified
+        case 1: self = .png
+        case 2: self = .jpeg
+        case 3: self = .tiff
+        default: self = .UNRECOGNIZED(rawValue)
+        }
     }
-  }
 
-  // The compiler won't synthesize support with the UNRECOGNIZED case.
-  public static let allCases: [Macosusesdk_V1_ImageFormat] = [
-    .unspecified,
-    .png,
-    .jpeg,
-    .tiff,
-  ]
+    public var rawValue: Int {
+        switch self {
+        case .unspecified: 0
+        case .png: 1
+        case .jpeg: 2
+        case .tiff: 3
+        case let .UNRECOGNIZED(i): i
+        }
+    }
 
+    // The compiler won't synthesize support with the UNRECOGNIZED case.
+    public static let allCases: [Macosusesdk_V1_ImageFormat] = [
+        .unspecified,
+        .png,
+        .jpeg,
+        .tiff,
+    ]
 }
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
 extension Macosusesdk_V1_ImageFormat: SwiftProtobuf._ProtoNameProviding {
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0IMAGE_FORMAT_UNSPECIFIED\0\u{1}IMAGE_FORMAT_PNG\0\u{1}IMAGE_FORMAT_JPEG\0\u{1}IMAGE_FORMAT_TIFF\0")
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0IMAGE_FORMAT_UNSPECIFIED\0\u{1}IMAGE_FORMAT_PNG\0\u{1}IMAGE_FORMAT_JPEG\0\u{1}IMAGE_FORMAT_TIFF\0")
 }

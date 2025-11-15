@@ -1,3 +1,5 @@
+// swiftlint:disable all -- Largely unchanged from upstream.
+
 import AppKit  // For NSWorkspace, NSRunningApplication, CGPoint, etc.
 import CoreGraphics
 import Foundation
@@ -40,7 +42,7 @@ public struct ActionOptions: Sendable {
   /// Duration for input animations and element highlighting.
   public var animationDuration: Double = 0.8
   /// Explicitly provide the PID for traversal if the primary action isn't `open`. Required if traversing without opening.
-  public var pidForTraversal: pid_t? = nil
+  public var pidForTraversal: pid_t?
   /// Delay in seconds *after* the primary action completes, but *before* the 'after' traversal starts.
   public var delayAfterAction: Double = 0.2
 
@@ -125,7 +127,7 @@ public func performAction(
   let options = optionsInput.validated()  // Ensure options are consistent (e.g., showDiff implies traversals)
   var result = ActionResult()
   var effectivePid: pid_t? = options.pidForTraversal
-  var primaryActionError: Error? = nil  // Temporary storage for Error objects
+  var primaryActionError: Error?  // Temporary storage for Error objects
   var primaryActionExecuted: Bool = false  // Flag to track if primary action ran
 
   fputs("info: [Coordinator] Starting action: \(action) with options: \(options)\n", stderr)
@@ -254,7 +256,7 @@ public func performAction(
   }
 
   // --- 5. Traverse After ---
-  var finalTraversalData: ResponseData? = nil
+  var finalTraversalData: ResponseData?
   if options.traverseAfter {
     fputs("info: [Coordinator] Performing post-action traversal for PID \(pid)...\n", stderr)
     do {
@@ -277,8 +279,7 @@ public func performAction(
   if options.showDiff {
     fputs("info: [Coordinator] Calculating detailed traversal diff...\n", stderr)
     if let beforeElements = result.traversalBefore?.elements,
-      let afterElements = result.traversalAfter?.elements
-    {
+      let afterElements = result.traversalAfter?.elements {
 
       // --- DETAILED DIFF LOGIC START ---
       var added: [ElementData] = []
@@ -293,7 +294,7 @@ public func performAction(
 
       // Iterate through 'before' elements to find matches or mark as removed
       for beforeElement in beforeElements {
-        var bestMatchIndex: Int? = nil
+        var bestMatchIndex: Int?
         var smallestDistanceSq: Double = .greatestFiniteMagnitude
 
         // Find potential matches in the 'after' list
@@ -305,8 +306,7 @@ public func performAction(
 
           // Check position proximity (if coordinates exist)
           if let bx = beforeElement.x, let by = beforeElement.y, let ax = afterElement.x,
-            let ay = afterElement.y
-          {
+            let ay = afterElement.y {
             let dx = bx - ax
             let dy = by - ay
             let distanceSq = (dx * dx) + (dy * dy)
@@ -320,8 +320,7 @@ public func performAction(
               }
             }
           } else if beforeElement.x == nil && afterElement.x == nil && beforeElement.y == nil
-            && afterElement.y == nil
-          {
+            && afterElement.y == nil {
             // If *both* lack position, consider them potentially matched if role matches (and text?)
             // For now, let's focus on positional matching primarily.
             // Maybe add a fallback: if role matches AND text matches (and text exists)

@@ -1,3 +1,5 @@
+// swiftlint:disable all -- Largely unchanged from upstream.
+
 import AppKit  // Required for NSApplication and RunLoop
 import Foundation
 import MacosUseSDK  // Your library
@@ -5,8 +7,8 @@ import MacosUseSDK  // Your library
 // --- Helper Function for Argument Parsing ---
 // Simple parser for "--duration <value>" and PID
 func parseArguments() -> (pid: Int32?, duration: Double?) {
-  var pid: Int32? = nil
-  var duration: Double? = nil
+  var pid: Int32?
+  var duration: Double?
   var waitingForDurationValue = false
 
   // Skip the executable path

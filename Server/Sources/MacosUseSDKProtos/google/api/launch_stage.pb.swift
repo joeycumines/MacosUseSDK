@@ -29,110 +29,109 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
-  struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
-  typealias Version = _2
+private struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+    struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
+    typealias Version = _2
 }
 
 /// The launch stage as defined by [Google Cloud Platform
 /// Launch Stages](https://cloud.google.com/terms/launch-stages).
 public enum Google_Api_LaunchStage: SwiftProtobuf.Enum, Swift.CaseIterable {
-  public typealias RawValue = Int
+    public typealias RawValue = Int
 
-  /// Do not use this default value.
-  case unspecified // = 0
+    /// Do not use this default value.
+    case unspecified // = 0
 
-  /// The feature is not yet implemented. Users can not use it.
-  case unimplemented // = 6
+    /// The feature is not yet implemented. Users can not use it.
+    case unimplemented // = 6
 
-  /// Prelaunch features are hidden from users and are only visible internally.
-  case prelaunch // = 7
+    /// Prelaunch features are hidden from users and are only visible internally.
+    case prelaunch // = 7
 
-  /// Early Access features are limited to a closed group of testers. To use
-  /// these features, you must sign up in advance and sign a Trusted Tester
-  /// agreement (which includes confidentiality provisions). These features may
-  /// be unstable, changed in backward-incompatible ways, and are not
-  /// guaranteed to be released.
-  case earlyAccess // = 1
+    /// Early Access features are limited to a closed group of testers. To use
+    /// these features, you must sign up in advance and sign a Trusted Tester
+    /// agreement (which includes confidentiality provisions). These features may
+    /// be unstable, changed in backward-incompatible ways, and are not
+    /// guaranteed to be released.
+    case earlyAccess // = 1
 
-  /// Alpha is a limited availability test for releases before they are cleared
-  /// for widespread use. By Alpha, all significant design issues are resolved
-  /// and we are in the process of verifying functionality. Alpha customers
-  /// need to apply for access, agree to applicable terms, and have their
-  /// projects allowlisted. Alpha releases don't have to be feature complete,
-  /// no SLAs are provided, and there are no technical support obligations, but
-  /// they will be far enough along that customers can actually use them in
-  /// test environments or for limited-use tests -- just like they would in
-  /// normal production cases.
-  case alpha // = 2
+    /// Alpha is a limited availability test for releases before they are cleared
+    /// for widespread use. By Alpha, all significant design issues are resolved
+    /// and we are in the process of verifying functionality. Alpha customers
+    /// need to apply for access, agree to applicable terms, and have their
+    /// projects allowlisted. Alpha releases don't have to be feature complete,
+    /// no SLAs are provided, and there are no technical support obligations, but
+    /// they will be far enough along that customers can actually use them in
+    /// test environments or for limited-use tests -- just like they would in
+    /// normal production cases.
+    case alpha // = 2
 
-  /// Beta is the point at which we are ready to open a release for any
-  /// customer to use. There are no SLA or technical support obligations in a
-  /// Beta release. Products will be complete from a feature perspective, but
-  /// may have some open outstanding issues. Beta releases are suitable for
-  /// limited production use cases.
-  case beta // = 3
+    /// Beta is the point at which we are ready to open a release for any
+    /// customer to use. There are no SLA or technical support obligations in a
+    /// Beta release. Products will be complete from a feature perspective, but
+    /// may have some open outstanding issues. Beta releases are suitable for
+    /// limited production use cases.
+    case beta // = 3
 
-  /// GA features are open to all developers and are considered stable and
-  /// fully qualified for production use.
-  case ga // = 4
+    /// GA features are open to all developers and are considered stable and
+    /// fully qualified for production use.
+    case ga // = 4
 
-  /// Deprecated features are scheduled to be shut down and removed. For more
-  /// information, see the "Deprecation Policy" section of our [Terms of
-  /// Service](https://cloud.google.com/terms/)
-  /// and the [Google Cloud Platform Subject to the Deprecation
-  /// Policy](https://cloud.google.com/terms/deprecation) documentation.
-  case deprecated // = 5
-  case UNRECOGNIZED(Int)
+    /// Deprecated features are scheduled to be shut down and removed. For more
+    /// information, see the "Deprecation Policy" section of our [Terms of
+    /// Service](https://cloud.google.com/terms/)
+    /// and the [Google Cloud Platform Subject to the Deprecation
+    /// Policy](https://cloud.google.com/terms/deprecation) documentation.
+    case deprecated // = 5
+    case UNRECOGNIZED(Int)
 
-  public init() {
-    self = .unspecified
-  }
-
-  public init?(rawValue: Int) {
-    switch rawValue {
-    case 0: self = .unspecified
-    case 1: self = .earlyAccess
-    case 2: self = .alpha
-    case 3: self = .beta
-    case 4: self = .ga
-    case 5: self = .deprecated
-    case 6: self = .unimplemented
-    case 7: self = .prelaunch
-    default: self = .UNRECOGNIZED(rawValue)
+    public init() {
+        self = .unspecified
     }
-  }
 
-  public var rawValue: Int {
-    switch self {
-    case .unspecified: return 0
-    case .earlyAccess: return 1
-    case .alpha: return 2
-    case .beta: return 3
-    case .ga: return 4
-    case .deprecated: return 5
-    case .unimplemented: return 6
-    case .prelaunch: return 7
-    case .UNRECOGNIZED(let i): return i
+    public init?(rawValue: Int) {
+        switch rawValue {
+        case 0: self = .unspecified
+        case 1: self = .earlyAccess
+        case 2: self = .alpha
+        case 3: self = .beta
+        case 4: self = .ga
+        case 5: self = .deprecated
+        case 6: self = .unimplemented
+        case 7: self = .prelaunch
+        default: self = .UNRECOGNIZED(rawValue)
+        }
     }
-  }
 
-  // The compiler won't synthesize support with the UNRECOGNIZED case.
-  public static let allCases: [Google_Api_LaunchStage] = [
-    .unspecified,
-    .unimplemented,
-    .prelaunch,
-    .earlyAccess,
-    .alpha,
-    .beta,
-    .ga,
-    .deprecated,
-  ]
+    public var rawValue: Int {
+        switch self {
+        case .unspecified: 0
+        case .earlyAccess: 1
+        case .alpha: 2
+        case .beta: 3
+        case .ga: 4
+        case .deprecated: 5
+        case .unimplemented: 6
+        case .prelaunch: 7
+        case let .UNRECOGNIZED(i): i
+        }
+    }
 
+    // The compiler won't synthesize support with the UNRECOGNIZED case.
+    public static let allCases: [Google_Api_LaunchStage] = [
+        .unspecified,
+        .unimplemented,
+        .prelaunch,
+        .earlyAccess,
+        .alpha,
+        .beta,
+        .ga,
+        .deprecated,
+    ]
 }
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
 extension Google_Api_LaunchStage: SwiftProtobuf._ProtoNameProviding {
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0LAUNCH_STAGE_UNSPECIFIED\0\u{1}EARLY_ACCESS\0\u{1}ALPHA\0\u{1}BETA\0\u{1}GA\0\u{1}DEPRECATED\0\u{1}UNIMPLEMENTED\0\u{1}PRELAUNCH\0")
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0LAUNCH_STAGE_UNSPECIFIED\0\u{1}EARLY_ACCESS\0\u{1}ALPHA\0\u{1}BETA\0\u{1}GA\0\u{1}DEPRECATED\0\u{1}UNIMPLEMENTED\0\u{1}PRELAUNCH\0")
 }

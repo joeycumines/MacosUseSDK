@@ -19,73 +19,73 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
-  struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
-  typealias Version = _2
+private struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+    struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
+    typealias Version = _2
 }
 
 /// A resource representing a running application instance that the server
 /// is actively tracking for automation.
 public struct Macosusesdk_V1_Application: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
 
-  /// Resource name in the format "applications/{application}"
-  /// where {application} is the process ID (PID).
-  public var name: String = String()
+    /// Resource name in the format "applications/{application}"
+    /// where {application} is the process ID (PID).
+    public var name: String = .init()
 
-  /// The process ID of the application.
-  public var pid: Int32 = 0
+    /// The process ID of the application.
+    public var pid: Int32 = 0
 
-  /// The localized name of the application.
-  public var displayName: String = String()
+    /// The localized name of the application.
+    public var displayName: String = .init()
 
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
+    public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  public init() {}
+    public init() {}
 }
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
-fileprivate let _protobuf_package = "macosusesdk.v1"
+private let _protobuf_package = "macosusesdk.v1"
 
 extension Macosusesdk_V1_Application: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".Application"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}pid\0\u{3}display_name\0")
+    public static let protoMessageName: String = _protobuf_package + ".Application"
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}pid\0\u{3}display_name\0")
 
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
-      case 2: try { try decoder.decodeSingularInt32Field(value: &self.pid) }()
-      case 3: try { try decoder.decodeSingularStringField(value: &self.displayName) }()
-      default: break
-      }
+    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularStringField(value: &name)
+            case 2: try decoder.decodeSingularInt32Field(value: &pid)
+            case 3: try decoder.decodeSingularStringField(value: &displayName)
+            default: break
+            }
+        }
     }
-  }
 
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.name.isEmpty {
-      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
+    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
+        if !name.isEmpty {
+            try visitor.visitSingularStringField(value: name, fieldNumber: 1)
+        }
+        if pid != 0 {
+            try visitor.visitSingularInt32Field(value: pid, fieldNumber: 2)
+        }
+        if !displayName.isEmpty {
+            try visitor.visitSingularStringField(value: displayName, fieldNumber: 3)
+        }
+        try unknownFields.traverse(visitor: &visitor)
     }
-    if self.pid != 0 {
-      try visitor.visitSingularInt32Field(value: self.pid, fieldNumber: 2)
-    }
-    if !self.displayName.isEmpty {
-      try visitor.visitSingularStringField(value: self.displayName, fieldNumber: 3)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
 
-  public static func ==(lhs: Macosusesdk_V1_Application, rhs: Macosusesdk_V1_Application) -> Bool {
-    if lhs.name != rhs.name {return false}
-    if lhs.pid != rhs.pid {return false}
-    if lhs.displayName != rhs.displayName {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+    public static func == (lhs: Macosusesdk_V1_Application, rhs: Macosusesdk_V1_Application) -> Bool {
+        if lhs.name != rhs.name { return false }
+        if lhs.pid != rhs.pid { return false }
+        if lhs.displayName != rhs.displayName { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
 }

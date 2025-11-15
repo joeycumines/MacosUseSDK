@@ -30,7 +30,7 @@ let package = Package(
       targets: ["AppOpenerTool"]),
     .executable(
       name: "ActionTool",
-      targets: ["ActionTool"]),
+      targets: ["ActionTool"])
   ],
   dependencies: [
     // Add any external package dependencies here later if needed
@@ -43,7 +43,7 @@ let package = Package(
       dependencies: [],
       linkerSettings: [
         .linkedFramework("AppKit"),
-        .linkedFramework("ApplicationServices"),
+        .linkedFramework("ApplicationServices")
       ]
     ),
     .executableTarget(
@@ -75,6 +75,6 @@ let package = Package(
     .testTarget(
       name: "MacosUseSDKTests",
       dependencies: ["MacosUseSDK"]
-    ),
+    )
   ]
 )

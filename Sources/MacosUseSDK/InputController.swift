@@ -1,4 +1,4 @@
-// #!/usr/bin/swift - Don't need this when it's part of a library
+// swiftlint:disable all -- Largely unchanged from upstream.
 
 import AppKit  // Needed for Process and potentially other things later
 import CoreGraphics
@@ -14,8 +14,7 @@ extension MacosUseSDKError {
     .internalError("Input Simulation Failed: \(message)")
   }
   public static func osascriptExecutionFailed(status: Int32, message: String = "")
-    -> MacosUseSDKError
-  {
+    -> MacosUseSDKError {
     .internalError("osascript execution failed with status \(status). \(message)")
   }
 }

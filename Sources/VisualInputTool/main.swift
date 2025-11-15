@@ -1,3 +1,5 @@
+// swiftlint:disable all -- Largely unchanged from upstream.
+
 import AppKit  // Required for RunLoop, NSScreen
 import CoreGraphics  // For CGPoint, CGEventFlags
 import Foundation
@@ -26,7 +28,7 @@ func finish(success: Bool, message: String? = nil) {
 // --- Argument Parsing Helper ---
 // Parses standard input actions AND an optional --duration flag
 func parseArguments() -> (action: String?, args: [String], duration: Double) {
-  var action: String? = nil
+  var action: String?
   var actionArgs: [String] = []
   var duration: Double = 0.5  // Default duration for visualization
   var waitingForDurationValue = false
@@ -95,7 +97,7 @@ guard let action = action else {
 
 // --- Action Handling ---
 var success = false
-var message: String? = nil
+var message: String?
 var requiresRunLoopWait = true  // Default to true, as all actions now have visualization
 
 // Variable to hold the actual duration used for visualization

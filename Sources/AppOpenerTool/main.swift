@@ -1,3 +1,5 @@
+// swiftlint:disable all -- Largely unchanged from upstream.
+
 // main.swift for AppOpenerTool
 // Script to open or activate a specified macOS application by name or path.
 // Reliably outputs the PID on success (launch or activation) and processing time to stderr.

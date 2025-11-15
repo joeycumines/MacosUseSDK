@@ -1,3 +1,5 @@
+// swiftlint:disable all -- Largely unchanged from upstream.
+
 // The Swift Programming Language
 // https://docs.swift.org/swift-book
 
@@ -112,8 +114,7 @@ public struct ResponseData: Codable, Sendable {
 /// - Returns: A `ResponseData` struct containing the collected elements, statistics, and timing information.
 /// - Throws: `MacosUseSDKError` if accessibility is denied, the app is not found, or an internal error occurs.
 public func traverseAccessibilityTree(pid: Int32, onlyVisibleElements: Bool = false) throws
-  -> ResponseData
-{
+  -> ResponseData {
   let operation = AccessibilityTraversalOperation(
     pid: pid, onlyVisibleElements: onlyVisibleElements)
   return try operation.executeTraversal()
@@ -136,7 +137,7 @@ private class AccessibilityTraversalOperation {
     "AXGroup", "AXStaticText", "AXUnknown", "AXSeparator",
     "AXHeading", "AXLayoutArea", "AXHelpTag", "AXGrowArea",
     "AXOutline", "AXScrollArea", "AXSplitGroup", "AXSplitter",
-    "AXToolbar", "AXDisclosureTriangle",
+    "AXToolbar", "AXDisclosureTriangle"
   ]
 
   init(pid: Int32, onlyVisibleElements: Bool) {
@@ -292,32 +293,30 @@ private class AccessibilityTraversalOperation {
     size: CGSize?, enabled: Bool?, focused: Bool?, attributes: [String: String]
   ) {
     var role = "AXUnknown"
-    var roleDesc: String? = nil
+    var roleDesc: String?
     var textParts: [String] = []
-    var position: CGPoint? = nil
-    var size: CGSize? = nil
-    var enabled: Bool? = nil
-    var focused: Bool? = nil
+    var position: CGPoint?
+    var size: CGSize?
+    var enabled: Bool?
+    var focused: Bool?
     var attributes: [String: String] = [:]
 
     if let roleValue = copyAttributeValue(element: element, attribute: kAXRoleAttribute as String) {
       role = getStringValue(roleValue) ?? "AXUnknown"
     }
     if let roleDescValue = copyAttributeValue(
-      element: element, attribute: kAXRoleDescriptionAttribute as String)
-    {
+      element: element, attribute: kAXRoleDescriptionAttribute as String) {
       roleDesc = getStringValue(roleDescValue)
     }
 
     let textAttributes = [
       kAXValueAttribute as String, kAXTitleAttribute as String, kAXDescriptionAttribute as String,
-      "AXLabel", "AXHelp",
+      "AXLabel", "AXHelp"
     ]
     for attr in textAttributes {
       if let attrValue = copyAttributeValue(element: element, attribute: attr),
         let text = getStringValue(attrValue),
-        !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-      {
+        !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
         textParts.append(text)
       }
     }
@@ -326,8 +325,7 @@ private class AccessibilityTraversalOperation {
       ? nil : textParts.joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
 
     if let posValue = copyAttributeValue(
-      element: element, attribute: kAXPositionAttribute as String)
-    {
+      element: element, attribute: kAXPositionAttribute as String) {
       position = getCGPointValue(posValue)
     }
 
@@ -336,14 +334,12 @@ private class AccessibilityTraversalOperation {
     }
 
     if let enabledValue = copyAttributeValue(
-      element: element, attribute: kAXEnabledAttribute as String)
-    {
+      element: element, attribute: kAXEnabledAttribute as String) {
       enabled = getBoolValue(enabledValue)
     }
 
     if let focusedValue = copyAttributeValue(
-      element: element, attribute: kAXFocusedAttribute as String)
-    {
+      element: element, attribute: kAXFocusedAttribute as String) {
       focused = getBoolValue(focusedValue)
     }
 
@@ -352,12 +348,11 @@ private class AccessibilityTraversalOperation {
       kAXTitleAttribute as String,
       kAXValueAttribute as String,
       kAXDescriptionAttribute as String,
-      kAXHelpAttribute as String,
+      kAXHelpAttribute as String
     ]
     for attr in commonAttributes {
       if let attrValue = copyAttributeValue(element: element, attribute: attr),
-        let strValue = getStringValue(attrValue)
-      {
+        let strValue = getStringValue(attrValue) {
         attributes[attr] = strValue
       }
     }
@@ -385,10 +380,10 @@ private class AccessibilityTraversalOperation {
     statistics.role_counts[role, default: 0] += 1
 
     // 3. Determine Geometry and Visibility
-    var finalX: Double? = nil
-    var finalY: Double? = nil
-    var finalWidth: Double? = nil
-    var finalHeight: Double? = nil
+    var finalX: Double?
+    var finalY: Double?
+    var finalWidth: Double?
+    var finalHeight: Double?
     if let p = position, let s = size, s.width > 0 || s.height > 0 {
       finalX = Double(p.x)
       finalY = Double(p.y)
@@ -460,8 +455,7 @@ private class AccessibilityTraversalOperation {
     // 5. Recursively traverse children, windows, main window
     // a) Windows
     if let windowsValue = copyAttributeValue(
-      element: element, attribute: kAXWindowsAttribute as String)
-    {
+      element: element, attribute: kAXWindowsAttribute as String) {
       if let windowsArray = windowsValue as? [AXUIElement] {
         for windowElement in windowsArray where !visitedElements.contains(windowElement) {
           walkElementTree(element: windowElement, depth: depth + 1)
@@ -473,8 +467,7 @@ private class AccessibilityTraversalOperation {
 
     // b) Main Window
     if let mainWindowValue = copyAttributeValue(
-      element: element, attribute: kAXMainWindowAttribute as String)
-    {
+      element: element, attribute: kAXMainWindowAttribute as String) {
       if CFGetTypeID(mainWindowValue) == AXUIElementGetTypeID() {
         let mainWindowElement = mainWindowValue as! AXUIElement
         if !visitedElements.contains(mainWindowElement) {
@@ -487,8 +480,7 @@ private class AccessibilityTraversalOperation {
 
     // c) Regular Children
     if let childrenValue = copyAttributeValue(
-      element: element, attribute: kAXChildrenAttribute as String)
-    {
+      element: element, attribute: kAXChildrenAttribute as String) {
       if let childrenArray = childrenValue as? [AXUIElement] {
         for childElement in childrenArray where !visitedElements.contains(childElement) {
           walkElementTree(element: childElement, depth: depth + 1)

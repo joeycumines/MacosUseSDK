@@ -1,3 +1,5 @@
+// swiftlint:disable all -- Largely unchanged from upstream.
+
 import CoreGraphics  // Needed for CGPoint, CGKeyCode, CGEventFlags
 import Foundation  // Needed for fputs, etc.
 
@@ -128,8 +130,7 @@ public enum CombinedActions {
   /// - Throws: `MacosUseSDKError` if either the application opening/activation or the accessibility traversal fails.
   @MainActor  // Ensures UI-related parts like activation happen on the main thread
   public static func openAndTraverseApp(identifier: String, onlyVisibleElements: Bool = false)
-    async throws -> ResponseData
-  {
+    async throws -> ResponseData {
     fputs(
       "info: starting combined action 'openAndTraverseApp' for identifier: '\(identifier)'\n",
       stderr)
@@ -278,8 +279,7 @@ public enum CombinedActions {
   ///   - afterElements: The list of elements from the second traversal.
   /// - Returns: A `TraversalDiff` struct containing added and removed elements.
   private static func calculateDiff(beforeElements: [ElementData], afterElements: [ElementData])
-    -> TraversalDiff
-  {
+    -> TraversalDiff {
     fputs(
       "debug: calculating diff between \(beforeElements.count) (before) and \(afterElements.count) (after) elements.\n",
       stderr)

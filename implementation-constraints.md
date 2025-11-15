@@ -114,6 +114,11 @@ CI/CD Workflows:
 
 IMPORTANT: You, the implementer, are expected to read and CONTINUALLY refine [implementation-plan.md](./implementation-plan.md).
 
+Operational Expectations (Reinforced after early stoppages):
+- You MUST NOT stop work mid-task; a session only ends when the current manager request is 100% satisfied or explicitly halted.
+- You MUST NOT ask for permission to perform obvious next steps (e.g. running lint, running the `all` target, fixing reported issues) – you are expected to simply execute.
+- You MUST aggressively use the existing plan and constraints to determine the next concrete action whenever there is ambiguity.
+
 **Additional Constraints:**
 
 - **FORBIDDEN FROM USING A DIRECT SHELL:** All commands MUST be executed by defining a custom target in `config.mk` and executing it with `mcp-server-make`.
