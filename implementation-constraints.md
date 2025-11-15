@@ -11,6 +11,14 @@ The gRPC server MUST:
 - Support automating MULTIPLE windows at once
 - Be performant
 - Support use cases like automating actions, inclusive of identifying UI elements, reading text from UI elements, entering input into UI elements and interacting in arbitrary ways
+- Support "complicated interactions with apps on Mac OS including interacting with Windows"
+- Support integration with developer tools like VS Code, including:
+  - Complex multi-window interactions
+  - Advanced element targeting and querying
+  - Sophisticated automation workflows
+  - Real-time observation and monitoring
+- Be production-ready, NOT just proof-of-concept
+- This is approximately 85% INCOMPLETE as of 2025-01-XX - basic scaffolding exists but most functionality is missing
 
 The gRPC API MUST:
 - Follow Google's AIPs in ALL regards (2025 / latest, up to date standards)
@@ -21,16 +29,42 @@ The gRPC API MUST:
 - Support sophisticated, well-conceived concurrency patterns
 - Use `buf` linting BUT be aware that there ARE conflicts with Google's AIPs. When in doubt, use Google's AIPs as the source of truth.
 - Configure and use https://linter.aip.dev/ UNLESS it is not possible to do so. The `api-linter` command MUST NOT have its dependencies pinned within the same Go module as the Go stubs. To be clear this is Google's linter for the AIPs, and is distinct from `buf lint`, and takes PRECEDENCE over `buf lint` where there are conflicts.
+- Include ALL necessary resources as first-class addressable entities:
+  - Window resource (MISSING - critical for multi-window automation)
+  - Element resource (MISSING - critical for element targeting)
+  - Observation resource (MISSING - for streaming change detection)
+  - Session resource (MISSING - for transaction support)
+  - Query methods (MISSING - for sophisticated element search)
+  - Screenshot methods (MISSING - for visual verification)
+  - Clipboard methods (MISSING - for clipboard operations)
+  - File methods (MISSING - for file dialog automation)
+  - Macro resource (MISSING - for workflow automation)
+  - Script methods (MISSING - for AppleScript/JXA execution)
+  - Metrics methods (MISSING - for performance monitoring)
+- Support advanced input types beyond basic click/type:
+  - Keyboard combinations with modifiers (Command, Option, Control, Shift)
+  - Special keys (Function keys, media keys)
+  - Mouse operations (drag, right-click, scroll, hover)
+  - Multi-touch gestures
+- Implement element targeting/selector system for robust element identification
+- Support streaming observations for real-time change detection and monitoring
+- Support sessions and transactions for atomic multi-step operations
+- Support performance metrics and diagnostics for operational visibility
 
 Testing and Tooling:
-- Implement comprehensive unit tests, at bare minimum
-- Implement PROPER CI, using GitHub Actions, inclusive of unit testing, and build and linting and all relevant checks
+- ALL new behavior and ALL modifications to existing behavior MUST be accompanied by automated tests in the SAME change set (commit/PR) – no feature work is considered complete without tests.
+- Tests MUST be designed and updated FIRST in the implementation process (or in lockstep), not treated as an afterthought; the implementation plan for any task MUST explicitly call out unit, integration, and, where relevant, end-to-end tests.
+- Implement and maintain comprehensive unit tests across all critical components (Swift server actors, SDK helpers, Go clients, and proto-level helpers) – “happy path only” coverage is insufficient.
+- Implement and maintain integration tests that exercise real automation flows against the "Golden Applications" (TextEdit, Calculator, Finder) as defined in `implementation-plan.md`, including state-delta assertions and PollUntil-style convergence checks.
+- Implement PROPER CI, using GitHub Actions, inclusive of unit testing, integration testing, build, linting, AIP/buf/api-linter checks, and any metrics/resource-invariant checks (e.g. leak detection via `GetMetrics`).
+- Tests and CI checks MUST be kept green at all times; temporarily disabling or commenting out failing tests is FORBIDDEN unless explicitly justified and documented in the plan with a concrete, near-term fix task.
+- Any bug fix MUST include at least one new or updated test that would have caught the bug prior to the fix.
 
 Documentation and Planning:
 - ALL updates to the plan MUST be represented in `./implementation-plan.md`, NOT any other files
 - You MUST NOT create status update files like `IMPLEMENTATION_COMPLETE.md` or `IMPLEMENTATION_NOTES.md`
 - You MUST keep `./implementation-plan.md` UP TO DATE with minimal edits, consolidating and updating where necessary
-- The plan MUST be STRICTLY and PERFECTLY aligned to this constraints document
+- The plan MUST be STRICTLY and PERFECTLY aligned to this constraints document **while also reflecting the actual current state of the repository**; when reality and earlier text diverge, you MUST update the plan to match reality and then adjust future tasks accordingly.
 - You MUST update `implementation-plan.md` as part of each set of changes, potentially multiple times per session
 
 Proto API Structure:
@@ -84,3 +118,19 @@ CI/CD Workflows:
 - For multi-command scripts, typically use `set -x`
 
 IMPORTANT: You, the implementer, are expected to read and CONTINUALLY refine [implementation-plan.md](./implementation-plan.md).
+
+Operational Expectations (Reinforced after early stoppages):
+- You MUST NOT stop work mid-task; a session only ends when the current manager request is 100% satisfied or explicitly halted.
+- You MUST NOT ask for permission to perform obvious next steps (e.g. running lint, running the `all` target, fixing reported issues) – you are expected to simply execute.
+- You MUST aggressively use the existing plan and constraints to determine the next concrete action whenever there is ambiguity.
+
+**Additional Constraints:**
+
+- **FORBIDDEN FROM USING A DIRECT SHELL:** All commands MUST be executed by defining a custom target in `config.mk` and executing it with `mcp-server-make`.
+- **MCP MAKE FILE OPTION IS FORBIDDEN:** When invoking `mcp-server-make`, you MUST NOT specify the `file` option (i.e. do **not** pass `file=config.mk` or any other makefile). The make invocation MUST rely on the repository's default `Makefile` discovery. `config.mk` exists **only** as the place to define temporary/custom targets that are then picked up by the normal make process.
+- **DO NOT BREAK THE BUILD:** Run the core `all` target constantly. Use `mcp-server-make all`. This is not a suggestion. It is your only way of knowing you haven't failed again. Add a `TODO` to run it after every major change and after every file change.
+- **ALL `config.mk` recipes MUST use `| tee /tmp/build.log | tail -n 100` or a similar pattern:** To mitigate excessive output. I don't want to hear you whining.
+- **PRIOR TO ANY CODE OR PLAN EDITS:** Use the TODO tool to create an exhaustive task list covering the implementation plan, all known deficiencies, all current constraints, and motivational reminders as explicitly directed.
+- **TODO LIST CONTENT REQUIREMENT:** The TODO tool entry MUST enumerate every task from `implementation-plan.md`, every deficiency called out in the latest code review, every active constraint (including command execution rules), and motivational reminders (e.g., avoiding nil element registration, running builds to earn meals).
+- **FREQUENT `all` EXECUTION:** Execute the make-all-with-log target (invoked via `mcp-server-make all`) after every change to ensure the element service fixes compile without errors.
+- **FAVOR SUB-AGENTS:** Delegate work to sub-agents whenever feasible to maximize parallel progress.
