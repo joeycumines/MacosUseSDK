@@ -1,3 +1,16 @@
+# Implementation Constraints
+
+## Session Directives
+
+- Maintain an exhaustive TODO list via the mandated tool before any code or plan edits; include every task from `implementation-plan.md`, every known deficiency, all active constraints, and motivational reminders.
+- Never stop execution mid-task and do not ask clarifying questions; infer next actions from the plan and constraints, and continue iterating until the entire plan is complete.
+- All progress must be incremental yet substantial per iteration, with the TODO list continuously reflecting accurate status and next steps.
+- Absolutely no manual testing; every behavior must be validated through automated tests (unit, integration, end-to-end) and recorded in CI.
+- Assume macOS availability with minimal preconditions (Calculator/TextEdit/Finder) when designing integration tests.
+- You are responsible for all bookkeeping (plan + constraints) and for shipping a production-ready result immediately upon completion.
+
+## Core Directives
+
 Implement a FULLY-REALISED, production-ready, gRPC server, acting as an API layer around the SDK.
 
 There MUST be a central control-loop acting as the coordinator for ALL inputs and making all logic decisions, functioning as an asynchronous means of processing commands and events (CQRS style, more or less). Obviously implement it in a pattern native to Swift. There will no doubt need to be a copy-on-write "view", used to expose ALL relevant state data, for direct queries of the state. There may need to be a "flush through" mechanism where the sequential nature of event processing is used to await processing of a command / effecting of a change, by publishing a command which has a side effect of notifying the waiting caller.
