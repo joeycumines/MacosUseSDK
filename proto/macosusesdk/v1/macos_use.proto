@@ -22,7 +22,6 @@ import "macosusesdk/v1/application.proto";
 import "macosusesdk/v1/clipboard.proto";
 import "macosusesdk/v1/input.proto";
 import "macosusesdk/v1/macro.proto";
-import "macosusesdk/v1/metrics.proto";
 import "macosusesdk/v1/observation.proto";
 import "macosusesdk/v1/screenshot.proto";
 import "macosusesdk/v1/script.proto";
@@ -590,27 +589,6 @@ service MacosUse {
   rpc GetScriptingDictionaries(GetScriptingDictionariesRequest) returns (ScriptingDictionaries) {
     option (google.api.http) = {get: "/v1/{name=scriptingDictionaries}"};
     option (google.api.method_signature) = "name";
-  }
-
-  // ===== Metrics Operations =====
-  // Gets current metrics.
-  rpc GetMetrics(GetMetricsRequest) returns (Metrics) {
-    option (google.api.http) = {get: "/v1/{name=metrics}"};
-    option (google.api.method_signature) = "name";
-  }
-
-  // Gets a performance report.
-  rpc GetPerformanceReport(GetPerformanceReportRequest) returns (PerformanceReport) {
-    option (google.api.http) = {get: "/v1/{name=metrics/performanceReport}"};
-    option (google.api.method_signature) = "name";
-  }
-
-  // Resets metrics.
-  rpc ResetMetrics(ResetMetricsRequest) returns (ResetMetricsResponse) {
-    option (google.api.http) = {
-      post: "/v1/metrics:reset"
-      body: "*"
-    };
   }
 }
 
@@ -2069,40 +2047,4 @@ message GetScriptingDictionariesRequest {
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {type: "*"}
   ];
-}
-
-// ===== Metrics Messages =====
-// Request to get current metrics.
-message GetMetricsRequest {
-  // The name of the metrics resource.
-  // Format: metrics (singleton)
-  string name = 1 [
-    (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "*"}
-  ];
-}
-
-// Request to get a performance report.
-message GetPerformanceReportRequest {
-  // The name of the performance report resource.
-  // Format: metrics/performanceReport (singleton)
-  string name = 1 [
-    (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "*"}
-  ];
-}
-
-// Request to reset metrics.
-message ResetMetricsRequest {
-  // Metric types to reset (empty = all).
-  repeated MetricType types = 1 [(google.api.field_behavior) = OPTIONAL];
-}
-
-// Response from resetting metrics.
-message ResetMetricsResponse {
-  // Whether reset succeeded.
-  bool success = 1;
-
-  // Metrics that were reset.
-  repeated MetricType reset_types = 2;
 }

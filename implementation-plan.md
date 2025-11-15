@@ -13,7 +13,7 @@
 ### **Server Implementation – ⚠️ FUNCTIONALLY BROAD, FORMALLY INCOMPLETE**
 
 **COMPLETION STATUS (REALITY-CHECKED):**
-Most proto-defined gRPC service methods have concrete, working implementations in `MacosUseServiceProvider.swift` backed by `AutomationCoordinator`, `AppStateStore`, `WindowRegistry`, `ObservationManager`, `SessionManager`, and `OperationStore`. The server is already capable of complex automation (multi-window, element targeting, observations, macros, scripting, screenshots, clipboard, file dialogs). However, it lacks **AIP-grade pagination**, **production-quality metrics**, and **strong correctness guarantees around convergence and cleanup**. These are now classified as **mandatory blockers for any “production-ready” release.**
+Most proto-defined gRPC service methods have concrete, working implementations in `MacosUseServiceProvider.swift` backed by `AutomationCoordinator`, `AppStateStore`, `WindowRegistry`, `ObservationManager`, `SessionManager`, and `OperationStore`. The server is already capable of complex automation (multi-window, element targeting, observations, macros, scripting, screenshots, clipboard, file dialogs). However, it lacks **AIP-grade pagination** and **strong correctness guarantees around convergence and cleanup**. These are now classified as **mandatory blockers for any "production-ready" release.**
 
 **PER-RPC IMPLEMENTATION SUMMARY (High-level, by category):**
 * **Implemented (substantially complete for v1):**
@@ -33,12 +33,7 @@ Most proto-defined gRPC service methods have concrete, working implementations i
     * **ObservationManager:** Window-change detection path is still TODO; element diffs are basic.
     * **GetScriptingDictionaries:** Uses placeholder bundle IDs (e.g. "unknown") instead of reliably resolved bundle identifiers.
     * **PerformElementAction:** Supports only a limited set of actions (press/click & show menu/open menu); unknown actions yield `UNIMPLEMENTED`.
-    * **Metrics:** `GetMetrics` returns mostly placeholder/zero values; `GetPerformanceReport` and `ResetMetrics` are stubbed as `UNIMPLEMENTED`.
     * **Placeholders:** `TargetApplicationsServiceProvider.swift` and `DesktopServiceProvider.swift` exist but remain TODO/partially wired.
-    * **OperationStore & Telemetry:** Tracks operation lifecycles but does not yet compute meaningful latency/usage statistics.
-* **Explicit Unimplemented RPCs:**
-    * `GetPerformanceReport` → throws `UNIMPLEMENTED`.
-    * `ResetMetrics` → throws `UNIMPLEMENTED`.
 
 **PER-RPC MAPPING (Detailed Status – SWIFT FILE REFERENCES MAY MOVE):**
 * **OpenApplication** — `Implemented` (LRO) — `MacosUseServiceProvider.swift:1-80` (uses `operationStore`, `AutomationCoordinator`).
@@ -78,14 +73,10 @@ Most proto-defined gRPC service methods have concrete, working implementations i
 * **File Dialogs automation** — `Implemented` — `MacosUseServiceProvider.swift:1815..1932` (AutomateOpen/AutomateSave/SelectFile/SelectDirectory/DragFiles).
 * **Macro methods** — `Implemented` — `MacosUseServiceProvider.swift:1998..2140` (Create/Get/List/Update/Delete/Execute; ListMacros has pagination).
 * **Script methods** — `Implemented` — `MacosUseServiceProvider.swift:2213..2424` (ExecuteApple/ExecuteJS/ExecuteShell/Validate/GetDictionaries; GetScriptingDictionaries uses placeholder bundleID).
-* **GetMetrics** — `Implemented` (scaffold, mostly zero values) — `MacosUseServiceProvider.swift:2494`.
-* **GetPerformanceReport** — `Unimplemented` — `MacosUseServiceProvider.swift` (UNIMPLEMENTED stub).
-* **ResetMetrics** — `Unimplemented` — `MacosUseServiceProvider.swift` (UNIMPLEMENTED stub).
 
 **CURRENT IMPLEMENTATION NOTES & TARGETED NEXT STEPS:**
 * **Pagination (AIP‑158):** Implement proper `page_size`/`page_token` handling and `next_page_token` emission for `ListWindows`, `ListInputs`, `FindElements`, `FindRegionElements`, and `ListObservations`.
 * **Observations:** Implement window-change diffing in `ObservationManager` (windowChanges case) using `WindowRegistry` snapshots, and feed results into `StreamObservations`.
-* **Metrics:** Extend `OperationStore` (and related actors) to track operation durations and key counters; implement `GetMetrics` with real values and `GetPerformanceReport`/`ResetMetrics` as non-stub RPCs.
 * **Scripting:** Resolve bundle IDs via `NSRunningApplication` (or equivalent) and update `GetScriptingDictionaries` to return meaningful bundle IDs and dictionaries.
 
 **RISKS & CAVEATS (UNCHANGED BUT CONFIRMED):**
@@ -98,9 +89,7 @@ Most proto-defined gRPC service methods have concrete, working implementations i
 
 1.  Implement AIP‑compliant pagination (`page_size`, `page_token`, `next_page_token`) for `ListWindows`, `ListInputs`, `FindElements`, `FindRegionElements`, and `ListObservations`.
 2.  Resolve bundle ID handling in `WindowRegistry`/scripting so that bundle identifiers are no longer "unknown" in normal cases, and fix `GetScriptingDictionaries` accordingly.
-3.  Implement `GetPerformanceReport` and `ResetMetrics`, and upgrade `GetMetrics` to report real counters/latencies wired to `OperationStore` and related components.
-4.  Introduce a shared `PollUntil` pattern in integration tests and refactor tests to assert **state deltas** (pre/post) instead of relying on naive sleeps.
-5.  Add a teardown `ResourceLeakCheck` that uses `GetMetrics` to assert that observation and connection counts return to baseline after each test suite.
+3.  Introduce a shared `PollUntil` pattern in integration tests and refactor tests to assert **state deltas** (pre/post) instead of relying on naive sleeps.
 
 **PRIORITY FOLLOW-UP CHECKLIST (RANKED AFTER BLOCKERS):**
 
@@ -115,9 +104,6 @@ Most proto-defined gRPC service methods have concrete, working implementations i
 
 4.  **Placeholder providers (Clean-up):**
     * Either remove or fully implement `TargetApplicationsServiceProvider` and `DesktopServiceProvider`.
-
-5.  **Telemetry & OperationStore metrics:**
-    * Persist operation start/end timestamps and use them to power metrics and performance reports.
 
 ---
 
@@ -329,20 +315,7 @@ File dialog automation is implemented via `FileDialogAutomation.swift` and the e
 - Clarify in docs how file dialogs are modelled (e.g. which RPCs and resources are used).
 - Avoid referencing a non-existent `file.proto`; instead, document the actual service methods.
 
-### **1.10 Performance & Diagnostics**
-
-#### **Performance Metrics** (`proto/macosusesdk/v1/metrics.proto`)
-- Metrics RPCs exist but are only partially implemented.
-- **Phase 1 tasks:**
-    - Precisely define metric fields and their semantics in proto comments.
-    - Decide which metrics are mandatory for production and which are optional or experimental.
-
-#### **Debug Tools**
-- Some debugging capabilities exist (snapshots, traversal, logs) via existing RPCs and server logs.
-- **Phase 1 tasks:**
-    - Ensure debug-focused RPCs are clearly labelled and safe to expose.
-
-### **1.11 VS Code Integration Support (Use-Case Layer)**
+### **1.10 VS Code Integration Support (Use-Case Layer)**
 
 These are high-level **use cases**, not separate API surfaces.
 
@@ -396,11 +369,10 @@ Phase 2 focuses on clarifying and strengthening the architecture **as it exists 
 
 **Current reality:**
 - Resource lifecycles (observations, sessions, operations, connections) are tracked across several components, but there is no single `ResourceTracker` actor.
-- Metrics RPCs are not yet wired to enforce invariants like "no leaked observations after client disconnect".
 
 **Phase 2 tasks:**
 - Define a consolidated resource model (what counts as an active resource, who owns it).
-- Implement or designate a component (e.g. `OperationStore`/`ObservationManager`) responsible for enforcing the "Zombie Resource Reaper" invariant and surfacing metrics.
+- Implement or designate a component (e.g. `OperationStore`/`ObservationManager`) responsible for enforcing the "Zombie Resource Reaper" invariant.
 
 ### **2.5 Error Handling & Recovery**
 
@@ -470,20 +442,7 @@ Phase 3 narrows to **specific, high-impact gaps** between the existing service a
     - `ListObservations`.
 - Add tests to ensure deterministic ordering, stable pagination, and correct token behaviour.
 
-### **3.5 Metrics & Debugging (MANDATORY)**
-
-**Current reality:**
-- `GetMetrics` is a scaffold; `GetPerformanceReport` and `ResetMetrics` are UNIMPLEMENTED.
-
-**Phase 3 tasks:**
-- Define and implement the metrics model in `metrics.proto` and the server:
-    - Operation counts, error counts, durations.
-    - Active observations and connections.
-    - Any additional, high-value metrics (cache hits, element counts) that can be computed cheaply.
-- Implement `GetPerformanceReport` and `ResetMetrics` in `MacosUseServiceProvider.swift` backed by real data from `OperationStore` and related components.
-- Ensure metrics support the "ResourceLeakCheck" invariant described in Phase 4.
-
-### **3.6 Scope-Managed Future Enhancements**
+### **3.5 Scope-Managed Future Enhancements**
 
 To avoid over-scoping Phase 3, the following remain **explicit future work** beyond the first production-ready milestone:
 - Full screen recording and animated outputs.
@@ -506,7 +465,7 @@ To avoid over-scoping Phase 3, the following remain **explicit future work** bey
 - Add focused unit tests for existing components:
     - `WindowRegistry`.
     - `ObservationManager` (including window-change diffs once implemented).
-    - `OperationStore` (lifecycles, timestamps, metrics integration).
+    - `OperationStore` (lifecycles, timestamps).
     - `SessionManager`.
     - `SelectorParser` / `ElementLocator`.
 - Cover edge cases such as:
@@ -514,7 +473,6 @@ To avoid over-scoping Phase 3, the following remain **explicit future work** bey
     - Windows closing mid-operation.
     - Applications quitting while operations are in-flight.
     - Permission-denied behaviours where system APIs refuse access.
-    - Metrics and resource accounting mismatches (e.g. leaked observations, sessions, or operations not reflected correctly in `GetMetrics`).
 
 **MANDATORY PROCESS REQUIREMENTS (UNIT TESTS):**
 - For EVERY new Swift server component, SDK helper, or Go client helper, a corresponding unit test case MUST be added or extended in the SAME change set.
@@ -528,7 +486,6 @@ To avoid over-scoping Phase 3, the following remain **explicit future work** bey
     -   **Pre-flight:** Must scan the OS process list for "Golden Applications" (defined below) and forcefully terminate them (SIGKILL) to ensure a clean slate.
     -   **Post-flight (TearDown):**
         -   Must aggressively issue `DeleteApplication` RPCs for any resources created during the test, followed by a verify-kill of the OS process.
-        -   **Mandatory Resource Leak Check:** The TearDown phase must invoke `GetMetrics` and assert that `resources.active_observations == 0` and `resources.connection_count == 0`. Failure here fails the test suite.
     -   **Client State:** A fresh gRPC connection must be established for every test suite to prevent channel state pollution.
 -   **"Golden Application" Definitions:**
     -   **Goal:** Define immutable targets for verification.
@@ -616,7 +573,7 @@ Instead of attempting a full matrix at once, Phase 4 focuses on a **prioritised 
 - Error recovery and resource cleanup.
 
 **MANDATORY PROCESS REQUIREMENTS (INTEGRATION TESTS):**
-- New or changed end-to-end behaviors (e.g. new RPCs, new observation types, pagination semantics, metrics invariants) MUST be covered by at least one integration test that exercises the full stack: client → gRPC → server actors → macOS APIs.
+- New or changed end-to-end behaviors (e.g. new RPCs, new observation types, pagination semantics) MUST be covered by at least one integration test that exercises the full stack: client → gRPC → server actors → macOS APIs.
 - Integration tests MUST rely on `PollUntil` and state-delta assertions rather than fixed sleeps; introducing `sleep`-based timing in tests is FORBIDDEN unless there is no viable alternative, in which case the constraint and rationale MUST be documented in this plan.
 - Any regression reported against a previously working scenario MUST result in an additional integration test that reproduces the issue and remains in the suite permanently.
 
@@ -694,10 +651,7 @@ Instead of attempting a full matrix at once, Phase 4 focuses on a **prioritised 
 - **Test: Screen Capturing:**
     - Capture screenshot & window screenshot; ensure image/data returns match expected size or MIME type.
 
-- **Test: Metrics:**
-    - Trigger operations; ensure `GetMetrics` returns appropriate counts; implement and test `GetPerformanceReport`.
-
-- **Test: Error Handling:**
+- **Test: Error Handling:
     - Invalid inputs: Call `GetElement` with invalid resource names, expecting `invalidArgument`/`notFound`.
 
 ### **Correctness & Verification Guarantees (MANDATORY)**
@@ -713,11 +667,7 @@ To ensure this implementation plan provides a **guarantee** of correctness, the 
     -   **Requirement:** Tests must **strictly avoid** `time.Sleep()`. Instead, implement a `PollUntil(condition, timeout)` utility.
     -   **Implementation:** Loop `GetWindow` (or relevant accessor) every 100ms up to a 2s deadline. Only pass if the state condition is met. Fail immediately if timeout occurs.
 
-3.  **Resource Cleanup Invariant (Zombie Reaper):**
-    -   **Requirement:** The suite must assert `GetMetrics` at the very end of execution (`TearDown`). The `resources.active_observations` and `resources.connection_count` must return to baseline levels.
-    -   **Action:** If this check fails, it implies the "Zombie Resource Reaper" (Phase 2.4) is failing to dereference resources on disconnect.
-
-4.  **OCR as Ground Truth:**
+3.  **OCR as Ground Truth:**
     -   **Requirement:** For graphical rendering tests (screenshots), byte-comparison is fragile. Verification must rely on the `ocr_text` field or valid image header decoding to guarantee the server isn't returning garbage bytes.
 
 ---
@@ -734,7 +684,6 @@ Files already present under `proto/macosusesdk/v1/`:
 - `input.proto`
 - `macos_use.proto`
 - `macro.proto`
-- `metrics.proto`
 - `observation.proto`
 - `screenshot.proto`
 - `script.proto`
@@ -821,7 +770,7 @@ Phase 7 remains focused on use-case patterns, not new APIs.
 
 ### **8.1 API Documentation**
 - Ensure all v1 and type protos have clear comments for messages, fields, and RPCs.
-- Provide examples for each major resource interaction (Application, Window, Element, Observation, Session, Metrics).
+- Provide examples for each major resource interaction (Application, Window, Element, Observation, Session).
 
 ### **8.2 Integration Guide**
 - Expand `proto/README.md` and top-level `README.md` with:
@@ -858,10 +807,7 @@ Phase 7 remains focused on use-case patterns, not new APIs.
 ### **Priority 1: Pagination & AIP Compliance (CRITICAL)**
 Implement and test AIP-158-compliant pagination for key list/find RPCs and ensure overall AIP alignment for the existing API surface.
 
-### **Priority 2: Metrics & Resource Invariants (CRITICAL)**
-Implement real metrics (`GetMetrics`, `GetPerformanceReport`, `ResetMetrics`) and enforce resource leak invariants, wiring them into tests.
-
-### **Priority 3: Observation & Window Changes (HIGH)**
+### **Priority 2: Observation & Window Changes (HIGH)
 Add robust window and element change detection to `ObservationManager` and expose it through streaming RPCs.
 
 ### **Priority 4: Bundle IDs & Scripting (HIGH)**

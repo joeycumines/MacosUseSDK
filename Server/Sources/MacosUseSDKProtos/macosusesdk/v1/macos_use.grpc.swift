@@ -213,16 +213,6 @@ public protocol Macosusesdk_V1_MacosUseProvider: CallHandlerProvider {
 
     /// Gets scripting dictionaries.
     func getScriptingDictionaries(request: Macosusesdk_V1_GetScriptingDictionariesRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_ScriptingDictionaries>
-
-    /// ===== Metrics Operations =====
-    /// Gets current metrics.
-    func getMetrics(request: Macosusesdk_V1_GetMetricsRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_Metrics>
-
-    /// Gets a performance report.
-    func getPerformanceReport(request: Macosusesdk_V1_GetPerformanceReportRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_PerformanceReport>
-
-    /// Resets metrics.
-    func resetMetrics(request: Macosusesdk_V1_ResetMetricsRequest, context: StatusOnlyCallContext) -> EventLoopFuture<Macosusesdk_V1_ResetMetricsResponse>
 }
 
 public extension Macosusesdk_V1_MacosUseProvider {
@@ -804,33 +794,6 @@ public extension Macosusesdk_V1_MacosUseProvider {
                 userFunction: getScriptingDictionaries(request:context:),
             )
 
-        case "GetMetrics":
-            UnaryServerHandler(
-                context: context,
-                requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetMetricsRequest>(),
-                responseSerializer: ProtobufSerializer<Macosusesdk_V1_Metrics>(),
-                interceptors: interceptors?.makeGetMetricsInterceptors() ?? [],
-                userFunction: getMetrics(request:context:),
-            )
-
-        case "GetPerformanceReport":
-            UnaryServerHandler(
-                context: context,
-                requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetPerformanceReportRequest>(),
-                responseSerializer: ProtobufSerializer<Macosusesdk_V1_PerformanceReport>(),
-                interceptors: interceptors?.makeGetPerformanceReportInterceptors() ?? [],
-                userFunction: getPerformanceReport(request:context:),
-            )
-
-        case "ResetMetrics":
-            UnaryServerHandler(
-                context: context,
-                requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ResetMetricsRequest>(),
-                responseSerializer: ProtobufSerializer<Macosusesdk_V1_ResetMetricsResponse>(),
-                interceptors: interceptors?.makeResetMetricsInterceptors() ?? [],
-                userFunction: resetMetrics(request:context:),
-            )
-
         default:
             nil
         }
@@ -1233,25 +1196,6 @@ public protocol Macosusesdk_V1_MacosUseAsyncProvider: CallHandlerProvider, Senda
         request: Macosusesdk_V1_GetScriptingDictionariesRequest,
         context: GRPCAsyncServerCallContext,
     ) async throws -> Macosusesdk_V1_ScriptingDictionaries
-
-    /// ===== Metrics Operations =====
-    /// Gets current metrics.
-    func getMetrics(
-        request: Macosusesdk_V1_GetMetricsRequest,
-        context: GRPCAsyncServerCallContext,
-    ) async throws -> Macosusesdk_V1_Metrics
-
-    /// Gets a performance report.
-    func getPerformanceReport(
-        request: Macosusesdk_V1_GetPerformanceReportRequest,
-        context: GRPCAsyncServerCallContext,
-    ) async throws -> Macosusesdk_V1_PerformanceReport
-
-    /// Resets metrics.
-    func resetMetrics(
-        request: Macosusesdk_V1_ResetMetricsRequest,
-        context: GRPCAsyncServerCallContext,
-    ) async throws -> Macosusesdk_V1_ResetMetricsResponse
 }
 
 @available(macOS 10.15, iOS 13, tvOS 13, watchOS 6, *)
@@ -1840,33 +1784,6 @@ public extension Macosusesdk_V1_MacosUseAsyncProvider {
                 wrapping: { try await self.getScriptingDictionaries(request: $0, context: $1) },
             )
 
-        case "GetMetrics":
-            GRPCAsyncServerHandler(
-                context: context,
-                requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetMetricsRequest>(),
-                responseSerializer: ProtobufSerializer<Macosusesdk_V1_Metrics>(),
-                interceptors: interceptors?.makeGetMetricsInterceptors() ?? [],
-                wrapping: { try await self.getMetrics(request: $0, context: $1) },
-            )
-
-        case "GetPerformanceReport":
-            GRPCAsyncServerHandler(
-                context: context,
-                requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_GetPerformanceReportRequest>(),
-                responseSerializer: ProtobufSerializer<Macosusesdk_V1_PerformanceReport>(),
-                interceptors: interceptors?.makeGetPerformanceReportInterceptors() ?? [],
-                wrapping: { try await self.getPerformanceReport(request: $0, context: $1) },
-            )
-
-        case "ResetMetrics":
-            GRPCAsyncServerHandler(
-                context: context,
-                requestDeserializer: ProtobufDeserializer<Macosusesdk_V1_ResetMetricsRequest>(),
-                responseSerializer: ProtobufSerializer<Macosusesdk_V1_ResetMetricsResponse>(),
-                interceptors: interceptors?.makeResetMetricsInterceptors() ?? [],
-                wrapping: { try await self.resetMetrics(request: $0, context: $1) },
-            )
-
         default:
             nil
         }
@@ -2125,18 +2042,6 @@ public protocol Macosusesdk_V1_MacosUseServerInterceptorFactoryProtocol: Sendabl
     /// - Returns: Interceptors to use when handling 'getScriptingDictionaries'.
     ///   Defaults to calling `self.makeInterceptors()`.
     func makeGetScriptingDictionariesInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetScriptingDictionariesRequest, Macosusesdk_V1_ScriptingDictionaries>]
-
-    /// - Returns: Interceptors to use when handling 'getMetrics'.
-    ///   Defaults to calling `self.makeInterceptors()`.
-    func makeGetMetricsInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetMetricsRequest, Macosusesdk_V1_Metrics>]
-
-    /// - Returns: Interceptors to use when handling 'getPerformanceReport'.
-    ///   Defaults to calling `self.makeInterceptors()`.
-    func makeGetPerformanceReportInterceptors() -> [ServerInterceptor<Macosusesdk_V1_GetPerformanceReportRequest, Macosusesdk_V1_PerformanceReport>]
-
-    /// - Returns: Interceptors to use when handling 'resetMetrics'.
-    ///   Defaults to calling `self.makeInterceptors()`.
-    func makeResetMetricsInterceptors() -> [ServerInterceptor<Macosusesdk_V1_ResetMetricsRequest, Macosusesdk_V1_ResetMetricsResponse>]
 }
 
 public enum Macosusesdk_V1_MacosUseServerMetadata {
@@ -2207,9 +2112,6 @@ public enum Macosusesdk_V1_MacosUseServerMetadata {
             Macosusesdk_V1_MacosUseServerMetadata.Methods.executeShellCommand,
             Macosusesdk_V1_MacosUseServerMetadata.Methods.validateScript,
             Macosusesdk_V1_MacosUseServerMetadata.Methods.getScriptingDictionaries,
-            Macosusesdk_V1_MacosUseServerMetadata.Methods.getMetrics,
-            Macosusesdk_V1_MacosUseServerMetadata.Methods.getPerformanceReport,
-            Macosusesdk_V1_MacosUseServerMetadata.Methods.resetMetrics,
         ],
     )
 
@@ -2589,24 +2491,6 @@ public enum Macosusesdk_V1_MacosUseServerMetadata {
         public static let getScriptingDictionaries = GRPCMethodDescriptor(
             name: "GetScriptingDictionaries",
             path: "/macosusesdk.v1.MacosUse/GetScriptingDictionaries",
-            type: GRPCCallType.unary,
-        )
-
-        public static let getMetrics = GRPCMethodDescriptor(
-            name: "GetMetrics",
-            path: "/macosusesdk.v1.MacosUse/GetMetrics",
-            type: GRPCCallType.unary,
-        )
-
-        public static let getPerformanceReport = GRPCMethodDescriptor(
-            name: "GetPerformanceReport",
-            path: "/macosusesdk.v1.MacosUse/GetPerformanceReport",
-            type: GRPCCallType.unary,
-        )
-
-        public static let resetMetrics = GRPCMethodDescriptor(
-            name: "ResetMetrics",
-            path: "/macosusesdk.v1.MacosUse/ResetMetrics",
             type: GRPCCallType.unary,
         )
     }

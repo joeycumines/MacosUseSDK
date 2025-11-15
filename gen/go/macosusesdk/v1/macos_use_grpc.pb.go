@@ -89,9 +89,6 @@ const (
 	MacosUse_ExecuteShellCommand_FullMethodName      = "/macosusesdk.v1.MacosUse/ExecuteShellCommand"
 	MacosUse_ValidateScript_FullMethodName           = "/macosusesdk.v1.MacosUse/ValidateScript"
 	MacosUse_GetScriptingDictionaries_FullMethodName = "/macosusesdk.v1.MacosUse/GetScriptingDictionaries"
-	MacosUse_GetMetrics_FullMethodName               = "/macosusesdk.v1.MacosUse/GetMetrics"
-	MacosUse_GetPerformanceReport_FullMethodName     = "/macosusesdk.v1.MacosUse/GetPerformanceReport"
-	MacosUse_ResetMetrics_FullMethodName             = "/macosusesdk.v1.MacosUse/ResetMetrics"
 )
 
 // MacosUseClient is the client API for MacosUse service.
@@ -235,13 +232,6 @@ type MacosUseClient interface {
 	ValidateScript(ctx context.Context, in *ValidateScriptRequest, opts ...grpc.CallOption) (*ValidateScriptResponse, error)
 	// Gets scripting dictionaries.
 	GetScriptingDictionaries(ctx context.Context, in *GetScriptingDictionariesRequest, opts ...grpc.CallOption) (*ScriptingDictionaries, error)
-	// ===== Metrics Operations =====
-	// Gets current metrics.
-	GetMetrics(ctx context.Context, in *GetMetricsRequest, opts ...grpc.CallOption) (*Metrics, error)
-	// Gets a performance report.
-	GetPerformanceReport(ctx context.Context, in *GetPerformanceReportRequest, opts ...grpc.CallOption) (*PerformanceReport, error)
-	// Resets metrics.
-	ResetMetrics(ctx context.Context, in *ResetMetricsRequest, opts ...grpc.CallOption) (*ResetMetricsResponse, error)
 }
 
 type macosUseClient struct {
@@ -900,36 +890,6 @@ func (c *macosUseClient) GetScriptingDictionaries(ctx context.Context, in *GetSc
 	return out, nil
 }
 
-func (c *macosUseClient) GetMetrics(ctx context.Context, in *GetMetricsRequest, opts ...grpc.CallOption) (*Metrics, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Metrics)
-	err := c.cc.Invoke(ctx, MacosUse_GetMetrics_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *macosUseClient) GetPerformanceReport(ctx context.Context, in *GetPerformanceReportRequest, opts ...grpc.CallOption) (*PerformanceReport, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(PerformanceReport)
-	err := c.cc.Invoke(ctx, MacosUse_GetPerformanceReport_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *macosUseClient) ResetMetrics(ctx context.Context, in *ResetMetricsRequest, opts ...grpc.CallOption) (*ResetMetricsResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ResetMetricsResponse)
-	err := c.cc.Invoke(ctx, MacosUse_ResetMetrics_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // MacosUseServer is the server API for MacosUse service.
 // All implementations should embed UnimplementedMacosUseServer
 // for forward compatibility.
@@ -1071,13 +1031,6 @@ type MacosUseServer interface {
 	ValidateScript(context.Context, *ValidateScriptRequest) (*ValidateScriptResponse, error)
 	// Gets scripting dictionaries.
 	GetScriptingDictionaries(context.Context, *GetScriptingDictionariesRequest) (*ScriptingDictionaries, error)
-	// ===== Metrics Operations =====
-	// Gets current metrics.
-	GetMetrics(context.Context, *GetMetricsRequest) (*Metrics, error)
-	// Gets a performance report.
-	GetPerformanceReport(context.Context, *GetPerformanceReportRequest) (*PerformanceReport, error)
-	// Resets metrics.
-	ResetMetrics(context.Context, *ResetMetricsRequest) (*ResetMetricsResponse, error)
 }
 
 // UnimplementedMacosUseServer should be embedded to have
@@ -1275,15 +1228,6 @@ func (UnimplementedMacosUseServer) ValidateScript(context.Context, *ValidateScri
 }
 func (UnimplementedMacosUseServer) GetScriptingDictionaries(context.Context, *GetScriptingDictionariesRequest) (*ScriptingDictionaries, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetScriptingDictionaries not implemented")
-}
-func (UnimplementedMacosUseServer) GetMetrics(context.Context, *GetMetricsRequest) (*Metrics, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetMetrics not implemented")
-}
-func (UnimplementedMacosUseServer) GetPerformanceReport(context.Context, *GetPerformanceReportRequest) (*PerformanceReport, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPerformanceReport not implemented")
-}
-func (UnimplementedMacosUseServer) ResetMetrics(context.Context, *ResetMetricsRequest) (*ResetMetricsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ResetMetrics not implemented")
 }
 func (UnimplementedMacosUseServer) testEmbeddedByValue() {}
 
@@ -2425,60 +2369,6 @@ func _MacosUse_GetScriptingDictionaries_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MacosUse_GetMetrics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetMetricsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MacosUseServer).GetMetrics(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: MacosUse_GetMetrics_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MacosUseServer).GetMetrics(ctx, req.(*GetMetricsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _MacosUse_GetPerformanceReport_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetPerformanceReportRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MacosUseServer).GetPerformanceReport(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: MacosUse_GetPerformanceReport_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MacosUseServer).GetPerformanceReport(ctx, req.(*GetPerformanceReportRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _MacosUse_ResetMetrics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ResetMetricsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MacosUseServer).ResetMetrics(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: MacosUse_ResetMetrics_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MacosUseServer).ResetMetrics(ctx, req.(*ResetMetricsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // MacosUse_ServiceDesc is the grpc.ServiceDesc for MacosUse service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -2729,18 +2619,6 @@ var MacosUse_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetScriptingDictionaries",
 			Handler:    _MacosUse_GetScriptingDictionaries_Handler,
-		},
-		{
-			MethodName: "GetMetrics",
-			Handler:    _MacosUse_GetMetrics_Handler,
-		},
-		{
-			MethodName: "GetPerformanceReport",
-			Handler:    _MacosUse_GetPerformanceReport_Handler,
-		},
-		{
-			MethodName: "ResetMetrics",
-			Handler:    _MacosUse_ResetMetrics_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
