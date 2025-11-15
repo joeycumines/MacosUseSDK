@@ -1465,7 +1465,7 @@ var File_macosusesdk_v1_macro_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_macro_proto_rawDesc = "" +
 	"\n" +
-	"\x1amacosusesdk/v1/macro.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1amacosusesdk/v1/input.proto\"\xfb\x03\n" +
+	"\x1amacosusesdk/v1/macro.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1amacosusesdk/v1/input.proto\"\xfc\x03\n" +
 	"\x05Macro\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12&\n" +
 	"\fdisplay_name\x18\x02 \x01(\tB\x03\xe0A\x02R\vdisplayName\x12%\n" +
@@ -1479,8 +1479,8 @@ const file_macosusesdk_v1_macro_proto_rawDesc = "" +
 	"\vupdate_time\x18\a \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\n" +
 	"updateTime\x12,\n" +
 	"\x0fexecution_count\x18\b \x01(\x03B\x03\xe0A\x03R\x0eexecutionCount\x12\x17\n" +
-	"\x04tags\x18\t \x03(\tB\x03\xe0A\x01R\x04tags:>\xeaA;\n" +
-	"\x1amacos.googleapis.com/Macro\x12\x0emacros/{macro}*\x06macros2\x05macro\"\x95\x03\n" +
+	"\x04tags\x18\t \x03(\tB\x03\xe0A\x01R\x04tags:?\xeaA<\n" +
+	"\x1bmacosusesdk.localhost/Macro\x12\x0emacros/{macro}*\x06macros2\x05macro\"\x95\x03\n" +
 	"\vMacroAction\x123\n" +
 	"\x05input\x18\x01 \x01(\v2\x1b.macosusesdk.v1.InputActionH\x00R\x05input\x120\n" +
 	"\x04wait\x18\x02 \x01(\v2\x1a.macosusesdk.v1.WaitActionH\x00R\x04wait\x12E\n" +

@@ -36,7 +36,7 @@ option java_package = "com.macosusesdk.v1";
 
 // MacosUse is the primary service for automating macOS applications.
 service MacosUse {
-  option (google.api.default_host) = "macos.googleapis.com";
+  option (google.api.default_host) = "macosusesdk.localhost";
 
   // Opens or activates an application. This is a long-running operation.
   rpc OpenApplication(OpenApplicationRequest) returns (google.longrunning.Operation) {
@@ -638,7 +638,7 @@ message GetApplicationRequest {
   // Resource name of the application.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Application"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
   ];
 }
 
@@ -665,7 +665,7 @@ message DeleteApplicationRequest {
   // Resource name of the application.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Application"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
   ];
 
   // If set to true, any pending inputs for this application will also be deleted.
@@ -677,7 +677,7 @@ message CreateInputRequest {
   // Parent resource. Either "applications/{application}" or "" for desktop inputs.
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {child_type: "macos.googleapis.com/Input"}
+    (google.api.resource_reference) = {child_type: "macosusesdk.localhost/Input"}
   ];
 
   // The input to create.
@@ -692,7 +692,7 @@ message GetInputRequest {
   // Resource name of the input.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Input"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Input"}
   ];
 }
 
@@ -701,7 +701,7 @@ message ListInputsRequest {
   // Parent resource. Either "applications/{application}" or "" for desktop inputs.
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {child_type: "macos.googleapis.com/Input"}
+    (google.api.resource_reference) = {child_type: "macosusesdk.localhost/Input"}
   ];
 
   // Maximum number of inputs to return.
@@ -728,7 +728,7 @@ message TraverseAccessibilityRequest {
   // Resource name of the application.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Application"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
   ];
 
   // Whether to return only visible elements.
@@ -755,7 +755,7 @@ message WatchAccessibilityRequest {
   // Resource name of the application.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Application"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
   ];
 
   // Poll interval in seconds.
@@ -1067,7 +1067,7 @@ message StateCondition {
 // Attribute condition for waiting.
 message AttributeCondition {
   option (google.api.resource) = {
-    type: "macos.googleapis.com/AttributeCondition"
+    type: "macosusesdk.localhost/AttributeCondition"
     pattern: "attributeConditions/{attribute_condition}"
     singular: "attributeCondition"
     plural: "attributeConditions"
@@ -1104,7 +1104,7 @@ message GetWindowRequest {
   // Resource name of the window.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Window"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Window"}
   ];
 }
 
@@ -1113,7 +1113,7 @@ message ListWindowsRequest {
   // Parent application.
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Application"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
   ];
 
   // Maximum number of windows to return.
@@ -1137,7 +1137,7 @@ message FocusWindowRequest {
   // Resource name of the window.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Window"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Window"}
   ];
 }
 
@@ -1146,7 +1146,7 @@ message MoveWindowRequest {
   // Resource name of the window.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Window"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Window"}
   ];
 
   // New X coordinate.
@@ -1161,7 +1161,7 @@ message ResizeWindowRequest {
   // Resource name of the window.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Window"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Window"}
   ];
 
   // New width.
@@ -1176,7 +1176,7 @@ message MinimizeWindowRequest {
   // Resource name of the window.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Window"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Window"}
   ];
 }
 
@@ -1185,7 +1185,7 @@ message RestoreWindowRequest {
   // Resource name of the window.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Window"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Window"}
   ];
 }
 
@@ -1194,7 +1194,7 @@ message CloseWindowRequest {
   // Resource name of the window.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Window"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Window"}
   ];
 
   // Whether to force close without confirmation.
@@ -1213,7 +1213,7 @@ message CreateObservationRequest {
   // Parent application.
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Application"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
   ];
 
   // The observation to create.
@@ -1226,7 +1226,7 @@ message CreateObservationRequest {
 // Metadata for CreateObservation operation.
 message CreateObservationMetadata {
   // The observation being created.
-  string observation = 1 [(google.api.resource_reference) = {type: "macos.googleapis.com/Observation"}];
+  string observation = 1 [(google.api.resource_reference) = {type: "macosusesdk.localhost/Observation"}];
 
   // Observation type.
   ObservationType type = 2;
@@ -1237,7 +1237,7 @@ message GetObservationRequest {
   // Resource name of the observation.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Observation"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Observation"}
   ];
 }
 
@@ -1246,7 +1246,7 @@ message ListObservationsRequest {
   // Parent application.
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Application"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
   ];
 
   // Maximum number of observations to return.
@@ -1270,7 +1270,7 @@ message CancelObservationRequest {
   // Resource name of the observation.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Observation"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Observation"}
   ];
 }
 
@@ -1279,7 +1279,7 @@ message StreamObservationsRequest {
   // Resource name of the observation.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Observation"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Observation"}
   ];
 }
 
@@ -1304,7 +1304,7 @@ message GetSessionRequest {
   // Resource name of the session.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Session"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Session"}
   ];
 }
 
@@ -1331,7 +1331,7 @@ message DeleteSessionRequest {
   // Resource name of the session.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Session"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Session"}
   ];
 
   // Whether to force delete active sessions.
@@ -1353,7 +1353,7 @@ message GetMacroRequest {
   // Resource name of the macro.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Macro"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Macro"}
   ];
 }
 
@@ -1389,7 +1389,7 @@ message DeleteMacroRequest {
   // Resource name of the macro.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Macro"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Macro"}
   ];
 
   // If true, delete child resources (executions, logs).
@@ -1401,7 +1401,7 @@ message ExecuteMacroRequest {
   // Macro to execute.
   string macro = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Macro"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Macro"}
   ];
 
   // Parameter values (for parameterized macros).
@@ -1410,7 +1410,7 @@ message ExecuteMacroRequest {
   // Application context (if needed).
   string application = 3 [
     (google.api.field_behavior) = OPTIONAL,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Application"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
   ];
 
   // Execution options.
@@ -1453,7 +1453,7 @@ message ExecuteMacroResponse {
 // Log entry for macro execution.
 message ExecutionLogEntry {
   option (google.api.resource) = {
-    type: "macos.googleapis.com/ExecutionLogEntry"
+    type: "macosusesdk.localhost/ExecutionLogEntry"
     pattern: "macros/{macro}/executions/{execution}/logEntries/{log_entry}"
     singular: "executionLogEntry"
     plural: "executionLogEntries"
@@ -1484,7 +1484,7 @@ message ExecutionLogEntry {
 // Metadata for ExecuteMacro operation.
 message ExecuteMacroMetadata {
   // Macro being executed.
-  string macro = 1 [(google.api.resource_reference) = {type: "macos.googleapis.com/Macro"}];
+  string macro = 1 [(google.api.resource_reference) = {type: "macosusesdk.localhost/Macro"}];
 
   // Current action index.
   int32 current_action = 2;
@@ -1502,7 +1502,7 @@ message BeginTransactionRequest {
   // Session name.
   string session = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Session"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Session"}
   ];
 
   // Transaction isolation level.
@@ -1539,7 +1539,7 @@ message CommitTransactionRequest {
   // Format: sessions/{session}
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Session"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Session"}
   ];
 
   // Transaction ID to commit.
@@ -1552,7 +1552,7 @@ message RollbackTransactionRequest {
   // Format: sessions/{session}
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Session"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Session"}
   ];
 
   // The revision to rollback to.
@@ -1568,7 +1568,7 @@ message GetSessionSnapshotRequest {
   // Format: sessions/{session}
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Session"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Session"}
   ];
 }
 
@@ -1611,7 +1611,7 @@ message CaptureWindowScreenshotRequest {
   // Window to capture.
   string window = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Window"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Window"}
   ];
 
   // Image format.
@@ -1642,7 +1642,7 @@ message CaptureWindowScreenshotResponse {
   int32 height = 4;
 
   // Window that was captured.
-  string window = 5 [(google.api.resource_reference) = {type: "macos.googleapis.com/Window"}];
+  string window = 5 [(google.api.resource_reference) = {type: "macosusesdk.localhost/Window"}];
 
   // OCR-extracted text (if requested).
   string ocr_text = 6;
@@ -1739,7 +1739,7 @@ message GetClipboardRequest {
   // Format: clipboard (singleton)
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Clipboard"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Clipboard"}
   ];
 }
 
@@ -1786,7 +1786,7 @@ message AutomateOpenFileDialogRequest {
   // Application context.
   string application = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Application"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
   ];
 
   // File path to select (if known).
@@ -1822,7 +1822,7 @@ message AutomateSaveFileDialogRequest {
   // Application context.
   string application = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Application"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
   ];
 
   // File path to save to.
@@ -1858,7 +1858,7 @@ message SelectFileRequest {
   // Application context.
   string application = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Application"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
   ];
 
   // File path to select.
@@ -1885,7 +1885,7 @@ message SelectDirectoryRequest {
   // Application context.
   string application = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Application"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
   ];
 
   // Directory path to select.
@@ -1915,7 +1915,7 @@ message DragFilesRequest {
   // Application context.
   string application = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macos.googleapis.com/Application"}
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
   ];
 
   // File paths to drag.

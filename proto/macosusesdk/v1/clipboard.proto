@@ -18,7 +18,7 @@ option java_package = "com.macosusesdk.v1";
 // Clipboard contents.
 message Clipboard {
   option (google.api.resource) = {
-    type: "macos.googleapis.com/Clipboard"
+    type: "macosusesdk.localhost/Clipboard"
     pattern: "clipboard"
     singular: "clipboard"
     plural: "clipboards"

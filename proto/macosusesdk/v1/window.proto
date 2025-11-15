@@ -17,7 +17,7 @@ option java_package = "com.macosusesdk.v1";
 // A resource representing an individual window within an application.
 message Window {
   option (google.api.resource) = {
-    type: "macos.googleapis.com/Window"
+    type: "macosusesdk.localhost/Window"
     pattern: "applications/{application}/windows/{window}"
     singular: "window"
     plural: "windows"

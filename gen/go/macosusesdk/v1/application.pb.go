@@ -96,12 +96,12 @@ var File_macosusesdk_v1_application_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_application_proto_rawDesc = "" +
 	"\n" +
-	" macosusesdk/v1/application.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\"\xc3\x01\n" +
+	" macosusesdk/v1/application.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\"\xc4\x01\n" +
 	"\vApplication\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12\x15\n" +
 	"\x03pid\x18\x02 \x01(\x05B\x03\xe0A\x03R\x03pid\x12&\n" +
-	"\fdisplay_name\x18\x03 \x01(\tB\x03\xe0A\x03R\vdisplayName:\\\xeaAY\n" +
-	" macos.googleapis.com/Application\x12\x1aapplications/{application}*\fapplications2\vapplicationB\xc7\x01\n" +
+	"\fdisplay_name\x18\x03 \x01(\tB\x03\xe0A\x03R\vdisplayName:]\xeaAZ\n" +
+	"!macosusesdk.localhost/Application\x12\x1aapplications/{application}*\fapplications2\vapplicationB\xc7\x01\n" +
 	"\x12com.macosusesdk.v1B\x10ApplicationProtoP\x01ZFgithub.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1\xa2\x02\x03MXX\xaa\x02\x0eMacosusesdk.V1\xca\x02\x0eMacosusesdk\\V1\xe2\x02\x1aMacosusesdk\\V1\\GPBMetadata\xea\x02\x0fMacosusesdk::V1b\x06proto3"
 
 var (

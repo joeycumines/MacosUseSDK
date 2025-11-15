@@ -304,7 +304,7 @@ var File_macosusesdk_v1_window_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_window_proto_rawDesc = "" +
 	"\n" +
-	"\x1bmacosusesdk/v1/window.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\"\xad\x03\n" +
+	"\x1bmacosusesdk/v1/window.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\"\xae\x03\n" +
 	"\x06Window\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12\x19\n" +
 	"\x05title\x18\x02 \x01(\tB\x03\xe0A\x03R\x05title\x123\n" +
@@ -316,8 +316,8 @@ const file_macosusesdk_v1_window_proto_rawDesc = "" +
 	"\n" +
 	"fullscreen\x18\b \x01(\bB\x03\xe0A\x03R\n" +
 	"fullscreen\x126\n" +
-	"\x05state\x18\t \x01(\v2\x1b.macosusesdk.v1.WindowStateB\x03\xe0A\x03R\x05state:^\xeaA[\n" +
-	"\x1bmacos.googleapis.com/Window\x12+applications/{application}/windows/{window}*\awindows2\x06window\"R\n" +
+	"\x05state\x18\t \x01(\v2\x1b.macosusesdk.v1.WindowStateB\x03\xe0A\x03R\x05state:_\xeaA\\\n" +
+	"\x1cmacosusesdk.localhost/Window\x12+applications/{application}/windows/{window}*\awindows2\x06window\"R\n" +
 	"\x06Bounds\x12\f\n" +
 	"\x01x\x18\x01 \x01(\x01R\x01x\x12\f\n" +
 	"\x01y\x18\x02 \x01(\x01R\x01y\x12\x14\n" +

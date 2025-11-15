@@ -20,7 +20,7 @@ option java_package = "com.macosusesdk.v1";
 // Inputs form a timeline for each application.
 message Input {
   option (google.api.resource) = {
-    type: "macos.googleapis.com/Input"
+    type: "macosusesdk.localhost/Input"
     pattern: "applications/{application}/inputs/{input}"
     singular: "input"
     plural: "inputs"
