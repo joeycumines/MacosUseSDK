@@ -10,22 +10,16 @@ on:
 permissions:
   contents: read
 jobs:
-  buf:
-    uses: ./.github/workflows/buf.yaml
-    secrets: inherit
-  swift:
-    uses: ./.github/workflows/swift.yaml
-    secrets: inherit
-  api-linter:
-    uses: ./.github/workflows/api-linter.yaml
+  build:
+    uses: ./.github/workflows/build.yaml
     secrets: inherit
   summary:
     if: always()
     runs-on: ubuntu-latest
-    needs: [ buf, swift, api-linter ]
+    needs: [ build ]
     steps:
       - name: Check CI Status
-        run: |
+        run: |-
           echo "Buf status: ${{ needs.buf.result }}"
           echo "Swift status: ${{ needs.swift.result }}"
           echo "API Linter status: ${{ needs.api-linter.result }}"

@@ -1,0 +1,24 @@
+name: Build
+on:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  by:
+    runs-on: macos-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 'stable'
+      - uses: bufbuild/buf-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install homebrew dependencies
+        run: |-
+          brew install swiftformat swiftlint
+      - name: Run a full build
+        run: |-
+          make -j "$(sysctl -n hw.ncpu)"
