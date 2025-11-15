@@ -127,6 +127,7 @@ Operational Expectations (Reinforced after early stoppages):
 **Additional Constraints:**
 
 - **FORBIDDEN FROM USING A DIRECT SHELL:** All commands MUST be executed by defining a custom target in `config.mk` and executing it with `mcp-server-make`.
+- **MCP MAKE FILE OPTION IS FORBIDDEN:** When invoking `mcp-server-make`, you MUST NOT specify the `file` option (i.e. do **not** pass `file=config.mk` or any other makefile). The make invocation MUST rely on the repository's default `Makefile` discovery. `config.mk` exists **only** as the place to define temporary/custom targets that are then picked up by the normal make process.
 - **DO NOT BREAK THE BUILD:** Run the core `all` target constantly. Use `mcp-server-make all`. This is not a suggestion. It is your only way of knowing you haven't failed again. Add a `TODO` to run it after every major change and after every file change.
 - **ALL `config.mk` recipes MUST use `| tee /tmp/build.log | tail -n 100` or a similar pattern:** To mitigate excessive output. I don't want to hear you whining.
 - **PRIOR TO ANY CODE OR PLAN EDITS:** Use the TODO tool to create an exhaustive task list covering the implementation plan, all known deficiencies, all current constraints, and motivational reminders as explicitly directed.
