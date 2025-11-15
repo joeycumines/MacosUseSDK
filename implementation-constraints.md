@@ -52,8 +52,13 @@ The gRPC API MUST:
 - Support performance metrics and diagnostics for operational visibility
 
 Testing and Tooling:
-- Implement comprehensive unit tests, at bare minimum
-- Implement PROPER CI, using GitHub Actions, inclusive of unit testing, and build and linting and all relevant checks
+- ALL new behavior and ALL modifications to existing behavior MUST be accompanied by automated tests in the SAME change set (commit/PR) – no feature work is considered complete without tests.
+- Tests MUST be designed and updated FIRST in the implementation process (or in lockstep), not treated as an afterthought; the implementation plan for any task MUST explicitly call out unit, integration, and, where relevant, end-to-end tests.
+- Implement and maintain comprehensive unit tests across all critical components (Swift server actors, SDK helpers, Go clients, and proto-level helpers) – “happy path only” coverage is insufficient.
+- Implement and maintain integration tests that exercise real automation flows against the "Golden Applications" (TextEdit, Calculator, Finder) as defined in `implementation-plan.md`, including state-delta assertions and PollUntil-style convergence checks.
+- Implement PROPER CI, using GitHub Actions, inclusive of unit testing, integration testing, build, linting, AIP/buf/api-linter checks, and any metrics/resource-invariant checks (e.g. leak detection via `GetMetrics`).
+- Tests and CI checks MUST be kept green at all times; temporarily disabling or commenting out failing tests is FORBIDDEN unless explicitly justified and documented in the plan with a concrete, near-term fix task.
+- Any bug fix MUST include at least one new or updated test that would have caught the bug prior to the fix.
 
 Documentation and Planning:
 - ALL updates to the plan MUST be represented in `./implementation-plan.md`, NOT any other files

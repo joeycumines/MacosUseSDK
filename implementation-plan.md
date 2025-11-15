@@ -515,6 +515,12 @@ To avoid over-scoping Phase 3, the following remain **explicit future work** bey
     - Windows closing mid-operation.
     - Applications quitting while operations are in-flight.
     - Permission-denied behaviours where system APIs refuse access.
+    - Metrics and resource accounting mismatches (e.g. leaked observations, sessions, or operations not reflected correctly in `GetMetrics`).
+
+**MANDATORY PROCESS REQUIREMENTS (UNIT TESTS):**
+- For EVERY new Swift server component, SDK helper, or Go client helper, a corresponding unit test case MUST be added or extended in the SAME change set.
+- When modifying existing behavior, existing tests MUST be updated or new tests added to exercise both the previous bug condition and the corrected behavior.
+- No public API surface change (proto, gRPC method semantics, or exported Swift/Go symbol) is allowed without at least one test that fails before the change and passes after.
 
 ### **4.2 Test Harness & Environment Standardisation**
 -   **Goal:** Eliminate test flakiness caused by shared state or lingering processes.
@@ -609,6 +615,11 @@ Instead of attempting a full matrix at once, Phase 4 focuses on a **prioritised 
 - Multi-window scenarios within a single app (e.g. multiple TextEdit windows).
 - Basic multi-app coordination (e.g. copy from one app, paste in another).
 - Error recovery and resource cleanup.
+
+**MANDATORY PROCESS REQUIREMENTS (INTEGRATION TESTS):**
+- New or changed end-to-end behaviors (e.g. new RPCs, new observation types, pagination semantics, metrics invariants) MUST be covered by at least one integration test that exercises the full stack: client → gRPC → server actors → macOS APIs.
+- Integration tests MUST rely on `PollUntil` and state-delta assertions rather than fixed sleeps; introducing `sleep`-based timing in tests is FORBIDDEN unless there is no viable alternative, in which case the constraint and rationale MUST be documented in this plan.
+- Any regression reported against a previously working scenario MUST result in an additional integration test that reproduces the issue and remains in the suite permanently.
 
 ### **4.9 Performance Tests**
 -   Benchmarks:

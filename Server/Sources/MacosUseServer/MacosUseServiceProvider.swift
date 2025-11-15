@@ -83,7 +83,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         request _: Macosusesdk_V1_ListApplicationsRequest, context _: GRPCAsyncServerCallContext,
     ) async throws -> Macosusesdk_V1_ListApplicationsResponse {
         fputs("info: [MacosUseServiceProvider] listApplications called\n", stderr)
-        let apps = await stateStore.listTargets()
+        _ = await stateStore.listTargets()
         return Macosusesdk_V1_ListApplicationsResponse.with {
             $0.applications = apps
         }
