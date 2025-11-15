@@ -1,4 +1,3 @@
--- implementation-plan.md --
 # Implementation Plan: MacosUseSDK gRPC Service
 
 ---

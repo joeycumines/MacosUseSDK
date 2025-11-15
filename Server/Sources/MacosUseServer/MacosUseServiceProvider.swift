@@ -2469,19 +2469,16 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
             ("Terminal", "com.apple.Terminal"),
         ]
 
-        for (name, bundleId) in systemApps {
-            // Check if already in list
-            if !dictionaries.contains(where: { $0.bundleID == bundleId }) {
-                let dictionary = Macosusesdk_V1_ScriptingDictionary.with {
-                    $0.application = name
-                    $0.bundleID = bundleId
-                    $0.supportsApplescript = true
-                    $0.supportsJxa = true
-                    $0.commands = ["activate", "quit", "open", "close"]
-                    $0.classes = ["application", "window"]
-                }
-                dictionaries.append(dictionary)
+        for (name, bundleId) in systemApps where !dictionaries.contains(where: { $0.bundleID == bundleId }) {
+            let dictionary = Macosusesdk_V1_ScriptingDictionary.with {
+                $0.application = name
+                $0.bundleID = bundleId
+                $0.supportsApplescript = true
+                $0.supportsJxa = true
+                $0.commands = ["activate", "quit", "open", "close"]
+                $0.classes = ["application", "window"]
             }
+            dictionaries.append(dictionary)
         }
 
         return Macosusesdk_V1_ScriptingDictionaries.with {
