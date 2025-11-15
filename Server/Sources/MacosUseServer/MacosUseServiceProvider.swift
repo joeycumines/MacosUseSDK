@@ -1,3 +1,4 @@
+import AppKit
 import ApplicationServices
 import CoreGraphics
 import Foundation
@@ -18,6 +19,13 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         self.stateStore = stateStore
         self.operationStore = operationStore
         windowRegistry = WindowRegistry()
+    }
+
+    // MARK: - Helper Methods
+
+    /// Resolve bundle ID from PID using NSRunningApplication.
+    private func resolveBundleID(forPID pid: pid_t) -> String? {
+        NSRunningApplication(processIdentifier: pid)?.bundleIdentifier
     }
 
     // MARK: - Application Methods
@@ -162,9 +170,45 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         async throws -> Macosusesdk_V1_ListInputsResponse
     {
         fputs("info: [MacosUseServiceProvider] listInputs called\n", stderr)
-        let inputs = await stateStore.listInputs(parent: request.parent)
+        let allInputs = await stateStore.listInputs(parent: request.parent)
+
+        // Sort by name for deterministic ordering
+        let sortedInputs = allInputs.sorted { $0.name < $1.name }
+
+        // Decode page_token to get offset
+        let offset: Int
+        if request.pageToken.isEmpty {
+            offset = 0
+        } else {
+            // Token format: "offset:N"
+            let components = request.pageToken.split(separator: ":")
+            guard components.count == 2, components[0] == "offset",
+                  let parsedOffset = Int(components[1]), parsedOffset >= 0
+            else {
+                throw GRPCStatus(code: .invalidArgument, message: "Invalid page_token format")
+            }
+            offset = parsedOffset
+        }
+
+        // Determine page size (default 100 if not specified or <= 0)
+        let pageSize = request.pageSize > 0 ? Int(request.pageSize) : 100
+        let totalCount = sortedInputs.count
+
+        // Calculate slice bounds
+        let startIndex = min(offset, totalCount)
+        let endIndex = min(startIndex + pageSize, totalCount)
+        let pageInputs = Array(sortedInputs[startIndex ..< endIndex])
+
+        // Generate next_page_token if more results exist
+        let nextPageToken = if endIndex < totalCount {
+            "offset:\(endIndex)"
+        } else {
+            ""
+        }
+
         return Macosusesdk_V1_ListInputsResponse.with {
-            $0.inputs = inputs
+            $0.inputs = pageInputs
+            $0.nextPageToken = nextPageToken
         }
     }
 
@@ -282,7 +326,41 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         try await registry.refreshWindows(forPID: pid)
         let windowInfos = try await registry.listWindows(forPID: pid)
 
-        let windows = windowInfos.map { windowInfo in
+        // Sort by window ID for deterministic ordering
+        let sortedWindowInfos = windowInfos.sorted { $0.windowID < $1.windowID }
+
+        // Decode page_token to get offset
+        let offset: Int
+        if request.pageToken.isEmpty {
+            offset = 0
+        } else {
+            // Token format: "offset:N"
+            let components = request.pageToken.split(separator: ":")
+            guard components.count == 2, components[0] == "offset",
+                  let parsedOffset = Int(components[1]), parsedOffset >= 0
+            else {
+                throw GRPCStatus(code: .invalidArgument, message: "Invalid page_token format")
+            }
+            offset = parsedOffset
+        }
+
+        // Determine page size (default 100 if not specified or <= 0)
+        let pageSize = request.pageSize > 0 ? Int(request.pageSize) : 100
+        let totalCount = sortedWindowInfos.count
+
+        // Calculate slice bounds
+        let startIndex = min(offset, totalCount)
+        let endIndex = min(startIndex + pageSize, totalCount)
+        let pageWindowInfos = Array(sortedWindowInfos[startIndex ..< endIndex])
+
+        // Generate next_page_token if more results exist
+        let nextPageToken = if endIndex < totalCount {
+            "offset:\(endIndex)"
+        } else {
+            ""
+        }
+
+        let windows = pageWindowInfos.map { windowInfo in
             Macosusesdk_V1_Window.with {
                 $0.name = "applications/\(pid)/windows/\(windowInfo.windowID)"
                 $0.title = windowInfo.title
@@ -303,6 +381,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
 
         return Macosusesdk_V1_ListWindowsResponse.with {
             $0.windows = windows
+            $0.nextPageToken = nextPageToken
         }
     }
 
@@ -537,18 +616,50 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         // Validate and parse the selector
         let selector = try SelectorParser.shared.parseSelector(request.selector)
 
-        // Find elements using ElementLocator
+        // Decode page_token to get offset
+        let offset: Int
+        if request.pageToken.isEmpty {
+            offset = 0
+        } else {
+            // Token format: "offset:N"
+            let components = request.pageToken.split(separator: ":")
+            guard components.count == 2, components[0] == "offset",
+                  let parsedOffset = Int(components[1]), parsedOffset >= 0
+            else {
+                throw GRPCStatus(code: .invalidArgument, message: "Invalid page_token format")
+            }
+            offset = parsedOffset
+        }
+
+        // Determine page size (default 100 if not specified or <= 0)
+        let pageSize = request.pageSize > 0 ? Int(request.pageSize) : 100
+
+        // Find elements using ElementLocator (request more than needed to check if there's a next page)
+        let maxResults = offset + pageSize + 1 // Request one extra to detect next page
         let elementsWithPaths = try await ElementLocator.shared.findElements(
             selector: selector,
             parent: request.parent,
             visibleOnly: request.visibleOnly,
-            maxResults: Int(request.pageSize),
+            maxResults: maxResults,
         )
 
+        // Apply pagination slice
+        let totalCount = elementsWithPaths.count
+        let startIndex = min(offset, totalCount)
+        let endIndex = min(startIndex + pageSize, totalCount)
+        let pageElementsWithPaths = Array(elementsWithPaths[startIndex ..< endIndex])
+
+        // Generate next_page_token if more results exist
+        let nextPageToken = if endIndex < totalCount {
+            "offset:\(endIndex)"
+        } else {
+            ""
+        }
+
         // Convert to proto elements and register them
-        var elements: [Macosusesdk_Type_Element] = []
+        var elements = [Macosusesdk_Type_Element]()
         let pid = try parsePID(fromName: request.parent)
-        for (element, path) in elementsWithPaths {
+        for (element, path) in pageElementsWithPaths {
             let protoElement = element
             // Generate and assign element ID
             let elementId = await ElementRegistry.shared.registerElement(protoElement, pid: pid)
@@ -560,8 +671,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
 
         return Macosusesdk_V1_FindElementsResponse.with {
             $0.elements = elements
-            // TODO: Implement pagination with next_page_token
-            $0.nextPageToken = ""
+            $0.nextPageToken = nextPageToken
         }
     }
 
@@ -574,19 +684,51 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         let selector =
             request.hasSelector ? try SelectorParser.shared.parseSelector(request.selector) : nil
 
-        // Find elements in region using ElementLocator
+        // Decode page_token to get offset
+        let offset: Int
+        if request.pageToken.isEmpty {
+            offset = 0
+        } else {
+            // Token format: "offset:N"
+            let components = request.pageToken.split(separator: ":")
+            guard components.count == 2, components[0] == "offset",
+                  let parsedOffset = Int(components[1]), parsedOffset >= 0
+            else {
+                throw GRPCStatus(code: .invalidArgument, message: "Invalid page_token format")
+            }
+            offset = parsedOffset
+        }
+
+        // Determine page size (default 100 if not specified or <= 0)
+        let pageSize = request.pageSize > 0 ? Int(request.pageSize) : 100
+
+        // Find elements in region using ElementLocator (request more than needed to check if there's a next page)
+        let maxResults = offset + pageSize + 1 // Request one extra to detect next page
         let elementsWithPaths = try await ElementLocator.shared.findElementsInRegion(
             region: request.region,
             selector: selector,
             parent: request.parent,
             visibleOnly: false, // Region search doesn't have visibleOnly parameter
-            maxResults: Int(request.pageSize),
+            maxResults: maxResults,
         )
 
+        // Apply pagination slice
+        let totalCount = elementsWithPaths.count
+        let startIndex = min(offset, totalCount)
+        let endIndex = min(startIndex + pageSize, totalCount)
+        let pageElementsWithPaths = Array(elementsWithPaths[startIndex ..< endIndex])
+
+        // Generate next_page_token if more results exist
+        let nextPageToken = if endIndex < totalCount {
+            "offset:\(endIndex)"
+        } else {
+            ""
+        }
+
         // Convert to proto elements and register them
-        var elements: [Macosusesdk_Type_Element] = []
+        var elements = [Macosusesdk_Type_Element]()
         let pid = try parsePID(fromName: request.parent)
-        for (element, path) in elementsWithPaths {
+        for (element, path) in pageElementsWithPaths {
             let protoElement = element
             // Generate and assign element ID
             let elementId = await ElementRegistry.shared.registerElement(protoElement, pid: pid)
@@ -598,8 +740,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
 
         return Macosusesdk_V1_FindRegionElementsResponse.with {
             $0.elements = elements
-            // TODO: Implement pagination with next_page_token
-            $0.nextPageToken = ""
+            $0.nextPageToken = nextPageToken
         }
     }
 
@@ -1307,12 +1448,45 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         fputs("info: [MacosUseServiceProvider] listObservations called\n", stderr)
 
         // List observations for parent
-        let observations = await ObservationManager.shared.listObservations(parent: request.parent)
+        let allObservations = await ObservationManager.shared.listObservations(parent: request.parent)
+
+        // Sort by name for deterministic ordering
+        let sortedObservations = allObservations.sorted { $0.name < $1.name }
+
+        // Decode page_token to get offset
+        let offset: Int
+        if request.pageToken.isEmpty {
+            offset = 0
+        } else {
+            // Token format: "offset:N"
+            let components = request.pageToken.split(separator: ":")
+            guard components.count == 2, components[0] == "offset",
+                  let parsedOffset = Int(components[1]), parsedOffset >= 0
+            else {
+                throw GRPCStatus(code: .invalidArgument, message: "Invalid page_token format")
+            }
+            offset = parsedOffset
+        }
+
+        // Determine page size (default 100 if not specified or <= 0)
+        let pageSize = request.pageSize > 0 ? Int(request.pageSize) : 100
+        let totalCount = sortedObservations.count
+
+        // Calculate slice bounds
+        let startIndex = min(offset, totalCount)
+        let endIndex = min(startIndex + pageSize, totalCount)
+        let pageObservations = Array(sortedObservations[startIndex ..< endIndex])
+
+        // Generate next_page_token if more results exist
+        let nextPageToken = if endIndex < totalCount {
+            "offset:\(endIndex)"
+        } else {
+            ""
+        }
 
         return Macosusesdk_V1_ListObservationsResponse.with {
-            $0.observations = observations
-            // TODO: Implement pagination with next_page_token
-            $0.nextPageToken = ""
+            $0.observations = pageObservations
+            $0.nextPageToken = nextPageToken
         }
     }
 
@@ -2440,9 +2614,9 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
 
         // For each application, check if it has scripting support
         for app in applications {
-            // Note: Application proto doesn't have bundleID field,
-            // so we extract it from the app name if available
-            let bundleId = "unknown" // TODO: Store bundleID in Application proto or metadata
+            // Resolve bundle ID from PID
+            let pid = app.pid
+            let bundleId = resolveBundleID(forPID: pid) ?? "unknown"
 
             // Create dictionary entry for the application
             let dictionary = Macosusesdk_V1_ScriptingDictionary.with {
