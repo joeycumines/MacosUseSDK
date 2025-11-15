@@ -12,34 +12,113 @@
 
 ### **Server Implementation - ⚠️ PARTIAL (CORE METHODS IMPLEMENTED, FEW PARTIAL FEATURES REMAIN)**
 
-**COMPLETION STATUS:** Most proto-defined gRPC service methods have concrete implementations in `MacosUseServiceProvider.swift`. The codebase implements the majority of the API surface, but a few important items remain partially implemented or marked as TODO (see below). Changes were verified by scanning the provider implementations and helper components.
+**COMPLETION STATUS:**
+Most proto-defined gRPC service methods have concrete implementations in `MacosUseServiceProvider.swift`. The codebase implements the majority of the API surface, but a few important items remain partially implemented or marked as TODO.
 
-**VERIFICATION SUMMARY:**
-- Total RPC methods declared in `macos_use.proto`: ~66 (refer to proto file for exact count).
-- Implemented RPCs: ~62 — The vast majority of RPCs have implementation functions and delegate to manager/helper components.
-- Partially implemented RPCs: Pagination issues for multiple `List*` RPCs and observation window-change events.
-- Explicitly `UNIMPLEMENTED`: 2 RPC methods (`GetPerformanceReport`, `ResetMetrics`) return `UNIMPLEMENTED` from the server.
+**PER-RPC IMPLEMENTATION SUMMARY (High-level):**
+* **Implemented (Complete):** OpenApplication (LRO), GetApplication, DeleteApplication, CreateInput, GetInput, TraverseAccessibility, WatchAccessibility, Focus/Move/Resize/Minimize/Restore/CloseWindow, GetElement/ListElements/FindRegionElements/GetElementActions/ClickElement/WriteElementValue/WaitElement/WaitElementState (with caveats), CreateObservation/CancelObservation/Get/StreamObservations, Session calls, Screenshot calls, Clipboard calls, FileDialog automation, Macro methods (CRUD & execute), Script methods (execute & validation), GetScriptingDictionaries, GetMetrics (partial), many support functions.
+* **Partial / Missing / TODOs:**
+    * **Pagination:** Multiple "List" RPCs (FindElements, FindRegionElements, ListObservations, ListApplications, ListInputs, ListWindows) are missing explicit `nextPageToken` handling.
+    * **ObservationManager:** No window-change detection yet (TODO).
+    * **GetScriptingDictionaries:** Uses placeholder bundleIDs "unknown" (TODO).
+    * **PerformElementAction:** Limited to a subset of actions (press/click & showmenu/openmenu) — unrecognized actions return `GRPC UNIMPLEMENTED`.
+    * **Metrics:** `GetPerformanceReport` & `ResetMetrics` explicitly return `GRPC UNIMPLEMENTED`; `GetMetrics` only returns simple aggregate counters and mostly placeholder values.
+    * **Placeholders:** `TargetApplicationsServiceProvider.swift` & `DesktopServiceProvider.swift` are TODO placeholders (not wired into the `MacosUseServiceProvider`).
+    * **OperationStore & Telemetry:** Operation lifecycles are tracked, but operation durations & more comprehensive metrics are not being captured currently.
+* **Explicit Unimplemented RPCs:**
+    * `getPerformanceReport` → throws UNIMPLEMENTED (`MacosUseServiceProvider.swift:2592`)
+    * `resetMetrics` → throws UNIMPLEMENTED (`MacosUseServiceProvider.swift:2598`)
 
-**RECOMMENDATION:** Address the partial implementations and the explicitly `UNIMPLEMENTED` metrics methods next to push the service to a fully complete state. The rest of the API surface is largely implemented and test-covered by unit and integration tests.
+**PER-RPC MAPPING (Detailed Status):**
+* **OpenApplication** — `Implemented` (LRO) — `MacosUseServiceProvider.swift:1-80` (uses `operationStore`, `AutomationCoordinator`).
+* **GetApplication** — `Implemented` — `MacosUseServiceProvider.swift:71`.
+* **ListApplications** — `Implemented` (no pagination) — `MacosUseServiceProvider.swift:82`.
+* **DeleteApplication** — `Implemented` — `MacosUseServiceProvider.swift:92`.
+* **CreateInput** — `Implemented` — `MacosUseServiceProvider.swift:103` (handles LRO-like state & success/failure updates).
+* **GetInput** — `Implemented` — `MacosUseServiceProvider.swift:151`.
+* **ListInputs** — `Implemented` (no pagination) — `MacosUseServiceProvider.swift:161`.
+* **TraverseAccessibility** — `Implemented` — `MacosUseServiceProvider.swift:173`.
+* **WatchAccessibility** — `Implemented` (poll-based) — `MacosUseServiceProvider.swift:183`.
+* **GetWindow** — `Implemented` — `MacosUseServiceProvider.swift:229` (some metadata states TODO).
+* **ListWindows** — `Implemented` (no pagination) — `MacosUseServiceProvider.swift:273` (many attributes defaulted or placeholders).
+* **FocusWindow** — `Implemented` — `MacosUseServiceProvider.swift:309`.
+* **MoveWindow** — `Implemented` — `MacosUseServiceProvider.swift:341`.
+* **ResizeWindow** — `Implemented` — `MacosUseServiceProvider.swift:381`.
+* **MinimizeWindow** — `Implemented` — `MacosUseServiceProvider.swift:419`.
+* **RestoreWindow** — `Implemented` — `MacosUseServiceProvider.swift:453`.
+* **CloseWindow** — `Implemented` — `MacosUseServiceProvider.swift:487`.
+* **FindElements** — `Partial` – `MacosUseServiceProvider.swift:532` (TODO: next_page_token).
+* **FindRegionElements** — `Partial` – `MacosUseServiceProvider.swift:568` (TODO: next_page_token).
+* **GetElement** — `Implemented` — `MacosUseServiceProvider.swift:606`.
+* **ClickElement** — `Implemented` — `MacosUseServiceProvider.swift:614` (AX or coordinate fallback).
+* **WriteElementValue** — `Implemented` — `MacosUseServiceProvider.swift:728`.
+* **GetElementActions** — `Implemented` — `MacosUseServiceProvider.swift:812`.
+* **PerformElementAction** — `Partial` (limited set) — `MacosUseServiceProvider.swift:860` (only press/click and showmenu actions; others return UNIMPLEMENTED).
+* **WaitElement** — `Implemented` (LRO) — `MacosUseServiceProvider.swift:995`.
+* **WaitElementState** — `Implemented` (LRO) — `MacosUseServiceProvider.swift:1091`.
+* **CreateObservation** — `Implemented` (LRO) — `MacosUseServiceProvider.swift:1224`.
+* **GetObservation** — `Implemented` — `MacosUseServiceProvider.swift:1290`.
+* **ListObservations** — `Partial` — `MacosUseServiceProvider.swift:1304` (TODO: next_page_token).
+* **CancelObservation** — `Implemented` — `MacosUseServiceProvider.swift:1319`.
+* **StreamObservations** — `Implemented` — `MacosUseServiceProvider.swift:1334`.
+* **Session methods** — `Implemented` — `MacosUseServiceProvider.swift:1373..1513` (Create/Get/List/Delete/Begin/Commit/Rollback/GetSnapshot; ListSessions uses pagination).
+* **Screenshot methods** — `Implemented` — `MacosUseServiceProvider.swift:1529..1687` (CaptureScreenshot/CaptureWindowScreenshot/CaptureElementScreenshot/CaptureRegionScreenshot).
+* **Clipboard methods** — `Implemented` — `MacosUseServiceProvider.swift:1745..1798` (Get/Write/Clear/GetHistory).
+* **File Dialogs automation** — `Implemented` — `MacosUseServiceProvider.swift:1815..1932` (AutomateOpen/AutomateSave/SelectFile/SelectDirectory/DragFiles).
+* **Macro methods** — `Implemented` — `MacosUseServiceProvider.swift:1998..2140` (Create/Get/List/Update/Delete/Execute; ListMacros has pagination).
+* **Script methods** — `Implemented` — `MacosUseServiceProvider.swift:2213..2424` (ExecuteApple/ExecuteJS/ExecuteShell/Validate/GetDictionaries; GetScriptingDictionaries uses placeholder bundleID).
+* **GetMetrics** — `Implemented` (scaffold, mostly zero values) — `MacosUseServiceProvider.swift:2494`.
+* **GetPerformanceReport** — `Unimplemented` — `MacosUseServiceProvider.swift:2589`.
+* **ResetMetrics** — `Unimplemented` — `MacosUseServiceProvider.swift:2595`.
 
-**COMPLETED IMPLEMENTATIONS:**
-* **Script Execution (COMPLETE):** ExecuteAppleScript, ExecuteJavaScript, ExecuteShellCommand, ValidateScript, GetScriptingDictionaries - all fully implemented with proper error handling, timeouts, security validation
-* **Macro Management (COMPLETE):** CreateMacro, GetMacro, ListMacros, UpdateMacro, DeleteMacro, ExecuteMacro (LRO) - all fully implemented with MacroRegistry integration
-* **Clipboard Operations (COMPLETE):** ReadClipboard (getClipboard), WriteClipboard, ClearClipboard - all delegating to ClipboardManager
-* **File Dialog Automation (COMPLETE):** OpenFileDialog (automateOpenFileDialog), SaveFileDialog (automateSaveFileDialog) - all delegating to FileDialogAutomation
-* **Metrics (PARTIAL - STUBS/UNIMPLEMENTED):** `GetMetrics` has scaffolding, but `GetPerformanceReport` and `ResetMetrics` are explicitly `unimplemented` and return gRPC `UNIMPLEMENTED` errors — metrics collection and reporting require further work.
-* **Supporting Infrastructure:** `ElementRegistry`, `ObservationManager`, `MacroRegistry`, and several managers are implemented and invoked — however, some features (e.g., observation window-change detection) are listed as TODOs.
+**CURRENT IMPLEMENTATION NOTES & SUGGESTED PR SCOPE:**
+* **Pagination:** Implement service-level slicing of arrays & tokens.
+* **Observations:** Implement Window Registry change diffing inside `ObservationManager` (.windowChanges case). Use WindowRegistry snapshots to produce `ObservationEvent` entries.
+* **Metrics:** Add start/finish timestamps on `OperationStore`. Implement `GetPerformanceReport` to aggregate CPU/Memory counters and operation latency histograms.
+* **Scripting:** Add `bundleID` read to `Application` Proto or `AppStateStore` (via `NSRunningApplication` by PID).
 
-**PROTO VERIFICATION FINDINGS:**
-* RecordMacro, StopRecording, WatchClipboard, StreamMetrics methods DO NOT EXIST in proto definitions - they were referenced in the implementation plan but are not part of the actual API specification and therefore were not implemented.
+**RISKS & CAVEATS:**
+* **Event-based vs poll-based:** Transitioning to AXObserver for efficiency requires patching into the main loop.
+* **Permissions:** Integration tests require Accessibility & Screen Recording permissions.
+* **Fragile Tests:** Tests relying on exact window coordinates are fragile; prefer robust element selectors.
 
-**KNOWN PARTIAL IMPLEMENTATION AREAS (HIGH PRIORITY)**
-- Pagination: Several `List*` RPCs (e.g., `ListWindows`, `ListInputs`, `ListObservations`) include `TODO: Implement pagination with next_page_token`. Pagination is currently not implemented or only rudimentarily implemented in many list methods.
-- Observation Events: `ObservationManager.swift` contains TODOs for detecting window changes and emitting events. Observations exist, but event completeness (window/app lifecycle) is limited.
-- Window Metadata: Many window attributes contain placeholders (e.g., `bundleId = "unknown"` with a TODO recommending storing the bundle ID) — more accurate window metadata should be added.
-- Metrics: The metrics subsystem is incomplete; `GetPerformanceReport` and `ResetMetrics` explicitly return `UNIMPLEMENTED`.
-- Element Actions: `PerformElementAction` currently implements only a subset of actions (e.g., `press`, `click`, `showmenu`); unrecognized actions return `UNIMPLEMENTED`. Consider adding a mapping for all relevant input types (keyboard combos, hover, drag, etc.).
-- Example placeholders: `TargetApplicationsServiceProvider` and `DesktopServiceProvider` contain TODO placeholders recommending implementing gRPC methods (the main `MacosUseServiceProvider` provides consolidated behavior, but these small providers are unimplemented placeholders and can be removed or implemented to mirror the same functionality).
+**PRIORITY FOLLOW-UP CHECKLIST**
+*(Ranked by Production impact, API completeness, test coverage)*
+
+1.  **Pagination on List endpoints (High Priority)**
+    * Implement AIP-style pagination for `ListApplications`, `ListInputs`, `ListWindows`, `FindElements`, `FindRegionElements`, `ListObservations`.
+    * Implement token encoding (e.g., base64 offset cursor).
+    * Tests: Unit tests for Page logic; Integration tests verifying multiple pages.
+
+2.  **Metrics (High Priority)**
+    * Implement `GetPerformanceReport` and `ResetMetrics`.
+    * Add operation durations & timestamps to `OperationStore`.
+    * Add telemetry in registries.
+    * Tests: `GetMetrics` returns non-zero values; `GetPerformanceReport` returns latency percentiles.
+
+3.  **Observation window changes (Medium-High Priority)**
+    * Implement diff of windows in `ObservationManager` monitorObservation .windowChanges case; emit add/remove/modify events.
+    * Tests: Unit test for window diff; Integration test verifying received events on window open/close.
+
+4.  **PerformElementAction (Medium Priority)**
+    * Expand accepted action names (e.g., "doubleclick", "rightclick", "hover", "type", "drag") and map to `InputAction`.
+    * Tests: Unit tests for mapping request.action string; Integration tests for action execution.
+
+5.  **Scripting dictionaries & bundleIDs (Medium Priority)**
+    * Get accurate bundleID for each application (read from `Application` proto or `NSRunningApplication`).
+    * Tests: Integration check verifying `GetScriptingDictionaries` returns valid bundleID.
+
+6.  **Validate & expand Event-based Observers (Lower Priority)**
+    * Replace polling with AXObserver/notifications.
+    * Tests: Event-based comparisons.
+
+7.  **Placeholder Service Providers (Clean-up)**
+    * Remove or implement `TargetApplicationsServiceProvider` & `DesktopServiceProvider`.
+    * Tests: Validate gRPC server exports.
+
+8.  **OperationStore telemetry & instrumented metrics**
+    * Store start/end timestamps; record operation durations.
+    * Tests: Operation store unit tests capturing durations.
 
 ---
 
@@ -628,6 +707,50 @@ Build a production-grade gRPC server exposing the complete MacosUseSDK functiona
     -   Permission handling
     -   Privacy protection
     -   Sandbox compatibility
+
+### **4.12 Immediate End-to-End Verification Plan**
+*(Specific Plan for Current Cycle)*
+
+- **Build/Run Preconditions:**
+    - macOS 12+ (headless or with simulator; server requires Accessibility & Screen Recording).
+    - Integration tests run via `cd integration; go test -v`, using generated Go stubs in `gen/go/*`.
+    - Use `INTEGRATION_SERVER_ADDR` env to test against existing server.
+
+- **Verify Baseline Health & Simple Operations:**
+    - Test: `ListApplications`, `OpenApplication`, `GetApplication`, `DeleteApplication`.
+    - Approach: Call `OpenApplication` (LRO), wait for op completion, verify `GetApplication` returns correct PID.
+
+- **Test: Input & Element Actions:**
+    - Use a test app (Calculator or TextEdit):
+        - Find a button via `FindElements`, `ClickElement` and verify effect (e.g., Calculator displays result).
+    - Run `PerformElementAction` with AX-based action (press) and coordinate fallback.
+
+- **Test: Find and Pagination:**
+    - Create a test that ensures `FindElements` returns page results with `nextPageToken` and request subsequent page to iterate.
+
+- **Test: Observation Streams:**
+    - Create observation on elements, make application change (open/close windows, change text), verify:
+        - Streamed events include changes.
+        - `createObservation` LRO returns proper result.
+        - `StreamObservations` receives events.
+
+- **Test: Window Changes Detection:**
+    - Create Observation for window changes; open/close windows in the app; expect window add/remove events in the stream.
+
+- **Test: Scripting:**
+    - `GetScriptingDictionaries` returns bundle ID & command set for a given app.
+
+- **Test: Macro Management:**
+    - Create macros, update, list paginated results, execute macros, verify action effects & operation response.
+
+- **Test: Screen Capturing:**
+    - Capture screenshot & window screenshot; ensure image/data returns match expected size or MIME type.
+
+- **Test: Metrics:**
+    - Trigger operations; ensure `GetMetrics` returns appropriate counts; implement and test `GetPerformanceReport`.
+
+- **Test: Error Handling:**
+    - Invalid inputs: Call `GetElement` with invalid resource names, expecting `invalidArgument`/`notFound`.
 
 ### **Correctness & Verification Guarantees**
 
