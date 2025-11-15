@@ -21,16 +21,14 @@ func PollUntil(timeout time.Duration, interval time.Duration, condition func() b
 	defer ticker.Stop()
 
 	for {
-		select {
-		case <-ticker.C:
-			if condition() {
-				return nil
-			}
-			// Check if we have exceeded the timeout *after* checking the condition
-			// to ensure we don't miss a success that happened exactly at the deadline.
-			if time.Now().After(deadline) {
-				return fmt.Errorf("PollUntil: condition not met after %v timeout", timeout)
-			}
+		<-ticker.C
+		if condition() {
+			return nil
+		}
+		// Check if we have exceeded the timeout *after* checking the condition
+		// to ensure we don't miss a success that happened exactly at the deadline.
+		if time.Now().After(deadline) {
+			return fmt.Errorf("PollUntil: condition not met after %v timeout", timeout)
 		}
 	}
 }
