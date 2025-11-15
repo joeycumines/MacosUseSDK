@@ -59,7 +59,7 @@ Documentation and Planning:
 - ALL updates to the plan MUST be represented in `./implementation-plan.md`, NOT any other files
 - You MUST NOT create status update files like `IMPLEMENTATION_COMPLETE.md` or `IMPLEMENTATION_NOTES.md`
 - You MUST keep `./implementation-plan.md` UP TO DATE with minimal edits, consolidating and updating where necessary
-- The plan MUST be STRICTLY and PERFECTLY aligned to this constraints document
+- The plan MUST be STRICTLY and PERFECTLY aligned to this constraints document **while also reflecting the actual current state of the repository**; when reality and earlier text diverge, you MUST update the plan to match reality and then adjust future tasks accordingly.
 - You MUST update `implementation-plan.md` as part of each set of changes, potentially multiple times per session
 
 Proto API Structure:

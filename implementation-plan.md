@@ -11,26 +11,37 @@
 >
 > This section is the *only* location for tracking progress. The `implementation-constraints.md` file MUST NOT be used for tracking status.
 
-### **Server Implementation - ⚠️ PARTIAL (CRITICAL CORRECTNESS GAPS REMAIN)**
+### **Server Implementation – ⚠️ FUNCTIONALLY BROAD, FORMALLY INCOMPLETE**
 
-**COMPLETION STATUS:**
-Most proto-defined gRPC service methods have concrete implementations in `MacosUseServiceProvider.swift`. However, the system currently lacks **asynchronous state convergence guarantees**, efficient pagination for large datasets, and strict resource cleanup. These are now classified as **MANDATORY BLOCKERS** for Phase 3 completion.
+**COMPLETION STATUS (REALITY-CHECKED):**
+Most proto-defined gRPC service methods have concrete, working implementations in `MacosUseServiceProvider.swift` backed by `AutomationCoordinator`, `AppStateStore`, `WindowRegistry`, `ObservationManager`, `SessionManager`, and `OperationStore`. The server is already capable of complex automation (multi-window, element targeting, observations, macros, scripting, screenshots, clipboard, file dialogs). However, it lacks **AIP-grade pagination**, **production-quality metrics**, and **strong correctness guarantees around convergence and cleanup**. These are now classified as **mandatory blockers for any “production-ready” release.**
 
-**PER-RPC IMPLEMENTATION SUMMARY (High-level):**
-* **Implemented (Complete):** OpenApplication (LRO), GetApplication, DeleteApplication, CreateInput, GetInput, TraverseAccessibility, WatchAccessibility, Focus/Move/Resize/Minimize/Restore/CloseWindow, GetElement/ListElements/FindRegionElements/GetElementActions/ClickElement/WriteElementValue/WaitElement/WaitElementState (with caveats), CreateObservation/CancelObservation/Get/StreamObservations, Session calls, Screenshot calls, Clipboard calls, FileDialog automation, Macro methods (CRUD & execute), Script methods (execute & validation), GetScriptingDictionaries, GetMetrics (partial), many support functions.
-* **Partial / Missing / TODOs:**
-    * **Pagination:** Multiple "List" RPCs (FindElements, FindRegionElements, ListObservations, ListApplications, ListInputs, ListWindows) are missing explicit `nextPageToken` handling.
-    * **ObservationManager:** No window-change detection yet (TODO).
-    * **GetScriptingDictionaries:** Uses placeholder bundleIDs "unknown" (TODO).
-    * **PerformElementAction:** Limited to a subset of actions (press/click & showmenu/openmenu) — unrecognized actions return `GRPC UNIMPLEMENTED`.
-    * **Metrics:** `GetPerformanceReport` & `ResetMetrics` explicitly return `GRPC UNIMPLEMENTED`; `GetMetrics` only returns simple aggregate counters and mostly placeholder values.
-    * **Placeholders:** `TargetApplicationsServiceProvider.swift` & `DesktopServiceProvider.swift` are TODO placeholders (not wired into the `MacosUseServiceProvider`).
-    * **OperationStore & Telemetry:** Operation lifecycles are tracked, but operation durations & more comprehensive metrics are not being captured currently.
+**PER-RPC IMPLEMENTATION SUMMARY (High-level, by category):**
+* **Implemented (substantially complete for v1):**
+    * Applications: `OpenApplication` (LRO), `GetApplication`, `ListApplications` (no pagination), `DeleteApplication`.
+    * Inputs: `CreateInput`, `GetInput`, `ListInputs` (no pagination).
+    * Windows: `GetWindow`, `ListWindows` (no pagination, some placeholder fields), `FocusWindow`, `MoveWindow`, `ResizeWindow`, `MinimizeWindow`, `RestoreWindow`, `CloseWindow`.
+    * Elements: `FindElements`, `FindRegionElements` (no pagination), `GetElement`, `ClickElement`, `WriteElementValue`, `GetElementActions`, `WaitElement` (LRO), `WaitElementState` (LRO).
+    * Observations: `CreateObservation` (LRO), `GetObservation`, `ListObservations` (no pagination), `CancelObservation`, `StreamObservations`.
+    * Sessions: all RPCs implemented (Create/Get/List/Delete/Begin/Commit/Rollback/GetSnapshot; `ListSessions` supports pagination).
+    * Screenshots: full set of capture methods implemented.
+    * Clipboard: get/write/clear/history implemented.
+    * File Dialogs: open/save/select/drag automation implemented.
+    * Macros: CRUD + Execute implemented; `ListMacros` supports pagination.
+    * Scripts: execute & validate methods implemented; `GetScriptingDictionaries` returns data with placeholder bundle IDs.
+* **Partial / Missing / TODOs (high impact):**
+    * **Pagination:** `ListWindows`, `ListInputs`, `FindElements`, `FindRegionElements`, `ListObservations` currently ignore `page_size`/`page_token` and return a single page only.
+    * **ObservationManager:** Window-change detection path is still TODO; element diffs are basic.
+    * **GetScriptingDictionaries:** Uses placeholder bundle IDs (e.g. "unknown") instead of reliably resolved bundle identifiers.
+    * **PerformElementAction:** Supports only a limited set of actions (press/click & show menu/open menu); unknown actions yield `UNIMPLEMENTED`.
+    * **Metrics:** `GetMetrics` returns mostly placeholder/zero values; `GetPerformanceReport` and `ResetMetrics` are stubbed as `UNIMPLEMENTED`.
+    * **Placeholders:** `TargetApplicationsServiceProvider.swift` and `DesktopServiceProvider.swift` exist but remain TODO/partially wired.
+    * **OperationStore & Telemetry:** Tracks operation lifecycles but does not yet compute meaningful latency/usage statistics.
 * **Explicit Unimplemented RPCs:**
-    * `getPerformanceReport` → throws UNIMPLEMENTED (`MacosUseServiceProvider.swift:2592`)
-    * `resetMetrics` → throws UNIMPLEMENTED (`MacosUseServiceProvider.swift:2598`)
+    * `GetPerformanceReport` → throws `UNIMPLEMENTED`.
+    * `ResetMetrics` → throws `UNIMPLEMENTED`.
 
-**PER-RPC MAPPING (Detailed Status):**
+**PER-RPC MAPPING (Detailed Status – SWIFT FILE REFERENCES MAY MOVE):**
 * **OpenApplication** — `Implemented` (LRO) — `MacosUseServiceProvider.swift:1-80` (uses `operationStore`, `AutomationCoordinator`).
 * **GetApplication** — `Implemented` — `MacosUseServiceProvider.swift:71`.
 * **ListApplications** — `Implemented` (no pagination) — `MacosUseServiceProvider.swift:82`.
@@ -69,51 +80,45 @@ Most proto-defined gRPC service methods have concrete implementations in `MacosU
 * **Macro methods** — `Implemented` — `MacosUseServiceProvider.swift:1998..2140` (Create/Get/List/Update/Delete/Execute; ListMacros has pagination).
 * **Script methods** — `Implemented` — `MacosUseServiceProvider.swift:2213..2424` (ExecuteApple/ExecuteJS/ExecuteShell/Validate/GetDictionaries; GetScriptingDictionaries uses placeholder bundleID).
 * **GetMetrics** — `Implemented` (scaffold, mostly zero values) — `MacosUseServiceProvider.swift:2494`.
-* **GetPerformanceReport** — `Unimplemented` — `MacosUseServiceProvider.swift:2589`.
-* **ResetMetrics** — `Unimplemented` — `MacosUseServiceProvider.swift:2595`.
+* **GetPerformanceReport** — `Unimplemented` — `MacosUseServiceProvider.swift` (UNIMPLEMENTED stub).
+* **ResetMetrics** — `Unimplemented` — `MacosUseServiceProvider.swift` (UNIMPLEMENTED stub).
 
-**CURRENT IMPLEMENTATION NOTES & SUGGESTED PR SCOPE:**
-* **Pagination:** Implement service-level slicing of arrays & tokens.
-* **Observations:** Implement Window Registry change diffing inside `ObservationManager` (.windowChanges case). Use WindowRegistry snapshots to produce `ObservationEvent` entries.
-* **Metrics:** Add start/finish timestamps on `OperationStore`. Implement `GetPerformanceReport` to aggregate CPU/Memory counters and operation latency histograms.
-* **Scripting:** Add `bundleID` read to `Application` Proto or `AppStateStore` (via `NSRunningApplication` by PID).
+**CURRENT IMPLEMENTATION NOTES & TARGETED NEXT STEPS:**
+* **Pagination (AIP‑158):** Implement proper `page_size`/`page_token` handling and `next_page_token` emission for `ListWindows`, `ListInputs`, `FindElements`, `FindRegionElements`, and `ListObservations`.
+* **Observations:** Implement window-change diffing in `ObservationManager` (windowChanges case) using `WindowRegistry` snapshots, and feed results into `StreamObservations`.
+* **Metrics:** Extend `OperationStore` (and related actors) to track operation durations and key counters; implement `GetMetrics` with real values and `GetPerformanceReport`/`ResetMetrics` as non-stub RPCs.
+* **Scripting:** Resolve bundle IDs via `NSRunningApplication` (or equivalent) and update `GetScriptingDictionaries` to return meaningful bundle IDs and dictionaries.
 
-**RISKS & CAVEATS:**
-* **Event-based vs poll-based:** Transitioning to AXObserver for efficiency requires patching into the main loop.
-* **Permissions:** Integration tests require Accessibility & Screen Recording permissions.
-* **Fragile Tests:** Tests relying on exact window coordinates are fragile; prefer robust element selectors.
+**RISKS & CAVEATS (UNCHANGED BUT CONFIRMED):**
+* **Event-based vs poll-based:** Moving to AXObserver/event-based monitoring touches the main loop and must be phased carefully.
+* **Permissions:** Integration tests depend on Accessibility & Screen Recording permissions and will fail noisily without them.
+* **Fragile Tests:** Assertions tied to exact coordinates are brittle; selector-based and state-based checks are preferred.
 
-**CRITICAL CORRECTNESS TASKS (IMMEDIATE BLOCKERS)**
-*(The following tasks are mandatory for Phase 3/4 completion)*
+**CRITICAL CORRECTNESS TASKS (IMMEDIATE BLOCKERS, RECONFIRMED)**
+*(Mandatory before declaring the server “production-ready”)*
 
-1.  **[Phase 3]** Implement `next_page_token` logic for `ListWindows`, `ListInputs`, and `FindElements` to satisfy AIP-158.
-2.  **[Phase 3]** Resolve `bundleId` resolution in `WindowRegistry` to eliminate "unknown" values.
-3.  **[Phase 3]** Implement `GetPerformanceReport` to replace the `UNIMPLEMENTED` stub.
-4.  **[Phase 4]** Rewrite `Integration Tests` to use `PollUntil(condition)` predicates for all state assertions (Geometry, Text Value, Window Existence).
-5.  **[Phase 4]** Add a `ResourceLeakCheck` step to the `TearDown` phase of the test harness.
+1.  Implement AIP‑compliant pagination (`page_size`, `page_token`, `next_page_token`) for `ListWindows`, `ListInputs`, `FindElements`, `FindRegionElements`, and `ListObservations`.
+2.  Resolve bundle ID handling in `WindowRegistry`/scripting so that bundle identifiers are no longer "unknown" in normal cases, and fix `GetScriptingDictionaries` accordingly.
+3.  Implement `GetPerformanceReport` and `ResetMetrics`, and upgrade `GetMetrics` to report real counters/latencies wired to `OperationStore` and related components.
+4.  Introduce a shared `PollUntil` pattern in integration tests and refactor tests to assert **state deltas** (pre/post) instead of relying on naive sleeps.
+5.  Add a teardown `ResourceLeakCheck` that uses `GetMetrics` to assert that observation and connection counts return to baseline after each test suite.
 
-**PRIORITY FOLLOW-UP CHECKLIST**
-*(Ranked by Production impact, API completeness, test coverage)*
+**PRIORITY FOLLOW-UP CHECKLIST (RANKED AFTER BLOCKERS):**
 
-1.  **Observation window changes (Medium-High Priority)**
-    * Implement diff of windows in `ObservationManager` monitorObservation .windowChanges case; emit add/remove/modify events.
-    * Tests: Unit test for window diff; Integration test verifying received events on window open/close.
+1.  **Observation window changes (Medium-High):**
+    * Implement window diffing in `ObservationManager` and add unit/integration coverage for window open/close events.
 
-2.  **PerformElementAction (Medium Priority)**
-    * Expand accepted action names (e.g., "doubleclick", "rightclick", "hover", "type", "drag") and map to `InputAction`.
-    * Tests: Unit tests for mapping request.action string; Integration tests for action execution.
+2.  **PerformElementAction expansion (Medium):**
+    * Support richer actions (e.g. doubleclick/rightclick/hover/type/drag) mapped to `InputAction` and add corresponding tests.
 
-3.  **Validate & expand Event-based Observers (Lower Priority)**
-    * Replace polling with AXObserver/notifications.
-    * Tests: Event-based comparisons.
+3.  **Event-based observers (Lower):**
+    * Gradually replace polling-based observers with AXObserver-backed implementations where feasible.
 
-4.  **Placeholder Service Providers (Clean-up)**
-    * Remove or implement `TargetApplicationsServiceProvider` & `DesktopServiceProvider`.
-    * Tests: Validate gRPC server exports.
+4.  **Placeholder providers (Clean-up):**
+    * Either remove or fully implement `TargetApplicationsServiceProvider` and `DesktopServiceProvider`.
 
-5.  **OperationStore telemetry & instrumented metrics**
-    * Store start/end timestamps; record operation durations.
-    * Tests: Operation store unit tests capturing durations.
+5.  **Telemetry & OperationStore metrics:**
+    * Persist operation start/end timestamps and use them to power metrics and performance reports.
 
 ---
 
@@ -121,458 +126,397 @@ Most proto-defined gRPC service methods have concrete implementations in `MacosU
 
 Build a production-grade gRPC server exposing the complete MacosUseSDK functionality through a sophisticated, resource-oriented API following Google's AIPs. The API must support complex automation workflows including multi-window interactions, advanced element targeting, streaming observations, and integration with developer tools like VS Code.
 
-## **Phase 1: Complete API Definition**
+## **Phase 1: API Definition (Reality-Aligned)**
 
-### **1.1 Core Resources**
+Phase 1 is no longer about **creating** resources and services; those already exist in `proto/macosusesdk/v1/*.proto` and `proto/macosusesdk/type/*.proto`. The focus is now on **ensuring AIP-compliant semantics**, consistent resource naming, and correctness features like pagination and filtering.
+
+### **1.1 Core Resources (Already Defined)**
+
+For each resource below, the corresponding proto file **exists**. Phase 1 work is to verify and refine:
+- Resource names and patterns (AIP-121, AIP-192, AIP-190, AIP-191).
+- Method sets and request/response shapes (AIP-131/132/133/135/151).
+- Pagination, filtering, and field masks where appropriate.
 
 #### **Application** (`applications/{application}`)
--   Represents a running application tracked by the server
--   Standard Methods: Get, List, Delete (AIP-131, 132, 135)
--   Custom Methods:
-    -   `OpenApplication` (LRO per AIP-151)
-    -   `ActivateApplication` - Bring to front
-    -   `TraverseAccessibility` - Get UI tree snapshot
-    -   `WatchAccessibility` (server-streaming) - Real-time UI changes
+- Represents a running application tracked by the server.
+- Proto: `proto/macosusesdk/v1/application.proto`.
+- Standard Methods: `GetApplication`, `ListApplications`, `DeleteApplication`.
+- Custom Methods:
+    - `OpenApplication` (LRO per AIP-151).
+    - `TraverseAccessibility` – UI tree snapshot.
+    - `WatchAccessibility` (server-streaming) – real-time UI changes.
+- **Phase 1 tasks:**
+    - Confirm resource name format and patterns follow AIPs.
+    - Ensure request/response messages are co-located with the service and documented.
+    - Review `ListApplications` for pagination semantics (currently single page only).
 
 #### **Window** (`applications/{application}/windows/{window}`)
--   Represents individual windows within an application
--   Properties: title, bounds, zIndex, visibility, minimized state
--   Standard Methods: Get, List
--   Custom Methods:
-    -   `FocusWindow` - Bring specific window to front
-    -   `MoveWindow` - Reposition window
-    -   `ResizeWindow` - Change window dimensions
-    -   `MinimizeWindow` / `RestoreWindow`
+- Represents individual windows within an application.
+- Proto: `proto/macosusesdk/v1/window.proto`.
+- Key properties: title, bounds, zIndex, visibility, minimized state, bundle ID.
+- Standard Methods: `GetWindow`, `ListWindows`.
+- Custom Methods: `FocusWindow`, `MoveWindow`, `ResizeWindow`, `MinimizeWindow`, `RestoreWindow`, `CloseWindow`.
+- **Phase 1 tasks:**
+    - Validate window resource name pattern and parent application relationship.
+    - Specify and document which fields are guaranteed vs best-effort (e.g. bundle ID, z-index).
+    - Design pagination for `ListWindows` (see Phase 3 for implementation details).
 
 #### **Element** (`applications/{application}/windows/{window}/elements/{element}`)
--   Represents UI elements (buttons, text fields, etc.)
--   Properties: role, text, bounds, states, actions, hierarchy path
--   Standard Methods: Get, List
--   Custom Methods:
-    -   `ClickElement` - Interact with element
-    -   `SetElementValue` - Modify element value
-    -   `GetElementActions` - Available AX actions
-    -   `PerformElementAction` - Execute AX action
+- Represents UI elements (buttons, text fields, etc.).
+- Types: `proto/macosusesdk/type/element.proto`, `proto/macosusesdk/type/selector.proto`.
+- Properties: role, text, bounds, states, actions, hierarchy path.
+- Standard Methods: `GetElement`, `ListElements` (via find APIs).
+- Custom Methods: `FindElements`, `FindRegionElements`, `ClickElement`, `WriteElementValue`, `GetElementActions`, `PerformElementAction`, `WaitElement`, `WaitElementState`.
+- **Phase 1 tasks:**
+    - Ensure selector and element types are documented and align with AIP-213 guidance.
+    - Define and document element ID stability and staleness semantics.
+    - Specify how pagination and filtering apply to `FindElements` and `FindRegionElements`.
 
 #### **Input** (`applications/{application}/inputs/{input}` | `desktopInputs/{input}`)
--   Timeline of input actions (circular buffer)
--   Standard Methods: Create, Get, List (AIP-133, 131, 132)
--   Enhanced types:
-    -   Keyboard: text, keys with modifiers, shortcuts
-    -   Mouse: click, drag, scroll, hover
-    -   Composite: multi-step sequences
+- Timeline of input actions associated with an application or the desktop.
+- Proto: `proto/macosusesdk/v1/input.proto`.
+- Standard Methods: `CreateInput`, `GetInput`, `ListInputs`.
+- Enhanced types: keyboard, mouse, composite/multi-step sequences.
+- **Phase 1 tasks:**
+    - Confirm resource name patterns for application vs desktop inputs.
+    - Define retention and circular-buffer behaviour for completed inputs.
+    - Specify pagination guarantees for `ListInputs`.
 
 #### **Observation** (`applications/{application}/observations/{observation}`)
--   Long-running watchers for UI state
--   Types: polling-based, event-based, condition-based
--   Standard Methods: Create (LRO), Get, List, Cancel
--   Output: stream of observed changes
+- Long-running watchers for UI state.
+- Proto: `proto/macosusesdk/v1/observation.proto`.
+- Types: polling-based, event-based, condition-based.
+- Standard Methods: `CreateObservation` (LRO), `GetObservation`, `ListObservations`, `CancelObservation`.
+- Streaming: `StreamObservations`.
+- **Phase 1 tasks:**
+    - Validate observation types and event shapes vs AIP guidance on streaming.
+    - Define semantics for observation lifetimes and cancellation.
+    - Plan for pagination on `ListObservations`.
 
 #### **Session** (`sessions/{session}`)
--   Groups related operations and maintains context
--   Supports transaction-like semantics
--   Standard Methods: Create, Get, List, Delete
--   Custom Methods:
-    -   `BeginTransaction` - Start atomic operation group
-    -   `CommitTransaction` - Apply all operations
-    -   `RollbackTransaction` - Undo operations
+- Groups related operations and maintains context.
+- Proto: `proto/macosusesdk/v1/session.proto`.
+- Standard Methods: `CreateSession`, `GetSession`, `ListSessions`, `DeleteSession`.
+- Custom Methods: `BeginTransaction`, `CommitTransaction`, `RollbackTransaction`, `GetSessionSnapshot`.
+- **Phase 1 tasks:**
+    - Confirm resource names and parentage (if any) follow AIPs.
+    - Clarify semantics for transactions and snapshots in proto comments.
+    - Ensure `ListSessions` pagination behaviour is well-documented and testable.
 
-### **1.2 Advanced Input Types**
+### **1.2 Advanced Input Types (Baseline vs Future Extension)**
 
-#### **Keyboard Input Enhancements**
--   Key combinations with multiple modifiers
--   Text input with IME support
--   Special keys (function keys, media keys)
--   Keyboard shortcuts (Cmd+Tab, etc.)
+The proto and server already support a subset of advanced input types (keyboard and mouse). Phase 1 should distinguish **baseline support** from **future extensions** and make this explicit in proto comments.
 
-#### **Mouse Input Enhancements**
--   Drag and drop operations
--   Scroll with momentum/precision
--   Right-click / context menu
--   Multi-button mouse support
--   Hover with duration
--   Double-click, triple-click
+#### **Keyboard Input (Baseline)**
+- Key combinations with modifiers (Command, Option, Control, Shift).
+- Text input.
+- Some special keys/shortcuts where supported by the current implementation.
 
-#### **Touch/Gesture Input**
--   Pinch, zoom, rotate gestures
--   Multi-finger swipes
--   Force touch
+#### **Mouse Input (Baseline)**
+- Clicks (including coordinate-based fallback where needed).
+- Basic drag operations for window movement.
+
+#### **Future Extensions (Documented but NOT required for initial production)**
+- Scroll with momentum/precision.
+- Advanced drag-and-drop and hover-duration semantics.
+- Multi-button mouse configurations.
+- Touch/gesture inputs (pinch, zoom, rotate, multi-finger swipes, force touch).
+
+**Phase 1 tasks:**
+- Ensure `input.proto` clearly separates currently supported actions from planned ones.
+- Avoid over-promising gestures/multi-touch in comments until designs and platform feasibility are nailed down.
 
 ### **1.3 Element Targeting System**
 
+Selector and element types already exist and are in active use.
+
 #### **Selector Syntax** (`proto/macosusesdk/type/selector.proto`)
--   By role and attributes (AX properties)
--   By text content (exact, contains, regex)
--   By position (relative, absolute, screen coords)
--   By hierarchy (parent/child relationships, depth)
--   By state (focused, enabled, visible)
--   Compound selectors (AND, OR, NOT)
--   Relative selectors (nth-child, sibling)
+- By role and attributes (AX properties).
+- By text content (exact, contains, possibly regex-like semantics where implemented).
+- By position (relative, absolute, screen coordinates).
+- By hierarchy (parent/child relationships, depth).
+- By state (focused, enabled, visible).
+- Compound selectors (AND, OR, NOT) and relative selectors (nth-child, sibling) as supported by `SelectorParser`.
 
 #### **Query System**
--   `FindElements` - Search with selectors
--   `FindElementsInRegion` - Spatial search
--   `WaitForElement` (LRO) - Wait for appearance
--   `WaitForElementState` (LRO) - Wait for state change
+- `FindElements` – selector-based search.
+- `FindRegionElements` – region-bounded search.
+- `WaitElement` (LRO) – wait for appearance.
+- `WaitElementState` (LRO) – wait for state change.
+
+**Phase 1 tasks:**
+- Document the selector grammar in `selector.proto` and `proto/README.md` with concrete examples.
+- Clarify which selector features are implemented today vs reserved for future.
+- Align error codes for invalid selectors with AIP-193.
 
 ### **1.4 Window Management API**
 
+Multi-window operations are already supported at the resource level; Phase 1 ensures the API surface is clearly documented and AIP-aligned.
+
 #### **Multi-Window Operations**
--   List all windows across all applications
--   Switch between windows
--   Tile/arrange windows programmatically
--   Window z-order management
--   Full-screen / split-screen support
--   Spaces/Mission Control integration
+- List windows for an application and (where appropriate) across applications.
+- Focus/switch between windows.
+- Move/resize windows using `MoveWindow` and `ResizeWindow`.
+- Minimize/restore windows.
+
+**Phase 1 tasks:**
+- Document window lifecycle and expected behaviours when a window is closed externally.
+- Clearly state any limitations (e.g. no explicit Mission Control/spaces integration in v1).
 
 ### **1.5 Automation Workflows**
 
 #### **Macro System** (`proto/macosusesdk/v1/macro.proto`)
--   Record user actions
--   Replay with timing preservation
--   Parameterized macros
--   Conditional execution
--   Loop constructs
--   Error handling
+- Macro resources and CRUD/execute RPCs already exist.
+- **Phase 1 tasks:**
+    - Document macro semantics (idempotency, parameterisation, and error handling) in proto comments.
+    - Defer full "record/loop/conditional" language design to later phases, marking them clearly as future enhancements.
 
 #### **Script Execution** (`proto/macosusesdk/v1/script.proto`)
--   AppleScript integration
--   JavaScript for Automation (JXA)
--   Shell command execution
--   Python/other language bindings
+- RPCs for AppleScript, JXA, and shell execution already exist.
+- `GetScriptingDictionaries` is implemented but currently uses placeholder bundle IDs.
+- **Phase 1 tasks:**
+    - Document security considerations and sandbox expectations.
+    - Clarify script timeouts and output size limits.
+    - Note current limitations around non-Apple scripting languages as future scope.
 
 ### **1.6 Advanced Accessibility Features**
 
+These features are partially implemented; Phase 1 should capture what is real today.
+
 #### **Attribute Monitoring**
--   Subscribe to attribute changes
--   Filter by attribute types
--   Batch notifications
+- `StreamObservations` already exposes change events; polling vs event-based mechanisms vary per type.
+- **Phase 1 tasks:**
+    - Document which attributes can be observed and how frequently.
+    - Clarify rate limits and aggregation behaviour (even if currently basic).
 
 #### **Action Discovery**
--   List available AX actions per element
--   Action parameters and types
--   Custom action support
+- `GetElementActions` exposes available AX actions for elements.
+- **Phase 1 tasks:**
+    - Ensure action names and descriptions are documented and stable.
+    - Document `PerformElementAction` behaviour for unsupported actions (UNIMPLEMENTED).
 
 #### **Hierarchy Navigation**
--   Parent/child navigation
--   Sibling iteration
--   Depth-first/breadth-first search
--   Path queries (XPath-like)
+- Traversal RPCs and selector paths provide limited navigation capabilities.
+- **Phase 1 tasks:**
+    - Align comments and examples with the actual path encoding used in `ElementRegistry`.
 
 ### **1.7 Visual/Screen Capture**
 
 #### **Screenshot API** (`proto/macosusesdk/v1/screenshot.proto`)
--   Capture full screen
--   Capture specific window
--   Capture element bounds
--   OCR integration for text extraction
--   Image comparison for visual testing
+- Capture full screen, windows, elements, and regions is implemented.
+- OCR text fields exist for some RPCs.
+- **Phase 1 tasks:**
+    - Document which formats and resolutions are supported.
+    - Clarify expected latency and size constraints.
 
-#### **Screen Recording**
--   Record screen activity
--   Record specific window
--   Configurable quality/format
+#### **Screen Recording (Future)**
+- Screen recording is not yet implemented.
+- **Phase 1 tasks:**
+    - Treat recording as a future extension and avoid implying current support in API docs.
 
 ### **1.8 Clipboard Operations**
 
 #### **Clipboard API** (`proto/macosusesdk/v1/clipboard.proto`)
--   Read clipboard (text, images, files)
--   Write clipboard (text, images, files)
--   Clipboard history
--   Format conversion
+- Read/write/clear/history RPCs are implemented.
+- **Phase 1 tasks:**
+    - Specify supported content types and their serialisation.
+    - Document error cases (e.g. unsupported formats).
 
 ### **1.9 File System Integration**
 
-#### **File Operations** (`proto/macosusesdk/v1/file.proto`)
--   File dialogs (open/save)
--   Drag-drop file operations
--   File selection automation
--   Path handling
+File dialog automation is implemented via `FileDialogAutomation.swift` and the existing v1 protos (no dedicated `file.proto`).
+
+**Phase 1 tasks:**
+- Clarify in docs how file dialogs are modelled (e.g. which RPCs and resources are used).
+- Avoid referencing a non-existent `file.proto`; instead, document the actual service methods.
 
 ### **1.10 Performance & Diagnostics**
 
 #### **Performance Metrics** (`proto/macosusesdk/v1/metrics.proto`)
--   Operation timing statistics
--   Success/failure rates
--   Resource utilization
--   Accessibility tree complexity metrics
+- Metrics RPCs exist but are only partially implemented.
+- **Phase 1 tasks:**
+    - Precisely define metric fields and their semantics in proto comments.
+    - Decide which metrics are mandatory for production and which are optional or experimental.
 
 #### **Debug Tools**
--   Element inspector (real-time)
--   Action replay debugger
--   State snapshots
--   Log streaming
+- Some debugging capabilities exist (snapshots, traversal, logs) via existing RPCs and server logs.
+- **Phase 1 tasks:**
+    - Ensure debug-focused RPCs are clearly labelled and safe to expose.
 
-### **1.11 VS Code Integration Support**
+### **1.11 VS Code Integration Support (Use-Case Layer)**
 
-#### **Development Tool Patterns**
--   Text editor element patterns
--   Command palette automation
--   Extension management
--   Terminal automation within IDE
--   File explorer navigation
--   Search/replace operations
--   Git integration automation
--   Debug session control
+These are high-level **use cases**, not separate API surfaces.
+
+**Phase 1 tasks:**
+- Identify which existing RPCs are sufficient to power VS Code/Xcode workflows.
+- Document example flows (in docs, not in proto) that show how to build such automations using the existing `MacosUse` service.
 
 ---
 
-## **Phase 2: Enhanced Server Architecture**
+## **Phase 2: Server Architecture (Grounded in Existing Components)**
 
-### **2.1 State Management Expansion**
+Phase 2 focuses on clarifying and strengthening the architecture **as it exists today**, rather than inventing new actors unless needed. The main architectural primitives are:
+- `AutomationCoordinator` (@MainActor): central orchestrator for SDK interactions.
+- `AppStateStore` (actor): copy-on-write state view for queries.
+- `WindowRegistry`, `ElementLocator`, `ElementRegistry`: window and element tracking.
+- `ObservationManager`, `SessionManager`, `OperationStore`, `ChangeDetector`: long-running operations and state change tracking.
 
-#### **ApplicationStateManager** (actor)
--   Window registry per application
--   Element cache with TTL
--   Active observations registry
--   Transaction state tracking
--   Session management
--   Resource lifecycle tracking
+### **2.1 State Management & Registries**
 
-#### **WindowRegistry** (actor)
--   Window discovery and caching
--   Window state updates (bounds, title, visibility)
--   Window focus history
--   Window-to-app mapping
--   Automatic window cleanup on close
+**Current reality:**
+- `AppStateStore` manages high-level state; `WindowRegistry` tracks windows; `ElementRegistry` manages element identities; `ObservationManager` and `SessionManager` track long-lived operations.
 
-#### **ElementCache** (actor)
--   Cache accessibility elements with TTL
--   Invalidation on UI changes
--   Hierarchy caching
--   Path-based lookups
--   LRU eviction policy
+**Phase 2 tasks:**
+- Tighten state ownership boundaries (which actor owns which slice of state).
+- Ensure copy-on-write snapshots used for queries cannot observe partially-applied mutations.
+- Document lifecycle and cleanup rules for windows, elements, observations, sessions, and operations.
 
-#### **ObservationManager** (actor)
--   Register ongoing observations
--   Manage observation lifecycles
--   Fan-out change notifications
--   Resource cleanup
--   Rate limiting/throttling
+### **2.2 Command & Transaction Handling**
 
-### **2.2 Command Processing Enhancement**
+**Current reality:**
+- There is no explicit `CommandQueue` or `TransactionManager` actor; commands are executed via gRPC handlers calling into `AutomationCoordinator` and related actors.
+- Sessions implement basic begin/commit/rollback semantics, but rollback is not yet a true undo of side effects.
 
-#### **CommandQueue** (actor)
--   Priority queuing
--   Command batching
--   Idempotency tracking
--   Retry logic with backoff
--   Command cancellation
--   Deadline enforcement
+**Phase 2 tasks:**
+- Clearly document the command flow: gRPC → provider → coordinator → SDK/state stores.
+- Decide whether a dedicated `CommandQueue` actor is warranted or whether structured use of Swift concurrency is sufficient.
+- Define a realistic scope for transactional behaviour (what can and cannot be rolled back) and write it down.
 
-#### **TransactionManager** (actor)
--   Begin/commit/rollback semantics
--   State snapshots
--   Rollback operations
--   Nested transactions
--   Isolation levels
+### **2.3 Event & Change Propagation**
 
-### **2.3 Event System**
+**Current reality:**
+- `ChangeDetector` and `ObservationManager` handle polling-based detection of changes.
+- There is no explicit `EventBus` actor; events are delivered via method calls and callbacks.
 
-#### **EventBus** (actor)
--   Pub-sub for internal components
--   Event history (circular buffer)
--   Event filtering
--   Async event handlers
--   Backpressure handling
+**Phase 2 tasks:**
+- Formalise the internal event model (what constitutes an event, who publishes, who subscribes).
+- Decide whether a light-weight event bus abstraction adds clarity or just complexity.
+- Plan the transition path from polling to AXObserver-based event delivery where justified.
 
-#### **ChangeDetector** (@MainActor)
--   Polling-based monitoring
--   Diff calculation engine
--   Change event generation
--   Efficient tree comparison
--   Selective monitoring (by element/window)
+### **2.4 Resource Tracking & Cleanup**
 
-### **2.4 Resource Management**
+**Current reality:**
+- Resource lifecycles (observations, sessions, operations, connections) are tracked across several components, but there is no single `ResourceTracker` actor.
+- Metrics RPCs are not yet wired to enforce invariants like "no leaked observations after client disconnect".
 
-#### **ResourceTracker** (actor)
--   Track all active resources
--   Automatic cleanup on disconnect
--   Resource quotas per client
--   Leak detection
--   Resource usage metrics
--   **Zombie Resource Reaper (Mandatory):** On `StreamObservations` disconnect, immediately dereference all `Observation` resources tied to that stream to prevent leaks during crashes or non-graceful disconnects.
+**Phase 2 tasks:**
+- Define a consolidated resource model (what counts as an active resource, who owns it).
+- Implement or designate a component (e.g. `OperationStore`/`ObservationManager`) responsible for enforcing the "Zombie Resource Reaper" invariant and surfacing metrics.
 
 ### **2.5 Error Handling & Recovery**
 
-#### **ErrorHandler**
--   Error categorization
--   Retry strategies
--   Circuit breaker patterns
--   Fallback behaviors
--   Error reporting/telemetry
+**Current reality:**
+- Error handling is implemented locally in providers and helpers, using gRPC status codes.
 
-### **2.6 Performance Optimization**
+**Phase 2 tasks:**
+- Establish shared patterns for mapping internal errors to gRPC statuses (AIP-193).
+- Identify operations that would benefit from retries or circuit-breaking and capture this in design docs, even if not yet implemented.
 
-#### **CacheManager** (actor)
--   Traversal result caching
--   Query result caching
--   Cache coherency
--   Memory limits
--   Cache statistics
+### **2.6 Performance, Caching & Rate Limiting**
 
-#### **RateLimiter** (actor)
--   Per-client rate limits
--   Per-operation limits
--   Token bucket algorithm
--   Burst handling
--   Quota management
+**Current reality:**
+- Some caching and performance considerations exist (e.g. element caching), but there is no central `CacheManager` or `RateLimiter` actor.
+
+**Phase 2 tasks:**
+- Document existing caching behaviour (which actors cache what, and for how long).
+- Identify hotspots (e.g. large traversals, heavy queries) where explicit caching or rate limiting is needed.
+- Decide whether to introduce dedicated caching/rate-limiting components or to extend existing actors.
 
 ---
 
-## **Phase 3: Complete Service Implementation**
+## **Phase 3: Service Completeness (Concrete Gaps)**
 
-### **3.1 Application Service**
--   `ActivateApplication` - Focus/activate
--   `TraverseAccessibility` - Full implementation
--   `WatchAccessibility` (server-streaming) - Real-time updates
--   `GetApplicationWindows` - List windows
--   `GetApplicationInfo` - Extended metadata
--   Error handling for terminated apps
--   Resource cleanup on app quit
+Phase 3 narrows to **specific, high-impact gaps** between the existing service and the production-ready bar.
 
-### **3.2 Window Service**
--   **Mandatory Bundle ID Resolution:** `WindowRegistry` must map `kAXPIDAttribute` -> `NSRunningApplication` -> `bundleIdentifier` to eliminate "unknown" values and ensure correct window targeting.
--   `GetWindowBounds` - Precise positioning (can be implemented as alias to GetWindow)
--   `SetWindowBounds` - Set position/size atomically (can combine MoveWindow + ResizeWindow)
--   `GetWindowState` - Visibility, minimized, etc. (expand GetWindow to query all state attributes)
--   `WatchWindows` (server-streaming) - Window changes (requires NotificationManager for AX notifications)
+### **3.1 Application & Window Services**
 
-### **3.3 Element Service**
-#### Future Enhancements
--   **Invalid hierarchy paths**: Currently using sequential indices - needs proper hierarchical paths (FIXME exists)
--   **Element staleness**: 30-second cache with no re-validation - needs cache invalidation on UI changes
--   **Window bounds uniqueness**: No validation if two windows have identical bounds - needs additional matching criteria
+**Current reality:**
+- Application and Window RPCs are implemented and usable.
 
-### **3.4 Input Service**
--   Complete all input types:
-    -   Text input with IME support
-    -   Key combinations with modifiers
-    -   Special keys (Fn, media keys)
-    -   Mouse drag operations
-    -   Right-click/context menu
-    -   Scroll with direction/amount
-    -   Hover with duration
-    -   Double/triple click
--   Input validation
--   Input composition (multi-step)
--   Input recording
--   Input replay with timing
+**Phase 3 tasks:**
+- Harden error handling when applications or windows terminate unexpectedly.
+- Ensure window metadata (title, bounds, visibility, minimized state, bundle ID) is populated consistently.
+- Implement and test bundle ID resolution in `WindowRegistry` via `NSRunningApplication` to eliminate "unknown" bundle IDs.
 
-### **3.5 Observation Service**
--   More sophisticated diff algorithms for element changes
--   Event-based AXObserver integration (currently polling-based for elements)
--   Rate limiting and aggregation options
--   Window change event detection (currently basic polling)
--   Application event forwarding to observation streams
+### **3.2 Element & Input Services**
 
-### **3.6 Session Service**
--   Actual rollback execution (currently marks as rolled back but doesn't undo operations)
--   Transaction timeout enforcement
--   Nested transaction support
--   More sophisticated isolation level handling
+**Current reality:**
+- Element targeting and input execution work for a broad set of scenarios.
 
-### **3.7 Query Service (MANDATORY PAGINATION)**
--   **Mandatory Pagination (AIP-158):** Implement `next_page_token` logic for `ListWindows`, `ListInputs`, and `FindElements`. This is a blocking requirement to handle complex trees (e.g., Xcode/VS Code) without OOM.
--   `QueryElements` - Advanced element search
--   `QueryWindows` - Window search
--   `QueryApplications` - Application search
--   Selector syntax support
--   Result ordering
--   Aggregations
--   Explain query (optimization hints)
+**Phase 3 tasks:**
+- Address element path and staleness issues (document semantics; improve cache invalidation where feasible).
+- Expand `PerformElementAction` support for a curated set of additional actions (double-click, right-click, hover, drag) that are realistically needed.
+- Clarify which advanced input types are supported and ensure errors are predictable for unsupported types.
 
-### **3.8 Screenshot Service**
--   Image comparison utilities for visual testing
--   Video recording capabilities
--   Animated GIF support
--   Screenshot metadata (timestamp, display info)
--   Batch screenshot operations
+### **3.3 Observation & Session Services**
 
-### **3.9 Clipboard Service**
--   Clipboard change notifications for real-time monitoring
--   Custom format support (UTType handling)
--   Clipboard ownership tracking
--   Multi-item clipboard support
--   Cross-application clipboard integration
+**Current reality:**
+- Observations and sessions are implemented, including LRO creation and streaming.
 
-### **3.10 File Service**
--   Path manipulation utilities
--   Temporary file handling
--   Batch file operations
--   File watching/monitoring
+**Phase 3 tasks:**
+- Implement window change detection and diffing in `ObservationManager`, surfacing appropriate events via `StreamObservations`.
+- Define practical semantics for session rollback (what is logically rolled back vs what is not) and reflect this in server behaviour and documentation.
 
-### **3.11 Macro Service**
--   `CreateMacro` - New macro
--   `GetMacro` - Macro details
--   `ListMacros` - Available macros
--   `UpdateMacro` - Modify macro
--   `DeleteMacro` - Remove macro
--   `ExecuteMacro` (LRO) - Run macro
--   `RecordMacro` - Record actions
--   `StopRecording` - End recording
--   Macro parameters
--   Conditional logic
--   Loop constructs
--   Error handling
+### **3.4 Query & Pagination (MANDATORY)**
 
-### **3.12 Script Service**
--   Advanced security sandboxing
--   Script compilation caching (compiled scripts stored for reuse)
--   Streaming output for long-running commands
--   Script execution history and analytics
+**Current reality:**
+- Query-like behaviours are provided via `FindElements`, `FindRegionElements`, and list RPCs, but pagination is incomplete.
 
-### **3.13 Metrics Service (MANDATORY IMPLEMENTATION)**
--   **Requirement:** `GetMetrics` and `GetPerformanceReport` must be implemented to replace the current `UNIMPLEMENTED` stubs before production readiness.
--   `GetMetrics` - Current metrics
--   `StreamMetrics` (server-streaming) - Live metrics
--   `GetPerformanceReport` - Analysis
--   Metric types:
-    -   Operation timings
-    -   Success/failure rates
-    -   Resource utilization
-    -   Element counts
-    -   Cache hit rates
-    -   Rate limit status
--   Metric retention
--   Aggregation options
+**Phase 3 tasks (AIP‑158 blockers):**
+- Implement `page_size`/`page_token`/`next_page_token` for:
+    - `ListWindows`.
+    - `ListInputs`.
+    - `FindElements`.
+    - `FindRegionElements`.
+    - `ListObservations`.
+- Add tests to ensure deterministic ordering, stable pagination, and correct token behaviour.
 
-### **3.14 Debug Service**
--   `InspectElement` - Element details
--   `GetAccessibilityTree` - Full tree
--   `StreamLogs` (server-streaming) - Live logs
--   `GetSnapshot` - State snapshot
--   `ListOperations` - Active operations
--   `DescribeOperation` - Operation details
--   `EnableTracing` - Debug mode
--   `DisableTracing` - Normal mode
+### **3.5 Metrics & Debugging (MANDATORY)**
+
+**Current reality:**
+- `GetMetrics` is a scaffold; `GetPerformanceReport` and `ResetMetrics` are UNIMPLEMENTED.
+
+**Phase 3 tasks:**
+- Define and implement the metrics model in `metrics.proto` and the server:
+    - Operation counts, error counts, durations.
+    - Active observations and connections.
+    - Any additional, high-value metrics (cache hits, element counts) that can be computed cheaply.
+- Implement `GetPerformanceReport` and `ResetMetrics` in `MacosUseServiceProvider.swift` backed by real data from `OperationStore` and related components.
+- Ensure metrics support the "ResourceLeakCheck" invariant described in Phase 4.
+
+### **3.6 Scope-Managed Future Enhancements**
+
+To avoid over-scoping Phase 3, the following remain **explicit future work** beyond the first production-ready milestone:
+- Full screen recording and animated outputs.
+- Rich macro-language features (record/loop/conditional programming model).
+- Advanced script analytics, history, and long-running streaming outputs.
+- Dedicated debug RPCs beyond what is needed for supportability and testing.
 
 ---
 
-## **Phase 4: Testing Strategy**
+## **Phase 4: Testing Strategy (Grounded & Prioritised)**
 
-**Objective:** To engineer a comprehensive, deterministic integration test suite that validates the functional correctness, state consistency, and error handling of the `MacosUse` gRPC service. **Crucially, this plan mandates "State-Difference Assertions" for every mutation. Simple checking of gRPC response codes is insufficient due to the asynchronous nature of macOS Accessibility APIs.**
+**Objective:** Engineer a deterministic test suite that validates functional correctness, state convergence, and error handling for the `MacosUse` gRPC service, with **state-difference assertions** for all mutations.
 
 ### **4.1 Unit Tests**
--   All new components:
-    -   WindowRegistry tests
-    -   ElementCache tests
-    -   ObservationManager tests
-    -   CommandQueue tests
-    -   TransactionManager tests
-    -   EventBus tests
-    -   ChangeDetector tests
-    -   ResourceTracker tests
--   Edge cases:
-    -   Element not found
-    -   Window closed during operation
-    -   App quit during operation
-    -   Invalid selectors
-    -   Permission denied
-    -   Memory pressure
-    -   Concurrent access
 
-### **4.2 Test Harness & Environment Standardization**
+**Current reality:**
+- Some Swift unit tests exist for server and SDK components; Go integration tests exist under `integration/`.
+
+**Phase 4 tasks:**
+- Add focused unit tests for existing components:
+    - `WindowRegistry`.
+    - `ObservationManager` (including window-change diffs once implemented).
+    - `OperationStore` (lifecycles, timestamps, metrics integration).
+    - `SessionManager`.
+    - `SelectorParser` / `ElementLocator`.
+- Cover edge cases such as:
+    - Element not found / invalid selectors.
+    - Windows closing mid-operation.
+    - Applications quitting while operations are in-flight.
+    - Permission-denied behaviours where system APIs refuse access.
+
+### **4.2 Test Harness & Environment Standardisation**
 -   **Goal:** Eliminate test flakiness caused by shared state or lingering processes.
 -   **Implementation Requirement:**
     -   Develop a **Test Fixture Lifecycle** that runs before and after *every* single test case.
@@ -656,17 +600,15 @@ Build a production-grade gRPC server exposing the complete MacosUseSDK functiona
         2.  **Trigger:** Invoke `CreateInput` to click a button.
         3.  **Event Capture:** Verify receipt of a response where `modified` elements contains the expected change.
 
-### **4.8 Integration Tests**
--   Complete test coverage:
-    -   Calculator: Full arithmetic operations
-    -   TextEdit: Text editing, formatting
-    -   Finder: File operations, navigation
-    -   Safari: Navigation, form interaction
-    -   System Preferences: Settings modification
-    -   Multi-window scenarios
-    -   Multi-app coordination
-    -   Error recovery
-    -   Resource cleanup
+### **4.8 Integration Tests (Prioritised Matrix)**
+
+Instead of attempting a full matrix at once, Phase 4 focuses on a **prioritised subset** of high-value scenarios:
+- Calculator: core arithmetic flows using element targeting and inputs.
+- TextEdit: open, type, resize/move window, and verify via traversal.
+- Finder: basic navigation and clipboard/file dialog interactions.
+- Multi-window scenarios within a single app (e.g. multiple TextEdit windows).
+- Basic multi-app coordination (e.g. copy from one app, paste in another).
+- Error recovery and resource cleanup.
 
 ### **4.9 Performance Tests**
 -   Benchmarks:
@@ -770,155 +712,165 @@ To ensure this implementation plan provides a **guarantee** of correctness, the 
 
 ---
 
-## **Phase 5: Proto File Expansion**
+## **Phase 5: Proto Refinement (Not Creation)**
 
-### **5.1 New Proto Files**
--   `proto/macosusesdk/v1/window.proto` - Window resource, WindowState enum, methods
--   `proto/macosusesdk/v1/element.proto` - Element resource, ElementSelector, ElementAction, methods
--   `proto/macosusesdk/v1/observation.proto` - Observation resource, ObservationType enum, events, methods
--   `proto/macosusesdk/v1/session.proto` - Session resource, Transaction, methods
--   `proto/macosusesdk/v1/query.proto` - Query methods, selector syntax, aggregations
--   `proto/macosusesdk/v1/screenshot.proto` - Screenshot methods, formats, options
--   `proto/macosusesdk/v1/clipboard.proto` - Clipboard methods, content types
--   `proto/macosusesdk/v1/file.proto` - File dialog methods, selection methods
--   `proto/macosusesdk/v1/macro.proto` - Macro resource, recording, execution
--   `proto/macosusesdk/v1/script.proto` - Script execution methods (AppleScript, JXA, Shell)
--   `proto/macosusesdk/v1/metrics.proto` - Metrics methods, metric types, reports
+Most core proto files already exist. Phase 5 focuses on **refinement** and AIP compliance rather than adding new top-level files.
 
-### **5.2 Proto Type Expansion**
--   `proto/macosusesdk/type/selector.proto` - Element selector grammar
--   `proto/macosusesdk/type/bounds.proto` - Precise geometry types
--   `proto/macosusesdk/type/state.proto` - Common state enums
--   `proto/macosusesdk/type/event.proto` - Event types for observations
--   `proto/macosusesdk/type/filter.proto` - Filter expression language
+### **5.1 Existing v1 Protos**
+
+Files already present under `proto/macosusesdk/v1/`:
+- `application.proto`
+- `clipboard.proto`
+- `input.proto`
+- `macos_use.proto`
+- `macro.proto`
+- `metrics.proto`
+- `observation.proto`
+- `screenshot.proto`
+- `script.proto`
+- `session.proto`
+- `window.proto`
+
+**Phase 5 tasks:**
+- Ensure each file has required options and metadata per AIPs.
+- Verify resource name patterns and method names against AIP-121/190/191.
+- Align request/response messages with AIP guidelines (e.g. `List*`/`Get*` shapes, LRO use).
+- Document semantics (including pagination, filters, and field masks) in proto comments.
+
+### **5.2 Type Protos**
+
+Files already present under `proto/macosusesdk/type/`:
+- `element.proto`
+- `geometry.proto`
+- `selector.proto`
+
+**Phase 5 tasks:**
+- Expand or introduce type protos for shared concepts only where needed (e.g. a `state` or `event` type file if duplication becomes a problem).
+- Keep the type surface minimal and focused on genuine reuse.
 
 ---
 
-## **Phase 6: Server Architecture Expansion**
+## **Phase 6: Server Architecture – Incremental Enhancements**
 
-### **6.1 Window Management**
--   `WindowRegistry.swift` - Track all windows, maintain window tree
--   `WindowObserver.swift` - AX notifications for window events
--   `WindowPositioner.swift` - Geometric calculations, collision detection
+Phase 6 captures architectural improvements that go beyond the immediate correctness and completeness issues tackled in Phases 2–5.
 
-### **6.2 Element Management**
--   `ElementLocator.swift` - Selector parsing, element search
--   `ElementRegistry.swift` - Element identity tracking (ephemeral IDs)
--   `ElementAttributeCache.swift` - Attribute caching with invalidation
+### **6.1 Window & Element Management**
 
-### **6.3 Observation Pipeline**
--   `ObservationScheduler.swift` - Rate limiting, aggregation
--   `ObservationFilter.swift` - Event filtering logic
--   `NotificationManager.swift` - AX notification registration
+**Current reality:**
+- `WindowRegistry`, `ElementLocator`, `ElementRegistry`, and `SelectorParser` already exist and are central to window/element handling.
 
-### **6.4 Session Management**
--   `SessionManager.swift` - Session lifecycle
--   `TransactionLog.swift` - Transaction recording
--   `StateSnapshot.swift` - Snapshot capture and restoration
+**Phase 6 tasks:**
+- Improve window tracking (history, z-order where possible, better matching for identical bounds).
+- Tighten element identity and caching semantics, reducing stale references where feasible.
 
-### **6.5 Advanced Input**
--   `KeyboardSimulator.swift` - CGEvent-based keyboard input
--   `MouseSimulator.swift` - CGEvent-based mouse input
--   `GestureSimulator.swift` - Multi-touch gestures
--   `InputValidator.swift` - Input validation
+### **6.2 Observation Pipeline**
 
-### **6.6 Query Engine**
--   `SelectorParser.swift` - Parse selector expressions
--   `QueryExecutor.swift` - Execute complex queries
--   `ResultAggregator.swift` - Aggregate and paginate results
+**Current reality:**
+- `ObservationManager` and `ChangeDetector` orchestrate observation lifecycles and polling.
+
+**Phase 6 tasks:**
+- Once Phase 3 observation diffs are in place, consider introducing:
+    - Simple scheduling/aggregation to avoid flooding clients.
+    - More configurable filters for observation streams.
+
+### **6.3 Session & Transaction Internals**
+
+**Current reality:**
+- `SessionManager` exists and supports basic session operations.
+
+**Phase 6 tasks:**
+- Introduce internal logging/snapshotting of session operations where beneficial for debugging.
+- Refine transaction recording to support more advanced rollback semantics if required by real-world usage.
+
+### **6.4 Advanced Input & Query Engine (Future)**
+
+These are optional enhancements to be pursued only when core correctness work is stable.
+
+**Phase 6 tasks:**
+- Extend input modelling and validation if advanced gestures or complex sequences become necessary.
+- If queries grow significantly in complexity, consider a dedicated internal query execution layer to manage selectors, filters, and pagination more systematically.
 
 ---
 
 ## **Phase 7: VS Code Integration Patterns**
 
+Phase 7 remains focused on use-case patterns, not new APIs.
+
 ### **7.1 Common Workflows**
--   Open file by path
--   Navigate to line/column
--   Execute command palette actions
--   Debug session control
--   Terminal interaction
--   Git operations
--   Extension installation
+- Open file by path.
+- Navigate to line/column.
+- Execute command palette actions.
+- Control the debugger, terminal, and file explorer.
 
 ### **7.2 Example Implementation**
--   Document VS Code element selectors
--   Create macros for common tasks
--   Implement robust error handling
--   Handle async operations
--   Manage multiple windows/panels
+- Capture a small set of documented flows (in README/docs) that explain how to orchestrate these behaviours using existing RPCs (applications, windows, elements, inputs, observations).
 
 ---
 
 ## **Phase 8: Documentation**
 
 ### **8.1 API Documentation**
--   Complete proto comments for all messages and methods
--   Usage examples for each resource type
--   Error handling patterns
--   Performance considerations
+- Ensure all v1 and type protos have clear comments for messages, fields, and RPCs.
+- Provide examples for each major resource interaction (Application, Window, Element, Observation, Session, Metrics).
 
 ### **8.2 Integration Guide**
--   Client setup (Go, Python, other languages)
--   Authentication and permissions
--   Rate limiting and quotas
--   Best practices
+- Expand `proto/README.md` and top-level `README.md` with:
+    - How to run the server and clients.
+    - Environment variable configuration.
+    - Basic usage examples for Go and Swift clients.
 
 ### **8.3 Advanced Topics**
--   Session management strategies
--   Transaction design
--   Observation patterns
--   Selector syntax guide
--   Macro language reference
+- Document recommended patterns for sessions, transactions, observations, and selectors, once stabilised by earlier phases.
 
 ---
 
-## **Phase 9: Build System Integration**
+## **Phase 9: Build System & CI Integration**
 
-### **9.1 Buf Configuration**
--   Update `buf.yaml` for new proto files
--   Update `buf.gen.yaml` for new packages
--   Regenerate all stubs
+### **9.1 Buf & Code Generation**
+- Keep `buf.yaml` and `buf.gen.yaml` in sync with the existing proto set.
+- Ensure Go and Swift stubs are generated deterministically and committed.
 
-### **9.2 Makefile Targets**
--   Add targets for new components
--   Update test targets
--   Add performance benchmarks
+### **9.2 Make & Local Tooling**
+- Maintain Make and `config.mk` targets for building/running server, SDK, and tests.
+- Ensure local workflows mirror CI behaviour as closely as possible.
 
 ### **9.3 CI/CD**
--   Extend workflows for new tests
--   Add performance regression detection
--   Add API compatibility checks
+- Verify GitHub Actions workflows:
+    - Run buf lint and api-linter.
+    - Build Swift and Go targets.
+    - Run unit and integration tests.
+- Add CI checks for API compatibility and performance regressions where practical.
 
 ---
 
-## **Phase 10: Implementation Priorities**
+## **Phase 10: Implementation Priorities (Re-ranked)**
 
-### **Priority 1: Window Resource (CRITICAL)**
-Complete Window resource is essential for multi-window automation. Must implement before other advanced features.
+### **Priority 1: Pagination & AIP Compliance (CRITICAL)**
+Implement and test AIP-158-compliant pagination for key list/find RPCs and ensure overall AIP alignment for the existing API surface.
 
-### **Priority 2: Element Resource (CRITICAL)**
-Element addressing and querying is core to all automation workflows. Includes selector syntax.
+### **Priority 2: Metrics & Resource Invariants (CRITICAL)**
+Implement real metrics (`GetMetrics`, `GetPerformanceReport`, `ResetMetrics`) and enforce resource leak invariants, wiring them into tests.
 
-### **Priority 3: Advanced Input (HIGH)**
-Keyboard modifiers, drag-drop, scroll are needed for real-world automation.
+### **Priority 3: Observation & Window Changes (HIGH)**
+Add robust window and element change detection to `ObservationManager` and expose it through streaming RPCs.
 
-### **Priority 4: Observation System (HIGH)**
-Streaming observations enable reactive automation and monitoring.
+### **Priority 4: Bundle IDs & Scripting (HIGH)**
+Fix bundle ID resolution and `GetScriptingDictionaries` so scripting and window attribution are reliable.
 
-### **Priority 5: Session/Transaction (MEDIUM)**
-Needed for robust multi-step workflows and rollback.
+### **Priority 5: Element & Input Semantics (MEDIUM)**
+Refine element identity/staleness semantics and expand `PerformElementAction` to a practical, well-documented set of actions.
 
-### **Priority 6: Query Engine (MEDIUM)**
-Advanced element queries improve automation reliability.
+### **Priority 6: Sessions & Transactions (MEDIUM)**
+Clarify and, where feasible, enhance rollback and snapshot behaviours.
 
-### **Priority 7: Visual/Screenshot (MEDIUM)**
-Screen capture for verification and debugging.
+### **Priority 7: Testing & Harness (MEDIUM)**
+Build out the prioritised integration tests and PollUntil-based convergence patterns.
 
-### **Priority 8: Macro/Script (LOW)**
-Convenience features for common workflows.
+### **Priority 8: VS Code / Workflow Patterns (LOW)**
+Document patterns for dev-tool automation using the existing API.
 
-### **Priority 9: Metrics/Debug (LOW)**
-Operational visibility and diagnostics.
+### **Priority 9: Advanced Features (LOW)**
+Pursue advanced input, screen recording, rich macro language, and deep debug tooling after the above are solid.
 
 ---
 
