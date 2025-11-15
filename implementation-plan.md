@@ -1,3 +1,4 @@
+-- implementation-plan.md --
 # Implementation Plan: MacosUseSDK gRPC Service
 
 ---
@@ -10,10 +11,10 @@
 >
 > This section is the *only* location for tracking progress. The `implementation-constraints.md` file MUST NOT be used for tracking status.
 
-### **Server Implementation - ⚠️ PARTIAL (CORE METHODS IMPLEMENTED, FEW PARTIAL FEATURES REMAIN)**
+### **Server Implementation - ⚠️ PARTIAL (CRITICAL CORRECTNESS GAPS REMAIN)**
 
 **COMPLETION STATUS:**
-Most proto-defined gRPC service methods have concrete implementations in `MacosUseServiceProvider.swift`. The codebase implements the majority of the API surface, but a few important items remain partially implemented or marked as TODO.
+Most proto-defined gRPC service methods have concrete implementations in `MacosUseServiceProvider.swift`. However, the system currently lacks **asynchronous state convergence guarantees**, efficient pagination for large datasets, and strict resource cleanup. These are now classified as **MANDATORY BLOCKERS** for Phase 3 completion.
 
 **PER-RPC IMPLEMENTATION SUMMARY (High-level):**
 * **Implemented (Complete):** OpenApplication (LRO), GetApplication, DeleteApplication, CreateInput, GetInput, TraverseAccessibility, WatchAccessibility, Focus/Move/Resize/Minimize/Restore/CloseWindow, GetElement/ListElements/FindRegionElements/GetElementActions/ClickElement/WriteElementValue/WaitElement/WaitElementState (with caveats), CreateObservation/CancelObservation/Get/StreamObservations, Session calls, Screenshot calls, Clipboard calls, FileDialog automation, Macro methods (CRUD & execute), Script methods (execute & validation), GetScriptingDictionaries, GetMetrics (partial), many support functions.
@@ -82,41 +83,35 @@ Most proto-defined gRPC service methods have concrete implementations in `MacosU
 * **Permissions:** Integration tests require Accessibility & Screen Recording permissions.
 * **Fragile Tests:** Tests relying on exact window coordinates are fragile; prefer robust element selectors.
 
+**CRITICAL CORRECTNESS TASKS (IMMEDIATE BLOCKERS)**
+*(The following tasks are mandatory for Phase 3/4 completion)*
+
+1.  **[Phase 3]** Implement `next_page_token` logic for `ListWindows`, `ListInputs`, and `FindElements` to satisfy AIP-158.
+2.  **[Phase 3]** Resolve `bundleId` resolution in `WindowRegistry` to eliminate "unknown" values.
+3.  **[Phase 3]** Implement `GetPerformanceReport` to replace the `UNIMPLEMENTED` stub.
+4.  **[Phase 4]** Rewrite `Integration Tests` to use `PollUntil(condition)` predicates for all state assertions (Geometry, Text Value, Window Existence).
+5.  **[Phase 4]** Add a `ResourceLeakCheck` step to the `TearDown` phase of the test harness.
+
 **PRIORITY FOLLOW-UP CHECKLIST**
 *(Ranked by Production impact, API completeness, test coverage)*
 
-1.  **Pagination on List endpoints (High Priority)**
-    * Implement AIP-style pagination for `ListApplications`, `ListInputs`, `ListWindows`, `FindElements`, `FindRegionElements`, `ListObservations`.
-    * Implement token encoding (e.g., base64 offset cursor).
-    * Tests: Unit tests for Page logic; Integration tests verifying multiple pages.
-
-2.  **Metrics (High Priority)**
-    * Implement `GetPerformanceReport` and `ResetMetrics`.
-    * Add operation durations & timestamps to `OperationStore`.
-    * Add telemetry in registries.
-    * Tests: `GetMetrics` returns non-zero values; `GetPerformanceReport` returns latency percentiles.
-
-3.  **Observation window changes (Medium-High Priority)**
+1.  **Observation window changes (Medium-High Priority)**
     * Implement diff of windows in `ObservationManager` monitorObservation .windowChanges case; emit add/remove/modify events.
     * Tests: Unit test for window diff; Integration test verifying received events on window open/close.
 
-4.  **PerformElementAction (Medium Priority)**
+2.  **PerformElementAction (Medium Priority)**
     * Expand accepted action names (e.g., "doubleclick", "rightclick", "hover", "type", "drag") and map to `InputAction`.
     * Tests: Unit tests for mapping request.action string; Integration tests for action execution.
 
-5.  **Scripting dictionaries & bundleIDs (Medium Priority)**
-    * Get accurate bundleID for each application (read from `Application` proto or `NSRunningApplication`).
-    * Tests: Integration check verifying `GetScriptingDictionaries` returns valid bundleID.
-
-6.  **Validate & expand Event-based Observers (Lower Priority)**
+3.  **Validate & expand Event-based Observers (Lower Priority)**
     * Replace polling with AXObserver/notifications.
     * Tests: Event-based comparisons.
 
-7.  **Placeholder Service Providers (Clean-up)**
+4.  **Placeholder Service Providers (Clean-up)**
     * Remove or implement `TargetApplicationsServiceProvider` & `DesktopServiceProvider`.
     * Tests: Validate gRPC server exports.
 
-8.  **OperationStore telemetry & instrumented metrics**
+5.  **OperationStore telemetry & instrumented metrics**
     * Store start/end timestamps; record operation durations.
     * Tests: Operation store unit tests capturing durations.
 
@@ -396,6 +391,7 @@ Build a production-grade gRPC server exposing the complete MacosUseSDK functiona
 -   Resource quotas per client
 -   Leak detection
 -   Resource usage metrics
+-   **Zombie Resource Reaper (Mandatory):** On `StreamObservations` disconnect, immediately dereference all `Observation` resources tied to that stream to prevent leaks during crashes or non-graceful disconnects.
 
 ### **2.5 Error Handling & Recovery**
 
@@ -436,7 +432,7 @@ Build a production-grade gRPC server exposing the complete MacosUseSDK functiona
 -   Resource cleanup on app quit
 
 ### **3.2 Window Service**
-#### Advanced Features
+-   **Mandatory Bundle ID Resolution:** `WindowRegistry` must map `kAXPIDAttribute` -> `NSRunningApplication` -> `bundleIdentifier` to eliminate "unknown" values and ensure correct window targeting.
 -   `GetWindowBounds` - Precise positioning (can be implemented as alias to GetWindow)
 -   `SetWindowBounds` - Set position/size atomically (can combine MoveWindow + ResizeWindow)
 -   `GetWindowState` - Visibility, minimized, etc. (expand GetWindow to query all state attributes)
@@ -476,12 +472,12 @@ Build a production-grade gRPC server exposing the complete MacosUseSDK functiona
 -   Nested transaction support
 -   More sophisticated isolation level handling
 
-### **3.7 Query Service**
+### **3.7 Query Service (MANDATORY PAGINATION)**
+-   **Mandatory Pagination (AIP-158):** Implement `next_page_token` logic for `ListWindows`, `ListInputs`, and `FindElements`. This is a blocking requirement to handle complex trees (e.g., Xcode/VS Code) without OOM.
 -   `QueryElements` - Advanced element search
 -   `QueryWindows` - Window search
 -   `QueryApplications` - Application search
 -   Selector syntax support
--   Result pagination
 -   Result ordering
 -   Aggregations
 -   Explain query (optimization hints)
@@ -526,7 +522,8 @@ Build a production-grade gRPC server exposing the complete MacosUseSDK functiona
 -   Streaming output for long-running commands
 -   Script execution history and analytics
 
-### **3.13 Metrics Service**
+### **3.13 Metrics Service (MANDATORY IMPLEMENTATION)**
+-   **Requirement:** `GetMetrics` and `GetPerformanceReport` must be implemented to replace the current `UNIMPLEMENTED` stubs before production readiness.
 -   `GetMetrics` - Current metrics
 -   `StreamMetrics` (server-streaming) - Live metrics
 -   `GetPerformanceReport` - Analysis
@@ -554,7 +551,7 @@ Build a production-grade gRPC server exposing the complete MacosUseSDK functiona
 
 ## **Phase 4: Testing Strategy**
 
-**Objective:** To engineer a comprehensive, deterministic integration test suite that validates the functional correctness, state consistency, and error handling of the `MacosUse` gRPC service. This plan mandates a shift from simple "happy path" testing to rigorous state-verification testing, covering 100% of the defined Proto RPCs.
+**Objective:** To engineer a comprehensive, deterministic integration test suite that validates the functional correctness, state consistency, and error handling of the `MacosUse` gRPC service. **Crucially, this plan mandates "State-Difference Assertions" for every mutation. Simple checking of gRPC response codes is insufficient due to the asynchronous nature of macOS Accessibility APIs.**
 
 ### **4.1 Unit Tests**
 -   All new components:
@@ -580,7 +577,9 @@ Build a production-grade gRPC server exposing the complete MacosUseSDK functiona
 -   **Implementation Requirement:**
     -   Develop a **Test Fixture Lifecycle** that runs before and after *every* single test case.
     -   **Pre-flight:** Must scan the OS process list for "Golden Applications" (defined below) and forcefully terminate them (SIGKILL) to ensure a clean slate.
-    -   **Post-flight:** Must aggressively issue `DeleteApplication` RPCs for any resources created during the test, followed by a verify-kill of the OS process.
+    -   **Post-flight (TearDown):**
+        -   Must aggressively issue `DeleteApplication` RPCs for any resources created during the test, followed by a verify-kill of the OS process.
+        -   **Mandatory Resource Leak Check:** The TearDown phase must invoke `GetMetrics` and assert that `resources.active_observations == 0` and `resources.connection_count == 0`. Failure here fails the test suite.
     -   **Client State:** A fresh gRPC connection must be established for every test suite to prevent channel state pollution.
 -   **"Golden Application" Definitions:**
     -   **Goal:** Define immutable targets for verification.
@@ -593,24 +592,24 @@ Build a production-grade gRPC server exposing the complete MacosUseSDK functiona
 -   **Application Lifecycle Loop**
     -   **Goal:** Verify `OpenApplication`, `GetApplication`, `ListApplications`, `DeleteApplication`.
     -   **Actionable Tasks:**
-        1.  **Launch Verification:** Invoke `OpenApplication` for TextEdit. The test must block until the Long Running Operation (LRO) completes. Verify the returned `Application` proto contains a valid, non-zero `pid` and the status is `STATE_COMPLETED`.
-        2.  **Persistence Check:** Immediately invoke `ListApplications`. Assert that the list contains exactly the app opened in step 1 (filtering for the test UUID if parallel execution is supported).
-        3.  **Termination Verification:** Invoke `DeleteApplication` (graceful). Verify via `ListApplications` that the app is removed from the server's tracking. Immediately verify via OS shell command (`pgrep`) that the process is still running (since graceful delete only stops tracking).
+        1.  **Launch Verification:** Invoke `OpenApplication` for TextEdit. **Poll** `GetApplication` (max 2s) until status is `STATE_COMPLETED`.
+        2.  **Persistence Check:** Immediately invoke `ListApplications`. Assert that the list contains exactly the app opened in step 1.
+        3.  **Termination Verification:** Invoke `DeleteApplication` (graceful). Verify via `ListApplications` that the app is removed from the server's tracking.
         4.  **Force Kill Verification:** Invoke `DeleteApplication` with `force=true`. Verify via OS shell command that the PID no longer exists.
 -   **Precise Window Geometry Control**
     -   **Goal:** Verify `GetWindow`, `ListWindows`, `MoveWindow`, `ResizeWindow`, `FocusWindow`, `Minimize/Restore`.
     -   **Actionable Tasks:**
-        1.  **Discovery:** Open TextEdit. Invoke `ListWindows`. Assert count >= 1. Capture the `name` (resource ID) of the main window.
-        2.  **Geometry Mutation:** Invoke `ResizeWindow` setting dimensions to strictly `500x500`. Immediately invoke `GetWindow`. Assert `bounds.width` and `bounds.height` are within a 2-pixel tolerance of 500 (accounting for OS chrome).
-        3.  **Position Mutation:** Invoke `MoveWindow` to coordinates `100,100`. Verify via `GetWindow` that `bounds.x` and `bounds.y` reflect this change.
-        4.  **State Mutation:** Invoke `MinimizeWindow`. Verify `GetWindow` returns `minimized=true`. Invoke `RestoreWindow`. Verify `minimized=false`. Invoke `FocusWindow`. Verify `focused=true`.
+        1.  **Discovery:** Open TextEdit. **Poll** `ListWindows` until count >= 1. Capture the `name` (resource ID) of the main window.
+        2.  **Geometry Mutation:** Invoke `ResizeWindow` setting dimensions to strictly `500x500`. **Poll** `GetWindow` in a tight loop (max 2s) until `bounds.width` and `bounds.height` are within a 2-pixel tolerance of 500. Fail if timeout.
+        3.  **Position Mutation:** Invoke `MoveWindow` to coordinates `100,100`. **Poll** `GetWindow` until `bounds.x` and `bounds.y` reflect this change.
+        4.  **State Mutation:** Invoke `MinimizeWindow`. **Poll** `GetWindow` until `minimized=true`. Invoke `RestoreWindow`. **Poll** until `minimized=false`.
 
 ### **4.4 Input Fidelity & Event Timeline**
 -   **Complex Input Sequences**
     -   **Goal:** Verify `CreateInput`, `ListInputs`, and specific `InputAction` types (Text, Click, Drag).
     -   **Actionable Tasks:**
-        1.  **Text Entry Validation:** Target TextEdit. Invoke `CreateInput` with `TextInput` payload "Hello_World". Verify success. Immediately invoke `TraverseAccessibility` and recursively search the element tree to find a `StaticText` or `TextArea` node containing the exact string "Hello_World".
-        2.  **Mouse Drag Simulation:** Target the TextEdit window title bar. Invoke `GetWindow` to establish start coordinates. Invoke `CreateInput` with `MouseDrag` payload (from `current_x+10, current_y+10` to `current_x+200, current_y+200`). Verify execution. Invoke `GetWindow` again to confirm the window coordinates have shifted by approximately +190 pixels.
+        1.  **Text Entry Validation:** Target TextEdit. Invoke `CreateInput` with `TextInput` payload "Hello_World". Verify success. **Poll** `TraverseAccessibility` and recursively search the element tree until a `StaticText` or `TextArea` node contains the exact string "Hello_World".
+        2.  **Mouse Drag Simulation:** Target the TextEdit window title bar. Invoke `GetWindow` to establish start coordinates. Invoke `CreateInput` with `MouseDrag` payload. Verify execution. **Poll** `GetWindow` to confirm the window coordinates have shifted.
         3.  **Input History:** Invoke `ListInputs` for the application. Assert that the sequence of inputs (Text, then Drag) appears in the returned list in chronological order with `state=STATE_COMPLETED`.
 
 ### **4.5 Accessibility & Element Interaction**
@@ -618,47 +617,44 @@ Build a production-grade gRPC server exposing the complete MacosUseSDK functiona
     -   **Goal:** Verify `TraverseAccessibility`, `FindElements`, `GetElement`.
     -   **Actionable Tasks:**
         1.  **Full Tree Dump:** Invoke `TraverseAccessibility`. Assert `stats.count` > 10. Assert `stats.visible_elements_count` > 0.
-        2.  **Selector Precision:** Invoke `FindElements` using a `CompoundSelector` (Operator AND) combining `role="button"` and `text_regex=".*Zoom.*"`. Verify it returns the specific window control buttons.
+        2.  **Selector Precision:** Invoke `FindElements` using a `CompoundSelector`. Verify it returns specific controls.
         3.  **Element Re-acquisition:** Take the `element_id` from the search result. Invoke `GetElement` using that ID. Assert the returned object matches the search result exactly.
 -   **Interactive Element State**
     -   **Goal:** Verify `ClickElement`, `WriteElementValue`, `PerformElementAction`.
     -   **Actionable Tasks:**
-        1.  **Action Discovery:** Invoke `GetElementActions` on a window's "Close" button. Verify "AXPress" or similar action exists.
-        2.  **Direct Action:** Invoke `PerformElementAction` with "AXPress". Verify via `ListWindows` that the window count has decreased by 1 (window closed).
+        1.  **Action Discovery:** Invoke `GetElementActions` on a window's "Close" button. Verify "AXPress" exists.
+        2.  **Direct Action:** Invoke `PerformElementAction` with "AXPress". **Poll** `ListWindows` until the window count has decreased by 1.
 
 ### **4.6 System Integration & Observability**
 -   **Visual Verification (Screenshots)**
     -   **Goal:** Verify `CaptureScreenshot`, `CaptureWindowScreenshot`, `CaptureElementScreenshot`.
     -   **Actionable Tasks:**
-        1.  **Format Compliance:** Invoke `CaptureScreenshot` requesting `IMAGE_FORMAT_PNG`. Decode the resulting `image_data` byte array using a standard image library. Assert decoding succeeds and dimensions match the primary display resolution.
-        2.  **Contextual Capture:** Invoke `CaptureWindowScreenshot` for Calculator. Enable `include_ocr_text=true`. Assert `ocr_text` contains numeric values currently displayed on the calculator face.
+        1.  **Format Compliance:** Invoke `CaptureScreenshot` requesting `IMAGE_FORMAT_PNG`. Decode the resulting `image_data`.
+        2.  **Contextual Capture:** Invoke `CaptureWindowScreenshot` for Calculator with `include_ocr_text=true`. Assert `ocr_text` contains displayed numeric values.
 -   **Clipboard & Scripting**
     -   **Goal:** Verify `Clipboard` resource and `Execute*Script` RPCs.
     -   **Actionable Tasks:**
-        1.  **Clipboard Roundtrip:** Invoke `WriteClipboard` with text "IntegrationUUID". Invoke `GetClipboard`. Assert `content.text` == "IntegrationUUID". Invoke `ClearClipboard`. Invoke `GetClipboard` and assert content is empty.
-        2.  **Polyglot Execution:**
-            -   Invoke `ExecuteShellCommand` with `echo "ping"`. Assert `stdout` == "ping\n".
-            -   Invoke `ExecuteAppleScript` with `return 5 * 5`. Assert `output` == "25".
-            -   Invoke `ExecuteJavaScript` (JXA) to query the System Events app name. Assert output is valid JSON string.
+        1.  **Clipboard Roundtrip:** Invoke `WriteClipboard`. **Poll** `GetClipboard` until content matches.
+        2.  **Polyglot Execution:** Verify `ExecuteShellCommand`, `ExecuteAppleScript`, and `ExecuteJavaScript`.
 
 ### **4.7 Advanced Workflows (Macros & Sessions)**
 -   **Macro Logic**
     -   **Goal:** Verify `CreateMacro`, `ExecuteMacro` (LRO).
     -   **Actionable Tasks:**
-        1.  **Definition:** Create a Macro resource containing three sequential actions: Wait (1s), Input (Type "Test"), Input (Key Press "Enter").
+        1.  **Definition:** Create a Macro resource.
         2.  **Execution:** Invoke `ExecuteMacro`. Poll the returned Operation.
-        3.  **Verification:** Upon completion, check the `ExecuteMacroResponse`. Assert `actions_executed` == 3. Check the target app to verify the text was typed.
+        3.  **Verification:** Assert `actions_executed`. **Poll** the target app state to verify effects.
 -   **Session Transactions**
     -   **Goal:** Verify `Session` resource and `Begin/Commit/Rollback Transaction`.
     -   **Actionable Tasks:**
-        1.  **Transaction Integrity:** Create a Session. Invoke `BeginTransaction`. Perform 3 distinct `CreateInput` operations referencing the Session ID. Invoke `CommitTransaction`.
-        2.  **Audit Trail:** Invoke `GetSessionSnapshot`. Verify the `history` array contains exactly the 3 inputs performed within the transaction block.
+        1.  **Transaction Integrity:** Perform ops in a transaction.
+        2.  **Audit Trail:** Invoke `GetSessionSnapshot`. Verify history.
 -   **Reactive Observation**
     -   **Goal:** Verify `WatchAccessibility` and `CreateObservation`.
     -   **Actionable Tasks:**
-        1.  **Stream Setup:** Initiate `WatchAccessibility` stream on Calculator.
-        2.  **Trigger:** In a separate thread, invoke `CreateInput` to click the "Clear" button.
-        3.  **Event Capture:** Block on the stream response. Verify receipt of a `WatchAccessibilityResponse` where `modified` elements contains the display text field (value changing to "0").
+        1.  **Stream Setup:** Initiate `WatchAccessibility`.
+        2.  **Trigger:** Invoke `CreateInput` to click a button.
+        3.  **Event Capture:** Verify receipt of a response where `modified` elements contains the expected change.
 
 ### **4.8 Integration Tests**
 -   Complete test coverage:
@@ -752,20 +748,22 @@ Build a production-grade gRPC server exposing the complete MacosUseSDK functiona
 - **Test: Error Handling:**
     - Invalid inputs: Call `GetElement` with invalid resource names, expecting `invalidArgument`/`notFound`.
 
-### **Correctness & Verification Guarantees**
+### **Correctness & Verification Guarantees (MANDATORY)**
 
-To ensure this implementation plan provides a **guarantee** of correctness, the following validation logic must be strictly adhered to:
+To ensure this implementation plan provides a **guarantee** of correctness, the following validation logic must be strictly adhered to. **ANY DEVIATION IS A CRITICAL FAILURE.**
 
 1.  **State-Difference Assertions (The Delta Check):**
     -   Tests must never assume an action worked simply because the RPC returned `OK`.
     -   **Requirement:** Every mutator RPC (Move, Resize, Click, Type) must be immediately followed by an accessor RPC (GetWindow, GetElement, Traverse) to assert the *Delta* between Pre-State and Post-State matches the expected mutation.
 
-2.  **Wait-For-Convergence Pattern:**
-    -   macOS Accessibility API is asynchronous.
-    -   **Requirement:** Tests must **strictly avoid** `time.Sleep()`. Instead, implement a `PollUntil(condition, timeout)` utility. For example, after opening an app, poll `GetApplication` until the PID is non-zero. After closing a window, poll `ListWindows` until count decreases.
+2.  **Wait-For-Convergence Pattern (PollUntil):**
+    -   macOS Accessibility API is asynchronous. Standard `Assert` will fail due to race conditions.
+    -   **Requirement:** Tests must **strictly avoid** `time.Sleep()`. Instead, implement a `PollUntil(condition, timeout)` utility.
+    -   **Implementation:** Loop `GetWindow` (or relevant accessor) every 100ms up to a 2s deadline. Only pass if the state condition is met. Fail immediately if timeout occurs.
 
-3.  **Resource Cleanup Invariant:**
-    -   **Requirement:** The suite must assert `GetMetrics` at the very end of execution. The `resources.active_observations` and `resources.connection_count` must return to baseline levels. Any deviation indicates a resource leak in the server implementation.
+3.  **Resource Cleanup Invariant (Zombie Reaper):**
+    -   **Requirement:** The suite must assert `GetMetrics` at the very end of execution (`TearDown`). The `resources.active_observations` and `resources.connection_count` must return to baseline levels.
+    -   **Action:** If this check fails, it implies the "Zombie Resource Reaper" (Phase 2.4) is failing to dereference resources on disconnect.
 
 4.  **OCR as Ground Truth:**
     -   **Requirement:** For graphical rendering tests (screenshots), byte-comparison is fragile. Verification must rely on the `ocr_text` field or valid image header decoding to guarantee the server isn't returning garbage bytes.
