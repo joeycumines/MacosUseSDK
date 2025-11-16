@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"syscall"
 	"testing"
 	"time"
 
+	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -26,22 +28,91 @@ func TestMain(m *testing.M) {
 
 	code := m.Run()
 
+	// Post-suite cleanup
+	_, _ = fmt.Fprintln(os.Stderr, "TestMain: Post-suite cleanup - killing golden applications...")
+	killGoldenApplications()
+
 	os.Exit(code)
 }
 
 // killGoldenApplications forcefully terminates all golden test applications.
 // Golden Applications:
 // - Calculator (com.apple.calculator)
-// - TextEdit (com.apple.TextEdit) - NOTE: Hopefully you aren't using it...
-// - Finder (com.apple.finder) - NOTE: Avoiding Finder kill to prevent system issues
+// - TextEdit (com.apple.TextEdit)
+// - Finder is NOT killed to prevent system issues
 func killGoldenApplications() {
 	apps := []string{"Calculator", "TextEdit"}
 	for _, app := range apps {
 		cmd := exec.Command("killall", "-9", app)
 		_ = cmd.Run() // Ignore errors (app may not be running)
 	}
-	// Give OS time to clean up processes
-	time.Sleep(500 * time.Millisecond)
+}
+
+// CleanupApplication closes an application using the DeleteApplication RPC and verifies the process is killed.
+// This is the MANDATORY per-test cleanup pattern for Test Fixture Lifecycle (Phase 4.2).
+func CleanupApplication(t *testing.T, ctx context.Context, client pb.MacosUseClient, name string) {
+	t.Helper()
+
+	// List applications to find the target
+	listResp, err := client.ListApplications(ctx, &pb.ListApplicationsRequest{})
+	if err != nil {
+		t.Logf("CleanupApplication: Failed to list applications: %v", err)
+		return
+	}
+
+	var targetApp *pb.Application
+	for _, app := range listResp.Applications {
+		if app.Name == name {
+			targetApp = app
+			break
+		}
+	}
+
+	if targetApp == nil {
+		t.Logf("CleanupApplication: Application %q not found (may already be closed)", name)
+		return
+	}
+
+	targetPID := targetApp.Pid
+
+	// Call DeleteApplication
+	_, err = client.DeleteApplication(ctx, &pb.DeleteApplicationRequest{
+		Name: targetApp.Name,
+	})
+	if err != nil {
+		t.Logf("CleanupApplication: Failed to delete application %q: %v", name, err)
+		// Fall back to killall using display_name
+		cmd := exec.Command("killall", "-9", targetApp.DisplayName)
+		_ = cmd.Run()
+		return
+	}
+
+	// Verify the process is killed using PollUntil (max 2s)
+	verifyCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
+	err = PollUntilContext(verifyCtx, 100*time.Millisecond, func() (bool, error) {
+		// Check if process still exists
+		process, err := os.FindProcess(int(targetPID))
+		if err != nil {
+			// Process doesn't exist
+			return true, nil
+		}
+
+		// Try to signal the process (Signal 0 = check if process exists)
+		err = process.Signal(syscall.Signal(0))
+		if err != nil {
+			// Process is dead
+			return true, nil
+		}
+
+		// Process still exists
+		return false, nil
+	})
+
+	if err != nil {
+		t.Errorf("CleanupApplication: Process %d for %q still alive after DeleteApplication", targetPID, name)
+	}
 }
 
 // cleanupServer stops the server
@@ -90,9 +161,26 @@ func startServer(t *testing.T, ctx context.Context) (*exec.Cmd, string) {
 		t.Fatalf("Failed to start server: %v", err)
 	}
 
-	// Wait for server to be ready
+	// Wait for server to be ready using poll
 	t.Log("Waiting for server to be ready...")
-	time.Sleep(3 * time.Second)
+	serverCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	err := PollUntilContext(serverCtx, 100*time.Millisecond, func() (bool, error) {
+		testConn, err := grpc.NewClient(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			return false, nil
+		}
+		defer testConn.Close()
+
+		client := pb.NewMacosUseClient(testConn)
+		_, err = client.ListApplications(serverCtx, &pb.ListApplicationsRequest{})
+		return err == nil, nil
+	})
+	if err != nil {
+		cmd.Process.Kill()
+		t.Fatalf("Server failed to become ready: %v", err)
+	}
 
 	return cmd, serverAddr
 }
@@ -122,9 +210,64 @@ func connectToServer(t *testing.T, ctx context.Context, addr string) *grpc.Clien
 		}
 
 		t.Logf("Connection attempt %d failed, retrying... (error: %v)", i+1, err)
-		time.Sleep(500 * time.Millisecond)
+
+		// Use PollUntil instead of sleep
+		retryCtx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
+		_ = PollUntilContext(retryCtx, 50*time.Millisecond, func() (bool, error) {
+			return true, nil
+		})
+		cancel()
 	}
 
 	t.Fatalf("Failed to connect to server after retries: %v", err)
 	return nil
+}
+
+// OpenApplicationAndWait opens an application and waits for the LRO to complete.
+// Returns the Application resource on success.
+func OpenApplicationAndWait(t *testing.T, ctx context.Context, client pb.MacosUseClient, opsClient longrunningpb.OperationsClient, appID string) *pb.Application {
+	t.Helper()
+
+	// Start the long-running operation
+	op, err := client.OpenApplication(ctx, &pb.OpenApplicationRequest{
+		Id: appID,
+	})
+	if err != nil {
+		t.Fatalf("Failed to start OpenApplication: %v", err)
+	}
+
+	t.Logf("OpenApplication operation started: %s", op.Name)
+
+	// Poll the operation until it completes
+	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
+		op, err = opsClient.GetOperation(ctx, &longrunningpb.GetOperationRequest{
+			Name: op.Name,
+		})
+		if err != nil {
+			return false, fmt.Errorf("failed to get operation status: %w", err)
+		}
+		return op.Done, nil
+	})
+	if err != nil {
+		t.Fatalf("Failed waiting for OpenApplication operation: %v", err)
+	}
+
+	// Check for error
+	if op.GetError() != nil {
+		t.Fatalf("OpenApplication operation failed: %v", op.GetError())
+	}
+
+	// Extract the Application from the response
+	response := &pb.OpenApplicationResponse{}
+	if err := op.GetResponse().UnmarshalTo(response); err != nil {
+		t.Fatalf("Failed to unmarshal operation response: %v", err)
+	}
+
+	app := response.Application
+	if app == nil {
+		t.Fatalf("Operation completed but no application returned")
+	}
+
+	t.Logf("Application opened successfully: %s (PID: %d)", app.Name, app.Pid)
+	return app
 }

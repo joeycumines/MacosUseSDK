@@ -18,15 +18,12 @@
 
 ### **Current Reality (Single-Sentence Snapshot)**
 
-The gRPC Swift 2 migration and core server scaffolding are complete and verified (all tests passing as of latest run); AIP-158 compliant pagination with opaque tokens is implemented for all List/Find RPCs; bundle ID resolution is working via NSRunningApplication; remaining work focuses on window change detection in observations, element path semantics refinement, and expanding the PollUntil-based integration test matrix.
+Server operational with core functionality, test fixture lifecycle, core lifecycle tests, and selector grammar documentation complete; unit test coverage for core components remains the primary gap.
 
 ### **Immediate Action Items (Next Things To Do)**
 
-1. **Implement window change detection in ObservationManager:** Add window add/remove/change diffing logic to ChangeDetector and surface these events via StreamObservations. This is the next highest-priority feature gap (Priority 2 in Phase 10). Files: Server/Sources/MacosUseServer/ObservationManager.swift, ChangeDetector.swift.
-2. **Add integration test for window change observations:** Create test that opens/closes windows and verifies StreamObservations receives appropriate window change events with correct delta information.
-3. **Align `PerformElementAction` with reality:** `PerformElementAction` currently supports a focused set of actions (press/click/showmenu/openmenu via AX or coordinate fallback) and returns `UNIMPLEMENTED` for others. Decide and document the v1 surface (stay narrow or add a small curated set), then add tests that cover both supported and unsupported actions. Keep Phase 3.2 aligned with this explicit scope.
-4. **Make observations and element paths explicit in the plan:** `ObservationManager` implements polling-based element/window/attribute diffs keyed off the element `path`, but `ElementLocator` currently uses a simple index `[index]` as the path and carries a `FIXME` for hierarchical paths. Capture this as a concrete technical debt item (Phase 3/6) and ensure tests don't assume more stable path semantics than the implementation provides.
-5. **Expand PollUntil integration test coverage:** Integration tests already use `PollUntilContext` and cover pagination and basic input flows. Expand to include more state-delta assertions around window geometry changes, element mutations, and error recovery scenarios per Phase 4.3-4.7 guidance.
+1. **Add unit tests for core components:** WindowRegistry, ObservationManager, OperationStore, SessionManager, SelectorParser/ElementLocator all lack focused unit tests. Files: Server/Tests/MacosUseServerTests/ (Phase 4.1, HIGH).
+2. **Fix test failures:** TestMultipleApplications and TestWindowChangeObservation failing; investigate and fix timing or state management issues. Files: integration/lifecycle_test.go, integration/observation_test.go (Phase 4, HIGH).
 
 ### **Standing Guidance For Future Edits To This Section**
 

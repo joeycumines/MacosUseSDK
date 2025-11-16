@@ -11,7 +11,71 @@ option java_multiple_files = true;
 option java_outer_classname = "SelectorProto";
 option java_package = "com.macosusesdk.type";
 
-// Selector for finding UI elements.
+// Selector for finding UI elements in the accessibility tree.
+//
+// SELECTOR GRAMMAR AND SEMANTICS:
+//
+// 1. SIMPLE SELECTORS (all fully implemented):
+//    - role: "button"                     → Match by AXRole (case-sensitive)
+//    - text: "Submit"                     → Exact text match (AXValue or AXTitle)
+//    - text_contains: "Submit"            → Substring match (case-sensitive)
+//    - text_regex: "^Submit.*"            → Regex match using NSRegularExpression
+//    - position: {x: 100, y: 200, tol: 5} → Match element at screen coordinates ±tolerance
+//    - attributes: {"AXEnabled": "1"}     → Match custom accessibility attributes (all must match)
+//
+// 2. COMPOUND SELECTORS (fully implemented):
+//    - OPERATOR_AND: All sub-selectors must match
+//    - OPERATOR_OR:  At least one sub-selector must match
+//    - OPERATOR_NOT: Single sub-selector must NOT match (requires exactly 1 selector)
+//
+// 3. EMPTY SELECTOR:
+//    - criteria unset → matches ALL elements (use with caution, can return many results)
+//
+// 4. VALIDATION RULES (enforced by SelectorParser):
+//    - role: cannot be empty string
+//    - text_contains: cannot be empty string
+//    - text_regex: must be valid NSRegularExpression pattern
+//    - position: tolerance cannot be negative
+//    - attributes: must have at least one key-value pair
+//    - compound: must have at least one selector; NOT requires exactly one
+//
+// 5. MATCHING SEMANTICS:
+//    - text/text_contains/text_regex: Check AXValue first, fall back to AXTitle
+//    - role: Exact match against AXRole (e.g., "AXButton", "AXTextField")
+//    - position: Element bounds must contain point (x,y) within tolerance
+//    - attributes: All specified attributes must match element's accessibility attributes
+//
+// 6. PERFORMANCE CONSIDERATIONS:
+//    - Simple selectors (role, text, text_contains, position) are optimized
+//    - Regex and attribute selectors require full tree traversal
+//    - Compound selectors with AND can short-circuit on first failure
+//
+// EXAMPLES:
+//
+//   // Find button with text "Submit"
+//   { role: "AXButton", text: "Submit" }  // INVALID: can't mix criteria in oneof
+//   { compound: { operator: AND, selectors: [
+//       { role: "AXButton" },
+//       { text: "Submit" }
+//   ]}}
+//
+//   // Find any button OR link
+//   { compound: { operator: OR, selectors: [
+//       { role: "AXButton" },
+//       { role: "AXLink" }
+//   ]}}
+//
+//   // Find elements NOT containing "Error"
+//   { compound: { operator: NOT, selectors: [
+//       { text_contains: "Error" }
+//   ]}}
+//
+//   // Find element at screen position (100, 200) with 10px tolerance
+//   { position: { x: 100, y: 200, tolerance: 10 }}
+//
+// FILES:
+//   - Implementation: Server/Sources/MacosUseServer/SelectorParser.swift
+//   - Matching logic: Server/Sources/MacosUseServer/ElementLocator.swift
 message ElementSelector {
   // Selector criteria (at least one must be specified).
   oneof criteria {

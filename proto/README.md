@@ -48,8 +48,70 @@ Common types that are reused across the API are placed in `macosusesdk/type/`:
 - `Point`: 2D screen coordinates
 - `Element`: UI element representation
 - `TraversalStatistics`: Statistics from accessibility tree traversal
+- `ElementSelector`: Declarative element querying system (see Selector Grammar below)
 
 These are minimal and only include truly common, reusable types.
+
+### Selector Grammar (Element Selection)
+
+The `ElementSelector` type in `type/selector.proto` provides a declarative way to query UI elements in the accessibility tree.
+
+**Implemented Features:**
+
+1. **Simple Selectors** (all fully implemented):
+   - `role: "AXButton"` → Match by accessibility role
+   - `text: "Submit"` → Exact text match (checks AXValue then AXTitle)
+   - `text_contains: "Submit"` → Substring match (case-sensitive)
+   - `text_regex: "^Submit.*"` → Regex match using NSRegularExpression
+   - `position: {x: 100, y: 200, tolerance: 5}` → Match element at screen coordinates
+   - `attributes: {"AXEnabled": "1"}` → Match custom accessibility attributes (all must match)
+
+2. **Compound Selectors** (fully implemented):
+   - `OPERATOR_AND`: All sub-selectors must match
+   - `OPERATOR_OR`: At least one sub-selector must match
+   - `OPERATOR_NOT`: Single sub-selector must NOT match (requires exactly 1 selector)
+
+3. **Empty Selector**: Matches ALL elements (use with caution)
+
+**Example Usage:**
+
+```protobuf
+// Find button with text "Submit"
+{
+  compound: {
+    operator: AND,
+    selectors: [
+      { role: "AXButton" },
+      { text: "Submit" }
+    ]
+  }
+}
+
+// Find any button OR link
+{
+  compound: {
+    operator: OR,
+    selectors: [
+      { role: "AXButton" },
+      { role: "AXLink" }
+    ]
+  }
+}
+
+// Find elements NOT containing "Error"
+{
+  compound: {
+    operator: NOT,
+    selectors: [{ text_contains: "Error" }]
+  }
+}
+```
+
+**Implementation:**
+- Validation: `Server/Sources/MacosUseServer/SelectorParser.swift`
+- Matching: `Server/Sources/MacosUseServer/ElementLocator.swift`
+
+**Performance:** Simple selectors (role, text, text_contains, position) are optimized. Regex and attribute selectors require full tree traversal.
 
 ### Long-Running Operations (AIP-151)
 
