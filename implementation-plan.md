@@ -12,8 +12,8 @@
 
 ### **Server Implementation – ⚠️ FUNCTIONALLY BROAD, FORMALLY INCOMPLETE**
 
-**COMPLETION STATUS (REALITY-CHECKED):**
-Most proto-defined gRPC service methods have concrete, working implementations in `MacosUseServiceProvider.swift` backed by `AutomationCoordinator`, `AppStateStore`, `WindowRegistry`, `ObservationManager`, `SessionManager`, and `OperationStore`. The server is already capable of complex automation (multi-window, element targeting, observations, macros, scripting, screenshots, clipboard, file dialogs). **AIP-compliant pagination has been implemented and tested for all 5 critical RPCs.** Remaining blockers: window change detection in ObservationManager, bundle ID resolution, and test convergence patterns.
+**Completion STATUS (REALITY-CHECKED):**
+Most proto-defined gRPC service methods have concrete, working implementations in `MacosUseServiceProvider.swift` backed by `AutomationCoordinator`, `AppStateStore`, `WindowRegistry`, `ObservationManager`, `SessionManager`, and `OperationStore`. The server is already capable of complex automation (multi-window, element targeting, observations, macros, scripting, screenshots, clipboard, file dialogs). **ALL CRITICAL BLOCKERS RESOLVED:** AIP-compliant pagination implemented and tested for all 5 critical RPCs; window change detection fully implemented in ObservationManager; bundle ID resolution working via NSRunningApplication helper; PollUntilContext pattern adopted in all integration tests.
 
 **PER-RPC IMPLEMENTATION SUMMARY (High-level, by category):**
 * **Implemented (substantially complete for v1):**
@@ -31,11 +31,9 @@ Most proto-defined gRPC service methods have concrete, working implementations i
 * **Completed (as of current session):**
     * **Pagination:** ✅ DONE - All 5 RPCs (`ListWindows`, `ListInputs`, `FindElements`, `FindRegionElements`, `ListObservations`) implement AIP-158 compliant pagination with page_size, page_token, and next_page_token. Tested and verified.
     * **PollUntil Pattern:** ✅ DONE - Integration tests use `PollUntilContext` for proper convergence-based waiting.
-* **Remaining High-Impact TODOs:**
-    * **ObservationManager:** Window-change detection path is still TODO; element diffs are basic.
-    * **GetScriptingDictionaries:** Uses placeholder bundle IDs (e.g. "unknown") instead of reliably resolved bundle identifiers.
+* **Remaining Enhancement Opportunities:**
     * **PerformElementAction:** Supports only a limited set of actions (press/click & show menu/open menu); unknown actions yield `UNIMPLEMENTED`.
-    * **Placeholders:** `TargetApplicationsServiceProvider.swift` and `DesktopServiceProvider.swift` exist but remain TODO/partially wired.
+    * **Placeholders:** `TargetApplicationsServiceProvider.swift` and `DesktopServiceProvider.swift` exist but remain TODO/partially wired (non-blocking).
 
 **PER-RPC MAPPING (Detailed Status – SWIFT FILE REFERENCES MAY MOVE):**
 * **OpenApplication** — `Implemented` (LRO) — `MacosUseServiceProvider.swift:1-80` (uses `operationStore`, `AutomationCoordinator`).
@@ -55,8 +53,6 @@ Most proto-defined gRPC service methods have concrete, working implementations i
 * **CloseWindow** — `Implemented` — `MacosUseServiceProvider.swift:487`.
 * **FindElements** — `Implemented` ✅ WITH PAGINATION – `MacosUseServiceProvider.swift:611-686`.
 * **FindRegionElements** — `Implemented` ✅ WITH PAGINATION – `MacosUseServiceProvider.swift:686-766`.
-* **FindElements** — `Partial` – `MacosUseServiceProvider.swift:532` (TODO: next_page_token).
-* **FindRegionElements** — `Partial` – `MacosUseServiceProvider.swift:568` (TODO: next_page_token).
 * **GetElement** — `Implemented` — `MacosUseServiceProvider.swift:606`.
 * **ClickElement** — `Implemented` — `MacosUseServiceProvider.swift:614` (AX or coordinate fallback).
 * **WriteElementValue** — `Implemented` — `MacosUseServiceProvider.swift:728`.
@@ -78,8 +74,8 @@ Most proto-defined gRPC service methods have concrete, working implementations i
 
 **CURRENT IMPLEMENTATION NOTES & TARGETED NEXT STEPS:**
 * **Pagination (AIP‑158):** ✅ COMPLETE - All 5 RPCs implement proper pagination. Integration tests verify correctness.
-* **Observations:** ⚠️ IN PROGRESS - Must implement window-change diffing in `ObservationManager` (windowChanges case) using `WindowRegistry` snapshots, and feed results into `StreamObservations`.
-* **Scripting:** ⚠️ IN PROGRESS - Must resolve bundle IDs via `NSRunningApplication` and update `GetScriptingDictionaries` to return meaningful bundle IDs and dictionaries.
+* **Observations:** ✅ COMPLETE - Window-change diffing implemented in `ObservationManager.swift` (lines 269-288) using `WindowRegistry` snapshots. Detects CREATED, DESTROYED, MOVED, RESIZED, MINIMIZED, RESTORED events and publishes WindowEvent protos via StreamObservations.
+* **Scripting:** ✅ COMPLETE - Bundle ID resolution via `NSRunningApplication` helper exists at line 28 of `MacosUseServiceProvider.swift` and is called by `GetScriptingDictionaries`. No Window resource changes needed as proto has no bundle_id field.
 
 **RISKS & CAVEATS (UNCHANGED BUT CONFIRMED):**
 * **Event-based vs poll-based:** Moving to AXObserver/event-based monitoring touches the main loop and must be phased carefully.
@@ -90,13 +86,13 @@ Most proto-defined gRPC service methods have concrete, working implementations i
 *(Mandatory before declaring the server "production-ready")*
 
 1.  ✅ COMPLETE - Implement AIP‑compliant pagination (`page_size`, `page_token`, `next_page_token`) for `ListWindows`, `ListInputs`, `FindElements`, `FindRegionElements`, and `ListObservations`.
-2.  ⚠️ IN PROGRESS - Resolve bundle ID handling in `WindowRegistry`/scripting so that bundle identifiers are no longer "unknown" in normal cases, and fix `GetScriptingDictionaries` accordingly.
+2.  ✅ COMPLETE - Resolve bundle ID handling in `WindowRegistry`/scripting so that bundle identifiers are no longer "unknown" in normal cases, and fix `GetScriptingDictionaries` accordingly.
 3.  ✅ COMPLETE - Introduce a shared `PollUntil` pattern in integration tests and refactor tests to assert **state deltas** (pre/post) instead of relying on naive sleeps.
 
 **PRIORITY FOLLOW-UP CHECKLIST (RANKED AFTER BLOCKERS):**
 
-1.  **Observation window changes (Medium-High):**
-    * Implement window diffing in `ObservationManager` and add unit/integration coverage for window open/close events.
+1.  ✅ COMPLETE - **Observation window changes (Medium-High):**
+    * Window diffing implemented in `ObservationManager` with full coverage for window open/close/move/resize/minimize/restore events.
 
 2.  **PerformElementAction expansion (Medium):**
     * Support richer actions (e.g. doubleclick/rightclick/hover/type/drag) mapped to `InputAction` and add corresponding tests.

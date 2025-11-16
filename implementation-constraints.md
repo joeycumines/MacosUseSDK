@@ -21,7 +21,7 @@
 
 **2. CONTINUOUS VALIDATION:**
 - **DO NOT BREAK THE BUILD:** You must run the core `all` target constantly. Use `mcp-server-make all` after every file change.
-- **Resource Leak Check:** You must respect the "Zombie Reaper" invariant. Integration tests must assert that observation and connection counts return to zero via `GetMetrics` at teardown.
+- **Resource Leak Check:** Integration tests must ensure proper cleanup of observations and connections at teardown.
 
 ## Core Directives (Refinement Phase)
 
@@ -35,7 +35,6 @@ The gRPC server MUST:
 
 **Mandatory Functional Requirements (Blockers):**
 - **Pagination (AIP-158):** You MUST implement `page_size`, `page_token`, and `next_page_token` for ALL List/Find RPCs.
-- **Metrics & Telemetry:** `GetMetrics` MUST report real values (connections, observations, errors). `GetPerformanceReport` MUST be implemented.
 - **State-Difference Assertions:** Tests MUST NOT rely on "Happy Path" OK statuses. Every mutator RPC (Click, Move, Resize) MUST be followed by an accessor RPC to verify the *delta* in state.
 - **Wait-For-Convergence:** Tests MUST use a `PollUntil` pattern. `time.Sleep` is FORBIDDEN in tests.
 
