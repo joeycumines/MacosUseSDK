@@ -15,7 +15,7 @@ plugins:
     opt:
       - Visibility=Public
     include_imports: true
-  - remote: buf.build/grpc/swift
+  - remote: buf.build/grpc/swift-protobuf
     out: Server/Sources/MacosUseSDKProtos
     opt:
       - Visibility=Public

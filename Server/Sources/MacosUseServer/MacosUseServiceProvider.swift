@@ -2,7 +2,7 @@ import AppKit
 import ApplicationServices
 import CoreGraphics
 import Foundation
-import GRPC
+import GRPCCore
 import MacosUseSDKProtos
 import SwiftProtobuf
 
@@ -31,7 +31,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     // MARK: - Application Methods
 
     func openApplication(
-        request: Macosusesdk_V1_OpenApplicationRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_OpenApplicationRequest, context _: ServerContext,
     ) async throws -> Google_Longrunning_Operation {
         fputs("info: [MacosUseServiceProvider] openApplication called\n", stderr)
 
@@ -77,7 +77,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func getApplication(
-        request: Macosusesdk_V1_GetApplicationRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_GetApplicationRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_Application {
         fputs("info: [MacosUseServiceProvider] getApplication called\n", stderr)
         let pid = try parsePID(fromName: request.name)
@@ -88,7 +88,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func listApplications(
-        request _: Macosusesdk_V1_ListApplicationsRequest, context _: GRPCAsyncServerCallContext,
+        request _: Macosusesdk_V1_ListApplicationsRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_ListApplicationsResponse {
         fputs("info: [MacosUseServiceProvider] listApplications called\n", stderr)
         let apps = await stateStore.listTargets()
@@ -98,7 +98,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func deleteApplication(
-        request: Macosusesdk_V1_DeleteApplicationRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_DeleteApplicationRequest, context _: ServerContext,
     ) async throws -> SwiftProtobuf.Google_Protobuf_Empty {
         fputs("info: [MacosUseServiceProvider] deleteApplication called\n", stderr)
         let pid = try parsePID(fromName: request.name)
@@ -108,7 +108,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
 
     // MARK: - Input Methods
 
-    func createInput(request: Macosusesdk_V1_CreateInputRequest, context _: GRPCAsyncServerCallContext)
+    func createInput(request: Macosusesdk_V1_CreateInputRequest, context _: ServerContext)
         async throws -> Macosusesdk_V1_Input
     {
         fputs("info: [MacosUseServiceProvider] createInput called\n", stderr)
@@ -156,7 +156,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         }
     }
 
-    func getInput(request: Macosusesdk_V1_GetInputRequest, context _: GRPCAsyncServerCallContext)
+    func getInput(request: Macosusesdk_V1_GetInputRequest, context _: ServerContext)
         async throws -> Macosusesdk_V1_Input
     {
         fputs("info: [MacosUseServiceProvider] getInput called\n", stderr)
@@ -166,7 +166,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         return input
     }
 
-    func listInputs(request: Macosusesdk_V1_ListInputsRequest, context _: GRPCAsyncServerCallContext)
+    func listInputs(request: Macosusesdk_V1_ListInputsRequest, context _: ServerContext)
         async throws -> Macosusesdk_V1_ListInputsResponse
     {
         fputs("info: [MacosUseServiceProvider] listInputs called\n", stderr)
@@ -215,7 +215,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     // MARK: - Custom Methods
 
     func traverseAccessibility(
-        request: Macosusesdk_V1_TraverseAccessibilityRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_TraverseAccessibilityRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_TraverseAccessibilityResponse {
         fputs("info: [MacosUseServiceProvider] traverseAccessibility called\n", stderr)
         let pid = try parsePID(fromName: request.name)
@@ -226,8 +226,8 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
 
     func watchAccessibility(
         request: Macosusesdk_V1_WatchAccessibilityRequest,
-        responseStream: GRPCAsyncResponseStreamWriter<Macosusesdk_V1_WatchAccessibilityResponse>,
-        context _: GRPCAsyncServerCallContext,
+        responseStream: RPCWriter<Macosusesdk_V1_WatchAccessibilityResponse>,
+        context _: ServerContext,
     ) async throws {
         fputs("info: [MacosUseServiceProvider] watchAccessibility called\n", stderr)
 
@@ -271,7 +271,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     // MARK: - Window Methods
 
     func getWindow(
-        request: Macosusesdk_V1_GetWindowRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_GetWindowRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_Window {
         fputs("info: [MacosUseServiceProvider] getWindow called\n", stderr)
         // Parse "applications/{pid}/windows/{windowId}"
@@ -315,7 +315,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func listWindows(
-        request: Macosusesdk_V1_ListWindowsRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_ListWindowsRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_ListWindowsResponse {
         fputs("info: [MacosUseServiceProvider] listWindows called\n", stderr)
 
@@ -386,7 +386,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func focusWindow(
-        request: Macosusesdk_V1_FocusWindowRequest, context: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_FocusWindowRequest, context: ServerContext,
     ) async throws -> Macosusesdk_V1_Window {
         fputs("info: [MacosUseServiceProvider] focusWindow called\n", stderr)
 
@@ -418,7 +418,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func moveWindow(
-        request: Macosusesdk_V1_MoveWindowRequest, context: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_MoveWindowRequest, context: ServerContext,
     ) async throws -> Macosusesdk_V1_Window {
         fputs("info: [MacosUseServiceProvider] moveWindow called\n", stderr)
 
@@ -458,7 +458,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func resizeWindow(
-        request: Macosusesdk_V1_ResizeWindowRequest, context: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_ResizeWindowRequest, context: ServerContext,
     ) async throws -> Macosusesdk_V1_Window {
         fputs("info: [MacosUseServiceProvider] resizeWindow called\n", stderr)
 
@@ -496,7 +496,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func minimizeWindow(
-        request: Macosusesdk_V1_MinimizeWindowRequest, context: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_MinimizeWindowRequest, context: ServerContext,
     ) async throws -> Macosusesdk_V1_Window {
         fputs("info: [MacosUseServiceProvider] minimizeWindow called\n", stderr)
 
@@ -530,7 +530,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func restoreWindow(
-        request: Macosusesdk_V1_RestoreWindowRequest, context: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_RestoreWindowRequest, context: ServerContext,
     ) async throws -> Macosusesdk_V1_Window {
         fputs("info: [MacosUseServiceProvider] restoreWindow called\n", stderr)
 
@@ -564,7 +564,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func closeWindow(
-        request: Macosusesdk_V1_CloseWindowRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_CloseWindowRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_CloseWindowResponse {
         fputs("info: [MacosUseServiceProvider] closeWindow called\n", stderr)
 
@@ -609,7 +609,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     // MARK: - Element Methods
 
     func findElements(
-        request: Macosusesdk_V1_FindElementsRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_FindElementsRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_FindElementsResponse {
         fputs("info: [MacosUseServiceProvider] findElements called\n", stderr)
 
@@ -676,7 +676,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func findRegionElements(
-        request: Macosusesdk_V1_FindRegionElementsRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_FindRegionElementsRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_FindRegionElementsResponse {
         fputs("info: [MacosUseServiceProvider] findRegionElements called\n", stderr)
 
@@ -745,7 +745,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func getElement(
-        request: Macosusesdk_V1_GetElementRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_GetElementRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_Type_Element {
         fputs("info: [MacosUseServiceProvider] getElement called\n", stderr)
 
@@ -753,7 +753,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func clickElement(
-        request: Macosusesdk_V1_ClickElementRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_ClickElementRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_ClickElementResponse {
         fputs("info: [MacosUseServiceProvider] clickElement called\n", stderr)
 
@@ -867,7 +867,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func writeElementValue(
-        request: Macosusesdk_V1_WriteElementValueRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_WriteElementValueRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_WriteElementValueResponse {
         fputs("info: [MacosUseServiceProvider] writeElementValue called\n", stderr)
 
@@ -951,7 +951,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
 
     @MainActor
     func getElementActions(
-        request: Macosusesdk_V1_GetElementActionsRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_GetElementActionsRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_ElementActions {
         fputs("info: [MacosUseServiceProvider] getElementActions called\n", stderr)
 
@@ -999,7 +999,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
 
     @MainActor
     func performElementAction(
-        request: Macosusesdk_V1_PerformElementActionRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_PerformElementActionRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_PerformElementActionResponse {
         fputs("info: [MacosUseServiceProvider] performElementAction called\n", stderr)
 
@@ -1134,7 +1134,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func waitElement(
-        request: Macosusesdk_V1_WaitElementRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_WaitElementRequest, context _: ServerContext,
     ) async throws -> Google_Longrunning_Operation {
         fputs("info: [MacosUseServiceProvider] waitElement called (LRO)\n", stderr)
 
@@ -1230,7 +1230,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func waitElementState(
-        request: Macosusesdk_V1_WaitElementStateRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_WaitElementStateRequest, context _: ServerContext,
     ) async throws -> Google_Longrunning_Operation {
         fputs("info: [MacosUseServiceProvider] waitElementState called (LRO)\n", stderr)
 
@@ -1363,7 +1363,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     // MARK: - Observation Methods
 
     func createObservation(
-        request: Macosusesdk_V1_CreateObservationRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_CreateObservationRequest, context _: ServerContext,
     ) async throws -> Google_Longrunning_Operation {
         fputs("info: [MacosUseServiceProvider] createObservation called (LRO)\n", stderr)
 
@@ -1429,7 +1429,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func getObservation(
-        request: Macosusesdk_V1_GetObservationRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_GetObservationRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_Observation {
         fputs("info: [MacosUseServiceProvider] getObservation called\n", stderr)
 
@@ -1443,7 +1443,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func listObservations(
-        request: Macosusesdk_V1_ListObservationsRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_ListObservationsRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_ListObservationsResponse {
         fputs("info: [MacosUseServiceProvider] listObservations called\n", stderr)
 
@@ -1491,7 +1491,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func cancelObservation(
-        request: Macosusesdk_V1_CancelObservationRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_CancelObservationRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_Observation {
         fputs("info: [MacosUseServiceProvider] cancelObservation called\n", stderr)
 
@@ -1507,8 +1507,8 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
 
     func streamObservations(
         request: Macosusesdk_V1_StreamObservationsRequest,
-        responseStream: GRPCAsyncResponseStreamWriter<Macosusesdk_V1_StreamObservationsResponse>,
-        context _: GRPCAsyncServerCallContext,
+        responseStream: RPCWriter<Macosusesdk_V1_StreamObservationsResponse>,
+        context _: ServerContext,
     ) async throws {
         fputs("info: [MacosUseServiceProvider] streamObservations called (streaming)\n", stderr)
 
@@ -1545,7 +1545,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     // MARK: - Session Methods
 
     func createSession(
-        request: Macosusesdk_V1_CreateSessionRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_CreateSessionRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_Session {
         fputs("info: [MacosUseServiceProvider] createSession called\n", stderr)
 
@@ -1566,7 +1566,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func getSession(
-        request: Macosusesdk_V1_GetSessionRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_GetSessionRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_Session {
         fputs("info: [MacosUseServiceProvider] getSession called\n", stderr)
 
@@ -1579,7 +1579,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func listSessions(
-        request: Macosusesdk_V1_ListSessionsRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_ListSessionsRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_ListSessionsResponse {
         fputs("info: [MacosUseServiceProvider] listSessions called\n", stderr)
 
@@ -1599,7 +1599,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func deleteSession(
-        request: Macosusesdk_V1_DeleteSessionRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_DeleteSessionRequest, context _: ServerContext,
     ) async throws -> SwiftProtobuf.Google_Protobuf_Empty {
         fputs("info: [MacosUseServiceProvider] deleteSession called\n", stderr)
 
@@ -1614,7 +1614,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func beginTransaction(
-        request: Macosusesdk_V1_BeginTransactionRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_BeginTransactionRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_BeginTransactionResponse {
         fputs("info: [MacosUseServiceProvider] beginTransaction called\n", stderr)
 
@@ -1642,7 +1642,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func commitTransaction(
-        request: Macosusesdk_V1_CommitTransactionRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_CommitTransactionRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_Transaction {
         fputs("info: [MacosUseServiceProvider] commitTransaction called\n", stderr)
 
@@ -1663,7 +1663,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func rollbackTransaction(
-        request: Macosusesdk_V1_RollbackTransactionRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_RollbackTransactionRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_Transaction {
         fputs("info: [MacosUseServiceProvider] rollbackTransaction called\n", stderr)
 
@@ -1685,7 +1685,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func getSessionSnapshot(
-        request: Macosusesdk_V1_GetSessionSnapshotRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_GetSessionSnapshotRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_SessionSnapshot {
         fputs("info: [MacosUseServiceProvider] getSessionSnapshot called\n", stderr)
 
@@ -1701,7 +1701,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     // MARK: - Screenshot Methods
 
     func captureScreenshot(
-        request: Macosusesdk_V1_CaptureScreenshotRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_CaptureScreenshotRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_CaptureScreenshotResponse {
         fputs("info: [captureScreenshot] Capturing screen screenshot\n", stderr)
 
@@ -1739,7 +1739,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func captureWindowScreenshot(
-        request: Macosusesdk_V1_CaptureWindowScreenshotRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_CaptureWindowScreenshotRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_CaptureWindowScreenshotResponse {
         fputs("info: [captureWindowScreenshot] Capturing window screenshot\n", stderr)
 
@@ -1800,7 +1800,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func captureElementScreenshot(
-        request: Macosusesdk_V1_CaptureElementScreenshotRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_CaptureElementScreenshotRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_CaptureElementScreenshotResponse {
         fputs("info: [captureElementScreenshot] Capturing element screenshot\n", stderr)
 
@@ -1859,7 +1859,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func captureRegionScreenshot(
-        request: Macosusesdk_V1_CaptureRegionScreenshotRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_CaptureRegionScreenshotRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_CaptureRegionScreenshotResponse {
         fputs("info: [captureRegionScreenshot] Capturing region screenshot\n", stderr)
 
@@ -1917,7 +1917,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     // MARK: - Clipboard Methods
 
     func getClipboard(
-        request: Macosusesdk_V1_GetClipboardRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_GetClipboardRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_Clipboard {
         fputs("info: [MacosUseServiceProvider] getClipboard called\n", stderr)
 
@@ -1930,7 +1930,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func writeClipboard(
-        request: Macosusesdk_V1_WriteClipboardRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_WriteClipboardRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_WriteClipboardResponse {
         fputs("info: [MacosUseServiceProvider] writeClipboard called\n", stderr)
 
@@ -1958,7 +1958,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func clearClipboard(
-        request _: Macosusesdk_V1_ClearClipboardRequest, context _: GRPCAsyncServerCallContext,
+        request _: Macosusesdk_V1_ClearClipboardRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_ClearClipboardResponse {
         fputs("info: [MacosUseServiceProvider] clearClipboard called\n", stderr)
 
@@ -1970,7 +1970,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     }
 
     func getClipboardHistory(
-        request: Macosusesdk_V1_GetClipboardHistoryRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_GetClipboardHistoryRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_ClipboardHistory {
         fputs("info: [MacosUseServiceProvider] getClipboardHistory called\n", stderr)
 
@@ -1987,7 +1987,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     // MARK: - File Dialog Methods
 
     func automateOpenFileDialog(
-        request: Macosusesdk_V1_AutomateOpenFileDialogRequest, context _: GRPCAsyncServerCallContext,
+        request: Macosusesdk_V1_AutomateOpenFileDialogRequest, context _: ServerContext,
     ) async throws -> Macosusesdk_V1_AutomateOpenFileDialogResponse {
         fputs("info: [MacosUseServiceProvider] automateOpenFileDialog called\n", stderr)
 

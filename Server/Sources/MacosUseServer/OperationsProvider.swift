@@ -1,5 +1,5 @@
 import Foundation
-import GRPC
+import GRPCCore
 import MacosUseSDKProtos
 import SwiftProtobuf
 
@@ -13,14 +13,14 @@ final class OperationsProvider: Google_Longrunning_OperationsAsyncProvider {
 
     // List operations - simple implementation ignoring filter/pagination
     func listOperations(
-        request _: Google_Longrunning_ListOperationsRequest, context _: GRPCAsyncServerCallContext,
+        request _: Google_Longrunning_ListOperationsRequest, context _: ServerContext,
     ) async throws -> Google_Longrunning_ListOperationsResponse {
         let ops = await operationStore.listOperations()
         return Google_Longrunning_ListOperationsResponse.with { $0.operations = ops }
     }
 
     func getOperation(
-        request: Google_Longrunning_GetOperationRequest, context _: GRPCAsyncServerCallContext,
+        request: Google_Longrunning_GetOperationRequest, context _: ServerContext,
     ) async throws -> Google_Longrunning_Operation {
         if let op = await operationStore.getOperation(name: request.name) {
             return op
@@ -29,21 +29,21 @@ final class OperationsProvider: Google_Longrunning_OperationsAsyncProvider {
     }
 
     func deleteOperation(
-        request: Google_Longrunning_DeleteOperationRequest, context _: GRPCAsyncServerCallContext,
+        request: Google_Longrunning_DeleteOperationRequest, context _: ServerContext,
     ) async throws -> SwiftProtobuf.Google_Protobuf_Empty {
         await operationStore.deleteOperation(name: request.name)
         return SwiftProtobuf.Google_Protobuf_Empty()
     }
 
     func cancelOperation(
-        request: Google_Longrunning_CancelOperationRequest, context _: GRPCAsyncServerCallContext,
+        request: Google_Longrunning_CancelOperationRequest, context _: ServerContext,
     ) async throws -> SwiftProtobuf.Google_Protobuf_Empty {
         await operationStore.cancelOperation(name: request.name)
         return SwiftProtobuf.Google_Protobuf_Empty()
     }
 
     func waitOperation(
-        request: Google_Longrunning_WaitOperationRequest, context _: GRPCAsyncServerCallContext,
+        request: Google_Longrunning_WaitOperationRequest, context _: ServerContext,
     ) async throws -> Google_Longrunning_Operation {
         let timeoutNs: UInt64? =
             request.hasTimeout

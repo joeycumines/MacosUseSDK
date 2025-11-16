@@ -17,7 +17,7 @@
   1.  Define a **custom temporary target** in `config.mk`.
   2.  Execute it using the `mcp-server-make` tool.
 - **FORBIDDEN ARGUMENT:** You MUST NOT specify the `file` option (e.g., `file=config.mk`) when invoking `mcp-server-make`. The invocation must rely strictly on the repository's default Makefile discovery (which includes `config.mk`).
-- **LOGGING REQUIREMENT:** All `config.mk` recipes producing significant output MUST use `| tee $(or $(PROJECT_ROOT),$(error unexpected var, ensure you call the root Makefile))/build.log | tail -n 15` (or similar) to prevent context window flooding.
+- **LOGGING REQUIREMENT:** All `config.mk` recipes producing significant output MUST use `| tee $(or $(PROJECT_ROOT),$(error If you are reading this you specified the `file` option when calling `mcp-server-make`. DONT DO THAT.))/build.log | tail -n 15` (or similar) to prevent context window flooding.
 
 **2. CONTINUOUS VALIDATION:**
 - **DO NOT BREAK THE BUILD:** You must run the core `all` target constantly. Use `mcp-server-make all` after every file change.
@@ -28,7 +28,7 @@
 The server scaffolding exists. The current objective is **Strict Correctness** and **Production Hardening**.
 
 The gRPC server MUST:
-- Use `github.com/grpc/grpc-swift-2` and leverage the existing `AutomationCoordinator` (@MainActor) as the central control loop.
+- Use **only** the gRPC Swift 2 module(s) (`grpc-swift-2`, `GRPCCore`, `grpc-swift-nio-transport`, `grpc-swift-protobuf`) and leverage the existing `AutomationCoordinator` (@MainActor) as the central control loop. Legacy v1 packages, plugins, generated code, or incremental v1/v2 compatibility shims are **forbidden** and must be actively removed during migration.
 - Strictly follow **Google's AIPs** (2025 standards). When in doubt between `buf lint` and Google's AIPs, Google's AIPs take precedence.
 - Support configuration via environment variables (socket paths, addresses).
 - Maintain the **State Store** architecture: `AppStateStore` (copy-on-write view for queries), `WindowRegistry`, `ObservationManager`, and `SessionManager`.

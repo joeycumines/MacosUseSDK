@@ -1,5 +1,5 @@
 import Foundation
-import GRPC
+import GRPCCore
 import MacosUseSDKProtos
 
 /// Component for parsing and validating ElementSelector proto messages.

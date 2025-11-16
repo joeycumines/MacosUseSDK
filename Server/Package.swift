@@ -10,6 +10,9 @@ import PackageDescription
 let package = Package(
     name: "MacosUseServer",
     platforms: [
+        // gRPC Swift 2 officially targets macOS 15+, but this package
+        // maintains a lower deployment target while relying on
+        // `-disable-availability-checking` for guarded APIs.
         .macOS(.v12),
     ],
     products: [
@@ -19,7 +22,13 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/grpc/grpc-swift.git", from: "1.23.0"),
+        // gRPC Swift 2 core, transport, and Protobuf integration
+        .package(url: "https://github.com/grpc/grpc-swift-2.git", from: "2.0.0"),
+        .package(url: "https://github.com/grpc/grpc-swift-protobuf.git", from: "2.0.0"),
+        .package(url: "https://github.com/grpc/grpc-swift-nio-transport.git", from: "2.0.0"),
+        .package(url: "https://github.com/apple/swift-atomics.git", from: "1.0.0"),
+        .package(url: "https://github.com/apple/swift-nio.git", from: "2.0.0"),
+        .package(url: "https://github.com/apple/swift-nio-http2.git", from: "1.0.0"),
         .package(name: "MacosUseSDK", path: "../"),
     ],
     targets: [
@@ -28,10 +37,14 @@ let package = Package(
         .target(
             name: "MacosUseSDKProtos",
             dependencies: [
-                .product(name: "GRPC", package: "grpc-swift"),
+                .product(name: "GRPCProtobuf", package: "grpc-swift-protobuf"),
+                .product(name: "Atomics", package: "swift-atomics"),
+                .product(name: "NIOCore", package: "swift-nio"),
+                .product(name: "NIOHTTP2", package: "swift-nio-http2"),
             ],
             path: "Sources/MacosUseSDKProtos",
-            exclude: ["google/api/expr/v1beta1/"],
+            // The expr protos are not used; avoid dangling excludes which
+            // trigger warnings by only including the directories we need.
             sources: ["macosusesdk/", "google/"],
             swiftSettings: [
                 .unsafeFlags(["-Xfrontend", "-disable-availability-checking"]),
@@ -42,7 +55,8 @@ let package = Package(
         .executableTarget(
             name: "MacosUseServer",
             dependencies: [
-                .product(name: "GRPC", package: "grpc-swift"),
+                .product(name: "GRPCCore", package: "grpc-swift-2"),
+                .product(name: "GRPCNIOTransportHTTP2", package: "grpc-swift-nio-transport"),
                 "MacosUseSDK",
                 "MacosUseSDKProtos", // Add dependency on the generated protos
             ],

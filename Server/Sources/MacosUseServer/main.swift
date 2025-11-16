@@ -2,11 +2,9 @@ import AppKit
 import Darwin
 import Foundation
 
-// Note: GRPC imports will be added once the server implementation is complete
-import GRPC
+import GRPCCore
+import GRPCNIOTransportHTTP2
 import MacosUseSDKProtos // Import the generated proto definitions
-import NIOCore
-import NIOPosix
 
 // Main entry point for the MacosUseServer
 func main() async throws {
@@ -43,28 +41,18 @@ func main() async throws {
     let operationsProvider = OperationsProvider(operationStore: operationStore)
     fputs("info: [MacosUseServer] Operations provider created\n", stderr)
 
-    // Set up and start gRPC server
-    let group = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
+    // Set up and start gRPC server using the HTTP/2 NIO transport
+    let server = GRPCServer(
+        transport: .http2NIOPosix(
+            address: .ipv4(host: config.listenAddress, port: config.port),
+            transportSecurity: .plaintext,
+        ),
+        services: [macosUseService, operationsProvider],
+    )
 
-    let serverBuilder = Server.insecure(group: group)
-        .withServiceProviders([macosUseService, operationsProvider])
+    fputs("info: [MacosUseServer] gRPC server starting\n", stderr)
 
-    let server: Server
-    if let socketPath = config.unixSocketPath {
-        // Clean up old socket file if it exists
-        var isDir: ObjCBool = false
-        if FileManager.default.fileExists(atPath: socketPath, isDirectory: &isDir) {
-            try FileManager.default.removeItem(atPath: socketPath)
-        }
-        server = try await serverBuilder.bind(unixDomainSocketPath: socketPath).get()
-    } else {
-        server = try await serverBuilder.bind(host: config.listenAddress, port: config.port).get()
-    }
-
-    fputs("info: [MacosUseServer] gRPC server started\n", stderr)
-
-    // Wait for the server to stop (which will be forever unless interrupted)
-    try await server.onClose.get()
+    try await server.serve()
 }
 
 try await main()
