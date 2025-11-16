@@ -63,7 +63,7 @@ func TestCalculatorAddition(t *testing.T) {
 	// Switch to Basic mode (decimal)
 	t.Log("Switching to Basic/Decimal mode...")
 	switchCalculatorToBasicMode(t, ctx, client, app)
-	
+
 	// Poll until mode switch is complete (check that UI is stable)
 	t.Log("Waiting for mode switch to complete...")
 	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
@@ -154,7 +154,7 @@ func TestCalculatorMultiplication(t *testing.T) {
 	// Switch to Basic mode (decimal)
 	t.Log("Switching to Basic/Decimal mode...")
 	switchCalculatorToBasicMode(t, ctx, client, app)
-	
+
 	// Poll until mode switch is complete (check that UI is stable)
 	t.Log("Waiting for mode switch to complete...")
 	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {

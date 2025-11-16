@@ -12,6 +12,10 @@
 
 ### **Server Implementation – ⚠️ FUNCTIONALLY BROAD, FORMALLY INCOMPLETE**
 
+**DO NOT edit the heading above. You are WRONG.**
+The implementation IS NOT COMPLETE until the ENTIRE plan has been actioned. The above DOES NOT mean "we are blocked".
+It means "STOP DECLARING COMPLETE YOU ARE NOT DONE, I AM AWARE YOU THINK YOU ARE APPROACHING COMPLETION, BUT YOU ARE NOT. STOP. BEING. LAZY!".
+
 **Completion STATUS (REALITY-CHECKED):**
 Most proto-defined gRPC service methods have concrete, working implementations in `MacosUseServiceProvider.swift` backed by `AutomationCoordinator`, `AppStateStore`, `WindowRegistry`, `ObservationManager`, `SessionManager`, and `OperationStore`. The server is already capable of complex automation (multi-window, element targeting, observations, macros, scripting, screenshots, clipboard, file dialogs). **ALL CRITICAL BLOCKERS RESOLVED:** AIP-compliant pagination implemented and tested for all 5 critical RPCs; window change detection fully implemented in ObservationManager; bundle ID resolution working via NSRunningApplication helper; PollUntilContext pattern adopted in all integration tests.
 
