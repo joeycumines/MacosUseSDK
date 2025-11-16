@@ -2963,11 +2963,6 @@ private extension MacosUseServiceProvider {
         let zIndex = windowInfo?.layer ?? 0
         let visible = windowInfo?.isOnScreen ?? true
 
-        fputs(
-            "info: [MacosUseServiceProvider] buildWindowResponseFromAX for window \(windowId): bounds=(\(bounds.origin.x),\(bounds.origin.y),\(bounds.size.width),\(bounds.size.height))\n",
-            stderr,
-        )
-
         // Build window state
         let windowState = try await buildWindowStateFromAX(pid: pid, windowId: windowId)
 
@@ -2993,8 +2988,6 @@ private extension MacosUseServiceProvider {
     }
 
     func findWindowElement(pid: pid_t, windowId: CGWindowID) throws -> AXUIElement {
-        fputs("debug: [findWindowElement] Looking for window \(windowId) in app \(pid)\n", stderr)
-
         // Get AXUIElement for application
         let appElement = AXUIElementCreateApplication(pid)
 
@@ -3004,16 +2997,12 @@ private extension MacosUseServiceProvider {
             appElement, kAXWindowsAttribute as CFString, &windowsValue,
         )
         guard result == .success, let windows = windowsValue as? [AXUIElement] else {
-            fputs("debug: [findWindowElement] Failed to get AX windows\n", stderr)
             throw RPCError(code: .internalError, message: "Failed to get windows for application")
         }
-
-        fputs("debug: [findWindowElement] Found \(windows.count) AX windows\n", stderr)
 
         // CRITICAL FIX: Check single-window optimization BEFORE querying CGWindowList.
         // This prevents 'NotFound' errors when CGWindowList is stale/missing the ID.
         if windows.count == 1 {
-            fputs("debug: [findWindowElement] Only 1 AX window, using it directly\n", stderr)
             return windows[0]
         }
 
@@ -3023,11 +3012,8 @@ private extension MacosUseServiceProvider {
                 [.optionAll, .excludeDesktopElements], kCGNullWindowID,
             ) as? [[String: Any]]
         else {
-            fputs("debug: [findWindowElement] Failed to get CGWindowList\n", stderr)
             throw RPCError(code: .internalError, message: "Failed to get window list")
         }
-
-        fputs("debug: [findWindowElement] CGWindowList has \(windowList.count) total windows\n", stderr)
 
         // Find window with matching CGWindowID
         guard
@@ -3035,26 +3021,18 @@ private extension MacosUseServiceProvider {
                 ($0[kCGWindowNumber as String] as? Int32) == Int32(windowId)
             })
         else {
-            fputs("debug: [findWindowElement] Window \(windowId) NOT in CGWindowList\n", stderr)
             throw RPCError(
                 code: .notFound, message: "Window with ID \(windowId) not found in CGWindowList",
             )
         }
-
-        fputs("debug: [findWindowElement] Found window \(windowId) in CGWindowList\n", stderr)
 
         // Get bounds from CGWindow
         guard let cgBounds = cgWindow[kCGWindowBounds as String] as? [String: CGFloat],
               let cgX = cgBounds["X"], let cgY = cgBounds["Y"],
               let cgWidth = cgBounds["Width"], let cgHeight = cgBounds["Height"]
         else {
-            fputs("debug: [findWindowElement] Failed to extract bounds from CGWindow\n", stderr)
             throw RPCError(code: .internalError, message: "Failed to get bounds from CGWindow")
         }
-
-        fputs("debug: [findWindowElement] CGWindow bounds: (\(cgX), \(cgY), \(cgWidth), \(cgHeight))\n", stderr)
-
-        fputs("debug: [findWindowElement] Multiple AX windows, matching by bounds...\n", stderr)
 
         // Find matching AXUIElement by bounds
         var windowIndex = 0
@@ -3088,23 +3066,17 @@ private extension MacosUseServiceProvider {
                     let deltaY = abs(axPos.y - cgY)
                     let deltaW = abs(axSize.width - cgWidth)
                     let deltaH = abs(axSize.height - cgHeight)
-                    fputs("debug: [findWindowElement] Window[\(windowIndex)] AX bounds: (\(axPos.x), \(axPos.y), \(axSize.width), \(axSize.height))\n", stderr)
-                    fputs("debug: [findWindowElement] Window[\(windowIndex)] Delta from CG: (\(deltaX), \(deltaY), \(deltaW), \(deltaH))\n", stderr)
 
                     // Check if bounds match (with large tolerance to handle stale CGWindowList after window operations)
                     // Use 200px tolerance to handle significant size changes that haven't propagated to CGWindowList yet
                     if deltaX < 200, deltaY < 200, deltaW < 200, deltaH < 200 {
-                        fputs("debug: [findWindowElement] Window[\(windowIndex)] MATCHED (within 200px tolerance)\n", stderr)
                         return window
-                    } else {
-                        fputs("debug: [findWindowElement] Window[\(windowIndex)] did not match (exceeds 200px tolerance)\n", stderr)
                     }
                 }
             }
             windowIndex += 1
         }
 
-        fputs("debug: [findWindowElement] NO MATCH FOUND for window \(windowId)\n", stderr)
         throw RPCError(code: .notFound, message: "AXUIElement not found for window ID \(windowId)")
     }
 

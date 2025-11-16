@@ -18,12 +18,12 @@
 
 ### **Current Reality (Single-Sentence Snapshot)**
 
-Server operational with core functionality, test fixture lifecycle, core lifecycle tests, and selector grammar documentation complete; unit test coverage for core components remains the primary gap.
+Server operational with resize/move operations fixed; minimize/restore observation events not firing in TestWindowChangeObservation; unit test coverage for core components incomplete.
 
 ### **Immediate Action Items (Next Things To Do)**
 
-1. **Add unit tests for core components:** WindowRegistry, ObservationManager, OperationStore, SessionManager, SelectorParser/ElementLocator all lack focused unit tests. Files: Server/Tests/MacosUseServerTests/ (Phase 4.1, HIGH).
-2. **Fix test failures:** TestMultipleApplications and TestWindowChangeObservation failing; investigate and fix timing or state management issues. Files: integration/lifecycle_test.go, integration/observation_test.go (Phase 4, HIGH).
+1. **Fix minimize/restore observation failures:** TestWindowChangeObservation fails at minimize event detection (line 271) and RestoreWindow times out. Investigate ObservationManager window-change detection for minimize/restore state transitions. Files: integration/observation_test.go, Server/Sources/MacosUseServer/ObservationManager.swift (Phase 4.3, CRITICAL).
+2. **Add unit tests for core components:** WindowRegistry, ObservationManager, OperationStore, SessionManager, SelectorParser/ElementLocator all lack focused unit tests. Files: Server/Tests/MacosUseServerTests/ (Phase 4.1, HIGH).
 
 ### **Standing Guidance For Future Edits To This Section**
 
