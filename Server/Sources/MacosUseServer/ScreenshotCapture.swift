@@ -6,11 +6,15 @@ import AppKit
 import ApplicationServices
 import Foundation
 import MacosUseSDKProtos
+@preconcurrency import ScreenCaptureKit
+import UniformTypeIdentifiers
 import Vision
 
 /// Utility for capturing screenshots with various options.
 @MainActor
 struct ScreenshotCapture {
+    fileprivate nonisolated static let ciContext = CIContext()
+
     /// Capture the entire screen or a specific display.
     /// - Parameters:
     ///   - displayID: Optional display ID (0 for main display, nil for all displays)
@@ -23,23 +27,21 @@ struct ScreenshotCapture {
         format: Macosusesdk_V1_ImageFormat = .png,
         quality: Int32 = 85,
         includeOCR: Bool = false,
-    ) throws -> (data: Data, width: Int32, height: Int32, ocrText: String?) {
-        // Get display ID
-        let display = displayID ?? CGMainDisplayID()
+    ) async throws -> (data: Data, width: Int32, height: Int32, ocrText: String?) {
+        let content = try await SCShareableContent.current
+        let display = content.displays.first { $0.displayID == (displayID ?? CGMainDisplayID()) }
+            ?? content.displays.first
 
-        // Capture display
-        guard let cgImage = CGDisplayCreateImage(display) else {
+        guard let display else {
             throw ScreenshotError.captureFailedScreen
         }
 
-        // Convert to NSImage
+        let cgImage = try await capture(filter: .init(display: display, excludingWindows: []))
+
         let width = cgImage.width
         let height = cgImage.height
-
-        // Encode to requested format
         let imageData = try encodeImage(cgImage, format: format, quality: quality)
 
-        // Extract OCR text if requested
         var ocrText: String?
         if includeOCR {
             ocrText = try? extractText(from: cgImage)
@@ -62,32 +64,29 @@ struct ScreenshotCapture {
         format: Macosusesdk_V1_ImageFormat = .png,
         quality: Int32 = 85,
         includeOCR: Bool = false,
-    ) throws -> (data: Data, width: Int32, height: Int32, ocrText: String?) {
-        // Determine window list options
-        let options: CGWindowListOption =
-            includeShadow
-                ? [.optionIncludingWindow]
-                : [.optionIncludingWindow, .excludeDesktopElements]
-
-        // Create window image
+    ) async throws -> (data: Data, width: Int32, height: Int32, ocrText: String?) {
+        let content = try await SCShareableContent.current
         guard
-            let cgImage = CGWindowListCreateImage(
-                .null,
-                options,
-                windowID,
-                [.boundsIgnoreFraming, .bestResolution],
-            )
+            let window = content.windows.first(where: {
+                $0.windowID == windowID && $0.isOnScreen
+            })
         else {
-            throw ScreenshotError.captureFailedWindow(windowID)
+            throw ScreenshotError.windowNotFound(windowID)
         }
+
+        let filter = SCContentFilter(desktopIndependentWindow: window)
+        let config = SCStreamConfiguration()
+
+        // Configure to capture only the window, excluding the frame.
+        config.capturesShadowsOnly = includeShadow
+        config.shouldBeOpaque = !includeShadow
+
+        let cgImage = try await capture(filter: filter, config: config)
 
         let width = cgImage.width
         let height = cgImage.height
-
-        // Encode to requested format
         let imageData = try encodeImage(cgImage, format: format, quality: quality)
 
-        // Extract OCR text if requested
         var ocrText: String?
         if includeOCR {
             ocrText = try? extractText(from: cgImage)
@@ -110,40 +109,75 @@ struct ScreenshotCapture {
         format: Macosusesdk_V1_ImageFormat = .png,
         quality: Int32 = 85,
         includeOCR: Bool = false,
-    ) throws -> (data: Data, width: Int32, height: Int32, ocrText: String?) {
-        // Validate bounds
+    ) async throws -> (data: Data, width: Int32, height: Int32, ocrText: String?) {
         guard bounds.width > 0, bounds.height > 0 else {
             throw ScreenshotError.invalidRegion
         }
 
-        // Capture screen image for the specific display
-        _ = displayID ?? CGMainDisplayID()
+        let content = try await SCShareableContent.current
+        let display = content.displays.first { $0.frame.intersects(bounds) }
+            ?? content.displays.first { $0.displayID == (displayID ?? CGMainDisplayID()) }
+            ?? content.displays.first
 
-        // Create image from window list (more flexible than CGDisplayCreateImage for regions)
-        guard
-            let fullImage = CGWindowListCreateImage(
-                bounds,
-                [.optionOnScreenOnly],
-                kCGNullWindowID,
-                [.bestResolution],
-            )
-        else {
+        guard let display else {
             throw ScreenshotError.captureFailedRegion(bounds)
         }
 
-        let width = fullImage.width
-        let height = fullImage.height
+        // Capture the entire display containing the region
+        let fullImage = try await capture(filter: .init(display: display, excludingWindows: []))
 
-        // Encode to requested format
-        let imageData = try encodeImage(fullImage, format: format, quality: quality)
+        // The bounds are in screen coordinates, so we need to convert them to image coordinates.
+        // The display's frame is also in screen coordinates.
+        let cropRect = CGRect(
+            x: bounds.origin.x - display.frame.origin.x,
+            y: bounds.origin.y - display.frame.origin.y,
+            width: bounds.width,
+            height: bounds.height,
+        )
 
-        // Extract OCR text if requested
+        // Crop the image to the requested bounds
+        guard let croppedImage = fullImage.cropping(to: cropRect) else {
+            throw ScreenshotError.captureFailedRegion(bounds)
+        }
+
+        let width = croppedImage.width
+        let height = croppedImage.height
+        let imageData = try encodeImage(croppedImage, format: format, quality: quality)
+
         var ocrText: String?
         if includeOCR {
-            ocrText = try? extractText(from: fullImage)
+            ocrText = try? extractText(from: croppedImage)
         }
 
         return (imageData, Int32(width), Int32(height), ocrText)
+    }
+
+    private static func capture(
+        filter: SCContentFilter,
+        config: SCStreamConfiguration = .init(),
+    ) async throws -> CGImage {
+        // Default configuration for a single frame.
+        config.minimumFrameInterval = CMTime(value: 1, timescale: 60)
+        config.width = 0 // Use source dimension
+        config.height = 0 // Use source dimension
+        config.queueDepth = 1
+
+        let delegate = CaptureDelegate()
+        let stream = SCStream(filter: filter, configuration: config, delegate: delegate)
+        try stream.addStreamOutput(delegate, type: .screen, sampleHandlerQueue: .main)
+
+        return try await withCheckedThrowingContinuation { continuation in
+            delegate.continuation = continuation
+            stream.startCapture { error in
+                if let error {
+                    // CRITICAL FIX: Hop to MainActor to avoid race with delegate methods
+                    Task { @MainActor in
+                        continuation.resume(throwing: error)
+                        delegate.continuation = nil
+                    }
+                }
+            }
+        }
     }
 
     // MARK: - Image Encoding
@@ -156,24 +190,23 @@ struct ScreenshotCapture {
     ) throws -> Data {
         let data = NSMutableData()
 
-        // Determine UTType for the format
-        let utType: CFString =
+        let utType: UTType =
             switch format {
             case .png, .unspecified:
-                kUTTypePNG
+                .png
             case .jpeg:
-                kUTTypeJPEG
+                .jpeg
             case .tiff:
-                kUTTypeTIFF
+                .tiff
             case .UNRECOGNIZED:
-                kUTTypePNG
+                .png
             }
 
         // Create image destination
         guard
             let destination = CGImageDestinationCreateWithData(
                 data as CFMutableData,
-                utType,
+                utType.identifier as CFString,
                 1,
                 nil,
             )
@@ -225,12 +258,61 @@ struct ScreenshotCapture {
     }
 }
 
+// MARK: - Capture Delegate
+
+private final class CaptureDelegate: NSObject, SCStreamDelegate, SCStreamOutput, @unchecked Sendable {
+    typealias Continuation = CheckedContinuation<CGImage, Error>
+    var continuation: Continuation?
+
+    func stream(
+        _ stream: SCStream,
+        didOutputSampleBuffer sampleBuffer: CMSampleBuffer,
+        of type: SCStreamOutputType,
+    ) {
+        // We only need the first frame.
+        stream.stopCapture()
+
+        guard let continuation else { return }
+        self.continuation = nil
+
+        guard sampleBuffer.isValid, type == .screen else {
+            continuation.resume(throwing: ScreenshotError.captureFailedGeneric)
+            return
+        }
+
+        guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
+            continuation.resume(throwing: ScreenshotError.captureFailedGeneric)
+            return
+        }
+
+        // Create a CIImage from the image buffer.
+        let ciImage = CIImage(cvImageBuffer: imageBuffer)
+
+        // Create a CGImage from the CIImage.
+        let context = ScreenshotCapture.ciContext
+        guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else {
+            continuation.resume(throwing: ScreenshotError.captureFailedGeneric)
+            return
+        }
+
+        continuation.resume(returning: cgImage)
+    }
+
+    func stream(_: SCStream, didStopWithError error: Error) {
+        if let continuation {
+            self.continuation = nil
+            continuation.resume(throwing: error)
+        }
+    }
+}
+
 // MARK: - Screenshot Errors
 
 enum ScreenshotError: Error, CustomStringConvertible {
     case captureFailedScreen
     case captureFailedWindow(CGWindowID)
     case captureFailedRegion(CGRect)
+    case captureFailedGeneric
     case invalidRegion
     case encodingFailed(Macosusesdk_V1_ImageFormat)
     case windowNotFound(CGWindowID)
@@ -244,6 +326,8 @@ enum ScreenshotError: Error, CustomStringConvertible {
             "Failed to capture window \(windowID)"
         case let .captureFailedRegion(bounds):
             "Failed to capture region \(bounds)"
+        case .captureFailedGeneric:
+            "Screenshot capture failed for an unknown reason"
         case .invalidRegion:
             "Invalid region bounds (width/height must be > 0)"
         case let .encodingFailed(format):

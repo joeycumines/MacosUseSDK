@@ -5,6 +5,7 @@ import Foundation
 import GRPCCore
 import GRPCNIOTransportHTTP2
 import MacosUseSDKProtos // Import the generated proto definitions
+import NIOCore
 
 // Main entry point for the MacosUseServer
 func main() async throws {
@@ -42,9 +43,24 @@ func main() async throws {
     fputs("info: [MacosUseServer] Operations provider created\n", stderr)
 
     // Set up and start gRPC server using the HTTP/2 NIO transport
+    let address: GRPCNIOTransportCore.SocketAddress
+
+    if let socketPath = config.unixSocketPath {
+        // Clean up old socket file if it exists
+        var isDir: ObjCBool = false
+        if FileManager.default.fileExists(atPath: socketPath, isDirectory: &isDir) {
+            try FileManager.default.removeItem(atPath: socketPath)
+        }
+        address = .unixDomainSocket(path: socketPath)
+        fputs("info: [MacosUseServer] Binding to Unix Domain Socket: \(socketPath)\n", stderr)
+    } else {
+        address = .ipv4(host: config.listenAddress, port: config.port)
+        fputs("info: [MacosUseServer] Binding to TCP: \(config.listenAddress):\(config.port)\n", stderr)
+    }
+
     let server = GRPCServer(
         transport: .http2NIOPosix(
-            address: .ipv4(host: config.listenAddress, port: config.port),
+            address: address,
             transportSecurity: .plaintext,
         ),
         services: [macosUseService, operationsProvider],

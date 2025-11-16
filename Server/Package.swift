@@ -3,17 +3,12 @@
 
 import PackageDescription
 
-// NOTE: Availability checking is disabled via unsafeFlags to support Swift 6.2
-// concurrency features while maintaining macOS 12 compatibility.
-// The server has been tested on macOS 14+ and requires macOS 12 minimum.
-// Runtime crashes on older macOS versions are possible if newer APIs are used.
+// NOTE: gRPC Swift 2 requires macOS 15+ for its Swift 6 concurrency features.
+// The deployment target is set to macOS 15 to ensure compatibility.
 let package = Package(
     name: "MacosUseServer",
     platforms: [
-        // gRPC Swift 2 officially targets macOS 15+, but this package
-        // maintains a lower deployment target while relying on
-        // `-disable-availability-checking` for guarded APIs.
-        .macOS(.v12),
+        .macOS(.v15),
     ],
     products: [
         .executable(
@@ -41,11 +36,9 @@ let package = Package(
             // trigger warnings by only including the directories we need.
             sources: ["macosusesdk/", "google/"],
             swiftSettings: [
-                .unsafeFlags(["-Xfrontend", "-disable-availability-checking"]),
                 .unsafeFlags(["-Xfrontend", "-warn-concurrency"]),
             ],
         ),
-
         .executableTarget(
             name: "MacosUseServer",
             dependencies: [
@@ -56,7 +49,6 @@ let package = Package(
             ],
             path: "Sources/MacosUseServer",
             swiftSettings: [
-                .unsafeFlags(["-Xfrontend", "-disable-availability-checking"]),
                 .unsafeFlags(["-Xfrontend", "-warn-concurrency"]),
             ],
         ),
