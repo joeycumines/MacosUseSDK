@@ -218,6 +218,7 @@ actor ObservationManager {
 
         // Keep track of previous state for diff detection
         var previousElements: [Macosusesdk_Type_Element] = []
+        var previousWindows: [WindowRegistry.WindowInfo] = []
 
         while !Task.isCancelled {
             do {
@@ -250,13 +251,27 @@ actor ObservationManager {
                     previousElements = currentElements
 
                 case .windowChanges:
-                    // Window changes are monitored via notifications
-                    // For now, we'll poll window list
+                    // Poll window list and detect changes
                     let registry = WindowRegistry()
                     try await registry.refreshWindows(forPID: pid)
-                    let windows = try await registry.listWindows(forPID: pid)
+                    let currentWindows = try await registry.listWindows(forPID: pid)
 
-                    // TODO: Detect window changes and emit events
+                    // Detect window changes
+                    let windowChanges = detectWindowChanges(
+                        previous: previousWindows,
+                        current: currentWindows,
+                    )
+
+                    // Publish window change events
+                    for change in windowChanges {
+                        let event = createWindowObservationEvent(
+                            name: name,
+                            change: change,
+                        )
+                        await publishEvent(name: name, event: event)
+                    }
+
+                    previousWindows = currentWindows
 
                 case .applicationChanges:
                     // Application changes are monitored via NSWorkspace notifications
@@ -485,6 +500,120 @@ actor ObservationManager {
             }
         }
     }
+
+    /// Detects changes between two window snapshots
+    private func detectWindowChanges(
+        previous: [WindowRegistry.WindowInfo],
+        current: [WindowRegistry.WindowInfo],
+    ) -> [WindowChange] {
+        var changes: [WindowChange] = []
+
+        // Create maps for efficient lookup
+        let previousMap = Dictionary(
+            uniqueKeysWithValues: previous.map { ($0.windowID, $0) })
+        let currentMap = Dictionary(
+            uniqueKeysWithValues: current.map { ($0.windowID, $0) })
+
+        // Find created windows
+        for window in current where previousMap[window.windowID] == nil {
+            changes.append(.created(window))
+        }
+
+        // Find destroyed windows
+        for window in previous where currentMap[window.windowID] == nil {
+            changes.append(.destroyed(window))
+        }
+
+        // Find modified windows (moved/resized)
+        for window in current {
+            if let prevWindow = previousMap[window.windowID] {
+                // Check for moved
+                if window.bounds.origin != prevWindow.bounds.origin {
+                    changes.append(.moved(old: prevWindow, new: window))
+                }
+                // Check for resized
+                if window.bounds.size != prevWindow.bounds.size {
+                    changes.append(.resized(old: prevWindow, new: window))
+                }
+                // Check for visibility changes (minimized/restored)
+                if window.isOnScreen != prevWindow.isOnScreen {
+                    if window.isOnScreen {
+                        changes.append(.restored(window))
+                    } else {
+                        changes.append(.minimized(window))
+                    }
+                }
+            }
+        }
+
+        return changes
+    }
+
+    /// Creates a window observation event from a window change
+    private func createWindowObservationEvent(
+        name: String,
+        change: WindowChange,
+    ) -> Macosusesdk_V1_ObservationEvent {
+        // Get and increment sequence counter
+        let sequence = sequenceCounters[name, default: 0]
+        sequenceCounters[name] = sequence + 1
+
+        return Macosusesdk_V1_ObservationEvent.with {
+            $0.observation = name
+            $0.eventTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
+            $0.sequence = sequence
+
+            switch change {
+            case let .created(window):
+                $0.eventType = .windowEvent(
+                    Macosusesdk_V1_WindowEvent.with {
+                        $0.eventType = .created
+                        $0.windowID = "\(window.windowID)"
+                        $0.title = window.title
+                    })
+
+            case let .destroyed(window):
+                $0.eventType = .windowEvent(
+                    Macosusesdk_V1_WindowEvent.with {
+                        $0.eventType = .destroyed
+                        $0.windowID = "\(window.windowID)"
+                        $0.title = window.title
+                    })
+
+            case let .moved(_, new):
+                $0.eventType = .windowEvent(
+                    Macosusesdk_V1_WindowEvent.with {
+                        $0.eventType = .moved
+                        $0.windowID = "\(new.windowID)"
+                        $0.title = new.title
+                    })
+
+            case let .resized(_, new):
+                $0.eventType = .windowEvent(
+                    Macosusesdk_V1_WindowEvent.with {
+                        $0.eventType = .resized
+                        $0.windowID = "\(new.windowID)"
+                        $0.title = new.title
+                    })
+
+            case let .minimized(window):
+                $0.eventType = .windowEvent(
+                    Macosusesdk_V1_WindowEvent.with {
+                        $0.eventType = .minimized
+                        $0.windowID = "\(window.windowID)"
+                        $0.title = window.title
+                    })
+
+            case let .restored(window):
+                $0.eventType = .windowEvent(
+                    Macosusesdk_V1_WindowEvent.with {
+                        $0.eventType = .restored
+                        $0.windowID = "\(window.windowID)"
+                        $0.title = window.title
+                    })
+            }
+        }
+    }
 }
 
 // MARK: - Supporting Types
@@ -501,6 +630,16 @@ private enum ElementChange {
     case added(Macosusesdk_Type_Element)
     case removed(Macosusesdk_Type_Element)
     case modified(old: Macosusesdk_Type_Element, new: Macosusesdk_Type_Element)
+}
+
+/// Type of window change
+private enum WindowChange {
+    case created(WindowRegistry.WindowInfo)
+    case destroyed(WindowRegistry.WindowInfo)
+    case moved(old: WindowRegistry.WindowInfo, new: WindowRegistry.WindowInfo)
+    case resized(old: WindowRegistry.WindowInfo, new: WindowRegistry.WindowInfo)
+    case minimized(WindowRegistry.WindowInfo)
+    case restored(WindowRegistry.WindowInfo)
 }
 
 /// Observation errors

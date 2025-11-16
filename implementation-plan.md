@@ -13,7 +13,7 @@
 ### **Server Implementation – ⚠️ FUNCTIONALLY BROAD, FORMALLY INCOMPLETE**
 
 **COMPLETION STATUS (REALITY-CHECKED):**
-Most proto-defined gRPC service methods have concrete, working implementations in `MacosUseServiceProvider.swift` backed by `AutomationCoordinator`, `AppStateStore`, `WindowRegistry`, `ObservationManager`, `SessionManager`, and `OperationStore`. The server is already capable of complex automation (multi-window, element targeting, observations, macros, scripting, screenshots, clipboard, file dialogs). However, it lacks **AIP-grade pagination** and **strong correctness guarantees around convergence and cleanup**. These are now classified as **mandatory blockers for any "production-ready" release.**
+Most proto-defined gRPC service methods have concrete, working implementations in `MacosUseServiceProvider.swift` backed by `AutomationCoordinator`, `AppStateStore`, `WindowRegistry`, `ObservationManager`, `SessionManager`, and `OperationStore`. The server is already capable of complex automation (multi-window, element targeting, observations, macros, scripting, screenshots, clipboard, file dialogs). **AIP-compliant pagination has been implemented and tested for all 5 critical RPCs.** Remaining blockers: window change detection in ObservationManager, bundle ID resolution, and test convergence patterns.
 
 **PER-RPC IMPLEMENTATION SUMMARY (High-level, by category):**
 * **Implemented (substantially complete for v1):**
@@ -28,8 +28,10 @@ Most proto-defined gRPC service methods have concrete, working implementations i
     * File Dialogs: open/save/select/drag automation implemented.
     * Macros: CRUD + Execute implemented; `ListMacros` supports pagination.
     * Scripts: execute & validate methods implemented; `GetScriptingDictionaries` returns data with placeholder bundle IDs.
-* **Partial / Missing / TODOs (high impact):**
-    * **Pagination:** `ListWindows`, `ListInputs`, `FindElements`, `FindRegionElements`, `ListObservations` currently ignore `page_size`/`page_token` and return a single page only.
+* **Completed (as of current session):**
+    * **Pagination:** ✅ DONE - All 5 RPCs (`ListWindows`, `ListInputs`, `FindElements`, `FindRegionElements`, `ListObservations`) implement AIP-158 compliant pagination with page_size, page_token, and next_page_token. Tested and verified.
+    * **PollUntil Pattern:** ✅ DONE - Integration tests use `PollUntilContext` for proper convergence-based waiting.
+* **Remaining High-Impact TODOs:**
     * **ObservationManager:** Window-change detection path is still TODO; element diffs are basic.
     * **GetScriptingDictionaries:** Uses placeholder bundle IDs (e.g. "unknown") instead of reliably resolved bundle identifiers.
     * **PerformElementAction:** Supports only a limited set of actions (press/click & show menu/open menu); unknown actions yield `UNIMPLEMENTED`.
@@ -42,17 +44,17 @@ Most proto-defined gRPC service methods have concrete, working implementations i
 * **DeleteApplication** — `Implemented` — `MacosUseServiceProvider.swift:92`.
 * **CreateInput** — `Implemented` — `MacosUseServiceProvider.swift:103` (handles LRO-like state & success/failure updates).
 * **GetInput** — `Implemented` — `MacosUseServiceProvider.swift:151`.
-* **ListInputs** — `Implemented` (no pagination) — `MacosUseServiceProvider.swift:161`.
+* **ListInputs** — `Implemented` ✅ WITH PAGINATION — `MacosUseServiceProvider.swift:169-209`.
 * **TraverseAccessibility** — `Implemented` — `MacosUseServiceProvider.swift:173`.
-* **WatchAccessibility** — `Implemented` (poll-based) — `MacosUseServiceProvider.swift:183`.
-* **GetWindow** — `Implemented` — `MacosUseServiceProvider.swift:229` (some metadata states TODO).
-* **ListWindows** — `Implemented` (no pagination) — `MacosUseServiceProvider.swift:273` (many attributes defaulted or placeholders).
+* **ListWindows** — `Implemented` ✅ WITH PAGINATION — `MacosUseServiceProvider.swift:317-396`.
 * **FocusWindow** — `Implemented` — `MacosUseServiceProvider.swift:309`.
 * **MoveWindow** — `Implemented` — `MacosUseServiceProvider.swift:341`.
 * **ResizeWindow** — `Implemented` — `MacosUseServiceProvider.swift:381`.
 * **MinimizeWindow** — `Implemented` — `MacosUseServiceProvider.swift:419`.
 * **RestoreWindow** — `Implemented` — `MacosUseServiceProvider.swift:453`.
 * **CloseWindow** — `Implemented` — `MacosUseServiceProvider.swift:487`.
+* **FindElements** — `Implemented` ✅ WITH PAGINATION – `MacosUseServiceProvider.swift:611-686`.
+* **FindRegionElements** — `Implemented` ✅ WITH PAGINATION – `MacosUseServiceProvider.swift:686-766`.
 * **FindElements** — `Partial` – `MacosUseServiceProvider.swift:532` (TODO: next_page_token).
 * **FindRegionElements** — `Partial` – `MacosUseServiceProvider.swift:568` (TODO: next_page_token).
 * **GetElement** — `Implemented` — `MacosUseServiceProvider.swift:606`.
@@ -64,7 +66,7 @@ Most proto-defined gRPC service methods have concrete, working implementations i
 * **WaitElementState** — `Implemented` (LRO) — `MacosUseServiceProvider.swift:1091`.
 * **CreateObservation** — `Implemented` (LRO) — `MacosUseServiceProvider.swift:1224`.
 * **GetObservation** — `Implemented` — `MacosUseServiceProvider.swift:1290`.
-* **ListObservations** — `Partial` — `MacosUseServiceProvider.swift:1304` (TODO: next_page_token).
+* **ListObservations** — `Implemented` ✅ WITH PAGINATION — `MacosUseServiceProvider.swift:1445-1505`.
 * **CancelObservation** — `Implemented` — `MacosUseServiceProvider.swift:1319`.
 * **StreamObservations** — `Implemented` — `MacosUseServiceProvider.swift:1334`.
 * **Session methods** — `Implemented` — `MacosUseServiceProvider.swift:1373..1513` (Create/Get/List/Delete/Begin/Commit/Rollback/GetSnapshot; ListSessions uses pagination).
@@ -75,9 +77,9 @@ Most proto-defined gRPC service methods have concrete, working implementations i
 * **Script methods** — `Implemented` — `MacosUseServiceProvider.swift:2213..2424` (ExecuteApple/ExecuteJS/ExecuteShell/Validate/GetDictionaries; GetScriptingDictionaries uses placeholder bundleID).
 
 **CURRENT IMPLEMENTATION NOTES & TARGETED NEXT STEPS:**
-* **Pagination (AIP‑158):** Implement proper `page_size`/`page_token` handling and `next_page_token` emission for `ListWindows`, `ListInputs`, `FindElements`, `FindRegionElements`, and `ListObservations`.
-* **Observations:** Implement window-change diffing in `ObservationManager` (windowChanges case) using `WindowRegistry` snapshots, and feed results into `StreamObservations`.
-* **Scripting:** Resolve bundle IDs via `NSRunningApplication` (or equivalent) and update `GetScriptingDictionaries` to return meaningful bundle IDs and dictionaries.
+* **Pagination (AIP‑158):** ✅ COMPLETE - All 5 RPCs implement proper pagination. Integration tests verify correctness.
+* **Observations:** ⚠️ IN PROGRESS - Must implement window-change diffing in `ObservationManager` (windowChanges case) using `WindowRegistry` snapshots, and feed results into `StreamObservations`.
+* **Scripting:** ⚠️ IN PROGRESS - Must resolve bundle IDs via `NSRunningApplication` and update `GetScriptingDictionaries` to return meaningful bundle IDs and dictionaries.
 
 **RISKS & CAVEATS (UNCHANGED BUT CONFIRMED):**
 * **Event-based vs poll-based:** Moving to AXObserver/event-based monitoring touches the main loop and must be phased carefully.
@@ -85,11 +87,11 @@ Most proto-defined gRPC service methods have concrete, working implementations i
 * **Fragile Tests:** Assertions tied to exact coordinates are brittle; selector-based and state-based checks are preferred.
 
 **CRITICAL CORRECTNESS TASKS (IMMEDIATE BLOCKERS, RECONFIRMED)**
-*(Mandatory before declaring the server “production-ready”)*
+*(Mandatory before declaring the server "production-ready")*
 
-1.  Implement AIP‑compliant pagination (`page_size`, `page_token`, `next_page_token`) for `ListWindows`, `ListInputs`, `FindElements`, `FindRegionElements`, and `ListObservations`.
-2.  Resolve bundle ID handling in `WindowRegistry`/scripting so that bundle identifiers are no longer "unknown" in normal cases, and fix `GetScriptingDictionaries` accordingly.
-3.  Introduce a shared `PollUntil` pattern in integration tests and refactor tests to assert **state deltas** (pre/post) instead of relying on naive sleeps.
+1.  ✅ COMPLETE - Implement AIP‑compliant pagination (`page_size`, `page_token`, `next_page_token`) for `ListWindows`, `ListInputs`, `FindElements`, `FindRegionElements`, and `ListObservations`.
+2.  ⚠️ IN PROGRESS - Resolve bundle ID handling in `WindowRegistry`/scripting so that bundle identifiers are no longer "unknown" in normal cases, and fix `GetScriptingDictionaries` accordingly.
+3.  ✅ COMPLETE - Introduce a shared `PollUntil` pattern in integration tests and refactor tests to assert **state deltas** (pre/post) instead of relying on naive sleeps.
 
 **PRIORITY FOLLOW-UP CHECKLIST (RANKED AFTER BLOCKERS):**
 
