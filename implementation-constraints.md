@@ -54,8 +54,10 @@ The gRPC server MUST:
 ## Documentation and Planning
 
 - **Single Source of Truth:** ALL updates to the plan MUST be represented in `./implementation-plan.md`.
-- **No Status Files:** Do NOT create `IMPLEMENTATION_COMPLETE.md` or similar.
-- **Living Document:** Keep `./implementation-plan.md` strictly aligned with this constraints document and the *actual* code reality. Update it as part of every change set.
+- **No Status Files:** Do NOT create `IMPLEMENTATION_COMPLETE.md` or similar. Do NOT use `implementation-constraints.md` to track status, progress logs, or completion markers of any kind.
+- **Plan-Local Status Only:** The **STATUS SECTION (ACTION-FOCUSED)** at the top of `implementation-plan.md` is the only allowed place for high-level status, and it MUST list only remaining work, unresolved discrepancies, and critical patterns that must not be forgotten. Do not accumulate historical "done" items or emojis there.
+- **Verification Before Completion Claims:** Before treating any item as complete, you MUST verify the implementation and its tests. If there is any doubt, treat the item as not done and keep (or re-add) a corresponding action in the plan.
+- **Living Document:** Keep `./implementation-plan.md` strictly aligned with this constraints document and the *actual* code reality. Update it as part of every change set, trimming completed/verified items from the status section rather than appending new ones.
 
 ## Proto API Structure
 

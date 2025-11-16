@@ -2,110 +2,31 @@
 
 ---
 
-**STATUS SECTION**
+**STATUS SECTION (ACTION-FOCUSED)**
 
-> **GUIDANCE: THIS SECTION IS NOT A LOG**
+> **GUIDANCE: TRACK ONLY WHAT REMAINS OR MUST NOT BE FORGOTTEN**
 >
-> This status block MUST be **updated in place**. Do NOT append new status updates here or elsewhere in the document.
+> This section MUST stay short and focused on *remaining* work, unresolved discrepancies, and critical patterns to follow. Do NOT accumulate historic "done" items, emojis, or log-style updates.
 >
-> This section is the *only* location for tracking progress. The `implementation-constraints.md` file MUST NOT be used for tracking status.
+> Before trusting any "done" status, you MUST verify it against the actual code and tests. If there is any doubt, treat the item as **not done** and list the verification work here.
 
-### **Server Implementation – ⚠️ FUNCTIONALLY BROAD, FORMALLY INCOMPLETE**
+### **Current Reality (Single-Sentence Snapshot)**
 
-**DO NOT edit the heading above. You are WRONG.**
-The implementation IS NOT COMPLETE until the ENTIRE plan has been actioned. The above DOES NOT mean "we are blocked".
-It means "STOP DECLARING COMPLETE YOU ARE NOT DONE, I AM AWARE YOU THINK YOU ARE APPROACHING COMPLETION, BUT YOU ARE NOT. STOP. BEING. LAZY!".
+Most gRPC methods and core actors exist and appear wired up, but the overall server remains **formally incomplete** until every phase in this plan is implemented, verified by tests, and reconciled with the constraints.
 
-**Completion STATUS (REALITY-CHECKED):**
-Most proto-defined gRPC service methods have concrete, working implementations in `MacosUseServiceProvider.swift` backed by `AutomationCoordinator`, `AppStateStore`, `WindowRegistry`, `ObservationManager`, `SessionManager`, and `OperationStore`. The server is already capable of complex automation (multi-window, element targeting, observations, macros, scripting, screenshots, clipboard, file dialogs). **ALL CRITICAL BLOCKERS RESOLVED:** AIP-compliant pagination implemented and tested for all 5 critical RPCs; window change detection fully implemented in ObservationManager; bundle ID resolution working via NSRunningApplication helper; PollUntilContext pattern adopted in all integration tests.
+### **Immediate Action Items (Next Things To Do)**
 
-**PER-RPC IMPLEMENTATION SUMMARY (High-level, by category):**
-* **Implemented (substantially complete for v1):**
-    * Applications: `OpenApplication` (LRO), `GetApplication`, `ListApplications` (no pagination), `DeleteApplication`.
-    * Inputs: `CreateInput`, `GetInput`, `ListInputs` (no pagination).
-    * Windows: `GetWindow`, `ListWindows` (no pagination, some placeholder fields), `FocusWindow`, `MoveWindow`, `ResizeWindow`, `MinimizeWindow`, `RestoreWindow`, `CloseWindow`.
-    * Elements: `FindElements`, `FindRegionElements` (no pagination), `GetElement`, `ClickElement`, `WriteElementValue`, `GetElementActions`, `WaitElement` (LRO), `WaitElementState` (LRO).
-    * Observations: `CreateObservation` (LRO), `GetObservation`, `ListObservations` (no pagination), `CancelObservation`, `StreamObservations`.
-    * Sessions: all RPCs implemented (Create/Get/List/Delete/Begin/Commit/Rollback/GetSnapshot; `ListSessions` supports pagination).
-    * Screenshots: full set of capture methods implemented.
-    * Clipboard: get/write/clear/history implemented.
-    * File Dialogs: open/save/select/drag automation implemented.
-    * Macros: CRUD + Execute implemented; `ListMacros` supports pagination.
-    * Scripts: execute & validate methods implemented; `GetScriptingDictionaries` returns data with placeholder bundle IDs.
-* **Completed (as of current session):**
-    * **Pagination:** ✅ DONE - All 5 RPCs (`ListWindows`, `ListInputs`, `FindElements`, `FindRegionElements`, `ListObservations`) implement AIP-158 compliant pagination with page_size, page_token, and next_page_token. Tested and verified.
-    * **PollUntil Pattern:** ✅ DONE - Integration tests use `PollUntilContext` for proper convergence-based waiting.
-* **Remaining Enhancement Opportunities:**
-    * **PerformElementAction:** Supports only a limited set of actions (press/click & show menu/open menu); unknown actions yield `UNIMPLEMENTED`.
-    * **Placeholders:** `TargetApplicationsServiceProvider.swift` and `DesktopServiceProvider.swift` exist but remain TODO/partially wired (non-blocking).
+1. **Re‑verify claimed completions vs reality:** For pagination, bundle ID handling, PollUntil patterns, and observation window diffs, inspect the Swift and Go code plus tests to confirm they truly exist and behave as described. If any gap is found, create a concrete fix task under the relevant phase section.
+2. **Tighten `PerformElementAction`:** Design and implement a minimal, well‑documented set of additional supported actions (e.g. double‑click, right‑click, hover, drag) plus tests, or explicitly document and test that only the current limited set is supported in v1.
+3. **Resolve placeholder providers:** Decide whether `TargetApplicationsServiceProvider` and `DesktopServiceProvider` are required for v1. Either remove them or fully implement and test them, then update this plan accordingly.
+4. **Audit observation and session semantics:** Confirm `ObservationManager` and `SessionManager` implement the semantics described in Phases 2–3 (lifecycles, window diffs, rollback limits). Any mismatch must become an explicit task.
+5. **Plan-driven test coverage audit:** For each mandatory behavior described in Phase 4 (state‑difference assertions, PollUntil, golden applications, lifecycle cleanup), verify there is at least one automated test. Add missing tests and update the relevant phase bullet to reflect the gap.
 
-**PER-RPC MAPPING (Detailed Status – SWIFT FILE REFERENCES MAY MOVE):**
-* **OpenApplication** — `Implemented` (LRO) — `MacosUseServiceProvider.swift:1-80` (uses `operationStore`, `AutomationCoordinator`).
-* **GetApplication** — `Implemented` — `MacosUseServiceProvider.swift:71`.
-* **ListApplications** — `Implemented` (no pagination) — `MacosUseServiceProvider.swift:82`.
-* **DeleteApplication** — `Implemented` — `MacosUseServiceProvider.swift:92`.
-* **CreateInput** — `Implemented` — `MacosUseServiceProvider.swift:103` (handles LRO-like state & success/failure updates).
-* **GetInput** — `Implemented` — `MacosUseServiceProvider.swift:151`.
-* **ListInputs** — `Implemented` ✅ WITH PAGINATION — `MacosUseServiceProvider.swift:169-209`.
-* **TraverseAccessibility** — `Implemented` — `MacosUseServiceProvider.swift:173`.
-* **ListWindows** — `Implemented` ✅ WITH PAGINATION — `MacosUseServiceProvider.swift:317-396`.
-* **FocusWindow** — `Implemented` — `MacosUseServiceProvider.swift:309`.
-* **MoveWindow** — `Implemented` — `MacosUseServiceProvider.swift:341`.
-* **ResizeWindow** — `Implemented` — `MacosUseServiceProvider.swift:381`.
-* **MinimizeWindow** — `Implemented` — `MacosUseServiceProvider.swift:419`.
-* **RestoreWindow** — `Implemented` — `MacosUseServiceProvider.swift:453`.
-* **CloseWindow** — `Implemented` — `MacosUseServiceProvider.swift:487`.
-* **FindElements** — `Implemented` ✅ WITH PAGINATION – `MacosUseServiceProvider.swift:611-686`.
-* **FindRegionElements** — `Implemented` ✅ WITH PAGINATION – `MacosUseServiceProvider.swift:686-766`.
-* **GetElement** — `Implemented` — `MacosUseServiceProvider.swift:606`.
-* **ClickElement** — `Implemented` — `MacosUseServiceProvider.swift:614` (AX or coordinate fallback).
-* **WriteElementValue** — `Implemented` — `MacosUseServiceProvider.swift:728`.
-* **GetElementActions** — `Implemented` — `MacosUseServiceProvider.swift:812`.
-* **PerformElementAction** — `Partial` (limited set) — `MacosUseServiceProvider.swift:860` (only press/click and showmenu actions; others return UNIMPLEMENTED).
-* **WaitElement** — `Implemented` (LRO) — `MacosUseServiceProvider.swift:995`.
-* **WaitElementState** — `Implemented` (LRO) — `MacosUseServiceProvider.swift:1091`.
-* **CreateObservation** — `Implemented` (LRO) — `MacosUseServiceProvider.swift:1224`.
-* **GetObservation** — `Implemented` — `MacosUseServiceProvider.swift:1290`.
-* **ListObservations** — `Implemented` ✅ WITH PAGINATION — `MacosUseServiceProvider.swift:1445-1505`.
-* **CancelObservation** — `Implemented` — `MacosUseServiceProvider.swift:1319`.
-* **StreamObservations** — `Implemented` — `MacosUseServiceProvider.swift:1334`.
-* **Session methods** — `Implemented` — `MacosUseServiceProvider.swift:1373..1513` (Create/Get/List/Delete/Begin/Commit/Rollback/GetSnapshot; ListSessions uses pagination).
-* **Screenshot methods** — `Implemented` — `MacosUseServiceProvider.swift:1529..1687` (CaptureScreenshot/CaptureWindowScreenshot/CaptureElementScreenshot/CaptureRegionScreenshot).
-* **Clipboard methods** — `Implemented` — `MacosUseServiceProvider.swift:1745..1798` (Get/Write/Clear/GetHistory).
-* **File Dialogs automation** — `Implemented` — `MacosUseServiceProvider.swift:1815..1932` (AutomateOpen/AutomateSave/SelectFile/SelectDirectory/DragFiles).
-* **Macro methods** — `Implemented` — `MacosUseServiceProvider.swift:1998..2140` (Create/Get/List/Update/Delete/Execute; ListMacros has pagination).
-* **Script methods** — `Implemented` — `MacosUseServiceProvider.swift:2213..2424` (ExecuteApple/ExecuteJS/ExecuteShell/Validate/GetDictionaries; GetScriptingDictionaries uses placeholder bundleID).
+### **Standing Guidance For Future Edits To This Section**
 
-**CURRENT IMPLEMENTATION NOTES & TARGETED NEXT STEPS:**
-* **Pagination (AIP‑158):** ✅ COMPLETE - All 5 RPCs implement proper pagination. Integration tests verify correctness.
-* **Observations:** ✅ COMPLETE - Window-change diffing implemented in `ObservationManager.swift` (lines 269-288) using `WindowRegistry` snapshots. Detects CREATED, DESTROYED, MOVED, RESIZED, MINIMIZED, RESTORED events and publishes WindowEvent protos via StreamObservations.
-* **Scripting:** ✅ COMPLETE - Bundle ID resolution via `NSRunningApplication` helper exists at line 28 of `MacosUseServiceProvider.swift` and is called by `GetScriptingDictionaries`. No Window resource changes needed as proto has no bundle_id field.
-
-**RISKS & CAVEATS (UNCHANGED BUT CONFIRMED):**
-* **Event-based vs poll-based:** Moving to AXObserver/event-based monitoring touches the main loop and must be phased carefully.
-* **Permissions:** Integration tests depend on Accessibility & Screen Recording permissions and will fail noisily without them.
-* **Fragile Tests:** Assertions tied to exact coordinates are brittle; selector-based and state-based checks are preferred.
-
-**CRITICAL CORRECTNESS TASKS (IMMEDIATE BLOCKERS, RECONFIRMED)**
-*(Mandatory before declaring the server "production-ready")*
-
-1.  ✅ COMPLETE - Implement AIP‑compliant pagination (`page_size`, `page_token`, `next_page_token`) for `ListWindows`, `ListInputs`, `FindElements`, `FindRegionElements`, and `ListObservations`.
-2.  ✅ COMPLETE - Resolve bundle ID handling in `WindowRegistry`/scripting so that bundle identifiers are no longer "unknown" in normal cases, and fix `GetScriptingDictionaries` accordingly.
-3.  ✅ COMPLETE - Introduce a shared `PollUntil` pattern in integration tests and refactor tests to assert **state deltas** (pre/post) instead of relying on naive sleeps.
-
-**PRIORITY FOLLOW-UP CHECKLIST (RANKED AFTER BLOCKERS):**
-
-1.  ✅ COMPLETE - **Observation window changes (Medium-High):**
-    * Window diffing implemented in `ObservationManager` with full coverage for window open/close/move/resize/minimize/restore events.
-
-2.  **PerformElementAction expansion (Medium):**
-    * Support richer actions (e.g. doubleclick/rightclick/hover/type/drag) mapped to `InputAction` and add corresponding tests.
-
-3.  **Event-based observers (Lower):**
-    * Gradually replace polling-based observers with AXObserver-backed implementations where feasible.
-
-4.  **Placeholder providers (Clean-up):**
-    * Either remove or fully implement `TargetApplicationsServiceProvider` and `DesktopServiceProvider`.
+- Only track **open work** or **must-not-forget patterns** here.
+- When a task is actually complete *and verified in code/tests*, remove it from the Immediate Action Items and, if necessary, adjust the relevant phase section below to reflect the new reality.
+- Never add completion emojis, running logs, or historical commentary; this section is a *queue of remaining work*, not a scrapbook.
 
 ---
 
