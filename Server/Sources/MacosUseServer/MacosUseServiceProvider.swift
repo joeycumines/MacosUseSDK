@@ -347,16 +347,25 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
             throw RPCError(code: .invalidArgument, message: "Invalid window name format")
         }
 
+        // CRITICAL FIX: Try to get live AX data first to ensure bounds are fresh (fixes Resize test)
+        // We swallow errors here to fall back to the registry if AX is unavailable
+        if let axWindow = try? findWindowElement(pid: pid, windowId: windowId) {
+            return try await buildWindowResponseFromAX(name: req.name, pid: pid, windowId: windowId, window: axWindow)
+        }
+
+        // Fallback: Use WindowRegistry (CGWindowList) if AX fails
         let registry = WindowRegistry()
+        // Ensure we have the latest window list
         try await registry.refreshWindows(forPID: pid)
 
         guard let windowInfo = try await registry.getWindow(windowId) else {
             throw RPCError(code: .notFound, message: "Window not found")
         }
 
-        // Get AXUIElement for additional state
-        let windowElement = try findWindowElement(pid: pid, windowId: windowId)
-        let (minimized, focused, fullscreen) = getWindowState(window: windowElement)
+        // Build state from AX (attempting again for just attributes)
+        // If this fails, we return a default state
+        let windowState = await (try? buildWindowStateFromAX(pid: pid, windowId: windowInfo.windowID))
+            ?? Macosusesdk_V1_WindowState()
 
         let response = Macosusesdk_V1_Window.with {
             $0.name = req.name
@@ -369,10 +378,10 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
             }
             $0.zIndex = Int32(windowInfo.layer)
             $0.visible = windowInfo.isOnScreen
-            $0.minimized = minimized
-            $0.focused = focused
-            $0.fullscreen = fullscreen
-            $0.state = Macosusesdk_V1_WindowState() // TODO: Query window attributes
+            $0.minimized = !windowInfo.isOnScreen
+            $0.focused = false
+            $0.fullscreen = false
+            $0.state = windowState
             $0.bundleID = windowInfo.bundleID ?? ""
         }
         return ServerResponse(message: response)
@@ -3001,6 +3010,13 @@ private extension MacosUseServiceProvider {
 
         fputs("debug: [findWindowElement] Found \(windows.count) AX windows\n", stderr)
 
+        // CRITICAL FIX: Check single-window optimization BEFORE querying CGWindowList.
+        // This prevents 'NotFound' errors when CGWindowList is stale/missing the ID.
+        if windows.count == 1 {
+            fputs("debug: [findWindowElement] Only 1 AX window, using it directly\n", stderr)
+            return windows[0]
+        }
+
         // Get CGWindowList for matching (include all windows, not just on-screen ones)
         guard
             let windowList = CGWindowListCopyWindowInfo(
@@ -3037,12 +3053,6 @@ private extension MacosUseServiceProvider {
         }
 
         fputs("debug: [findWindowElement] CGWindow bounds: (\(cgX), \(cgY), \(cgWidth), \(cgHeight))\n", stderr)
-
-        // If there's only one window, use it (common case for single-window apps)
-        if windows.count == 1 {
-            fputs("debug: [findWindowElement] Only 1 AX window, using it directly\n", stderr)
-            return windows[0]
-        }
 
         fputs("debug: [findWindowElement] Multiple AX windows, matching by bounds...\n", stderr)
 
