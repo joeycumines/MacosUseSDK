@@ -891,7 +891,7 @@ func (c *macosUseClient) GetScriptingDictionaries(ctx context.Context, in *GetSc
 }
 
 // MacosUseServer is the server API for MacosUse service.
-// All implementations should embed UnimplementedMacosUseServer
+// All implementations must embed UnimplementedMacosUseServer
 // for forward compatibility.
 //
 // MacosUse is the primary service for automating macOS applications.
@@ -1031,9 +1031,10 @@ type MacosUseServer interface {
 	ValidateScript(context.Context, *ValidateScriptRequest) (*ValidateScriptResponse, error)
 	// Gets scripting dictionaries.
 	GetScriptingDictionaries(context.Context, *GetScriptingDictionariesRequest) (*ScriptingDictionaries, error)
+	mustEmbedUnimplementedMacosUseServer()
 }
 
-// UnimplementedMacosUseServer should be embedded to have
+// UnimplementedMacosUseServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
@@ -1229,7 +1230,8 @@ func (UnimplementedMacosUseServer) ValidateScript(context.Context, *ValidateScri
 func (UnimplementedMacosUseServer) GetScriptingDictionaries(context.Context, *GetScriptingDictionariesRequest) (*ScriptingDictionaries, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetScriptingDictionaries not implemented")
 }
-func (UnimplementedMacosUseServer) testEmbeddedByValue() {}
+func (UnimplementedMacosUseServer) mustEmbedUnimplementedMacosUseServer() {}
+func (UnimplementedMacosUseServer) testEmbeddedByValue()                  {}
 
 // UnsafeMacosUseServer may be embedded to opt out of forward compatibility for this service.
 // Use of this interface is not recommended, as added methods to MacosUseServer will
