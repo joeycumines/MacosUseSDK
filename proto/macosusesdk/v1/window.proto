@@ -50,6 +50,10 @@ message Window {
 
   // Window attributes and state.
   WindowState state = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Bundle identifier of the application that owns this window.
+  // Resolved via NSRunningApplication. Empty string if unavailable.
+  string bundle_id = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Bounding rectangle for window positioning.

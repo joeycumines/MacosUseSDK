@@ -47,7 +47,10 @@ type Window struct {
 	// Whether the window is in full-screen mode.
 	Fullscreen bool `protobuf:"varint,8,opt,name=fullscreen,proto3" json:"fullscreen,omitempty"`
 	// Window attributes and state.
-	State         *WindowState `protobuf:"bytes,9,opt,name=state,proto3" json:"state,omitempty"`
+	State *WindowState `protobuf:"bytes,9,opt,name=state,proto3" json:"state,omitempty"`
+	// Bundle identifier of the application that owns this window.
+	// Resolved via NSRunningApplication. Empty string if unavailable.
+	BundleId      string `protobuf:"bytes,10,opt,name=bundle_id,json=bundleId,proto3" json:"bundle_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -143,6 +146,13 @@ func (x *Window) GetState() *WindowState {
 		return x.State
 	}
 	return nil
+}
+
+func (x *Window) GetBundleId() string {
+	if x != nil {
+		return x.BundleId
+	}
+	return ""
 }
 
 // Bounding rectangle for window positioning.
@@ -304,7 +314,7 @@ var File_macosusesdk_v1_window_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_window_proto_rawDesc = "" +
 	"\n" +
-	"\x1bmacosusesdk/v1/window.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\"\xae\x03\n" +
+	"\x1bmacosusesdk/v1/window.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\"\xd0\x03\n" +
 	"\x06Window\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12\x19\n" +
 	"\x05title\x18\x02 \x01(\tB\x03\xe0A\x03R\x05title\x123\n" +
@@ -316,7 +326,9 @@ const file_macosusesdk_v1_window_proto_rawDesc = "" +
 	"\n" +
 	"fullscreen\x18\b \x01(\bB\x03\xe0A\x03R\n" +
 	"fullscreen\x126\n" +
-	"\x05state\x18\t \x01(\v2\x1b.macosusesdk.v1.WindowStateB\x03\xe0A\x03R\x05state:_\xeaA\\\n" +
+	"\x05state\x18\t \x01(\v2\x1b.macosusesdk.v1.WindowStateB\x03\xe0A\x03R\x05state\x12 \n" +
+	"\tbundle_id\x18\n" +
+	" \x01(\tB\x03\xe0A\x03R\bbundleId:_\xeaA\\\n" +
 	"\x1cmacosusesdk.localhost/Window\x12+applications/{application}/windows/{window}*\awindows2\x06window\"R\n" +
 	"\x06Bounds\x12\f\n" +
 	"\x01x\x18\x01 \x01(\x01R\x01x\x12\f\n" +

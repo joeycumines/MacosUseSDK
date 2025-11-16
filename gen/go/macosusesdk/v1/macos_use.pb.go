@@ -333,6 +333,8 @@ type ListApplicationsRequest struct {
 	// Maximum number of applications to return.
 	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	// Page token from a previous ListApplications call.
+	// This token is opaque and its structure must not be relied upon by clients.
+	// Only its presence or absence should be used to determine pagination state.
 	PageToken     string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -388,6 +390,8 @@ type ListApplicationsResponse struct {
 	// The applications.
 	Applications []*Application `protobuf:"bytes,1,rep,name=applications,proto3" json:"applications,omitempty"`
 	// Token to retrieve the next page of results.
+	// This token is opaque and its structure must not be relied upon by clients.
+	// An empty value indicates no more results are available.
 	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -610,6 +614,8 @@ type ListInputsRequest struct {
 	// Maximum number of inputs to return.
 	PageSize int32 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	// Page token from a previous ListInputs call.
+	// This token is opaque and its structure must not be relied upon by clients.
+	// Only its presence or absence should be used to determine pagination state.
 	PageToken string `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	// Filter inputs by state. Valid values: PENDING, EXECUTING, COMPLETED, FAILED.
 	Filter        string `protobuf:"bytes,4,opt,name=filter,proto3" json:"filter,omitempty"`
@@ -681,6 +687,8 @@ type ListInputsResponse struct {
 	// The inputs.
 	Inputs []*Input `protobuf:"bytes,1,rep,name=inputs,proto3" json:"inputs,omitempty"`
 	// Token to retrieve the next page of results.
+	// This token is opaque and its structure must not be relied upon by clients.
+	// An empty value indicates no more results are available.
 	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1063,6 +1071,8 @@ type FindElementsRequest struct {
 	// Maximum number of elements to return.
 	PageSize int32 `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	// Page token from a previous FindElements call.
+	// This token is opaque and its structure must not be relied upon by clients.
+	// Only its presence or absence should be used to determine pagination state.
 	PageToken string `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	// Whether to search only visible elements.
 	VisibleOnly   bool `protobuf:"varint,5,opt,name=visible_only,json=visibleOnly,proto3" json:"visible_only,omitempty"`
@@ -1141,6 +1151,8 @@ type FindElementsResponse struct {
 	// Elements matching the selector.
 	Elements []*_type.Element `protobuf:"bytes,1,rep,name=elements,proto3" json:"elements,omitempty"`
 	// Token to retrieve the next page of results.
+	// This token is opaque and its structure must not be relied upon by clients.
+	// An empty value indicates no more results are available.
 	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1202,6 +1214,8 @@ type FindRegionElementsRequest struct {
 	// Maximum number of elements to return.
 	PageSize int32 `protobuf:"varint,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	// Page token from a previous call.
+	// This token is opaque and its structure must not be relied upon by clients.
+	// Only its presence or absence should be used to determine pagination state.
 	PageToken     string `protobuf:"bytes,5,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1278,6 +1292,8 @@ type FindRegionElementsResponse struct {
 	// Elements within the region.
 	Elements []*_type.Element `protobuf:"bytes,1,rep,name=elements,proto3" json:"elements,omitempty"`
 	// Token to retrieve the next page of results.
+	// This token is opaque and its structure must not be relied upon by clients.
+	// An empty value indicates no more results are available.
 	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2602,6 +2618,8 @@ type ListWindowsRequest struct {
 	// Maximum number of windows to return.
 	PageSize int32 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	// Page token from a previous ListWindows call.
+	// This token is opaque and its structure must not be relied upon by clients.
+	// Only its presence or absence should be used to determine pagination state.
 	PageToken     string `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2664,6 +2682,8 @@ type ListWindowsResponse struct {
 	// The windows.
 	Windows []*Window `protobuf:"bytes,1,rep,name=windows,proto3" json:"windows,omitempty"`
 	// Token to retrieve the next page of results.
+	// This token is opaque and its structure must not be relied upon by clients.
+	// An empty value indicates no more results are available.
 	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -3254,6 +3274,8 @@ type ListObservationsRequest struct {
 	// Maximum number of observations to return.
 	PageSize int32 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	// Page token from a previous ListObservations call.
+	// This token is opaque and its structure must not be relied upon by clients.
+	// Only its presence or absence should be used to determine pagination state.
 	PageToken     string `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -3316,6 +3338,8 @@ type ListObservationsResponse struct {
 	// The observations.
 	Observations []*Observation `protobuf:"bytes,1,rep,name=observations,proto3" json:"observations,omitempty"`
 	// Token to retrieve the next page of results.
+	// This token is opaque and its structure must not be relied upon by clients.
+	// An empty value indicates no more results are available.
 	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

@@ -28,6 +28,31 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         NSRunningApplication(processIdentifier: pid)?.bundleIdentifier
     }
 
+    /// Encode an offset into an opaque page token per AIP-158.
+    /// The token is base64-encoded to prevent clients from relying on its structure.
+    private func encodePageToken(offset: Int) -> String {
+        let tokenString = "offset:\(offset)"
+        return Data(tokenString.utf8).base64EncodedString()
+    }
+
+    /// Decode an opaque page token to retrieve the offset per AIP-158.
+    /// Throws invalidArgument if the token is malformed.
+    private func decodePageToken(_ token: String) throws -> Int {
+        guard let data = Data(base64Encoded: token),
+              let tokenString = String(data: data, encoding: .utf8)
+        else {
+            throw RPCError(code: .invalidArgument, message: "Invalid page_token format")
+        }
+
+        let components = tokenString.split(separator: ":")
+        guard components.count == 2, components[0] == "offset",
+              let parsedOffset = Int(components[1]), parsedOffset >= 0
+        else {
+            throw RPCError(code: .invalidArgument, message: "Invalid page_token format")
+        }
+        return parsedOffset
+    }
+
     // MARK: - Application Methods
 
     func openApplication(
@@ -92,11 +117,39 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
     func listApplications(
         request: ServerRequest<Macosusesdk_V1_ListApplicationsRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_ListApplicationsResponse> {
-        _ = request.message
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] listApplications called\n", stderr)
-        let apps = await stateStore.listTargets()
+        let allApps = await stateStore.listTargets()
+
+        // Sort by name for deterministic ordering
+        let sortedApps = allApps.sorted { $0.name < $1.name }
+
+        // Decode page_token to get offset
+        let offset: Int = if req.pageToken.isEmpty {
+            0
+        } else {
+            try decodePageToken(req.pageToken)
+        }
+
+        // Determine page size (default 100 if not specified or <= 0)
+        let pageSize = req.pageSize > 0 ? Int(req.pageSize) : 100
+        let totalCount = sortedApps.count
+
+        // Calculate slice bounds
+        let startIndex = min(offset, totalCount)
+        let endIndex = min(startIndex + pageSize, totalCount)
+        let pageApps = Array(sortedApps[startIndex ..< endIndex])
+
+        // Generate next_page_token if more results exist
+        let nextPageToken = if endIndex < totalCount {
+            encodePageToken(offset: endIndex)
+        } else {
+            ""
+        }
+
         let response = Macosusesdk_V1_ListApplicationsResponse.with {
-            $0.applications = apps
+            $0.applications = pageApps
+            $0.nextPageToken = nextPageToken
         }
         return ServerResponse(message: response)
     }
@@ -184,18 +237,10 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         let sortedInputs = allInputs.sorted { $0.name < $1.name }
 
         // Decode page_token to get offset
-        let offset: Int
-        if req.pageToken.isEmpty {
-            offset = 0
+        let offset: Int = if req.pageToken.isEmpty {
+            0
         } else {
-            // Token format: "offset:N"
-            let components = req.pageToken.split(separator: ":")
-            guard components.count == 2, components[0] == "offset",
-                  let parsedOffset = Int(components[1]), parsedOffset >= 0
-            else {
-                throw RPCError(code: .invalidArgument, message: "Invalid page_token format")
-            }
-            offset = parsedOffset
+            try decodePageToken(req.pageToken)
         }
 
         // Determine page size (default 100 if not specified or <= 0)
@@ -209,7 +254,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
 
         // Generate next_page_token if more results exist
         let nextPageToken = if endIndex < totalCount {
-            "offset:\(endIndex)"
+            encodePageToken(offset: endIndex)
         } else {
             ""
         }
@@ -328,6 +373,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
             $0.focused = focused
             $0.fullscreen = fullscreen
             $0.state = Macosusesdk_V1_WindowState() // TODO: Query window attributes
+            $0.bundleID = windowInfo.bundleID ?? ""
         }
         return ServerResponse(message: response)
     }
@@ -349,18 +395,10 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         let sortedWindowInfos = windowInfos.sorted { $0.windowID < $1.windowID }
 
         // Decode page_token to get offset
-        let offset: Int
-        if req.pageToken.isEmpty {
-            offset = 0
+        let offset: Int = if req.pageToken.isEmpty {
+            0
         } else {
-            // Token format: "offset:N"
-            let components = req.pageToken.split(separator: ":")
-            guard components.count == 2, components[0] == "offset",
-                  let parsedOffset = Int(components[1]), parsedOffset >= 0
-            else {
-                throw RPCError(code: .invalidArgument, message: "Invalid page_token format")
-            }
-            offset = parsedOffset
+            try decodePageToken(req.pageToken)
         }
 
         // Determine page size (default 100 if not specified or <= 0)
@@ -374,7 +412,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
 
         // Generate next_page_token if more results exist
         let nextPageToken = if endIndex < totalCount {
-            "offset:\(endIndex)"
+            encodePageToken(offset: endIndex)
         } else {
             ""
         }
@@ -395,6 +433,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
                 $0.focused = false
                 $0.fullscreen = false
                 $0.state = Macosusesdk_V1_WindowState()
+                $0.bundleID = windowInfo.bundleID ?? ""
             }
         }
 
@@ -644,18 +683,10 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         let selector = try SelectorParser.shared.parseSelector(req.selector)
 
         // Decode page_token to get offset
-        let offset: Int
-        if req.pageToken.isEmpty {
-            offset = 0
+        let offset: Int = if req.pageToken.isEmpty {
+            0
         } else {
-            // Token format: "offset:N"
-            let components = req.pageToken.split(separator: ":")
-            guard components.count == 2, components[0] == "offset",
-                  let parsedOffset = Int(components[1]), parsedOffset >= 0
-            else {
-                throw RPCError(code: .invalidArgument, message: "Invalid page_token format")
-            }
-            offset = parsedOffset
+            try decodePageToken(req.pageToken)
         }
 
         // Determine page size (default 100 if not specified or <= 0)
@@ -678,7 +709,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
 
         // Generate next_page_token if more results exist
         let nextPageToken = if endIndex < totalCount {
-            "offset:\(endIndex)"
+            encodePageToken(offset: endIndex)
         } else {
             ""
         }
@@ -714,18 +745,10 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
             req.hasSelector ? try SelectorParser.shared.parseSelector(req.selector) : nil
 
         // Decode page_token to get offset
-        let offset: Int
-        if req.pageToken.isEmpty {
-            offset = 0
+        let offset: Int = if req.pageToken.isEmpty {
+            0
         } else {
-            // Token format: "offset:N"
-            let components = req.pageToken.split(separator: ":")
-            guard components.count == 2, components[0] == "offset",
-                  let parsedOffset = Int(components[1]), parsedOffset >= 0
-            else {
-                throw RPCError(code: .invalidArgument, message: "Invalid page_token format")
-            }
-            offset = parsedOffset
+            try decodePageToken(req.pageToken)
         }
 
         // Determine page size (default 100 if not specified or <= 0)
@@ -749,7 +772,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
 
         // Generate next_page_token if more results exist
         let nextPageToken = if endIndex < totalCount {
-            "offset:\(endIndex)"
+            encodePageToken(offset: endIndex)
         } else {
             ""
         }
@@ -1502,18 +1525,10 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         let sortedObservations = allObservations.sorted { $0.name < $1.name }
 
         // Decode page_token to get offset
-        let offset: Int
-        if req.pageToken.isEmpty {
-            offset = 0
+        let offset: Int = if req.pageToken.isEmpty {
+            0
         } else {
-            // Token format: "offset:N"
-            let components = req.pageToken.split(separator: ":")
-            guard components.count == 2, components[0] == "offset",
-                  let parsedOffset = Int(components[1]), parsedOffset >= 0
-            else {
-                throw RPCError(code: .invalidArgument, message: "Invalid page_token format")
-            }
-            offset = parsedOffset
+            try decodePageToken(req.pageToken)
         }
 
         // Determine page size (default 100 if not specified or <= 0)
@@ -1527,7 +1542,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
 
         // Generate next_page_token if more results exist
         let nextPageToken = if endIndex < totalCount {
-            "offset:\(endIndex)"
+            encodePageToken(offset: endIndex)
         } else {
             ""
         }

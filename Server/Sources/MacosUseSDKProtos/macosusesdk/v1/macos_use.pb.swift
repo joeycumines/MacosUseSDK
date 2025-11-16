@@ -102,6 +102,8 @@ public struct Macosusesdk_V1_ListApplicationsRequest: Sendable {
     public var pageSize: Int32 = 0
 
     /// Page token from a previous ListApplications call.
+    /// This token is opaque and its structure must not be relied upon by clients.
+    /// Only its presence or absence should be used to determine pagination state.
     public var pageToken: String = .init()
 
     public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -119,6 +121,8 @@ public struct Macosusesdk_V1_ListApplicationsResponse: Sendable {
     public var applications: [Macosusesdk_V1_Application] = []
 
     /// Token to retrieve the next page of results.
+    /// This token is opaque and its structure must not be relied upon by clients.
+    /// An empty value indicates no more results are available.
     public var nextPageToken: String = .init()
 
     public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -206,6 +210,8 @@ public struct Macosusesdk_V1_ListInputsRequest: Sendable {
     public var pageSize: Int32 = 0
 
     /// Page token from a previous ListInputs call.
+    /// This token is opaque and its structure must not be relied upon by clients.
+    /// Only its presence or absence should be used to determine pagination state.
     public var pageToken: String = .init()
 
     /// Filter inputs by state. Valid values: PENDING, EXECUTING, COMPLETED, FAILED.
@@ -226,6 +232,8 @@ public struct Macosusesdk_V1_ListInputsResponse: Sendable {
     public var inputs: [Macosusesdk_V1_Input] = []
 
     /// Token to retrieve the next page of results.
+    /// This token is opaque and its structure must not be relied upon by clients.
+    /// An empty value indicates no more results are available.
     public var nextPageToken: String = .init()
 
     public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -400,6 +408,8 @@ public struct Macosusesdk_V1_FindElementsRequest: Sendable {
     public var pageSize: Int32 = 0
 
     /// Page token from a previous FindElements call.
+    /// This token is opaque and its structure must not be relied upon by clients.
+    /// Only its presence or absence should be used to determine pagination state.
     public var pageToken: String = .init()
 
     /// Whether to search only visible elements.
@@ -422,6 +432,8 @@ public struct Macosusesdk_V1_FindElementsResponse: Sendable {
     public var elements: [Macosusesdk_Type_Element] = []
 
     /// Token to retrieve the next page of results.
+    /// This token is opaque and its structure must not be relied upon by clients.
+    /// An empty value indicates no more results are available.
     public var nextPageToken: String = .init()
 
     public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -464,6 +476,8 @@ public struct Macosusesdk_V1_FindRegionElementsRequest: Sendable {
     public var pageSize: Int32 = 0
 
     /// Page token from a previous call.
+    /// This token is opaque and its structure must not be relied upon by clients.
+    /// Only its presence or absence should be used to determine pagination state.
     public var pageToken: String = .init()
 
     public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -484,6 +498,8 @@ public struct Macosusesdk_V1_FindRegionElementsResponse: Sendable {
     public var elements: [Macosusesdk_Type_Element] = []
 
     /// Token to retrieve the next page of results.
+    /// This token is opaque and its structure must not be relied upon by clients.
+    /// An empty value indicates no more results are available.
     public var nextPageToken: String = .init()
 
     public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -1122,6 +1138,8 @@ public struct Macosusesdk_V1_ListWindowsRequest: Sendable {
     public var pageSize: Int32 = 0
 
     /// Page token from a previous ListWindows call.
+    /// This token is opaque and its structure must not be relied upon by clients.
+    /// Only its presence or absence should be used to determine pagination state.
     public var pageToken: String = .init()
 
     public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -1139,6 +1157,8 @@ public struct Macosusesdk_V1_ListWindowsResponse: Sendable {
     public var windows: [Macosusesdk_V1_Window] = []
 
     /// Token to retrieve the next page of results.
+    /// This token is opaque and its structure must not be relied upon by clients.
+    /// An empty value indicates no more results are available.
     public var nextPageToken: String = .init()
 
     public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -1334,6 +1354,8 @@ public struct Macosusesdk_V1_ListObservationsRequest: Sendable {
     public var pageSize: Int32 = 0
 
     /// Page token from a previous ListObservations call.
+    /// This token is opaque and its structure must not be relied upon by clients.
+    /// Only its presence or absence should be used to determine pagination state.
     public var pageToken: String = .init()
 
     public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -1351,6 +1373,8 @@ public struct Macosusesdk_V1_ListObservationsResponse: Sendable {
     public var observations: [Macosusesdk_V1_Observation] = []
 
     /// Token to retrieve the next page of results.
+    /// This token is opaque and its structure must not be relied upon by clients.
+    /// An empty value indicates no more results are available.
     public var nextPageToken: String = .init()
 
     public var unknownFields = SwiftProtobuf.UnknownStorage()

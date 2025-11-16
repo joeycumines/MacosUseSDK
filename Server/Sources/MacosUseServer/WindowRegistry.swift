@@ -16,6 +16,7 @@ actor WindowRegistry {
         let layer: Int32
         let isOnScreen: Bool
         let timestamp: Date
+        let bundleID: String?
     }
 
     /// Cache of window information by window ID.
@@ -56,6 +57,9 @@ actor WindowRegistry {
             let layer = windowDict[kCGWindowLayer as String] as? Int32 ?? 0
             let isOnScreen = windowDict[kCGWindowIsOnscreen as String] as? Bool ?? false
 
+            // Resolve bundle ID using NSRunningApplication
+            let bundleID = NSRunningApplication(processIdentifier: ownerPID)?.bundleIdentifier
+
             let info = WindowInfo(
                 windowID: windowID,
                 ownerPID: ownerPID,
@@ -64,6 +68,7 @@ actor WindowRegistry {
                 layer: layer,
                 isOnScreen: isOnScreen,
                 timestamp: now,
+                bundleID: bundleID,
             )
 
             windowCache[windowID] = info

@@ -25,61 +25,88 @@ private struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVer
 }
 
 /// A resource representing an individual window within an application.
-public struct Macosusesdk_V1_Window: Sendable {
+public struct Macosusesdk_V1_Window: @unchecked Sendable {
     // SwiftProtobuf.Message conformance is added in an extension below. See the
     // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
     // methods supported on all messages.
 
     /// Resource name in the format "applications/{application}/windows/{window}"
     /// where {application} is the process ID and {window} is the window ID.
-    public var name: String = .init()
+    public var name: String {
+        get { _storage._name }
+        set { _uniqueStorage()._name = newValue }
+    }
 
     /// The title of the window.
-    public var title: String = .init()
+    public var title: String {
+        get { _storage._title }
+        set { _uniqueStorage()._title = newValue }
+    }
 
     /// Bounding rectangle of the window.
     public var bounds: Macosusesdk_V1_Bounds {
-        get { _bounds ?? Macosusesdk_V1_Bounds() }
-        set { _bounds = newValue }
+        get { _storage._bounds ?? Macosusesdk_V1_Bounds() }
+        set { _uniqueStorage()._bounds = newValue }
     }
 
     /// Returns true if `bounds` has been explicitly set.
-    public var hasBounds: Bool { _bounds != nil }
+    public var hasBounds: Bool { _storage._bounds != nil }
     /// Clears the value of `bounds`. Subsequent reads from it will return its default value.
-    public mutating func clearBounds() { _bounds = nil }
+    public mutating func clearBounds() { _uniqueStorage()._bounds = nil }
 
     /// Z-order index (higher values are in front).
-    public var zIndex: Int32 = 0
+    public var zIndex: Int32 {
+        get { _storage._zIndex }
+        set { _uniqueStorage()._zIndex = newValue }
+    }
 
     /// Whether the window is currently visible.
-    public var visible: Bool = false
+    public var visible: Bool {
+        get { _storage._visible }
+        set { _uniqueStorage()._visible = newValue }
+    }
 
     /// Whether the window is minimized.
-    public var minimized: Bool = false
+    public var minimized: Bool {
+        get { _storage._minimized }
+        set { _uniqueStorage()._minimized = newValue }
+    }
 
     /// Whether the window is focused.
-    public var focused: Bool = false
+    public var focused: Bool {
+        get { _storage._focused }
+        set { _uniqueStorage()._focused = newValue }
+    }
 
     /// Whether the window is in full-screen mode.
-    public var fullscreen: Bool = false
+    public var fullscreen: Bool {
+        get { _storage._fullscreen }
+        set { _uniqueStorage()._fullscreen = newValue }
+    }
 
     /// Window attributes and state.
     public var state: Macosusesdk_V1_WindowState {
-        get { _state ?? Macosusesdk_V1_WindowState() }
-        set { _state = newValue }
+        get { _storage._state ?? Macosusesdk_V1_WindowState() }
+        set { _uniqueStorage()._state = newValue }
     }
 
     /// Returns true if `state` has been explicitly set.
-    public var hasState: Bool { _state != nil }
+    public var hasState: Bool { _storage._state != nil }
     /// Clears the value of `state`. Subsequent reads from it will return its default value.
-    public mutating func clearState() { _state = nil }
+    public mutating func clearState() { _uniqueStorage()._state = nil }
+
+    /// Bundle identifier of the application that owns this window.
+    /// Resolved via NSRunningApplication. Empty string if unavailable.
+    public var bundleID: String {
+        get { _storage._bundleID }
+        set { _uniqueStorage()._bundleID = newValue }
+    }
 
     public var unknownFields = SwiftProtobuf.UnknownStorage()
 
     public init() {}
 
-    fileprivate var _bounds: Macosusesdk_V1_Bounds?
-    fileprivate var _state: Macosusesdk_V1_WindowState?
+    fileprivate var _storage = _StorageClass.defaultInstance
 }
 
 /// Bounding rectangle for window positioning.
@@ -137,73 +164,132 @@ private let _protobuf_package = "macosusesdk.v1"
 
 extension Macosusesdk_V1_Window: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
     public static let protoMessageName: String = _protobuf_package + ".Window"
-    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}title\0\u{1}bounds\0\u{3}z_index\0\u{1}visible\0\u{1}minimized\0\u{1}focused\0\u{1}fullscreen\0\u{1}state\0")
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}title\0\u{1}bounds\0\u{3}z_index\0\u{1}visible\0\u{1}minimized\0\u{1}focused\0\u{1}fullscreen\0\u{1}state\0\u{3}bundle_id\0")
+
+    fileprivate class _StorageClass {
+        var _name: String = .init()
+        var _title: String = .init()
+        var _bounds: Macosusesdk_V1_Bounds?
+        var _zIndex: Int32 = 0
+        var _visible: Bool = false
+        var _minimized: Bool = false
+        var _focused: Bool = false
+        var _fullscreen: Bool = false
+        var _state: Macosusesdk_V1_WindowState?
+        var _bundleID: String = .init()
+
+        // This property is used as the initial default value for new instances of the type.
+        // The type itself is protecting the reference to its storage via CoW semantics.
+        // This will force a copy to be made of this reference when the first mutation occurs;
+        // hence, it is safe to mark this as `nonisolated(unsafe)`.
+        nonisolated(unsafe) static let defaultInstance = _StorageClass()
+
+        private init() {}
+
+        init(copying source: _StorageClass) {
+            _name = source._name
+            _title = source._title
+            _bounds = source._bounds
+            _zIndex = source._zIndex
+            _visible = source._visible
+            _minimized = source._minimized
+            _focused = source._focused
+            _fullscreen = source._fullscreen
+            _state = source._state
+            _bundleID = source._bundleID
+        }
+    }
+
+    fileprivate mutating func _uniqueStorage() -> _StorageClass {
+        if !isKnownUniquelyReferenced(&_storage) {
+            _storage = _StorageClass(copying: _storage)
+        }
+        return _storage
+    }
 
     public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
-        while let fieldNumber = try decoder.nextFieldNumber() {
-            // The use of inline closures is to circumvent an issue where the compiler
-            // allocates stack space for every case branch when no optimizations are
-            // enabled. https://github.com/apple/swift-protobuf/issues/1034
-            switch fieldNumber {
-            case 1: try decoder.decodeSingularStringField(value: &name)
-            case 2: try decoder.decodeSingularStringField(value: &title)
-            case 3: try decoder.decodeSingularMessageField(value: &_bounds)
-            case 4: try decoder.decodeSingularInt32Field(value: &zIndex)
-            case 5: try decoder.decodeSingularBoolField(value: &visible)
-            case 6: try decoder.decodeSingularBoolField(value: &minimized)
-            case 7: try decoder.decodeSingularBoolField(value: &focused)
-            case 8: try decoder.decodeSingularBoolField(value: &fullscreen)
-            case 9: try decoder.decodeSingularMessageField(value: &_state)
-            default: break
+        _ = _uniqueStorage()
+        try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+            while let fieldNumber = try decoder.nextFieldNumber() {
+                // The use of inline closures is to circumvent an issue where the compiler
+                // allocates stack space for every case branch when no optimizations are
+                // enabled. https://github.com/apple/swift-protobuf/issues/1034
+                switch fieldNumber {
+                case 1: try decoder.decodeSingularStringField(value: &_storage._name)
+                case 2: try decoder.decodeSingularStringField(value: &_storage._title)
+                case 3: try decoder.decodeSingularMessageField(value: &_storage._bounds)
+                case 4: try decoder.decodeSingularInt32Field(value: &_storage._zIndex)
+                case 5: try decoder.decodeSingularBoolField(value: &_storage._visible)
+                case 6: try decoder.decodeSingularBoolField(value: &_storage._minimized)
+                case 7: try decoder.decodeSingularBoolField(value: &_storage._focused)
+                case 8: try decoder.decodeSingularBoolField(value: &_storage._fullscreen)
+                case 9: try decoder.decodeSingularMessageField(value: &_storage._state)
+                case 10: try decoder.decodeSingularStringField(value: &_storage._bundleID)
+                default: break
+                }
             }
         }
     }
 
     public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
-        // The use of inline closures is to circumvent an issue where the compiler
-        // allocates stack space for every if/case branch local when no optimizations
-        // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-        // https://github.com/apple/swift-protobuf/issues/1182
-        if !name.isEmpty {
-            try visitor.visitSingularStringField(value: name, fieldNumber: 1)
+        try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every if/case branch local when no optimizations
+            // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+            // https://github.com/apple/swift-protobuf/issues/1182
+            if !_storage._name.isEmpty {
+                try visitor.visitSingularStringField(value: _storage._name, fieldNumber: 1)
+            }
+            if !_storage._title.isEmpty {
+                try visitor.visitSingularStringField(value: _storage._title, fieldNumber: 2)
+            }
+            try { if let v = _storage._bounds {
+                try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
+            } }()
+            if _storage._zIndex != 0 {
+                try visitor.visitSingularInt32Field(value: _storage._zIndex, fieldNumber: 4)
+            }
+            if _storage._visible != false {
+                try visitor.visitSingularBoolField(value: _storage._visible, fieldNumber: 5)
+            }
+            if _storage._minimized != false {
+                try visitor.visitSingularBoolField(value: _storage._minimized, fieldNumber: 6)
+            }
+            if _storage._focused != false {
+                try visitor.visitSingularBoolField(value: _storage._focused, fieldNumber: 7)
+            }
+            if _storage._fullscreen != false {
+                try visitor.visitSingularBoolField(value: _storage._fullscreen, fieldNumber: 8)
+            }
+            try { if let v = _storage._state {
+                try visitor.visitSingularMessageField(value: v, fieldNumber: 9)
+            } }()
+            if !_storage._bundleID.isEmpty {
+                try visitor.visitSingularStringField(value: _storage._bundleID, fieldNumber: 10)
+            }
         }
-        if !title.isEmpty {
-            try visitor.visitSingularStringField(value: title, fieldNumber: 2)
-        }
-        try { if let v = self._bounds {
-            try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
-        } }()
-        if zIndex != 0 {
-            try visitor.visitSingularInt32Field(value: zIndex, fieldNumber: 4)
-        }
-        if visible != false {
-            try visitor.visitSingularBoolField(value: visible, fieldNumber: 5)
-        }
-        if minimized != false {
-            try visitor.visitSingularBoolField(value: minimized, fieldNumber: 6)
-        }
-        if focused != false {
-            try visitor.visitSingularBoolField(value: focused, fieldNumber: 7)
-        }
-        if fullscreen != false {
-            try visitor.visitSingularBoolField(value: fullscreen, fieldNumber: 8)
-        }
-        try { if let v = self._state {
-            try visitor.visitSingularMessageField(value: v, fieldNumber: 9)
-        } }()
         try unknownFields.traverse(visitor: &visitor)
     }
 
     public static func == (lhs: Macosusesdk_V1_Window, rhs: Macosusesdk_V1_Window) -> Bool {
-        if lhs.name != rhs.name { return false }
-        if lhs.title != rhs.title { return false }
-        if lhs._bounds != rhs._bounds { return false }
-        if lhs.zIndex != rhs.zIndex { return false }
-        if lhs.visible != rhs.visible { return false }
-        if lhs.minimized != rhs.minimized { return false }
-        if lhs.focused != rhs.focused { return false }
-        if lhs.fullscreen != rhs.fullscreen { return false }
-        if lhs._state != rhs._state { return false }
+        if lhs._storage !== rhs._storage {
+            let storagesAreEqual: Bool = withExtendedLifetime((lhs._storage, rhs._storage)) { (_args: (_StorageClass, _StorageClass)) in
+                let _storage = _args.0
+                let rhs_storage = _args.1
+                if _storage._name != rhs_storage._name { return false }
+                if _storage._title != rhs_storage._title { return false }
+                if _storage._bounds != rhs_storage._bounds { return false }
+                if _storage._zIndex != rhs_storage._zIndex { return false }
+                if _storage._visible != rhs_storage._visible { return false }
+                if _storage._minimized != rhs_storage._minimized { return false }
+                if _storage._focused != rhs_storage._focused { return false }
+                if _storage._fullscreen != rhs_storage._fullscreen { return false }
+                if _storage._state != rhs_storage._state { return false }
+                if _storage._bundleID != rhs_storage._bundleID { return false }
+                return true
+            }
+            if !storagesAreEqual { return false }
+        }
         if lhs.unknownFields != rhs.unknownFields { return false }
         return true
     }
