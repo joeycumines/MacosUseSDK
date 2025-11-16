@@ -181,7 +181,7 @@ public actor ElementRegistry {
         while true {
             do {
                 try await Task.sleep(nanoseconds: 10 * 1_000_000_000)
-                await cleanupExpiredElements()
+                cleanupExpiredElements()
             } catch {
                 // Task was cancelled, exit
                 break

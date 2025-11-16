@@ -11,7 +11,7 @@ public struct SelectorParser {
 
     /// Parse and validate an ElementSelector.
     /// - Parameter selector: The selector to parse
-    /// - Throws: GRPCStatus if the selector is invalid
+    /// - Throws: RPCError if the selector is invalid
     /// - Returns: A validated and potentially optimized selector
     public func parseSelector(_ selector: Macosusesdk_Type_ElementSelector) throws
         -> Macosusesdk_Type_ElementSelector
@@ -28,12 +28,12 @@ public struct SelectorParser {
 
     /// Validate that a selector is well-formed.
     /// - Parameter selector: The selector to validate
-    /// - Throws: GRPCStatus if validation fails
+    /// - Throws: RPCError if validation fails
     private func validateSelector(_ selector: Macosusesdk_Type_ElementSelector) throws {
         switch selector.criteria {
         case let .role(role):
             if role.isEmpty {
-                throw GRPCStatus(code: .invalidArgument, message: "Role selector cannot be empty")
+                throw RPCError(code: .invalidArgument, message: "Role selector cannot be empty")
             }
 
         case .text:
@@ -42,34 +42,34 @@ public struct SelectorParser {
 
         case let .textContains(substring):
             if substring.isEmpty {
-                throw GRPCStatus(code: .invalidArgument, message: "Text contains selector cannot be empty")
+                throw RPCError(code: .invalidArgument, message: "Text contains selector cannot be empty")
             }
 
         case let .textRegex(pattern):
             do {
                 _ = try NSRegularExpression(pattern: pattern, options: [])
             } catch {
-                throw GRPCStatus(code: .invalidArgument, message: "Invalid regex pattern: \(pattern)")
+                throw RPCError(code: .invalidArgument, message: "Invalid regex pattern: \(pattern)")
             }
 
         case let .position(positionSelector):
             if positionSelector.tolerance < 0 {
-                throw GRPCStatus(code: .invalidArgument, message: "Position tolerance cannot be negative")
+                throw RPCError(code: .invalidArgument, message: "Position tolerance cannot be negative")
             }
 
         case let .attributes(attributeSelector):
             if attributeSelector.attributes.isEmpty {
-                throw GRPCStatus(code: .invalidArgument, message: "Attribute selector cannot be empty")
+                throw RPCError(code: .invalidArgument, message: "Attribute selector cannot be empty")
             }
 
         case let .compound(compoundSelector):
             if compoundSelector.selectors.isEmpty {
-                throw GRPCStatus(code: .invalidArgument, message: "Compound selector cannot be empty")
+                throw RPCError(code: .invalidArgument, message: "Compound selector cannot be empty")
             }
 
             // Validate NOT operator has exactly one selector
             if compoundSelector.operator == .not, compoundSelector.selectors.count != 1 {
-                throw GRPCStatus(
+                throw RPCError(
                     code: .invalidArgument, message: "NOT operator requires exactly one selector",
                 )
             }

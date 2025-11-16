@@ -26,9 +26,6 @@ let package = Package(
         .package(url: "https://github.com/grpc/grpc-swift-2.git", from: "2.0.0"),
         .package(url: "https://github.com/grpc/grpc-swift-protobuf.git", from: "2.0.0"),
         .package(url: "https://github.com/grpc/grpc-swift-nio-transport.git", from: "2.0.0"),
-        .package(url: "https://github.com/apple/swift-atomics.git", from: "1.0.0"),
-        .package(url: "https://github.com/apple/swift-nio.git", from: "2.0.0"),
-        .package(url: "https://github.com/apple/swift-nio-http2.git", from: "1.0.0"),
         .package(name: "MacosUseSDK", path: "../"),
     ],
     targets: [
@@ -38,9 +35,6 @@ let package = Package(
             name: "MacosUseSDKProtos",
             dependencies: [
                 .product(name: "GRPCProtobuf", package: "grpc-swift-protobuf"),
-                .product(name: "Atomics", package: "swift-atomics"),
-                .product(name: "NIOCore", package: "swift-nio"),
-                .product(name: "NIOHTTP2", package: "swift-nio-http2"),
             ],
             path: "Sources/MacosUseSDKProtos",
             // The expr protos are not used; avoid dangling excludes which

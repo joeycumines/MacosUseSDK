@@ -430,7 +430,7 @@ actor ScriptExecutor {
     private func validateAppleScriptSecurity(_ script: String) throws {
         // Basic security checks for AppleScript
         // Prevent potentially dangerous operations
-        let dangerousPatterns = [
+        _ = [
             "do shell script", // Allow but warn
             "rm -rf",
             "sudo",

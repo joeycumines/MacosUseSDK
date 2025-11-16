@@ -4,7 +4,7 @@ import MacosUseSDKProtos
 import SwiftProtobuf
 
 /// Provider for google.longrunning.Operations that proxies to OperationStore.
-final class OperationsProvider: Google_Longrunning_OperationsAsyncProvider {
+final class OperationsProvider: Google_Longrunning_Operations.ServiceProtocol {
     let operationStore: OperationStore
 
     init(operationStore: OperationStore) {
@@ -13,44 +13,57 @@ final class OperationsProvider: Google_Longrunning_OperationsAsyncProvider {
 
     // List operations - simple implementation ignoring filter/pagination
     func listOperations(
-        request _: Google_Longrunning_ListOperationsRequest, context _: ServerContext,
-    ) async throws -> Google_Longrunning_ListOperationsResponse {
-        let ops = await operationStore.listOperations()
-        return Google_Longrunning_ListOperationsResponse.with { $0.operations = ops }
+        request: ServerRequest<Google_Longrunning_ListOperationsRequest>,
+        context _: ServerContext,
+    ) async throws -> ServerResponse<Google_Longrunning_ListOperationsResponse> {
+        _ = request.message
+        var response = Google_Longrunning_ListOperationsResponse()
+        let operations = await operationStore.listOperations()
+
+        response.operations = operations
+        return ServerResponse(message: response)
     }
 
     func getOperation(
-        request: Google_Longrunning_GetOperationRequest, context _: ServerContext,
-    ) async throws -> Google_Longrunning_Operation {
-        if let op = await operationStore.getOperation(name: request.name) {
-            return op
+        request: ServerRequest<Google_Longrunning_GetOperationRequest>,
+        context _: ServerContext,
+    ) async throws -> ServerResponse<Google_Longrunning_Operation> {
+        let req = request.message
+        if let op = await operationStore.getOperation(name: req.name) {
+            return ServerResponse(message: op)
         }
-        throw GRPCStatus(code: .notFound, message: "operation not found")
+        throw RPCError(code: .notFound, message: "operation not found")
     }
 
     func deleteOperation(
-        request: Google_Longrunning_DeleteOperationRequest, context _: ServerContext,
-    ) async throws -> SwiftProtobuf.Google_Protobuf_Empty {
-        await operationStore.deleteOperation(name: request.name)
-        return SwiftProtobuf.Google_Protobuf_Empty()
+        request: ServerRequest<Google_Longrunning_DeleteOperationRequest>,
+        context _: ServerContext,
+    ) async throws -> ServerResponse<SwiftProtobuf.Google_Protobuf_Empty> {
+        let req = request.message
+        await operationStore.deleteOperation(name: req.name)
+        return ServerResponse(message: SwiftProtobuf.Google_Protobuf_Empty())
     }
 
     func cancelOperation(
-        request: Google_Longrunning_CancelOperationRequest, context _: ServerContext,
-    ) async throws -> SwiftProtobuf.Google_Protobuf_Empty {
-        await operationStore.cancelOperation(name: request.name)
-        return SwiftProtobuf.Google_Protobuf_Empty()
+        request: ServerRequest<Google_Longrunning_CancelOperationRequest>,
+        context _: ServerContext,
+    ) async throws -> ServerResponse<SwiftProtobuf.Google_Protobuf_Empty> {
+        let req = request.message
+        await operationStore.cancelOperation(name: req.name)
+        return ServerResponse(message: SwiftProtobuf.Google_Protobuf_Empty())
     }
 
     func waitOperation(
-        request: Google_Longrunning_WaitOperationRequest, context _: ServerContext,
-    ) async throws -> Google_Longrunning_Operation {
+        request: ServerRequest<Google_Longrunning_WaitOperationRequest>,
+        context _: ServerContext,
+    ) async throws -> ServerResponse<Google_Longrunning_Operation> {
+        let req = request.message
         let timeoutNs: UInt64? =
-            request.hasTimeout
-                ? UInt64(request.timeout.seconds) * 1_000_000_000 + UInt64(request.timeout.nanos) : nil
-        if let op = await operationStore.waitOperation(name: request.name, timeoutNs: timeoutNs) {
-            return op
+            req.hasTimeout
+                ? UInt64(req.timeout.seconds) * 1_000_000_000 + UInt64(req.timeout.nanos) : nil
+        if let op = await operationStore.waitOperation(name: req.name, timeoutNs: timeoutNs) {
+            return ServerResponse(message: op)
         }
-        throw GRPCStatus(code: .notFound, message: "operation not found")
+        throw RPCError(code: .notFound, message: "operation not found")
     }
 }

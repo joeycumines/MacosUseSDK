@@ -1,6 +1,6 @@
 import ApplicationServices
 import Foundation
-import GRPC
+import GRPCCore
 import MacosUseSDK
 import MacosUseSDKProtos
 
@@ -30,7 +30,7 @@ public actor ElementLocator {
         fputs("info: [ElementLocator] Finding elements with selector in parent: \(parent)\n", stderr)
 
         // Parse parent to get PID and optional window ID
-        let (pid, windowId) = try parseParent(parent)
+        let (pid, _) = try parseParent(parent)
 
         // Get elements with paths
         let elementsWithPaths = try await traverseWithPaths(pid: pid, visibleOnly: visibleOnly)
@@ -66,7 +66,7 @@ public actor ElementLocator {
         fputs("info: [ElementLocator] Finding elements in region for parent: \(parent)\n", stderr)
 
         // Parse parent to get PID and optional window ID
-        let (pid, windowId) = try parseParent(parent)
+        let (pid, _) = try parseParent(parent)
 
         // Get elements with paths
         let elementsWithPaths = try await traverseWithPaths(pid: pid, visibleOnly: visibleOnly)
@@ -101,16 +101,16 @@ public actor ElementLocator {
         guard components.count == 4,
               components[0] == "applications",
               components[2] == "elements",
-              let pid = pid_t(components[1])
+              pid_t(components[1]) != nil
         else {
-            throw GRPCStatus(code: .invalidArgument, message: "Invalid element name format")
+            throw RPCError(code: .invalidArgument, message: "Invalid element name format")
         }
 
         let elementId = components[3]
 
         // Get element from registry
         guard let element = await ElementRegistry.shared.getElement(elementId) else {
-            throw GRPCStatus(code: .notFound, message: "Element not found")
+            throw RPCError(code: .notFound, message: "Element not found")
         }
 
         return element
@@ -124,17 +124,17 @@ public actor ElementLocator {
         if components.count == 2, components[0] == "applications" {
             // "applications/{pid}" - search entire application
             guard let pid = pid_t(components[1]) else {
-                throw GRPCStatus(code: .invalidArgument, message: "Invalid application PID")
+                throw RPCError(code: .invalidArgument, message: "Invalid application PID")
             }
             return (pid, nil)
         } else if components.count == 4, components[0] == "applications", components[2] == "windows" {
             // "applications/{pid}/windows/{windowId}" - search within specific window
             guard let pid = pid_t(components[1]), let windowId = CGWindowID(components[3]) else {
-                throw GRPCStatus(code: .invalidArgument, message: "Invalid window resource name")
+                throw RPCError(code: .invalidArgument, message: "Invalid window resource name")
             }
             return (pid, windowId)
         } else {
-            throw GRPCStatus(code: .invalidArgument, message: "Invalid parent format")
+            throw RPCError(code: .invalidArgument, message: "Invalid parent format")
         }
     }
 

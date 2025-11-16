@@ -8,9 +8,9 @@ import SwiftProtobuf
 
 /// This is the single, correct gRPC provider for the `MacosUse` service.
 ///
-/// It implements the generated `Macosusesdk_V1_MacosUseAsyncProvider` protocol
+/// It implements the generated `Macosusesdk_V1_MacosUse.ServiceProtocol` protocol
 /// and acts as the bridge between gRPC requests and the `AutomationCoordinator`.
-final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
+final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
     let stateStore: AppStateStore
     let operationStore: OperationStore
     let windowRegistry: WindowRegistry
@@ -31,8 +31,9 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
     // MARK: - Application Methods
 
     func openApplication(
-        request: Macosusesdk_V1_OpenApplicationRequest, context _: ServerContext,
-    ) async throws -> Google_Longrunning_Operation {
+        request: ServerRequest<Macosusesdk_V1_OpenApplicationRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Google_Longrunning_Operation> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] openApplication called\n", stderr)
 
         fputs("info: [MacosUseServiceProvider] openApplication called (LRO)\n", stderr)
@@ -43,7 +44,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         // optional metadata could include the requested id
         let metadata = try SwiftProtobuf.Google_Protobuf_Any.with {
             $0.typeURL = "type.googleapis.com/macosusesdk.v1.OpenApplicationMetadata"
-            $0.value = try Macosusesdk_V1_OpenApplicationMetadata.with { $0.id = request.id }
+            $0.value = try Macosusesdk_V1_OpenApplicationMetadata.with { $0.id = req.id }
                 .serializedData()
         }
 
@@ -53,7 +54,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         Task {
             do {
                 let app = try await AutomationCoordinator.shared.handleOpenApplication(
-                    identifier: request.id)
+                    identifier: req.id)
                 await stateStore.addTarget(app)
 
                 let response = Macosusesdk_V1_OpenApplicationResponse.with {
@@ -73,54 +74,59 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
             }
         }
 
-        return op
+        return ServerResponse(message: op)
     }
 
     func getApplication(
-        request: Macosusesdk_V1_GetApplicationRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_Application {
+        request: ServerRequest<Macosusesdk_V1_GetApplicationRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_Application> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] getApplication called\n", stderr)
-        let pid = try parsePID(fromName: request.name)
+        let pid = try parsePID(fromName: req.name)
         guard let app = await stateStore.getTarget(pid: pid) else {
-            throw GRPCStatus(code: .notFound, message: "Application not found")
+            throw RPCError(code: .notFound, message: "Application not found")
         }
-        return app
+        return ServerResponse(message: app)
     }
 
     func listApplications(
-        request _: Macosusesdk_V1_ListApplicationsRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_ListApplicationsResponse {
+        request: ServerRequest<Macosusesdk_V1_ListApplicationsRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_ListApplicationsResponse> {
+        _ = request.message
         fputs("info: [MacosUseServiceProvider] listApplications called\n", stderr)
         let apps = await stateStore.listTargets()
-        return Macosusesdk_V1_ListApplicationsResponse.with {
+        let response = Macosusesdk_V1_ListApplicationsResponse.with {
             $0.applications = apps
         }
+        return ServerResponse(message: response)
     }
 
     func deleteApplication(
-        request: Macosusesdk_V1_DeleteApplicationRequest, context _: ServerContext,
-    ) async throws -> SwiftProtobuf.Google_Protobuf_Empty {
+        request: ServerRequest<Macosusesdk_V1_DeleteApplicationRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<SwiftProtobuf.Google_Protobuf_Empty> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] deleteApplication called\n", stderr)
-        let pid = try parsePID(fromName: request.name)
+        let pid = try parsePID(fromName: req.name)
         _ = await stateStore.removeTarget(pid: pid)
-        return SwiftProtobuf.Google_Protobuf_Empty()
+        return ServerResponse(message: SwiftProtobuf.Google_Protobuf_Empty())
     }
 
     // MARK: - Input Methods
 
-    func createInput(request: Macosusesdk_V1_CreateInputRequest, context _: ServerContext)
-        async throws -> Macosusesdk_V1_Input
+    func createInput(request: ServerRequest<Macosusesdk_V1_CreateInputRequest>, context _: ServerContext)
+        async throws -> ServerResponse<Macosusesdk_V1_Input>
     {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] createInput called\n", stderr)
 
-        let inputId = request.inputID.isEmpty ? UUID().uuidString : request.inputID
-        let pid: pid_t? = request.parent.isEmpty ? nil : try parsePID(fromName: request.parent)
+        let inputId = req.inputID.isEmpty ? UUID().uuidString : req.inputID
+        let pid: pid_t? = req.parent.isEmpty ? nil : try parsePID(fromName: req.parent)
         let name =
-            request.parent.isEmpty ? "desktopInputs/\(inputId)" : "\(request.parent)/inputs/\(inputId)"
+            req.parent.isEmpty ? "desktopInputs/\(inputId)" : "\(req.parent)/inputs/\(inputId)"
 
         let input = Macosusesdk_V1_Input.with {
             $0.name = name
-            $0.action = request.input.action
+            $0.action = req.input.action
             $0.state = .pending
             $0.createTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
         }
@@ -134,17 +140,17 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
 
         do {
             try await AutomationCoordinator.shared.handleExecuteInput(
-                action: request.input.action,
+                action: req.input.action,
                 pid: pid,
-                showAnimation: request.input.action.showAnimation,
-                animationDuration: request.input.action.animationDuration,
+                showAnimation: req.input.action.showAnimation,
+                animationDuration: req.input.action.animationDuration,
             )
             // Update to completed
             var completedInput = executingInput
             completedInput.state = .completed
             completedInput.completeTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
             await stateStore.addInput(completedInput)
-            return completedInput
+            return ServerResponse(message: completedInput)
         } catch {
             // Update to failed
             var failedInput = executingInput
@@ -152,46 +158,48 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
             failedInput.error = error.localizedDescription
             failedInput.completeTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
             await stateStore.addInput(failedInput)
-            return failedInput
+            return ServerResponse(message: failedInput)
         }
     }
 
-    func getInput(request: Macosusesdk_V1_GetInputRequest, context _: ServerContext)
-        async throws -> Macosusesdk_V1_Input
+    func getInput(request: ServerRequest<Macosusesdk_V1_GetInputRequest>, context _: ServerContext)
+        async throws -> ServerResponse<Macosusesdk_V1_Input>
     {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] getInput called\n", stderr)
-        guard let input = await stateStore.getInput(name: request.name) else {
-            throw GRPCStatus(code: .notFound, message: "Input not found")
+        guard let input = await stateStore.getInput(name: req.name) else {
+            throw RPCError(code: .notFound, message: "Input not found")
         }
-        return input
+        return ServerResponse(message: input)
     }
 
-    func listInputs(request: Macosusesdk_V1_ListInputsRequest, context _: ServerContext)
-        async throws -> Macosusesdk_V1_ListInputsResponse
+    func listInputs(request: ServerRequest<Macosusesdk_V1_ListInputsRequest>, context _: ServerContext)
+        async throws -> ServerResponse<Macosusesdk_V1_ListInputsResponse>
     {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] listInputs called\n", stderr)
-        let allInputs = await stateStore.listInputs(parent: request.parent)
+        let allInputs = await stateStore.listInputs(parent: req.parent)
 
         // Sort by name for deterministic ordering
         let sortedInputs = allInputs.sorted { $0.name < $1.name }
 
         // Decode page_token to get offset
         let offset: Int
-        if request.pageToken.isEmpty {
+        if req.pageToken.isEmpty {
             offset = 0
         } else {
             // Token format: "offset:N"
-            let components = request.pageToken.split(separator: ":")
+            let components = req.pageToken.split(separator: ":")
             guard components.count == 2, components[0] == "offset",
                   let parsedOffset = Int(components[1]), parsedOffset >= 0
             else {
-                throw GRPCStatus(code: .invalidArgument, message: "Invalid page_token format")
+                throw RPCError(code: .invalidArgument, message: "Invalid page_token format")
             }
             offset = parsedOffset
         }
 
         // Determine page size (default 100 if not specified or <= 0)
-        let pageSize = request.pageSize > 0 ? Int(request.pageSize) : 100
+        let pageSize = req.pageSize > 0 ? Int(req.pageSize) : 100
         let totalCount = sortedInputs.count
 
         // Calculate slice bounds
@@ -206,98 +214,107 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
             ""
         }
 
-        return Macosusesdk_V1_ListInputsResponse.with {
+        let response = Macosusesdk_V1_ListInputsResponse.with {
             $0.inputs = pageInputs
             $0.nextPageToken = nextPageToken
         }
+        return ServerResponse(message: response)
     }
 
     // MARK: - Custom Methods
 
     func traverseAccessibility(
-        request: Macosusesdk_V1_TraverseAccessibilityRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_TraverseAccessibilityResponse {
+        request: ServerRequest<Macosusesdk_V1_TraverseAccessibilityRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_TraverseAccessibilityResponse> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] traverseAccessibility called\n", stderr)
-        let pid = try parsePID(fromName: request.name)
-        return try await AutomationCoordinator.shared.handleTraverse(
-            pid: pid, visibleOnly: request.visibleOnly,
+        let pid = try parsePID(fromName: req.name)
+        let response = try await AutomationCoordinator.shared.handleTraverse(
+            pid: pid, visibleOnly: req.visibleOnly,
         )
+        return ServerResponse(message: response)
     }
 
     func watchAccessibility(
-        request: Macosusesdk_V1_WatchAccessibilityRequest,
-        responseStream: RPCWriter<Macosusesdk_V1_WatchAccessibilityResponse>,
+        request: ServerRequest<Macosusesdk_V1_WatchAccessibilityRequest>,
         context _: ServerContext,
-    ) async throws {
+    ) async throws -> StreamingServerResponse<Macosusesdk_V1_WatchAccessibilityResponse> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] watchAccessibility called\n", stderr)
 
-        let pid = try parsePID(fromName: request.name)
-        let pollInterval = request.pollInterval > 0 ? request.pollInterval : 1.0
+        let pid = try parsePID(fromName: req.name)
+        let pollInterval = req.pollInterval > 0 ? req.pollInterval : 1.0
 
-        var previous: [Macosusesdk_Type_Element] = []
+        return StreamingServerResponse { writer in
+            var previous: [Macosusesdk_Type_Element] = []
 
-        while !Task.isCancelled {
-            do {
-                let trav = try await AutomationCoordinator.shared.handleTraverse(
-                    pid: pid, visibleOnly: request.visibleOnly,
-                )
+            while !Task.isCancelled {
+                do {
+                    let trav = try await AutomationCoordinator.shared.handleTraverse(
+                        pid: pid, visibleOnly: req.visibleOnly,
+                    )
 
-                // Naive diff: if previous empty, send all as added; otherwise send elements as modified
-                let resp = Macosusesdk_V1_WatchAccessibilityResponse.with {
-                    if previous.isEmpty {
-                        $0.added = trav.elements
-                    } else {
-                        $0.modified = trav.elements.map { element in
-                            Macosusesdk_V1_ModifiedElement.with {
-                                $0.oldElement = Macosusesdk_Type_Element()
-                                $0.newElement = element
+                    // Naive diff: if previous empty, send all as added; otherwise send elements as modified
+                    let resp = Macosusesdk_V1_WatchAccessibilityResponse.with {
+                        if previous.isEmpty {
+                            $0.added = trav.elements
+                        } else {
+                            $0.modified = trav.elements.map { element in
+                                Macosusesdk_V1_ModifiedElement.with {
+                                    $0.oldElement = Macosusesdk_Type_Element()
+                                    $0.newElement = element
+                                }
                             }
                         }
                     }
+
+                    try await writer.write(resp)
+                    previous = trav.elements
+                } catch {
+                    // send an empty heartbeat to keep client alive
+                    _ = try? await writer.write(Macosusesdk_V1_WatchAccessibilityResponse())
                 }
 
-                try await responseStream.send(resp)
-                previous = trav.elements
-            } catch {
-                // send an empty heartbeat to keep client alive
-                _ = try? await responseStream.send(Macosusesdk_V1_WatchAccessibilityResponse())
+                // Sleep for interval, but allow task cancellation to stop
+                try await Task.sleep(nanoseconds: UInt64(pollInterval * 1_000_000_000))
             }
 
-            // Sleep for interval, but allow task cancellation to stop
-            try await Task.sleep(nanoseconds: UInt64(pollInterval * 1_000_000_000))
+            // Return trailing metadata
+            return [:]
         }
     }
 
     // MARK: - Window Methods
 
     func getWindow(
-        request: Macosusesdk_V1_GetWindowRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_Window {
+        request: ServerRequest<Macosusesdk_V1_GetWindowRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] getWindow called\n", stderr)
         // Parse "applications/{pid}/windows/{windowId}"
-        let components = request.name.split(separator: "/")
+        let components = req.name.split(separator: "/")
         guard components.count == 4,
               components[0] == "applications",
               components[2] == "windows",
               let pid = pid_t(components[1]),
               let windowId = CGWindowID(components[3])
         else {
-            throw GRPCStatus(code: .invalidArgument, message: "Invalid window name format")
+            throw RPCError(code: .invalidArgument, message: "Invalid window name format")
         }
 
         let registry = WindowRegistry()
         try await registry.refreshWindows(forPID: pid)
 
         guard let windowInfo = try await registry.getWindow(windowId) else {
-            throw GRPCStatus(code: .notFound, message: "Window not found")
+            throw RPCError(code: .notFound, message: "Window not found")
         }
 
         // Get AXUIElement for additional state
         let windowElement = try findWindowElement(pid: pid, windowId: windowId)
         let (minimized, focused, fullscreen) = getWindowState(window: windowElement)
 
-        return Macosusesdk_V1_Window.with {
-            $0.name = request.name
+        let response = Macosusesdk_V1_Window.with {
+            $0.name = req.name
             $0.title = windowInfo.title
             $0.bounds = Macosusesdk_V1_Bounds.with {
                 $0.x = windowInfo.bounds.origin.x
@@ -312,15 +329,17 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
             $0.fullscreen = fullscreen
             $0.state = Macosusesdk_V1_WindowState() // TODO: Query window attributes
         }
+        return ServerResponse(message: response)
     }
 
     func listWindows(
-        request: Macosusesdk_V1_ListWindowsRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_ListWindowsResponse {
+        request: ServerRequest<Macosusesdk_V1_ListWindowsRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_ListWindowsResponse> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] listWindows called\n", stderr)
 
         // Parse "applications/{pid}"
-        let pid = try parsePID(fromName: request.parent)
+        let pid = try parsePID(fromName: req.parent)
 
         let registry = WindowRegistry()
         try await registry.refreshWindows(forPID: pid)
@@ -331,21 +350,21 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
 
         // Decode page_token to get offset
         let offset: Int
-        if request.pageToken.isEmpty {
+        if req.pageToken.isEmpty {
             offset = 0
         } else {
             // Token format: "offset:N"
-            let components = request.pageToken.split(separator: ":")
+            let components = req.pageToken.split(separator: ":")
             guard components.count == 2, components[0] == "offset",
                   let parsedOffset = Int(components[1]), parsedOffset >= 0
             else {
-                throw GRPCStatus(code: .invalidArgument, message: "Invalid page_token format")
+                throw RPCError(code: .invalidArgument, message: "Invalid page_token format")
             }
             offset = parsedOffset
         }
 
         // Determine page size (default 100 if not specified or <= 0)
-        let pageSize = request.pageSize > 0 ? Int(request.pageSize) : 100
+        let pageSize = req.pageSize > 0 ? Int(req.pageSize) : 100
         let totalCount = sortedWindowInfos.count
 
         // Calculate slice bounds
@@ -379,26 +398,28 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
             }
         }
 
-        return Macosusesdk_V1_ListWindowsResponse.with {
+        let response = Macosusesdk_V1_ListWindowsResponse.with {
             $0.windows = windows
             $0.nextPageToken = nextPageToken
         }
+        return ServerResponse(message: response)
     }
 
     func focusWindow(
-        request: Macosusesdk_V1_FocusWindowRequest, context: ServerContext,
-    ) async throws -> Macosusesdk_V1_Window {
+        request: ServerRequest<Macosusesdk_V1_FocusWindowRequest>, context: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] focusWindow called\n", stderr)
 
         // Parse "applications/{pid}/windows/{windowId}"
-        let components = request.name.split(separator: "/").map(String.init)
+        let components = req.name.split(separator: "/").map(String.init)
         guard components.count == 4,
               components[0] == "applications",
               components[2] == "windows",
               let pid = pid_t(components[1]),
               let windowId = CGWindowID(components[3])
         else {
-            throw GRPCStatus(code: .invalidArgument, message: "Invalid window name format")
+            throw RPCError(code: .invalidArgument, message: "Invalid window name format")
         }
 
         let windowToFocus = try findWindowElement(pid: pid, windowId: windowId)
@@ -408,37 +429,38 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
             windowToFocus, kAXMainAttribute as CFString, kCFBooleanTrue,
         )
         guard mainResult == .success else {
-            throw GRPCStatus(code: .internalError, message: "Failed to focus window")
+            throw RPCError(code: .internalError, message: "Failed to focus window")
         }
 
         // Return updated window state
         return try await getWindow(
-            request: Macosusesdk_V1_GetWindowRequest.with { $0.name = request.name }, context: context,
+            request: ServerRequest(metadata: request.metadata, message: Macosusesdk_V1_GetWindowRequest.with { $0.name = req.name }), context: context,
         )
     }
 
     func moveWindow(
-        request: Macosusesdk_V1_MoveWindowRequest, context: ServerContext,
-    ) async throws -> Macosusesdk_V1_Window {
+        request: ServerRequest<Macosusesdk_V1_MoveWindowRequest>, context: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] moveWindow called\n", stderr)
 
         // Parse "applications/{pid}/windows/{windowId}"
-        let components = request.name.split(separator: "/").map(String.init)
+        let components = req.name.split(separator: "/").map(String.init)
         guard components.count == 4,
               components[0] == "applications",
               components[2] == "windows",
               let pid = pid_t(components[1]),
               let windowId = CGWindowID(components[3])
         else {
-            throw GRPCStatus(code: .invalidArgument, message: "Invalid window name format")
+            throw RPCError(code: .invalidArgument, message: "Invalid window name format")
         }
 
         let window = try findWindowElement(pid: pid, windowId: windowId)
 
         // Create AXValue for new position
-        var newPosition = CGPoint(x: request.x, y: request.y)
+        var newPosition = CGPoint(x: req.x, y: req.y)
         guard let positionValue = AXValueCreate(.cgPoint, &newPosition) else {
-            throw GRPCStatus(code: .internalError, message: "Failed to create position value")
+            throw RPCError(code: .internalError, message: "Failed to create position value")
         }
 
         // Set position
@@ -446,69 +468,71 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
             window, kAXPositionAttribute as CFString, positionValue,
         )
         guard setResult == .success else {
-            throw GRPCStatus(
+            throw RPCError(
                 code: .internalError, message: "Failed to move window: \(setResult.rawValue)",
             )
         }
 
         // Return updated window state
         return try await getWindow(
-            request: Macosusesdk_V1_GetWindowRequest.with { $0.name = request.name }, context: context,
+            request: ServerRequest(metadata: request.metadata, message: Macosusesdk_V1_GetWindowRequest.with { $0.name = req.name }), context: context,
         )
     }
 
     func resizeWindow(
-        request: Macosusesdk_V1_ResizeWindowRequest, context: ServerContext,
-    ) async throws -> Macosusesdk_V1_Window {
+        request: ServerRequest<Macosusesdk_V1_ResizeWindowRequest>, context: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] resizeWindow called\n", stderr)
 
         // Parse "applications/{pid}/windows/{windowId}"
-        let components = request.name.split(separator: "/").map(String.init)
+        let components = req.name.split(separator: "/").map(String.init)
         guard components.count == 4,
               components[0] == "applications",
               components[2] == "windows",
               let pid = pid_t(components[1]),
               let windowId = CGWindowID(components[3])
         else {
-            throw GRPCStatus(code: .invalidArgument, message: "Invalid window name format")
+            throw RPCError(code: .invalidArgument, message: "Invalid window name format")
         }
 
         let window = try findWindowElement(pid: pid, windowId: windowId)
 
         // Create AXValue for new size
-        var newSize = CGSize(width: request.width, height: request.height)
+        var newSize = CGSize(width: req.width, height: req.height)
         guard let sizeValue = AXValueCreate(.cgSize, &newSize) else {
-            throw GRPCStatus(code: .internalError, message: "Failed to create size value")
+            throw RPCError(code: .internalError, message: "Failed to create size value")
         }
 
         // Set size
         let setResult = AXUIElementSetAttributeValue(window, kAXSizeAttribute as CFString, sizeValue)
         guard setResult == .success else {
-            throw GRPCStatus(
+            throw RPCError(
                 code: .internalError, message: "Failed to resize window: \(setResult.rawValue)",
             )
         }
 
         // Return updated window state
         return try await getWindow(
-            request: Macosusesdk_V1_GetWindowRequest.with { $0.name = request.name }, context: context,
+            request: ServerRequest(metadata: request.metadata, message: Macosusesdk_V1_GetWindowRequest.with { $0.name = req.name }), context: context,
         )
     }
 
     func minimizeWindow(
-        request: Macosusesdk_V1_MinimizeWindowRequest, context: ServerContext,
-    ) async throws -> Macosusesdk_V1_Window {
+        request: ServerRequest<Macosusesdk_V1_MinimizeWindowRequest>, context: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] minimizeWindow called\n", stderr)
 
         // Parse "applications/{pid}/windows/{windowId}"
-        let components = request.name.split(separator: "/").map(String.init)
+        let components = req.name.split(separator: "/").map(String.init)
         guard components.count == 4,
               components[0] == "applications",
               components[2] == "windows",
               let pid = pid_t(components[1]),
               let windowId = CGWindowID(components[3])
         else {
-            throw GRPCStatus(code: .invalidArgument, message: "Invalid window name format")
+            throw RPCError(code: .invalidArgument, message: "Invalid window name format")
         }
 
         let window = try findWindowElement(pid: pid, windowId: windowId)
@@ -518,31 +542,32 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
             window, kAXMinimizedAttribute as CFString, kCFBooleanTrue,
         )
         guard setResult == .success else {
-            throw GRPCStatus(
+            throw RPCError(
                 code: .internalError, message: "Failed to minimize window: \(setResult.rawValue)",
             )
         }
 
         // Return updated window state
         return try await getWindow(
-            request: Macosusesdk_V1_GetWindowRequest.with { $0.name = request.name }, context: context,
+            request: ServerRequest(metadata: request.metadata, message: Macosusesdk_V1_GetWindowRequest.with { $0.name = req.name }), context: context,
         )
     }
 
     func restoreWindow(
-        request: Macosusesdk_V1_RestoreWindowRequest, context: ServerContext,
-    ) async throws -> Macosusesdk_V1_Window {
+        request: ServerRequest<Macosusesdk_V1_RestoreWindowRequest>, context: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] restoreWindow called\n", stderr)
 
         // Parse "applications/{pid}/windows/{windowId}"
-        let components = request.name.split(separator: "/").map(String.init)
+        let components = req.name.split(separator: "/").map(String.init)
         guard components.count == 4,
               components[0] == "applications",
               components[2] == "windows",
               let pid = pid_t(components[1]),
               let windowId = CGWindowID(components[3])
         else {
-            throw GRPCStatus(code: .invalidArgument, message: "Invalid window name format")
+            throw RPCError(code: .invalidArgument, message: "Invalid window name format")
         }
 
         let window = try findWindowElement(pid: pid, windowId: windowId)
@@ -552,31 +577,32 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
             window, kAXMinimizedAttribute as CFString, kCFBooleanFalse,
         )
         guard setResult == .success else {
-            throw GRPCStatus(
+            throw RPCError(
                 code: .internalError, message: "Failed to restore window: \(setResult.rawValue)",
             )
         }
 
         // Return updated window state
         return try await getWindow(
-            request: Macosusesdk_V1_GetWindowRequest.with { $0.name = request.name }, context: context,
+            request: ServerRequest(metadata: request.metadata, message: Macosusesdk_V1_GetWindowRequest.with { $0.name = req.name }), context: context,
         )
     }
 
     func closeWindow(
-        request: Macosusesdk_V1_CloseWindowRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_CloseWindowResponse {
+        request: ServerRequest<Macosusesdk_V1_CloseWindowRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_CloseWindowResponse> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] closeWindow called\n", stderr)
 
         // Parse "applications/{pid}/windows/{windowId}"
-        let components = request.name.split(separator: "/").map(String.init)
+        let components = req.name.split(separator: "/").map(String.init)
         guard components.count == 4,
               components[0] == "applications",
               components[2] == "windows",
               let pid = pid_t(components[1]),
               let windowId = CGWindowID(components[3])
         else {
-            throw GRPCStatus(code: .invalidArgument, message: "Invalid window name format")
+            throw RPCError(code: .invalidArgument, message: "Invalid window name format")
         }
 
         let window = try findWindowElement(pid: pid, windowId: windowId)
@@ -590,7 +616,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
               let unwrappedCloseButtonValue = closeButtonValue,
               CFGetTypeID(unwrappedCloseButtonValue) == AXUIElementGetTypeID()
         else {
-            throw GRPCStatus(code: .internalError, message: "Failed to get close button")
+            throw RPCError(code: .internalError, message: "Failed to get close button")
         }
 
         let closeButton = unsafeDowncast(unwrappedCloseButtonValue, to: AXUIElement.self)
@@ -598,48 +624,49 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         // Press the close button
         let pressResult = AXUIElementPerformAction(closeButton, kAXPressAction as CFString)
         guard pressResult == .success else {
-            throw GRPCStatus(
+            throw RPCError(
                 code: .internalError, message: "Failed to close window: \(pressResult.rawValue)",
             )
         }
 
-        return Macosusesdk_V1_CloseWindowResponse()
+        return ServerResponse(message: Macosusesdk_V1_CloseWindowResponse())
     }
 
     // MARK: - Element Methods
 
     func findElements(
-        request: Macosusesdk_V1_FindElementsRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_FindElementsResponse {
+        request: ServerRequest<Macosusesdk_V1_FindElementsRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_FindElementsResponse> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] findElements called\n", stderr)
 
         // Validate and parse the selector
-        let selector = try SelectorParser.shared.parseSelector(request.selector)
+        let selector = try SelectorParser.shared.parseSelector(req.selector)
 
         // Decode page_token to get offset
         let offset: Int
-        if request.pageToken.isEmpty {
+        if req.pageToken.isEmpty {
             offset = 0
         } else {
             // Token format: "offset:N"
-            let components = request.pageToken.split(separator: ":")
+            let components = req.pageToken.split(separator: ":")
             guard components.count == 2, components[0] == "offset",
                   let parsedOffset = Int(components[1]), parsedOffset >= 0
             else {
-                throw GRPCStatus(code: .invalidArgument, message: "Invalid page_token format")
+                throw RPCError(code: .invalidArgument, message: "Invalid page_token format")
             }
             offset = parsedOffset
         }
 
         // Determine page size (default 100 if not specified or <= 0)
-        let pageSize = request.pageSize > 0 ? Int(request.pageSize) : 100
+        let pageSize = req.pageSize > 0 ? Int(req.pageSize) : 100
 
         // Find elements using ElementLocator (request more than needed to check if there's a next page)
         let maxResults = offset + pageSize + 1 // Request one extra to detect next page
         let elementsWithPaths = try await ElementLocator.shared.findElements(
             selector: selector,
-            parent: request.parent,
-            visibleOnly: request.visibleOnly,
+            parent: req.parent,
+            visibleOnly: req.visibleOnly,
             maxResults: maxResults,
         )
 
@@ -658,7 +685,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
 
         // Convert to proto elements and register them
         var elements = [Macosusesdk_Type_Element]()
-        let pid = try parsePID(fromName: request.parent)
+        let pid = try parsePID(fromName: req.parent)
         for (element, path) in pageElementsWithPaths {
             let protoElement = element
             // Generate and assign element ID
@@ -669,45 +696,47 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
             elements.append(protoWithId)
         }
 
-        return Macosusesdk_V1_FindElementsResponse.with {
+        let response = Macosusesdk_V1_FindElementsResponse.with {
             $0.elements = elements
             $0.nextPageToken = nextPageToken
         }
+        return ServerResponse(message: response)
     }
 
     func findRegionElements(
-        request: Macosusesdk_V1_FindRegionElementsRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_FindRegionElementsResponse {
+        request: ServerRequest<Macosusesdk_V1_FindRegionElementsRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_FindRegionElementsResponse> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] findRegionElements called\n", stderr)
 
         // Validate selector if provided
         let selector =
-            request.hasSelector ? try SelectorParser.shared.parseSelector(request.selector) : nil
+            req.hasSelector ? try SelectorParser.shared.parseSelector(req.selector) : nil
 
         // Decode page_token to get offset
         let offset: Int
-        if request.pageToken.isEmpty {
+        if req.pageToken.isEmpty {
             offset = 0
         } else {
             // Token format: "offset:N"
-            let components = request.pageToken.split(separator: ":")
+            let components = req.pageToken.split(separator: ":")
             guard components.count == 2, components[0] == "offset",
                   let parsedOffset = Int(components[1]), parsedOffset >= 0
             else {
-                throw GRPCStatus(code: .invalidArgument, message: "Invalid page_token format")
+                throw RPCError(code: .invalidArgument, message: "Invalid page_token format")
             }
             offset = parsedOffset
         }
 
         // Determine page size (default 100 if not specified or <= 0)
-        let pageSize = request.pageSize > 0 ? Int(request.pageSize) : 100
+        let pageSize = req.pageSize > 0 ? Int(req.pageSize) : 100
 
         // Find elements in region using ElementLocator (request more than needed to check if there's a next page)
         let maxResults = offset + pageSize + 1 // Request one extra to detect next page
         let elementsWithPaths = try await ElementLocator.shared.findElementsInRegion(
-            region: request.region,
+            region: req.region,
             selector: selector,
-            parent: request.parent,
+            parent: req.parent,
             visibleOnly: false, // Region search doesn't have visibleOnly parameter
             maxResults: maxResults,
         )
@@ -727,7 +756,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
 
         // Convert to proto elements and register them
         var elements = [Macosusesdk_Type_Element]()
-        let pid = try parsePID(fromName: request.parent)
+        let pid = try parsePID(fromName: req.parent)
         for (element, path) in pageElementsWithPaths {
             let protoElement = element
             // Generate and assign element ID
@@ -738,70 +767,74 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
             elements.append(protoWithId)
         }
 
-        return Macosusesdk_V1_FindRegionElementsResponse.with {
+        let response = Macosusesdk_V1_FindRegionElementsResponse.with {
             $0.elements = elements
             $0.nextPageToken = nextPageToken
         }
+        return ServerResponse(message: response)
     }
 
     func getElement(
-        request: Macosusesdk_V1_GetElementRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_Type_Element {
+        request: ServerRequest<Macosusesdk_V1_GetElementRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_Type_Element> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] getElement called\n", stderr)
 
-        return try await ElementLocator.shared.getElement(name: request.name)
+        let response = try await ElementLocator.shared.getElement(name: req.name)
+        return ServerResponse(message: response)
     }
 
     func clickElement(
-        request: Macosusesdk_V1_ClickElementRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_ClickElementResponse {
+        request: ServerRequest<Macosusesdk_V1_ClickElementRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_ClickElementResponse> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] clickElement called\n", stderr)
 
         let element: Macosusesdk_Type_Element
         let pid: pid_t
 
         // Find the element to click
-        switch request.target {
+        switch req.target {
         case let .elementID(elementId):
             // Get element by ID
             guard let foundElement = await ElementRegistry.shared.getElement(elementId) else {
-                throw GRPCStatus(code: .notFound, message: "Element not found")
+                throw RPCError(code: .notFound, message: "Element not found")
             }
             element = foundElement
-            pid = try parsePID(fromName: request.parent)
+            pid = try parsePID(fromName: req.parent)
 
         case let .selector(selector):
             // Find element by selector
             let validatedSelector = try SelectorParser.shared.parseSelector(selector)
             let elementsWithPaths = try await ElementLocator.shared.findElements(
                 selector: validatedSelector,
-                parent: request.parent,
+                parent: req.parent,
                 visibleOnly: true,
                 maxResults: 1,
             )
 
             guard let firstElement = elementsWithPaths.first else {
-                throw GRPCStatus(code: .notFound, message: "No element found matching selector")
+                throw RPCError(code: .notFound, message: "No element found matching selector")
             }
 
             element = firstElement.element
-            pid = try parsePID(fromName: request.parent)
+            pid = try parsePID(fromName: req.parent)
 
         case .none:
-            throw GRPCStatus(
+            throw RPCError(
                 code: .invalidArgument, message: "Either element_id or selector must be specified",
             )
         }
 
         // Get element position for clicking
         guard element.hasX, element.hasY else {
-            throw GRPCStatus(code: .failedPrecondition, message: "Element has no position information")
+            throw RPCError(code: .failedPrecondition, message: "Element has no position information")
         }
         let x = element.x
         let y = element.y
 
         // Determine click type
-        let clickType = request.clickType
+        let clickType = req.clickType
 
         // Perform the click using AutomationCoordinator
         switch clickType {
@@ -860,54 +893,56 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
             )
         }
 
-        return Macosusesdk_V1_ClickElementResponse.with {
+        let response = Macosusesdk_V1_ClickElementResponse.with {
             $0.success = true
             $0.element = element
         }
+        return ServerResponse(message: response)
     }
 
     func writeElementValue(
-        request: Macosusesdk_V1_WriteElementValueRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_WriteElementValueResponse {
+        request: ServerRequest<Macosusesdk_V1_WriteElementValueRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_WriteElementValueResponse> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] writeElementValue called\n", stderr)
 
         let element: Macosusesdk_Type_Element
         let pid: pid_t
 
         // Find the element to modify
-        switch request.target {
+        switch req.target {
         case let .elementID(elementId):
             guard let foundElement = await ElementRegistry.shared.getElement(elementId) else {
-                throw GRPCStatus(code: .notFound, message: "Element not found")
+                throw RPCError(code: .notFound, message: "Element not found")
             }
             element = foundElement
-            pid = try parsePID(fromName: request.parent)
+            pid = try parsePID(fromName: req.parent)
 
         case let .selector(selector):
             let validatedSelector = try SelectorParser.shared.parseSelector(selector)
             let elementsWithPaths = try await ElementLocator.shared.findElements(
                 selector: validatedSelector,
-                parent: request.parent,
+                parent: req.parent,
                 visibleOnly: true,
                 maxResults: 1,
             )
 
             guard let firstElement = elementsWithPaths.first else {
-                throw GRPCStatus(code: .notFound, message: "No element found matching selector")
+                throw RPCError(code: .notFound, message: "No element found matching selector")
             }
 
             element = firstElement.element
-            pid = try parsePID(fromName: request.parent)
+            pid = try parsePID(fromName: req.parent)
 
         case .none:
-            throw GRPCStatus(
+            throw RPCError(
                 code: .invalidArgument, message: "Either element_id or selector must be specified",
             )
         }
 
         // Get element position for typing
         guard element.hasX, element.hasY else {
-            throw GRPCStatus(code: .failedPrecondition, message: "Element has no position information")
+            throw RPCError(code: .failedPrecondition, message: "Element has no position information")
         }
         let x = element.x
         let y = element.y
@@ -935,7 +970,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
             action: Macosusesdk_V1_InputAction.with {
                 $0.inputType = .typeText(
                     Macosusesdk_V1_TextInput.with {
-                        $0.text = request.value
+                        $0.text = req.value
                     })
             },
             pid: pid,
@@ -943,32 +978,34 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
             animationDuration: 0,
         )
 
-        return Macosusesdk_V1_WriteElementValueResponse.with {
+        let response = Macosusesdk_V1_WriteElementValueResponse.with {
             $0.success = true
             $0.element = element
         }
+        return ServerResponse(message: response)
     }
 
     @MainActor
     func getElementActions(
-        request: Macosusesdk_V1_GetElementActionsRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_ElementActions {
+        request: ServerRequest<Macosusesdk_V1_GetElementActionsRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_ElementActions> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] getElementActions called\n", stderr)
 
         // Parse element name to get element ID
-        let components = request.name.split(separator: "/").map(String.init)
+        let components = req.name.split(separator: "/").map(String.init)
         guard components.count == 4,
               components[0] == "applications",
               components[2] == "elements"
         else {
-            throw GRPCStatus(code: .invalidArgument, message: "Invalid element name format")
+            throw RPCError(code: .invalidArgument, message: "Invalid element name format")
         }
 
         let elementId = components[3]
 
         // Get element from registry
         guard let element = await ElementRegistry.shared.getElement(elementId) else {
-            throw GRPCStatus(code: .notFound, message: "Element not found")
+            throw RPCError(code: .notFound, message: "Element not found")
         }
 
         // Try to get actions from AXUIElement first
@@ -979,28 +1016,32 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
             else {
                 // Fallback to role-based if query fails
                 let actions = getActionsForRole(element.role)
-                return Macosusesdk_V1_ElementActions.with { $0.actions = actions }
+                let response = Macosusesdk_V1_ElementActions.with { $0.actions = actions }
+                return ServerResponse(message: response)
             }
 
             if let actionsArray = value as? [String] {
-                return Macosusesdk_V1_ElementActions.with {
+                let response = Macosusesdk_V1_ElementActions.with {
                     $0.actions = actionsArray
                 }
+                return ServerResponse(message: response)
             }
         }
 
         // Fallback to role-based actions
         let actions = getActionsForRole(element.role)
 
-        return Macosusesdk_V1_ElementActions.with {
+        let response = Macosusesdk_V1_ElementActions.with {
             $0.actions = actions
         }
+        return ServerResponse(message: response)
     }
 
     @MainActor
     func performElementAction(
-        request: Macosusesdk_V1_PerformElementActionRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_PerformElementActionResponse {
+        request: ServerRequest<Macosusesdk_V1_PerformElementActionRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_PerformElementActionResponse> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] performElementAction called\n", stderr)
 
         let element: Macosusesdk_Type_Element
@@ -1008,34 +1049,34 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         let pid: pid_t
 
         // Find the element
-        switch request.target {
+        switch req.target {
         case let .elementID(id):
             guard let foundElement = await ElementRegistry.shared.getElement(id) else {
-                throw GRPCStatus(code: .notFound, message: "Element not found")
+                throw RPCError(code: .notFound, message: "Element not found")
             }
             element = foundElement
             elementID = id
-            pid = try parsePID(fromName: request.parent)
+            pid = try parsePID(fromName: req.parent)
 
         case let .selector(selector):
             let validatedSelector = try SelectorParser.shared.parseSelector(selector)
             let elementsWithPaths = try await ElementLocator.shared.findElements(
                 selector: validatedSelector,
-                parent: request.parent,
+                parent: req.parent,
                 visibleOnly: true,
                 maxResults: 1,
             )
 
             guard let firstElement = elementsWithPaths.first else {
-                throw GRPCStatus(code: .notFound, message: "No element found matching selector")
+                throw RPCError(code: .notFound, message: "No element found matching selector")
             }
 
             element = firstElement.element
             elementID = element.elementID
-            pid = try parsePID(fromName: request.parent)
+            pid = try parsePID(fromName: req.parent)
 
         case .none:
-            throw GRPCStatus(
+            throw RPCError(
                 code: .invalidArgument, message: "Either element_id or selector must be specified",
             )
         }
@@ -1045,29 +1086,30 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
             let actionName: String
 
                 // Map common action names to AX action constants
-                = switch request.action.lowercased()
+                = switch req.action.lowercased()
             {
             case "press", "click":
                 kAXPressAction as String
             case "showmenu", "openmenu":
                 kAXShowMenuAction as String
             default:
-                request.action
+                req.action
             }
 
             // Perform the AX action
             let result = AXUIElementPerformAction(axElement, actionName as CFString)
 
             if result == .success {
-                return Macosusesdk_V1_PerformElementActionResponse.with {
+                let response = Macosusesdk_V1_PerformElementActionResponse.with {
                     $0.success = true
                     $0.element = element
                 }
+                return ServerResponse(message: response)
             }
 
             // If action failed but element has position, fall through to coordinate-based fallback
             if !element.hasX || !element.hasY {
-                throw GRPCStatus(
+                throw RPCError(
                     code: .internalError,
                     message: "AX action failed: \(result.rawValue) and no position available for fallback",
                 )
@@ -1076,7 +1118,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
 
         // Fallback to coordinate-based simulation if AXUIElement is nil or action failed
         guard element.hasX, element.hasY else {
-            throw GRPCStatus(
+            throw RPCError(
                 code: .failedPrecondition, message: "Element has no AXUIElement and no position for action",
             )
         }
@@ -1084,7 +1126,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         let x = element.x
         let y = element.y
 
-        switch request.action.lowercased() {
+        switch req.action.lowercased() {
         case "press", "click":
             try await AutomationCoordinator.shared.handleExecuteInput(
                 action: Macosusesdk_V1_InputAction.with {
@@ -1122,24 +1164,26 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
             )
 
         default:
-            throw GRPCStatus(
-                code: .unimplemented, message: "Action '\(request.action)' is not implemented",
+            throw RPCError(
+                code: .unimplemented, message: "Action '\(req.action)' is not implemented",
             )
         }
 
-        return Macosusesdk_V1_PerformElementActionResponse.with {
+        let response = Macosusesdk_V1_PerformElementActionResponse.with {
             $0.success = true
             $0.element = element
         }
+        return ServerResponse(message: response)
     }
 
     func waitElement(
-        request: Macosusesdk_V1_WaitElementRequest, context _: ServerContext,
-    ) async throws -> Google_Longrunning_Operation {
+        request: ServerRequest<Macosusesdk_V1_WaitElementRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Google_Longrunning_Operation> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] waitElement called (LRO)\n", stderr)
 
         // Validate selector
-        let selector = try SelectorParser.shared.parseSelector(request.selector)
+        let selector = try SelectorParser.shared.parseSelector(req.selector)
 
         // Create LRO
         let opName = "operations/waitElement/\(UUID().uuidString)"
@@ -1156,8 +1200,8 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         // Start background task
         Task {
             do {
-                let timeout = request.timeout > 0 ? request.timeout : 30.0
-                let pollInterval = request.pollInterval > 0 ? request.pollInterval : 0.5
+                let timeout = req.timeout > 0 ? req.timeout : 30.0
+                let pollInterval = req.pollInterval > 0 ? req.pollInterval : 0.5
                 let endTime = Date().timeIntervalSince1970 + timeout
                 var attempts = 0
 
@@ -1179,7 +1223,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
                     // Try to find the element
                     let elementsWithPaths = try await ElementLocator.shared.findElements(
                         selector: selector,
-                        parent: request.parent,
+                        parent: req.parent,
                         visibleOnly: true,
                         maxResults: 1,
                     )
@@ -1188,7 +1232,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
                         // Element found! Complete the operation
                         var elementWithId = firstElement.element
                         let elementId = try await ElementRegistry.shared.registerElement(
-                            elementWithId, pid: parsePID(fromName: request.parent),
+                            elementWithId, pid: parsePID(fromName: req.parent),
                         )
                         elementWithId.elementID = elementId
                         elementWithId.path = firstElement.path
@@ -1209,7 +1253,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
                 var failedOp = await operationStore.getOperation(name: opName) ?? op
                 failedOp.done = true
                 failedOp.error = Google_Rpc_Status.with {
-                    $0.code = Int32(GRPCStatus.Code.deadlineExceeded.rawValue)
+                    $0.code = Int32(RPCError.Code.deadlineExceeded.rawValue)
                     $0.message = "Element did not appear within timeout"
                 }
                 await operationStore.putOperation(failedOp)
@@ -1219,31 +1263,32 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
                 var errOp = await operationStore.getOperation(name: opName) ?? op
                 errOp.done = true
                 errOp.error = Google_Rpc_Status.with {
-                    $0.code = Int32(GRPCStatus.Code.internalError.rawValue)
+                    $0.code = Int32(RPCError.Code.internalError.rawValue)
                     $0.message = "\(error)"
                 }
                 await operationStore.putOperation(errOp)
             }
         }
 
-        return op
+        return ServerResponse(message: op)
     }
 
     func waitElementState(
-        request: Macosusesdk_V1_WaitElementStateRequest, context _: ServerContext,
-    ) async throws -> Google_Longrunning_Operation {
+        request: ServerRequest<Macosusesdk_V1_WaitElementStateRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Google_Longrunning_Operation> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] waitElementState called (LRO)\n", stderr)
 
         // Store the original selector for re-running, or create one for elementId case
         let selectorToUse: Macosusesdk_Type_ElementSelector
         let pid: pid_t
 
-        switch request.target {
+        switch req.target {
         case let .elementID(elementID):
             guard let foundElement = await ElementRegistry.shared.getElement(elementID) else {
-                throw GRPCStatus(code: .notFound, message: "Element not found")
+                throw RPCError(code: .notFound, message: "Element not found")
             }
-            pid = try parsePID(fromName: request.parent)
+            pid = try parsePID(fromName: req.parent)
 
             // Create a selector based on the element's stable attributes
             // This is a fallback - ideally we'd store the original selector
@@ -1264,10 +1309,10 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
 
         case let .selector(selector):
             selectorToUse = try SelectorParser.shared.parseSelector(selector)
-            pid = try parsePID(fromName: request.parent)
+            pid = try parsePID(fromName: req.parent)
 
         case .none:
-            throw GRPCStatus(
+            throw RPCError(
                 code: .invalidArgument, message: "Either element_id or selector must be specified",
             )
         }
@@ -1277,7 +1322,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         let metadata = try SwiftProtobuf.Google_Protobuf_Any.with {
             $0.typeURL = "type.googleapis.com/macosusesdk.v1.WaitElementStateMetadata"
             $0.value = try Macosusesdk_V1_WaitElementStateMetadata.with {
-                $0.condition = request.condition
+                $0.condition = req.condition
                 $0.attempts = 0
             }.serializedData()
         }
@@ -1287,8 +1332,8 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         // Start background task
         Task {
             do {
-                let timeout = request.timeout > 0 ? request.timeout : 30.0
-                let pollInterval = request.pollInterval > 0 ? request.pollInterval : 0.5
+                let timeout = req.timeout > 0 ? req.timeout : 30.0
+                let pollInterval = req.pollInterval > 0 ? req.pollInterval : 0.5
                 let endTime = Date().timeIntervalSince1970 + timeout
                 var attempts = 0
 
@@ -1297,7 +1342,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
 
                     // Update metadata with attempt count
                     let updatedMetadata = Macosusesdk_V1_WaitElementStateMetadata.with {
-                        $0.condition = request.condition
+                        $0.condition = req.condition
                         $0.attempts = Int32(attempts)
                     }
                     var updatedOp = await operationStore.getOperation(name: opName) ?? op
@@ -1310,13 +1355,13 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
                     // Re-run the selector to find the current element
                     let elementsWithPaths = try await ElementLocator.shared.findElements(
                         selector: selectorToUse,
-                        parent: request.parent,
+                        parent: req.parent,
                         visibleOnly: true,
                         maxResults: 1,
                     )
 
                     if let currentElementWithPath = elementsWithPaths.first,
-                       elementMatchesCondition(currentElementWithPath.element, condition: request.condition)
+                       elementMatchesCondition(currentElementWithPath.element, condition: req.condition)
                     {
                         // Condition met! Complete the operation
                         var elementWithId = currentElementWithPath.element
@@ -1340,7 +1385,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
                 var failedOp = await operationStore.getOperation(name: opName) ?? op
                 failedOp.done = true
                 failedOp.error = Google_Rpc_Status.with {
-                    $0.code = Int32(GRPCStatus.Code.deadlineExceeded.rawValue)
+                    $0.code = Int32(RPCError.Code.deadlineExceeded.rawValue)
                     $0.message = "Element did not reach expected state within timeout"
                 }
                 await operationStore.putOperation(failedOp)
@@ -1350,30 +1395,31 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
                 var errOp = await operationStore.getOperation(name: opName) ?? op
                 errOp.done = true
                 errOp.error = Google_Rpc_Status.with {
-                    $0.code = Int32(GRPCStatus.Code.internalError.rawValue)
+                    $0.code = Int32(RPCError.Code.internalError.rawValue)
                     $0.message = "\(error)"
                 }
                 await operationStore.putOperation(errOp)
             }
         }
 
-        return op
+        return ServerResponse(message: op)
     }
 
     // MARK: - Observation Methods
 
     func createObservation(
-        request: Macosusesdk_V1_CreateObservationRequest, context _: ServerContext,
-    ) async throws -> Google_Longrunning_Operation {
+        request: ServerRequest<Macosusesdk_V1_CreateObservationRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Google_Longrunning_Operation> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] createObservation called (LRO)\n", stderr)
 
         // Parse parent resource name to get PID
-        let pid = try parsePID(fromName: request.parent)
+        let pid = try parsePID(fromName: req.parent)
 
         // Generate observation ID
         let observationId =
-            request.observationID.isEmpty ? UUID().uuidString : request.observationID
-        let observationName = "\(request.parent)/observations/\(observationId)"
+            req.observationID.isEmpty ? UUID().uuidString : req.observationID
+        let observationName = "\(req.parent)/observations/\(observationId)"
 
         // Create operation for LRO
         let opName = "operations/observation/\(observationId)"
@@ -1381,9 +1427,9 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         // Create initial observation in ObservationManager
         let observation = await ObservationManager.shared.createObservation(
             name: observationName,
-            type: request.observation.type,
-            parent: request.parent,
-            filter: request.observation.hasFilter ? request.observation.filter : nil,
+            type: req.observation.type,
+            parent: req.parent,
+            filter: req.observation.hasFilter ? req.observation.filter : nil,
             pid: pid,
         )
 
@@ -1407,7 +1453,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
                     let startedObservation = await ObservationManager.shared.getObservation(
                         name: observationName)
                 else {
-                    throw GRPCStatus(code: .internalError, message: "Failed to start observation")
+                    throw RPCError(code: .internalError, message: "Failed to start observation")
                 }
 
                 // Mark operation as done with observation in response
@@ -1418,58 +1464,60 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
                 var errOp = await operationStore.getOperation(name: opName) ?? op
                 errOp.done = true
                 errOp.error = Google_Rpc_Status.with {
-                    $0.code = Int32(GRPCStatus.Code.internalError.rawValue)
+                    $0.code = Int32(RPCError.Code.internalError.rawValue)
                     $0.message = "\(error)"
                 }
                 await operationStore.putOperation(errOp)
             }
         }
 
-        return op
+        return ServerResponse(message: op)
     }
 
     func getObservation(
-        request: Macosusesdk_V1_GetObservationRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_Observation {
+        request: ServerRequest<Macosusesdk_V1_GetObservationRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_Observation> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] getObservation called\n", stderr)
 
         // Get observation from ObservationManager
-        guard let observation = await ObservationManager.shared.getObservation(name: request.name)
+        guard let observation = await ObservationManager.shared.getObservation(name: req.name)
         else {
-            throw GRPCStatus(code: .notFound, message: "Observation not found")
+            throw RPCError(code: .notFound, message: "Observation not found")
         }
 
-        return observation
+        return ServerResponse(message: observation)
     }
 
     func listObservations(
-        request: Macosusesdk_V1_ListObservationsRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_ListObservationsResponse {
+        request: ServerRequest<Macosusesdk_V1_ListObservationsRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_ListObservationsResponse> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] listObservations called\n", stderr)
 
         // List observations for parent
-        let allObservations = await ObservationManager.shared.listObservations(parent: request.parent)
+        let allObservations = await ObservationManager.shared.listObservations(parent: req.parent)
 
         // Sort by name for deterministic ordering
         let sortedObservations = allObservations.sorted { $0.name < $1.name }
 
         // Decode page_token to get offset
         let offset: Int
-        if request.pageToken.isEmpty {
+        if req.pageToken.isEmpty {
             offset = 0
         } else {
             // Token format: "offset:N"
-            let components = request.pageToken.split(separator: ":")
+            let components = req.pageToken.split(separator: ":")
             guard components.count == 2, components[0] == "offset",
                   let parsedOffset = Int(components[1]), parsedOffset >= 0
             else {
-                throw GRPCStatus(code: .invalidArgument, message: "Invalid page_token format")
+                throw RPCError(code: .invalidArgument, message: "Invalid page_token format")
             }
             offset = parsedOffset
         }
 
         // Determine page size (default 100 if not specified or <= 0)
-        let pageSize = request.pageSize > 0 ? Int(request.pageSize) : 100
+        let pageSize = req.pageSize > 0 ? Int(req.pageSize) : 100
         let totalCount = sortedObservations.count
 
         // Calculate slice bounds
@@ -1484,76 +1532,84 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
             ""
         }
 
-        return Macosusesdk_V1_ListObservationsResponse.with {
+        let response = Macosusesdk_V1_ListObservationsResponse.with {
             $0.observations = pageObservations
             $0.nextPageToken = nextPageToken
         }
+        return ServerResponse(message: response)
     }
 
     func cancelObservation(
-        request: Macosusesdk_V1_CancelObservationRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_Observation {
+        request: ServerRequest<Macosusesdk_V1_CancelObservationRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_Observation> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] cancelObservation called\n", stderr)
 
         // Cancel observation in ObservationManager
         guard
-            let observation = await ObservationManager.shared.cancelObservation(name: request.name)
+            let observation = await ObservationManager.shared.cancelObservation(name: req.name)
         else {
-            throw GRPCStatus(code: .notFound, message: "Observation not found")
+            throw RPCError(code: .notFound, message: "Observation not found")
         }
 
-        return observation
+        return ServerResponse(message: observation)
     }
 
     func streamObservations(
-        request: Macosusesdk_V1_StreamObservationsRequest,
-        responseStream: RPCWriter<Macosusesdk_V1_StreamObservationsResponse>,
+        request: ServerRequest<Macosusesdk_V1_StreamObservationsRequest>,
         context _: ServerContext,
-    ) async throws {
+    ) async throws -> StreamingServerResponse<Macosusesdk_V1_StreamObservationsResponse> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] streamObservations called (streaming)\n", stderr)
 
         // Verify observation exists
-        guard await ObservationManager.shared.getObservation(name: request.name) != nil else {
-            throw GRPCStatus(code: .notFound, message: "Observation not found")
+        guard await ObservationManager.shared.getObservation(name: req.name) != nil else {
+            throw RPCError(code: .notFound, message: "Observation not found")
         }
 
         // Create event stream
-        guard let eventStream = await ObservationManager.shared.createEventStream(name: request.name)
+        guard let eventStream = await ObservationManager.shared.createEventStream(name: req.name)
         else {
-            throw GRPCStatus(code: .notFound, message: "Failed to create event stream")
+            throw RPCError(code: .notFound, message: "Failed to create event stream")
         }
 
-        // Stream events to client
-        for await event in eventStream {
-            // Check if client disconnected
-            if Task.isCancelled {
-                fputs(
-                    "info: [MacosUseServiceProvider] client disconnected from observation stream\n", stderr,
-                )
-                break
+        return StreamingServerResponse { writer in
+            // Stream events to client
+            for await event in eventStream {
+                // Check if client disconnected
+                if Task.isCancelled {
+                    fputs(
+                        "info: [MacosUseServiceProvider] client disconnected from observation stream\n", stderr,
+                    )
+                    break
+                }
+
+                // Send event to client
+                let response = Macosusesdk_V1_StreamObservationsResponse.with {
+                    $0.event = event
+                }
+
+                try await writer.write(response)
             }
 
-            // Send event to client
-            let response = Macosusesdk_V1_StreamObservationsResponse.with {
-                $0.event = event
-            }
-
-            try await responseStream.send(response)
+            // Return trailing metadata
+            return [:]
         }
     }
 
     // MARK: - Session Methods
 
     func createSession(
-        request: Macosusesdk_V1_CreateSessionRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_Session {
+        request: ServerRequest<Macosusesdk_V1_CreateSessionRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_Session> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] createSession called\n", stderr)
 
         // Extract session parameters from request
-        let sessionId = request.sessionID.isEmpty ? nil : request.sessionID
+        let sessionId = req.sessionID.isEmpty ? nil : req.sessionID
         let displayName =
-            request.session.displayName.isEmpty ? "Unnamed Session" : request.session.displayName
-        let metadata = request.session.metadata
+            req.session.displayName.isEmpty ? "Unnamed Session" : req.session.displayName
+        let metadata = req.session.metadata
 
         // Create session in SessionManager
         let session = await SessionManager.shared.createSession(
@@ -1562,164 +1618,174 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
             metadata: metadata,
         )
 
-        return session
+        return ServerResponse(message: session)
     }
 
     func getSession(
-        request: Macosusesdk_V1_GetSessionRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_Session {
+        request: ServerRequest<Macosusesdk_V1_GetSessionRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_Session> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] getSession called\n", stderr)
 
         // Get session from SessionManager
-        guard let session = await SessionManager.shared.getSession(name: request.name) else {
-            throw GRPCStatus(code: .notFound, message: "Session not found: \(request.name)")
+        guard let session = await SessionManager.shared.getSession(name: req.name) else {
+            throw RPCError(code: .notFound, message: "Session not found: \(req.name)")
         }
 
-        return session
+        return ServerResponse(message: session)
     }
 
     func listSessions(
-        request: Macosusesdk_V1_ListSessionsRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_ListSessionsResponse {
+        request: ServerRequest<Macosusesdk_V1_ListSessionsRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_ListSessionsResponse> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] listSessions called\n", stderr)
 
         // List sessions from SessionManager with pagination
-        let pageSize = Int(request.pageSize)
-        let pageToken = request.pageToken.isEmpty ? nil : request.pageToken
+        let pageSize = Int(req.pageSize)
+        let pageToken = req.pageToken.isEmpty ? nil : req.pageToken
 
         let (sessions, nextToken) = await SessionManager.shared.listSessions(
             pageSize: pageSize,
             pageToken: pageToken,
         )
 
-        return Macosusesdk_V1_ListSessionsResponse.with {
+        let response = Macosusesdk_V1_ListSessionsResponse.with {
             $0.sessions = sessions
             $0.nextPageToken = nextToken ?? ""
         }
+        return ServerResponse(message: response)
     }
 
     func deleteSession(
-        request: Macosusesdk_V1_DeleteSessionRequest, context _: ServerContext,
-    ) async throws -> SwiftProtobuf.Google_Protobuf_Empty {
+        request: ServerRequest<Macosusesdk_V1_DeleteSessionRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<SwiftProtobuf.Google_Protobuf_Empty> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] deleteSession called\n", stderr)
 
         // Delete session from SessionManager
-        let deleted = await SessionManager.shared.deleteSession(name: request.name)
+        let deleted = await SessionManager.shared.deleteSession(name: req.name)
 
         if !deleted {
-            throw GRPCStatus(code: .notFound, message: "Session not found: \(request.name)")
+            throw RPCError(code: .notFound, message: "Session not found: \(req.name)")
         }
 
-        return SwiftProtobuf.Google_Protobuf_Empty()
+        return ServerResponse(message: SwiftProtobuf.Google_Protobuf_Empty())
     }
 
     func beginTransaction(
-        request: Macosusesdk_V1_BeginTransactionRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_BeginTransactionResponse {
+        request: ServerRequest<Macosusesdk_V1_BeginTransactionRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_BeginTransactionResponse> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] beginTransaction called\n", stderr)
 
         do {
             // Begin transaction in SessionManager
             let isolationLevel =
-                request.isolationLevel == .unspecified ? .serializable : request.isolationLevel
-            let timeout = request.timeout > 0 ? request.timeout : 300.0
+                req.isolationLevel == .unspecified ? .serializable : req.isolationLevel
+            let timeout = req.timeout > 0 ? req.timeout : 300.0
 
             let (transactionId, session) = try await SessionManager.shared.beginTransaction(
-                sessionName: request.session,
+                sessionName: req.session,
                 isolationLevel: isolationLevel,
                 timeout: timeout,
             )
 
-            return Macosusesdk_V1_BeginTransactionResponse.with {
+            let response = Macosusesdk_V1_BeginTransactionResponse.with {
                 $0.transactionID = transactionId
                 $0.session = session
             }
+            return ServerResponse(message: response)
         } catch let error as SessionError {
-            throw GRPCStatus(code: .failedPrecondition, message: error.description)
+            throw RPCError(code: .failedPrecondition, message: error.description)
         } catch {
-            throw GRPCStatus(code: .internalError, message: "Failed to begin transaction: \(error)")
+            throw RPCError(code: .internalError, message: "Failed to begin transaction: \(error)")
         }
     }
 
     func commitTransaction(
-        request: Macosusesdk_V1_CommitTransactionRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_Transaction {
+        request: ServerRequest<Macosusesdk_V1_CommitTransactionRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_Transaction> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] commitTransaction called\n", stderr)
 
         do {
             // Commit transaction in SessionManager
             let transaction = try await SessionManager.shared
                 .commitTransaction(
-                    sessionName: request.name,
-                    transactionId: request.transactionID,
+                    sessionName: req.name,
+                    transactionId: req.transactionID,
                 )
 
-            return transaction
+            return ServerResponse(message: transaction)
         } catch let error as SessionError {
-            throw GRPCStatus(code: .failedPrecondition, message: error.description)
+            throw RPCError(code: .failedPrecondition, message: error.description)
         } catch {
-            throw GRPCStatus(code: .internalError, message: "Failed to commit transaction: \(error)")
+            throw RPCError(code: .internalError, message: "Failed to commit transaction: \(error)")
         }
     }
 
     func rollbackTransaction(
-        request: Macosusesdk_V1_RollbackTransactionRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_Transaction {
+        request: ServerRequest<Macosusesdk_V1_RollbackTransactionRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_Transaction> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] rollbackTransaction called\n", stderr)
 
         do {
             // Rollback transaction in SessionManager
             let transaction = try await SessionManager.shared
                 .rollbackTransaction(
-                    sessionName: request.name,
-                    transactionId: request.transactionID,
-                    revisionId: request.revisionID,
+                    sessionName: req.name,
+                    transactionId: req.transactionID,
+                    revisionId: req.revisionID,
                 )
 
-            return transaction
+            return ServerResponse(message: transaction)
         } catch let error as SessionError {
-            throw GRPCStatus(code: .failedPrecondition, message: error.description)
+            throw RPCError(code: .failedPrecondition, message: error.description)
         } catch {
-            throw GRPCStatus(code: .internalError, message: "Failed to rollback transaction: \(error)")
+            throw RPCError(code: .internalError, message: "Failed to rollback transaction: \(error)")
         }
     }
 
     func getSessionSnapshot(
-        request: Macosusesdk_V1_GetSessionSnapshotRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_SessionSnapshot {
+        request: ServerRequest<Macosusesdk_V1_GetSessionSnapshotRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_SessionSnapshot> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] getSessionSnapshot called\n", stderr)
 
         // Get session snapshot from SessionManager
-        guard let snapshot = await SessionManager.shared.getSessionSnapshot(sessionName: request.name)
+        guard let snapshot = await SessionManager.shared.getSessionSnapshot(sessionName: req.name)
         else {
-            throw GRPCStatus(code: .notFound, message: "Session not found: \(request.name)")
+            throw RPCError(code: .notFound, message: "Session not found: \(req.name)")
         }
 
-        return snapshot
+        return ServerResponse(message: snapshot)
     }
 
     // MARK: - Screenshot Methods
 
     func captureScreenshot(
-        request: Macosusesdk_V1_CaptureScreenshotRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_CaptureScreenshotResponse {
+        request: ServerRequest<Macosusesdk_V1_CaptureScreenshotRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_CaptureScreenshotResponse> {
+        let req = request.message
         fputs("info: [captureScreenshot] Capturing screen screenshot\n", stderr)
 
         // Determine display ID (0 = main display, nil = all displays)
         let displayID: CGDirectDisplayID? =
-            request.display > 0
-                ? CGDirectDisplayID(request.display)
+            req.display > 0
+                ? CGDirectDisplayID(req.display)
                 : nil
 
         // Determine format (default to PNG)
-        let format = request.format == .unspecified ? .png : request.format
+        let format = req.format == .unspecified ? .png : req.format
 
         // Capture screen
         let result = try await ScreenshotCapture.captureScreen(
             displayID: displayID,
             format: format,
-            quality: request.quality,
-            includeOCR: request.includeOcrText,
+            quality: req.quality,
+            includeOCR: req.includeOcrText,
         )
 
         // Build response
@@ -1735,25 +1801,26 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         fputs(
             "info: [captureScreenshot] Captured \(result.width)x\(result.height) screenshot\n", stderr,
         )
-        return response
+        return ServerResponse(message: response)
     }
 
     func captureWindowScreenshot(
-        request: Macosusesdk_V1_CaptureWindowScreenshotRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_CaptureWindowScreenshotResponse {
+        request: ServerRequest<Macosusesdk_V1_CaptureWindowScreenshotRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_CaptureWindowScreenshotResponse> {
+        let req = request.message
         fputs("info: [captureWindowScreenshot] Capturing window screenshot\n", stderr)
 
         // Parse window resource name: applications/{pid}/windows/{windowId}
-        let components = request.window.split(separator: "/")
+        let components = req.window.split(separator: "/")
         guard components.count == 4,
               components[0] == "applications",
               components[2] == "windows",
               let pid = pid_t(components[1]),
               let windowIdInt = Int(components[3])
         else {
-            throw GRPCStatus(
+            throw RPCError(
                 code: .invalidArgument,
-                message: "Invalid window resource name: \(request.window)",
+                message: "Invalid window resource name: \(req.window)",
             )
         }
 
@@ -1763,22 +1830,22 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         }
 
         guard let windowInfo else {
-            throw GRPCStatus(
+            throw RPCError(
                 code: .notFound,
-                message: "Window not found: \(request.window)",
+                message: "Window not found: \(req.window)",
             )
         }
 
         // Determine format (default to PNG)
-        let format = request.format == .unspecified ? .png : request.format
+        let format = req.format == .unspecified ? .png : req.format
 
         // Capture window
         let result = try await ScreenshotCapture.captureWindow(
             windowID: windowInfo.windowID,
-            includeShadow: request.includeShadow,
+            includeShadow: req.includeShadow,
             format: format,
-            quality: request.quality,
-            includeOCR: request.includeOcrText,
+            quality: req.quality,
+            includeOCR: req.includeOcrText,
         )
 
         // Build response
@@ -1787,7 +1854,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         response.format = format
         response.width = result.width
         response.height = result.height
-        response.window = request.window
+        response.window = req.window
         if let ocrText = result.ocrText {
             response.ocrText = ocrText
         }
@@ -1796,32 +1863,33 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
             "info: [captureWindowScreenshot] Captured \(result.width)x\(result.height) window screenshot\n",
             stderr,
         )
-        return response
+        return ServerResponse(message: response)
     }
 
     func captureElementScreenshot(
-        request: Macosusesdk_V1_CaptureElementScreenshotRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_CaptureElementScreenshotResponse {
+        request: ServerRequest<Macosusesdk_V1_CaptureElementScreenshotRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_CaptureElementScreenshotResponse> {
+        let req = request.message
         fputs("info: [captureElementScreenshot] Capturing element screenshot\n", stderr)
 
         // Get element from registry
-        guard let element = await ElementRegistry.shared.getElement(request.elementID) else {
-            throw GRPCStatus(
+        guard let element = await ElementRegistry.shared.getElement(req.elementID) else {
+            throw RPCError(
                 code: .notFound,
-                message: "Element not found: \(request.elementID)",
+                message: "Element not found: \(req.elementID)",
             )
         }
 
         // Check element has bounds (x, y, width, height)
         guard element.hasX, element.hasY, element.hasWidth, element.hasHeight else {
-            throw GRPCStatus(
+            throw RPCError(
                 code: .failedPrecondition,
-                message: "Element has no bounds: \(request.elementID)",
+                message: "Element has no bounds: \(req.elementID)",
             )
         }
 
         // Apply padding if specified
-        let padding = CGFloat(request.padding)
+        let padding = CGFloat(req.padding)
         let bounds = CGRect(
             x: element.x - padding,
             y: element.y - padding,
@@ -1830,14 +1898,14 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         )
 
         // Determine format (default to PNG)
-        let format = request.format == .unspecified ? .png : request.format
+        let format = req.format == .unspecified ? .png : req.format
 
         // Capture element region
         let result = try await ScreenshotCapture.captureRegion(
             bounds: bounds,
             format: format,
-            quality: request.quality,
-            includeOCR: request.includeOcrText,
+            quality: req.quality,
+            includeOCR: req.includeOcrText,
         )
 
         // Build response
@@ -1846,7 +1914,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         response.format = format
         response.width = result.width
         response.height = result.height
-        response.elementID = request.elementID
+        response.elementID = req.elementID
         if let ocrText = result.ocrText {
             response.ocrText = ocrText
         }
@@ -1855,17 +1923,18 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
             "info: [captureElementScreenshot] Captured \(result.width)x\(result.height) element screenshot\n",
             stderr,
         )
-        return response
+        return ServerResponse(message: response)
     }
 
     func captureRegionScreenshot(
-        request: Macosusesdk_V1_CaptureRegionScreenshotRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_CaptureRegionScreenshotResponse {
+        request: ServerRequest<Macosusesdk_V1_CaptureRegionScreenshotRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_CaptureRegionScreenshotResponse> {
+        let req = request.message
         fputs("info: [captureRegionScreenshot] Capturing region screenshot\n", stderr)
 
         // Validate region
-        guard request.hasRegion else {
-            throw GRPCStatus(
+        guard req.hasRegion else {
+            throw RPCError(
                 code: .invalidArgument,
                 message: "Region is required",
             )
@@ -1873,28 +1942,28 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
 
         // Convert proto Region to CGRect
         let bounds = CGRect(
-            x: request.region.x,
-            y: request.region.y,
-            width: request.region.width,
-            height: request.region.height,
+            x: req.region.x,
+            y: req.region.y,
+            width: req.region.width,
+            height: req.region.height,
         )
 
         // Determine display ID (for multi-monitor setups)
         let displayID: CGDirectDisplayID? =
-            request.display > 0
-                ? CGDirectDisplayID(request.display)
+            req.display > 0
+                ? CGDirectDisplayID(req.display)
                 : nil
 
         // Determine format (default to PNG)
-        let format = request.format == .unspecified ? .png : request.format
+        let format = req.format == .unspecified ? .png : req.format
 
         // Capture region
         let result = try await ScreenshotCapture.captureRegion(
             bounds: bounds,
             displayID: displayID,
             format: format,
-            quality: request.quality,
-            includeOCR: request.includeOcrText,
+            quality: req.quality,
+            includeOCR: req.includeOcrText,
         )
 
         // Build response
@@ -1911,338 +1980,375 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
             "info: [captureRegionScreenshot] Captured \(result.width)x\(result.height) region screenshot\n",
             stderr,
         )
-        return response
+        return ServerResponse(message: response)
     }
 
     // MARK: - Clipboard Methods
 
     func getClipboard(
-        request: Macosusesdk_V1_GetClipboardRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_Clipboard {
+        request: ServerRequest<Macosusesdk_V1_GetClipboardRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_Clipboard> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] getClipboard called\n", stderr)
 
         // Validate resource name (singleton: "clipboard")
-        guard request.name == "clipboard" else {
-            throw GRPCStatus(code: .invalidArgument, message: "Invalid clipboard name: \(request.name)")
+        guard req.name == "clipboard" else {
+            throw RPCError(code: .invalidArgument, message: "Invalid clipboard name: \(req.name)")
         }
 
-        return await ClipboardManager.shared.readClipboard()
+        let response = await ClipboardManager.shared.readClipboard()
+        return ServerResponse(message: response)
     }
 
     func writeClipboard(
-        request: Macosusesdk_V1_WriteClipboardRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_WriteClipboardResponse {
+        request: ServerRequest<Macosusesdk_V1_WriteClipboardRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_WriteClipboardResponse> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] writeClipboard called\n", stderr)
 
         // Validate content
-        guard request.hasContent else {
-            throw GRPCStatus(code: .invalidArgument, message: "Content is required")
+        guard req.hasContent else {
+            throw RPCError(code: .invalidArgument, message: "Content is required")
         }
 
         do {
             // Write to clipboard
             let clipboard = try await ClipboardManager.shared.writeClipboard(
-                content: request.content,
-                clearExisting: request.clearExisting_p,
+                content: req.content,
+                clearExisting: req.clearExisting_p,
             )
 
-            return Macosusesdk_V1_WriteClipboardResponse.with {
+            let response = Macosusesdk_V1_WriteClipboardResponse.with {
                 $0.success = true
                 $0.type = clipboard.content.type
             }
+            return ServerResponse(message: response)
         } catch let error as ClipboardError {
-            throw GRPCStatus(code: .internalError, message: error.description)
+            throw RPCError(code: .internalError, message: error.description)
         } catch {
-            throw GRPCStatus(code: .internalError, message: "Failed to write clipboard: \(error)")
+            throw RPCError(code: .internalError, message: "Failed to write clipboard: \(error)")
         }
     }
 
     func clearClipboard(
-        request _: Macosusesdk_V1_ClearClipboardRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_ClearClipboardResponse {
+        request: ServerRequest<Macosusesdk_V1_ClearClipboardRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_ClearClipboardResponse> {
+        _ = request.message
         fputs("info: [MacosUseServiceProvider] clearClipboard called\n", stderr)
 
         await ClipboardManager.shared.clearClipboard()
 
-        return Macosusesdk_V1_ClearClipboardResponse.with {
+        let response = Macosusesdk_V1_ClearClipboardResponse.with {
             $0.success = true
         }
+        return ServerResponse(message: response)
     }
 
     func getClipboardHistory(
-        request: Macosusesdk_V1_GetClipboardHistoryRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_ClipboardHistory {
+        request: ServerRequest<Macosusesdk_V1_GetClipboardHistoryRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_ClipboardHistory> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] getClipboardHistory called\n", stderr)
 
         // Validate resource name (singleton: "clipboard/history")
-        guard request.name == "clipboard/history" else {
-            throw GRPCStatus(
-                code: .invalidArgument, message: "Invalid clipboard history name: \(request.name)",
+        guard req.name == "clipboard/history" else {
+            throw RPCError(
+                code: .invalidArgument, message: "Invalid clipboard history name: \(req.name)",
             )
         }
 
-        return await ClipboardHistoryManager.shared.getHistory()
+        let response = await ClipboardHistoryManager.shared.getHistory()
+        return ServerResponse(message: response)
     }
 
     // MARK: - File Dialog Methods
 
     func automateOpenFileDialog(
-        request: Macosusesdk_V1_AutomateOpenFileDialogRequest, context _: ServerContext,
-    ) async throws -> Macosusesdk_V1_AutomateOpenFileDialogResponse {
+        request: ServerRequest<Macosusesdk_V1_AutomateOpenFileDialogRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_AutomateOpenFileDialogResponse> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] automateOpenFileDialog called\n", stderr)
 
         do {
             let selectedPaths = try await FileDialogAutomation.shared.automateOpenFileDialog(
-                filePath: request.filePath.isEmpty ? nil : request.filePath,
-                defaultDirectory: request.defaultDirectory.isEmpty ? nil : request.defaultDirectory,
-                fileFilters: request.fileFilters,
-                allowMultiple: request.allowMultiple,
+                filePath: req.filePath.isEmpty ? nil : req.filePath,
+                defaultDirectory: req.defaultDirectory.isEmpty ? nil : req.defaultDirectory,
+                fileFilters: req.fileFilters,
+                allowMultiple: req.allowMultiple,
             )
 
-            return Macosusesdk_V1_AutomateOpenFileDialogResponse.with {
+            let response = Macosusesdk_V1_AutomateOpenFileDialogResponse.with {
                 $0.success = true
                 $0.selectedPaths = selectedPaths
             }
+            return ServerResponse(message: response)
         } catch let error as FileDialogError {
-            return Macosusesdk_V1_AutomateOpenFileDialogResponse.with {
+            let response = Macosusesdk_V1_AutomateOpenFileDialogResponse.with {
                 $0.success = false
                 $0.error = error.description
             }
+            return ServerResponse(message: response)
         } catch {
-            return Macosusesdk_V1_AutomateOpenFileDialogResponse.with {
+            let response = Macosusesdk_V1_AutomateOpenFileDialogResponse.with {
                 $0.success = false
                 $0.error = "Failed to automate open file dialog: \(error.localizedDescription)"
             }
+            return ServerResponse(message: response)
         }
     }
 
     func automateSaveFileDialog(
-        request: Macosusesdk_V1_AutomateSaveFileDialogRequest, context _: GRPCAsyncServerCallContext,
-    ) async throws -> Macosusesdk_V1_AutomateSaveFileDialogResponse {
+        request: ServerRequest<Macosusesdk_V1_AutomateSaveFileDialogRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_AutomateSaveFileDialogResponse> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] automateSaveFileDialog called\n", stderr)
 
         do {
             let savedPath = try await FileDialogAutomation.shared.automateSaveFileDialog(
-                filePath: request.filePath,
-                defaultDirectory: request.defaultDirectory.isEmpty ? nil : request.defaultDirectory,
-                defaultFilename: request.defaultFilename.isEmpty ? nil : request.defaultFilename,
-                confirmOverwrite: request.confirmOverwrite,
+                filePath: req.filePath,
+                defaultDirectory: req.defaultDirectory.isEmpty ? nil : req.defaultDirectory,
+                defaultFilename: req.defaultFilename.isEmpty ? nil : req.defaultFilename,
+                confirmOverwrite: req.confirmOverwrite,
             )
 
-            return Macosusesdk_V1_AutomateSaveFileDialogResponse.with {
+            let response = Macosusesdk_V1_AutomateSaveFileDialogResponse.with {
                 $0.success = true
                 $0.savedPath = savedPath
             }
+            return ServerResponse(message: response)
         } catch let error as FileDialogError {
-            return Macosusesdk_V1_AutomateSaveFileDialogResponse.with {
+            let response = Macosusesdk_V1_AutomateSaveFileDialogResponse.with {
                 $0.success = false
                 $0.error = error.description
             }
+            return ServerResponse(message: response)
         } catch {
-            return Macosusesdk_V1_AutomateSaveFileDialogResponse.with {
+            let response = Macosusesdk_V1_AutomateSaveFileDialogResponse.with {
                 $0.success = false
                 $0.error = "Failed to automate save file dialog: \(error.localizedDescription)"
             }
+            return ServerResponse(message: response)
         }
     }
 
     func selectFile(
-        request: Macosusesdk_V1_SelectFileRequest, context _: GRPCAsyncServerCallContext,
-    ) async throws -> Macosusesdk_V1_SelectFileResponse {
+        request: ServerRequest<Macosusesdk_V1_SelectFileRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_SelectFileResponse> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] selectFile called\n", stderr)
 
         do {
             let selectedPath = try await FileDialogAutomation.shared.selectFile(
-                filePath: request.filePath,
-                revealInFinder: request.revealFinder,
+                filePath: req.filePath,
+                revealInFinder: req.revealFinder,
             )
 
-            return Macosusesdk_V1_SelectFileResponse.with {
+            let response = Macosusesdk_V1_SelectFileResponse.with {
                 $0.success = true
                 $0.selectedPath = selectedPath
             }
+            return ServerResponse(message: response)
         } catch let error as FileDialogError {
-            return Macosusesdk_V1_SelectFileResponse.with {
+            let response = Macosusesdk_V1_SelectFileResponse.with {
                 $0.success = false
                 $0.error = error.description
             }
+            return ServerResponse(message: response)
         } catch {
-            return Macosusesdk_V1_SelectFileResponse.with {
+            let response = Macosusesdk_V1_SelectFileResponse.with {
                 $0.success = false
                 $0.error = "Failed to select file: \(error.localizedDescription)"
             }
+            return ServerResponse(message: response)
         }
     }
 
     func selectDirectory(
-        request: Macosusesdk_V1_SelectDirectoryRequest, context _: GRPCAsyncServerCallContext,
-    ) async throws -> Macosusesdk_V1_SelectDirectoryResponse {
+        request: ServerRequest<Macosusesdk_V1_SelectDirectoryRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_SelectDirectoryResponse> {
+        let req = request.message
         fputs("info: [MacosUseServiceProvider] selectDirectory called\n", stderr)
 
         do {
             let (selectedPath, wasCreated) = try await FileDialogAutomation.shared.selectDirectory(
-                directoryPath: request.directoryPath,
-                createMissing: request.createMissing,
+                directoryPath: req.directoryPath,
+                createMissing: req.createMissing,
             )
 
-            return Macosusesdk_V1_SelectDirectoryResponse.with {
+            let response = Macosusesdk_V1_SelectDirectoryResponse.with {
                 $0.success = true
                 $0.selectedPath = selectedPath
                 $0.created = wasCreated
             }
+            return ServerResponse(message: response)
         } catch let error as FileDialogError {
-            return Macosusesdk_V1_SelectDirectoryResponse.with {
+            let response = Macosusesdk_V1_SelectDirectoryResponse.with {
                 $0.success = false
                 $0.error = error.description
             }
+            return ServerResponse(message: response)
         } catch {
-            return Macosusesdk_V1_SelectDirectoryResponse.with {
+            let response = Macosusesdk_V1_SelectDirectoryResponse.with {
                 $0.success = false
                 $0.error = "Failed to select directory: \(error.localizedDescription)"
             }
+            return ServerResponse(message: response)
         }
     }
 
     func dragFiles(
-        request: Macosusesdk_V1_DragFilesRequest, context _: GRPCAsyncServerCallContext,
-    ) async throws -> Macosusesdk_V1_DragFilesResponse {
+        request: ServerRequest<Macosusesdk_V1_DragFilesRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_DragFilesResponse> {
         fputs("info: [MacosUseServiceProvider] dragFiles called\n", stderr)
+        let req = request.message
 
         // Validate inputs
-        guard !request.filePaths.isEmpty else {
-            return Macosusesdk_V1_DragFilesResponse.with {
+        guard !req.filePaths.isEmpty else {
+            let response = Macosusesdk_V1_DragFilesResponse.with {
                 $0.success = false
                 $0.error = "At least one file path is required"
             }
+            return ServerResponse(message: response)
         }
 
-        guard !request.targetElementID.isEmpty else {
-            return Macosusesdk_V1_DragFilesResponse.with {
+        guard !req.targetElementID.isEmpty else {
+            let response = Macosusesdk_V1_DragFilesResponse.with {
                 $0.success = false
                 $0.error = "Target element ID is required"
             }
+            return ServerResponse(message: response)
         }
 
         // Get target element from registry
-        guard let targetElement = await ElementRegistry.shared.getElement(request.targetElementID)
+        guard let targetElement = await ElementRegistry.shared.getElement(req.targetElementID)
         else {
-            return Macosusesdk_V1_DragFilesResponse.with {
+            let response = Macosusesdk_V1_DragFilesResponse.with {
                 $0.success = false
-                $0.error = "Target element not found: \(request.targetElementID)"
+                $0.error = "Target element not found: \(req.targetElementID)"
             }
+            return ServerResponse(message: response)
         }
 
         // Ensure element has position
         guard targetElement.hasX, targetElement.hasY else {
-            return Macosusesdk_V1_DragFilesResponse.with {
+            let response = Macosusesdk_V1_DragFilesResponse.with {
                 $0.success = false
                 $0.error = "Target element has no position information"
             }
+            return ServerResponse(message: response)
         }
 
         let targetPoint = CGPoint(x: targetElement.x, y: targetElement.y)
-        let duration = request.duration > 0 ? request.duration : 0.5
+        let duration = req.duration > 0 ? req.duration : 0.5
 
         do {
             try await FileDialogAutomation.shared.dragFilesToElement(
-                filePaths: request.filePaths,
+                filePaths: req.filePaths,
                 targetElement: targetPoint,
                 duration: duration,
             )
 
-            return Macosusesdk_V1_DragFilesResponse.with {
+            let response = Macosusesdk_V1_DragFilesResponse.with {
                 $0.success = true
-                $0.filesDropped = Int32(request.filePaths.count)
+                $0.filesDropped = Int32(req.filePaths.count)
             }
+            return ServerResponse(message: response)
         } catch let error as FileDialogError {
-            return Macosusesdk_V1_DragFilesResponse.with {
+            let response = Macosusesdk_V1_DragFilesResponse.with {
                 $0.success = false
                 $0.error = error.description
             }
+            return ServerResponse(message: response)
         } catch {
-            return Macosusesdk_V1_DragFilesResponse.with {
+            let response = Macosusesdk_V1_DragFilesResponse.with {
                 $0.success = false
                 $0.error = "Failed to drag files: \(error.localizedDescription)"
             }
+            return ServerResponse(message: response)
         }
     }
 
     // MARK: - Macro Methods
 
     func createMacro(
-        request: Macosusesdk_V1_CreateMacroRequest, context _: GRPCAsyncServerCallContext,
-    ) async throws -> Macosusesdk_V1_Macro {
+        request: ServerRequest<Macosusesdk_V1_CreateMacroRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_Macro> {
         fputs("info: [MacosUseServiceProvider] createMacro called\n", stderr)
+        let req = request.message
 
         // Validate required fields
-        guard !request.macro.displayName.isEmpty else {
-            throw GRPCStatus(code: .invalidArgument, message: "display_name is required")
+        guard !req.macro.displayName.isEmpty else {
+            throw RPCError(code: .invalidArgument, message: "display_name is required")
         }
 
-        guard !request.macro.actions.isEmpty else {
-            throw GRPCStatus(code: .invalidArgument, message: "at least one action is required")
+        guard !req.macro.actions.isEmpty else {
+            throw RPCError(code: .invalidArgument, message: "at least one action is required")
         }
 
         // Extract macro ID from parent if provided (format: "macros/{macro_id}")
-        let macroId: String? = if !request.macroID.isEmpty { request.macroID } else { nil }
+        let macroId: String? = if !req.macroID.isEmpty { req.macroID } else { nil }
 
         // Create the macro in the registry
         let createdMacro = await MacroRegistry.shared.createMacro(
             macroId: macroId,
-            displayName: request.macro.displayName,
-            description: request.macro.description_p,
-            actions: request.macro.actions,
-            parameters: request.macro.parameters,
-            tags: request.macro.tags,
+            displayName: req.macro.displayName,
+            description: req.macro.description_p,
+            actions: req.macro.actions,
+            parameters: req.macro.parameters,
+            tags: req.macro.tags,
         )
 
-        return createdMacro
+        return ServerResponse(message: createdMacro)
     }
 
     func getMacro(
-        request: Macosusesdk_V1_GetMacroRequest, context _: GRPCAsyncServerCallContext,
-    ) async throws -> Macosusesdk_V1_Macro {
+        request: ServerRequest<Macosusesdk_V1_GetMacroRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_Macro> {
         fputs("info: [MacosUseServiceProvider] getMacro called\n", stderr)
+        let req = request.message
 
-        guard let macro = await MacroRegistry.shared.getMacro(name: request.name) else {
-            throw GRPCStatus(
+        guard let macro = await MacroRegistry.shared.getMacro(name: req.name) else {
+            throw RPCError(
                 code: .notFound,
-                message: "Macro '\(request.name)' not found",
+                message: "Macro '\(req.name)' not found",
             )
         }
 
-        return macro
+        return ServerResponse(message: macro)
     }
 
     func listMacros(
-        request: Macosusesdk_V1_ListMacrosRequest, context _: GRPCAsyncServerCallContext,
-    ) async throws -> Macosusesdk_V1_ListMacrosResponse {
+        request: ServerRequest<Macosusesdk_V1_ListMacrosRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_ListMacrosResponse> {
         fputs("info: [MacosUseServiceProvider] listMacros called\n", stderr)
+        let req = request.message
 
         // List macros with pagination
-        let pageSize = Int(request.pageSize > 0 ? request.pageSize : 50)
-        let pageToken = request.pageToken.isEmpty ? nil : request.pageToken
+        let pageSize = Int(req.pageSize > 0 ? req.pageSize : 50)
+        let pageToken = req.pageToken.isEmpty ? nil : req.pageToken
 
         let (macros, nextToken) = await MacroRegistry.shared.listMacros(
             pageSize: pageSize,
             pageToken: pageToken,
         )
 
-        return Macosusesdk_V1_ListMacrosResponse.with {
+        let response = Macosusesdk_V1_ListMacrosResponse.with {
             $0.macros = macros
             $0.nextPageToken = nextToken ?? ""
         }
+        return ServerResponse(message: response)
     }
 
     func updateMacro(
-        request: Macosusesdk_V1_UpdateMacroRequest, context _: GRPCAsyncServerCallContext,
-    ) async throws -> Macosusesdk_V1_Macro {
+        request: ServerRequest<Macosusesdk_V1_UpdateMacroRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_Macro> {
         fputs("info: [MacosUseServiceProvider] updateMacro called\n", stderr)
+        let req = request.message
 
         // Parse field mask to determine what to update
-        let updateMask = request.updateMask
+        let updateMask = req.updateMask
 
-        // Extract fields to update from request.macro
+        // Extract fields to update from req.macro
         var displayName: String?
         var description: String?
         var actions: [Macosusesdk_V1_MacroAction]?
@@ -2254,27 +2360,27 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         // - Non-empty mask = partial update (update only specified fields)
         if updateMask.paths.isEmpty {
             // Full replacement - update all fields even if empty (allows field clearance)
-            displayName = request.macro.displayName
-            description = request.macro.description_p
-            actions = request.macro.actions
-            parameters = request.macro.parameters
-            tags = request.macro.tags
+            displayName = req.macro.displayName
+            description = req.macro.description_p
+            actions = req.macro.actions
+            parameters = req.macro.parameters
+            tags = req.macro.tags
         } else {
             // Update only specified fields
             for path in updateMask.paths {
                 switch path {
                 case "display_name":
-                    displayName = request.macro.displayName
+                    displayName = req.macro.displayName
                 case "description":
-                    description = request.macro.description_p
+                    description = req.macro.description_p
                 case "actions":
-                    actions = request.macro.actions
+                    actions = req.macro.actions
                 case "parameters":
-                    parameters = request.macro.parameters
+                    parameters = req.macro.parameters
                 case "tags":
-                    tags = request.macro.tags
+                    tags = req.macro.tags
                 default:
-                    throw GRPCStatus(code: .invalidArgument, message: "Invalid field path: \(path)")
+                    throw RPCError(code: .invalidArgument, message: "Invalid field path: \(path)")
                 }
             }
         }
@@ -2282,7 +2388,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         // Update macro in registry
         guard
             let updatedMacro = await MacroRegistry.shared.updateMacro(
-                name: request.macro.name,
+                name: req.macro.name,
                 displayName: displayName,
                 description: description,
                 actions: actions,
@@ -2290,35 +2396,38 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
                 tags: tags,
             )
         else {
-            throw GRPCStatus(code: .notFound, message: "Macro not found: \(request.macro.name)")
+            throw RPCError(code: .notFound, message: "Macro not found: \(req.macro.name)")
         }
 
-        return updatedMacro
+        return ServerResponse(message: updatedMacro)
     }
 
     func deleteMacro(
-        request: Macosusesdk_V1_DeleteMacroRequest, context _: GRPCAsyncServerCallContext,
-    ) async throws -> SwiftProtobuf.Google_Protobuf_Empty {
+        request: ServerRequest<Macosusesdk_V1_DeleteMacroRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<SwiftProtobuf.Google_Protobuf_Empty> {
         fputs("info: [MacosUseServiceProvider] deleteMacro called\n", stderr)
+        let req = request.message
 
         // Delete macro from registry
-        let deleted = await MacroRegistry.shared.deleteMacro(name: request.name)
+        let deleted = await MacroRegistry.shared.deleteMacro(name: req.name)
 
         if !deleted {
-            throw GRPCStatus(code: .notFound, message: "Macro not found: \(request.name)")
+            throw RPCError(code: .notFound, message: "Macro not found: \(req.name)")
         }
 
-        return SwiftProtobuf.Google_Protobuf_Empty()
+        let response = SwiftProtobuf.Google_Protobuf_Empty()
+        return ServerResponse(message: response)
     }
 
     func executeMacro(
-        request: Macosusesdk_V1_ExecuteMacroRequest, context _: GRPCAsyncServerCallContext,
-    ) async throws -> Google_Longrunning_Operation {
+        request: ServerRequest<Macosusesdk_V1_ExecuteMacroRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Google_Longrunning_Operation> {
         fputs("info: [MacosUseServiceProvider] executeMacro called (LRO)\n", stderr)
+        let req = request.message
 
         // Get macro from registry
-        guard let macro = await MacroRegistry.shared.getMacro(name: request.macro) else {
-            throw GRPCStatus(code: .notFound, message: "Macro not found: \(request.macro)")
+        guard let macro = await MacroRegistry.shared.getMacro(name: req.macro) else {
+            throw RPCError(code: .notFound, message: "Macro not found: \(req.macro)")
         }
 
         // Create LRO
@@ -2326,7 +2435,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         let metadata = try SwiftProtobuf.Google_Protobuf_Any.with {
             $0.typeURL = "type.googleapis.com/macosusesdk.v1.ExecuteMacroMetadata"
             $0.value = try Macosusesdk_V1_ExecuteMacroMetadata.with {
-                $0.macro = request.macro
+                $0.macro = req.macro
                 $0.totalActions = Int32(macro.actions.count)
             }.serializedData()
         }
@@ -2336,18 +2445,18 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         // Execute macro in background
         Task {
             do {
-                let timeout = request.hasOptions && request.options.timeout > 0 ? request.options.timeout : 300.0
+                let timeout = req.hasOptions && req.options.timeout > 0 ? req.options.timeout : 300.0
 
                 // Execute macro
                 try await MacroExecutor.shared.executeMacro(
                     macro: macro,
-                    parameters: request.parameterValues,
-                    parent: request.application.isEmpty ? "" : request.application,
+                    parameters: req.parameterValues,
+                    parent: req.application.isEmpty ? "" : req.application,
                     timeout: timeout,
                 )
 
                 // Increment execution count
-                await MacroRegistry.shared.incrementExecutionCount(name: request.macro)
+                await MacroRegistry.shared.incrementExecutionCount(name: req.macro)
 
                 // Complete operation
                 let response = Macosusesdk_V1_ExecuteMacroResponse.with {
@@ -2362,7 +2471,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
                 var errOp = await operationStore.getOperation(name: opName) ?? op
                 errOp.done = true
                 errOp.error = Google_Rpc_Status.with {
-                    $0.code = Int32(GRPCStatus.Code.internalError.rawValue)
+                    $0.code = Int32(RPCError.Code.internalError.rawValue)
                     $0.message = error.description
                 }
                 await operationStore.putOperation(errOp)
@@ -2372,26 +2481,27 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
                 var errOp = await operationStore.getOperation(name: opName) ?? op
                 errOp.done = true
                 errOp.error = Google_Rpc_Status.with {
-                    $0.code = Int32(GRPCStatus.Code.internalError.rawValue)
+                    $0.code = Int32(RPCError.Code.internalError.rawValue)
                     $0.message = "\(error)"
                 }
                 await operationStore.putOperation(errOp)
             }
         }
 
-        return op
+        return ServerResponse(message: op)
     }
 
     // MARK: - Script Methods
 
     func executeAppleScript(
-        request: Macosusesdk_V1_ExecuteAppleScriptRequest, context _: GRPCAsyncServerCallContext,
-    ) async throws -> Macosusesdk_V1_ExecuteAppleScriptResponse {
+        request: ServerRequest<Macosusesdk_V1_ExecuteAppleScriptRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_ExecuteAppleScriptResponse> {
         fputs("info: [MacosUseServiceProvider] executeAppleScript called\n", stderr)
+        let req = request.message
 
         // Parse timeout from Duration
-        let timeout: TimeInterval = if request.hasTimeout {
-            Double(request.timeout.seconds) + (Double(request.timeout.nanos) / 1_000_000_000)
+        let timeout: TimeInterval = if req.hasTimeout {
+            Double(req.timeout.seconds) + (Double(req.timeout.nanos) / 1_000_000_000)
         } else {
             30.0 // Default 30 seconds
         }
@@ -2399,12 +2509,12 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         do {
             // Execute AppleScript using ScriptExecutor
             let result = try await ScriptExecutor.shared.executeAppleScript(
-                request.script,
+                req.script,
                 timeout: timeout,
-                compileOnly: request.compileOnly,
+                compileOnly: req.compileOnly,
             )
 
-            return Macosusesdk_V1_ExecuteAppleScriptResponse.with {
+            let response = Macosusesdk_V1_ExecuteAppleScriptResponse.with {
                 $0.success = result.success
                 $0.output = result.output
                 if let error = result.error {
@@ -2415,32 +2525,36 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
                     $0.nanos = Int32((result.duration.truncatingRemainder(dividingBy: 1.0)) * 1_000_000_000)
                 }
             }
+            return ServerResponse(message: response)
         } catch let error as ScriptExecutionError {
-            return Macosusesdk_V1_ExecuteAppleScriptResponse.with {
+            let response = Macosusesdk_V1_ExecuteAppleScriptResponse.with {
                 $0.success = false
                 $0.output = ""
                 $0.error = error.description
                 $0.executionDuration = SwiftProtobuf.Google_Protobuf_Duration()
             }
+            return ServerResponse(message: response)
         } catch {
-            return Macosusesdk_V1_ExecuteAppleScriptResponse.with {
+            let response = Macosusesdk_V1_ExecuteAppleScriptResponse.with {
                 $0.success = false
                 $0.output = ""
                 $0.error = "Unexpected error: \(error.localizedDescription)"
                 $0.executionDuration = SwiftProtobuf.Google_Protobuf_Duration()
             }
+            return ServerResponse(message: response)
         }
     }
 
     func executeJavaScript(
-        request: Macosusesdk_V1_ExecuteJavaScriptRequest,
-        context _: GRPCAsyncServerCallContext,
-    ) async throws -> Macosusesdk_V1_ExecuteJavaScriptResponse {
+        request: ServerRequest<Macosusesdk_V1_ExecuteJavaScriptRequest>,
+        context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_ExecuteJavaScriptResponse> {
         fputs("info: [MacosUseServiceProvider] executeJavaScript called\n", stderr)
+        let req = request.message
 
         // Parse timeout from Duration
-        let timeout: TimeInterval = if request.hasTimeout {
-            Double(request.timeout.seconds) + (Double(request.timeout.nanos) / 1_000_000_000)
+        let timeout: TimeInterval = if req.hasTimeout {
+            Double(req.timeout.seconds) + (Double(req.timeout.nanos) / 1_000_000_000)
         } else {
             30.0 // Default 30 seconds
         }
@@ -2448,12 +2562,12 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         do {
             // Execute JavaScript using ScriptExecutor
             let result = try await ScriptExecutor.shared.executeJavaScript(
-                request.script,
+                req.script,
                 timeout: timeout,
-                compileOnly: request.compileOnly,
+                compileOnly: req.compileOnly,
             )
 
-            return Macosusesdk_V1_ExecuteJavaScriptResponse.with {
+            let response = Macosusesdk_V1_ExecuteJavaScriptResponse.with {
                 $0.success = result.success
                 $0.output = result.output
                 if let error = result.error {
@@ -2464,54 +2578,58 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
                     $0.nanos = Int32((result.duration.truncatingRemainder(dividingBy: 1.0)) * 1_000_000_000)
                 }
             }
+            return ServerResponse(message: response)
         } catch let error as ScriptExecutionError {
-            return Macosusesdk_V1_ExecuteJavaScriptResponse.with {
+            let response = Macosusesdk_V1_ExecuteJavaScriptResponse.with {
                 $0.success = false
                 $0.output = ""
                 $0.error = error.description
                 $0.executionDuration = SwiftProtobuf.Google_Protobuf_Duration()
             }
+            return ServerResponse(message: response)
         } catch {
-            return Macosusesdk_V1_ExecuteJavaScriptResponse.with {
+            let response = Macosusesdk_V1_ExecuteJavaScriptResponse.with {
                 $0.success = false
                 $0.output = ""
                 $0.error = "Unexpected error: \(error.localizedDescription)"
                 $0.executionDuration = SwiftProtobuf.Google_Protobuf_Duration()
             }
+            return ServerResponse(message: response)
         }
     }
 
     func executeShellCommand(
-        request: Macosusesdk_V1_ExecuteShellCommandRequest, context _: GRPCAsyncServerCallContext,
-    ) async throws -> Macosusesdk_V1_ExecuteShellCommandResponse {
+        request: ServerRequest<Macosusesdk_V1_ExecuteShellCommandRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_ExecuteShellCommandResponse> {
         fputs("info: [MacosUseServiceProvider] executeShellCommand called\n", stderr)
+        let req = request.message
 
         // Parse timeout from Duration
-        let timeout: TimeInterval = if request.hasTimeout {
-            Double(request.timeout.seconds) + (Double(request.timeout.nanos) / 1_000_000_000)
+        let timeout: TimeInterval = if req.hasTimeout {
+            Double(req.timeout.seconds) + (Double(req.timeout.nanos) / 1_000_000_000)
         } else {
             30.0 // Default 30 seconds
         }
 
         // Extract shell (default to /bin/bash)
-        let shell = request.shell.isEmpty ? "/bin/bash" : request.shell
+        let shell = req.shell.isEmpty ? "/bin/bash" : req.shell
 
         // Extract working directory (optional)
-        let workingDir = request.workingDirectory.isEmpty ? nil : request.workingDirectory
+        let workingDir = req.workingDirectory.isEmpty ? nil : req.workingDirectory
 
         // Extract environment (optional)
         let environment =
-            request.environment.isEmpty
-                ? nil : Dictionary(uniqueKeysWithValues: request.environment.map { ($0.key, $0.value) })
+            req.environment.isEmpty
+                ? nil : Dictionary(uniqueKeysWithValues: req.environment.map { ($0.key, $0.value) })
 
         // Extract stdin (optional)
-        let stdin = request.stdin.isEmpty ? nil : request.stdin
+        let stdin = req.stdin.isEmpty ? nil : req.stdin
 
         do {
             // Execute shell command using ScriptExecutor
             let result = try await ScriptExecutor.shared.executeShellCommand(
-                request.command,
-                args: Array(request.args),
+                req.command,
+                args: Array(req.args),
                 workingDirectory: workingDir,
                 environment: environment,
                 timeout: timeout,
@@ -2519,7 +2637,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
                 shell: shell,
             )
 
-            return Macosusesdk_V1_ExecuteShellCommandResponse.with {
+            let response = Macosusesdk_V1_ExecuteShellCommandResponse.with {
                 $0.success = result.success
                 $0.stdout = result.stdout
                 $0.stderr = result.stderr
@@ -2532,8 +2650,9 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
                     $0.error = error
                 }
             }
+            return ServerResponse(message: response)
         } catch let error as ScriptExecutionError {
-            return Macosusesdk_V1_ExecuteShellCommandResponse.with {
+            let response = Macosusesdk_V1_ExecuteShellCommandResponse.with {
                 $0.success = false
                 $0.stdout = ""
                 $0.stderr = ""
@@ -2541,8 +2660,9 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
                 $0.error = error.description
                 $0.executionDuration = SwiftProtobuf.Google_Protobuf_Duration()
             }
+            return ServerResponse(message: response)
         } catch {
-            return Macosusesdk_V1_ExecuteShellCommandResponse.with {
+            let response = Macosusesdk_V1_ExecuteShellCommandResponse.with {
                 $0.success = false
                 $0.stdout = ""
                 $0.stderr = ""
@@ -2550,17 +2670,19 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
                 $0.error = "Unexpected error: \(error.localizedDescription)"
                 $0.executionDuration = SwiftProtobuf.Google_Protobuf_Duration()
             }
+            return ServerResponse(message: response)
         }
     }
 
     func validateScript(
-        request: Macosusesdk_V1_ValidateScriptRequest, context _: GRPCAsyncServerCallContext,
-    ) async throws -> Macosusesdk_V1_ValidateScriptResponse {
+        request: ServerRequest<Macosusesdk_V1_ValidateScriptRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_ValidateScriptResponse> {
         fputs("info: [MacosUseServiceProvider] validateScript called\n", stderr)
+        let req = request.message
 
         // Convert proto ScriptType to internal ScriptType
         let scriptType: ScriptType
-        switch request.type {
+        switch req.type {
         case .applescript:
             scriptType = .appleScript
         case .jxa:
@@ -2568,42 +2690,46 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
         case .shell:
             scriptType = .shell
         case .unspecified, .UNRECOGNIZED:
-            throw GRPCStatus(code: .invalidArgument, message: "Script type must be specified")
+            throw RPCError(code: .invalidArgument, message: "Script type must be specified")
         }
 
         do {
             // Validate script using ScriptExecutor
-            let result = try await ScriptExecutor.shared.validateScript(request.script, type: scriptType)
+            let result = try await ScriptExecutor.shared.validateScript(req.script, type: scriptType)
 
-            return Macosusesdk_V1_ValidateScriptResponse.with {
+            let response = Macosusesdk_V1_ValidateScriptResponse.with {
                 $0.valid = result.valid
                 $0.errors = result.errors
                 $0.warnings = result.warnings
             }
+            return ServerResponse(message: response)
         } catch let error as ScriptExecutionError {
-            return Macosusesdk_V1_ValidateScriptResponse.with {
+            let response = Macosusesdk_V1_ValidateScriptResponse.with {
                 $0.valid = false
                 $0.errors = [error.description]
                 $0.warnings = []
             }
+            return ServerResponse(message: response)
         } catch {
-            return Macosusesdk_V1_ValidateScriptResponse.with {
+            let response = Macosusesdk_V1_ValidateScriptResponse.with {
                 $0.valid = false
                 $0.errors = ["Unexpected error: \(error.localizedDescription)"]
                 $0.warnings = []
             }
+            return ServerResponse(message: response)
         }
     }
 
     func getScriptingDictionaries(
-        request: Macosusesdk_V1_GetScriptingDictionariesRequest, context _: GRPCAsyncServerCallContext,
-    ) async throws -> Macosusesdk_V1_ScriptingDictionaries {
+        request: ServerRequest<Macosusesdk_V1_GetScriptingDictionariesRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_ScriptingDictionaries> {
         fputs("info: [MacosUseServiceProvider] getScriptingDictionaries called\n", stderr)
+        let req = request.message
 
         // Validate resource name (singleton: "scriptingDictionaries")
-        guard request.name == "scriptingDictionaries" else {
-            throw GRPCStatus(
-                code: .invalidArgument, message: "Invalid scripting dictionaries name: \(request.name)",
+        guard req.name == "scriptingDictionaries" else {
+            throw RPCError(
+                code: .invalidArgument, message: "Invalid scripting dictionaries name: \(req.name)",
             )
         }
 
@@ -2655,9 +2781,10 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUseAsyncProvider {
             dictionaries.append(dictionary)
         }
 
-        return Macosusesdk_V1_ScriptingDictionaries.with {
+        let response = Macosusesdk_V1_ScriptingDictionaries.with {
             $0.dictionaries = dictionaries
         }
+        return ServerResponse(message: response)
     }
 }
 
@@ -2668,7 +2795,7 @@ private extension MacosUseServiceProvider {
         let components = name.split(separator: "/").map(String.init)
         guard components.count >= 2, components[0] == "applications", let pidInt = Int32(components[1])
         else {
-            throw GRPCStatus(code: .invalidArgument, message: "Invalid application name: \(name)")
+            throw RPCError(code: .invalidArgument, message: "Invalid application name: \(name)")
         }
         return pid_t(pidInt)
     }
@@ -2683,7 +2810,7 @@ private extension MacosUseServiceProvider {
             appElement, kAXWindowsAttribute as CFString, &windowsValue,
         )
         guard result == .success, let windows = windowsValue as? [AXUIElement] else {
-            throw GRPCStatus(code: .internalError, message: "Failed to get windows for application")
+            throw RPCError(code: .internalError, message: "Failed to get windows for application")
         }
 
         // Get CGWindowList for matching
@@ -2692,7 +2819,7 @@ private extension MacosUseServiceProvider {
                 [.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID,
             ) as? [[String: Any]]
         else {
-            throw GRPCStatus(code: .internalError, message: "Failed to get window list")
+            throw RPCError(code: .internalError, message: "Failed to get window list")
         }
 
         // Find window with matching CGWindowID
@@ -2701,7 +2828,7 @@ private extension MacosUseServiceProvider {
                 ($0[kCGWindowNumber as String] as? Int32) == Int32(windowId)
             })
         else {
-            throw GRPCStatus(
+            throw RPCError(
                 code: .notFound, message: "Window with ID \(windowId) not found in CGWindowList",
             )
         }
@@ -2711,7 +2838,7 @@ private extension MacosUseServiceProvider {
               let cgX = cgBounds["X"], let cgY = cgBounds["Y"],
               let cgWidth = cgBounds["Width"], let cgHeight = cgBounds["Height"]
         else {
-            throw GRPCStatus(code: .internalError, message: "Failed to get bounds from CGWindow")
+            throw RPCError(code: .internalError, message: "Failed to get bounds from CGWindow")
         }
 
         // Find matching AXUIElement by bounds
@@ -2751,7 +2878,7 @@ private extension MacosUseServiceProvider {
             }
         }
 
-        throw GRPCStatus(code: .notFound, message: "AXUIElement not found for window ID \(windowId)")
+        throw RPCError(code: .notFound, message: "AXUIElement not found for window ID \(windowId)")
     }
 
     func getWindowState(window: AXUIElement) -> (

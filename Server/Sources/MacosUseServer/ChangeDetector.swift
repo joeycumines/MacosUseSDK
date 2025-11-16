@@ -125,7 +125,9 @@ class ChangeDetector {
             if let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey]
                 as? NSRunningApplication
             {
-                handleAppActivated(app: app)
+                Task { @MainActor in
+                    self.handleAppActivated(app: app)
+                }
             }
         }
 
@@ -139,7 +141,9 @@ class ChangeDetector {
             if let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey]
                 as? NSRunningApplication
             {
-                handleAppDeactivated(app: app)
+                Task { @MainActor in
+                    self.handleAppDeactivated(app: app)
+                }
             }
         }
 
@@ -153,7 +157,9 @@ class ChangeDetector {
             if let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey]
                 as? NSRunningApplication
             {
-                handleAppLaunched(app: app)
+                Task { @MainActor in
+                    self.handleAppLaunched(app: app)
+                }
             }
         }
 
@@ -167,7 +173,9 @@ class ChangeDetector {
             if let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey]
                 as? NSRunningApplication
             {
-                handleAppTerminated(app: app)
+                Task { @MainActor in
+                    self.handleAppTerminated(app: app)
+                }
             }
         }
     }

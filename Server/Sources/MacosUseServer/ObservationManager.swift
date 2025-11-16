@@ -173,7 +173,7 @@ actor ObservationManager {
 
         let stream = AsyncStream<Macosusesdk_V1_ObservationEvent> { continuation in
             Task {
-                await self.addStreamContinuation(name: name, continuation: continuation)
+                self.addStreamContinuation(name: name, continuation: continuation)
             }
         }
 
@@ -209,7 +209,7 @@ actor ObservationManager {
         let type = state.observation.type
         let filter = state.observation.filter
         let pid = state.pid
-        let parent = state.parent
+        _ = state.parent
 
         // Determine poll interval from filter or use default
         let pollInterval =
@@ -245,7 +245,7 @@ actor ObservationManager {
                             name: name,
                             change: change,
                         )
-                        await publishEvent(name: name, event: event)
+                        publishEvent(name: name, event: event)
                     }
 
                     previousElements = currentElements
@@ -268,7 +268,7 @@ actor ObservationManager {
                             name: name,
                             change: change,
                         )
-                        await publishEvent(name: name, event: event)
+                        publishEvent(name: name, event: event)
                     }
 
                     previousWindows = currentWindows
@@ -300,7 +300,7 @@ actor ObservationManager {
                             name: name,
                             change: change,
                         )
-                        await publishEvent(name: name, event: event)
+                        publishEvent(name: name, event: event)
                     }
 
                     previousElements = currentElements
@@ -365,7 +365,7 @@ actor ObservationManager {
 
         let previousMap = Dictionary(
             uniqueKeysWithValues: previous.map { ($0.path, $0) })
-        let currentMap = Dictionary(
+        _ = Dictionary(
             uniqueKeysWithValues: current.map { ($0.path, $0) })
 
         // Only look for modified elements

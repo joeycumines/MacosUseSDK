@@ -117,7 +117,7 @@ struct ScreenshotCapture {
         }
 
         // Capture screen image for the specific display
-        let display = displayID ?? CGMainDisplayID()
+        _ = displayID ?? CGMainDisplayID()
 
         // Create image from window list (more flexible than CGDisplayCreateImage for regions)
         guard

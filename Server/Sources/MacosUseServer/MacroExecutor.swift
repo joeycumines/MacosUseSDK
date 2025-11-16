@@ -1,6 +1,6 @@
 import AppKit
 import Foundation
-import GRPC
+import GRPCCore
 import MacosUseSDKProtos
 import SwiftProtobuf
 
@@ -424,7 +424,7 @@ public actor MacroExecutor {
         // Execute common methods
         switch methodCall.method {
         case "ClickElement":
-            guard let elementId = processedArgs["elementId"] else {
+            guard processedArgs["elementId"] != nil else {
                 throw MacroExecutionError.invalidAction("ClickElement requires elementId argument")
             }
 
