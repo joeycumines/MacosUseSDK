@@ -31,7 +31,7 @@ func TestWindowChangeObservation(t *testing.T) {
 	app := openTextEdit(t, ctx, client, opsClient)
 	defer cleanupApplication(t, ctx, client, app)
 
-	// 3. Wait for initial window to appear
+	// 3. Wait for initial window to appear (skip modal dialogs like file dialog)
 	t.Log("Waiting for TextEdit window to appear...")
 	var initialWindow *pb.Window
 	err := PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
@@ -41,9 +41,12 @@ func TestWindowChangeObservation(t *testing.T) {
 		if err != nil {
 			return false, err
 		}
-		if len(resp.Windows) > 0 {
-			initialWindow = resp.Windows[0]
-			return true, nil
+		// TextEdit spawns file dialog on launch - skip modal dialogs, wait for document window
+		for _, window := range resp.Windows {
+			if window.State != nil && !window.State.Modal {
+				initialWindow = window
+				return true, nil
+			}
 		}
 		return false, nil
 	})

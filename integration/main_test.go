@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"syscall"
 	"testing"
 	"time"
 
@@ -87,27 +86,28 @@ func CleanupApplication(t *testing.T, ctx context.Context, client pb.MacosUseCli
 		return
 	}
 
-	// Verify the process is killed using PollUntil (max 2s)
+	// Verify the application is removed from server's tracking using PollUntil (max 2s)
 	verifyCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
 	err = PollUntilContext(verifyCtx, 100*time.Millisecond, func() (bool, error) {
-		// Check if process still exists
-		process, err := os.FindProcess(int(targetPID))
+		// Check if application still exists in server's ListApplications
+		listResp, err := client.ListApplications(ctx, &pb.ListApplicationsRequest{})
 		if err != nil {
-			// Process doesn't exist
-			return true, nil
+			// Treat errors as transient during cleanup
+			return false, nil
 		}
 
-		// Try to signal the process (Signal 0 = check if process exists)
-		err = process.Signal(syscall.Signal(0))
-		if err != nil {
-			// Process is dead
-			return true, nil
+		// Application is gone when it no longer appears in the list
+		for _, app := range listResp.Applications {
+			if app.Name == targetApp.Name {
+				// Application still exists
+				return false, nil
+			}
 		}
 
-		// Process still exists
-		return false, nil
+		// Application is gone
+		return true, nil
 	})
 
 	if err != nil {
