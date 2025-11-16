@@ -25,7 +25,7 @@
 
 ## Core Directives (Refinement Phase)
 
-The server scaffolding exists. The current objective is **Strict Correctness** and **Production Hardening**.
+The gRPC server scaffolding exists. The current objective is **Strict Correctness** and **Production Hardening**; constraints in this section describe *requirements*, not current status.
 
 The gRPC server MUST:
 - Use **only** the gRPC Swift 2 module(s) (`grpc-swift-2`, `GRPCCore`, `grpc-swift-nio-transport`, `grpc-swift-protobuf`) and leverage the existing `AutomationCoordinator` (@MainActor) as the central control loop. Legacy v1 packages, plugins, generated code, or incremental v1/v2 compatibility shims are **forbidden** and must be actively removed during migration.
@@ -34,7 +34,7 @@ The gRPC server MUST:
 - Maintain the **State Store** architecture: `AppStateStore` (copy-on-write view for queries), `WindowRegistry`, `ObservationManager`, and `SessionManager`.
 
 **Mandatory Functional Requirements (Blockers):**
-- **Pagination (AIP-158):** You MUST implement `page_size`, `page_token`, and `next_page_token` for ALL List/Find RPCs.
+- **Pagination (AIP-158):** You MUST implement `page_size`, `page_token`, and `next_page_token` for ALL List/Find RPCs, and `page_token`/`next_page_token` MUST be treated as opaque by clients (no reliance on internal structure such as `"offset:N"`).
 - **State-Difference Assertions:** Tests MUST NOT rely on "Happy Path" OK statuses. Every mutator RPC (Click, Move, Resize) MUST be followed by an accessor RPC to verify the *delta* in state.
 - **Wait-For-Convergence:** Tests MUST use a `PollUntil` pattern. `time.Sleep` is FORBIDDEN in tests.
 
