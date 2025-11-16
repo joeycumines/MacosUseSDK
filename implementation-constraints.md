@@ -3,7 +3,6 @@
 ## Session Directives
 
 - Maintain an exhaustive TODO list via the mandated tool before any code or plan edits; include every task from `implementation-plan.md`, every known deficiency, all active constraints, and motivational reminders.
-- Immediate directive (2025-11-16): eliminate or explicitly silence every compiler warning enumerated by the manager, preferring corrective fixes informed by upstream documentation; treat any remaining warning as a blocker until justified and documented.
 - Never stop execution mid-task and do not ask clarifying questions; infer next actions from the plan and constraints, and continue iterating until the entire plan is complete.
 - All progress must be incremental yet substantial per iteration, with the TODO list continuously reflecting accurate status and next steps.
 - Absolutely no manual testing; every behavior must be validated through automated tests (unit, integration, end-to-end) and recorded in CI.
