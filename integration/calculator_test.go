@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"fmt"
 	"os/exec"
 	"strings"
 	"testing"
@@ -43,13 +44,42 @@ func TestCalculatorAddition(t *testing.T) {
 	app := openCalculator(t, ctx, client, opsClient)
 	defer cleanupApplication(t, ctx, client, app)
 
-	// Wait for app to be ready
-	time.Sleep(3 * time.Second)
+	// Wait for app to be ready (poll until windows are available)
+	t.Log("Waiting for Calculator windows to appear...")
+	err := PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
+		resp, err := client.ListWindows(ctx, &pb.ListWindowsRequest{
+			Parent: app.Name,
+		})
+		if err != nil {
+			return false, err
+		}
+		return len(resp.Windows) > 0, nil
+	})
+	if err != nil {
+		t.Fatalf("Calculator windows never appeared: %v", err)
+	}
+	t.Log("Calculator is ready")
 
 	// Switch to Basic mode (decimal)
 	t.Log("Switching to Basic/Decimal mode...")
 	switchCalculatorToBasicMode(t, ctx, client, app)
-	time.Sleep(2 * time.Second)
+	
+	// Poll until mode switch is complete (check that UI is stable)
+	t.Log("Waiting for mode switch to complete...")
+	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
+		resp, err := client.TraverseAccessibility(ctx, &pb.TraverseAccessibilityRequest{
+			Name: app.Name,
+		})
+		if err != nil {
+			return false, err
+		}
+		// Mode is ready when we have a stable element count
+		return len(resp.Elements) > 10, nil
+	})
+	if err != nil {
+		t.Fatalf("Mode switch did not stabilize: %v", err)
+	}
+	t.Log("Mode switch complete")
 
 	// Clear calculator (press 'c' for clear then 'AC' to all clear)
 	t.Log("Clearing calculator...")
@@ -63,12 +93,18 @@ func TestCalculatorAddition(t *testing.T) {
 	performInput(t, ctx, client, app, "3")
 	performInput(t, ctx, client, app, "=")
 
-	// Wait for calculation to complete
-	time.Sleep(1 * time.Second)
-
-	// Traverse the UI to get the result
-	t.Log("Reading result from Calculator...")
-	result := readCalculatorResult(t, ctx, client, app)
+	// Poll until calculation result appears (state-delta assertion)
+	t.Log("Waiting for calculation result to appear...")
+	var result string
+	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
+		result = readCalculatorResult(t, ctx, client, app)
+		// Result is ready when we have a non-empty numeric value
+		return result != "" && isNumeric(result), nil
+	})
+	if err != nil {
+		t.Fatalf("Calculation result never appeared: %v", err)
+	}
+	t.Logf("Calculation result appeared: %s", result)
 
 	// Verify we got a numeric result (exact value may vary due to input timing)
 	if result == "" || !isNumeric(result) {
@@ -99,13 +135,42 @@ func TestCalculatorMultiplication(t *testing.T) {
 	app := openCalculator(t, ctx, client, opsClient)
 	defer cleanupApplication(t, ctx, client, app)
 
-	// Wait for app to be ready
-	time.Sleep(3 * time.Second)
+	// Wait for app to be ready (poll until windows are available)
+	t.Log("Waiting for Calculator windows to appear...")
+	err := PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
+		resp, err := client.ListWindows(ctx, &pb.ListWindowsRequest{
+			Parent: app.Name,
+		})
+		if err != nil {
+			return false, err
+		}
+		return len(resp.Windows) > 0, nil
+	})
+	if err != nil {
+		t.Fatalf("Calculator windows never appeared: %v", err)
+	}
+	t.Log("Calculator is ready")
 
 	// Switch to Basic mode (decimal)
 	t.Log("Switching to Basic/Decimal mode...")
 	switchCalculatorToBasicMode(t, ctx, client, app)
-	time.Sleep(2 * time.Second)
+	
+	// Poll until mode switch is complete (check that UI is stable)
+	t.Log("Waiting for mode switch to complete...")
+	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
+		resp, err := client.TraverseAccessibility(ctx, &pb.TraverseAccessibilityRequest{
+			Name: app.Name,
+		})
+		if err != nil {
+			return false, err
+		}
+		// Mode is ready when we have a stable element count
+		return len(resp.Elements) > 10, nil
+	})
+	if err != nil {
+		t.Fatalf("Mode switch did not stabilize: %v", err)
+	}
+	t.Log("Mode switch complete")
 
 	// Clear calculator (press 'c' for clear then 'AC' to all clear)
 	t.Log("Clearing calculator...")
@@ -119,12 +184,18 @@ func TestCalculatorMultiplication(t *testing.T) {
 	performInput(t, ctx, client, app, "8")
 	performInput(t, ctx, client, app, "=")
 
-	// Wait for calculation to complete
-	time.Sleep(1 * time.Second)
-
-	// Traverse the UI to get the result
-	t.Log("Reading result from Calculator...")
-	result := readCalculatorResult(t, ctx, client, app)
+	// Poll until calculation result appears (state-delta assertion)
+	t.Log("Waiting for calculation result to appear...")
+	var result string
+	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
+		result = readCalculatorResult(t, ctx, client, app)
+		// Result is ready when we have a non-empty numeric value
+		return result != "" && isNumeric(result), nil
+	})
+	if err != nil {
+		t.Fatalf("Calculation result never appeared: %v", err)
+	}
+	t.Logf("Calculation result appeared: %s", result)
 
 	// Verify we got a numeric result (exact value may vary due to input timing)
 	if result == "" || !isNumeric(result) {
@@ -146,21 +217,18 @@ func openCalculator(t *testing.T, ctx context.Context, client pb.MacosUseClient,
 
 	t.Logf("OpenApplication operation started: %s", op.Name)
 
-	// Poll the operation until it completes
-	for {
+	// Poll the operation until it completes using PollUntilContext
+	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
 		op, err = opsClient.GetOperation(ctx, &longrunningpb.GetOperationRequest{
 			Name: op.Name,
 		})
 		if err != nil {
-			t.Fatalf("Failed to get operation status: %v", err)
+			return false, fmt.Errorf("failed to get operation status: %w", err)
 		}
-
-		if op.Done {
-			break
-		}
-
-		t.Logf("Waiting for operation to complete...")
-		time.Sleep(500 * time.Millisecond)
+		return op.Done, nil
+	})
+	if err != nil {
+		t.Fatalf("Failed waiting for OpenApplication operation: %v", err)
 	}
 
 	// Check for error
