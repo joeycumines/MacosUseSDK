@@ -1,3 +1,9 @@
+**This is `./implementation-plan.md`. KEEP THE PLAN UP TO DATE AS YOU EVOLVE THE CODE. DEVIATIONS TO THE PLAN MUST BE LOGGED WITHIN THE PLAN. THE PLAN MUST BE REASSESSED HOLISTICALLY AFTER ANY CHANGE OF ANY SIZE.**
+
+**ON TOOLS: Use `config.mk` to create custom targets, and `mcp-server-make` to run targets. ALWAYS use custom targets that *limit* the amount of output you receive. For example, piping through tail, with FEW lines output. Prior to tail, pipe to tee. The file ./build.log in the root of the project is gitignored, so use that. That way you can *search* the output. To be clear, timing dependent tests are BANNED. As are those that take too long to run. Testing retries, for example, MUST be done in a way that supports avoiding running afoul of those CRITICAL rules. Abide. OBEY.**
+
+---
+
 # Implementation Plan: MacosUseSDK gRPC Service
 
 ---
@@ -16,11 +22,11 @@ Most gRPC methods and core actors exist and appear wired up, but the overall ser
 
 ### **Immediate Action Items (Next Things To Do)**
 
-1. **Re‑verify claimed completions vs reality:** For pagination, bundle ID handling, PollUntil patterns, and observation window diffs, inspect the Swift and Go code plus tests to confirm they truly exist and behave as described. If any gap is found, create a concrete fix task under the relevant phase section.
-2. **Tighten `PerformElementAction`:** Design and implement a minimal, well‑documented set of additional supported actions (e.g. double‑click, right‑click, hover, drag) plus tests, or explicitly document and test that only the current limited set is supported in v1.
-3. **Resolve placeholder providers:** Decide whether `TargetApplicationsServiceProvider` and `DesktopServiceProvider` are required for v1. Either remove them or fully implement and test them, then update this plan accordingly.
-4. **Audit observation and session semantics:** Confirm `ObservationManager` and `SessionManager` implement the semantics described in Phases 2–3 (lifecycles, window diffs, rollback limits). Any mismatch must become an explicit task.
-5. **Plan-driven test coverage audit:** For each mandatory behavior described in Phase 4 (state‑difference assertions, PollUntil, golden applications, lifecycle cleanup), verify there is at least one automated test. Add missing tests and update the relevant phase bullet to reflect the gap.
+1. **Fix pagination to use opaque tokens everywhere:** AIP-158 requires `page_token` to be treated as an opaque string by clients. `listInputs` and `listWindows` currently use a readable `"offset:N"` format; keep any internal structure server-side only and update code/comments so tokens are generated and documented as opaque (no client should depend on their structure). Ensure all List/Find RPCs use pagination with opaque tokens.
+2. **Paginate all List/Find RPCs consistently:** `ListApplications` and any other list RPCs that currently return unpaginated results must be updated to support `page_size`, `page_token`, and `next_page_token` with deterministic ordering. Remove the notion that it might be acceptable to leave some list RPCs unpaginated in v1 and align Phase 1/3 wording with the "everything paginated" requirement.
+3. **Tighten `PerformElementAction` and related tests:** After confirming its actual coverage in `MacosUseServiceProvider.swift`, either extend it to the minimal, well-documented set of additional actions we care about for v1 or clearly constrain and test the limited set it supports today. Reflect this decision and the implemented set in Phase 3.2.
+4. **Reconcile observation behavior with tests:** `ObservationManager` implements element and window change detection with polling, but current Go integration tests (`integration/main_test.go` and siblings) still rely on sleeps and basic List-based checks instead of a full PollUntil + delta pattern. Update Phase 4 to call out the concrete missing tests and add explicit tasks to replace sleeps with PollUntil and add delta assertions.
+5. **Clarify golden app lifecycle guarantees vs actual harness:** The integration harness kills Calculator/TextEdit up front but does not yet implement per-test `DeleteApplication` RPC cleanup or full session/resource teardown. Reflect this gap in Phase 4.2 and add tasks for a proper fixture lifecycle aligned with the constraints.
 
 ### **Standing Guidance For Future Edits To This Section**
 
@@ -170,6 +176,7 @@ Multi-window operations are already supported at the resource level; Phase 1 ens
 **Phase 1 tasks:**
 - Document window lifecycle and expected behaviours when a window is closed externally.
 - Clearly state any limitations (e.g. no explicit Mission Control/spaces integration in v1).
+- Align docs and implementation of `MacosUseServiceProvider.listWindows` with AIP-158: ensure pagination exists, that `page_token` is **explicitly opaque to clients**, and that ordering and default/maximum `page_size` semantics are clearly defined without exposing internal token structure.
 
 ### **1.5 Automation Workflows**
 
@@ -357,13 +364,8 @@ Phase 3 narrows to **specific, high-impact gaps** between the existing service a
 - Query-like behaviours are provided via `FindElements`, `FindRegionElements`, and list RPCs, but pagination is incomplete.
 
 **Phase 3 tasks (AIP‑158 blockers):**
-- Implement `page_size`/`page_token`/`next_page_token` for:
-    - `ListWindows`.
-    - `ListInputs`.
-    - `FindElements`.
-    - `FindRegionElements`.
-    - `ListObservations`.
-- Add tests to ensure deterministic ordering, stable pagination, and correct token behaviour.
+- Confirm, by reading the concrete Swift implementations, that **every** List/Find RPC supports `page_size`/`page_token`/`next_page_token` and uses an opaque token format in line with AIP-158. Where coverage is missing (e.g. `FindElements`, `FindRegionElements`, `ListObservations`, `ListApplications`), implement pagination.
+- Add explicit tests for all paginated RPCs to ensure deterministic ordering, stable pagination, and correct `next_page_token` behaviour. Proto comments must describe that tokens are opaque, and only high-level semantics (e.g. presence/absence, not structure) may be relied upon by clients.
 
 ### **3.5 Scope-Managed Future Enhancements**
 
@@ -790,3 +792,9 @@ Pursue advanced input, screen recording, rich macro language, and deep debug too
 ---
 **END OF IMPLEMENTATION PLAN**
 (To provide an update, return to the "STATUS SECTION" at the top of this document.)
+
+---
+
+**ON TOOLS: Use `config.mk` to create custom targets, and `mcp-server-make` to run targets. ALWAYS use custom targets that *limit* the amount of output you receive. For example, piping through tail, with FEW lines output. Prior to tail, pipe to tee. The file ./build.log in the root of the project is gitignored, so use that. That way you can *search* the output. To be clear, timing dependent tests are BANNED. As are those that take too long to run. Testing retries, for example, MUST be done in a way that supports avoiding running afoul of those CRITICAL rules. Abide. OBEY.**
+
+**ON TOOLS: Use `config.mk` to create custom targets, and `mcp-server-make` to run targets. ALWAYS use custom targets that *limit* the amount of output you receive. For example, piping through tail, with FEW lines output. Prior to tail, pipe to tee. The file ./build.log in the root of the project is gitignored, so use that. That way you can *search* the output. To be clear, timing dependent tests are BANNED. As are those that take too long to run. Testing retries, for example, MUST be done in a way that supports avoiding running afoul of those CRITICAL rules. Abide. OBEY.**

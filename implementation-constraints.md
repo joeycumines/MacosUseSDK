@@ -17,7 +17,7 @@
   1.  Define a **custom temporary target** in `config.mk`.
   2.  Execute it using the `mcp-server-make` tool.
 - **FORBIDDEN ARGUMENT:** You MUST NOT specify the `file` option (e.g., `file=config.mk`) when invoking `mcp-server-make`. The invocation must rely strictly on the repository's default Makefile discovery (which includes `config.mk`).
-- **LOGGING REQUIREMENT:** All `config.mk` recipes producing significant output MUST use `| tee /tmp/build.log | tail -n 15` (or similar) to prevent context window flooding.
+- **LOGGING REQUIREMENT:** All `config.mk` recipes producing significant output MUST use `| tee $(or $(PROJECT_ROOT),$(error unexpected var, ensure you call the root Makefile))/build.log | tail -n 15` (or similar) to prevent context window flooding.
 
 **2. CONTINUOUS VALIDATION:**
 - **DO NOT BREAK THE BUILD:** You must run the core `all` target constantly. Use `mcp-server-make all` after every file change.
