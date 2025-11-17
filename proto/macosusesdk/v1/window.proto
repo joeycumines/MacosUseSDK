@@ -43,10 +43,12 @@ message Window {
   bool minimized = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Whether the window is focused.
-  bool focused = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // Optional: unset if state is unknown (accessibility query failed).
+  optional bool focused = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Whether the window is in full-screen mode.
-  bool fullscreen = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // Optional: unset if state is unknown (accessibility query failed).
+  optional bool fullscreen = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Window attributes and state.
   WindowState state = 9 [(google.api.field_behavior) = OUTPUT_ONLY];

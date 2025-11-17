@@ -18,13 +18,35 @@
 
 ### **Current Reality (Single-Sentence Snapshot)**
 
-Core operations functional with all critical window state fixes verified: WaitElementState uses selector-based re-acquisition; listWindows avoids O(N*M) catastrophe (registry-only, no per-window AX queries); getWindow attempts fresh AX state before fallback; buildWindowResponseFromAX correctly derives visible from both AX minimized + registry isOnScreen; bounds matching uses proper 2px tolerance; WindowRegistry detects minimized windows; **KNOWN LIMITATION:** streamObservations causes server-wide RPC blocking (test disabled pending architectural redesign).
+Optional bools (focused/fullscreen) are correctly implemented end‑to‑end and `ObservationManager` event publishing is correctly decoupled, but a CRITICAL regression remains: `ObservationManager.monitorObservation` (and several other call sites) instantiate temporary `WindowRegistry()` instances, defeating the shared cache used by `getWindow`; `@MainActor` contention during traversal still limits `streamObservations`.
 
 ### **Immediate Action Items (Next Things To Do)**
 
-1. **ARCHITECTURAL REDESIGN: streamObservations RPC blocking:** The streaming observation implementation causes subsequent RPCs to timeout due to fundamental gRPC/actor interaction issues. The `for await` loop in StreamingServerResponse monopolizes request processing. Root cause: ObservationManager monitoring calls @MainActor methods (AutomationCoordinator.handleTraverse), creating contention. Solution requires: (a) Move observation monitoring to dedicated dispatch queue separate from gRPC request processing, (b) Implement non-blocking event buffer/channel between monitoring and stream writer, or (c) Use gRPC bidirectional streaming with separate response channel. Test disabled (integration/observation_test.go lines 12-14) until fixed. Files: Server/Sources/MacosUseServer/ObservationManager.swift, MacosUseServiceProvider.swift (Phase 4.3, ARCHITECTURAL LIMITATION).
+1. **WindowRegistry Consistency (CRITICAL): Single shared cache across the server.**
+    - Replace all temporary `WindowRegistry()` usages with a shared instance to maintain one coherent cache and avoid redundant CGWindowList scans.
+    - Targets (must change):
+      - `Server/Sources/MacosUseServer/ObservationManager.swift`: `monitorObservation(.windowChanges)` must use the shared registry (not `WindowRegistry()`).
+      - `Server/Sources/MacosUseServer/MacosUseServiceProvider.swift`: `listWindows`, `captureWindowScreenshot`, and `buildWindowResponseFromAX` must use the provider’s shared `windowRegistry` instead of creating temporaries.
+      - `Server/Sources/MacosUseServer/MacroExecutor.swift`: all window queries (`windowExists`, `windowTitle`, for‑each window patterns) must use the shared registry.
+    - Acceptance: A single registry instance serves all window reads; results from `ListWindows`, `GetWindow`, and observation diffs agree modulo AX freshness; no temporary `WindowRegistry()` remains in production paths.
 
-2. **Add unit tests for core components:** WindowRegistry, ObservationManager, OperationStore, SessionManager, SelectorParser/ElementLocator all lack focused unit tests. Files: Server/Tests/MacosUseServerTests/ (Phase 4.1, HIGH).
+2. **Observation stream lifecycle hygiene (HIGH):**
+    - Add continuation removal on stream termination in `ObservationManager.createEventStream` (use `onTermination`) to prevent continuation leaks; keep `Task.detached` event publishing.
+    - Acceptance: Starting and stopping `StreamObservations` does not increase retained continuations; repeated start/stop does not grow memory or fan‑out sets.
+
+3. **Traversal contention (HIGH):**
+    - `handleTraverse` runs under `@MainActor`, still contending with other RPCs during observations. Plan: refactor traversal off `@MainActor` (or isolate via a dedicated non‑main queue) to remove RPC timeouts.
+    - **Test Re-enable During Work:** As part of the refactor, re-enable `integration/observation_test.go` **during** implementation (not only after). Use it to validate window change detection and streaming behaviour while iterating. If the test cannot be re-enabled due to a known blocker, document the blocker, the incremental mitigation plan, and acceptance criteria for re-enablement.
+    - Acceptance: With observation active, concurrent RPCs (e.g., `GetWindow`) execute without timeouts; unskip the observation test and pass with PollUntil conditions.
+
+4. **Small correctness/unification fixes (MEDIUM):**
+    - Unify `parsePID(fromName:)` (currently duplicated in `MacosUseServiceProvider` and `MacroExecutor`).
+    - In `MacroExecutor.executeMethodCall("ClickElement")`, implement coordinate resolution from `elementId` (or return a clear UNIMPLEMENTED error) to avoid a misleading placeholder.
+    - In `MacosUseServiceProvider.buildWindowResponseFromAX`, stop creating a temporary registry; use the shared provider `windowRegistry` to enrich bundle ID/layer/visible.
+
+5. **Targeted tests (HIGH):**
+    - Unit tests: `WindowRegistry` (TTL, filtering) and `ObservationManager` window diffing (with shared registry).
+    - Integration: Pagination determinism for all `List*/Find*` RPCs (AIP‑158), and state‑delta verification for window ops; unskip observation streaming once traversal contention is resolved.
 
 ### **Standing Guidance For Future Edits To This Section**
 
@@ -564,6 +586,10 @@ Instead of attempting a full matrix at once, Phase 4 focuses on a **prioritised 
 
 - **Test: Window Changes Detection:**
     - Create Observation for window changes; open/close windows in the app; expect window add/remove events in the stream.
+
+- **Implementation Note:** Unskip and run `integration/observation_test.go` as part of the change set that refactors traversal and ObservationManager; it should be used to confirm window add/remove detection during development (not postponed to after completion).
+
+- **Developer Target:** Add a Makefile target `enable-observation-test` (in `config.mk`) to unskip observation tests during the development cycle and make it straightforward for contributors to run this specific test during the change set.
 
 - **Test: Scripting:**
     - `GetScriptingDictionaries` returns bundle ID & command set for a given app.

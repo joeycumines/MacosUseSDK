@@ -73,16 +73,28 @@ public struct Macosusesdk_V1_Window: @unchecked Sendable {
     }
 
     /// Whether the window is focused.
+    /// Optional: unset if state is unknown (accessibility query failed).
     public var focused: Bool {
-        get { _storage._focused }
+        get { _storage._focused ?? false }
         set { _uniqueStorage()._focused = newValue }
     }
 
+    /// Returns true if `focused` has been explicitly set.
+    public var hasFocused: Bool { _storage._focused != nil }
+    /// Clears the value of `focused`. Subsequent reads from it will return its default value.
+    public mutating func clearFocused() { _uniqueStorage()._focused = nil }
+
     /// Whether the window is in full-screen mode.
+    /// Optional: unset if state is unknown (accessibility query failed).
     public var fullscreen: Bool {
-        get { _storage._fullscreen }
+        get { _storage._fullscreen ?? false }
         set { _uniqueStorage()._fullscreen = newValue }
     }
+
+    /// Returns true if `fullscreen` has been explicitly set.
+    public var hasFullscreen: Bool { _storage._fullscreen != nil }
+    /// Clears the value of `fullscreen`. Subsequent reads from it will return its default value.
+    public mutating func clearFullscreen() { _uniqueStorage()._fullscreen = nil }
 
     /// Window attributes and state.
     public var state: Macosusesdk_V1_WindowState {
@@ -173,8 +185,8 @@ extension Macosusesdk_V1_Window: SwiftProtobuf.Message, SwiftProtobuf._MessageIm
         var _zIndex: Int32 = 0
         var _visible: Bool = false
         var _minimized: Bool = false
-        var _focused: Bool = false
-        var _fullscreen: Bool = false
+        var _focused: Bool?
+        var _fullscreen: Bool?
         var _state: Macosusesdk_V1_WindowState?
         var _bundleID: String = .init()
 
@@ -255,12 +267,12 @@ extension Macosusesdk_V1_Window: SwiftProtobuf.Message, SwiftProtobuf._MessageIm
             if _storage._minimized != false {
                 try visitor.visitSingularBoolField(value: _storage._minimized, fieldNumber: 6)
             }
-            if _storage._focused != false {
-                try visitor.visitSingularBoolField(value: _storage._focused, fieldNumber: 7)
-            }
-            if _storage._fullscreen != false {
-                try visitor.visitSingularBoolField(value: _storage._fullscreen, fieldNumber: 8)
-            }
+            try { if let v = _storage._focused {
+                try visitor.visitSingularBoolField(value: v, fieldNumber: 7)
+            } }()
+            try { if let v = _storage._fullscreen {
+                try visitor.visitSingularBoolField(value: v, fieldNumber: 8)
+            } }()
             try { if let v = _storage._state {
                 try visitor.visitSingularMessageField(value: v, fieldNumber: 9)
             } }()

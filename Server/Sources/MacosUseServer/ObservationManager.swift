@@ -15,6 +15,8 @@ actor ObservationManager {
     private var observations: [String: ObservationState] = [:]
 
     /// Event streams for active observations
+    /// ARCHITECTURAL FIX: Use buffering continuations to decouple producer from consumer
+    /// and prevent @MainActor contention deadlock
     private var eventStreams: [String: [AsyncStream<Macosusesdk_V1_ObservationEvent>.Continuation]] =
         [:]
 
@@ -71,16 +73,15 @@ actor ObservationManager {
         observations[name] = state // Write state back to actor
 
         // Get all data needed by the nonisolated task *before* detaching
-        let continuations = eventStreams[name] ?? []
         let initialState = state // Copy state by value
 
         // Start background monitoring task (detached to avoid blocking this actor)
         let task = Task.detached {
-            // Pass state and continuations by value
+            // Pass state by value (continuations no longer needed, fetched dynamically)
             await self.monitorObservation(
                 name: name,
                 initialState: initialState,
-                continuations: continuations,
+                [],
             )
         }
         tasks[name] = task
@@ -173,6 +174,7 @@ actor ObservationManager {
     }
 
     /// Creates an event stream for an observation
+    /// ARCHITECTURAL FIX: Use buffering limit to prevent producer blocking on slow consumers
     func createEventStream(
         name: String,
     ) -> AsyncStream<Macosusesdk_V1_ObservationEvent>? {
@@ -180,9 +182,11 @@ actor ObservationManager {
             return nil
         }
 
-        let stream = AsyncStream<Macosusesdk_V1_ObservationEvent> { continuation in
+        let stream = AsyncStream<Macosusesdk_V1_ObservationEvent>(
+            bufferingPolicy: .bufferingNewest(100),
+        ) { continuation in
             Task {
-                self.addStreamContinuation(name: name, continuation: continuation)
+                await self.addStreamContinuation(name: name, continuation: continuation)
             }
         }
 
@@ -194,7 +198,7 @@ actor ObservationManager {
     private func addStreamContinuation(
         name: String,
         continuation: AsyncStream<Macosusesdk_V1_ObservationEvent>.Continuation,
-    ) {
+    ) async {
         if eventStreams[name] != nil {
             eventStreams[name]?.append(continuation)
         } else {
@@ -202,21 +206,33 @@ actor ObservationManager {
         }
     }
 
-    /// Publishes an event to all subscribers (nonisolated to avoid blocking monitoring loop)
+    /// Publishes an event to all subscribers (nonisolated, non-blocking via Task dispatch)
+    /// ARCHITECTURAL FIX: Use Task.detached to completely decouple event publishing from
+    /// the monitoring loop, preventing yield() from blocking on @MainActor contention.
     private nonisolated func publishEvent(
-        continuations: [AsyncStream<Macosusesdk_V1_ObservationEvent>.Continuation],
+        name: String,
         event: Macosusesdk_V1_ObservationEvent,
     ) {
-        for continuation in continuations {
-            continuation.yield(event)
+        // Dispatch event publication to a detached task so we never block the monitoring loop
+        Task.detached {
+            // Re-fetch current continuations from the actor to handle late subscribers
+            let continuations = await self.getCurrentContinuations(name: name)
+            for continuation in continuations {
+                continuation.yield(event)
+            }
         }
+    }
+
+    /// Gets current continuations for an observation (actor-isolated helper)
+    private func getCurrentContinuations(name: String) -> [AsyncStream<Macosusesdk_V1_ObservationEvent>.Continuation] {
+        eventStreams[name] ?? []
     }
 
     /// Monitors an observation in the background
     private nonisolated func monitorObservation(
         name: String,
         initialState: ObservationState,
-        continuations: [AsyncStream<Macosusesdk_V1_ObservationEvent>.Continuation],
+        _: [AsyncStream<Macosusesdk_V1_ObservationEvent>.Continuation],
     ) async {
         let type = initialState.observation.type
         let filter = initialState.observation.filter
@@ -263,7 +279,7 @@ actor ObservationManager {
                             sequence: sequence,
                         )
                         sequence += 1
-                        publishEvent(continuations: continuations, event: event)
+                        publishEvent(name: name, event: event)
                     }
 
                     previousElements = currentElements
@@ -288,7 +304,7 @@ actor ObservationManager {
                             sequence: sequence,
                         )
                         sequence += 1
-                        publishEvent(continuations: continuations, event: event)
+                        publishEvent(name: name, event: event)
                     }
 
                     previousWindows = currentWindows
@@ -322,7 +338,7 @@ actor ObservationManager {
                             sequence: sequence,
                         )
                         sequence += 1
-                        publishEvent(continuations: continuations, event: event)
+                        publishEvent(name: name, event: event)
                     }
 
                     previousElements = currentElements

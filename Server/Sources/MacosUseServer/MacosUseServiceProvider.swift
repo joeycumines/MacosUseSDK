@@ -354,29 +354,34 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         }
 
         // Fallback: Use WindowRegistry (CGWindowList) if AX fails
-        let registry = WindowRegistry()
-        // Ensure we have the latest window list
-        try await registry.refreshWindows(forPID: pid)
+        // CRITICAL FIX: Use shared windowRegistry actor instead of creating a temporary one
+        // Refreshing a temporary registry has no effect on CGWindowList cache consistency
+        try await windowRegistry.refreshWindows(forPID: pid)
 
-        guard let windowInfo = try await registry.getWindow(windowId) else {
+        guard let windowInfo = try await windowRegistry.getWindow(windowId) else {
             throw RPCError(code: .notFound, message: "Window not found")
         }
 
         // Try to get fresh AX data for state - only use stale registry as last resort
         var minimized: Bool
-        var focused: Bool
-        var fullscreen: Bool
+        var focused: Bool?
+        var fullscreen: Bool?
         var state: Macosusesdk_V1_WindowState
 
         // Attempt to get fresh AX data even in fallback path
         if let axWindow = try? findWindowElement(pid: pid, windowId: windowId) {
-            (minimized, focused, fullscreen) = getWindowState(window: axWindow)
+            let windowState = getWindowState(window: axWindow)
+            minimized = windowState.0
+            focused = windowState.1
+            fullscreen = windowState.2
             state = try await buildWindowStateFromAX(window: axWindow)
         } else {
-            // Last resort: use stale registry data
+            // Last resort: use stale registry data for minimized, leave focused/fullscreen unknown
+            // CRITICAL FIX: Use optional bool fields (proto3 field presence) to represent unknown state
+            // rather than hardcoding false. Unset optional fields indicate AX query failure.
             minimized = !windowInfo.isOnScreen
-            focused = false
-            fullscreen = false
+            focused = nil // Unknown - AX query failed, leave unset
+            fullscreen = nil // Unknown - AX query failed, leave unset
             state = Macosusesdk_V1_WindowState() // Empty
         }
 
@@ -391,10 +396,15 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
             }
             $0.zIndex = Int32(windowInfo.layer)
             $0.visible = windowInfo.isOnScreen
-            $0.minimized = minimized // Use fresh value if available
-            $0.focused = focused // Use fresh value if available
-            $0.fullscreen = fullscreen // Use fresh value if available
-            $0.state = state // Use fresh value if available
+            $0.minimized = minimized
+            // CRITICAL FIX: Use optional field presence - only set if known
+            if let focusedValue = focused {
+                $0.focused = focusedValue
+            }
+            if let fullscreenValue = fullscreen {
+                $0.fullscreen = fullscreenValue
+            }
+            $0.state = state
             $0.bundleID = windowInfo.bundleID ?? ""
         }
         return ServerResponse(message: response)
@@ -2961,8 +2971,13 @@ private extension MacosUseServiceProvider {
                 $0.zIndex = Int32(zIndex)
                 $0.visible = visible
                 $0.minimized = minimized
-                $0.focused = focused
-                $0.fullscreen = fullscreen
+                // CRITICAL FIX: Only set focused/fullscreen if known (not nil)
+                if let focusedValue = focused {
+                    $0.focused = focusedValue
+                }
+                if let fullscreenValue = fullscreen {
+                    $0.fullscreen = fullscreenValue
+                }
                 $0.state = windowState
                 $0.bundleID = bundleID
             },
@@ -3139,11 +3154,11 @@ private extension MacosUseServiceProvider {
     }
 
     func getWindowState(window: AXUIElement) -> (
-        minimized: Bool, focused: Bool, fullscreen: Bool,
+        minimized: Bool, focused: Bool?, fullscreen: Bool?,
     ) {
         var minimized = false
-        var focused = false
-        let fullscreen = false
+        var focused: Bool?
+        let fullscreen: Bool? = nil
 
         // Check minimized
         var minValue: CFTypeRef?
@@ -3155,15 +3170,17 @@ private extension MacosUseServiceProvider {
         }
 
         // Check focused (main window)
+        // CRITICAL FIX: Return nil if query fails, not false
         var mainValue: CFTypeRef?
         if AXUIElementCopyAttributeValue(window, kAXMainAttribute as CFString, &mainValue) == .success,
            let mainBool = mainValue as? Bool
         {
             focused = mainBool
         }
+        // If query failed, focused remains nil (unknown)
 
         // Note: kAXFullscreenAttribute is not available in Accessibility API
-        // fullscreen remains false
+        // fullscreen remains nil (unknown)
 
         return (minimized, focused, fullscreen)
     }

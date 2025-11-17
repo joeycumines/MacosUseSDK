@@ -43,9 +43,11 @@ type Window struct {
 	// Whether the window is minimized.
 	Minimized bool `protobuf:"varint,6,opt,name=minimized,proto3" json:"minimized,omitempty"`
 	// Whether the window is focused.
-	Focused bool `protobuf:"varint,7,opt,name=focused,proto3" json:"focused,omitempty"`
+	// Optional: unset if state is unknown (accessibility query failed).
+	Focused *bool `protobuf:"varint,7,opt,name=focused,proto3,oneof" json:"focused,omitempty"`
 	// Whether the window is in full-screen mode.
-	Fullscreen bool `protobuf:"varint,8,opt,name=fullscreen,proto3" json:"fullscreen,omitempty"`
+	// Optional: unset if state is unknown (accessibility query failed).
+	Fullscreen *bool `protobuf:"varint,8,opt,name=fullscreen,proto3,oneof" json:"fullscreen,omitempty"`
 	// Window attributes and state.
 	State *WindowState `protobuf:"bytes,9,opt,name=state,proto3" json:"state,omitempty"`
 	// Bundle identifier of the application that owns this window.
@@ -128,15 +130,15 @@ func (x *Window) GetMinimized() bool {
 }
 
 func (x *Window) GetFocused() bool {
-	if x != nil {
-		return x.Focused
+	if x != nil && x.Focused != nil {
+		return *x.Focused
 	}
 	return false
 }
 
 func (x *Window) GetFullscreen() bool {
-	if x != nil {
-		return x.Fullscreen
+	if x != nil && x.Fullscreen != nil {
+		return *x.Fullscreen
 	}
 	return false
 }
@@ -314,22 +316,25 @@ var File_macosusesdk_v1_window_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_window_proto_rawDesc = "" +
 	"\n" +
-	"\x1bmacosusesdk/v1/window.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\"\xd0\x03\n" +
+	"\x1bmacosusesdk/v1/window.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\"\xf5\x03\n" +
 	"\x06Window\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12\x19\n" +
 	"\x05title\x18\x02 \x01(\tB\x03\xe0A\x03R\x05title\x123\n" +
 	"\x06bounds\x18\x03 \x01(\v2\x16.macosusesdk.v1.BoundsB\x03\xe0A\x03R\x06bounds\x12\x1c\n" +
 	"\az_index\x18\x04 \x01(\x05B\x03\xe0A\x03R\x06zIndex\x12\x1d\n" +
 	"\avisible\x18\x05 \x01(\bB\x03\xe0A\x03R\avisible\x12!\n" +
-	"\tminimized\x18\x06 \x01(\bB\x03\xe0A\x03R\tminimized\x12\x1d\n" +
-	"\afocused\x18\a \x01(\bB\x03\xe0A\x03R\afocused\x12#\n" +
+	"\tminimized\x18\x06 \x01(\bB\x03\xe0A\x03R\tminimized\x12\"\n" +
+	"\afocused\x18\a \x01(\bB\x03\xe0A\x03H\x00R\afocused\x88\x01\x01\x12(\n" +
 	"\n" +
-	"fullscreen\x18\b \x01(\bB\x03\xe0A\x03R\n" +
-	"fullscreen\x126\n" +
+	"fullscreen\x18\b \x01(\bB\x03\xe0A\x03H\x01R\n" +
+	"fullscreen\x88\x01\x01\x126\n" +
 	"\x05state\x18\t \x01(\v2\x1b.macosusesdk.v1.WindowStateB\x03\xe0A\x03R\x05state\x12 \n" +
 	"\tbundle_id\x18\n" +
 	" \x01(\tB\x03\xe0A\x03R\bbundleId:_\xeaA\\\n" +
-	"\x1cmacosusesdk.localhost/Window\x12+applications/{application}/windows/{window}*\awindows2\x06window\"R\n" +
+	"\x1cmacosusesdk.localhost/Window\x12+applications/{application}/windows/{window}*\awindows2\x06windowB\n" +
+	"\n" +
+	"\b_focusedB\r\n" +
+	"\v_fullscreen\"R\n" +
 	"\x06Bounds\x12\f\n" +
 	"\x01x\x18\x01 \x01(\x01R\x01x\x12\f\n" +
 	"\x01y\x18\x02 \x01(\x01R\x01y\x12\x14\n" +
@@ -376,6 +381,7 @@ func file_macosusesdk_v1_window_proto_init() {
 	if File_macosusesdk_v1_window_proto != nil {
 		return
 	}
+	file_macosusesdk_v1_window_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
