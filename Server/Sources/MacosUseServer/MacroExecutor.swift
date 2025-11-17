@@ -426,16 +426,33 @@ public actor MacroExecutor {
         // Execute common methods
         switch methodCall.method {
         case "ClickElement":
-            guard processedArgs["elementId"] != nil else {
+            guard let elementId = processedArgs["elementId"] else {
                 throw MacroExecutionError.invalidAction("ClickElement requires elementId argument")
             }
 
-            // Click the element
+            // Retrieve element from registry to get coordinates
+            guard let element = await ElementRegistry.shared.getElement(elementId) else {
+                throw MacroExecutionError.elementNotFound(elementId)
+            }
+
+            // Validate element has position data
+            guard element.hasX, element.hasY, element.hasWidth, element.hasHeight else {
+                throw MacroExecutionError.executionFailed("Element \(elementId) missing position data")
+            }
+
+            // Calculate center point of element
+            let centerX = element.x + (element.width / 2)
+            let centerY = element.y + (element.height / 2)
+
+            // Click the element at its center
             try await AutomationCoordinator.shared.handleExecuteInput(
                 action: Macosusesdk_V1_InputAction.with {
                     $0.inputType = .click(
                         Macosusesdk_V1_MouseClick.with {
-                            // Would need to get element position here
+                            $0.position = Macosusesdk_Type_Point.with {
+                                $0.x = centerX
+                                $0.y = centerY
+                            }
                             $0.clickType = .left
                             $0.clickCount = 1
                         })
