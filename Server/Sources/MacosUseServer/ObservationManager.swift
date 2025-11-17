@@ -321,7 +321,7 @@ actor ObservationManager {
                     // Detect window changes
                     let windowChanges = detectWindowChanges(
                         previous: previousWindows,
-                        current: currentWindows
+                        current: currentWindows,
                     )
 
                     // Publish window change events
@@ -329,7 +329,7 @@ actor ObservationManager {
                         let event = createWindowObservationEvent(
                             name: name,
                             change: change,
-                            sequence: sequence
+                            sequence: sequence,
                         )
                         sequence += 1
                         publishEvent(name: name, event: event)
@@ -393,10 +393,10 @@ actor ObservationManager {
 
         var windowsValue: CFTypeRef?
         let result = AXUIElementCopyAttributeValue(
-            appElement, kAXWindowsAttribute as CFString, &windowsValue
+            appElement, kAXWindowsAttribute as CFString, &windowsValue,
         )
         guard result == .success, let windows = windowsValue as? [AXUIElement] else {
-            return []  // No windows or permission denied
+            return [] // No windows or permission denied
         }
 
         var snapshots: [AXWindowSnapshot] = []
@@ -405,10 +405,10 @@ actor ObservationManager {
             var posValue: CFTypeRef?
             var sizeValue: CFTypeRef?
             let posResult = AXUIElementCopyAttributeValue(
-                window, kAXPositionAttribute as CFString, &posValue
+                window, kAXPositionAttribute as CFString, &posValue,
             )
             let sizeResult = AXUIElementCopyAttributeValue(
-                window, kAXSizeAttribute as CFString, &sizeValue
+                window, kAXSizeAttribute as CFString, &sizeValue,
             )
 
             var bounds = CGRect.zero
@@ -431,7 +431,7 @@ actor ObservationManager {
             // Get title
             var titleValue: CFTypeRef?
             let titleResult = AXUIElementCopyAttributeValue(
-                window, kAXTitleAttribute as CFString, &titleValue
+                window, kAXTitleAttribute as CFString, &titleValue,
             )
             let title = if titleResult == .success, let titleStr = titleValue as? String {
                 titleStr
@@ -442,7 +442,7 @@ actor ObservationManager {
             // Get minimized state
             var minValue: CFTypeRef?
             let minimized = if AXUIElementCopyAttributeValue(
-                window, kAXMinimizedAttribute as CFString, &minValue
+                window, kAXMinimizedAttribute as CFString, &minValue,
             ) == .success, let minBool = minValue as? Bool {
                 minBool
             } else {
@@ -452,7 +452,7 @@ actor ObservationManager {
             // Get focused state
             var mainValue: CFTypeRef?
             let focused: Bool? = if AXUIElementCopyAttributeValue(
-                window, kAXMainAttribute as CFString, &mainValue
+                window, kAXMainAttribute as CFString, &mainValue,
             ) == .success, let mainBool = mainValue as? Bool {
                 mainBool
             } else {
@@ -469,7 +469,7 @@ actor ObservationManager {
                 bounds: bounds,
                 minimized: minimized,
                 visible: !minimized,
-                focused: focused
+                focused: focused,
             )
             snapshots.append(snapshot)
         }
@@ -658,7 +658,7 @@ actor ObservationManager {
     /// Detects changes between two window snapshots
     nonisolated func detectWindowChanges(
         previous: [AXWindowSnapshot],
-        current: [AXWindowSnapshot]
+        current: [AXWindowSnapshot],
     ) -> [WindowChange] {
         var changes: [WindowChange] = []
 
@@ -666,10 +666,10 @@ actor ObservationManager {
         // We match windows by windowID (derived from index in fetchAXWindows).
         // This is fragile but the best we can do without stable IDs from the OS.
         let previousMap = Dictionary(
-            uniqueKeysWithValues: previous.map { ($0.windowID, $0) }
+            uniqueKeysWithValues: previous.map { ($0.windowID, $0) },
         )
         let currentMap = Dictionary(
-            uniqueKeysWithValues: current.map { ($0.windowID, $0) }
+            uniqueKeysWithValues: current.map { ($0.windowID, $0) },
         )
 
         // Find created windows (windowID that didn't exist before)
@@ -711,7 +711,7 @@ actor ObservationManager {
     private nonisolated func createWindowObservationEvent(
         name: String,
         change: WindowChange,
-        sequence: Int64
+        sequence: Int64,
     ) -> Macosusesdk_V1_ObservationEvent {
         Macosusesdk_V1_ObservationEvent.with {
             $0.observation = name
@@ -725,7 +725,7 @@ actor ObservationManager {
                         $0.eventType = .created
                         $0.windowID = "\(window.windowID)"
                         $0.title = window.title
-                    }
+                    },
                 )
 
             case let .destroyed(window):
@@ -734,7 +734,7 @@ actor ObservationManager {
                         $0.eventType = .destroyed
                         $0.windowID = "\(window.windowID)"
                         $0.title = window.title
-                    }
+                    },
                 )
 
             case let .moved(_, new):
@@ -743,7 +743,7 @@ actor ObservationManager {
                         $0.eventType = .moved
                         $0.windowID = "\(new.windowID)"
                         $0.title = new.title
-                    }
+                    },
                 )
 
             case let .resized(_, new):
@@ -752,7 +752,7 @@ actor ObservationManager {
                         $0.eventType = .resized
                         $0.windowID = "\(new.windowID)"
                         $0.title = new.title
-                    }
+                    },
                 )
 
             case let .minimized(window):
@@ -761,7 +761,7 @@ actor ObservationManager {
                         $0.eventType = .minimized
                         $0.windowID = "\(window.windowID)"
                         $0.title = window.title
-                    }
+                    },
                 )
 
             case let .restored(window):
@@ -770,7 +770,7 @@ actor ObservationManager {
                         $0.eventType = .restored
                         $0.windowID = "\(window.windowID)"
                         $0.title = window.title
-                    }
+                    },
                 )
             }
         }
@@ -797,11 +797,11 @@ private enum ElementChange {
 /// This struct holds ONLY data from the Accessibility API, avoiding the
 /// catastrophic state inconsistency with CGWindowList.
 struct AXWindowSnapshot: Hashable {
-    let windowID: Int  // Derived from hash or index since AX doesn't expose CGWindowID directly
+    let windowID: Int // Derived from hash or index since AX doesn't expose CGWindowID directly
     let title: String
     let bounds: CGRect
     let minimized: Bool
-    let visible: Bool  // Derived as !minimized
+    let visible: Bool // Derived as !minimized
     let focused: Bool?
 
     func hash(into hasher: inout Hasher) {

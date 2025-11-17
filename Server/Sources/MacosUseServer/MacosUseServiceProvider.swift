@@ -2901,7 +2901,7 @@ private extension MacosUseServiceProvider {
     /// Build a Window response directly from an AXUIElement, bypassing CGWindowList lookups.
     /// This is used after window operations where CGWindowList may be stale.
     func buildWindowResponseFromAX(
-        name: String, pid: pid_t, windowId: CGWindowID, window: AXUIElement,
+        name: String, pid _: pid_t, windowId _: CGWindowID, window: AXUIElement,
     ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
         // Get bounds and title from AXUIElement (MUST run on MainActor)
         let (bounds, title) = try await MainActor.run { () -> (CGRect, String) in
