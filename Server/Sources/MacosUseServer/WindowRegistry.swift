@@ -59,6 +59,7 @@ actor WindowRegistry {
             let isOnScreen = windowDict[kCGWindowIsOnscreen as String] as? Bool ?? false
 
             // Resolve bundle ID using NSRunningApplication
+            // NOTE: This is a simple lookup and should be thread-safe
             let bundleID = NSRunningApplication(processIdentifier: ownerPID)?.bundleIdentifier
 
             let info = WindowInfo(

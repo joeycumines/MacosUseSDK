@@ -485,65 +485,64 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
     func focusWindow(
         request: ServerRequest<Macosusesdk_V1_FocusWindowRequest>, context: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
+        let req = request.message
+        fputs("info: [MacosUseServiceProvider] focusWindow called\n", stderr)
+
+        // Parse "applications/{pid}/windows/{windowId}"
+        let components = req.name.split(separator: "/").map(String.init)
+        guard components.count == 4,
+              components[0] == "applications",
+              components[2] == "windows",
+              let pid = pid_t(components[1]),
+              let windowId = CGWindowID(components[3])
+        else {
+            throw RPCError(code: .invalidArgument, message: "Invalid window name format")
+        }
+
+        let windowToFocus = try await findWindowElement(pid: pid, windowId: windowId)
+
+        // Set kAXMainAttribute to true to focus the window (MUST run on MainActor)
         try await MainActor.run {
-            let req = request.message
-            fputs("info: [MacosUseServiceProvider] focusWindow called\n", stderr)
-
-            // Parse "applications/{pid}/windows/{windowId}"
-            let components = req.name.split(separator: "/").map(String.init)
-            guard components.count == 4,
-                  components[0] == "applications",
-                  components[2] == "windows",
-                  let pid = pid_t(components[1]),
-                  let windowId = CGWindowID(components[3])
-            else {
-                throw RPCError(code: .invalidArgument, message: "Invalid window name format")
-            }
-
-            let windowToFocus = try await findWindowElement(pid: pid, windowId: windowId)
-
-            // Set kAXMainAttribute to true to focus the window
             let mainResult = AXUIElementSetAttributeValue(
                 windowToFocus, kAXMainAttribute as CFString, kCFBooleanTrue,
             )
             guard mainResult == .success else {
                 throw RPCError(code: .internalError, message: "Failed to focus window")
             }
-
-            // Return updated window state
-            return try await getWindow(
-                request: ServerRequest(metadata: request.metadata, message: Macosusesdk_V1_GetWindowRequest.with { $0.name = req.name }), context: context,
-            )
         }
+
+        // Return updated window state
+        return try await getWindow(
+            request: ServerRequest(metadata: request.metadata, message: Macosusesdk_V1_GetWindowRequest.with { $0.name = req.name }), context: context,
+        )
     }
 
     func moveWindow(
         request: ServerRequest<Macosusesdk_V1_MoveWindowRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
+        let req = request.message
+        fputs("info: [MacosUseServiceProvider] moveWindow called\n", stderr)
+
+        // Parse "applications/{pid}/windows/{windowId}"
+        let components = req.name.split(separator: "/").map(String.init)
+        guard components.count == 4,
+              components[0] == "applications",
+              components[2] == "windows",
+              let pid = pid_t(components[1]),
+              let windowId = CGWindowID(components[3])
+        else {
+            throw RPCError(code: .invalidArgument, message: "Invalid window name format")
+        }
+
+        let window = try await findWindowElement(pid: pid, windowId: windowId)
+
+        // Create AXValue and set position (MUST run on MainActor)
         try await MainActor.run {
-            let req = request.message
-            fputs("info: [MacosUseServiceProvider] moveWindow called\n", stderr)
-
-            // Parse "applications/{pid}/windows/{windowId}"
-            let components = req.name.split(separator: "/").map(String.init)
-            guard components.count == 4,
-                  components[0] == "applications",
-                  components[2] == "windows",
-                  let pid = pid_t(components[1]),
-                  let windowId = CGWindowID(components[3])
-            else {
-                throw RPCError(code: .invalidArgument, message: "Invalid window name format")
-            }
-
-            let window = try await findWindowElement(pid: pid, windowId: windowId)
-
-            // Create AXValue for new position
             var newPosition = CGPoint(x: req.x, y: req.y)
             guard let positionValue = AXValueCreate(.cgPoint, &newPosition) else {
                 throw RPCError(code: .internalError, message: "Failed to create position value")
             }
 
-            // Set position
             let setResult = AXUIElementSetAttributeValue(
                 window, kAXPositionAttribute as CFString, positionValue,
             )
@@ -552,39 +551,38 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
                     code: .internalError, message: "Failed to move window: \(setResult.rawValue)",
                 )
             }
-
-            // Build response directly from AXUIElement (CGWindowList may be stale)
-            return try await buildWindowResponseFromAX(name: req.name, pid: pid, windowId: windowId, window: window)
         }
+
+        // Build response directly from AXUIElement (CGWindowList may be stale)
+        return try await buildWindowResponseFromAX(name: req.name, pid: pid, windowId: windowId, window: window)
     }
 
     func resizeWindow(
         request: ServerRequest<Macosusesdk_V1_ResizeWindowRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
+        let req = request.message
+        fputs("info: [MacosUseServiceProvider] resizeWindow called\n", stderr)
+
+        // Parse "applications/{pid}/windows/{windowId}"
+        let components = req.name.split(separator: "/").map(String.init)
+        guard components.count == 4,
+              components[0] == "applications",
+              components[2] == "windows",
+              let pid = pid_t(components[1]),
+              let windowId = CGWindowID(components[3])
+        else {
+            throw RPCError(code: .invalidArgument, message: "Invalid window name format")
+        }
+
+        let window = try await findWindowElement(pid: pid, windowId: windowId)
+
+        // Create AXValue, set size, and verify (MUST run on MainActor)
         try await MainActor.run {
-            let req = request.message
-            fputs("info: [MacosUseServiceProvider] resizeWindow called\n", stderr)
-
-            // Parse "applications/{pid}/windows/{windowId}"
-            let components = req.name.split(separator: "/").map(String.init)
-            guard components.count == 4,
-                  components[0] == "applications",
-                  components[2] == "windows",
-                  let pid = pid_t(components[1]),
-                  let windowId = CGWindowID(components[3])
-            else {
-                throw RPCError(code: .invalidArgument, message: "Invalid window name format")
-            }
-
-            let window = try await findWindowElement(pid: pid, windowId: windowId)
-
-            // Create AXValue for new size
             var newSize = CGSize(width: req.width, height: req.height)
             guard let sizeValue = AXValueCreate(.cgSize, &newSize) else {
                 throw RPCError(code: .internalError, message: "Failed to create size value")
             }
 
-            // Set size
             let setResult = AXUIElementSetAttributeValue(window, kAXSizeAttribute as CFString, sizeValue)
             guard setResult == .success else {
                 throw RPCError(
@@ -608,33 +606,33 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
                     )
                 }
             }
-
-            // Build response directly from AXUIElement (CGWindowList may be stale)
-            return try await buildWindowResponseFromAX(name: req.name, pid: pid, windowId: windowId, window: window)
         }
+
+        // Build response directly from AXUIElement (CGWindowList may be stale)
+        return try await buildWindowResponseFromAX(name: req.name, pid: pid, windowId: windowId, window: window)
     }
 
     func minimizeWindow(
         request: ServerRequest<Macosusesdk_V1_MinimizeWindowRequest>, context: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
+        let req = request.message
+        fputs("info: [MacosUseServiceProvider] minimizeWindow called\n", stderr)
+
+        // Parse "applications/{pid}/windows/{windowId}"
+        let components = req.name.split(separator: "/").map(String.init)
+        guard components.count == 4,
+              components[0] == "applications",
+              components[2] == "windows",
+              let pid = pid_t(components[1]),
+              let windowId = CGWindowID(components[3])
+        else {
+            throw RPCError(code: .invalidArgument, message: "Invalid window name format")
+        }
+
+        let window = try await findWindowElement(pid: pid, windowId: windowId)
+
+        // Set kAXMinimizedAttribute to true (MUST run on MainActor)
         try await MainActor.run {
-            let req = request.message
-            fputs("info: [MacosUseServiceProvider] minimizeWindow called\n", stderr)
-
-            // Parse "applications/{pid}/windows/{windowId}"
-            let components = req.name.split(separator: "/").map(String.init)
-            guard components.count == 4,
-                  components[0] == "applications",
-                  components[2] == "windows",
-                  let pid = pid_t(components[1]),
-                  let windowId = CGWindowID(components[3])
-            else {
-                throw RPCError(code: .invalidArgument, message: "Invalid window name format")
-            }
-
-            let window = try await findWindowElement(pid: pid, windowId: windowId)
-
-            // Set kAXMinimizedAttribute to true
             let setResult = AXUIElementSetAttributeValue(
                 window, kAXMinimizedAttribute as CFString, kCFBooleanTrue,
             )
@@ -643,12 +641,12 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
                     code: .internalError, message: "Failed to minimize window: \(setResult.rawValue)",
                 )
             }
-
-            // Return updated window state
-            return try await getWindow(
-                request: ServerRequest(metadata: request.metadata, message: Macosusesdk_V1_GetWindowRequest.with { $0.name = req.name }), context: context,
-            )
         }
+
+        // Return updated window state
+        return try await getWindow(
+            request: ServerRequest(metadata: request.metadata, message: Macosusesdk_V1_GetWindowRequest.with { $0.name = req.name }), context: context,
+        )
     }
 
     func restoreWindow(
@@ -670,14 +668,16 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
 
         let window = try await findWindowElement(pid: pid, windowId: windowId)
 
-        // Set kAXMinimizedAttribute to false
-        let setResult = AXUIElementSetAttributeValue(
-            window, kAXMinimizedAttribute as CFString, kCFBooleanFalse,
-        )
-        guard setResult == .success else {
-            throw RPCError(
-                code: .internalError, message: "Failed to restore window: \(setResult.rawValue)",
+        // Set kAXMinimizedAttribute to false (MUST run on MainActor)
+        try await MainActor.run {
+            let setResult = AXUIElementSetAttributeValue(
+                window, kAXMinimizedAttribute as CFString, kCFBooleanFalse,
             )
+            guard setResult == .success else {
+                throw RPCError(
+                    code: .internalError, message: "Failed to restore window: \(setResult.rawValue)",
+                )
+            }
         }
 
         // Return updated window state
@@ -689,24 +689,24 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
     func closeWindow(
         request: ServerRequest<Macosusesdk_V1_CloseWindowRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_CloseWindowResponse> {
+        let req = request.message
+        fputs("info: [MacosUseServiceProvider] closeWindow called\n", stderr)
+
+        // Parse "applications/{pid}/windows/{windowId}"
+        let components = req.name.split(separator: "/").map(String.init)
+        guard components.count == 4,
+              components[0] == "applications",
+              components[2] == "windows",
+              let pid = pid_t(components[1]),
+              let windowId = CGWindowID(components[3])
+        else {
+            throw RPCError(code: .invalidArgument, message: "Invalid window name format")
+        }
+
+        let window = try await findWindowElement(pid: pid, windowId: windowId)
+
+        // Get close button and press it (MUST run on MainActor)
         try await MainActor.run {
-            let req = request.message
-            fputs("info: [MacosUseServiceProvider] closeWindow called\n", stderr)
-
-            // Parse "applications/{pid}/windows/{windowId}"
-            let components = req.name.split(separator: "/").map(String.init)
-            guard components.count == 4,
-                  components[0] == "applications",
-                  components[2] == "windows",
-                  let pid = pid_t(components[1]),
-                  let windowId = CGWindowID(components[3])
-            else {
-                throw RPCError(code: .invalidArgument, message: "Invalid window name format")
-            }
-
-            let window = try await findWindowElement(pid: pid, windowId: windowId)
-
-            // Get close button
             var closeButtonValue: CFTypeRef?
             let closeResult = AXUIElementCopyAttributeValue(
                 window, kAXCloseButtonAttribute as CFString, &closeButtonValue,
@@ -720,16 +720,15 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
 
             let closeButton = unsafeDowncast(unwrappedCloseButtonValue, to: AXUIElement.self)
 
-            // Press the close button
             let pressResult = AXUIElementPerformAction(closeButton, kAXPressAction as CFString)
             guard pressResult == .success else {
                 throw RPCError(
                     code: .internalError, message: "Failed to close window: \(pressResult.rawValue)",
                 )
             }
-
-            return ServerResponse(message: Macosusesdk_V1_CloseWindowResponse())
         }
+
+        return ServerResponse(message: Macosusesdk_V1_CloseWindowResponse())
     }
 
     // MARK: - Element Methods
@@ -1121,58 +1120,53 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         return ServerResponse(message: response)
     }
 
-    @MainActor
     func performElementAction(
         request: ServerRequest<Macosusesdk_V1_PerformElementActionRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_PerformElementActionResponse> {
-        try await MainActor.run {
-            let req = request.message
-            fputs("info: [MacosUseServiceProvider] performElementAction called\n", stderr)
+        let req = request.message
+        fputs("info: [MacosUseServiceProvider] performElementAction called\n", stderr)
 
-            let element: Macosusesdk_Type_Element
-            let elementID: String
-            let pid: pid_t
+        let element: Macosusesdk_Type_Element
+        let elementID: String
+        let pid: pid_t
 
-            // Find the element
-            switch req.target {
-            case let .elementID(id):
-                guard let foundElement = await ElementRegistry.shared.getElement(id) else {
-                    throw RPCError(code: .notFound, message: "Element not found")
-                }
-                element = foundElement
-                elementID = id
-                pid = try parsePID(fromName: req.parent)
+        // Find the element
+        switch req.target {
+        case let .elementID(id):
+            guard let foundElement = await ElementRegistry.shared.getElement(id) else {
+                throw RPCError(code: .notFound, message: "Element not found")
+            }
+            element = foundElement
+            elementID = id
+            pid = try parsePID(fromName: req.parent)
 
-            case let .selector(selector):
-                let validatedSelector = try SelectorParser.shared.parseSelector(selector)
-                let elementsWithPaths = try await ElementLocator.shared.findElements(
-                    selector: validatedSelector,
-                    parent: req.parent,
-                    visibleOnly: true,
-                    maxResults: 1,
-                )
+        case let .selector(selector):
+            let validatedSelector = try SelectorParser.shared.parseSelector(selector)
+            let elementsWithPaths = try await ElementLocator.shared.findElements(
+                selector: validatedSelector,
+                parent: req.parent,
+                visibleOnly: true,
+                maxResults: 1,
+            )
 
-                guard let firstElement = elementsWithPaths.first else {
-                    throw RPCError(code: .notFound, message: "No element found matching selector")
-                }
-
-                element = firstElement.element
-                elementID = element.elementID
-                pid = try parsePID(fromName: req.parent)
-
-            case .none:
-                throw RPCError(
-                    code: .invalidArgument, message: "Either element_id or selector must be specified",
-                )
+            guard let firstElement = elementsWithPaths.first else {
+                throw RPCError(code: .notFound, message: "No element found matching selector")
             }
 
-            // Try to get the AXUIElement and perform semantic action
-            if let axElement = await ElementRegistry.shared.getAXElement(elementID) {
-                let actionName: String
+            element = firstElement.element
+            elementID = element.elementID
+            pid = try parsePID(fromName: req.parent)
 
-                    // Map common action names to AX action constants
-                    = switch req.action.lowercased()
-                {
+        case .none:
+            throw RPCError(
+                code: .invalidArgument, message: "Either element_id or selector must be specified",
+            )
+        }
+
+        // Try to get the AXUIElement and perform semantic action (MUST run on MainActor)
+        if let axElement = await ElementRegistry.shared.getAXElement(elementID) {
+            let performResult = try await MainActor.run { () -> AXError in
+                let actionName: String = switch req.action.lowercased() {
                 case "press", "click":
                     kAXPressAction as String
                 case "showmenu", "openmenu":
@@ -1181,85 +1175,84 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
                     req.action
                 }
 
-                // Perform the AX action
-                let result = AXUIElementPerformAction(axElement, actionName as CFString)
+                return AXUIElementPerformAction(axElement, actionName as CFString)
+            }
 
-                if result == .success {
-                    let response = Macosusesdk_V1_PerformElementActionResponse.with {
-                        $0.success = true
-                        $0.element = element
-                    }
-                    return ServerResponse(message: response)
+            if performResult == .success {
+                let response = Macosusesdk_V1_PerformElementActionResponse.with {
+                    $0.success = true
+                    $0.element = element
                 }
-
-                // If action failed but element has position, fall through to coordinate-based fallback
-                if !element.hasX || !element.hasY {
-                    throw RPCError(
-                        code: .internalError,
-                        message: "AX action failed: \(result.rawValue) and no position available for fallback",
-                    )
-                }
+                return ServerResponse(message: response)
             }
 
-            // Fallback to coordinate-based simulation if AXUIElement is nil or action failed
-            guard element.hasX, element.hasY else {
+            // If action failed but element has position, fall through to coordinate-based fallback
+            if !element.hasX || !element.hasY {
                 throw RPCError(
-                    code: .failedPrecondition, message: "Element has no AXUIElement and no position for action",
+                    code: .internalError,
+                    message: "AX action failed: \(performResult.rawValue) and no position available for fallback",
                 )
             }
-
-            let x = element.x
-            let y = element.y
-
-            switch req.action.lowercased() {
-            case "press", "click":
-                try await AutomationCoordinator.shared.handleExecuteInput(
-                    action: Macosusesdk_V1_InputAction.with {
-                        $0.inputType = .click(
-                            Macosusesdk_V1_MouseClick.with {
-                                $0.position = Macosusesdk_Type_Point.with {
-                                    $0.x = x
-                                    $0.y = y
-                                }
-                                $0.clickType = .left
-                                $0.clickCount = 1
-                            })
-                    },
-                    pid: pid,
-                    showAnimation: false,
-                    animationDuration: 0,
-                )
-
-            case "showmenu", "openmenu":
-                try await AutomationCoordinator.shared.handleExecuteInput(
-                    action: Macosusesdk_V1_InputAction.with {
-                        $0.inputType = .click(
-                            Macosusesdk_V1_MouseClick.with {
-                                $0.position = Macosusesdk_Type_Point.with {
-                                    $0.x = x
-                                    $0.y = y
-                                }
-                                $0.clickType = .right
-                                $0.clickCount = 1
-                            })
-                    },
-                    pid: pid,
-                    showAnimation: false,
-                    animationDuration: 0,
-                )
-
-            default:
-                throw RPCError(
-                    code: .unimplemented, message: "Action '\(req.action)' is not implemented",
-                )
-            }
-
-            let response = Macosusesdk_V1_PerformElementActionResponse.with {
-                $0.success = true
-                $0.element = element
-            }
-            return ServerResponse(message: response)
         }
+
+        // Fallback to coordinate-based simulation if AXUIElement is nil or action failed
+        guard element.hasX, element.hasY else {
+            throw RPCError(
+                code: .failedPrecondition, message: "Element has no AXUIElement and no position for action",
+            )
+        }
+
+        let x = element.x
+        let y = element.y
+
+        switch req.action.lowercased() {
+        case "press", "click":
+            try await AutomationCoordinator.shared.handleExecuteInput(
+                action: Macosusesdk_V1_InputAction.with {
+                    $0.inputType = .click(
+                        Macosusesdk_V1_MouseClick.with {
+                            $0.position = Macosusesdk_Type_Point.with {
+                                $0.x = x
+                                $0.y = y
+                            }
+                            $0.clickType = .left
+                            $0.clickCount = 1
+                        })
+                },
+                pid: pid,
+                showAnimation: false,
+                animationDuration: 0,
+            )
+
+        case "showmenu", "openmenu":
+            try await AutomationCoordinator.shared.handleExecuteInput(
+                action: Macosusesdk_V1_InputAction.with {
+                    $0.inputType = .click(
+                        Macosusesdk_V1_MouseClick.with {
+                            $0.position = Macosusesdk_Type_Point.with {
+                                $0.x = x
+                                $0.y = y
+                            }
+                            $0.clickType = .right
+                            $0.clickCount = 1
+                        })
+                },
+                pid: pid,
+                showAnimation: false,
+                animationDuration: 0,
+            )
+
+        default:
+            throw RPCError(
+                code: .unimplemented, message: "Action '\(req.action)' is not implemented",
+            )
+        }
+
+        let response = Macosusesdk_V1_PerformElementActionResponse.with {
+            $0.success = true
+            $0.element = element
+        }
+        return ServerResponse(message: response)
     }
 
     func waitElement(
@@ -2906,46 +2899,49 @@ private extension MacosUseServiceProvider {
     func buildWindowResponseFromAX(
         name: String, pid: pid_t, windowId: CGWindowID, window: AXUIElement,
     ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
-        // Get bounds from AXUIElement
-        var posValue: CFTypeRef?
-        var sizeValue: CFTypeRef?
-        let posResult = AXUIElementCopyAttributeValue(
-            window, kAXPositionAttribute as CFString, &posValue,
-        )
-        let sizeResult = AXUIElementCopyAttributeValue(
-            window, kAXSizeAttribute as CFString, &sizeValue,
-        )
+        // Get bounds and title from AXUIElement (MUST run on MainActor)
+        let (bounds, title) = try await MainActor.run { () -> (CGRect, String) in
+            var posValue: CFTypeRef?
+            var sizeValue: CFTypeRef?
+            let posResult = AXUIElementCopyAttributeValue(
+                window, kAXPositionAttribute as CFString, &posValue,
+            )
+            let sizeResult = AXUIElementCopyAttributeValue(
+                window, kAXSizeAttribute as CFString, &sizeValue,
+            )
 
-        var bounds = CGRect.zero
-        if posResult == .success, let unwrappedPosValue = posValue,
-           CFGetTypeID(unwrappedPosValue) == AXValueGetTypeID(),
-           sizeResult == .success, let unwrappedSizeValue = sizeValue,
-           CFGetTypeID(unwrappedSizeValue) == AXValueGetTypeID()
-        {
-            let pos = unsafeDowncast(unwrappedPosValue, to: AXValue.self)
-            let size = unsafeDowncast(unwrappedSizeValue, to: AXValue.self)
-            var position = CGPoint.zero
-            var windowSize = CGSize.zero
-            if AXValueGetValue(pos, .cgPoint, &position),
-               AXValueGetValue(size, .cgSize, &windowSize)
+            var boundsResult = CGRect.zero
+            if posResult == .success, let unwrappedPosValue = posValue,
+               CFGetTypeID(unwrappedPosValue) == AXValueGetTypeID(),
+               sizeResult == .success, let unwrappedSizeValue = sizeValue,
+               CFGetTypeID(unwrappedSizeValue) == AXValueGetTypeID()
             {
-                bounds = CGRect(origin: position, size: windowSize)
+                let pos = unsafeDowncast(unwrappedPosValue, to: AXValue.self)
+                let size = unsafeDowncast(unwrappedSizeValue, to: AXValue.self)
+                var position = CGPoint.zero
+                var windowSize = CGSize.zero
+                if AXValueGetValue(pos, .cgPoint, &position),
+                   AXValueGetValue(size, .cgSize, &windowSize)
+                {
+                    boundsResult = CGRect(origin: position, size: windowSize)
+                }
             }
+
+            var titleValue: CFTypeRef?
+            let titleResult = AXUIElementCopyAttributeValue(
+                window, kAXTitleAttribute as CFString, &titleValue,
+            )
+            let titleResult2 = if titleResult == .success, let titleStr = titleValue as? String {
+                titleStr
+            } else {
+                ""
+            }
+
+            return (boundsResult, titleResult2)
         }
 
         // Get AX window state (focused/fullscreen only - NOT minimized)
         let (_, focused, fullscreen) = await getWindowState(window: window)
-
-        // Get title from AXUIElement
-        var titleValue: CFTypeRef?
-        let titleResult = AXUIElementCopyAttributeValue(
-            window, kAXTitleAttribute as CFString, &titleValue,
-        )
-        let title = if titleResult == .success, let titleStr = titleValue as? String {
-            titleStr
-        } else {
-            ""
-        }
 
         // Get bundle ID and window metadata from CGWindowList
         try await windowRegistry.refreshWindows(forPID: pid)

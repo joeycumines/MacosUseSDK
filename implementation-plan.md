@@ -18,7 +18,7 @@
 
 ### **Current Reality (Single-Sentence Snapshot)**
 
-Optional bools (focused/fullscreen) are correctly implemented end‑to‑end and `ObservationManager` event publishing is correctly decoupled, but a CRITICAL regression remains: `ObservationManager.monitorObservation` (and several other call sites) instantiate temporary `WindowRegistry()` instances, defeating the shared cache used by `getWindow`; `@MainActor` contention during traversal still limits `streamObservations`.
+All window manipulation RPC methods (`focusWindow`, `moveWindow`, `resizeWindow`, `minimizeWindow`, `restoreWindow`, `closeWindow`, `performElementAction`) and their helper functions (`findWindowElement`, `buildWindowResponseFromAX`, `getWindowState`, `buildWindowStateFromAX`) now correctly wrap all synchronous Accessibility API calls in `await MainActor.run` blocks to prevent threading violations. However, `TestWindowChangeObservation` continues to fail with `DeadlineExceeded` due to MainActor contention: when observation monitoring is active, the high frequency of MainActor hops (from observation polling, window registry refreshes, and RPC AX calls) creates excessive contention that starves RPC handlers.
 
 ### **Immediate Action Items (Next Things To Do)**
 
