@@ -27,8 +27,9 @@ actor WindowRegistry {
 
     /// Refresh the window cache for all or specific application.
     func refreshWindows(forPID pid: pid_t? = nil) async throws {
+        // Use .optionAll to include minimized/off-screen windows
         let windowList =
-            CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID)
+            CGWindowListCopyWindowInfo([.optionAll, .excludeDesktopElements], kCGNullWindowID)
                 as? [[String: Any]] ?? []
 
         let now = Date()

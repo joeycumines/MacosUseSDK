@@ -68,11 +68,20 @@ actor ObservationManager {
 
         state.observation.state = .active
         state.observation.startTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
-        observations[name] = state
+        observations[name] = state // Write state back to actor
 
-        // Start background monitoring task
-        let task = Task {
-            await monitorObservation(name: name)
+        // Get all data needed by the nonisolated task *before* detaching
+        let continuations = eventStreams[name] ?? []
+        let initialState = state // Copy state by value
+
+        // Start background monitoring task (detached to avoid blocking this actor)
+        let task = Task.detached {
+            // Pass state and continuations by value
+            await self.monitorObservation(
+                name: name,
+                initialState: initialState,
+                continuations: continuations,
+            )
         }
         tasks[name] = task
     }
@@ -193,23 +202,26 @@ actor ObservationManager {
         }
     }
 
-    /// Publishes an event to all subscribers
-    private func publishEvent(name: String, event: Macosusesdk_V1_ObservationEvent) {
-        guard let continuations = eventStreams[name] else { return }
-
+    /// Publishes an event to all subscribers (nonisolated to avoid blocking monitoring loop)
+    private nonisolated func publishEvent(
+        continuations: [AsyncStream<Macosusesdk_V1_ObservationEvent>.Continuation],
+        event: Macosusesdk_V1_ObservationEvent,
+    ) {
         for continuation in continuations {
             continuation.yield(event)
         }
     }
 
     /// Monitors an observation in the background
-    private func monitorObservation(name: String) async {
-        guard let state = observations[name] else { return }
-
-        let type = state.observation.type
-        let filter = state.observation.filter
-        let pid = state.pid
-        _ = state.parent
+    private nonisolated func monitorObservation(
+        name: String,
+        initialState: ObservationState,
+        continuations: [AsyncStream<Macosusesdk_V1_ObservationEvent>.Continuation],
+    ) async {
+        let type = initialState.observation.type
+        let filter = initialState.observation.filter
+        let pid = initialState.pid
+        _ = initialState.parent
 
         // Determine poll interval from filter or use default
         let pollInterval =
@@ -217,8 +229,12 @@ actor ObservationManager {
                 ? filter.pollInterval : 1.0
 
         // Keep track of previous state for diff detection
+        // Start with empty state - first poll will emit "created" events for existing resources
         var previousElements: [Macosusesdk_Type_Element] = []
         var previousWindows: [WindowRegistry.WindowInfo] = []
+        var sequence: Int64 = 0 // Track sequence locally instead of actor state
+
+        fputs("info: [ObservationManager] Starting monitoring loop for \(name) (type: \(type))\n", stderr)
 
         while !Task.isCancelled {
             do {
@@ -244,8 +260,10 @@ actor ObservationManager {
                         let event = createObservationEvent(
                             name: name,
                             change: change,
+                            sequence: sequence,
                         )
-                        publishEvent(name: name, event: event)
+                        sequence += 1
+                        publishEvent(continuations: continuations, event: event)
                     }
 
                     previousElements = currentElements
@@ -267,8 +285,10 @@ actor ObservationManager {
                         let event = createWindowObservationEvent(
                             name: name,
                             change: change,
+                            sequence: sequence,
                         )
-                        publishEvent(name: name, event: event)
+                        sequence += 1
+                        publishEvent(continuations: continuations, event: event)
                     }
 
                     previousWindows = currentWindows
@@ -299,8 +319,10 @@ actor ObservationManager {
                         let event = createObservationEvent(
                             name: name,
                             change: change,
+                            sequence: sequence,
                         )
-                        publishEvent(name: name, event: event)
+                        sequence += 1
+                        publishEvent(continuations: continuations, event: event)
                     }
 
                     previousElements = currentElements
@@ -313,15 +335,15 @@ actor ObservationManager {
                 try await Task.sleep(nanoseconds: UInt64(pollInterval * 1_000_000_000))
 
             } catch {
-                // If error occurs, fail the observation
-                await failObservation(name: name, error: error)
+                // If error occurs, call back to the actor to fail the observation
+                await ObservationManager.shared.failObservation(name: name, error: error)
                 return
             }
         }
     }
 
     /// Detects changes between two element snapshots
-    private func detectElementChanges(
+    private nonisolated func detectElementChanges(
         previous: [Macosusesdk_Type_Element],
         current: [Macosusesdk_Type_Element],
     ) -> [ElementChange] {
@@ -356,7 +378,7 @@ actor ObservationManager {
     }
 
     /// Detects attribute changes between two element snapshots
-    private func detectAttributeChanges(
+    private nonisolated func detectAttributeChanges(
         previous: [Macosusesdk_Type_Element],
         current: [Macosusesdk_Type_Element],
         watchedAttributes: [String],
@@ -387,7 +409,7 @@ actor ObservationManager {
     }
 
     /// Finds specific attribute changes between two elements
-    private func findAttributeChanges(
+    private nonisolated func findAttributeChanges(
         old: Macosusesdk_Type_Element,
         new: Macosusesdk_Type_Element,
         watched: [String],
@@ -446,7 +468,7 @@ actor ObservationManager {
     }
 
     /// Checks if two elements are equal
-    private func elementsEqual(
+    private nonisolated func elementsEqual(
         _ a: Macosusesdk_Type_Element,
         _ b: Macosusesdk_Type_Element,
     ) -> Bool {
@@ -458,15 +480,12 @@ actor ObservationManager {
     }
 
     /// Creates an observation event from a change
-    private func createObservationEvent(
+    private nonisolated func createObservationEvent(
         name: String,
         change: ElementChange,
+        sequence: Int64,
     ) -> Macosusesdk_V1_ObservationEvent {
-        // Get and increment sequence counter
-        let sequence = sequenceCounters[name, default: 0]
-        sequenceCounters[name] = sequence + 1
-
-        return Macosusesdk_V1_ObservationEvent.with {
+        Macosusesdk_V1_ObservationEvent.with {
             $0.observation = name
             $0.eventTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
             $0.sequence = sequence
@@ -502,7 +521,7 @@ actor ObservationManager {
     }
 
     /// Detects changes between two window snapshots
-    private func detectWindowChanges(
+    private nonisolated func detectWindowChanges(
         previous: [WindowRegistry.WindowInfo],
         current: [WindowRegistry.WindowInfo],
     ) -> [WindowChange] {
@@ -550,15 +569,12 @@ actor ObservationManager {
     }
 
     /// Creates a window observation event from a window change
-    private func createWindowObservationEvent(
+    private nonisolated func createWindowObservationEvent(
         name: String,
         change: WindowChange,
+        sequence: Int64,
     ) -> Macosusesdk_V1_ObservationEvent {
-        // Get and increment sequence counter
-        let sequence = sequenceCounters[name, default: 0]
-        sequenceCounters[name] = sequence + 1
-
-        return Macosusesdk_V1_ObservationEvent.with {
+        Macosusesdk_V1_ObservationEvent.with {
             $0.observation = name
             $0.eventTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
             $0.sequence = sequence

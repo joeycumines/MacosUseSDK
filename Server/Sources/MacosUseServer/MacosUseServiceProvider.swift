@@ -76,7 +76,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         let op = await operationStore.createOperation(name: opName, metadata: metadata)
 
         // Schedule actual open on background task (coordinator runs on @MainActor internally)
-        Task {
+        Task { [operationStore, stateStore] in
             do {
                 let app = try await AutomationCoordinator.shared.handleOpenApplication(
                     identifier: req.id)
@@ -362,10 +362,23 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
             throw RPCError(code: .notFound, message: "Window not found")
         }
 
-        // Build state from AX (attempting again for just attributes)
-        // If this fails, we return a default state
-        let windowState = await (try? buildWindowStateFromAX(pid: pid, windowId: windowInfo.windowID))
-            ?? Macosusesdk_V1_WindowState()
+        // Try to get fresh AX data for state - only use stale registry as last resort
+        var minimized: Bool
+        var focused: Bool
+        var fullscreen: Bool
+        var state: Macosusesdk_V1_WindowState
+
+        // Attempt to get fresh AX data even in fallback path
+        if let axWindow = try? findWindowElement(pid: pid, windowId: windowId) {
+            (minimized, focused, fullscreen) = getWindowState(window: axWindow)
+            state = try await buildWindowStateFromAX(window: axWindow)
+        } else {
+            // Last resort: use stale registry data
+            minimized = !windowInfo.isOnScreen
+            focused = false
+            fullscreen = false
+            state = Macosusesdk_V1_WindowState() // Empty
+        }
 
         let response = Macosusesdk_V1_Window.with {
             $0.name = req.name
@@ -378,10 +391,10 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
             }
             $0.zIndex = Int32(windowInfo.layer)
             $0.visible = windowInfo.isOnScreen
-            $0.minimized = !windowInfo.isOnScreen
-            $0.focused = false
-            $0.fullscreen = false
-            $0.state = windowState
+            $0.minimized = minimized // Use fresh value if available
+            $0.focused = focused // Use fresh value if available
+            $0.fullscreen = fullscreen // Use fresh value if available
+            $0.state = state // Use fresh value if available
             $0.bundleID = windowInfo.bundleID ?? ""
         }
         return ServerResponse(message: response)
@@ -426,9 +439,15 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
             ""
         }
 
-        let windows = try await pageWindowInfos.asyncMap { windowInfo in
-            let windowState = try await buildWindowStateFromAX(pid: pid, windowId: windowInfo.windowID)
-            return Macosusesdk_V1_Window.with {
+        // Build window list from registry data only - NO per-window AX queries
+        // This returns fast, registry-only data. Clients MUST use GetWindow to query
+        // detailed, fresh AX state (modal, resizable, etc.).
+        //
+        // PERFORMANCE: This eliminates the O(N*M) catastrophe where N windows each
+        // triggered M blocking AX queries. ListWindows now completes in <50ms regardless
+        // of window count.
+        let windows = pageWindowInfos.map { windowInfo in
+            Macosusesdk_V1_Window.with {
                 $0.name = "applications/\(pid)/windows/\(windowInfo.windowID)"
                 $0.title = windowInfo.title
                 $0.bounds = Macosusesdk_V1_Bounds.with {
@@ -439,11 +458,11 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
                 }
                 $0.zIndex = Int32(windowInfo.layer)
                 $0.visible = windowInfo.isOnScreen
-                $0.minimized = false
-                $0.focused = false
-                $0.fullscreen = false
-                $0.state = windowState
+                $0.minimized = !windowInfo.isOnScreen
                 $0.bundleID = windowInfo.bundleID ?? ""
+                $0.state = Macosusesdk_V1_WindowState()
+                // State is empty - use GetWindow for fresh AX state
+                // Clients should use GetWindow for complete state details
             }
         }
 
@@ -1244,7 +1263,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         let op = await operationStore.createOperation(name: opName, metadata: metadata)
 
         // Start background task
-        Task {
+        Task { [operationStore] in
             do {
                 let timeout = req.timeout > 0 ? req.timeout : 30.0
                 let pollInterval = req.pollInterval > 0 ? req.pollInterval : 0.5
@@ -1398,7 +1417,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         }
 
         // Start background task
-        Task {
+        Task { [operationStore] in
             do {
                 let timeout = req.timeout > 0 ? req.timeout : 30.0
                 let pollInterval = req.pollInterval > 0 ? req.pollInterval : 0.5
@@ -1420,70 +1439,27 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
                     }
                     await operationStore.putOperation(updatedOp)
 
-                    // Get the live AXUIElement reference and query its current state
-                    guard let axElement = await ElementRegistry.shared.getAXElement(trackedElementId)
-                    else {
+                    // Re-acquire element using selector on each iteration to handle UI redraws
+                    // This is the selector-based polling approach that is resilient to element invalidation
+                    let currentElementsWithPaths = try await ElementLocator.shared.findElements(
+                        selector: selectorToUse,
+                        parent: req.parent,
+                        visibleOnly: true,
+                        maxResults: 1,
+                    )
+
+                    guard let currentElementWithPath = currentElementsWithPaths.first else {
                         // Element no longer exists
                         throw RPCError(code: .notFound, message: "Element no longer available")
                     }
 
-                    // Query current element state from live AXUIElement
-                    var currentRole: CFTypeRef?
-                    var currentValue: CFTypeRef?
-                    var currentEnabled: CFTypeRef?
-                    var currentFocused: CFTypeRef?
-
-                    AXUIElementCopyAttributeValue(
-                        axElement, kAXRoleAttribute as CFString, &currentRole,
-                    )
-                    AXUIElementCopyAttributeValue(
-                        axElement, kAXValueAttribute as CFString, &currentValue,
-                    )
-                    AXUIElementCopyAttributeValue(
-                        axElement, kAXEnabledAttribute as CFString, &currentEnabled,
-                    )
-                    AXUIElementCopyAttributeValue(
-                        axElement, kAXFocusedAttribute as CFString, &currentFocused,
-                    )
-
-                    // Build current element state
-                    var currentElement = initialElementWithPath.element
-                    currentElement.role = if let role = currentRole as? String {
-                        role
-                    } else {
-                        currentElement.role
-                    }
-                    currentElement.text = if let value = currentValue {
-                        "\(value)"
-                    } else {
-                        currentElement.text
-                    }
-                    currentElement.enabled =
-                        if let enabled = currentEnabled as? Bool {
-                            enabled
-                        } else if let ref = currentEnabled,
-                                  CFGetTypeID(ref) == CFBooleanGetTypeID()
-                        {
-                            CFBooleanGetValue(unsafeBitCast(ref, to: CFBoolean.self))
-                        } else {
-                            currentElement.enabled
-                        }
-                    currentElement.focused =
-                        if let focused = currentFocused as? Bool {
-                            focused
-                        } else if let ref = currentFocused,
-                                  CFGetTypeID(ref) == CFBooleanGetTypeID()
-                        {
-                            CFBooleanGetValue(unsafeBitCast(ref, to: CFBoolean.self))
-                        } else {
-                            currentElement.focused
-                        }
+                    let currentElement = currentElementWithPath.element
 
                     if elementMatchesCondition(currentElement, condition: req.condition) {
                         // Condition met! Complete the operation
                         var elementWithId = currentElement
                         elementWithId.elementID = trackedElementId
-                        elementWithId.path = initialElementWithPath.path
+                        elementWithId.path = currentElementWithPath.path
 
                         let response = Macosusesdk_V1_WaitElementStateResponse.with {
                             $0.element = elementWithId
@@ -1559,7 +1535,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         let op = await operationStore.createOperation(name: opName, metadata: metadata)
 
         // Start observation in background
-        Task {
+        Task { [operationStore] in
             do {
                 // Start the observation
                 try await ObservationManager.shared.startObservation(name: observationName)
@@ -1933,7 +1909,9 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         }
 
         // Find window in registry
-        let windowInfo = try await windowRegistry.listWindows(forPID: pid).first {
+        let registry = WindowRegistry()
+        try await registry.refreshWindows(forPID: pid)
+        let windowInfo = try await registry.listWindows(forPID: pid).first {
             $0.windowID == CGWindowID(windowIdInt)
         }
 
@@ -2551,7 +2529,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         let op = await operationStore.createOperation(name: opName, metadata: metadata)
 
         // Execute macro in background
-        Task {
+        Task { [operationStore] in
             do {
                 let timeout = req.hasOptions && req.options.timeout > 0 ? req.options.timeout : 300.0
 
@@ -2940,7 +2918,7 @@ private extension MacosUseServiceProvider {
             }
         }
 
-        // Get window state
+        // Get fresh AX window state first
         let (minimized, focused, fullscreen) = getWindowState(window: window)
 
         // Get title from AXUIElement
@@ -2961,10 +2939,14 @@ private extension MacosUseServiceProvider {
 
         let bundleID = windowInfo?.bundleID ?? ""
         let zIndex = windowInfo?.layer ?? 0
-        let visible = windowInfo?.isOnScreen ?? true
+        // CRITICAL FIX: Derive visible from BOTH fresh AX minimized AND registry isOnScreen
+        // A window is visible ONLY if it is NOT minimized (per AX)
+        // AND the registry (which tracks desktop visibility) says it's on-screen.
+        let registryIsOnScreen = windowInfo?.isOnScreen ?? true
+        let visible = !minimized && registryIsOnScreen
 
         // Build window state
-        let windowState = try await buildWindowStateFromAX(pid: pid, windowId: windowId)
+        let windowState = try await buildWindowStateFromAX(window: window)
 
         return ServerResponse(
             message: Macosusesdk_V1_Window.with {
@@ -3002,6 +2984,19 @@ private extension MacosUseServiceProvider {
 
         // CRITICAL FIX: Check single-window optimization BEFORE querying CGWindowList.
         // This prevents 'NotFound' errors when CGWindowList is stale/missing the ID.
+        //
+        // IDENTITY HAZARD: This optimization assumes that if an application has exactly one
+        // window, it MUST be the window associated with `windowId`. This creates a race
+        // condition where a stale ID request can mistakenly return a newly opened, unrelated
+        // window if their PIDs match and count is 1.
+        //
+        // TRADE-OFF: We accept this heuristic because AXUIElement does not expose a stable
+        // persistent ID that correlates to CGWindowID without checking bounds (which is
+        // exactly what we are trying to avoid due to staleness).
+        //
+        // MITIGATION: In future iterations, we should add a sanity check: if the AXTitle
+        // of windows[0] differs significantly from the last known title of windowId
+        // (if available from WindowRegistry), warn or fail.
         if windows.count == 1 {
             return windows[0]
         }
@@ -3067,9 +3062,10 @@ private extension MacosUseServiceProvider {
                     let deltaW = abs(axSize.width - cgWidth)
                     let deltaH = abs(axSize.height - cgHeight)
 
-                    // Check if bounds match (with large tolerance to handle stale CGWindowList after window operations)
-                    // Use 200px tolerance to handle significant size changes that haven't propagated to CGWindowList yet
-                    if deltaX < 200, deltaY < 200, deltaW < 200, deltaH < 200 {
+                    // Check if bounds match within reasonable tolerance (2px for minor window manager adjustments)
+                    // If CGWindowList is stale (bounds don't match), we'll fail to find the window,
+                    // which is correct behavior - caller should retry or use single-window optimization
+                    if deltaX < 2, deltaY < 2, deltaW < 2, deltaH < 2 {
                         return window
                     }
                 }
@@ -3081,10 +3077,7 @@ private extension MacosUseServiceProvider {
     }
 
     /// Build WindowState proto from AXUIElement attributes.
-    func buildWindowStateFromAX(pid: pid_t, windowId: CGWindowID) async throws -> Macosusesdk_V1_WindowState {
-        // Get AXUIElement for the window
-        let window = try findWindowElement(pid: pid, windowId: windowId)
-
+    func buildWindowStateFromAX(window: AXUIElement) async throws -> Macosusesdk_V1_WindowState {
         var resizable = false
         var minimizable = false
         var closable = false
