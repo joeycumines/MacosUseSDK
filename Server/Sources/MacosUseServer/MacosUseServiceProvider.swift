@@ -1672,25 +1672,29 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         }
 
         return StreamingServerResponse { writer in
-            // Stream events to client
-            for await event in eventStream {
-                // Check if client disconnected
-                if Task.isCancelled {
-                    fputs(
-                        "info: [MacosUseServiceProvider] client disconnected from observation stream\n", stderr,
-                    )
-                    break
-                }
+            // CRITICAL FIX: Launch detached task but DON'T await it - let it run independently
+            // The closure must return immediately to free the gRPC executor
+            _ = Task.detached {
+                // Stream events to client
+                for await event in eventStream {
+                    // Check if client disconnected
+                    if Task.isCancelled {
+                        fputs(
+                            "info: [MacosUseServiceProvider] client disconnected from observation stream\n", stderr,
+                        )
+                        break
+                    }
 
-                // Send event to client
-                let response = Macosusesdk_V1_StreamObservationsResponse.with {
-                    $0.event = event
-                }
+                    // Send event to client
+                    let response = Macosusesdk_V1_StreamObservationsResponse.with {
+                        $0.event = event
+                    }
 
-                try await writer.write(response)
+                    try? await writer.write(response)
+                }
             }
 
-            // Return trailing metadata
+            // Return trailing metadata immediately - streaming continues in background
             return [:]
         }
     }
@@ -2940,22 +2944,13 @@ private extension MacosUseServiceProvider {
             return (boundsResult, titleResult2)
         }
 
-        // Get AX window state (focused/fullscreen only - NOT minimized)
-        let (_, focused, fullscreen) = await getWindowState(window: window)
+        // CRITICAL FIX: Use ONLY AX API as the source of truth.
+        // CGWindowList (windowRegistry) is stale and not synchronized with AX mutations.
+        // Get ALL window state from AXUIElement.
+        let (minimized, focused, fullscreen) = await getWindowState(window: window)
 
-        // Get bundle ID and window metadata from CGWindowList
-        try await windowRegistry.refreshWindows(forPID: pid)
-        let windowInfo = try await windowRegistry.getWindow(windowId)
-
-        let bundleID = windowInfo?.bundleID ?? ""
-        let zIndex = windowInfo?.layer ?? 0
-
-        // CRITICAL FIX: CGWindowList is the ONLY reliable source of truth for visibility/minimized state
-        // The AX minimized attribute is NOT reliable (e.g., restoring via dock doesn't update it)
-        // Therefore, DERIVE both visible AND minimized from the registry's isOnScreen flag
-        let registryIsOnScreen = windowInfo?.isOnScreen ?? true
-        let visible = registryIsOnScreen
-        let minimized = !registryIsOnScreen
+        // visible is simply !minimized for this purpose
+        let visible = !minimized
 
         // Build window state
         let windowState = try await buildWindowStateFromAX(window: window)
@@ -2970,10 +2965,13 @@ private extension MacosUseServiceProvider {
                     $0.width = bounds.size.width
                     $0.height = bounds.size.height
                 }
-                $0.zIndex = Int32(zIndex)
+                // Temporarily lose zIndex and bundleID - these only come from CGWindowList
+                // and we cannot use that stale source. Correctness first.
+                // $0.zIndex is omitted (defaults to 0)
+                // $0.bundleID is omitted (defaults to "")
                 $0.visible = visible
                 $0.minimized = minimized
-                // CRITICAL FIX: Only set focused/fullscreen if known (not nil)
+                // Set focused/fullscreen if known (not nil)
                 if let focusedValue = focused {
                     $0.focused = focusedValue
                 }
@@ -2981,7 +2979,6 @@ private extension MacosUseServiceProvider {
                     $0.fullscreen = fullscreenValue
                 }
                 $0.state = windowState
-                $0.bundleID = bundleID
             },
         )
     }

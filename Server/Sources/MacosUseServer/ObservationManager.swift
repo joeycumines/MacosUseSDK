@@ -273,12 +273,15 @@ actor ObservationManager {
         // Keep track of previous state for diff detection
         // Start with empty state - first poll will emit "created" events for existing resources
         var previousElements: [Macosusesdk_Type_Element] = []
-        var previousWindows: [WindowRegistry.WindowInfo] = []
+        var previousWindows: [AXWindowSnapshot] = []
         var sequence: Int64 = 0 // Track sequence locally instead of actor state
 
         fputs("info: [ObservationManager] Starting monitoring loop for \(name) (type: \(type))\n", stderr)
 
         while !Task.isCancelled {
+            // CRITICAL: Yield control to allow gRPC executor to dispatch other RPCs
+            await Task.yield()
+
             do {
                 // Different monitoring strategies based on observation type
                 switch type {
@@ -311,14 +314,14 @@ actor ObservationManager {
                     previousElements = currentElements
 
                 case .windowChanges:
-                    // Poll window list and detect changes
-                    try await windowRegistry.refreshWindows(forPID: pid)
-                    let currentWindows = try await windowRegistry.listWindows(forPID: pid)
+                    // CRITICAL FIX: Poll AX API directly instead of CGWindowList (WindowRegistry)
+                    // This ensures window change detection sees mutations made via AX API
+                    let currentWindows = try await fetchAXWindows(pid: pid)
 
                     // Detect window changes
                     let windowChanges = detectWindowChanges(
                         previous: previousWindows,
-                        current: currentWindows,
+                        current: currentWindows
                     )
 
                     // Publish window change events
@@ -326,7 +329,7 @@ actor ObservationManager {
                         let event = createWindowObservationEvent(
                             name: name,
                             change: change,
-                            sequence: sequence,
+                            sequence: sequence
                         )
                         sequence += 1
                         publishEvent(name: name, event: event)
@@ -381,6 +384,97 @@ actor ObservationManager {
                 return
             }
         }
+    }
+
+    /// Fetches current window snapshots from AX API (MUST run on MainActor)
+    @MainActor
+    private func fetchAXWindows(pid: pid_t) async throws -> [AXWindowSnapshot] {
+        let appElement = AXUIElementCreateApplication(pid)
+
+        var windowsValue: CFTypeRef?
+        let result = AXUIElementCopyAttributeValue(
+            appElement, kAXWindowsAttribute as CFString, &windowsValue
+        )
+        guard result == .success, let windows = windowsValue as? [AXUIElement] else {
+            return []  // No windows or permission denied
+        }
+
+        var snapshots: [AXWindowSnapshot] = []
+        for (index, window) in windows.enumerated() {
+            // Get bounds
+            var posValue: CFTypeRef?
+            var sizeValue: CFTypeRef?
+            let posResult = AXUIElementCopyAttributeValue(
+                window, kAXPositionAttribute as CFString, &posValue
+            )
+            let sizeResult = AXUIElementCopyAttributeValue(
+                window, kAXSizeAttribute as CFString, &sizeValue
+            )
+
+            var bounds = CGRect.zero
+            if posResult == .success, let unwrappedPosValue = posValue,
+               CFGetTypeID(unwrappedPosValue) == AXValueGetTypeID(),
+               sizeResult == .success, let unwrappedSizeValue = sizeValue,
+               CFGetTypeID(unwrappedSizeValue) == AXValueGetTypeID()
+            {
+                let pos = unsafeDowncast(unwrappedPosValue, to: AXValue.self)
+                let size = unsafeDowncast(unwrappedSizeValue, to: AXValue.self)
+                var position = CGPoint.zero
+                var windowSize = CGSize.zero
+                if AXValueGetValue(pos, .cgPoint, &position),
+                   AXValueGetValue(size, .cgSize, &windowSize)
+                {
+                    bounds = CGRect(origin: position, size: windowSize)
+                }
+            }
+
+            // Get title
+            var titleValue: CFTypeRef?
+            let titleResult = AXUIElementCopyAttributeValue(
+                window, kAXTitleAttribute as CFString, &titleValue
+            )
+            let title = if titleResult == .success, let titleStr = titleValue as? String {
+                titleStr
+            } else {
+                ""
+            }
+
+            // Get minimized state
+            var minValue: CFTypeRef?
+            let minimized = if AXUIElementCopyAttributeValue(
+                window, kAXMinimizedAttribute as CFString, &minValue
+            ) == .success, let minBool = minValue as? Bool {
+                minBool
+            } else {
+                false
+            }
+
+            // Get focused state
+            var mainValue: CFTypeRef?
+            let focused: Bool? = if AXUIElementCopyAttributeValue(
+                window, kAXMainAttribute as CFString, &mainValue
+            ) == .success, let mainBool = mainValue as? Bool {
+                mainBool
+            } else {
+                nil
+            }
+
+            // Create snapshot
+            // Use index as stable ID since AX doesn't expose CGWindowID
+            // This is a compromise: ordering may change, but it's the best we can do
+            // without CGWindowList
+            let snapshot = AXWindowSnapshot(
+                windowID: index,
+                title: title,
+                bounds: bounds,
+                minimized: minimized,
+                visible: !minimized,
+                focused: focused
+            )
+            snapshots.append(snapshot)
+        }
+
+        return snapshots
     }
 
     /// Detects changes between two element snapshots
@@ -563,28 +657,32 @@ actor ObservationManager {
 
     /// Detects changes between two window snapshots
     nonisolated func detectWindowChanges(
-        previous: [WindowRegistry.WindowInfo],
-        current: [WindowRegistry.WindowInfo],
+        previous: [AXWindowSnapshot],
+        current: [AXWindowSnapshot]
     ) -> [WindowChange] {
         var changes: [WindowChange] = []
 
-        // Create maps for efficient lookup
+        // IDENTITY CHALLENGE: AX API doesn't expose CGWindowID.
+        // We match windows by windowID (derived from index in fetchAXWindows).
+        // This is fragile but the best we can do without stable IDs from the OS.
         let previousMap = Dictionary(
-            uniqueKeysWithValues: previous.map { ($0.windowID, $0) })
+            uniqueKeysWithValues: previous.map { ($0.windowID, $0) }
+        )
         let currentMap = Dictionary(
-            uniqueKeysWithValues: current.map { ($0.windowID, $0) })
+            uniqueKeysWithValues: current.map { ($0.windowID, $0) }
+        )
 
-        // Find created windows
+        // Find created windows (windowID that didn't exist before)
         for window in current where previousMap[window.windowID] == nil {
             changes.append(.created(window))
         }
 
-        // Find destroyed windows
+        // Find destroyed windows (windowID that no longer exists)
         for window in previous where currentMap[window.windowID] == nil {
             changes.append(.destroyed(window))
         }
 
-        // Find modified windows (moved/resized)
+        // Find modified windows (same windowID, different properties)
         for window in current {
             if let prevWindow = previousMap[window.windowID] {
                 // Check for moved
@@ -596,11 +694,11 @@ actor ObservationManager {
                     changes.append(.resized(old: prevWindow, new: window))
                 }
                 // Check for visibility changes (minimized/restored)
-                if window.isOnScreen != prevWindow.isOnScreen {
-                    if window.isOnScreen {
-                        changes.append(.restored(window))
-                    } else {
+                if window.minimized != prevWindow.minimized {
+                    if window.minimized {
                         changes.append(.minimized(window))
+                    } else {
+                        changes.append(.restored(window))
                     }
                 }
             }
@@ -613,7 +711,7 @@ actor ObservationManager {
     private nonisolated func createWindowObservationEvent(
         name: String,
         change: WindowChange,
-        sequence: Int64,
+        sequence: Int64
     ) -> Macosusesdk_V1_ObservationEvent {
         Macosusesdk_V1_ObservationEvent.with {
             $0.observation = name
@@ -627,7 +725,8 @@ actor ObservationManager {
                         $0.eventType = .created
                         $0.windowID = "\(window.windowID)"
                         $0.title = window.title
-                    })
+                    }
+                )
 
             case let .destroyed(window):
                 $0.eventType = .windowEvent(
@@ -635,7 +734,8 @@ actor ObservationManager {
                         $0.eventType = .destroyed
                         $0.windowID = "\(window.windowID)"
                         $0.title = window.title
-                    })
+                    }
+                )
 
             case let .moved(_, new):
                 $0.eventType = .windowEvent(
@@ -643,7 +743,8 @@ actor ObservationManager {
                         $0.eventType = .moved
                         $0.windowID = "\(new.windowID)"
                         $0.title = new.title
-                    })
+                    }
+                )
 
             case let .resized(_, new):
                 $0.eventType = .windowEvent(
@@ -651,7 +752,8 @@ actor ObservationManager {
                         $0.eventType = .resized
                         $0.windowID = "\(new.windowID)"
                         $0.title = new.title
-                    })
+                    }
+                )
 
             case let .minimized(window):
                 $0.eventType = .windowEvent(
@@ -659,7 +761,8 @@ actor ObservationManager {
                         $0.eventType = .minimized
                         $0.windowID = "\(window.windowID)"
                         $0.title = window.title
-                    })
+                    }
+                )
 
             case let .restored(window):
                 $0.eventType = .windowEvent(
@@ -667,7 +770,8 @@ actor ObservationManager {
                         $0.eventType = .restored
                         $0.windowID = "\(window.windowID)"
                         $0.title = window.title
-                    })
+                    }
+                )
             }
         }
     }
@@ -689,14 +793,34 @@ private enum ElementChange {
     case modified(old: Macosusesdk_Type_Element, new: Macosusesdk_Type_Element)
 }
 
+/// AX-sourced window snapshot for observation diffing.
+/// This struct holds ONLY data from the Accessibility API, avoiding the
+/// catastrophic state inconsistency with CGWindowList.
+struct AXWindowSnapshot: Hashable {
+    let windowID: Int  // Derived from hash or index since AX doesn't expose CGWindowID directly
+    let title: String
+    let bounds: CGRect
+    let minimized: Bool
+    let visible: Bool  // Derived as !minimized
+    let focused: Bool?
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(windowID)
+    }
+
+    static func == (lhs: AXWindowSnapshot, rhs: AXWindowSnapshot) -> Bool {
+        lhs.windowID == rhs.windowID
+    }
+}
+
 /// Type of window change
 enum WindowChange {
-    case created(WindowRegistry.WindowInfo)
-    case destroyed(WindowRegistry.WindowInfo)
-    case moved(old: WindowRegistry.WindowInfo, new: WindowRegistry.WindowInfo)
-    case resized(old: WindowRegistry.WindowInfo, new: WindowRegistry.WindowInfo)
-    case minimized(WindowRegistry.WindowInfo)
-    case restored(WindowRegistry.WindowInfo)
+    case created(AXWindowSnapshot)
+    case destroyed(AXWindowSnapshot)
+    case moved(old: AXWindowSnapshot, new: AXWindowSnapshot)
+    case resized(old: AXWindowSnapshot, new: AXWindowSnapshot)
+    case minimized(AXWindowSnapshot)
+    case restored(AXWindowSnapshot)
 }
 
 /// Observation errors

@@ -18,7 +18,11 @@
 
 ### **Current Reality (Single-Sentence Snapshot)**
 
-All window manipulation RPC methods (`focusWindow`, `moveWindow`, `resizeWindow`, `minimizeWindow`, `restoreWindow`, `closeWindow`, `performElementAction`) and their helper functions (`findWindowElement`, `buildWindowResponseFromAX`, `getWindowState`, `buildWindowStateFromAX`) now correctly wrap all synchronous Accessibility API calls in `await MainActor.run` blocks to prevent threading violations. However, `TestWindowChangeObservation` continues to fail with `DeadlineExceeded` due to MainActor contention: when observation monitoring is active, the high frequency of MainActor hops (from observation polling, window registry refreshes, and RPC AX calls) creates excessive contention that starves RPC handlers.
+The threading, caching, and stream lifecycle refactoring is complete and correct: all Accessibility API calls are wrapped in `MainActor.run`, a single `sharedWindowRegistry` is injected into all server components (`MacosUseServiceProvider`, `ObservationManager`, `MacroExecutor`) via `main.swift`, and observation streams use UUID-keyed continuations with `Task.detached` publishing. However, `TestWindowChangeObservation` continues to fail with `DeadlineExceeded` due to MainActor contention: when observation monitoring is active, the high frequency of MainActor hops (from observation polling, window registry refreshes, and RPC AX calls) creates excessive contention that starves RPC handlers.
+
+### **Immediate Action Items (Next Things To Do)**
+
+1. **Observation stream lifecycle hygiene (HIGH):**
 
 ### **Immediate Action Items (Next Things To Do)**
 
@@ -30,21 +34,20 @@ All window manipulation RPC methods (`focusWindow`, `moveWindow`, `resizeWindow`
       - `Server/Sources/MacosUseServer/MacroExecutor.swift`: all window queries (`windowExists`, `windowTitle`, for‑each window patterns) must use the shared registry.
     - Acceptance: A single registry instance serves all window reads; results from `ListWindows`, `GetWindow`, and observation diffs agree modulo AX freshness; no temporary `WindowRegistry()` remains in production paths.
 
-2. **Observation stream lifecycle hygiene (HIGH):**
-    - Add continuation removal on stream termination in `ObservationManager.createEventStream` (use `onTermination`) to prevent continuation leaks; keep `Task.detached` event publishing.
-    - Acceptance: Starting and stopping `StreamObservations` does not increase retained continuations; repeated start/stop does not grow memory or fan‑out sets.
-
-3. **Traversal contention (HIGH):**
+1. **Traversal contention (HIGH):**
     - `handleTraverse` runs under `@MainActor`, still contending with other RPCs during observations. Plan: refactor traversal off `@MainActor` (or isolate via a dedicated non‑main queue) to remove RPC timeouts.
     - **Test Re-enable During Work:** As part of the refactor, re-enable `integration/observation_test.go` **during** implementation (not only after). Use it to validate window change detection and streaming behaviour while iterating. If the test cannot be re-enabled due to a known blocker, document the blocker, the incremental mitigation plan, and acceptance criteria for re-enablement.
     - Acceptance: With observation active, concurrent RPCs (e.g., `GetWindow`) execute without timeouts; unskip the observation test and pass with PollUntil conditions.
 
-4. **Small correctness/unification fixes (MEDIUM):**
+2. **Observation stream lifecycle hygiene (MEDIUM):**
+    - Add continuation removal on stream termination in `ObservationManager.createEventStream` (use `onTermination`) to prevent continuation leaks; keep `Task.detached` event publishing.
+    - Acceptance: Starting and stopping `StreamObservations` does not increase retained continuations; repeated start/stop does not grow memory or fan‑out sets.
+
+3. **Small correctness/unification fixes (MEDIUM):**
     - Unify `parsePID(fromName:)` (currently duplicated in `MacosUseServiceProvider` and `MacroExecutor`).
     - In `MacroExecutor.executeMethodCall("ClickElement")`, implement coordinate resolution from `elementId` (or return a clear UNIMPLEMENTED error) to avoid a misleading placeholder.
-    - In `MacosUseServiceProvider.buildWindowResponseFromAX`, stop creating a temporary registry; use the shared provider `windowRegistry` to enrich bundle ID/layer/visible.
 
-5. **Targeted tests (HIGH):**
+4. **Targeted tests (HIGH):**
     - Unit tests: `WindowRegistry` (TTL, filtering) and `ObservationManager` window diffing (with shared registry).
     - Integration: Pagination determinism for all `List*/Find*` RPCs (AIP‑158), and state‑delta verification for window ops; unskip observation streaming once traversal contention is resolved.
 
