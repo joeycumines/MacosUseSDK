@@ -13,12 +13,10 @@ import (
 // window change events (created, moved, resized, minimized, restored, destroyed)
 // when windows are manipulated. Uses PollUntil pattern, NO sleep.
 //
-// ARCHITECTURAL LIMITATION (PARTIAL FIX): Task.detached event publishing allows events to
-// flow, but handleTraverse (@MainActor) still creates contention with concurrent RPCs.
-// Observation stream works but blocks other operations. Requires: (a) move traverse off
-// @MainActor, or (b) dedicated dispatch queue with AsyncChannel. See implementation-plan.md Phase 4.3.
+// ARCHITECTURAL FIX COMPLETED: handleTraverse removed from @MainActor, observation streaming
+// no longer blocks concurrent RPCs. Task.detached event publishing + nonisolated traversal
+// provides full decoupling of producer/consumer and concurrent RPC execution.
 func TestWindowChangeObservation(t *testing.T) {
-	t.Skip("ARCHITECTURAL LIMITATION: streamObservations partially functional but causes RPC timeouts (see implementation-plan.md Phase 4.3)")
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 

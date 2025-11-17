@@ -44,9 +44,14 @@ public enum MacroExecutionError: Error, CustomStringConvertible {
 
 /// Actor for executing macros with support for all action types
 public actor MacroExecutor {
-    public static let shared = MacroExecutor()
+    public nonisolated(unsafe) static var shared: MacroExecutor!
 
-    private init() {}
+    /// Shared window registry for consistent window tracking
+    private let windowRegistry: WindowRegistry
+
+    init(windowRegistry: WindowRegistry) {
+        self.windowRegistry = windowRegistry
+    }
 
     // MARK: - Execution Entry Point
 
@@ -191,9 +196,8 @@ public actor MacroExecutor {
         case let .windowTitle(title):
             // Check if window with title exists
             guard let pid = context.pid else { return false }
-            let registry = WindowRegistry()
-            try await registry.refreshWindows(forPID: pid)
-            let windows = try await registry.listWindows(forPID: pid)
+            try await windowRegistry.refreshWindows(forPID: pid)
+            let windows = try await windowRegistry.listWindows(forPID: pid)
             return windows.contains { $0.title.contains(title) }
 
         case let .application(bundleId):
@@ -245,9 +249,8 @@ public actor MacroExecutor {
 
         case let .windowExists(title):
             guard let pid = context.pid else { return false }
-            let registry = WindowRegistry()
-            try await registry.refreshWindows(forPID: pid)
-            let windows = try await registry.listWindows(forPID: pid)
+            try await windowRegistry.refreshWindows(forPID: pid)
+            let windows = try await windowRegistry.listWindows(forPID: pid)
             return windows.contains { $0.title.contains(title) }
 
         case let .applicationRunning(bundleId):
@@ -352,9 +355,8 @@ public actor MacroExecutor {
             guard let pid = context.pid else {
                 throw MacroExecutionError.executionFailed("No PID in context for window pattern")
             }
-            let registry = WindowRegistry()
-            try await registry.refreshWindows(forPID: pid)
-            let windows = try await registry.listWindows(forPID: pid)
+            try await windowRegistry.refreshWindows(forPID: pid)
+            let windows = try await windowRegistry.listWindows(forPID: pid)
             items = windows.filter { $0.title.contains(pattern) }.map { String($0.windowID) }
 
         case let .values(valuesString):
@@ -551,14 +553,11 @@ private func parseSelectorString(_ str: String) -> Macosusesdk_Type_ElementSelec
     }
 }
 
-// Helper function to parse PID from resource name
+// Helper function to parse PID from resource name - now uses shared ParsingHelpers
 private func parsePID(fromName name: String) throws -> pid_t {
-    let components = name.split(separator: "/")
-    guard components.count >= 2,
-          components[0] == "applications",
-          let pid = pid_t(components[1])
-    else {
+    do {
+        return try ParsingHelpers.parsePID(fromName: name)
+    } catch {
         throw MacroExecutionError.invalidAction("Invalid parent resource name: \(name)")
     }
-    return pid
 }

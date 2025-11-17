@@ -15,10 +15,10 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
     let operationStore: OperationStore
     let windowRegistry: WindowRegistry
 
-    init(stateStore: AppStateStore, operationStore: OperationStore) {
+    init(stateStore: AppStateStore, operationStore: OperationStore, windowRegistry: WindowRegistry) {
         self.stateStore = stateStore
         self.operationStore = operationStore
-        windowRegistry = WindowRegistry()
+        self.windowRegistry = windowRegistry
     }
 
     // MARK: - Helper Methods
@@ -419,9 +419,8 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         // Parse "applications/{pid}"
         let pid = try parsePID(fromName: req.parent)
 
-        let registry = WindowRegistry()
-        try await registry.refreshWindows(forPID: pid)
-        let windowInfos = try await registry.listWindows(forPID: pid)
+        try await windowRegistry.refreshWindows(forPID: pid)
+        let windowInfos = try await windowRegistry.listWindows(forPID: pid)
 
         // Sort by window ID for deterministic ordering
         let sortedWindowInfos = windowInfos.sorted { $0.windowID < $1.windowID }
@@ -1919,9 +1918,8 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         }
 
         // Find window in registry
-        let registry = WindowRegistry()
-        try await registry.refreshWindows(forPID: pid)
-        let windowInfo = try await registry.listWindows(forPID: pid).first {
+        try await windowRegistry.refreshWindows(forPID: pid)
+        let windowInfo = try await windowRegistry.listWindows(forPID: pid).first {
             $0.windowID == CGWindowID(windowIdInt)
         }
 
@@ -2888,12 +2886,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
 
 private extension MacosUseServiceProvider {
     func parsePID(fromName name: String) throws -> pid_t {
-        let components = name.split(separator: "/").map(String.init)
-        guard components.count >= 2, components[0] == "applications", let pidInt = Int32(components[1])
-        else {
-            throw RPCError(code: .invalidArgument, message: "Invalid application name: \(name)")
-        }
-        return pid_t(pidInt)
+        try ParsingHelpers.parsePID(fromName: name)
     }
 
     /// Build a Window response directly from an AXUIElement, bypassing CGWindowList lookups.
@@ -2943,9 +2936,8 @@ private extension MacosUseServiceProvider {
         }
 
         // Get bundle ID and window metadata from CGWindowList
-        let registry = WindowRegistry()
-        try await registry.refreshWindows(forPID: pid)
-        let windowInfo = try await registry.getWindow(windowId)
+        try await windowRegistry.refreshWindows(forPID: pid)
+        let windowInfo = try await windowRegistry.getWindow(windowId)
 
         let bundleID = windowInfo?.bundleID ?? ""
         let zIndex = windowInfo?.layer ?? 0

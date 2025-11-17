@@ -85,8 +85,10 @@ public actor AutomationCoordinator {
     }
 
     /// Traverses the accessibility tree for a given PID
-    @MainActor
-    public func handleTraverse(pid: pid_t, visibleOnly: Bool) async throws
+    /// ARCHITECTURAL FIX: Made nonisolated to prevent actor serialization contention
+    /// The underlying traverseAccessibilityTree does not require actor isolation
+    /// and can safely execute concurrently with other actor methods
+    public nonisolated func handleTraverse(pid: pid_t, visibleOnly: Bool) async throws
         -> Macosusesdk_V1_TraverseAccessibilityResponse
     {
         fputs("info: [AutomationCoordinator] Traversing accessibility tree for PID \(pid)\n", stderr)

@@ -8,8 +8,11 @@ import SwiftProtobuf
 /// This actor is thread-safe and maintains the state of all active observations.
 /// It works with ChangeDetector to monitor UI changes and fan out events to subscribers.
 actor ObservationManager {
-    /// Shared singleton instance
-    static let shared = ObservationManager()
+    /// Shared singleton instance (initialized in main.swift with shared WindowRegistry)
+    nonisolated(unsafe) static var shared: ObservationManager!
+
+    /// Shared window registry for consistent window tracking
+    private let windowRegistry: WindowRegistry
 
     /// Active observations keyed by observation name
     private var observations: [String: ObservationState] = [:]
@@ -17,7 +20,8 @@ actor ObservationManager {
     /// Event streams for active observations
     /// ARCHITECTURAL FIX: Use buffering continuations to decouple producer from consumer
     /// and prevent @MainActor contention deadlock
-    private var eventStreams: [String: [AsyncStream<Macosusesdk_V1_ObservationEvent>.Continuation]] =
+    /// LIFECYCLE FIX: Use UUID-keyed storage for proper continuation removal on termination
+    private var eventStreams: [String: [UUID: AsyncStream<Macosusesdk_V1_ObservationEvent>.Continuation]] =
         [:]
 
     /// Sequence counters for observations
@@ -26,7 +30,9 @@ actor ObservationManager {
     /// Background tasks for active observations
     private var tasks: [String: Task<Void, Never>] = [:]
 
-    private init() {}
+    init(windowRegistry: WindowRegistry) {
+        self.windowRegistry = windowRegistry
+    }
 
     // MARK: - Public Interface
 
@@ -57,7 +63,7 @@ actor ObservationManager {
 
         observations[name] = state
         sequenceCounters[name] = 0
-        eventStreams[name] = []
+        eventStreams[name] = [:]
 
         return observation
     }
@@ -74,11 +80,12 @@ actor ObservationManager {
 
         // Get all data needed by the nonisolated task *before* detaching
         let initialState = state // Copy state by value
+        let manager = self // Capture actor reference for detached task
 
         // Start background monitoring task (detached to avoid blocking this actor)
         let task = Task.detached {
             // Pass state by value (continuations no longer needed, fetched dynamically)
-            await self.monitorObservation(
+            await manager.monitorObservation(
                 name: name,
                 initialState: initialState,
                 [],
@@ -121,7 +128,7 @@ actor ObservationManager {
 
         // Close all event streams
         if let continuations = eventStreams[name] {
-            for continuation in continuations {
+            for continuation in continuations.values {
                 continuation.finish()
             }
         }
@@ -145,7 +152,7 @@ actor ObservationManager {
 
         // Close all event streams
         if let continuations = eventStreams[name] {
-            for continuation in continuations {
+            for continuation in continuations.values {
                 continuation.finish()
             }
         }
@@ -166,7 +173,7 @@ actor ObservationManager {
 
         // Close all event streams
         if let continuations = eventStreams[name] {
-            for continuation in continuations {
+            for continuation in continuations.values {
                 continuation.finish()
             }
         }
@@ -175,6 +182,7 @@ actor ObservationManager {
 
     /// Creates an event stream for an observation
     /// ARCHITECTURAL FIX: Use buffering limit to prevent producer blocking on slow consumers
+    /// LIFECYCLE FIX: Remove continuation on termination to prevent leaks
     func createEventStream(
         name: String,
     ) -> AsyncStream<Macosusesdk_V1_ObservationEvent>? {
@@ -182,11 +190,17 @@ actor ObservationManager {
             return nil
         }
 
+        let continuationID = UUID()
         let stream = AsyncStream<Macosusesdk_V1_ObservationEvent>(
             bufferingPolicy: .bufferingNewest(100),
         ) { continuation in
             Task {
-                await self.addStreamContinuation(name: name, continuation: continuation)
+                await self.addStreamContinuation(id: continuationID, name: name, continuation: continuation)
+            }
+            continuation.onTermination = { @Sendable _ in
+                Task {
+                    await self.removeStreamContinuation(id: continuationID, name: name)
+                }
             }
         }
 
@@ -196,13 +210,24 @@ actor ObservationManager {
     // MARK: - Private Methods
 
     private func addStreamContinuation(
+        id: UUID,
         name: String,
         continuation: AsyncStream<Macosusesdk_V1_ObservationEvent>.Continuation,
     ) async {
         if eventStreams[name] != nil {
-            eventStreams[name]?.append(continuation)
+            eventStreams[name]?[id] = continuation
         } else {
-            eventStreams[name] = [continuation]
+            eventStreams[name] = [id: continuation]
+        }
+    }
+
+    private func removeStreamContinuation(
+        id: UUID,
+        name: String,
+    ) async {
+        eventStreams[name]?.removeValue(forKey: id)
+        if eventStreams[name]?.isEmpty == true {
+            eventStreams.removeValue(forKey: name)
         }
     }
 
@@ -225,7 +250,8 @@ actor ObservationManager {
 
     /// Gets current continuations for an observation (actor-isolated helper)
     private func getCurrentContinuations(name: String) -> [AsyncStream<Macosusesdk_V1_ObservationEvent>.Continuation] {
-        eventStreams[name] ?? []
+        guard let continuations = eventStreams[name] else { return [] }
+        return Array(continuations.values)
     }
 
     /// Monitors an observation in the background
@@ -286,9 +312,8 @@ actor ObservationManager {
 
                 case .windowChanges:
                     // Poll window list and detect changes
-                    let registry = WindowRegistry()
-                    try await registry.refreshWindows(forPID: pid)
-                    let currentWindows = try await registry.listWindows(forPID: pid)
+                    try await windowRegistry.refreshWindows(forPID: pid)
+                    let currentWindows = try await windowRegistry.listWindows(forPID: pid)
 
                     // Detect window changes
                     let windowChanges = detectWindowChanges(
@@ -537,7 +562,7 @@ actor ObservationManager {
     }
 
     /// Detects changes between two window snapshots
-    private nonisolated func detectWindowChanges(
+    nonisolated func detectWindowChanges(
         previous: [WindowRegistry.WindowInfo],
         current: [WindowRegistry.WindowInfo],
     ) -> [WindowChange] {
@@ -665,7 +690,7 @@ private enum ElementChange {
 }
 
 /// Type of window change
-private enum WindowChange {
+enum WindowChange {
     case created(WindowRegistry.WindowInfo)
     case destroyed(WindowRegistry.WindowInfo)
     case moved(old: WindowRegistry.WindowInfo, new: WindowRegistry.WindowInfo)
