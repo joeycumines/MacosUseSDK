@@ -35,8 +35,8 @@ func TestWindowChangeObservation(t *testing.T) {
 	app := openTextEdit(t, ctx, client, opsClient)
 	defer cleanupApplication(t, ctx, client, app)
 
-	// 3. Wait for initial window to appear (skip modal dialogs like file dialog)
-	t.Log("Waiting for TextEdit window to appear...")
+	// 3. Wait for initial window to appear (skip modal dialogs and toolbar/picker windows)
+	t.Log("Waiting for TextEdit document window to appear...")
 	var initialWindow *pb.Window
 	err := PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
 		resp, err := client.ListWindows(ctx, &pb.ListWindowsRequest{
@@ -45,9 +45,14 @@ func TestWindowChangeObservation(t *testing.T) {
 		if err != nil {
 			return false, err
 		}
-		// TextEdit spawns file dialog on launch - skip modal dialogs, wait for document window
+		// TextEdit spawns file dialog on launch - skip modal dialogs and tiny windows
+		// A real document window should have reasonable dimensions (at least 200x200)
+		// AND be positioned fully on-screen (top Y < 400 to ensure bottom doesn't go off-screen)
 		for _, window := range resp.Windows {
-			if window.State != nil && !window.State.Modal {
+			if window.State != nil && !window.State.Modal &&
+				window.Bounds != nil &&
+				window.Bounds.Width >= 200 && window.Bounds.Height >= 200 &&
+				window.Bounds.Y < 400 && window.Bounds.X >= 0 {
 				initialWindow = window
 				return true, nil
 			}
@@ -55,9 +60,14 @@ func TestWindowChangeObservation(t *testing.T) {
 		return false, nil
 	})
 	if err != nil {
-		t.Fatalf("Initial window never appeared: %v", err)
+		t.Fatalf("Initial document window never appeared: %v", err)
 	}
 	t.Logf("Initial window found: %s", initialWindow.Name)
+
+	// Get initial window bounds for later comparison
+	initialBounds := initialWindow.Bounds
+	t.Logf("Initial window bounds: %.0fx%.0f at (%.0f, %.0f)",
+		initialBounds.Width, initialBounds.Height, initialBounds.X, initialBounds.Y)
 
 	// 4. Create observation for window changes
 	t.Log("Creating window change observation...")
@@ -144,26 +154,16 @@ func TestWindowChangeObservation(t *testing.T) {
 		}
 	}()
 
-	// 6. Test Case 1: Window Resize
-	t.Log("Test 1: Resizing window...")
-	_, err = client.ResizeWindow(ctx, &pb.ResizeWindowRequest{
-		Name:   initialWindow.Name,
-		Width:  600,
-		Height: 400,
-	})
-	if err != nil {
-		t.Fatalf("ResizeWindow failed: %v", err)
-	}
-
-	// Wait for resize event with PollUntil pattern via event channel
-	resizeEventReceived := false
-	pollErr := PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
+	// 6. Wait for observation to establish baseline (receive initial "created" event)
+	t.Log("Waiting for observation baseline...")
+	baselineReceived := false
+	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
 		select {
 		case event := <-eventsChan:
 			if windowEvent := event.GetWindowEvent(); windowEvent != nil {
-				if windowEvent.EventType == pb.WindowEvent_WINDOW_EVENT_TYPE_RESIZED {
-					t.Log("✓ Resize event received")
-					resizeEventReceived = true
+				if windowEvent.EventType == pb.WindowEvent_WINDOW_EVENT_TYPE_CREATED {
+					t.Log("✓ Baseline window created event received")
+					baselineReceived = true
 					return true, nil
 				}
 			}
@@ -173,11 +173,55 @@ func TestWindowChangeObservation(t *testing.T) {
 		}
 		return false, nil
 	})
-	if pollErr != nil || !resizeEventReceived {
-		t.Error("Expected window resize event but did not receive it")
+	if err != nil || !baselineReceived {
+		t.Fatal("Failed to receive baseline window created event")
 	}
 
-	// Verify state delta - window bounds should reflect resize
+	// 7. Test Case 1: Window Resize (First Resize to Different Dimensions)
+	// Calculate target dimensions that are different from initial
+	targetWidth1 := float64(500)
+	targetHeight1 := float64(300)
+	// Ensure they're different from initial
+	if initialBounds.Width == targetWidth1 {
+		targetWidth1 = 450
+	}
+	if initialBounds.Height == targetHeight1 {
+		targetHeight1 = 350
+	}
+
+	t.Logf("Test 1a: Resizing window to %.0fx%.0f...", targetWidth1, targetHeight1)
+	_, err = client.ResizeWindow(ctx, &pb.ResizeWindowRequest{
+		Name:   initialWindow.Name,
+		Width:  targetWidth1,
+		Height: targetHeight1,
+	})
+	if err != nil {
+		t.Fatalf("ResizeWindow (first) failed: %v", err)
+	}
+
+	// Wait for first resize event with PollUntil pattern via event channel
+	resizeEvent1Received := false
+	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
+		select {
+		case event := <-eventsChan:
+			if windowEvent := event.GetWindowEvent(); windowEvent != nil {
+				if windowEvent.EventType == pb.WindowEvent_WINDOW_EVENT_TYPE_RESIZED {
+					t.Log("✓ First resize event received")
+					resizeEvent1Received = true
+					return true, nil
+				}
+			}
+		case err := <-errChan:
+			return false, err
+		default:
+		}
+		return false, nil
+	})
+	if err != nil || !resizeEvent1Received {
+		t.Error("Expected first window resize event but did not receive it")
+	}
+
+	// Verify state delta - window bounds should reflect first resize
 	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
 		window, err := client.GetWindow(ctx, &pb.GetWindowRequest{
 			Name: initialWindow.Name,
@@ -186,12 +230,63 @@ func TestWindowChangeObservation(t *testing.T) {
 			return false, err
 		}
 		// Allow 2-pixel tolerance for window manager adjustments
-		widthOk := window.Bounds.Width >= 598 && window.Bounds.Width <= 602
-		heightOk := window.Bounds.Height >= 398 && window.Bounds.Height <= 402
+		widthOk := window.Bounds.Width >= targetWidth1-2 && window.Bounds.Width <= targetWidth1+2
+		heightOk := window.Bounds.Height >= targetHeight1-2 && window.Bounds.Height <= targetHeight1+2
 		return widthOk && heightOk, nil
 	})
 	if err != nil {
-		t.Error("Window bounds did not reflect resize operation")
+		t.Error("Window bounds did not reflect first resize operation")
+	}
+
+	// Test Case 1b: Resize back to original dimensions
+	t.Logf("Test 1b: Resizing window back to original %.0fx%.0f...",
+		initialBounds.Width, initialBounds.Height)
+	_, err = client.ResizeWindow(ctx, &pb.ResizeWindowRequest{
+		Name:   initialWindow.Name,
+		Width:  initialBounds.Width,
+		Height: initialBounds.Height,
+	})
+	if err != nil {
+		t.Fatalf("ResizeWindow (back to original) failed: %v", err)
+	}
+
+	// Wait for second resize event
+	resizeEvent2Received := false
+	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
+		select {
+		case event := <-eventsChan:
+			if windowEvent := event.GetWindowEvent(); windowEvent != nil {
+				if windowEvent.EventType == pb.WindowEvent_WINDOW_EVENT_TYPE_RESIZED {
+					t.Log("✓ Second resize event received")
+					resizeEvent2Received = true
+					return true, nil
+				}
+			}
+		case err := <-errChan:
+			return false, err
+		default:
+		}
+		return false, nil
+	})
+	if err != nil || !resizeEvent2Received {
+		t.Error("Expected second window resize event but did not receive it")
+	}
+
+	// Verify state delta - window bounds should be back to original
+	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
+		window, err := client.GetWindow(ctx, &pb.GetWindowRequest{
+			Name: initialWindow.Name,
+		})
+		if err != nil {
+			return false, err
+		}
+		// Allow 2-pixel tolerance
+		widthOk := window.Bounds.Width >= initialBounds.Width-2 && window.Bounds.Width <= initialBounds.Width+2
+		heightOk := window.Bounds.Height >= initialBounds.Height-2 && window.Bounds.Height <= initialBounds.Height+2
+		return widthOk && heightOk, nil
+	})
+	if err != nil {
+		t.Error("Window bounds did not reflect second resize operation")
 	}
 
 	// 7. Test Case 2: Window Move
@@ -207,7 +302,7 @@ func TestWindowChangeObservation(t *testing.T) {
 
 	// Wait for move event
 	moveEventReceived := false
-	pollErr = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
+	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
 		select {
 		case event := <-eventsChan:
 			if windowEvent := event.GetWindowEvent(); windowEvent != nil {
@@ -223,7 +318,7 @@ func TestWindowChangeObservation(t *testing.T) {
 		}
 		return false, nil
 	})
-	if pollErr != nil || !moveEventReceived {
+	if err != nil || !moveEventReceived {
 		t.Error("Expected window move event but did not receive it")
 	}
 
@@ -255,7 +350,7 @@ func TestWindowChangeObservation(t *testing.T) {
 
 	// Wait for minimize event
 	minimizeEventReceived := false
-	pollErr = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
+	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
 		select {
 		case event := <-eventsChan:
 			if windowEvent := event.GetWindowEvent(); windowEvent != nil {
@@ -271,7 +366,7 @@ func TestWindowChangeObservation(t *testing.T) {
 		}
 		return false, nil
 	})
-	if pollErr != nil || !minimizeEventReceived {
+	if err != nil || !minimizeEventReceived {
 		t.Error("Expected window minimize event but did not receive it")
 	}
 
@@ -299,7 +394,7 @@ func TestWindowChangeObservation(t *testing.T) {
 
 	// Wait for restore event
 	restoreEventReceived := false
-	pollErr = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
+	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
 		select {
 		case event := <-eventsChan:
 			if windowEvent := event.GetWindowEvent(); windowEvent != nil {
@@ -315,7 +410,7 @@ func TestWindowChangeObservation(t *testing.T) {
 		}
 		return false, nil
 	})
-	if pollErr != nil || !restoreEventReceived {
+	if err != nil || !restoreEventReceived {
 		t.Error("Expected window restore event but did not receive it")
 	}
 
@@ -344,7 +439,7 @@ func TestWindowChangeObservation(t *testing.T) {
 
 	// Wait for destroyed event
 	destroyedEventReceived := false
-	pollErr = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
+	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
 		select {
 		case event := <-eventsChan:
 			if windowEvent := event.GetWindowEvent(); windowEvent != nil {
@@ -360,7 +455,7 @@ func TestWindowChangeObservation(t *testing.T) {
 		}
 		return false, nil
 	})
-	if pollErr != nil || !destroyedEventReceived {
+	if err != nil || !destroyedEventReceived {
 		t.Error("Expected window destroyed event but did not receive it")
 	}
 

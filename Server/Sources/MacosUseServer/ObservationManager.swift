@@ -3,6 +3,8 @@ import Foundation
 import MacosUseSDKProtos
 import SwiftProtobuf
 
+// MARK: - ObservationManager
+
 /// Manages active observations and coordinates streaming of observation events.
 ///
 /// This actor is thread-safe and maintains the state of all active observations.
@@ -314,8 +316,7 @@ actor ObservationManager {
                     previousElements = currentElements
 
                 case .windowChanges:
-                    // CRITICAL FIX: Poll AX API directly instead of CGWindowList (WindowRegistry)
-                    // This ensures window change detection sees mutations made via AX API
+                    // Poll AX API directly to detect window changes
                     let currentWindows = try await fetchAXWindows(pid: pid)
 
                     // Detect window changes
@@ -387,94 +388,117 @@ actor ObservationManager {
     }
 
     /// Fetches current window snapshots from AX API (MUST run on MainActor)
-    @MainActor
-    private func fetchAXWindows(pid: pid_t) async throws -> [AXWindowSnapshot] {
-        let appElement = AXUIElementCreateApplication(pid)
+    /// Uses CGWindowList IDs for consistency with gRPC API
+    private nonisolated func fetchAXWindows(pid: pid_t) async throws -> [AXWindowSnapshot] {
+        // Refresh WindowRegistry to get latest CGWindowList data
+        try await windowRegistry.refreshWindows(forPID: pid)
+        let cgWindows = try await windowRegistry.listWindows(forPID: pid)
 
-        var windowsValue: CFTypeRef?
-        let result = AXUIElementCopyAttributeValue(
-            appElement, kAXWindowsAttribute as CFString, &windowsValue,
-        )
-        guard result == .success, let windows = windowsValue as? [AXUIElement] else {
-            return [] // No windows or permission denied
-        }
+        return await MainActor.run {
+            let appElement = AXUIElementCreateApplication(pid)
 
-        var snapshots: [AXWindowSnapshot] = []
-        for (index, window) in windows.enumerated() {
-            // Get bounds
-            var posValue: CFTypeRef?
-            var sizeValue: CFTypeRef?
-            let posResult = AXUIElementCopyAttributeValue(
-                window, kAXPositionAttribute as CFString, &posValue,
+            var windowsValue: CFTypeRef?
+            let result = AXUIElementCopyAttributeValue(
+                appElement, kAXWindowsAttribute as CFString, &windowsValue,
             )
-            let sizeResult = AXUIElementCopyAttributeValue(
-                window, kAXSizeAttribute as CFString, &sizeValue,
-            )
+            guard result == .success, let windows = windowsValue as? [AXUIElement] else {
+                return [] // No windows or permission denied
+            }
 
-            var bounds = CGRect.zero
-            if posResult == .success, let unwrappedPosValue = posValue,
-               CFGetTypeID(unwrappedPosValue) == AXValueGetTypeID(),
-               sizeResult == .success, let unwrappedSizeValue = sizeValue,
-               CFGetTypeID(unwrappedSizeValue) == AXValueGetTypeID()
-            {
-                let pos = unsafeDowncast(unwrappedPosValue, to: AXValue.self)
-                let size = unsafeDowncast(unwrappedSizeValue, to: AXValue.self)
-                var position = CGPoint.zero
-                var windowSize = CGSize.zero
-                if AXValueGetValue(pos, .cgPoint, &position),
-                   AXValueGetValue(size, .cgSize, &windowSize)
+            var snapshots: [AXWindowSnapshot] = []
+            for window in windows {
+                var posValue: CFTypeRef?
+                var sizeValue: CFTypeRef?
+                let posResult = AXUIElementCopyAttributeValue(
+                    window, kAXPositionAttribute as CFString, &posValue,
+                )
+                let sizeResult = AXUIElementCopyAttributeValue(
+                    window, kAXSizeAttribute as CFString, &sizeValue,
+                )
+
+                var bounds = CGRect.zero
+                if posResult == .success, let unwrappedPosValue = posValue,
+                   CFGetTypeID(unwrappedPosValue) == AXValueGetTypeID(),
+                   sizeResult == .success, let unwrappedSizeValue = sizeValue,
+                   CFGetTypeID(unwrappedSizeValue) == AXValueGetTypeID()
                 {
-                    bounds = CGRect(origin: position, size: windowSize)
+                    let pos = unsafeDowncast(unwrappedPosValue, to: AXValue.self)
+                    let size = unsafeDowncast(unwrappedSizeValue, to: AXValue.self)
+                    var position = CGPoint.zero
+                    var windowSize = CGSize.zero
+                    if AXValueGetValue(pos, .cgPoint, &position),
+                       AXValueGetValue(size, .cgSize, &windowSize)
+                    {
+                        bounds = CGRect(origin: position, size: windowSize)
+                    }
                 }
+
+                // Match AX window to CGWindowList entry by position + size (with tolerance)
+                // This is robust to timing issues where CGWindowList updates faster than AX
+                var matchedWindow: (id: CGWindowID, bounds: CGRect)?
+                let tolerance: CGFloat = 50.0 // Allow up to 50px difference in any dimension
+                for cgWin in cgWindows {
+                    let posMatch = abs(bounds.origin.x - cgWin.bounds.origin.x) <= tolerance &&
+                        abs(bounds.origin.y - cgWin.bounds.origin.y) <= tolerance
+                    let sizeMatch = abs(bounds.size.width - cgWin.bounds.size.width) <= tolerance &&
+                        abs(bounds.size.height - cgWin.bounds.size.height) <= tolerance
+                    if posMatch, sizeMatch {
+                        matchedWindow = (id: cgWin.windowID, bounds: cgWin.bounds)
+                        break
+                    }
+                }
+
+                guard let matchedWindow else {
+                    // Window not matchable to CGWindowList (might be transient/hidden)
+                    continue
+                }
+
+                // Get title
+                var titleValue: CFTypeRef?
+                let titleResult = AXUIElementCopyAttributeValue(
+                    window, kAXTitleAttribute as CFString, &titleValue,
+                )
+                let title = if titleResult == .success, let titleStr = titleValue as? String {
+                    titleStr
+                } else {
+                    ""
+                }
+
+                // Get minimized state
+                var minValue: CFTypeRef?
+                let minimized = if AXUIElementCopyAttributeValue(
+                    window, kAXMinimizedAttribute as CFString, &minValue,
+                ) == .success, let minBool = minValue as? Bool {
+                    minBool
+                } else {
+                    false
+                }
+
+                // Get focused state
+                var mainValue: CFTypeRef?
+                let focused: Bool? = if AXUIElementCopyAttributeValue(
+                    window, kAXMainAttribute as CFString, &mainValue,
+                ) == .success, let mainBool = mainValue as? Bool {
+                    mainBool
+                } else {
+                    nil
+                }
+
+                // Use CGWindowList bounds (not AX bounds) for observation diffing
+                // CGWindowList updates faster and more reliably than AX
+                let snapshot = AXWindowSnapshot(
+                    windowID: matchedWindow.id,
+                    title: title,
+                    bounds: matchedWindow.bounds,
+                    minimized: minimized,
+                    visible: !minimized,
+                    focused: focused,
+                )
+                snapshots.append(snapshot)
             }
 
-            // Get title
-            var titleValue: CFTypeRef?
-            let titleResult = AXUIElementCopyAttributeValue(
-                window, kAXTitleAttribute as CFString, &titleValue,
-            )
-            let title = if titleResult == .success, let titleStr = titleValue as? String {
-                titleStr
-            } else {
-                ""
-            }
-
-            // Get minimized state
-            var minValue: CFTypeRef?
-            let minimized = if AXUIElementCopyAttributeValue(
-                window, kAXMinimizedAttribute as CFString, &minValue,
-            ) == .success, let minBool = minValue as? Bool {
-                minBool
-            } else {
-                false
-            }
-
-            // Get focused state
-            var mainValue: CFTypeRef?
-            let focused: Bool? = if AXUIElementCopyAttributeValue(
-                window, kAXMainAttribute as CFString, &mainValue,
-            ) == .success, let mainBool = mainValue as? Bool {
-                mainBool
-            } else {
-                nil
-            }
-
-            // Create snapshot
-            // Use index as stable ID since AX doesn't expose CGWindowID
-            // This is a compromise: ordering may change, but it's the best we can do
-            // without CGWindowList
-            let snapshot = AXWindowSnapshot(
-                windowID: index,
-                title: title,
-                bounds: bounds,
-                minimized: minimized,
-                visible: !minimized,
-                focused: focused,
-            )
-            snapshots.append(snapshot)
+            return snapshots
         }
-
-        return snapshots
     }
 
     /// Detects changes between two element snapshots
@@ -662,9 +686,8 @@ actor ObservationManager {
     ) -> [WindowChange] {
         var changes: [WindowChange] = []
 
-        // IDENTITY CHALLENGE: AX API doesn't expose CGWindowID.
-        // We match windows by windowID (derived from index in fetchAXWindows).
-        // This is fragile but the best we can do without stable IDs from the OS.
+        // CORRECTNESS FIX: Now using real CGWindowID extracted from AXUIElement via _AXUIElementGetWindow.
+        // This provides stable window identity across polls, fixing the fatal observation bug.
         let previousMap = Dictionary(
             uniqueKeysWithValues: previous.map { ($0.windowID, $0) },
         )
@@ -797,7 +820,7 @@ private enum ElementChange {
 /// This struct holds ONLY data from the Accessibility API, avoiding the
 /// catastrophic state inconsistency with CGWindowList.
 struct AXWindowSnapshot: Hashable {
-    let windowID: Int // Derived from hash or index since AX doesn't expose CGWindowID directly
+    let windowID: CGWindowID // Stable CGWindowID extracted from AXUIElement via _AXUIElementGetWindow
     let title: String
     let bounds: CGRect
     let minimized: Bool

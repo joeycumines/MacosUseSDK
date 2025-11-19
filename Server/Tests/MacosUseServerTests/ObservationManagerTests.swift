@@ -4,26 +4,23 @@ import Testing
 
 @testable import MacosUseServer
 
-/// Helper to create WindowInfo for tests
-extension WindowRegistry.WindowInfo {
+/// Helper to create AXWindowSnapshot for tests
+extension AXWindowSnapshot {
     static func testWindow(
         id: CGWindowID = 1001,
-        pid: pid_t = 12345,
         title: String = "Test Window",
         bounds: CGRect = CGRect(x: 0, y: 0, width: 800, height: 600),
-        layer: Int32 = 0,
-        isOnScreen: Bool = true,
-        bundleID: String? = "com.example.app",
-    ) -> WindowRegistry.WindowInfo {
-        WindowRegistry.WindowInfo(
+        minimized: Bool = false,
+        visible: Bool = true,
+        focused: Bool? = nil,
+    ) -> AXWindowSnapshot {
+        AXWindowSnapshot(
             windowID: id,
-            ownerPID: pid,
-            bounds: bounds,
             title: title,
-            layer: layer,
-            isOnScreen: isOnScreen,
-            timestamp: Date(),
-            bundleID: bundleID,
+            bounds: bounds,
+            minimized: minimized,
+            visible: visible,
+            focused: focused,
         )
     }
 }
@@ -35,8 +32,8 @@ struct ObservationManagerTests {
     @Test("Detects window creation")
     func detectsWindowCreation() {
         let manager = ObservationManager(windowRegistry: WindowRegistry())
-        let previous: [WindowRegistry.WindowInfo] = []
-        let current: [WindowRegistry.WindowInfo] = [.testWindow(title: "New Window")]
+        let previous: [AXWindowSnapshot] = []
+        let current: [AXWindowSnapshot] = [.testWindow(title: "New Window")]
 
         let changes = manager.detectWindowChanges(previous: previous, current: current)
 
@@ -52,8 +49,8 @@ struct ObservationManagerTests {
     @Test("Detects window destruction")
     func detectsWindowDestruction() {
         let manager = ObservationManager(windowRegistry: WindowRegistry())
-        let previous: [WindowRegistry.WindowInfo] = [.testWindow(title: "Old Window")]
-        let current: [WindowRegistry.WindowInfo] = []
+        let previous: [AXWindowSnapshot] = [.testWindow(title: "Old Window")]
+        let current: [AXWindowSnapshot] = []
 
         let changes = manager.detectWindowChanges(previous: previous, current: current)
 
@@ -65,11 +62,11 @@ struct ObservationManagerTests {
         }
     }
 
-    @Test("Detects window minimization via isOnScreen")
+    @Test("Detects window minimization")
     func detectsWindowMinimization() {
         let manager = ObservationManager(windowRegistry: WindowRegistry())
-        let previous: [WindowRegistry.WindowInfo] = [.testWindow(isOnScreen: true)]
-        let current: [WindowRegistry.WindowInfo] = [.testWindow(isOnScreen: false)]
+        let previous: [AXWindowSnapshot] = [.testWindow(minimized: false)]
+        let current: [AXWindowSnapshot] = [.testWindow(minimized: true)]
 
         let changes = manager.detectWindowChanges(previous: previous, current: current)
 
@@ -81,11 +78,11 @@ struct ObservationManagerTests {
         }
     }
 
-    @Test("Detects window restoration via isOnScreen")
+    @Test("Detects window restoration")
     func detectsWindowRestoration() {
         let manager = ObservationManager(windowRegistry: WindowRegistry())
-        let previous: [WindowRegistry.WindowInfo] = [.testWindow(isOnScreen: false)]
-        let current: [WindowRegistry.WindowInfo] = [.testWindow(isOnScreen: true)]
+        let previous: [AXWindowSnapshot] = [.testWindow(minimized: true)]
+        let current: [AXWindowSnapshot] = [.testWindow(minimized: false)]
 
         let changes = manager.detectWindowChanges(previous: previous, current: current)
 
@@ -100,8 +97,8 @@ struct ObservationManagerTests {
     @Test("Detects window movement")
     func detectsWindowMovement() {
         let manager = ObservationManager(windowRegistry: WindowRegistry())
-        let previous: [WindowRegistry.WindowInfo] = [.testWindow()]
-        let current: [WindowRegistry.WindowInfo] = [.testWindow(bounds: CGRect(x: 100, y: 100, width: 800, height: 600))]
+        let previous: [AXWindowSnapshot] = [.testWindow()]
+        let current: [AXWindowSnapshot] = [.testWindow(bounds: CGRect(x: 100, y: 100, width: 800, height: 600))]
 
         let changes = manager.detectWindowChanges(previous: previous, current: current)
 
@@ -116,8 +113,8 @@ struct ObservationManagerTests {
     @Test("Detects window resizing")
     func detectsWindowResizing() {
         let manager = ObservationManager(windowRegistry: WindowRegistry())
-        let previous: [WindowRegistry.WindowInfo] = [.testWindow()]
-        let current: [WindowRegistry.WindowInfo] = [.testWindow(bounds: CGRect(x: 0, y: 0, width: 1024, height: 768))]
+        let previous: [AXWindowSnapshot] = [.testWindow()]
+        let current: [AXWindowSnapshot] = [.testWindow(bounds: CGRect(x: 0, y: 0, width: 1024, height: 768))]
 
         let changes = manager.detectWindowChanges(previous: previous, current: current)
 
@@ -132,8 +129,8 @@ struct ObservationManagerTests {
     @Test("No changes when windows unchanged")
     func noChangesWhenUnchanged() {
         let manager = ObservationManager(windowRegistry: WindowRegistry())
-        let previous: [WindowRegistry.WindowInfo] = [.testWindow()]
-        let current: [WindowRegistry.WindowInfo] = [.testWindow()]
+        let previous: [AXWindowSnapshot] = [.testWindow()]
+        let current: [AXWindowSnapshot] = [.testWindow()]
 
         let changes = manager.detectWindowChanges(previous: previous, current: current)
 

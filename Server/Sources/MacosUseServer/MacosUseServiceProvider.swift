@@ -2901,7 +2901,7 @@ private extension MacosUseServiceProvider {
     /// Build a Window response directly from an AXUIElement, bypassing CGWindowList lookups.
     /// This is used after window operations where CGWindowList may be stale.
     func buildWindowResponseFromAX(
-        name: String, pid _: pid_t, windowId _: CGWindowID, window: AXUIElement,
+        name: String, pid _: pid_t, windowId: CGWindowID, window: AXUIElement,
     ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
         // Get bounds and title from AXUIElement (MUST run on MainActor)
         let (bounds, title) = try await MainActor.run { () -> (CGRect, String) in
@@ -2944,9 +2944,9 @@ private extension MacosUseServiceProvider {
             return (boundsResult, titleResult2)
         }
 
-        // CRITICAL FIX: Use ONLY AX API as the source of truth.
-        // CGWindowList (windowRegistry) is stale and not synchronized with AX mutations.
-        // Get ALL window state from AXUIElement.
+        // MERGED DATA SOURCES: Use AX API for state (minimized, focused, fullscreen, bounds)
+        // which is fresh after AX mutations, and WindowRegistry (CGWindowList) for metadata
+        // (zIndex, bundleID) which is stable and doesn't change during window operations.
         let (minimized, focused, fullscreen) = await getWindowState(window: window)
 
         // visible is simply !minimized for this purpose
@@ -2954,6 +2954,12 @@ private extension MacosUseServiceProvider {
 
         // Build window state
         let windowState = try await buildWindowStateFromAX(window: window)
+
+        // Refresh WindowRegistry and query for layer (zIndex) and bundleID
+        try await windowRegistry.refreshWindows()
+        let registryWindow = try await windowRegistry.getWindow(windowId)
+        let zIndex = registryWindow?.layer ?? 0
+        let bundleID = registryWindow?.bundleID ?? ""
 
         return ServerResponse(
             message: Macosusesdk_V1_Window.with {
@@ -2965,10 +2971,8 @@ private extension MacosUseServiceProvider {
                     $0.width = bounds.size.width
                     $0.height = bounds.size.height
                 }
-                // Temporarily lose zIndex and bundleID - these only come from CGWindowList
-                // and we cannot use that stale source. Correctness first.
-                // $0.zIndex is omitted (defaults to 0)
-                // $0.bundleID is omitted (defaults to "")
+                $0.zIndex = Int32(zIndex)
+                $0.bundleID = bundleID
                 $0.visible = visible
                 $0.minimized = minimized
                 // Set focused/fullscreen if known (not nil)
@@ -2997,24 +3001,7 @@ private extension MacosUseServiceProvider {
                 throw RPCError(code: .internalError, message: "Failed to get windows for application")
             }
 
-            // CRITICAL FIX: Check single-window optimization BEFORE querying CGWindowList.
-            // This prevents 'NotFound' errors when CGWindowList is stale/missing the ID.
-            //
-            // IDENTITY HAZARD: This optimization assumes that if an application has exactly one
-            // window, it MUST be the window associated with `windowId`. This creates a race
-            // condition where a stale ID request can mistakenly return a newly opened, unrelated
-            // window if their PIDs match and count is 1.
-            //
-            // TRADE-OFF: We accept this heuristic because AXUIElement does not expose a stable
-            // persistent ID that correlates to CGWindowID without checking bounds (which is
-            // exactly what we are trying to avoid due to staleness).
-            //
-            // MITIGATION: In future iterations, we should add a sanity check: if the AXTitle
-            // of windows[0] differs significantly from the last known title of windowId
-            // (if available from WindowRegistry), warn or fail.
-            if windows.count == 1 {
-                return windows[0]
-            }
+            fputs("debug: [findWindowElement] Found \(windows.count) AX windows, searching for ID \(windowId)\n", stderr)
 
             // Get CGWindowList for matching (include all windows, not just on-screen ones)
             guard

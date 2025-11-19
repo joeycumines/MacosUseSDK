@@ -18,7 +18,42 @@
 
 ### **Current Reality (Single-Sentence Snapshot)**
 
-The threading, caching, and stream lifecycle refactoring is complete and correct: all Accessibility API calls are wrapped in `MainActor.run`, a single `sharedWindowRegistry` is injected into all server components (`MacosUseServiceProvider`, `ObservationManager`, `MacroExecutor`) via `main.swift`, and observation streams use UUID-keyed continuations with `Task.detached` publishing. However, `TestWindowChangeObservation` continues to fail with `DeadlineExceeded` due to MainActor contention: when observation monitoring is active, the high frequency of MainActor hops (from observation polling, window registry refreshes, and RPC AX calls) creates excessive contention that starves RPC handlers.
+**Current Reality:** Window observation diffing is now **architecturally correct**: uses CGWindowList bounds (which update faster than AX) matched to AX windows for state. The single-window optimization bug in `findWindowElement` has been removed. The test has been fixed to select on-screen windows (Y < 400) and wait for baseline state before mutations. **However**, the observation test still fails with event timing issues - the baseline "created" event is published but not received by the test's event channel, suggesting a race condition in event delivery or stream setup. Data regression (zIndex/bundleID) is fixed.
+
+### **Immediate Action Items (Next Things To Do)**
+
+1. **Fix observation event stream timing (CRITICAL):**
+    - The baseline "created" event is being published but not received by the test's event channel during the PollUntil loop.
+    - Root cause: Possible race between stream setup, first poll, and event consumption. The observation monitoring loop publishes to continuations, but the test's goroutine reading from the stream may not have received the message yet.
+    - Solution: Either (a) add small delay after stream setup before expecting events, (b) make the test more lenient about which event types it accepts initially, or (c) investigate why Task.detached event publishing doesn't promptly deliver to gRPC stream.
+    - Acceptance: Test receives the baseline created event within PollUntil timeout.
+
+2. **Verify observation test passes (HIGH):**
+    - After fixing event timing, run `make test-observation-quick`.
+    - Acceptance: `TestWindowChangeObservation` passes, detecting created, resized, moved, minimized, restored, and destroyed events.
+
+2. **WindowRegistry Consistency (HIGH): Single shared cache across the server.**
+    - Replace all temporary `WindowRegistry()` usages with a shared instance to maintain one coherent cache and avoid redundant CGWindowList scans.
+    - Targets (must change):
+      - `Server/Sources/MacosUseServer/MacosUseServiceProvider.swift`: `listWindows`, `captureWindowScreenshot`, and `buildWindowResponseFromAX` must use the provider's shared `windowRegistry` instead of creating temporaries.
+      - `Server/Sources/MacosUseServer/MacroExecutor.swift`: all window queries (`windowExists`, `windowTitle`, for‑each window patterns) must use the shared registry.
+    - Acceptance: A single registry instance serves all window reads; results from `ListWindows`, `GetWindow`, and observation diffs agree modulo AX freshness; no temporary `WindowRegistry()` remains in production paths.
+
+3. **Traversal contention (MEDIUM):**
+    - `handleTraverse` runs under `@MainActor`, still contending with other RPCs during observations. Plan: refactor traversal off `@MainActor` (or isolate via a dedicated non‑main queue) to remove RPC timeouts.
+    - Acceptance: With observation active, concurrent RPCs (e.g., `GetWindow`) execute without timeouts.
+
+4. **Observation stream lifecycle hygiene (MEDIUM):**
+    - Continuation removal on stream termination is already implemented via `onTermination` in `ObservationManager.createEventStream`.
+    - Acceptance: Starting and stopping `StreamObservations` does not increase retained continuations; repeated start/stop does not grow memory or fan‑out sets.
+
+5. **Small correctness/unification fixes (MEDIUM):**
+    - Unify `parsePID(fromName:)` (currently duplicated in `MacosUseServiceProvider` and `MacroExecutor`).
+    - In `MacroExecutor.executeMethodCall("ClickElement")`, implement coordinate resolution from `elementId` (or return a clear UNIMPLEMENTED error) to avoid a misleading placeholder.
+
+6. **Targeted tests (HIGH):**
+    - Unit tests: `WindowRegistry` (TTL, filtering).
+    - Integration: Pagination determinism for all `List*/Find*` RPCs (AIP‑158), and state‑delta verification for window ops.
 
 ### **Immediate Action Items (Next Things To Do)**
 
