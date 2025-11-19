@@ -1671,30 +1671,32 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
             throw RPCError(code: .notFound, message: "Failed to create event stream")
         }
 
-        return StreamingServerResponse { writer in
-            // CRITICAL FIX: Launch detached task but DON'T await it - let it run independently
-            // The closure must return immediately to free the gRPC executor
-            _ = Task.detached {
-                // Stream events to client
-                for await event in eventStream {
-                    // Check if client disconnected
-                    if Task.isCancelled {
-                        fputs(
-                            "info: [MacosUseServiceProvider] client disconnected from observation stream\n", stderr,
-                        )
-                        break
-                    }
+        return StreamingServerResponse { writer async in
+            // Stream events to client
+            // NOTE: The for-await-in loop will suspend and yield control, allowing the gRPC
+            // executor to handle this task cooperatively with others.
+            for await event in eventStream {
+                // Check if client disconnected
+                if Task.isCancelled {
+                    fputs(
+                        "info: [MacosUseServiceProvider] client disconnected from observation stream\n", stderr,
+                    )
+                    break
+                }
 
-                    // Send event to client
-                    let response = Macosusesdk_V1_StreamObservationsResponse.with {
-                        $0.event = event
-                    }
+                // Send event to client
+                let response = Macosusesdk_V1_StreamObservationsResponse.with {
+                    $0.event = event
+                }
 
-                    try? await writer.write(response)
+                do {
+                    try await writer.write(response)
+                } catch {
+                    break
                 }
             }
 
-            // Return trailing metadata immediately - streaming continues in background
+            // Return trailing metadata after stream completes
             return [:]
         }
     }

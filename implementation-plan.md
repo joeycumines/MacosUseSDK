@@ -18,19 +18,20 @@
 
 ### **Current Reality (Single-Sentence Snapshot)**
 
-**Current Reality:** Window observation diffing is now **architecturally correct**: uses CGWindowList bounds (which update faster than AX) matched to AX windows for state. The single-window optimization bug in `findWindowElement` has been removed. The test has been fixed to select on-screen windows (Y < 400) and wait for baseline state before mutations. **However**, the observation test still fails with event timing issues - the baseline "created" event is published but not received by the test's event channel, suggesting a race condition in event delivery or stream setup. Data regression (zIndex/bundleID) is fixed.
+**Current Reality:** The window observation system has a critical identity logic flaw. Using tolerance-based bounds matching (50px) to correlate AX windows with CGWindowList entries causes identity loss during resize operations when the delta exceeds tolerance. This results in false `destroyed`/`created` event sequences instead of `resized` events, rendering the observation API functionally useless for tracking window mutations. Data regression (zIndex/bundleID) is fixed.
 
 ### **Immediate Action Items (Next Things To Do)**
 
-1. **Fix observation event stream timing (CRITICAL):**
-    - The baseline "created" event is being published but not received by the test's event channel during the PollUntil loop.
-    - Root cause: Possible race between stream setup, first poll, and event consumption. The observation monitoring loop publishes to continuations, but the test's goroutine reading from the stream may not have received the message yet.
-    - Solution: Either (a) add small delay after stream setup before expecting events, (b) make the test more lenient about which event types it accepts initially, or (c) investigate why Task.detached event publishing doesn't promptly deliver to gRPC stream.
-    - Acceptance: Test receives the baseline created event within PollUntil timeout.
+1. **Implement best-candidate matching for window identity (CRITICAL):**
+    - Replace the boolean tolerance check in `fetchAXWindows` with a distance-based scoring heuristic.
+    - For each AX window, calculate distance to all CGWindowList entries: `distance = abs(posX_delta) + abs(posY_delta) + abs(width_delta) + abs(height_delta)`.
+    - Select the candidate with minimum distance as the match.
+    - **Edge case:** If the app has exactly one AX window and one CGWindowList window, assume they match regardless of distance (handle API lag gracefully).
+    - Acceptance: A 400px resize no longer causes identity loss; the window retains its CGWindowID across polls.
 
 2. **Verify observation test passes (HIGH):**
-    - After fixing event timing, run `make test-observation-quick`.
-    - Acceptance: `TestWindowChangeObservation` passes, detecting created, resized, moved, minimized, restored, and destroyed events.
+    - After fixing matching logic, run `make test-observation-quick`.
+    - Acceptance: `TestWindowChangeObservation` passes, detecting a `RESIZED` event (not `DESTROYED`/`CREATED`) when the window is resized.
 
 2. **WindowRegistry Consistency (HIGH): Single shared cache across the server.**
     - Replace all temporary `WindowRegistry()` usages with a shared instance to maintain one coherent cache and avoid redundant CGWindowList scans.

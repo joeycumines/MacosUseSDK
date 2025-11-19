@@ -278,8 +278,6 @@ actor ObservationManager {
         var previousWindows: [AXWindowSnapshot] = []
         var sequence: Int64 = 0 // Track sequence locally instead of actor state
 
-        fputs("info: [ObservationManager] Starting monitoring loop for \(name) (type: \(type))\n", stderr)
-
         while !Task.isCancelled {
             // CRITICAL: Yield control to allow gRPC executor to dispatch other RPCs
             await Task.yield()
@@ -433,18 +431,40 @@ actor ObservationManager {
                     }
                 }
 
-                // Match AX window to CGWindowList entry by position + size (with tolerance)
-                // This is robust to timing issues where CGWindowList updates faster than AX
+                // CORRECTNESS FIX: Use best-candidate matching instead of boolean tolerance check.
+                // The tolerance approach caused identity loss during resize operations when
+                // the delta exceeded 50px, resulting in false destroyed/created events.
+                //
+                // New strategy: Calculate distance for all candidates, select minimum.
+                // Distance = abs(posX_delta) + abs(posY_delta) + abs(width_delta) + abs(height_delta)
+                //
+                // Edge case: If app has exactly 1 AX window and 1 CGWindowList window,
+                // assume they match regardless of distance (handle API lag gracefully).
+
                 var matchedWindow: (id: CGWindowID, bounds: CGRect)?
-                let tolerance: CGFloat = 50.0 // Allow up to 50px difference in any dimension
-                for cgWin in cgWindows {
-                    let posMatch = abs(bounds.origin.x - cgWin.bounds.origin.x) <= tolerance &&
-                        abs(bounds.origin.y - cgWin.bounds.origin.y) <= tolerance
-                    let sizeMatch = abs(bounds.size.width - cgWin.bounds.size.width) <= tolerance &&
-                        abs(bounds.size.height - cgWin.bounds.size.height) <= tolerance
-                    if posMatch, sizeMatch {
-                        matchedWindow = (id: cgWin.windowID, bounds: cgWin.bounds)
-                        break
+
+                if cgWindows.count == 1, windows.count == 1 {
+                    // Single-window edge case: assume match regardless of distance
+                    matchedWindow = (id: cgWindows[0].windowID, bounds: cgWindows[0].bounds)
+                } else if !cgWindows.isEmpty {
+                    // Multi-window case: select best candidate by minimum distance
+                    var bestCandidate: (id: CGWindowID, bounds: CGRect, distance: CGFloat)?
+
+                    for cgWin in cgWindows {
+                        let posXDelta = abs(bounds.origin.x - cgWin.bounds.origin.x)
+                        let posYDelta = abs(bounds.origin.y - cgWin.bounds.origin.y)
+                        let widthDelta = abs(bounds.size.width - cgWin.bounds.size.width)
+                        let heightDelta = abs(bounds.size.height - cgWin.bounds.size.height)
+
+                        let distance = posXDelta + posYDelta + widthDelta + heightDelta
+
+                        if bestCandidate == nil || distance < bestCandidate!.distance {
+                            bestCandidate = (id: cgWin.windowID, bounds: cgWin.bounds, distance: distance)
+                        }
+                    }
+
+                    if let best = bestCandidate {
+                        matchedWindow = (id: best.id, bounds: best.bounds)
                     }
                 }
 

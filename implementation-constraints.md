@@ -2,6 +2,8 @@
 
 ## Session Directives
 
+**CURRENT DIRECTIVE (2025-11-20):** Implement best-candidate matching for window identity in ObservationManager.fetchAXWindows to fix the observation test failure. The tolerance-based approach causes identity loss during resize operations. Replace with a distance-based scoring heuristic that selects the minimum-distance candidate and handles the single-window edge case.
+
 - Maintain an exhaustive TODO list via the mandated tool before any code or plan edits; include every task from `implementation-plan.md`, every known deficiency, all active constraints, and motivational reminders.
 - Never stop execution mid-task and do not ask clarifying questions; infer next actions from the plan and constraints, and continue iterating until the entire plan is complete.
 - All progress must be incremental yet substantial per iteration, with the TODO list continuously reflecting accurate status and next steps.
