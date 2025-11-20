@@ -12,7 +12,7 @@ This guide covers deploying the MacosUseServer in various environments.
 
 ### 1. Generate Proto Stubs
 
-```bash
+```sh
 make proto
 ```
 
@@ -23,7 +23,7 @@ This will:
 
 ### 2. Build and Run
 
-```bash
+```sh
 # Build the server
 make server-build
 
@@ -33,7 +33,7 @@ make server-run
 
 ### 3. Test with grpcurl
 
-```bash
+```sh
 # Install grpcurl
 brew install grpcurl
 
@@ -60,14 +60,14 @@ The server is configured via environment variables:
 
 Build a release binary:
 
-```bash
+```sh
 cd Server
 swift build -c release
 ```
 
 Run with custom configuration:
 
-```bash
+```sh
 export GRPC_LISTEN_ADDRESS="0.0.0.0"
 export GRPC_PORT="9090"
 .build/release/MacosUseServer
@@ -77,7 +77,7 @@ export GRPC_PORT="9090"
 
 Using a Unix socket provides better security for local-only access:
 
-```bash
+```sh
 export GRPC_UNIX_SOCKET="/var/run/macosuse.sock"
 .build/release/MacosUseServer
 ```
@@ -131,7 +131,7 @@ Create `/Library/LaunchDaemons/com.macosusesdk.server.plist`:
 
 Install and start:
 
-```bash
+```sh
 # Copy binary
 sudo cp Server/.build/release/MacosUseServer /usr/local/bin/
 
@@ -147,13 +147,13 @@ sudo launchctl list | grep macosusesdk
 ### 1. Network Access
 
 **Localhost Only (Recommended)**:
-```bash
+```sh
 export GRPC_LISTEN_ADDRESS="127.0.0.1"
 export GRPC_PORT="8080"
 ```
 
 **All Interfaces (Use with Caution)**:
-```bash
+```sh
 export GRPC_LISTEN_ADDRESS="0.0.0.0"
 export GRPC_PORT="8080"
 ```
@@ -198,7 +198,7 @@ Grant these permissions to the terminal or application running the server.
 
 Use grpcurl for health checks:
 
-```bash
+```sh
 grpcurl -plaintext localhost:8080 list
 ```
 
@@ -212,7 +212,7 @@ macosusesdk.v1.TargetApplicationsService
 
 The server logs to stderr. Redirect for persistent logs:
 
-```bash
+```sh
 MacosUseServer 2>&1 | tee /var/log/macosuse.log
 ```
 
@@ -251,7 +251,7 @@ Typical limits:
 ### Server Won't Start
 
 1. Check permissions:
-   ```bash
+   ```sh
    xattr -d com.apple.quarantine MacosUseServer
    ```
 
@@ -260,24 +260,24 @@ Typical limits:
    - Add Terminal or your application
 
 3. Check port availability:
-   ```bash
+   ```sh
    lsof -i :8080
    ```
 
 ### Client Connection Errors
 
 1. Verify server is running:
-   ```bash
+   ```sh
    grpcurl -plaintext localhost:8080 list
    ```
 
 2. Check firewall settings:
-   ```bash
+   ```sh
    sudo pfctl -s rules | grep 8080
    ```
 
 3. Verify network configuration:
-   ```bash
+   ```sh
    netstat -an | grep 8080
    ```
 
@@ -328,17 +328,17 @@ Future improvements:
 ### Updating the Server
 
 1. Build new version:
-   ```bash
+   ```sh
    make server-build
    ```
 
 2. Test in staging:
-   ```bash
+   ```sh
    GRPC_PORT=9090 make server-run
    ```
 
 3. Graceful shutdown:
-   ```bash
+   ```sh
    kill -TERM $(pgrep MacosUseServer)
    ```
 
@@ -348,7 +348,7 @@ Future improvements:
 
 Keep previous binary:
 
-```bash
+```sh
 cp .build/release/MacosUseServer MacosUseServer.backup
 # After update, if needed:
 cp MacosUseServer.backup .build/release/MacosUseServer
