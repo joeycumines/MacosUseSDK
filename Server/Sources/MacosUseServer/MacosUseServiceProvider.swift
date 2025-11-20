@@ -652,24 +652,28 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
                     code: .internalError, message: "Failed to minimize window: \(setResult.rawValue)",
                 )
             }
+        }
 
-            // CRITICAL: AX state propagation is async - poll until minimized=true
-            // This prevents race condition where we return stale state
-            let startTime = Date()
-            let timeout = 2.0 // 2 second timeout
-            while Date().timeIntervalSince(startTime) < timeout {
+        // CRITICAL: AX state propagation is async - poll until minimized=true
+        // This prevents race condition where we return stale state
+        let startTime = Date()
+        let timeout = 2.0 // 2 second timeout
+        while Date().timeIntervalSince(startTime) < timeout {
+            let isMinimized = await MainActor.run { () -> Bool in
                 var verifyValue: CFTypeRef?
                 if AXUIElementCopyAttributeValue(window, kAXMinimizedAttribute as CFString, &verifyValue) == .success,
-                   let isMinimized = verifyValue as? Bool
+                   let isMinimizedValue = verifyValue as? Bool
                 {
-                    if isMinimized {
-                        fputs("debug: [minimizeWindow] Verified minimized=true after \(Date().timeIntervalSince(startTime) * 1000)ms\n", stderr)
-                        break
-                    }
+                    return isMinimizedValue
                 }
-                // Small yield to allow AX system to propagate change
-                try? await Task.sleep(for: .milliseconds(10))
+                return false
             }
+            if isMinimized {
+                fputs("debug: [minimizeWindow] Verified minimized=true after \(Date().timeIntervalSince(startTime) * 1000)ms\n", stderr)
+                break
+            }
+            // Small yield to allow AX system to propagate change
+            try? await Task.sleep(for: .milliseconds(10))
         }
 
         // CRITICAL FIX: Refresh and fetch registry metadata BEFORE invalidation
@@ -713,24 +717,28 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
                     code: .internalError, message: "Failed to restore window: \(setResult.rawValue)",
                 )
             }
+        }
 
-            // CRITICAL: AX state propagation is async - poll until minimized=false
-            // This prevents race condition where we return stale state
-            let startTime = Date()
-            let timeout = 2.0 // 2 second timeout
-            while Date().timeIntervalSince(startTime) < timeout {
+        // CRITICAL: AX state propagation is async - poll until minimized=false
+        // This prevents race condition where we return stale state
+        let startTime = Date()
+        let timeout = 2.0 // 2 second timeout
+        while Date().timeIntervalSince(startTime) < timeout {
+            let isMinimized = await MainActor.run { () -> Bool in
                 var verifyValue: CFTypeRef?
                 if AXUIElementCopyAttributeValue(window, kAXMinimizedAttribute as CFString, &verifyValue) == .success,
-                   let isMinimized = verifyValue as? Bool
+                   let isMinimizedValue = verifyValue as? Bool
                 {
-                    if !isMinimized {
-                        fputs("debug: [restoreWindow] Verified minimized=false after \(Date().timeIntervalSince(startTime) * 1000)ms\n", stderr)
-                        break
-                    }
+                    return isMinimizedValue
                 }
-                // Small yield to allow AX system to propagate change
-                try? await Task.sleep(for: .milliseconds(10))
+                return false
             }
+            if !isMinimized {
+                fputs("debug: [restoreWindow] Verified minimized=false after \(Date().timeIntervalSince(startTime) * 1000)ms\n", stderr)
+                break
+            }
+            // Small yield to allow AX system to propagate change
+            try? await Task.sleep(for: .milliseconds(10))
         }
 
         // CRITICAL FIX: Refresh registry AFTER restore to get updated isOnScreen value

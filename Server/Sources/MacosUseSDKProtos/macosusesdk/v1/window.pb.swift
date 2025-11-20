@@ -37,9 +37,18 @@ public struct Macosusesdk_V1_Window: Sendable {
     public var name: String = .init()
 
     /// The title of the window.
+    ///
+    /// Data Source (AX Authority): Fresh Accessibility API query (kAXTitleAttribute).
+    /// This field is queried from AX on every request and reflects the immediate state.
+    /// It is NOT cached from CGWindowList, ensuring mutation responses return up-to-date values.
     public var title: String = .init()
 
     /// Bounding rectangle of the window.
+    ///
+    /// Data Source (AX Authority): Fresh Accessibility API queries (kAXPositionAttribute, kAXSizeAttribute).
+    /// These fields are queried from AX on every request and reflect the immediate state after mutations.
+    /// They are NOT cached from CGWindowList (which can lag by 10-100ms), ensuring mutation responses
+    /// (MoveWindow, ResizeWindow) return the exact requested values without polling delays.
     public var bounds: Macosusesdk_V1_Bounds {
         get { _bounds ?? Macosusesdk_V1_Bounds() }
         set { _bounds = newValue }
@@ -51,15 +60,36 @@ public struct Macosusesdk_V1_Window: Sendable {
     public mutating func clearBounds() { _bounds = nil }
 
     /// Z-order index (higher values are in front).
+    ///
+    /// Data Source (Registry Authority): Cached value from CGWindowList via WindowRegistry.
+    /// This is a stable metadata field that does not change during window mutations (move/resize).
+    /// Defaults to 0 if registry data is unavailable.
     public var zIndex: Int32 = 0
 
     /// Whether the window is currently visible on screen.
-    /// This is a cheap property derived from CGWindowList (isOnScreen).
-    /// For expensive AX-based visibility state, use GetWindowState.
+    ///
+    /// Data Source (Split-Brain Authority): Computed via the formula:
+    ///   visible = (Registry.isOnScreen OR Assumption) AND NOT AX.Minimized AND NOT AX.Hidden
+    ///
+    /// Where:
+    ///   - Registry.isOnScreen: Cached from CGWindowList (may be stale during async propagation)
+    ///   - Assumption: If registry data is missing but AX interaction succeeded, assume isOnScreen=true
+    ///   - AX.Minimized: Fresh query of kAXMinimizedAttribute (authoritative, no lag)
+    ///   - AX.Hidden: Fresh query of kAXHiddenAttribute (authoritative, no lag)
+    ///
+    /// This hybrid approach ensures:
+    ///   1. Mutation responses (Move/Resize) correctly report visible=true (not false due to stale CGWindowList)
+    ///   2. Minimize operations correctly report visible=false (fresh AX state overrides stale registry)
+    ///   3. Hidden state is accurately reflected without conflating minimized vs explicitly hidden
+    ///
+    /// For detailed AX state queries (minimized, ax_hidden, focused, modal, etc.), use GetWindowState.
     public var visible: Bool = false
 
     /// Bundle identifier of the application that owns this window.
-    /// Resolved via NSRunningApplication. Empty string if unavailable.
+    ///
+    /// Data Source (Registry Authority): Resolved via NSRunningApplication from cached CGWindowList metadata.
+    /// This is a stable metadata field that does not change during window mutations.
+    /// Empty string if NSRunningApplication resolution fails or registry data is unavailable.
     public var bundleID: String = .init()
 
     public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -104,33 +134,72 @@ public struct Macosusesdk_V1_WindowState: Sendable {
     public var name: String = .init()
 
     /// Whether the window can be resized.
+    ///
+    /// Data Source: AX query of AXSizeSettable attribute.
+    /// This is an expensive query that should only be fetched on-demand via GetWindowState.
     public var resizable: Bool = false
 
     /// Whether the window can be minimized.
+    ///
+    /// Data Source: AX query checking existence of AXMinimizeButton attribute.
+    /// This is an expensive query that should only be fetched on-demand via GetWindowState.
     public var minimizable: Bool = false
 
     /// Whether the window can be closed.
+    ///
+    /// Data Source: AX query checking existence of AXCloseButton attribute.
+    /// This is an expensive query that should only be fetched on-demand via GetWindowState.
     public var closable: Bool = false
 
     /// Whether the window is a modal dialog.
+    ///
+    /// Data Source: AX queries of kAXModalAttribute and kAXSubroleAttribute.
+    /// True if explicitly marked modal or subrole contains "Dialog" or "Sheet".
+    /// This is an expensive query that should only be fetched on-demand via GetWindowState.
     public var modal: Bool = false
 
     /// Whether the window is a floating window.
+    ///
+    /// Data Source: AX query of kAXSubroleAttribute.
+    /// True if subrole contains "Floating".
+    /// This is an expensive query that should only be fetched on-demand via GetWindowState.
     public var floating: Bool = false
 
-    /// Whether the window is hidden according to AX attributes.
-    /// This is an expensive AX query, distinct from Window.visible (cheap CGWindowList).
-    /// True means the window is explicitly hidden via Accessibility attributes.
+    /// Whether the window is explicitly hidden according to AX attributes.
+    ///
+    /// Data Source: Fresh AX query of kAXHiddenAttribute.
+    /// True means the window is explicitly hidden by the application (NOT minimized to dock).
+    /// This field is distinct from:
+    ///   - Window.visible (hybrid formula combining registry + AX state)
+    ///   - minimized (window is in dock, not explicitly hidden)
+    ///
+    /// Note: This field is ALSO queried in Window responses (as part of the visible formula),
+    /// but Window responses may use cached registry data for performance. GetWindowState
+    /// guarantees a fresh AX query.
     public var axHidden: Bool = false
 
-    /// Whether the window is minimized.
+    /// Whether the window is minimized (in the dock).
+    ///
+    /// Data Source: Fresh AX query of kAXMinimizedAttribute.
+    /// True means the window is minimized to the dock (NOT explicitly hidden).
+    ///
+    /// Note: This field is ALSO queried in Window responses (as part of the visible formula),
+    /// but clients requiring authoritative minimized state should use GetWindowState to ensure
+    /// the most up-to-date value, especially immediately after minimize/restore operations.
     public var minimized: Bool = false
 
-    /// Whether the window is focused.
+    /// Whether the window is focused (is the main window).
+    ///
+    /// Data Source: Fresh AX query of kAXMainAttribute.
+    /// True if this window is the application's main (focused) window.
+    /// This is an expensive query that should only be fetched on-demand via GetWindowState.
     public var focused: Bool = false
 
     /// Whether the window is in full-screen mode.
-    /// Optional: unset if the AX API does not provide a definitive answer.
+    ///
+    /// Data Source: Currently UNIMPLEMENTED (kAXFullscreenAttribute is not standard).
+    /// Optional: unset (nil) if the AX API does not provide a definitive answer.
+    /// Clients should check HasFullscreen() before accessing this field.
     public var fullscreen: Bool {
         get { _fullscreen ?? false }
         set { _fullscreen = newValue }

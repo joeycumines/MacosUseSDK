@@ -35,17 +35,48 @@ type Window struct {
 	// where {application} is the process ID and {window} is the window ID.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The title of the window.
+	//
+	// Data Source (AX Authority): Fresh Accessibility API query (kAXTitleAttribute).
+	// This field is queried from AX on every request and reflects the immediate state.
+	// It is NOT cached from CGWindowList, ensuring mutation responses return up-to-date values.
 	Title string `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
 	// Bounding rectangle of the window.
+	//
+	// Data Source (AX Authority): Fresh Accessibility API queries (kAXPositionAttribute, kAXSizeAttribute).
+	// These fields are queried from AX on every request and reflect the immediate state after mutations.
+	// They are NOT cached from CGWindowList (which can lag by 10-100ms), ensuring mutation responses
+	// (MoveWindow, ResizeWindow) return the exact requested values without polling delays.
 	Bounds *Bounds `protobuf:"bytes,3,opt,name=bounds,proto3" json:"bounds,omitempty"`
 	// Z-order index (higher values are in front).
+	//
+	// Data Source (Registry Authority): Cached value from CGWindowList via WindowRegistry.
+	// This is a stable metadata field that does not change during window mutations (move/resize).
+	// Defaults to 0 if registry data is unavailable.
 	ZIndex int32 `protobuf:"varint,4,opt,name=z_index,json=zIndex,proto3" json:"z_index,omitempty"`
 	// Whether the window is currently visible on screen.
-	// This is a cheap property derived from CGWindowList (isOnScreen).
-	// For expensive AX-based visibility state, use GetWindowState.
+	//
+	// Data Source (Split-Brain Authority): Computed via the formula:
+	//
+	//	visible = (Registry.isOnScreen OR Assumption) AND NOT AX.Minimized AND NOT AX.Hidden
+	//
+	// Where:
+	//   - Registry.isOnScreen: Cached from CGWindowList (may be stale during async propagation)
+	//   - Assumption: If registry data is missing but AX interaction succeeded, assume isOnScreen=true
+	//   - AX.Minimized: Fresh query of kAXMinimizedAttribute (authoritative, no lag)
+	//   - AX.Hidden: Fresh query of kAXHiddenAttribute (authoritative, no lag)
+	//
+	// This hybrid approach ensures:
+	//  1. Mutation responses (Move/Resize) correctly report visible=true (not false due to stale CGWindowList)
+	//  2. Minimize operations correctly report visible=false (fresh AX state overrides stale registry)
+	//  3. Hidden state is accurately reflected without conflating minimized vs explicitly hidden
+	//
+	// For detailed AX state queries (minimized, ax_hidden, focused, modal, etc.), use GetWindowState.
 	Visible bool `protobuf:"varint,5,opt,name=visible,proto3" json:"visible,omitempty"`
 	// Bundle identifier of the application that owns this window.
-	// Resolved via NSRunningApplication. Empty string if unavailable.
+	//
+	// Data Source (Registry Authority): Resolved via NSRunningApplication from cached CGWindowList metadata.
+	// This is a stable metadata field that does not change during window mutations.
+	// Empty string if NSRunningApplication resolution fails or registry data is unavailable.
 	BundleId      string `protobuf:"bytes,10,opt,name=bundle_id,json=bundleId,proto3" json:"bundle_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -204,25 +235,64 @@ type WindowState struct {
 	// Resource name in the format "applications/{application}/windows/{window}/state"
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// Whether the window can be resized.
+	//
+	// Data Source: AX query of AXSizeSettable attribute.
+	// This is an expensive query that should only be fetched on-demand via GetWindowState.
 	Resizable bool `protobuf:"varint,2,opt,name=resizable,proto3" json:"resizable,omitempty"`
 	// Whether the window can be minimized.
+	//
+	// Data Source: AX query checking existence of AXMinimizeButton attribute.
+	// This is an expensive query that should only be fetched on-demand via GetWindowState.
 	Minimizable bool `protobuf:"varint,3,opt,name=minimizable,proto3" json:"minimizable,omitempty"`
 	// Whether the window can be closed.
+	//
+	// Data Source: AX query checking existence of AXCloseButton attribute.
+	// This is an expensive query that should only be fetched on-demand via GetWindowState.
 	Closable bool `protobuf:"varint,4,opt,name=closable,proto3" json:"closable,omitempty"`
 	// Whether the window is a modal dialog.
+	//
+	// Data Source: AX queries of kAXModalAttribute and kAXSubroleAttribute.
+	// True if explicitly marked modal or subrole contains "Dialog" or "Sheet".
+	// This is an expensive query that should only be fetched on-demand via GetWindowState.
 	Modal bool `protobuf:"varint,5,opt,name=modal,proto3" json:"modal,omitempty"`
 	// Whether the window is a floating window.
+	//
+	// Data Source: AX query of kAXSubroleAttribute.
+	// True if subrole contains "Floating".
+	// This is an expensive query that should only be fetched on-demand via GetWindowState.
 	Floating bool `protobuf:"varint,6,opt,name=floating,proto3" json:"floating,omitempty"`
-	// Whether the window is hidden according to AX attributes.
-	// This is an expensive AX query, distinct from Window.visible (cheap CGWindowList).
-	// True means the window is explicitly hidden via Accessibility attributes.
+	// Whether the window is explicitly hidden according to AX attributes.
+	//
+	// Data Source: Fresh AX query of kAXHiddenAttribute.
+	// True means the window is explicitly hidden by the application (NOT minimized to dock).
+	// This field is distinct from:
+	//   - Window.visible (hybrid formula combining registry + AX state)
+	//   - minimized (window is in dock, not explicitly hidden)
+	//
+	// Note: This field is ALSO queried in Window responses (as part of the visible formula),
+	// but Window responses may use cached registry data for performance. GetWindowState
+	// guarantees a fresh AX query.
 	AxHidden bool `protobuf:"varint,7,opt,name=ax_hidden,json=axHidden,proto3" json:"ax_hidden,omitempty"`
-	// Whether the window is minimized.
+	// Whether the window is minimized (in the dock).
+	//
+	// Data Source: Fresh AX query of kAXMinimizedAttribute.
+	// True means the window is minimized to the dock (NOT explicitly hidden).
+	//
+	// Note: This field is ALSO queried in Window responses (as part of the visible formula),
+	// but clients requiring authoritative minimized state should use GetWindowState to ensure
+	// the most up-to-date value, especially immediately after minimize/restore operations.
 	Minimized bool `protobuf:"varint,8,opt,name=minimized,proto3" json:"minimized,omitempty"`
-	// Whether the window is focused.
+	// Whether the window is focused (is the main window).
+	//
+	// Data Source: Fresh AX query of kAXMainAttribute.
+	// True if this window is the application's main (focused) window.
+	// This is an expensive query that should only be fetched on-demand via GetWindowState.
 	Focused bool `protobuf:"varint,9,opt,name=focused,proto3" json:"focused,omitempty"`
 	// Whether the window is in full-screen mode.
-	// Optional: unset if the AX API does not provide a definitive answer.
+	//
+	// Data Source: Currently UNIMPLEMENTED (kAXFullscreenAttribute is not standard).
+	// Optional: unset (nil) if the AX API does not provide a definitive answer.
+	// Clients should check HasFullscreen() before accessing this field.
 	Fullscreen    *bool `protobuf:"varint,10,opt,name=fullscreen,proto3,oneof" json:"fullscreen,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

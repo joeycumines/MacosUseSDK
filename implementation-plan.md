@@ -18,16 +18,22 @@
 
 ### **Current Reality (Single-Sentence Snapshot)**
 
-**Current Reality:** All critical issues from code review addressed and verified; split-brain authority model correctly implemented with fresh AX state for bounds/title/minimized/hidden and stable registry metadata for bundleID/zIndex; visible field computed via correct formula; all List/Find RPCs have AIP-158 pagination; comprehensive unit and integration tests pass.
+**Current Reality:** All critical issues verified and documentation updated; split-brain authority model correctly implemented with fresh AX state for bounds/title/minimized/hidden and stable registry metadata for bundleID/zIndex; visible field computed via correct formula; proto documentation updated to accurately surface actual behavior for all Window fields; all List/Find RPCs have AIP-158 pagination; comprehensive unit and integration tests pass.
 
 ### **Immediate Action Items (Next Things To Do)**
 
-1. **COMPLETED: Critical window metadata fixes ✓**
-    - Fixed deterministic metadata destruction by refreshing registry and fetching metadata BEFORE invalidation.
-    - Fixed AX Authority violation by querying `kAXMinimizedAttribute` and `kAXHiddenAttribute` in `buildWindowResponseFromAX`.
-    - Fixed incorrect visible state by computing via split-brain formula: `visible = (Registry.isOnScreen OR Assumption) AND NOT AX.Minimized AND NOT AX.Hidden`.
-    - Added AX state polling to handle async propagation delays (minimize/restore operations verify state before returning).
-    - Created `window_metadata_test.go` integration test that verifies all window mutations preserve bundleID, zIndex, and visible fields.
+1. **COMPLETED: Critical window metadata fixes and documentation ✓**
+    - ✅ Verified: Metadata fetched BEFORE invalidation prevents nil registry bug
+    - ✅ Verified: `kAXMinimizedAttribute` and `kAXHiddenAttribute` queried per AX Authority
+    - ✅ Verified: `visible` computed via split-brain formula: `(Registry.isOnScreen OR Assumption) AND NOT AX.Minimized AND NOT AX.Hidden`
+    - ✅ Verified: AX state polling in minimize/restore prevents stale responses
+    - ✅ Verified: `window_metadata_test.go` validates bundleID, zIndex, and visible preservation
+    - ✅ **COMPLETED: Updated proto documentation** to clearly document data sources and authority model for all Window fields:
+        - `title`: AX Authority (fresh kAXTitleAttribute query)
+        - `bounds`: AX Authority (fresh kAXPositionAttribute/kAXSizeAttribute queries)
+        - `z_index`: Registry Authority (cached CGWindowList metadata)
+        - `bundle_id`: Registry Authority (cached NSRunningApplication resolution)
+        - `visible`: Split-Brain Authority (formula documented with rationale for each component)
 
 2. **COMPLETED: Small correctness/unification fixes ✓**
     - `parsePID(fromName:)` already unified via `ParsingHelpers` (both `MacosUseServiceProvider` and `MacroExecutor` use it).
