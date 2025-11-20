@@ -181,8 +181,6 @@ private class AccessibilityTraversalOperation {
       if !runningApp.isActive {
         // fputs("info: activating application '\(targetAppName)'...\n", stderr) // Optional start log
         runningApp.activate()
-        // Consider adding a small delay or a check loop if activation timing is critical
-        // Thread.sleep(forTimeInterval: 0.2)
         didActivate = true
       }
     }

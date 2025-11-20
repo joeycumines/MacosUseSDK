@@ -350,7 +350,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         // CRITICAL FIX: Try to get live AX data first to ensure bounds are fresh (fixes Resize test)
         // We swallow errors here to fall back to the registry if AX is unavailable
         if let axWindow = try? await findWindowElement(pid: pid, windowId: windowId) {
-            return try await buildWindowResponseFromAX(name: req.name, pid: pid, windowId: windowId, window: axWindow)
+            return try await buildWindowResponseFromAX(name: req.name, pid: pid, windowId: windowId, window: axWindow, registryInfo: nil)
         }
 
         // Fallback: Use WindowRegistry (CGWindowList) if AX fails
@@ -550,11 +550,15 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
             }
         }
 
+        // CRITICAL FIX: Refresh and fetch registry metadata BEFORE invalidation (nil registry bug fix)
+        try await windowRegistry.refreshWindows(forPID: pid)
+        let registryInfo = await windowRegistry.getLastKnownWindow(windowId)
+
         // Invalidate cache to ensure subsequent reads reflect the new position immediately
         await windowRegistry.invalidate(windowID: windowId)
 
         // Build response directly from AXUIElement (CGWindowList may be stale)
-        return try await buildWindowResponseFromAX(name: req.name, pid: pid, windowId: windowId, window: window)
+        return try await buildWindowResponseFromAX(name: req.name, pid: pid, windowId: windowId, window: window, registryInfo: registryInfo)
     }
 
     func resizeWindow(
@@ -608,15 +612,19 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
             }
         }
 
+        // CRITICAL FIX: Refresh and fetch registry metadata BEFORE invalidation (nil registry bug fix)
+        try await windowRegistry.refreshWindows(forPID: pid)
+        let registryInfo = await windowRegistry.getLastKnownWindow(windowId)
+
         // Invalidate cache to ensure subsequent reads reflect the new size immediately
         await windowRegistry.invalidate(windowID: windowId)
 
         // Build response directly from AXUIElement (CGWindowList may be stale)
-        return try await buildWindowResponseFromAX(name: req.name, pid: pid, windowId: windowId, window: window)
+        return try await buildWindowResponseFromAX(name: req.name, pid: pid, windowId: windowId, window: window, registryInfo: registryInfo)
     }
 
     func minimizeWindow(
-        request: ServerRequest<Macosusesdk_V1_MinimizeWindowRequest>, context: ServerContext,
+        request: ServerRequest<Macosusesdk_V1_MinimizeWindowRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
         let req = request.message
         fputs("info: [MacosUseServiceProvider] minimizeWindow called\n", stderr)
@@ -644,19 +652,39 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
                     code: .internalError, message: "Failed to minimize window: \(setResult.rawValue)",
                 )
             }
+
+            // CRITICAL: AX state propagation is async - poll until minimized=true
+            // This prevents race condition where we return stale state
+            let startTime = Date()
+            let timeout = 2.0 // 2 second timeout
+            while Date().timeIntervalSince(startTime) < timeout {
+                var verifyValue: CFTypeRef?
+                if AXUIElementCopyAttributeValue(window, kAXMinimizedAttribute as CFString, &verifyValue) == .success,
+                   let isMinimized = verifyValue as? Bool
+                {
+                    if isMinimized {
+                        fputs("debug: [minimizeWindow] Verified minimized=true after \(Date().timeIntervalSince(startTime) * 1000)ms\n", stderr)
+                        break
+                    }
+                }
+                // Small yield to allow AX system to propagate change
+                try? await Task.sleep(for: .milliseconds(10))
+            }
         }
+
+        // CRITICAL FIX: Refresh and fetch registry metadata BEFORE invalidation
+        try await windowRegistry.refreshWindows(forPID: pid)
+        let registryInfo = await windowRegistry.getLastKnownWindow(windowId)
 
         // Invalidate cache to ensure subsequent reads reflect the new minimized state immediately
         await windowRegistry.invalidate(windowID: windowId)
 
-        // Return updated window state
-        return try await getWindow(
-            request: ServerRequest(metadata: request.metadata, message: Macosusesdk_V1_GetWindowRequest.with { $0.name = req.name }), context: context,
-        )
+        // Build response directly from AXUIElement
+        return try await buildWindowResponseFromAX(name: req.name, pid: pid, windowId: windowId, window: window, registryInfo: registryInfo)
     }
 
     func restoreWindow(
-        request: ServerRequest<Macosusesdk_V1_RestoreWindowRequest>, context: ServerContext,
+        request: ServerRequest<Macosusesdk_V1_RestoreWindowRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
         let req = request.message
         fputs("info: [MacosUseServiceProvider] restoreWindow called\n", stderr)
@@ -685,15 +713,36 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
                     code: .internalError, message: "Failed to restore window: \(setResult.rawValue)",
                 )
             }
+
+            // CRITICAL: AX state propagation is async - poll until minimized=false
+            // This prevents race condition where we return stale state
+            let startTime = Date()
+            let timeout = 2.0 // 2 second timeout
+            while Date().timeIntervalSince(startTime) < timeout {
+                var verifyValue: CFTypeRef?
+                if AXUIElementCopyAttributeValue(window, kAXMinimizedAttribute as CFString, &verifyValue) == .success,
+                   let isMinimized = verifyValue as? Bool
+                {
+                    if !isMinimized {
+                        fputs("debug: [restoreWindow] Verified minimized=false after \(Date().timeIntervalSince(startTime) * 1000)ms\n", stderr)
+                        break
+                    }
+                }
+                // Small yield to allow AX system to propagate change
+                try? await Task.sleep(for: .milliseconds(10))
+            }
         }
+
+        // CRITICAL FIX: Refresh registry AFTER restore to get updated isOnScreen value
+        // (CGWindowList updates when window becomes visible again)
+        try await windowRegistry.refreshWindows(forPID: pid)
+        let registryInfo = await windowRegistry.getLastKnownWindow(windowId)
 
         // Invalidate cache to ensure subsequent reads reflect the restored state immediately
         await windowRegistry.invalidate(windowID: windowId)
 
-        // Return updated window state
-        return try await getWindow(
-            request: ServerRequest(metadata: request.metadata, message: Macosusesdk_V1_GetWindowRequest.with { $0.name = req.name }), context: context,
-        )
+        // Build response directly from AXUIElement (AFTER restore operation)
+        return try await buildWindowResponseFromAX(name: req.name, pid: pid, windowId: windowId, window: window, registryInfo: registryInfo)
     }
 
     func closeWindow(
@@ -2911,13 +2960,14 @@ private extension MacosUseServiceProvider {
     }
 
     /// Build a Window response directly from an AXUIElement using split-brain authority model.
-    /// AX authority (fresh): bounds, title. Registry authority (stable): z-index, bundleID, visible.
+    /// AX authority (fresh): bounds, title, minimized, hidden. Registry authority (stable): z-index, bundleID.
+    /// Visible is computed from split-brain sources: (Registry.isOnScreen OR Assumption) AND NOT AX.Minimized AND NOT AX.Hidden.
     /// This is used after window operations where CGWindowList may be stale.
     func buildWindowResponseFromAX(
-        name: String, pid _: pid_t, windowId: CGWindowID, window: AXUIElement,
+        name: String, pid _: pid_t, windowId: CGWindowID, window: AXUIElement, registryInfo: WindowRegistry.WindowInfo? = nil,
     ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
-        // 1. Get Fresh AX Data (MainActor) - The Authority for Geometry
-        let (axBounds, axTitle) = await MainActor.run { () -> (Macosusesdk_V1_Bounds, String) in
+        // 1. Get Fresh AX Data (MainActor) - The Authority for Geometry + State
+        let (axBounds, axTitle, axMinimized, axHidden) = await MainActor.run { () -> (Macosusesdk_V1_Bounds, String, Bool, Bool) in
             var posValue: CFTypeRef?
             var sizeValue: CFTypeRef?
 
@@ -2955,21 +3005,50 @@ private extension MacosUseServiceProvider {
                 title = str
             }
 
-            return (bounds, title)
+            // CRITICAL FIX: Query kAXMinimizedAttribute per AX Authority constraints
+            var minimized = false
+            var minimizedValue: CFTypeRef?
+            if AXUIElementCopyAttributeValue(window, kAXMinimizedAttribute as CFString, &minimizedValue) == .success,
+               let boolVal = minimizedValue as? Bool
+            {
+                minimized = boolVal
+            }
+
+            // CRITICAL FIX: Query kAXHiddenAttribute per AX Authority constraints
+            var hidden = false
+            var hiddenValue: CFTypeRef?
+            if AXUIElementCopyAttributeValue(window, kAXHiddenAttribute as CFString, &hiddenValue) == .success,
+               let boolVal = hiddenValue as? Bool
+            {
+                hidden = boolVal
+            }
+
+            return (bounds, title, minimized, hidden)
         }
 
         // 2. Get Metadata from Registry (No Refresh) - The Authority for Z-Index/Bundle
         // We explicitly avoid refreshWindows() to prevent 100ms lag injection
-        let registryInfo = await windowRegistry.getLastKnownWindow(windowId)
+        // CRITICAL FIX: Use passed registryInfo if available (prevents nil after invalidation)
+        let metadata: WindowRegistry.WindowInfo? = if let registryInfo {
+            registryInfo
+        } else {
+            await windowRegistry.getLastKnownWindow(windowId)
+        }
 
-        // 3. Construct Response
+        // 3. CRITICAL FIX: Compute visible using fresh AX data per formula:
+        // visible = (Registry.isOnScreen OR Assumption) AND NOT AX.Minimized AND NOT AX.Hidden
+        // Assumption: if registryInfo is missing but AX interaction succeeded, assume onScreen=true
+        let isOnScreen = metadata?.isOnScreen ?? true
+        let visible = isOnScreen && !axMinimized && !axHidden
+
+        // 4. Construct Response
         let response = Macosusesdk_V1_Window.with {
             $0.name = name
             $0.title = axTitle // AX Authority
             $0.bounds = axBounds // AX Authority
-            $0.zIndex = Int32(registryInfo?.layer ?? 0) // Registry Authority
-            $0.bundleID = registryInfo?.bundleID ?? "" // Registry Authority
-            $0.visible = registryInfo?.isOnScreen ?? false // Registry Authority (defined as CG property)
+            $0.zIndex = Int32(metadata?.layer ?? 0) // Registry Authority
+            $0.bundleID = metadata?.bundleID ?? "" // Registry Authority
+            $0.visible = visible // Split-brain: Registry.isOnScreen AND NOT AX.Minimized AND NOT AX.Hidden
         }
 
         return ServerResponse(message: response)

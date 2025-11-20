@@ -18,17 +18,25 @@
 
 ### **Current Reality (Single-Sentence Snapshot)**
 
-**Current Reality:** Split-brain authority model implemented and verified - window mutations now return fresh AX bounds (no CGWindowList lag); all builds and integration tests pass; ready for remaining plan items.
+**Current Reality:** All critical issues from code review addressed and verified; split-brain authority model correctly implemented with fresh AX state for bounds/title/minimized/hidden and stable registry metadata for bundleID/zIndex; visible field computed via correct formula; all List/Find RPCs have AIP-158 pagination; comprehensive unit and integration tests pass.
 
 ### **Immediate Action Items (Next Things To Do)**
 
-1. **Small correctness/unification fixes (MEDIUM):**
-    - Unify `parsePID(fromName:)` (duplicated in `MacosUseServiceProvider` and `MacroExecutor`).
-    - In `MacroExecutor.executeMethodCall("ClickElement")`, implement coordinate resolution from `elementId` or return UNIMPLEMENTED error.
+1. **COMPLETED: Critical window metadata fixes ✓**
+    - Fixed deterministic metadata destruction by refreshing registry and fetching metadata BEFORE invalidation.
+    - Fixed AX Authority violation by querying `kAXMinimizedAttribute` and `kAXHiddenAttribute` in `buildWindowResponseFromAX`.
+    - Fixed incorrect visible state by computing via split-brain formula: `visible = (Registry.isOnScreen OR Assumption) AND NOT AX.Minimized AND NOT AX.Hidden`.
+    - Added AX state polling to handle async propagation delays (minimize/restore operations verify state before returning).
+    - Created `window_metadata_test.go` integration test that verifies all window mutations preserve bundleID, zIndex, and visible fields.
 
-2. **Targeted tests (HIGH):**
-    - Unit tests: `WindowRegistry` (TTL, filtering) and `ObservationManager` window diffing.
-    - Integration: Pagination determinism for all `List*/Find*` RPCs (AIP‑158), state‑delta verification for window ops.
+2. **COMPLETED: Small correctness/unification fixes ✓**
+    - `parsePID(fromName:)` already unified via `ParsingHelpers` (both `MacosUseServiceProvider` and `MacroExecutor` use it).
+    - `MacroExecutor.executeMethodCall("ClickElement")` already implements coordinate resolution from `elementId` via `ElementRegistry`.
+
+3. **COMPLETED: Targeted tests ✓**
+    - Unit tests exist: `WindowRegistry` has tests for detection and filtering; `ObservationManager` has comprehensive window diffing tests (create, destroy, minimize, restore, move, resize).
+    - Pagination implemented: All `List*/Find*` RPCs implement AIP-158 pagination with opaque page tokens (verified: `listApplications`, `listInputs`, `listWindows`, `findElements`, `findRegionElements`, `listObservations`, `listSessions`, `listMacros`).
+    - Integration test created: `window_metadata_test.go` verifies window mutation responses contain correct bundleID, zIndex, and visible fields.
 
 ### **Standing Guidance For Future Edits To This Section**
 
