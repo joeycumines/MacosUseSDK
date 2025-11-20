@@ -1039,26 +1039,6 @@ public struct Macosusesdk_V1_StateCondition: Sendable {
     public init() {}
 }
 
-/// Attribute condition for waiting.
-public struct Macosusesdk_V1_AttributeCondition: Sendable {
-    // SwiftProtobuf.Message conformance is added in an extension below. See the
-    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-    // methods supported on all messages.
-
-    /// Resource name.
-    public var name: String = .init()
-
-    /// Attribute name.
-    public var attribute: String = .init()
-
-    /// Expected attribute value.
-    public var value: String = .init()
-
-    public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-    public init() {}
-}
-
 /// Response from waiting for element state.
 public struct Macosusesdk_V1_WaitElementStateResponse: Sendable {
     // SwiftProtobuf.Message conformance is added in an extension below. See the
@@ -1141,6 +1121,21 @@ public struct Macosusesdk_V1_ListWindowsRequest: Sendable {
     /// This token is opaque and its structure must not be relied upon by clients.
     /// Only its presence or absence should be used to determine pagination state.
     public var pageToken: String = .init()
+
+    public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+    public init() {}
+}
+
+/// Request to get the state of a window.
+public struct Macosusesdk_V1_GetWindowStateRequest: Sendable {
+    // SwiftProtobuf.Message conformance is added in an extension below. See the
+    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+    // methods supported on all messages.
+
+    /// The name of the window state resource to retrieve.
+    /// Format: applications/{application}/windows/{window}/state
+    public var name: String = .init()
 
     public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -1746,48 +1741,6 @@ public struct Macosusesdk_V1_ExecuteMacroResponse: Sendable {
     public init() {}
 
     fileprivate var _executionDuration: SwiftProtobuf.Google_Protobuf_Duration?
-}
-
-/// Log entry for macro execution.
-public struct Macosusesdk_V1_ExecutionLogEntry: Sendable {
-    // SwiftProtobuf.Message conformance is added in an extension below. See the
-    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-    // methods supported on all messages.
-
-    /// Resource name.
-    public var name: String = .init()
-
-    /// When the action executed.
-    public var executionTime: SwiftProtobuf.Google_Protobuf_Timestamp {
-        get { _executionTime ?? SwiftProtobuf.Google_Protobuf_Timestamp() }
-        set { _executionTime = newValue }
-    }
-
-    /// Returns true if `executionTime` has been explicitly set.
-    public var hasExecutionTime: Bool { _executionTime != nil }
-    /// Clears the value of `executionTime`. Subsequent reads from it will return its default value.
-    public mutating func clearExecutionTime() { _executionTime = nil }
-
-    /// Action index in macro.
-    public var actionIndex: Int32 = 0
-
-    /// Action description.
-    public var description_p: String = .init()
-
-    /// Whether action succeeded.
-    public var success: Bool = false
-
-    /// Error message if failed.
-    public var error: String = .init()
-
-    /// Duration in seconds.
-    public var duration: Double = 0
-
-    public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-    public init() {}
-
-    fileprivate var _executionTime: SwiftProtobuf.Google_Protobuf_Timestamp?
 }
 
 /// Metadata for ExecuteMacro operation.
@@ -4374,46 +4327,6 @@ extension Macosusesdk_V1_StateCondition: SwiftProtobuf.Message, SwiftProtobuf._M
     }
 }
 
-extension Macosusesdk_V1_AttributeCondition: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-    public static let protoMessageName: String = _protobuf_package + ".AttributeCondition"
-    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}attribute\0\u{1}value\0")
-
-    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
-        while let fieldNumber = try decoder.nextFieldNumber() {
-            // The use of inline closures is to circumvent an issue where the compiler
-            // allocates stack space for every case branch when no optimizations are
-            // enabled. https://github.com/apple/swift-protobuf/issues/1034
-            switch fieldNumber {
-            case 1: try decoder.decodeSingularStringField(value: &name)
-            case 2: try decoder.decodeSingularStringField(value: &attribute)
-            case 3: try decoder.decodeSingularStringField(value: &value)
-            default: break
-            }
-        }
-    }
-
-    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
-        if !name.isEmpty {
-            try visitor.visitSingularStringField(value: name, fieldNumber: 1)
-        }
-        if !attribute.isEmpty {
-            try visitor.visitSingularStringField(value: attribute, fieldNumber: 2)
-        }
-        if !value.isEmpty {
-            try visitor.visitSingularStringField(value: value, fieldNumber: 3)
-        }
-        try unknownFields.traverse(visitor: &visitor)
-    }
-
-    public static func == (lhs: Macosusesdk_V1_AttributeCondition, rhs: Macosusesdk_V1_AttributeCondition) -> Bool {
-        if lhs.name != rhs.name { return false }
-        if lhs.attribute != rhs.attribute { return false }
-        if lhs.value != rhs.value { return false }
-        if lhs.unknownFields != rhs.unknownFields { return false }
-        return true
-    }
-}
-
 extension Macosusesdk_V1_WaitElementStateResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
     public static let protoMessageName: String = _protobuf_package + ".WaitElementStateResponse"
     public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}element\0")
@@ -4552,6 +4465,36 @@ extension Macosusesdk_V1_ListWindowsRequest: SwiftProtobuf.Message, SwiftProtobu
         if lhs.parent != rhs.parent { return false }
         if lhs.pageSize != rhs.pageSize { return false }
         if lhs.pageToken != rhs.pageToken { return false }
+        if lhs.unknownFields != rhs.unknownFields { return false }
+        return true
+    }
+}
+
+extension Macosusesdk_V1_GetWindowStateRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+    public static let protoMessageName: String = _protobuf_package + ".GetWindowStateRequest"
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
+
+    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
+        while let fieldNumber = try decoder.nextFieldNumber() {
+            // The use of inline closures is to circumvent an issue where the compiler
+            // allocates stack space for every case branch when no optimizations are
+            // enabled. https://github.com/apple/swift-protobuf/issues/1034
+            switch fieldNumber {
+            case 1: try decoder.decodeSingularStringField(value: &name)
+            default: break
+            }
+        }
+    }
+
+    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
+        if !name.isEmpty {
+            try visitor.visitSingularStringField(value: name, fieldNumber: 1)
+        }
+        try unknownFields.traverse(visitor: &visitor)
+    }
+
+    public static func == (lhs: Macosusesdk_V1_GetWindowStateRequest, rhs: Macosusesdk_V1_GetWindowStateRequest) -> Bool {
+        if lhs.name != rhs.name { return false }
         if lhs.unknownFields != rhs.unknownFields { return false }
         return true
     }
@@ -5635,70 +5578,6 @@ extension Macosusesdk_V1_ExecuteMacroResponse: SwiftProtobuf.Message, SwiftProto
         if lhs._executionDuration != rhs._executionDuration { return false }
         if lhs.error != rhs.error { return false }
         if lhs.log != rhs.log { return false }
-        if lhs.unknownFields != rhs.unknownFields { return false }
-        return true
-    }
-}
-
-extension Macosusesdk_V1_ExecutionLogEntry: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-    public static let protoMessageName: String = _protobuf_package + ".ExecutionLogEntry"
-    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}execution_time\0\u{3}action_index\0\u{1}description\0\u{1}success\0\u{1}error\0\u{1}duration\0")
-
-    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
-        while let fieldNumber = try decoder.nextFieldNumber() {
-            // The use of inline closures is to circumvent an issue where the compiler
-            // allocates stack space for every case branch when no optimizations are
-            // enabled. https://github.com/apple/swift-protobuf/issues/1034
-            switch fieldNumber {
-            case 1: try decoder.decodeSingularStringField(value: &name)
-            case 2: try decoder.decodeSingularMessageField(value: &_executionTime)
-            case 3: try decoder.decodeSingularInt32Field(value: &actionIndex)
-            case 4: try decoder.decodeSingularStringField(value: &description_p)
-            case 5: try decoder.decodeSingularBoolField(value: &success)
-            case 6: try decoder.decodeSingularStringField(value: &error)
-            case 7: try decoder.decodeSingularDoubleField(value: &duration)
-            default: break
-            }
-        }
-    }
-
-    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
-        // The use of inline closures is to circumvent an issue where the compiler
-        // allocates stack space for every if/case branch local when no optimizations
-        // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-        // https://github.com/apple/swift-protobuf/issues/1182
-        if !name.isEmpty {
-            try visitor.visitSingularStringField(value: name, fieldNumber: 1)
-        }
-        try { if let v = self._executionTime {
-            try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
-        } }()
-        if actionIndex != 0 {
-            try visitor.visitSingularInt32Field(value: actionIndex, fieldNumber: 3)
-        }
-        if !description_p.isEmpty {
-            try visitor.visitSingularStringField(value: description_p, fieldNumber: 4)
-        }
-        if success != false {
-            try visitor.visitSingularBoolField(value: success, fieldNumber: 5)
-        }
-        if !error.isEmpty {
-            try visitor.visitSingularStringField(value: error, fieldNumber: 6)
-        }
-        if duration.bitPattern != 0 {
-            try visitor.visitSingularDoubleField(value: duration, fieldNumber: 7)
-        }
-        try unknownFields.traverse(visitor: &visitor)
-    }
-
-    public static func == (lhs: Macosusesdk_V1_ExecutionLogEntry, rhs: Macosusesdk_V1_ExecutionLogEntry) -> Bool {
-        if lhs.name != rhs.name { return false }
-        if lhs._executionTime != rhs._executionTime { return false }
-        if lhs.actionIndex != rhs.actionIndex { return false }
-        if lhs.description_p != rhs.description_p { return false }
-        if lhs.success != rhs.success { return false }
-        if lhs.error != rhs.error { return false }
-        if lhs.duration != rhs.duration { return false }
         if lhs.unknownFields != rhs.unknownFields { return false }
         return true
     }

@@ -217,21 +217,6 @@ public struct Macosusesdk_V1_WindowState: Sendable {
     fileprivate var _fullscreen: Bool?
 }
 
-/// Request to get the state of a window.
-public struct Macosusesdk_V1_GetWindowStateRequest: Sendable {
-    // SwiftProtobuf.Message conformance is added in an extension below. See the
-    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-    // methods supported on all messages.
-
-    /// The name of the window state resource to retrieve.
-    /// Format: applications/{application}/windows/{window}/state
-    public var name: String = .init()
-
-    public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-    public init() {}
-}
-
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
 private let _protobuf_package = "macosusesdk.v1"
@@ -414,36 +399,6 @@ extension Macosusesdk_V1_WindowState: SwiftProtobuf.Message, SwiftProtobuf._Mess
         if lhs.minimized != rhs.minimized { return false }
         if lhs.focused != rhs.focused { return false }
         if lhs._fullscreen != rhs._fullscreen { return false }
-        if lhs.unknownFields != rhs.unknownFields { return false }
-        return true
-    }
-}
-
-extension Macosusesdk_V1_GetWindowStateRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-    public static let protoMessageName: String = _protobuf_package + ".GetWindowStateRequest"
-    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
-
-    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
-        while let fieldNumber = try decoder.nextFieldNumber() {
-            // The use of inline closures is to circumvent an issue where the compiler
-            // allocates stack space for every case branch when no optimizations are
-            // enabled. https://github.com/apple/swift-protobuf/issues/1034
-            switch fieldNumber {
-            case 1: try decoder.decodeSingularStringField(value: &name)
-            default: break
-            }
-        }
-    }
-
-    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
-        if !name.isEmpty {
-            try visitor.visitSingularStringField(value: name, fieldNumber: 1)
-        }
-        try unknownFields.traverse(visitor: &visitor)
-    }
-
-    public static func == (lhs: Macosusesdk_V1_GetWindowStateRequest, rhs: Macosusesdk_V1_GetWindowStateRequest) -> Bool {
-        if lhs.name != rhs.name { return false }
         if lhs.unknownFields != rhs.unknownFields { return false }
         return true
     }

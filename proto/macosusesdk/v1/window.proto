@@ -176,13 +176,3 @@ message WindowState {
   // Clients should check HasFullscreen() before accessing this field.
   optional bool fullscreen = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
-
-// Request to get the state of a window.
-message GetWindowStateRequest {
-  // The name of the window state resource to retrieve.
-  // Format: applications/{application}/windows/{window}/state
-  string name = 1 [
-    (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/WindowState"}
-  ];
-}

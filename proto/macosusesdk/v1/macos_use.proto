@@ -20,6 +20,7 @@ import "macosusesdk/type/geometry.proto";
 import "macosusesdk/type/selector.proto";
 import "macosusesdk/v1/application.proto";
 import "macosusesdk/v1/clipboard.proto";
+import "macosusesdk/v1/condition.proto";
 import "macosusesdk/v1/input.proto";
 import "macosusesdk/v1/macro.proto";
 import "macosusesdk/v1/observation.proto";
@@ -1064,25 +1065,6 @@ message StateCondition {
   }
 }
 
-// Attribute condition for waiting.
-message AttributeCondition {
-  option (google.api.resource) = {
-    type: "macosusesdk.localhost/AttributeCondition"
-    pattern: "attributeConditions/{attribute_condition}"
-    singular: "attributeCondition"
-    plural: "attributeConditions"
-  };
-
-  // Resource name.
-  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
-
-  // Attribute name.
-  string attribute = 2 [(google.api.field_behavior) = REQUIRED];
-
-  // Expected attribute value.
-  string value = 3 [(google.api.field_behavior) = REQUIRED];
-}
-
 // Response from waiting for element state.
 message WaitElementStateResponse {
   // The element in the expected state.
@@ -1123,6 +1105,16 @@ message ListWindowsRequest {
   // This token is opaque and its structure must not be relied upon by clients.
   // Only its presence or absence should be used to determine pagination state.
   string page_token = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request to get the state of a window.
+message GetWindowStateRequest {
+  // The name of the window state resource to retrieve.
+  // Format: applications/{application}/windows/{window}/state
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/WindowState"}
+  ];
 }
 
 // Response from listing windows.
@@ -1456,37 +1448,6 @@ message ExecuteMacroResponse {
 
   // Execution log (if recording was enabled).
   repeated ExecutionLogEntry log = 5;
-}
-
-// Log entry for macro execution.
-message ExecutionLogEntry {
-  option (google.api.resource) = {
-    type: "macosusesdk.localhost/ExecutionLogEntry"
-    pattern: "macros/{macro}/executions/{execution}/logEntries/{log_entry}"
-    singular: "executionLogEntry"
-    plural: "executionLogEntries"
-  };
-
-  // Resource name.
-  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
-
-  // When the action executed.
-  google.protobuf.Timestamp execution_time = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
-
-  // Action index in macro.
-  int32 action_index = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
-
-  // Action description.
-  string description = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
-
-  // Whether action succeeded.
-  bool success = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
-
-  // Error message if failed.
-  string error = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
-
-  // Duration in seconds.
-  double duration = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Metadata for ExecuteMacro operation.

@@ -81,7 +81,7 @@ func (x CompoundCondition_Operator) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use CompoundCondition_Operator.Descriptor instead.
 func (CompoundCondition_Operator) EnumDescriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{7, 0}
+	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{8, 0}
 }
 
 // Parameter type enumeration.
@@ -146,7 +146,7 @@ func (x MacroParameter_ParameterType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use MacroParameter_ParameterType.Descriptor instead.
 func (MacroParameter_ParameterType) EnumDescriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{13, 0}
+	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{14, 0}
 }
 
 // A resource representing a recorded sequence of actions.
@@ -269,6 +269,106 @@ func (x *Macro) GetTags() []string {
 	return nil
 }
 
+// Log entry for macro execution.
+type ExecutionLogEntry struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Resource name.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// When the action executed.
+	ExecutionTime *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=execution_time,json=executionTime,proto3" json:"execution_time,omitempty"`
+	// Action index in macro.
+	ActionIndex int32 `protobuf:"varint,3,opt,name=action_index,json=actionIndex,proto3" json:"action_index,omitempty"`
+	// Action description.
+	Description string `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
+	// Whether action succeeded.
+	Success bool `protobuf:"varint,5,opt,name=success,proto3" json:"success,omitempty"`
+	// Error message if failed.
+	Error string `protobuf:"bytes,6,opt,name=error,proto3" json:"error,omitempty"`
+	// Duration in seconds.
+	Duration      float64 `protobuf:"fixed64,7,opt,name=duration,proto3" json:"duration,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExecutionLogEntry) Reset() {
+	*x = ExecutionLogEntry{}
+	mi := &file_macosusesdk_v1_macro_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExecutionLogEntry) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExecutionLogEntry) ProtoMessage() {}
+
+func (x *ExecutionLogEntry) ProtoReflect() protoreflect.Message {
+	mi := &file_macosusesdk_v1_macro_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExecutionLogEntry.ProtoReflect.Descriptor instead.
+func (*ExecutionLogEntry) Descriptor() ([]byte, []int) {
+	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ExecutionLogEntry) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ExecutionLogEntry) GetExecutionTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExecutionTime
+	}
+	return nil
+}
+
+func (x *ExecutionLogEntry) GetActionIndex() int32 {
+	if x != nil {
+		return x.ActionIndex
+	}
+	return 0
+}
+
+func (x *ExecutionLogEntry) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *ExecutionLogEntry) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *ExecutionLogEntry) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+func (x *ExecutionLogEntry) GetDuration() float64 {
+	if x != nil {
+		return x.Duration
+	}
+	return 0
+}
+
 // A single action within a macro.
 type MacroAction struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -291,7 +391,7 @@ type MacroAction struct {
 
 func (x *MacroAction) Reset() {
 	*x = MacroAction{}
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[1]
+	mi := &file_macosusesdk_v1_macro_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -303,7 +403,7 @@ func (x *MacroAction) String() string {
 func (*MacroAction) ProtoMessage() {}
 
 func (x *MacroAction) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[1]
+	mi := &file_macosusesdk_v1_macro_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -316,7 +416,7 @@ func (x *MacroAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MacroAction.ProtoReflect.Descriptor instead.
 func (*MacroAction) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{1}
+	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *MacroAction) GetAction() isMacroAction_Action {
@@ -446,7 +546,7 @@ type WaitAction struct {
 
 func (x *WaitAction) Reset() {
 	*x = WaitAction{}
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[2]
+	mi := &file_macosusesdk_v1_macro_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -458,7 +558,7 @@ func (x *WaitAction) String() string {
 func (*WaitAction) ProtoMessage() {}
 
 func (x *WaitAction) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[2]
+	mi := &file_macosusesdk_v1_macro_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -471,7 +571,7 @@ func (x *WaitAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WaitAction.ProtoReflect.Descriptor instead.
 func (*WaitAction) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{2}
+	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *WaitAction) GetDuration() float64 {
@@ -507,7 +607,7 @@ type WaitCondition struct {
 
 func (x *WaitCondition) Reset() {
 	*x = WaitCondition{}
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[3]
+	mi := &file_macosusesdk_v1_macro_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -519,7 +619,7 @@ func (x *WaitCondition) String() string {
 func (*WaitCondition) ProtoMessage() {}
 
 func (x *WaitCondition) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[3]
+	mi := &file_macosusesdk_v1_macro_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -532,7 +632,7 @@ func (x *WaitCondition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WaitCondition.ProtoReflect.Descriptor instead.
 func (*WaitCondition) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{3}
+	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *WaitCondition) GetCondition() isWaitCondition_Condition {
@@ -616,7 +716,7 @@ type ConditionalAction struct {
 
 func (x *ConditionalAction) Reset() {
 	*x = ConditionalAction{}
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[4]
+	mi := &file_macosusesdk_v1_macro_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -628,7 +728,7 @@ func (x *ConditionalAction) String() string {
 func (*ConditionalAction) ProtoMessage() {}
 
 func (x *ConditionalAction) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[4]
+	mi := &file_macosusesdk_v1_macro_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -641,7 +741,7 @@ func (x *ConditionalAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConditionalAction.ProtoReflect.Descriptor instead.
 func (*ConditionalAction) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{4}
+	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ConditionalAction) GetCondition() *MacroCondition {
@@ -684,7 +784,7 @@ type MacroCondition struct {
 
 func (x *MacroCondition) Reset() {
 	*x = MacroCondition{}
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[5]
+	mi := &file_macosusesdk_v1_macro_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -696,7 +796,7 @@ func (x *MacroCondition) String() string {
 func (*MacroCondition) ProtoMessage() {}
 
 func (x *MacroCondition) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[5]
+	mi := &file_macosusesdk_v1_macro_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -709,7 +809,7 @@ func (x *MacroCondition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MacroCondition.ProtoReflect.Descriptor instead.
 func (*MacroCondition) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{5}
+	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *MacroCondition) GetCondition() isMacroCondition_Condition {
@@ -816,7 +916,7 @@ type VariableCondition struct {
 
 func (x *VariableCondition) Reset() {
 	*x = VariableCondition{}
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[6]
+	mi := &file_macosusesdk_v1_macro_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -828,7 +928,7 @@ func (x *VariableCondition) String() string {
 func (*VariableCondition) ProtoMessage() {}
 
 func (x *VariableCondition) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[6]
+	mi := &file_macosusesdk_v1_macro_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -841,7 +941,7 @@ func (x *VariableCondition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VariableCondition.ProtoReflect.Descriptor instead.
 func (*VariableCondition) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{6}
+	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *VariableCondition) GetVariable() string {
@@ -871,7 +971,7 @@ type CompoundCondition struct {
 
 func (x *CompoundCondition) Reset() {
 	*x = CompoundCondition{}
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[7]
+	mi := &file_macosusesdk_v1_macro_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -883,7 +983,7 @@ func (x *CompoundCondition) String() string {
 func (*CompoundCondition) ProtoMessage() {}
 
 func (x *CompoundCondition) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[7]
+	mi := &file_macosusesdk_v1_macro_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -896,7 +996,7 @@ func (x *CompoundCondition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CompoundCondition.ProtoReflect.Descriptor instead.
 func (*CompoundCondition) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{7}
+	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *CompoundCondition) GetOperator() CompoundCondition_Operator {
@@ -932,7 +1032,7 @@ type LoopAction struct {
 
 func (x *LoopAction) Reset() {
 	*x = LoopAction{}
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[8]
+	mi := &file_macosusesdk_v1_macro_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -944,7 +1044,7 @@ func (x *LoopAction) String() string {
 func (*LoopAction) ProtoMessage() {}
 
 func (x *LoopAction) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[8]
+	mi := &file_macosusesdk_v1_macro_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -957,7 +1057,7 @@ func (x *LoopAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LoopAction.ProtoReflect.Descriptor instead.
 func (*LoopAction) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{8}
+	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *LoopAction) GetLoopType() isLoopAction_LoopType {
@@ -1045,7 +1145,7 @@ type ForEachLoop struct {
 
 func (x *ForEachLoop) Reset() {
 	*x = ForEachLoop{}
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[9]
+	mi := &file_macosusesdk_v1_macro_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1057,7 +1157,7 @@ func (x *ForEachLoop) String() string {
 func (*ForEachLoop) ProtoMessage() {}
 
 func (x *ForEachLoop) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[9]
+	mi := &file_macosusesdk_v1_macro_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1070,7 +1170,7 @@ func (x *ForEachLoop) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ForEachLoop.ProtoReflect.Descriptor instead.
 func (*ForEachLoop) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{9}
+	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ForEachLoop) GetCollection() isForEachLoop_Collection {
@@ -1159,7 +1259,7 @@ type AssignAction struct {
 
 func (x *AssignAction) Reset() {
 	*x = AssignAction{}
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[10]
+	mi := &file_macosusesdk_v1_macro_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1171,7 +1271,7 @@ func (x *AssignAction) String() string {
 func (*AssignAction) ProtoMessage() {}
 
 func (x *AssignAction) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[10]
+	mi := &file_macosusesdk_v1_macro_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1184,7 +1284,7 @@ func (x *AssignAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AssignAction.ProtoReflect.Descriptor instead.
 func (*AssignAction) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{10}
+	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *AssignAction) GetVariable() string {
@@ -1282,7 +1382,7 @@ type ElementAttributeValue struct {
 
 func (x *ElementAttributeValue) Reset() {
 	*x = ElementAttributeValue{}
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[11]
+	mi := &file_macosusesdk_v1_macro_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1294,7 +1394,7 @@ func (x *ElementAttributeValue) String() string {
 func (*ElementAttributeValue) ProtoMessage() {}
 
 func (x *ElementAttributeValue) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[11]
+	mi := &file_macosusesdk_v1_macro_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1307,7 +1407,7 @@ func (x *ElementAttributeValue) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ElementAttributeValue.ProtoReflect.Descriptor instead.
 func (*ElementAttributeValue) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{11}
+	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ElementAttributeValue) GetElementSelector() string {
@@ -1337,7 +1437,7 @@ type MethodCall struct {
 
 func (x *MethodCall) Reset() {
 	*x = MethodCall{}
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[12]
+	mi := &file_macosusesdk_v1_macro_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1349,7 +1449,7 @@ func (x *MethodCall) String() string {
 func (*MethodCall) ProtoMessage() {}
 
 func (x *MethodCall) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[12]
+	mi := &file_macosusesdk_v1_macro_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1362,7 +1462,7 @@ func (x *MethodCall) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MethodCall.ProtoReflect.Descriptor instead.
 func (*MethodCall) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{12}
+	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *MethodCall) GetMethod() string {
@@ -1398,7 +1498,7 @@ type MacroParameter struct {
 
 func (x *MacroParameter) Reset() {
 	*x = MacroParameter{}
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[13]
+	mi := &file_macosusesdk_v1_macro_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1410,7 +1510,7 @@ func (x *MacroParameter) String() string {
 func (*MacroParameter) ProtoMessage() {}
 
 func (x *MacroParameter) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_macro_proto_msgTypes[13]
+	mi := &file_macosusesdk_v1_macro_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1423,7 +1523,7 @@ func (x *MacroParameter) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MacroParameter.ProtoReflect.Descriptor instead.
 func (*MacroParameter) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{13}
+	return file_macosusesdk_v1_macro_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *MacroParameter) GetKey() string {
@@ -1480,7 +1580,16 @@ const file_macosusesdk_v1_macro_proto_rawDesc = "" +
 	"updateTime\x12,\n" +
 	"\x0fexecution_count\x18\b \x01(\x03B\x03\xe0A\x03R\x0eexecutionCount\x12\x17\n" +
 	"\x04tags\x18\t \x03(\tB\x03\xe0A\x01R\x04tags:?\xeaA<\n" +
-	"\x1bmacosusesdk.localhost/Macro\x12\x0emacros/{macro}*\x06macros2\x05macro\"\x95\x03\n" +
+	"\x1bmacosusesdk.localhost/Macro\x12\x0emacros/{macro}*\x06macros2\x05macro\"\xb4\x03\n" +
+	"\x11ExecutionLogEntry\x12\x17\n" +
+	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12F\n" +
+	"\x0eexecution_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\rexecutionTime\x12&\n" +
+	"\faction_index\x18\x03 \x01(\x05B\x03\xe0A\x03R\vactionIndex\x12%\n" +
+	"\vdescription\x18\x04 \x01(\tB\x03\xe0A\x03R\vdescription\x12\x1d\n" +
+	"\asuccess\x18\x05 \x01(\bB\x03\xe0A\x03R\asuccess\x12\x19\n" +
+	"\x05error\x18\x06 \x01(\tB\x03\xe0A\x03R\x05error\x12\x1f\n" +
+	"\bduration\x18\a \x01(\x01B\x03\xe0A\x03R\bduration:\x93\x01\xeaA\x8f\x01\n" +
+	"'macosusesdk.localhost/ExecutionLogEntry\x12<macros/{macro}/executions/{execution}/logEntries/{log_entry}*\x13executionLogEntries2\x11executionLogEntry\"\x95\x03\n" +
 	"\vMacroAction\x123\n" +
 	"\x05input\x18\x01 \x01(\v2\x1b.macosusesdk.v1.InputActionH\x00R\x05input\x120\n" +
 	"\x04wait\x18\x02 \x01(\v2\x1a.macosusesdk.v1.WaitActionH\x00R\x04wait\x12E\n" +
@@ -1591,58 +1700,60 @@ func file_macosusesdk_v1_macro_proto_rawDescGZIP() []byte {
 }
 
 var file_macosusesdk_v1_macro_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_macosusesdk_v1_macro_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_macosusesdk_v1_macro_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_macosusesdk_v1_macro_proto_goTypes = []any{
 	(CompoundCondition_Operator)(0),   // 0: macosusesdk.v1.CompoundCondition.Operator
 	(MacroParameter_ParameterType)(0), // 1: macosusesdk.v1.MacroParameter.ParameterType
 	(*Macro)(nil),                     // 2: macosusesdk.v1.Macro
-	(*MacroAction)(nil),               // 3: macosusesdk.v1.MacroAction
-	(*WaitAction)(nil),                // 4: macosusesdk.v1.WaitAction
-	(*WaitCondition)(nil),             // 5: macosusesdk.v1.WaitCondition
-	(*ConditionalAction)(nil),         // 6: macosusesdk.v1.ConditionalAction
-	(*MacroCondition)(nil),            // 7: macosusesdk.v1.MacroCondition
-	(*VariableCondition)(nil),         // 8: macosusesdk.v1.VariableCondition
-	(*CompoundCondition)(nil),         // 9: macosusesdk.v1.CompoundCondition
-	(*LoopAction)(nil),                // 10: macosusesdk.v1.LoopAction
-	(*ForEachLoop)(nil),               // 11: macosusesdk.v1.ForEachLoop
-	(*AssignAction)(nil),              // 12: macosusesdk.v1.AssignAction
-	(*ElementAttributeValue)(nil),     // 13: macosusesdk.v1.ElementAttributeValue
-	(*MethodCall)(nil),                // 14: macosusesdk.v1.MethodCall
-	(*MacroParameter)(nil),            // 15: macosusesdk.v1.MacroParameter
-	nil,                               // 16: macosusesdk.v1.MethodCall.ArgsEntry
-	(*timestamppb.Timestamp)(nil),     // 17: google.protobuf.Timestamp
-	(*InputAction)(nil),               // 18: macosusesdk.v1.InputAction
+	(*ExecutionLogEntry)(nil),         // 3: macosusesdk.v1.ExecutionLogEntry
+	(*MacroAction)(nil),               // 4: macosusesdk.v1.MacroAction
+	(*WaitAction)(nil),                // 5: macosusesdk.v1.WaitAction
+	(*WaitCondition)(nil),             // 6: macosusesdk.v1.WaitCondition
+	(*ConditionalAction)(nil),         // 7: macosusesdk.v1.ConditionalAction
+	(*MacroCondition)(nil),            // 8: macosusesdk.v1.MacroCondition
+	(*VariableCondition)(nil),         // 9: macosusesdk.v1.VariableCondition
+	(*CompoundCondition)(nil),         // 10: macosusesdk.v1.CompoundCondition
+	(*LoopAction)(nil),                // 11: macosusesdk.v1.LoopAction
+	(*ForEachLoop)(nil),               // 12: macosusesdk.v1.ForEachLoop
+	(*AssignAction)(nil),              // 13: macosusesdk.v1.AssignAction
+	(*ElementAttributeValue)(nil),     // 14: macosusesdk.v1.ElementAttributeValue
+	(*MethodCall)(nil),                // 15: macosusesdk.v1.MethodCall
+	(*MacroParameter)(nil),            // 16: macosusesdk.v1.MacroParameter
+	nil,                               // 17: macosusesdk.v1.MethodCall.ArgsEntry
+	(*timestamppb.Timestamp)(nil),     // 18: google.protobuf.Timestamp
+	(*InputAction)(nil),               // 19: macosusesdk.v1.InputAction
 }
 var file_macosusesdk_v1_macro_proto_depIdxs = []int32{
-	3,  // 0: macosusesdk.v1.Macro.actions:type_name -> macosusesdk.v1.MacroAction
-	15, // 1: macosusesdk.v1.Macro.parameters:type_name -> macosusesdk.v1.MacroParameter
-	17, // 2: macosusesdk.v1.Macro.create_time:type_name -> google.protobuf.Timestamp
-	17, // 3: macosusesdk.v1.Macro.update_time:type_name -> google.protobuf.Timestamp
-	18, // 4: macosusesdk.v1.MacroAction.input:type_name -> macosusesdk.v1.InputAction
-	4,  // 5: macosusesdk.v1.MacroAction.wait:type_name -> macosusesdk.v1.WaitAction
-	6,  // 6: macosusesdk.v1.MacroAction.conditional:type_name -> macosusesdk.v1.ConditionalAction
-	10, // 7: macosusesdk.v1.MacroAction.loop:type_name -> macosusesdk.v1.LoopAction
-	12, // 8: macosusesdk.v1.MacroAction.assign:type_name -> macosusesdk.v1.AssignAction
-	14, // 9: macosusesdk.v1.MacroAction.method_call:type_name -> macosusesdk.v1.MethodCall
-	5,  // 10: macosusesdk.v1.WaitAction.condition:type_name -> macosusesdk.v1.WaitCondition
-	7,  // 11: macosusesdk.v1.ConditionalAction.condition:type_name -> macosusesdk.v1.MacroCondition
-	3,  // 12: macosusesdk.v1.ConditionalAction.then_actions:type_name -> macosusesdk.v1.MacroAction
-	3,  // 13: macosusesdk.v1.ConditionalAction.else_actions:type_name -> macosusesdk.v1.MacroAction
-	8,  // 14: macosusesdk.v1.MacroCondition.variable_equals:type_name -> macosusesdk.v1.VariableCondition
-	9,  // 15: macosusesdk.v1.MacroCondition.compound:type_name -> macosusesdk.v1.CompoundCondition
-	0,  // 16: macosusesdk.v1.CompoundCondition.operator:type_name -> macosusesdk.v1.CompoundCondition.Operator
-	7,  // 17: macosusesdk.v1.CompoundCondition.conditions:type_name -> macosusesdk.v1.MacroCondition
-	7,  // 18: macosusesdk.v1.LoopAction.while_condition:type_name -> macosusesdk.v1.MacroCondition
-	11, // 19: macosusesdk.v1.LoopAction.foreach:type_name -> macosusesdk.v1.ForEachLoop
-	3,  // 20: macosusesdk.v1.LoopAction.actions:type_name -> macosusesdk.v1.MacroAction
-	13, // 21: macosusesdk.v1.AssignAction.element_attribute:type_name -> macosusesdk.v1.ElementAttributeValue
-	16, // 22: macosusesdk.v1.MethodCall.args:type_name -> macosusesdk.v1.MethodCall.ArgsEntry
-	1,  // 23: macosusesdk.v1.MacroParameter.type:type_name -> macosusesdk.v1.MacroParameter.ParameterType
-	24, // [24:24] is the sub-list for method output_type
-	24, // [24:24] is the sub-list for method input_type
-	24, // [24:24] is the sub-list for extension type_name
-	24, // [24:24] is the sub-list for extension extendee
-	0,  // [0:24] is the sub-list for field type_name
+	4,  // 0: macosusesdk.v1.Macro.actions:type_name -> macosusesdk.v1.MacroAction
+	16, // 1: macosusesdk.v1.Macro.parameters:type_name -> macosusesdk.v1.MacroParameter
+	18, // 2: macosusesdk.v1.Macro.create_time:type_name -> google.protobuf.Timestamp
+	18, // 3: macosusesdk.v1.Macro.update_time:type_name -> google.protobuf.Timestamp
+	18, // 4: macosusesdk.v1.ExecutionLogEntry.execution_time:type_name -> google.protobuf.Timestamp
+	19, // 5: macosusesdk.v1.MacroAction.input:type_name -> macosusesdk.v1.InputAction
+	5,  // 6: macosusesdk.v1.MacroAction.wait:type_name -> macosusesdk.v1.WaitAction
+	7,  // 7: macosusesdk.v1.MacroAction.conditional:type_name -> macosusesdk.v1.ConditionalAction
+	11, // 8: macosusesdk.v1.MacroAction.loop:type_name -> macosusesdk.v1.LoopAction
+	13, // 9: macosusesdk.v1.MacroAction.assign:type_name -> macosusesdk.v1.AssignAction
+	15, // 10: macosusesdk.v1.MacroAction.method_call:type_name -> macosusesdk.v1.MethodCall
+	6,  // 11: macosusesdk.v1.WaitAction.condition:type_name -> macosusesdk.v1.WaitCondition
+	8,  // 12: macosusesdk.v1.ConditionalAction.condition:type_name -> macosusesdk.v1.MacroCondition
+	4,  // 13: macosusesdk.v1.ConditionalAction.then_actions:type_name -> macosusesdk.v1.MacroAction
+	4,  // 14: macosusesdk.v1.ConditionalAction.else_actions:type_name -> macosusesdk.v1.MacroAction
+	9,  // 15: macosusesdk.v1.MacroCondition.variable_equals:type_name -> macosusesdk.v1.VariableCondition
+	10, // 16: macosusesdk.v1.MacroCondition.compound:type_name -> macosusesdk.v1.CompoundCondition
+	0,  // 17: macosusesdk.v1.CompoundCondition.operator:type_name -> macosusesdk.v1.CompoundCondition.Operator
+	8,  // 18: macosusesdk.v1.CompoundCondition.conditions:type_name -> macosusesdk.v1.MacroCondition
+	8,  // 19: macosusesdk.v1.LoopAction.while_condition:type_name -> macosusesdk.v1.MacroCondition
+	12, // 20: macosusesdk.v1.LoopAction.foreach:type_name -> macosusesdk.v1.ForEachLoop
+	4,  // 21: macosusesdk.v1.LoopAction.actions:type_name -> macosusesdk.v1.MacroAction
+	14, // 22: macosusesdk.v1.AssignAction.element_attribute:type_name -> macosusesdk.v1.ElementAttributeValue
+	17, // 23: macosusesdk.v1.MethodCall.args:type_name -> macosusesdk.v1.MethodCall.ArgsEntry
+	1,  // 24: macosusesdk.v1.MacroParameter.type:type_name -> macosusesdk.v1.MacroParameter.ParameterType
+	25, // [25:25] is the sub-list for method output_type
+	25, // [25:25] is the sub-list for method input_type
+	25, // [25:25] is the sub-list for extension type_name
+	25, // [25:25] is the sub-list for extension extendee
+	0,  // [0:25] is the sub-list for field type_name
 }
 
 func init() { file_macosusesdk_v1_macro_proto_init() }
@@ -1651,7 +1762,7 @@ func file_macosusesdk_v1_macro_proto_init() {
 		return
 	}
 	file_macosusesdk_v1_input_proto_init()
-	file_macosusesdk_v1_macro_proto_msgTypes[1].OneofWrappers = []any{
+	file_macosusesdk_v1_macro_proto_msgTypes[2].OneofWrappers = []any{
 		(*MacroAction_Input)(nil),
 		(*MacroAction_Wait)(nil),
 		(*MacroAction_Conditional)(nil),
@@ -1659,29 +1770,29 @@ func file_macosusesdk_v1_macro_proto_init() {
 		(*MacroAction_Assign)(nil),
 		(*MacroAction_MethodCall)(nil),
 	}
-	file_macosusesdk_v1_macro_proto_msgTypes[3].OneofWrappers = []any{
+	file_macosusesdk_v1_macro_proto_msgTypes[4].OneofWrappers = []any{
 		(*WaitCondition_ElementSelector)(nil),
 		(*WaitCondition_WindowTitle)(nil),
 		(*WaitCondition_Application)(nil),
 	}
-	file_macosusesdk_v1_macro_proto_msgTypes[5].OneofWrappers = []any{
+	file_macosusesdk_v1_macro_proto_msgTypes[6].OneofWrappers = []any{
 		(*MacroCondition_ElementExists)(nil),
 		(*MacroCondition_WindowExists)(nil),
 		(*MacroCondition_ApplicationRunning)(nil),
 		(*MacroCondition_VariableEquals)(nil),
 		(*MacroCondition_Compound)(nil),
 	}
-	file_macosusesdk_v1_macro_proto_msgTypes[8].OneofWrappers = []any{
+	file_macosusesdk_v1_macro_proto_msgTypes[9].OneofWrappers = []any{
 		(*LoopAction_Count)(nil),
 		(*LoopAction_WhileCondition)(nil),
 		(*LoopAction_Foreach)(nil),
 	}
-	file_macosusesdk_v1_macro_proto_msgTypes[9].OneofWrappers = []any{
+	file_macosusesdk_v1_macro_proto_msgTypes[10].OneofWrappers = []any{
 		(*ForEachLoop_ElementSelector)(nil),
 		(*ForEachLoop_WindowPattern)(nil),
 		(*ForEachLoop_Values)(nil),
 	}
-	file_macosusesdk_v1_macro_proto_msgTypes[10].OneofWrappers = []any{
+	file_macosusesdk_v1_macro_proto_msgTypes[11].OneofWrappers = []any{
 		(*AssignAction_Literal)(nil),
 		(*AssignAction_ElementAttribute)(nil),
 		(*AssignAction_Parameter)(nil),
@@ -1693,7 +1804,7 @@ func file_macosusesdk_v1_macro_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_macosusesdk_v1_macro_proto_rawDesc), len(file_macosusesdk_v1_macro_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   15,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

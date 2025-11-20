@@ -55,6 +55,37 @@ message Macro {
   repeated string tags = 9 [(google.api.field_behavior) = OPTIONAL];
 }
 
+// Log entry for macro execution.
+message ExecutionLogEntry {
+  option (google.api.resource) = {
+    type: "macosusesdk.localhost/ExecutionLogEntry"
+    pattern: "macros/{macro}/executions/{execution}/logEntries/{log_entry}"
+    singular: "executionLogEntry"
+    plural: "executionLogEntries"
+  };
+
+  // Resource name.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // When the action executed.
+  google.protobuf.Timestamp execution_time = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Action index in macro.
+  int32 action_index = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Action description.
+  string description = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether action succeeded.
+  bool success = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Error message if failed.
+  string error = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Duration in seconds.
+  double duration = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
 // A single action within a macro.
 message MacroAction {
   // Action type.

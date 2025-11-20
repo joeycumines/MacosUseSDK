@@ -398,53 +398,6 @@ func (x *WindowState) GetFullscreen() bool {
 	return false
 }
 
-// Request to get the state of a window.
-type GetWindowStateRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// The name of the window state resource to retrieve.
-	// Format: applications/{application}/windows/{window}/state
-	Name          string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetWindowStateRequest) Reset() {
-	*x = GetWindowStateRequest{}
-	mi := &file_macosusesdk_v1_window_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetWindowStateRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetWindowStateRequest) ProtoMessage() {}
-
-func (x *GetWindowStateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_window_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetWindowStateRequest.ProtoReflect.Descriptor instead.
-func (*GetWindowStateRequest) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_window_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *GetWindowStateRequest) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
 var File_macosusesdk_v1_window_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_window_proto_rawDesc = "" +
@@ -479,10 +432,7 @@ const file_macosusesdk_v1_window_proto_rawDesc = "" +
 	" \x01(\bB\x03\xe0A\x03H\x00R\n" +
 	"fullscreen\x88\x01\x01:t\xeaAq\n" +
 	"!macosusesdk.localhost/WindowState\x121applications/{application}/windows/{window}/state*\fwindowStates2\vwindowStateB\r\n" +
-	"\v_fullscreen\"V\n" +
-	"\x15GetWindowStateRequest\x12=\n" +
-	"\x04name\x18\x01 \x01(\tB)\xe0A\x02\xfaA#\n" +
-	"!macosusesdk.localhost/WindowStateR\x04nameB\xc2\x01\n" +
+	"\v_fullscreenB\xc2\x01\n" +
 	"\x12com.macosusesdk.v1B\vWindowProtoP\x01ZFgithub.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1\xa2\x02\x03MXX\xaa\x02\x0eMacosusesdk.V1\xca\x02\x0eMacosusesdk\\V1\xe2\x02\x1aMacosusesdk\\V1\\GPBMetadata\xea\x02\x0fMacosusesdk::V1b\x06proto3"
 
 var (
@@ -497,12 +447,11 @@ func file_macosusesdk_v1_window_proto_rawDescGZIP() []byte {
 	return file_macosusesdk_v1_window_proto_rawDescData
 }
 
-var file_macosusesdk_v1_window_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_macosusesdk_v1_window_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_macosusesdk_v1_window_proto_goTypes = []any{
-	(*Window)(nil),                // 0: macosusesdk.v1.Window
-	(*Bounds)(nil),                // 1: macosusesdk.v1.Bounds
-	(*WindowState)(nil),           // 2: macosusesdk.v1.WindowState
-	(*GetWindowStateRequest)(nil), // 3: macosusesdk.v1.GetWindowStateRequest
+	(*Window)(nil),      // 0: macosusesdk.v1.Window
+	(*Bounds)(nil),      // 1: macosusesdk.v1.Bounds
+	(*WindowState)(nil), // 2: macosusesdk.v1.WindowState
 }
 var file_macosusesdk_v1_window_proto_depIdxs = []int32{
 	1, // 0: macosusesdk.v1.Window.bounds:type_name -> macosusesdk.v1.Bounds
@@ -525,7 +474,7 @@ func file_macosusesdk_v1_window_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_macosusesdk_v1_window_proto_rawDesc), len(file_macosusesdk_v1_window_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
