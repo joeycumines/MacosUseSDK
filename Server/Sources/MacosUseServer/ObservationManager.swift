@@ -327,11 +327,34 @@ actor ObservationManager {
                         previousWindows: previousWindows,
                     )
 
+                    fputs("debug: [ObservationManager] currentWindows=\(currentWindows.count), cgWindows=\(cgWindows.count), currentWithOrphans=\(currentWithOrphans.count), previousWindows=\(previousWindows.count)\n", stderr)
+                    for w in currentWithOrphans {
+                        fputs("debug: [ObservationManager]   window \(w.windowID): minimized=\(w.minimized), visible=\(w.visible)\n", stderr)
+                    }
+
                     // Detect window changes
                     let windowChanges = detectWindowChanges(
                         previous: previousWindows,
                         current: currentWithOrphans,
                     )
+
+                    fputs("debug: [ObservationManager] Detected \(windowChanges.count) window changes\n", stderr)
+                    for change in windowChanges {
+                        switch change {
+                        case let .minimized(w):
+                            fputs("debug: [ObservationManager]   MINIMIZED: window \(w.windowID)\n", stderr)
+                        case let .restored(w):
+                            fputs("debug: [ObservationManager]   RESTORED: window \(w.windowID)\n", stderr)
+                        case let .created(w):
+                            fputs("debug: [ObservationManager]   CREATED: window \(w.windowID)\n", stderr)
+                        case let .destroyed(w):
+                            fputs("debug: [ObservationManager]   DESTROYED: window \(w.windowID)\n", stderr)
+                        case .moved:
+                            fputs("debug: [ObservationManager]   MOVED\n", stderr)
+                        case .resized:
+                            fputs("debug: [ObservationManager]   RESIZED\n", stderr)
+                        }
+                    }
 
                     // Publish window change events
                     for change in windowChanges {
@@ -446,7 +469,8 @@ actor ObservationManager {
         let cgWindows = allCGWindows.filter { win in
             // Exclude tiny windows (likely system UI)
             win.bounds.width >= 10 && win.bounds.height >= 10
-            // Note: layer and alpha filtering would require additional WindowRegistry data
+                // Exclude non-window layers (tooltips, overlays, status items)
+                && win.layer == 0
         }
 
         return await MainActor.run {
@@ -552,13 +576,15 @@ actor ObservationManager {
                 }
 
                 var minValue: CFTypeRef?
-                let minimized = if AXUIElementCopyAttributeValue(
+                let minResult = AXUIElementCopyAttributeValue(
                     candidate.axElement, kAXMinimizedAttribute as CFString, &minValue,
-                ) == .success, let minBool = minValue as? Bool {
+                )
+                let minimized = if minResult == .success, let minBool = minValue as? Bool {
                     minBool
                 } else {
                     false
                 }
+                fputs("debug: [fetchAXWindows] window \(candidate.cgWindow.windowID) kAXMinimizedAttribute result=\(minResult.rawValue), value=\(String(describing: minValue)), minimized=\(minimized)\n", stderr)
 
                 var mainValue: CFTypeRef?
                 let focused: Bool? = if AXUIElementCopyAttributeValue(

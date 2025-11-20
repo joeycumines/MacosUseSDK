@@ -18,26 +18,28 @@
 
 ### **Current Reality (Single-Sentence Snapshot)**
 
-### **Current Reality (Single-Sentence Snapshot)**
-
-**Current Reality:** Window matching implementation is MATERIALLY INCORRECT. Contains three critical flaws: Identity Aliasing (greedy matching allows multiple AX windows to claim same CGWindowID), Dead Edge Case (1-vs-1 optimization never executes due to system windows in CGWindowList), Minimization Mishandling (minimized windows disappear from AX list and are flagged as DESTROYED instead of MINIMIZED). MUST rewrite with bijective matching and orphan handling.
+**Current Reality:** CRITICAL API DESIGN FLAW DISCOVERED - ListWindows omits WindowState fields violating AIP-157 (partial responses forbidden). Must design and implement singleton sub-resource pattern for expensive-to-fetch window metadata OR fix ListWindows to return complete state. ObservationManager/RestoreWindow fixes are on hold pending API correction.
 
 ### **Immediate Action Items (Next Things To Do)**
 
-1. **FIX WINDOW MATCHING LOGIC (CRITICAL - BLOCKING ALL OBSERVATION WORK):**
-    - **Identity Aliasing:** Current greedy "minimum distance" selection allows multiple AX windows to match the same CGWindowID. Must implement bijective matching via Assignment Problem: calculate all (AX, CG, distance) tuples, sort by distance, assign 1-to-1 with exclusion of used candidates.
-    - **Dead Edge Case:** The 1-vs-1 optimization never executes because CGWindowList returns 6 windows (including system/menu windows). Must filter CGWindowList BEFORE counting (exclude layer > 0, size < 10x10, alpha == 0).
-    - **Minimization Lifecycle:** When windows minimize, they disappear from kAXWindowsAttribute but remain in CGWindowList. Must handle orphaned CGWindows (unmatched but previously tracked) as MINIMIZED if isOnscreen == false, not DESTROYED.
-    - **Implementation Plan:**
-        1. Add `filterValidCGWindows` helper to exclude system noise
-        2. Rewrite `fetchAXWindows` to build all (AX, CG, distance) tuples
-        3. Sort tuples by distance, assign bijectively with exclusion tracking
-        4. After matching loop, check orphaned CGWindows against previous snapshot
-        5. Mark orphans as MINIMIZED if isOnscreen == false, otherwise DESTROYED
-    - Acceptance: Test passes minimize operation, no aliasing under multiple overlapping windows, no false DESTROYED events.
+1. **FIX API DESIGN FLAW - ListWindows State Omission (CRITICAL - BLOCKING ALL WORK):**
+    - **The Problem:** Current `ListWindows` implementation returns empty `WindowState` for performance, forcing clients to call `GetWindow` per-window. This violates AIP-157 (List methods must return complete resources).
+    - **The Solution:** Two options:
+        - **Option A (Preferred):** Create singleton sub-resource `applications/{app}/windows/{window}/state` with dedicated `GetWindowState` RPC for expensive AX queries (resizable, minimizable, modal, etc.). Keep `ListWindows` fast with only CGWindowList data.
+        - **Option B:** Make `ListWindows` return complete state and accept performance cost (O(N) AX queries).
+    - **Decision:** Option A - follows AIP-128 (singleton sub-resources) and AIP-157 compliance while maintaining performance.
+    - **Implementation Steps:**
+        1. Update `implementation-constraints.md` with new directive.
+        2. Design `WindowState` singleton sub-resource in `window.proto`.
+        3. Add `GetWindowState` RPC to `macos_use.proto`.
+        4. Implement `GetWindowState` in `MacosUseServiceProvider.swift`.
+        5. Update `ListWindows` to populate ALL Window fields from CGWindowList (remove empty state).
+        6. Fix integration test to use `GetWindowState` instead of relying on `GetWindow`.
+        7. Run validation test.
+    - **Acceptance:** API linter passes, test uses proper resource pattern.
 
-2. **Traversal contention (HIGH - BLOCKED BY ITEM 1):**
-    - Cannot proceed until window matching is correct.
+2. **Resume observation validation (HIGH - BLOCKED BY ITEM 1):**
+    - Cannot proceed until API design is corrected.
 
 3. **Small correctness/unification fixes (MEDIUM):**
     - Unify `parsePID(fromName:)` (duplicated in `MacosUseServiceProvider` and `MacroExecutor`).

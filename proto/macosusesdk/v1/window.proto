@@ -50,9 +50,6 @@ message Window {
   // Optional: unset if state is unknown (accessibility query failed).
   optional bool fullscreen = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
 
-  // Window attributes and state.
-  WindowState state = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
-
   // Bundle identifier of the application that owns this window.
   // Resolved via NSRunningApplication. Empty string if unavailable.
   string bundle_id = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
@@ -73,20 +70,32 @@ message Bounds {
   double height = 4;
 }
 
-// State information about a window.
+// Detailed state information about a window, fetched via expensive AX queries.
+// This is a singleton sub-resource that clients must explicitly request.
+// Use GetWindowState to fetch this data on-demand.
 message WindowState {
+  option (google.api.resource) = {
+    type: "macosusesdk.localhost/WindowState"
+    pattern: "applications/{application}/windows/{window}/state"
+    singular: "windowState"
+    plural: "windowStates"
+  };
+
+  // Resource name in the format "applications/{application}/windows/{window}/state"
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
   // Whether the window can be resized.
-  bool resizable = 1;
+  bool resizable = 2;
 
   // Whether the window can be minimized.
-  bool minimizable = 2;
+  bool minimizable = 3;
 
   // Whether the window can be closed.
-  bool closable = 3;
+  bool closable = 4;
 
   // Whether the window is a modal dialog.
-  bool modal = 4;
+  bool modal = 5;
 
   // Whether the window is a floating window.
-  bool floating = 5;
+  bool floating = 6;
 }

@@ -35,9 +35,9 @@ func TestWindowChangeObservation(t *testing.T) {
 	app := openTextEdit(t, ctx, client, opsClient)
 	defer cleanupApplication(t, ctx, client, app)
 
-	// 3. Wait for initial window to appear (skip modal dialogs and toolbar/picker windows)
-	t.Log("Waiting for TextEdit document window to appear...")
-	var initialWindow *pb.Window
+	// 3. Dismiss file picker dialog and create a new document
+	t.Log("Dismissing file picker and creating new document...")
+	// Close the initial file picker window (Cancel button)
 	err := PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
 		resp, err := client.ListWindows(ctx, &pb.ListWindowsRequest{
 			Parent: app.Name,
@@ -45,19 +45,70 @@ func TestWindowChangeObservation(t *testing.T) {
 		if err != nil {
 			return false, err
 		}
-		t.Logf("ListWindows returned %d windows", len(resp.Windows))
-		// TextEdit spawns file dialog on launch - skip modal dialogs and tiny windows
-		// A real document window should have reasonable dimensions (at least 200x200)
+		// Find and close the file picker (small window)
 		for _, window := range resp.Windows {
-			t.Logf("  Window: %s, modal=%v, bounds=%.0fx%.0f at (%.0f, %.0f)",
-				window.Name,
-				window.State != nil && window.State.Modal,
-				window.Bounds.Width, window.Bounds.Height, window.Bounds.X, window.Bounds.Y)
-			if window.State != nil && !window.State.Modal &&
-				window.Bounds != nil &&
+			if window.Bounds != nil && window.Bounds.Width < 200 {
+				// This is likely the file picker - close it
+				_, err := client.CloseWindow(ctx, &pb.CloseWindowRequest{
+					Name: window.Name,
+				})
+				return err == nil, err
+			}
+		}
+		return true, nil // No file picker found, proceed
+	})
+	if err != nil {
+		t.Logf("Warning: failed to close file picker: %v", err)
+	}
+
+	// Create a new document using Cmd+N
+	t.Log("Creating new document with Cmd+N...")
+	_, err = client.CreateInput(ctx, &pb.CreateInputRequest{
+		Parent: app.Name,
+		Input: &pb.Input{
+			Action: &pb.InputAction{
+				InputType: &pb.InputAction_PressKey{
+					PressKey: &pb.KeyPress{
+						Key:       "n",
+						Modifiers: []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_COMMAND},
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("Failed to send Cmd+N: %v", err)
+	}
+
+	// Wait for document window to appear
+	t.Log("Waiting for TextEdit document window to appear...")
+	var initialWindow *pb.Window
+	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
+		resp, err := client.ListWindows(ctx, &pb.ListWindowsRequest{
+			Parent: app.Name,
+		})
+		if err != nil {
+			return false, err
+		}
+		// A real document window should have reasonable dimensions (ListWindows doesn't return detailed state)
+		for _, window := range resp.Windows {
+			if window.Bounds != nil &&
 				window.Bounds.Width >= 200 && window.Bounds.Height >= 200 {
-				initialWindow = window
-				return true, nil
+				// Found a candidate - use GetWindow to check if it's minimizable
+				fullWindow, err := client.GetWindow(ctx, &pb.GetWindowRequest{
+					Name: window.Name,
+				})
+				if err != nil {
+					continue
+				}
+				t.Logf("  Window: %s, minimizable=%v, bounds=%.0fx%.0f at (%.0f, %.0f)",
+					fullWindow.Name,
+					fullWindow.State != nil && fullWindow.State.Minimizable,
+					fullWindow.Bounds.Width, fullWindow.Bounds.Height, fullWindow.Bounds.X, fullWindow.Bounds.Y)
+				if fullWindow.State != nil && fullWindow.State.Minimizable {
+					initialWindow = fullWindow
+					return true, nil
+				}
 			}
 		}
 		return false, nil
