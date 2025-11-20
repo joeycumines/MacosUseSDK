@@ -7,12 +7,22 @@ This directory contains the Protocol Buffer definitions for the MacosUseSDK gRPC
 ```
 proto/
 ├── macosusesdk/
-│   ├── type/           # Common type definitions (AIP-213)
+│   ├── type/              # Common type definitions (AIP-213)
+│   │   ├── element.proto    # UI element and traversal types
 │   │   ├── geometry.proto   # Point and geometric types
-│   │   └── element.proto    # UI element and traversal types
-│   └── v1/             # API v1 definitions
-│       ├── macos_use.proto  # MacosUse service and methods
-│       └── *.proto          # Resource definitions, other messages
+│   │   └── selector.proto   # Selector grammar definitions
+│   └── v1/                # API v1 definitions
+│       ├── application.proto # Application resource
+│       ├── clipboard.proto   # Clipboard resource
+│       ├── condition.proto   # Condition types
+│       ├── input.proto       # Input resource
+│       ├── macos_use.proto   # MacosUse service and methods
+│       ├── macro.proto       # Macro resource
+│       ├── observation.proto # Observation resource
+│       ├── screenshot.proto  # Screenshot types
+│       ├── script.proto      # Scripting definitions
+│       ├── session.proto     # Session and transaction resources
+│       └── window.proto      # Window resource
 └── README.md
 ```
 
@@ -22,168 +32,141 @@ This API follows [Google's API Improvement Proposals (AIPs)](https://google.aip.
 
 ### Resource-Oriented Design
 
-The API exposes two primary resources:
+The API is built around a hierarchy of resources that represent the state and capabilities of the macOS environment:
 
-1. **Application** (`applications/{application}`)
-   - Represents a running macOS application being tracked for automation
-   - Supports standard methods: Get, List, Delete
-   
-2. **Input** (`applications/{application}/inputs/{input}` or `desktopInputs/{input}`)
-   - Represents an input action in a timeline
-   - Supports standard methods: Create, Get, List
-   - Forms a timeline for each application or globally for the desktop
+1.  **Application** (`applications/{application}`)
+
+      * Represents a running macOS application being tracked.
+      * Parent to Inputs, Windows, and Observations.
+
+2.  **Window** (`applications/{application}/windows/{window}`)
+
+      * Represents an on-screen window.
+      * Designed for high-performance enumeration (see *Window Design Pattern* below).
+
+3.  **Input** (`applications/{application}/inputs/{input}` or `desktopInputs/{input}`)
+
+      * Represents a discrete input action (click, type, gesture) within a timeline.
+
+4.  **Session** (`sessions/{session}`)
+
+      * Maintains context across complex workflows.
+      * Supports transactional semantics for atomic operations.
+
+5.  **Macro** (`macros/{macro}`)
+
+      * Represents a recorded or defined sequence of actions (loops, conditionals, inputs).
+      * Persisted resources that can be executed as Long-Running Operations.
+
+6.  **Observation** (`applications/{application}/observations/{observation}`)
+
+      * Represents an active monitor for UI changes (elements, windows, or attributes).
+      * Streams events back to the client.
+
+7.  **Clipboard** (`clipboard`)
+
+      * Singleton resource representing the system clipboard.
+      * Supports rich content types (Text, RTF, HTML, Images, Files).
+
+8.  **Scripting Dictionary** (`scriptingDictionaries/{name}`)
+
+      * Represents the AppleScript/JXA capabilities and terminology available for specific applications.
+
+### Window Design Pattern (Data Authority)
+
+A specific design pattern is applied to Windows to balance performance with data accuracy:
+
+  * **The `Window` Resource (High Performance):**
+    The standard `Window` resource (`GetWindow`, `ListWindows`) relies on **hybrid data authority**. It prioritizes cached CoreGraphics data (Registry Authority) for geometry and "Split-Brain" logic for visibility. This ensures that listing windows is fast and lightweight, suitable for high-frequency polling or UI rendering.
+
+  * **The `WindowState` Singleton (High Accuracy):**
+    For authoritative accessibility details, the API exposes a singleton sub-resource: `WindowState` (`applications/{app}/windows/{window}/state`).
+
+      * Fetching this resource triggers fresh, expensive queries to the Accessibility API (AX Authority).
+      * It provides deep state details: `minimized`, `ax_hidden`, `modal`, `focused`, `resizable`, etc.
+      * **Principle:** Clients should list `Window` resources for general navigation but request `WindowState` only when making logic decisions that require absolute truth (e.g., "Is this window actually capable of receiving input right now?").
+
+### Session & Transaction Model
+
+To support complex automation workflows that require reliability, the API introduces **Sessions**:
+
+  * **Context:** Sessions allow the server to maintain state (metadata, active targets) across multiple RPCs.
+  * **Transactions:** Sessions support ACID-like transactions via `BeginTransaction`, `CommitTransaction`, and `RollbackTransaction`.
+  * **Isolation:** Clients can specify isolation levels (e.g., `ISOLATION_LEVEL_SERIALIZABLE`) to ensure that a sequence of operations (like navigating a menu) is treated atomically. If a step fails, the session can be rolled back to a known good state.
 
 ### Service Structure (AIP-190, AIP-191)
 
-- Single service: `MacosUse` (not `MacosUseService` - service suffix is discouraged per AIP-191)
-- File: `macos_use.proto` aligns with service name
-- All method request/response messages co-located with the service
-- Resources in separate files
-
-### Common Components (AIP-213)
-
-Common types that are reused across the API are placed in `macosusesdk/type/`:
-
-- `Point`: 2D screen coordinates
-- `Element`: UI element representation
-- `TraversalStatistics`: Statistics from accessibility tree traversal
-- `ElementSelector`: Declarative element querying system (see Selector Grammar below)
-
-These are minimal and only include truly common, reusable types.
+  * Single service: `MacosUse`
+  * File: `macos_use.proto` contains the service definition.
+  * Resources are modularized into their own `.proto` files.
 
 ### Selector Grammar (Element Selection)
 
-The `ElementSelector` type in `type/selector.proto` provides a declarative way to query UI elements in the accessibility tree.
+The `ElementSelector` type in `type/selector.proto` provides a declarative way to query UI elements.
 
 **Implemented Features:**
 
-1. **Simple Selectors** (all fully implemented):
-   - `role: "AXButton"` → Match by accessibility role
-   - `text: "Submit"` → Exact text match (checks AXValue then AXTitle)
-   - `text_contains: "Submit"` → Substring match (case-sensitive)
-   - `text_regex: "^Submit.*"` → Regex match using NSRegularExpression
-   - `position: {x: 100, y: 200, tolerance: 5}` → Match element at screen coordinates
-   - `attributes: {"AXEnabled": "1"}` → Match custom accessibility attributes (all must match)
-
-2. **Compound Selectors** (fully implemented):
-   - `OPERATOR_AND`: All sub-selectors must match
-   - `OPERATOR_OR`: At least one sub-selector must match
-   - `OPERATOR_NOT`: Single sub-selector must NOT match (requires exactly 1 selector)
-
-3. **Empty Selector**: Matches ALL elements (use with caution)
-
-**Example Usage:**
-
-```protobuf
-// Find button with text "Submit"
-{
-  compound: {
-    operator: AND,
-    selectors: [
-      { role: "AXButton" },
-      { text: "Submit" }
-    ]
-  }
-}
-
-// Find any button OR link
-{
-  compound: {
-    operator: OR,
-    selectors: [
-      { role: "AXButton" },
-      { role: "AXLink" }
-    ]
-  }
-}
-
-// Find elements NOT containing "Error"
-{
-  compound: {
-    operator: NOT,
-    selectors: [{ text_contains: "Error" }]
-  }
-}
-```
-
-**Implementation:**
-- Validation: `Server/Sources/MacosUseServer/SelectorParser.swift`
-- Matching: `Server/Sources/MacosUseServer/ElementLocator.swift`
-
-**Performance:** Simple selectors (role, text, text_contains, position) are optimized. Regex and attribute selectors require full tree traversal.
+  * **Simple:** Role, Text (Exact/Contains/Regex), Position, Attributes.
+  * **Compound:** AND, OR, NOT logic.
+  * **Performance:** Simple selectors are optimized; Regex/Attributes require full tree traversal.
 
 ### Long-Running Operations (AIP-151)
 
-`OpenApplication` is implemented as a long-running operation using `google.longrunning.Operation`:
+Operations that take significant time or wait for external state changes return `google.longrunning.Operation`. Clients can poll, cancel, or wait for these operations.
 
-```protobuf
-rpc OpenApplication(OpenApplicationRequest) returns (google.longrunning.Operation) {
-  option (google.longrunning.operation_info) = {
-    response_type: "OpenApplicationResponse"
-    metadata_type: "OpenApplicationMetadata"
-  };
-}
-```
+**Implemented LROs:**
 
-This allows clients to:
-- Poll for completion
-- Cancel operations
-- Receive metadata during execution
-
-### Input Timeline & Circular Buffer
-
-Inputs are modeled as resources forming a timeline:
-
-- **Application-specific**: `applications/{application}/inputs/{input}`
-- **Global desktop**: `desktopInputs/{input}`
-
-Each input has a state lifecycle:
-1. `STATE_PENDING`: Created but not yet executing
-2. `STATE_EXECUTING`: Currently being executed
-3. `STATE_COMPLETED`: Successfully completed
-4. `STATE_FAILED`: Failed with an error
-
-**Circular Buffer**: The server maintains a circular buffer of completed inputs per application. This allows:
-- Querying recent input history
-- Analyzing automation patterns
-- Debugging failed sequences
-
-The buffer size is server-configurable and oldest completed inputs are automatically evicted.
-
-### Standard Methods (AIP-130, AIP-131, AIP-132)
-
-All resources implement appropriate standard methods:
-
-**Application**:
-- `GetApplication` (AIP-131)
-- `ListApplications` (AIP-132)
-- `DeleteApplication` (AIP-135)
-
-**Input**:
-- `CreateInput` (AIP-133)
-- `GetInput` (AIP-131)
-- `ListInputs` (AIP-132)
+  * **`OpenApplication`**: Launches or activates apps.
+  * **`WaitElement` / `WaitElementState`**: Suspends execution until a UI element appears or satisfies a condition (e.g., becomes enabled).
+  * **`ExecuteMacro`**: Runs a stored sequence of actions.
+  * **`CreateObservation`**: Initializes a monitoring stream.
 
 ### Custom Methods (AIP-136)
 
-- `TraverseAccessibility`: Retrieves accessibility tree snapshot
-- `WatchAccessibility`: Streams accessibility tree changes (server-streaming RPC)
+The API exposes extensive custom methods categorized by capability:
+
+**Window Management:**
+
+  * `FocusWindow`, `MoveWindow`, `ResizeWindow`
+  * `MinimizeWindow`, `RestoreWindow`, `CloseWindow`
+
+**Element Operations:**
+
+  * `ClickElement`, `WriteElementValue`, `PerformElementAction`
+  * `FindElements`, `FindRegionElements`
+
+**File System & Dialogs:**
+
+  * `AutomateOpenFileDialog`, `AutomateSaveFileDialog`
+  * `SelectFile`, `SelectDirectory`, `DragFiles`
+
+**Script Execution:**
+
+  * `ExecuteAppleScript`, `ExecuteJavaScript` (JXA), `ExecuteShellCommand`
+  * Includes validation (`ValidateScript`) and timeout management.
+
+**Screen Capture:**
+
+  * `CaptureScreenshot` (Full screen)
+  * `CaptureWindowScreenshot`, `CaptureElementScreenshot`, `CaptureRegionScreenshot`
+  * Supports OCR text extraction and various image formats.
+
+**Observation & Streaming:**
+
+  * `WatchAccessibility` (stream tree changes)
+  * `StreamObservations` (stream specific monitored events)
+
+### Input Timeline & Circular Buffer
+
+Inputs (`CreateInput`) form a timeline. The server maintains a configurable circular buffer of `COMPLETED` inputs, allowing clients to query recent history for debugging or pattern analysis.
+
+### Standard Methods (AIP-130 - AIP-135)
+
+All resources (`Application`, `Input`, `Window`, `Macro`, `Session`, `Observation`) implement standard `Get`, `List`, `Create`, `Update`, and `Delete` methods where applicable.
 
 ### Pagination (AIP-158)
 
-List methods support pagination with `page_size` and `page_token`:
-
-```protobuf
-message ListApplicationsRequest {
-  int32 page_size = 1;
-  string page_token = 2;
-}
-
-message ListApplicationsResponse {
-  repeated Application applications = 1;
-  string next_page_token = 2;
-}
-```
+List methods support pagination via `page_size` and `page_token`.
 
 ## File Options
 
@@ -200,19 +183,18 @@ option java_package = "com.macosusesdk...";
 
 Generated code is committed to the repository:
 
-- `Server/Sources/MacosUseSDKProtos/`: Swift server stubs (grpc-swift)
-- `gen/go/`: Go client stubs
+  - `Server/Sources/MacosUseSDKProtos/`: Swift server stubs
+  - `gen/go/`: Go client stubs
 
 ### Regenerating Code
 
 ```sh
-# from the root of the project
 make generate
 ```
 
 ## Linting
 
-The API is validated with both `buf lint` and `api-linter`:
+The API is validated with `buf lint` and `api-linter`.
 
 ```sh
 make lint
@@ -220,36 +202,22 @@ make lint
 
 ## Dependencies
 
-- `buf.build/googleapis/googleapis`: Google API common protos and types
-
-Dependencies are locked in `buf.lock` via:
-
-```sh
-make update
-```
+  - `buf.build/googleapis/googleapis`: Google API common protos
 
 ## Versioning
 
-The API is versioned as `v1`. Future breaking changes will require a new version (`v2`, etc) per AIP-180.
+The API is versioned as `v1`.
 
 ## HTTP/JSON Mapping
 
-All RPCs include HTTP annotations enabling REST/JSON access via grpc-gateway:
-
-```protobuf
-rpc GetApplication(GetApplicationRequest) returns (Application) {
-  option (google.api.http) = {
-    get: "/v1/{name=applications/*}"
-  };
-}
-```
+All RPCs include HTTP annotations enabling REST/JSON access via grpc-gateway.
 
 ## Contributing
 
 When modifying the API:
 
-1. Follow all applicable AIPs
-2. Regenerate code with `buf generate`
-3. Run linters for all protos and code using `make lint`
-4. Update this README with structural or design changes, notable AIPs, or learnings
-5. Update `implementation-plan.md` with significant changes
+1.  Follow all applicable AIPs
+2.  Regenerate code with `buf generate`
+3.  Run linters for all protos and code using `make lint`
+4.  Update this README with structural or design changes, notable AIPs, or learnings
+5.  Update `implementation-plan.md` with significant changes
