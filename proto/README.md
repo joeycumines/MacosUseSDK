@@ -11,9 +11,8 @@ proto/
 │   │   ├── geometry.proto   # Point and geometric types
 │   │   └── element.proto    # UI element and traversal types
 │   └── v1/             # API v1 definitions
-│       ├── application.proto   # Application resource
-│       ├── input.proto        # Input resource
-│       └── macos_use.proto    # MacosUse service and methods
+│       ├── macos_use.proto  # MacosUse service and methods
+│       └── *.proto          # Resource definitions, other messages
 └── README.md
 ```
 
@@ -206,33 +205,18 @@ Generated code is committed to the repository:
 
 ### Regenerating Code
 
-```bash
-buf generate
+```sh
+# from the root of the project
+make generate
 ```
 
 ## Linting
 
 The API is validated with both `buf lint` and `api-linter`:
 
-### buf lint
-
-```bash
-buf lint
+```sh
+make lint
 ```
-
-Note: Some buf lint warnings conflict with AIPs. Per `implementation-constraints.md`, AIPs take precedence.
-
-### api-linter (Google's AIP linter)
-
-```bash
-./hack/google-api-linter.sh
-```
-
-This script:
-1. Exports googleapis protos via `buf export`
-2. Runs `api-linter` with proper proto paths
-3. Outputs in GitHub Actions format
-4. Ignores googleapis protos (configured in `google-api-linter.yaml`)
 
 ## Dependencies
 
@@ -240,8 +224,8 @@ This script:
 
 Dependencies are locked in `buf.lock` via:
 
-```bash
-buf dep update
+```sh
+make update
 ```
 
 ## Versioning
@@ -265,7 +249,7 @@ rpc GetApplication(GetApplicationRequest) returns (Application) {
 When modifying the API:
 
 1. Follow all applicable AIPs
-2. Run `buf lint` and `./hack/google-api-linter.sh`
-3. Regenerate code with `buf generate`
-4. Update this README if structure changes
+2. Regenerate code with `buf generate`
+3. Run linters for all protos and code using `make lint`
+4. Update this README with structural or design changes, notable AIPs, or learnings
 5. Update `implementation-plan.md` with significant changes
