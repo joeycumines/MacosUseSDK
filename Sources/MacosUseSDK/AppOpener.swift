@@ -4,10 +4,6 @@ import AppKit
 import Foundation
 import OSLog
 
-import AppKit
-import Foundation
-import OSLog
-
 private let logger = sdkLogger(category: "AppOpener")
 
 // Define potential errors during app opening
