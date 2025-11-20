@@ -114,4 +114,11 @@ actor WindowRegistry {
     func invalidate(windowID: CGWindowID) {
         windowCache.removeValue(forKey: windowID)
     }
+
+    /// Retrieves the last known window info from cache without triggering a refresh.
+    /// Safe to call from latency-sensitive paths where stale metadata (z-index) is
+    /// preferable to blocking on CGWindowList.
+    func getLastKnownWindow(_ windowID: CGWindowID) -> WindowInfo? {
+        windowCache[windowID]
+    }
 }

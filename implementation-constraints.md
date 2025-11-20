@@ -2,11 +2,33 @@
 
 ## Session Directives
 
-**CURRENT DIRECTIVE (2025-11-20):** Fix CRITICAL correctness bugs from rejected PR:
-1. **CGWindowList lag race**: Cache invalidation is insufficient because `CGWindowListCopyWindowInfo` updates asynchronously (10-100ms lag). Modify `buildWindowResponseFromAX` to source bounds directly from `kAXPositionAttribute` and `kAXSizeAttribute` instead of `WindowRegistry`.
-2. **axHidden fix is CORRECT**: Keep the existing fix that queries raw `kAXHiddenAttribute` to correctly distinguish minimized (false) from hidden (true).
-3. Retain `windowRegistry.invalidate` for eventual consistency but do NOT rely on it for immediate RPC response.
-4. Complete all remaining implementation-plan.md items with utmost excellence.
+**CURRENT DIRECTIVE (2025-11-20):** Implement robust window state consistency using split-brain authority model.
+
+### The Split-Brain Authority Model
+
+To guarantee correctness and performance, enforce strict separation of data authority:
+
+* **AX Authority (Fresh, Mutable):**
+  - Fields: `Bounds` (Position/Size), `Title`, `Minimized`, `Hidden`.
+  - Justification: AX updates immediately upon mutation. CG lags by 10–100ms.
+  - Usage: Query explicitly on every `Move`, `Resize`, `Minimize` response.
+
+* **CG/Registry Authority (Stable, Metadata):**
+  - Fields: `ZIndex`, `BundleID`, `Visible` (derived from `isOnScreen`).
+  - Justification: Expensive or impossible via AX but stable during window operations.
+  - Usage: Sourced from `WindowRegistry` cache.
+
+* **Conflict Resolution:**
+  - Overlay Pattern: Fetch base state from registry, forcibly overwrite all AX-authoritative fields with fresh data.
+  - No-Block Read: Registry lookup must NEVER trigger blocking `CGWindowListCopyWindowInfo` during response hot-path.
+
+### Implementation Requirements
+
+1. **Add `WindowRegistry.getLastKnownWindow`:** Return `windowCache[windowID]` immediately without TTL check or refresh.
+2. **Implement `buildWindowResponseFromAX`:** Query fresh AX bounds/title on MainActor, merge with registry metadata (z-index, bundleID, visible).
+3. **Integrate into mutation handlers:** Use `buildWindowResponseFromAX` in `moveWindow`, `resizeWindow` after invalidation.
+4. **Verification:** Integration tests must assert returned bounds match requested mutation without sleep/retry.
+5. Complete all remaining implementation-plan.md items with utmost excellence.
 
 - Maintain an exhaustive TODO list via the mandated tool before any code or plan edits; include every task from `implementation-plan.md`, every known deficiency, all active constraints, and motivational reminders.
 - Never stop execution mid-task and do not ask clarifying questions; infer next actions from the plan and constraints, and continue iterating until the entire plan is complete.

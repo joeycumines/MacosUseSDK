@@ -18,7 +18,7 @@
 
 ### **Current Reality (Single-Sentence Snapshot)**
 
-**Current Reality:** PR issues resolved - buildWindowResponseFromAX no longer calls refreshWindows(), avoiding CGWindowList lag; all integration tests pass including window resize/move assertions.
+**Current Reality:** Split-brain authority model implemented and verified - window mutations now return fresh AX bounds (no CGWindowList lag); all builds and integration tests pass; ready for remaining plan items.
 
 ### **Immediate Action Items (Next Things To Do)**
 
@@ -27,14 +27,6 @@
     - In `MacroExecutor.executeMethodCall("ClickElement")`, implement coordinate resolution from `elementId` or return UNIMPLEMENTED error.
 
 2. **Targeted tests (HIGH):**
-    - Unit tests: `WindowRegistry` (TTL, filtering) and `ObservationManager` window diffing.
-    - Integration: Pagination determinism for all `List*/Find*` RPCs (AIP‑158), state‑delta verification for window ops.
-
-4. **Small correctness/unification fixes (MEDIUM):**
-    - Unify `parsePID(fromName:)` (duplicated in `MacosUseServiceProvider` and `MacroExecutor`).
-    - In `MacroExecutor.executeMethodCall("ClickElement")`, implement coordinate resolution from `elementId` or return UNIMPLEMENTED error.
-
-5. **Targeted tests (HIGH):**
     - Unit tests: `WindowRegistry` (TTL, filtering) and `ObservationManager` window diffing.
     - Integration: Pagination determinism for all `List*/Find*` RPCs (AIP‑158), state‑delta verification for window ops.
 
@@ -343,11 +335,13 @@ Phase 3 narrows to **specific, high-impact gaps** between the existing service a
 
 **Current reality:**
 - Application and Window RPCs are implemented and usable.
+- ✅ Split-brain authority model fully implemented: AX for fresh bounds/title, registry for stable z-index/bundleID.
+- ✅ Window mutations (move/resize) return immediate AX state, no CGWindowList lag.
+- ✅ Integration tests verify window operations with fresh bounds assertions.
 
 **Phase 3 tasks:**
 - Harden error handling when applications or windows terminate unexpectedly.
-- Ensure window metadata (title, bounds, visibility, minimized state, bundle ID) is populated consistently.
-- Implement and test bundle ID resolution in `WindowRegistry` via `NSRunningApplication` to eliminate "unknown" bundle IDs.
+- Implement and test bundle ID resolution in `WindowRegistry` via `NSRunningApplication` to eliminate "unknown" bundle IDs (note: basic resolution already exists but may need hardening).
 
 ### **3.2 Element & Input Services**
 

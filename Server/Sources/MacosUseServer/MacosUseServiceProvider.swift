@@ -2910,76 +2910,69 @@ private extension MacosUseServiceProvider {
         try ParsingHelpers.parsePID(fromName: name)
     }
 
-    /// Build a Window response directly from an AXUIElement, bypassing CGWindowList lookups.
+    /// Build a Window response directly from an AXUIElement using split-brain authority model.
+    /// AX authority (fresh): bounds, title. Registry authority (stable): z-index, bundleID, visible.
     /// This is used after window operations where CGWindowList may be stale.
     func buildWindowResponseFromAX(
         name: String, pid _: pid_t, windowId: CGWindowID, window: AXUIElement,
     ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
-        // Get bounds and title from AXUIElement (MUST run on MainActor)
-        // CRITICAL: Bounds MUST come from AX, NOT WindowRegistry, because CGWindowList lags 10-100ms
-        let (bounds, title) = await MainActor.run { () -> (CGRect, String) in
+        // 1. Get Fresh AX Data (MainActor) - The Authority for Geometry
+        let (axBounds, axTitle) = await MainActor.run { () -> (Macosusesdk_V1_Bounds, String) in
             var posValue: CFTypeRef?
             var sizeValue: CFTypeRef?
-            let posResult = AXUIElementCopyAttributeValue(
-                window, kAXPositionAttribute as CFString, &posValue,
-            )
-            let sizeResult = AXUIElementCopyAttributeValue(
-                window, kAXSizeAttribute as CFString, &sizeValue,
-            )
 
-            var boundsResult = CGRect.zero
-            if posResult == .success, let unwrappedPosValue = posValue,
-               CFGetTypeID(unwrappedPosValue) == AXValueGetTypeID(),
-               sizeResult == .success, let unwrappedSizeValue = sizeValue,
-               CFGetTypeID(unwrappedSizeValue) == AXValueGetTypeID()
+            // Fetch Position
+            var bounds = Macosusesdk_V1_Bounds()
+            if AXUIElementCopyAttributeValue(window, kAXPositionAttribute as CFString, &posValue) == .success,
+               let val = posValue, CFGetTypeID(val) == AXValueGetTypeID()
             {
-                let pos = unsafeDowncast(unwrappedPosValue, to: AXValue.self)
-                let size = unsafeDowncast(unwrappedSizeValue, to: AXValue.self)
-                var position = CGPoint.zero
-                var windowSize = CGSize.zero
-                if AXValueGetValue(pos, .cgPoint, &position),
-                   AXValueGetValue(size, .cgSize, &windowSize)
-                {
-                    boundsResult = CGRect(origin: position, size: windowSize)
+                let axVal = unsafeDowncast(val, to: AXValue.self)
+                var point = CGPoint.zero
+                if AXValueGetValue(axVal, .cgPoint, &point) {
+                    bounds.x = Double(point.x)
+                    bounds.y = Double(point.y)
                 }
             }
 
-            var titleValue: CFTypeRef?
-            let titleResult = AXUIElementCopyAttributeValue(
-                window, kAXTitleAttribute as CFString, &titleValue,
-            )
-            let titleResult2 = if titleResult == .success, let titleStr = titleValue as? String {
-                titleStr
-            } else {
-                ""
+            // Fetch Size
+            if AXUIElementCopyAttributeValue(window, kAXSizeAttribute as CFString, &sizeValue) == .success,
+               let val = sizeValue, CFGetTypeID(val) == AXValueGetTypeID()
+            {
+                let axVal = unsafeDowncast(val, to: AXValue.self)
+                var size = CGSize.zero
+                if AXValueGetValue(axVal, .cgSize, &size) {
+                    bounds.width = Double(size.width)
+                    bounds.height = Double(size.height)
+                }
             }
 
-            return (boundsResult, titleResult2)
+            // Fetch Title
+            var title = ""
+            var titleValue: CFTypeRef?
+            if AXUIElementCopyAttributeValue(window, kAXTitleAttribute as CFString, &titleValue) == .success,
+               let str = titleValue as? String
+            {
+                title = str
+            }
+
+            return (bounds, title)
         }
 
-        // Query WindowRegistry for zIndex and bundleID WITHOUT forcing a refresh
-        // CRITICAL: Do NOT call refreshWindows() here - it triggers CGWindowListCopyWindowInfo
-        // which lags 10-100ms behind AX changes, defeating the purpose of using AX bounds.
-        // The registry is kept up-to-date by invalidate() calls after mutations and by
-        // periodic refreshes elsewhere, so we use whatever is cached (eventual consistency).
-        let registryWindow = try await windowRegistry.getWindow(windowId)
-        let zIndex = registryWindow?.layer ?? 0
-        let bundleID = registryWindow?.bundleID ?? ""
+        // 2. Get Metadata from Registry (No Refresh) - The Authority for Z-Index/Bundle
+        // We explicitly avoid refreshWindows() to prevent 100ms lag injection
+        let registryInfo = await windowRegistry.getLastKnownWindow(windowId)
 
-        return ServerResponse(
-            message: Macosusesdk_V1_Window.with {
-                $0.name = name
-                $0.title = title
-                $0.bounds = Macosusesdk_V1_Bounds.with {
-                    $0.x = bounds.origin.x
-                    $0.y = bounds.origin.y
-                    $0.width = bounds.size.width
-                    $0.height = bounds.size.height
-                }
-                $0.zIndex = Int32(zIndex)
-                $0.bundleID = bundleID
-            },
-        )
+        // 3. Construct Response
+        let response = Macosusesdk_V1_Window.with {
+            $0.name = name
+            $0.title = axTitle // AX Authority
+            $0.bounds = axBounds // AX Authority
+            $0.zIndex = Int32(registryInfo?.layer ?? 0) // Registry Authority
+            $0.bundleID = registryInfo?.bundleID ?? "" // Registry Authority
+            $0.visible = registryInfo?.isOnScreen ?? false // Registry Authority (defined as CG property)
+        }
+
+        return ServerResponse(message: response)
     }
 
     /// Find AXUIElement for a window, with fallback to kAXChildrenAttribute for minimized windows.
