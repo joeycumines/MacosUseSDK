@@ -1175,7 +1175,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
 
         // Try to get the AXUIElement and perform semantic action (MUST run on MainActor)
         if let axElement = await ElementRegistry.shared.getAXElement(elementID) {
-            let performResult = try await MainActor.run { () -> AXError in
+            let performResult = await MainActor.run { () -> AXError in
                 let actionName: String = switch req.action.lowercased() {
                 case "press", "click":
                     kAXPressAction as String
@@ -2916,7 +2916,8 @@ private extension MacosUseServiceProvider {
         name: String, pid _: pid_t, windowId: CGWindowID, window: AXUIElement,
     ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
         // Get bounds and title from AXUIElement (MUST run on MainActor)
-        let (bounds, title) = try await MainActor.run { () -> (CGRect, String) in
+        // CRITICAL: Bounds MUST come from AX, NOT WindowRegistry, because CGWindowList lags 10-100ms
+        let (bounds, title) = await MainActor.run { () -> (CGRect, String) in
             var posValue: CFTypeRef?
             var sizeValue: CFTypeRef?
             let posResult = AXUIElementCopyAttributeValue(
@@ -2956,9 +2957,11 @@ private extension MacosUseServiceProvider {
             return (boundsResult, titleResult2)
         }
 
-        // Refresh WindowRegistry and query for layer (zIndex) and bundleID
-        // Window resource contains ONLY cheap CoreGraphics data
-        try await windowRegistry.refreshWindows()
+        // Query WindowRegistry for zIndex and bundleID WITHOUT forcing a refresh
+        // CRITICAL: Do NOT call refreshWindows() here - it triggers CGWindowListCopyWindowInfo
+        // which lags 10-100ms behind AX changes, defeating the purpose of using AX bounds.
+        // The registry is kept up-to-date by invalidate() calls after mutations and by
+        // periodic refreshes elsewhere, so we use whatever is cached (eventual consistency).
         let registryWindow = try await windowRegistry.getWindow(windowId)
         let zIndex = registryWindow?.layer ?? 0
         let bundleID = registryWindow?.bundleID ?? ""

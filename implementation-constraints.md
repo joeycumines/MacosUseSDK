@@ -2,10 +2,11 @@
 
 ## Session Directives
 
-**CURRENT DIRECTIVE (2025-11-20):** Fix two CRITICAL correctness bugs from code review:
-1. Cache consistency race: Add `windowRegistry.invalidate(windowID:)` to `moveWindow` and `resizeWindow` handlers.
-2. Semantic data corruption: Fix `axHidden` assignment - must NOT use composite `visible` variable. Must query raw `kAXHiddenAttribute` to correctly distinguish minimized (false) from hidden (true).
-3. Complete all remaining implementation-plan.md items with utmost excellence.
+**CURRENT DIRECTIVE (2025-11-20):** Fix CRITICAL correctness bugs from rejected PR:
+1. **CGWindowList lag race**: Cache invalidation is insufficient because `CGWindowListCopyWindowInfo` updates asynchronously (10-100ms lag). Modify `buildWindowResponseFromAX` to source bounds directly from `kAXPositionAttribute` and `kAXSizeAttribute` instead of `WindowRegistry`.
+2. **axHidden fix is CORRECT**: Keep the existing fix that queries raw `kAXHiddenAttribute` to correctly distinguish minimized (false) from hidden (true).
+3. Retain `windowRegistry.invalidate` for eventual consistency but do NOT rely on it for immediate RPC response.
+4. Complete all remaining implementation-plan.md items with utmost excellence.
 
 - Maintain an exhaustive TODO list via the mandated tool before any code or plan edits; include every task from `implementation-plan.md`, every known deficiency, all active constraints, and motivational reminders.
 - Never stop execution mid-task and do not ask clarifying questions; infer next actions from the plan and constraints, and continue iterating until the entire plan is complete.
