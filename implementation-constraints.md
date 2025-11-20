@@ -2,7 +2,10 @@
 
 ## Session Directives
 
-**CURRENT DIRECTIVE (2025-11-20):** Fix visibility and fullscreen regressions in Window/WindowState proto and implementation. Restore `visible` field to Window (cheap CGWindowList data), rename WindowState.visible to ax_hidden (expensive AX data), and change WindowState.fullscreen to optional. Execute all remaining implementation-plan.md items until complete.
+**CURRENT DIRECTIVE (2025-11-20):** Fix two CRITICAL correctness bugs from code review:
+1. Cache consistency race: Add `windowRegistry.invalidate(windowID:)` to `moveWindow` and `resizeWindow` handlers.
+2. Semantic data corruption: Fix `axHidden` assignment - must NOT use composite `visible` variable. Must query raw `kAXHiddenAttribute` to correctly distinguish minimized (false) from hidden (true).
+3. Complete all remaining implementation-plan.md items with utmost excellence.
 
 - Maintain an exhaustive TODO list via the mandated tool before any code or plan edits; include every task from `implementation-plan.md`, every known deficiency, all active constraints, and motivational reminders.
 - Never stop execution mid-task and do not ask clarifying questions; infer next actions from the plan and constraints, and continue iterating until the entire plan is complete.

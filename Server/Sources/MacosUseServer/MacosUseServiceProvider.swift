@@ -550,6 +550,9 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
             }
         }
 
+        // Invalidate cache to ensure subsequent reads reflect the new position immediately
+        await windowRegistry.invalidate(windowID: windowId)
+
         // Build response directly from AXUIElement (CGWindowList may be stale)
         return try await buildWindowResponseFromAX(name: req.name, pid: pid, windowId: windowId, window: window)
     }
@@ -604,6 +607,9 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
                 }
             }
         }
+
+        // Invalidate cache to ensure subsequent reads reflect the new size immediately
+        await windowRegistry.invalidate(windowID: windowId)
 
         // Build response directly from AXUIElement (CGWindowList may be stale)
         return try await buildWindowResponseFromAX(name: req.name, pid: pid, windowId: windowId, window: window)
@@ -3203,14 +3209,17 @@ private extension MacosUseServiceProvider {
                 }
             }
 
-            // Check visible
+            // Query kAXHiddenAttribute directly for axHidden field
+            // CRITICAL: Do NOT use composite "visible" variable that might conflate hidden with minimized
+            // axHidden must ONLY reflect kAXHiddenAttribute (window explicitly hidden by app),
+            // NOT minimized state (window in dock)
             var hiddenValue: CFTypeRef?
-            let visible = if AXUIElementCopyAttributeValue(window, kAXHiddenAttribute as CFString, &hiddenValue) == .success,
-                             let isHidden = hiddenValue as? Bool
+            let axHidden = if AXUIElementCopyAttributeValue(window, kAXHiddenAttribute as CFString, &hiddenValue) == .success,
+                              let isHidden = hiddenValue as? Bool
             {
-                !isHidden
+                isHidden
             } else {
-                true // Assume visible if attribute missing
+                false // Assume not hidden if attribute missing or query fails
             }
 
             // Check minimized
@@ -3243,7 +3252,7 @@ private extension MacosUseServiceProvider {
                 $0.closable = closable
                 $0.modal = modal
                 $0.floating = floating
-                $0.axHidden = !visible // Invert: visible=false means ax_hidden=true
+                $0.axHidden = axHidden
                 $0.minimized = minimized
                 $0.focused = focused
                 if let fullscreen {

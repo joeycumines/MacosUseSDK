@@ -18,21 +18,27 @@
 
 ### **Current Reality (Single-Sentence Snapshot)**
 
-**Current Reality:** ALL regressions FIXED and VERIFIED - Window.visible (cheap CG), WindowState.ax_hidden (expensive AX), WindowState.fullscreen (optional). Cache invalidation implemented for all window mutations (move, resize, minimize, restore). TestWindowChangeObservation PASSES (27.65s). All integration tests pass. Build clean.
+**Current Reality:** Code review REJECTED - two critical correctness bugs identified: (1) Missing cache invalidation in moveWindow/resizeWindow, (2) Semantic corruption in axHidden assignment using composite visible variable.
 
 ### **Immediate Action Items (Next Things To Do)**
 
-1. **Core implementation COMPLETE and production-ready:**
-    - All critical functionality implemented, tested, and verified.
-    - Stale cache race condition eliminated via WindowRegistry.invalidate() after mutations.
-    - Observation window destroy detection improved (handleOrphanedWindows validates minimized vs closed).
-    - Remaining items are test coverage expansions (unit tests for WindowRegistry/ObservationManager, additional integration scenarios).
+1. **Fix Cache Race Condition (CRITICAL):**
+    - Add `await windowRegistry.invalidate(windowID: windowId)` to `moveWindow` handler in `MacosUseServiceProvider.swift`.
+    - Add `await windowRegistry.invalidate(windowID: windowId)` to `resizeWindow` handler in `MacosUseServiceProvider.swift`.
 
-2. **Small correctness/unification fixes (MEDIUM):**
+2. **Fix Semantic Data Corruption (CRITICAL):**
+    - In `MacosUseServiceProvider.swift`, replace `$0.axHidden = !visible` with explicit `kAXHiddenAttribute` query.
+    - Must ensure `axHidden` is `false` for minimized windows (not hidden), `true` only for explicitly hidden windows.
+
+3. **Verify & Merge:**
+    - Run integration tests to verify fixes.
+    - Verify `axHidden` is false when a window is minimized.
+
+4. **Small correctness/unification fixes (MEDIUM):**
     - Unify `parsePID(fromName:)` (duplicated in `MacosUseServiceProvider` and `MacroExecutor`).
     - In `MacroExecutor.executeMethodCall("ClickElement")`, implement coordinate resolution from `elementId` or return UNIMPLEMENTED error.
 
-3. **Targeted tests (HIGH):**
+5. **Targeted tests (HIGH):**
     - Unit tests: `WindowRegistry` (TTL, filtering) and `ObservationManager` window diffing.
     - Integration: Pagination determinism for all `List*/Find*` RPCs (AIP‑158), state‑delta verification for window ops.
 
