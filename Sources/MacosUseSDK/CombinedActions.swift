@@ -1,7 +1,9 @@
 // swiftlint:disable all -- Largely unchanged from upstream.
 
 import CoreGraphics  // Needed for CGPoint, CGKeyCode, CGEventFlags
-import Foundation  // Needed for fputs, etc.
+import OSLog
+
+private let logger = sdkLogger(category: "CombinedActions")
 
 /// Represents a change in a specific attribute of an accessibility element.
 public struct AttributeChangeDetail: Codable, Sendable {
@@ -27,9 +29,8 @@ public struct AttributeChangeDetail: Codable, Sendable {
       // This initializer should not be called directly for text.
       // Handle text changes via the dedicated text initializer below.
       // For safety, provide a basic fallback if called incorrectly.
-      fputs(
-        "warning: Generic AttributeChangeDetail initializer called for 'text'. Use text-specific init.\n",
-        stderr)
+      logger.warning(
+        "Generic AttributeChangeDetail initializer called for 'text'. Use text-specific init.")
       self.attributeName = attribute
       self.oldValue = before.map { $0.description }
       self.newValue = after.map { $0.description }
@@ -131,27 +132,24 @@ public enum CombinedActions {
   @MainActor  // Ensures UI-related parts like activation happen on the main thread
   public static func openAndTraverseApp(identifier: String, onlyVisibleElements: Bool = false)
     async throws -> ResponseData {
-    fputs(
-      "info: starting combined action 'openAndTraverseApp' for identifier: '\(identifier)'\n",
-      stderr)
+    logger.info(
+      "starting combined action 'openAndTraverseApp' for identifier: '\(identifier, privacy: .private)'")
 
     // Step 1: Open or Activate the Application
-    fputs("info: calling openApplication...\n", stderr)
+    logger.info("calling openApplication...")
     let openResult = try await MacosUseSDK.openApplication(identifier: identifier)
-    fputs(
-      "info: openApplication completed successfully. PID: \(openResult.pid), App Name: \(openResult.appName)\n",
-      stderr)
+    logger.info(
+      "openApplication completed successfully. PID: \(openResult.pid, privacy: .public), App Name: \(openResult.appName, privacy: .private)")
 
     // Step 2: Traverse the Accessibility Tree of the opened/activated application
-    fputs(
-      "info: calling traverseAccessibilityTree for PID \(openResult.pid) (Visible Only: \(onlyVisibleElements))...\n",
-      stderr)
+    logger.info(
+      "calling traverseAccessibilityTree for PID \(openResult.pid, privacy: .public) (Visible Only: \(onlyVisibleElements, privacy: .public))...")
     let traversalResult = try MacosUseSDK.traverseAccessibilityTree(
       pid: openResult.pid, onlyVisibleElements: onlyVisibleElements)
-    fputs("info: traverseAccessibilityTree completed successfully.\n", stderr)
+    logger.info("traverseAccessibilityTree completed successfully.")
 
     // Step 3: Return the traversal result
-    fputs("info: combined action 'openAndTraverseApp' finished.\n", stderr)
+    logger.info("combined action 'openAndTraverseApp' finished.")
     return traversalResult
   }
 
@@ -169,28 +167,26 @@ public enum CombinedActions {
   public static func clickAndTraverseApp(
     point: CGPoint, pid: Int32, onlyVisibleElements: Bool = false
   ) async throws -> ResponseData {
-    fputs(
-      "info: starting combined action 'clickAndTraverseApp' at (\(point.x), \(point.y)) for PID \(pid)\n",
-      stderr)
+    logger.info(
+      "starting combined action 'clickAndTraverseApp' at (\(point.x, privacy: .public), \(point.y, privacy: .public)) for PID \(pid, privacy: .public)")
 
     // Step 1: Perform the click
-    fputs("info: calling clickMouse...\n", stderr)
+    logger.info("calling clickMouse...")
     try MacosUseSDK.clickMouse(at: point)
-    fputs("info: clickMouse completed successfully.\n", stderr)
+    logger.info("clickMouse completed successfully.")
 
     // Add a small delay to allow UI to potentially update after the click
     try await Task.sleep(nanoseconds: 100_000_000)  // 100 milliseconds
 
     // Step 2: Traverse the Accessibility Tree
-    fputs(
-      "info: calling traverseAccessibilityTree for PID \(pid) (Visible Only: \(onlyVisibleElements))...\n",
-      stderr)
+    logger.info(
+      "calling traverseAccessibilityTree for PID \(pid, privacy: .public) (Visible Only: \(onlyVisibleElements, privacy: .public))...")
     let traversalResult = try MacosUseSDK.traverseAccessibilityTree(
       pid: pid, onlyVisibleElements: onlyVisibleElements)
-    fputs("info: traverseAccessibilityTree completed successfully.\n", stderr)
+    logger.info("traverseAccessibilityTree completed successfully.")
 
     // Step 3: Return the traversal result
-    fputs("info: combined action 'clickAndTraverseApp' finished.\n", stderr)
+    logger.info("combined action 'clickAndTraverseApp' finished.")
     return traversalResult
   }
 
@@ -207,28 +203,26 @@ public enum CombinedActions {
   public static func pressKeyAndTraverseApp(
     keyCode: CGKeyCode, flags: CGEventFlags = [], pid: Int32, onlyVisibleElements: Bool = false
   ) async throws -> ResponseData {
-    fputs(
-      "info: starting combined action 'pressKeyAndTraverseApp' (key: \(keyCode), flags: \(flags.rawValue)) for PID \(pid)\n",
-      stderr)
+    logger.info(
+      "starting combined action 'pressKeyAndTraverseApp' (key: \(keyCode, privacy: .public), flags: \(flags.rawValue, privacy: .public)) for PID \(pid, privacy: .public)")
 
     // Step 1: Perform the key press
-    fputs("info: calling pressKey...\n", stderr)
+    logger.info("calling pressKey...")
     try MacosUseSDK.pressKey(keyCode: keyCode, flags: flags)
-    fputs("info: pressKey completed successfully.\n", stderr)
+    logger.info("pressKey completed successfully.")
 
     // Add a small delay
     try await Task.sleep(nanoseconds: 100_000_000)  // 100 milliseconds
 
     // Step 2: Traverse the Accessibility Tree
-    fputs(
-      "info: calling traverseAccessibilityTree for PID \(pid) (Visible Only: \(onlyVisibleElements))...\n",
-      stderr)
+    logger.info(
+      "calling traverseAccessibilityTree for PID \(pid, privacy: .public) (Visible Only: \(onlyVisibleElements, privacy: .public))...")
     let traversalResult = try MacosUseSDK.traverseAccessibilityTree(
       pid: pid, onlyVisibleElements: onlyVisibleElements)
-    fputs("info: traverseAccessibilityTree completed successfully.\n", stderr)
+    logger.info("traverseAccessibilityTree completed successfully.")
 
     // Step 3: Return the traversal result
-    fputs("info: combined action 'pressKeyAndTraverseApp' finished.\n", stderr)
+    logger.info("combined action 'pressKeyAndTraverseApp' finished.")
     return traversalResult
   }
 
@@ -244,28 +238,26 @@ public enum CombinedActions {
   public static func writeTextAndTraverseApp(
     text: String, pid: Int32, onlyVisibleElements: Bool = false
   ) async throws -> ResponseData {
-    fputs(
-      "info: starting combined action 'writeTextAndTraverseApp' (text: \"\(text)\") for PID \(pid)\n",
-      stderr)
+    logger.info(
+      "starting combined action 'writeTextAndTraverseApp' (text: \"\(text, privacy: .private)\") for PID \(pid, privacy: .public)")
 
     // Step 1: Perform the text writing
-    fputs("info: calling writeText...\n", stderr)
+    logger.info("calling writeText...")
     try MacosUseSDK.writeText(text)
-    fputs("info: writeText completed successfully.\n", stderr)
+    logger.info("writeText completed successfully.")
 
     // Add a small delay
     try await Task.sleep(nanoseconds: 100_000_000)  // 100 milliseconds
 
     // Step 2: Traverse the Accessibility Tree
-    fputs(
-      "info: calling traverseAccessibilityTree for PID \(pid) (Visible Only: \(onlyVisibleElements))...\n",
-      stderr)
+    logger.info(
+      "calling traverseAccessibilityTree for PID \(pid, privacy: .public) (Visible Only: \(onlyVisibleElements, privacy: .public))...")
     let traversalResult = try MacosUseSDK.traverseAccessibilityTree(
       pid: pid, onlyVisibleElements: onlyVisibleElements)
-    fputs("info: traverseAccessibilityTree completed successfully.\n", stderr)
+    logger.info("traverseAccessibilityTree completed successfully.")
 
     // Step 3: Return the traversal result
-    fputs("info: combined action 'writeTextAndTraverseApp' finished.\n", stderr)
+    logger.info("combined action 'writeTextAndTraverseApp' finished.")
     return traversalResult
   }
 
@@ -280,20 +272,19 @@ public enum CombinedActions {
   /// - Returns: A `TraversalDiff` struct containing added and removed elements.
   private static func calculateDiff(beforeElements: [ElementData], afterElements: [ElementData])
     -> TraversalDiff {
-    fputs(
-      "debug: calculating diff between \(beforeElements.count) (before) and \(afterElements.count) (after) elements.\n",
-      stderr)
+    logger.debug(
+      "calculating diff between \(beforeElements.count, privacy: .public) (before) and \(afterElements.count, privacy: .public) (after) elements.")
     // Convert arrays to Sets for efficient comparison. Relies on ElementData being Hashable.
     let beforeSet = Set(beforeElements)
     let afterSet = Set(afterElements)
 
     // Elements present in 'after' but not in 'before' are added.
     let addedElements = Array(afterSet.subtracting(beforeSet))
-    fputs("debug: diff calculation - found \(addedElements.count) added elements.\n", stderr)
+    logger.debug("diff calculation - found \(addedElements.count, privacy: .public) added elements.")
 
     // Elements present in 'before' but not in 'after' are removed.
     let removedElements = Array(beforeSet.subtracting(afterSet))
-    fputs("debug: diff calculation - found \(removedElements.count) removed elements.\n", stderr)
+    logger.debug("diff calculation - found \(removedElements.count, privacy: .public) removed elements.")
 
     // Sort results for consistent output (optional, but helpful)
     let sortedAdded = addedElements.sorted(by: elementSortPredicate)
@@ -332,45 +323,43 @@ public enum CombinedActions {
     onlyVisibleElements: Bool = false,
     delayAfterActionNano: UInt64 = 100_000_000  // 100 ms default
   ) async throws -> ActionDiffResult {
-    fputs(
-      "info: starting combined action 'clickWithDiff' at (\(point.x), \(point.y)) for PID \(pid)\n",
-      stderr)
+    logger.info(
+      "starting combined action 'clickWithDiff' at (\(point.x, privacy: .public), \(point.y, privacy: .public)) for PID \(pid, privacy: .public)")
 
     // Step 1: Traverse Before Action
-    fputs("info: calling traverseAccessibilityTree (before action)...\n", stderr)
+    logger.info("calling traverseAccessibilityTree (before action)...")
     let beforeTraversal = try MacosUseSDK.traverseAccessibilityTree(
       pid: pid, onlyVisibleElements: onlyVisibleElements)
-    fputs("info: traversal (before action) completed.\n", stderr)
+    logger.info("traversal (before action) completed.")
 
     // Step 2: Perform the Click
-    fputs("info: calling clickMouse...\n", stderr)
+    logger.info("calling clickMouse...")
     try MacosUseSDK.clickMouse(at: point)
-    fputs("info: clickMouse completed successfully.\n", stderr)
+    logger.info("clickMouse completed successfully.")
 
     // Step 3: Wait for UI to Update
-    fputs(
-      "info: waiting \(Double(delayAfterActionNano) / 1_000_000_000.0) seconds after action...\n",
-      stderr)
+    logger.info(
+      "waiting \(Double(delayAfterActionNano) / 1_000_000_000.0, privacy: .public) seconds after action...")
     try await Task.sleep(nanoseconds: delayAfterActionNano)
 
     // Step 4: Traverse After Action
-    fputs("info: calling traverseAccessibilityTree (after action)...\n", stderr)
+    logger.info("calling traverseAccessibilityTree (after action)...")
     let afterTraversal = try MacosUseSDK.traverseAccessibilityTree(
       pid: pid, onlyVisibleElements: onlyVisibleElements)
-    fputs("info: traversal (after action) completed.\n", stderr)
+    logger.info("traversal (after action) completed.")
 
     // Step 5: Calculate Diff
-    fputs("info: calculating traversal diff...\n", stderr)
+    logger.info("calculating traversal diff...")
     let diff = calculateDiff(
       beforeElements: beforeTraversal.elements, afterElements: afterTraversal.elements)
-    fputs("info: diff calculation completed.\n", stderr)
+    logger.info("diff calculation completed.")
 
     // Step 6: Prepare and Return Result
     let result = ActionDiffResult(
       afterAction: afterTraversal,
       diff: diff
     )
-    fputs("info: combined action 'clickWithDiff' finished.\n", stderr)
+    logger.info("combined action 'clickWithDiff' finished.")
     return result
   }
 
@@ -392,45 +381,43 @@ public enum CombinedActions {
     onlyVisibleElements: Bool = false,
     delayAfterActionNano: UInt64 = 100_000_000  // 100 ms default
   ) async throws -> ActionDiffResult {
-    fputs(
-      "info: starting combined action 'pressKeyWithDiff' (key: \(keyCode), flags: \(flags.rawValue)) for PID \(pid)\n",
-      stderr)
+    logger.info(
+      "starting combined action 'pressKeyWithDiff' (key: \(keyCode, privacy: .public), flags: \(flags.rawValue, privacy: .public)) for PID \(pid, privacy: .public)")
 
     // Step 1: Traverse Before Action
-    fputs("info: calling traverseAccessibilityTree (before action)...\n", stderr)
+    logger.info("calling traverseAccessibilityTree (before action)...")
     let beforeTraversal = try MacosUseSDK.traverseAccessibilityTree(
       pid: pid, onlyVisibleElements: onlyVisibleElements)
-    fputs("info: traversal (before action) completed.\n", stderr)
+    logger.info("traversal (before action) completed.")
 
     // Step 2: Perform the Key Press
-    fputs("info: calling pressKey...\n", stderr)
+    logger.info("calling pressKey...")
     try MacosUseSDK.pressKey(keyCode: keyCode, flags: flags)
-    fputs("info: pressKey completed successfully.\n", stderr)
+    logger.info("pressKey completed successfully.")
 
     // Step 3: Wait for UI to Update
-    fputs(
-      "info: waiting \(Double(delayAfterActionNano) / 1_000_000_000.0) seconds after action...\n",
-      stderr)
+    logger.info(
+      "waiting \(Double(delayAfterActionNano) / 1_000_000_000.0, privacy: .public) seconds after action...")
     try await Task.sleep(nanoseconds: delayAfterActionNano)
 
     // Step 4: Traverse After Action
-    fputs("info: calling traverseAccessibilityTree (after action)...\n", stderr)
+    logger.info("calling traverseAccessibilityTree (after action)...")
     let afterTraversal = try MacosUseSDK.traverseAccessibilityTree(
       pid: pid, onlyVisibleElements: onlyVisibleElements)
-    fputs("info: traversal (after action) completed.\n", stderr)
+    logger.info("traversal (after action) completed.")
 
     // Step 5: Calculate Diff
-    fputs("info: calculating traversal diff...\n", stderr)
+    logger.info("calculating traversal diff...")
     let diff = calculateDiff(
       beforeElements: beforeTraversal.elements, afterElements: afterTraversal.elements)
-    fputs("info: diff calculation completed.\n", stderr)
+    logger.info("diff calculation completed.")
 
     // Step 6: Prepare and Return Result
     let result = ActionDiffResult(
       afterAction: afterTraversal,
       diff: diff
     )
-    fputs("info: combined action 'pressKeyWithDiff' finished.\n", stderr)
+    logger.info("combined action 'pressKeyWithDiff' finished.")
     return result
   }
 
@@ -450,45 +437,43 @@ public enum CombinedActions {
     onlyVisibleElements: Bool = false,
     delayAfterActionNano: UInt64 = 100_000_000  // 100 ms default
   ) async throws -> ActionDiffResult {
-    fputs(
-      "info: starting combined action 'writeTextWithDiff' (text: \"\(text)\") for PID \(pid)\n",
-      stderr)
+    logger.info(
+      "starting combined action 'writeTextWithDiff' (text: \"\(text, privacy: .private)\") for PID \(pid, privacy: .public)")
 
     // Step 1: Traverse Before Action
-    fputs("info: calling traverseAccessibilityTree (before action)...\n", stderr)
+    logger.info("calling traverseAccessibilityTree (before action)...")
     let beforeTraversal = try MacosUseSDK.traverseAccessibilityTree(
       pid: pid, onlyVisibleElements: onlyVisibleElements)
-    fputs("info: traversal (before action) completed.\n", stderr)
+    logger.info("traversal (before action) completed.")
 
     // Step 2: Perform the Text Writing
-    fputs("info: calling writeText...\n", stderr)
+    logger.info("calling writeText...")
     try MacosUseSDK.writeText(text)
-    fputs("info: writeText completed successfully.\n", stderr)
+    logger.info("writeText completed successfully.")
 
     // Step 3: Wait for UI to Update
-    fputs(
-      "info: waiting \(Double(delayAfterActionNano) / 1_000_000_000.0) seconds after action...\n",
-      stderr)
+    logger.info(
+      "waiting \(Double(delayAfterActionNano) / 1_000_000_000.0, privacy: .public) seconds after action...")
     try await Task.sleep(nanoseconds: delayAfterActionNano)
 
     // Step 4: Traverse After Action
-    fputs("info: calling traverseAccessibilityTree (after action)...\n", stderr)
+    logger.info("calling traverseAccessibilityTree (after action)...")
     let afterTraversal = try MacosUseSDK.traverseAccessibilityTree(
       pid: pid, onlyVisibleElements: onlyVisibleElements)
-    fputs("info: traversal (after action) completed.\n", stderr)
+    logger.info("traversal (after action) completed.")
 
     // Step 5: Calculate Diff
-    fputs("info: calculating traversal diff...\n", stderr)
+    logger.info("calculating traversal diff...")
     let diff = calculateDiff(
       beforeElements: beforeTraversal.elements, afterElements: afterTraversal.elements)
-    fputs("info: diff calculation completed.\n", stderr)
+    logger.info("diff calculation completed.")
 
     // Step 6: Prepare and Return Result
     let result = ActionDiffResult(
       afterAction: afterTraversal,
       diff: diff
     )
-    fputs("info: combined action 'writeTextWithDiff' finished.\n", stderr)
+    logger.info("combined action 'writeTextWithDiff' finished.")
     return result
   }
 
@@ -517,66 +502,61 @@ public enum CombinedActions {
     traversalHighlightDuration: Double = 3.0,  // Duration for highlighting elements
     delayAfterActionNano: UInt64 = 100_000_000  // 100 ms default
   ) async throws -> ActionDiffResult {
-    fputs(
-      "info: starting combined action 'clickWithActionAndTraversalHighlight' at (\(point.x), \(point.y)) for PID \(pid)\n",
-      stderr)
+    logger.info(
+      "starting combined action 'clickWithActionAndTraversalHighlight' at (\(point.x, privacy: .public), \(point.y, privacy: .public)) for PID \(pid, privacy: .public)")
 
     // Step 1: Traverse Before Action
-    fputs("info: calling traverseAccessibilityTree (before action)...\n", stderr)
+    logger.info("calling traverseAccessibilityTree (before action)...")
     let beforeTraversal = try MacosUseSDK.traverseAccessibilityTree(
       pid: pid, onlyVisibleElements: onlyVisibleElements)
-    fputs("info: traversal (before action) completed.\n", stderr)
+    logger.info("traversal (before action) completed.")
 
     // Step 2a: Perform the Click (Input Simulation Only)
-    fputs("info: calling clickMouse...\n", stderr)
+    logger.info("calling clickMouse...")
     try MacosUseSDK.clickMouse(at: point)
-    fputs("info: clickMouse completed successfully.\n", stderr)
+    logger.info("clickMouse completed successfully.")
 
     // Step 2b: Dispatch Click Visualization
-    fputs(
-      "info: dispatching showVisualFeedback for click (duration: \(actionHighlightDuration)s)...\n",
-      stderr)
+    logger.info(
+      "dispatching showVisualFeedback for click (duration: \(actionHighlightDuration, privacy: .public)s)...")
     // Use Task to ensure it runs on MainActor, respecting showVisualFeedback's requirement
     Task { @MainActor in
       MacosUseSDK.showVisualFeedback(at: point, type: .circle, duration: actionHighlightDuration)
     }
-    fputs("info: showVisualFeedback for click dispatched.\n", stderr)
+    logger.info("showVisualFeedback for click dispatched.")
 
     // Step 3: Wait for UI to Update (after action, before second traversal)
-    fputs(
-      "info: waiting \(Double(delayAfterActionNano) / 1_000_000_000.0) seconds after action...\n",
-      stderr)
+    logger.info(
+      "waiting \(Double(delayAfterActionNano) / 1_000_000_000.0, privacy: .public) seconds after action...")
     try await Task.sleep(nanoseconds: delayAfterActionNano)
 
     // Step 4: Traverse After Action (Standard Traversal)
-    fputs("info: calling traverseAccessibilityTree (after action)...\n", stderr)
+    logger.info("calling traverseAccessibilityTree (after action)...")
     let afterTraversal = try MacosUseSDK.traverseAccessibilityTree(
       pid: pid, onlyVisibleElements: onlyVisibleElements)
-    fputs("info: traversal (after action) completed.\n", stderr)
+    logger.info("traversal (after action) completed.")
 
     // Step 5: Calculate Diff using data from the two traversals
-    fputs("info: calculating traversal diff...\n", stderr)
+    logger.info("calculating traversal diff...")
     let diff = calculateDiff(
       beforeElements: beforeTraversal.elements, afterElements: afterTraversal.elements)
-    fputs("info: diff calculation completed.\n", stderr)
+    logger.info("diff calculation completed.")
 
     // Step 6: Dispatch Highlighting of the "After" Elements
-    fputs(
-      "info: calling drawHighlightBoxes (duration: \(traversalHighlightDuration)s) for afterTraversal elements...\n",
-      stderr)
+    logger.info(
+      "calling drawHighlightBoxes (duration: \(traversalHighlightDuration, privacy: .public)s) for afterTraversal elements...")
     // This call returns immediately after dispatching the UI work.
     // It uses the @MainActor function drawHighlightBoxes.
     drawHighlightBoxes(for: afterTraversal.elements, duration: traversalHighlightDuration)
-    fputs("info: drawHighlightBoxes dispatched highlight drawing.\n", stderr)
+    logger.info("drawHighlightBoxes dispatched highlight drawing.")
 
     // Step 7: Prepare and Return Result (using data from the *second* traversal)
     let result = ActionDiffResult(
       afterAction: afterTraversal,  // Contains data from the second traversal
       diff: diff
     )
-    fputs(
-      "info: combined action 'clickWithActionAndTraversalHighlight' finished returning result.\n",
-      stderr)
+    logger.info(
+      "combined action 'clickWithActionAndTraversalHighlight' finished returning result.")
     // IMPORTANT: Highlighting cleanup happens asynchronously later.
     return result
   }
@@ -604,27 +584,25 @@ public enum CombinedActions {
     traversalHighlightDuration: Double = 3.0,  // Duration for highlighting elements
     delayAfterActionNano: UInt64 = 100_000_000  // 100 ms default
   ) async throws -> ActionDiffResult {
-    fputs(
-      "info: starting combined action 'pressKeyWithActionAndTraversalHighlight' (key: \(keyCode), flags: \(flags.rawValue)) for PID \(pid)\n",
-      stderr)
+    logger.info(
+      "starting combined action 'pressKeyWithActionAndTraversalHighlight' (key: \(keyCode, privacy: .public), flags: \(flags.rawValue, privacy: .public)) for PID \(pid, privacy: .public)")
 
     // Step 1: Traverse Before Action
-    fputs("info: calling traverseAccessibilityTree (before action)...\n", stderr)
+    logger.info("calling traverseAccessibilityTree (before action)...")
     let beforeTraversal = try MacosUseSDK.traverseAccessibilityTree(
       pid: pid, onlyVisibleElements: onlyVisibleElements)
-    fputs("info: traversal (before action) completed.\n", stderr)
+    logger.info("traversal (before action) completed.")
 
     // Step 2a: Perform the Key Press (Input Simulation Only)
-    fputs("info: calling pressKey (key: \(keyCode), flags: \(flags.rawValue))...\n", stderr)
+    logger.info("calling pressKey (key: \(keyCode, privacy: .public), flags: \(flags.rawValue, privacy: .public))...")
     try MacosUseSDK.pressKey(keyCode: keyCode, flags: flags)
-    fputs("info: pressKey completed successfully.\n", stderr)
+    logger.info("pressKey completed successfully.")
 
     // Step 2b: Dispatch Key Press Visualization (Caption)
     let captionText = "[KEY PRESS]"
     let captionSize = CGSize(width: 250, height: 80)  // Keep caption size definition here or centralize
-    fputs(
-      "info: dispatching showVisualFeedback for key press (duration: \(actionHighlightDuration)s)...\n",
-      stderr)
+    logger.info(
+      "dispatching showVisualFeedback for key press (duration: \(actionHighlightDuration, privacy: .public)s)...")
     Task { @MainActor in
       // Use the internal top-level function directly
       if let screenCenter = getMainScreenCenter() {
@@ -635,45 +613,42 @@ public enum CombinedActions {
           duration: actionHighlightDuration
         )
       } else {
-        fputs(
-          "warning: [\(#function)] could not get screen center for key press caption.\n", stderr)
+        logger.warning(
+          "[\(#function, privacy: .public)] could not get screen center for key press caption.")
       }
     }
-    fputs("info: showVisualFeedback for key press dispatched.\n", stderr)
+    logger.info("showVisualFeedback for key press dispatched.")
 
     // Step 3: Wait for UI to Update
-    fputs(
-      "info: waiting \(Double(delayAfterActionNano) / 1_000_000_000.0) seconds after action...\n",
-      stderr)
+    logger.info(
+      "waiting \(Double(delayAfterActionNano) / 1_000_000_000.0, privacy: .public) seconds after action...")
     try await Task.sleep(nanoseconds: delayAfterActionNano)
 
     // Step 4: Traverse After Action
-    fputs("info: calling traverseAccessibilityTree (after action)...\n", stderr)
+    logger.info("calling traverseAccessibilityTree (after action)...")
     let afterTraversal = try MacosUseSDK.traverseAccessibilityTree(
       pid: pid, onlyVisibleElements: onlyVisibleElements)
-    fputs("info: traversal (after action) completed.\n", stderr)
+    logger.info("traversal (after action) completed.")
 
     // Step 5: Calculate Diff
-    fputs("info: calculating traversal diff...\n", stderr)
+    logger.info("calculating traversal diff...")
     let diff = calculateDiff(
       beforeElements: beforeTraversal.elements, afterElements: afterTraversal.elements)
-    fputs("info: diff calculation completed.\n", stderr)
+    logger.info("diff calculation completed.")
 
     // Step 6: Dispatch Highlighting of the "After" Elements
-    fputs(
-      "info: calling drawHighlightBoxes (duration: \(traversalHighlightDuration)s) for afterTraversal elements...\n",
-      stderr)
+    logger.info(
+      "calling drawHighlightBoxes (duration: \(traversalHighlightDuration, privacy: .public)s) for afterTraversal elements...")
     drawHighlightBoxes(for: afterTraversal.elements, duration: traversalHighlightDuration)
-    fputs("info: drawHighlightBoxes dispatched highlight drawing.\n", stderr)
+    logger.info("drawHighlightBoxes dispatched highlight drawing.")
 
     // Step 7: Prepare and Return Result
     let result = ActionDiffResult(
       afterAction: afterTraversal,
       diff: diff
     )
-    fputs(
-      "info: combined action 'pressKeyWithActionAndTraversalHighlight' finished returning result.\n",
-      stderr)
+    logger.info(
+      "combined action 'pressKeyWithActionAndTraversalHighlight' finished returning result.")
     // IMPORTANT: Highlighting cleanup happens asynchronously later.
     return result
   }
@@ -699,29 +674,27 @@ public enum CombinedActions {
     traversalHighlightDuration: Double = 3.0,  // Duration for highlighting elements
     delayAfterActionNano: UInt64 = 100_000_000  // 100 ms default
   ) async throws -> ActionDiffResult {
-    fputs(
-      "info: starting combined action 'writeTextWithActionAndTraversalHighlight' (text: \"\(text)\") for PID \(pid)\n",
-      stderr)
+    logger.info(
+      "starting combined action 'writeTextWithActionAndTraversalHighlight' (text: \"\(text, privacy: .private)\") for PID \(pid, privacy: .public)")
 
     // Step 1: Traverse Before Action
-    fputs("info: calling traverseAccessibilityTree (before action)...\n", stderr)
+    logger.info("calling traverseAccessibilityTree (before action)...")
     let beforeTraversal = try MacosUseSDK.traverseAccessibilityTree(
       pid: pid, onlyVisibleElements: onlyVisibleElements)
-    fputs("info: traversal (before action) completed.\n", stderr)
+    logger.info("traversal (before action) completed.")
 
     // Step 2a: Perform the Text Writing (Input Simulation Only)
-    fputs("info: calling writeText (\"\(text)\")...\n", stderr)
+    logger.info("calling writeText (\"\(text, privacy: .private)\")...")
     try MacosUseSDK.writeText(text)
-    fputs("info: writeText completed successfully.\n", stderr)
+    logger.info("writeText completed successfully.")
 
     // Step 2b: Dispatch Text Writing Visualization (Caption)
     let defaultDuration = 1.0
     let calculatedDuration = max(defaultDuration, 0.5 + Double(text.count) * 0.05)
     let finalDuration = actionHighlightDuration ?? calculatedDuration  // Use provided or calculated duration
     let captionSize = CGSize(width: 450, height: 100)  // Keep caption size definition here or centralize
-    fputs(
-      "info: dispatching showVisualFeedback for write text (duration: \(finalDuration)s)...\n",
-      stderr)
+    logger.info(
+      "dispatching showVisualFeedback for write text (duration: \(finalDuration, privacy: .public)s)...")
     Task { @MainActor in
       // Use the internal top-level function directly
       if let screenCenter = getMainScreenCenter() {
@@ -732,45 +705,42 @@ public enum CombinedActions {
           duration: finalDuration
         )
       } else {
-        fputs(
-          "warning: [\(#function)] could not get screen center for write text caption.\n", stderr)
+        logger.warning(
+          "[\(#function, privacy: .public)] could not get screen center for write text caption.")
       }
     }
-    fputs("info: showVisualFeedback for write text dispatched.\n", stderr)
+    logger.info("showVisualFeedback for write text dispatched.")
 
     // Step 3: Wait for UI to Update
-    fputs(
-      "info: waiting \(Double(delayAfterActionNano) / 1_000_000_000.0) seconds after action...\n",
-      stderr)
+    logger.info(
+      "waiting \(Double(delayAfterActionNano) / 1_000_000_000.0, privacy: .public) seconds after action...")
     try await Task.sleep(nanoseconds: delayAfterActionNano)
 
     // Step 4: Traverse After Action
-    fputs("info: calling traverseAccessibilityTree (after action)...\n", stderr)
+    logger.info("calling traverseAccessibilityTree (after action)...")
     let afterTraversal = try MacosUseSDK.traverseAccessibilityTree(
       pid: pid, onlyVisibleElements: onlyVisibleElements)
-    fputs("info: traversal (after action) completed.\n", stderr)
+    logger.info("traversal (after action) completed.")
 
     // Step 5: Calculate Diff
-    fputs("info: calculating traversal diff...\n", stderr)
+    logger.info("calculating traversal diff...")
     let diff = calculateDiff(
       beforeElements: beforeTraversal.elements, afterElements: afterTraversal.elements)
-    fputs("info: diff calculation completed.\n", stderr)
+    logger.info("diff calculation completed.")
 
     // Step 6: Dispatch Highlighting of the "After" Elements
-    fputs(
-      "info: calling drawHighlightBoxes (duration: \(traversalHighlightDuration)s) for afterTraversal elements...\n",
-      stderr)
+    logger.info(
+      "calling drawHighlightBoxes (duration: \(traversalHighlightDuration, privacy: .public)s) for afterTraversal elements...")
     drawHighlightBoxes(for: afterTraversal.elements, duration: traversalHighlightDuration)
-    fputs("info: drawHighlightBoxes dispatched highlight drawing.\n", stderr)
+    logger.info("drawHighlightBoxes dispatched highlight drawing.")
 
     // Step 7: Prepare and Return Result
     let result = ActionDiffResult(
       afterAction: afterTraversal,
       diff: diff
     )
-    fputs(
-      "info: combined action 'writeTextWithActionAndTraversalHighlight' finished returning result.\n",
-      stderr)
+    logger.info(
+      "combined action 'writeTextWithActionAndTraversalHighlight' finished returning result.")
     // IMPORTANT: Highlighting cleanup happens asynchronously later.
     return result
   }

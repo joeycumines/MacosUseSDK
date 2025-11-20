@@ -2,6 +2,13 @@
 
 import AppKit
 import Foundation
+import OSLog
+
+import AppKit
+import Foundation
+import OSLog
+
+private let logger = sdkLogger(category: "AppOpener")
 
 // Define potential errors during app opening
 extension MacosUseSDKError {
@@ -52,7 +59,7 @@ private class AppOpenerOperation {
   init(identifier: String) {
     self.appIdentifier = identifier
     self.stepStartTime = overallStartTime  // Initialize step timer
-    fputs("info: starting AppOpenerOperation for: \(identifier)\n", stderr)
+    logger.info("starting AppOpenerOperation for: \(identifier, privacy: .private(mask: .hash))")
   }
 
   // Helper to log step completion times (Method definition)
@@ -60,7 +67,7 @@ private class AppOpenerOperation {
     let endTime = Date()
     let duration = endTime.timeIntervalSince(stepStartTime)
     let durationStr = String(format: "%.3f", duration)
-    fputs("info: [\(durationStr)s] finished '\(stepDescription)'\n", stderr)
+    logger.info("[\(durationStr, privacy: .public)s] finished '\(stepDescription, privacy: .public)'")
     stepStartTime = endTime  // Reset for next step
   }
 
@@ -76,38 +83,35 @@ private class AppOpenerOperation {
     // --- 1. Application Discovery ---
     // (Path checking logic...)
     if appIdentifier.hasSuffix(".app") && appIdentifier.contains("/") {
-      fputs("info: interpreting '\(appIdentifier)' as a path.\n", stderr)
+      logger.info("interpreting '\(self.appIdentifier, privacy: .private)' as a path.")
       let potentialURL = URL(fileURLWithPath: appIdentifier)
       var isDirectory: ObjCBool = false
       if FileManager.default.fileExists(atPath: potentialURL.path, isDirectory: &isDirectory)
         && isDirectory.boolValue && potentialURL.pathExtension == "app" {
         appURL = potentialURL
-        fputs("info: path confirmed as valid application bundle: \(potentialURL.path)\n", stderr)
+        logger.info("path confirmed as valid application bundle: \(potentialURL.path, privacy: .private)")
         if let bundle = Bundle(url: potentialURL) {
           bundleIdentifier = bundle.bundleIdentifier
           finalAppName =
             bundle.localizedInfoDictionary?["CFBundleName"] as? String ?? bundle.bundleIdentifier
-          fputs(
-            "info: derived bundleID: \(bundleIdentifier ?? "nil"), name: \(finalAppName ?? "nil") from path\n",
-            stderr)
+          logger.info(
+            "derived bundleID: \(bundleIdentifier ?? "nil", privacy: .public), name: \(finalAppName ?? "nil", privacy: .public) from path")
         }
       } else {
-        fputs(
-          "warning: provided path does not appear to be a valid application bundle: \(appIdentifier). Will try as name/bundleID.\n",
-          stderr)
+        logger.warning(
+          "provided path does not appear to be a valid application bundle: \(self.appIdentifier, privacy: .private). Will try as name/bundleID.")
       }
     }
 
     // (Name/BundleID search logic...)
     if appURL == nil {
-      fputs(
-        "info: interpreting '\(appIdentifier)' as an application name or bundleID, searching...\n",
-        stderr)
+      logger.info(
+        "interpreting '\(self.appIdentifier, privacy: .private)' as an application name or bundleID, searching...")
       if let foundURL = workspace.urlForApplication(withBundleIdentifier: appIdentifier) {
         appURL = foundURL
         bundleIdentifier = appIdentifier
-        fputs(
-          "info: found application url via bundleID '\(appIdentifier)': \(foundURL.path)\n", stderr)
+        logger.info(
+          "found application url via bundleID '\(self.appIdentifier, privacy: .public)': \(foundURL.path, privacy: .private)")
         if let bundle = Bundle(url: foundURL) {
           finalAppName =
             bundle.localizedInfoDictionary?["CFBundleName"] as? String ?? bundle.bundleIdentifier
@@ -119,16 +123,14 @@ private class AppOpenerOperation {
         ?? workspace.urlForApplication(
           toOpen: URL(fileURLWithPath: "/System/Applications/Utilities/\(appIdentifier).app")) {
         appURL = foundURLByName
-        fputs(
-          "info: found application url via name search '\(appIdentifier)': \(foundURLByName.path)\n",
-          stderr)
+        logger.info(
+          "found application url via name search '\(self.appIdentifier, privacy: .private)': \(foundURLByName.path, privacy: .private)")
         if let bundle = Bundle(url: foundURLByName) {
           bundleIdentifier = bundle.bundleIdentifier
           finalAppName =
             bundle.localizedInfoDictionary?["CFBundleName"] as? String ?? bundle.bundleIdentifier
-          fputs(
-            "info: derived bundleID: \(bundleIdentifier ?? "nil"), name: \(finalAppName ?? "nil") from found URL\n",
-            stderr)
+          logger.info(
+            "derived bundleID: \(bundleIdentifier ?? "nil", privacy: .public), name: \(finalAppName ?? "nil", privacy: .public) from found URL")
         }
       } else {
         logStepCompletion("application discovery (failed)")  // Call method
@@ -141,7 +143,7 @@ private class AppOpenerOperation {
 
     // (Guard statement logic...)
     guard let finalAppURL = appURL else {
-      fputs("error: unexpected error - application url is nil before launch attempt.\n", stderr)
+      logger.error("unexpected error - application url is nil before launch attempt.")
       throw MacosUseSDKError.AppOpenerError.unexpectedNilURL
     }
     // (Final app name determination...)
@@ -156,28 +158,27 @@ private class AppOpenerOperation {
     // --- 2. Pre-find PID if running ---
     // (PID finding logic...)
     if let bID = bundleIdentifier {
-      fputs("info: checking running applications for bundle id: \(bID)\n", stderr)
+      logger.info("checking running applications for bundle id: \(bID, privacy: .public)")
       if let runningApp = NSRunningApplication.runningApplications(withBundleIdentifier: bID).first {
         foundPID = runningApp.processIdentifier
-        fputs("info: found running instance with pid \(foundPID!) for bundle id \(bID).\n", stderr)
+        logger.info("found running instance with pid \(foundPID!, privacy: .public) for bundle id \(bID, privacy: .public).")
       } else {
-        fputs(
-          "info: no running instance found for bundle id \(bID) before activation attempt.\n",
-          stderr)
+        logger.info(
+          "no running instance found for bundle id \(bID, privacy: .public) before activation attempt.")
       }
     } else {
-      fputs(
-        "warning: no bundle identifier, attempting lookup by URL: \(finalAppURL.path)\n", stderr)
+      logger.warning(
+        "no bundle identifier, attempting lookup by URL: \(finalAppURL.path, privacy: .private)")
       for app in workspace.runningApplications {
         if app.bundleURL?.standardizedFileURL == finalAppURL.standardizedFileURL
           || app.executableURL?.standardizedFileURL == finalAppURL.standardizedFileURL {
           foundPID = app.processIdentifier
-          fputs("info: found running instance with pid \(foundPID!) matching URL.\n", stderr)
+          logger.info("found running instance with pid \(foundPID!, privacy: .public) matching URL.")
           break
         }
       }
       if foundPID == nil {
-        fputs("info: no running instance found by URL before activation attempt.\n", stderr)
+        logger.info("no running instance found by URL before activation attempt.")
       }
     }
     logStepCompletion(
@@ -185,21 +186,21 @@ private class AppOpenerOperation {
 
     // --- 3. Open/Activate Application ---
     // (Activation logic...)
-    fputs(
-      "info: attempting to open/activate application: \(finalAppName ?? appIdentifier)\n", stderr)
+    logger.info(
+      "attempting to open/activate application: \(finalAppName ?? appIdentifier, privacy: .private)")
     let configuration = NSWorkspace.OpenConfiguration()  // Define configuration locally
 
     do {
       // Await the async call AND extract the PID within an explicit MainActor Task
       // This replaces MainActor.run which caused issues in Swift 6.1 with async closures
       let pidAfterOpen = try await Task { @MainActor in
-        fputs("info: [Task @MainActor] executing workspace.openApplication...\n", stderr)
+        logger.info("[Task @MainActor] executing workspace.openApplication...")
         // The await happens *inside* the MainActor Task block
         let runningApp = try await workspace.openApplication(
           at: finalAppURL, configuration: configuration)
         // Access the non-Sendable property *inside* the MainActor Task block
         let pid = runningApp.processIdentifier
-        fputs("info: [Task @MainActor] got pid \(pid) from NSRunningApplication.\n", stderr)
+        logger.info("[Task @MainActor] got pid \(pid, privacy: .public) from NSRunningApplication.")
         // Return the Sendable pid_t
         return pid
       }.value  // Await the result of the Task
@@ -211,13 +212,12 @@ private class AppOpenerOperation {
 
       if let pid = foundPID {
         finalPID = pid
-        fputs("info: using pre-found pid \(pid).\n", stderr)
+        logger.info("using pre-found pid \(pid, privacy: .public).")
       } else {
         // Use the PID extracted immediately after the await
         finalPID = pidAfterOpen
-        fputs(
-          "info: using pid \(finalPID!) from newly launched/activated application instance.\n",
-          stderr)
+        logger.info(
+          "using pid \(finalPID!, privacy: .public) from newly launched/activated application instance.")
         foundPID = finalPID  // Update foundPID if it was initially nil
       }
       logStepCompletion("determining final pid (using \(finalPID!))")  // Call method
@@ -227,10 +227,9 @@ private class AppOpenerOperation {
       let processingTime = endTime.timeIntervalSince(overallStartTime)
       let formattedTime = String(format: "%.3f", processingTime)
 
-      fputs(
-        "success: application '\(finalAppName ?? appIdentifier)' active (pid: \(finalPID!)).\n",
-        stderr)
-      fputs("info: total processing time: \(formattedTime) seconds\n", stderr)
+      logger.info(
+        "success: application '\(finalAppName ?? appIdentifier, privacy: .private)' active (pid: \(finalPID!, privacy: .public)).")
+      logger.info("total processing time: \(formattedTime, privacy: .public) seconds")
 
       return AppOpenerResult(
         pid: finalPID!,
@@ -240,27 +239,26 @@ private class AppOpenerOperation {
 
     } catch {
       logStepCompletion("opening/activating application (failed)")  // Call method
-      fputs("error: activation call failed: \(error.localizedDescription)\n", stderr)
+      logger.error("activation call failed: \(error.localizedDescription, privacy: .auto)")
 
       if let pid = foundPID {
-        fputs(
-          "warning: activation failed, but PID \(pid) was found beforehand. Assuming it's running.\n",
-          stderr)
+        logger.warning(
+          "activation failed, but PID \(pid, privacy: .public) was found beforehand. Assuming it's running.")
         let endTime = Date()
         let processingTime = endTime.timeIntervalSince(overallStartTime)
         let formattedTime = String(format: "%.3f", processingTime)
-        fputs("info: total processing time: \(formattedTime) seconds\n", stderr)
+        logger.info("total processing time: \(formattedTime, privacy: .public) seconds")
         return AppOpenerResult(
           pid: pid,
           appName: finalAppName ?? appIdentifier,
           processingTimeSeconds: formattedTime
         )
       } else {
-        fputs("error: PID could not be determined after activation failure.\n", stderr)
+        logger.error("PID could not be determined after activation failure.")
         let endTime = Date()
         let processingTime = endTime.timeIntervalSince(overallStartTime)
         let formattedTime = String(format: "%.3f", processingTime)
-        fputs("info: total processing time (on failure): \(formattedTime) seconds\n", stderr)
+        logger.info("total processing time (on failure): \(formattedTime, privacy: .public) seconds")
         throw MacosUseSDKError.AppOpenerError.activationFailed(
           identifier: appIdentifier, underlyingError: error)
       }

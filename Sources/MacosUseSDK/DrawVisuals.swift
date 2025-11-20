@@ -4,6 +4,9 @@
 // REMOVED: import Cocoa
 import AppKit
 import Foundation
+import OSLog
+
+private let logger = sdkLogger(category: "DrawVisuals")
 
 // Define types of visual feedback
 public enum FeedbackType {
@@ -122,7 +125,7 @@ internal class OverlayView: NSView {
 
   // New method to draw the caption
   private func drawCaption(with text: String) {
-    fputs("debug: OverlayView drawing caption: '\(text)'\n", stderr)
+    logger.debug("OverlayView drawing caption: '\(text, privacy: .private)'")
 
     // Draw background
     captionBackgroundColor.setFill()
@@ -150,15 +153,13 @@ internal class OverlayView: NSView {
 
       // Basic truncation if text wider than available space (though less likely for centered captions)
       if textSize.width > availableRect.width && availableRect.width > 0 {
-        fputs(
-          "warning: Caption text '\(stringToDraw)' (\(textSize.width)) wider than available \(availableRect.width), may clip.\n",
-          stderr)
+        logger.warning(
+          "Caption text '\(stringToDraw, privacy: .private)' (\(textSize.width, privacy: .public)) wider than available \(availableRect.width, privacy: .public), may clip.")
         // Simple clipping will occur, could implement more complex truncation if needed
       }
       if textSize.height > availableRect.height {
-        fputs(
-          "warning: Caption text '\(stringToDraw)' (\(textSize.height)) taller than available \(availableRect.height), may clip.\n",
-          stderr)
+        logger.warning(
+          "Caption text '\(stringToDraw, privacy: .private)' (\(textSize.height, privacy: .public)) taller than available \(availableRect.height, privacy: .public), may clip.")
       }
 
       // Calculate position to center the text vertically and horizontally within the available rect
@@ -167,11 +168,11 @@ internal class OverlayView: NSView {
       let textRect = NSRect(x: textX, y: textY, width: availableRect.width, height: textSize.height)
 
       // Draw the text string centered
-      fputs(
-        "debug: OverlayView drawing caption text '\(stringToDraw)' in rect \(textRect)\n", stderr)
+      logger.debug(
+        "OverlayView drawing caption text '\(stringToDraw, privacy: .private)' in rect \(String(describing: textRect), privacy: .public)")
       (stringToDraw as NSString).draw(in: textRect, withAttributes: textAttributes)
     } else {
-      fputs("debug: OverlayView no caption text to draw.\n", stderr)
+      logger.debug("OverlayView no caption text to draw.")
     }
   }
 
@@ -196,7 +197,7 @@ internal class OverlayView: NSView {
 // ADDED: @MainActor annotation to ensure UI operations run on the main thread
 @MainActor
 internal func createOverlayWindow(frame: NSRect, type: FeedbackType) -> NSWindow {
-  fputs("debug: Creating overlay window with frame: \(frame), type: \(type)\n", stderr)  // Log includes type now
+  logger.debug("Creating overlay window with frame: \(String(describing: frame), privacy: .public), type: \(String(describing: type), privacy: .public)")  // Log includes type now
   // Now safe to call NSWindow initializer and set properties from here
   let window = NSWindow(
     contentRect: frame,
@@ -232,7 +233,7 @@ internal func createOverlayWindow(frame: NSRect, type: FeedbackType) -> NSWindow
 /// - Returns: CGPoint of the center in screen coordinates, or nil if main screen not found.
 public func getMainScreenCenter() -> CGPoint? {
   guard let mainScreen = NSScreen.main else {
-    fputs("error: could not get main screen.\n", stderr)
+    logger.error("could not get main screen.")
     return nil
   }
   let screenRect = mainScreen.frame
@@ -260,9 +261,8 @@ public func showVisualFeedback(
 ) {
   // Requires main thread for UI work
   guard Thread.isMainThread else {
-    fputs(
-      "warning: showVisualFeedback called off main thread, dispatching. Point: \(point), Type: \(type)\n",
-      stderr)
+    logger.warning(
+      "showVisualFeedback called off main thread, dispatching. Point: \(String(describing: point), privacy: .public), Type: \(String(describing: type), privacy: .public)")
     DispatchQueue.main.async {
       showVisualFeedback(at: point, type: type, size: size, duration: duration)
     }
@@ -280,29 +280,27 @@ public func showVisualFeedback(
     // Increased padding from 4.0 to 10.0
     let paddedSize = ceil(maxDiameter + 100.0)  // Add padding (e.g., 5 points on each side)
     effectiveSize = CGSize(width: paddedSize, height: paddedSize)
-    fputs(
-      "info: showVisualFeedback using calculated size \(effectiveSize) for .circle type (ignores input size \(size)).\n",
-      stderr)
+    logger.info(
+      "showVisualFeedback using calculated size \(String(describing: effectiveSize), privacy: .public) for .circle type (ignores input size \(String(describing: size), privacy: .public)).")
   } else {
     // Use provided or default size for other types (box, caption)
     effectiveSize = size
-    fputs(
-      "info: showVisualFeedback called for point \(point), type \(type), size \(effectiveSize), duration \(duration)s.\n",
-      stderr)
+    logger.info(
+      "showVisualFeedback called for point \(String(describing: point), privacy: .public), type \(String(describing: type), privacy: .public), size \(String(describing: effectiveSize), privacy: .public), duration \(duration, privacy: .public)s.")
   }
 
   // --- Coordinate Conversion (Using AppKit bottom-left origin) ---
   // Screen height is needed to convert the Y coordinate.
   let screenHeight = NSScreen.main?.frame.height ?? 0
   if screenHeight == 0 {
-    fputs("warning: Could not get main screen height, coordinates might be incorrect.\n", stderr)
+    logger.warning("Could not get main screen height, coordinates might be incorrect.")
   }
   // Calculate origin based on the center point provided and the *effective* size
   let originX = point.x - (effectiveSize.width / 2.0)
   let originY = screenHeight - point.y - (effectiveSize.height / 2.0)  // Convert Y from top-left to bottom-left
   let frame = NSRect(
     x: originX, y: originY, width: effectiveSize.width, height: effectiveSize.height)
-  fputs("debug: Creating feedback window with AppKit frame: \(frame)\n", stderr)
+  logger.debug("Creating feedback window with AppKit frame: \(String(describing: frame), privacy: .public)")
 
   // --- Create Window ---
   // Pass the calculated effectiveSize and frame to createOverlayWindow
@@ -316,7 +314,7 @@ public func showVisualFeedback(
     overlayView.wantsLayer = true  // Ensure the view has a layer for animation
 
     if case .circle = type {
-      fputs("debug: Applying pulse/fade animation to circle overlay layer.\n", stderr)
+      logger.debug("Applying pulse/fade animation to circle overlay layer.")
       // --- Circle Pulse/Fade Animation ---
       let scaleAnimation = CABasicAnimation(keyPath: "transform.scale")
       scaleAnimation.fromValue = 0.7
@@ -337,7 +335,7 @@ public func showVisualFeedback(
       overlayView.layer?.add(animationGroup, forKey: "pulseFadeEffect")
 
     } else if case .caption = type {
-      fputs("debug: Applying entrance and fade-out animations to caption overlay layer.\n", stderr)
+      logger.debug("Applying entrance and fade-out animations to caption overlay layer.")
 
       // --- Caption Entrance Animation (Scale Up & Fade In) ---
       let entranceDuration = 0.2  // Duration for the entrance effect
@@ -377,14 +375,14 @@ public func showVisualFeedback(
 
     } else {
       // Log if a type is added that doesn't have specific animation handling
-      fputs("debug: Animation skipped (unhandled FeedbackType or view issue).\n", stderr)
+      logger.debug("Animation skipped (unhandled FeedbackType or view issue).")
     }
   } else {
     // Log if contentView isn't the expected OverlayView or is nil
-    fputs("warning: Could not get OverlayView from window content for animation.\n", stderr)
+    logger.warning("Could not get OverlayView from window content for animation.")
   }
 
-  fputs("debug: Visual feedback window displayed. It will remain until the tool exits.\n", stderr)
+  logger.debug("Visual feedback window displayed. It will remain until the tool exits.")
 }
 
 // --- NEW Public API Function for Drawing Highlight Boxes ---
@@ -403,9 +401,8 @@ public func showVisualFeedback(
 /// - Parameter duration: The time in seconds for which the overlay windows should be visible. Defaults to 3.0 seconds.
 @MainActor  // Ensure UI work happens on the main thread
 public func drawHighlightBoxes(for elementsToHighlightInput: [ElementData], duration: Double = 3.0) {
-  fputs(
-    "info: drawHighlightBoxes called for \(elementsToHighlightInput.count) elements, duration \(duration)s.\n",
-    stderr)
+  logger.info(
+    "drawHighlightBoxes called for \(elementsToHighlightInput.count, privacy: .public) elements, duration \(duration, privacy: .public)s.")
 
   // 1. Filter elements that have geometry needed for highlighting
   //    (Moved filtering here from the old highlightVisibleElements)
@@ -416,29 +413,26 @@ public func drawHighlightBoxes(for elementsToHighlightInput: [ElementData], dura
 
   // 2. Check if there's anything to highlight
   if elementsToHighlight.isEmpty {
-    fputs("info: No elements with valid geometry provided to highlight.\n", stderr)
+    logger.info("No elements with valid geometry provided to highlight.")
     return  // Nothing to do
   }
 
-  fputs(
-    "info: Filtered down to \(elementsToHighlight.count) elements with valid geometry to highlight.\n",
-    stderr)
+  logger.info(
+    "Filtered down to \(elementsToHighlight.count, privacy: .public) elements with valid geometry to highlight.")
 
   // 3. Dispatch UI work to the main thread asynchronously
   DispatchQueue.main.async {  // This block executes on the main actor
     var overlayWindows: [NSWindow] = []
 
-    fputs("info: [Main Thread] Creating \(elementsToHighlight.count) overlay windows...\n", stderr)
+    logger.info("[Main Thread] Creating \(elementsToHighlight.count, privacy: .public) overlay windows...")
 
     let screenHeight = NSScreen.main?.frame.height ?? 0
     if screenHeight == 0 {
-      fputs(
-        "warning: [Main Thread] Could not get main screen height, coordinates might be incorrect.\n",
-        stderr)
+      logger.warning(
+        "[Main Thread] Could not get main screen height, coordinates might be incorrect.")
     } else {
-      fputs(
-        "debug: [Main Thread] Main screen height for coordinate conversion: \(screenHeight)\n",
-        stderr)
+      logger.debug(
+        "[Main Thread] Main screen height for coordinate conversion: \(screenHeight, privacy: .public)")
     }
 
     for element in elementsToHighlight {
@@ -457,13 +451,12 @@ public func drawHighlightBoxes(for elementsToHighlightInput: [ElementData], dura
       window.makeKeyAndOrderFront(nil)
     }
 
-    fputs(
-      "info: [Main Thread] Displayed \(overlayWindows.count) overlays. They will remain until the tool exits.\n",
-      stderr)
+    logger.info(
+      "[Main Thread] Displayed \(overlayWindows.count, privacy: .public) overlays. They will remain until the tool exits.")
 
   }  // End of DispatchQueue.main.async block
 
   // 5. Return immediately after dispatching UI work
-  fputs("info: drawHighlightBoxes finished synchronous part, dispatched UI updates.\n", stderr)
+  logger.info("drawHighlightBoxes finished synchronous part, dispatched UI updates.")
   // No return value needed
 }

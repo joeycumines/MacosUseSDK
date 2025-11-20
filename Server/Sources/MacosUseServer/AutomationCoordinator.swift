@@ -3,7 +3,10 @@ import CoreGraphics
 import Foundation
 import MacosUseSDK
 import MacosUseSDKProtos
+import OSLog
 import SwiftProtobuf
+
+private let logger = MacosUseSDK.sdkLogger(category: "AutomationCoordinator")
 
 /// Actor that coordinates all SDK interactions on the main thread.
 /// This is critical because the MacosUseSDK requires main thread execution
@@ -12,7 +15,7 @@ public actor AutomationCoordinator {
     public static let shared = AutomationCoordinator()
 
     private init() {
-        fputs("info: [AutomationCoordinator] Initialized\n", stderr)
+        logger.info("Initialized")
     }
 
     // MARK: - Command Handlers
@@ -20,7 +23,7 @@ public actor AutomationCoordinator {
     /// Opens or activates an application and returns target info
     @MainActor
     public func handleOpenApplication(identifier: String) async throws -> Macosusesdk_V1_Application {
-        fputs("info: [AutomationCoordinator] Opening application: \(identifier)\n", stderr)
+        logger.info("Opening application: \(identifier, privacy: .private)")
 
         let result = try await MacosUseSDK.openApplication(identifier: identifier)
 
@@ -36,7 +39,7 @@ public actor AutomationCoordinator {
     public func handleGlobalInput(
         action: InputActionInfo, showAnimation: Bool, animationDuration: Double,
     ) async throws {
-        fputs("info: [AutomationCoordinator] Executing global input action\n", stderr)
+        logger.info("Executing global input action")
 
         let sdkAction = try convertToSDKInputAction(action)
 
@@ -53,7 +56,7 @@ public actor AutomationCoordinator {
         action: PrimaryActionInfo,
         options: ActionOptionsInfo,
     ) async throws -> ActionResultInfo {
-        fputs("info: [AutomationCoordinator] Performing action on PID \(pid)\n", stderr)
+        logger.info("Performing action on PID \(pid, privacy: .public)")
 
         let sdkAction = try convertToSDKPrimaryAction(action)
         let sdkOptions = convertToSDKActionOptions(pid: pid, options: options)
@@ -68,7 +71,7 @@ public actor AutomationCoordinator {
     public func handleExecuteInput(
         action: Macosusesdk_V1_InputAction, pid: pid_t?, showAnimation: Bool, animationDuration: Double,
     ) async throws {
-        fputs("info: [AutomationCoordinator] Executing input action\n", stderr)
+        logger.info("Executing input action")
 
         let sdkAction = try convertFromProtoInputAction(action)
 
@@ -90,7 +93,7 @@ public actor AutomationCoordinator {
     public nonisolated func handleTraverse(pid: pid_t, visibleOnly: Bool) async throws
         -> Macosusesdk_V1_TraverseAccessibilityResponse
     {
-        fputs("info: [AutomationCoordinator] Traversing accessibility tree for PID \(pid)\n", stderr)
+        logger.info("Traversing accessibility tree for PID \(pid, privacy: .public)")
 
         // CRITICAL: Only the AX API call runs on MainActor
         let sdkResponse = try await MainActor.run {

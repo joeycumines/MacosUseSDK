@@ -3,6 +3,10 @@
 import AppKit  // Needed for Process and potentially other things later
 import CoreGraphics
 import Foundation
+import OSLog
+import OSLog
+
+private let logger = sdkLogger(category: "InputController")
 
 // --- Add new Error Cases for Input Control ---
 extension MacosUseSDKError {
@@ -34,11 +38,6 @@ public let KEY_ARROW_UP: CGKeyCode = 126
 
 // --- Helper Functions (Internal or Fileprivate) ---
 
-// Logs messages to stderr for debugging/status - keep internal or remove if tool handles logging
-// fileprivate func log(_ message: String) { // Make fileprivate or remove
-//     fputs("log: \(message)\n", stderr)
-// }
-
 // Creates a CGEventSource or throws
 private func createEventSource() throws -> CGEventSource {
   guard let source = CGEventSource(stateID: .hidSystemState) else {
@@ -65,7 +64,7 @@ private func postEvent(_ event: CGEvent?, actionDescription: String) throws {
 ///   - flags: The modifier flags (`CGEventFlags`) to apply (e.g., `.maskCommand`, `.maskShift`).
 /// - Throws: `MacosUseSDKError` if the event source cannot be created or the event cannot be posted.
 public func pressKey(keyCode: CGKeyCode, flags: CGEventFlags = []) throws {
-  fputs("log: simulating key press: (code: \(keyCode), flags: \(flags.rawValue))\n", stderr)  // Log action
+  logger.info("simulating key press: (code: \(keyCode, privacy: .public), flags: \(flags.rawValue, privacy: .public))")
   let source = try createEventSource()
 
   let keyDown = CGEvent(keyboardEventSource: source, virtualKey: keyCode, keyDown: true)
@@ -78,7 +77,7 @@ public func pressKey(keyCode: CGKeyCode, flags: CGEventFlags = []) throws {
   let keyUp = CGEvent(keyboardEventSource: source, virtualKey: keyCode, keyDown: false)
   keyUp?.flags = flags  // Apply modifier flags for key up as well
   try postEvent(keyUp, actionDescription: "key up (code: \(keyCode), flags: \(flags.rawValue))")
-  fputs("log: key press simulation complete.\n", stderr)
+  logger.info("key press simulation complete.")
 }
 
 /// Simulates a left mouse click at the specified screen coordinates.
@@ -86,7 +85,7 @@ public func pressKey(keyCode: CGKeyCode, flags: CGEventFlags = []) throws {
 /// - Parameter point: The `CGPoint` where the click should occur.
 /// - Throws: `MacosUseSDKError` if the event source cannot be created or the event cannot be posted.
 public func clickMouse(at point: CGPoint) throws {
-  fputs("log: simulating left click at: (\(point.x), \(point.y))\n", stderr)  // Log action
+  logger.info("simulating left click at: (\(point.x, privacy: .public), \(point.y, privacy: .public))")
   let source = try createEventSource()
 
   // Create and post mouse down event
@@ -103,7 +102,7 @@ public func clickMouse(at point: CGPoint) throws {
     mouseEventSource: source, mouseType: .leftMouseUp, mouseCursorPosition: point,
     mouseButton: .left)
   try postEvent(mouseUp, actionDescription: "mouse up at (\(point.x), \(point.y))")
-  fputs("log: left click simulation complete.\n", stderr)
+  logger.info("left click simulation complete.")
 }
 
 /// Simulates a left mouse double click at the specified screen coordinates.
@@ -111,7 +110,7 @@ public func clickMouse(at point: CGPoint) throws {
 /// - Parameter point: The `CGPoint` where the double click should occur.
 /// - Throws: `MacosUseSDKError` if the event source cannot be created or the event cannot be posted.
 public func doubleClickMouse(at point: CGPoint) throws {
-  fputs("log: simulating double-click at: (\(point.x), \(point.y))\n", stderr)  // Log action
+  logger.info("simulating double-click at: (\(point.x, privacy: .public), \(point.y, privacy: .public))")
   let source = try createEventSource()
 
   // Use the specific double-click event type directly
@@ -129,7 +128,7 @@ public func doubleClickMouse(at point: CGPoint) throws {
     mouseButton: .left)
   mouseUpEvent?.setIntegerValueField(.mouseEventClickState, value: 2)  // Set click count
   try postEvent(mouseUpEvent, actionDescription: "double click up at (\(point.x), \(point.y))")
-  fputs("log: double-click simulation complete.\n", stderr)
+  logger.info("double-click simulation complete.")
 }
 
 // Simulates a right mouse click at the specified coordinates
@@ -138,7 +137,7 @@ public func doubleClickMouse(at point: CGPoint) throws {
 /// - Parameter point: The `CGPoint` where the right click should occur.
 /// - Throws: `MacosUseSDKError` if the event source cannot be created or the event cannot be posted.
 public func rightClickMouse(at point: CGPoint) throws {
-  fputs("log: simulating right-click at: (\(point.x), \(point.y))\n", stderr)  // Log action
+  logger.info("simulating right-click at: (\(point.x, privacy: .public), \(point.y, privacy: .public))")
   let source = try createEventSource()
 
   // Create and post mouse down event (RIGHT button)
@@ -155,14 +154,14 @@ public func rightClickMouse(at point: CGPoint) throws {
     mouseEventSource: source, mouseType: .rightMouseUp, mouseCursorPosition: point,
     mouseButton: .right)
   try postEvent(mouseUp, actionDescription: "right mouse up at (\(point.x), \(point.y))")
-  fputs("log: right-click simulation complete.\n", stderr)
+  logger.info("right-click simulation complete.")
 }
 
 /// Moves the mouse cursor to the specified screen coordinates.
 /// - Parameter point: The `CGPoint` to move the cursor to.
 /// - Throws: `MacosUseSDKError` if the event source cannot be created or the event cannot be posted.
 public func moveMouse(to point: CGPoint) throws {
-  fputs("log: moving mouse to: (\(point.x), \(point.y))\n", stderr)  // Log action
+  logger.info("moving mouse to: (\(point.x, privacy: .public), \(point.y, privacy: .public))")
   let source = try createEventSource()
 
   // .mouseMoved type doesn't require a button state
@@ -170,7 +169,7 @@ public func moveMouse(to point: CGPoint) throws {
     mouseEventSource: source, mouseType: .mouseMoved, mouseCursorPosition: point, mouseButton: .left
   )  // Button doesn't matter for move
   try postEvent(mouseMove, actionDescription: "mouse move to (\(point.x), \(point.y))")
-  fputs("log: mouse move simulation complete.\n", stderr)
+  logger.info("mouse move simulation complete.")
 }
 
 /// Simulates typing a string of text using AppleScript `keystroke`.
@@ -181,7 +180,7 @@ public func writeText(_ text: String) throws {
   // Using AppleScript's 'keystroke' is simplest for arbitrary text,
   // as it handles character mapping, keyboard layouts, etc.
   // A pure CGEvent approach would require complex character-to-keycode+flags mapping.
-  fputs("log: simulating text writing: \"\(text)\" (using AppleScript)\n", stderr)  // Log action
+  logger.info("simulating text writing: \"\(text, privacy: .private)\" (using AppleScript)")
 
   // Escape double quotes and backslashes within the text for AppleScript string
   let escapedText = text.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(
@@ -207,11 +206,11 @@ public func writeText(_ text: String) throws {
       ?? ""
 
     if process.terminationStatus == 0 {
-      fputs("log: text writing simulation complete.\n", stderr)
+      logger.info("text writing simulation complete.")
     } else {
-      fputs("error: osascript command failed with status \(process.terminationStatus)\n", stderr)
+      logger.error("osascript command failed with status \(process.terminationStatus, privacy: .public)")
       if !errorString.isEmpty {
-        fputs("error details (osascript): \(errorString)\n", stderr)
+        logger.error("error details (osascript): \(errorString, privacy: .auto)")
       }
       throw MacosUseSDKError.osascriptExecutionFailed(
         status: process.terminationStatus, message: errorString)
@@ -310,9 +309,8 @@ public func mapKeyNameToKeyCode(_ keyName: String) -> CGKeyCode? {
 
   default:
     // If not a known name, attempt to interpret it as a raw key code number
-    fputs(
-      "log: key '\(keyName)' not explicitly mapped, attempting conversion to CGKeyCode number.\n",
-      stderr)
+    logger.info(
+      "key '\(keyName, privacy: .public)' not explicitly mapped, attempting conversion to CGKeyCode number.")
     return CGKeyCode(keyName)  // Returns nil if conversion fails
   }
 }

@@ -1,45 +1,49 @@
 import AppKit
 import Darwin
 import Foundation
+import OSLog
 
 import GRPCCore
 import GRPCNIOTransportHTTP2
-import MacosUseSDKProtos // Import the generated proto definitions
+import MacosUseSDK
+import MacosUseSDKProtos
 import NIOCore
+
+private let logger = MacosUseSDK.sdkLogger(category: "Main")
 
 // Main entry point for the MacosUseServer
 func main() async throws {
-    fputs("info: [MacosUseServer] Starting...\n", stderr)
+    logger.info("MacosUseServer starting...")
 
     // CRITICAL: Initialize NSApplication before any SDK calls
     // This is mandatory for the MacosUseSDK to function properly
     _ = await NSApplication.shared
-    fputs("info: [MacosUseServer] NSApplication initialized\n", stderr)
+    logger.info("NSApplication initialized")
 
     // Load configuration from environment
     let config = ServerConfig.fromEnvironment()
-    fputs("info: [MacosUseServer] Configuration loaded\n", stderr)
+    logger.info("Configuration loaded")
     if let socketPath = config.unixSocketPath {
-        fputs("info: [MacosUseServer] Will listen on Unix socket: \(socketPath)\n", stderr)
+        logger.info("Will listen on Unix socket: \(socketPath, privacy: .private)")
     } else {
-        fputs("info: [MacosUseServer] Will listen on \(config.listenAddress):\(config.port)\n", stderr)
+        logger.info("Will listen on \(config.listenAddress, privacy: .public):\(config.port, privacy: .public)")
     }
 
     // Create the state store
     let stateStore = AppStateStore()
-    fputs("info: [MacosUseServer] State store initialized\n", stderr)
+    logger.info("State store initialized")
 
     // Create the operation store
     let operationStore = OperationStore()
 
     // Create the shared window registry (single source of truth for window caching)
     let sharedWindowRegistry = WindowRegistry()
-    fputs("info: [MacosUseServer] Shared window registry created\n", stderr)
+    logger.info("Shared window registry created")
 
     // Initialize singleton actors with the shared registry
     ObservationManager.shared = ObservationManager(windowRegistry: sharedWindowRegistry)
     MacroExecutor.shared = MacroExecutor(windowRegistry: sharedWindowRegistry)
-    fputs("info: [MacosUseServer] Singleton actors initialized with shared registry\n", stderr)
+    logger.info("Singleton actors initialized with shared registry")
 
     // Create the single, correct service provider
     let macosUseService = MacosUseServiceProvider(
@@ -47,11 +51,11 @@ func main() async throws {
         operationStore: operationStore,
         windowRegistry: sharedWindowRegistry,
     )
-    fputs("info: [MacosUseServer] Service provider created\n", stderr)
+    logger.info("Service provider created")
 
     // Create Operations provider and register it so clients may poll LROs
     let operationsProvider = OperationsProvider(operationStore: operationStore)
-    fputs("info: [MacosUseServer] Operations provider created\n", stderr)
+    logger.info("Operations provider created")
 
     // Set up and start gRPC server using the HTTP/2 NIO transport
     let address: GRPCNIOTransportCore.SocketAddress
@@ -63,10 +67,10 @@ func main() async throws {
             try FileManager.default.removeItem(atPath: socketPath)
         }
         address = .unixDomainSocket(path: socketPath)
-        fputs("info: [MacosUseServer] Binding to Unix Domain Socket: \(socketPath)\n", stderr)
+        logger.info("Binding to Unix Domain Socket: \(socketPath, privacy: .private)")
     } else {
         address = .ipv4(host: config.listenAddress, port: config.port)
-        fputs("info: [MacosUseServer] Binding to TCP: \(config.listenAddress):\(config.port)\n", stderr)
+        logger.info("Binding to TCP: \(config.listenAddress, privacy: .public):\(config.port, privacy: .public)")
     }
 
     let server = GRPCServer(
@@ -77,7 +81,7 @@ func main() async throws {
         services: [macosUseService, operationsProvider],
     )
 
-    fputs("info: [MacosUseServer] gRPC server starting\n", stderr)
+    logger.info("gRPC server starting")
 
     try await server.serve()
 }

@@ -3,6 +3,9 @@
 import AppKit  // For NSWorkspace, NSRunningApplication, CGPoint, etc.
 import CoreGraphics
 import Foundation
+import OSLog
+
+private let logger = sdkLogger(category: "ActionCoordinator")
 
 // --- Enums and Structs for Orchestration ---
 
@@ -130,35 +133,31 @@ public func performAction(
   var primaryActionError: Error?  // Temporary storage for Error objects
   var primaryActionExecuted: Bool = false  // Flag to track if primary action ran
 
-  fputs("info: [Coordinator] Starting action: \(action) with options: \(options)\n", stderr)
+  logger.info("[Coordinator] Starting action: \(String(describing: action), privacy: .public) with options: \(String(describing: options), privacy: .public)")
 
   // --- 1. Determine Target PID & Execute Open Action ---
   if case .open(let identifier) = action {
-    fputs(
-      "info: [Coordinator] Primary action is 'open', attempting to get PID for '\(identifier)'...\n",
-      stderr)
+    logger.info(
+      "[Coordinator] Primary action is 'open', attempting to get PID for '\(identifier, privacy: .private)'...")
     do {
       let openRes = try await openApplication(identifier: identifier)
       result.openResult = openRes
       effectivePid = openRes.pid
-      fputs("info: [Coordinator] App opened successfully. PID: \(effectivePid!).\n", stderr)
+      logger.info("[Coordinator] App opened successfully. PID: \(effectivePid!, privacy: .public).")
       primaryActionExecuted = true  // Mark 'open' as executed
       // REMOVED Delay specific to open
     } catch {
-      fputs(
-        "error: [Coordinator] Failed to open application '\(identifier)': \(error.localizedDescription)\n",
-        stderr)
+      logger.error(
+        "[Coordinator] Failed to open application '\(identifier, privacy: .private)': \(error.localizedDescription, privacy: .auto)")
       primaryActionError = error
       if effectivePid == nil {
         result.primaryActionError = error.localizedDescription
-        fputs(
-          "warning: [Coordinator] Cannot proceed with PID-dependent steps (traversal) due to open failure and no provided PID.\n",
-          stderr)
+        logger.warning(
+          "[Coordinator] Cannot proceed with PID-dependent steps (traversal) due to open failure and no provided PID.")
         return result
       } else {
-        fputs(
-          "warning: [Coordinator] Open failed, but continuing with provided PID \(effectivePid!).\n",
-          stderr)
+        logger.warning(
+          "[Coordinator] Open failed, but continuing with provided PID \(effectivePid!, privacy: .public).")
       }
     }
   }
@@ -170,28 +169,24 @@ public func performAction(
     options.traverseBefore || options.traverseAfter || options.showAnimation
   else {
     if options.traverseBefore || options.traverseAfter || options.showAnimation {
-      fputs(
-        "warning: [Coordinator] Traversal or animation requested, but no PID could be determined (app open failed or PID not provided).\n",
-        stderr)
+      logger.warning(
+        "[Coordinator] Traversal or animation requested, but no PID could be determined (app open failed or PID not provided).")
       if options.traverseBefore { result.traversalBeforeError = "PID unavailable" }
       if options.traverseAfter { result.traversalAfterError = "PID unavailable" }
     } else {
-      fputs(
-        "info: [Coordinator] No PID determined and no traversal/animation requested. Proceeding with primary action only (if applicable).\n",
-        stderr)
+      logger.info(
+        "[Coordinator] No PID determined and no traversal/animation requested. Proceeding with primary action only (if applicable).")
     }
     // If primary action was *not* open, execute it now if PID wasn't available/needed
     if case .input(let inputAction) = action {
-      fputs(
-        "info: [Coordinator] Executing primary input action (no PID context available/needed for traversal)...\n",
-        stderr)
+      logger.info(
+        "[Coordinator] Executing primary input action (no PID context available/needed for traversal)...")
       do {
         try await executeInputAction(inputAction, options: options)
         primaryActionExecuted = true  // Mark 'input' as executed
       } catch {
-        fputs(
-          "error: [Coordinator] Failed to execute input action: \(error.localizedDescription)\n",
-          stderr)
+        logger.error(
+          "[Coordinator] Failed to execute input action: \(error.localizedDescription, privacy: .auto)")
         primaryActionError = error
       }
     } else if case .traverseOnly = action {
@@ -201,9 +196,8 @@ public func performAction(
     // Apply generic delay if an action was executed *and* a delay is set,
     // even if no traversal follows (though less common use case).
     if primaryActionExecuted && options.delayAfterAction > 0 {
-      fputs(
-        "info: [Coordinator] Primary action finished. Applying delay: \(options.delayAfterAction)s (before exiting due to no PID/traversal/animation)\n",
-        stderr)
+      logger.info(
+        "[Coordinator] Primary action finished. Applying delay: \(options.delayAfterAction, privacy: .public)s (before exiting due to no PID/traversal/animation)")
       try? await Task.sleep(nanoseconds: UInt64(options.delayAfterAction * 1_000_000_000))
     }
 
@@ -211,73 +205,68 @@ public func performAction(
     return result
   }
 
-  fputs("info: [Coordinator] Effective PID for subsequent steps: \(pid)\n", stderr)
+  logger.info("[Coordinator] Effective PID for subsequent steps: \(pid, privacy: .public)")
 
   // --- 2. Traverse Before ---
   if options.traverseBefore {
-    fputs("info: [Coordinator] Performing pre-action traversal for PID \(pid)...\n", stderr)
+    logger.info("[Coordinator] Performing pre-action traversal for PID \(pid, privacy: .public)...")
     do {
       result.traversalBefore = try traverseAccessibilityTree(
         pid: pid, onlyVisibleElements: options.onlyVisibleElements)
-      fputs(
-        "info: [Coordinator] Pre-action traversal complete. Elements: \(result.traversalBefore?.elements.count ?? 0)\n",
-        stderr)
+      logger.info(
+        "[Coordinator] Pre-action traversal complete. Elements: \(result.traversalBefore?.elements.count ?? 0, privacy: .public)")
     } catch {
-      fputs(
-        "error: [Coordinator] Pre-action traversal failed: \(error.localizedDescription)\n", stderr)
+      logger.error(
+        "[Coordinator] Pre-action traversal failed: \(error.localizedDescription, privacy: .auto)")
       result.traversalBeforeError = error.localizedDescription
     }
   }
 
   // --- 3. Execute Primary Input Action (if not 'open' or 'traverseOnly') ---
   if case .input(let inputAction) = action {
-    fputs("info: [Coordinator] Executing primary input action...\n", stderr)
+    logger.info("[Coordinator] Executing primary input action...")
     do {
       try await executeInputAction(inputAction, options: options)
       primaryActionExecuted = true  // Mark 'input' as executed
     } catch {
-      fputs(
-        "error: [Coordinator] Failed to execute input action: \(error.localizedDescription)\n",
-        stderr)
+      logger.error(
+        "[Coordinator] Failed to execute input action: \(error.localizedDescription, privacy: .auto)")
       primaryActionError = error
     }
   } else if case .traverseOnly = action {
-    fputs(
-      "info: [Coordinator] Primary action is 'traverseOnly', skipping action execution.\n", stderr)
+    logger.info(
+      "[Coordinator] Primary action is 'traverseOnly', skipping action execution.")
   }  // 'open' action was handled earlier
 
   // --- 4. Apply Delay AFTER Action, BEFORE Traverse After ---
   // Apply delay only if an action was actually executed and delay > 0
   if primaryActionExecuted && options.delayAfterAction > 0 {
-    fputs(
-      "info: [Coordinator] Primary action finished. Applying delay: \(options.delayAfterAction)s (before post-action traversal)\n",
-      stderr)
+    logger.info(
+      "[Coordinator] Primary action finished. Applying delay: \(options.delayAfterAction, privacy: .public)s (before post-action traversal)")
     try? await Task.sleep(nanoseconds: UInt64(options.delayAfterAction * 1_000_000_000))
   }
 
   // --- 5. Traverse After ---
   var finalTraversalData: ResponseData?
   if options.traverseAfter {
-    fputs("info: [Coordinator] Performing post-action traversal for PID \(pid)...\n", stderr)
+    logger.info("[Coordinator] Performing post-action traversal for PID \(pid, privacy: .public)...")
     do {
       let traversalData = try traverseAccessibilityTree(
         pid: pid, onlyVisibleElements: options.onlyVisibleElements)
       result.traversalAfter = traversalData
       finalTraversalData = traversalData  // Keep for highlighting
-      fputs(
-        "info: [Coordinator] Post-action traversal complete. Elements: \(traversalData.elements.count)\n",
-        stderr)
+      logger.info(
+        "[Coordinator] Post-action traversal complete. Elements: \(traversalData.elements.count, privacy: .public)")
     } catch {
-      fputs(
-        "error: [Coordinator] Post-action traversal failed: \(error.localizedDescription)\n", stderr
-      )
+      logger.error(
+        "[Coordinator] Post-action traversal failed: \(error.localizedDescription, privacy: .auto)")
       result.traversalAfterError = error.localizedDescription
     }
   }
 
   // --- 6. Calculate Diff ---
   if options.showDiff {
-    fputs("info: [Coordinator] Calculating detailed traversal diff...\n", stderr)
+    logger.info("[Coordinator] Calculating detailed traversal diff...")
     if let beforeElements = result.traversalBefore?.elements,
       let afterElements = result.traversalAfter?.elements {
 
@@ -388,44 +377,39 @@ public func performAction(
 
       // Assign to result (using the TraversalDiff struct from CombinedActions.swift)
       result.traversalDiff = TraversalDiff(added: added, removed: removed, modified: modified)
-      fputs(
-        "info: [Coordinator] Detailed diff calculated: Added=\(added.count), Removed=\(removed.count), Modified=\(modified.count)\n",
-        stderr)
+      logger.info(
+        "[Coordinator] Detailed diff calculated: Added=\(added.count, privacy: .public), Removed=\(removed.count, privacy: .public), Modified=\(modified.count, privacy: .public)")
       // --- DETAILED DIFF LOGIC END ---
 
     } else {
-      fputs(
-        "warning: [Coordinator] Cannot calculate detailed diff because one or both traversals failed or were not performed.\n",
-        stderr)
+      logger.warning(
+        "[Coordinator] Cannot calculate detailed diff because one or both traversals failed or were not performed.")
     }
   }
 
   // --- 7. Highlight Target Elements (Now controlled by showAnimation) ---
   if options.showAnimation {
     if let elementsToHighlight = finalTraversalData?.elements, !elementsToHighlight.isEmpty {
-      fputs(
-        "info: [Coordinator] Highlighting \(elementsToHighlight.count) elements from final traversal (showAnimation=true)...\n",
-        stderr)
+      logger.info(
+        "[Coordinator] Highlighting \(elementsToHighlight.count, privacy: .public) elements from final traversal (showAnimation=true)...")
       // No need for try/catch as drawHighlightBoxes is async and handles errors internally via logs
       drawHighlightBoxes(for: elementsToHighlight, duration: options.animationDuration)
       // Note: Highlighting starts and runs async, this function returns before it finishes.
     } else if finalTraversalData == nil && options.traverseAfter {
-      fputs(
-        "warning: [Coordinator] Animation requested, but post-action traversal failed or was skipped (cannot highlight).\n",
-        stderr)
+      logger.warning(
+        "[Coordinator] Animation requested, but post-action traversal failed or was skipped (cannot highlight).")
     } else {
-      fputs(
-        "info: [Coordinator] Animation requested, but no elements found in the final traversal to highlight.\n",
-        stderr)
+      logger.info(
+        "[Coordinator] Animation requested, but no elements found in the final traversal to highlight.")
     }
   } else {
-    fputs("info: [Coordinator] Skipping element highlighting (showAnimation=false).\n", stderr)
+    logger.info("[Coordinator] Skipping element highlighting (showAnimation=false).")
   }
 
   // Store any primary action error encountered
   result.primaryActionError = primaryActionError?.localizedDescription
 
-  fputs("info: [Coordinator] Action sequence finished.\n", stderr)
+  logger.info("[Coordinator] Action sequence finished.")
   return result
 }
 
@@ -435,42 +419,38 @@ private func executeInputAction(_ action: InputAction, options: ActionOptions) a
   switch action {
   case .click(let point):
     if options.showAnimation {
-      fputs(
-        "log: simulating click AND visualizing at \(point) (duration: \(options.animationDuration))\n",
-        stderr)
+      logger.info(
+        "simulating click AND visualizing at \(String(describing: point), privacy: .public) (duration: \(options.animationDuration, privacy: .public))")
       try clickMouseAndVisualize(at: point, duration: options.animationDuration)
     } else {
-      fputs("log: simulating click at \(point) (no visualization)\n", stderr)
+      logger.info("simulating click at \(String(describing: point), privacy: .public) (no visualization)")
       try clickMouse(at: point)
     }
   case .doubleClick(let point):
     if options.showAnimation {
-      fputs(
-        "log: simulating double-click AND visualizing at \(point) (duration: \(options.animationDuration))\n",
-        stderr)
+      logger.info(
+        "simulating double-click AND visualizing at \(String(describing: point), privacy: .public) (duration: \(options.animationDuration, privacy: .public))")
       try doubleClickMouseAndVisualize(at: point, duration: options.animationDuration)
     } else {
-      fputs("log: simulating double-click at \(point) (no visualization)\n", stderr)
+      logger.info("simulating double-click at \(String(describing: point), privacy: .public) (no visualization)")
       try doubleClickMouse(at: point)
     }
   case .rightClick(let point):
     if options.showAnimation {
-      fputs(
-        "log: simulating right-click AND visualizing at \(point) (duration: \(options.animationDuration))\n",
-        stderr)
+      logger.info(
+        "simulating right-click AND visualizing at \(String(describing: point), privacy: .public) (duration: \(options.animationDuration, privacy: .public))")
       try rightClickMouseAndVisualize(at: point, duration: options.animationDuration)
     } else {
-      fputs("log: simulating right-click at \(point) (no visualization)\n", stderr)
+      logger.info("simulating right-click at \(String(describing: point), privacy: .public) (no visualization)")
       try rightClickMouse(at: point)
     }
   case .type(let text):
     if options.showAnimation {
-      fputs(
-        "log: simulating text writing AND visualizing caption \"\(text)\" (auto duration)\n", stderr
-      )
+      logger.info(
+        "simulating text writing AND visualizing caption \"\(text, privacy: .private)\" (auto duration)")
       try writeTextAndVisualize(text, duration: nil)  // Use nil to let visualize calculate duration
     } else {
-      fputs("log: simulating text writing \"\(text)\" (no visualization)\n", stderr)
+      logger.info("simulating text writing \"\(text, privacy: .private)\" (no visualization)")
       try writeText(text)
     }
   case .press(let keyName, let flags):
@@ -478,22 +458,20 @@ private func executeInputAction(_ action: InputAction, options: ActionOptions) a
       throw MacosUseSDKError.inputInvalidArgument("Unknown key name: \(keyName)")
     }
     if options.showAnimation {
-      fputs(
-        "log: simulating key press \(keyName) (\(keyCode)) AND visualizing (duration: \(options.animationDuration))\n",
-        stderr)
+      logger.info(
+        "simulating key press \(keyName, privacy: .public) (\(keyCode, privacy: .public)) AND visualizing (duration: \(options.animationDuration, privacy: .public))")
       try pressKeyAndVisualize(keyCode: keyCode, flags: flags, duration: options.animationDuration)
     } else {
-      fputs("log: simulating key press \(keyName) (\(keyCode)) (no visualization)\n", stderr)
+      logger.info("simulating key press \(keyName, privacy: .public) (\(keyCode, privacy: .public)) (no visualization)")
       try pressKey(keyCode: keyCode, flags: flags)
     }
   case .move(let point):
     if options.showAnimation {
-      fputs(
-        "log: simulating mouse move AND visualizing to \(point) (duration: \(options.animationDuration))\n",
-        stderr)
+      logger.info(
+        "simulating mouse move AND visualizing to \(String(describing: point), privacy: .public) (duration: \(options.animationDuration, privacy: .public))")
       try moveMouseAndVisualize(to: point, duration: options.animationDuration)
     } else {
-      fputs("log: simulating mouse move to \(point) (no visualization)\n", stderr)
+      logger.info("simulating mouse move to \(String(describing: point), privacy: .public) (no visualization)")
       try moveMouse(to: point)
     }
   }

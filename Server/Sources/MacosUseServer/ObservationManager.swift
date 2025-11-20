@@ -1,7 +1,11 @@
 import ApplicationServices
 import Foundation
+import MacosUseSDK
 import MacosUseSDKProtos
+import OSLog
 import SwiftProtobuf
+
+private let logger = MacosUseSDK.sdkLogger(category: "ObservationManager")
 
 // MARK: - ObservationManager
 
@@ -327,9 +331,9 @@ actor ObservationManager {
                         previousWindows: previousWindows,
                     )
 
-                    fputs("debug: [ObservationManager] currentWindows=\(currentWindows.count), cgWindows=\(cgWindows.count), currentWithOrphans=\(currentWithOrphans.count), previousWindows=\(previousWindows.count)\n", stderr)
+                    logger.debug("currentWindows=\(currentWindows.count, privacy: .public), cgWindows=\(cgWindows.count, privacy: .public), currentWithOrphans=\(currentWithOrphans.count, privacy: .public), previousWindows=\(previousWindows.count, privacy: .public)")
                     for w in currentWithOrphans {
-                        fputs("debug: [ObservationManager]   window \(w.windowID): minimized=\(w.minimized), visible=\(w.visible)\n", stderr)
+                        logger.debug("  window \(w.windowID, privacy: .public): minimized=\(w.minimized, privacy: .public), visible=\(w.visible, privacy: .public)")
                     }
 
                     // Detect window changes
@@ -338,21 +342,21 @@ actor ObservationManager {
                         current: currentWithOrphans,
                     )
 
-                    fputs("debug: [ObservationManager] Detected \(windowChanges.count) window changes\n", stderr)
+                    logger.debug("Detected \(windowChanges.count, privacy: .public) window changes")
                     for change in windowChanges {
                         switch change {
                         case let .minimized(w):
-                            fputs("debug: [ObservationManager]   MINIMIZED: window \(w.windowID)\n", stderr)
+                            logger.debug("  MINIMIZED: window \(w.windowID, privacy: .public)")
                         case let .restored(w):
-                            fputs("debug: [ObservationManager]   RESTORED: window \(w.windowID)\n", stderr)
+                            logger.debug("  RESTORED: window \(w.windowID, privacy: .public)")
                         case let .created(w):
-                            fputs("debug: [ObservationManager]   CREATED: window \(w.windowID)\n", stderr)
+                            logger.debug("  CREATED: window \(w.windowID, privacy: .public)")
                         case let .destroyed(w):
-                            fputs("debug: [ObservationManager]   DESTROYED: window \(w.windowID)\n", stderr)
+                            logger.debug("  DESTROYED: window \(w.windowID, privacy: .public)")
                         case .moved:
-                            fputs("debug: [ObservationManager]   MOVED\n", stderr)
+                            logger.debug("  MOVED")
                         case .resized:
-                            fputs("debug: [ObservationManager]   RESIZED\n", stderr)
+                            logger.debug("  RESIZED")
                         }
                     }
 
@@ -615,7 +619,7 @@ actor ObservationManager {
                 } else {
                     false
                 }
-                fputs("debug: [fetchAXWindows] window \(candidate.cgWindow.windowID) kAXMinimizedAttribute result=\(minResult.rawValue), value=\(String(describing: minValue)), minimized=\(minimized)\n", stderr)
+                logger.debug("[fetchAXWindows] window \(candidate.cgWindow.windowID, privacy: .public) kAXMinimizedAttribute result=\(minResult.rawValue, privacy: .public), value=\(String(describing: minValue), privacy: .auto), minimized=\(minimized, privacy: .public)")
 
                 var mainValue: CFTypeRef?
                 let focused: Bool? = if AXUIElementCopyAttributeValue(

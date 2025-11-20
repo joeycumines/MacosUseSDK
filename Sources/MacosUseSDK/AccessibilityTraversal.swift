@@ -6,6 +6,9 @@
 import AppKit  // For NSWorkspace, NSRunningApplication, NSApplication
 @preconcurrency import ApplicationServices  // For Accessibility API (AXUIElement, etc.)
 import Foundation  // For basic types, JSONEncoder, Date
+import OSLog
+
+private let logger = sdkLogger(category: "AccessibilityTraversal")
 
 // Mark AXUIElement as Sendable - it's safe because it's an opaque CFTypeRef
 // managed by the Accessibility framework. We only store/pass references.
@@ -148,27 +151,25 @@ private class AccessibilityTraversalOperation {
   // --- Main Execution Method ---
   func executeTraversal() throws -> ResponseData {
     let overallStartTime = Date()
-    fputs(
-      "info: starting traversal for pid: \(pid) (Visible Only: \(onlyVisibleElements))\n", stderr)
+    logger.info(
+      "starting traversal for pid: \(String(describing: self.pid), privacy: .public) (Visible Only: \(String(describing: self.onlyVisibleElements), privacy: .public))")
     stepStartTime = Date()  // Initialize step timer
-
     // 1. Accessibility Check
-    fputs("info: checking accessibility permissions...\n", stderr)
+    logger.info("checking accessibility permissions...")
     let checkOptions = ["AXTrustedCheckOptionPrompt": kCFBooleanTrue] as CFDictionary
     let isTrusted = AXIsProcessTrustedWithOptions(checkOptions)
 
     if !isTrusted {
-      fputs("❌ error: accessibility access is denied.\n", stderr)
-      fputs(
-        "       please grant permissions in system settings > privacy & security > accessibility.\n",
-        stderr)
+      logger.error("❌ accessibility access is denied.")
+      logger.error(
+        "please grant permissions in system settings > privacy & security > accessibility.")
       throw MacosUseSDKError.accessibilityDenied
     }
     logStepCompletion("checking accessibility permissions (granted)")
 
     // 2. Find Application by PID and Create AXUIElement
     guard let runningApp = NSRunningApplication(processIdentifier: pid) else {
-      fputs("error: no running application found with pid \(pid).\n", stderr)
+      logger.error("no running application found with pid \(String(describing: self.pid), privacy: .public).")
       throw MacosUseSDKError.appNotFound(pid: pid)
     }
     let targetAppName = runningApp.localizedName ?? "App (PID: \(pid))"
@@ -213,7 +214,7 @@ private class AccessibilityTraversalOperation {
     let overallEndTime = Date()
     let totalProcessingTime = overallEndTime.timeIntervalSince(overallStartTime)
     let formattedTime = String(format: "%.2f", totalProcessingTime)
-    fputs("info: total execution time: \(formattedTime) seconds\n", stderr)
+    logger.info("total execution time: \(formattedTime, privacy: .public) seconds")
 
     // 6. Prepare Response
     let response = ResponseData(
@@ -494,7 +495,7 @@ private class AccessibilityTraversalOperation {
     let endTime = Date()
     let duration = endTime.timeIntervalSince(stepStartTime)
     let durationStr = String(format: "%.3f", duration)
-    fputs("info: [\(durationStr)s] finished '\(stepDescription)'\n", stderr)
+    logger.info("[\(durationStr)s] finished '\(stepDescription)'")
     stepStartTime = endTime  // Reset start time for the next step
   }
 }  // End of AccessibilityTraversalOperation class

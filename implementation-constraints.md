@@ -2,40 +2,9 @@
 
 ## Session Directives
 
-**CURRENT DIRECTIVE (2025-11-20):** Implement robust window state consistency using split-brain authority model.
+N.B. This is ONLY a hint to the current task. Do not turn it into a log.
 
-### The Split-Brain Authority Model
-
-To guarantee correctness and performance, enforce strict separation of data authority:
-
-* **AX Authority (Fresh, Mutable):**
-  - Fields: `Bounds` (Position/Size), `Title`, `Minimized`, `Hidden`.
-  - Justification: AX updates immediately upon mutation. CG lags by 10–100ms.
-  - Usage: Query explicitly on every `Move`, `Resize`, `Minimize` response.
-
-* **CG/Registry Authority (Stable, Metadata):**
-  - Fields: `ZIndex`, `BundleID`, `Visible` (derived from `isOnScreen`).
-  - Justification: Expensive or impossible via AX but stable during window operations.
-  - Usage: Sourced from `WindowRegistry` cache.
-
-* **Conflict Resolution:**
-  - Overlay Pattern: Fetch base state from registry, forcibly overwrite all AX-authoritative fields with fresh data.
-  - No-Block Read: Registry lookup must NEVER trigger blocking `CGWindowListCopyWindowInfo` during response hot-path.
-
-### Implementation Requirements
-
-1. **Add `WindowRegistry.getLastKnownWindow`:** Return `windowCache[windowID]` immediately without TTL check or refresh.
-2. **Implement `buildWindowResponseFromAX`:** Query fresh AX bounds/title on MainActor, merge with registry metadata (z-index, bundleID, visible).
-3. **Integrate into mutation handlers:** Use `buildWindowResponseFromAX` in `moveWindow`, `resizeWindow` after invalidation.
-4. **Verification:** Integration tests must assert returned bounds match requested mutation without sleep/retry.
-5. Complete all remaining implementation-plan.md items with utmost excellence.
-
-- Maintain an exhaustive TODO list via the mandated tool before any code or plan edits; include every task from `implementation-plan.md`, every known deficiency, all active constraints, and motivational reminders.
-- Never stop execution mid-task and do not ask clarifying questions; infer next actions from the plan and constraints, and continue iterating until the entire plan is complete.
-- All progress must be incremental yet substantial per iteration, with the TODO list continuously reflecting accurate status and next steps.
-- Absolutely no manual testing; every behavior must be validated through automated tests (unit, integration, end-to-end) and recorded in CI.
-- Assume macOS availability with minimal preconditions (Calculator/TextEdit/Finder) when designing integration tests.
-- You are responsible for all bookkeeping (plan + constraints) and for shipping a production-ready result immediately upon completion.
+**CURRENT DIRECTIVE (2025-11-21):** Fixed critical SDKLogger import errors across all server files (was using non-existent `SDKLogger.sdkLogger` instead of `MacosUseSDK.sdkLogger`). Build and all checks now pass. Proceeding with implementation plan assessment and completion of remaining work per SDK vs Server reconsolidation directives.
 
 ## Critical Ways of Working (STRICT MANDATES)
 
@@ -46,6 +15,10 @@ To guarantee correctness and performance, enforce strict separation of data auth
   2.  Execute it using the `mcp-server-make` tool.
 - **FORBIDDEN ARGUMENT:** You MUST NOT specify the `file` option (e.g., `file=config.mk`) when invoking `mcp-server-make`. The invocation must rely strictly on the repository's default Makefile discovery (which includes `config.mk`).
 - **LOGGING REQUIREMENT:** All `config.mk` recipes producing significant output MUST use `| tee $(or $(PROJECT_ROOT),$(error If you are reading this you specified the `file` option when calling `mcp-server-make`. DONT DO THAT.))/build.log | tail -n 15` (or similar) to prevent context window flooding.
+
+**LOG OUTPUT PRIVACY:**
+- AVOID and REPLACE ad-hoc `fputs` or unannotated `print` with `Logger` and `OSLogPrivacy` for any message emitted from Swift server components or SDK helpers in `Server/Sources/MacosUseServer` and `Sources/MacosUseSDK`.
+- `fputs` is forbidden in these server/SDK directories for diagnostic logs — it bypasses OS unified logging and cannot mark privacy. Use `Logger` with explicit `privacy` annotations for every interpolated value. For user-facing CLI help text (static strings) `print` is allowed only outside `Server/Sources/MacosUseServer` and `Sources/MacosUseSDK`.
 
 **2. CONTINUOUS VALIDATION:**
 - **DO NOT BREAK THE BUILD:** You must run the core `all` target constantly. Use `mcp-server-make all` after every file change.

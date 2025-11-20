@@ -3,6 +3,9 @@ import Foundation
 import GRPCCore
 import MacosUseSDK
 import MacosUseSDKProtos
+import OSLog
+
+private let logger = MacosUseSDK.sdkLogger(category: "ElementLocator")
 
 /// Actor responsible for locating UI elements using selectors.
 /// Integrates with the accessibility tree traversal to find elements
@@ -11,7 +14,7 @@ public actor ElementLocator {
     public static let shared = ElementLocator()
 
     private init() {
-        fputs("info: [ElementLocator] Initialized\n", stderr)
+        logger.info("Initialized")
     }
 
     /// Find elements matching a selector within an application or window context.
@@ -27,7 +30,7 @@ public actor ElementLocator {
         visibleOnly: Bool = false,
         maxResults: Int = 0,
     ) async throws -> [(element: Macosusesdk_Type_Element, path: [Int32])] {
-        fputs("info: [ElementLocator] Finding elements with selector in parent: \(parent)\n", stderr)
+        logger.info("Finding elements with selector in parent: \(parent, privacy: .private)")
 
         // Parse parent to get PID and optional window ID
         let (pid, _) = try parseParent(parent)
@@ -44,7 +47,7 @@ public actor ElementLocator {
         let limitedResults =
             maxResults > 0 ? Array(matchingElements.prefix(maxResults)) : matchingElements
 
-        fputs("info: [ElementLocator] Found \(limitedResults.count) matching elements\n", stderr)
+        logger.info("Found \(limitedResults.count, privacy: .public) matching elements")
         return limitedResults
     }
 
@@ -63,7 +66,7 @@ public actor ElementLocator {
         visibleOnly: Bool = false,
         maxResults: Int = 0,
     ) async throws -> [(element: Macosusesdk_Type_Element, path: [Int32])] {
-        fputs("info: [ElementLocator] Finding elements in region for parent: \(parent)\n", stderr)
+        logger.info("Finding elements in region for parent: \(parent, privacy: .private)")
 
         // Parse parent to get PID and optional window ID
         let (pid, _) = try parseParent(parent)
@@ -86,7 +89,7 @@ public actor ElementLocator {
         // Apply max results limit
         let limitedResults = maxResults > 0 ? Array(regionElements.prefix(maxResults)) : regionElements
 
-        fputs("info: [ElementLocator] Found \(limitedResults.count) elements in region\n", stderr)
+        logger.info("Found \(limitedResults.count, privacy: .public) elements in region")
         return limitedResults
     }
 
@@ -94,7 +97,7 @@ public actor ElementLocator {
     /// - Parameter name: Resource name like "applications/{pid}/elements/{elementId}"
     /// - Returns: The element if found
     public func getElement(name: String) async throws -> Macosusesdk_Type_Element {
-        fputs("info: [ElementLocator] Getting element: \(name)\n", stderr)
+        logger.info("Getting element: \(name, privacy: .private)")
 
         // Parse the resource name
         let components = name.split(separator: "/").map(String.init)
@@ -194,7 +197,7 @@ public actor ElementLocator {
                 let range = NSRange(location: 0, length: element.text.utf16.count)
                 return regex.firstMatch(in: element.text, options: [], range: range) != nil
             } catch {
-                fputs("warning: [ElementLocator] Invalid regex pattern: \(pattern)\n", stderr)
+                logger.warning("Invalid regex pattern: \(pattern, privacy: .private)")
                 return false
             }
 

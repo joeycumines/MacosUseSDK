@@ -1,6 +1,10 @@
 import ApplicationServices
 import Foundation
+import MacosUseSDK
 import MacosUseSDKProtos
+import OSLog
+
+private let logger = MacosUseSDK.sdkLogger(category: "ElementRegistry")
 
 /// Actor responsible for tracking element IDs and providing stable references.
 /// Elements are ephemeral and IDs are generated server-side. This registry
@@ -23,7 +27,7 @@ public actor ElementRegistry {
     private let cacheExpiration: TimeInterval = 30.0
 
     private init() {
-        fputs("info: [ElementRegistry] Initialized\n", stderr)
+        logger.info("Initialized")
 
         // Start cleanup task
         Task {
@@ -51,7 +55,7 @@ public actor ElementRegistry {
         )
 
         elementCache[elementId] = cachedElement
-        fputs("info: [ElementRegistry] Registered element \(elementId) for PID \(pid)\n", stderr)
+        logger.info("Registered element \(elementId, privacy: .private) for PID \(pid, privacy: .public)")
         return elementId
     }
 
@@ -60,15 +64,13 @@ public actor ElementRegistry {
     /// - Returns: The element data if found and not expired
     public func getElement(_ elementId: String) -> Macosusesdk_Type_Element? {
         guard let cached = elementCache[elementId] else {
-            fputs("warning: [ElementRegistry] Element \(elementId) not found in cache\n", stderr)
+            logger.warning("Element \(elementId, privacy: .private) not found in cache")
             return nil
         }
 
         // Check if expired
         if Date().timeIntervalSince(cached.timestamp) > cacheExpiration {
-            fputs(
-                "warning: [ElementRegistry] Element \(elementId) expired, removing from cache\n", stderr,
-            )
+            logger.warning("Element \(elementId, privacy: .private) expired, removing from cache")
             elementCache.removeValue(forKey: elementId)
             return nil
         }
@@ -82,13 +84,13 @@ public actor ElementRegistry {
     /// - Note: This MUST be called from MainActor context since AXUIElement requires it
     public func getAXElement(_ elementId: String) async -> AXUIElement? {
         guard let cached = elementCache[elementId] else {
-            fputs("warning: [ElementRegistry] Element \(elementId) not found\n", stderr)
+            logger.warning("Element \(elementId, privacy: .private) not found")
             return nil
         }
 
         // Check if expired
         if Date().timeIntervalSince(cached.timestamp) > cacheExpiration {
-            fputs("warning: [ElementRegistry] Element \(elementId) expired\n", stderr)
+            logger.warning("Element \(elementId, privacy: .private) expired")
             elementCache.removeValue(forKey: elementId)
             return nil
         }
@@ -117,7 +119,7 @@ public actor ElementRegistry {
         )
 
         elementCache[elementId] = cachedElement
-        fputs("info: [ElementRegistry] Updated element \(elementId)\n", stderr)
+        logger.info("Updated element \(elementId, privacy: .private)")
         return true
     }
 
@@ -125,7 +127,7 @@ public actor ElementRegistry {
     /// - Parameter elementId: The element ID to remove
     public func removeElement(_ elementId: String) {
         if elementCache.removeValue(forKey: elementId) != nil {
-            fputs("info: [ElementRegistry] Removed element \(elementId)\n", stderr)
+            logger.info("Removed element \(elementId, privacy: .private)")
         }
     }
 
@@ -143,7 +145,7 @@ public actor ElementRegistry {
         for key in keysToRemove {
             elementCache.removeValue(forKey: key)
         }
-        fputs("info: [ElementRegistry] Cleared \(keysToRemove.count) elements for PID \(pid)\n", stderr)
+        logger.info("Cleared \(keysToRemove.count, privacy: .public) elements for PID \(pid, privacy: .public)")
     }
 
     /// Get cache statistics.
@@ -200,7 +202,7 @@ public actor ElementRegistry {
         }
 
         if !expiredKeys.isEmpty {
-            fputs("info: [ElementRegistry] Cleaned up \(expiredKeys.count) expired elements\n", stderr)
+            logger.info("Cleaned up \(expiredKeys.count, privacy: .public) expired elements")
         }
     }
 }

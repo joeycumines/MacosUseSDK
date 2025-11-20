@@ -1,8 +1,12 @@
 import AppKit
 import Foundation
 import GRPCCore
+import MacosUseSDK
 import MacosUseSDKProtos
+import OSLog
 import SwiftProtobuf
+
+private let logger = MacosUseSDK.sdkLogger(category: "MacroExecutor")
 
 /// Execution context for macro operations
 public struct MacroContext {
@@ -62,7 +66,7 @@ public actor MacroExecutor {
         parent: String,
         timeout: Double,
     ) async throws {
-        fputs("info: [MacroExecutor] Executing macro: \(macro.name)\n", stderr)
+        logger.info("Executing macro: \(macro.name, privacy: .private)")
 
         // Validate required parameters
         for param in macro.parameters where param.required {
@@ -95,7 +99,7 @@ public actor MacroExecutor {
             try await executeAction(action, context: &context)
         }
 
-        fputs("info: [MacroExecutor] Macro execution completed: \(macro.name)\n", stderr)
+        logger.info("Macro execution completed: \(macro.name, privacy: .private)")
     }
 
     // MARK: - Action Execution

@@ -1,6 +1,10 @@
 import Foundation
+import MacosUseSDK
 import MacosUseSDKProtos
+import OSLog
 import SwiftProtobuf
+
+private let logger = MacosUseSDK.sdkLogger(category: "SessionManager")
 
 /// Thread-safe session and transaction manager for the MacosUseSDK gRPC server.
 /// Manages session lifecycle, transaction state, operation history, and resource tracking.
@@ -382,7 +386,7 @@ actor SessionManager {
 
                 // Remove after marking as expired
                 sessions.removeValue(forKey: name)
-                fputs("info: [SessionManager] Cleaned up expired session: \(name)\n", stderr)
+                logger.info("Cleaned up expired session: \(name, privacy: .private)")
             }
         }
     }

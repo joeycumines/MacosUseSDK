@@ -18,31 +18,25 @@
 
 ### **Current Reality (Single-Sentence Snapshot)**
 
-**Current Reality:** All critical issues verified and documentation updated; split-brain authority model correctly implemented with fresh AX state for bounds/title/minimized/hidden and stable registry metadata for bundleID/zIndex; visible field computed via correct formula; proto documentation updated to accurately surface actual behavior for all Window fields; all List/Find RPCs have AIP-158 pagination; comprehensive unit and integration tests pass.
+**Current Reality:** Build passes, all checks green, SDKLogger import issues resolved; SDK vs Server reconsolidation directive active but requires concrete task identification.
 
 ### **Immediate Action Items (Next Things To Do)**
 
-1. **COMPLETED: Critical window metadata fixes and documentation ✓**
-    - ✅ Verified: Metadata fetched BEFORE invalidation prevents nil registry bug
-    - ✅ Verified: `kAXMinimizedAttribute` and `kAXHiddenAttribute` queried per AX Authority
-    - ✅ Verified: `visible` computed via split-brain formula: `(Registry.isOnScreen OR Assumption) AND NOT AX.Minimized AND NOT AX.Hidden`
-    - ✅ Verified: AX state polling in minimize/restore prevents stale responses
-    - ✅ Verified: `window_metadata_test.go` validates bundleID, zIndex, and visible preservation
-    - ✅ **COMPLETED: Updated proto documentation** to clearly document data sources and authority model for all Window fields:
-        - `title`: AX Authority (fresh kAXTitleAttribute query)
-        - `bounds`: AX Authority (fresh kAXPositionAttribute/kAXSizeAttribute queries)
-        - `z_index`: Registry Authority (cached CGWindowList metadata)
-        - `bundle_id`: Registry Authority (cached NSRunningApplication resolution)
-        - `visible`: Split-Brain Authority (formula documented with rationale for each component)
+#### SDK vs Server Reconsolidation Directives (2025-11-21)
 
-2. **COMPLETED: Small correctness/unification fixes ✓**
-    - `parsePID(fromName:)` already unified via `ParsingHelpers` (both `MacosUseServiceProvider` and `MacroExecutor` use it).
-    - `MacroExecutor.executeMethodCall("ClickElement")` already implements coordinate resolution from `elementId` via `ElementRegistry`.
+**Goal:** Combine divergent `Sources/MacosUseSDK` and `Server/Sources/MacosUseServer` implementations.
 
-3. **COMPLETED: Targeted tests ✓**
-    - Unit tests exist: `WindowRegistry` has tests for detection and filtering; `ObservationManager` has comprehensive window diffing tests (create, destroy, minimize, restore, move, resize).
-    - Pagination implemented: All `List*/Find*` RPCs implement AIP-158 pagination with opaque page tokens (verified: `listApplications`, `listInputs`, `listWindows`, `findElements`, `findRegionElements`, `listObservations`, `listSessions`, `listMacros`).
-    - Integration test created: `window_metadata_test.go` verifies window mutation responses contain correct bundleID, zIndex, and visible fields.
+**MUST HAVES:**
+- **Prioritise Server Use Case:** The SDK MUST be well-designed for the server use case (robustness, resource management).
+- **No Detrimental Side Effects:** Server behavior must remain EXACTLY equivalent (unless fixing a bug).
+- **Concurrency Compatibility:** SDK MUST be compatible with the server's concurrency model (Actor-based, Main Thread constraints).
+- **Liveness:** Blocking calls (e.g. `usleep`) on Main Thread are FORBIDDEN. Use `async`/`await` and `Task.sleep`.
+- **Window Authority:** SDK must support the "Split-Brain" authority model (provide fresh AX data primitives).
+
+**NICE TO HAVES:**
+- Avoid breaking changes in SDK where possible.
+- Modular/Composable: SDK functionality should be usable directly in Swift without the Server.
+- Extend Swift examples.
 
 ### **Standing Guidance For Future Edits To This Section**
 
@@ -504,143 +498,130 @@ To avoid over-scoping Phase 3, the following remain **explicit future work** bey
         1.  **Stream Setup:** Initiate `WatchAccessibility`.
         2.  **Trigger:** Invoke `CreateInput` to click a button.
         3.  **Event Capture:** Verify receipt of a response where `modified` elements contains the expected change.
-
-### **4.8 Integration Tests (Prioritised Matrix)**
-
-Instead of attempting a full matrix at once, Phase 4 focuses on a **prioritised subset** of high-value scenarios:
-- Calculator: core arithmetic flows using element targeting and inputs.
-- TextEdit: open, type, resize/move window, and verify via traversal.
-- Finder: basic navigation and clipboard/file dialog interactions.
-- Multi-window scenarios within a single app (e.g. multiple TextEdit windows).
-- Basic multi-app coordination (e.g. copy from one app, paste in another).
-- Error recovery and resource cleanup.
-
-**MANDATORY PROCESS REQUIREMENTS (INTEGRATION TESTS):**
-- New or changed end-to-end behaviors (e.g. new RPCs, new observation types, pagination semantics) MUST be covered by at least one integration test that exercises the full stack: client → gRPC → server actors → macOS APIs.
 - Integration tests MUST rely on `PollUntil` and state-delta assertions rather than fixed sleeps; introducing `sleep`-based timing in tests is FORBIDDEN unless there is no viable alternative, in which case the constraint and rationale MUST be documented in this plan.
-- Any regression reported against a previously working scenario MUST result in an additional integration test that reproduces the issue and remains in the suite permanently.
+- Any regression reported against a previously working scenario MUST result in an additional integration test that reproduces the issue and remains in the suite permanently.(Prioritised Matrix)**
 
-### **4.9 Performance Tests**
--   Benchmarks:
-    -   Element lookup speed
-    -   Cache hit rates
-    -   Traversal performance
-    -   Input latency
-    -   Memory usage patterns
+### **4.9 Performance Tests**matrix at once, Phase 4 focuses on a **prioritised subset** of high-value scenarios:
+-   Benchmarks:ithmetic flows using element targeting and inputs.
+    -   Element lookup speede/move window, and verify via traversal.
+    -   Cache hit ratespboard/file dialog interactions.
+    -   Traversal performancethin a single app (e.g. multiple TextEdit windows).
+    -   Input latencye.g. copy from one app, paste in another).
+    -   Memory usage patterns- Error recovery and resource cleanup.
     -   Concurrent client handling
-    -   Large tree handling
-    -   Rate limit effectiveness
+    -   Large tree handlingREMENTS (INTEGRATION TESTS):**
+    -   Rate limit effectiveness observation types, pagination semantics) MUST be covered by at least one integration test that exercises the full stack: client → gRPC → server actors → macOS APIs.
 
 ### **4.10 End-to-End Tests**
 -   Real-world scenarios:
-    -   VS Code automation (open file, edit, save, debug)
+    -   VS Code automation (open file, edit, save, debug)e
     -   Xcode automation (build, test, run)
-    -   Browser automation (navigation, forms, downloads)
-    -   Mail automation (compose, send)
-    -   Multi-step workflows
-    -   Error recovery paths
+    -   Browser automation (navigation, forms, downloads)rns
+    -   Mail automation (compose, send)ndling
+    -   Multi-step workflows    -   Large tree handling
+    -   Error recovery pathsess
     -   Session management
     -   Transaction rollback
 
-### **4.11 Compliance Tests**
--   API standards:
-    -   AIP compliance validation
-    -   Resource name formats
-    -   LRO patterns
+### **4.11 Compliance Tests**mation (open file, edit, save, debug)
+-   API standards:on (build, test, run)
+    -   AIP compliance validationon (navigation, forms, downloads)
+    -   Resource name formatsation (compose, send)
+    -   LRO patternsworkflows
     -   Error handling
     -   Filtering syntax
-    -   Pagination
+    -   Paginationck
     -   Field masks
--   Accessibility compliance:
+-   Accessibility compliance:### **4.11 Compliance Tests**
     -   Permission handling
     -   Privacy protection
-    -   Sandbox compatibility
+    -   Sandbox compatibility    -   Resource name formats
 
 ### **4.12 Immediate End-to-End Verification Plan**
 *(Specific Plan for Current Cycle)*
 
-- **Build/Run Preconditions:**
+- **Build/Run Preconditions:**    -   Field masks
     - macOS 12+ (headless or with simulator; server requires Accessibility & Screen Recording).
     - Integration tests run via `cd integration; go test -v`, using generated Go stubs in `gen/go/*`.
     - Use `INTEGRATION_SERVER_ADDR` env to test against existing server.
-
+    -   Sandbox compatibility
 - **Verify Baseline Health & Simple Operations:**
-    - Test: `ListApplications`, `OpenApplication`, `GetApplication`, `DeleteApplication`.
+    - Test: `ListApplications`, `OpenApplication`, `GetApplication`, `DeleteApplication`.lan**
     - Approach: Call `OpenApplication` (LRO), wait for op completion, verify `GetApplication` returns correct PID.
 
-- **Test: Input & Element Actions:**
-    - Use a test app (Calculator or TextEdit):
+- **Test: Input & Element Actions:**- **Build/Run Preconditions:**
+    - Use a test app (Calculator or TextEdit):h simulator; server requires Accessibility & Screen Recording).
         - Find a button via `FindElements`, `ClickElement` and verify effect (e.g., Calculator displays result).
-    - Run `PerformElementAction` with AX-based action (press) and coordinate fallback.
+    - Run `PerformElementAction` with AX-based action (press) and coordinate fallback.    - Use `INTEGRATION_SERVER_ADDR` env to test against existing server.
 
 - **Test: Find and Pagination:**
-    - Create a test that ensures `FindElements` returns page results with `nextPageToken` and request subsequent page to iterate.
-
+    - Create a test that ensures `FindElements` returns page results with `nextPageToken` and request subsequent page to iterate.cation`, `GetApplication`, `DeleteApplication`.
+p completion, verify `GetApplication` returns correct PID.
 - **Test: Observation Streams:**
-    - Create observation on elements, make application change (open/close windows, change text), verify:
-        - Streamed events include changes.
+    - Create observation on elements, make application change (open/close windows, change text), verify:- **Test: Input & Element Actions:**
+        - Streamed events include changes.extEdit):
         - `createObservation` LRO returns proper result.
-        - `StreamObservations` receives events.
+        - `StreamObservations` receives events.    - Run `PerformElementAction` with AX-based action (press) and coordinate fallback.
 
-- **Test: Window Changes Detection:**
+- **Test: Window Changes Detection:**- **Test: Find and Pagination:**
     - Create Observation for window changes; open/close windows in the app; expect window add/remove events in the stream.
 
-- **Implementation Note:** Unskip and run `integration/observation_test.go` as part of the change set that refactors traversal and ObservationManager; it should be used to confirm window add/remove detection during development (not postponed to after completion).
-
-- **Developer Target:** Add a Makefile target `enable-observation-test` (in `config.mk`) to unskip observation tests during the development cycle and make it straightforward for contributors to run this specific test during the change set.
-
+- **Implementation Note:** Unskip and run `integration/observation_test.go` as part of the change set that refactors traversal and ObservationManager; it should be used to confirm window add/remove detection during development (not postponed to after completion).Streams:**
+, change text), verify:
+- **Developer Target:** Add a Makefile target `enable-observation-test` (in `config.mk`) to unskip observation tests during the development cycle and make it straightforward for contributors to run this specific test during the change set.        - Streamed events include changes.
+ LRO returns proper result.
 - **Test: Scripting:**
     - `GetScriptingDictionaries` returns bundle ID & command set for a given app.
-
-- **Test: Macro Management:**
+ction:**
+- **Test: Macro Management:**ts in the stream.
     - Create macros, update, list paginated results, execute macros, verify action effects & operation response.
-
+* Unskip and run `integration/observation_test.go` as part of the change set that refactors traversal and ObservationManager; it should be used to confirm window add/remove detection during development (not postponed to after completion).
 - **Test: Screen Capturing:**
-    - Capture screenshot & window screenshot; ensure image/data returns match expected size or MIME type.
+    - Capture screenshot & window screenshot; ensure image/data returns match expected size or MIME type.- **Developer Target:** Add a Makefile target `enable-observation-test` (in `config.mk`) to unskip observation tests during the development cycle and make it straightforward for contributors to run this specific test during the change set.
 
-- **Test: Error Handling:
+- **Test: Error Handling:- **Test: Scripting:**
     - Invalid inputs: Call `GetElement` with invalid resource names, expecting `invalidArgument`/`notFound`.
 
 ### **Correctness & Verification Guarantees (MANDATORY)**
-
+ects & operation response.
 To ensure this implementation plan provides a **guarantee** of correctness, the following validation logic must be strictly adhered to. **ANY DEVIATION IS A CRITICAL FAILURE.**
-
-1.  **State-Difference Assertions (The Delta Check):**
+- **Test: Screen Capturing:**
+1.  **State-Difference Assertions (The Delta Check):**ure image/data returns match expected size or MIME type.
     -   Tests must never assume an action worked simply because the RPC returned `OK`.
     -   **Requirement:** Every mutator RPC (Move, Resize, Click, Type) must be immediately followed by an accessor RPC (GetWindow, GetElement, Traverse) to assert the *Delta* between Pre-State and Post-State matches the expected mutation.
 
 2.  **Wait-For-Convergence Pattern (PollUntil):**
-    -   macOS Accessibility API is asynchronous. Standard `Assert` will fail due to race conditions.
+    -   macOS Accessibility API is asynchronous. Standard `Assert` will fail due to race conditions.tion Guarantees (MANDATORY)**
     -   **Requirement:** Tests must **strictly avoid** `time.Sleep()`. Instead, implement a `PollUntil(condition, timeout)` utility.
-    -   **Implementation:** Loop `GetWindow` (or relevant accessor) every 100ms up to a 2s deadline. Only pass if the state condition is met. Fail immediately if timeout occurs.
+    -   **Implementation:** Loop `GetWindow` (or relevant accessor) every 100ms up to a 2s deadline. Only pass if the state condition is met. Fail immediately if timeout occurs.To ensure this implementation plan provides a **guarantee** of correctness, the following validation logic must be strictly adhered to. **ANY DEVIATION IS A CRITICAL FAILURE.**
 
-3.  **OCR as Ground Truth:**
-    -   **Requirement:** For graphical rendering tests (screenshots), byte-comparison is fragile. Verification must rely on the `ocr_text` field or valid image header decoding to guarantee the server isn't returning garbage bytes.
-
+3.  **OCR as Ground Truth:**1.  **State-Difference Assertions (The Delta Check):**
+    -   **Requirement:** For graphical rendering tests (screenshots), byte-comparison is fragile. Verification must rely on the `ocr_text` field or valid image header decoding to guarantee the server isn't returning garbage bytes.d simply because the RPC returned `OK`.
+    -   **Requirement:** Every mutator RPC (Move, Resize, Click, Type) must be immediately followed by an accessor RPC (GetWindow, GetElement, Traverse) to assert the *Delta* between Pre-State and Post-State matches the expected mutation.
 ---
+2.  **Wait-For-Convergence Pattern (PollUntil):**
+## **Phase 5: Proto Refinement (Not Creation)**I is asynchronous. Standard `Assert` will fail due to race conditions.
+    -   **Requirement:** Tests must **strictly avoid** `time.Sleep()`. Instead, implement a `PollUntil(condition, timeout)` utility.
+Most core proto files already exist. Phase 5 focuses on **refinement** and AIP compliance rather than adding new top-level files.evant accessor) every 100ms up to a 2s deadline. Only pass if the state condition is met. Fail immediately if timeout occurs.
 
-## **Phase 5: Proto Refinement (Not Creation)**
-
-Most core proto files already exist. Phase 5 focuses on **refinement** and AIP compliance rather than adding new top-level files.
-
-### **5.1 Existing v1 Protos**
-
+### **5.1 Existing v1 Protos** Truth:**
+rement:** For graphical rendering tests (screenshots), byte-comparison is fragile. Verification must rely on the `ocr_text` field or valid image header decoding to guarantee the server isn't returning garbage bytes.
 Files already present under `proto/macosusesdk/v1/`:
 - `application.proto`
 - `clipboard.proto`
-- `input.proto`
+- `input.proto`Refinement (Not Creation)**
 - `macos_use.proto`
-- `macro.proto`
+- `macro.proto`iles already exist. Phase 5 focuses on **refinement** and AIP compliance rather than adding new top-level files.
 - `observation.proto`
-- `screenshot.proto`
+- `screenshot.proto`### **5.1 Existing v1 Protos**
 - `script.proto`
 - `session.proto`
 - `window.proto`
 
 **Phase 5 tasks:**
-- Ensure each file has required options and metadata per AIPs.
+- Ensure each file has required options and metadata per AIPs.- `macos_use.proto`
 - Verify resource name patterns and method names against AIP-121/190/191.
-- Align request/response messages with AIP guidelines (e.g. `List*`/`Get*` shapes, LRO use).
+- Align request/response messages with AIP guidelines (e.g. `List*`/`Get*` shapes, LRO use).- `observation.proto`
 - Document semantics (including pagination, filters, and field masks) in proto comments.
 
 ### **5.2 Type Protos**
@@ -648,132 +629,132 @@ Files already present under `proto/macosusesdk/v1/`:
 Files already present under `proto/macosusesdk/type/`:
 - `element.proto`
 - `geometry.proto`
-- `selector.proto`
-
-**Phase 5 tasks:**
+- `selector.proto`121/190/191.
+- Align request/response messages with AIP guidelines (e.g. `List*`/`Get*` shapes, LRO use).
+**Phase 5 tasks:**ocument semantics (including pagination, filters, and field masks) in proto comments.
 - Expand or introduce type protos for shared concepts only where needed (e.g. a `state` or `event` type file if duplication becomes a problem).
 - Keep the type surface minimal and focused on genuine reuse.
 
 ---
-
+- `element.proto`
 ## **Phase 6: Server Architecture – Incremental Enhancements**
-
+- `selector.proto`
 Phase 6 captures architectural improvements that go beyond the immediate correctness and completeness issues tackled in Phases 2–5.
 
-### **6.1 Window & Element Management**
-
+### **6.1 Window & Element Management**- Expand or introduce type protos for shared concepts only where needed (e.g. a `state` or `event` type file if duplication becomes a problem).
+rface minimal and focused on genuine reuse.
 **Current reality:**
 - `WindowRegistry`, `ElementLocator`, `ElementRegistry`, and `SelectorParser` already exist and are central to window/element handling.
 
-**Phase 6 tasks:**
+**Phase 6 tasks:**e – Incremental Enhancements**
 - Improve window tracking (history, z-order where possible, better matching for identical bounds).
-- Tighten element identity and caching semantics, reducing stale references where feasible.
+- Tighten element identity and caching semantics, reducing stale references where feasible.hitectural improvements that go beyond the immediate correctness and completeness issues tackled in Phases 2–5.
 
-### **6.2 Observation Pipeline**
+### **6.2 Observation Pipeline**### **6.1 Window & Element Management**
 
 **Current reality:**
-- `ObservationManager` and `ChangeDetector` orchestrate observation lifecycles and polling.
+- `ObservationManager` and `ChangeDetector` orchestrate observation lifecycles and polling.SelectorParser` already exist and are central to window/element handling.
 
-**Phase 6 tasks:**
-- Once Phase 3 observation diffs are in place, consider introducing:
-    - Simple scheduling/aggregation to avoid flooding clients.
+**Phase 6 tasks:****Phase 6 tasks:**
+- Once Phase 3 observation diffs are in place, consider introducing: where possible, better matching for identical bounds).
+    - Simple scheduling/aggregation to avoid flooding clients.- Tighten element identity and caching semantics, reducing stale references where feasible.
     - More configurable filters for observation streams.
 
 ### **6.3 Session & Transaction Internals**
-
+**
 **Current reality:**
 - `SessionManager` exists and supports basic session operations.
-
 **Phase 6 tasks:**
-- Introduce internal logging/snapshotting of session operations where beneficial for debugging.
+**Phase 6 tasks:**sider introducing:
+- Introduce internal logging/snapshotting of session operations where beneficial for debugging.    - Simple scheduling/aggregation to avoid flooding clients.
 - Refine transaction recording to support more advanced rollback semantics if required by real-world usage.
 
-### **6.4 Advanced Input & Query Engine (Future)**
+### **6.4 Advanced Input & Query Engine (Future)**& Transaction Internals**
 
 These are optional enhancements to be pursued only when core correctness work is stable.
-
+- `SessionManager` exists and supports basic session operations.
 **Phase 6 tasks:**
-- Extend input modelling and validation if advanced gestures or complex sequences become necessary.
-- If queries grow significantly in complexity, consider a dedicated internal query execution layer to manage selectors, filters, and pagination more systematically.
-
+- Extend input modelling and validation if advanced gestures or complex sequences become necessary.**Phase 6 tasks:**
+- If queries grow significantly in complexity, consider a dedicated internal query execution layer to manage selectors, filters, and pagination more systematically. session operations where beneficial for debugging.
+- Refine transaction recording to support more advanced rollback semantics if required by real-world usage.
 ---
-
+### **6.4 Advanced Input & Query Engine (Future)**
 ## **Phase 7: VS Code Integration Patterns**
-
+nhancements to be pursued only when core correctness work is stable.
 Phase 7 remains focused on use-case patterns, not new APIs.
 
-### **7.1 Common Workflows**
-- Open file by path.
+### **7.1 Common Workflows**gestures or complex sequences become necessary.
+- Open file by path.- If queries grow significantly in complexity, consider a dedicated internal query execution layer to manage selectors, filters, and pagination more systematically.
 - Navigate to line/column.
 - Execute command palette actions.
 - Control the debugger, terminal, and file explorer.
-
+**Phase 7: VS Code Integration Patterns**
 ### **7.2 Example Implementation**
-- Capture a small set of documented flows (in README/docs) that explain how to orchestrate these behaviours using existing RPCs (applications, windows, elements, inputs, observations).
+- Capture a small set of documented flows (in README/docs) that explain how to orchestrate these behaviours using existing RPCs (applications, windows, elements, inputs, observations).e-case patterns, not new APIs.
 
 ---
 
 ## **Phase 8: Documentation**
-
-### **8.1 API Documentation**
+- Execute command palette actions.
+### **8.1 API Documentation**nal, and file explorer.
 - Ensure all v1 and type protos have clear comments for messages, fields, and RPCs.
 - Provide examples for each major resource interaction (Application, Window, Element, Observation, Session).
-
+ (in README/docs) that explain how to orchestrate these behaviours using existing RPCs (applications, windows, elements, inputs, observations).
 ### **8.2 Integration Guide**
-- Expand `proto/README.md` and top-level `README.md` with:
+- Expand `proto/README.md` and top-level `README.md` with:---
     - How to run the server and clients.
     - Environment variable configuration.
     - Basic usage examples for Go and Swift clients.
-
-### **8.3 Advanced Topics**
-- Document recommended patterns for sessions, transactions, observations, and selectors, once stabilised by earlier phases.
+ **8.1 API Documentation**
+### **8.3 Advanced Topics**- Ensure all v1 and type protos have clear comments for messages, fields, and RPCs.
+- Document recommended patterns for sessions, transactions, observations, and selectors, once stabilised by earlier phases.teraction (Application, Window, Element, Observation, Session).
 
 ---
 
 ## **Phase 9: Build System & CI Integration**
-
-### **9.1 Buf & Code Generation**
+    - Environment variable configuration.
+### **9.1 Buf & Code Generation**o and Swift clients.
 - Keep `buf.yaml` and `buf.gen.yaml` in sync with the existing proto set.
 - Ensure Go and Swift stubs are generated deterministically and committed.
-
+- Document recommended patterns for sessions, transactions, observations, and selectors, once stabilised by earlier phases.
 ### **9.2 Make & Local Tooling**
 - Maintain Make and `config.mk` targets for building/running server, SDK, and tests.
 - Ensure local workflows mirror CI behaviour as closely as possible.
-
+ntegration**
 ### **9.3 CI/CD**
 - Verify GitHub Actions workflows:
-    - Run buf lint and api-linter.
-    - Build Swift and Go targets.
+    - Run buf lint and api-linter.- Keep `buf.yaml` and `buf.gen.yaml` in sync with the existing proto set.
+    - Build Swift and Go targets.nsure Go and Swift stubs are generated deterministically and committed.
     - Run unit and integration tests.
 - Add CI checks for API compatibility and performance regressions where practical.
+- Maintain Make and `config.mk` targets for building/running server, SDK, and tests.
+--- possible.
 
----
-
-## **Phase 10: Implementation Priorities (Re-ranked)**
+## **Phase 10: Implementation Priorities (Re-ranked)**### **9.3 CI/CD**
 
 ### **Priority 1: Pagination & AIP Compliance (CRITICAL)**
-Implement and test AIP-158-compliant pagination for key list/find RPCs and ensure overall AIP alignment for the existing API surface.
+Implement and test AIP-158-compliant pagination for key list/find RPCs and ensure overall AIP alignment for the existing API surface.    - Build Swift and Go targets.
 
 ### **Priority 2: Observation & Window Changes (HIGH)
 Add robust window and element change detection to `ObservationManager` and expose it through streaming RPCs.
 
 ### **Priority 4: Bundle IDs & Scripting (HIGH)**
-Fix bundle ID resolution and `GetScriptingDictionaries` so scripting and window attribution are reliable.
+Fix bundle ID resolution and `GetScriptingDictionaries` so scripting and window attribution are reliable.## **Phase 10: Implementation Priorities (Re-ranked)**
 
 ### **Priority 5: Element & Input Semantics (MEDIUM)**
-Refine element identity/staleness semantics and expand `PerformElementAction` to a practical, well-documented set of actions.
+Refine element identity/staleness semantics and expand `PerformElementAction` to a practical, well-documented set of actions.Implement and test AIP-158-compliant pagination for key list/find RPCs and ensure overall AIP alignment for the existing API surface.
 
 ### **Priority 6: Sessions & Transactions (MEDIUM)**
-Clarify and, where feasible, enhance rollback and snapshot behaviours.
+Clarify and, where feasible, enhance rollback and snapshot behaviours.Add robust window and element change detection to `ObservationManager` and expose it through streaming RPCs.
 
 ### **Priority 7: Testing & Harness (MEDIUM)**
-Build out the prioritised integration tests and PollUntil-based convergence patterns.
+Build out the prioritised integration tests and PollUntil-based convergence patterns.Fix bundle ID resolution and `GetScriptingDictionaries` so scripting and window attribution are reliable.
 
 ### **Priority 8: VS Code / Workflow Patterns (LOW)**
-Document patterns for dev-tool automation using the existing API.
+Document patterns for dev-tool automation using the existing API.Refine element identity/staleness semantics and expand `PerformElementAction` to a practical, well-documented set of actions.
 
-### **Priority 9: Advanced Features (LOW)**
-Pursue advanced input, screen recording, rich macro language, and deep debug tooling after the above are solid.
+### **Priority 9: Advanced Features (LOW)**### **Priority 6: Sessions & Transactions (MEDIUM)**
+Pursue advanced input, screen recording, rich macro language, and deep debug tooling after the above are solid.hance rollback and snapshot behaviours.
 
 ---
 
@@ -782,33 +763,46 @@ Pursue advanced input, screen recording, rich macro language, and deep debug too
 * **Follow AIPs:** The API design strictly adheres to the Google API Improvement Proposals (AIPs), particularly:
     * **AIP-121:** Resource-oriented design (resources should be independently addressable).
     * **AIP-131, 132, 133, 135:** Standard methods (`Get`, `List`, `Create`, `Delete`).
-    * **AIP-151:** Long-running operations (for `OpenApplication`, using `google.longrunning.Operation`).
+    * **AIP-151:** Long-running operations (for `OpenApplication`, using `google.longrunning.Operation`).Pursue advanced input, screen recording, rich macro language, and deep debug tooling after the above are solid.
     * **AIP-161:** Field masks (e.g., for `TraverseAccessibility` element filtering).
     * **AIP-192:** Resource names must follow standard patterns.
     * **AIP-203:** Declarative-friendly resource design.
 
 * **Main-Thread Constraint:** The MacosUseSDK requires `NSApplication.shared` to be running and most operations to be performed on the main thread (`@MainActor`). The architecture uses:
     * **`AutomationCoordinator` (@MainActor):** The central, main-thread controller that interacts with the SDK.
-    * **`AppStateStore` (actor):** A thread-safe, copy-on-write state store that is queried from gRPC providers to avoid blocking main thread.
-    * **Task-based communication:** gRPC providers submit tasks to the coordinator and await results.
-
+    * **`AppStateStore` (actor):** A thread-safe, copy-on-write state store that is queried from gRPC providers to avoid blocking main thread.    * **AIP-121:** Resource-oriented design (resources should be independently addressable).
+    * **Task-based communication:** gRPC providers submit tasks to the coordinator and await results.5:** Standard methods (`Get`, `List`, `Create`, `Delete`).
+tion`).
 * **Swift Concurrency:** Leverage Swift's `async`/`await` and `actor` model for safe, scalable concurrency. The `grpc-swift-2` library is built on Swift Concurrency and all providers use `AsyncProvider` protocols.
 
 * **Separation of Concerns:**
     * **Proto Definition** (`proto/`): The API contract (resource definitions, method signatures).
-    * **gRPC Providers** (`Server/Sources/MacosUseServer/*Provider.swift`): gRPC endpoint implementations that validate, transform, and delegate.
+    * **gRPC Providers** (`Server/Sources/MacosUseServer/*Provider.swift`): gRPC endpoint implementations that validate, transform, and delegate.* **Main-Thread Constraint:** The MacosUseSDK requires `NSApplication.shared` to be running and most operations to be performed on the main thread (`@MainActor`). The architecture uses:
     * **AutomationCoordinator** (`Server/Sources/MacosUseServer/AutomationCoordinator.swift`): Main-thread SDK orchestrator.
-    * **State Management** (`Server/Sources/MacosUseServer/AppStateStore.swift`, `OperationStore.swift`): Thread-safe state storage.
+    * **State Management** (`Server/Sources/MacosUseServer/AppStateStore.swift`, `OperationStore.swift`): Thread-safe state storage.    * **`AppStateStore` (actor):** A thread-safe, copy-on-write state store that is queried from gRPC providers to avoid blocking main thread.
     * **MacosUseSDK** (`Sources/MacosUseSDK/`): The underlying Swift library that wraps macOS Accessibility APIs.
 
-* **Code Generation:** All protobuf stubs are generated via `buf generate` and committed to the repository. This ensures reproducibility and allows clients to consume generated code directly.
+* **Code Generation:** All protobuf stubs are generated via `buf generate` and committed to the repository. This ensures reproducibility and allows clients to consume generated code directly.await` and `actor` model for safe, scalable concurrency. The `grpc-swift-2` library is built on Swift Concurrency and all providers use `AsyncProvider` protocols.
 
 * **Error Handling:** Use standard gRPC status codes and provide detailed error messages. Follow AIP-193 for error responses.
-
+e API contract (resource definitions, method signatures).
+* **Testing:** Comprehensive testing at all levels:MacosUseServer/*Provider.swift`): gRPC endpoint implementations that validate, transform, and delegate.
+    * Unit tests for individual components    * **AutomationCoordinator** (`Server/Sources/MacosUseServer/AutomationCoordinator.swift`): Main-thread SDK orchestrator.
+    -   Integration tests for end-to-end workflows * **State Management** (`Server/Sources/MacosUseServer/AppStateStore.swift`, `OperationStore.swift`): Thread-safe state storage.
+    -   Performance tests for scalabilitys/MacosUseSDK/`): The underlying Swift library that wraps macOS Accessibility APIs.
+    -   Compliance tests for API standards
+* **Code Generation:** All protobuf stubs are generated via `buf generate` and committed to the repository. This ensures reproducibility and allows clients to consume generated code directly.
+---
+**END OF IMPLEMENTATION PLAN*** **Error Handling:** Use standard gRPC status codes and provide detailed error messages. Follow AIP-193 for error responses.
+(To provide an update, return to the "STATUS SECTION" at the top of this document.)
 * **Testing:** Comprehensive testing at all levels:
-    * Unit tests for individual components
+---
     -   Integration tests for end-to-end workflows
-    -   Performance tests for scalability
+
+
+
+
+**ON TOOLS: Use `config.mk` to create custom targets, and `mcp-server-make` to run targets. ALWAYS use custom targets that *limit* the amount of output you receive. For example, piping through tail, with FEW lines output. Prior to tail, pipe to tee. The file ./build.log in the root of the project is gitignored, so use that. That way you can *search* the output. To be clear, timing dependent tests are BANNED. As are those that take too long to run. Testing retries, for example, MUST be done in a way that supports avoiding running afoul of those CRITICAL rules. Abide. OBEY.****ON TOOLS: Use `config.mk` to create custom targets, and `mcp-server-make` to run targets. ALWAYS use custom targets that *limit* the amount of output you receive. For example, piping through tail, with FEW lines output. Prior to tail, pipe to tee. The file ./build.log in the root of the project is gitignored, so use that. That way you can *search* the output. To be clear, timing dependent tests are BANNED. As are those that take too long to run. Testing retries, for example, MUST be done in a way that supports avoiding running afoul of those CRITICAL rules. Abide. OBEY.**    -   Performance tests for scalability
     -   Compliance tests for API standards
 
 ---

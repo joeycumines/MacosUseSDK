@@ -1,6 +1,10 @@
 import Foundation
 import GRPCCore
+import MacosUseSDK
 import MacosUseSDKProtos
+import OSLog
+
+private let logger = MacosUseSDK.sdkLogger(category: "SelectorParser")
 
 /// Component for parsing and validating ElementSelector proto messages.
 /// Provides validation, optimization, and preprocessing of selectors.
@@ -16,7 +20,7 @@ public struct SelectorParser {
     public func parseSelector(_ selector: Macosusesdk_Type_ElementSelector) throws
         -> Macosusesdk_Type_ElementSelector
     {
-        fputs("info: [SelectorParser] Parsing selector\n", stderr)
+        logger.info("Parsing selector")
 
         // Validate the selector structure
         try validateSelector(selector)
