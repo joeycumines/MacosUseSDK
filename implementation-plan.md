@@ -18,74 +18,34 @@
 
 ### **Current Reality (Single-Sentence Snapshot)**
 
-**Current Reality:** The window observation system has a critical identity logic flaw. Using tolerance-based bounds matching (50px) to correlate AX windows with CGWindowList entries causes identity loss during resize operations when the delta exceeds tolerance. This results in false `destroyed`/`created` event sequences instead of `resized` events, rendering the observation API functionally useless for tracking window mutations. Data regression (zIndex/bundleID) is fixed.
+### **Current Reality (Single-Sentence Snapshot)**
+
+**Current Reality:** Window matching implementation is MATERIALLY INCORRECT. Contains three critical flaws: Identity Aliasing (greedy matching allows multiple AX windows to claim same CGWindowID), Dead Edge Case (1-vs-1 optimization never executes due to system windows in CGWindowList), Minimization Mishandling (minimized windows disappear from AX list and are flagged as DESTROYED instead of MINIMIZED). MUST rewrite with bijective matching and orphan handling.
 
 ### **Immediate Action Items (Next Things To Do)**
 
-1. **Implement best-candidate matching for window identity (CRITICAL):**
-    - Replace the boolean tolerance check in `fetchAXWindows` with a distance-based scoring heuristic.
-    - For each AX window, calculate distance to all CGWindowList entries: `distance = abs(posX_delta) + abs(posY_delta) + abs(width_delta) + abs(height_delta)`.
-    - Select the candidate with minimum distance as the match.
-    - **Edge case:** If the app has exactly one AX window and one CGWindowList window, assume they match regardless of distance (handle API lag gracefully).
-    - Acceptance: A 400px resize no longer causes identity loss; the window retains its CGWindowID across polls.
+1. **FIX WINDOW MATCHING LOGIC (CRITICAL - BLOCKING ALL OBSERVATION WORK):**
+    - **Identity Aliasing:** Current greedy "minimum distance" selection allows multiple AX windows to match the same CGWindowID. Must implement bijective matching via Assignment Problem: calculate all (AX, CG, distance) tuples, sort by distance, assign 1-to-1 with exclusion of used candidates.
+    - **Dead Edge Case:** The 1-vs-1 optimization never executes because CGWindowList returns 6 windows (including system/menu windows). Must filter CGWindowList BEFORE counting (exclude layer > 0, size < 10x10, alpha == 0).
+    - **Minimization Lifecycle:** When windows minimize, they disappear from kAXWindowsAttribute but remain in CGWindowList. Must handle orphaned CGWindows (unmatched but previously tracked) as MINIMIZED if isOnscreen == false, not DESTROYED.
+    - **Implementation Plan:**
+        1. Add `filterValidCGWindows` helper to exclude system noise
+        2. Rewrite `fetchAXWindows` to build all (AX, CG, distance) tuples
+        3. Sort tuples by distance, assign bijectively with exclusion tracking
+        4. After matching loop, check orphaned CGWindows against previous snapshot
+        5. Mark orphans as MINIMIZED if isOnscreen == false, otherwise DESTROYED
+    - Acceptance: Test passes minimize operation, no aliasing under multiple overlapping windows, no false DESTROYED events.
 
-2. **Verify observation test passes (HIGH):**
-    - After fixing matching logic, run `make test-observation-quick`.
-    - Acceptance: `TestWindowChangeObservation` passes, detecting a `RESIZED` event (not `DESTROYED`/`CREATED`) when the window is resized.
-
-2. **WindowRegistry Consistency (HIGH): Single shared cache across the server.**
-    - Replace all temporary `WindowRegistry()` usages with a shared instance to maintain one coherent cache and avoid redundant CGWindowList scans.
-    - Targets (must change):
-      - `Server/Sources/MacosUseServer/MacosUseServiceProvider.swift`: `listWindows`, `captureWindowScreenshot`, and `buildWindowResponseFromAX` must use the provider's shared `windowRegistry` instead of creating temporaries.
-      - `Server/Sources/MacosUseServer/MacroExecutor.swift`: all window queries (`windowExists`, `windowTitle`, for‑each window patterns) must use the shared registry.
-    - Acceptance: A single registry instance serves all window reads; results from `ListWindows`, `GetWindow`, and observation diffs agree modulo AX freshness; no temporary `WindowRegistry()` remains in production paths.
-
-3. **Traversal contention (MEDIUM):**
-    - `handleTraverse` runs under `@MainActor`, still contending with other RPCs during observations. Plan: refactor traversal off `@MainActor` (or isolate via a dedicated non‑main queue) to remove RPC timeouts.
-    - Acceptance: With observation active, concurrent RPCs (e.g., `GetWindow`) execute without timeouts.
-
-4. **Observation stream lifecycle hygiene (MEDIUM):**
-    - Continuation removal on stream termination is already implemented via `onTermination` in `ObservationManager.createEventStream`.
-    - Acceptance: Starting and stopping `StreamObservations` does not increase retained continuations; repeated start/stop does not grow memory or fan‑out sets.
-
-5. **Small correctness/unification fixes (MEDIUM):**
-    - Unify `parsePID(fromName:)` (currently duplicated in `MacosUseServiceProvider` and `MacroExecutor`).
-    - In `MacroExecutor.executeMethodCall("ClickElement")`, implement coordinate resolution from `elementId` (or return a clear UNIMPLEMENTED error) to avoid a misleading placeholder.
-
-6. **Targeted tests (HIGH):**
-    - Unit tests: `WindowRegistry` (TTL, filtering).
-    - Integration: Pagination determinism for all `List*/Find*` RPCs (AIP‑158), and state‑delta verification for window ops.
-
-### **Immediate Action Items (Next Things To Do)**
-
-1. **Observation stream lifecycle hygiene (HIGH):**
-
-### **Immediate Action Items (Next Things To Do)**
-
-1. **WindowRegistry Consistency (CRITICAL): Single shared cache across the server.**
-    - Replace all temporary `WindowRegistry()` usages with a shared instance to maintain one coherent cache and avoid redundant CGWindowList scans.
-    - Targets (must change):
-      - `Server/Sources/MacosUseServer/ObservationManager.swift`: `monitorObservation(.windowChanges)` must use the shared registry (not `WindowRegistry()`).
-      - `Server/Sources/MacosUseServer/MacosUseServiceProvider.swift`: `listWindows`, `captureWindowScreenshot`, and `buildWindowResponseFromAX` must use the provider’s shared `windowRegistry` instead of creating temporaries.
-      - `Server/Sources/MacosUseServer/MacroExecutor.swift`: all window queries (`windowExists`, `windowTitle`, for‑each window patterns) must use the shared registry.
-    - Acceptance: A single registry instance serves all window reads; results from `ListWindows`, `GetWindow`, and observation diffs agree modulo AX freshness; no temporary `WindowRegistry()` remains in production paths.
-
-1. **Traversal contention (HIGH):**
-    - `handleTraverse` runs under `@MainActor`, still contending with other RPCs during observations. Plan: refactor traversal off `@MainActor` (or isolate via a dedicated non‑main queue) to remove RPC timeouts.
-    - **Test Re-enable During Work:** As part of the refactor, re-enable `integration/observation_test.go` **during** implementation (not only after). Use it to validate window change detection and streaming behaviour while iterating. If the test cannot be re-enabled due to a known blocker, document the blocker, the incremental mitigation plan, and acceptance criteria for re-enablement.
-    - Acceptance: With observation active, concurrent RPCs (e.g., `GetWindow`) execute without timeouts; unskip the observation test and pass with PollUntil conditions.
-
-2. **Observation stream lifecycle hygiene (MEDIUM):**
-    - Add continuation removal on stream termination in `ObservationManager.createEventStream` (use `onTermination`) to prevent continuation leaks; keep `Task.detached` event publishing.
-    - Acceptance: Starting and stopping `StreamObservations` does not increase retained continuations; repeated start/stop does not grow memory or fan‑out sets.
+2. **Traversal contention (HIGH - BLOCKED BY ITEM 1):**
+    - Cannot proceed until window matching is correct.
 
 3. **Small correctness/unification fixes (MEDIUM):**
-    - Unify `parsePID(fromName:)` (currently duplicated in `MacosUseServiceProvider` and `MacroExecutor`).
-    - In `MacroExecutor.executeMethodCall("ClickElement")`, implement coordinate resolution from `elementId` (or return a clear UNIMPLEMENTED error) to avoid a misleading placeholder.
+    - Unify `parsePID(fromName:)` (duplicated in `MacosUseServiceProvider` and `MacroExecutor`).
+    - In `MacroExecutor.executeMethodCall("ClickElement")`, implement coordinate resolution from `elementId` or return UNIMPLEMENTED error.
 
-4. **Targeted tests (HIGH):**
-    - Unit tests: `WindowRegistry` (TTL, filtering) and `ObservationManager` window diffing (with shared registry).
-    - Integration: Pagination determinism for all `List*/Find*` RPCs (AIP‑158), and state‑delta verification for window ops; unskip observation streaming once traversal contention is resolved.
+4. **Targeted tests (HIGH - BLOCKED BY ITEM 1):**
+    - Unit tests: `WindowRegistry` (TTL, filtering) and `ObservationManager` window diffing.
+    - Integration: Pagination determinism for all `List*/Find*` RPCs (AIP‑158), state‑delta verification for window ops.
 
 ### **Standing Guidance For Future Edits To This Section**
 

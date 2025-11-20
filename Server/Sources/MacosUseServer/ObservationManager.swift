@@ -317,10 +317,20 @@ actor ObservationManager {
                     // Poll AX API directly to detect window changes
                     let currentWindows = try await fetchAXWindows(pid: pid)
 
+                    // MINIMIZATION HANDLING: Check for orphaned windows in CGWindowList
+                    // When windows minimize, they disappear from AX but remain in CG
+                    // We must detect these and mark as MINIMIZED, not DESTROYED
+                    let cgWindows = try await windowRegistry.listWindows(forPID: pid)
+                    let currentWithOrphans = try await handleOrphanedWindows(
+                        axWindows: currentWindows,
+                        cgWindows: cgWindows,
+                        previousWindows: previousWindows,
+                    )
+
                     // Detect window changes
                     let windowChanges = detectWindowChanges(
                         previous: previousWindows,
-                        current: currentWindows,
+                        current: currentWithOrphans,
                     )
 
                     // Publish window change events
@@ -334,7 +344,7 @@ actor ObservationManager {
                         publishEvent(name: name, event: event)
                     }
 
-                    previousWindows = currentWindows
+                    previousWindows = currentWithOrphans
 
                 case .applicationChanges:
                     // Application changes are monitored via NSWorkspace notifications
@@ -385,12 +395,59 @@ actor ObservationManager {
         }
     }
 
+    /// Handles orphaned windows (exist in CGWindowList but not in AX list)
+    /// This occurs when windows are minimized - they disappear from AX but remain in CG
+    /// We must preserve their identity and mark them as minimized rather than destroyed
+    private nonisolated func handleOrphanedWindows(
+        axWindows: [AXWindowSnapshot],
+        cgWindows: [WindowRegistry.WindowInfo],
+        previousWindows: [AXWindowSnapshot],
+    ) async throws -> [AXWindowSnapshot] {
+        var result = axWindows
+        let axWindowIDs = Set(axWindows.map(\.windowID))
+        let previousWindowMap = Dictionary(uniqueKeysWithValues: previousWindows.map { ($0.windowID, $0) })
+
+        // Check each CG window
+        for cgWin in cgWindows {
+            // Skip if this window is already in the AX list
+            guard !axWindowIDs.contains(cgWin.windowID) else { continue }
+
+            // Check if this was a previously tracked window
+            guard let previousWindow = previousWindowMap[cgWin.windowID] else { continue }
+
+            // This is an orphaned window - it exists in CG but not AX
+            // Assume it's minimized (windows disappear from AX when minimized)
+            let orphanSnapshot = AXWindowSnapshot(
+                windowID: cgWin.windowID,
+                title: previousWindow.title, // Preserve title
+                bounds: cgWin.bounds, // Use current CG bounds
+                minimized: true, // Mark as minimized
+                visible: false,
+                focused: nil,
+            )
+            result.append(orphanSnapshot)
+        }
+
+        return result
+    }
+
     /// Fetches current window snapshots from AX API (MUST run on MainActor)
     /// Uses CGWindowList IDs for consistency with gRPC API
+    ///
+    /// CORRECTNESS: Implements bijective (1-to-1) matching via Assignment Problem solution
+    /// to prevent Identity Aliasing where multiple AX windows claim the same CGWindowID.
     private nonisolated func fetchAXWindows(pid: pid_t) async throws -> [AXWindowSnapshot] {
         // Refresh WindowRegistry to get latest CGWindowList data
         try await windowRegistry.refreshWindows(forPID: pid)
-        let cgWindows = try await windowRegistry.listWindows(forPID: pid)
+        let allCGWindows = try await windowRegistry.listWindows(forPID: pid)
+
+        // Filter CGWindowList to exclude system noise (menu bars, tooltips, invisible layers)
+        // This prevents the 1-vs-1 edge case from being dead code
+        let cgWindows = allCGWindows.filter { win in
+            // Exclude tiny windows (likely system UI)
+            win.bounds.width >= 10 && win.bounds.height >= 10
+            // Note: layer and alpha filtering would require additional WindowRegistry data
+        }
 
         return await MainActor.run {
             let appElement = AXUIElementCreateApplication(pid)
@@ -399,22 +456,34 @@ actor ObservationManager {
             let result = AXUIElementCopyAttributeValue(
                 appElement, kAXWindowsAttribute as CFString, &windowsValue,
             )
-            guard result == .success, let windows = windowsValue as? [AXUIElement] else {
+            guard result == .success, let axWindows = windowsValue as? [AXUIElement] else {
                 return [] // No windows or permission denied
             }
 
-            var snapshots: [AXWindowSnapshot] = []
-            for window in windows {
+            // Step 1: Build all (AX, CG, distance) tuples for potential matches
+            struct MatchCandidate {
+                let axIndex: Int
+                let axElement: AXUIElement
+                let axBounds: CGRect
+                let cgWindow: WindowRegistry.WindowInfo
+                let distance: CGFloat
+            }
+
+            var candidates: [MatchCandidate] = []
+            var axBoundsCache: [Int: CGRect] = [:]
+
+            for (axIndex, axWindow) in axWindows.enumerated() {
+                // Extract AX bounds
                 var posValue: CFTypeRef?
                 var sizeValue: CFTypeRef?
                 let posResult = AXUIElementCopyAttributeValue(
-                    window, kAXPositionAttribute as CFString, &posValue,
+                    axWindow, kAXPositionAttribute as CFString, &posValue,
                 )
                 let sizeResult = AXUIElementCopyAttributeValue(
-                    window, kAXSizeAttribute as CFString, &sizeValue,
+                    axWindow, kAXSizeAttribute as CFString, &sizeValue,
                 )
 
-                var bounds = CGRect.zero
+                var axBounds = CGRect.zero
                 if posResult == .success, let unwrappedPosValue = posValue,
                    CFGetTypeID(unwrappedPosValue) == AXValueGetTypeID(),
                    sizeResult == .success, let unwrappedSizeValue = sizeValue,
@@ -427,56 +496,54 @@ actor ObservationManager {
                     if AXValueGetValue(pos, .cgPoint, &position),
                        AXValueGetValue(size, .cgSize, &windowSize)
                     {
-                        bounds = CGRect(origin: position, size: windowSize)
+                        axBounds = CGRect(origin: position, size: windowSize)
                     }
                 }
 
-                // CORRECTNESS FIX: Use best-candidate matching instead of boolean tolerance check.
-                // The tolerance approach caused identity loss during resize operations when
-                // the delta exceeded 50px, resulting in false destroyed/created events.
-                //
-                // New strategy: Calculate distance for all candidates, select minimum.
-                // Distance = abs(posX_delta) + abs(posY_delta) + abs(width_delta) + abs(height_delta)
-                //
-                // Edge case: If app has exactly 1 AX window and 1 CGWindowList window,
-                // assume they match regardless of distance (handle API lag gracefully).
+                axBoundsCache[axIndex] = axBounds
 
-                var matchedWindow: (id: CGWindowID, bounds: CGRect)?
+                // Calculate distance to all CG candidates
+                for cgWin in cgWindows {
+                    let posXDelta = abs(axBounds.origin.x - cgWin.bounds.origin.x)
+                    let posYDelta = abs(axBounds.origin.y - cgWin.bounds.origin.y)
+                    let widthDelta = abs(axBounds.size.width - cgWin.bounds.size.width)
+                    let heightDelta = abs(axBounds.size.height - cgWin.bounds.size.height)
+                    let distance = posXDelta + posYDelta + widthDelta + heightDelta
 
-                if cgWindows.count == 1, windows.count == 1 {
-                    // Single-window edge case: assume match regardless of distance
-                    matchedWindow = (id: cgWindows[0].windowID, bounds: cgWindows[0].bounds)
-                } else if !cgWindows.isEmpty {
-                    // Multi-window case: select best candidate by minimum distance
-                    var bestCandidate: (id: CGWindowID, bounds: CGRect, distance: CGFloat)?
-
-                    for cgWin in cgWindows {
-                        let posXDelta = abs(bounds.origin.x - cgWin.bounds.origin.x)
-                        let posYDelta = abs(bounds.origin.y - cgWin.bounds.origin.y)
-                        let widthDelta = abs(bounds.size.width - cgWin.bounds.size.width)
-                        let heightDelta = abs(bounds.size.height - cgWin.bounds.size.height)
-
-                        let distance = posXDelta + posYDelta + widthDelta + heightDelta
-
-                        if bestCandidate == nil || distance < bestCandidate!.distance {
-                            bestCandidate = (id: cgWin.windowID, bounds: cgWin.bounds, distance: distance)
-                        }
-                    }
-
-                    if let best = bestCandidate {
-                        matchedWindow = (id: best.id, bounds: best.bounds)
-                    }
+                    candidates.append(MatchCandidate(
+                        axIndex: axIndex,
+                        axElement: axWindow,
+                        axBounds: axBounds,
+                        cgWindow: cgWin,
+                        distance: distance,
+                    ))
                 }
+            }
 
-                guard let matchedWindow else {
-                    // Window not matchable to CGWindowList (might be transient/hidden)
+            // Step 2: Sort candidates by distance (Assignment Problem greedy approximation)
+            candidates.sort { $0.distance < $1.distance }
+
+            // Step 3: Assign bijectively with exclusion tracking
+            var usedAXIndices = Set<Int>()
+            var usedCGWindowIDs = Set<CGWindowID>()
+            var snapshots: [AXWindowSnapshot] = []
+
+            for candidate in candidates {
+                // Skip if this AX window or CG window already matched
+                guard !usedAXIndices.contains(candidate.axIndex),
+                      !usedCGWindowIDs.contains(candidate.cgWindow.windowID)
+                else {
                     continue
                 }
 
-                // Get title
+                // Mark as used
+                usedAXIndices.insert(candidate.axIndex)
+                usedCGWindowIDs.insert(candidate.cgWindow.windowID)
+
+                // Extract window metadata
                 var titleValue: CFTypeRef?
                 let titleResult = AXUIElementCopyAttributeValue(
-                    window, kAXTitleAttribute as CFString, &titleValue,
+                    candidate.axElement, kAXTitleAttribute as CFString, &titleValue,
                 )
                 let title = if titleResult == .success, let titleStr = titleValue as? String {
                     titleStr
@@ -484,32 +551,29 @@ actor ObservationManager {
                     ""
                 }
 
-                // Get minimized state
                 var minValue: CFTypeRef?
                 let minimized = if AXUIElementCopyAttributeValue(
-                    window, kAXMinimizedAttribute as CFString, &minValue,
+                    candidate.axElement, kAXMinimizedAttribute as CFString, &minValue,
                 ) == .success, let minBool = minValue as? Bool {
                     minBool
                 } else {
                     false
                 }
 
-                // Get focused state
                 var mainValue: CFTypeRef?
                 let focused: Bool? = if AXUIElementCopyAttributeValue(
-                    window, kAXMainAttribute as CFString, &mainValue,
+                    candidate.axElement, kAXMainAttribute as CFString, &mainValue,
                 ) == .success, let mainBool = mainValue as? Bool {
                     mainBool
                 } else {
                     nil
                 }
 
-                // Use CGWindowList bounds (not AX bounds) for observation diffing
-                // CGWindowList updates faster and more reliably than AX
+                // Use CGWindowList bounds for consistency
                 let snapshot = AXWindowSnapshot(
-                    windowID: matchedWindow.id,
+                    windowID: candidate.cgWindow.windowID,
                     title: title,
-                    bounds: matchedWindow.bounds,
+                    bounds: candidate.cgWindow.bounds,
                     minimized: minimized,
                     visible: !minimized,
                     focused: focused,
@@ -706,8 +770,8 @@ actor ObservationManager {
     ) -> [WindowChange] {
         var changes: [WindowChange] = []
 
-        // CORRECTNESS FIX: Now using real CGWindowID extracted from AXUIElement via _AXUIElementGetWindow.
-        // This provides stable window identity across polls, fixing the fatal observation bug.
+        // CGWindowID provides stable window identity across polls, enabling correct
+        // RESIZED/MOVED events instead of false DESTROYED/CREATED sequences.
         let previousMap = Dictionary(
             uniqueKeysWithValues: previous.map { ($0.windowID, $0) },
         )

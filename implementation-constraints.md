@@ -2,7 +2,9 @@
 
 ## Session Directives
 
-**CURRENT DIRECTIVE (2025-11-20):** Implement best-candidate matching for window identity in ObservationManager.fetchAXWindows to fix the observation test failure. The tolerance-based approach causes identity loss during resize operations. Replace with a distance-based scoring heuristic that selects the minimum-distance candidate and handles the single-window edge case.
+**CURRENT DIRECTIVE (2025-11-20):** The previous window matching implementation is MATERIALLY INCORRECT. It has three critical flaws: (1) Identity Aliasing - greedy selection allows multiple AX windows to match the same CGWindowID; (2) Dead Edge Case - the 1-vs-1 optimization never executes due to system windows; (3) Minimization Mishandling - minimized windows disappear from AX list and are incorrectly flagged as DESTROYED. 
+
+**MANDATORY FIX:** Implement bijective matching via Assignment Problem solution: (1) Filter CGWindowList to exclude noise (layer > 0, size < 10x10, alpha == 0); (2) Calculate all valid (AX, CG, distance) tuples; (3) Sort by distance and assign 1-to-1 with exclusion of used candidates; (4) Handle orphaned CGWindows (unmatched but previously tracked) as MINIMIZED if isOnscreen == false.
 
 - Maintain an exhaustive TODO list via the mandated tool before any code or plan edits; include every task from `implementation-plan.md`, every known deficiency, all active constraints, and motivational reminders.
 - Never stop execution mid-task and do not ask clarifying questions; infer next actions from the plan and constraints, and continue iterating until the entire plan is complete.
