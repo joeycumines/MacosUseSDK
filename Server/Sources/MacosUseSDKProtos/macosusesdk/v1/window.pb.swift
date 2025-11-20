@@ -53,6 +53,11 @@ public struct Macosusesdk_V1_Window: Sendable {
     /// Z-order index (higher values are in front).
     public var zIndex: Int32 = 0
 
+    /// Whether the window is currently visible on screen.
+    /// This is a cheap property derived from CGWindowList (isOnScreen).
+    /// For expensive AX-based visibility state, use GetWindowState.
+    public var visible: Bool = false
+
     /// Bundle identifier of the application that owns this window.
     /// Resolved via NSRunningApplication. Empty string if unavailable.
     public var bundleID: String = .init()
@@ -113,8 +118,10 @@ public struct Macosusesdk_V1_WindowState: Sendable {
     /// Whether the window is a floating window.
     public var floating: Bool = false
 
-    /// Whether the window is currently visible.
-    public var visible: Bool = false
+    /// Whether the window is hidden according to AX attributes.
+    /// This is an expensive AX query, distinct from Window.visible (cheap CGWindowList).
+    /// True means the window is explicitly hidden via Accessibility attributes.
+    public var axHidden: Bool = false
 
     /// Whether the window is minimized.
     public var minimized: Bool = false
@@ -123,11 +130,22 @@ public struct Macosusesdk_V1_WindowState: Sendable {
     public var focused: Bool = false
 
     /// Whether the window is in full-screen mode.
-    public var fullscreen: Bool = false
+    /// Optional: unset if the AX API does not provide a definitive answer.
+    public var fullscreen: Bool {
+        get { _fullscreen ?? false }
+        set { _fullscreen = newValue }
+    }
+
+    /// Returns true if `fullscreen` has been explicitly set.
+    public var hasFullscreen: Bool { _fullscreen != nil }
+    /// Clears the value of `fullscreen`. Subsequent reads from it will return its default value.
+    public mutating func clearFullscreen() { _fullscreen = nil }
 
     public var unknownFields = SwiftProtobuf.UnknownStorage()
 
     public init() {}
+
+    fileprivate var _fullscreen: Bool?
 }
 
 /// Request to get the state of a window.
@@ -151,7 +169,7 @@ private let _protobuf_package = "macosusesdk.v1"
 
 extension Macosusesdk_V1_Window: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
     public static let protoMessageName: String = _protobuf_package + ".Window"
-    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}title\0\u{1}bounds\0\u{3}z_index\0\u{4}\u{6}bundle_id\0")
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}title\0\u{1}bounds\0\u{3}z_index\0\u{1}visible\0\u{4}\u{5}bundle_id\0")
 
     public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
         while let fieldNumber = try decoder.nextFieldNumber() {
@@ -163,6 +181,7 @@ extension Macosusesdk_V1_Window: SwiftProtobuf.Message, SwiftProtobuf._MessageIm
             case 2: try decoder.decodeSingularStringField(value: &title)
             case 3: try decoder.decodeSingularMessageField(value: &_bounds)
             case 4: try decoder.decodeSingularInt32Field(value: &zIndex)
+            case 5: try decoder.decodeSingularBoolField(value: &visible)
             case 10: try decoder.decodeSingularStringField(value: &bundleID)
             default: break
             }
@@ -186,6 +205,9 @@ extension Macosusesdk_V1_Window: SwiftProtobuf.Message, SwiftProtobuf._MessageIm
         if zIndex != 0 {
             try visitor.visitSingularInt32Field(value: zIndex, fieldNumber: 4)
         }
+        if visible != false {
+            try visitor.visitSingularBoolField(value: visible, fieldNumber: 5)
+        }
         if !bundleID.isEmpty {
             try visitor.visitSingularStringField(value: bundleID, fieldNumber: 10)
         }
@@ -197,6 +219,7 @@ extension Macosusesdk_V1_Window: SwiftProtobuf.Message, SwiftProtobuf._MessageIm
         if lhs.title != rhs.title { return false }
         if lhs._bounds != rhs._bounds { return false }
         if lhs.zIndex != rhs.zIndex { return false }
+        if lhs.visible != rhs.visible { return false }
         if lhs.bundleID != rhs.bundleID { return false }
         if lhs.unknownFields != rhs.unknownFields { return false }
         return true
@@ -250,7 +273,7 @@ extension Macosusesdk_V1_Bounds: SwiftProtobuf.Message, SwiftProtobuf._MessageIm
 
 extension Macosusesdk_V1_WindowState: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
     public static let protoMessageName: String = _protobuf_package + ".WindowState"
-    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}resizable\0\u{1}minimizable\0\u{1}closable\0\u{1}modal\0\u{1}floating\0\u{1}visible\0\u{1}minimized\0\u{1}focused\0\u{1}fullscreen\0")
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}resizable\0\u{1}minimizable\0\u{1}closable\0\u{1}modal\0\u{1}floating\0\u{3}ax_hidden\0\u{1}minimized\0\u{1}focused\0\u{1}fullscreen\0")
 
     public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
         while let fieldNumber = try decoder.nextFieldNumber() {
@@ -264,16 +287,20 @@ extension Macosusesdk_V1_WindowState: SwiftProtobuf.Message, SwiftProtobuf._Mess
             case 4: try decoder.decodeSingularBoolField(value: &closable)
             case 5: try decoder.decodeSingularBoolField(value: &modal)
             case 6: try decoder.decodeSingularBoolField(value: &floating)
-            case 7: try decoder.decodeSingularBoolField(value: &visible)
+            case 7: try decoder.decodeSingularBoolField(value: &axHidden)
             case 8: try decoder.decodeSingularBoolField(value: &minimized)
             case 9: try decoder.decodeSingularBoolField(value: &focused)
-            case 10: try decoder.decodeSingularBoolField(value: &fullscreen)
+            case 10: try decoder.decodeSingularBoolField(value: &_fullscreen)
             default: break
             }
         }
     }
 
     public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
+        // The use of inline closures is to circumvent an issue where the compiler
+        // allocates stack space for every if/case branch local when no optimizations
+        // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+        // https://github.com/apple/swift-protobuf/issues/1182
         if !name.isEmpty {
             try visitor.visitSingularStringField(value: name, fieldNumber: 1)
         }
@@ -292,8 +319,8 @@ extension Macosusesdk_V1_WindowState: SwiftProtobuf.Message, SwiftProtobuf._Mess
         if floating != false {
             try visitor.visitSingularBoolField(value: floating, fieldNumber: 6)
         }
-        if visible != false {
-            try visitor.visitSingularBoolField(value: visible, fieldNumber: 7)
+        if axHidden != false {
+            try visitor.visitSingularBoolField(value: axHidden, fieldNumber: 7)
         }
         if minimized != false {
             try visitor.visitSingularBoolField(value: minimized, fieldNumber: 8)
@@ -301,9 +328,9 @@ extension Macosusesdk_V1_WindowState: SwiftProtobuf.Message, SwiftProtobuf._Mess
         if focused != false {
             try visitor.visitSingularBoolField(value: focused, fieldNumber: 9)
         }
-        if fullscreen != false {
-            try visitor.visitSingularBoolField(value: fullscreen, fieldNumber: 10)
-        }
+        try { if let v = self._fullscreen {
+            try visitor.visitSingularBoolField(value: v, fieldNumber: 10)
+        } }()
         try unknownFields.traverse(visitor: &visitor)
     }
 
@@ -314,10 +341,10 @@ extension Macosusesdk_V1_WindowState: SwiftProtobuf.Message, SwiftProtobuf._Mess
         if lhs.closable != rhs.closable { return false }
         if lhs.modal != rhs.modal { return false }
         if lhs.floating != rhs.floating { return false }
-        if lhs.visible != rhs.visible { return false }
+        if lhs.axHidden != rhs.axHidden { return false }
         if lhs.minimized != rhs.minimized { return false }
         if lhs.focused != rhs.focused { return false }
-        if lhs.fullscreen != rhs.fullscreen { return false }
+        if lhs._fullscreen != rhs._fullscreen { return false }
         if lhs.unknownFields != rhs.unknownFields { return false }
         return true
     }

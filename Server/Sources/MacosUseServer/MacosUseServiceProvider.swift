@@ -374,6 +374,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
                 $0.height = windowInfo.bounds.size.height
             }
             $0.zIndex = Int32(windowInfo.layer)
+            $0.visible = windowInfo.isOnScreen
             $0.bundleID = windowInfo.bundleID ?? ""
         }
         return ServerResponse(message: response)
@@ -435,6 +436,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
                     $0.height = windowInfo.bounds.size.height
                 }
                 $0.zIndex = Int32(windowInfo.layer)
+                $0.visible = windowInfo.isOnScreen
                 $0.bundleID = windowInfo.bundleID ?? ""
             }
         }
@@ -638,6 +640,9 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
             }
         }
 
+        // Invalidate cache to ensure subsequent reads reflect the new minimized state immediately
+        await windowRegistry.invalidate(windowID: windowId)
+
         // Return updated window state
         return try await getWindow(
             request: ServerRequest(metadata: request.metadata, message: Macosusesdk_V1_GetWindowRequest.with { $0.name = req.name }), context: context,
@@ -675,6 +680,9 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
                 )
             }
         }
+
+        // Invalidate cache to ensure subsequent reads reflect the restored state immediately
+        await windowRegistry.invalidate(windowID: windowId)
 
         // Return updated window state
         return try await getWindow(
@@ -3226,8 +3234,8 @@ private extension MacosUseServiceProvider {
             }
 
             // Note: kAXFullscreenAttribute is not standard in Accessibility API
-            // We return false as a safe default
-            let fullscreen = false
+            // We leave fullscreen unset (nil) if we cannot determine it definitively
+            let fullscreen: Bool? = nil
 
             return Macosusesdk_V1_WindowState.with {
                 $0.resizable = resizable
@@ -3235,10 +3243,12 @@ private extension MacosUseServiceProvider {
                 $0.closable = closable
                 $0.modal = modal
                 $0.floating = floating
-                $0.visible = visible
+                $0.axHidden = !visible // Invert: visible=false means ax_hidden=true
                 $0.minimized = minimized
                 $0.focused = focused
-                $0.fullscreen = fullscreen
+                if let fullscreen {
+                    $0.fullscreen = fullscreen
+                }
             }
         }
     }

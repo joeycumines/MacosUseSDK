@@ -2,12 +2,7 @@
 
 ## Session Directives
 
-````markdown
-# Implementation Constraints
-
-## Session Directives
-
-**CURRENT DIRECTIVE (2025-11-20):** API Design Fix Complete - `WindowState` is now a singleton sub-resource per AIP-128. Continue with remaining implementation priorities: correctness fixes, unit tests, and integration test expansion.
+**CURRENT DIRECTIVE (2025-11-20):** Fix visibility and fullscreen regressions in Window/WindowState proto and implementation. Restore `visible` field to Window (cheap CGWindowList data), rename WindowState.visible to ax_hidden (expensive AX data), and change WindowState.fullscreen to optional. Execute all remaining implementation-plan.md items until complete.
 
 - Maintain an exhaustive TODO list via the mandated tool before any code or plan edits; include every task from `implementation-plan.md`, every known deficiency, all active constraints, and motivational reminders.
 - Never stop execution mid-task and do not ask clarifying questions; infer next actions from the plan and constraints, and continue iterating until the entire plan is complete.

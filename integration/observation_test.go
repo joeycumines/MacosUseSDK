@@ -16,6 +16,10 @@ import (
 // ARCHITECTURAL FIX COMPLETED: handleTraverse removed from @MainActor, observation streaming
 // no longer blocks concurrent RPCs. Task.detached event publishing + nonisolated traversal
 // provides full decoupling of producer/consumer and concurrent RPC execution.
+//
+// CACHE INVALIDATION FIX: WindowRegistry.invalidate() called after all window mutations
+// (move, resize, minimize, restore) to ensure subsequent reads reflect fresh state immediately.
+// This eliminates the stale-cache race condition that caused timeout failures.
 func TestWindowChangeObservation(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
@@ -478,7 +482,9 @@ func TestWindowChangeObservation(t *testing.T) {
 		if err != nil {
 			return false, err
 		}
-		return !windowState.Minimized && windowState.Visible, nil
+		// WindowState.AxHidden is true when window is hidden via AX attributes
+		// !AxHidden means window is not hidden (i.e., visible)
+		return !windowState.Minimized && !windowState.AxHidden, nil
 	})
 	if err != nil {
 		t.Error("Window did not reflect restored state")

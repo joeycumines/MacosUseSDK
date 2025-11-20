@@ -40,6 +40,10 @@ type Window struct {
 	Bounds *Bounds `protobuf:"bytes,3,opt,name=bounds,proto3" json:"bounds,omitempty"`
 	// Z-order index (higher values are in front).
 	ZIndex int32 `protobuf:"varint,4,opt,name=z_index,json=zIndex,proto3" json:"z_index,omitempty"`
+	// Whether the window is currently visible on screen.
+	// This is a cheap property derived from CGWindowList (isOnScreen).
+	// For expensive AX-based visibility state, use GetWindowState.
+	Visible bool `protobuf:"varint,5,opt,name=visible,proto3" json:"visible,omitempty"`
 	// Bundle identifier of the application that owns this window.
 	// Resolved via NSRunningApplication. Empty string if unavailable.
 	BundleId      string `protobuf:"bytes,10,opt,name=bundle_id,json=bundleId,proto3" json:"bundle_id,omitempty"`
@@ -103,6 +107,13 @@ func (x *Window) GetZIndex() int32 {
 		return x.ZIndex
 	}
 	return 0
+}
+
+func (x *Window) GetVisible() bool {
+	if x != nil {
+		return x.Visible
+	}
+	return false
 }
 
 func (x *Window) GetBundleId() string {
@@ -202,14 +213,17 @@ type WindowState struct {
 	Modal bool `protobuf:"varint,5,opt,name=modal,proto3" json:"modal,omitempty"`
 	// Whether the window is a floating window.
 	Floating bool `protobuf:"varint,6,opt,name=floating,proto3" json:"floating,omitempty"`
-	// Whether the window is currently visible.
-	Visible bool `protobuf:"varint,7,opt,name=visible,proto3" json:"visible,omitempty"`
+	// Whether the window is hidden according to AX attributes.
+	// This is an expensive AX query, distinct from Window.visible (cheap CGWindowList).
+	// True means the window is explicitly hidden via Accessibility attributes.
+	AxHidden bool `protobuf:"varint,7,opt,name=ax_hidden,json=axHidden,proto3" json:"ax_hidden,omitempty"`
 	// Whether the window is minimized.
 	Minimized bool `protobuf:"varint,8,opt,name=minimized,proto3" json:"minimized,omitempty"`
 	// Whether the window is focused.
 	Focused bool `protobuf:"varint,9,opt,name=focused,proto3" json:"focused,omitempty"`
 	// Whether the window is in full-screen mode.
-	Fullscreen    bool `protobuf:"varint,10,opt,name=fullscreen,proto3" json:"fullscreen,omitempty"`
+	// Optional: unset if the AX API does not provide a definitive answer.
+	Fullscreen    *bool `protobuf:"varint,10,opt,name=fullscreen,proto3,oneof" json:"fullscreen,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -286,9 +300,9 @@ func (x *WindowState) GetFloating() bool {
 	return false
 }
 
-func (x *WindowState) GetVisible() bool {
+func (x *WindowState) GetAxHidden() bool {
 	if x != nil {
-		return x.Visible
+		return x.AxHidden
 	}
 	return false
 }
@@ -308,8 +322,8 @@ func (x *WindowState) GetFocused() bool {
 }
 
 func (x *WindowState) GetFullscreen() bool {
-	if x != nil {
-		return x.Fullscreen
+	if x != nil && x.Fullscreen != nil {
+		return *x.Fullscreen
 	}
 	return false
 }
@@ -365,12 +379,13 @@ var File_macosusesdk_v1_window_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_window_proto_rawDesc = "" +
 	"\n" +
-	"\x1bmacosusesdk/v1/window.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\"\x92\x02\n" +
+	"\x1bmacosusesdk/v1/window.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\"\xb1\x02\n" +
 	"\x06Window\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12\x19\n" +
 	"\x05title\x18\x02 \x01(\tB\x03\xe0A\x03R\x05title\x123\n" +
 	"\x06bounds\x18\x03 \x01(\v2\x16.macosusesdk.v1.BoundsB\x03\xe0A\x03R\x06bounds\x12\x1c\n" +
-	"\az_index\x18\x04 \x01(\x05B\x03\xe0A\x03R\x06zIndex\x12 \n" +
+	"\az_index\x18\x04 \x01(\x05B\x03\xe0A\x03R\x06zIndex\x12\x1d\n" +
+	"\avisible\x18\x05 \x01(\bB\x03\xe0A\x03R\avisible\x12 \n" +
 	"\tbundle_id\x18\n" +
 	" \x01(\tB\x03\xe0A\x03R\bbundleId:_\xeaA\\\n" +
 	"\x1cmacosusesdk.localhost/Window\x12+applications/{application}/windows/{window}*\awindows2\x06window\"R\n" +
@@ -378,22 +393,23 @@ const file_macosusesdk_v1_window_proto_rawDesc = "" +
 	"\x01x\x18\x01 \x01(\x01R\x01x\x12\f\n" +
 	"\x01y\x18\x02 \x01(\x01R\x01y\x12\x14\n" +
 	"\x05width\x18\x03 \x01(\x01R\x05width\x12\x16\n" +
-	"\x06height\x18\x04 \x01(\x01R\x06height\"\xc9\x03\n" +
+	"\x06height\x18\x04 \x01(\x01R\x06height\"\xe0\x03\n" +
 	"\vWindowState\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12!\n" +
 	"\tresizable\x18\x02 \x01(\bB\x03\xe0A\x03R\tresizable\x12%\n" +
 	"\vminimizable\x18\x03 \x01(\bB\x03\xe0A\x03R\vminimizable\x12\x1f\n" +
 	"\bclosable\x18\x04 \x01(\bB\x03\xe0A\x03R\bclosable\x12\x19\n" +
 	"\x05modal\x18\x05 \x01(\bB\x03\xe0A\x03R\x05modal\x12\x1f\n" +
-	"\bfloating\x18\x06 \x01(\bB\x03\xe0A\x03R\bfloating\x12\x1d\n" +
-	"\avisible\x18\a \x01(\bB\x03\xe0A\x03R\avisible\x12!\n" +
+	"\bfloating\x18\x06 \x01(\bB\x03\xe0A\x03R\bfloating\x12 \n" +
+	"\tax_hidden\x18\a \x01(\bB\x03\xe0A\x03R\baxHidden\x12!\n" +
 	"\tminimized\x18\b \x01(\bB\x03\xe0A\x03R\tminimized\x12\x1d\n" +
-	"\afocused\x18\t \x01(\bB\x03\xe0A\x03R\afocused\x12#\n" +
+	"\afocused\x18\t \x01(\bB\x03\xe0A\x03R\afocused\x12(\n" +
 	"\n" +
 	"fullscreen\x18\n" +
-	" \x01(\bB\x03\xe0A\x03R\n" +
-	"fullscreen:t\xeaAq\n" +
-	"!macosusesdk.localhost/WindowState\x121applications/{application}/windows/{window}/state*\fwindowStates2\vwindowState\"V\n" +
+	" \x01(\bB\x03\xe0A\x03H\x00R\n" +
+	"fullscreen\x88\x01\x01:t\xeaAq\n" +
+	"!macosusesdk.localhost/WindowState\x121applications/{application}/windows/{window}/state*\fwindowStates2\vwindowStateB\r\n" +
+	"\v_fullscreen\"V\n" +
 	"\x15GetWindowStateRequest\x12=\n" +
 	"\x04name\x18\x01 \x01(\tB)\xe0A\x02\xfaA#\n" +
 	"!macosusesdk.localhost/WindowStateR\x04nameB\xc2\x01\n" +
@@ -432,6 +448,7 @@ func file_macosusesdk_v1_window_proto_init() {
 	if File_macosusesdk_v1_window_proto != nil {
 		return
 	}
+	file_macosusesdk_v1_window_proto_msgTypes[2].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

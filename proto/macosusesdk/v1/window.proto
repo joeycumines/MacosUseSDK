@@ -38,6 +38,11 @@ message Window {
   // Z-order index (higher values are in front).
   int32 z_index = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
 
+  // Whether the window is currently visible on screen.
+  // This is a cheap property derived from CGWindowList (isOnScreen).
+  // For expensive AX-based visibility state, use GetWindowState.
+  bool visible = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
   // Bundle identifier of the application that owns this window.
   // Resolved via NSRunningApplication. Empty string if unavailable.
   string bundle_id = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
@@ -87,8 +92,10 @@ message WindowState {
   // Whether the window is a floating window.
   bool floating = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
 
-  // Whether the window is currently visible.
-  bool visible = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // Whether the window is hidden according to AX attributes.
+  // This is an expensive AX query, distinct from Window.visible (cheap CGWindowList).
+  // True means the window is explicitly hidden via Accessibility attributes.
+  bool ax_hidden = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Whether the window is minimized.
   bool minimized = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
@@ -97,7 +104,8 @@ message WindowState {
   bool focused = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Whether the window is in full-screen mode.
-  bool fullscreen = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // Optional: unset if the AX API does not provide a definitive answer.
+  optional bool fullscreen = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to get the state of a window.

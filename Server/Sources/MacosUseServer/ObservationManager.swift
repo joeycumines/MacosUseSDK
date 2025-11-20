@@ -438,8 +438,39 @@ actor ObservationManager {
             // Check if this was a previously tracked window
             guard let previousWindow = previousWindowMap[cgWin.windowID] else { continue }
 
-            // This is an orphaned window - it exists in CG but not AX
-            // Assume it's minimized (windows disappear from AX when minimized)
+            // CRITICAL FIX: Verify the window is actually minimized, not closed.
+            // Closed windows may linger in CGWindowList briefly but won't respond to AX queries.
+            // We verify by attempting to get the window's AX element and checking minimized state.
+            let isActuallyMinimized = await MainActor.run {
+                let appElement = AXUIElementCreateApplication(cgWin.ownerPID)
+                var windowsValue: CFTypeRef?
+                guard AXUIElementCopyAttributeValue(
+                    appElement, kAXWindowsAttribute as CFString, &windowsValue,
+                ) == .success, let axWindows = windowsValue as? [AXUIElement] else {
+                    return false
+                }
+
+                // Find the AX window that matches this CG window ID
+                for axWindow in axWindows {
+                    // Try to get minimized attribute
+                    var minValue: CFTypeRef?
+                    if AXUIElementCopyAttributeValue(
+                        axWindow, kAXMinimizedAttribute as CFString, &minValue,
+                    ) == .success, let minBool = minValue as? Bool, minBool {
+                        // This window is actually minimized
+                        return true
+                    }
+                }
+                return false
+            }
+
+            if !isActuallyMinimized {
+                // Window is in CG but not AX and not verifiably minimized -> likely closed
+                // Don't add it to the result; let detectWindowChanges mark it as DESTROYED
+                continue
+            }
+
+            // This is a genuinely orphaned minimized window
             let orphanSnapshot = AXWindowSnapshot(
                 windowID: cgWin.windowID,
                 title: previousWindow.title, // Preserve title

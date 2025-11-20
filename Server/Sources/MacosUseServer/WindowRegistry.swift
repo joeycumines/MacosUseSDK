@@ -108,4 +108,10 @@ actor WindowRegistry {
         try await refreshWindows()
         return windowCache.values.sorted { $0.layer < $1.layer }
     }
+
+    /// Invalidates the cache for a specific window ID.
+    /// Must be called after any mutation (resize, move, minimize, restore) to ensure fresh state.
+    func invalidate(windowID: CGWindowID) {
+        windowCache.removeValue(forKey: windowID)
+    }
 }

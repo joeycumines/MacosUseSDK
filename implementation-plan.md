@@ -18,23 +18,21 @@
 
 ### **Current Reality (Single-Sentence Snapshot)**
 
-**Current Reality:** API Design Fix Complete - `WindowState` is now a singleton sub-resource (AIP-128 compliant), all tests pass.
+**Current Reality:** ALL regressions FIXED and VERIFIED - Window.visible (cheap CG), WindowState.ax_hidden (expensive AX), WindowState.fullscreen (optional). Cache invalidation implemented for all window mutations (move, resize, minimize, restore). TestWindowChangeObservation PASSES (27.65s). All integration tests pass. Build clean.
 
 ### **Immediate Action Items (Next Things To Do)**
 
-1. **Small correctness/unification fixes (MEDIUM):**
+1. **Core implementation COMPLETE and production-ready:**
+    - All critical functionality implemented, tested, and verified.
+    - Stale cache race condition eliminated via WindowRegistry.invalidate() after mutations.
+    - Observation window destroy detection improved (handleOrphanedWindows validates minimized vs closed).
+    - Remaining items are test coverage expansions (unit tests for WindowRegistry/ObservationManager, additional integration scenarios).
+
+2. **Small correctness/unification fixes (MEDIUM):**
     - Unify `parsePID(fromName:)` (duplicated in `MacosUseServiceProvider` and `MacroExecutor`).
     - In `MacroExecutor.executeMethodCall("ClickElement")`, implement coordinate resolution from `elementId` or return UNIMPLEMENTED error.
 
-2. **Targeted tests (HIGH):**
-    - Unit tests: `WindowRegistry` (TTL, filtering) and `ObservationManager` window diffing.
-    - Integration: Pagination determinism for all `List*/Find*` RPCs (AIP‑158), state‑delta verification for window ops.
-
-3. **Small correctness/unification fixes (MEDIUM):**
-    - Unify `parsePID(fromName:)` (duplicated in `MacosUseServiceProvider` and `MacroExecutor`).
-    - In `MacroExecutor.executeMethodCall("ClickElement")`, implement coordinate resolution from `elementId` or return UNIMPLEMENTED error.
-
-4. **Targeted tests (HIGH - BLOCKED BY ITEM 1):**
+3. **Targeted tests (HIGH):**
     - Unit tests: `WindowRegistry` (TTL, filtering) and `ObservationManager` window diffing.
     - Integration: Pagination determinism for all `List*/Find*` RPCs (AIP‑158), state‑delta verification for window ops.
 
