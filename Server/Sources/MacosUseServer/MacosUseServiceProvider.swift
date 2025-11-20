@@ -362,29 +362,8 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
             throw RPCError(code: .notFound, message: "Window not found")
         }
 
-        // Try to get fresh AX data for state - only use stale registry as last resort
-        var minimized: Bool
-        var focused: Bool?
-        var fullscreen: Bool?
-        var state: Macosusesdk_V1_WindowState
-
-        // Attempt to get fresh AX data even in fallback path
-        if let axWindow = try? await findWindowElement(pid: pid, windowId: windowId) {
-            let windowState = await getWindowState(window: axWindow)
-            minimized = windowState.0
-            focused = windowState.1
-            fullscreen = windowState.2
-            state = try await buildWindowStateFromAX(window: axWindow)
-        } else {
-            // Last resort: use stale registry data for minimized, leave focused/fullscreen unknown
-            // CRITICAL FIX: Use optional bool fields (proto3 field presence) to represent unknown state
-            // rather than hardcoding false. Unset optional fields indicate AX query failure.
-            minimized = !windowInfo.isOnScreen
-            focused = nil // Unknown - AX query failed, leave unset
-            fullscreen = nil // Unknown - AX query failed, leave unset
-            state = Macosusesdk_V1_WindowState() // Empty
-        }
-
+        // Build Window response with registry data only (cheap CoreGraphics data)
+        // Clients must use GetWindowState for expensive AX queries
         let response = Macosusesdk_V1_Window.with {
             $0.name = req.name
             $0.title = windowInfo.title
@@ -395,16 +374,6 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
                 $0.height = windowInfo.bounds.size.height
             }
             $0.zIndex = Int32(windowInfo.layer)
-            $0.visible = windowInfo.isOnScreen
-            $0.minimized = minimized
-            // CRITICAL FIX: Use optional field presence - only set if known
-            if let focusedValue = focused {
-                $0.focused = focusedValue
-            }
-            if let fullscreenValue = fullscreen {
-                $0.fullscreen = fullscreenValue
-            }
-            $0.state = state
             $0.bundleID = windowInfo.bundleID ?? ""
         }
         return ServerResponse(message: response)
@@ -449,8 +418,8 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         }
 
         // Build window list from registry data only - NO per-window AX queries
-        // This returns fast, registry-only data. Clients MUST use GetWindow to query
-        // detailed, fresh AX state (modal, resizable, etc.).
+        // This returns fast, registry-only data (CoreGraphics only).
+        // Clients MUST use GetWindowState for expensive AX queries (modal, minimizable, etc.).
         //
         // PERFORMANCE: This eliminates the O(N*M) catastrophe where N windows each
         // triggered M blocking AX queries. ListWindows now completes in <50ms regardless
@@ -466,12 +435,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
                     $0.height = windowInfo.bounds.size.height
                 }
                 $0.zIndex = Int32(windowInfo.layer)
-                $0.visible = windowInfo.isOnScreen
-                $0.minimized = !windowInfo.isOnScreen
                 $0.bundleID = windowInfo.bundleID ?? ""
-                $0.state = Macosusesdk_V1_WindowState()
-                // State is empty - use GetWindow for fresh AX state
-                // Clients should use GetWindow for complete state details
             }
         }
 
@@ -479,6 +443,37 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
             $0.windows = windows
             $0.nextPageToken = nextPageToken
         }
+        return ServerResponse(message: response)
+    }
+
+    func getWindowState(
+        request: ServerRequest<Macosusesdk_V1_GetWindowStateRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_WindowState> {
+        let req = request.message
+        fputs("info: [MacosUseServiceProvider] getWindowState called for \(req.name)\n", stderr)
+
+        // Parse "applications/{pid}/windows/{windowId}/state"
+        let components = req.name.split(separator: "/")
+        guard components.count == 5,
+              components[0] == "applications",
+              components[2] == "windows",
+              components[4] == "state",
+              let pid = pid_t(components[1]),
+              let windowId = CGWindowID(components[3])
+        else {
+            throw RPCError(code: .invalidArgument, message: "Invalid window state name format")
+        }
+
+        // Find the window via AX API
+        let axWindow = try await findWindowElement(pid: pid, windowId: windowId)
+
+        // Build complete WindowState from AX queries
+        let state = try await buildWindowStateFromAX(window: axWindow)
+
+        // Set the resource name
+        var response = state
+        response.name = req.name
+
         return ServerResponse(message: response)
     }
 
@@ -2947,18 +2942,8 @@ private extension MacosUseServiceProvider {
             return (boundsResult, titleResult2)
         }
 
-        // MERGED DATA SOURCES: Use AX API for state (minimized, focused, fullscreen, bounds)
-        // which is fresh after AX mutations, and WindowRegistry (CGWindowList) for metadata
-        // (zIndex, bundleID) which is stable and doesn't change during window operations.
-        let (minimized, focused, fullscreen) = await getWindowState(window: window)
-
-        // visible is simply !minimized for this purpose
-        let visible = !minimized
-
-        // Build window state
-        let windowState = try await buildWindowStateFromAX(window: window)
-
         // Refresh WindowRegistry and query for layer (zIndex) and bundleID
+        // Window resource contains ONLY cheap CoreGraphics data
         try await windowRegistry.refreshWindows()
         let registryWindow = try await windowRegistry.getWindow(windowId)
         let zIndex = registryWindow?.layer ?? 0
@@ -2976,16 +2961,6 @@ private extension MacosUseServiceProvider {
                 }
                 $0.zIndex = Int32(zIndex)
                 $0.bundleID = bundleID
-                $0.visible = visible
-                $0.minimized = minimized
-                // Set focused/fullscreen if known (not nil)
-                if let focusedValue = focused {
-                    $0.focused = focusedValue
-                }
-                if let fullscreenValue = fullscreen {
-                    $0.fullscreen = fullscreenValue
-                }
-                $0.state = windowState
             },
         )
     }
@@ -3220,12 +3195,50 @@ private extension MacosUseServiceProvider {
                 }
             }
 
+            // Check visible
+            var hiddenValue: CFTypeRef?
+            let visible = if AXUIElementCopyAttributeValue(window, kAXHiddenAttribute as CFString, &hiddenValue) == .success,
+                             let isHidden = hiddenValue as? Bool
+            {
+                !isHidden
+            } else {
+                true // Assume visible if attribute missing
+            }
+
+            // Check minimized
+            var minimizedValue: CFTypeRef?
+            let minimized = if AXUIElementCopyAttributeValue(window, kAXMinimizedAttribute as CFString, &minimizedValue) == .success,
+                               let isMinimized = minimizedValue as? Bool
+            {
+                isMinimized
+            } else {
+                false
+            }
+
+            // Check focused (main window)
+            var mainValue: CFTypeRef?
+            let focused = if AXUIElementCopyAttributeValue(window, kAXMainAttribute as CFString, &mainValue) == .success,
+                             let isMain = mainValue as? Bool
+            {
+                isMain
+            } else {
+                false
+            }
+
+            // Note: kAXFullscreenAttribute is not standard in Accessibility API
+            // We return false as a safe default
+            let fullscreen = false
+
             return Macosusesdk_V1_WindowState.with {
                 $0.resizable = resizable
                 $0.minimizable = minimizable
                 $0.closable = closable
                 $0.modal = modal
                 $0.floating = floating
+                $0.visible = visible
+                $0.minimized = minimized
+                $0.focused = focused
+                $0.fullscreen = fullscreen
             }
         }
     }

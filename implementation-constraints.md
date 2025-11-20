@@ -7,7 +7,7 @@
 
 ## Session Directives
 
-**CURRENT DIRECTIVE (2025-11-20):** CRITICAL API DESIGN FLAW - ListWindows returns partial Window resources (empty WindowState) violating AIP-157. MUST implement WindowState singleton sub-resource pattern (AIP-128) with dedicated GetWindowState RPC. ObservationManager/RestoreWindow fixes complete but on hold pending API correction.
+**CURRENT DIRECTIVE (2025-11-20):** API Design Fix Complete - `WindowState` is now a singleton sub-resource per AIP-128. Continue with remaining implementation priorities: correctness fixes, unit tests, and integration test expansion.
 
 - Maintain an exhaustive TODO list via the mandated tool before any code or plan edits; include every task from `implementation-plan.md`, every known deficiency, all active constraints, and motivational reminders.
 - Never stop execution mid-task and do not ask clarifying questions; infer next actions from the plan and constraints, and continue iterating until the entire plan is complete.

@@ -168,6 +168,19 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
 
+        /// Namespace for "GetWindowState" metadata.
+        public enum GetWindowState {
+            /// Request type for "GetWindowState".
+            public typealias Input = Macosusesdk_V1_GetWindowStateRequest
+            /// Response type for "GetWindowState".
+            public typealias Output = Macosusesdk_V1_WindowState
+            /// Descriptor for "GetWindowState".
+            public static let descriptor = GRPCCore.MethodDescriptor(
+                service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
+                method: "GetWindowState",
+            )
+        }
+
         /// Namespace for "FocusWindow" metadata.
         public enum FocusWindow {
             /// Request type for "FocusWindow".
@@ -857,6 +870,7 @@ public enum Macosusesdk_V1_MacosUse {
             WatchAccessibility.descriptor,
             GetWindow.descriptor,
             ListWindows.descriptor,
+            GetWindowState.descriptor,
             FocusWindow.descriptor,
             MoveWindow.descriptor,
             ResizeWindow.descriptor,
@@ -1136,6 +1150,24 @@ public extension Macosusesdk_V1_MacosUse {
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ListWindowsRequest>,
             context: GRPCCore.ServerContext,
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ListWindowsResponse>
+
+        /// Handle the "GetWindowState" method.
+        ///
+        /// > Source IDL Documentation:
+        /// >
+        /// > Gets the detailed state (AX) of a window.
+        ///
+        /// - Parameters:
+        ///   - request: A streaming request of `Macosusesdk_V1_GetWindowStateRequest` messages.
+        ///   - context: Context providing information about the RPC.
+        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
+        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
+        ///     to an internal error.
+        /// - Returns: A streaming response of `Macosusesdk_V1_WindowState` messages.
+        func getWindowState(
+            request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetWindowStateRequest>,
+            context: GRPCCore.ServerContext,
+        ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_WindowState>
 
         /// Handle the "FocusWindow" method.
         ///
@@ -2293,6 +2325,24 @@ public extension Macosusesdk_V1_MacosUse {
             context: GRPCCore.ServerContext,
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ListWindowsResponse>
 
+        /// Handle the "GetWindowState" method.
+        ///
+        /// > Source IDL Documentation:
+        /// >
+        /// > Gets the detailed state (AX) of a window.
+        ///
+        /// - Parameters:
+        ///   - request: A request containing a single `Macosusesdk_V1_GetWindowStateRequest` message.
+        ///   - context: Context providing information about the RPC.
+        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
+        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
+        ///     to an internal error.
+        /// - Returns: A response containing a single `Macosusesdk_V1_WindowState` message.
+        func getWindowState(
+            request: GRPCCore.ServerRequest<Macosusesdk_V1_GetWindowStateRequest>,
+            context: GRPCCore.ServerContext,
+        ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_WindowState>
+
         /// Handle the "FocusWindow" method.
         ///
         /// > Source IDL Documentation:
@@ -3448,6 +3498,24 @@ public extension Macosusesdk_V1_MacosUse {
             context: GRPCCore.ServerContext,
         ) async throws -> Macosusesdk_V1_ListWindowsResponse
 
+        /// Handle the "GetWindowState" method.
+        ///
+        /// > Source IDL Documentation:
+        /// >
+        /// > Gets the detailed state (AX) of a window.
+        ///
+        /// - Parameters:
+        ///   - request: A `Macosusesdk_V1_GetWindowStateRequest` message.
+        ///   - context: Context providing information about the RPC.
+        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
+        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
+        ///     to an internal error.
+        /// - Returns: A `Macosusesdk_V1_WindowState` to respond with.
+        func getWindowState(
+            request: Macosusesdk_V1_GetWindowStateRequest,
+            context: GRPCCore.ServerContext,
+        ) async throws -> Macosusesdk_V1_WindowState
+
         /// Handle the "FocusWindow" method.
         ///
         /// > Source IDL Documentation:
@@ -4521,6 +4589,17 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             },
         )
         router.registerHandler(
+            forMethod: Macosusesdk_V1_MacosUse.Method.GetWindowState.descriptor,
+            deserializer: GRPCProtobuf.ProtobufDeserializer<Macosusesdk_V1_GetWindowStateRequest>(),
+            serializer: GRPCProtobuf.ProtobufSerializer<Macosusesdk_V1_WindowState>(),
+            handler: { request, context in
+                try await self.getWindowState(
+                    request: request,
+                    context: context,
+                )
+            },
+        )
+        router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.FocusWindow.descriptor,
             deserializer: GRPCProtobuf.ProtobufDeserializer<Macosusesdk_V1_FocusWindowRequest>(),
             serializer: GRPCProtobuf.ProtobufSerializer<Macosusesdk_V1_Window>(),
@@ -5213,6 +5292,17 @@ public extension Macosusesdk_V1_MacosUse.ServiceProtocol {
         context: GRPCCore.ServerContext,
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ListWindowsResponse> {
         let response = try await listWindows(
+            request: GRPCCore.ServerRequest(stream: request),
+            context: context,
+        )
+        return GRPCCore.StreamingServerResponse(single: response)
+    }
+
+    func getWindowState(
+        request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetWindowStateRequest>,
+        context: GRPCCore.ServerContext,
+    ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_WindowState> {
+        let response = try await getWindowState(
             request: GRPCCore.ServerRequest(stream: request),
             context: context,
         )
@@ -5935,6 +6025,19 @@ public extension Macosusesdk_V1_MacosUse.SimpleServiceProtocol {
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ListWindowsResponse> {
         try await GRPCCore.ServerResponse<Macosusesdk_V1_ListWindowsResponse>(
             message: listWindows(
+                request: request.message,
+                context: context,
+            ),
+            metadata: [:],
+        )
+    }
+
+    func getWindowState(
+        request: GRPCCore.ServerRequest<Macosusesdk_V1_GetWindowStateRequest>,
+        context: GRPCCore.ServerContext,
+    ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_WindowState> {
+        try await GRPCCore.ServerResponse<Macosusesdk_V1_WindowState>(
+            message: getWindowState(
                 request: request.message,
                 context: context,
             ),

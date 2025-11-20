@@ -15,6 +15,8 @@ option java_outer_classname = "WindowProto";
 option java_package = "com.macosusesdk.v1";
 
 // A resource representing an individual window within an application.
+// Contains only cheap CoreGraphics data. For expensive AX state queries,
+// use GetWindowState to fetch the WindowState singleton sub-resource.
 message Window {
   option (google.api.resource) = {
     type: "macosusesdk.localhost/Window"
@@ -35,20 +37,6 @@ message Window {
 
   // Z-order index (higher values are in front).
   int32 z_index = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
-
-  // Whether the window is currently visible.
-  bool visible = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
-
-  // Whether the window is minimized.
-  bool minimized = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
-
-  // Whether the window is focused.
-  // Optional: unset if state is unknown (accessibility query failed).
-  optional bool focused = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
-
-  // Whether the window is in full-screen mode.
-  // Optional: unset if state is unknown (accessibility query failed).
-  optional bool fullscreen = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Bundle identifier of the application that owns this window.
   // Resolved via NSRunningApplication. Empty string if unavailable.
@@ -85,17 +73,39 @@ message WindowState {
   string name = 1 [(google.api.field_behavior) = IDENTIFIER];
 
   // Whether the window can be resized.
-  bool resizable = 2;
+  bool resizable = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Whether the window can be minimized.
-  bool minimizable = 3;
+  bool minimizable = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Whether the window can be closed.
-  bool closable = 4;
+  bool closable = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Whether the window is a modal dialog.
-  bool modal = 5;
+  bool modal = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Whether the window is a floating window.
-  bool floating = 6;
+  bool floating = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether the window is currently visible.
+  bool visible = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether the window is minimized.
+  bool minimized = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether the window is focused.
+  bool focused = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether the window is in full-screen mode.
+  bool fullscreen = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Request to get the state of a window.
+message GetWindowStateRequest {
+  // The name of the window state resource to retrieve.
+  // Format: applications/{application}/windows/{window}/state
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/WindowState"}
+  ];
 }

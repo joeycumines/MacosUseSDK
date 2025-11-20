@@ -37,6 +37,7 @@ const (
 	MacosUse_WatchAccessibility_FullMethodName       = "/macosusesdk.v1.MacosUse/WatchAccessibility"
 	MacosUse_GetWindow_FullMethodName                = "/macosusesdk.v1.MacosUse/GetWindow"
 	MacosUse_ListWindows_FullMethodName              = "/macosusesdk.v1.MacosUse/ListWindows"
+	MacosUse_GetWindowState_FullMethodName           = "/macosusesdk.v1.MacosUse/GetWindowState"
 	MacosUse_FocusWindow_FullMethodName              = "/macosusesdk.v1.MacosUse/FocusWindow"
 	MacosUse_MoveWindow_FullMethodName               = "/macosusesdk.v1.MacosUse/MoveWindow"
 	MacosUse_ResizeWindow_FullMethodName             = "/macosusesdk.v1.MacosUse/ResizeWindow"
@@ -120,6 +121,8 @@ type MacosUseClient interface {
 	GetWindow(ctx context.Context, in *GetWindowRequest, opts ...grpc.CallOption) (*Window, error)
 	// Lists windows for an application.
 	ListWindows(ctx context.Context, in *ListWindowsRequest, opts ...grpc.CallOption) (*ListWindowsResponse, error)
+	// Gets the detailed state (AX) of a window.
+	GetWindowState(ctx context.Context, in *GetWindowStateRequest, opts ...grpc.CallOption) (*WindowState, error)
 	// Focuses a specific window.
 	FocusWindow(ctx context.Context, in *FocusWindowRequest, opts ...grpc.CallOption) (*Window, error)
 	// Moves a window to a new position.
@@ -355,6 +358,16 @@ func (c *macosUseClient) ListWindows(ctx context.Context, in *ListWindowsRequest
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListWindowsResponse)
 	err := c.cc.Invoke(ctx, MacosUse_ListWindows_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *macosUseClient) GetWindowState(ctx context.Context, in *GetWindowStateRequest, opts ...grpc.CallOption) (*WindowState, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(WindowState)
+	err := c.cc.Invoke(ctx, MacosUse_GetWindowState_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -919,6 +932,8 @@ type MacosUseServer interface {
 	GetWindow(context.Context, *GetWindowRequest) (*Window, error)
 	// Lists windows for an application.
 	ListWindows(context.Context, *ListWindowsRequest) (*ListWindowsResponse, error)
+	// Gets the detailed state (AX) of a window.
+	GetWindowState(context.Context, *GetWindowStateRequest) (*WindowState, error)
 	// Focuses a specific window.
 	FocusWindow(context.Context, *FocusWindowRequest) (*Window, error)
 	// Moves a window to a new position.
@@ -1073,6 +1088,9 @@ func (UnimplementedMacosUseServer) GetWindow(context.Context, *GetWindowRequest)
 }
 func (UnimplementedMacosUseServer) ListWindows(context.Context, *ListWindowsRequest) (*ListWindowsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListWindows not implemented")
+}
+func (UnimplementedMacosUseServer) GetWindowState(context.Context, *GetWindowStateRequest) (*WindowState, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetWindowState not implemented")
 }
 func (UnimplementedMacosUseServer) FocusWindow(context.Context, *FocusWindowRequest) (*Window, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FocusWindow not implemented")
@@ -1438,6 +1456,24 @@ func _MacosUse_ListWindows_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MacosUseServer).ListWindows(ctx, req.(*ListWindowsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MacosUse_GetWindowState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetWindowStateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MacosUseServer).GetWindowState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MacosUse_GetWindowState_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MacosUseServer).GetWindowState(ctx, req.(*GetWindowStateRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2417,6 +2453,10 @@ var MacosUse_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListWindows",
 			Handler:    _MacosUse_ListWindows_Handler,
+		},
+		{
+			MethodName: "GetWindowState",
+			Handler:    _MacosUse_GetWindowState_Handler,
 		},
 		{
 			MethodName: "FocusWindow",

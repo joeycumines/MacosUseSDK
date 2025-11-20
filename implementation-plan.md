@@ -18,28 +18,17 @@
 
 ### **Current Reality (Single-Sentence Snapshot)**
 
-**Current Reality:** CRITICAL API DESIGN FLAW DISCOVERED - ListWindows omits WindowState fields violating AIP-157 (partial responses forbidden). Must design and implement singleton sub-resource pattern for expensive-to-fetch window metadata OR fix ListWindows to return complete state. ObservationManager/RestoreWindow fixes are on hold pending API correction.
+**Current Reality:** API Design Fix Complete - `WindowState` is now a singleton sub-resource (AIP-128 compliant), all tests pass.
 
 ### **Immediate Action Items (Next Things To Do)**
 
-1. **FIX API DESIGN FLAW - ListWindows State Omission (CRITICAL - BLOCKING ALL WORK):**
-    - **The Problem:** Current `ListWindows` implementation returns empty `WindowState` for performance, forcing clients to call `GetWindow` per-window. This violates AIP-157 (List methods must return complete resources).
-    - **The Solution:** Two options:
-        - **Option A (Preferred):** Create singleton sub-resource `applications/{app}/windows/{window}/state` with dedicated `GetWindowState` RPC for expensive AX queries (resizable, minimizable, modal, etc.). Keep `ListWindows` fast with only CGWindowList data.
-        - **Option B:** Make `ListWindows` return complete state and accept performance cost (O(N) AX queries).
-    - **Decision:** Option A - follows AIP-128 (singleton sub-resources) and AIP-157 compliance while maintaining performance.
-    - **Implementation Steps:**
-        1. Update `implementation-constraints.md` with new directive.
-        2. Design `WindowState` singleton sub-resource in `window.proto`.
-        3. Add `GetWindowState` RPC to `macos_use.proto`.
-        4. Implement `GetWindowState` in `MacosUseServiceProvider.swift`.
-        5. Update `ListWindows` to populate ALL Window fields from CGWindowList (remove empty state).
-        6. Fix integration test to use `GetWindowState` instead of relying on `GetWindow`.
-        7. Run validation test.
-    - **Acceptance:** API linter passes, test uses proper resource pattern.
+1. **Small correctness/unification fixes (MEDIUM):**
+    - Unify `parsePID(fromName:)` (duplicated in `MacosUseServiceProvider` and `MacroExecutor`).
+    - In `MacroExecutor.executeMethodCall("ClickElement")`, implement coordinate resolution from `elementId` or return UNIMPLEMENTED error.
 
-2. **Resume observation validation (HIGH - BLOCKED BY ITEM 1):**
-    - Cannot proceed until API design is corrected.
+2. **Targeted tests (HIGH):**
+    - Unit tests: `WindowRegistry` (TTL, filtering) and `ObservationManager` window diffing.
+    - Integration: Pagination determinism for all `List*/Find*` RPCs (AIP‑158), state‑delta verification for window ops.
 
 3. **Small correctness/unification fixes (MEDIUM):**
     - Unify `parsePID(fromName:)` (duplicated in `MacosUseServiceProvider` and `MacroExecutor`).

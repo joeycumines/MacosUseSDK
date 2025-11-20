@@ -27,6 +27,8 @@ const (
 )
 
 // A resource representing an individual window within an application.
+// Contains only cheap CoreGraphics data. For expensive AX state queries,
+// use GetWindowState to fetch the WindowState singleton sub-resource.
 type Window struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Resource name in the format "applications/{application}/windows/{window}"
@@ -38,18 +40,6 @@ type Window struct {
 	Bounds *Bounds `protobuf:"bytes,3,opt,name=bounds,proto3" json:"bounds,omitempty"`
 	// Z-order index (higher values are in front).
 	ZIndex int32 `protobuf:"varint,4,opt,name=z_index,json=zIndex,proto3" json:"z_index,omitempty"`
-	// Whether the window is currently visible.
-	Visible bool `protobuf:"varint,5,opt,name=visible,proto3" json:"visible,omitempty"`
-	// Whether the window is minimized.
-	Minimized bool `protobuf:"varint,6,opt,name=minimized,proto3" json:"minimized,omitempty"`
-	// Whether the window is focused.
-	// Optional: unset if state is unknown (accessibility query failed).
-	Focused *bool `protobuf:"varint,7,opt,name=focused,proto3,oneof" json:"focused,omitempty"`
-	// Whether the window is in full-screen mode.
-	// Optional: unset if state is unknown (accessibility query failed).
-	Fullscreen *bool `protobuf:"varint,8,opt,name=fullscreen,proto3,oneof" json:"fullscreen,omitempty"`
-	// Window attributes and state.
-	State *WindowState `protobuf:"bytes,9,opt,name=state,proto3" json:"state,omitempty"`
 	// Bundle identifier of the application that owns this window.
 	// Resolved via NSRunningApplication. Empty string if unavailable.
 	BundleId      string `protobuf:"bytes,10,opt,name=bundle_id,json=bundleId,proto3" json:"bundle_id,omitempty"`
@@ -113,41 +103,6 @@ func (x *Window) GetZIndex() int32 {
 		return x.ZIndex
 	}
 	return 0
-}
-
-func (x *Window) GetVisible() bool {
-	if x != nil {
-		return x.Visible
-	}
-	return false
-}
-
-func (x *Window) GetMinimized() bool {
-	if x != nil {
-		return x.Minimized
-	}
-	return false
-}
-
-func (x *Window) GetFocused() bool {
-	if x != nil && x.Focused != nil {
-		return *x.Focused
-	}
-	return false
-}
-
-func (x *Window) GetFullscreen() bool {
-	if x != nil && x.Fullscreen != nil {
-		return *x.Fullscreen
-	}
-	return false
-}
-
-func (x *Window) GetState() *WindowState {
-	if x != nil {
-		return x.State
-	}
-	return nil
 }
 
 func (x *Window) GetBundleId() string {
@@ -230,19 +185,31 @@ func (x *Bounds) GetHeight() float64 {
 	return 0
 }
 
-// State information about a window.
+// Detailed state information about a window, fetched via expensive AX queries.
+// This is a singleton sub-resource that clients must explicitly request.
+// Use GetWindowState to fetch this data on-demand.
 type WindowState struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// Resource name in the format "applications/{application}/windows/{window}/state"
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// Whether the window can be resized.
-	Resizable bool `protobuf:"varint,1,opt,name=resizable,proto3" json:"resizable,omitempty"`
+	Resizable bool `protobuf:"varint,2,opt,name=resizable,proto3" json:"resizable,omitempty"`
 	// Whether the window can be minimized.
-	Minimizable bool `protobuf:"varint,2,opt,name=minimizable,proto3" json:"minimizable,omitempty"`
+	Minimizable bool `protobuf:"varint,3,opt,name=minimizable,proto3" json:"minimizable,omitempty"`
 	// Whether the window can be closed.
-	Closable bool `protobuf:"varint,3,opt,name=closable,proto3" json:"closable,omitempty"`
+	Closable bool `protobuf:"varint,4,opt,name=closable,proto3" json:"closable,omitempty"`
 	// Whether the window is a modal dialog.
-	Modal bool `protobuf:"varint,4,opt,name=modal,proto3" json:"modal,omitempty"`
+	Modal bool `protobuf:"varint,5,opt,name=modal,proto3" json:"modal,omitempty"`
 	// Whether the window is a floating window.
-	Floating      bool `protobuf:"varint,5,opt,name=floating,proto3" json:"floating,omitempty"`
+	Floating bool `protobuf:"varint,6,opt,name=floating,proto3" json:"floating,omitempty"`
+	// Whether the window is currently visible.
+	Visible bool `protobuf:"varint,7,opt,name=visible,proto3" json:"visible,omitempty"`
+	// Whether the window is minimized.
+	Minimized bool `protobuf:"varint,8,opt,name=minimized,proto3" json:"minimized,omitempty"`
+	// Whether the window is focused.
+	Focused bool `protobuf:"varint,9,opt,name=focused,proto3" json:"focused,omitempty"`
+	// Whether the window is in full-screen mode.
+	Fullscreen    bool `protobuf:"varint,10,opt,name=fullscreen,proto3" json:"fullscreen,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -275,6 +242,13 @@ func (x *WindowState) ProtoReflect() protoreflect.Message {
 // Deprecated: Use WindowState.ProtoReflect.Descriptor instead.
 func (*WindowState) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_window_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *WindowState) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
 }
 
 func (x *WindowState) GetResizable() bool {
@@ -312,40 +286,117 @@ func (x *WindowState) GetFloating() bool {
 	return false
 }
 
+func (x *WindowState) GetVisible() bool {
+	if x != nil {
+		return x.Visible
+	}
+	return false
+}
+
+func (x *WindowState) GetMinimized() bool {
+	if x != nil {
+		return x.Minimized
+	}
+	return false
+}
+
+func (x *WindowState) GetFocused() bool {
+	if x != nil {
+		return x.Focused
+	}
+	return false
+}
+
+func (x *WindowState) GetFullscreen() bool {
+	if x != nil {
+		return x.Fullscreen
+	}
+	return false
+}
+
+// Request to get the state of a window.
+type GetWindowStateRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The name of the window state resource to retrieve.
+	// Format: applications/{application}/windows/{window}/state
+	Name          string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetWindowStateRequest) Reset() {
+	*x = GetWindowStateRequest{}
+	mi := &file_macosusesdk_v1_window_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetWindowStateRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetWindowStateRequest) ProtoMessage() {}
+
+func (x *GetWindowStateRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_macosusesdk_v1_window_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetWindowStateRequest.ProtoReflect.Descriptor instead.
+func (*GetWindowStateRequest) Descriptor() ([]byte, []int) {
+	return file_macosusesdk_v1_window_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *GetWindowStateRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
 var File_macosusesdk_v1_window_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_window_proto_rawDesc = "" +
 	"\n" +
-	"\x1bmacosusesdk/v1/window.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\"\xf5\x03\n" +
+	"\x1bmacosusesdk/v1/window.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\"\x92\x02\n" +
 	"\x06Window\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12\x19\n" +
 	"\x05title\x18\x02 \x01(\tB\x03\xe0A\x03R\x05title\x123\n" +
 	"\x06bounds\x18\x03 \x01(\v2\x16.macosusesdk.v1.BoundsB\x03\xe0A\x03R\x06bounds\x12\x1c\n" +
-	"\az_index\x18\x04 \x01(\x05B\x03\xe0A\x03R\x06zIndex\x12\x1d\n" +
-	"\avisible\x18\x05 \x01(\bB\x03\xe0A\x03R\avisible\x12!\n" +
-	"\tminimized\x18\x06 \x01(\bB\x03\xe0A\x03R\tminimized\x12\"\n" +
-	"\afocused\x18\a \x01(\bB\x03\xe0A\x03H\x00R\afocused\x88\x01\x01\x12(\n" +
-	"\n" +
-	"fullscreen\x18\b \x01(\bB\x03\xe0A\x03H\x01R\n" +
-	"fullscreen\x88\x01\x01\x126\n" +
-	"\x05state\x18\t \x01(\v2\x1b.macosusesdk.v1.WindowStateB\x03\xe0A\x03R\x05state\x12 \n" +
+	"\az_index\x18\x04 \x01(\x05B\x03\xe0A\x03R\x06zIndex\x12 \n" +
 	"\tbundle_id\x18\n" +
 	" \x01(\tB\x03\xe0A\x03R\bbundleId:_\xeaA\\\n" +
-	"\x1cmacosusesdk.localhost/Window\x12+applications/{application}/windows/{window}*\awindows2\x06windowB\n" +
-	"\n" +
-	"\b_focusedB\r\n" +
-	"\v_fullscreen\"R\n" +
+	"\x1cmacosusesdk.localhost/Window\x12+applications/{application}/windows/{window}*\awindows2\x06window\"R\n" +
 	"\x06Bounds\x12\f\n" +
 	"\x01x\x18\x01 \x01(\x01R\x01x\x12\f\n" +
 	"\x01y\x18\x02 \x01(\x01R\x01y\x12\x14\n" +
 	"\x05width\x18\x03 \x01(\x01R\x05width\x12\x16\n" +
-	"\x06height\x18\x04 \x01(\x01R\x06height\"\x9b\x01\n" +
-	"\vWindowState\x12\x1c\n" +
-	"\tresizable\x18\x01 \x01(\bR\tresizable\x12 \n" +
-	"\vminimizable\x18\x02 \x01(\bR\vminimizable\x12\x1a\n" +
-	"\bclosable\x18\x03 \x01(\bR\bclosable\x12\x14\n" +
-	"\x05modal\x18\x04 \x01(\bR\x05modal\x12\x1a\n" +
-	"\bfloating\x18\x05 \x01(\bR\bfloatingB\xc2\x01\n" +
+	"\x06height\x18\x04 \x01(\x01R\x06height\"\xc9\x03\n" +
+	"\vWindowState\x12\x17\n" +
+	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12!\n" +
+	"\tresizable\x18\x02 \x01(\bB\x03\xe0A\x03R\tresizable\x12%\n" +
+	"\vminimizable\x18\x03 \x01(\bB\x03\xe0A\x03R\vminimizable\x12\x1f\n" +
+	"\bclosable\x18\x04 \x01(\bB\x03\xe0A\x03R\bclosable\x12\x19\n" +
+	"\x05modal\x18\x05 \x01(\bB\x03\xe0A\x03R\x05modal\x12\x1f\n" +
+	"\bfloating\x18\x06 \x01(\bB\x03\xe0A\x03R\bfloating\x12\x1d\n" +
+	"\avisible\x18\a \x01(\bB\x03\xe0A\x03R\avisible\x12!\n" +
+	"\tminimized\x18\b \x01(\bB\x03\xe0A\x03R\tminimized\x12\x1d\n" +
+	"\afocused\x18\t \x01(\bB\x03\xe0A\x03R\afocused\x12#\n" +
+	"\n" +
+	"fullscreen\x18\n" +
+	" \x01(\bB\x03\xe0A\x03R\n" +
+	"fullscreen:t\xeaAq\n" +
+	"!macosusesdk.localhost/WindowState\x121applications/{application}/windows/{window}/state*\fwindowStates2\vwindowState\"V\n" +
+	"\x15GetWindowStateRequest\x12=\n" +
+	"\x04name\x18\x01 \x01(\tB)\xe0A\x02\xfaA#\n" +
+	"!macosusesdk.localhost/WindowStateR\x04nameB\xc2\x01\n" +
 	"\x12com.macosusesdk.v1B\vWindowProtoP\x01ZFgithub.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1\xa2\x02\x03MXX\xaa\x02\x0eMacosusesdk.V1\xca\x02\x0eMacosusesdk\\V1\xe2\x02\x1aMacosusesdk\\V1\\GPBMetadata\xea\x02\x0fMacosusesdk::V1b\x06proto3"
 
 var (
@@ -360,20 +411,20 @@ func file_macosusesdk_v1_window_proto_rawDescGZIP() []byte {
 	return file_macosusesdk_v1_window_proto_rawDescData
 }
 
-var file_macosusesdk_v1_window_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_macosusesdk_v1_window_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_macosusesdk_v1_window_proto_goTypes = []any{
-	(*Window)(nil),      // 0: macosusesdk.v1.Window
-	(*Bounds)(nil),      // 1: macosusesdk.v1.Bounds
-	(*WindowState)(nil), // 2: macosusesdk.v1.WindowState
+	(*Window)(nil),                // 0: macosusesdk.v1.Window
+	(*Bounds)(nil),                // 1: macosusesdk.v1.Bounds
+	(*WindowState)(nil),           // 2: macosusesdk.v1.WindowState
+	(*GetWindowStateRequest)(nil), // 3: macosusesdk.v1.GetWindowStateRequest
 }
 var file_macosusesdk_v1_window_proto_depIdxs = []int32{
 	1, // 0: macosusesdk.v1.Window.bounds:type_name -> macosusesdk.v1.Bounds
-	2, // 1: macosusesdk.v1.Window.state:type_name -> macosusesdk.v1.WindowState
-	2, // [2:2] is the sub-list for method output_type
-	2, // [2:2] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	1, // [1:1] is the sub-list for method output_type
+	1, // [1:1] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_macosusesdk_v1_window_proto_init() }
@@ -381,14 +432,13 @@ func file_macosusesdk_v1_window_proto_init() {
 	if File_macosusesdk_v1_window_proto != nil {
 		return
 	}
-	file_macosusesdk_v1_window_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_macosusesdk_v1_window_proto_rawDesc), len(file_macosusesdk_v1_window_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

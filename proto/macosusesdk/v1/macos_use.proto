@@ -118,6 +118,12 @@ service MacosUse {
     option (google.api.method_signature) = "parent";
   }
 
+  // Gets the detailed state (AX) of a window.
+  rpc GetWindowState(GetWindowStateRequest) returns (WindowState) {
+    option (google.api.http) = {get: "/v1/{name=applications/*/windows/*/state}"};
+    option (google.api.method_signature) = "name";
+  }
+
   // Focuses a specific window.
   rpc FocusWindow(FocusWindowRequest) returns (Window) {
     option (google.api.http) = {

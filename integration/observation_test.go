@@ -94,19 +94,20 @@ func TestWindowChangeObservation(t *testing.T) {
 		for _, window := range resp.Windows {
 			if window.Bounds != nil &&
 				window.Bounds.Width >= 200 && window.Bounds.Height >= 200 {
-				// Found a candidate - use GetWindow to check if it's minimizable
-				fullWindow, err := client.GetWindow(ctx, &pb.GetWindowRequest{
-					Name: window.Name,
+				// Found a candidate - use GetWindowState to check if it's minimizable
+				stateName := window.Name + "/state"
+				windowState, err := client.GetWindowState(ctx, &pb.GetWindowStateRequest{
+					Name: stateName,
 				})
 				if err != nil {
 					continue
 				}
 				t.Logf("  Window: %s, minimizable=%v, bounds=%.0fx%.0f at (%.0f, %.0f)",
-					fullWindow.Name,
-					fullWindow.State != nil && fullWindow.State.Minimizable,
-					fullWindow.Bounds.Width, fullWindow.Bounds.Height, fullWindow.Bounds.X, fullWindow.Bounds.Y)
-				if fullWindow.State != nil && fullWindow.State.Minimizable {
-					initialWindow = fullWindow
+					window.Name,
+					windowState.Minimizable,
+					window.Bounds.Width, window.Bounds.Height, window.Bounds.X, window.Bounds.Y)
+				if windowState.Minimizable {
+					initialWindow = window
 					return true, nil
 				}
 			}
@@ -425,13 +426,14 @@ func TestWindowChangeObservation(t *testing.T) {
 
 	// Verify state delta - window should be minimized
 	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
-		window, err := client.GetWindow(ctx, &pb.GetWindowRequest{
-			Name: initialWindow.Name,
+		stateName := initialWindow.Name + "/state"
+		windowState, err := client.GetWindowState(ctx, &pb.GetWindowStateRequest{
+			Name: stateName,
 		})
 		if err != nil {
 			return false, err
 		}
-		return !window.Visible, nil // Minimized windows are not visible
+		return windowState.Minimized, nil
 	})
 	if err != nil {
 		t.Error("Window did not reflect minimized state")
@@ -469,13 +471,14 @@ func TestWindowChangeObservation(t *testing.T) {
 
 	// Verify state delta - window should be visible again
 	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
-		window, err := client.GetWindow(ctx, &pb.GetWindowRequest{
-			Name: initialWindow.Name,
+		stateName := initialWindow.Name + "/state"
+		windowState, err := client.GetWindowState(ctx, &pb.GetWindowStateRequest{
+			Name: stateName,
 		})
 		if err != nil {
 			return false, err
 		}
-		return window.Visible, nil
+		return !windowState.Minimized && windowState.Visible, nil
 	})
 	if err != nil {
 		t.Error("Window did not reflect restored state")
