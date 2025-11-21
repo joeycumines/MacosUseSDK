@@ -1,7 +1,50 @@
 To guarantee the correctness of this PR, I have analyzed the changes against the strict constraints of concurrency safety, state consistency, and logical completeness.
 
 ### **Succinct Summary**
-The PR successfully mitigates the Main Thread hang by offloading Accessibility API calls to detached tasks. However, it introduces a **critical race condition** in sequential window operations: the window lookup mechanism (`findWindowElement`) relies on heuristic geometry matching between `CGWindowList` and `AXUIElement`. Since `CGWindowList` updates lag behind AX changes (10-100ms), and the PR removes stabilization delays, executing a mutation (e.g., `MoveWindow`) immediately followed by an interaction (e.g., `FocusWindow`) will cause the second operation to fail with a `notFound` error, as the stale CG bounds will not match the fresh AX bounds. Additionally, the PR includes tests for pagination but lacks the corresponding implementation in `ElementLocator` or `AutomationCoordinator`, guaranteeing functional failure.
+This review verifies the claims and annotates where they are correct, partially correct, and where they are incorrect.
+
+Summary of verified findings (evidence-backed):
+
+- **Main-thread hang fix: Confirmed.** Accessibility calls and AX mutations are moved off of blocking MainActor code and executed on detached background tasks (`Task.detached`). See:
+    - `Server/Sources/MacosUseServer/WindowHelpers.swift` — `buildWindowResponseFromAX`, `findWindowElement`, `findWindowElementWithMinimizedFallback` use `Task.detached` for AX reads.
+    - `Server/Sources/MacosUseServer/MacosUseServiceProvider.swift` — `focusWindow`, `moveWindow`, `resizeWindow`, `minimizeWindow`, etc. perform AX set operations in `Task.detached` blocks.
+
+- **Window lookup race (geometry heuristic): Substantially correct.** The server resolves AX windows by comparing AX positions/sizes to a snapshot from `CGWindowList` (2px tolerance). This is implemented in `findWindowElement` / `findWindowElementWithMinimizedFallback` and can fail when `CGWindowList` is stale relative to fresh AX state (i.e., after a fast mutation). Evidence:
+    - `Server/Sources/MacosUseServer/WindowHelpers.swift` — `findWindowElement` uses `CGWindowListCopyWindowInfo(...)` and compares bounds (delta < 2 px) against AX position/size.
+    - `WindowRegistry` provides `getLastKnownWindow` and `refreshWindows`, but `findWindowElement` reads `CGWindowList` directly and can therefore miss a just-applied AX change.
+
+- **Move/Resize -> immediate Focus race: Real risk.** `moveWindow` and `resizeWindow` execute AX set operations and return results built from AX (good). However, these endpoints do not wait for `CGWindowList` to update before finishing; `findWindowElement` still performs CG-to-AX geometry matching and so a follow-up call (e.g., `FocusWindow`) immediately after a `MoveWindow` may fail with `notFound` if the system-level `CGWindowList` hasn't updated yet. Evidence and observed behavior:
+    - `Server/Sources/MacosUseServer/MacosUseServiceProvider.swift` — `moveWindow` and `resizeWindow` set attributes on AX, then call `windowRegistry.refreshWindows(forPID:)` (to read registry metadata), then `invalidate` the cached entry, and finally return a `buildWindowResponseFromAX` result. They do not poll `CGWindowList` for the updated geometry.
+    - `findWindowElement` will still use `CGWindowListCopyWindowInfo(...)` when resolving windows by ID, so the immediate re-resolution can fail.
+    - Integration test run: `integration/window_metadata_test.go` showed examples where `MoveWindow` / `ResizeWindow` responses were observed as `visible=false` (unexpected) in this environment — this is consistent with stale CG data. See test output: `integration/window_metadata_test.go` (run details below).
+
+- **Pagination claim: Incorrect as stated.** The review said pagination tests were present but the implementation was missing in `ElementLocator` or `AutomationCoordinator`. This is not true for the server implementation: pagination is implemented in the server provider and ElementLocator supports limiting results.
+    - `Server/Sources/MacosUseServer/MacosUseServiceProvider.swift`: defines `encodePageToken` / `decodePageToken` and implements pagination slicing in `findElements`, `findRegionElements`, `listWindows`, `listApplications`, `listInputs`, and `listObservations`.
+    - `Server/Sources/MacosUseServer/ElementLocator.swift`: `findElements` / `findElementsInRegion` accept `maxResults` and apply the `prefix(maxResults)` limit (so the server can request extra items and slice for pagination).
+    - Integration tests `integration/pagination_find_test.go` exercise the AIP-158 semantics (opaque tokens, page size) and passed in the local test run.
+
+Short conclusion and recommended changes:
+
+- The report's main warning (race in `findWindowElement`) is valid and supported by code inspection and test outputs: resolving AX <-> CG via geometry is fragile if CG updates lag AX changes. The current code contains partial mitigations (cache, `getLastKnownWindow`, `invalidate`, `refreshWindows`) and explicit polling only for minimize/restore but not for move/resize.
+- The pagination-related claims in the review are wrong: pagination logic exists and is exercised by tests; the ServiceProvider implements token encoding/slicing and `ElementLocator` supports `maxResults`.
+
+Next actionable options (pick one if you want me to implement):
+
+- Implement robust AX caching for windows (cache AXAXUIElement -> CGWindowID mapping in `WindowRegistry` or extend `ElementRegistry`), so `findWindowElement` can avoid a fragile geometry-based re-resolution.
+- Alternatively, make `findWindowElement` prefer AX authority when a recent mutation has been performed, or add a short bounded retry (10-100ms) / polling for `CGWindowList` update after mutations to eliminate failure modes without significant latency.
+
+Evidence & pointers (files to inspect / tests observed):
+
+- AX offload / read/write: `Server/Sources/MacosUseServer/WindowHelpers.swift` (Task.detached usage)
+- `findWindowElement` geometry matching: `Server/Sources/MacosUseServer/WindowHelpers.swift`
+- Window mutation code paths: `Server/Sources/MacosUseServer/MacosUseServiceProvider.swift` (`moveWindow`, `resizeWindow`, `minimizeWindow`, `restoreWindow`, `focusWindow`)
+- Cache / last-known metadata: `Server/Sources/MacosUseServer/WindowRegistry.swift` (`getLastKnownWindow`, `invalidate`, `refreshWindows`)
+- Pagination encoder/decoder and server-side pagination: `Server/Sources/MacosUseServer/MacosUseServiceProvider.swift` (`encodePageToken` / `decodePageToken`, slices in `findElements`/`listWindows`/`listApplications`)
+- ElementLocator limit support: `Server/Sources/MacosUseServer/ElementLocator.swift` (`maxResults` parameter)
+- Pagination tests: `integration/pagination_find_test.go` (passed in current run)
+- Observed integration failure: `integration/window_metadata_test.go` (showed `MoveWindow`/`ResizeWindow` returned `visible=false` unexpectedly in the local run; this supports the timing/staleness concern).
+
+If you'd like, I can implement one of the suggested fixes now (window AX caching, short bounded retry after mutations, or other mitigation) and add tests that reproduce and guard against the failure mode. Which fix should I apply first?
 
 ---
 
