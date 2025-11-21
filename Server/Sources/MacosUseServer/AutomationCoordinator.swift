@@ -1,6 +1,7 @@
 import AppKit
 import CoreGraphics
 import Foundation
+import GRPCCore
 import MacosUseSDK
 import MacosUseSDKProtos
 import OSLog
@@ -130,10 +131,20 @@ public actor AutomationCoordinator {
             }.value
         } catch let error as MacosUseSDK.MacosUseSDKError {
             logger.error("SDK error during traversal: \(error.localizedDescription, privacy: .public)")
-            throw error
+            // Convert SDK errors to RPCError so gRPC can handle them properly
+            switch error {
+            case .accessibilityDenied:
+                throw RPCError(code: .permissionDenied, message: error.localizedDescription)
+            case let .appNotFound(pid):
+                throw RPCError(code: .notFound, message: "Application with PID \(pid) not found")
+            case let .jsonEncodingFailed(underlyingError):
+                throw RPCError(code: .internalError, message: "JSON encoding failed: \(underlyingError.localizedDescription)")
+            case let .internalError(message):
+                throw RPCError(code: .internalError, message: message)
+            }
         } catch {
             logger.error("Unexpected error during traversal: \(String(describing: error), privacy: .public)")
-            throw error
+            throw RPCError(code: .unknown, message: "Unexpected error: \(error.localizedDescription)")
         }
     }
 

@@ -3039,8 +3039,10 @@ private extension MacosUseServiceProvider {
 
         // 3. CRITICAL FIX: Compute visible using fresh AX data per formula:
         // visible = (Registry.isOnScreen OR Assumption) AND NOT AX.Minimized AND NOT AX.Hidden
-        // Assumption: if registryInfo is missing but AX interaction succeeded, assume onScreen=true
-        let isOnScreen = metadata?.isOnScreen ?? true
+        // CRITICAL INSIGHT: CGWindowList lags by 10-100ms, so if we successfully queried the window
+        // via AX and it's not minimized/hidden, we KNOW it's on screen regardless of what registry says.
+        // This ensures mutation responses return visible=true immediately without polling delays.
+        let isOnScreen = (!axMinimized && !axHidden) ? true : (metadata?.isOnScreen ?? false)
         let visible = isOnScreen && !axMinimized && !axHidden
 
         // 4. Construct Response

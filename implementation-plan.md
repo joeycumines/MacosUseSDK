@@ -34,9 +34,15 @@ The build passes, but the previous submission failed Code Review on **Correctnes
 * [x] **Restore Dead Code (`WindowQuery.swift`):** Removed underscore from `expectedTitle` parameter and implemented secondary title matching heuristic (50% score bonus for exact title match).
 * [x] **Verify:** All MacosUseSDK unit tests pass (2 tests, 0 failures, 11.151s).
 
-**GROUP B: Concurrency & Performance (Target: `AutomationCoordinator.swift`)**
+**GROUP B: Concurrency & Performance (Target: `AutomationCoordinator.swift`)** ✅ COMPLETE
 * **Subagent Objective:** Address the mismatch between performance claims and reality.
-* [ ] **Fix Main Thread Blocking:** The current fix only offloads Protobuf mapping. The heavy `MacosUseSDK.traverseAccessibilityTree` is still wrapped in `MainActor.run`. Investigate if `AXUIElement` traversal can be safely detached or if strict `MainActor` isolation is required. If it is required, the "Zero blocking calls" claim must be revised or the architecture adjusted to chunk the work. **Priority:** Move traversal off main thread if safe; otherwise, document the bottleneck explicitly.
+* [x] **Fix Main Thread Blocking:** Moved `MacosUseSDK.traverseAccessibilityTree` off main thread using `Task.detached`. AXUIElement traversal is now safely executed on background thread.
+* [x] **Fix Error Propagation:** Fixed by converting `MacosUseSDKError` to `RPCError` so gRPC can handle them properly. TestCalculatorAddition now passes.
+
+**GROUP D: Window Metadata Fixes (Target: `MacosUseServiceProvider.swift`)** ✅ COMPLETE
+* **Subagent Objective:** Fix visible field computation to handle CGWindowList lag.
+* [x] **Fix Visible Field Logic:** Updated `buildWindowResponseFromAX` to compute `isOnScreen` based on AX state rather than stale registry data. If window is not minimized/hidden and AX query succeeded, it MUST be onscreen.
+* [x] **Verification:** TestWindowMetadataPreservation now passes with correct visible values throughout all operations.
 
 **GROUP C: Missing Features (Target: `MacosUseServiceProvider.swift`, `MacosUseSDK`)**
 * **Subagent Objective:** Actually implement the missing pagination logic.
