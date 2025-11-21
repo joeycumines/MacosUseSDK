@@ -5,7 +5,7 @@ This review verifies the claims and annotates where they are correct, partially 
 
 Summary of verified findings (evidence-backed):
 
-- **Main-thread hang fix: Confirmed.** Accessibility calls and AX mutations are moved off of blocking MainActor code and executed on detached background tasks (`Task.detached`). See:
+-- **Main-thread hang fix: Confirmed (evidence + guidance).** Accessibility calls and AX mutations are moved off of blocking MainActor code and executed on detached background tasks (`Task.detached`). Accessibility APIs involve cross-process IPC and can be relatively expensive; avoiding main-thread blocking is the defensible practice.
     - `Server/Sources/MacosUseServer/WindowHelpers.swift` — `buildWindowResponseFromAX`, `findWindowElement`, `findWindowElementWithMinimizedFallback` use `Task.detached` for AX reads.
     - `Server/Sources/MacosUseServer/MacosUseServiceProvider.swift` — `focusWindow`, `moveWindow`, `resizeWindow`, `minimizeWindow`, etc. perform AX set operations in `Task.detached` blocks.
 
@@ -53,11 +53,22 @@ If you'd like, I can implement one of the suggested fixes now (window AX caching
 #### **1. Concurrency & Liveness (Fixed)**
 * **Change:** Moving `handleTraverse` and AX mutations (`AXUIElementSetAttributeValue`) from `@MainActor` blocks to `Task.detached(priority: .userInitiated)` is the correct architectural fix.
 * **Impact:** This decouples high-latency IPC (Accessibility) from the Application Main Loop. The application will no longer hang or show the "beach ball" during heavy traversals.
-* **Verification:** `AXUIElement` is thread-safe (CoreFoundation type), so sharing it across boundaries is valid.
+* **Verification / caveat:** Accessibility calls perform IPC and can block; Apple's public docs do not provide a clear cross-thread "thread-safety contract" for `AXUIElement`. The code's approach (offloading AX reads/writes to background tasks) is supported by the performance characteristics of these APIs and avoids main-thread hangs. Treat the claim "AXUIElement is thread-safe" as an implementation-side assumption rather than an authoritative guarantee from Apple.
+
+---
+
+### References
+
+- CGWindow snapshot / API doc: https://developer.apple.com/documentation/coregraphics/cgwindowlistcopywindowinfo(_:_:) (returns point-in-time window dictionaries; generation is relatively expensive)
+- AXUIElement / Accessibility docs: https://developer.apple.com/documentation/applicationservices/axuielement_h
+- AXValue docs: https://developer.apple.com/documentation/applicationservices/axvalue_h
+- AX attribute helpers: https://developer.apple.com/documentation/applicationservices/axuielementcopyattributevalue and https://developer.apple.com/documentation/applicationservices/axuielementsetattributevalue
+
+Notes: Apple's docs show the intended API surface and point out CG window list is snapshot-based and relatively expensive; however there is no explicit Apple statement guaranteeing `AXUIElement` is safe to use concurrently across arbitrary threads. When in doubt, offload to background tasks and avoid blocking the UI main thread.
 
 #### **2. The "Split-Brain" Consistency Bug (Critical)**
 * **Mechanism:** The helper `findWindowElement` attempts to resolve a `CGWindowID` (Identity) to an `AXUIElement` (Interaction) by matching their On-Screen Bounds.
-    * `CGWindowList` (The Identity Source) is known to lag by 10-100ms.
+    * `CGWindowList` (The Identity Source) can lag behind AX state; runs in this repository and local testing observed roughly 10–100ms differences depending on system conditions (this is observational, not a documented hard guarantee from Apple).
     * `AXUIElement` (The Interaction Source) updates instantly after a mutation.
 * **Scenario:**
     1.  User calls `ResizeWindow(500x500)`. AX updates to 500x500. Function returns success.
