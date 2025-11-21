@@ -35,7 +35,7 @@ public func fetchAXWindowInfo(
     pid: Int32,
     windowId: CGWindowID,
     expectedBounds: CGRect,
-    expectedTitle _: String? = nil,
+    expectedTitle: String? = nil,
 ) -> WindowInfo? {
     let appElement = AXUIElementCreateApplication(pid)
 
@@ -115,14 +115,18 @@ public func fetchAXWindowInfo(
         // We use a combination of origin delta and size delta.
         let originDiff = hypot(axBounds.origin.x - expectedBounds.origin.x, axBounds.origin.y - expectedBounds.origin.y)
         let sizeDiff = hypot(axBounds.width - expectedBounds.width, axBounds.height - expectedBounds.height)
-        let score = originDiff + sizeDiff
+        var score = originDiff + sizeDiff
+        
+        // -- Title (Secondary Heuristic) --
+        let axTitle = values[2] as? String ?? ""
+        // If expectedTitle is provided and matches exactly, apply a bonus (reduce score)
+        if let expectedTitle = expectedTitle, !expectedTitle.isEmpty, axTitle == expectedTitle {
+            score *= 0.5  // Give 50% weight reduction for exact title match
+        }
 
         // If this candidate is closer than previous ones, verify and store it
         if score < bestScore {
             bestScore = score
-
-            // -- Title --
-            let axTitle = values[2] as? String ?? ""
 
             // -- Minimized --
             // CFBoolean bridges to Bool in Swift, but we check safely.

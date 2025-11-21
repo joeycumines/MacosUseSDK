@@ -28,11 +28,11 @@ The build passes, but the previous submission failed Code Review on **Correctnes
 
 ### **Work Queue (Grouped for Subagents)**
 
-**GROUP A: Correctness & Logic Repairs (Target: `InputController.swift`, `WindowQuery.swift`)**
+**GROUP A: Correctness & Logic Repairs (Target: `InputController.swift`, `WindowQuery.swift`)** ✅ COMPLETE
 * **Subagent Objective:** Fix memory safety and heuristic logic.
-* [ ] **Fix Retain Cycle (`InputController.swift`):** The closure captures `[process]` strongly. You MUST break the cycle by setting `proc.terminationHandler = nil` inside the completion block.
-* [ ] **Restore Dead Code (`WindowQuery.swift`):** The signature `expectedTitle _: String?` ignores the argument. Remove the underscore `_` and ensure the "secondary matching heuristic" actually uses this parameter as documented.
-* [ ] **Verify:** Run related unit tests to ensure no regression.
+* [x] **Fix Retain Cycle (`InputController.swift`):** Fixed by setting `proc.terminationHandler = nil` inside the completion block, breaking the retain cycle properly.
+* [x] **Restore Dead Code (`WindowQuery.swift`):** Removed underscore from `expectedTitle` parameter and implemented secondary title matching heuristic (50% score bonus for exact title match).
+* [x] **Verify:** All MacosUseSDK unit tests pass (2 tests, 0 failures, 11.151s).
 
 **GROUP B: Concurrency & Performance (Target: `AutomationCoordinator.swift`)**
 * **Subagent Objective:** Address the mismatch between performance claims and reality.
