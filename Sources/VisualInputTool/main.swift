@@ -212,7 +212,7 @@ Task {
       visualizationDuration = parsedDuration > 0 ? parsedDuration : calculatedDuration  // Use parsed or calculated
 
       log("Calling writeText library function...")
-      try MacosUseSDK.writeText(text)  // Input simulation
+      try await MacosUseSDK.writeText(text)  // Input simulation
 
       log("Dispatching showVisualFeedback for writetext...")
       // Dispatch visualization separately

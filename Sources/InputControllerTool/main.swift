@@ -145,7 +145,7 @@ Task {
       let text = arguments[2]
       log("Text Argument: \"\(text)\"")
       log("Calling writeText library function...")
-      try MacosUseSDK.writeText(text)
+      try await MacosUseSDK.writeText(text)
       finish(success: true, message: "Text writing simulated.")
 
     default:

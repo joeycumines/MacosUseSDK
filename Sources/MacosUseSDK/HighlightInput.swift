@@ -145,7 +145,7 @@ public func writeTextAndVisualize(_ text: String, duration: Double? = nil) async
   logger.info(
     "simulating text writing AND visualizing caption: \"\(text, privacy: .private)\", duration: \(finalDuration, privacy: .public)s")
   // Call the original input function first
-  try writeText(text)
+  try await writeText(text)
 
   // Always dispatch caption visualization to the main thread at screen center
   DispatchQueue.main.async {

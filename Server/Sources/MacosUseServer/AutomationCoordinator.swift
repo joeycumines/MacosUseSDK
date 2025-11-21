@@ -88,43 +88,47 @@ public actor AutomationCoordinator {
     }
 
     /// Traverses the accessibility tree for a given PID
-    /// CONTENTION FIX: Made nonisolated and executes ONLY AX API calls on MainActor.
-    /// Element conversion and proto building happens off-MainActor to reduce contention.
-    public nonisolated func handleTraverse(pid: pid_t, visibleOnly: Bool) async throws
+    @MainActor
+    public func handleTraverse(pid: pid_t, visibleOnly: Bool) async throws
         -> Macosusesdk_V1_TraverseAccessibilityResponse
     {
         logger.info("Traversing accessibility tree for PID \(pid, privacy: .public)")
 
-        // CRITICAL: Only the AX API call runs on MainActor
-        let sdkResponse = try await MainActor.run {
-            try MacosUseSDK.traverseAccessibilityTree(
+        do {
+            // Execute traversal on MainActor (required for AX APIs)
+            let sdkResponse = try MacosUseSDK.traverseAccessibilityTree(
                 pid: pid,
                 onlyVisibleElements: visibleOnly,
             )
-        }
 
-        // Element conversion and proto building happens off-MainActor
-        let elements = sdkResponse.elements.map { sdkElement in
-            Macosusesdk_Type_Element.with {
-                $0.role = sdkElement.role
-                $0.text = sdkElement.text ?? ""
-                $0.x = sdkElement.x ?? 0
-                $0.y = sdkElement.y ?? 0
-                $0.width = sdkElement.width ?? 0
-                $0.height = sdkElement.height ?? 0
+            // Element conversion and proto building
+            let elements = sdkResponse.elements.map { sdkElement in
+                Macosusesdk_Type_Element.with {
+                    $0.role = sdkElement.role
+                    $0.text = sdkElement.text ?? ""
+                    $0.x = sdkElement.x ?? 0
+                    $0.y = sdkElement.y ?? 0
+                    $0.width = sdkElement.width ?? 0
+                    $0.height = sdkElement.height ?? 0
+                }
             }
-        }
 
-        let statistics = Macosusesdk_Type_TraversalStats.with {
-            $0.count = Int32(sdkResponse.elements.count)
-            // Add other stats if available
-        }
+            let statistics = Macosusesdk_Type_TraversalStats.with {
+                $0.count = Int32(sdkResponse.elements.count)
+            }
 
-        return Macosusesdk_V1_TraverseAccessibilityResponse.with {
-            $0.app = sdkResponse.app_name
-            $0.elements = elements
-            $0.stats = statistics
-            $0.processingTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
+            return Macosusesdk_V1_TraverseAccessibilityResponse.with {
+                $0.app = sdkResponse.app_name
+                $0.elements = elements
+                $0.stats = statistics
+                $0.processingTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
+            }
+        } catch let error as MacosUseSDK.MacosUseSDKError {
+            logger.error("SDK error during traversal: \(error.localizedDescription, privacy: .public)")
+            throw error
+        } catch {
+            logger.error("Unexpected error during traversal: \(String(describing: error), privacy: .public)")
+            throw error
         }
     }
 
@@ -157,7 +161,7 @@ public actor AutomationCoordinator {
             if showAnimation {
                 try await MacosUseSDK.writeTextAndVisualize(text, duration: nil)
             } else {
-                try MacosUseSDK.writeText(text)
+                try await MacosUseSDK.writeText(text)
             }
         case let .press(keyName, flags):
             guard let keyCode = MacosUseSDK.mapKeyNameToKeyCode(keyName) else {

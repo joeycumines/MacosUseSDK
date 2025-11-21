@@ -243,7 +243,7 @@ public enum CombinedActions {
 
     // Step 1: Perform the text writing
     logger.info("calling writeText...")
-    try MacosUseSDK.writeText(text)
+    try await MacosUseSDK.writeText(text)
     logger.info("writeText completed successfully.")
 
     // Add a small delay
@@ -448,7 +448,7 @@ public enum CombinedActions {
 
     // Step 2: Perform the Text Writing
     logger.info("calling writeText...")
-    try MacosUseSDK.writeText(text)
+    try await MacosUseSDK.writeText(text)
     logger.info("writeText completed successfully.")
 
     // Step 3: Wait for UI to Update
@@ -685,7 +685,7 @@ public enum CombinedActions {
 
     // Step 2a: Perform the Text Writing (Input Simulation Only)
     logger.info("calling writeText (\"\(text, privacy: .private)\")...")
-    try MacosUseSDK.writeText(text)
+    try await MacosUseSDK.writeText(text)
     logger.info("writeText completed successfully.")
 
     // Step 2b: Dispatch Text Writing Visualization (Caption)

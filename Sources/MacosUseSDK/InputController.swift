@@ -176,7 +176,7 @@ public func moveMouse(to point: CGPoint) async throws {
 /// This is generally more reliable for arbitrary text than simulating individual key presses.
 /// - Parameter text: The `String` to type.
 /// - Throws: `MacosUseSDKError` if the osascript command fails to execute or returns an error.
-public func writeText(_ text: String) throws {
+public func writeText(_ text: String) async throws {
   // Using AppleScript's 'keystroke' is simplest for arbitrary text,
   // as it handles character mapping, keyboard layouts, etc.
   // A pure CGEvent approach would require complex character-to-keycode+flags mapping.
@@ -187,39 +187,39 @@ public func writeText(_ text: String) throws {
     of: "\"", with: "\\\"")
   let script = "tell application \"System Events\" to keystroke \"\(escapedText)\""
 
-  let process = Process()
-  process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-  process.arguments = ["-e", script]
+  // Use a continuation to bridge the callback-based Process API to async/await
+  try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+    let process = Process()
+    process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+    process.arguments = ["-e", script]
 
-  // Capture potential errors from osascript
-  let errorPipe = Pipe()
-  process.standardError = errorPipe
+    let errorPipe = Pipe()
+    process.standardError = errorPipe
 
-  do {
-    try process.run()
-    process.waitUntilExit()
-
-    // Read error output
-    let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
-    let errorString =
-      String(data: errorData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
-      ?? ""
-
-    if process.terminationStatus == 0 {
-      logger.info("text writing simulation complete.")
-    } else {
-      logger.error("osascript command failed with status \(process.terminationStatus, privacy: .public)")
-      if !errorString.isEmpty {
-        logger.error("error details (osascript): \(errorString, privacy: .auto)")
+    process.terminationHandler = { proc in
+      let status = proc.terminationStatus
+      if status == 0 {
+        continuation.resume()
+      } else {
+        let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+        let errorString =
+          String(data: errorData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+          ?? ""
+        logger.error("osascript failed: \(status, privacy: .public) \(errorString, privacy: .auto)")
+        continuation.resume(
+          throwing: MacosUseSDKError.osascriptExecutionFailed(status: status, message: errorString))
       }
-      throw MacosUseSDKError.osascriptExecutionFailed(
-        status: process.terminationStatus, message: errorString)
     }
-  } catch {
-    // Catch errors from process.run() itself
-    throw MacosUseSDKError.inputSimulationFailed(
-      "failed to execute osascript for writetext: \(error.localizedDescription)")
+
+    do {
+      try process.run()
+    } catch {
+      continuation.resume(
+        throwing: MacosUseSDKError.inputSimulationFailed(
+          "failed to run osascript: \(error.localizedDescription)"))
+    }
   }
+  logger.info("text writing simulation complete.")
 }
 
 // Maps common key names (case-insensitive) to their CGKeyCode. Public for potential use by the tool.

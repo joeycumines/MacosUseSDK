@@ -451,7 +451,7 @@ private func executeInputAction(_ action: InputAction, options: ActionOptions) a
       try await writeTextAndVisualize(text, duration: nil)  // Use nil to let visualize calculate duration
     } else {
       logger.info("simulating text writing \"\(text, privacy: .private)\" (no visualization)")
-      try writeText(text)
+      try await writeText(text)
     }
   case .press(let keyName, let flags):
     guard let keyCode = mapKeyNameToKeyCode(keyName) else {

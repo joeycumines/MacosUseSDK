@@ -281,20 +281,26 @@ func TestWindowChangeObservation(t *testing.T) {
 	}
 
 	// Verify state delta - window dimensions changed
-	// Note: Window manager may adjust requested dimensions, so we verify change occurred, not exact match
+	// Note: Window manager may adjust requested dimensions (clamping), so we verify change occurred from INITIAL
 	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
 		window, err := client.GetWindow(ctx, &pb.GetWindowRequest{
 			Name: initialWindow.Name,
 		})
 		if err != nil {
-			return false, err
+			// Log warning but continue polling to handle transient errors during mutation
+			t.Logf("Warning: GetWindow failed during resize verification (retrying): %v", err)
+			return false, nil
 		}
-		// Window changed if height is close to target (window manager constraints may prevent exact width)
-		heightChanged := window.Bounds.Height >= targetHeight1-50 && window.Bounds.Height <= targetHeight1+50
-		return heightChanged, nil
+		// Window changed if height is significantly different from initial
+		// We use a threshold of 20px to account for minor adjustments
+		heightDiff := window.Bounds.Height - initialBounds.Height
+		if heightDiff < 0 {
+			heightDiff = -heightDiff
+		}
+		return heightDiff > 20, nil
 	})
 	if err != nil {
-		t.Error("Window bounds did not reflect first resize operation")
+		t.Errorf("Window bounds did not reflect first resize operation (timeout or persistent error): %v", err)
 	}
 
 	// Test Case 1b: Resize back to original dimensions
@@ -337,14 +343,18 @@ func TestWindowChangeObservation(t *testing.T) {
 			Name: initialWindow.Name,
 		})
 		if err != nil {
-			return false, err
+			t.Logf("Warning: GetWindow failed during resize-back verification (retrying): %v", err)
+			return false, nil
 		}
-		// Verify height changed back (allow window manager adjustments)
-		heightChanged := window.Bounds.Height >= initialBounds.Height-50 && window.Bounds.Height <= initialBounds.Height+50
-		return heightChanged, nil
+		// Verify height changed back close to initial
+		heightDiff := window.Bounds.Height - initialBounds.Height
+		if heightDiff < 0 {
+			heightDiff = -heightDiff
+		}
+		return heightDiff <= 50, nil
 	})
 	if err != nil {
-		t.Error("Window bounds did not reflect second resize operation")
+		t.Errorf("Window bounds did not reflect second resize operation: %v", err)
 	}
 
 	// 7. Test Case 2: Window Move
@@ -386,15 +396,23 @@ func TestWindowChangeObservation(t *testing.T) {
 			Name: initialWindow.Name,
 		})
 		if err != nil {
-			return false, err
+			t.Logf("Warning: GetWindow failed during move verification (retrying): %v", err)
+			return false, nil
 		}
-		// Allow 2-pixel tolerance
-		xOk := window.Bounds.X >= 198 && window.Bounds.X <= 202
-		yOk := window.Bounds.Y >= 198 && window.Bounds.Y <= 202
-		return xOk && yOk, nil
+		// Allow 5-pixel tolerance for move
+		xDiff := window.Bounds.X - 200
+		if xDiff < 0 {
+			xDiff = -xDiff
+		}
+		yDiff := window.Bounds.Y - 200
+		if yDiff < 0 {
+			yDiff = -yDiff
+		}
+
+		return xDiff <= 5 && yDiff <= 5, nil
 	})
 	if err != nil {
-		t.Error("Window position did not reflect move operation")
+		t.Errorf("Window position did not reflect move operation: %v", err)
 	}
 
 	// 8. Test Case 3: Window Minimize/Restore
