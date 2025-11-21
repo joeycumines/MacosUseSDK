@@ -8,7 +8,7 @@ import MacosUseSDKProtos
 import OSLog
 import SwiftProtobuf
 
-private let logger = MacosUseSDK.sdkLogger(category: "MacosUseServiceProvider")
+// Use the shared logger from MacosUseServiceProvider (module-level)
 
 extension MacosUseServiceProvider {
     func parsePID(fromName name: String) throws -> pid_t {
@@ -123,187 +123,173 @@ extension MacosUseServiceProvider {
 
         // Fallback: search kAXChildrenAttribute for minimized windows
         // CRITICAL FIX: AX APIs are thread-safe and should NOT block MainActor
-        return try await withCheckedThrowingContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async {
-                do {
-                    let appElement = AXUIElementCreateApplication(pid)
+        return try await Task.detached(priority: .userInitiated) {
+            let appElement = AXUIElementCreateApplication(pid)
 
-                    var childrenValue: CFTypeRef?
-                    let result = AXUIElementCopyAttributeValue(
-                        appElement, kAXChildrenAttribute as CFString, &childrenValue,
-                    )
-                    guard result == .success, let children = childrenValue as? [AXUIElement] else {
-                        throw RPCError(code: .notFound, message: "Window not found in kAXChildren")
-                    }
+            var childrenValue: CFTypeRef?
+            let result = AXUIElementCopyAttributeValue(
+                appElement, kAXChildrenAttribute as CFString, &childrenValue,
+            )
+            guard result == .success, let children = childrenValue as? [AXUIElement] else {
+                throw RPCError(code: .notFound, message: "Window not found in kAXChildren")
+            }
 
-                    logger.debug("[findWindowElementWithMinimizedFallback] Searching \(children.count, privacy: OSLogPrivacy.public) children for ID \(windowId, privacy: OSLogPrivacy.public)")
+            Self.logger.debug("[findWindowElementWithMinimizedFallback] Searching \(children.count, privacy: OSLogPrivacy.public) children for ID \(windowId, privacy: OSLogPrivacy.public)")
 
-                    // Get CGWindowList bounds for matching
-                    guard
-                        let windowList = CGWindowListCopyWindowInfo(
-                            [.optionAll, .excludeDesktopElements], kCGNullWindowID,
-                        ) as? [[String: Any]]
-                    else {
-                        throw RPCError(code: .notFound, message: "Failed to get window list")
-                    }
+            // Get CGWindowList bounds for matching
+            guard
+                let windowList = CGWindowListCopyWindowInfo(
+                    [.optionAll, .excludeDesktopElements], kCGNullWindowID,
+                ) as? [[String: Any]]
+            else {
+                throw RPCError(code: .notFound, message: "Failed to get window list")
+            }
 
-                    guard
-                        let cgWindow = windowList.first(where: {
-                            ($0[kCGWindowNumber as String] as? Int32) == Int32(windowId)
-                        })
-                    else {
-                        throw RPCError(code: .notFound, message: "Window ID \(windowId) not in CGWindowList")
-                    }
+            guard
+                let cgWindow = windowList.first(where: {
+                    ($0[kCGWindowNumber as String] as? Int32) == Int32(windowId)
+                })
+            else {
+                throw RPCError(code: .notFound, message: "Window ID \(windowId) not in CGWindowList")
+            }
 
-                    guard let cgBounds = cgWindow[kCGWindowBounds as String] as? [String: CGFloat],
-                          let cgX = cgBounds["X"], let cgY = cgBounds["Y"],
-                          let cgWidth = cgBounds["Width"], let cgHeight = cgBounds["Height"]
-                    else {
-                        throw RPCError(code: .notFound, message: "Failed to get bounds from CGWindow")
-                    }
+            guard let cgBounds = cgWindow[kCGWindowBounds as String] as? [String: CGFloat],
+                  let cgX = cgBounds["X"], let cgY = cgBounds["Y"],
+                  let cgWidth = cgBounds["Width"], let cgHeight = cgBounds["Height"]
+            else {
+                throw RPCError(code: .notFound, message: "Failed to get bounds from CGWindow")
+            }
 
-                    // Search children for matching bounds
-                    for child in children {
-                        var posValue: CFTypeRef?
-                        var sizeValue: CFTypeRef?
-                        let posResult = AXUIElementCopyAttributeValue(
-                            child, kAXPositionAttribute as CFString, &posValue,
-                        )
-                        let sizeResult = AXUIElementCopyAttributeValue(
-                            child, kAXSizeAttribute as CFString, &sizeValue,
-                        )
+            // Search children for matching bounds
+            for child in children {
+                var posValue: CFTypeRef?
+                var sizeValue: CFTypeRef?
+                let posResult = AXUIElementCopyAttributeValue(
+                    child, kAXPositionAttribute as CFString, &posValue,
+                )
+                let sizeResult = AXUIElementCopyAttributeValue(
+                    child, kAXSizeAttribute as CFString, &sizeValue,
+                )
 
-                        if posResult == .success, sizeResult == .success,
-                           let unwrappedPosValue = posValue,
-                           let unwrappedSizeValue = sizeValue,
-                           CFGetTypeID(unwrappedPosValue) == AXValueGetTypeID(),
-                           CFGetTypeID(unwrappedSizeValue) == AXValueGetTypeID()
-                        {
-                            let pos = unsafeDowncast(unwrappedPosValue, to: AXValue.self)
-                            let size = unsafeDowncast(unwrappedSizeValue, to: AXValue.self)
-                            var axPos = CGPoint()
-                            var axSize = CGSize()
-                            if AXValueGetValue(pos, .cgPoint, &axPos), AXValueGetValue(size, .cgSize, &axSize) {
-                                let deltaX = abs(axPos.x - cgX)
-                                let deltaY = abs(axPos.y - cgY)
-                                let deltaW = abs(axSize.width - cgWidth)
-                                let deltaH = abs(axSize.height - cgHeight)
+                if posResult == .success, sizeResult == .success,
+                   let unwrappedPosValue = posValue,
+                   let unwrappedSizeValue = sizeValue,
+                   CFGetTypeID(unwrappedPosValue) == AXValueGetTypeID(),
+                   CFGetTypeID(unwrappedSizeValue) == AXValueGetTypeID()
+                {
+                    let pos = unsafeDowncast(unwrappedPosValue, to: AXValue.self)
+                    let size = unsafeDowncast(unwrappedSizeValue, to: AXValue.self)
+                    var axPos = CGPoint()
+                    var axSize = CGSize()
+                    if AXValueGetValue(pos, .cgPoint, &axPos), AXValueGetValue(size, .cgSize, &axSize) {
+                        let deltaX = abs(axPos.x - cgX)
+                        let deltaY = abs(axPos.y - cgY)
+                        let deltaW = abs(axSize.width - cgWidth)
+                        let deltaH = abs(axSize.height - cgHeight)
 
-                                if deltaX < 2, deltaY < 2, deltaW < 2, deltaH < 2 {
-                                    continuation.resume(returning: child)
-                                    return
-                                }
-                            }
+                        if deltaX < 2, deltaY < 2, deltaW < 2, deltaH < 2 {
+                            return child
                         }
                     }
-
-                    throw RPCError(code: .notFound, message: "Window not found in kAXChildren")
-                } catch {
-                    continuation.resume(throwing: error)
                 }
             }
-        }
+
+            throw RPCError(code: .notFound, message: "Window not found in kAXChildren")
+        }.value
     }
 
     func findWindowElement(pid: pid_t, windowId: CGWindowID) async throws -> AXUIElement {
         // CRITICAL FIX: AX APIs are thread-safe and should NOT block MainActor
         // Run on background thread to prevent server hangs
-        try await withCheckedThrowingContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async {
-                do {
-                    // Get AXUIElement for application
-                    let appElement = AXUIElementCreateApplication(pid)
+        try await Task.detached(priority: .userInitiated) {
+            // Get AXUIElement for application
+            let appElement = AXUIElementCreateApplication(pid)
 
-                    // Get AXWindows attribute
-                    var windowsValue: CFTypeRef?
-                    let result = AXUIElementCopyAttributeValue(
-                        appElement, kAXWindowsAttribute as CFString, &windowsValue,
-                    )
-                    guard result == .success, let windows = windowsValue as? [AXUIElement] else {
-                        throw RPCError(code: .internalError, message: "Failed to get windows for application")
-                    }
-
-                    logger.debug("[findWindowElement] Found \(windows.count, privacy: OSLogPrivacy.public) AX windows, searching for ID \(windowId, privacy: OSLogPrivacy.public)")
-
-                    // Get CGWindowList for matching (include all windows, not just on-screen ones)
-                    guard
-                        let windowList = CGWindowListCopyWindowInfo(
-                            [.optionAll, .excludeDesktopElements], kCGNullWindowID,
-                        ) as? [[String: Any]]
-                    else {
-                        throw RPCError(code: .internalError, message: "Failed to get window list")
-                    }
-
-                    // Find window with matching CGWindowID
-                    guard
-                        let cgWindow = windowList.first(where: {
-                            ($0[kCGWindowNumber as String] as? Int32) == Int32(windowId)
-                        })
-                    else {
-                        throw RPCError(
-                            code: .notFound, message: "Window with ID \(windowId) not found in CGWindowList",
-                        )
-                    }
-
-                    // Get bounds from CGWindow
-                    guard let cgBounds = cgWindow[kCGWindowBounds as String] as? [String: CGFloat],
-                          let cgX = cgBounds["X"], let cgY = cgBounds["Y"],
-                          let cgWidth = cgBounds["Width"], let cgHeight = cgBounds["Height"]
-                    else {
-                        throw RPCError(code: .internalError, message: "Failed to get bounds from CGWindow")
-                    }
-
-                    // Find matching AXUIElement by bounds
-                    var windowIndex = 0
-                    for window in windows {
-                        var posValue: CFTypeRef?
-                        var sizeValue: CFTypeRef?
-                        let positionResult = AXUIElementCopyAttributeValue(
-                            window,
-                            kAXPositionAttribute as CFString,
-                            &posValue,
-                        )
-                        let sizeResult = AXUIElementCopyAttributeValue(
-                            window,
-                            kAXSizeAttribute as CFString,
-                            &sizeValue,
-                        )
-
-                        if positionResult == .success,
-                           sizeResult == .success,
-                           let unwrappedPosValue = posValue,
-                           let unwrappedSizeValue = sizeValue,
-                           CFGetTypeID(unwrappedPosValue) == AXValueGetTypeID(),
-                           CFGetTypeID(unwrappedSizeValue) == AXValueGetTypeID()
-                        {
-                            let pos = unsafeDowncast(unwrappedPosValue, to: AXValue.self)
-                            let size = unsafeDowncast(unwrappedSizeValue, to: AXValue.self)
-                            var axPos = CGPoint()
-                            var axSize = CGSize()
-                            if AXValueGetValue(pos, .cgPoint, &axPos), AXValueGetValue(size, .cgSize, &axSize) {
-                                let deltaX = abs(axPos.x - cgX)
-                                let deltaY = abs(axPos.y - cgY)
-                                let deltaW = abs(axSize.width - cgWidth)
-                                let deltaH = abs(axSize.height - cgHeight)
-
-                                // Check if bounds match within reasonable tolerance (2px for minor window manager adjustments)
-                                // If CGWindowList is stale (bounds don't match), we'll fail to find the window,
-                                // which is correct behavior - caller should retry or use single-window optimization
-                                if deltaX < 2, deltaY < 2, deltaW < 2, deltaH < 2 {
-                                    continuation.resume(returning: window)
-                                    return
-                                }
-                            }
-                        }
-                        windowIndex += 1
-                    }
-
-                    throw RPCError(code: .notFound, message: "AXUIElement not found for window ID \(windowId)")
-                } catch {
-                    continuation.resume(throwing: error)
-                }
+            // Get AXWindows attribute
+            var windowsValue: CFTypeRef?
+            let result = AXUIElementCopyAttributeValue(
+                appElement, kAXWindowsAttribute as CFString, &windowsValue,
+            )
+            guard result == .success, let windows = windowsValue as? [AXUIElement] else {
+                throw RPCError(code: .internalError, message: "Failed to get windows for application")
             }
-        }
+
+            Self.logger.debug("[findWindowElement] Found \(windows.count, privacy: OSLogPrivacy.public) AX windows, searching for ID \(windowId, privacy: OSLogPrivacy.public)")
+
+            // Get CGWindowList for matching (include all windows, not just on-screen ones)
+            guard
+                let windowList = CGWindowListCopyWindowInfo(
+                    [.optionAll, .excludeDesktopElements], kCGNullWindowID,
+                ) as? [[String: Any]]
+            else {
+                throw RPCError(code: .internalError, message: "Failed to get window list")
+            }
+
+            // Find window with matching CGWindowID
+            guard
+                let cgWindow = windowList.first(where: {
+                    ($0[kCGWindowNumber as String] as? Int32) == Int32(windowId)
+                })
+            else {
+                throw RPCError(
+                    code: .notFound, message: "Window with ID \(windowId) not found in CGWindowList",
+                )
+            }
+
+            // Get bounds from CGWindow
+            guard let cgBounds = cgWindow[kCGWindowBounds as String] as? [String: CGFloat],
+                  let cgX = cgBounds["X"], let cgY = cgBounds["Y"],
+                  let cgWidth = cgBounds["Width"], let cgHeight = cgBounds["Height"]
+            else {
+                throw RPCError(code: .internalError, message: "Failed to get bounds from CGWindow")
+            }
+
+            // Find matching AXUIElement by bounds
+            var windowIndex = 0
+            for window in windows {
+                var posValue: CFTypeRef?
+                var sizeValue: CFTypeRef?
+                let positionResult = AXUIElementCopyAttributeValue(
+                    window,
+                    kAXPositionAttribute as CFString,
+                    &posValue,
+                )
+                let sizeResult = AXUIElementCopyAttributeValue(
+                    window,
+                    kAXSizeAttribute as CFString,
+                    &sizeValue,
+                )
+
+                if positionResult == .success,
+                   sizeResult == .success,
+                   let unwrappedPosValue = posValue,
+                   let unwrappedSizeValue = sizeValue,
+                   CFGetTypeID(unwrappedPosValue) == AXValueGetTypeID(),
+                   CFGetTypeID(unwrappedSizeValue) == AXValueGetTypeID()
+                {
+                    let pos = unsafeDowncast(unwrappedPosValue, to: AXValue.self)
+                    let size = unsafeDowncast(unwrappedSizeValue, to: AXValue.self)
+                    var axPos = CGPoint()
+                    var axSize = CGSize()
+                    if AXValueGetValue(pos, .cgPoint, &axPos), AXValueGetValue(size, .cgSize, &axSize) {
+                        let deltaX = abs(axPos.x - cgX)
+                        let deltaY = abs(axPos.y - cgY)
+                        let deltaW = abs(axSize.width - cgWidth)
+                        let deltaH = abs(axSize.height - cgHeight)
+
+                        // Check if bounds match within reasonable tolerance (2px for minor window manager adjustments)
+                        // If CGWindowList is stale (bounds don't match), we'll fail to find the window,
+                        // which is correct behavior - caller should retry or use single-window optimization
+                        if deltaX < 2, deltaY < 2, deltaW < 2, deltaH < 2 {
+                            return window
+                        }
+                    }
+                }
+                windowIndex += 1
+            }
+
+            throw RPCError(code: .notFound, message: "AXUIElement not found for window ID \(windowId)")
+        }.value
     }
 
     /// Build WindowState proto from AXUIElement attributes.

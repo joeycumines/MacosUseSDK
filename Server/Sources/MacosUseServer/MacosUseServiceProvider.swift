@@ -8,13 +8,12 @@ import MacosUseSDKProtos
 import OSLog
 import SwiftProtobuf
 
-private let logger = MacosUseSDK.sdkLogger(category: "MacosUseServiceProvider")
-
 /// This is the single, correct gRPC provider for the `MacosUse` service.
 ///
 /// It implements the generated `Macosusesdk_V1_MacosUse.ServiceProtocol` protocol
 /// and acts as the bridge between gRPC requests and the `AutomationCoordinator`.
 final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
+    static let logger = MacosUseSDK.sdkLogger(category: "MacosUseServiceProvider")
     let stateStore: AppStateStore
     let operationStore: OperationStore
     let windowRegistry: WindowRegistry
@@ -63,9 +62,9 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_OpenApplicationRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Google_Longrunning_Operation> {
         let req = request.message
-        logger.info("openApplication called")
+        Self.logger.info("openApplication called")
 
-        logger.info("openApplication called (LRO)")
+        Self.logger.info("openApplication called (LRO)")
 
         // Create an operation and return immediately
         let opName = "operations/open/\(UUID().uuidString)"
@@ -110,7 +109,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_GetApplicationRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_Application> {
         let req = request.message
-        logger.info("getApplication called")
+        Self.logger.info("getApplication called")
         let pid = try parsePID(fromName: req.name)
         guard let app = await stateStore.getTarget(pid: pid) else {
             throw RPCError(code: .notFound, message: "Application not found")
@@ -122,7 +121,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_ListApplicationsRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_ListApplicationsResponse> {
         let req = request.message
-        logger.info("listApplications called")
+        Self.logger.info("listApplications called")
         let allApps = await stateStore.listTargets()
 
         // Sort by name for deterministic ordering
@@ -162,7 +161,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_DeleteApplicationRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<SwiftProtobuf.Google_Protobuf_Empty> {
         let req = request.message
-        logger.info("deleteApplication called")
+        Self.logger.info("deleteApplication called")
         let pid = try parsePID(fromName: req.name)
         _ = await stateStore.removeTarget(pid: pid)
         return ServerResponse(message: SwiftProtobuf.Google_Protobuf_Empty())
@@ -174,7 +173,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         async throws -> ServerResponse<Macosusesdk_V1_Input>
     {
         let req = request.message
-        logger.info("createInput called")
+        Self.logger.info("createInput called")
 
         let inputId = req.inputID.isEmpty ? UUID().uuidString : req.inputID
         let pid: pid_t? = req.parent.isEmpty ? nil : try parsePID(fromName: req.parent)
@@ -223,7 +222,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         async throws -> ServerResponse<Macosusesdk_V1_Input>
     {
         let req = request.message
-        logger.info("getInput called")
+        Self.logger.info("getInput called")
         guard let input = await stateStore.getInput(name: req.name) else {
             throw RPCError(code: .notFound, message: "Input not found")
         }
@@ -234,7 +233,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         async throws -> ServerResponse<Macosusesdk_V1_ListInputsResponse>
     {
         let req = request.message
-        logger.info("listInputs called")
+        Self.logger.info("listInputs called")
         let allInputs = await stateStore.listInputs(parent: req.parent)
 
         // Sort by name for deterministic ordering
@@ -276,7 +275,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_TraverseAccessibilityRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_TraverseAccessibilityResponse> {
         let req = request.message
-        logger.info("traverseAccessibility called")
+        Self.logger.info("traverseAccessibility called")
         let pid = try parsePID(fromName: req.name)
         let response = try await AutomationCoordinator.shared.handleTraverse(
             pid: pid, visibleOnly: req.visibleOnly,
@@ -289,7 +288,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         context _: ServerContext,
     ) async throws -> StreamingServerResponse<Macosusesdk_V1_WatchAccessibilityResponse> {
         let req = request.message
-        logger.info("watchAccessibility called")
+        Self.logger.info("watchAccessibility called")
 
         let pid = try parsePID(fromName: req.name)
         let pollInterval = req.pollInterval > 0 ? req.pollInterval : 1.0
@@ -339,7 +338,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_GetWindowRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
         let req = request.message
-        logger.info("getWindow called for \(req.name, privacy: .private)")
+        Self.logger.info("getWindow called for \(req.name, privacy: .private)")
         // Parse "applications/{pid}/windows/{windowId}"
         let components = req.name.split(separator: "/")
         guard components.count == 4,
@@ -388,7 +387,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_ListWindowsRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_ListWindowsResponse> {
         let req = request.message
-        logger.info("listWindows called")
+        Self.logger.info("listWindows called")
 
         // Parse "applications/{pid}"
         let pid = try parsePID(fromName: req.parent)
@@ -456,7 +455,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_GetWindowStateRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_WindowState> {
         let req = request.message
-        logger.info("getWindowState called for \(req.name, privacy: .private)")
+        Self.logger.info("getWindowState called for \(req.name, privacy: .private)")
 
         // Parse "applications/{pid}/windows/{windowId}/state"
         let components = req.name.split(separator: "/")
@@ -487,7 +486,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_FocusWindowRequest>, context: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
         let req = request.message
-        logger.info("focusWindow called")
+        Self.logger.info("focusWindow called")
 
         // Parse "applications/{pid}/windows/{windowId}"
         let components = req.name.split(separator: "/").map(String.init)
@@ -523,7 +522,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_MoveWindowRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
         let req = request.message
-        logger.info("moveWindow called")
+        Self.logger.info("moveWindow called")
 
         // Parse "applications/{pid}/windows/{windowId}"
         let components = req.name.split(separator: "/").map(String.init)
@@ -571,7 +570,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_ResizeWindowRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
         let req = request.message
-        logger.info("resizeWindow called")
+        Self.logger.info("resizeWindow called")
 
         // Parse "applications/{pid}/windows/{windowId}"
         let components = req.name.split(separator: "/").map(String.init)
@@ -611,7 +610,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
                 let size = unsafeDowncast(unwrappedValue, to: AXValue.self)
                 var actualSize = CGSize.zero
                 if AXValueGetValue(size, .cgSize, &actualSize) {
-                    logger.info("After resize: requested=\(req.width, privacy: .public)x\(req.height, privacy: .public), actual=\(actualSize.width, privacy: .public)x\(actualSize.height, privacy: .public)")
+                    Self.logger.info("After resize: requested=\(req.width, privacy: .public)x\(req.height, privacy: .public), actual=\(actualSize.width, privacy: .public)x\(actualSize.height, privacy: .public)")
                 }
             }
         }.value
@@ -631,7 +630,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_MinimizeWindowRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
         let req = request.message
-        logger.info("minimizeWindow called")
+        Self.logger.info("minimizeWindow called")
 
         // Parse "applications/{pid}/windows/{windowId}"
         let components = req.name.split(separator: "/").map(String.init)
@@ -674,7 +673,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
                 return false
             }
             if isMinimized {
-                logger.debug("[minimizeWindow] Verified minimized=true after \(Date().timeIntervalSince(startTime) * 1000, privacy: .public)ms")
+                Self.logger.debug("[minimizeWindow] Verified minimized=true after \(Date().timeIntervalSince(startTime) * 1000, privacy: .public)ms")
                 break
             }
             // Small yield to allow AX system to propagate change
@@ -696,7 +695,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_RestoreWindowRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
         let req = request.message
-        logger.info("restoreWindow called")
+        Self.logger.info("restoreWindow called")
 
         // Parse "applications/{pid}/windows/{windowId}"
         let components = req.name.split(separator: "/").map(String.init)
@@ -740,7 +739,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
                 return false
             }
             if !isMinimized {
-                logger.debug("[restoreWindow] Verified minimized=false after \(Date().timeIntervalSince(startTime) * 1000, privacy: .public)ms")
+                Self.logger.debug("[restoreWindow] Verified minimized=false after \(Date().timeIntervalSince(startTime) * 1000, privacy: .public)ms")
                 break
             }
             // Small yield to allow AX system to propagate change
@@ -763,7 +762,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_CloseWindowRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_CloseWindowResponse> {
         let req = request.message
-        logger.info("closeWindow called")
+        Self.logger.info("closeWindow called")
 
         // Parse "applications/{pid}/windows/{windowId}"
         let components = req.name.split(separator: "/").map(String.init)
@@ -810,7 +809,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_FindElementsRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_FindElementsResponse> {
         let req = request.message
-        logger.info("findElements called")
+        Self.logger.info("findElements called")
 
         // Validate and parse the selector
         let selector = try SelectorParser.shared.parseSelector(req.selector)
@@ -871,7 +870,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_FindRegionElementsRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_FindRegionElementsResponse> {
         let req = request.message
-        logger.info("findRegionElements called")
+        Self.logger.info("findRegionElements called")
 
         // Validate selector if provided
         let selector =
@@ -934,7 +933,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_GetElementRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_Type_Element> {
         let req = request.message
-        logger.info("getElement called")
+        Self.logger.info("getElement called")
 
         let response = try await ElementLocator.shared.getElement(name: req.name)
         return ServerResponse(message: response)
@@ -944,7 +943,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_ClickElementRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_ClickElementResponse> {
         let req = request.message
-        logger.info("clickElement called")
+        Self.logger.info("clickElement called")
 
         let element: Macosusesdk_Type_Element
         let pid: pid_t
@@ -1060,7 +1059,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_WriteElementValueRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_WriteElementValueResponse> {
         let req = request.message
-        logger.info("writeElementValue called")
+        Self.logger.info("writeElementValue called")
 
         let element: Macosusesdk_Type_Element
         let pid: pid_t
@@ -1146,7 +1145,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_GetElementActionsRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_ElementActions> {
         let req = request.message
-        logger.info("getElementActions called")
+        Self.logger.info("getElementActions called")
 
         // Parse element name to get element ID
         let components = req.name.split(separator: "/").map(String.init)
@@ -1197,7 +1196,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_PerformElementActionRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_PerformElementActionResponse> {
         let req = request.message
-        logger.info("performElementAction called")
+        Self.logger.info("performElementAction called")
 
         let element: Macosusesdk_Type_Element
         let elementID: String
@@ -1332,7 +1331,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_WaitElementRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Google_Longrunning_Operation> {
         let req = request.message
-        logger.info("waitElement called (LRO)")
+        Self.logger.info("waitElement called (LRO)")
 
         // Validate selector
         let selector = try SelectorParser.shared.parseSelector(req.selector)
@@ -1429,7 +1428,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_WaitElementStateRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Google_Longrunning_Operation> {
         let req = request.message
-        logger.info("waitElementState called (LRO)")
+        Self.logger.info("waitElementState called (LRO)")
 
         // Store the original selector for re-running, or create one for elementId case
         let selectorToUse: Macosusesdk_Type_ElementSelector
@@ -1590,7 +1589,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_CreateObservationRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Google_Longrunning_Operation> {
         let req = request.message
-        logger.info("createObservation called (LRO)")
+        Self.logger.info("createObservation called (LRO)")
 
         // Parse parent resource name to get PID
         let pid = try parsePID(fromName: req.parent)
@@ -1657,7 +1656,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_GetObservationRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_Observation> {
         let req = request.message
-        logger.info("getObservation called")
+        Self.logger.info("getObservation called")
 
         // Get observation from ObservationManager
         guard let observation = await ObservationManager.shared.getObservation(name: req.name)
@@ -1672,7 +1671,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_ListObservationsRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_ListObservationsResponse> {
         let req = request.message
-        logger.info("listObservations called")
+        Self.logger.info("listObservations called")
 
         // List observations for parent
         let allObservations = await ObservationManager.shared.listObservations(parent: req.parent)
@@ -1714,7 +1713,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_CancelObservationRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_Observation> {
         let req = request.message
-        logger.info("cancelObservation called")
+        Self.logger.info("cancelObservation called")
 
         // Cancel observation in ObservationManager
         guard
@@ -1731,7 +1730,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         context _: ServerContext,
     ) async throws -> StreamingServerResponse<Macosusesdk_V1_StreamObservationsResponse> {
         let req = request.message
-        logger.info("streamObservations called (streaming)")
+        Self.logger.info("streamObservations called (streaming)")
 
         // Verify observation exists
         guard await ObservationManager.shared.getObservation(name: req.name) != nil else {
@@ -1751,7 +1750,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
             for await event in eventStream {
                 // Check if client disconnected
                 if Task.isCancelled {
-                    logger.info("client disconnected from observation stream")
+                    Self.logger.info("client disconnected from observation stream")
                     break
                 }
 
@@ -1778,7 +1777,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_CreateSessionRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_Session> {
         let req = request.message
-        logger.info("createSession called")
+        Self.logger.info("createSession called")
 
         // Extract session parameters from request
         let sessionId = req.sessionID.isEmpty ? nil : req.sessionID
@@ -1800,7 +1799,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_GetSessionRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_Session> {
         let req = request.message
-        logger.info("getSession called")
+        Self.logger.info("getSession called")
 
         // Get session from SessionManager
         guard let session = await SessionManager.shared.getSession(name: req.name) else {
@@ -1814,7 +1813,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_ListSessionsRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_ListSessionsResponse> {
         let req = request.message
-        logger.info("listSessions called")
+        Self.logger.info("listSessions called")
 
         // List sessions from SessionManager with pagination
         let pageSize = Int(req.pageSize)
@@ -1836,7 +1835,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_DeleteSessionRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<SwiftProtobuf.Google_Protobuf_Empty> {
         let req = request.message
-        logger.info("deleteSession called")
+        Self.logger.info("deleteSession called")
 
         // Delete session from SessionManager
         let deleted = await SessionManager.shared.deleteSession(name: req.name)
@@ -1852,7 +1851,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_BeginTransactionRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_BeginTransactionResponse> {
         let req = request.message
-        logger.info("beginTransaction called")
+        Self.logger.info("beginTransaction called")
 
         do {
             // Begin transaction in SessionManager
@@ -1882,7 +1881,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_CommitTransactionRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_Transaction> {
         let req = request.message
-        logger.info("commitTransaction called")
+        Self.logger.info("commitTransaction called")
 
         do {
             // Commit transaction in SessionManager
@@ -1904,7 +1903,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_RollbackTransactionRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_Transaction> {
         let req = request.message
-        logger.info("rollbackTransaction called")
+        Self.logger.info("rollbackTransaction called")
 
         do {
             // Rollback transaction in SessionManager
@@ -1927,7 +1926,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_GetSessionSnapshotRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_SessionSnapshot> {
         let req = request.message
-        logger.info("getSessionSnapshot called")
+        Self.logger.info("getSessionSnapshot called")
 
         // Get session snapshot from SessionManager
         guard let snapshot = await SessionManager.shared.getSessionSnapshot(sessionName: req.name)
@@ -1944,7 +1943,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_CaptureScreenshotRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_CaptureScreenshotResponse> {
         let req = request.message
-        logger.info("[captureScreenshot] Capturing screen screenshot")
+        Self.logger.info("[captureScreenshot] Capturing screen screenshot")
 
         // Determine display ID (0 = main display, nil = all displays)
         let displayID: CGDirectDisplayID? =
@@ -1973,7 +1972,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
             response.ocrText = ocrText
         }
 
-        logger.info("[captureScreenshot] Captured \(result.width, privacy: .public)x\(result.height, privacy: .public) screenshot")
+        Self.logger.info("[captureScreenshot] Captured \(result.width, privacy: .public)x\(result.height, privacy: .public) screenshot")
         return ServerResponse(message: response)
     }
 
@@ -1981,7 +1980,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_CaptureWindowScreenshotRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_CaptureWindowScreenshotResponse> {
         let req = request.message
-        logger.info("[captureWindowScreenshot] Capturing window screenshot")
+        Self.logger.info("[captureWindowScreenshot] Capturing window screenshot")
 
         // Parse window resource name: applications/{pid}/windows/{windowId}
         let components = req.window.split(separator: "/")
@@ -2033,7 +2032,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
             response.ocrText = ocrText
         }
 
-        logger.info("[captureWindowScreenshot] Captured \(result.width, privacy: .public)x\(result.height, privacy: .public) window screenshot")
+        Self.logger.info("[captureWindowScreenshot] Captured \(result.width, privacy: .public)x\(result.height, privacy: .public) window screenshot")
         return ServerResponse(message: response)
     }
 
@@ -2041,7 +2040,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_CaptureElementScreenshotRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_CaptureElementScreenshotResponse> {
         let req = request.message
-        logger.info("[captureElementScreenshot] Capturing element screenshot")
+        Self.logger.info("[captureElementScreenshot] Capturing element screenshot")
 
         // Get element from registry
         guard let element = await ElementRegistry.shared.getElement(req.elementID) else {
@@ -2090,7 +2089,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
             response.ocrText = ocrText
         }
 
-        logger.info("[captureElementScreenshot] Captured \(result.width, privacy: .public)x\(result.height, privacy: .public) element screenshot")
+        Self.logger.info("[captureElementScreenshot] Captured \(result.width, privacy: .public)x\(result.height, privacy: .public) element screenshot")
         return ServerResponse(message: response)
     }
 
@@ -2098,7 +2097,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_CaptureRegionScreenshotRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_CaptureRegionScreenshotResponse> {
         let req = request.message
-        logger.info("[captureRegionScreenshot] Capturing region screenshot")
+        Self.logger.info("[captureRegionScreenshot] Capturing region screenshot")
 
         // Validate region
         guard req.hasRegion else {
@@ -2144,7 +2143,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
             response.ocrText = ocrText
         }
 
-        logger.info("[captureRegionScreenshot] Captured \(result.width, privacy: .public)x\(result.height, privacy: .public) region screenshot")
+        Self.logger.info("[captureRegionScreenshot] Captured \(result.width, privacy: .public)x\(result.height, privacy: .public) region screenshot")
         return ServerResponse(message: response)
     }
 
@@ -2154,7 +2153,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_GetClipboardRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_Clipboard> {
         let req = request.message
-        logger.info("getClipboard called")
+        Self.logger.info("getClipboard called")
 
         // Validate resource name (singleton: "clipboard")
         guard req.name == "clipboard" else {
@@ -2169,7 +2168,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_WriteClipboardRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_WriteClipboardResponse> {
         let req = request.message
-        logger.info("writeClipboard called")
+        Self.logger.info("writeClipboard called")
 
         // Validate content
         guard req.hasContent else {
@@ -2199,7 +2198,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_ClearClipboardRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_ClearClipboardResponse> {
         _ = request.message
-        logger.info("clearClipboard called")
+        Self.logger.info("clearClipboard called")
 
         await ClipboardManager.shared.clearClipboard()
 
@@ -2213,7 +2212,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_GetClipboardHistoryRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_ClipboardHistory> {
         let req = request.message
-        logger.info("getClipboardHistory called")
+        Self.logger.info("getClipboardHistory called")
 
         // Validate resource name (singleton: "clipboard/history")
         guard req.name == "clipboard/history" else {
@@ -2232,7 +2231,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_AutomateOpenFileDialogRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_AutomateOpenFileDialogResponse> {
         let req = request.message
-        logger.info("automateOpenFileDialog called")
+        Self.logger.info("automateOpenFileDialog called")
 
         do {
             let selectedPaths = try await FileDialogAutomation.shared.automateOpenFileDialog(
@@ -2266,7 +2265,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_AutomateSaveFileDialogRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_AutomateSaveFileDialogResponse> {
         let req = request.message
-        logger.info("automateSaveFileDialog called")
+        Self.logger.info("automateSaveFileDialog called")
 
         do {
             let savedPath = try await FileDialogAutomation.shared.automateSaveFileDialog(
@@ -2300,7 +2299,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_SelectFileRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_SelectFileResponse> {
         let req = request.message
-        logger.info("selectFile called")
+        Self.logger.info("selectFile called")
 
         do {
             let selectedPath = try await FileDialogAutomation.shared.selectFile(
@@ -2332,7 +2331,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_SelectDirectoryRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_SelectDirectoryResponse> {
         let req = request.message
-        logger.info("selectDirectory called")
+        Self.logger.info("selectDirectory called")
 
         do {
             let (selectedPath, wasCreated) = try await FileDialogAutomation.shared.selectDirectory(
@@ -2364,7 +2363,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
     func dragFiles(
         request: ServerRequest<Macosusesdk_V1_DragFilesRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_DragFilesResponse> {
-        logger.info("dragFiles called")
+        Self.logger.info("dragFiles called")
         let req = request.message
 
         // Validate inputs
@@ -2438,7 +2437,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
     func createMacro(
         request: ServerRequest<Macosusesdk_V1_CreateMacroRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_Macro> {
-        logger.info("createMacro called")
+        Self.logger.info("createMacro called")
         let req = request.message
 
         // Validate required fields
@@ -2469,7 +2468,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
     func getMacro(
         request: ServerRequest<Macosusesdk_V1_GetMacroRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_Macro> {
-        logger.info("getMacro called")
+        Self.logger.info("getMacro called")
         let req = request.message
 
         guard let macro = await MacroRegistry.shared.getMacro(name: req.name) else {
@@ -2485,7 +2484,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
     func listMacros(
         request: ServerRequest<Macosusesdk_V1_ListMacrosRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_ListMacrosResponse> {
-        logger.info("listMacros called")
+        Self.logger.info("listMacros called")
         let req = request.message
 
         // List macros with pagination
@@ -2507,7 +2506,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
     func updateMacro(
         request: ServerRequest<Macosusesdk_V1_UpdateMacroRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_Macro> {
-        logger.info("updateMacro called")
+        Self.logger.info("updateMacro called")
         let req = request.message
 
         // Parse field mask to determine what to update
@@ -2570,7 +2569,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
     func deleteMacro(
         request: ServerRequest<Macosusesdk_V1_DeleteMacroRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<SwiftProtobuf.Google_Protobuf_Empty> {
-        logger.info("deleteMacro called")
+        Self.logger.info("deleteMacro called")
         let req = request.message
 
         // Delete macro from registry
@@ -2587,7 +2586,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
     func executeMacro(
         request: ServerRequest<Macosusesdk_V1_ExecuteMacroRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Google_Longrunning_Operation> {
-        logger.info("executeMacro called (LRO)")
+        Self.logger.info("executeMacro called (LRO)")
         let req = request.message
 
         // Get macro from registry
@@ -2661,7 +2660,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
     func executeAppleScript(
         request: ServerRequest<Macosusesdk_V1_ExecuteAppleScriptRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_ExecuteAppleScriptResponse> {
-        logger.info("executeAppleScript called")
+        Self.logger.info("executeAppleScript called")
         let req = request.message
 
         // Parse timeout from Duration
@@ -2714,7 +2713,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         request: ServerRequest<Macosusesdk_V1_ExecuteJavaScriptRequest>,
         context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_ExecuteJavaScriptResponse> {
-        logger.info("executeJavaScript called")
+        Self.logger.info("executeJavaScript called")
         let req = request.message
 
         // Parse timeout from Duration
@@ -2766,7 +2765,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
     func executeShellCommand(
         request: ServerRequest<Macosusesdk_V1_ExecuteShellCommandRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_ExecuteShellCommandResponse> {
-        logger.info("executeShellCommand called")
+        Self.logger.info("executeShellCommand called")
         let req = request.message
 
         // Parse timeout from Duration
@@ -2842,7 +2841,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
     func validateScript(
         request: ServerRequest<Macosusesdk_V1_ValidateScriptRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_ValidateScriptResponse> {
-        logger.info("validateScript called")
+        Self.logger.info("validateScript called")
         let req = request.message
 
         // Convert proto ScriptType to internal ScriptType
@@ -2888,7 +2887,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
     func getScriptingDictionaries(
         request: ServerRequest<Macosusesdk_V1_GetScriptingDictionariesRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_ScriptingDictionaries> {
-        logger.info("getScriptingDictionaries called")
+        Self.logger.info("getScriptingDictionaries called")
         let req = request.message
 
         // Validate resource name (singleton: "scriptingDictionaries")
