@@ -48,6 +48,38 @@ If you'd like, I can implement one of the suggested fixes now (window AX caching
 
 ---
 
+### **Verified API details (sources & behavior)**
+
+- AXUIElement / Accessibility (ApplicationServices):
+    - Key docs: `AXUIElement.h` and the attribute helper functions.
+        - https://developer.apple.com/documentation/applicationservices/axuielement_h
+        - https://developer.apple.com/documentation/applicationservices/axuielementcopyattributevalue
+        - https://developer.apple.com/documentation/applicationservices/axuielementsetattributevalue
+        - `AXObserver` (notifications): https://developer.apple.com/documentation/applicationservices/axobserver
+    - Observable/usable facts (verified in Apple docs & code):
+        - Position/size are exposed via `kAXPositionAttribute` and `kAXSizeAttribute` as `AXValue` (CGPoint/CGSize) — code uses `AXValueGetValue` to extract `CGPoint`/`CGSize`.
+        - Typical attribute access is `AXUIElementCopyAttributeValue` / `AXUIElementSetAttributeValue`; the API surface is for cross-process accessibility queries and mutating accessible objects.
+        - Apple docs do not state a cross-thread/thread-safety guarantee for `AXUIElement` objects; the API behaves like cross-process IPC and can block/become expensive. The codebase's approach (offload AX reads/writes to background tasks) is consistent with the documented characteristic that Accessibility operations are IPC-like and potentially costly.
+
+- CGWindowList / CoreGraphics window snapshot (window server):
+    - Key docs:
+        - `CGWindowListCopyWindowInfo`: https://developer.apple.com/documentation/coregraphics/cgwindowlistcopywindowinfo(_:_:)
+        - Required/Optional window-list dictionary keys: https://developer.apple.com/documentation/coregraphics/required-window-list-keys and https://developer.apple.com/documentation/coregraphics/optional-window-list-keys
+    - Observable/usable facts (verified in Apple docs & code):
+        - `CGWindowListCopyWindowInfo` returns a CFArray of CFDictionary entries (one dictionary per window) describing the current snapshot of the window server state for the calling session.
+        - Common keys used in this repo: `kCGWindowNumber` (window ID), `kCGWindowBounds` (bounds dictionary with X/Y/Width/Height), `kCGWindowOwnerPID`, `kCGWindowLayer`, `kCGWindowIsOnscreen`, `kCGWindowName`/`kCGWindowOwnerName`.
+        - Apple documentation explicitly notes the call is relatively expensive and that it returns `NULL` if called outside of a GUI session or when no window server is running.
+
+- Relationship and timing (AX vs CG):
+    - Apple docs characterize `CGWindowListCopyWindowInfo` as a point-in-time snapshot and Accessibility APIs as a different IPC surface. The documentation does not define a strict ordering or timing relationship between AX updates and the CG window list.
+    - Practical consequence (verified by code inspection and local integration tests): because `CGWindowListCopyWindowInfo` is snapshot-based and relatively expensive, it can be observed (in practice) to lag AX updates by tens of milliseconds under some conditions. Apple does not publish a fixed latency; the code must treat the two sources as logically distinct authorities and handle reconciliation explicitly.
+
+### **Confidence levels / Notes**
+
+- Claims about AXUIElement being safe to call off-main-thread: Supported by practical characteristics and defensive guidance in the code, but NOT explicitly guaranteed by Apple docs. Treat this as high-confidence engineering practice (offload AX calls) rather than a documented API contract.
+- Claims that `CGWindowListCopyWindowInfo` is snapshot-based and can be stale relative to AX: Verified in Apple docs (snapshot) and observed in local tests; confidence: high for snapshot nature, medium for typical lag timing (Apple does not specify timing guarantees).
+- Anything requiring precise timing guarantees (e.g., "CG updates within X ms") is not supported by Apple docs — if timing bounds are required, they must be measured on target hardware and OS versions.
+
 ### **Detailed Analysis**
 
 #### **1. Concurrency & Liveness (Fixed)**
