@@ -1,11 +1,5 @@
 # Implementation Constraints
 
-## Session Directives
-
-N.B. This is ONLY a hint to the current task. Do not turn it into a log.
-
-**CURRENT DIRECTIVE (2025-11-21):** Fixed critical SDKLogger import errors across all server files (was using non-existent `SDKLogger.sdkLogger` instead of `MacosUseSDK.sdkLogger`). Build and all checks now pass. Proceeding with implementation plan assessment and completion of remaining work per SDK vs Server reconsolidation directives.
-
 ## Critical Ways of Working (STRICT MANDATES)
 
 **1. EXECUTION PROTOCOL (NON-NEGOTIABLE):**

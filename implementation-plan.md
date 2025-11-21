@@ -10,39 +10,19 @@
 
 **STATUS SECTION (ACTION-FOCUSED)**
 
-> **GUIDANCE: TRACK ONLY WHAT REMAINS OR MUST NOT BE FORGOTTEN**
->
-> This section MUST stay short and focused on *remaining* work, unresolved discrepancies, and critical patterns to follow. Do NOT accumulate historic "done" items, emojis, or log-style updates.
->
-> Before trusting any "done" status, you MUST verify it against the actual code and tests. If there is any doubt, treat the item as **not done** and list the verification work here.
+### **Current Reality**
 
-### **Current Reality (Single-Sentence Snapshot)**
+Build passes, all checks green. SDK vs Server reconsolidation in progress.
 
-**Current Reality:** Build passes, all checks green, SDKLogger import issues resolved; SDK vs Server reconsolidation directive active but requires concrete task identification.
+### **Remaining Work**
 
-### **Immediate Action Items (Next Things To Do)**
+**SDK vs Server Reconsolidation (Priority Order):**
+1. Convert InputController to async (MUST HAVE P1 - Liveness) - Step 1 of reconsolidation plan
+2. Extract window primitives to SDK (MUST HAVE P1 - Consistency) - Step 3 of reconsolidation plan  
+3. Move selector logic to SDK (NICE TO HAVE P2 - Modularity) - Step 2 of reconsolidation plan
+4. Verify no regressions via integration tests - Step 4 of reconsolidation plan
 
-#### SDK vs Server Reconsolidation Directives (2025-11-21)
-
-**Goal:** Combine divergent `Sources/MacosUseSDK` and `Server/Sources/MacosUseServer` implementations.
-
-**MUST HAVES:**
-- **Prioritise Server Use Case:** The SDK MUST be well-designed for the server use case (robustness, resource management).
-- **No Detrimental Side Effects:** Server behavior must remain EXACTLY equivalent (unless fixing a bug).
-- **Concurrency Compatibility:** SDK MUST be compatible with the server's concurrency model (Actor-based, Main Thread constraints).
-- **Liveness:** Blocking calls (e.g. `usleep`) on Main Thread are FORBIDDEN. Use `async`/`await` and `Task.sleep`.
-- **Window Authority:** SDK must support the "Split-Brain" authority model (provide fresh AX data primitives).
-
-**NICE TO HAVES:**
-- Avoid breaking changes in SDK where possible.
-- Modular/Composable: SDK functionality should be usable directly in Swift without the Server.
-- Extend Swift examples.
-
-### **Standing Guidance For Future Edits To This Section**
-
-- Only track **open work** or **must-not-forget patterns** here.
-- When a task is actually complete *and verified in code/tests*, remove it from the Immediate Action Items and, if necessary, adjust the relevant phase section below to reflect the new reality.
-- Never add completion emojis, running logs, or historical commentary; this section is a *queue of remaining work*, not a scrapbook.
+See `implementation-plan-reconsolidation-of-sdk-vs-server.md` for detailed requirements, priorities, and implementation steps.
 
 ---
 
@@ -796,13 +776,9 @@ e API contract (resource definitions, method signatures).
 **END OF IMPLEMENTATION PLAN*** **Error Handling:** Use standard gRPC status codes and provide detailed error messages. Follow AIP-193 for error responses.
 (To provide an update, return to the "STATUS SECTION" at the top of this document.)
 * **Testing:** Comprehensive testing at all levels:
----
+    -   Unit tests for individual components
     -   Integration tests for end-to-end workflows
-
-
-
-
-**ON TOOLS: Use `config.mk` to create custom targets, and `mcp-server-make` to run targets. ALWAYS use custom targets that *limit* the amount of output you receive. For example, piping through tail, with FEW lines output. Prior to tail, pipe to tee. The file ./build.log in the root of the project is gitignored, so use that. That way you can *search* the output. To be clear, timing dependent tests are BANNED. As are those that take too long to run. Testing retries, for example, MUST be done in a way that supports avoiding running afoul of those CRITICAL rules. Abide. OBEY.****ON TOOLS: Use `config.mk` to create custom targets, and `mcp-server-make` to run targets. ALWAYS use custom targets that *limit* the amount of output you receive. For example, piping through tail, with FEW lines output. Prior to tail, pipe to tee. The file ./build.log in the root of the project is gitignored, so use that. That way you can *search* the output. To be clear, timing dependent tests are BANNED. As are those that take too long to run. Testing retries, for example, MUST be done in a way that supports avoiding running afoul of those CRITICAL rules. Abide. OBEY.**    -   Performance tests for scalability
+    -   Performance tests for scalability
     -   Compliance tests for API standards
 
 ---
