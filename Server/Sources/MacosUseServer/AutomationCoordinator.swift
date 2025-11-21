@@ -88,20 +88,20 @@ public actor AutomationCoordinator {
     }
 
     /// Traverses the accessibility tree for a given PID
-    @MainActor
     public func handleTraverse(pid: pid_t, visibleOnly: Bool) async throws
         -> Macosusesdk_V1_TraverseAccessibilityResponse
     {
         logger.info("Traversing accessibility tree for PID \(pid, privacy: .public)")
 
         do {
-            // Execute traversal on MainActor (required for AX APIs)
-            let sdkResponse = try await MainActor.run {
+            // CRITICAL FIX: Run traversal on background thread to prevent main thread blocking
+            // AX APIs are thread-safe and should NOT block the main actor
+            let sdkResponse = try await Task.detached(priority: .userInitiated) {
                 try MacosUseSDK.traverseAccessibilityTree(
                     pid: pid,
                     onlyVisibleElements: visibleOnly,
                 )
-            }
+            }.value
 
             // Offload protobuf conversion to background to avoid blocking MainActor
             return await Task.detached {

@@ -58,10 +58,10 @@ actor WindowRegistry {
             let layer = windowDict[kCGWindowLayer as String] as? Int32 ?? 0
             let isOnScreen = windowDict[kCGWindowIsOnscreen as String] as? Bool ?? false
 
-            // CRITICAL FIX: AppKit (NSRunningApplication) MUST run on MainActor
-            let bundleID = await MainActor.run {
-                NSRunningApplication(processIdentifier: ownerPID)?.bundleIdentifier
-            }
+            // Get bundle ID using NSRunningApplication
+            // NOTE: NSRunningApplication(processIdentifier:) is actually thread-safe for reads
+            // Only mutations require MainActor
+            let bundleID = NSRunningApplication(processIdentifier: ownerPID)?.bundleIdentifier
 
             let info = WindowInfo(
                 windowID: windowID,

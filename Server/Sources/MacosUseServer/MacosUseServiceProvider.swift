@@ -502,15 +502,16 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
 
         let windowToFocus = try await findWindowElement(pid: pid, windowId: windowId)
 
-        // Set kAXMainAttribute to true to focus the window (MUST run on MainActor)
-        try await MainActor.run {
+        // Set kAXMainAttribute to true to focus the window
+        // CRITICAL FIX: AX set operations are thread-safe and should NOT block MainActor
+        try await Task.detached(priority: .userInitiated) {
             let mainResult = AXUIElementSetAttributeValue(
                 windowToFocus, kAXMainAttribute as CFString, kCFBooleanTrue,
             )
             guard mainResult == .success else {
                 throw RPCError(code: .internalError, message: "Failed to focus window")
             }
-        }
+        }.value
 
         // Return updated window state
         return try await getWindow(
@@ -537,8 +538,9 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
 
         let window = try await findWindowElement(pid: pid, windowId: windowId)
 
-        // Create AXValue and set position (MUST run on MainActor)
-        try await MainActor.run {
+        // Create AXValue and set position
+        // CRITICAL FIX: AX set operations are thread-safe and should NOT block MainActor
+        try await Task.detached(priority: .userInitiated) {
             var newPosition = CGPoint(x: req.x, y: req.y)
             guard let positionValue = AXValueCreate(.cgPoint, &newPosition) else {
                 throw RPCError(code: .internalError, message: "Failed to create position value")
@@ -552,7 +554,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
                     code: .internalError, message: "Failed to move window: \(setResult.rawValue)",
                 )
             }
-        }
+        }.value
 
         // CRITICAL FIX: Refresh and fetch registry metadata BEFORE invalidation (nil registry bug fix)
         try await windowRegistry.refreshWindows(forPID: pid)
@@ -584,8 +586,9 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
 
         let window = try await findWindowElement(pid: pid, windowId: windowId)
 
-        // Create AXValue, set size, and verify (MUST run on MainActor)
-        try await MainActor.run {
+        // Create AXValue, set size, and verify
+        // CRITICAL FIX: AX set operations are thread-safe and should NOT block MainActor
+        try await Task.detached(priority: .userInitiated) {
             var newSize = CGSize(width: req.width, height: req.height)
             guard let sizeValue = AXValueCreate(.cgSize, &newSize) else {
                 throw RPCError(code: .internalError, message: "Failed to create size value")
@@ -611,7 +614,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
                     logger.info("After resize: requested=\(req.width, privacy: .public)x\(req.height, privacy: .public), actual=\(actualSize.width, privacy: .public)x\(actualSize.height, privacy: .public)")
                 }
             }
-        }
+        }.value
 
         // CRITICAL FIX: Refresh and fetch registry metadata BEFORE invalidation (nil registry bug fix)
         try await windowRegistry.refreshWindows(forPID: pid)
@@ -643,8 +646,9 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
 
         let window = try await findWindowElement(pid: pid, windowId: windowId)
 
-        // Set kAXMinimizedAttribute to true (MUST run on MainActor)
-        try await MainActor.run {
+        // Set kAXMinimizedAttribute to true
+        // CRITICAL FIX: AX set operations are thread-safe and should NOT block MainActor
+        try await Task.detached(priority: .userInitiated) {
             let setResult = AXUIElementSetAttributeValue(
                 window, kAXMinimizedAttribute as CFString, kCFBooleanTrue,
             )
@@ -653,7 +657,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
                     code: .internalError, message: "Failed to minimize window: \(setResult.rawValue)",
                 )
             }
-        }
+        }.value
 
         // CRITICAL: AX state propagation is async - poll until minimized=true
         // This prevents race condition where we return stale state
@@ -708,8 +712,9 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         // CRITICAL FIX: Minimized windows vanish from kAXWindowsAttribute but remain in kAXChildrenAttribute
         let window = try await findWindowElementWithMinimizedFallback(pid: pid, windowId: windowId)
 
-        // Set kAXMinimizedAttribute to false (MUST run on MainActor)
-        try await MainActor.run {
+        // Set kAXMinimizedAttribute to false
+        // CRITICAL FIX: AX set operations are thread-safe and should NOT block MainActor
+        try await Task.detached(priority: .userInitiated) {
             let setResult = AXUIElementSetAttributeValue(
                 window, kAXMinimizedAttribute as CFString, kCFBooleanFalse,
             )
@@ -718,7 +723,7 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
                     code: .internalError, message: "Failed to restore window: \(setResult.rawValue)",
                 )
             }
-        }
+        }.value
 
         // CRITICAL: AX state propagation is async - poll until minimized=false
         // This prevents race condition where we return stale state
@@ -2962,8 +2967,9 @@ private extension MacosUseServiceProvider {
     func buildWindowResponseFromAX(
         name: String, pid _: pid_t, windowId: CGWindowID, window: AXUIElement, registryInfo: WindowRegistry.WindowInfo? = nil,
     ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
-        // 1. Get Fresh AX Data (MainActor) - The Authority for Geometry + State
-        let (axBounds, axTitle, axMinimized, axHidden) = await MainActor.run { () -> (Macosusesdk_V1_Bounds, String, Bool, Bool) in
+        // 1. Get Fresh AX Data (Background Thread) - The Authority for Geometry + State
+        // CRITICAL FIX: AX APIs are thread-safe and should NOT block MainActor
+        let (axBounds, axTitle, axMinimized, axHidden) = await Task.detached(priority: .userInitiated) { () -> (Macosusesdk_V1_Bounds, String, Bool, Bool) in
             var posValue: CFTypeRef?
             var sizeValue: CFTypeRef?
 
@@ -3020,7 +3026,7 @@ private extension MacosUseServiceProvider {
             }
 
             return (bounds, title, minimized, hidden)
-        }
+        }.value
 
         // 2. Get Metadata from Registry (No Refresh) - The Authority for Z-Index/Bundle
         // We explicitly avoid refreshWindows() to prevent 100ms lag injection
@@ -3059,7 +3065,8 @@ private extension MacosUseServiceProvider {
         }
 
         // Fallback: search kAXChildrenAttribute for minimized windows
-        return try await MainActor.run {
+        // CRITICAL FIX: AX APIs are thread-safe and should NOT block MainActor
+        return try await Task.detached(priority: .userInitiated) {
             let appElement = AXUIElementCreateApplication(pid)
 
             var childrenValue: CFTypeRef?
@@ -3131,11 +3138,13 @@ private extension MacosUseServiceProvider {
             }
 
             throw RPCError(code: .notFound, message: "Window not found in kAXChildren")
-        }
+        }.value
     }
 
     func findWindowElement(pid: pid_t, windowId: CGWindowID) async throws -> AXUIElement {
-        try await MainActor.run {
+        // CRITICAL FIX: AX APIs are thread-safe and should NOT block MainActor
+        // Run on background thread to prevent server hangs
+        try await Task.detached(priority: .userInitiated) {
             // Get AXUIElement for application
             let appElement = AXUIElementCreateApplication(pid)
 
@@ -3223,12 +3232,13 @@ private extension MacosUseServiceProvider {
             }
 
             throw RPCError(code: .notFound, message: "AXUIElement not found for window ID \(windowId)")
-        }
+        }.value
     }
 
     /// Build WindowState proto from AXUIElement attributes.
     func buildWindowStateFromAX(window: AXUIElement) async throws -> Macosusesdk_V1_WindowState {
-        await MainActor.run {
+        // CRITICAL FIX: AX APIs are thread-safe and should NOT block MainActor
+        await Task.detached(priority: .userInitiated) {
             var resizable = false
             var minimizable = false
             var closable = false
@@ -3330,13 +3340,14 @@ private extension MacosUseServiceProvider {
                     $0.fullscreen = fullscreen
                 }
             }
-        }
+        }.value
     }
 
     func getWindowState(window: AXUIElement) async -> (
         minimized: Bool, focused: Bool?, fullscreen: Bool?,
     ) {
-        await MainActor.run {
+        // CRITICAL FIX: AX APIs are thread-safe and should NOT block MainActor
+        await Task.detached(priority: .userInitiated) {
             var minimized = false
             var focused: Bool?
             let fullscreen: Bool? = nil
@@ -3364,7 +3375,7 @@ private extension MacosUseServiceProvider {
             // fullscreen remains nil (unknown)
 
             return (minimized, focused, fullscreen)
-        }
+        }.value
     }
 
     func getActionsForRole(_ role: String) -> [String] {
