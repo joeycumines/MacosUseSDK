@@ -116,7 +116,7 @@ public func fetchAXWindowInfo(
         let originDiff = hypot(axBounds.origin.x - expectedBounds.origin.x, axBounds.origin.y - expectedBounds.origin.y)
         let sizeDiff = hypot(axBounds.width - expectedBounds.width, axBounds.height - expectedBounds.height)
         var score = originDiff + sizeDiff
-        
+
         // -- Title (Secondary Heuristic) --
         let axTitle = values[2] as? String ?? ""
         // If expectedTitle is provided and matches exactly, apply a bonus (reduce score)
