@@ -280,8 +280,7 @@ func TestWindowChangeObservation(t *testing.T) {
 		t.Error("Expected first window resize event but did not receive it")
 	}
 
-	// Verify state delta - window dimensions changed
-	// Note: Window manager may adjust requested dimensions (clamping), so we verify change occurred from INITIAL
+	// Verify state delta - window dimensions match target with strict tolerance
 	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
 		window, err := client.GetWindow(ctx, &pb.GetWindowRequest{
 			Name: initialWindow.Name,
@@ -291,13 +290,16 @@ func TestWindowChangeObservation(t *testing.T) {
 			t.Logf("Warning: GetWindow failed during resize verification (retrying): %v", err)
 			return false, nil
 		}
-		// Window changed if height is significantly different from initial
-		// We use a threshold of 20px to account for minor adjustments
-		heightDiff := window.Bounds.Height - initialBounds.Height
+		// Strict verification: window dimensions must match target within 2px tolerance
+		widthDiff := window.Bounds.Width - targetWidth1
+		if widthDiff < 0 {
+			widthDiff = -widthDiff
+		}
+		heightDiff := window.Bounds.Height - targetHeight1
 		if heightDiff < 0 {
 			heightDiff = -heightDiff
 		}
-		return heightDiff > 20, nil
+		return widthDiff <= 2 && heightDiff <= 2, nil
 	})
 	if err != nil {
 		t.Errorf("Window bounds did not reflect first resize operation (timeout or persistent error): %v", err)
@@ -337,7 +339,7 @@ func TestWindowChangeObservation(t *testing.T) {
 		t.Error("Expected second window resize event but did not receive it")
 	}
 
-	// Verify state delta - window dimensions returned toward original
+	// Verify state delta - window dimensions returned to initial values with strict tolerance
 	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
 		window, err := client.GetWindow(ctx, &pb.GetWindowRequest{
 			Name: initialWindow.Name,
@@ -346,12 +348,16 @@ func TestWindowChangeObservation(t *testing.T) {
 			t.Logf("Warning: GetWindow failed during resize-back verification (retrying): %v", err)
 			return false, nil
 		}
-		// Verify height changed back close to initial
+		// Strict verification: dimensions must match initial bounds within 2px tolerance
+		widthDiff := window.Bounds.Width - initialBounds.Width
+		if widthDiff < 0 {
+			widthDiff = -widthDiff
+		}
 		heightDiff := window.Bounds.Height - initialBounds.Height
 		if heightDiff < 0 {
 			heightDiff = -heightDiff
 		}
-		return heightDiff <= 50, nil
+		return widthDiff <= 2 && heightDiff <= 2, nil
 	})
 	if err != nil {
 		t.Errorf("Window bounds did not reflect second resize operation: %v", err)

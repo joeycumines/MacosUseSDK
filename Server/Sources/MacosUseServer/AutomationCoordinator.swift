@@ -96,33 +96,38 @@ public actor AutomationCoordinator {
 
         do {
             // Execute traversal on MainActor (required for AX APIs)
-            let sdkResponse = try MacosUseSDK.traverseAccessibilityTree(
-                pid: pid,
-                onlyVisibleElements: visibleOnly,
-            )
+            let sdkResponse = try await MainActor.run {
+                try MacosUseSDK.traverseAccessibilityTree(
+                    pid: pid,
+                    onlyVisibleElements: visibleOnly,
+                )
+            }
 
-            // Element conversion and proto building
-            let elements = sdkResponse.elements.map { sdkElement in
-                Macosusesdk_Type_Element.with {
-                    $0.role = sdkElement.role
-                    $0.text = sdkElement.text ?? ""
-                    $0.x = sdkElement.x ?? 0
-                    $0.y = sdkElement.y ?? 0
-                    $0.width = sdkElement.width ?? 0
-                    $0.height = sdkElement.height ?? 0
+            // Offload protobuf conversion to background to avoid blocking MainActor
+            return await Task.detached {
+                // Element conversion and proto building
+                let elements = sdkResponse.elements.map { sdkElement in
+                    Macosusesdk_Type_Element.with {
+                        $0.role = sdkElement.role
+                        $0.text = sdkElement.text ?? ""
+                        $0.x = sdkElement.x ?? 0
+                        $0.y = sdkElement.y ?? 0
+                        $0.width = sdkElement.width ?? 0
+                        $0.height = sdkElement.height ?? 0
+                    }
                 }
-            }
 
-            let statistics = Macosusesdk_Type_TraversalStats.with {
-                $0.count = Int32(sdkResponse.elements.count)
-            }
+                let statistics = Macosusesdk_Type_TraversalStats.with {
+                    $0.count = Int32(sdkResponse.elements.count)
+                }
 
-            return Macosusesdk_V1_TraverseAccessibilityResponse.with {
-                $0.app = sdkResponse.app_name
-                $0.elements = elements
-                $0.stats = statistics
-                $0.processingTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
-            }
+                return Macosusesdk_V1_TraverseAccessibilityResponse.with {
+                    $0.app = sdkResponse.app_name
+                    $0.elements = elements
+                    $0.stats = statistics
+                    $0.processingTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
+                }
+            }.value
         } catch let error as MacosUseSDK.MacosUseSDKError {
             logger.error("SDK error during traversal: \(error.localizedDescription, privacy: .public)")
             throw error

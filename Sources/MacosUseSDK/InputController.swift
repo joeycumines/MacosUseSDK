@@ -196,7 +196,9 @@ public func writeText(_ text: String) async throws {
     let errorPipe = Pipe()
     process.standardError = errorPipe
 
-    process.terminationHandler = { proc in
+    process.terminationHandler = { [process] proc in
+      // Capture process strongly to prevent deallocation before handler fires
+      _ = process
       let status = proc.terminationStatus
       if status == 0 {
         continuation.resume()

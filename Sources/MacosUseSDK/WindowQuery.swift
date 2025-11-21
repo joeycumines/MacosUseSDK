@@ -32,10 +32,10 @@ public struct WindowInfo {
 ///   - expectedTitle: (Optional) The title from CGWindowList, used as a secondary matching heuristic.
 /// - Returns: A `WindowInfo` struct containing authoritative AX data, or `nil` if no match is found.
 public func fetchAXWindowInfo(
-pid: Int32,
-windowId: CGWindowID,
-expectedBounds: CGRect,
-expectedTitle: String? = nil
+    pid: Int32,
+    windowId: CGWindowID,
+    expectedBounds: CGRect,
+    expectedTitle _: String? = nil,
 ) -> WindowInfo? {
     let appElement = AXUIElementCreateApplication(pid)
 
@@ -51,16 +51,16 @@ expectedTitle: String? = nil
     // 2. Optimize IPC: Batch fetch attributes to avoid N+1 problem
     // We fetch Position, Size, Title, Minimized, and Main in a single round-trip per window.
     let attributes: [CFString] = [
-        kAXPositionAttribute as CFString,  // Index 0
-        kAXSizeAttribute as CFString,      // Index 1
-        kAXTitleAttribute as CFString,     // Index 2
+        kAXPositionAttribute as CFString, // Index 0
+        kAXSizeAttribute as CFString, // Index 1
+        kAXTitleAttribute as CFString, // Index 2
         kAXMinimizedAttribute as CFString, // Index 3
-        kAXMainAttribute as CFString       // Index 4
+        kAXMainAttribute as CFString, // Index 4
     ]
 
     var bestMatch: WindowInfo?
     // Initialize with a high score (distance); lower score is better.
-    var bestScore: CGFloat = CGFloat.greatestFiniteMagnitude
+    var bestScore = CGFloat.greatestFiniteMagnitude
 
     for axWindow in windows {
         var valuesArray: CFArray?
@@ -68,8 +68,9 @@ expectedTitle: String? = nil
 
         // Validate we got a list of values matching our request count
         guard valuesResult == .success,
-        let values = valuesArray as? [AnyObject],
-        values.count == attributes.count else {
+              let values = valuesArray as? [AnyObject],
+              values.count == attributes.count
+        else {
             continue
         }
 
@@ -144,7 +145,7 @@ expectedTitle: String? = nil
                 isMinimized: axMinimized,
                 isHidden: isHidden,
                 isMain: axMain,
-                isFocused: axMain // kAXMain usually implies focus
+                isFocused: axMain, // kAXMain usually implies focus
             )
 
             bestMatch = candidate
