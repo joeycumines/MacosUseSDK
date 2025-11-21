@@ -47,13 +47,13 @@ private func createEventSource() throws -> CGEventSource {
 }
 
 // Posts a CGEvent or throws
-private func postEvent(_ event: CGEvent?, actionDescription: String) throws {
+private func postEvent(_ event: CGEvent?, actionDescription: String) async throws {
   guard let event = event else {
     throw MacosUseSDKError.inputSimulationFailed("failed to create \(actionDescription) event")
   }
   event.post(tap: .cghidEventTap)
   // Add a small delay after posting, crucial for some applications
-  usleep(15_000)  // 15 milliseconds, slightly increased from 10ms
+  try await Task.sleep(nanoseconds: 15_000_000)  // 15 milliseconds
 }
 
 // --- Public Input Simulation Functions ---
@@ -63,20 +63,20 @@ private func postEvent(_ event: CGEvent?, actionDescription: String) throws {
 ///   - keyCode: The `CGKeyCode` of the key to press.
 ///   - flags: The modifier flags (`CGEventFlags`) to apply (e.g., `.maskCommand`, `.maskShift`).
 /// - Throws: `MacosUseSDKError` if the event source cannot be created or the event cannot be posted.
-public func pressKey(keyCode: CGKeyCode, flags: CGEventFlags = []) throws {
+public func pressKey(keyCode: CGKeyCode, flags: CGEventFlags = []) async throws {
   logger.info("simulating key press: (code: \(keyCode, privacy: .public), flags: \(flags.rawValue, privacy: .public))")
   let source = try createEventSource()
 
   let keyDown = CGEvent(keyboardEventSource: source, virtualKey: keyCode, keyDown: true)
   keyDown?.flags = flags  // Apply modifier flags
-  try postEvent(keyDown, actionDescription: "key down (code: \(keyCode), flags: \(flags.rawValue))")
+  try await postEvent(keyDown, actionDescription: "key down (code: \(keyCode), flags: \(flags.rawValue))")
 
   // Short delay between key down and key up is often necessary
-  // usleep(10_000) // Delay moved into postEvent
+  // Task.sleep now handled in postEvent
 
   let keyUp = CGEvent(keyboardEventSource: source, virtualKey: keyCode, keyDown: false)
   keyUp?.flags = flags  // Apply modifier flags for key up as well
-  try postEvent(keyUp, actionDescription: "key up (code: \(keyCode), flags: \(flags.rawValue))")
+  try await postEvent(keyUp, actionDescription: "key up (code: \(keyCode), flags: \(flags.rawValue))")
   logger.info("key press simulation complete.")
 }
 
@@ -84,7 +84,7 @@ public func pressKey(keyCode: CGKeyCode, flags: CGEventFlags = []) throws {
 /// Does not move the cursor first. Call `moveMouse` beforehand if needed.
 /// - Parameter point: The `CGPoint` where the click should occur.
 /// - Throws: `MacosUseSDKError` if the event source cannot be created or the event cannot be posted.
-public func clickMouse(at point: CGPoint) throws {
+public func clickMouse(at point: CGPoint) async throws {
   logger.info("simulating left click at: (\(point.x, privacy: .public), \(point.y, privacy: .public))")
   let source = try createEventSource()
 
@@ -92,16 +92,16 @@ public func clickMouse(at point: CGPoint) throws {
   let mouseDown = CGEvent(
     mouseEventSource: source, mouseType: .leftMouseDown, mouseCursorPosition: point,
     mouseButton: .left)
-  try postEvent(mouseDown, actionDescription: "mouse down at (\(point.x), \(point.y))")
+  try await postEvent(mouseDown, actionDescription: "mouse down at (\(point.x), \(point.y))")
 
   // Short delay - moved into postEvent
-  // usleep(10_000)
+  // Task.sleep now handled in postEvent
 
   // Create and post mouse up event
   let mouseUp = CGEvent(
     mouseEventSource: source, mouseType: .leftMouseUp, mouseCursorPosition: point,
     mouseButton: .left)
-  try postEvent(mouseUp, actionDescription: "mouse up at (\(point.x), \(point.y))")
+  try await postEvent(mouseUp, actionDescription: "mouse up at (\(point.x), \(point.y))")
   logger.info("left click simulation complete.")
 }
 
@@ -109,7 +109,7 @@ public func clickMouse(at point: CGPoint) throws {
 /// Does not move the cursor first. Call `moveMouse` beforehand if needed.
 /// - Parameter point: The `CGPoint` where the double click should occur.
 /// - Throws: `MacosUseSDKError` if the event source cannot be created or the event cannot be posted.
-public func doubleClickMouse(at point: CGPoint) throws {
+public func doubleClickMouse(at point: CGPoint) async throws {
   logger.info("simulating double-click at: (\(point.x, privacy: .public), \(point.y, privacy: .public))")
   let source = try createEventSource()
 
@@ -118,16 +118,16 @@ public func doubleClickMouse(at point: CGPoint) throws {
     mouseEventSource: source, mouseType: .leftMouseDown, mouseCursorPosition: point,
     mouseButton: .left)
   doubleClickEvent?.setIntegerValueField(.mouseEventClickState, value: 2)  // Set click count
-  try postEvent(
+  try await postEvent(
     doubleClickEvent, actionDescription: "double click down at (\(point.x), \(point.y))")
 
-  // usleep(10_000) // Delay moved into postEvent
+  // Task.sleep now handled in postEvent
 
   let mouseUpEvent = CGEvent(
     mouseEventSource: source, mouseType: .leftMouseUp, mouseCursorPosition: point,
     mouseButton: .left)
   mouseUpEvent?.setIntegerValueField(.mouseEventClickState, value: 2)  // Set click count
-  try postEvent(mouseUpEvent, actionDescription: "double click up at (\(point.x), \(point.y))")
+  try await postEvent(mouseUpEvent, actionDescription: "double click up at (\(point.x), \(point.y))")
   logger.info("double-click simulation complete.")
 }
 
@@ -136,7 +136,7 @@ public func doubleClickMouse(at point: CGPoint) throws {
 /// Does not move the cursor first. Call `moveMouse` beforehand if needed.
 /// - Parameter point: The `CGPoint` where the right click should occur.
 /// - Throws: `MacosUseSDKError` if the event source cannot be created or the event cannot be posted.
-public func rightClickMouse(at point: CGPoint) throws {
+public func rightClickMouse(at point: CGPoint) async throws {
   logger.info("simulating right-click at: (\(point.x, privacy: .public), \(point.y, privacy: .public))")
   let source = try createEventSource()
 
@@ -144,23 +144,23 @@ public func rightClickMouse(at point: CGPoint) throws {
   let mouseDown = CGEvent(
     mouseEventSource: source, mouseType: .rightMouseDown, mouseCursorPosition: point,
     mouseButton: .right)
-  try postEvent(mouseDown, actionDescription: "right mouse down at (\(point.x), \(point.y))")
+  try await postEvent(mouseDown, actionDescription: "right mouse down at (\(point.x), \(point.y))")
 
   // Short delay - moved into postEvent
-  // usleep(10_000)
+  // Task.sleep now handled in postEvent
 
   // Create and post mouse up event (RIGHT button)
   let mouseUp = CGEvent(
     mouseEventSource: source, mouseType: .rightMouseUp, mouseCursorPosition: point,
     mouseButton: .right)
-  try postEvent(mouseUp, actionDescription: "right mouse up at (\(point.x), \(point.y))")
+  try await postEvent(mouseUp, actionDescription: "right mouse up at (\(point.x), \(point.y))")
   logger.info("right-click simulation complete.")
 }
 
 /// Moves the mouse cursor to the specified screen coordinates.
 /// - Parameter point: The `CGPoint` to move the cursor to.
 /// - Throws: `MacosUseSDKError` if the event source cannot be created or the event cannot be posted.
-public func moveMouse(to point: CGPoint) throws {
+public func moveMouse(to point: CGPoint) async throws {
   logger.info("moving mouse to: (\(point.x, privacy: .public), \(point.y, privacy: .public))")
   let source = try createEventSource()
 
@@ -168,7 +168,7 @@ public func moveMouse(to point: CGPoint) throws {
   let mouseMove = CGEvent(
     mouseEventSource: source, mouseType: .mouseMoved, mouseCursorPosition: point, mouseButton: .left
   )  // Button doesn't matter for move
-  try postEvent(mouseMove, actionDescription: "mouse move to (\(point.x), \(point.y))")
+  try await postEvent(mouseMove, actionDescription: "mouse move to (\(point.x), \(point.y))")
   logger.info("mouse move simulation complete.")
 }
 

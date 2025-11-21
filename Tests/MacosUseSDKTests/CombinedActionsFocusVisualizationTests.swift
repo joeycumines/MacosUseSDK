@@ -153,7 +153,7 @@ final class CombinedActionsFocusVisualizationTests: XCTestCase {
     fputs(
       "info: Test run - Calling writeTextWithActionAndTraversalHighlight for 'Hello TextEdit!'...\n",
       stderr)
-    let result = try await CombinedActions.writeTextWithActionAndTraversalHighlight(
+    _ = try await CombinedActions.writeTextWithActionAndTraversalHighlight(
       text: "Hello TextEdit!",
       pid: pid,
       onlyVisibleElements: true,  // Doesn't affect focus check, but standard for combined action

@@ -15,11 +15,11 @@ private let logger = sdkLogger(category: "HighlightInput")
 ///   - point: The `CGPoint` where the click should occur.
 ///   - duration: How long the visual feedback should last (in seconds). Default is 0.5s.
 /// - Throws: `MacosUseSDKError` if simulation or visualization fails.
-public func clickMouseAndVisualize(at point: CGPoint, duration: Double = 0.5) throws {
+public func clickMouseAndVisualize(at point: CGPoint, duration: Double = 0.5) async throws {
   logger.info(
     "simulating left click AND visualize at: (\(point.x, privacy: .public), \(point.y, privacy: .public)), duration: \(duration, privacy: .public)s")
   // Call the original input function
-  try clickMouse(at: point)
+  try await clickMouse(at: point)
 
   // Restore the correct async dispatch:
   DispatchQueue.main.async {
@@ -36,11 +36,11 @@ public func clickMouseAndVisualize(at point: CGPoint, duration: Double = 0.5) th
 ///   - point: The `CGPoint` where the double click should occur.
 ///   - duration: How long the visual feedback should last (in seconds). Default is 0.5s.
 /// - Throws: `MacosUseSDKError` if simulation or visualization fails.
-public func doubleClickMouseAndVisualize(at point: CGPoint, duration: Double = 0.5) throws {
+public func doubleClickMouseAndVisualize(at point: CGPoint, duration: Double = 0.5) async throws {
   logger.info(
     "simulating double-click AND visualize at: (\(point.x, privacy: .public), \(point.y, privacy: .public)), duration: \(duration, privacy: .public)s")
   // Call the original input function
-  try doubleClickMouse(at: point)
+  try await doubleClickMouse(at: point)
   // Schedule visualization on the main thread
   DispatchQueue.main.async {
     Task { @MainActor in
@@ -55,11 +55,11 @@ public func doubleClickMouseAndVisualize(at point: CGPoint, duration: Double = 0
 ///   - point: The `CGPoint` where the right click should occur.
 ///   - duration: How long the visual feedback should last (in seconds). Default is 0.5s.
 /// - Throws: `MacosUseSDKError` if simulation or visualization fails.
-public func rightClickMouseAndVisualize(at point: CGPoint, duration: Double = 0.5) throws {
+public func rightClickMouseAndVisualize(at point: CGPoint, duration: Double = 0.5) async throws {
   logger.info(
     "simulating right-click AND visualize at: (\(point.x, privacy: .public), \(point.y, privacy: .public)), duration: \(duration, privacy: .public)s")
   // Call the original input function
-  try rightClickMouse(at: point)
+  try await rightClickMouse(at: point)
   // Schedule visualization on the main thread
   DispatchQueue.main.async {
     Task { @MainActor in
@@ -74,11 +74,11 @@ public func rightClickMouseAndVisualize(at point: CGPoint, duration: Double = 0.
 ///   - point: The `CGPoint` to move the cursor to.
 ///   - duration: How long the visual feedback should last (in seconds). Default is 0.5s.
 /// - Throws: `MacosUseSDKError` if simulation or visualization fails.
-public func moveMouseAndVisualize(to point: CGPoint, duration: Double = 0.5) throws {
+public func moveMouseAndVisualize(to point: CGPoint, duration: Double = 0.5) async throws {
   logger.info(
     "moving mouse AND visualize to: (\(point.x, privacy: .public), \(point.y, privacy: .public)), duration: \(duration, privacy: .public)s")
   // Call the original input function
-  try moveMouse(to: point)
+  try await moveMouse(to: point)
   // Schedule visualization on the main thread
   DispatchQueue.main.async {
     Task { @MainActor in
@@ -96,7 +96,7 @@ public func moveMouseAndVisualize(to point: CGPoint, duration: Double = 0.5) thr
 /// - Throws: `MacosUseSDKError` if simulation fails.
 public func pressKeyAndVisualize(
   keyCode: CGKeyCode, flags: CGEventFlags = [], duration: Double = 0.8
-) throws {
+) async throws {
   // Define caption constants
   let captionText = "[KEY PRESS]"
   let captionSize = CGSize(width: 250, height: 80)  // Size for the key press caption
@@ -104,7 +104,7 @@ public func pressKeyAndVisualize(
   logger.info(
     "simulating key press (code: \(keyCode, privacy: .public), flags: \(flags.rawValue, privacy: .public)) AND visualizing caption '\(captionText, privacy: .public)', duration: \(duration, privacy: .public)s")
   // Call the original input function first
-  try pressKey(keyCode: keyCode, flags: flags)
+  try await pressKey(keyCode: keyCode, flags: flags)
 
   // Always dispatch caption visualization to the main thread at screen center
   DispatchQueue.main.async {
@@ -134,7 +134,7 @@ public func pressKeyAndVisualize(
 ///   - text: The `String` to type.
 ///   - duration: How long the visual feedback should last (in seconds). Default is calculated or 1.0s min.
 /// - Throws: `MacosUseSDKError` if simulation fails.
-public func writeTextAndVisualize(_ text: String, duration: Double? = nil) throws {
+public func writeTextAndVisualize(_ text: String, duration: Double? = nil) async throws {
   // Define caption constants
   let defaultDuration = 1.0  // Minimum duration
   // Optional: Calculate duration based on text length, e.g., 0.5s + 0.05s per char

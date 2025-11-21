@@ -172,7 +172,7 @@ public enum CombinedActions {
 
     // Step 1: Perform the click
     logger.info("calling clickMouse...")
-    try MacosUseSDK.clickMouse(at: point)
+    try await MacosUseSDK.clickMouse(at: point)
     logger.info("clickMouse completed successfully.")
 
     // Add a small delay to allow UI to potentially update after the click
@@ -208,7 +208,7 @@ public enum CombinedActions {
 
     // Step 1: Perform the key press
     logger.info("calling pressKey...")
-    try MacosUseSDK.pressKey(keyCode: keyCode, flags: flags)
+    try await MacosUseSDK.pressKey(keyCode: keyCode, flags: flags)
     logger.info("pressKey completed successfully.")
 
     // Add a small delay
@@ -334,7 +334,7 @@ public enum CombinedActions {
 
     // Step 2: Perform the Click
     logger.info("calling clickMouse...")
-    try MacosUseSDK.clickMouse(at: point)
+    try await MacosUseSDK.clickMouse(at: point)
     logger.info("clickMouse completed successfully.")
 
     // Step 3: Wait for UI to Update
@@ -392,7 +392,7 @@ public enum CombinedActions {
 
     // Step 2: Perform the Key Press
     logger.info("calling pressKey...")
-    try MacosUseSDK.pressKey(keyCode: keyCode, flags: flags)
+    try await MacosUseSDK.pressKey(keyCode: keyCode, flags: flags)
     logger.info("pressKey completed successfully.")
 
     // Step 3: Wait for UI to Update
@@ -513,7 +513,7 @@ public enum CombinedActions {
 
     // Step 2a: Perform the Click (Input Simulation Only)
     logger.info("calling clickMouse...")
-    try MacosUseSDK.clickMouse(at: point)
+    try await MacosUseSDK.clickMouse(at: point)
     logger.info("clickMouse completed successfully.")
 
     // Step 2b: Dispatch Click Visualization
@@ -595,7 +595,7 @@ public enum CombinedActions {
 
     // Step 2a: Perform the Key Press (Input Simulation Only)
     logger.info("calling pressKey (key: \(keyCode, privacy: .public), flags: \(flags.rawValue, privacy: .public))...")
-    try MacosUseSDK.pressKey(keyCode: keyCode, flags: flags)
+    try await MacosUseSDK.pressKey(keyCode: keyCode, flags: flags)
     logger.info("pressKey completed successfully.")
 
     // Step 2b: Dispatch Key Press Visualization (Caption)

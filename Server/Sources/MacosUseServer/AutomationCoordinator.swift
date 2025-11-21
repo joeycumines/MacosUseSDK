@@ -137,25 +137,25 @@ public actor AutomationCoordinator {
         switch action {
         case let .click(point):
             if showAnimation {
-                try MacosUseSDK.clickMouseAndVisualize(at: point, duration: animationDuration)
+                try await MacosUseSDK.clickMouseAndVisualize(at: point, duration: animationDuration)
             } else {
-                try MacosUseSDK.clickMouse(at: point)
+                try await MacosUseSDK.clickMouse(at: point)
             }
         case let .doubleClick(point):
             if showAnimation {
-                try MacosUseSDK.doubleClickMouseAndVisualize(at: point, duration: animationDuration)
+                try await MacosUseSDK.doubleClickMouseAndVisualize(at: point, duration: animationDuration)
             } else {
-                try MacosUseSDK.doubleClickMouse(at: point)
+                try await MacosUseSDK.doubleClickMouse(at: point)
             }
         case let .rightClick(point):
             if showAnimation {
-                try MacosUseSDK.rightClickMouseAndVisualize(at: point, duration: animationDuration)
+                try await MacosUseSDK.rightClickMouseAndVisualize(at: point, duration: animationDuration)
             } else {
-                try MacosUseSDK.rightClickMouse(at: point)
+                try await MacosUseSDK.rightClickMouse(at: point)
             }
         case let .type(text):
             if showAnimation {
-                try MacosUseSDK.writeTextAndVisualize(text, duration: nil)
+                try await MacosUseSDK.writeTextAndVisualize(text, duration: nil)
             } else {
                 try MacosUseSDK.writeText(text)
             }
@@ -164,17 +164,17 @@ public actor AutomationCoordinator {
                 throw CoordinatorError.invalidKeyName(keyName)
             }
             if showAnimation {
-                try MacosUseSDK.pressKeyAndVisualize(
+                try await MacosUseSDK.pressKeyAndVisualize(
                     keyCode: keyCode, flags: flags, duration: animationDuration,
                 )
             } else {
-                try MacosUseSDK.pressKey(keyCode: keyCode, flags: flags)
+                try await MacosUseSDK.pressKey(keyCode: keyCode, flags: flags)
             }
         case let .move(point):
             if showAnimation {
-                try MacosUseSDK.moveMouseAndVisualize(to: point, duration: animationDuration)
+                try await MacosUseSDK.moveMouseAndVisualize(to: point, duration: animationDuration)
             } else {
-                try MacosUseSDK.moveMouse(to: point)
+                try await MacosUseSDK.moveMouse(to: point)
             }
         }
     }

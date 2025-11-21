@@ -71,7 +71,7 @@ Task {
   do {
     // 2. Perform Traversal FIRST
     fputs("info: Calling traverseAccessibilityTree (visible only)...\n", stderr)
-    let responseData = try await MacosUseSDK.traverseAccessibilityTree(
+    let responseData = try MacosUseSDK.traverseAccessibilityTree(
       pid: targetPID, onlyVisibleElements: true)
     fputs(
       "info: Traversal complete. Found \(responseData.elements.count) visible elements.\n", stderr)

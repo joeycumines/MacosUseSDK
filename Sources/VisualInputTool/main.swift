@@ -147,7 +147,7 @@ Task {
       visualizationDuration = parsedDuration > 0 ? parsedDuration : 0.8  // Use parsed or default 0.8s
 
       log("Calling pressKey library function...")
-      try MacosUseSDK.pressKey(keyCode: finalKeyCode, flags: flags)  // Input simulation
+      try await MacosUseSDK.pressKey(keyCode: finalKeyCode, flags: flags)  // Input simulation
 
       log("Dispatching showVisualFeedback for keypress...")
       // Dispatch visualization separately (@MainActor is handled by showVisualFeedback)
@@ -184,10 +184,10 @@ Task {
 
       log("Calling \(action) library function...")  // Now refers to the input-only function
       switch action {
-      case "click": try MacosUseSDK.clickMouse(at: point)
-      case "doubleclick": try MacosUseSDK.doubleClickMouse(at: point)
-      case "rightclick": try MacosUseSDK.rightClickMouse(at: point)
-      case "mousemove": try MacosUseSDK.moveMouse(to: point)
+      case "click": try await MacosUseSDK.clickMouse(at: point)
+      case "doubleclick": try await MacosUseSDK.doubleClickMouse(at: point)
+      case "rightclick": try await MacosUseSDK.rightClickMouse(at: point)
+      case "mousemove": try await MacosUseSDK.moveMouse(to: point)
       default: break  // Should not happen
       }
 

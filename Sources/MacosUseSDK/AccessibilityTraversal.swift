@@ -12,7 +12,7 @@ private let logger = sdkLogger(category: "AccessibilityTraversal")
 
 // Mark AXUIElement as Sendable - it's safe because it's an opaque CFTypeRef
 // managed by the Accessibility framework. We only store/pass references.
-extension AXUIElement: @unchecked Sendable {}
+extension AXUIElement: @retroactive @unchecked Sendable {}
 
 // Wrapper to provide Hashable conformance for AXUIElement
 // AXUIElement is a CFTypeRef which is thread-safe by nature
@@ -259,7 +259,7 @@ private class AccessibilityTraversalOperation {
   // Extract bool value
   func getBoolValue(_ value: CFTypeRef?) -> Bool? {
     guard let value = value, CFGetTypeID(value) == CFBooleanGetTypeID() else { return nil }
-    return CFBooleanGetValue(value as! CFBoolean)
+    return CFBooleanGetValue((value as! CFBoolean))
   }
 
   // Extract CGPoint

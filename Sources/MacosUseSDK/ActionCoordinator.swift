@@ -421,34 +421,34 @@ private func executeInputAction(_ action: InputAction, options: ActionOptions) a
     if options.showAnimation {
       logger.info(
         "simulating click AND visualizing at \(String(describing: point), privacy: .public) (duration: \(options.animationDuration, privacy: .public))")
-      try clickMouseAndVisualize(at: point, duration: options.animationDuration)
+      try await clickMouseAndVisualize(at: point, duration: options.animationDuration)
     } else {
       logger.info("simulating click at \(String(describing: point), privacy: .public) (no visualization)")
-      try clickMouse(at: point)
+      try await clickMouse(at: point)
     }
   case .doubleClick(let point):
     if options.showAnimation {
       logger.info(
         "simulating double-click AND visualizing at \(String(describing: point), privacy: .public) (duration: \(options.animationDuration, privacy: .public))")
-      try doubleClickMouseAndVisualize(at: point, duration: options.animationDuration)
+      try await doubleClickMouseAndVisualize(at: point, duration: options.animationDuration)
     } else {
       logger.info("simulating double-click at \(String(describing: point), privacy: .public) (no visualization)")
-      try doubleClickMouse(at: point)
+      try await doubleClickMouse(at: point)
     }
   case .rightClick(let point):
     if options.showAnimation {
       logger.info(
         "simulating right-click AND visualizing at \(String(describing: point), privacy: .public) (duration: \(options.animationDuration, privacy: .public))")
-      try rightClickMouseAndVisualize(at: point, duration: options.animationDuration)
+      try await rightClickMouseAndVisualize(at: point, duration: options.animationDuration)
     } else {
       logger.info("simulating right-click at \(String(describing: point), privacy: .public) (no visualization)")
-      try rightClickMouse(at: point)
+      try await rightClickMouse(at: point)
     }
   case .type(let text):
     if options.showAnimation {
       logger.info(
         "simulating text writing AND visualizing caption \"\(text, privacy: .private)\" (auto duration)")
-      try writeTextAndVisualize(text, duration: nil)  // Use nil to let visualize calculate duration
+      try await writeTextAndVisualize(text, duration: nil)  // Use nil to let visualize calculate duration
     } else {
       logger.info("simulating text writing \"\(text, privacy: .private)\" (no visualization)")
       try writeText(text)
@@ -460,19 +460,19 @@ private func executeInputAction(_ action: InputAction, options: ActionOptions) a
     if options.showAnimation {
       logger.info(
         "simulating key press \(keyName, privacy: .public) (\(keyCode, privacy: .public)) AND visualizing (duration: \(options.animationDuration, privacy: .public))")
-      try pressKeyAndVisualize(keyCode: keyCode, flags: flags, duration: options.animationDuration)
+      try await pressKeyAndVisualize(keyCode: keyCode, flags: flags, duration: options.animationDuration)
     } else {
       logger.info("simulating key press \(keyName, privacy: .public) (\(keyCode, privacy: .public)) (no visualization)")
-      try pressKey(keyCode: keyCode, flags: flags)
+      try await pressKey(keyCode: keyCode, flags: flags)
     }
   case .move(let point):
     if options.showAnimation {
       logger.info(
         "simulating mouse move AND visualizing to \(String(describing: point), privacy: .public) (duration: \(options.animationDuration, privacy: .public))")
-      try moveMouseAndVisualize(to: point, duration: options.animationDuration)
+      try await moveMouseAndVisualize(to: point, duration: options.animationDuration)
     } else {
       logger.info("simulating mouse move to \(String(describing: point), privacy: .public) (no visualization)")
-      try moveMouse(to: point)
+      try await moveMouse(to: point)
     }
   }
 }

@@ -63,105 +63,107 @@ guard arguments.count > 1 else {
 let action = arguments[1].lowercased()
 log("Action: \(action)")
 
-// --- Action Handling ---
-do {
-  switch action {
-  case "keypress":
-    guard arguments.count == 3 else {
-      throw MacosUseSDKError.inputInvalidArgument(
-        "'keypress' requires exactly one argument: <key_name_or_code_with_modifiers>\n\(usage)")
-    }
-    let keyCombo = arguments[2]
-    log("Key Combo Argument: '\(keyCombo)'")
-    var keyCode: CGKeyCode?
-    var flags: CGEventFlags = []
+// --- Action Handling (Wrapped in Task for async support) ---
+Task {
+  do {
+    switch action {
+    case "keypress":
+      guard arguments.count == 3 else {
+        throw MacosUseSDKError.inputInvalidArgument(
+          "'keypress' requires exactly one argument: <key_name_or_code_with_modifiers>\n\(usage)")
+      }
+      let keyCombo = arguments[2]
+      log("Key Combo Argument: '\(keyCombo)'")
+      var keyCode: CGKeyCode?
+      var flags: CGEventFlags = []
 
-    // Parse modifiers (cmd, shift, opt, ctrl, fn)
-    let parts = keyCombo.split(separator: "+").map {
-      String($0).trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-    }
+      // Parse modifiers (cmd, shift, opt, ctrl, fn)
+      let parts = keyCombo.split(separator: "+").map {
+        String($0).trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+      }
 
-    // The last part is the key
-    guard let keyPart = parts.last else {
-      throw MacosUseSDKError.inputInvalidArgument("Invalid key combination format: '\(keyCombo)'")
-    }
-    log("Parsing key part: '\(keyPart)'")
-    keyCode = MacosUseSDK.mapKeyNameToKeyCode(keyPart)  // Use library function
+      // The last part is the key
+      guard let keyPart = parts.last else {
+        throw MacosUseSDKError.inputInvalidArgument("Invalid key combination format: '\(keyCombo)'")
+      }
+      log("Parsing key part: '\(keyPart)'")
+      keyCode = MacosUseSDK.mapKeyNameToKeyCode(keyPart)  // Use library function
 
-    // Process modifier parts
-    if parts.count > 1 {
-      log("Parsing modifiers: \(parts.dropLast().joined(separator: ", "))")
-      for i in 0..<(parts.count - 1) {
-        switch parts[i] {
-        case "cmd", "command": flags.insert(.maskCommand)
-        case "shift": flags.insert(.maskShift)
-        case "opt", "option", "alt": flags.insert(.maskAlternate)
-        case "ctrl", "control": flags.insert(.maskControl)
-        case "fn", "function": flags.insert(.maskSecondaryFn)  // Note: 'fn' might need special handling or accessibility settings
-        default:
-          throw MacosUseSDKError.inputInvalidArgument(
-            "Unknown modifier: '\(parts[i])' in '\(keyCombo)'")
+      // Process modifier parts
+      if parts.count > 1 {
+        log("Parsing modifiers: \(parts.dropLast().joined(separator: ", "))")
+        for i in 0..<(parts.count - 1) {
+          switch parts[i] {
+          case "cmd", "command": flags.insert(.maskCommand)
+          case "shift": flags.insert(.maskShift)
+          case "opt", "option", "alt": flags.insert(.maskAlternate)
+          case "ctrl", "control": flags.insert(.maskControl)
+          case "fn", "function": flags.insert(.maskSecondaryFn)  // Note: 'fn' might need special handling or accessibility settings
+          default:
+            throw MacosUseSDKError.inputInvalidArgument(
+              "Unknown modifier: '\(parts[i])' in '\(keyCombo)'")
+          }
         }
       }
+
+      guard let finalKeyCode = keyCode else {
+        throw MacosUseSDKError.inputInvalidArgument(
+          "Unknown key name or invalid key code: '\(keyPart)' in '\(keyCombo)'")
+      }
+
+      log("Calling pressKey library function...")
+      try await MacosUseSDK.pressKey(keyCode: finalKeyCode, flags: flags)
+      finish(success: true, message: "Key press '\(keyCombo)' simulated.")
+
+    case "click", "doubleclick", "rightclick", "mousemove":
+      guard arguments.count == 4 else {
+        throw MacosUseSDKError.inputInvalidArgument(
+          "'\(action)' requires exactly two arguments: <x> <y>\n\(usage)")
+      }
+      guard let x = Double(arguments[2]), let y = Double(arguments[3]) else {
+        throw MacosUseSDKError.inputInvalidArgument(
+          "Invalid coordinates for '\(action)'. x and y must be numbers.")
+      }
+      let point = CGPoint(x: x, y: y)
+      log("Coordinates: (\(x), \(y))")
+
+      log("Calling \(action) library function...")
+      switch action {
+      case "click": try await MacosUseSDK.clickMouse(at: point)
+      case "doubleclick": try await MacosUseSDK.doubleClickMouse(at: point)
+      case "rightclick": try await MacosUseSDK.rightClickMouse(at: point)
+      case "mousemove": try await MacosUseSDK.moveMouse(to: point)
+      default: break  // Should not happen
+      }
+      finish(success: true, message: "\(action) simulated at (\(x), \(y)).")
+
+    case "writetext":
+      guard arguments.count == 3 else {
+        throw MacosUseSDKError.inputInvalidArgument(
+          "'writetext' requires exactly one argument: <text_to_type>\n\(usage)")
+      }
+      let text = arguments[2]
+      log("Text Argument: \"\(text)\"")
+      log("Calling writeText library function...")
+      try MacosUseSDK.writeText(text)
+      finish(success: true, message: "Text writing simulated.")
+
+    default:
+      fputs(usage, stderr)
+      throw MacosUseSDKError.inputInvalidArgument("Unknown action '\(action)'")
     }
 
-    guard let finalKeyCode = keyCode else {
-      throw MacosUseSDKError.inputInvalidArgument(
-        "Unknown key name or invalid key code: '\(keyPart)' in '\(keyCombo)'")
-    }
-
-    log("Calling pressKey library function...")
-    try MacosUseSDK.pressKey(keyCode: finalKeyCode, flags: flags)
-    finish(success: true, message: "Key press '\(keyCombo)' simulated.")
-
-  case "click", "doubleclick", "rightclick", "mousemove":
-    guard arguments.count == 4 else {
-      throw MacosUseSDKError.inputInvalidArgument(
-        "'\(action)' requires exactly two arguments: <x> <y>\n\(usage)")
-    }
-    guard let x = Double(arguments[2]), let y = Double(arguments[3]) else {
-      throw MacosUseSDKError.inputInvalidArgument(
-        "Invalid coordinates for '\(action)'. x and y must be numbers.")
-    }
-    let point = CGPoint(x: x, y: y)
-    log("Coordinates: (\(x), \(y))")
-
-    log("Calling \(action) library function...")
-    switch action {
-    case "click": try MacosUseSDK.clickMouse(at: point)
-    case "doubleclick": try MacosUseSDK.doubleClickMouse(at: point)
-    case "rightclick": try MacosUseSDK.rightClickMouse(at: point)
-    case "mousemove": try MacosUseSDK.moveMouse(to: point)
-    default: break  // Should not happen
-    }
-    finish(success: true, message: "\(action) simulated at (\(x), \(y)).")
-
-  case "writetext":
-    guard arguments.count == 3 else {
-      throw MacosUseSDKError.inputInvalidArgument(
-        "'writetext' requires exactly one argument: <text_to_type>\n\(usage)")
-    }
-    let text = arguments[2]
-    log("Text Argument: \"\(text)\"")
-    log("Calling writeText library function...")
-    try MacosUseSDK.writeText(text)
-    finish(success: true, message: "Text writing simulated.")
-
-  default:
-    fputs(usage, stderr)
-    throw MacosUseSDKError.inputInvalidArgument("Unknown action '\(action)'")
+  } catch let error as MacosUseSDKError {
+    // Handle specific SDK errors
+    finish(success: false, message: "MacosUseSDK Error: \(error.localizedDescription)")
+  } catch {
+    // Handle other unexpected errors
+    finish(success: false, message: "An unexpected error occurred: \(error.localizedDescription)")
   }
-
-} catch let error as MacosUseSDKError {
-  // Handle specific SDK errors
-  finish(success: false, message: "MacosUseSDK Error: \(error.localizedDescription)")
-} catch {
-  // Handle other unexpected errors
-  finish(success: false, message: "An unexpected error occurred: \(error.localizedDescription)")
 }
 
-// Should not be reached due to finish() calls, but satisfies the compiler
-exit(0)
+// Keep the process alive until the Task completes
+RunLoop.main.run()
 
 /*
 # Example: Open Calculator and type 2*3=
