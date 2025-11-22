@@ -9,14 +9,25 @@
   2.  Execute it using the `mcp-server-make` tool.
 - **FORBIDDEN ARGUMENT:** You MUST NOT specify the `file` option (e.g., `file=config.mk`) when invoking `mcp-server-make`. The invocation must rely strictly on the repository's default Makefile discovery (which includes `config.mk`).
 - **LOGGING REQUIREMENT:** All `config.mk` recipes producing significant output MUST use `| tee $(or $(PROJECT_ROOT),$(error If you are reading this you specified the `file` option when calling `mcp-server-make`. DONT DO THAT.))/build.log | tail -n 15` (or similar) to prevent context window flooding.
-
-**LOG OUTPUT PRIVACY:**
-- AVOID and REPLACE ad-hoc `fputs` or unannotated `print` with `Logger` and `OSLogPrivacy` for any message emitted from Swift server components or SDK helpers in `Server/Sources/MacosUseServer` and `Sources/MacosUseSDK`.
-- `fputs` is forbidden in these server/SDK directories for diagnostic logs — it bypasses OS unified logging and cannot mark privacy. Use `Logger` with explicit `privacy` annotations for every interpolated value. For user-facing CLI help text (static strings) `print` is allowed only outside `Server/Sources/MacosUseServer` and `Sources/MacosUseSDK`.
+  For example (add if missing to `config.mk` within `ifndef CUSTOM_TARGETS_DEFINED ... endif` per `example.config.mk`):
+  ```makefile
+  .PHONY: make-all-with-log
+  make-all-with-log: ## Run all targets with logging to build.log
+  make-all-with-log: SHELL := /bin/bash
+  make-all-with-log:
+  	@echo "Output limited to avoid context explosion. See $(or $(PROJECT_ROOT),$(error If you are reading this you specified the `file` option when calling `mcp-server-make`. DONT DO THAT.))/build.log for full content."; \
+  	set -o pipefail; \
+  	$(MAKE) all 2>&1 | tee $(or $(PROJECT_ROOT),$(error If you are reading this you specified the `file` option when calling `mcp-server-make`. DONT DO THAT.))/build.log | tail -n 15; \
+  	exit $${PIPESTATUS[0]}
+  ```
 
 **2. CONTINUOUS VALIDATION:**
-- **DO NOT BREAK THE BUILD:** You must run the core `all` target constantly. Use `mcp-server-make all` after every file change.
+- **DO NOT BREAK THE BUILD:** You must run the core `all` target constantly. Use `mcp-server-make make-all-with-log` after every file change.
 - **Resource Leak Check:** Integration tests must ensure proper cleanup of observations and connections at teardown.
+
+**3. LOG OUTPUT PRIVACY:**
+- AVOID and REPLACE ad-hoc `fputs` or unannotated `print` with `Logger` and `OSLogPrivacy` for any message emitted from Swift server components or SDK helpers in `Server/Sources/MacosUseServer` and `Sources/MacosUseSDK`.
+- `fputs` is forbidden in these server/SDK directories for diagnostic logs — it bypasses OS unified logging and cannot mark privacy. Use `Logger` with explicit `privacy` annotations for every interpolated value. For user-facing CLI help text (static strings) `print` is allowed only outside `Server/Sources/MacosUseServer` and `Sources/MacosUseSDK`.
 
 ## Core Directives (Refinement Phase)
 
