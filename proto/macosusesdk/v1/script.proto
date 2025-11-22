@@ -1,0 +1,54 @@
+// Copyright 2025 Joseph Cumines
+//
+// Script-related resources and types
+
+syntax = "proto3";
+
+package macosusesdk.v1;
+
+option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
+option java_multiple_files = true;
+option java_outer_classname = "ScriptProto";
+option java_package = "com.macosusesdk.v1";
+
+// Scripting dictionaries.
+message ScriptingDictionaries {
+  // Available scripting dictionaries.
+  repeated ScriptingDictionary dictionaries = 1;
+}
+
+// Scripting dictionary for an application.
+message ScriptingDictionary {
+  // Application.
+  string application = 1;
+
+  // Application bundle identifier.
+  string bundle_id = 2;
+
+  // Whether the application supports AppleScript.
+  bool supports_applescript = 3;
+
+  // Whether the application supports JXA.
+  bool supports_jxa = 4;
+
+  // Available scripting commands.
+  repeated string commands = 5;
+
+  // Available scripting classes.
+  repeated string classes = 6;
+}
+
+// Script type enumeration.
+enum ScriptType {
+  // Default unspecified type.
+  SCRIPT_TYPE_UNSPECIFIED = 0;
+
+  // AppleScript.
+  SCRIPT_TYPE_APPLESCRIPT = 1;
+
+  // JavaScript for Automation (JXA).
+  SCRIPT_TYPE_JXA = 2;
+
+  // Shell script (bash).
+  SCRIPT_TYPE_SHELL = 3;
+}

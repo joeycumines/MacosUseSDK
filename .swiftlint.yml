@@ -1,0 +1,18 @@
+disabled_rules:
+  # conflict w/ swiftformat
+  - trailing_comma
+  - opening_brace
+  # conflict w/ generated code
+  - type_name
+  # the bin of shame - if you consider these worthwhile consider yourself judged
+  - todo
+  - file_length
+  - closure_body_length
+  - function_body_length
+  - line_length
+  - type_body_length
+  - blanket_disable_command
+  - cyclomatic_complexity
+  - identifier_name
+  - function_parameter_count
+  - large_tuple

@@ -1,0 +1,36 @@
+// Copyright 2025 Joseph Cumines
+//
+// Application resource definition
+
+syntax = "proto3";
+
+package macosusesdk.v1;
+
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+
+option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
+option java_multiple_files = true;
+option java_outer_classname = "ApplicationProto";
+option java_package = "com.macosusesdk.v1";
+
+// A resource representing a running application instance that the server
+// is actively tracking for automation.
+message Application {
+  option (google.api.resource) = {
+    type: "macosusesdk.localhost/Application"
+    pattern: "applications/{application}"
+    singular: "application"
+    plural: "applications"
+  };
+
+  // Resource name in the format "applications/{application}"
+  // where {application} is the process ID (PID).
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // The process ID of the application.
+  int32 pid = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // The localized name of the application.
+  string display_name = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+}

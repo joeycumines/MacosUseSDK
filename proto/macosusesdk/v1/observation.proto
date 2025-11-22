@@ -1,0 +1,228 @@
+// Copyright 2025 Joseph Cumines
+//
+// Observation resource for monitoring UI changes
+
+syntax = "proto3";
+
+package macosusesdk.v1;
+
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+import "macosusesdk/type/element.proto";
+
+option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
+option java_multiple_files = true;
+option java_outer_classname = "ObservationProto";
+option java_package = "com.macosusesdk.v1";
+
+// An observation monitors UI changes and streams events.
+message Observation {
+  option (google.api.resource) = {
+    type: "macosusesdk.localhost/Observation"
+    pattern: "applications/{application}/observations/{observation}"
+    singular: "observation"
+    plural: "observations"
+  };
+
+  // Resource name in the format "applications/{application}/observations/{observation}".
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // Type of observation.
+  ObservationType type = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Current state of the observation.
+  State state = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the observation was created.
+  google.protobuf.Timestamp create_time = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the observation started.
+  google.protobuf.Timestamp start_time = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the observation ended (if completed or cancelled).
+  google.protobuf.Timestamp end_time = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Filter configuration for the observation.
+  ObservationFilter filter = 7 [(google.api.field_behavior) = OPTIONAL];
+
+  // State of an observation.
+  enum State {
+    // Default unspecified state.
+    STATE_UNSPECIFIED = 0;
+
+    // Observation is pending start.
+    STATE_PENDING = 1;
+
+    // Observation is actively monitoring.
+    STATE_ACTIVE = 2;
+
+    // Observation completed successfully.
+    STATE_COMPLETED = 3;
+
+    // Observation was cancelled.
+    STATE_CANCELLED = 4;
+
+    // Observation failed with an error.
+    STATE_FAILED = 5;
+  }
+}
+
+// Filter for observations.
+message ObservationFilter {
+  // Poll interval in seconds (for polling-based observations).
+  double poll_interval = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to observe only visible elements.
+  bool visible_only = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Specific element roles to observe (empty = all roles).
+  repeated string roles = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Specific attributes to observe (for attribute change observations).
+  repeated string attributes = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// An event from an observation.
+message ObservationEvent {
+  // Observation that generated this event.
+  string observation = 1 [(google.api.resource_reference) = {type: "macosusesdk.localhost/Observation"}];
+
+  // When the event occurred.
+  google.protobuf.Timestamp event_time = 2;
+
+  // Event sequence number (monotonically increasing per observation).
+  int64 sequence = 3;
+
+  // The specific event type and data.
+  oneof event_type {
+    // Element was added.
+    ElementEvent element_added = 10;
+
+    // Element was removed.
+    ElementEvent element_removed = 11;
+
+    // Element was modified.
+    ElementModified element_modified = 12;
+
+    // Window event occurred.
+    WindowEvent window_event = 13;
+
+    // Application event occurred.
+    ApplicationEvent application_event = 14;
+  }
+}
+
+// Event related to an element.
+message ElementEvent {
+  // The element.
+  macosusesdk.type.Element element = 1;
+}
+
+// Event for an element modification.
+message ElementModified {
+  // The element before modification.
+  macosusesdk.type.Element old_element = 1;
+
+  // The element after modification.
+  macosusesdk.type.Element new_element = 2;
+
+  // Changed attributes.
+  repeated AttributeChange changes = 3;
+}
+
+// A change to an element attribute.
+message AttributeChange {
+  // Name of the attribute that changed.
+  string attribute = 1;
+
+  // Old value of the attribute.
+  string old_value = 2;
+
+  // New value of the attribute.
+  string new_value = 3;
+}
+
+// Event related to a window.
+message WindowEvent {
+  // Type of window event.
+  WindowEventType event_type = 1;
+
+  // Window ID.
+  string window_id = 2;
+
+  // Window title (if available).
+  string title = 3;
+
+  // Window event type.
+  enum WindowEventType {
+    // Default unspecified.
+    WINDOW_EVENT_TYPE_UNSPECIFIED = 0;
+
+    // Window was created.
+    WINDOW_EVENT_TYPE_CREATED = 1;
+
+    // Window was destroyed.
+    WINDOW_EVENT_TYPE_DESTROYED = 2;
+
+    // Window was moved.
+    WINDOW_EVENT_TYPE_MOVED = 3;
+
+    // Window was resized.
+    WINDOW_EVENT_TYPE_RESIZED = 4;
+
+    // Window was minimized.
+    WINDOW_EVENT_TYPE_MINIMIZED = 5;
+
+    // Window was restored.
+    WINDOW_EVENT_TYPE_RESTORED = 6;
+
+    // Window focus changed.
+    WINDOW_EVENT_TYPE_FOCUSED = 7;
+  }
+}
+
+// Event related to an application.
+message ApplicationEvent {
+  // Type of application event.
+  ApplicationEventType event_type = 1;
+
+  // Application event type.
+  enum ApplicationEventType {
+    // Default unspecified.
+    APPLICATION_EVENT_TYPE_UNSPECIFIED = 0;
+
+    // Application was activated (brought to front).
+    APPLICATION_EVENT_TYPE_ACTIVATED = 1;
+
+    // Application was deactivated.
+    APPLICATION_EVENT_TYPE_DEACTIVATED = 2;
+
+    // Application launched.
+    APPLICATION_EVENT_TYPE_LAUNCHED = 3;
+
+    // Application terminated.
+    APPLICATION_EVENT_TYPE_TERMINATED = 4;
+  }
+}
+
+// Type of observation to perform.
+enum ObservationType {
+  // Default unspecified type.
+  OBSERVATION_TYPE_UNSPECIFIED = 0;
+
+  // Observe element changes (additions, removals, modifications).
+  OBSERVATION_TYPE_ELEMENT_CHANGES = 1;
+
+  // Observe window changes (creation, destruction, movement, resize).
+  OBSERVATION_TYPE_WINDOW_CHANGES = 2;
+
+  // Observe application state changes.
+  OBSERVATION_TYPE_APPLICATION_CHANGES = 3;
+
+  // Observe specific element attribute changes.
+  OBSERVATION_TYPE_ATTRIBUTE_CHANGES = 4;
+
+  // Observe accessibility tree structure changes.
+  OBSERVATION_TYPE_TREE_CHANGES = 5;
+}

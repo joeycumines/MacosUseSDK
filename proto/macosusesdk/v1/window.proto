@@ -1,0 +1,178 @@
+// Copyright 2025 Joseph Cumines
+//
+// Window resource definition
+
+syntax = "proto3";
+
+package macosusesdk.v1;
+
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+
+option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
+option java_multiple_files = true;
+option java_outer_classname = "WindowProto";
+option java_package = "com.macosusesdk.v1";
+
+// A resource representing an individual window within an application.
+// Contains only cheap CoreGraphics data. For expensive AX state queries,
+// use GetWindowState to fetch the WindowState singleton sub-resource.
+message Window {
+  option (google.api.resource) = {
+    type: "macosusesdk.localhost/Window"
+    pattern: "applications/{application}/windows/{window}"
+    singular: "window"
+    plural: "windows"
+  };
+
+  // Resource name in the format "applications/{application}/windows/{window}"
+  // where {application} is the process ID and {window} is the window ID.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // The title of the window.
+  //
+  // Data Source (AX Authority): Fresh Accessibility API query (kAXTitleAttribute).
+  // This field is queried from AX on every request and reflects the immediate state.
+  // It is NOT cached from CGWindowList, ensuring mutation responses return up-to-date values.
+  string title = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Bounding rectangle of the window.
+  //
+  // Data Source (AX Authority): Fresh Accessibility API queries (kAXPositionAttribute, kAXSizeAttribute).
+  // These fields are queried from AX on every request and reflect the immediate state after mutations.
+  // They are NOT cached from CGWindowList (which can lag by 10-100ms), ensuring mutation responses
+  // (MoveWindow, ResizeWindow) return the exact requested values without polling delays.
+  Bounds bounds = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Z-order index (higher values are in front).
+  //
+  // Data Source (Registry Authority): Cached value from CGWindowList via WindowRegistry.
+  // This is a stable metadata field that does not change during window mutations (move/resize).
+  // Defaults to 0 if registry data is unavailable.
+  int32 z_index = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether the window is currently visible on screen.
+  //
+  // Data Source (Split-Brain Authority): Computed via the formula:
+  //   visible = (Registry.isOnScreen OR Assumption) AND NOT AX.Minimized AND NOT AX.Hidden
+  //
+  // Where:
+  //   - Registry.isOnScreen: Cached from CGWindowList (may be stale during async propagation)
+  //   - Assumption: If registry data is missing but AX interaction succeeded, assume isOnScreen=true
+  //   - AX.Minimized: Fresh query of kAXMinimizedAttribute (authoritative, no lag)
+  //   - AX.Hidden: Fresh query of kAXHiddenAttribute (authoritative, no lag)
+  //
+  // This hybrid approach ensures:
+  //   1. Mutation responses (Move/Resize) correctly report visible=true (not false due to stale CGWindowList)
+  //   2. Minimize operations correctly report visible=false (fresh AX state overrides stale registry)
+  //   3. Hidden state is accurately reflected without conflating minimized vs explicitly hidden
+  //
+  // For detailed AX state queries (minimized, ax_hidden, focused, modal, etc.), use GetWindowState.
+  bool visible = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Bundle identifier of the application that owns this window.
+  //
+  // Data Source (Registry Authority): Resolved via NSRunningApplication from cached CGWindowList metadata.
+  // This is a stable metadata field that does not change during window mutations.
+  // Empty string if NSRunningApplication resolution fails or registry data is unavailable.
+  string bundle_id = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Bounding rectangle for window positioning.
+message Bounds {
+  // X coordinate of the window's origin.
+  double x = 1;
+
+  // Y coordinate of the window's origin.
+  double y = 2;
+
+  // Width of the window.
+  double width = 3;
+
+  // Height of the window.
+  double height = 4;
+}
+
+// Detailed state information about a window, fetched via expensive AX queries.
+// This is a singleton sub-resource that clients must explicitly request.
+// Use GetWindowState to fetch this data on-demand.
+message WindowState {
+  option (google.api.resource) = {
+    type: "macosusesdk.localhost/WindowState"
+    pattern: "applications/{application}/windows/{window}/state"
+    singular: "windowState"
+    plural: "windowStates"
+  };
+
+  // Resource name in the format "applications/{application}/windows/{window}/state"
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // Whether the window can be resized.
+  //
+  // Data Source: AX query of AXSizeSettable attribute.
+  // This is an expensive query that should only be fetched on-demand via GetWindowState.
+  bool resizable = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether the window can be minimized.
+  //
+  // Data Source: AX query checking existence of AXMinimizeButton attribute.
+  // This is an expensive query that should only be fetched on-demand via GetWindowState.
+  bool minimizable = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether the window can be closed.
+  //
+  // Data Source: AX query checking existence of AXCloseButton attribute.
+  // This is an expensive query that should only be fetched on-demand via GetWindowState.
+  bool closable = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether the window is a modal dialog.
+  //
+  // Data Source: AX queries of kAXModalAttribute and kAXSubroleAttribute.
+  // True if explicitly marked modal or subrole contains "Dialog" or "Sheet".
+  // This is an expensive query that should only be fetched on-demand via GetWindowState.
+  bool modal = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether the window is a floating window.
+  //
+  // Data Source: AX query of kAXSubroleAttribute.
+  // True if subrole contains "Floating".
+  // This is an expensive query that should only be fetched on-demand via GetWindowState.
+  bool floating = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether the window is explicitly hidden according to AX attributes.
+  //
+  // Data Source: Fresh AX query of kAXHiddenAttribute.
+  // True means the window is explicitly hidden by the application (NOT minimized to dock).
+  // This field is distinct from:
+  //   - Window.visible (hybrid formula combining registry + AX state)
+  //   - minimized (window is in dock, not explicitly hidden)
+  //
+  // Note: This field is ALSO queried in Window responses (as part of the visible formula),
+  // but Window responses may use cached registry data for performance. GetWindowState
+  // guarantees a fresh AX query.
+  bool ax_hidden = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether the window is minimized (in the dock).
+  //
+  // Data Source: Fresh AX query of kAXMinimizedAttribute.
+  // True means the window is minimized to the dock (NOT explicitly hidden).
+  //
+  // Note: This field is ALSO queried in Window responses (as part of the visible formula),
+  // but clients requiring authoritative minimized state should use GetWindowState to ensure
+  // the most up-to-date value, especially immediately after minimize/restore operations.
+  bool minimized = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether the window is focused (is the main window).
+  //
+  // Data Source: Fresh AX query of kAXMainAttribute.
+  // True if this window is the application's main (focused) window.
+  // This is an expensive query that should only be fetched on-demand via GetWindowState.
+  bool focused = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether the window is in full-screen mode.
+  //
+  // Data Source: Currently UNIMPLEMENTED (kAXFullscreenAttribute is not standard).
+  // Optional: unset (nil) if the AX API does not provide a definitive answer.
+  // Clients should check HasFullscreen() before accessing this field.
+  optional bool fullscreen = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
+}

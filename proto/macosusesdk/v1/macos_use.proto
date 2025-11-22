@@ -1,0 +1,2022 @@
+// Copyright 2025 Joseph Cumines
+//
+// MacosUse service definition
+
+syntax = "proto3";
+
+package macosusesdk.v1;
+
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/longrunning/operations.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "macosusesdk/type/element.proto";
+import "macosusesdk/type/geometry.proto";
+import "macosusesdk/type/selector.proto";
+import "macosusesdk/v1/application.proto";
+import "macosusesdk/v1/clipboard.proto";
+import "macosusesdk/v1/condition.proto";
+import "macosusesdk/v1/input.proto";
+import "macosusesdk/v1/macro.proto";
+import "macosusesdk/v1/observation.proto";
+import "macosusesdk/v1/screenshot.proto";
+import "macosusesdk/v1/script.proto";
+import "macosusesdk/v1/session.proto";
+import "macosusesdk/v1/window.proto";
+
+option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
+option java_multiple_files = true;
+option java_outer_classname = "MacosUseProto";
+option java_package = "com.macosusesdk.v1";
+
+// MacosUse is the primary service for automating macOS applications.
+service MacosUse {
+  option (google.api.default_host) = "macosusesdk.localhost";
+
+  // Opens or activates an application. This is a long-running operation.
+  rpc OpenApplication(OpenApplicationRequest) returns (google.longrunning.Operation) {
+    option (google.api.http) = {
+      post: "/v1/applications:openApplication"
+      body: "*"
+    };
+    option (google.longrunning.operation_info) = {
+      response_type: "OpenApplicationResponse"
+      metadata_type: "OpenApplicationMetadata"
+    };
+  }
+
+  // Gets a specific application being tracked.
+  rpc GetApplication(GetApplicationRequest) returns (Application) {
+    option (google.api.http) = {get: "/v1/{name=applications/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists all applications currently tracked.
+  rpc ListApplications(ListApplicationsRequest) returns (ListApplicationsResponse) {
+    option (google.api.http) = {get: "/v1/applications"};
+  }
+
+  // Stops tracking an application. This does NOT quit the app.
+  rpc DeleteApplication(DeleteApplicationRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/v1/{name=applications/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Creates an input action to be executed.
+  rpc CreateInput(CreateInputRequest) returns (Input) {
+    option (google.api.http) = {
+      post: "/v1/{parent=applications/*}/inputs"
+      body: "input"
+    };
+    option (google.api.method_signature) = "parent,input,input_id";
+  }
+
+  // Gets a specific input.
+  rpc GetInput(GetInputRequest) returns (Input) {
+    option (google.api.http) = {get: "/v1/{name=applications/*/inputs/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists inputs for an application or globally.
+  rpc ListInputs(ListInputsRequest) returns (ListInputsResponse) {
+    option (google.api.http) = {get: "/v1/{parent=applications/*}/inputs"};
+    option (google.api.method_signature) = "parent";
+  }
+
+  // Traverses the accessibility tree of an application.
+  rpc TraverseAccessibility(TraverseAccessibilityRequest) returns (TraverseAccessibilityResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=applications/*}:traverseAccessibility"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // Streams accessibility tree changes for an application.
+  rpc WatchAccessibility(WatchAccessibilityRequest) returns (stream WatchAccessibilityResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=applications/*}:watchAccessibility"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // Gets a specific window.
+  rpc GetWindow(GetWindowRequest) returns (Window) {
+    option (google.api.http) = {get: "/v1/{name=applications/*/windows/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists windows for an application.
+  rpc ListWindows(ListWindowsRequest) returns (ListWindowsResponse) {
+    option (google.api.http) = {get: "/v1/{parent=applications/*}/windows"};
+    option (google.api.method_signature) = "parent";
+  }
+
+  // Gets the detailed state (AX) of a window.
+  rpc GetWindowState(GetWindowStateRequest) returns (WindowState) {
+    option (google.api.http) = {get: "/v1/{name=applications/*/windows/*/state}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Focuses a specific window.
+  rpc FocusWindow(FocusWindowRequest) returns (Window) {
+    option (google.api.http) = {
+      post: "/v1/{name=applications/*/windows/*}:focus"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // Moves a window to a new position.
+  rpc MoveWindow(MoveWindowRequest) returns (Window) {
+    option (google.api.http) = {
+      post: "/v1/{name=applications/*/windows/*}:move"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name,x,y";
+  }
+
+  // Resizes a window.
+  rpc ResizeWindow(ResizeWindowRequest) returns (Window) {
+    option (google.api.http) = {
+      post: "/v1/{name=applications/*/windows/*}:resize"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name,width,height";
+  }
+
+  // Minimizes a window.
+  rpc MinimizeWindow(MinimizeWindowRequest) returns (Window) {
+    option (google.api.http) = {
+      post: "/v1/{name=applications/*/windows/*}:minimize"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // Restores a minimized window.
+  rpc RestoreWindow(RestoreWindowRequest) returns (Window) {
+    option (google.api.http) = {
+      post: "/v1/{name=applications/*/windows/*}:restore"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // Closes a window.
+  rpc CloseWindow(CloseWindowRequest) returns (CloseWindowResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=applications/*/windows/*}:close"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // Finds elements matching a selector.
+  rpc FindElements(FindElementsRequest) returns (FindElementsResponse) {
+    option (google.api.http) = {
+      post: "/v1/{parent=applications/*}:findElements"
+      body: "*"
+      additional_bindings: {
+        post: "/v1/{parent=applications/*/windows/*}:findElements"
+        body: "*"
+      }
+    };
+    option (google.api.method_signature) = "parent,selector";
+  }
+
+  // Finds elements within a screen region.
+  rpc FindRegionElements(FindRegionElementsRequest) returns (FindRegionElementsResponse) {
+    option (google.api.http) = {
+      post: "/v1/{parent=applications/*}:findRegionElements"
+      body: "*"
+      additional_bindings: {
+        post: "/v1/{parent=applications/*/windows/*}:findRegionElements"
+        body: "*"
+      }
+    };
+    option (google.api.method_signature) = "parent,region";
+  }
+
+  // Gets a specific element.
+  rpc GetElement(GetElementRequest) returns (macosusesdk.type.Element) {
+    option (google.api.http) = {get: "/v1/{name=applications/*/elements/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Clicks an element.
+  rpc ClickElement(ClickElementRequest) returns (ClickElementResponse) {
+    option (google.api.http) = {
+      post: "/v1/{parent=applications/*}:clickElement"
+      body: "*"
+      additional_bindings: {
+        post: "/v1/{parent=applications/*/windows/*}:clickElement"
+        body: "*"
+      }
+    };
+  }
+
+  // Writes an element's value.
+  rpc WriteElementValue(WriteElementValueRequest) returns (WriteElementValueResponse) {
+    option (google.api.http) = {
+      post: "/v1/{parent=applications/*}:writeElementValue"
+      body: "*"
+      additional_bindings: {
+        post: "/v1/{parent=applications/*/windows/*}:writeElementValue"
+        body: "*"
+      }
+    };
+  }
+
+  // Gets available actions for an element.
+  rpc GetElementActions(GetElementActionsRequest) returns (ElementActions) {
+    option (google.api.http) = {get: "/v1/{name=applications/*/elements/*}/actions"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Performs an accessibility action on an element.
+  rpc PerformElementAction(PerformElementActionRequest) returns (PerformElementActionResponse) {
+    option (google.api.http) = {
+      post: "/v1/{parent=applications/*}:performElementAction"
+      body: "*"
+      additional_bindings: {
+        post: "/v1/{parent=applications/*/windows/*}:performElementAction"
+        body: "*"
+      }
+    };
+  }
+
+  // Waits for an element to appear (long-running operation).
+  rpc WaitElement(WaitElementRequest) returns (google.longrunning.Operation) {
+    option (google.api.http) = {
+      post: "/v1/{parent=applications/*}:waitElement"
+      body: "*"
+      additional_bindings: {
+        post: "/v1/{parent=applications/*/windows/*}:waitElement"
+        body: "*"
+      }
+    };
+    option (google.longrunning.operation_info) = {
+      response_type: "WaitElementResponse"
+      metadata_type: "WaitElementMetadata"
+    };
+  }
+
+  // Waits for an element to reach a specific state (long-running operation).
+  rpc WaitElementState(WaitElementStateRequest) returns (google.longrunning.Operation) {
+    option (google.api.http) = {
+      post: "/v1/{parent=applications/*}:waitElementState"
+      body: "*"
+      additional_bindings: {
+        post: "/v1/{parent=applications/*/windows/*}:waitElementState"
+        body: "*"
+      }
+    };
+    option (google.longrunning.operation_info) = {
+      response_type: "WaitElementStateResponse"
+      metadata_type: "WaitElementStateMetadata"
+    };
+  }
+
+  // Creates an observation (long-running operation).
+  rpc CreateObservation(CreateObservationRequest) returns (google.longrunning.Operation) {
+    option (google.api.http) = {
+      post: "/v1/{parent=applications/*}/observations"
+      body: "observation"
+    };
+    option (google.api.method_signature) = "parent,observation,observation_id";
+    option (google.longrunning.operation_info) = {
+      response_type: "Observation"
+      metadata_type: "CreateObservationMetadata"
+    };
+  }
+
+  // Gets an observation.
+  rpc GetObservation(GetObservationRequest) returns (Observation) {
+    option (google.api.http) = {get: "/v1/{name=applications/*/observations/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists observations for an application.
+  rpc ListObservations(ListObservationsRequest) returns (ListObservationsResponse) {
+    option (google.api.http) = {get: "/v1/{parent=applications/*}/observations"};
+    option (google.api.method_signature) = "parent";
+  }
+
+  // Cancels an observation.
+  rpc CancelObservation(CancelObservationRequest) returns (Observation) {
+    option (google.api.http) = {
+      post: "/v1/{name=applications/*/observations/*}:cancel"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // Streams observation events.
+  rpc StreamObservations(StreamObservationsRequest) returns (stream StreamObservationsResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=applications/*/observations/*}:stream"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // Creates a session.
+  rpc CreateSession(CreateSessionRequest) returns (Session) {
+    option (google.api.http) = {
+      post: "/v1/sessions"
+      body: "session"
+    };
+    option (google.api.method_signature) = "session,session_id";
+  }
+
+  // Gets a session.
+  rpc GetSession(GetSessionRequest) returns (Session) {
+    option (google.api.http) = {get: "/v1/{name=sessions/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists sessions.
+  rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse) {
+    option (google.api.http) = {get: "/v1/sessions"};
+  }
+
+  // Deletes a session.
+  rpc DeleteSession(DeleteSessionRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/v1/{name=sessions/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Begins a transaction within a session.
+  rpc BeginTransaction(BeginTransactionRequest) returns (BeginTransactionResponse) {
+    option (google.api.http) = {
+      post: "/v1/{session=sessions/*}:beginTransaction"
+      body: "*"
+    };
+    option (google.api.method_signature) = "session";
+  }
+
+  // Commits a transaction.
+  rpc CommitTransaction(CommitTransactionRequest) returns (Transaction) {
+    option (google.api.http) = {
+      post: "/v1/{name=sessions/*}:commit"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name,transaction_id";
+  }
+
+  // Rolls back a transaction.
+  rpc RollbackTransaction(RollbackTransactionRequest) returns (Transaction) {
+    option (google.api.http) = {
+      post: "/v1/{name=sessions/*}:rollback"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name,revision_id,transaction_id";
+  }
+
+  // Gets a session state snapshot.
+  rpc GetSessionSnapshot(GetSessionSnapshotRequest) returns (SessionSnapshot) {
+    option (google.api.http) = {get: "/v1/{name=sessions/*}/snapshot"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Captures a full screen screenshot.
+  rpc CaptureScreenshot(CaptureScreenshotRequest) returns (CaptureScreenshotResponse) {
+    option (google.api.http) = {
+      post: "/v1/screenshots:captureScreenshot"
+      body: "*"
+    };
+  }
+
+  // Captures a screenshot of a specific window.
+  rpc CaptureWindowScreenshot(CaptureWindowScreenshotRequest) returns (CaptureWindowScreenshotResponse) {
+    option (google.api.http) = {
+      post: "/v1/{window=applications/*/windows/*}:captureWindowScreenshot"
+      body: "*"
+    };
+    option (google.api.method_signature) = "window";
+  }
+
+  // Captures a screenshot of a specific element.
+  rpc CaptureElementScreenshot(CaptureElementScreenshotRequest) returns (CaptureElementScreenshotResponse) {
+    option (google.api.http) = {
+      post: "/v1/{parent=applications/*}:captureElementScreenshot"
+      body: "*"
+      additional_bindings: {
+        post: "/v1/{parent=applications/*/windows/*}:captureElementScreenshot"
+        body: "*"
+      }
+    };
+    option (google.api.method_signature) = "parent,element_id";
+  }
+
+  // Captures a screenshot of a screen region.
+  rpc CaptureRegionScreenshot(CaptureRegionScreenshotRequest) returns (CaptureRegionScreenshotResponse) {
+    option (google.api.http) = {
+      post: "/v1/screenshots:captureRegionScreenshot"
+      body: "*"
+    };
+    option (google.api.method_signature) = "region";
+  }
+
+  // Gets clipboard contents.
+  rpc GetClipboard(GetClipboardRequest) returns (Clipboard) {
+    option (google.api.http) = {get: "/v1/{name=clipboard}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Writes clipboard contents.
+  rpc WriteClipboard(WriteClipboardRequest) returns (WriteClipboardResponse) {
+    option (google.api.http) = {
+      post: "/v1/clipboard:write"
+      body: "*"
+    };
+    option (google.api.method_signature) = "content";
+  }
+
+  // Clears clipboard contents.
+  rpc ClearClipboard(ClearClipboardRequest) returns (ClearClipboardResponse) {
+    option (google.api.http) = {
+      post: "/v1/clipboard:clear"
+      body: "*"
+    };
+  }
+
+  // Gets clipboard history (if available).
+  rpc GetClipboardHistory(GetClipboardHistoryRequest) returns (ClipboardHistory) {
+    option (google.api.http) = {get: "/v1/{name=clipboard/history}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Automates an open file dialog.
+  rpc AutomateOpenFileDialog(AutomateOpenFileDialogRequest) returns (AutomateOpenFileDialogResponse) {
+    option (google.api.http) = {
+      post: "/v1/{application=applications/*}:automateOpenFileDialog"
+      body: "*"
+    };
+    option (google.api.method_signature) = "application,file_path";
+  }
+
+  // Automates a save file dialog.
+  rpc AutomateSaveFileDialog(AutomateSaveFileDialogRequest) returns (AutomateSaveFileDialogResponse) {
+    option (google.api.http) = {
+      post: "/v1/{application=applications/*}:automateSaveFileDialog"
+      body: "*"
+    };
+    option (google.api.method_signature) = "application,file_path";
+  }
+
+  // Selects a file programmatically.
+  rpc SelectFile(SelectFileRequest) returns (SelectFileResponse) {
+    option (google.api.http) = {
+      post: "/v1/{application=applications/*}:selectFile"
+      body: "*"
+    };
+    option (google.api.method_signature) = "application,file_path";
+  }
+
+  // Selects a directory.
+  rpc SelectDirectory(SelectDirectoryRequest) returns (SelectDirectoryResponse) {
+    option (google.api.http) = {
+      post: "/v1/{application=applications/*}:selectDirectory"
+      body: "*"
+    };
+    option (google.api.method_signature) = "application,directory_path";
+  }
+
+  // Drags and drops files.
+  rpc DragFiles(DragFilesRequest) returns (DragFilesResponse) {
+    option (google.api.http) = {
+      post: "/v1/{application=applications/*}:dragFiles"
+      body: "*"
+    };
+    option (google.api.method_signature) = "application,file_paths,target_element_id";
+  }
+
+  // Creates a macro.
+  rpc CreateMacro(CreateMacroRequest) returns (Macro) {
+    option (google.api.http) = {
+      post: "/v1/macros"
+      body: "macro"
+    };
+    option (google.api.method_signature) = "macro,macro_id";
+  }
+
+  // Gets a macro.
+  rpc GetMacro(GetMacroRequest) returns (Macro) {
+    option (google.api.http) = {get: "/v1/{name=macros/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists macros.
+  rpc ListMacros(ListMacrosRequest) returns (ListMacrosResponse) {
+    option (google.api.http) = {get: "/v1/macros"};
+  }
+
+  // Updates a macro.
+  rpc UpdateMacro(UpdateMacroRequest) returns (Macro) {
+    option (google.api.http) = {
+      patch: "/v1/{macro.name=macros/*}"
+      body: "macro"
+    };
+    option (google.api.method_signature) = "macro,update_mask";
+  }
+
+  // Deletes a macro.
+  rpc DeleteMacro(DeleteMacroRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/v1/{name=macros/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Executes a macro (long-running operation).
+  rpc ExecuteMacro(ExecuteMacroRequest) returns (google.longrunning.Operation) {
+    option (google.api.http) = {
+      post: "/v1/{macro=macros/*}:executeMacro"
+      body: "*"
+    };
+    option (google.api.method_signature) = "macro";
+    option (google.longrunning.operation_info) = {
+      response_type: "ExecuteMacroResponse"
+      metadata_type: "ExecuteMacroMetadata"
+    };
+  }
+
+  // Executes an AppleScript.
+  rpc ExecuteAppleScript(ExecuteAppleScriptRequest) returns (ExecuteAppleScriptResponse) {
+    option (google.api.http) = {
+      post: "/v1/scripts:executeAppleScript"
+      body: "*"
+    };
+    option (google.api.method_signature) = "script";
+  }
+
+  // Executes JavaScript for Automation (JXA).
+  rpc ExecuteJavaScript(ExecuteJavaScriptRequest) returns (ExecuteJavaScriptResponse) {
+    option (google.api.http) = {
+      post: "/v1/scripts:executeJavaScript"
+      body: "*"
+    };
+    option (google.api.method_signature) = "script";
+  }
+
+  // Executes a shell command.
+  rpc ExecuteShellCommand(ExecuteShellCommandRequest) returns (ExecuteShellCommandResponse) {
+    option (google.api.http) = {
+      post: "/v1/scripts:executeShellCommand"
+      body: "*"
+    };
+    option (google.api.method_signature) = "command";
+  }
+
+  // Validates a script without executing.
+  rpc ValidateScript(ValidateScriptRequest) returns (ValidateScriptResponse) {
+    option (google.api.http) = {
+      post: "/v1/scripts:validateScript"
+      body: "*"
+    };
+    option (google.api.method_signature) = "type,script";
+  }
+
+  // Gets scripting dictionaries.
+  rpc GetScriptingDictionaries(GetScriptingDictionariesRequest) returns (ScriptingDictionaries) {
+    option (google.api.http) = {get: "/v1/{name=scriptingDictionaries}"};
+    option (google.api.method_signature) = "name";
+  }
+}
+
+// Request to open an application.
+message OpenApplicationRequest {
+  // The identifier (name, bundle ID, or path) of the application to open.
+  // Examples: "Calculator", "com.apple.calculator", "/Applications/Calculator.app"
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Response from opening an application.
+message OpenApplicationResponse {
+  // The application resource that was opened.
+  Application application = 1;
+}
+
+// Metadata for OpenApplication long-running operation.
+message OpenApplicationMetadata {
+  // The identifier being opened.
+  string id = 1;
+}
+
+// Request to get an application.
+message GetApplicationRequest {
+  // Resource name of the application.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
+  ];
+}
+
+// Request to list applications.
+message ListApplicationsRequest {
+  // Maximum number of applications to return.
+  int32 page_size = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Page token from a previous ListApplications call.
+  // This token is opaque and its structure must not be relied upon by clients.
+  // Only its presence or absence should be used to determine pagination state.
+  string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from listing applications.
+message ListApplicationsResponse {
+  // The applications.
+  repeated Application applications = 1;
+
+  // Token to retrieve the next page of results.
+  // This token is opaque and its structure must not be relied upon by clients.
+  // An empty value indicates no more results are available.
+  string next_page_token = 2;
+}
+
+// Request to delete an application.
+message DeleteApplicationRequest {
+  // Resource name of the application.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
+  ];
+
+  // If set to true, any pending inputs for this application will also be deleted.
+  bool force = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request to create an input.
+message CreateInputRequest {
+  // Parent resource. Either "applications/{application}" or "" for desktop inputs.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {child_type: "macosusesdk.localhost/Input"}
+  ];
+
+  // The input to create.
+  Input input = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Optional input ID. If not provided, the server generates one.
+  string input_id = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request to get an input.
+message GetInputRequest {
+  // Resource name of the input.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Input"}
+  ];
+}
+
+// Request to list inputs.
+message ListInputsRequest {
+  // Parent resource. Either "applications/{application}" or "" for desktop inputs.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {child_type: "macosusesdk.localhost/Input"}
+  ];
+
+  // Maximum number of inputs to return.
+  int32 page_size = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Page token from a previous ListInputs call.
+  // This token is opaque and its structure must not be relied upon by clients.
+  // Only its presence or absence should be used to determine pagination state.
+  string page_token = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Filter inputs by state. Valid values: PENDING, EXECUTING, COMPLETED, FAILED.
+  string filter = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from listing inputs.
+message ListInputsResponse {
+  // The inputs.
+  repeated Input inputs = 1;
+
+  // Token to retrieve the next page of results.
+  // This token is opaque and its structure must not be relied upon by clients.
+  // An empty value indicates no more results are available.
+  string next_page_token = 2;
+}
+
+// Request to traverse accessibility tree.
+message TraverseAccessibilityRequest {
+  // Resource name of the application.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
+  ];
+
+  // Whether to return only visible elements.
+  bool visible_only = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from traversing accessibility tree.
+message TraverseAccessibilityResponse {
+  // Name of the application.
+  string app = 1;
+
+  // Elements found in the traversal.
+  repeated macosusesdk.type.Element elements = 2;
+
+  // Statistics about the traversal.
+  macosusesdk.type.TraversalStats stats = 3;
+
+  // Processing time.
+  google.protobuf.Timestamp processing_time = 4;
+}
+
+// Request to watch accessibility changes.
+message WatchAccessibilityRequest {
+  // Resource name of the application.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
+  ];
+
+  // Poll interval in seconds.
+  double poll_interval = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to return only visible elements.
+  bool visible_only = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response streamed from watching accessibility.
+message WatchAccessibilityResponse {
+  // Elements added since last update.
+  repeated macosusesdk.type.Element added = 1;
+
+  // Elements removed since last update.
+  repeated macosusesdk.type.Element removed = 2;
+
+  // Elements modified since last update.
+  repeated ModifiedElement modified = 3;
+}
+
+// An element that was modified.
+message ModifiedElement {
+  // The element before modification.
+  macosusesdk.type.Element old_element = 1;
+
+  // The element after modification.
+  macosusesdk.type.Element new_element = 2;
+
+  // List of changed attributes (uses AttributeChange from observation.proto).
+  repeated AttributeChange changes = 3;
+}
+
+// Request to find elements matching a selector.
+message FindElementsRequest {
+  // Parent context. Either:
+  // - "applications/{application}" to search within an app
+  // - "applications/{application}/windows/{window}" to search within a window
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "*"}
+  ];
+
+  // Selector for finding elements.
+  macosusesdk.type.ElementSelector selector = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Maximum number of elements to return.
+  int32 page_size = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Page token from a previous FindElements call.
+  // This token is opaque and its structure must not be relied upon by clients.
+  // Only its presence or absence should be used to determine pagination state.
+  string page_token = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to search only visible elements.
+  bool visible_only = 5 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from finding elements.
+message FindElementsResponse {
+  // Elements matching the selector.
+  repeated macosusesdk.type.Element elements = 1;
+
+  // Token to retrieve the next page of results.
+  // This token is opaque and its structure must not be relied upon by clients.
+  // An empty value indicates no more results are available.
+  string next_page_token = 2;
+}
+
+// Request to find elements within a screen region.
+message FindRegionElementsRequest {
+  // Parent context (same as FindElementsRequest).
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "*"}
+  ];
+
+  // Region to search within (screen coordinates).
+  macosusesdk.type.Region region = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Optional selector for additional filtering.
+  macosusesdk.type.ElementSelector selector = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Maximum number of elements to return.
+  int32 page_size = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Page token from a previous call.
+  // This token is opaque and its structure must not be relied upon by clients.
+  // Only its presence or absence should be used to determine pagination state.
+  string page_token = 5 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from finding elements in a region.
+message FindRegionElementsResponse {
+  // Elements within the region.
+  repeated macosusesdk.type.Element elements = 1;
+
+  // Token to retrieve the next page of results.
+  // This token is opaque and its structure must not be relied upon by clients.
+  // An empty value indicates no more results are available.
+  string next_page_token = 2;
+}
+
+// Request to get a specific element by its resource name.
+message GetElementRequest {
+  // The name of the element to retrieve.
+  // Format: applications/{application}/elements/{element}
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.googleapis.com/Element"}
+  ];
+}
+
+// Request to click an element.
+message ClickElementRequest {
+  // Parent context.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "*"}
+  ];
+
+  // Element ID or selector.
+  oneof target {
+    // Element ID to click.
+    string element_id = 2;
+
+    // Selector to find element to click.
+    macosusesdk.type.ElementSelector selector = 3;
+  }
+
+  // Click type (single, double, right-click).
+  ClickType click_type = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Click type enumeration.
+  enum ClickType {
+    // Default single click.
+    CLICK_TYPE_UNSPECIFIED = 0;
+
+    // Single left-click.
+    CLICK_TYPE_SINGLE = 1;
+
+    // Double-click.
+    CLICK_TYPE_DOUBLE = 2;
+
+    // Right-click.
+    CLICK_TYPE_RIGHT = 3;
+  }
+}
+
+// Response from clicking an element.
+message ClickElementResponse {
+  // Whether the click was successful.
+  bool success = 1;
+
+  // The element that was clicked.
+  macosusesdk.type.Element element = 2;
+}
+
+// Request to write an element's value.
+message WriteElementValueRequest {
+  // Parent context.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "*"}
+  ];
+
+  // Element ID or selector.
+  oneof target {
+    // Element ID to modify.
+    string element_id = 2;
+
+    // Selector to find element to modify.
+    macosusesdk.type.ElementSelector selector = 3;
+  }
+
+  // Value to write.
+  string value = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from writing an element's value.
+message WriteElementValueResponse {
+  // Whether the operation was successful.
+  bool success = 1;
+
+  // The element that was modified.
+  macosusesdk.type.Element element = 2;
+}
+
+// Request to get available actions for an element.
+message GetElementActionsRequest {
+  // The name of the element to get actions for.
+  // Format: applications/{application}/elements/{element}
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.googleapis.com/Element"}
+  ];
+}
+
+// Available actions for an element.
+message ElementActions {
+  // Available action names.
+  repeated string actions = 1;
+}
+
+// Request to perform an accessibility action on an element.
+message PerformElementActionRequest {
+  // Parent context.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "*"}
+  ];
+
+  // Element ID or selector.
+  oneof target {
+    // Element ID.
+    string element_id = 2;
+
+    // Selector to find element.
+    macosusesdk.type.ElementSelector selector = 3;
+  }
+
+  // Action name to perform.
+  string action = 4 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Response from performing an element action.
+message PerformElementActionResponse {
+  // Whether the action was successful.
+  bool success = 1;
+
+  // The element.
+  macosusesdk.type.Element element = 2;
+}
+
+// Request to wait for an element to appear (long-running operation).
+message WaitElementRequest {
+  // Parent context.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "*"}
+  ];
+
+  // Selector for the element to wait for.
+  macosusesdk.type.ElementSelector selector = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Maximum time to wait in seconds (default: 30).
+  double timeout = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Poll interval in seconds (default: 0.5).
+  double poll_interval = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from waiting for an element.
+message WaitElementResponse {
+  // The element that appeared.
+  macosusesdk.type.Element element = 1;
+}
+
+// Metadata for WaitElement long-running operation.
+message WaitElementMetadata {
+  // The selector being waited for.
+  macosusesdk.type.ElementSelector selector = 1;
+
+  // Number of poll attempts so far.
+  int32 attempts = 2;
+}
+
+// Request to wait for an element to reach a specific state.
+message WaitElementStateRequest {
+  // Parent context.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "*"}
+  ];
+
+  // Element ID or selector.
+  oneof target {
+    // Element ID.
+    string element_id = 2;
+
+    // Selector to find element.
+    macosusesdk.type.ElementSelector selector = 3;
+  }
+
+  // State condition to wait for.
+  StateCondition condition = 4 [(google.api.field_behavior) = REQUIRED];
+
+  // Maximum time to wait in seconds (default: 30).
+  double timeout = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Poll interval in seconds (default: 0.5).
+  double poll_interval = 6 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// State condition for waiting.
+message StateCondition {
+  // Condition type.
+  oneof condition {
+    // Wait for element to be enabled.
+    bool enabled = 1;
+
+    // Wait for element to be focused.
+    bool focused = 2;
+
+    // Wait for element text to match.
+    string text_equals = 3;
+
+    // Wait for element text to contain substring.
+    string text_contains = 4;
+
+    // Wait for element to have specific attribute value.
+    AttributeCondition attribute = 5;
+  }
+}
+
+// Response from waiting for element state.
+message WaitElementStateResponse {
+  // The element in the expected state.
+  macosusesdk.type.Element element = 1;
+}
+
+// Metadata for WaitElementState operation.
+message WaitElementStateMetadata {
+  // The condition being waited for.
+  StateCondition condition = 1;
+
+  // Number of poll attempts so far.
+  int32 attempts = 2;
+}
+
+// Request to get a window.
+message GetWindowRequest {
+  // Resource name of the window.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Window"}
+  ];
+}
+
+// Request to list windows.
+message ListWindowsRequest {
+  // Parent application.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
+  ];
+
+  // Maximum number of windows to return.
+  int32 page_size = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Page token from a previous ListWindows call.
+  // This token is opaque and its structure must not be relied upon by clients.
+  // Only its presence or absence should be used to determine pagination state.
+  string page_token = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request to get the state of a window.
+message GetWindowStateRequest {
+  // The name of the window state resource to retrieve.
+  // Format: applications/{application}/windows/{window}/state
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/WindowState"}
+  ];
+}
+
+// Response from listing windows.
+message ListWindowsResponse {
+  // The windows.
+  repeated Window windows = 1;
+
+  // Token to retrieve the next page of results.
+  // This token is opaque and its structure must not be relied upon by clients.
+  // An empty value indicates no more results are available.
+  string next_page_token = 2;
+}
+
+// Request to focus a window.
+message FocusWindowRequest {
+  // Resource name of the window.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Window"}
+  ];
+}
+
+// Request to move a window.
+message MoveWindowRequest {
+  // Resource name of the window.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Window"}
+  ];
+
+  // New X coordinate.
+  double x = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // New Y coordinate.
+  double y = 3 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Request to resize a window.
+message ResizeWindowRequest {
+  // Resource name of the window.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Window"}
+  ];
+
+  // New width.
+  double width = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // New height.
+  double height = 3 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Request to minimize a window.
+message MinimizeWindowRequest {
+  // Resource name of the window.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Window"}
+  ];
+}
+
+// Request to restore a window.
+message RestoreWindowRequest {
+  // Resource name of the window.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Window"}
+  ];
+}
+
+// Request to close a window.
+message CloseWindowRequest {
+  // Resource name of the window.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Window"}
+  ];
+
+  // Whether to force close without confirmation.
+  bool force = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from closing a window.
+message CloseWindowResponse {
+  // Whether the operation succeeded.
+  bool success = 1;
+}
+
+// Request to create an observation.
+message CreateObservationRequest {
+  // Parent application.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
+  ];
+
+  // The observation to create.
+  Observation observation = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Optional observation ID. If not provided, the server generates one.
+  string observation_id = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Metadata for CreateObservation operation.
+message CreateObservationMetadata {
+  // The observation being created.
+  string observation = 1 [(google.api.resource_reference) = {type: "macosusesdk.localhost/Observation"}];
+
+  // Observation type.
+  ObservationType type = 2;
+}
+
+// Request to get an observation.
+message GetObservationRequest {
+  // Resource name of the observation.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Observation"}
+  ];
+}
+
+// Request to list observations.
+message ListObservationsRequest {
+  // Parent application.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
+  ];
+
+  // Maximum number of observations to return.
+  int32 page_size = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Page token from a previous ListObservations call.
+  // This token is opaque and its structure must not be relied upon by clients.
+  // Only its presence or absence should be used to determine pagination state.
+  string page_token = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from listing observations.
+message ListObservationsResponse {
+  // The observations.
+  repeated Observation observations = 1;
+
+  // Token to retrieve the next page of results.
+  // This token is opaque and its structure must not be relied upon by clients.
+  // An empty value indicates no more results are available.
+  string next_page_token = 2;
+}
+
+// Request to cancel an observation.
+message CancelObservationRequest {
+  // Resource name of the observation.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Observation"}
+  ];
+}
+
+// Request to stream observation events.
+message StreamObservationsRequest {
+  // Resource name of the observation.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Observation"}
+  ];
+}
+
+// Response from streaming observations.
+message StreamObservationsResponse {
+  // The observation event.
+  ObservationEvent event = 1;
+}
+
+// Request to create a session.
+message CreateSessionRequest {
+  // The session to create.
+  Session session = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Optional session ID. If not provided, the server generates one.
+  string session_id = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request to get a session.
+message GetSessionRequest {
+  // Resource name of the session.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Session"}
+  ];
+}
+
+// Request to list sessions.
+message ListSessionsRequest {
+  // Maximum number of sessions to return.
+  int32 page_size = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Page token from a previous ListSessions call.
+  string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from listing sessions.
+message ListSessionsResponse {
+  // The sessions.
+  repeated Session sessions = 1;
+
+  // Token to retrieve the next page of results.
+  string next_page_token = 2;
+}
+
+// Request to delete a session.
+message DeleteSessionRequest {
+  // Resource name of the session.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Session"}
+  ];
+
+  // Whether to force delete active sessions.
+  bool force = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request to create a macro.
+message CreateMacroRequest {
+  // The macro to create.
+  Macro macro = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Optional macro ID. If not provided, the server generates one.
+  string macro_id = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request to get a macro.
+message GetMacroRequest {
+  // Resource name of the macro.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Macro"}
+  ];
+}
+
+// Request to list macros.
+message ListMacrosRequest {
+  // Maximum number of macros to return.
+  int32 page_size = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Page token from a previous ListMacros call.
+  string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from listing macros.
+message ListMacrosResponse {
+  // The macros.
+  repeated Macro macros = 1;
+
+  // Token to retrieve the next page of results.
+  string next_page_token = 2;
+}
+
+// Request to update a macro.
+message UpdateMacroRequest {
+  // The macro to update. The name field must be set.
+  Macro macro = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Fields to update.
+  google.protobuf.FieldMask update_mask = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request to delete a macro.
+message DeleteMacroRequest {
+  // Resource name of the macro.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Macro"}
+  ];
+
+  // If true, delete child resources (executions, logs).
+  bool force = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request to execute a macro (long-running operation).
+message ExecuteMacroRequest {
+  // Macro to execute.
+  string macro = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Macro"}
+  ];
+
+  // Parameter values (for parameterized macros).
+  map<string, string> parameter_values = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Application context (if needed).
+  string application = 3 [
+    (google.api.field_behavior) = OPTIONAL,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
+  ];
+
+  // Execution options.
+  ExecutionOptions options = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Options for macro execution.
+message ExecutionOptions {
+  // Execution speed multiplier (1.0 = normal speed).
+  double speed = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to continue on error.
+  bool continue_on_error = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Maximum execution time in seconds.
+  double timeout = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to record execution for debugging.
+  bool record_execution = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from executing a macro.
+message ExecuteMacroResponse {
+  // Whether execution succeeded.
+  bool success = 1;
+
+  // Number of actions executed.
+  int32 actions_executed = 2;
+
+  // Execution duration.
+  google.protobuf.Duration execution_duration = 3;
+
+  // Error message if failed.
+  string error = 4;
+
+  // Execution log (if recording was enabled).
+  repeated ExecutionLogEntry log = 5;
+}
+
+// Metadata for ExecuteMacro operation.
+message ExecuteMacroMetadata {
+  // Macro being executed.
+  string macro = 1 [(google.api.resource_reference) = {type: "macosusesdk.localhost/Macro"}];
+
+  // Current action index.
+  int32 current_action = 2;
+
+  // Total actions in macro.
+  int32 total_actions = 3;
+
+  // Elapsed duration.
+  google.protobuf.Duration elapsed_duration = 4;
+}
+
+// Request to begin a transaction within a session.
+message BeginTransactionRequest {
+  // Session name.
+  string session = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Session"}
+  ];
+
+  // Transaction isolation level.
+  IsolationLevel isolation_level = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Transaction timeout in seconds (default: 300).
+  double timeout = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Isolation level for transactions.
+  enum IsolationLevel {
+    // Default isolation level (SERIALIZABLE).
+    ISOLATION_LEVEL_UNSPECIFIED = 0;
+
+    // All operations appear atomic (full snapshot/restore on rollback).
+    ISOLATION_LEVEL_SERIALIZABLE = 1;
+
+    // Operations may see partial changes (best-effort rollback).
+    ISOLATION_LEVEL_READ_COMMITTED = 2;
+  }
+}
+
+// Response from beginning a transaction.
+message BeginTransactionResponse {
+  // Transaction ID for subsequent operations.
+  string transaction_id = 1;
+
+  // Session with updated state.
+  Session session = 2;
+}
+
+// Request to commit a transaction.
+message CommitTransactionRequest {
+  // The name of the session to commit.
+  // Format: sessions/{session}
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Session"}
+  ];
+
+  // Transaction ID to commit.
+  string transaction_id = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Request to rollback a transaction.
+message RollbackTransactionRequest {
+  // The name of the session to rollback.
+  // Format: sessions/{session}
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Session"}
+  ];
+
+  // The revision to rollback to.
+  string revision_id = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Transaction ID to rollback.
+  string transaction_id = 3 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Request to get a session state snapshot.
+message GetSessionSnapshotRequest {
+  // The name of the session to snapshot.
+  // Format: sessions/{session}
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Session"}
+  ];
+}
+
+// Request to capture a screenshot of the entire screen.
+message CaptureScreenshotRequest {
+  // Image format.
+  ImageFormat format = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // JPEG quality (1-100, only for JPEG format).
+  int32 quality = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Include display index in filename.
+  int32 display = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to include OCR text extraction.
+  bool include_ocr_text = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from capturing a screenshot.
+message CaptureScreenshotResponse {
+  // Image data (encoded according to format).
+  bytes image_data = 1;
+
+  // Image format used.
+  ImageFormat format = 2;
+
+  // Image width in pixels.
+  int32 width = 3;
+
+  // Image height in pixels.
+  int32 height = 4;
+
+  // OCR-extracted text (if requested).
+  string ocr_text = 5;
+}
+
+// Request to capture a screenshot of a specific window.
+message CaptureWindowScreenshotRequest {
+  // Window to capture.
+  string window = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Window"}
+  ];
+
+  // Image format.
+  ImageFormat format = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // JPEG quality (1-100, only for JPEG format).
+  int32 quality = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to include window shadow.
+  bool include_shadow = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to include OCR text extraction.
+  bool include_ocr_text = 5 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from capturing a window screenshot.
+message CaptureWindowScreenshotResponse {
+  // Image data (encoded according to format).
+  bytes image_data = 1;
+
+  // Image format used.
+  ImageFormat format = 2;
+
+  // Image width in pixels.
+  int32 width = 3;
+
+  // Image height in pixels.
+  int32 height = 4;
+
+  // Window that was captured.
+  string window = 5 [(google.api.resource_reference) = {type: "macosusesdk.localhost/Window"}];
+
+  // OCR-extracted text (if requested).
+  string ocr_text = 6;
+}
+
+// Request to capture a screenshot of a specific element.
+message CaptureElementScreenshotRequest {
+  // Parent context (application or window).
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "*"}
+  ];
+
+  // Element ID to capture.
+  string element_id = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Image format.
+  ImageFormat format = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // JPEG quality (1-100, only for JPEG format).
+  int32 quality = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Padding around element in pixels.
+  int32 padding = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to include OCR text extraction.
+  bool include_ocr_text = 6 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from capturing an element screenshot.
+message CaptureElementScreenshotResponse {
+  // Image data (encoded according to format).
+  bytes image_data = 1;
+
+  // Image format used.
+  ImageFormat format = 2;
+
+  // Image width in pixels.
+  int32 width = 3;
+
+  // Image height in pixels.
+  int32 height = 4;
+
+  // Element ID that was captured.
+  string element_id = 5;
+
+  // OCR-extracted text (if requested).
+  string ocr_text = 6;
+}
+
+// Request to capture a screenshot of a screen region.
+message CaptureRegionScreenshotRequest {
+  // Region to capture (screen coordinates).
+  macosusesdk.type.Region region = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Image format.
+  ImageFormat format = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // JPEG quality (1-100, only for JPEG format).
+  int32 quality = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Display index (for multi-monitor setups).
+  int32 display = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to include OCR text extraction.
+  bool include_ocr_text = 5 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from capturing a region screenshot.
+message CaptureRegionScreenshotResponse {
+  // Image data (encoded according to format).
+  bytes image_data = 1;
+
+  // Image format used.
+  ImageFormat format = 2;
+
+  // Image width in pixels.
+  int32 width = 3;
+
+  // Image height in pixels.
+  int32 height = 4;
+
+  // Region that was captured.
+  macosusesdk.type.Region region = 5;
+
+  // OCR-extracted text (if requested).
+  string ocr_text = 6;
+}
+
+// Request to get clipboard contents.
+message GetClipboardRequest {
+  // The name of the clipboard resource.
+  // Format: clipboard (singleton)
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Clipboard"}
+  ];
+}
+
+// Request to write clipboard contents.
+message WriteClipboardRequest {
+  // Content to write on clipboard.
+  ClipboardContent content = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to clear existing clipboard content first.
+  bool clear_existing = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from writing clipboard contents.
+message WriteClipboardResponse {
+  // Whether the operation succeeded.
+  bool success = 1;
+
+  // Content type that was written.
+  ContentType type = 2;
+}
+
+// Request to clear clipboard contents.
+message ClearClipboardRequest {}
+
+// Response from clearing clipboard.
+message ClearClipboardResponse {
+  // Whether the operation succeeded.
+  bool success = 1;
+}
+
+// Request to get clipboard history (if available).
+message GetClipboardHistoryRequest {
+  // The name of the clipboard history resource.
+  // Format: clipboard/history (singleton)
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "*"}
+  ];
+}
+
+// Request to automate an open file dialog.
+message AutomateOpenFileDialogRequest {
+  // Application context.
+  string application = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
+  ];
+
+  // File path to select (if known).
+  string file_path = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Default directory to navigate to.
+  string default_directory = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // File type filters (e.g., ["*.txt", "*.pdf"]).
+  repeated string file_filters = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Timeout for dialog to appear (seconds).
+  double timeout = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to allow multiple file selection.
+  bool allow_multiple = 6 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from automating an open file dialog.
+message AutomateOpenFileDialogResponse {
+  // Whether the operation succeeded.
+  bool success = 1;
+
+  // Selected file path(s).
+  repeated string selected_paths = 2;
+
+  // Error message if failed.
+  string error = 3;
+}
+
+// Request to automate a save file dialog.
+message AutomateSaveFileDialogRequest {
+  // Application context.
+  string application = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
+  ];
+
+  // File path to save to.
+  string file_path = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Default directory to navigate to.
+  string default_directory = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Default filename.
+  string default_filename = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Timeout for dialog to appear (seconds).
+  double timeout = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to confirm overwrite.
+  bool confirm_overwrite = 6 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from automating a save file dialog.
+message AutomateSaveFileDialogResponse {
+  // Whether the operation succeeded.
+  bool success = 1;
+
+  // Final save path.
+  string saved_path = 2;
+
+  // Error message if failed.
+  string error = 3;
+}
+
+// Request to select a file programmatically.
+message SelectFileRequest {
+  // Application context.
+  string application = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
+  ];
+
+  // File path to select.
+  string file_path = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Whether to reveal Finder after selection.
+  bool reveal_finder = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from selecting a file.
+message SelectFileResponse {
+  // Whether the operation succeeded.
+  bool success = 1;
+
+  // Selected file path.
+  string selected_path = 2;
+
+  // Error message if failed.
+  string error = 3;
+}
+
+// Request to select a directory.
+message SelectDirectoryRequest {
+  // Application context.
+  string application = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
+  ];
+
+  // Directory path to select.
+  string directory_path = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Whether to create directory when it doesn't exist.
+  bool create_missing = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from selecting a directory.
+message SelectDirectoryResponse {
+  // Whether the operation succeeded.
+  bool success = 1;
+
+  // Selected directory path.
+  string selected_path = 2;
+
+  // Whether the directory was created.
+  bool created = 3;
+
+  // Error message if failed.
+  string error = 4;
+}
+
+// Request to drag and drop files.
+message DragFilesRequest {
+  // Application context.
+  string application = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
+  ];
+
+  // File paths to drag.
+  repeated string file_paths = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Target element ID to drop on.
+  string target_element_id = 3 [(google.api.field_behavior) = REQUIRED];
+
+  // Drag duration in seconds.
+  double duration = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from dragging files.
+message DragFilesResponse {
+  // Whether the operation succeeded.
+  bool success = 1;
+
+  // Number of files dropped.
+  int32 files_dropped = 2;
+
+  // Error message if failed.
+  string error = 3;
+}
+
+// Request to execute an AppleScript.
+message ExecuteAppleScriptRequest {
+  // AppleScript source code.
+  string script = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Timeout for script execution.
+  google.protobuf.Duration timeout = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to compile the script (for validation).
+  bool compile_only = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from executing an AppleScript.
+message ExecuteAppleScriptResponse {
+  // Whether execution succeeded.
+  bool success = 1;
+
+  // Script output (return value).
+  string output = 2;
+
+  // Error message if failed.
+  string error = 3;
+
+  // Execution duration.
+  google.protobuf.Duration execution_duration = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Request to execute JavaScript for Automation (JXA).
+message ExecuteJavaScriptRequest {
+  // JavaScript source code.
+  string script = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Timeout for script execution.
+  google.protobuf.Duration timeout = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to compile the script (for validation).
+  bool compile_only = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from executing JXA.
+message ExecuteJavaScriptResponse {
+  // Whether execution succeeded.
+  bool success = 1;
+
+  // Script output (return value, JSON-encoded).
+  string output = 2;
+
+  // Error message if failed.
+  string error = 3;
+
+  // Execution duration.
+  google.protobuf.Duration execution_duration = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Request to execute a shell command.
+message ExecuteShellCommandRequest {
+  // Shell command to execute.
+  string command = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Arguments for the command.
+  repeated string args = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Working directory for command execution.
+  string working_directory = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Environment variables (key-value pairs).
+  map<string, string> environment = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Timeout for command execution.
+  google.protobuf.Duration timeout = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Input to provide to command via stdin.
+  string stdin = 6 [(google.api.field_behavior) = OPTIONAL];
+
+  // Shell to use (default: /bin/bash).
+  string shell = 7 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from executing a shell command.
+message ExecuteShellCommandResponse {
+  // Whether execution succeeded.
+  bool success = 1;
+
+  // Standard output from command.
+  string stdout = 2;
+
+  // Standard error from command.
+  string stderr = 3;
+
+  // Exit code from command.
+  int32 exit_code = 4;
+
+  // Execution duration.
+  google.protobuf.Duration execution_duration = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Error message if execution failed (not command failure).
+  string error = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Request to validate a script without executing.
+message ValidateScriptRequest {
+  // Script type.
+  ScriptType type = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Script source code.
+  string script = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Response from validating a script.
+message ValidateScriptResponse {
+  // Whether the script is valid.
+  bool valid = 1;
+
+  // Validation error messages (if any).
+  repeated string errors = 2;
+
+  // Validation warnings (if any).
+  repeated string warnings = 3;
+}
+
+// Request to get available scripting dictionaries.
+message GetScriptingDictionariesRequest {
+  // The name of the scripting dictionaries resource.
+  // Format: scriptingDictionaries (singleton)
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "*"}
+  ];
+}

@@ -1,0 +1,152 @@
+// Copyright 2025 Joseph Cumines
+//
+// Session resource for workflow management and transactions
+
+syntax = "proto3";
+
+package macosusesdk.v1;
+
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
+option java_multiple_files = true;
+option java_outer_classname = "SessionProto";
+option java_package = "com.macosusesdk.v1";
+
+// A resource representing a session for coordinating complex workflows.
+// Sessions maintain context across multiple operations and support
+// transaction-like semantics for atomic operation groups.
+message Session {
+  option (google.api.resource) = {
+    type: "macosusesdk.localhost/Session"
+    pattern: "sessions/{session}"
+    singular: "session"
+    plural: "sessions"
+  };
+
+  // Resource name in the format "sessions/{session}"
+  // where {session} is a unique session identifier.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // Display name for the session.
+  string display_name = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Current state of the session.
+  State state = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the session was created.
+  google.protobuf.Timestamp create_time = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the session was last accessed.
+  google.protobuf.Timestamp last_access_time = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the session expires (auto-cleanup).
+  google.protobuf.Timestamp expire_time = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Active transaction ID (if in transaction).
+  string transaction_id = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Session-scoped metadata (key-value pairs).
+  map<string, string> metadata = 9 [(google.api.field_behavior) = OPTIONAL];
+
+  // State of a session.
+  enum State {
+    // Default unspecified state.
+    STATE_UNSPECIFIED = 0;
+
+    // Session is active and ready for operations.
+    STATE_ACTIVE = 1;
+
+    // Session is in a transaction.
+    STATE_IN_TRANSACTION = 2;
+
+    // Session has been terminated.
+    STATE_TERMINATED = 3;
+
+    // Session has expired.
+    STATE_EXPIRED = 4;
+
+    // Session has failed.
+    STATE_FAILED = 5;
+  }
+}
+
+// A transaction within a session.
+message Transaction {
+  // Transaction ID.
+  string transaction_id = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Session this transaction belongs to.
+  string session = 2 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.resource_reference) = {type: "macosusesdk.localhost/Session"}
+  ];
+
+  // Transaction state.
+  State state = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the transaction started.
+  google.protobuf.Timestamp start_time = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Number of operations in the transaction.
+  int32 operations_count = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // The updated session on committed or rolled back transaction.
+  Session updated_session = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Transaction state.
+  enum State {
+    // Default unspecified.
+    STATE_UNSPECIFIED = 0;
+
+    // Transaction is active.
+    STATE_ACTIVE = 1;
+
+    // Transaction is committed.
+    STATE_COMMITTED = 2;
+
+    // Transaction is rolled back.
+    STATE_ROLLED_BACK = 3;
+
+    // Transaction failed.
+    STATE_FAILED = 4;
+  }
+}
+
+// Session state snapshot.
+message SessionSnapshot {
+  // Session state.
+  Session session = 1;
+
+  // Active applications in session context.
+  repeated string applications = 2;
+
+  // Active observations in session context.
+  repeated string observations = 3;
+
+  // Operation history.
+  repeated OperationRecord history = 4;
+}
+
+// Record of an operation within a session.
+message OperationRecord {
+  // When the operation occurred.
+  google.protobuf.Timestamp operation_time = 1;
+
+  // Operation type (method name).
+  string operation_type = 2;
+
+  // Resource affected (resource name).
+  string resource = 3;
+
+  // Whether the operation succeeded.
+  bool success = 4;
+
+  // Error message (if failed).
+  string error = 5;
+
+  // Transaction ID (if in transaction).
+  string transaction_id = 6;
+}

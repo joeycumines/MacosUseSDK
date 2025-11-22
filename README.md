@@ -1,6 +1,12 @@
 # MacosUseSDK
 
-Library and command-line tools to traverse the macOS accessibility tree and simulate user input actions. Allows interaction with UI elements of other applications.
+Library, command-line tools, and gRPC server to traverse the macOS accessibility tree and simulate user input actions. Allows interaction with UI elements of other applications.
+
+## Components
+
+- **MacosUseSDK**: Core Swift library for accessibility automation
+- **Command-line Tools**: Standalone executables for common automation tasks
+- **gRPC Server**: Production-ready API server with resource-oriented gRPC API
 
 
 https://github.com/user-attachments/assets/d8dc75ba-5b15-492c-bb40-d2bc5b65483e
@@ -15,7 +21,7 @@ Listen to changes in the UI, elements changed, text changed
 
 To build the command-line tools provided by this package, navigate to the root directory (`MacosUseSDK`) in your terminal and run:
 
-```bash
+```sh
 swift build
 ```
 
@@ -30,7 +36,7 @@ All tools output informational logs and timing data to `stderr`. Primary output 
 *   **Purpose:** Opens or activates a macOS application by its name, bundle ID, or full path. Outputs the application's PID on success.
 *   **Usage:** `AppOpenerTool <Application Name | Bundle ID | Path>`
 *   **Examples:**
-    ```bash
+    ```sh
     # Open by name
     swift run AppOpenerTool Calculator
     # Open by bundle ID
@@ -48,7 +54,7 @@ All tools output informational logs and timing data to `stderr`. Primary output 
 *   **Options:**
     *   `--visible-only`: Only include elements that have a position and size (are geometrically visible).
 *   **Examples:**
-    ```bash
+    ```sh
     # Get only visible elements for Messages app
     swift run TraversalTool --visible-only $(swift run AppOpenerTool Messages)
     ```
@@ -60,7 +66,7 @@ All tools output informational logs and timing data to `stderr`. Primary output 
 *   **Options:**
     *   `--duration <seconds>`: Specifies how long the highlights remain visible (default: 3.0 seconds).
 *   **Examples:**
-    ```bash
+    ```sh
     # Combine with AppOpenerTool to open Messages and highlight it
     swift run HighlightTraversalTool $(swift run AppOpenerTool Messages) --duration 5
     ```
@@ -71,7 +77,7 @@ All tools output informational logs and timing data to `stderr`. Primary output 
 *   **Purpose:** Simulates keyboard and mouse input events without visual feedback.
 *   **Usage:** See `swift run InputControllerTool --help` (or just run without args) for actions.
 *   **Examples:**
-    ```bash
+    ```sh
     # Press the Enter key
     swift run InputControllerTool keypress enter
     # Simulate Cmd+C (Copy)
@@ -97,7 +103,7 @@ All tools output informational logs and timing data to `stderr`. Primary output 
 *   **Options:**
     *   `--duration <seconds>`: How long the visual feedback effect lasts (default: 0.5 seconds).
 *   **Examples:**
-    ```bash
+    ```sh
     # Left click at (100, 250) with default 0.5s feedback
     swift run VisualInputTool click 100 250
     # Right click at (800, 400) with 2 second feedback
@@ -115,7 +121,7 @@ All tools output informational logs and timing data to `stderr`. Primary output 
 Run only specific tests or test classes, use the --filter option.
 Run a specific test method: Provide the full identifier TestClassName/testMethodName
 
-```bash
+```sh
 swift test
 # Example: Run only the multiply test in CombinedActionsDiffTests
 swift test --filter CombinedActionsDiffTests/testCalculatorMultiplyWithActionAndTraversalHighlight
@@ -176,6 +182,51 @@ Task {
 
 // Remember to keep the run loop active if using async UI functions like highlightVisibleElements or *AndVisualize
 // RunLoop.main.run() // Or use within an @main Application structure
+```
+
+## gRPC Server
+
+The repository includes a production-ready gRPC server that exposes all SDK functionality via a resource-oriented API.
+
+### Features
+
+- **Resource-oriented API** following [Google's AIPs](https://google.aip.dev/)
+- **Multi-application support**: Automate multiple applications simultaneously
+- **Real-time streaming**: Watch accessibility tree changes in real-time
+- **Thread-safe architecture**: CQRS-style with central control loop
+- **Flexible configuration**: TCP sockets or Unix domain sockets
+
+### Quick Start
+
+1. Install [buf](https://buf.build/) for protobuf code generation
+2. Generate gRPC stubs:
+   ```sh
+   buf generate
+   ```
+3. Build and run the server:
+   ```sh
+   cd Server
+   swift build -c release
+   .build/release/MacosUseServer
+   ```
+
+See [Server/README.md](Server/README.md) for detailed documentation.
+
+### API Example
+
+Open Calculator and perform an action:
+
+```sh
+# Open application
+grpcurl -plaintext -d '{"identifier": "Calculator"}' \
+  localhost:8080 macosusesdk.v1.DesktopService/OpenApplication
+
+# Perform action (type "1+2=")
+grpcurl -plaintext -d '{
+  "name": "targetApplications/12345",
+  "action": {"input": {"type_text": "1+2="}},
+  "options": {"show_animation": true}
+}' localhost:8080 macosusesdk.v1.TargetApplicationsService/PerformAction
 ```
 
 ## License

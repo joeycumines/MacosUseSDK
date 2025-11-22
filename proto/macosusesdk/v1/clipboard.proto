@@ -1,0 +1,110 @@
+// Copyright 2025 Joseph Cumines
+//
+// Clipboard resources and types
+
+syntax = "proto3";
+
+package macosusesdk.v1;
+
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
+option java_multiple_files = true;
+option java_outer_classname = "ClipboardProto";
+option java_package = "com.macosusesdk.v1";
+
+// Clipboard contents.
+message Clipboard {
+  option (google.api.resource) = {
+    type: "macosusesdk.localhost/Clipboard"
+    pattern: "clipboard"
+    singular: "clipboard"
+    plural: "clipboards"
+  };
+
+  // Resource name (singleton: "clipboard")
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // Clipboard content.
+  ClipboardContent content = 2;
+
+  // Available content types on clipboard.
+  repeated ContentType available_types = 3;
+}
+
+// Clipboard content (one of the supported types).
+message ClipboardContent {
+  // Content type.
+  ContentType type = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The actual content (type-specific).
+  oneof content {
+    // Plain text content.
+    string text = 10;
+
+    // Rich Text Format (RTF) content.
+    bytes rtf = 11;
+
+    // HTML content.
+    string html = 12;
+
+    // Image data (PNG format).
+    bytes image = 13;
+
+    // File paths (for copied files).
+    FilePaths files = 14;
+
+    // URL content.
+    string url = 15;
+  }
+}
+
+// File paths for clipboard file content.
+message FilePaths {
+  // List of file paths.
+  repeated string paths = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Clipboard history.
+message ClipboardHistory {
+  // Historical clipboard entries (most recent first).
+  repeated ClipboardHistoryEntry entries = 1;
+}
+
+// A clipboard history entry.
+message ClipboardHistoryEntry {
+  // When this content was copied.
+  google.protobuf.Timestamp copied_time = 1;
+
+  // Clipboard content.
+  ClipboardContent content = 2;
+
+  // Source application (if known).
+  string source_application = 3;
+}
+
+// Content type for clipboard operations.
+enum ContentType {
+  // Default unspecified type (auto-detect).
+  CONTENT_TYPE_UNSPECIFIED = 0;
+
+  // Plain text.
+  CONTENT_TYPE_TEXT = 1;
+
+  // Rich Text Format.
+  CONTENT_TYPE_RTF = 2;
+
+  // HTML content.
+  CONTENT_TYPE_HTML = 3;
+
+  // Image data.
+  CONTENT_TYPE_IMAGE = 4;
+
+  // File paths.
+  CONTENT_TYPE_FILES = 5;
+
+  // URL.
+  CONTENT_TYPE_URL = 6;
+}

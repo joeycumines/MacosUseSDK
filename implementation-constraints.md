@@ -1,66 +1,84 @@
-Implement a FULLY-REALISED, production-ready, gRPC server, acting as an API layer around the SDK.
+# Implementation Constraints
 
-There MUST be a central control-loop acting as the coordinator for ALL inputs and making all logic decisions, functioning as an asynchronous means of processing commands and events (CQRS style, more or less). Obviously implement it in a pattern native to Swift. There will no doubt need to be a copy-on-write "view", used to expose ALL relevant state data, for direct queries of the state. There may need to be a "flush through" mechanism where the sequential nature of event processing is used to await processing of a command / effecting of a change, by publishing a command which has a side effect of notifying the waiting caller.
+## Critical Ways of Working (STRICT MANDATES)
+
+**1. EXECUTION PROTOCOL (NON-NEGOTIABLE):**
+- **NO DIRECT SHELL COMMANDS:** You are FORBIDDEN from running complex multi-argument shell commands directly.
+- **MANDATORY `config.mk` PATTERN:** For ALL build steps, test runs, linting, or execution commands:
+  1.  Define a **custom temporary target** in `config.mk`.
+  2.  Execute it using the `mcp-server-make` tool.
+- **FORBIDDEN ARGUMENT:** You MUST NOT specify the `file` option (e.g., `file=config.mk`) when invoking `mcp-server-make`. The invocation must rely strictly on the repository's default Makefile discovery (which includes `config.mk`).
+- **LOGGING REQUIREMENT:** All `config.mk` recipes producing significant output MUST use `| tee $(or $(PROJECT_ROOT),$(error If you are reading this you specified the `file` option when calling `mcp-server-make`. DONT DO THAT.))/build.log | tail -n 15` (or similar) to prevent context window flooding.
+  For example (add if missing to `config.mk` within `ifndef CUSTOM_TARGETS_DEFINED ... endif` per `example.config.mk`):
+  ```makefile
+  .PHONY: make-all-with-log
+  make-all-with-log: ## Run all targets with logging to build.log
+  make-all-with-log: SHELL := /bin/bash
+  make-all-with-log:
+  	@echo "Output limited to avoid context explosion. See $(or $(PROJECT_ROOT),$(error If you are reading this you specified the `file` option when calling `mcp-server-make`. DONT DO THAT.))/build.log for full content."; \
+  	set -o pipefail; \
+  	$(MAKE) all 2>&1 | tee $(or $(PROJECT_ROOT),$(error If you are reading this you specified the `file` option when calling `mcp-server-make`. DONT DO THAT.))/build.log | tail -n 15; \
+  	exit $${PIPESTATUS[0]}
+  ```
+
+**2. CONTINUOUS VALIDATION:**
+- **DO NOT BREAK THE BUILD:** You must run the core `all` target constantly. Use `mcp-server-make make-all-with-log` after every file change.
+- **Resource Leak Check:** Integration tests must ensure proper cleanup of observations and connections at teardown.
+
+**3. LOG OUTPUT PRIVACY:**
+- AVOID and REPLACE ad-hoc `fputs` or unannotated `print` with `Logger` and `OSLogPrivacy` for any message emitted from Swift server components or SDK helpers in `Server/Sources/MacosUseServer` and `Sources/MacosUseSDK`.
+- `fputs` is forbidden in these server/SDK directories for diagnostic logs — it bypasses OS unified logging and cannot mark privacy. Use `Logger` with explicit `privacy` annotations for every interpolated value. For user-facing CLI help text (static strings) `print` is allowed only outside `Server/Sources/MacosUseServer` and `Sources/MacosUseSDK`.
+
+## Core Directives
+
+Constraints in this section describe *requirements*, not current status.
 
 The gRPC server MUST:
-- Use github.com/grpc/grpc-swift-2
-- Support configuration via environment variables, e.g. listen unix socket file location, listen address (inclusive of port, or port and address split - depending on what is relevant input)
-- Expose ALL BEHAVIOR AND FUNCTIONALITY implemented ANY OF the attached source files
-- Integrate in a well-conceived scalable and maintainable manner with the aforementioned control loop
-- Combine and extend on ALL the functionality demonstrated within ALL the "tools" that exist
-- Support automating MULTIPLE windows at once
-- Be performant
-- Support use cases like automating actions, inclusive of identifying UI elements, reading text from UI elements, entering input into UI elements and interacting in arbitrary ways
+- Strictly follow **Google's AIPs** (2025 standards). When in doubt between `buf lint` and Google's AIPs, Google's AIPs take precedence.
+- Support configuration via environment variables (socket paths, addresses).
+- Maintain the **State Store** architecture: `AppStateStore` (copy-on-write view for queries), `WindowRegistry`, `ObservationManager`, and `SessionManager`.
 
-The gRPC API MUST:
-- Follow Google's AIPs in ALL regards (2025 / latest, up to date standards)
-- Expose a resource-oriented API to interact with the state of the system
-- Include custom methods (non-standard) PER the AIPs i.e. where justifiable, e.g. streaming events
-- Use `buf` for codegen - configure (v2) buf.yaml and buf.gen.yaml and there'll be a a buf.lock because of a dependency on `buf.build/googleapis/googleapis`, and you'll need to implement checks inclusive of breaking change detection, so use the buf-provided github action(s? i forget), and define the necessary github action workflow
-- Have generated stubs for the Go programming language (inclusive of appropriate Go module, N.B. the repository is `github.com/joeycumines/MacosUseSDK`)
-- Support sophisticated, well-conceived concurrency patterns
-- Use `buf` linting BUT be aware that there ARE conflicts with Google's AIPs. When in doubt, use Google's AIPs as the source of truth.
-- Configure and use https://linter.aip.dev/ UNLESS it is not possible to do so. The `api-linter` command MUST NOT have its dependencies pinned within the same Go module as the Go stubs. To be clear this is Google's linter for the AIPs, and is distinct from `buf lint`, and takes PRECEDENCE over `buf lint` where there are conflicts.
+Previous sins (now corrected, not to be repeated):
+- **Pagination (AIP-158):** You MUST implement `page_size`, `page_token`, and `next_page_token` for ALL List/Find RPCs, and `page_token`/`next_page_token` MUST be treated as opaque by clients (no reliance on internal structure such as `"offset:N"`).
+- **State-Difference Assertions:** Tests MUST NOT rely on "Happy Path" OK statuses. Every mutator RPC (Click, Move, Resize) MUST be followed by an accessor RPC to verify the *delta* in state.
+- **Wait-For-Convergence:** Tests MUST use a `PollUntil` pattern. `time.Sleep` is FORBIDDEN in tests.
 
-Testing and Tooling:
-- Implement comprehensive unit tests, at bare minimum
-- Implement PROPER CI, using GitHub Actions, inclusive of unit testing, and build and linting and all relevant checks
+**API Scope:**
+- Expose ALL functionality via the `MacosUse` service (consolidated service).
+- Include all resources: Window, Element, Observation, Session, Macro, Screenshot, Clipboard, File, Script.
+- Support advanced inputs: Modifiers, Special Keys, Mouse Operations (drag, right-click).
+- Support VS Code integration patterns (multi-window, advanced targeting).
 
-Documentation and Planning:
-- ALL updates to the plan MUST be represented in `./implementation-plan.md`, NOT any other files
-- You MUST NOT create status update files like `IMPLEMENTATION_COMPLETE.md` or `IMPLEMENTATION_NOTES.md`
-- You MUST keep `./implementation-plan.md` UP TO DATE with minimal edits, consolidating and updating where necessary
-- The plan MUST be STRICTLY and PERFECTLY aligned to this constraints document
-- You MUST update `implementation-plan.md` as part of each set of changes, potentially multiple times per session
+- **Quartz/Accessibility Race Condition Mitigation:** Do not rely on `NSRunningApplication(processIdentifier:)` for process liveness when performing AX actions; always attempt AX actions e.g. `AXUIElementCreateApplication(pid)` _then_ handle invalid processes via AX API errors.
 
-Proto API Structure:
-- Proto files MUST be located at `proto/macosusesdk/v1/` (NOT `proto/v1/`) - the proto dir is the root of the proto path and MUST mirror the package structure
-- Common components MUST be created under `proto/macosusesdk/type` where appropriate per https://google.aip.dev/213
-- Resource definitions MUST be in their own .proto files separate from service definitions
-- Method request/response messages MUST be co-located with the service definition
-- File names MUST correctly align with service names per AIPs
-- Files MUST include mandatory file options per AIPs
-- MUST follow https://google.aip.dev/190 and https://google.aip.dev/191 for naming conventions
-- Consolidate all services into a SINGLE service named `MacosUse`
-- Document proto semantics in `proto/README.md`
+## Testing and Tooling
 
-Input Action Modeling:
-- Model input actions as a timeline of inputs (actual collections): `applications/*/inputs/*`, `desktopInputs/*`, etc.
-- Input resources MUST support Get and List standard methods per https://google.aip.dev/130, https://google.aip.dev/131, https://google.aip.dev/132
-- Inputs which have been handled MUST have a circular buffer per target resource, applicable to COMPLETED actions
+- **Atomic Testing:** ALL new behavior and ALL modifications MUST be accompanied by automated tests in the SAME change set.
+- **Golden Applications:** Integration tests must strictly target `TextEdit`, `Calculator`, or `Finder` as defined in the plan.
+- **CI Integrity:** Tests and CI checks MUST be kept green. Disabling tests is forbidden without a documented fix plan.
+- **Test Fixture Lifecycle:** Every test suite must ensure a clean state (SIGKILL target apps) before running and perform aggressive cleanup (DeleteApplication) after running.
 
-OpenApplication Method:
-- MUST use a dedicated response type (not returning TargetApplication directly)
-- MUST be a long-running operation using the `google.longrunning` API per https://google.aip.dev/151
+## Documentation and Planning
 
-Google API Linter:
-- api-linter MUST be run using `go -C hack/google-api-linter run api-linter` from a dedicated Go module at `hack/google-api-linter/`
-- MUST use `buf export` command to export the full (flattened) protopath for googleapis protos
-- MUST use a tempdir to stage the proto files with proper cleanup hooks
-- MUST configure api-linter with a config file located at `google-api-linter.yaml`
-- MUST output in GitHub Actions format
-- Logic MUST be encapsulated in a POSIX-compliant shell script at `./hack/google-api-linter.sh`
-- The contents of `./google-api-linter.yaml` MUST be:
+- **Single Source of Truth:** ALL updates to the plan MUST be represented in `./implementation-plan.md`.
+- **No Status Files:** Do NOT create `IMPLEMENTATION_COMPLETE.md` or similar. Do NOT use `implementation-constraints.md` to track status, progress logs, or completion markers of any kind.
+- **Plan-Local Status Only:** The **STATUS SECTION (ACTION-FOCUSED)** at the top of `implementation-plan.md` is the only allowed place for high-level status, and it MUST list only remaining work, unresolved discrepancies, and critical patterns that must not be forgotten. Do not accumulate historical "done" items or emojis there.
+- **Verification Before Completion Claims:** Before treating any item as complete, you MUST verify the implementation and its tests. If there is any doubt, treat the item as not done and keep (or re-add) a corresponding action in the plan.
+- **Living Document:** Keep `./implementation-plan.md` strictly aligned with this constraints document and the *actual* code reality. Update it as part of every change set, trimming completed/verified items from the status section rather than appending new ones.
+
+## Proto API Structure
+
+- **Path:** Proto files MUST be located at `proto/macosusesdk/v1/` and mirror package structure.
+- **Common Types:** Use `proto/macosusesdk/type` for shared definitions.
+- **Separation:** Resource definitions MUST be in separate files from service definitions.
+- **Naming:** Follow https://google.aip.dev/121, 190, and 191.
+- **Linting:** Use `buf` for generation but `api-linter` (Google's linter) for design validation.
+
+## Google API Linter Configuration
+
+- `api-linter` MUST be run via a dedicated Go module in `hack/google-api-linter/`.
+- Logic MUST be encapsulated in `./hack/google-api-linter.sh` (executable via `mcp-server-make`).
+- Configuration MUST be in `./google-api-linter.yaml` with:
   ```yaml
   ---
   - included_paths:
@@ -68,19 +86,10 @@ Google API Linter:
     disabled_rules:
       - 'all'
   ```
-- MUST NOT ignore linting for ANYTHING except googleapis protos (which are entirely ignored)
-- ALL linting issues MUST be fixed
+- You MUST NOT ignore linting for anything except `googleapis` protos.
 
-CI/CD Workflows:
-- MUST use reusable workflow pattern with `workflow_call`
-- Individual workflows (buf, api-linter, swift) MUST be callable as jobs in a single core CI workflow `ci.yaml`
-- Individual workflows MUST NOT have push/pull_request triggers - those belong on `ci.yaml` only
-- `ci.yaml` MUST have events: push or pull request to main, or workflow dispatch
-- `ci.yaml` MUST have a final summary job with `if: always()` that runs after ALL other jobs
-- MUST NOT auto-commit generated code - generate all required source locally and commit it
-- MUST properly lock dependencies with `buf dep update`
-- Scripts MUST handle ALL errors and MUST NOT assume the use of `set -e`
-- MUST NOT use `set -e` - use chaining with `&&` or explicit if conditions with non-zero exit codes
-- For multi-command scripts, typically use `set -x`
+## CI/CD Workflows
 
-IMPORTANT: You, the implementer, are expected to read and CONTINUALLY refine [implementation-plan.md](./implementation-plan.md).
+- MUST use reusable workflow patterns (`workflow_call`).
+- `ci.yaml` is the entry point; individual workflows must not have independent triggers.
+- Scripts MUST NOT use `set -e`; use explicit chaining (`&&`) or condition checks.

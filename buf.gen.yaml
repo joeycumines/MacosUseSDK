@@ -1,0 +1,32 @@
+version: v2
+clean: true
+managed:
+  enabled: true
+  override:
+    - path: macosusesdk
+      file_option: go_package_prefix
+      value: github.com/joeycumines/MacosUseSDK/gen/go
+inputs:
+  - directory: proto
+  - module: buf.build/googleapis/googleapis
+plugins:
+  - remote: buf.build/apple/swift
+    out: Server/Sources/MacosUseSDKProtos
+    opt:
+      - Visibility=Public
+    include_imports: true
+  - remote: buf.build/grpc/swift-protobuf
+    out: Server/Sources/MacosUseSDKProtos
+    opt:
+      - Visibility=Public
+      - Server=true
+      - Client=false
+    include_imports: true
+  - remote: buf.build/protocolbuffers/go
+    out: gen/go
+    opt:
+      - paths=source_relative
+  - remote: buf.build/grpc/go
+    out: gen/go
+    opt:
+      - paths=source_relative

@@ -1,0 +1,321 @@
+// Copyright 2025 Joseph Cumines
+//
+// Macro resource for recordable action sequences
+
+syntax = "proto3";
+
+package macosusesdk.v1;
+
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+import "macosusesdk/v1/input.proto";
+
+option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
+option java_multiple_files = true;
+option java_outer_classname = "MacroProto";
+option java_package = "com.macosusesdk.v1";
+
+// A resource representing a recorded sequence of actions.
+// Macros can be replayed to automate repetitive tasks.
+message Macro {
+  option (google.api.resource) = {
+    type: "macosusesdk.localhost/Macro"
+    pattern: "macros/{macro}"
+    singular: "macro"
+    plural: "macros"
+  };
+
+  // Resource name in the format "macros/{macro}"
+  // where {macro} is a unique macro identifier.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // Display name for the macro.
+  string display_name = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Description of what the macro does.
+  string description = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Sequence of actions in the macro.
+  repeated MacroAction actions = 4 [(google.api.field_behavior) = REQUIRED];
+
+  // Macro parameters (for parameterized macros).
+  repeated MacroParameter parameters = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // When the macro was created.
+  google.protobuf.Timestamp create_time = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the macro was last modified.
+  google.protobuf.Timestamp update_time = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Number of times the macro has been executed.
+  int64 execution_count = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Tags for categorization.
+  repeated string tags = 9 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Log entry for macro execution.
+message ExecutionLogEntry {
+  option (google.api.resource) = {
+    type: "macosusesdk.localhost/ExecutionLogEntry"
+    pattern: "macros/{macro}/executions/{execution}/logEntries/{log_entry}"
+    singular: "executionLogEntry"
+    plural: "executionLogEntries"
+  };
+
+  // Resource name.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // When the action executed.
+  google.protobuf.Timestamp execution_time = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Action index in macro.
+  int32 action_index = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Action description.
+  string description = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether action succeeded.
+  bool success = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Error message if failed.
+  string error = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Duration in seconds.
+  double duration = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// A single action within a macro.
+message MacroAction {
+  // Action type.
+  oneof action {
+    // Input action (click, type, etc.).
+    InputAction input = 1;
+
+    // Wait/delay action.
+    WaitAction wait = 2;
+
+    // Conditional action (if-then).
+    ConditionalAction conditional = 3;
+
+    // Loop action (repeat).
+    LoopAction loop = 4;
+
+    // Variable assignment.
+    AssignAction assign = 5;
+
+    // Custom method call.
+    MethodCall method_call = 6;
+  }
+
+  // Human-readable description of this action.
+  string description = 10 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Wait/delay action.
+message WaitAction {
+  // Duration to wait in seconds.
+  double duration = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Optional condition to wait for.
+  WaitCondition condition = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Condition to wait for.
+message WaitCondition {
+  // Condition type.
+  oneof condition {
+    // Wait for element to appear.
+    string element_selector = 1;
+
+    // Wait for window to appear.
+    string window_title = 2;
+
+    // Wait for application to launch.
+    string application = 3;
+  }
+
+  // Timeout in seconds.
+  double timeout = 10 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Conditional action (if-then-else).
+message ConditionalAction {
+  // Condition to evaluate.
+  MacroCondition condition = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Actions to execute if condition is true.
+  repeated MacroAction then_actions = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Actions to execute if condition is false.
+  repeated MacroAction else_actions = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Condition for conditional actions.
+message MacroCondition {
+  // Condition type.
+  oneof condition {
+    // Element exists.
+    string element_exists = 1;
+
+    // Window exists.
+    string window_exists = 2;
+
+    // Application is running.
+    string application_running = 3;
+
+    // Variable equals value.
+    VariableCondition variable_equals = 4;
+
+    // Compound condition.
+    CompoundCondition compound = 5;
+  }
+}
+
+// Variable equality condition.
+message VariableCondition {
+  // Variable name.
+  string variable = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Expected value.
+  string value = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Compound condition (AND/OR/NOT).
+message CompoundCondition {
+  // Operator.
+  Operator operator = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Sub-conditions.
+  repeated MacroCondition conditions = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Logical operator.
+  enum Operator {
+    // Default unspecified.
+    OPERATOR_UNSPECIFIED = 0;
+
+    // All conditions must be true.
+    OPERATOR_AND = 1;
+
+    // At least one condition must be true.
+    OPERATOR_OR = 2;
+
+    // Condition must be false (only with single condition).
+    OPERATOR_NOT = 3;
+  }
+}
+
+// Loop action (repeat).
+message LoopAction {
+  // Loop type.
+  oneof loop_type {
+    // Fixed iteration count.
+    int32 count = 1;
+
+    // Loop while condition is true.
+    MacroCondition while_condition = 2;
+
+    // Loop over each item in collection.
+    ForEachLoop foreach = 3;
+  }
+
+  // Actions to execute in each iteration.
+  repeated MacroAction actions = 10 [(google.api.field_behavior) = REQUIRED];
+}
+
+// For-each loop over collection.
+message ForEachLoop {
+  // Collection to iterate over.
+  oneof collection {
+    // List of elements.
+    string element_selector = 1;
+
+    // List of windows.
+    string window_pattern = 2;
+
+    // List of values (newline or comma-separated).
+    string values = 3;
+  }
+
+  // Variable name for current item.
+  string item_variable = 10 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Variable assignment action.
+message AssignAction {
+  // Variable name.
+  string variable = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Value source.
+  oneof value {
+    // Literal string value.
+    string literal = 2;
+
+    // Value from element attribute.
+    ElementAttributeValue element_attribute = 3;
+
+    // Value from parameter.
+    string parameter = 4;
+
+    // Result of expression.
+    string expression = 5;
+  }
+}
+
+// Value from element attribute.
+message ElementAttributeValue {
+  // Element selector.
+  string element_selector = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Attribute name.
+  string attribute = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Custom method call action.
+message MethodCall {
+  // Method name (e.g., "ClickElement", "SetElementValue").
+  string method = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Method arguments (key-value pairs).
+  map<string, string> args = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Macro parameter definition.
+message MacroParameter {
+  // Parameter key/identifier.
+  string key = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Parameter type.
+  ParameterType type = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Default value (optional).
+  string default_value = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Parameter description.
+  string description = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether parameter is required.
+  bool required = 5 [(google.api.field_behavior) = REQUIRED];
+
+  // Parameter type enumeration.
+  enum ParameterType {
+    // Default unspecified type.
+    PARAMETER_TYPE_UNSPECIFIED = 0;
+
+    // String value.
+    PARAMETER_TYPE_STRING = 1;
+
+    // Integer value.
+    PARAMETER_TYPE_INTEGER = 2;
+
+    // Boolean value.
+    PARAMETER_TYPE_BOOLEAN = 3;
+
+    // Element selector.
+    PARAMETER_TYPE_SELECTOR = 4;
+
+    // File path.
+    PARAMETER_TYPE_PATH = 5;
+  }
+}

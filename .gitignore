@@ -1,5 +1,5 @@
 .DS_Store
-/.build
+.build
 /Packages
 xcuserdata/
 DerivedData/
@@ -7,3 +7,12 @@ DerivedData/
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
 .netrc
 /config.mk
+/scratch.md
+/examples/go-client/go-client
+/examples/**/*.exe
+/examples/**/*.out
+coverage.out
+/coverage-all.out
+coverage.lcov
+/coverage-all.lcov
+/build.log

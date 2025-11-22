@@ -1,6 +1,12 @@
-import Foundation
+// swiftlint:disable all -- Largely unchanged from upstream.
+
+import AppKit  // For DispatchQueue, showVisualFeedback
 import CoreGraphics
-import AppKit // For DispatchQueue, showVisualFeedback
+import Foundation
+import OSLog
+import OSLog
+
+private let logger = sdkLogger(category: "HighlightInput")
 
 // --- Public Functions Combining Input Simulation and Visualization ---
 
@@ -9,19 +15,20 @@ import AppKit // For DispatchQueue, showVisualFeedback
 ///   - point: The `CGPoint` where the click should occur.
 ///   - duration: How long the visual feedback should last (in seconds). Default is 0.5s.
 /// - Throws: `MacosUseSDKError` if simulation or visualization fails.
-public func clickMouseAndVisualize(at point: CGPoint, duration: Double = 0.5) throws {
-    fputs("log: simulating left click AND visualize at: (\(point.x), \(point.y)), duration: \(duration)s\n", stderr)
-    // Call the original input function
-    try clickMouse(at: point)
+public func clickMouseAndVisualize(at point: CGPoint, duration: Double = 0.5) async throws {
+  logger.info(
+    "simulating left click AND visualize at: (\(point.x, privacy: .public), \(point.y, privacy: .public)), duration: \(duration, privacy: .public)s")
+  // Call the original input function
+  try await clickMouse(at: point)
 
-    // Restore the correct async dispatch:
-    DispatchQueue.main.async {
-        Task { @MainActor in
-            // Ensure FeedbackType is used if it's public/internal enum
-            showVisualFeedback(at: point, type: FeedbackType.circle, duration: duration)
-        }
+  // Restore the correct async dispatch:
+  DispatchQueue.main.async {
+    Task { @MainActor in
+      // Ensure FeedbackType is used if it's public/internal enum
+      showVisualFeedback(at: point, type: FeedbackType.circle, duration: duration)
     }
-    fputs("log: left click simulation and visualization dispatched.\n", stderr)
+  }
+  logger.info("left click simulation and visualization dispatched.")
 }
 
 /// Simulates a left mouse double click at the specified coordinates and shows visual feedback.
@@ -29,17 +36,18 @@ public func clickMouseAndVisualize(at point: CGPoint, duration: Double = 0.5) th
 ///   - point: The `CGPoint` where the double click should occur.
 ///   - duration: How long the visual feedback should last (in seconds). Default is 0.5s.
 /// - Throws: `MacosUseSDKError` if simulation or visualization fails.
-public func doubleClickMouseAndVisualize(at point: CGPoint, duration: Double = 0.5) throws {
-    fputs("log: simulating double-click AND visualize at: (\(point.x), \(point.y)), duration: \(duration)s\n", stderr)
-    // Call the original input function
-    try doubleClickMouse(at: point)
-    // Schedule visualization on the main thread
-    DispatchQueue.main.async {
-        Task { @MainActor in
-             showVisualFeedback(at: point, type: FeedbackType.circle, duration: duration)
-        }
+public func doubleClickMouseAndVisualize(at point: CGPoint, duration: Double = 0.5) async throws {
+  logger.info(
+    "simulating double-click AND visualize at: (\(point.x, privacy: .public), \(point.y, privacy: .public)), duration: \(duration, privacy: .public)s")
+  // Call the original input function
+  try await doubleClickMouse(at: point)
+  // Schedule visualization on the main thread
+  DispatchQueue.main.async {
+    Task { @MainActor in
+      showVisualFeedback(at: point, type: FeedbackType.circle, duration: duration)
     }
-    fputs("log: double-click simulation and visualization dispatched.\n", stderr)
+  }
+  logger.info("double-click simulation and visualization dispatched.")
 }
 
 /// Simulates a right mouse click at the specified coordinates and shows visual feedback.
@@ -47,17 +55,18 @@ public func doubleClickMouseAndVisualize(at point: CGPoint, duration: Double = 0
 ///   - point: The `CGPoint` where the right click should occur.
 ///   - duration: How long the visual feedback should last (in seconds). Default is 0.5s.
 /// - Throws: `MacosUseSDKError` if simulation or visualization fails.
-public func rightClickMouseAndVisualize(at point: CGPoint, duration: Double = 0.5) throws {
-     fputs("log: simulating right-click AND visualize at: (\(point.x), \(point.y)), duration: \(duration)s\n", stderr)
-     // Call the original input function
-    try rightClickMouse(at: point)
-    // Schedule visualization on the main thread
-    DispatchQueue.main.async {
-        Task { @MainActor in
-            showVisualFeedback(at: point, type: FeedbackType.circle, duration: duration)
-        }
+public func rightClickMouseAndVisualize(at point: CGPoint, duration: Double = 0.5) async throws {
+  logger.info(
+    "simulating right-click AND visualize at: (\(point.x, privacy: .public), \(point.y, privacy: .public)), duration: \(duration, privacy: .public)s")
+  // Call the original input function
+  try await rightClickMouse(at: point)
+  // Schedule visualization on the main thread
+  DispatchQueue.main.async {
+    Task { @MainActor in
+      showVisualFeedback(at: point, type: FeedbackType.circle, duration: duration)
     }
-     fputs("log: right-click simulation and visualization dispatched.\n", stderr)
+  }
+  logger.info("right-click simulation and visualization dispatched.")
 }
 
 /// Moves the mouse cursor to the specified coordinates and shows brief visual feedback at the destination.
@@ -65,17 +74,18 @@ public func rightClickMouseAndVisualize(at point: CGPoint, duration: Double = 0.
 ///   - point: The `CGPoint` to move the cursor to.
 ///   - duration: How long the visual feedback should last (in seconds). Default is 0.5s.
 /// - Throws: `MacosUseSDKError` if simulation or visualization fails.
-public func moveMouseAndVisualize(to point: CGPoint, duration: Double = 0.5) throws {
-     fputs("log: moving mouse AND visualize to: (\(point.x), \(point.y)), duration: \(duration)s\n", stderr)
-     // Call the original input function
-    try moveMouse(to: point)
-    // Schedule visualization on the main thread
-    DispatchQueue.main.async {
-         Task { @MainActor in
-            showVisualFeedback(at: point, type: FeedbackType.circle, duration: duration)
-         }
+public func moveMouseAndVisualize(to point: CGPoint, duration: Double = 0.5) async throws {
+  logger.info(
+    "moving mouse AND visualize to: (\(point.x, privacy: .public), \(point.y, privacy: .public)), duration: \(duration, privacy: .public)s")
+  // Call the original input function
+  try await moveMouse(to: point)
+  // Schedule visualization on the main thread
+  DispatchQueue.main.async {
+    Task { @MainActor in
+      showVisualFeedback(at: point, type: FeedbackType.circle, duration: duration)
     }
-     fputs("log: mouse move simulation and visualization dispatched.\n", stderr)
+  }
+  logger.info("mouse move simulation and visualization dispatched.")
 }
 
 /// Simulates pressing and releasing a key with optional modifiers. Shows a caption at screen center.
@@ -84,34 +94,39 @@ public func moveMouseAndVisualize(to point: CGPoint, duration: Double = 0.5) thr
 ///   - flags: The modifier flags (`CGEventFlags`).
 ///   - duration: How long the visual feedback should last (in seconds). Default is 0.8s.
 /// - Throws: `MacosUseSDKError` if simulation fails.
-public func pressKeyAndVisualize(keyCode: CGKeyCode, flags: CGEventFlags = [], duration: Double = 0.8) throws {
-    // Define caption constants
-    let captionText = "[KEY PRESS]"
-    let captionSize = CGSize(width: 250, height: 80) // Size for the key press caption
+public func pressKeyAndVisualize(
+  keyCode: CGKeyCode, flags: CGEventFlags = [], duration: Double = 0.8
+) async throws {
+  // Define caption constants
+  let captionText = "[KEY PRESS]"
+  let captionSize = CGSize(width: 250, height: 80)  // Size for the key press caption
 
-    fputs("log: simulating key press (code: \(keyCode), flags: \(flags.rawValue)) AND visualizing caption '\(captionText)', duration: \(duration)s\n", stderr)
-    // Call the original input function first
-    try pressKey(keyCode: keyCode, flags: flags)
+  logger.info(
+    "simulating key press (code: \(keyCode, privacy: .public), flags: \(flags.rawValue, privacy: .public)) AND visualizing caption '\(captionText, privacy: .public)', duration: \(duration, privacy: .public)s")
+  // Call the original input function first
+  try await pressKey(keyCode: keyCode, flags: flags)
 
-    // Always dispatch caption visualization to the main thread at screen center
-    DispatchQueue.main.async {
-        Task { @MainActor in
-            // Get screen center for caption placement
-            if let screenCenter = getMainScreenCenter() {
-                fputs("log: [Main Thread] Displaying key press caption at screen center: \(screenCenter).\n", stderr)
-                // Show the caption feedback
-                showVisualFeedback(
-                    at: screenCenter,
-                    type: .caption(text: captionText),
-                    size: captionSize,
-                    duration: duration
-                )
-            } else {
-                fputs("warning: [Main Thread] could not get main screen center for key press caption visualization.\n", stderr)
-            }
-        }
+  // Always dispatch caption visualization to the main thread at screen center
+  DispatchQueue.main.async {
+    Task { @MainActor in
+      // Get screen center for caption placement
+      if let screenCenter = getMainScreenCenter() {
+        logger.info(
+          "[Main Thread] Displaying key press caption at screen center: \(String(describing: screenCenter), privacy: .public).")
+        // Show the caption feedback
+        showVisualFeedback(
+          at: screenCenter,
+          type: .caption(text: captionText),
+          size: captionSize,
+          duration: duration
+        )
+      } else {
+        logger.warning(
+          "[Main Thread] could not get main screen center for key press caption visualization.")
+      }
     }
-    fputs("log: key press simulation complete, caption visualization dispatched.\n", stderr)
+  }
+  logger.info("key press simulation complete, caption visualization dispatched.")
 }
 
 /// Simulates typing a string of text. Shows a caption of the text at screen center.
@@ -119,37 +134,40 @@ public func pressKeyAndVisualize(keyCode: CGKeyCode, flags: CGEventFlags = [], d
 ///   - text: The `String` to type.
 ///   - duration: How long the visual feedback should last (in seconds). Default is calculated or 1.0s min.
 /// - Throws: `MacosUseSDKError` if simulation fails.
-public func writeTextAndVisualize(_ text: String, duration: Double? = nil) throws {
-    // Define caption constants
-    let defaultDuration = 1.0 // Minimum duration
-    // Optional: Calculate duration based on text length, e.g., 0.5s + 0.05s per char
-    let calculatedDuration = max(defaultDuration, 0.5 + Double(text.count) * 0.05)
-    let finalDuration = duration ?? calculatedDuration
-    let captionSize = CGSize(width: 450, height: 100) // Adjust size as needed, maybe make dynamic later
+public func writeTextAndVisualize(_ text: String, duration: Double? = nil) async throws {
+  // Define caption constants
+  let defaultDuration = 1.0  // Minimum duration
+  // Optional: Calculate duration based on text length, e.g., 0.5s + 0.05s per char
+  let calculatedDuration = max(defaultDuration, 0.5 + Double(text.count) * 0.05)
+  let finalDuration = duration ?? calculatedDuration
+  let captionSize = CGSize(width: 450, height: 100)  // Adjust size as needed, maybe make dynamic later
 
-    fputs("log: simulating text writing AND visualizing caption: \"\(text)\", duration: \(finalDuration)s\n", stderr)
-    // Call the original input function first
-    try writeText(text)
+  logger.info(
+    "simulating text writing AND visualizing caption: \"\(text, privacy: .private)\", duration: \(finalDuration, privacy: .public)s")
+  // Call the original input function first
+  try await writeText(text)
 
-    // Always dispatch caption visualization to the main thread at screen center
-    DispatchQueue.main.async {
-        Task { @MainActor in
-            // Get screen center for caption placement
-            if let screenCenter = getMainScreenCenter() {
-                 fputs("log: [Main Thread] Displaying text writing caption at screen center: \(screenCenter).\n", stderr)
-                 // Show the caption feedback with the typed text
-                 showVisualFeedback(
-                     at: screenCenter,
-                     type: .caption(text: text), // Pass the actual text here
-                     size: captionSize,
-                     duration: finalDuration
-                 )
-            } else {
-                fputs("warning: [Main Thread] could not get main screen center for text writing caption visualization.\n", stderr)
-            }
-        }
+  // Always dispatch caption visualization to the main thread at screen center
+  DispatchQueue.main.async {
+    Task { @MainActor in
+      // Get screen center for caption placement
+      if let screenCenter = getMainScreenCenter() {
+        logger.info(
+          "[Main Thread] Displaying text writing caption at screen center: \(String(describing: screenCenter), privacy: .public).")
+        // Show the caption feedback with the typed text
+        showVisualFeedback(
+          at: screenCenter,
+          type: .caption(text: text),  // Pass the actual text here
+          size: captionSize,
+          duration: finalDuration
+        )
+      } else {
+        logger.warning(
+          "[Main Thread] could not get main screen center for text writing caption visualization.")
+      }
     }
-     fputs("log: text writing simulation complete, caption visualization dispatched.\n", stderr)
+  }
+  logger.info("text writing simulation complete, caption visualization dispatched.")
 }
 
 // --- Helper Function to Get Main Screen Center ---

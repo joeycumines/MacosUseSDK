@@ -1,0 +1,27 @@
+// Copyright 2025 Joseph Cumines
+//
+// Screenshot-related types
+
+syntax = "proto3";
+
+package macosusesdk.v1;
+
+option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
+option java_multiple_files = true;
+option java_outer_classname = "ScreenshotProto";
+option java_package = "com.macosusesdk.v1";
+
+// Image format for screenshots.
+enum ImageFormat {
+  // Default format (PNG).
+  IMAGE_FORMAT_UNSPECIFIED = 0;
+
+  // PNG format (lossless).
+  IMAGE_FORMAT_PNG = 1;
+
+  // JPEG format (lossy, smaller size).
+  IMAGE_FORMAT_JPEG = 2;
+
+  // TIFF format (lossless, larger size).
+  IMAGE_FORMAT_TIFF = 3;
+}
