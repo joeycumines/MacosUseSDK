@@ -16,121 +16,41 @@
 **STATUS SECTION (ACTION-FOCUSED)**
 
 ### **Current Reality**
-The build passes, but the previous submission failed Code Review on **Correctness**, **Performance**, and **Completeness**. The codebase currently contains a memory leak, dead code in critical heuristics, main-thread blocking, and missing implementations for claimed features.
 
-**CRITICAL DEFECTS (Must fix immediately):**
-1.  **Memory Leak:** `InputController` introduces a retain cycle by capturing `[process]` without releasing it.
-2.  **Dead Code:** `WindowQuery` ignores the `expectedTitle` argument, breaking the documented secondary matching heuristic.
-3.  **UI Blocking:** `AutomationCoordinator` claims non-blocking behavior but performs the heavy `AX` traversal on `MainActor`.
-4.  **Missing Implementation:** AIP-158 Pagination is marked complete, but the actual logic is missing from the codebase.
+**CRITICAL DEFECTS (Immediate Action Required):**
+1. The only known defects are identified by `./FIX_ME_THEN_DELETE_THIS_DOC.md` (READ THE ACTUAL DOC, N.B. asyncMap already dealt with)
 
 ---
 
 ### **Work Queue (Grouped for Subagents)**
 
-**GROUP A: Correctness & Logic Repairs (Target: `InputController.swift`, `WindowQuery.swift`)** ✅ COMPLETE
-* **Subagent Objective:** Fix memory safety and heuristic logic.
-* [x] **Fix Retain Cycle (`InputController.swift`):** Fixed by setting `proc.terminationHandler = nil` inside the completion block, breaking the retain cycle properly.
-* [x] **Restore Dead Code (`WindowQuery.swift`):** Removed underscore from `expectedTitle` parameter and implemented secondary title matching heuristic (50% score bonus for exact title match).
-* [x] **Verify:** All MacosUseSDK unit tests pass (2 tests, 0 failures, 11.151s).
-
-**GROUP B: Concurrency & Performance (Target: `AutomationCoordinator.swift`)** ✅ COMPLETE
-* **Subagent Objective:** Address the mismatch between performance claims and reality.
-* [x] **Fix Main Thread Blocking:** Moved `MacosUseSDK.traverseAccessibilityTree` off main thread using `Task.detached`. AXUIElement traversal is now safely executed on background thread.
-* [x] **Fix Error Propagation:** Fixed by converting `MacosUseSDKError` to `RPCError` so gRPC can handle them properly. TestCalculatorAddition now passes.
-
-**GROUP D: Window Metadata Fixes (Target: `MacosUseServiceProvider.swift`)** ✅ COMPLETE
-* **Subagent Objective:** Fix visible field computation to handle CGWindowList lag.
-* [x] **Fix Visible Field Logic:** Updated `buildWindowResponseFromAX` to compute `isOnScreen` based on AX state rather than stale registry data. If window is not minimized/hidden and AX query succeeded, it MUST be onscreen.
-* [x] **Verification:** TestWindowMetadataPreservation now passes with correct visible values throughout all operations.
-
-**GROUP C: Missing Features (Target: `MacosUseServiceProvider.swift`, `MacosUseSDK`)**
-* **Subagent Objective:** Actually implement the missing pagination logic.
-* [ ] **Implement Pagination:** The code for AIP-158 (opaque tokens, page limits) is missing despite the tests being added. Implement the logic to handle `page_token` and `page_size` in the Provider/SDK layer.
-* [ ] **Verify:** Ensure `integration/pagination_find_test.go` passes against *real* logic, not accidental defaults.
-
----
-
-## **Objective**
-
-Build a production-grade gRPC server exposing the complete MacosUseSDK functionality through a sophisticated, resource-oriented API following Google's AIPs.
-
-## **Phase 1: API Definition (Reality-Aligned)**
-
-### **1.1 Core Resources**
-
-#### **Application** (`applications/{application}`)
-- Proto: `proto/macosusesdk/v1/application.proto`.
-- **Status:** Defined. Pagination on `ListApplications` requires verification (See Phase 3.4).
-
-#### **Window** (`applications/{application}/windows/{window}`)
-- Proto: `proto/macosusesdk/v1/window.proto`.
-- **Status:** Defined. Pagination on `ListWindows` requires verification (See Phase 3.4).
-
-#### **Element** (`applications/{application}/windows/{window}/elements/{element}`)
-- Proto: `proto/macosusesdk/type/element.proto`.
-- **Status:** Defined.
-
-#### **Observation** (`applications/{application}/observations/{observation}`)
-- Proto: `proto/macosusesdk/v1/observation.proto`.
-- **Status:** Defined. Streaming implemented.
-
-### **1.3 Element Targeting System**
-- **Selector Syntax:** Defined in `proto/macosusesdk/type/selector.proto`.
-- **Query System:** `FindElements` and `FindRegionElements` exist.
-
----
-
-## **Phase 2: Server Architecture**
-
-### **2.1 State Management**
-- **Current Reality:** `AppStateStore` manages state.
-- **Constraint:** Must maintain `@MainActor` constraints where AX APIs require it, but offload processing where possible.
-
----
-
-## **Phase 3: Service Completeness (Concrete Gaps)**
-
-### **3.1 Application & Window Services**
-- ✅ Split-brain authority model implemented.
-- ✅ Window mutations return immediate AX state.
-
-### **3.4 Query & Pagination (MANDATORY & INCOMPLETE)**
-**Current Status: FAILED / MISSING CODE**
-- The implementation plan previously claimed this was complete. Code review proved the implementation logic was missing.
-- **Requirement:**
-    - Implement opaque token generation/parsing (base64).
-    - Ensure `FindElements`, `ListWindows`, `ListApplications` respect `page_size`.
-    - Ensure `next_page_token` is generated correctly.
+**GROUP B: Critical Consolidation & Correctness (Target: `InputController.swift`, `WindowQuery.swift`, `WindowRegistry.swift`)**
+* **Subagent Objective:** Resolve the "Split-Brain" race condition and blocking I/O issues.
+* [ ] **Async Input Controller (Liveness):**
+    * Convert `InputController` methods to `async/await`.
+    * Remove `usleep` and replace with `Task.sleep`.
+    * Update `AutomationCoordinator` to await these calls.
+* [ ] **Window Authority Primitives (Race Condition Fix):**
+    * Modify SDK `WindowQuery.swift` to expose a robust `fetchAXWindowInfo(pid:windowId:expectedBounds:expectedTitle:)` primitive (returning `AXUIElement`).
+    * Refactor Server `WindowHelpers.swift` / `WindowRegistry.swift` to **strictly** use this SDK primitive instead of the current manual iteration loop.
+    * This consolidates logic and fixes the race condition via SDK heuristics.
 
 ---
 
 ## **Phase 4: Testing Strategy**
 
 ### **4.1 Unit Tests**
-- **Requirement:** Every fix in Group A/B/C must have accompanying unit test verification.
-- **Strictness:** `integration/observation_test.go` has been updated to strict 2px tolerance. This must be maintained.
+- **Requirement:** Every fix must have accompanying unit test verification.
+- **Strictness:** `integration/observation_test.go` must remain an EFFECTIVE test of the logic it covers.
 
 ### **4.2 Test Harness**
 - **Golden Apps:** `TextEdit`, `Calculator`, `Finder`.
 - **Lifecycle:** Tests must clean up resources (DeleteApplication) aggressively.
+  - TODO: This needs to be expanded to RELIABLY include hung API servers.
 
 ### **Correctness & Verification Guarantees**
 1.  **State-Difference Assertions:** Mutator RPCs must be followed by Accessor RPCs to verify delta.
 2.  **PollUntil Pattern:** No `time.Sleep()`. Use polling with timeouts.
-
----
-
-## **Phase 10: Implementation Priorities (Revised)**
-
-### **Priority 1: Critical Defect Remediation (IMMEDIATE)**
-Fix memory leaks (`InputController`), dead code (`WindowQuery`), and blocking calls (`AutomationCoordinator`).
-
-### **Priority 2: Pagination Implementation (IMMEDIATE)**
-Actually write the code that makes the pagination tests pass validly.
-
-### **Priority 3: Observation & Window Changes (HIGH)**
-Add robust window and element change detection.
 
 ---
 **END OF IMPLEMENTATION PLAN**
