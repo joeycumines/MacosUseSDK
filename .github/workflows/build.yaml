@@ -9,6 +9,7 @@ jobs:
     permissions:
       contents: read
     steps:
+      - uses: actions/checkout@v5
       - name: Select Latest Stable Xcode
         shell: sh
         run: |-
@@ -49,7 +50,6 @@ jobs:
           xcode_select_output="$(xcode-select -p)" &&
           swift_version_output="$(swift --version)" &&
           echo "::notice::Using Xcode path: $xcode_select_output; Swift version: $swift_version_output"
-      - uses: actions/checkout@v5
       - uses: actions/setup-go@v6
         with:
           go-version: 'stable'
