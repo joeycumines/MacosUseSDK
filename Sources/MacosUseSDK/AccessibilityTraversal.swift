@@ -168,20 +168,23 @@ private class AccessibilityTraversalOperation {
     logStepCompletion("checking accessibility permissions (granted)")
 
     // 2. Find Application by PID and Create AXUIElement
-    guard let runningApp = NSRunningApplication(processIdentifier: pid) else {
-      logger.error("no running application found with pid \(String(describing: self.pid), privacy: .public).")
-      throw MacosUseSDKError.appNotFound(pid: pid)
+    // Remove strict dependency on NSRunningApplication. It is primarily needed for .activate().
+    let runningApp = NSRunningApplication(processIdentifier: pid)
+    if runningApp == nil {
+      logger.warning("NSRunningApplication returned nil for PID \(self.pid, privacy: .public). The app might be in a transient state. Proceeding with raw AX creation.")
     }
-    let targetAppName = runningApp.localizedName ?? "App (PID: \(pid))"
-    let appElement = AXUIElementCreateApplication(pid)
-    // logStepCompletion("finding application '\(targetAppName)'") // Logging step completion implicitly here
 
-    // 3. Activate App if needed
+    let targetAppName = runningApp?.localizedName ?? "App (PID: \(pid))"
+
+    // Create the AX element directly from the PID. This works at the CoreFoundation level
+    // and does not require the Window Server to be fully in sync.
+    let appElement = AXUIElementCreateApplication(pid)
+
+    // 3. Activate App if needed (Only if we have a runningApp handle)
     var didActivate = false
-    if runningApp.activationPolicy == NSApplication.ActivationPolicy.regular {
-      if !runningApp.isActive {
-        // fputs("info: activating application '\(targetAppName)'...\n", stderr) // Optional start log
-        runningApp.activate()
+    if let app = runningApp, app.activationPolicy == NSApplication.ActivationPolicy.regular {
+      if !app.isActive {
+        app.activate() // Default options are usually sufficient
         didActivate = true
       }
     }

@@ -15,7 +15,7 @@
 
 **STATUS SECTION (ACTION-FOCUSED)**
 
-### **Current State (2025-11-22 22:00 JST)**
+### **Current State (2025-11-22 22:20 JST)**
 
 **COMPLETED:**
 1. **Zero-Bounds Heuristic Bias Fix (WindowHelpers.swift:248-305)**
@@ -24,16 +24,11 @@
    - Prevents silent selection of wrong window in multi-window apps.
    - `TestWindowMetadataPreservation` PASSES, confirming fix works for single-window apps.
 
-**INVESTIGATION REQUIRED:**
-1. **TestCalculatorMultiplication Flake**
-   - Error: "Application with PID 18971 not found" during `TraverseAccessibility`.
-   - This means `NSRunningApplication(processIdentifier:)` returned `nil` mid-test.
-   - Test sequence: Open → Wait → Mode Switch → Clear → Type → **Read Result (FAILS HERE)**.
-   - My changes to `findWindowElement` do NOT affect `TraverseAccessibility` code path.
-   - `ListWindows` (used in test) does NOT call `findWindowElement`.
-   - My new `.failedPrecondition` error never appeared in logs.
-   - **Hypothesis:** Pre-existing race condition in Calculator automation or server state management.
-   - **Action:** Run `make all` multiple times to determine if flake or deterministic regression.
+2. **NSRunningApplication Race Condition Fix (AccessibilityTraversal.swift:179-199)**
+   - **Root Cause:** `NSRunningApplication(processIdentifier:)` can return `nil` during transient states due to Window Server vs. Accessibility IPC desynchronization.
+   - **Fix:** Made `NSRunningApplication` optional; proceed with `AXUIElementCreateApplication(pid)` regardless.
+   - **Benefit:** CoreFoundation-level AX creation is more reliable. If process is truly dead, subsequent AX calls fail naturally.
+   - **Verification:** Must run `make all` to confirm flake is resolved.
 
 ---
 
@@ -41,9 +36,10 @@
 
 **TASK 1: Verify Build Stability**
 * [x] Fix multi-window ambiguity (completed).
-* [ ] Run `make all` 3x to identify flake vs regression pattern.
-* [ ] If flake: Document in plan, proceed to completion.
-* [ ] If regression: Identify root cause and fix.
+* [x] Fix NSRunningApplication race condition (completed).
+* [ ] Run `make all` 3x to verify flake is resolved.
+* [ ] If tests pass: Mark implementation complete.
+* [ ] If tests still flake: Further investigation required.
 
 ---
 

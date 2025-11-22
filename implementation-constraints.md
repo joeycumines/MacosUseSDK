@@ -49,6 +49,8 @@ Previous sins (now corrected, not to be repeated):
 - Support advanced inputs: Modifiers, Special Keys, Mouse Operations (drag, right-click).
 - Support VS Code integration patterns (multi-window, advanced targeting).
 
+- **Quartz/Accessibility Race Condition Mitigation:** Do not rely on `NSRunningApplication(processIdentifier:)` for process liveness when performing AX actions; always attempt AX actions e.g. `AXUIElementCreateApplication(pid)` _then_ handle invalid processes via AX API errors.
+
 ## Testing and Tooling
 
 - **Atomic Testing:** ALL new behavior and ALL modifications MUST be accompanied by automated tests in the SAME change set.
