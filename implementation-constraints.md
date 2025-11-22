@@ -29,17 +29,16 @@
 - AVOID and REPLACE ad-hoc `fputs` or unannotated `print` with `Logger` and `OSLogPrivacy` for any message emitted from Swift server components or SDK helpers in `Server/Sources/MacosUseServer` and `Sources/MacosUseSDK`.
 - `fputs` is forbidden in these server/SDK directories for diagnostic logs — it bypasses OS unified logging and cannot mark privacy. Use `Logger` with explicit `privacy` annotations for every interpolated value. For user-facing CLI help text (static strings) `print` is allowed only outside `Server/Sources/MacosUseServer` and `Sources/MacosUseSDK`.
 
-## Core Directives (Refinement Phase)
+## Core Directives
 
-The gRPC server scaffolding exists. The current objective is **Strict Correctness** and **Production Hardening**; constraints in this section describe *requirements*, not current status.
+Constraints in this section describe *requirements*, not current status.
 
 The gRPC server MUST:
-- Use **only** the gRPC Swift 2 module(s) (`grpc-swift-2`, `GRPCCore`, `grpc-swift-nio-transport`, `grpc-swift-protobuf`) and leverage the existing `AutomationCoordinator` (@MainActor) as the central control loop. Legacy v1 packages, plugins, generated code, or incremental v1/v2 compatibility shims are **forbidden** and must be actively removed during migration.
 - Strictly follow **Google's AIPs** (2025 standards). When in doubt between `buf lint` and Google's AIPs, Google's AIPs take precedence.
 - Support configuration via environment variables (socket paths, addresses).
 - Maintain the **State Store** architecture: `AppStateStore` (copy-on-write view for queries), `WindowRegistry`, `ObservationManager`, and `SessionManager`.
 
-**Mandatory Functional Requirements (Blockers):**
+Previous sins (now corrected, not to be repeated):
 - **Pagination (AIP-158):** You MUST implement `page_size`, `page_token`, and `next_page_token` for ALL List/Find RPCs, and `page_token`/`next_page_token` MUST be treated as opaque by clients (no reliance on internal structure such as `"offset:N"`).
 - **State-Difference Assertions:** Tests MUST NOT rely on "Happy Path" OK statuses. Every mutator RPC (Click, Move, Resize) MUST be followed by an accessor RPC to verify the *delta* in state.
 - **Wait-For-Convergence:** Tests MUST use a `PollUntil` pattern. `time.Sleep` is FORBIDDEN in tests.
