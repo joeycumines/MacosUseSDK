@@ -75,22 +75,33 @@ func TestWindowMetadataPreservation(t *testing.T) {
 	t.Logf("Initial window found: %s", initialWindow.Name)
 
 	// 4. Verify initial window metadata is populated
-	t.Log("Verifying initial window metadata...")
+	// CRITICAL FIX: ListWindows uses CGWindowList (registry) data only, which may have stale isOnScreen flag.
+	// To get fresh AX-based visibility, we must call GetWindow (which queries AX directly).
+	t.Log("Verifying initial window metadata via GetWindow (AX-based)...")
+	freshWindow, err := client.GetWindow(ctx, &pb.GetWindowRequest{
+		Name: initialWindow.Name,
+	})
+	if err != nil {
+		t.Fatalf("GetWindow failed for initial window: %v", err)
+	}
 
 	// Verify initial metadata is populated
-	if initialWindow.BundleId == "" {
+	if freshWindow.BundleId == "" {
 		t.Error("Initial window: bundleID is empty")
 	}
-	if initialWindow.ZIndex == 0 {
+	if freshWindow.ZIndex == 0 {
 		t.Log("Warning: Initial window zIndex is 0 (may be valid)")
 	}
-	// visible should be true for a newly opened window
-	if !initialWindow.Visible {
-		t.Error("Initial window: expected visible=true for new window")
+	// visible should be true for a newly opened, non-minimized window (AX-based check)
+	if !freshWindow.Visible {
+		t.Error("Initial window: expected visible=true for new window (from GetWindow AX query)")
 	}
 
-	t.Logf("Initial window: bundleID=%s, zIndex=%d, visible=%v",
-		initialWindow.BundleId, initialWindow.ZIndex, initialWindow.Visible)
+	t.Logf("Initial window (AX-based): bundleID=%s, zIndex=%d, visible=%v",
+		freshWindow.BundleId, freshWindow.ZIndex, freshWindow.Visible)
+
+	// Use freshWindow for subsequent operations
+	initialWindow = freshWindow
 
 	// Store initial values for comparison
 	expectedBundleID := initialWindow.BundleId

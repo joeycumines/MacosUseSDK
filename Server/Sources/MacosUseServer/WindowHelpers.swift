@@ -260,35 +260,30 @@ extension MacosUseServiceProvider {
                 title = expectedTitle
             } else {
                 // Get CGWindowList snapshot for expected bounds hint
-                guard
-                    let windowList = CGWindowListCopyWindowInfo(
-                        [.optionAll, .excludeDesktopElements], kCGNullWindowID,
-                    ) as? [[String: Any]]
-                else {
-                    throw RPCError(code: .internalError, message: "Failed to get window list")
-                }
+                // CRITICAL FIX: During rapid mutations or window creation, CGWindowList may be stale/incomplete.
+                // Treat CG data as best-effort hint only; fallback to zero rect if window not found.
+                let windowList = CGWindowListCopyWindowInfo(
+                    [.optionAll, .excludeDesktopElements], kCGNullWindowID,
+                ) as? [[String: Any]] ?? []
 
                 // Find window with matching CGWindowID
-                guard
-                    let cgWindow = windowList.first(where: {
-                        ($0[kCGWindowNumber as String] as? Int32) == Int32(windowId)
-                    })
-                else {
-                    throw RPCError(
-                        code: .notFound, message: "Window with ID \(windowId) not found in CGWindowList",
-                    )
+                if let cgWindow = windowList.first(where: {
+                    ($0[kCGWindowNumber as String] as? Int32) == Int32(windowId)
+                }),
+                    let cgBounds = cgWindow[kCGWindowBounds as String] as? [String: CGFloat],
+                    let cgX = cgBounds["X"], let cgY = cgBounds["Y"],
+                    let cgWidth = cgBounds["Width"], let cgHeight = cgBounds["Height"]
+                {
+                    // Use CG bounds as hint
+                    bounds = CGRect(x: cgX, y: cgY, width: cgWidth, height: cgHeight)
+                    title = cgWindow[kCGWindowName as String] as? String
+                } else {
+                    // CRITICAL FALLBACK: Window not in CGWindowList (stale snapshot during mutation).
+                    // Use zero rect as hint; fetchAXWindowInfo will still match based on PID filtering.
+                    // This ensures GetWindow succeeds immediately after mutations without waiting for CG refresh.
+                    bounds = .zero
+                    title = nil
                 }
-
-                // Get bounds from CGWindow as expected hint
-                guard let cgBounds = cgWindow[kCGWindowBounds as String] as? [String: CGFloat],
-                      let cgX = cgBounds["X"], let cgY = cgBounds["Y"],
-                      let cgWidth = cgBounds["Width"], let cgHeight = cgBounds["Height"]
-                else {
-                    throw RPCError(code: .internalError, message: "Failed to get bounds from CGWindow")
-                }
-
-                bounds = CGRect(x: cgX, y: cgY, width: cgWidth, height: cgHeight)
-                title = cgWindow[kCGWindowName as String] as? String
             }
 
             // Use SDK primitive with heuristic matching (race-resistant)

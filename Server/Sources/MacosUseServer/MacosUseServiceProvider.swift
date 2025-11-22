@@ -350,37 +350,11 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
             throw RPCError(code: .invalidArgument, message: "Invalid window name format")
         }
 
-        // CRITICAL FIX: Try to get live AX data first to ensure bounds are fresh (fixes Resize test)
-        // We swallow errors here to fall back to the registry if AX is unavailable
-        if let axWindow = try? await findWindowElement(pid: pid, windowId: windowId) {
-            return try await buildWindowResponseFromAX(name: req.name, pid: pid, windowId: windowId, window: axWindow, registryInfo: nil)
-        }
-
-        // Fallback: Use WindowRegistry (CGWindowList) if AX fails
-        // CRITICAL FIX: Use shared windowRegistry actor instead of creating a temporary one
-        // Refreshing a temporary registry has no effect on CGWindowList cache consistency
-        try await windowRegistry.refreshWindows(forPID: pid)
-
-        guard let windowInfo = try await windowRegistry.getWindow(windowId) else {
-            throw RPCError(code: .notFound, message: "Window not found")
-        }
-
-        // Build Window response with registry data only (cheap CoreGraphics data)
-        // Clients must use GetWindowState for expensive AX queries
-        let response = Macosusesdk_V1_Window.with {
-            $0.name = req.name
-            $0.title = windowInfo.title
-            $0.bounds = Macosusesdk_V1_Bounds.with {
-                $0.x = windowInfo.bounds.origin.x
-                $0.y = windowInfo.bounds.origin.y
-                $0.width = windowInfo.bounds.size.width
-                $0.height = windowInfo.bounds.size.height
-            }
-            $0.zIndex = Int32(windowInfo.layer)
-            $0.visible = windowInfo.isOnScreen
-            $0.bundleID = windowInfo.bundleID ?? ""
-        }
-        return ServerResponse(message: response)
+        // CRITICAL FIX: ALWAYS use AX data for bounds (never fall back to stale CGWindowList).
+        // This ensures GetWindow returns fresh geometry immediately after mutations (MoveWindow, ResizeWindow).
+        // The "split-brain" model mandates: AX is authority for geometry, Registry is authority for metadata.
+        let axWindow = try await findWindowElement(pid: pid, windowId: windowId)
+        return try await buildWindowResponseFromAX(name: req.name, pid: pid, windowId: windowId, window: axWindow, registryInfo: nil)
     }
 
     func listWindows(

@@ -15,27 +15,57 @@
 
 **STATUS SECTION (ACTION-FOCUSED)**
 
-### **Current Reality**
+2*3=### **Current Reality (2025-11-22 20:45 JST - Takumi's Shame Audit)**
+
+**CRITICAL BUILD FAILURES:**
+1. Integration test `TestWindowChangeObservation` FAILS with `DeadlineExceeded` during `ResizeWindow` RPC.
+   - **Root Cause:** Server DEADLOCK or excessive blocking during window mutation.
+   - **Symptom:** ResizeWindow RPC times out after 3 minutes, never returns.
+   - **Evidence:** Line 1775 of build.log shows "ResizeWindow (back to original) failed: rpc error: code = DeadlineExceeded desc = context deadline exceeded"
 
 **CRITICAL DEFECTS (Immediate Action Required):**
-1. The only known defects are identified by `./FIX_ME_THEN_DELETE_THIS_DOC.md` (READ THE ACTUAL DOC, N.B. asyncMap already dealt with)
+1. **Window Lookup Consolidation NOT DONE** (FIX_ME_THEN_DELETE_THIS_DOC.md Section 3)
+   - Server `WindowHelpers.swift` `findWindowElement()` STILL uses manual 2N IPC iteration.
+   - SDK `WindowQuery.swift` `fetchAXWindowInfo()` exists but is UNUSED by Server.
+   - This causes INEFFICIENCY (2N vs 1N IPC) and BRITTLENESS (strict 2px vs heuristic).
+   - **Immediate Action:** Refactor Server to use SDK primitive.
+
+2. **Dead Code Removal NOT DONE** (FIX_ME_THEN_DELETE_THIS_DOC.md Section 6.2)
+   - `Server/Sources/MacosUseServer/Extensions.swift` contains unused `asyncMap` function.
+   - **Immediate Action:** Delete the file.
+
+3. **Async Input Controller NOT DONE** (FIX_ME_THEN_DELETE_THIS_DOC.md hints + implementation-plan)
+   - `InputController.swift` uses `usleep` (blocking).
+   - Must convert to `async/await` with `Task.sleep`.
+   - **Immediate Action:** Refactor InputController to be async.
 
 ---
 
-### **Work Queue (Grouped for Subagents)**
+### **Work Queue (MANDATORY IMMEDIATE EXECUTION)**
 
-**GROUP B: Critical Consolidation & Correctness (Target: `InputController.swift`, `WindowQuery.swift`, `WindowRegistry.swift`)**
-* **Subagent Objective:** Resolve the "Split-Brain" race condition and blocking I/O issues.
-* [ ] **Async Input Controller (Liveness):**
-    * Convert `InputController` methods to `async/await`.
-    * Remove `usleep` and replace with `Task.sleep`.
-    * Update `AutomationCoordinator` to await these calls.
-* [X] **Window Authority Primitives (Race Condition Fix):**  **COMPLETE - 2025-11-22**
-    * Modified SDK `WindowQuery.swift` `WindowInfo` struct to include `element: AXUIElement` field.
-    * Refactored Server `WindowHelpers.swift` `findWindowElement()` to use SDK's `fetchAXWindowInfo` primitive with batched IPC.
-    * Eliminated Server's manual 2N IPC iteration loop in favor of SDK's optimized 1N batched approach.
-    * Fixed race condition by removing strict 2px tolerance and accepting best heuristic match during rapid mutations.
-    * **Evidence:** `integration/window_metadata_test.go` now passes all mutation operations (MoveWindow → ResizeWindow → MinimizeWindow → RestoreWindow) without "AXUIElement not found" errors.
+**TASK 1: Fix ResizeWindow Deadlock**
+* [ ] Investigate why `resizeWindow()` in `MacosUseServiceProvider.swift` causes 3-minute timeout.
+* [ ] Check if `findWindowElement()` or `windowRegistry.refreshWindows()` blocks main thread.
+* [ ] Verify Task.detached isolation is correct for AX operations.
+
+**TASK 2: Window Lookup Consolidation (FIX_ME Section 3)**
+* [ ] Verify SDK `WindowQuery.swift` `WindowInfo` struct includes `element: AXUIElement` field.
+* [ ] Refactor Server `WindowHelpers.swift` `findWindowElement()` to call SDK's `fetchAXWindowInfo()`.
+* [ ] Remove Server's manual 2N IPC loop.
+* [ ] Update all callers to use consolidated implementation.
+
+**TASK 3: Dead Code Removal (FIX_ME Section 6.2)**
+* [ ] Delete `Server/Sources/MacosUseServer/Extensions.swift`.
+
+**TASK 4: Async Input Controller (FIX_ME Liveness)**
+* [ ] Convert `InputController.swift` methods to `async/await`.
+* [ ] Replace `usleep` with `Task.sleep`.
+* [ ] Update `AutomationCoordinator` to await InputController calls.
+
+**TASK 5: Verification**
+* [ ] Run `make-all-with-log` and ensure zero failures.
+* [ ] Run `test-integration-all` and ensure all tests pass.
+* [ ] Verify `TestWindowChangeObservation` specifically passes without timeout.
 
 ---
 
