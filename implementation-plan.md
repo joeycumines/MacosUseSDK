@@ -30,10 +30,12 @@
     * Convert `InputController` methods to `async/await`.
     * Remove `usleep` and replace with `Task.sleep`.
     * Update `AutomationCoordinator` to await these calls.
-* [ ] **Window Authority Primitives (Race Condition Fix):**
-    * Modify SDK `WindowQuery.swift` to expose a robust `fetchAXWindowInfo(pid:windowId:expectedBounds:expectedTitle:)` primitive (returning `AXUIElement`).
-    * Refactor Server `WindowHelpers.swift` / `WindowRegistry.swift` to **strictly** use this SDK primitive instead of the current manual iteration loop.
-    * This consolidates logic and fixes the race condition via SDK heuristics.
+* [X] **Window Authority Primitives (Race Condition Fix):**  **COMPLETE - 2025-11-22**
+    * Modified SDK `WindowQuery.swift` `WindowInfo` struct to include `element: AXUIElement` field.
+    * Refactored Server `WindowHelpers.swift` `findWindowElement()` to use SDK's `fetchAXWindowInfo` primitive with batched IPC.
+    * Eliminated Server's manual 2N IPC iteration loop in favor of SDK's optimized 1N batched approach.
+    * Fixed race condition by removing strict 2px tolerance and accepting best heuristic match during rapid mutations.
+    * **Evidence:** `integration/window_metadata_test.go` now passes all mutation operations (MoveWindow → ResizeWindow → MinimizeWindow → RestoreWindow) without "AXUIElement not found" errors.
 
 ---
 

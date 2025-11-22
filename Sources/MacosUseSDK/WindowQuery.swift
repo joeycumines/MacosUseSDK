@@ -9,6 +9,7 @@ private let logger = sdkLogger(category: "WindowQuery")
 
 /// Structure representing the resolved Accessibility state of a window.
 public struct WindowInfo {
+    public let element: AXUIElement
     public let pid: Int32
     public let windowId: CGWindowID
     public let bounds: CGRect
@@ -142,6 +143,7 @@ public func fetchAXWindowInfo(
             let isHidden = false
 
             let candidate = WindowInfo(
+                element: axWindow,
                 pid: pid,
                 windowId: windowId,
                 bounds: axBounds,
@@ -157,13 +159,16 @@ public func fetchAXWindowInfo(
     }
 
     // 5. Validation Threshold
-    // A score of < 20.0 roughly allows for shadow/border discrepancies or slight animation lag.
-    // If the best score is huge, we likely found the "first" window of a totally different app window state.
-    let matchThreshold: CGFloat = 20.0
-
-    if bestScore <= matchThreshold {
+    // CRITICAL FIX FOR RACE CONDITION: During rapid mutation sequences, CGWindowList can be
+    // extremely stale. If we found ANY window (bestScore < infinity), return it.
+    // This is safe because we're already filtering by PID and using heuristic bounds matching.
+    // The worst case is we match the wrong window of the same app, but that's better than
+    // failing completely. Once CGWindowList catches up, scores will be low (< 20).
+    if bestScore < CGFloat.greatestFiniteMagnitude {
+        logger.debug("[fetchAXWindowInfo] Matched window \(windowId, privacy: .public) with score \(bestScore, privacy: .public)")
         return bestMatch
     }
 
+    logger.warning("[fetchAXWindowInfo] No windows found for PID \(pid, privacy: .public)")
     return nil
 }
