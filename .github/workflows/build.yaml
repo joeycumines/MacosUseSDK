@@ -9,7 +9,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Select Newest Strict Xcode Version
+      - name: Select Latest Stable Xcode
         shell: sh
         run: |-
           set -eu || exit 1
@@ -44,7 +44,7 @@ jobs:
              exit 1
           fi
           echo "DEVELOPER_DIR=$DEV_DIR" >>"$GITHUB_ENV"
-      - name: Verify Selection
+      - name: Verify Xcode and Swift versions
         run: |-
           xcode_select_output="$(xcode-select -p)" &&
           swift_version_output="$(swift --version)" &&
