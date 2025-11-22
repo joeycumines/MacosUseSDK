@@ -106,7 +106,6 @@ service MacosUse {
     option (google.api.method_signature) = "name";
   }
 
-  // ===== Window Operations =====
   // Gets a specific window.
   rpc GetWindow(GetWindowRequest) returns (Window) {
     option (google.api.http) = {get: "/v1/{name=applications/*/windows/*}"};
@@ -179,7 +178,6 @@ service MacosUse {
     option (google.api.method_signature) = "name";
   }
 
-  // ===== Element Operations =====
   // Finds elements matching a selector.
   rpc FindElements(FindElementsRequest) returns (FindElementsResponse) {
     option (google.api.http) = {
@@ -286,7 +284,6 @@ service MacosUse {
     };
   }
 
-  // ===== Observation Operations =====
   // Creates an observation (long-running operation).
   rpc CreateObservation(CreateObservationRequest) returns (google.longrunning.Operation) {
     option (google.api.http) = {
@@ -330,7 +327,6 @@ service MacosUse {
     option (google.api.method_signature) = "name";
   }
 
-  // ===== Session Operations =====
   // Creates a session.
   rpc CreateSession(CreateSessionRequest) returns (Session) {
     option (google.api.http) = {
@@ -390,7 +386,6 @@ service MacosUse {
     option (google.api.method_signature) = "name";
   }
 
-  // ===== Screenshot Operations =====
   // Captures a full screen screenshot.
   rpc CaptureScreenshot(CaptureScreenshotRequest) returns (CaptureScreenshotResponse) {
     option (google.api.http) = {
@@ -430,7 +425,6 @@ service MacosUse {
     option (google.api.method_signature) = "region";
   }
 
-  // ===== Clipboard Operations =====
   // Gets clipboard contents.
   rpc GetClipboard(GetClipboardRequest) returns (Clipboard) {
     option (google.api.http) = {get: "/v1/{name=clipboard}"};
@@ -460,7 +454,6 @@ service MacosUse {
     option (google.api.method_signature) = "name";
   }
 
-  // ===== File Operations =====
   // Automates an open file dialog.
   rpc AutomateOpenFileDialog(AutomateOpenFileDialogRequest) returns (AutomateOpenFileDialogResponse) {
     option (google.api.http) = {
@@ -506,7 +499,6 @@ service MacosUse {
     option (google.api.method_signature) = "application,file_paths,target_element_id";
   }
 
-  // ===== Macro Operations =====
   // Creates a macro.
   rpc CreateMacro(CreateMacroRequest) returns (Macro) {
     option (google.api.http) = {
@@ -555,7 +547,6 @@ service MacosUse {
     };
   }
 
-  // ===== Script Operations =====
   // Executes an AppleScript.
   rpc ExecuteAppleScript(ExecuteAppleScriptRequest) returns (ExecuteAppleScriptResponse) {
     option (google.api.http) = {
@@ -782,7 +773,6 @@ message ModifiedElement {
   repeated AttributeChange changes = 3;
 }
 
-// ===== Element Messages =====
 // Request to find elements matching a selector.
 message FindElementsRequest {
   // Parent context. Either:
@@ -1080,7 +1070,6 @@ message WaitElementStateMetadata {
   int32 attempts = 2;
 }
 
-// ===== Window Messages =====
 // Request to get a window.
 message GetWindowRequest {
   // Resource name of the window.
@@ -1203,7 +1192,6 @@ message CloseWindowResponse {
   bool success = 1;
 }
 
-// ===== Observation Messages =====
 // Request to create an observation.
 message CreateObservationRequest {
   // Parent application.
@@ -1289,7 +1277,6 @@ message StreamObservationsResponse {
   ObservationEvent event = 1;
 }
 
-// ===== Session Messages =====
 // Request to create a session.
 message CreateSessionRequest {
   // The session to create.
@@ -1338,7 +1325,6 @@ message DeleteSessionRequest {
   bool force = 2 [(google.api.field_behavior) = OPTIONAL];
 }
 
-// ===== Macro Messages =====
 // Request to create a macro.
 message CreateMacroRequest {
   // The macro to create.
@@ -1465,7 +1451,6 @@ message ExecuteMacroMetadata {
   google.protobuf.Duration elapsed_duration = 4;
 }
 
-// ===== Session Transaction Messages =====
 // Request to begin a transaction within a session.
 message BeginTransactionRequest {
   // Session name.
@@ -1541,7 +1526,6 @@ message GetSessionSnapshotRequest {
   ];
 }
 
-// ===== Screenshot Messages =====
 // Request to capture a screenshot of the entire screen.
 message CaptureScreenshotRequest {
   // Image format.
@@ -1701,7 +1685,6 @@ message CaptureRegionScreenshotResponse {
   string ocr_text = 6;
 }
 
-// ===== Clipboard Messages =====
 // Request to get clipboard contents.
 message GetClipboardRequest {
   // The name of the clipboard resource.
@@ -1749,7 +1732,6 @@ message GetClipboardHistoryRequest {
   ];
 }
 
-// ===== File Messages =====
 // Request to automate an open file dialog.
 message AutomateOpenFileDialogRequest {
   // Application context.
@@ -1909,7 +1891,6 @@ message DragFilesResponse {
   string error = 3;
 }
 
-// ===== Script Messages =====
 // Request to execute an AppleScript.
 message ExecuteAppleScriptRequest {
   // AppleScript source code.

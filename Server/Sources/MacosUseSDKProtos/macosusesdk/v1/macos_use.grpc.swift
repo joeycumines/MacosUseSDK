@@ -1118,7 +1118,6 @@ public extension Macosusesdk_V1_MacosUse {
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > ===== Window Operations =====
         /// > Gets a specific window.
         ///
         /// - Parameters:
@@ -1281,7 +1280,6 @@ public extension Macosusesdk_V1_MacosUse {
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > ===== Element Operations =====
         /// > Finds elements matching a selector.
         ///
         /// - Parameters:
@@ -1444,7 +1442,6 @@ public extension Macosusesdk_V1_MacosUse {
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > ===== Observation Operations =====
         /// > Creates an observation (long-running operation).
         ///
         /// - Parameters:
@@ -1535,7 +1532,6 @@ public extension Macosusesdk_V1_MacosUse {
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > ===== Session Operations =====
         /// > Creates a session.
         ///
         /// - Parameters:
@@ -1680,7 +1676,6 @@ public extension Macosusesdk_V1_MacosUse {
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > ===== Screenshot Operations =====
         /// > Captures a full screen screenshot.
         ///
         /// - Parameters:
@@ -1753,7 +1748,6 @@ public extension Macosusesdk_V1_MacosUse {
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > ===== Clipboard Operations =====
         /// > Gets clipboard contents.
         ///
         /// - Parameters:
@@ -1826,7 +1820,6 @@ public extension Macosusesdk_V1_MacosUse {
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > ===== File Operations =====
         /// > Automates an open file dialog.
         ///
         /// - Parameters:
@@ -1917,7 +1910,6 @@ public extension Macosusesdk_V1_MacosUse {
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > ===== Macro Operations =====
         /// > Creates a macro.
         ///
         /// - Parameters:
@@ -2026,7 +2018,6 @@ public extension Macosusesdk_V1_MacosUse {
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > ===== Script Operations =====
         /// > Executes an AppleScript.
         ///
         /// - Parameters:
@@ -2292,7 +2283,6 @@ public extension Macosusesdk_V1_MacosUse {
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > ===== Window Operations =====
         /// > Gets a specific window.
         ///
         /// - Parameters:
@@ -2455,7 +2445,6 @@ public extension Macosusesdk_V1_MacosUse {
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > ===== Element Operations =====
         /// > Finds elements matching a selector.
         ///
         /// - Parameters:
@@ -2618,7 +2607,6 @@ public extension Macosusesdk_V1_MacosUse {
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > ===== Observation Operations =====
         /// > Creates an observation (long-running operation).
         ///
         /// - Parameters:
@@ -2709,7 +2697,6 @@ public extension Macosusesdk_V1_MacosUse {
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > ===== Session Operations =====
         /// > Creates a session.
         ///
         /// - Parameters:
@@ -2854,7 +2841,6 @@ public extension Macosusesdk_V1_MacosUse {
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > ===== Screenshot Operations =====
         /// > Captures a full screen screenshot.
         ///
         /// - Parameters:
@@ -2927,7 +2913,6 @@ public extension Macosusesdk_V1_MacosUse {
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > ===== Clipboard Operations =====
         /// > Gets clipboard contents.
         ///
         /// - Parameters:
@@ -3000,7 +2985,6 @@ public extension Macosusesdk_V1_MacosUse {
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > ===== File Operations =====
         /// > Automates an open file dialog.
         ///
         /// - Parameters:
@@ -3091,7 +3075,6 @@ public extension Macosusesdk_V1_MacosUse {
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > ===== Macro Operations =====
         /// > Creates a macro.
         ///
         /// - Parameters:
@@ -3200,7 +3183,6 @@ public extension Macosusesdk_V1_MacosUse {
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > ===== Script Operations =====
         /// > Executes an AppleScript.
         ///
         /// - Parameters:
@@ -3465,7 +3447,6 @@ public extension Macosusesdk_V1_MacosUse {
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > ===== Window Operations =====
         /// > Gets a specific window.
         ///
         /// - Parameters:
@@ -3628,7 +3609,6 @@ public extension Macosusesdk_V1_MacosUse {
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > ===== Element Operations =====
         /// > Finds elements matching a selector.
         ///
         /// - Parameters:
@@ -3791,7 +3771,6 @@ public extension Macosusesdk_V1_MacosUse {
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > ===== Observation Operations =====
         /// > Creates an observation (long-running operation).
         ///
         /// - Parameters:
@@ -3883,7 +3862,6 @@ public extension Macosusesdk_V1_MacosUse {
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > ===== Session Operations =====
         /// > Creates a session.
         ///
         /// - Parameters:
@@ -4028,7 +4006,6 @@ public extension Macosusesdk_V1_MacosUse {
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > ===== Screenshot Operations =====
         /// > Captures a full screen screenshot.
         ///
         /// - Parameters:
@@ -4101,7 +4078,6 @@ public extension Macosusesdk_V1_MacosUse {
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > ===== Clipboard Operations =====
         /// > Gets clipboard contents.
         ///
         /// - Parameters:
@@ -4174,7 +4150,6 @@ public extension Macosusesdk_V1_MacosUse {
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > ===== File Operations =====
         /// > Automates an open file dialog.
         ///
         /// - Parameters:
@@ -4265,7 +4240,6 @@ public extension Macosusesdk_V1_MacosUse {
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > ===== Macro Operations =====
         /// > Creates a macro.
         ///
         /// - Parameters:
@@ -4374,7 +4348,6 @@ public extension Macosusesdk_V1_MacosUse {
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > ===== Script Operations =====
         /// > Executes an AppleScript.
         ///
         /// - Parameters:

@@ -1058,7 +1058,6 @@ func (x *ModifiedElement) GetChanges() []*AttributeChange {
 	return nil
 }
 
-// ===== Element Messages =====
 // Request to find elements matching a selector.
 type FindElementsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -2499,7 +2498,6 @@ func (x *WaitElementStateMetadata) GetAttempts() int32 {
 	return 0
 }
 
-// ===== Window Messages =====
 // Request to get a window.
 type GetWindowRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -3083,7 +3081,6 @@ func (x *CloseWindowResponse) GetSuccess() bool {
 	return false
 }
 
-// ===== Observation Messages =====
 // Request to create an observation.
 type CreateObservationRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -3510,7 +3507,6 @@ func (x *StreamObservationsResponse) GetEvent() *ObservationEvent {
 	return nil
 }
 
-// ===== Session Messages =====
 // Request to create a session.
 type CreateSessionRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -3777,7 +3773,6 @@ func (x *DeleteSessionRequest) GetForce() bool {
 	return false
 }
 
-// ===== Macro Messages =====
 // Request to create a macro.
 type CreateMacroRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -4400,7 +4395,6 @@ func (x *ExecuteMacroMetadata) GetElapsedDuration() *durationpb.Duration {
 	return nil
 }
 
-// ===== Session Transaction Messages =====
 // Request to begin a transaction within a session.
 type BeginTransactionRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -4688,7 +4682,6 @@ func (x *GetSessionSnapshotRequest) GetName() string {
 	return ""
 }
 
-// ===== Screenshot Messages =====
 // Request to capture a screenshot of the entire screen.
 type CaptureScreenshotRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -5372,7 +5365,6 @@ func (x *CaptureRegionScreenshotResponse) GetOcrText() string {
 	return ""
 }
 
-// ===== Clipboard Messages =====
 // Request to get clipboard contents.
 type GetClipboardRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -5660,7 +5652,6 @@ func (x *GetClipboardHistoryRequest) GetName() string {
 	return ""
 }
 
-// ===== File Messages =====
 // Request to automate an open file dialog.
 type AutomateOpenFileDialogRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -6373,7 +6364,6 @@ func (x *DragFilesResponse) GetError() string {
 	return ""
 }
 
-// ===== Script Messages =====
 // Request to execute an AppleScript.
 type ExecuteAppleScriptRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`

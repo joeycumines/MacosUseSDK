@@ -116,7 +116,6 @@ type MacosUseClient interface {
 	TraverseAccessibility(ctx context.Context, in *TraverseAccessibilityRequest, opts ...grpc.CallOption) (*TraverseAccessibilityResponse, error)
 	// Streams accessibility tree changes for an application.
 	WatchAccessibility(ctx context.Context, in *WatchAccessibilityRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[WatchAccessibilityResponse], error)
-	// ===== Window Operations =====
 	// Gets a specific window.
 	GetWindow(ctx context.Context, in *GetWindowRequest, opts ...grpc.CallOption) (*Window, error)
 	// Lists windows for an application.
@@ -135,7 +134,6 @@ type MacosUseClient interface {
 	RestoreWindow(ctx context.Context, in *RestoreWindowRequest, opts ...grpc.CallOption) (*Window, error)
 	// Closes a window.
 	CloseWindow(ctx context.Context, in *CloseWindowRequest, opts ...grpc.CallOption) (*CloseWindowResponse, error)
-	// ===== Element Operations =====
 	// Finds elements matching a selector.
 	FindElements(ctx context.Context, in *FindElementsRequest, opts ...grpc.CallOption) (*FindElementsResponse, error)
 	// Finds elements within a screen region.
@@ -154,7 +152,6 @@ type MacosUseClient interface {
 	WaitElement(ctx context.Context, in *WaitElementRequest, opts ...grpc.CallOption) (*longrunningpb.Operation, error)
 	// Waits for an element to reach a specific state (long-running operation).
 	WaitElementState(ctx context.Context, in *WaitElementStateRequest, opts ...grpc.CallOption) (*longrunningpb.Operation, error)
-	// ===== Observation Operations =====
 	// Creates an observation (long-running operation).
 	CreateObservation(ctx context.Context, in *CreateObservationRequest, opts ...grpc.CallOption) (*longrunningpb.Operation, error)
 	// Gets an observation.
@@ -165,7 +162,6 @@ type MacosUseClient interface {
 	CancelObservation(ctx context.Context, in *CancelObservationRequest, opts ...grpc.CallOption) (*Observation, error)
 	// Streams observation events.
 	StreamObservations(ctx context.Context, in *StreamObservationsRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[StreamObservationsResponse], error)
-	// ===== Session Operations =====
 	// Creates a session.
 	CreateSession(ctx context.Context, in *CreateSessionRequest, opts ...grpc.CallOption) (*Session, error)
 	// Gets a session.
@@ -182,7 +178,6 @@ type MacosUseClient interface {
 	RollbackTransaction(ctx context.Context, in *RollbackTransactionRequest, opts ...grpc.CallOption) (*Transaction, error)
 	// Gets a session state snapshot.
 	GetSessionSnapshot(ctx context.Context, in *GetSessionSnapshotRequest, opts ...grpc.CallOption) (*SessionSnapshot, error)
-	// ===== Screenshot Operations =====
 	// Captures a full screen screenshot.
 	CaptureScreenshot(ctx context.Context, in *CaptureScreenshotRequest, opts ...grpc.CallOption) (*CaptureScreenshotResponse, error)
 	// Captures a screenshot of a specific window.
@@ -191,7 +186,6 @@ type MacosUseClient interface {
 	CaptureElementScreenshot(ctx context.Context, in *CaptureElementScreenshotRequest, opts ...grpc.CallOption) (*CaptureElementScreenshotResponse, error)
 	// Captures a screenshot of a screen region.
 	CaptureRegionScreenshot(ctx context.Context, in *CaptureRegionScreenshotRequest, opts ...grpc.CallOption) (*CaptureRegionScreenshotResponse, error)
-	// ===== Clipboard Operations =====
 	// Gets clipboard contents.
 	GetClipboard(ctx context.Context, in *GetClipboardRequest, opts ...grpc.CallOption) (*Clipboard, error)
 	// Writes clipboard contents.
@@ -200,7 +194,6 @@ type MacosUseClient interface {
 	ClearClipboard(ctx context.Context, in *ClearClipboardRequest, opts ...grpc.CallOption) (*ClearClipboardResponse, error)
 	// Gets clipboard history (if available).
 	GetClipboardHistory(ctx context.Context, in *GetClipboardHistoryRequest, opts ...grpc.CallOption) (*ClipboardHistory, error)
-	// ===== File Operations =====
 	// Automates an open file dialog.
 	AutomateOpenFileDialog(ctx context.Context, in *AutomateOpenFileDialogRequest, opts ...grpc.CallOption) (*AutomateOpenFileDialogResponse, error)
 	// Automates a save file dialog.
@@ -211,7 +204,6 @@ type MacosUseClient interface {
 	SelectDirectory(ctx context.Context, in *SelectDirectoryRequest, opts ...grpc.CallOption) (*SelectDirectoryResponse, error)
 	// Drags and drops files.
 	DragFiles(ctx context.Context, in *DragFilesRequest, opts ...grpc.CallOption) (*DragFilesResponse, error)
-	// ===== Macro Operations =====
 	// Creates a macro.
 	CreateMacro(ctx context.Context, in *CreateMacroRequest, opts ...grpc.CallOption) (*Macro, error)
 	// Gets a macro.
@@ -224,7 +216,6 @@ type MacosUseClient interface {
 	DeleteMacro(ctx context.Context, in *DeleteMacroRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Executes a macro (long-running operation).
 	ExecuteMacro(ctx context.Context, in *ExecuteMacroRequest, opts ...grpc.CallOption) (*longrunningpb.Operation, error)
-	// ===== Script Operations =====
 	// Executes an AppleScript.
 	ExecuteAppleScript(ctx context.Context, in *ExecuteAppleScriptRequest, opts ...grpc.CallOption) (*ExecuteAppleScriptResponse, error)
 	// Executes JavaScript for Automation (JXA).
@@ -927,7 +918,6 @@ type MacosUseServer interface {
 	TraverseAccessibility(context.Context, *TraverseAccessibilityRequest) (*TraverseAccessibilityResponse, error)
 	// Streams accessibility tree changes for an application.
 	WatchAccessibility(*WatchAccessibilityRequest, grpc.ServerStreamingServer[WatchAccessibilityResponse]) error
-	// ===== Window Operations =====
 	// Gets a specific window.
 	GetWindow(context.Context, *GetWindowRequest) (*Window, error)
 	// Lists windows for an application.
@@ -946,7 +936,6 @@ type MacosUseServer interface {
 	RestoreWindow(context.Context, *RestoreWindowRequest) (*Window, error)
 	// Closes a window.
 	CloseWindow(context.Context, *CloseWindowRequest) (*CloseWindowResponse, error)
-	// ===== Element Operations =====
 	// Finds elements matching a selector.
 	FindElements(context.Context, *FindElementsRequest) (*FindElementsResponse, error)
 	// Finds elements within a screen region.
@@ -965,7 +954,6 @@ type MacosUseServer interface {
 	WaitElement(context.Context, *WaitElementRequest) (*longrunningpb.Operation, error)
 	// Waits for an element to reach a specific state (long-running operation).
 	WaitElementState(context.Context, *WaitElementStateRequest) (*longrunningpb.Operation, error)
-	// ===== Observation Operations =====
 	// Creates an observation (long-running operation).
 	CreateObservation(context.Context, *CreateObservationRequest) (*longrunningpb.Operation, error)
 	// Gets an observation.
@@ -976,7 +964,6 @@ type MacosUseServer interface {
 	CancelObservation(context.Context, *CancelObservationRequest) (*Observation, error)
 	// Streams observation events.
 	StreamObservations(*StreamObservationsRequest, grpc.ServerStreamingServer[StreamObservationsResponse]) error
-	// ===== Session Operations =====
 	// Creates a session.
 	CreateSession(context.Context, *CreateSessionRequest) (*Session, error)
 	// Gets a session.
@@ -993,7 +980,6 @@ type MacosUseServer interface {
 	RollbackTransaction(context.Context, *RollbackTransactionRequest) (*Transaction, error)
 	// Gets a session state snapshot.
 	GetSessionSnapshot(context.Context, *GetSessionSnapshotRequest) (*SessionSnapshot, error)
-	// ===== Screenshot Operations =====
 	// Captures a full screen screenshot.
 	CaptureScreenshot(context.Context, *CaptureScreenshotRequest) (*CaptureScreenshotResponse, error)
 	// Captures a screenshot of a specific window.
@@ -1002,7 +988,6 @@ type MacosUseServer interface {
 	CaptureElementScreenshot(context.Context, *CaptureElementScreenshotRequest) (*CaptureElementScreenshotResponse, error)
 	// Captures a screenshot of a screen region.
 	CaptureRegionScreenshot(context.Context, *CaptureRegionScreenshotRequest) (*CaptureRegionScreenshotResponse, error)
-	// ===== Clipboard Operations =====
 	// Gets clipboard contents.
 	GetClipboard(context.Context, *GetClipboardRequest) (*Clipboard, error)
 	// Writes clipboard contents.
@@ -1011,7 +996,6 @@ type MacosUseServer interface {
 	ClearClipboard(context.Context, *ClearClipboardRequest) (*ClearClipboardResponse, error)
 	// Gets clipboard history (if available).
 	GetClipboardHistory(context.Context, *GetClipboardHistoryRequest) (*ClipboardHistory, error)
-	// ===== File Operations =====
 	// Automates an open file dialog.
 	AutomateOpenFileDialog(context.Context, *AutomateOpenFileDialogRequest) (*AutomateOpenFileDialogResponse, error)
 	// Automates a save file dialog.
@@ -1022,7 +1006,6 @@ type MacosUseServer interface {
 	SelectDirectory(context.Context, *SelectDirectoryRequest) (*SelectDirectoryResponse, error)
 	// Drags and drops files.
 	DragFiles(context.Context, *DragFilesRequest) (*DragFilesResponse, error)
-	// ===== Macro Operations =====
 	// Creates a macro.
 	CreateMacro(context.Context, *CreateMacroRequest) (*Macro, error)
 	// Gets a macro.
@@ -1035,7 +1018,6 @@ type MacosUseServer interface {
 	DeleteMacro(context.Context, *DeleteMacroRequest) (*emptypb.Empty, error)
 	// Executes a macro (long-running operation).
 	ExecuteMacro(context.Context, *ExecuteMacroRequest) (*longrunningpb.Operation, error)
-	// ===== Script Operations =====
 	// Executes an AppleScript.
 	ExecuteAppleScript(context.Context, *ExecuteAppleScriptRequest) (*ExecuteAppleScriptResponse, error)
 	// Executes JavaScript for Automation (JXA).

@@ -381,7 +381,6 @@ public struct Macosusesdk_V1_ModifiedElement: @unchecked Sendable {
     fileprivate var _storage = _StorageClass.defaultInstance
 }
 
-/// ===== Element Messages =====
 /// Request to find elements matching a selector.
 public struct Macosusesdk_V1_FindElementsRequest: Sendable {
     // SwiftProtobuf.Message conformance is added in an extension below. See the
@@ -1090,7 +1089,6 @@ public struct Macosusesdk_V1_WaitElementStateMetadata: Sendable {
     fileprivate var _condition: Macosusesdk_V1_StateCondition?
 }
 
-/// ===== Window Messages =====
 /// Request to get a window.
 public struct Macosusesdk_V1_GetWindowRequest: Sendable {
     // SwiftProtobuf.Message conformance is added in an extension below. See the
@@ -1274,7 +1272,6 @@ public struct Macosusesdk_V1_CloseWindowResponse: Sendable {
     public init() {}
 }
 
-/// ===== Observation Messages =====
 /// Request to create an observation.
 public struct Macosusesdk_V1_CreateObservationRequest: Sendable {
     // SwiftProtobuf.Message conformance is added in an extension below. See the
@@ -1429,7 +1426,6 @@ public struct Macosusesdk_V1_StreamObservationsResponse: Sendable {
     fileprivate var _event: Macosusesdk_V1_ObservationEvent?
 }
 
-/// ===== Session Messages =====
 /// Request to create a session.
 public struct Macosusesdk_V1_CreateSessionRequest: Sendable {
     // SwiftProtobuf.Message conformance is added in an extension below. See the
@@ -1522,7 +1518,6 @@ public struct Macosusesdk_V1_DeleteSessionRequest: Sendable {
     public init() {}
 }
 
-/// ===== Macro Messages =====
 /// Request to create a macro.
 public struct Macosusesdk_V1_CreateMacroRequest: Sendable {
     // SwiftProtobuf.Message conformance is added in an extension below. See the
@@ -1776,7 +1771,6 @@ public struct Macosusesdk_V1_ExecuteMacroMetadata: Sendable {
     fileprivate var _elapsedDuration: SwiftProtobuf.Google_Protobuf_Duration?
 }
 
-/// ===== Session Transaction Messages =====
 /// Request to begin a transaction within a session.
 public struct Macosusesdk_V1_BeginTransactionRequest: Sendable {
     // SwiftProtobuf.Message conformance is added in an extension below. See the
@@ -1922,7 +1916,6 @@ public struct Macosusesdk_V1_GetSessionSnapshotRequest: Sendable {
     public init() {}
 }
 
-/// ===== Screenshot Messages =====
 /// Request to capture a screenshot of the entire screen.
 public struct Macosusesdk_V1_CaptureScreenshotRequest: Sendable {
     // SwiftProtobuf.Message conformance is added in an extension below. See the
@@ -2160,7 +2153,6 @@ public struct Macosusesdk_V1_CaptureRegionScreenshotResponse: Sendable {
     fileprivate var _region: Macosusesdk_Type_Region?
 }
 
-/// ===== Clipboard Messages =====
 /// Request to get clipboard contents.
 public struct Macosusesdk_V1_GetClipboardRequest: Sendable {
     // SwiftProtobuf.Message conformance is added in an extension below. See the
@@ -2260,7 +2252,6 @@ public struct Macosusesdk_V1_GetClipboardHistoryRequest: Sendable {
     public init() {}
 }
 
-/// ===== File Messages =====
 /// Request to automate an open file dialog.
 public struct Macosusesdk_V1_AutomateOpenFileDialogRequest: Sendable {
     // SwiftProtobuf.Message conformance is added in an extension below. See the
@@ -2485,7 +2476,6 @@ public struct Macosusesdk_V1_DragFilesResponse: Sendable {
     public init() {}
 }
 
-/// ===== Script Messages =====
 /// Request to execute an AppleScript.
 public struct Macosusesdk_V1_ExecuteAppleScriptRequest: Sendable {
     // SwiftProtobuf.Message conformance is added in an extension below. See the
