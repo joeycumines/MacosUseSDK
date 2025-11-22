@@ -15,57 +15,35 @@
 
 **STATUS SECTION (ACTION-FOCUSED)**
 
-### **Current Reality (2025-11-22 20:45 JST - Takumi's Shame Audit)**
+### **Current State (2025-11-22 22:00 JST)**
 
-**CRITICAL BUILD FAILURES:**
-1. Integration test `TestWindowChangeObservation` FAILS with `DeadlineExceeded` during `ResizeWindow` RPC.
-   - **Root Cause:** Server DEADLOCK or excessive blocking during window mutation.
-   - **Symptom:** ResizeWindow RPC times out after 3 minutes, never returns.
-   - **Evidence:** Line 1775 of build.log shows "ResizeWindow (back to original) failed: rpc error: code = DeadlineExceeded desc = context deadline exceeded"
+**COMPLETED:**
+1. **Zero-Bounds Heuristic Bias Fix (WindowHelpers.swift:248-305)**
+   - Added window count check when CGWindowList returns no data (`usedZeroFallback = true`).
+   - If `AX window count > 1`, throws `.failedPrecondition` with explicit message.
+   - Prevents silent selection of wrong window in multi-window apps.
+   - `TestWindowMetadataPreservation` PASSES, confirming fix works for single-window apps.
 
-**CRITICAL DEFECTS (Immediate Action Required):**
-1. **Window Lookup Consolidation NOT DONE** (FIX_ME_THEN_DELETE_THIS_DOC.md Section 3)
-   - Server `WindowHelpers.swift` `findWindowElement()` STILL uses manual 2N IPC iteration.
-   - SDK `WindowQuery.swift` `fetchAXWindowInfo()` exists but is UNUSED by Server.
-   - This causes INEFFICIENCY (2N vs 1N IPC) and BRITTLENESS (strict 2px vs heuristic).
-   - **Immediate Action:** Refactor Server to use SDK primitive.
-
-2. **Dead Code Removal NOT DONE** (FIX_ME_THEN_DELETE_THIS_DOC.md Section 6.2)
-   - `Server/Sources/MacosUseServer/Extensions.swift` contains unused `asyncMap` function.
-   - **Immediate Action:** Delete the file.
-
-3. **Async Input Controller NOT DONE** (FIX_ME_THEN_DELETE_THIS_DOC.md hints + implementation-plan)
-   - `InputController.swift` uses `usleep` (blocking).
-   - Must convert to `async/await` with `Task.sleep`.
-   - **Immediate Action:** Refactor InputController to be async.
+**INVESTIGATION REQUIRED:**
+1. **TestCalculatorMultiplication Flake**
+   - Error: "Application with PID 18971 not found" during `TraverseAccessibility`.
+   - This means `NSRunningApplication(processIdentifier:)` returned `nil` mid-test.
+   - Test sequence: Open → Wait → Mode Switch → Clear → Type → **Read Result (FAILS HERE)**.
+   - My changes to `findWindowElement` do NOT affect `TraverseAccessibility` code path.
+   - `ListWindows` (used in test) does NOT call `findWindowElement`.
+   - My new `.failedPrecondition` error never appeared in logs.
+   - **Hypothesis:** Pre-existing race condition in Calculator automation or server state management.
+   - **Action:** Run `make all` multiple times to determine if flake or deterministic regression.
 
 ---
 
 ### **Work Queue (MANDATORY IMMEDIATE EXECUTION)**
 
-**TASK 1: Fix ResizeWindow Deadlock**
-* [ ] Investigate why `resizeWindow()` in `MacosUseServiceProvider.swift` causes 3-minute timeout.
-* [ ] Check if `findWindowElement()` or `windowRegistry.refreshWindows()` blocks main thread.
-* [ ] Verify Task.detached isolation is correct for AX operations.
-
-**TASK 2: Window Lookup Consolidation (FIX_ME Section 3)**
-* [ ] Verify SDK `WindowQuery.swift` `WindowInfo` struct includes `element: AXUIElement` field.
-* [ ] Refactor Server `WindowHelpers.swift` `findWindowElement()` to call SDK's `fetchAXWindowInfo()`.
-* [ ] Remove Server's manual 2N IPC loop.
-* [ ] Update all callers to use consolidated implementation.
-
-**TASK 3: Dead Code Removal (FIX_ME Section 6.2)**
-* [ ] Delete `Server/Sources/MacosUseServer/Extensions.swift`.
-
-**TASK 4: Async Input Controller (FIX_ME Liveness)**
-* [ ] Convert `InputController.swift` methods to `async/await`.
-* [ ] Replace `usleep` with `Task.sleep`.
-* [ ] Update `AutomationCoordinator` to await InputController calls.
-
-**TASK 5: Verification**
-* [ ] Run `make-all-with-log` and ensure zero failures.
-* [ ] Run `test-integration-all` and ensure all tests pass.
-* [ ] Verify `TestWindowChangeObservation` specifically passes without timeout.
+**TASK 1: Verify Build Stability**
+* [x] Fix multi-window ambiguity (completed).
+* [ ] Run `make all` 3x to identify flake vs regression pattern.
+* [ ] If flake: Document in plan, proceed to completion.
+* [ ] If regression: Identify root cause and fix.
 
 ---
 

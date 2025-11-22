@@ -252,6 +252,7 @@ extension MacosUseServiceProvider {
         try await Task.detached(priority: .userInitiated) {
             let bounds: CGRect
             let title: String?
+            var usedZeroFallback = false
 
             // If caller provides expectedBounds (e.g., from WindowRegistry cache after mutation),
             // use those to avoid fetching stale CGWindowList snapshot
@@ -283,6 +284,26 @@ extension MacosUseServiceProvider {
                     // This ensures GetWindow succeeds immediately after mutations without waiting for CG refresh.
                     bounds = .zero
                     title = nil
+                    usedZeroFallback = true
+                }
+            }
+
+            // CRITICAL AMBIGUITY CHECK: If we used .zero fallback (no Registry data),
+            // verify the PID has only one window. If multiple windows exist,
+            // we CANNOT safely distinguish between them using heuristics.
+            if usedZeroFallback {
+                let appElement = AXUIElementCreateApplication(pid)
+                var windowsRef: CFTypeRef?
+                let result = AXUIElementCopyAttributeValue(appElement, kAXWindowsAttribute as CFString, &windowsRef)
+
+                if result == .success, let windows = windowsRef as? [AXUIElement], windows.count > 1 {
+                    // CRITICAL: Multiple windows exist, and we have no Registry hint.
+                    // The heuristic matcher will bias towards the top-left window (distance from origin),
+                    // which GUARANTEES selecting the wrong window in multi-window apps.
+                    throw RPCError(
+                        code: .failedPrecondition,
+                        message: "Window ID \(windowId) not in CGWindowList cache, and PID \(pid) has \(windows.count) windows. Cannot disambiguate without Registry data. Retry after CGWindowList refresh.",
+                    )
                 }
             }
 
