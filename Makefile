@@ -19,6 +19,7 @@ include $(PROJECT_ROOT)/make/buf.mk
 .PHONY: all
 all: proto-lint ## Run a full build of the project.
 	$(MAKE) --no-print-directory swift.all
+	ls -alh $(PROJECT_ROOT)/Server/.build/release/
 	$(MAKE) --no-print-directory go.all GO_TEST_FLAGS=$(call escape_command_arg,$(if $(filter -count,$(GO_TEST_FLAGS))$(filter -count=%,$(GO_TEST_FLAGS)),$(GO_TEST_FLAGS),$(GO_TEST_FLAGS) -count=1))
 
 .PHONY: clean
