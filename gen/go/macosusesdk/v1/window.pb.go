@@ -55,22 +55,27 @@ type Window struct {
 	ZIndex int32 `protobuf:"varint,4,opt,name=z_index,json=zIndex,proto3" json:"z_index,omitempty"`
 	// Whether the window is currently visible on screen.
 	//
-	// Data Source (Split-Brain Authority): Computed via the formula:
+	// Data Source (Hybrid Authority - Differs by RPC):
 	//
-	//	visible = (Registry.isOnScreen OR Assumption) AND NOT AX.Minimized AND NOT AX.Hidden
+	// GetWindow (AX-First Visibility):
 	//
-	// Where:
-	//   - Registry.isOnScreen: Cached from CGWindowList (may be stale during async propagation)
-	//   - Assumption: If registry data is missing but AX interaction succeeded, assume isOnScreen=true
-	//   - AX.Minimized: Fresh query of kAXMinimizedAttribute (authoritative, no lag)
-	//   - AX.Hidden: Fresh query of kAXHiddenAttribute (authoritative, no lag)
+	//	Computes visible using fresh AX queries with optimistic assumption:
+	//	  visible = (!axMinimized && !axHidden) ? true : (registry.isOnScreen ?? false)
 	//
-	// This hybrid approach ensures:
-	//  1. Mutation responses (Move/Resize) correctly report visible=true (not false due to stale CGWindowList)
-	//  2. Minimize operations correctly report visible=false (fresh AX state overrides stale registry)
-	//  3. Hidden state is accurately reflected without conflating minimized vs explicitly hidden
+	//	This AX-first approach ensures mutation responses (MoveWindow/ResizeWindow) immediately
+	//	report visible=true without waiting for stale CGWindowList to update. Fresh AX state
+	//	(minimized, hidden) is authoritative; registry is only consulted as fallback.
 	//
-	// For detailed AX state queries (minimized, ax_hidden, focused, modal, etc.), use GetWindowState.
+	// ListWindows (Registry-Only Performance):
+	//
+	//	Returns registry.isOnScreen directly from cached CGWindowList with NO per-window AX queries.
+	//	This ensures <50ms response regardless of window count, suitable for high-frequency polling.
+	//	Registry data may lag 10-100ms behind actual state during rapid window mutations.
+	//
+	// Recommendation:
+	//   - Use ListWindows for fast enumeration and UI rendering
+	//   - Use GetWindow for authoritative visibility after mutations
+	//   - Use GetWindowState for expensive AX state details (modal, focused, etc.)
 	Visible bool `protobuf:"varint,5,opt,name=visible,proto3" json:"visible,omitempty"`
 	// Bundle identifier of the application that owns this window.
 	//

@@ -169,8 +169,6 @@ public actor ElementRegistry {
         elementCache.count
     }
 
-    // MARK: - Private Methods
-
     private func generateElementId() -> String {
         // Generate a unique ID using timestamp and random component
         let timestamp = Int(Date().timeIntervalSince1970 * 1000)

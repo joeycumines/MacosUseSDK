@@ -48,8 +48,6 @@ actor SessionManager {
         }
     }
 
-    // MARK: - Session Management
-
     /// Create a new session
     func createSession(
         sessionId: String?,
@@ -129,8 +127,6 @@ actor SessionManager {
         sessions.removeValue(forKey: name)
         return true
     }
-
-    // MARK: - Transaction Management
 
     /// Begin a transaction for a session
     func beginTransaction(
@@ -269,8 +265,6 @@ actor SessionManager {
         return rolledBackTransaction
     }
 
-    // MARK: - Operation History
-
     /// Record an operation in session history
     func recordOperation(
         sessionName: String,
@@ -299,8 +293,6 @@ actor SessionManager {
         state.operations.append(operation)
         sessions[sessionName] = state
     }
-
-    // MARK: - Session Context
 
     /// Add an application to session context
     func addApplication(sessionName: String, applicationName: String) async {
@@ -346,8 +338,6 @@ actor SessionManager {
         sessions[sessionName] = state
     }
 
-    // MARK: - Session Snapshot
-
     /// Get a snapshot of session state
     func getSessionSnapshot(sessionName: String) async -> Macosusesdk_V1_SessionSnapshot? {
         guard let state = sessions[sessionName] else {
@@ -361,8 +351,6 @@ actor SessionManager {
             $0.history = state.operations
         }
     }
-
-    // MARK: - Cleanup
 
     /// Background task to clean up expired sessions
     private func startCleanupTask() async {
@@ -386,13 +374,11 @@ actor SessionManager {
 
                 // Remove after marking as expired
                 sessions.removeValue(forKey: name)
-                logger.info("Cleaned up expired session: \(name, privacy: .private)")
+                logger.info("Cleaned up expired session: \(name, privacy: .public)")
             }
         }
     }
 }
-
-// MARK: - Errors
 
 enum SessionError: Error, CustomStringConvertible {
     case sessionNotFound

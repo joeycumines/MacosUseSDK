@@ -26,7 +26,6 @@
 ### **4.2 Test Harness**
 - **Golden Apps:** `TextEdit`, `Calculator`, `Finder`.
 - **Lifecycle:** Tests must clean up resources (DeleteApplication) aggressively.
-  - TODO: This needs to be expanded to RELIABLY include hung API servers.
 
 ### **Correctness & Verification Guarantees**
 1.  **State-Difference Assertions:** Mutator RPCs must be followed by Accessor RPCs to verify delta.

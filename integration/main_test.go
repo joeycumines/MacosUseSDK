@@ -21,17 +21,53 @@ func TestMain(m *testing.M) {
 		os.Exit(0)
 	}
 
-	// Pre-flight cleanup: Kill golden applications to ensure clean slate
-	_, _ = fmt.Fprintln(os.Stderr, "TestMain: Pre-flight cleanup - killing golden applications...")
+	// Start log streaming to capture OSLog output
+	var logCmd *exec.Cmd
+	logCmd = exec.Command("/usr/bin/log", "stream",
+		"--level", "debug",
+		"--predicate", `subsystem == "com.macosusesdk"`,
+		"--style", "compact")
+	logCmd.Stdout = os.Stdout
+	logCmd.Stderr = os.Stderr
+	if err := logCmd.Start(); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Warning: Failed to start log streaming: %v\n", err)
+		logCmd = nil
+	}
+
+	// Pre-flight cleanup: Kill any stray servers and golden applications
+	_, _ = fmt.Fprintln(os.Stderr, "TestMain: Pre-flight cleanup - killing stray servers and golden applications...")
+	killStrayServers()
 	killGoldenApplications()
 
-	code := m.Run()
+	// closure because panics bubble e.g. on timeout
+	code := func() int {
+		defer func() {
+			if logCmd != nil && logCmd.Process != nil {
+				_ = logCmd.Process.Kill()
+				_ = logCmd.Wait()
+			}
+		}()
+		// ^ Stop log streaming
 
-	// Post-suite cleanup
-	_, _ = fmt.Fprintln(os.Stderr, "TestMain: Post-suite cleanup - killing golden applications...")
-	killGoldenApplications()
+		defer killGoldenApplications()
+		defer killStrayServers()
+		defer func() {
+			_, _ = fmt.Fprintln(os.Stderr, "TestMain: Post-suite cleanup - killing servers and golden applications...")
+		}()
+		// ^ Post-suite cleanup
+
+		return m.Run()
+	}()
 
 	os.Exit(code)
+}
+
+// killStrayServers forcefully terminates any MacosUseServer processes
+// to prevent port conflicts when starting new test servers.
+func killStrayServers() {
+	cmd := exec.Command("killall", "-9", "MacosUseServer")
+	_ = cmd.Run() // Ignore errors (server may not be running)
+	// Port release is handled by server startup retry logic
 }
 
 // killGoldenApplications forcefully terminates all golden test applications.
@@ -131,10 +167,12 @@ func startServer(t *testing.T, ctx context.Context) (*exec.Cmd, string) {
 	// Check if INTEGRATION_SERVER_ADDR is set (for external server)
 	if addr := os.Getenv("INTEGRATION_SERVER_ADDR"); addr != "" {
 		t.Logf("Using existing server at %s", addr)
-		// Wait a bit to ensure it's ready
-		time.Sleep(500 * time.Millisecond)
+		// External server should already be running and ready
 		return nil, addr
 	}
+
+	// Kill any stray servers before starting a new one to prevent port conflicts
+	killStrayServers()
 
 	// Build the server
 	t.Log("Building MacosUse server...")

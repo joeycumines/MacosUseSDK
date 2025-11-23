@@ -23,8 +23,6 @@ class ChangeDetector {
         setupAppNotifications()
     }
 
-    // MARK: - Public Interface
-
     /// Registers an observer for a process
     func registerObserver(
         pid: pid_t,
@@ -109,8 +107,6 @@ class ChangeDetector {
             observers.removeValue(forKey: pid)
         }
     }
-
-    // MARK: - Private Methods
 
     private func setupAppNotifications() {
         let workspace = NSWorkspace.shared
@@ -212,8 +208,6 @@ class ChangeDetector {
         }
     }
 }
-
-// MARK: - Errors
 
 enum ChangeDetectorError: Error {
     case failedToCreateObserver(pid: pid_t)

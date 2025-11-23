@@ -49,7 +49,7 @@ Previous sins (now corrected, not to be repeated):
 - Support advanced inputs: Modifiers, Special Keys, Mouse Operations (drag, right-click).
 - Support VS Code integration patterns (multi-window, advanced targeting).
 
-- **Quartz/Accessibility Race Condition Mitigation:** Do not rely on `NSRunningApplication(processIdentifier:)` for process liveness when performing AX actions; always attempt AX actions e.g. `AXUIElementCreateApplication(pid)` _then_ handle invalid processes via AX API errors.
+**Core Graphics/Cocoa/Accessibility Race Condition Mitigation:** Do not rely on `NSRunningApplication(processIdentifier:)` or `CGWindowListCopyWindowInfo` (and related `CGWindow*` APIs) for process/window liveness or existence checks when performing AX actions. These APIs can lag behind the real-time state of the Accessibility server. Always attempt AX actions (e.g., `AXUIElementCreateApplication(pid)`, `AXUIElementCopyAttributeValue`) directly, then handle invalid process/element errors if they occur. Using CG/NS APIs as a "guard" or "pre-check" introduces a race condition where valid AX targets are rejected because the slower API hasn't updated yet.
 
 ## Testing and Tooling
 
@@ -65,6 +65,12 @@ Previous sins (now corrected, not to be repeated):
 - **Plan-Local Status Only:** The **STATUS SECTION (ACTION-FOCUSED)** at the top of `implementation-plan.md` is the only allowed place for high-level status, and it MUST list only remaining work, unresolved discrepancies, and critical patterns that must not be forgotten. Do not accumulate historical "done" items or emojis there.
 - **Verification Before Completion Claims:** Before treating any item as complete, you MUST verify the implementation and its tests. If there is any doubt, treat the item as not done and keep (or re-add) a corresponding action in the plan.
 - **Living Document:** Keep `./implementation-plan.md` strictly aligned with this constraints document and the *actual* code reality. Update it as part of every change set, trimming completed/verified items from the status section rather than appending new ones.
+
+## Master (LIVING) Documents
+
+**MUST BE KEPT UP TO DATE.** Must be analytical, terse, and precise.
+
+- [docs/02-window-state-management.md](docs/02-window-state-management.md)
 
 ## Proto API Structure
 

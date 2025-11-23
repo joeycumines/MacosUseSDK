@@ -3,7 +3,7 @@ import OSLog
 
 /// Use Logger and OSLogPrivacy to log messages with appropriate privacy levels.
 
-private let subsystem = "com.github.joeycumines.MacosUseSDK"
+private let subsystem = "com.macosusesdk"
 
 /// Returns a configured `Logger` for the given category within the MacosUseSDK subsystem.
 ///

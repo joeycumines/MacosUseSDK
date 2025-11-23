@@ -36,12 +36,13 @@ func main() async throws {
     // Create the operation store
     let operationStore = OperationStore()
 
-    // Create the shared window registry (single source of truth for window caching)
-    let sharedWindowRegistry = WindowRegistry()
+    // Create the shared SystemOperations adapter and window registry
+    let system = ProductionSystemOperations.shared
+    let sharedWindowRegistry = WindowRegistry(system: system)
     logger.info("Shared window registry created")
 
     // Initialize singleton actors with the shared registry
-    ObservationManager.shared = ObservationManager(windowRegistry: sharedWindowRegistry)
+    ObservationManager.shared = ObservationManager(windowRegistry: sharedWindowRegistry, system: system)
     MacroExecutor.shared = MacroExecutor(windowRegistry: sharedWindowRegistry)
     logger.info("Singleton actors initialized with shared registry")
 
@@ -50,6 +51,7 @@ func main() async throws {
         stateStore: stateStore,
         operationStore: operationStore,
         windowRegistry: sharedWindowRegistry,
+        system: system,
     )
     logger.info("Service provider created")
 

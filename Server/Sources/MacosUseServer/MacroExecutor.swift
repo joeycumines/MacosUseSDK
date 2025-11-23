@@ -57,8 +57,6 @@ public actor MacroExecutor {
         self.windowRegistry = windowRegistry
     }
 
-    // MARK: - Execution Entry Point
-
     /// Execute a macro with given parameters
     public func executeMacro(
         macro: Macosusesdk_V1_Macro,
@@ -66,7 +64,7 @@ public actor MacroExecutor {
         parent: String,
         timeout: Double,
     ) async throws {
-        logger.info("Executing macro: \(macro.name, privacy: .private)")
+        logger.info("Executing macro: \(macro.name, privacy: .public)")
 
         // Validate required parameters
         for param in macro.parameters where param.required {
@@ -99,10 +97,8 @@ public actor MacroExecutor {
             try await executeAction(action, context: &context)
         }
 
-        logger.info("Macro execution completed: \(macro.name, privacy: .private)")
+        logger.info("Macro execution completed: \(macro.name, privacy: .public)")
     }
-
-    // MARK: - Action Execution
 
     private func executeAction(
         _ action: Macosusesdk_V1_MacroAction,
@@ -132,8 +128,6 @@ public actor MacroExecutor {
         }
     }
 
-    // MARK: - Input Action Execution
-
     private func executeInputAction(
         _ inputAction: Macosusesdk_V1_InputAction,
         context: MacroContext,
@@ -150,8 +144,6 @@ public actor MacroExecutor {
             animationDuration: 0,
         )
     }
-
-    // MARK: - Wait Action Execution
 
     private func executeWaitAction(
         _ waitAction: Macosusesdk_V1_WaitAction,
@@ -214,8 +206,6 @@ public actor MacroExecutor {
             return false
         }
     }
-
-    // MARK: - Conditional Action Execution
 
     private func executeConditionalAction(
         _ conditionalAction: Macosusesdk_V1_ConditionalAction,
@@ -304,8 +294,6 @@ public actor MacroExecutor {
         }
     }
 
-    // MARK: - Loop Action Execution
-
     private func executeLoopAction(
         _ loopAction: Macosusesdk_V1_LoopAction,
         context: inout MacroContext,
@@ -382,8 +370,6 @@ public actor MacroExecutor {
         }
     }
 
-    // MARK: - Assign Action Execution
-
     private func executeAssignAction(
         _ assignAction: Macosusesdk_V1_AssignAction,
         context: inout MacroContext,
@@ -414,8 +400,6 @@ public actor MacroExecutor {
 
         context.variables[assignAction.variable] = value
     }
-
-    // MARK: - Method Call Execution
 
     private func executeMethodCall(
         _ methodCall: Macosusesdk_V1_MethodCall,
@@ -487,8 +471,6 @@ public actor MacroExecutor {
             throw MacroExecutionError.invalidAction("Unknown method: \(methodCall.method)")
         }
     }
-
-    // MARK: - Variable Substitution
 
     private func substituteVariables(
         in action: Macosusesdk_V1_InputAction,

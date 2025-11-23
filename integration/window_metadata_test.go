@@ -39,10 +39,58 @@ func TestWindowMetadataPreservation(t *testing.T) {
 	app := openTextEdit(t, ctx, client, opsClient)
 	defer cleanupApplication(t, ctx, client, app)
 
+	// 2.5. Dismiss file picker dialog and create a new document
+	t.Log("Dismissing file picker and creating new document...")
+	// Close the initial file picker window (Cancel button)
+	var err error
+	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
+		resp, err := client.ListWindows(ctx, &pb.ListWindowsRequest{
+			Parent: app.Name,
+		})
+		if err != nil {
+			return false, err
+		}
+		// Find and close the file picker
+		// CRITICAL FIX: Standard NSOpenPanel is ~800x600, not < 200px
+		// Use a more realistic constraint that covers standard dialogs
+		for _, window := range resp.Windows {
+			if window.Bounds != nil && window.Bounds.Width < 1200 {
+				// This is likely the file picker - close it
+				_, err := client.CloseWindow(ctx, &pb.CloseWindowRequest{
+					Name: window.Name,
+				})
+				return err == nil, err
+			}
+		}
+		return true, nil // No file picker found, proceed
+	})
+	if err != nil {
+		t.Logf("Warning: failed to close file picker: %v", err)
+	}
+
+	// Create a new document using Cmd+N
+	t.Log("Creating new document with Cmd+N...")
+	_, err = client.CreateInput(ctx, &pb.CreateInputRequest{
+		Parent: app.Name,
+		Input: &pb.Input{
+			Action: &pb.InputAction{
+				InputType: &pb.InputAction_PressKey{
+					PressKey: &pb.KeyPress{
+						Key:       "n",
+						Modifiers: []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_COMMAND},
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("Failed to send Cmd+N: %v", err)
+	}
+
 	// 3. Wait for document window to appear and get initial window
 	t.Log("Waiting for TextEdit document window to appear...")
 	var initialWindow *pb.Window
-	err := PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
+	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
 		resp, err := client.ListWindows(ctx, &pb.ListWindowsRequest{
 			Parent: app.Name,
 		})

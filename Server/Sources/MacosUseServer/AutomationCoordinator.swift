@@ -19,8 +19,6 @@ public actor AutomationCoordinator {
         logger.info("Initialized")
     }
 
-    // MARK: - Command Handlers
-
     /// Opens or activates an application and returns target info
     @MainActor
     public func handleOpenApplication(identifier: String) async throws -> Macosusesdk_V1_Application {
@@ -148,8 +146,6 @@ public actor AutomationCoordinator {
         }
     }
 
-    // MARK: - Private Helpers
-
     @MainActor
     private func executeInputAction(
         _ action: MacosUseSDK.InputAction, showAnimation: Bool, animationDuration: Double,
@@ -199,8 +195,6 @@ public actor AutomationCoordinator {
         }
     }
 }
-
-// MARK: - Conversion Functions
 
 // These functions convert between proto-like info structs and SDK types
 // They will be updated to use actual proto types once generated
@@ -352,8 +346,6 @@ extension AutomationCoordinator {
     }
 }
 
-// MARK: - Temporary Info Structs
-
 // These will be replaced with generated proto types
 
 public enum InputActionInfo {
@@ -414,8 +406,6 @@ public struct ResponseDataInfo {
     public let elementCount: Int
     public let processingTime: String
 }
-
-// MARK: - Errors
 
 public enum CoordinatorError: Error, LocalizedError {
     case invalidKeyName(String)

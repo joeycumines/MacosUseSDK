@@ -159,7 +159,7 @@ sudo chmod 644 /Library/LaunchDaemons/com.macosusesdk.server.plist
 sudo launchctl bootstrap system /Library/LaunchDaemons/com.macosusesdk.server.plist
 
 # Check status
-sudo launchctl list | grep macosusesdk
+sudo launchctl list | grep -i macosusesdk
 ```
 
 ## Security Considerations

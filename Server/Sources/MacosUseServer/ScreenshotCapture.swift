@@ -180,8 +180,6 @@ struct ScreenshotCapture {
         }
     }
 
-    // MARK: - Image Encoding
-
     /// Encode a CGImage to the requested format.
     private static func encodeImage(
         _ cgImage: CGImage,
@@ -232,8 +230,6 @@ struct ScreenshotCapture {
         return data as Data
     }
 
-    // MARK: - OCR Text Extraction
-
     /// Extract text from a CGImage using Vision framework.
     private static func extractText(from cgImage: CGImage) throws -> String {
         let requestHandler = VNImageRequestHandler(cgImage: cgImage, options: [:])
@@ -257,8 +253,6 @@ struct ScreenshotCapture {
         return recognizedStrings.joined(separator: "\n")
     }
 }
-
-// MARK: - Capture Delegate
 
 private final class CaptureDelegate: NSObject, SCStreamDelegate, SCStreamOutput, @unchecked Sendable {
     typealias Continuation = CheckedContinuation<CGImage, Error>
@@ -305,8 +299,6 @@ private final class CaptureDelegate: NSObject, SCStreamDelegate, SCStreamOutput,
         }
     }
 }
-
-// MARK: - Screenshot Errors
 
 enum ScreenshotError: Error, CustomStringConvertible {
     case captureFailedScreen

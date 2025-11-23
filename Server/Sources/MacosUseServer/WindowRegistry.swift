@@ -7,6 +7,12 @@ import Foundation
 
 /// Thread-safe registry for tracking windows across all applications.
 actor WindowRegistry {
+    private let system: SystemOperations
+
+    init(system: SystemOperations = ProductionSystemOperations.shared) {
+        self.system = system
+    }
+
     /// Cached window information.
     struct WindowInfo {
         let windowID: CGWindowID
@@ -28,9 +34,7 @@ actor WindowRegistry {
     /// Refresh the window cache for all or specific application.
     func refreshWindows(forPID pid: pid_t? = nil) async throws {
         // Use .optionAll to include minimized/off-screen windows
-        let windowList =
-            CGWindowListCopyWindowInfo([.optionAll, .excludeDesktopElements], kCGNullWindowID)
-                as? [[String: Any]] ?? []
+        let windowList = system.cgWindowListCopyWindowInfo(options: [.optionAll, .excludeDesktopElements], relativeToWindow: kCGNullWindowID)
 
         let now = Date()
 
@@ -58,10 +62,9 @@ actor WindowRegistry {
             let layer = windowDict[kCGWindowLayer as String] as? Int32 ?? 0
             let isOnScreen = windowDict[kCGWindowIsOnscreen as String] as? Bool ?? false
 
-            // Get bundle ID using NSRunningApplication
-            // NOTE: NSRunningApplication(processIdentifier:) is actually thread-safe for reads
-            // Only mutations require MainActor
-            let bundleID = NSRunningApplication(processIdentifier: ownerPID)?.bundleIdentifier
+            // Get bundle ID via injected SystemOperations to allow mocking and remove
+            // reliance on NSRunningApplication during unit tests.
+            let bundleID = system.getRunningApplicationBundleID(pid: ownerPID)
 
             let info = WindowInfo(
                 windowID: windowID,

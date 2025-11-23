@@ -45,8 +45,6 @@ final class FileDialogAutomation {
 
     private init() {}
 
-    // MARK: - File Dialog Automation
-
     /// Automate an open file dialog by presenting NSOpenPanel
     /// - Parameters:
     ///   - filePath: Optional specific file to select
@@ -171,8 +169,6 @@ final class FileDialogAutomation {
         return selectedURL.path
     }
 
-    // MARK: - Programmatic File Selection
-
     /// Select a file programmatically (without showing dialog)
     /// - Parameters:
     ///   - filePath: Path to file to select
@@ -259,8 +255,6 @@ final class FileDialogAutomation {
             }
         }
     }
-
-    // MARK: - File Drag and Drop
 
     /// Simulate dragging files to a target element
     /// - Parameters:

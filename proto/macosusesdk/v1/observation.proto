@@ -179,6 +179,12 @@ message WindowEvent {
 
     // Window focus changed.
     WINDOW_EVENT_TYPE_FOCUSED = 7;
+
+    // Window was hidden (via Cmd+H or kAXHiddenAttribute).
+    WINDOW_EVENT_TYPE_HIDDEN = 8;
+
+    // Window was shown (unhidden).
+    WINDOW_EVENT_TYPE_SHOWN = 9;
   }
 }
 

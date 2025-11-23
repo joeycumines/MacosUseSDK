@@ -76,15 +76,29 @@ The API is built around a hierarchy of resources that represent the state and ca
 
 A specific design pattern is applied to Windows to balance performance with data accuracy:
 
-  * **The `Window` Resource (High Performance):**
-    The standard `Window` resource (`GetWindow`, `ListWindows`) relies on **hybrid data authority**. It prioritizes cached CoreGraphics data (Registry Authority) for geometry and "Split-Brain" logic for visibility. This ensures that listing windows is fast and lightweight, suitable for high-frequency polling or UI rendering.
+  * **`GetWindow` (AX-First Hybrid Authority):**
+    Returns fresh Accessibility API (AX) data for geometry (bounds) and title, ensuring mutation
+    responses (MoveWindow/ResizeWindow) reflect the exact requested values without polling delays.
+    Visibility uses an AX-first optimistic approach: assumes visible=true if not minimized/hidden,
+    only falling back to cached registry data when AX state indicates the window is not on screen.
+    This eliminates false negatives from stale CGWindowList during rapid mutations.
 
-  * **The `WindowState` Singleton (High Accuracy):**
-    For authoritative accessibility details, the API exposes a singleton sub-resource: `WindowState` (`applications/{app}/windows/{window}/state`).
+  * **`ListWindows` (Registry-Only Performance):**
+    Returns cached CoreGraphics data (CGWindowList via WindowRegistry) with ZERO per-window AX queries.
+    Completes in <50ms regardless of window count, suitable for high-frequency polling and UI rendering.
+    Registry data (bounds, title, visible) may lag 10-100ms behind actual state during rapid mutations.
 
-      * Fetching this resource triggers fresh, expensive queries to the Accessibility API (AX Authority).
-      * It provides deep state details: `minimized`, `ax_hidden`, `modal`, `focused`, `resizable`, etc.
-      * **Principle:** Clients should list `Window` resources for general navigation but request `WindowState` only when making logic decisions that require absolute truth (e.g., "Is this window actually capable of receiving input right now?").
+  * **`GetWindowState` Singleton (Deep AX Authority):**
+    For authoritative accessibility details, the API exposes a singleton sub-resource: `WindowState`
+    (`applications/{app}/windows/{window}/state`). Fetching this resource triggers fresh, expensive
+    queries to the Accessibility API for deep state: `minimized`, `ax_hidden`, `modal`, `focused`,
+    `resizable`, `minimizable`, `closable`, etc.
+
+  * **Principle:**
+    - Use `ListWindows` for fast enumeration and discovery
+    - Use `GetWindow` for authoritative data after mutations or before acting on a specific window
+    - Use `GetWindowState` only when making logic decisions requiring expensive AX state
+      (e.g., "Is this window actually capable of receiving input right now?")
 
 ### Session & Transaction Model
 

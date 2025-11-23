@@ -17,14 +17,14 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
     let stateStore: AppStateStore
     let operationStore: OperationStore
     let windowRegistry: WindowRegistry
+    let system: SystemOperations
 
-    init(stateStore: AppStateStore, operationStore: OperationStore, windowRegistry: WindowRegistry) {
+    init(stateStore: AppStateStore, operationStore: OperationStore, windowRegistry: WindowRegistry, system: SystemOperations = ProductionSystemOperations.shared) {
         self.stateStore = stateStore
         self.operationStore = operationStore
         self.windowRegistry = windowRegistry
+        self.system = system
     }
-
-    // MARK: - Helper Methods
 
     /// Resolve bundle ID from PID using NSRunningApplication.
     private func resolveBundleID(forPID pid: pid_t) -> String? {
@@ -33,14 +33,14 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
 
     /// Encode an offset into an opaque page token per AIP-158.
     /// The token is base64-encoded to prevent clients from relying on its structure.
-    private func encodePageToken(offset: Int) -> String {
+    func encodePageToken(offset: Int) -> String {
         let tokenString = "offset:\(offset)"
         return Data(tokenString.utf8).base64EncodedString()
     }
 
     /// Decode an opaque page token to retrieve the offset per AIP-158.
     /// Throws invalidArgument if the token is malformed.
-    private func decodePageToken(_ token: String) throws -> Int {
+    func decodePageToken(_ token: String) throws -> Int {
         guard let data = Data(base64Encoded: token),
               let tokenString = String(data: data, encoding: .utf8)
         else {
@@ -55,119 +55,6 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         }
         return parsedOffset
     }
-
-    // MARK: - Application Methods
-
-    func openApplication(
-        request: ServerRequest<Macosusesdk_V1_OpenApplicationRequest>, context _: ServerContext,
-    ) async throws -> ServerResponse<Google_Longrunning_Operation> {
-        let req = request.message
-        Self.logger.info("openApplication called")
-
-        Self.logger.info("openApplication called (LRO)")
-
-        // Create an operation and return immediately
-        let opName = "operations/open/\(UUID().uuidString)"
-
-        // optional metadata could include the requested id
-        let metadata = try SwiftProtobuf.Google_Protobuf_Any.with {
-            $0.typeURL = "type.googleapis.com/macosusesdk.v1.OpenApplicationMetadata"
-            $0.value = try Macosusesdk_V1_OpenApplicationMetadata.with { $0.id = req.id }
-                .serializedData()
-        }
-
-        let op = await operationStore.createOperation(name: opName, metadata: metadata)
-
-        // Schedule actual open on background task (coordinator runs on @MainActor internally)
-        Task { [operationStore, stateStore] in
-            do {
-                let app = try await AutomationCoordinator.shared.handleOpenApplication(
-                    identifier: req.id)
-                await stateStore.addTarget(app)
-
-                let response = Macosusesdk_V1_OpenApplicationResponse.with {
-                    $0.application = app
-                }
-
-                try await operationStore.finishOperation(name: opName, responseMessage: response)
-            } catch {
-                // mark operation as done with an error in the response's metadata
-                var errOp = await operationStore.getOperation(name: opName) ?? op
-                errOp.done = true
-                errOp.error = Google_Rpc_Status.with {
-                    $0.code = 13
-                    $0.message = "\(error)"
-                }
-                await operationStore.putOperation(errOp)
-            }
-        }
-
-        return ServerResponse(message: op)
-    }
-
-    func getApplication(
-        request: ServerRequest<Macosusesdk_V1_GetApplicationRequest>, context _: ServerContext,
-    ) async throws -> ServerResponse<Macosusesdk_V1_Application> {
-        let req = request.message
-        Self.logger.info("getApplication called")
-        let pid = try parsePID(fromName: req.name)
-        guard let app = await stateStore.getTarget(pid: pid) else {
-            throw RPCError(code: .notFound, message: "Application not found")
-        }
-        return ServerResponse(message: app)
-    }
-
-    func listApplications(
-        request: ServerRequest<Macosusesdk_V1_ListApplicationsRequest>, context _: ServerContext,
-    ) async throws -> ServerResponse<Macosusesdk_V1_ListApplicationsResponse> {
-        let req = request.message
-        Self.logger.info("listApplications called")
-        let allApps = await stateStore.listTargets()
-
-        // Sort by name for deterministic ordering
-        let sortedApps = allApps.sorted { $0.name < $1.name }
-
-        // Decode page_token to get offset
-        let offset: Int = if req.pageToken.isEmpty {
-            0
-        } else {
-            try decodePageToken(req.pageToken)
-        }
-
-        // Determine page size (default 100 if not specified or <= 0)
-        let pageSize = req.pageSize > 0 ? Int(req.pageSize) : 100
-        let totalCount = sortedApps.count
-
-        // Calculate slice bounds
-        let startIndex = min(offset, totalCount)
-        let endIndex = min(startIndex + pageSize, totalCount)
-        let pageApps = Array(sortedApps[startIndex ..< endIndex])
-
-        // Generate next_page_token if more results exist
-        let nextPageToken = if endIndex < totalCount {
-            encodePageToken(offset: endIndex)
-        } else {
-            ""
-        }
-
-        let response = Macosusesdk_V1_ListApplicationsResponse.with {
-            $0.applications = pageApps
-            $0.nextPageToken = nextPageToken
-        }
-        return ServerResponse(message: response)
-    }
-
-    func deleteApplication(
-        request: ServerRequest<Macosusesdk_V1_DeleteApplicationRequest>, context _: ServerContext,
-    ) async throws -> ServerResponse<SwiftProtobuf.Google_Protobuf_Empty> {
-        let req = request.message
-        Self.logger.info("deleteApplication called")
-        let pid = try parsePID(fromName: req.name)
-        _ = await stateStore.removeTarget(pid: pid)
-        return ServerResponse(message: SwiftProtobuf.Google_Protobuf_Empty())
-    }
-
-    // MARK: - Input Methods
 
     func createInput(request: ServerRequest<Macosusesdk_V1_CreateInputRequest>, context _: ServerContext)
         async throws -> ServerResponse<Macosusesdk_V1_Input>
@@ -269,8 +156,6 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         return ServerResponse(message: response)
     }
 
-    // MARK: - Custom Methods
-
     func traverseAccessibility(
         request: ServerRequest<Macosusesdk_V1_TraverseAccessibilityRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_TraverseAccessibilityResponse> {
@@ -331,453 +216,6 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
             return [:]
         }
     }
-
-    // MARK: - Window Methods
-
-    func getWindow(
-        request: ServerRequest<Macosusesdk_V1_GetWindowRequest>, context _: ServerContext,
-    ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
-        let req = request.message
-        Self.logger.info("getWindow called for \(req.name, privacy: .private)")
-        // Parse "applications/{pid}/windows/{windowId}"
-        let components = req.name.split(separator: "/")
-        guard components.count == 4,
-              components[0] == "applications",
-              components[2] == "windows",
-              let pid = pid_t(components[1]),
-              let windowId = CGWindowID(components[3])
-        else {
-            throw RPCError(code: .invalidArgument, message: "Invalid window name format")
-        }
-
-        // CRITICAL FIX: ALWAYS use AX data for bounds (never fall back to stale CGWindowList).
-        // This ensures GetWindow returns fresh geometry immediately after mutations (MoveWindow, ResizeWindow).
-        // The "split-brain" model mandates: AX is authority for geometry, Registry is authority for metadata.
-        let axWindow = try await findWindowElement(pid: pid, windowId: windowId)
-        return try await buildWindowResponseFromAX(name: req.name, pid: pid, windowId: windowId, window: axWindow, registryInfo: nil)
-    }
-
-    func listWindows(
-        request: ServerRequest<Macosusesdk_V1_ListWindowsRequest>, context _: ServerContext,
-    ) async throws -> ServerResponse<Macosusesdk_V1_ListWindowsResponse> {
-        let req = request.message
-        Self.logger.info("listWindows called")
-
-        // Parse "applications/{pid}"
-        let pid = try parsePID(fromName: req.parent)
-
-        try await windowRegistry.refreshWindows(forPID: pid)
-        let windowInfos = try await windowRegistry.listWindows(forPID: pid)
-
-        // Sort by window ID for deterministic ordering
-        let sortedWindowInfos = windowInfos.sorted { $0.windowID < $1.windowID }
-
-        // Decode page_token to get offset
-        let offset: Int = if req.pageToken.isEmpty {
-            0
-        } else {
-            try decodePageToken(req.pageToken)
-        }
-
-        // Determine page size (default 100 if not specified or <= 0)
-        let pageSize = req.pageSize > 0 ? Int(req.pageSize) : 100
-        let totalCount = sortedWindowInfos.count
-
-        // Calculate slice bounds
-        let startIndex = min(offset, totalCount)
-        let endIndex = min(startIndex + pageSize, totalCount)
-        let pageWindowInfos = Array(sortedWindowInfos[startIndex ..< endIndex])
-
-        // Generate next_page_token if more results exist
-        let nextPageToken = if endIndex < totalCount {
-            encodePageToken(offset: endIndex)
-        } else {
-            ""
-        }
-
-        // Build window list from registry data only - NO per-window AX queries
-        // This returns fast, registry-only data (CoreGraphics only).
-        // Clients MUST use GetWindowState for expensive AX queries (modal, minimizable, etc.).
-        //
-        // PERFORMANCE: This eliminates the O(N*M) catastrophe where N windows each
-        // triggered M blocking AX queries. ListWindows now completes in <50ms regardless
-        // of window count.
-        let windows = pageWindowInfos.map { windowInfo in
-            Macosusesdk_V1_Window.with {
-                $0.name = "applications/\(pid)/windows/\(windowInfo.windowID)"
-                $0.title = windowInfo.title
-                $0.bounds = Macosusesdk_V1_Bounds.with {
-                    $0.x = windowInfo.bounds.origin.x
-                    $0.y = windowInfo.bounds.origin.y
-                    $0.width = windowInfo.bounds.size.width
-                    $0.height = windowInfo.bounds.size.height
-                }
-                $0.zIndex = Int32(windowInfo.layer)
-                $0.visible = windowInfo.isOnScreen
-                $0.bundleID = windowInfo.bundleID ?? ""
-            }
-        }
-
-        let response = Macosusesdk_V1_ListWindowsResponse.with {
-            $0.windows = windows
-            $0.nextPageToken = nextPageToken
-        }
-        return ServerResponse(message: response)
-    }
-
-    func getWindowState(
-        request: ServerRequest<Macosusesdk_V1_GetWindowStateRequest>, context _: ServerContext,
-    ) async throws -> ServerResponse<Macosusesdk_V1_WindowState> {
-        let req = request.message
-        Self.logger.info("getWindowState called for \(req.name, privacy: .private)")
-
-        // Parse "applications/{pid}/windows/{windowId}/state"
-        let components = req.name.split(separator: "/")
-        guard components.count == 5,
-              components[0] == "applications",
-              components[2] == "windows",
-              components[4] == "state",
-              let pid = pid_t(components[1]),
-              let windowId = CGWindowID(components[3])
-        else {
-            throw RPCError(code: .invalidArgument, message: "Invalid window state name format")
-        }
-
-        // Find the window via AX API
-        let axWindow = try await findWindowElement(pid: pid, windowId: windowId)
-
-        // Build complete WindowState from AX queries
-        let state = try await buildWindowStateFromAX(window: axWindow)
-
-        // Set the resource name
-        var response = state
-        response.name = req.name
-
-        return ServerResponse(message: response)
-    }
-
-    func focusWindow(
-        request: ServerRequest<Macosusesdk_V1_FocusWindowRequest>, context: ServerContext,
-    ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
-        let req = request.message
-        Self.logger.info("focusWindow called")
-
-        // Parse "applications/{pid}/windows/{windowId}"
-        let components = req.name.split(separator: "/").map(String.init)
-        guard components.count == 4,
-              components[0] == "applications",
-              components[2] == "windows",
-              let pid = pid_t(components[1]),
-              let windowId = CGWindowID(components[3])
-        else {
-            throw RPCError(code: .invalidArgument, message: "Invalid window name format")
-        }
-
-        let windowToFocus = try await findWindowElement(pid: pid, windowId: windowId)
-
-        // Set kAXMainAttribute to true to focus the window
-        // CRITICAL FIX: AX set operations are thread-safe and should NOT block MainActor
-        try await Task.detached(priority: .userInitiated) {
-            let mainResult = AXUIElementSetAttributeValue(
-                windowToFocus, kAXMainAttribute as CFString, kCFBooleanTrue,
-            )
-            guard mainResult == .success else {
-                throw RPCError(code: .internalError, message: "Failed to focus window")
-            }
-        }.value
-
-        // Return updated window state
-        return try await getWindow(
-            request: ServerRequest(metadata: request.metadata, message: Macosusesdk_V1_GetWindowRequest.with { $0.name = req.name }), context: context,
-        )
-    }
-
-    func moveWindow(
-        request: ServerRequest<Macosusesdk_V1_MoveWindowRequest>, context _: ServerContext,
-    ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
-        let req = request.message
-        Self.logger.info("moveWindow called")
-
-        // Parse "applications/{pid}/windows/{windowId}"
-        let components = req.name.split(separator: "/").map(String.init)
-        guard components.count == 4,
-              components[0] == "applications",
-              components[2] == "windows",
-              let pid = pid_t(components[1]),
-              let windowId = CGWindowID(components[3])
-        else {
-            throw RPCError(code: .invalidArgument, message: "Invalid window name format")
-        }
-
-        let window = try await findWindowElement(pid: pid, windowId: windowId)
-
-        // Create AXValue and set position
-        // CRITICAL FIX: AX set operations are thread-safe and should NOT block MainActor
-        try await Task.detached(priority: .userInitiated) {
-            var newPosition = CGPoint(x: req.x, y: req.y)
-            guard let positionValue = AXValueCreate(.cgPoint, &newPosition) else {
-                throw RPCError(code: .internalError, message: "Failed to create position value")
-            }
-
-            let setResult = AXUIElementSetAttributeValue(
-                window, kAXPositionAttribute as CFString, positionValue,
-            )
-            guard setResult == .success else {
-                throw RPCError(
-                    code: .internalError, message: "Failed to move window: \(setResult.rawValue)",
-                )
-            }
-        }.value
-
-        // CRITICAL FIX: Refresh and fetch registry metadata BEFORE invalidation (nil registry bug fix)
-        try await windowRegistry.refreshWindows(forPID: pid)
-        let registryInfo = await windowRegistry.getLastKnownWindow(windowId)
-
-        // Invalidate cache to ensure subsequent reads reflect the new position immediately
-        await windowRegistry.invalidate(windowID: windowId)
-
-        // Build response directly from AXUIElement (CGWindowList may be stale)
-        return try await buildWindowResponseFromAX(name: req.name, pid: pid, windowId: windowId, window: window, registryInfo: registryInfo)
-    }
-
-    func resizeWindow(
-        request: ServerRequest<Macosusesdk_V1_ResizeWindowRequest>, context _: ServerContext,
-    ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
-        let req = request.message
-        Self.logger.info("resizeWindow called")
-
-        // Parse "applications/{pid}/windows/{windowId}"
-        let components = req.name.split(separator: "/").map(String.init)
-        guard components.count == 4,
-              components[0] == "applications",
-              components[2] == "windows",
-              let pid = pid_t(components[1]),
-              let windowId = CGWindowID(components[3])
-        else {
-            throw RPCError(code: .invalidArgument, message: "Invalid window name format")
-        }
-
-        let window = try await findWindowElement(pid: pid, windowId: windowId)
-
-        // Create AXValue, set size, and verify
-        // CRITICAL FIX: AX set operations are thread-safe and should NOT block MainActor
-        try await Task.detached(priority: .userInitiated) {
-            var newSize = CGSize(width: req.width, height: req.height)
-            guard let sizeValue = AXValueCreate(.cgSize, &newSize) else {
-                throw RPCError(code: .internalError, message: "Failed to create size value")
-            }
-
-            let setResult = AXUIElementSetAttributeValue(window, kAXSizeAttribute as CFString, sizeValue)
-            guard setResult == .success else {
-                throw RPCError(
-                    code: .internalError, message: "Failed to resize window: \(setResult.rawValue)",
-                )
-            }
-
-            // Verify AX actually applied the change
-            var verifyValue: CFTypeRef?
-            if AXUIElementCopyAttributeValue(window, kAXSizeAttribute as CFString, &verifyValue)
-                == .success,
-                let unwrappedValue = verifyValue,
-                CFGetTypeID(unwrappedValue) == AXValueGetTypeID()
-            {
-                let size = unsafeDowncast(unwrappedValue, to: AXValue.self)
-                var actualSize = CGSize.zero
-                if AXValueGetValue(size, .cgSize, &actualSize) {
-                    Self.logger.info("After resize: requested=\(req.width, privacy: .public)x\(req.height, privacy: .public), actual=\(actualSize.width, privacy: .public)x\(actualSize.height, privacy: .public)")
-                }
-            }
-        }.value
-
-        // CRITICAL FIX: Refresh and fetch registry metadata BEFORE invalidation (nil registry bug fix)
-        try await windowRegistry.refreshWindows(forPID: pid)
-        let registryInfo = await windowRegistry.getLastKnownWindow(windowId)
-
-        // Invalidate cache to ensure subsequent reads reflect the new size immediately
-        await windowRegistry.invalidate(windowID: windowId)
-
-        // Build response directly from AXUIElement (CGWindowList may be stale)
-        return try await buildWindowResponseFromAX(name: req.name, pid: pid, windowId: windowId, window: window, registryInfo: registryInfo)
-    }
-
-    func minimizeWindow(
-        request: ServerRequest<Macosusesdk_V1_MinimizeWindowRequest>, context _: ServerContext,
-    ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
-        let req = request.message
-        Self.logger.info("minimizeWindow called")
-
-        // Parse "applications/{pid}/windows/{windowId}"
-        let components = req.name.split(separator: "/").map(String.init)
-        guard components.count == 4,
-              components[0] == "applications",
-              components[2] == "windows",
-              let pid = pid_t(components[1]),
-              let windowId = CGWindowID(components[3])
-        else {
-            throw RPCError(code: .invalidArgument, message: "Invalid window name format")
-        }
-
-        let window = try await findWindowElement(pid: pid, windowId: windowId)
-
-        // Set kAXMinimizedAttribute to true
-        // CRITICAL FIX: AX set operations are thread-safe and should NOT block MainActor
-        try await Task.detached(priority: .userInitiated) {
-            let setResult = AXUIElementSetAttributeValue(
-                window, kAXMinimizedAttribute as CFString, kCFBooleanTrue,
-            )
-            guard setResult == .success else {
-                throw RPCError(
-                    code: .internalError, message: "Failed to minimize window: \(setResult.rawValue)",
-                )
-            }
-        }.value
-
-        // CRITICAL: AX state propagation is async - poll until minimized=true
-        // This prevents race condition where we return stale state
-        let startTime = Date()
-        let timeout = 2.0 // 2 second timeout
-        while Date().timeIntervalSince(startTime) < timeout {
-            let isMinimized = await MainActor.run { () -> Bool in
-                var verifyValue: CFTypeRef?
-                if AXUIElementCopyAttributeValue(window, kAXMinimizedAttribute as CFString, &verifyValue) == .success,
-                   let isMinimizedValue = verifyValue as? Bool
-                {
-                    return isMinimizedValue
-                }
-                return false
-            }
-            if isMinimized {
-                Self.logger.debug("[minimizeWindow] Verified minimized=true after \(Date().timeIntervalSince(startTime) * 1000, privacy: .public)ms")
-                break
-            }
-            // Small yield to allow AX system to propagate change
-            try? await Task.sleep(for: .milliseconds(10))
-        }
-
-        // CRITICAL FIX: Refresh and fetch registry metadata BEFORE invalidation
-        try await windowRegistry.refreshWindows(forPID: pid)
-        let registryInfo = await windowRegistry.getLastKnownWindow(windowId)
-
-        // Invalidate cache to ensure subsequent reads reflect the new minimized state immediately
-        await windowRegistry.invalidate(windowID: windowId)
-
-        // Build response directly from AXUIElement
-        return try await buildWindowResponseFromAX(name: req.name, pid: pid, windowId: windowId, window: window, registryInfo: registryInfo)
-    }
-
-    func restoreWindow(
-        request: ServerRequest<Macosusesdk_V1_RestoreWindowRequest>, context _: ServerContext,
-    ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
-        let req = request.message
-        Self.logger.info("restoreWindow called")
-
-        // Parse "applications/{pid}/windows/{windowId}"
-        let components = req.name.split(separator: "/").map(String.init)
-        guard components.count == 4,
-              components[0] == "applications",
-              components[2] == "windows",
-              let pid = pid_t(components[1]),
-              let windowId = CGWindowID(components[3])
-        else {
-            throw RPCError(code: .invalidArgument, message: "Invalid window name format")
-        }
-
-        // CRITICAL FIX: Minimized windows vanish from kAXWindowsAttribute but remain in kAXChildrenAttribute
-        let window = try await findWindowElementWithMinimizedFallback(pid: pid, windowId: windowId)
-
-        // Set kAXMinimizedAttribute to false
-        // CRITICAL FIX: AX set operations are thread-safe and should NOT block MainActor
-        try await Task.detached(priority: .userInitiated) {
-            let setResult = AXUIElementSetAttributeValue(
-                window, kAXMinimizedAttribute as CFString, kCFBooleanFalse,
-            )
-            guard setResult == .success else {
-                throw RPCError(
-                    code: .internalError, message: "Failed to restore window: \(setResult.rawValue)",
-                )
-            }
-        }.value
-
-        // CRITICAL: AX state propagation is async - poll until minimized=false
-        // This prevents race condition where we return stale state
-        let startTime = Date()
-        let timeout = 2.0 // 2 second timeout
-        while Date().timeIntervalSince(startTime) < timeout {
-            let isMinimized = await MainActor.run { () -> Bool in
-                var verifyValue: CFTypeRef?
-                if AXUIElementCopyAttributeValue(window, kAXMinimizedAttribute as CFString, &verifyValue) == .success,
-                   let isMinimizedValue = verifyValue as? Bool
-                {
-                    return isMinimizedValue
-                }
-                return false
-            }
-            if !isMinimized {
-                Self.logger.debug("[restoreWindow] Verified minimized=false after \(Date().timeIntervalSince(startTime) * 1000, privacy: .public)ms")
-                break
-            }
-            // Small yield to allow AX system to propagate change
-            try? await Task.sleep(for: .milliseconds(10))
-        }
-
-        // CRITICAL FIX: Refresh registry AFTER restore to get updated isOnScreen value
-        // (CGWindowList updates when window becomes visible again)
-        try await windowRegistry.refreshWindows(forPID: pid)
-        let registryInfo = await windowRegistry.getLastKnownWindow(windowId)
-
-        // Invalidate cache to ensure subsequent reads reflect the restored state immediately
-        await windowRegistry.invalidate(windowID: windowId)
-
-        // Build response directly from AXUIElement (AFTER restore operation)
-        return try await buildWindowResponseFromAX(name: req.name, pid: pid, windowId: windowId, window: window, registryInfo: registryInfo)
-    }
-
-    func closeWindow(
-        request: ServerRequest<Macosusesdk_V1_CloseWindowRequest>, context _: ServerContext,
-    ) async throws -> ServerResponse<Macosusesdk_V1_CloseWindowResponse> {
-        let req = request.message
-        Self.logger.info("closeWindow called")
-
-        // Parse "applications/{pid}/windows/{windowId}"
-        let components = req.name.split(separator: "/").map(String.init)
-        guard components.count == 4,
-              components[0] == "applications",
-              components[2] == "windows",
-              let pid = pid_t(components[1]),
-              let windowId = CGWindowID(components[3])
-        else {
-            throw RPCError(code: .invalidArgument, message: "Invalid window name format")
-        }
-
-        let window = try await findWindowElement(pid: pid, windowId: windowId)
-
-        // Get close button and press it (MUST run on MainActor)
-        try await MainActor.run {
-            var closeButtonValue: CFTypeRef?
-            let closeResult = AXUIElementCopyAttributeValue(
-                window, kAXCloseButtonAttribute as CFString, &closeButtonValue,
-            )
-            guard closeResult == .success,
-                  let unwrappedCloseButtonValue = closeButtonValue,
-                  CFGetTypeID(unwrappedCloseButtonValue) == AXUIElementGetTypeID()
-            else {
-                throw RPCError(code: .internalError, message: "Failed to get close button")
-            }
-
-            let closeButton = unsafeDowncast(unwrappedCloseButtonValue, to: AXUIElement.self)
-
-            let pressResult = AXUIElementPerformAction(closeButton, kAXPressAction as CFString)
-            guard pressResult == .success else {
-                throw RPCError(
-                    code: .internalError, message: "Failed to close window: \(pressResult.rawValue)",
-                )
-            }
-        }
-
-        return ServerResponse(message: Macosusesdk_V1_CloseWindowResponse())
-    }
-
-    // MARK: - Element Methods
 
     func findElements(
         request: ServerRequest<Macosusesdk_V1_FindElementsRequest>, context _: ServerContext,
@@ -1557,8 +995,6 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         return ServerResponse(message: op)
     }
 
-    // MARK: - Observation Methods
-
     func createObservation(
         request: ServerRequest<Macosusesdk_V1_CreateObservationRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Google_Longrunning_Operation> {
@@ -1745,8 +1181,6 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         }
     }
 
-    // MARK: - Session Methods
-
     func createSession(
         request: ServerRequest<Macosusesdk_V1_CreateSessionRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_Session> {
@@ -1911,8 +1345,6 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         return ServerResponse(message: snapshot)
     }
 
-    // MARK: - Screenshot Methods
-
     func captureScreenshot(
         request: ServerRequest<Macosusesdk_V1_CaptureScreenshotRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_CaptureScreenshotResponse> {
@@ -1947,66 +1379,6 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         }
 
         Self.logger.info("[captureScreenshot] Captured \(result.width, privacy: .public)x\(result.height, privacy: .public) screenshot")
-        return ServerResponse(message: response)
-    }
-
-    func captureWindowScreenshot(
-        request: ServerRequest<Macosusesdk_V1_CaptureWindowScreenshotRequest>, context _: ServerContext,
-    ) async throws -> ServerResponse<Macosusesdk_V1_CaptureWindowScreenshotResponse> {
-        let req = request.message
-        Self.logger.info("[captureWindowScreenshot] Capturing window screenshot")
-
-        // Parse window resource name: applications/{pid}/windows/{windowId}
-        let components = req.window.split(separator: "/")
-        guard components.count == 4,
-              components[0] == "applications",
-              components[2] == "windows",
-              let pid = pid_t(components[1]),
-              let windowIdInt = Int(components[3])
-        else {
-            throw RPCError(
-                code: .invalidArgument,
-                message: "Invalid window resource name: \(req.window)",
-            )
-        }
-
-        // Find window in registry
-        try await windowRegistry.refreshWindows(forPID: pid)
-        let windowInfo = try await windowRegistry.listWindows(forPID: pid).first {
-            $0.windowID == CGWindowID(windowIdInt)
-        }
-
-        guard let windowInfo else {
-            throw RPCError(
-                code: .notFound,
-                message: "Window not found: \(req.window)",
-            )
-        }
-
-        // Determine format (default to PNG)
-        let format = req.format == .unspecified ? .png : req.format
-
-        // Capture window
-        let result = try await ScreenshotCapture.captureWindow(
-            windowID: windowInfo.windowID,
-            includeShadow: req.includeShadow,
-            format: format,
-            quality: req.quality,
-            includeOCR: req.includeOcrText,
-        )
-
-        // Build response
-        var response = Macosusesdk_V1_CaptureWindowScreenshotResponse()
-        response.imageData = result.data
-        response.format = format
-        response.width = result.width
-        response.height = result.height
-        response.window = req.window
-        if let ocrText = result.ocrText {
-            response.ocrText = ocrText
-        }
-
-        Self.logger.info("[captureWindowScreenshot] Captured \(result.width, privacy: .public)x\(result.height, privacy: .public) window screenshot")
         return ServerResponse(message: response)
     }
 
@@ -2121,8 +1493,6 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         return ServerResponse(message: response)
     }
 
-    // MARK: - Clipboard Methods
-
     func getClipboard(
         request: ServerRequest<Macosusesdk_V1_GetClipboardRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_Clipboard> {
@@ -2198,8 +1568,6 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
         let response = await ClipboardHistoryManager.shared.getHistory()
         return ServerResponse(message: response)
     }
-
-    // MARK: - File Dialog Methods
 
     func automateOpenFileDialog(
         request: ServerRequest<Macosusesdk_V1_AutomateOpenFileDialogRequest>, context _: ServerContext,
@@ -2405,8 +1773,6 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
             return ServerResponse(message: response)
         }
     }
-
-    // MARK: - Macro Methods
 
     func createMacro(
         request: ServerRequest<Macosusesdk_V1_CreateMacroRequest>, context _: ServerContext,
@@ -2628,8 +1994,6 @@ final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
 
         return ServerResponse(message: op)
     }
-
-    // MARK: - Script Methods
 
     func executeAppleScript(
         request: ServerRequest<Macosusesdk_V1_ExecuteAppleScriptRequest>, context _: ServerContext,

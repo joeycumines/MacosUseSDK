@@ -1,9 +1,13 @@
 // Provides window information primitives that query AX APIs directly,
-// supporting the "Split-Brain" window authority model.
+// supporting hybrid data authority (AX for geometry/state, Registry for metadata).
 
 import ApplicationServices
 import Foundation
 import OSLog
+
+// Private API declaration for getting CGWindowID from AXUIElement
+@_silgen_name("_AXUIElementGetWindow")
+func _AXUIElementGetWindow(_ element: AXUIElement, _ id: UnsafeMutablePointer<CGWindowID>) -> AXError
 
 private let logger = sdkLogger(category: "WindowQuery")
 
@@ -40,16 +44,37 @@ public func fetchAXWindowInfo(
 ) -> WindowInfo? {
     let appElement = AXUIElementCreateApplication(pid)
 
-    // 1. Fetch the list of windows
+    // 1. Fetch the list of windows - with kAXChildren fallback for race conditions
+    // CRITICAL RACE CONDITION FIX: During rapid window mutations, kAXWindowsAttribute
+    // can temporarily return an empty list even though windows still exist. We fall back
+    // to kAXChildrenAttribute (which includes all UI elements, not just windows) to rescue
+    // orphaned windows, matching the pattern in ObservationManager.handleOrphanedWindows.
     var windowsRef: CFTypeRef?
-    let result = AXUIElementCopyAttributeValue(appElement, kAXWindowsAttribute as CFString, &windowsRef)
+    var result = AXUIElementCopyAttributeValue(appElement, kAXWindowsAttribute as CFString, &windowsRef)
+    var windows = (result == .success) ? (windowsRef as? [AXUIElement]) : nil
 
-    guard result == .success, let windows = windowsRef as? [AXUIElement] else {
-        logger.error("Failed to fetch AX windows list for PID \(pid, privacy: .public): AXError \(result.rawValue)")
+    // Fallback to kAXChildren if kAXWindows returned empty or failed
+    if windows == nil || windows!.isEmpty {
+        logger.debug("[fetchAXWindowInfo] kAXWindows empty/failed for PID \(pid, privacy: .public), trying kAXChildren fallback")
+        var childrenRef: CFTypeRef?
+        result = AXUIElementCopyAttributeValue(appElement, kAXChildrenAttribute as CFString, &childrenRef)
+        if result == .success {
+            windows = childrenRef as? [AXUIElement]
+            logger.debug("[fetchAXWindowInfo] kAXChildren returned \(windows?.count ?? 0) elements")
+        } else {
+            logger.error("[fetchAXWindowInfo] kAXChildren fetch failed with AXError \(result.rawValue)")
+            windows = nil
+        }
+    }
+
+    guard let windows = windows, !windows.isEmpty else {
+        logger.error("[fetchAXWindowInfo] No elements available from kAXWindows or kAXChildren for PID \(pid, privacy: .public)")
         return nil
     }
 
     // 2. Optimize IPC: Batch fetch attributes to avoid N+1 problem
+    // This reduces per-window IPC from multiple attribute round-trips (4+ calls) to
+    // a single batched call — effectively O(N) total work instead of O(4N).
     // We fetch Position, Size, Title, Minimized, and Main in a single round-trip per window.
     let attributes: [CFString] = [
         kAXPositionAttribute as CFString, // Index 0
@@ -64,6 +89,97 @@ public func fetchAXWindowInfo(
     var bestScore = CGFloat.greatestFiniteMagnitude
 
     for axWindow in windows {
+        // CRITICAL FIX 1: Filter by Role if we are in the fallback path (kAXChildren)
+        // kAXChildren returns ALL UI elements (buttons, groups, images, etc.), not just windows.
+        // We must verify the element is actually a window before attempting to match it.
+        var roleRef: CFTypeRef?
+              if AXUIElementCopyAttributeValue(axWindow, kAXRoleAttribute as CFString, &roleRef) == .success,
+                  let role = roleRef as? String {
+            // Allow standard window roles. Reject non-window elements.
+            // Role is typically "AXWindow" for windows (not "AXButton", "AXGroup", etc.)
+            if role != "AXWindow" {
+                // Reject non-window UI elements; this avoids catastrophic false-matches
+                // when kAXChildren includes controls/groups. Note this excludes
+                // non-standard window-like roles (AXDrawer/AXPopover), accepting
+                // false negatives over false positives.
+                continue
+            }
+        }
+        // NOTE: If `AXUIElementCopyAttributeValue(..., kAXRoleAttribute)` fails, `roleRef` will be nil
+        // and this `if` body will not execute. In that case we intentionally "fail-open" and allow
+        // the element to proceed to heuristic matching rather than rejecting it outright. This
+        // behavior prevents transient AX errors from causing false negatives when trying to
+        // resolve windows during race conditions.
+
+        // CRITICAL FIX 2: Prioritize ID Match via _AXUIElementGetWindow
+        // If the private API works and returns a matching ID, this is the source of truth.
+        // Use it as an instant "gold standard" match (Score 0).
+        var axID: CGWindowID = 0
+        let idResult = _AXUIElementGetWindow(axWindow, &axID)
+
+        // If ID matches perfectly, fetch remaining attributes and return immediately
+        if idResult == .success && axID == windowId {
+            logger.debug("[fetchAXWindowInfo] EXACT ID match for window \(windowId, privacy: .public) via _AXUIElementGetWindow")
+
+            // Fetch remaining attributes for this confirmed window
+            var valuesArray: CFArray?
+            let valuesResult = AXUIElementCopyMultipleAttributeValues(axWindow, attributes as CFArray, AXCopyMultipleAttributeOptions(), &valuesArray)
+
+            guard valuesResult == .success,
+                  let values = valuesArray as? [AnyObject],
+                  values.count == attributes.count
+            else {
+                // If attribute fetch fails, fall through to heuristic matching
+                logger.warning("[fetchAXWindowInfo] Attribute fetch failed for exact ID match, falling back to heuristics")
+                continue
+            }
+
+            // Extract bounds
+            var axPosition = CGPoint.zero
+            let posVal = values[0]
+            if CFGetTypeID(posVal) == AXValueGetTypeID() {
+                // swiftlint:disable:next force_cast
+                let axVal = posVal as! AXValue
+                if AXValueGetType(axVal) == .cgPoint {
+                    AXValueGetValue(axVal, .cgPoint, &axPosition)
+                }
+            }
+
+            var axSize = CGSize.zero
+            let sizeVal = values[1]
+            if CFGetTypeID(sizeVal) == AXValueGetTypeID() {
+                // swiftlint:disable:next force_cast
+                let axVal = sizeVal as! AXValue
+                if AXValueGetType(axVal) == .cgSize {
+                    AXValueGetValue(axVal, .cgSize, &axSize)
+                }
+            }
+
+            let axBounds = CGRect(origin: axPosition, size: axSize)
+            let axTitle = values[2] as? String ?? ""
+            let axMinimized = (values[3] as? Bool) ?? false
+            let axMain = (values[4] as? Bool) ?? false
+
+            return WindowInfo(
+                element: axWindow,
+                pid: pid,
+                windowId: windowId,
+                bounds: axBounds,
+                title: axTitle,
+                isMinimized: axMinimized,
+                isHidden: false,
+                isMain: axMain,
+                isFocused: axMain
+            )
+        }
+
+        // If ID is valid but MISMATCHES, skip this element (it is definitely the wrong window)
+        if idResult == .success && axID != 0 && axID != windowId {
+            logger.debug("[fetchAXWindowInfo] Skipping window with ID \(axID, privacy: .public) (looking for \(windowId, privacy: .public))")
+            continue
+        }
+
+        // Proceed with heuristic matching if ID check failed or returned 0
         var valuesArray: CFArray?
         let valuesResult = AXUIElementCopyMultipleAttributeValues(axWindow, attributes as CFArray, AXCopyMultipleAttributeOptions(), &valuesArray)
 
@@ -160,15 +276,29 @@ public func fetchAXWindowInfo(
 
     // 5. Validation Threshold
     // CRITICAL FIX FOR RACE CONDITION: During rapid mutation sequences, CGWindowList can be
-    // extremely stale. If we found ANY window (bestScore < infinity), return it.
-    // This is safe because we're already filtering by PID and using heuristic bounds matching.
-    // The worst case is we match the wrong window of the same app, but that's better than
-    // failing completely. Once CGWindowList catches up, scores will be low (< 20).
-    if bestScore < CGFloat.greatestFiniteMagnitude {
+    // extremely stale. Accept matches up to a reasonable threshold to handle minor discrepancies.
+    // After window mutations (move/resize), CGWindowList may lag behind AX state by several frames,
+    // causing scores up to ~600 pixels for legitimate matches. Reject only egregious mismatches.
+    // Scores under 100 are excellent matches; scores under 1000 are acceptable for race conditions.
+    // NOTE: This threshold also intentionally absorbs the common "shadow penalty":
+    // Quartz (CG) often reports bounds including drop-shadows and resize chrome while AX
+    // reports content bounds. See the docs subsection "Heuristic fairness, biases, and alternatives"
+    // in `docs/02-window-state-management.md#heuristic-fairness-biases-and-alternatives` for details.
+    // WARNING: If the private API `_AXUIElementGetWindow` fails (returns error/0) AND the
+    // candidate AX element has moved a very large distance since the last CG snapshot
+    // (e.g., >~1200px across monitors), the score can exceed this threshold and the
+    // lookup will reject the candidate — causing `GetWindow` to return `nil` briefly.
+    // This is an intentional 'fail-closed' tradeoff to avoid mismatching a different window
+    // when the private API is unavailable.
+    let scoreThreshold: CGFloat = 1000.0
+    if bestScore < scoreThreshold {
         logger.debug("[fetchAXWindowInfo] Matched window \(windowId, privacy: .public) with score \(bestScore, privacy: .public)")
         return bestMatch
+    } else if bestScore < CGFloat.greatestFiniteMagnitude {
+        logger.warning("[fetchAXWindowInfo] Best match for window \(windowId, privacy: .public) has score \(bestScore, privacy: .public) (threshold: \(scoreThreshold)), rejecting as too far")
+    } else {
+        logger.warning("[fetchAXWindowInfo] No candidate elements found for window \(windowId, privacy: .public)")
     }
 
-    logger.warning("[fetchAXWindowInfo] No windows found for PID \(pid, privacy: .public)")
     return nil
 }

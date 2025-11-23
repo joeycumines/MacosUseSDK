@@ -211,8 +211,6 @@ enum ClipboardError: Error, CustomStringConvertible {
     }
 }
 
-// MARK: - NSImage PNG Conversion
-
 extension NSImage {
     /// Convert NSImage to PNG data.
     func pngData() -> Data? {

@@ -70,8 +70,6 @@ actor ScriptExecutor {
 
     private init() {}
 
-    // MARK: - AppleScript Execution
-
     /// Executes an AppleScript string and returns the result.
     ///
     /// - Parameters:
@@ -144,8 +142,6 @@ actor ScriptExecutor {
             duration: duration,
         )
     }
-
-    // MARK: - JavaScript for Automation (JXA) Execution
 
     /// Executes JavaScript for Automation (JXA) and returns the result.
     ///
@@ -224,8 +220,6 @@ actor ScriptExecutor {
             )
         }
     }
-
-    // MARK: - Shell Command Execution
 
     /// Executes a shell command and returns the result.
     ///
@@ -342,8 +336,6 @@ actor ScriptExecutor {
         )
     }
 
-    // MARK: - Script Validation
-
     /// Validates a script without executing it.
     ///
     /// - Parameters:
@@ -425,8 +417,6 @@ actor ScriptExecutor {
         }
     }
 
-    // MARK: - Security Validation
-
     private func validateAppleScriptSecurity(_ script: String) throws {
         // Basic security checks for AppleScript
         // Prevent potentially dangerous operations
@@ -485,8 +475,6 @@ actor ScriptExecutor {
         }
     }
 
-    // MARK: - Helper: Timeout Support
-
     private func withTimeout<T: Sendable>(
         seconds: TimeInterval,
         operation: @Sendable @escaping () throws -> T,
@@ -510,8 +498,6 @@ actor ScriptExecutor {
         }
     }
 }
-
-// MARK: - Script Type
 
 enum ScriptType {
     case appleScript

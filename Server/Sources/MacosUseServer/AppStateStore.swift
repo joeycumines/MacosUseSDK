@@ -14,8 +14,6 @@ public struct ServerState: Sendable {
 /// Will be replaced with generated proto message
 public typealias TargetApplicationInfo = Macosusesdk_V1_Application
 
-// MARK: - State Store Actor
-
 /// Thread-safe actor for managing the server's state.
 /// All state mutations go through this actor, ensuring serial access.
 public actor AppStateStore {
@@ -48,8 +46,6 @@ public actor AppStateStore {
     public func currentState() -> ServerState {
         state
     }
-
-    // MARK: - Input Management
 
     /// Adds an input to the state
     public func addInput(_ input: Macosusesdk_V1_Input) {

@@ -461,6 +461,12 @@ public struct Macosusesdk_V1_WindowEvent: Sendable {
 
         /// Window focus changed.
         case focused // = 7
+
+        /// Window was hidden (via Cmd+H or kAXHiddenAttribute).
+        case hidden // = 8
+
+        /// Window was shown (unhidden).
+        case shown // = 9
         case UNRECOGNIZED(Int)
 
         public init() {
@@ -477,6 +483,8 @@ public struct Macosusesdk_V1_WindowEvent: Sendable {
             case 5: self = .minimized
             case 6: self = .restored
             case 7: self = .focused
+            case 8: self = .hidden
+            case 9: self = .shown
             default: self = .UNRECOGNIZED(rawValue)
             }
         }
@@ -491,6 +499,8 @@ public struct Macosusesdk_V1_WindowEvent: Sendable {
             case .minimized: 5
             case .restored: 6
             case .focused: 7
+            case .hidden: 8
+            case .shown: 9
             case let .UNRECOGNIZED(i): i
             }
         }
@@ -505,6 +515,8 @@ public struct Macosusesdk_V1_WindowEvent: Sendable {
             .minimized,
             .restored,
             .focused,
+            .hidden,
+            .shown,
         ]
     }
 
@@ -1034,7 +1046,7 @@ extension Macosusesdk_V1_WindowEvent: SwiftProtobuf.Message, SwiftProtobuf._Mess
 }
 
 extension Macosusesdk_V1_WindowEvent.WindowEventType: SwiftProtobuf._ProtoNameProviding {
-    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0WINDOW_EVENT_TYPE_UNSPECIFIED\0\u{1}WINDOW_EVENT_TYPE_CREATED\0\u{1}WINDOW_EVENT_TYPE_DESTROYED\0\u{1}WINDOW_EVENT_TYPE_MOVED\0\u{1}WINDOW_EVENT_TYPE_RESIZED\0\u{1}WINDOW_EVENT_TYPE_MINIMIZED\0\u{1}WINDOW_EVENT_TYPE_RESTORED\0\u{1}WINDOW_EVENT_TYPE_FOCUSED\0")
+    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0WINDOW_EVENT_TYPE_UNSPECIFIED\0\u{1}WINDOW_EVENT_TYPE_CREATED\0\u{1}WINDOW_EVENT_TYPE_DESTROYED\0\u{1}WINDOW_EVENT_TYPE_MOVED\0\u{1}WINDOW_EVENT_TYPE_RESIZED\0\u{1}WINDOW_EVENT_TYPE_MINIMIZED\0\u{1}WINDOW_EVENT_TYPE_RESTORED\0\u{1}WINDOW_EVENT_TYPE_FOCUSED\0\u{1}WINDOW_EVENT_TYPE_HIDDEN\0\u{1}WINDOW_EVENT_TYPE_SHOWN\0")
 }
 
 extension Macosusesdk_V1_ApplicationEvent: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {

@@ -10,8 +10,6 @@ public actor MacroRegistry {
 
     private init() {}
 
-    // MARK: - Macro Management
-
     /// Create a new macro with generated or provided ID
     public func createMacro(
         macroId: String?,

@@ -178,6 +178,10 @@ const (
 	WindowEvent_WINDOW_EVENT_TYPE_RESTORED WindowEvent_WindowEventType = 6
 	// Window focus changed.
 	WindowEvent_WINDOW_EVENT_TYPE_FOCUSED WindowEvent_WindowEventType = 7
+	// Window was hidden (via Cmd+H or kAXHiddenAttribute).
+	WindowEvent_WINDOW_EVENT_TYPE_HIDDEN WindowEvent_WindowEventType = 8
+	// Window was shown (unhidden).
+	WindowEvent_WINDOW_EVENT_TYPE_SHOWN WindowEvent_WindowEventType = 9
 )
 
 // Enum value maps for WindowEvent_WindowEventType.
@@ -191,6 +195,8 @@ var (
 		5: "WINDOW_EVENT_TYPE_MINIMIZED",
 		6: "WINDOW_EVENT_TYPE_RESTORED",
 		7: "WINDOW_EVENT_TYPE_FOCUSED",
+		8: "WINDOW_EVENT_TYPE_HIDDEN",
+		9: "WINDOW_EVENT_TYPE_SHOWN",
 	}
 	WindowEvent_WindowEventType_value = map[string]int32{
 		"WINDOW_EVENT_TYPE_UNSPECIFIED": 0,
@@ -201,6 +207,8 @@ var (
 		"WINDOW_EVENT_TYPE_MINIMIZED":   5,
 		"WINDOW_EVENT_TYPE_RESTORED":    6,
 		"WINDOW_EVENT_TYPE_FOCUSED":     7,
+		"WINDOW_EVENT_TYPE_HIDDEN":      8,
+		"WINDOW_EVENT_TYPE_SHOWN":       9,
 	}
 )
 
@@ -969,12 +977,12 @@ const file_macosusesdk_v1_observation_proto_rawDesc = "" +
 	"\x0fAttributeChange\x12\x1c\n" +
 	"\tattribute\x18\x01 \x01(\tR\tattribute\x12\x1b\n" +
 	"\told_value\x18\x02 \x01(\tR\boldValue\x12\x1b\n" +
-	"\tnew_value\x18\x03 \x01(\tR\bnewValue\"\x9f\x03\n" +
+	"\tnew_value\x18\x03 \x01(\tR\bnewValue\"\xda\x03\n" +
 	"\vWindowEvent\x12J\n" +
 	"\n" +
 	"event_type\x18\x01 \x01(\x0e2+.macosusesdk.v1.WindowEvent.WindowEventTypeR\teventType\x12\x1b\n" +
 	"\twindow_id\x18\x02 \x01(\tR\bwindowId\x12\x14\n" +
-	"\x05title\x18\x03 \x01(\tR\x05title\"\x90\x02\n" +
+	"\x05title\x18\x03 \x01(\tR\x05title\"\xcb\x02\n" +
 	"\x0fWindowEventType\x12!\n" +
 	"\x1dWINDOW_EVENT_TYPE_UNSPECIFIED\x10\x00\x12\x1d\n" +
 	"\x19WINDOW_EVENT_TYPE_CREATED\x10\x01\x12\x1f\n" +
@@ -983,7 +991,9 @@ const file_macosusesdk_v1_observation_proto_rawDesc = "" +
 	"\x19WINDOW_EVENT_TYPE_RESIZED\x10\x04\x12\x1f\n" +
 	"\x1bWINDOW_EVENT_TYPE_MINIMIZED\x10\x05\x12\x1e\n" +
 	"\x1aWINDOW_EVENT_TYPE_RESTORED\x10\x06\x12\x1d\n" +
-	"\x19WINDOW_EVENT_TYPE_FOCUSED\x10\a\"\xc3\x02\n" +
+	"\x19WINDOW_EVENT_TYPE_FOCUSED\x10\a\x12\x1c\n" +
+	"\x18WINDOW_EVENT_TYPE_HIDDEN\x10\b\x12\x1b\n" +
+	"\x17WINDOW_EVENT_TYPE_SHOWN\x10\t\"\xc3\x02\n" +
 	"\x10ApplicationEvent\x12T\n" +
 	"\n" +
 	"event_type\x18\x01 \x01(\x0e25.macosusesdk.v1.ApplicationEvent.ApplicationEventTypeR\teventType\"\xd8\x01\n" +

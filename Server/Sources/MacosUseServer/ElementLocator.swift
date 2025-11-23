@@ -97,7 +97,7 @@ public actor ElementLocator {
     /// - Parameter name: Resource name like "applications/{pid}/elements/{elementId}"
     /// - Returns: The element if found
     public func getElement(name: String) async throws -> Macosusesdk_Type_Element {
-        logger.info("Getting element: \(name, privacy: .private)")
+        logger.info("Getting element: \(name, privacy: .public)")
 
         // Parse the resource name
         let components = name.split(separator: "/").map(String.init)
@@ -118,8 +118,6 @@ public actor ElementLocator {
 
         return element
     }
-
-    // MARK: - Private Helper Methods
 
     private func parseParent(_ parent: String) throws -> (pid: pid_t, windowId: CGWindowID?) {
         let components = parent.split(separator: "/").map(String.init)
