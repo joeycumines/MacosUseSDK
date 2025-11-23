@@ -174,15 +174,6 @@ func startServer(t *testing.T, ctx context.Context) (*exec.Cmd, string) {
 	// Kill any stray servers before starting a new one to prevent port conflicts
 	killStrayServers()
 
-	// Build the server
-	t.Log("Building MacosUse server...")
-	buildCmd := exec.CommandContext(ctx, "swift", "build", "-c", "release", "--package-path", "../Server")
-	buildCmd.Stdout = os.Stdout
-	buildCmd.Stderr = os.Stderr
-	if err := buildCmd.Run(); err != nil {
-		t.Fatalf("Failed to build server: %v", err)
-	}
-
 	// Start the server
 	serverAddr := defaultServerAddr
 	t.Logf("Starting MacosUse server on %s...", serverAddr)
