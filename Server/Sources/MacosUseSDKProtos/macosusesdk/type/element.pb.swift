@@ -19,312 +19,305 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-private struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
-    struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
-    typealias Version = _2
+fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+  struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
+  typealias Version = _2
 }
 
 /// Represents a UI element from accessibility tree traversal.
 public struct Macosusesdk_Type_Element: Sendable {
-    // SwiftProtobuf.Message conformance is added in an extension below. See the
-    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-    // methods supported on all messages.
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
 
-    /// The accessibility role of the element (e.g., "button", "text field").
-    public var role: String = .init()
+  /// The accessibility role of the element (e.g., "button", "text field").
+  public var role: String = String()
 
-    /// Text content of the element, if any.
-    public var text: String {
-        get { _text ?? String() }
-        set { _text = newValue }
-    }
+  /// Text content of the element, if any.
+  public var text: String {
+    get {return _text ?? String()}
+    set {_text = newValue}
+  }
+  /// Returns true if `text` has been explicitly set.
+  public var hasText: Bool {return self._text != nil}
+  /// Clears the value of `text`. Subsequent reads from it will return its default value.
+  public mutating func clearText() {self._text = nil}
 
-    /// Returns true if `text` has been explicitly set.
-    public var hasText: Bool { _text != nil }
-    /// Clears the value of `text`. Subsequent reads from it will return its default value.
-    public mutating func clearText() { _text = nil }
+  /// X coordinate of the element's position.
+  public var x: Double {
+    get {return _x ?? 0}
+    set {_x = newValue}
+  }
+  /// Returns true if `x` has been explicitly set.
+  public var hasX: Bool {return self._x != nil}
+  /// Clears the value of `x`. Subsequent reads from it will return its default value.
+  public mutating func clearX() {self._x = nil}
 
-    /// X coordinate of the element's position.
-    public var x: Double {
-        get { _x ?? 0 }
-        set { _x = newValue }
-    }
+  /// Y coordinate of the element's position.
+  public var y: Double {
+    get {return _y ?? 0}
+    set {_y = newValue}
+  }
+  /// Returns true if `y` has been explicitly set.
+  public var hasY: Bool {return self._y != nil}
+  /// Clears the value of `y`. Subsequent reads from it will return its default value.
+  public mutating func clearY() {self._y = nil}
 
-    /// Returns true if `x` has been explicitly set.
-    public var hasX: Bool { _x != nil }
-    /// Clears the value of `x`. Subsequent reads from it will return its default value.
-    public mutating func clearX() { _x = nil }
+  /// Width of the element.
+  public var width: Double {
+    get {return _width ?? 0}
+    set {_width = newValue}
+  }
+  /// Returns true if `width` has been explicitly set.
+  public var hasWidth: Bool {return self._width != nil}
+  /// Clears the value of `width`. Subsequent reads from it will return its default value.
+  public mutating func clearWidth() {self._width = nil}
 
-    /// Y coordinate of the element's position.
-    public var y: Double {
-        get { _y ?? 0 }
-        set { _y = newValue }
-    }
+  /// Height of the element.
+  public var height: Double {
+    get {return _height ?? 0}
+    set {_height = newValue}
+  }
+  /// Returns true if `height` has been explicitly set.
+  public var hasHeight: Bool {return self._height != nil}
+  /// Clears the value of `height`. Subsequent reads from it will return its default value.
+  public mutating func clearHeight() {self._height = nil}
 
-    /// Returns true if `y` has been explicitly set.
-    public var hasY: Bool { _y != nil }
-    /// Clears the value of `y`. Subsequent reads from it will return its default value.
-    public mutating func clearY() { _y = nil }
+  /// Unique identifier for this element within its window/app context.
+  /// This is a server-generated ephemeral ID that may change between traversals.
+  public var elementID: String = String()
 
-    /// Width of the element.
-    public var width: Double {
-        get { _width ?? 0 }
-        set { _width = newValue }
-    }
+  /// Whether the element is enabled for interaction.
+  public var enabled: Bool {
+    get {return _enabled ?? false}
+    set {_enabled = newValue}
+  }
+  /// Returns true if `enabled` has been explicitly set.
+  public var hasEnabled: Bool {return self._enabled != nil}
+  /// Clears the value of `enabled`. Subsequent reads from it will return its default value.
+  public mutating func clearEnabled() {self._enabled = nil}
 
-    /// Returns true if `width` has been explicitly set.
-    public var hasWidth: Bool { _width != nil }
-    /// Clears the value of `width`. Subsequent reads from it will return its default value.
-    public mutating func clearWidth() { _width = nil }
+  /// Whether the element has keyboard focus.
+  public var focused: Bool {
+    get {return _focused ?? false}
+    set {_focused = newValue}
+  }
+  /// Returns true if `focused` has been explicitly set.
+  public var hasFocused: Bool {return self._focused != nil}
+  /// Clears the value of `focused`. Subsequent reads from it will return its default value.
+  public mutating func clearFocused() {self._focused = nil}
 
-    /// Height of the element.
-    public var height: Double {
-        get { _height ?? 0 }
-        set { _height = newValue }
-    }
+  /// Hierarchy path from root to this element (indices at each level).
+  public var path: [Int32] = []
 
-    /// Returns true if `height` has been explicitly set.
-    public var hasHeight: Bool { _height != nil }
-    /// Clears the value of `height`. Subsequent reads from it will return its default value.
-    public mutating func clearHeight() { _height = nil }
+  /// Additional accessibility attributes as key-value pairs.
+  public var attributes: Dictionary<String,String> = [:]
 
-    /// Unique identifier for this element within its window/app context.
-    /// This is a server-generated ephemeral ID that may change between traversals.
-    public var elementID: String = .init()
+  /// Available accessibility actions for this element.
+  public var actions: [String] = []
 
-    /// Whether the element is enabled for interaction.
-    public var enabled: Bool {
-        get { _enabled ?? false }
-        set { _enabled = newValue }
-    }
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-    /// Returns true if `enabled` has been explicitly set.
-    public var hasEnabled: Bool { _enabled != nil }
-    /// Clears the value of `enabled`. Subsequent reads from it will return its default value.
-    public mutating func clearEnabled() { _enabled = nil }
+  public init() {}
 
-    /// Whether the element has keyboard focus.
-    public var focused: Bool {
-        get { _focused ?? false }
-        set { _focused = newValue }
-    }
-
-    /// Returns true if `focused` has been explicitly set.
-    public var hasFocused: Bool { _focused != nil }
-    /// Clears the value of `focused`. Subsequent reads from it will return its default value.
-    public mutating func clearFocused() { _focused = nil }
-
-    /// Hierarchy path from root to this element (indices at each level).
-    public var path: [Int32] = []
-
-    /// Additional accessibility attributes as key-value pairs.
-    public var attributes: [String: String] = [:]
-
-    /// Available accessibility actions for this element.
-    public var actions: [String] = []
-
-    public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-    public init() {}
-
-    fileprivate var _text: String?
-    fileprivate var _x: Double?
-    fileprivate var _y: Double?
-    fileprivate var _width: Double?
-    fileprivate var _height: Double?
-    fileprivate var _enabled: Bool?
-    fileprivate var _focused: Bool?
+  fileprivate var _text: String? = nil
+  fileprivate var _x: Double? = nil
+  fileprivate var _y: Double? = nil
+  fileprivate var _width: Double? = nil
+  fileprivate var _height: Double? = nil
+  fileprivate var _enabled: Bool? = nil
+  fileprivate var _focused: Bool? = nil
 }
 
 /// Statistics about a traversal operation.
 public struct Macosusesdk_Type_TraversalStats: Sendable {
-    // SwiftProtobuf.Message conformance is added in an extension below. See the
-    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-    // methods supported on all messages.
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
 
-    /// Total number of elements found.
-    public var count: Int32 = 0
+  /// Total number of elements found.
+  public var count: Int32 = 0
 
-    /// Number of elements excluded from results.
-    public var excludedCount: Int32 = 0
+  /// Number of elements excluded from results.
+  public var excludedCount: Int32 = 0
 
-    /// Number excluded due to not being interactable.
-    public var excludedNonInteractable: Int32 = 0
+  /// Number excluded due to not being interactable.
+  public var excludedNonInteractable: Int32 = 0
 
-    /// Number excluded due to having no text.
-    public var excludedNoText: Int32 = 0
+  /// Number excluded due to having no text.
+  public var excludedNoText: Int32 = 0
 
-    /// Number of elements with text.
-    public var textElementsCount: Int32 = 0
+  /// Number of elements with text.
+  public var textElementsCount: Int32 = 0
 
-    /// Number of elements without text.
-    public var nonTextElementsCount: Int32 = 0
+  /// Number of elements without text.
+  public var nonTextElementsCount: Int32 = 0
 
-    /// Number of visible elements.
-    public var visibleElementsCount: Int32 = 0
+  /// Number of visible elements.
+  public var visibleElementsCount: Int32 = 0
 
-    /// Count of elements by role type.
-    public var roleCounts: [String: Int32] = [:]
+  /// Count of elements by role type.
+  public var roleCounts: Dictionary<String,Int32> = [:]
 
-    public var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-    public init() {}
+  public init() {}
 }
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
-private let _protobuf_package = "macosusesdk.type"
+fileprivate let _protobuf_package = "macosusesdk.type"
 
 extension Macosusesdk_Type_Element: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-    public static let protoMessageName: String = _protobuf_package + ".Element"
-    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}role\0\u{1}text\0\u{1}x\0\u{1}y\0\u{1}width\0\u{1}height\0\u{3}element_id\0\u{1}enabled\0\u{1}focused\0\u{1}path\0\u{1}attributes\0\u{1}actions\0")
+  public static let protoMessageName: String = _protobuf_package + ".Element"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}role\0\u{1}text\0\u{1}x\0\u{1}y\0\u{1}width\0\u{1}height\0\u{3}element_id\0\u{1}enabled\0\u{1}focused\0\u{1}path\0\u{1}attributes\0\u{1}actions\0")
 
-    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
-        while let fieldNumber = try decoder.nextFieldNumber() {
-            // The use of inline closures is to circumvent an issue where the compiler
-            // allocates stack space for every case branch when no optimizations are
-            // enabled. https://github.com/apple/swift-protobuf/issues/1034
-            switch fieldNumber {
-            case 1: try decoder.decodeSingularStringField(value: &role)
-            case 2: try decoder.decodeSingularStringField(value: &_text)
-            case 3: try decoder.decodeSingularDoubleField(value: &_x)
-            case 4: try decoder.decodeSingularDoubleField(value: &_y)
-            case 5: try decoder.decodeSingularDoubleField(value: &_width)
-            case 6: try decoder.decodeSingularDoubleField(value: &_height)
-            case 7: try decoder.decodeSingularStringField(value: &elementID)
-            case 8: try decoder.decodeSingularBoolField(value: &_enabled)
-            case 9: try decoder.decodeSingularBoolField(value: &_focused)
-            case 10: try decoder.decodeRepeatedInt32Field(value: &path)
-            case 11: try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString, SwiftProtobuf.ProtobufString>.self, value: &attributes)
-            case 12: try decoder.decodeRepeatedStringField(value: &actions)
-            default: break
-            }
-        }
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.role) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self._text) }()
+      case 3: try { try decoder.decodeSingularDoubleField(value: &self._x) }()
+      case 4: try { try decoder.decodeSingularDoubleField(value: &self._y) }()
+      case 5: try { try decoder.decodeSingularDoubleField(value: &self._width) }()
+      case 6: try { try decoder.decodeSingularDoubleField(value: &self._height) }()
+      case 7: try { try decoder.decodeSingularStringField(value: &self.elementID) }()
+      case 8: try { try decoder.decodeSingularBoolField(value: &self._enabled) }()
+      case 9: try { try decoder.decodeSingularBoolField(value: &self._focused) }()
+      case 10: try { try decoder.decodeRepeatedInt32Field(value: &self.path) }()
+      case 11: try { try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufString>.self, value: &self.attributes) }()
+      case 12: try { try decoder.decodeRepeatedStringField(value: &self.actions) }()
+      default: break
+      }
     }
+  }
 
-    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
-        // The use of inline closures is to circumvent an issue where the compiler
-        // allocates stack space for every if/case branch local when no optimizations
-        // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-        // https://github.com/apple/swift-protobuf/issues/1182
-        if !role.isEmpty {
-            try visitor.visitSingularStringField(value: role, fieldNumber: 1)
-        }
-        try { if let v = self._text {
-            try visitor.visitSingularStringField(value: v, fieldNumber: 2)
-        } }()
-        try { if let v = self._x {
-            try visitor.visitSingularDoubleField(value: v, fieldNumber: 3)
-        } }()
-        try { if let v = self._y {
-            try visitor.visitSingularDoubleField(value: v, fieldNumber: 4)
-        } }()
-        try { if let v = self._width {
-            try visitor.visitSingularDoubleField(value: v, fieldNumber: 5)
-        } }()
-        try { if let v = self._height {
-            try visitor.visitSingularDoubleField(value: v, fieldNumber: 6)
-        } }()
-        if !elementID.isEmpty {
-            try visitor.visitSingularStringField(value: elementID, fieldNumber: 7)
-        }
-        try { if let v = self._enabled {
-            try visitor.visitSingularBoolField(value: v, fieldNumber: 8)
-        } }()
-        try { if let v = self._focused {
-            try visitor.visitSingularBoolField(value: v, fieldNumber: 9)
-        } }()
-        if !path.isEmpty {
-            try visitor.visitPackedInt32Field(value: path, fieldNumber: 10)
-        }
-        if !attributes.isEmpty {
-            try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString, SwiftProtobuf.ProtobufString>.self, value: attributes, fieldNumber: 11)
-        }
-        if !actions.isEmpty {
-            try visitor.visitRepeatedStringField(value: actions, fieldNumber: 12)
-        }
-        try unknownFields.traverse(visitor: &visitor)
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.role.isEmpty {
+      try visitor.visitSingularStringField(value: self.role, fieldNumber: 1)
     }
+    try { if let v = self._text {
+      try visitor.visitSingularStringField(value: v, fieldNumber: 2)
+    } }()
+    try { if let v = self._x {
+      try visitor.visitSingularDoubleField(value: v, fieldNumber: 3)
+    } }()
+    try { if let v = self._y {
+      try visitor.visitSingularDoubleField(value: v, fieldNumber: 4)
+    } }()
+    try { if let v = self._width {
+      try visitor.visitSingularDoubleField(value: v, fieldNumber: 5)
+    } }()
+    try { if let v = self._height {
+      try visitor.visitSingularDoubleField(value: v, fieldNumber: 6)
+    } }()
+    if !self.elementID.isEmpty {
+      try visitor.visitSingularStringField(value: self.elementID, fieldNumber: 7)
+    }
+    try { if let v = self._enabled {
+      try visitor.visitSingularBoolField(value: v, fieldNumber: 8)
+    } }()
+    try { if let v = self._focused {
+      try visitor.visitSingularBoolField(value: v, fieldNumber: 9)
+    } }()
+    if !self.path.isEmpty {
+      try visitor.visitPackedInt32Field(value: self.path, fieldNumber: 10)
+    }
+    if !self.attributes.isEmpty {
+      try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufString>.self, value: self.attributes, fieldNumber: 11)
+    }
+    if !self.actions.isEmpty {
+      try visitor.visitRepeatedStringField(value: self.actions, fieldNumber: 12)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
 
-    public static func == (lhs: Macosusesdk_Type_Element, rhs: Macosusesdk_Type_Element) -> Bool {
-        if lhs.role != rhs.role { return false }
-        if lhs._text != rhs._text { return false }
-        if lhs._x != rhs._x { return false }
-        if lhs._y != rhs._y { return false }
-        if lhs._width != rhs._width { return false }
-        if lhs._height != rhs._height { return false }
-        if lhs.elementID != rhs.elementID { return false }
-        if lhs._enabled != rhs._enabled { return false }
-        if lhs._focused != rhs._focused { return false }
-        if lhs.path != rhs.path { return false }
-        if lhs.attributes != rhs.attributes { return false }
-        if lhs.actions != rhs.actions { return false }
-        if lhs.unknownFields != rhs.unknownFields { return false }
-        return true
-    }
+  public static func ==(lhs: Macosusesdk_Type_Element, rhs: Macosusesdk_Type_Element) -> Bool {
+    if lhs.role != rhs.role {return false}
+    if lhs._text != rhs._text {return false}
+    if lhs._x != rhs._x {return false}
+    if lhs._y != rhs._y {return false}
+    if lhs._width != rhs._width {return false}
+    if lhs._height != rhs._height {return false}
+    if lhs.elementID != rhs.elementID {return false}
+    if lhs._enabled != rhs._enabled {return false}
+    if lhs._focused != rhs._focused {return false}
+    if lhs.path != rhs.path {return false}
+    if lhs.attributes != rhs.attributes {return false}
+    if lhs.actions != rhs.actions {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
 }
 
 extension Macosusesdk_Type_TraversalStats: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-    public static let protoMessageName: String = _protobuf_package + ".TraversalStats"
-    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}count\0\u{3}excluded_count\0\u{3}excluded_non_interactable\0\u{3}excluded_no_text\0\u{3}text_elements_count\0\u{3}non_text_elements_count\0\u{3}visible_elements_count\0\u{3}role_counts\0")
+  public static let protoMessageName: String = _protobuf_package + ".TraversalStats"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}count\0\u{3}excluded_count\0\u{3}excluded_non_interactable\0\u{3}excluded_no_text\0\u{3}text_elements_count\0\u{3}non_text_elements_count\0\u{3}visible_elements_count\0\u{3}role_counts\0")
 
-    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
-        while let fieldNumber = try decoder.nextFieldNumber() {
-            // The use of inline closures is to circumvent an issue where the compiler
-            // allocates stack space for every case branch when no optimizations are
-            // enabled. https://github.com/apple/swift-protobuf/issues/1034
-            switch fieldNumber {
-            case 1: try decoder.decodeSingularInt32Field(value: &count)
-            case 2: try decoder.decodeSingularInt32Field(value: &excludedCount)
-            case 3: try decoder.decodeSingularInt32Field(value: &excludedNonInteractable)
-            case 4: try decoder.decodeSingularInt32Field(value: &excludedNoText)
-            case 5: try decoder.decodeSingularInt32Field(value: &textElementsCount)
-            case 6: try decoder.decodeSingularInt32Field(value: &nonTextElementsCount)
-            case 7: try decoder.decodeSingularInt32Field(value: &visibleElementsCount)
-            case 8: try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString, SwiftProtobuf.ProtobufInt32>.self, value: &roleCounts)
-            default: break
-            }
-        }
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularInt32Field(value: &self.count) }()
+      case 2: try { try decoder.decodeSingularInt32Field(value: &self.excludedCount) }()
+      case 3: try { try decoder.decodeSingularInt32Field(value: &self.excludedNonInteractable) }()
+      case 4: try { try decoder.decodeSingularInt32Field(value: &self.excludedNoText) }()
+      case 5: try { try decoder.decodeSingularInt32Field(value: &self.textElementsCount) }()
+      case 6: try { try decoder.decodeSingularInt32Field(value: &self.nonTextElementsCount) }()
+      case 7: try { try decoder.decodeSingularInt32Field(value: &self.visibleElementsCount) }()
+      case 8: try { try decoder.decodeMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufInt32>.self, value: &self.roleCounts) }()
+      default: break
+      }
     }
+  }
 
-    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
-        if count != 0 {
-            try visitor.visitSingularInt32Field(value: count, fieldNumber: 1)
-        }
-        if excludedCount != 0 {
-            try visitor.visitSingularInt32Field(value: excludedCount, fieldNumber: 2)
-        }
-        if excludedNonInteractable != 0 {
-            try visitor.visitSingularInt32Field(value: excludedNonInteractable, fieldNumber: 3)
-        }
-        if excludedNoText != 0 {
-            try visitor.visitSingularInt32Field(value: excludedNoText, fieldNumber: 4)
-        }
-        if textElementsCount != 0 {
-            try visitor.visitSingularInt32Field(value: textElementsCount, fieldNumber: 5)
-        }
-        if nonTextElementsCount != 0 {
-            try visitor.visitSingularInt32Field(value: nonTextElementsCount, fieldNumber: 6)
-        }
-        if visibleElementsCount != 0 {
-            try visitor.visitSingularInt32Field(value: visibleElementsCount, fieldNumber: 7)
-        }
-        if !roleCounts.isEmpty {
-            try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString, SwiftProtobuf.ProtobufInt32>.self, value: roleCounts, fieldNumber: 8)
-        }
-        try unknownFields.traverse(visitor: &visitor)
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.count != 0 {
+      try visitor.visitSingularInt32Field(value: self.count, fieldNumber: 1)
     }
+    if self.excludedCount != 0 {
+      try visitor.visitSingularInt32Field(value: self.excludedCount, fieldNumber: 2)
+    }
+    if self.excludedNonInteractable != 0 {
+      try visitor.visitSingularInt32Field(value: self.excludedNonInteractable, fieldNumber: 3)
+    }
+    if self.excludedNoText != 0 {
+      try visitor.visitSingularInt32Field(value: self.excludedNoText, fieldNumber: 4)
+    }
+    if self.textElementsCount != 0 {
+      try visitor.visitSingularInt32Field(value: self.textElementsCount, fieldNumber: 5)
+    }
+    if self.nonTextElementsCount != 0 {
+      try visitor.visitSingularInt32Field(value: self.nonTextElementsCount, fieldNumber: 6)
+    }
+    if self.visibleElementsCount != 0 {
+      try visitor.visitSingularInt32Field(value: self.visibleElementsCount, fieldNumber: 7)
+    }
+    if !self.roleCounts.isEmpty {
+      try visitor.visitMapField(fieldType: SwiftProtobuf._ProtobufMap<SwiftProtobuf.ProtobufString,SwiftProtobuf.ProtobufInt32>.self, value: self.roleCounts, fieldNumber: 8)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
 
-    public static func == (lhs: Macosusesdk_Type_TraversalStats, rhs: Macosusesdk_Type_TraversalStats) -> Bool {
-        if lhs.count != rhs.count { return false }
-        if lhs.excludedCount != rhs.excludedCount { return false }
-        if lhs.excludedNonInteractable != rhs.excludedNonInteractable { return false }
-        if lhs.excludedNoText != rhs.excludedNoText { return false }
-        if lhs.textElementsCount != rhs.textElementsCount { return false }
-        if lhs.nonTextElementsCount != rhs.nonTextElementsCount { return false }
-        if lhs.visibleElementsCount != rhs.visibleElementsCount { return false }
-        if lhs.roleCounts != rhs.roleCounts { return false }
-        if lhs.unknownFields != rhs.unknownFields { return false }
-        return true
-    }
+  public static func ==(lhs: Macosusesdk_Type_TraversalStats, rhs: Macosusesdk_Type_TraversalStats) -> Bool {
+    if lhs.count != rhs.count {return false}
+    if lhs.excludedCount != rhs.excludedCount {return false}
+    if lhs.excludedNonInteractable != rhs.excludedNonInteractable {return false}
+    if lhs.excludedNoText != rhs.excludedNoText {return false}
+    if lhs.textElementsCount != rhs.textElementsCount {return false}
+    if lhs.nonTextElementsCount != rhs.nonTextElementsCount {return false}
+    if lhs.visibleElementsCount != rhs.visibleElementsCount {return false}
+    if lhs.roleCounts != rhs.roleCounts {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
 }

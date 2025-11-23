@@ -44,10 +44,9 @@ public enum Google_Longrunning_Operations {
             /// Descriptor for "ListOperations".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "google.longrunning.Operations"),
-                method: "ListOperations",
+                method: "ListOperations"
             )
         }
-
         /// Namespace for "GetOperation" metadata.
         public enum GetOperation {
             /// Request type for "GetOperation".
@@ -57,10 +56,9 @@ public enum Google_Longrunning_Operations {
             /// Descriptor for "GetOperation".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "google.longrunning.Operations"),
-                method: "GetOperation",
+                method: "GetOperation"
             )
         }
-
         /// Namespace for "DeleteOperation" metadata.
         public enum DeleteOperation {
             /// Request type for "DeleteOperation".
@@ -70,10 +68,9 @@ public enum Google_Longrunning_Operations {
             /// Descriptor for "DeleteOperation".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "google.longrunning.Operations"),
-                method: "DeleteOperation",
+                method: "DeleteOperation"
             )
         }
-
         /// Namespace for "CancelOperation" metadata.
         public enum CancelOperation {
             /// Request type for "CancelOperation".
@@ -83,10 +80,9 @@ public enum Google_Longrunning_Operations {
             /// Descriptor for "CancelOperation".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "google.longrunning.Operations"),
-                method: "CancelOperation",
+                method: "CancelOperation"
             )
         }
-
         /// Namespace for "WaitOperation" metadata.
         public enum WaitOperation {
             /// Request type for "WaitOperation".
@@ -96,31 +92,30 @@ public enum Google_Longrunning_Operations {
             /// Descriptor for "WaitOperation".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "google.longrunning.Operations"),
-                method: "WaitOperation",
+                method: "WaitOperation"
             )
         }
-
         /// Descriptors for all methods in the "google.longrunning.Operations" service.
         public static let descriptors: [GRPCCore.MethodDescriptor] = [
             ListOperations.descriptor,
             GetOperation.descriptor,
             DeleteOperation.descriptor,
             CancelOperation.descriptor,
-            WaitOperation.descriptor,
+            WaitOperation.descriptor
         ]
     }
 }
 
 @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
-public extension GRPCCore.ServiceDescriptor {
+extension GRPCCore.ServiceDescriptor {
     /// Service descriptor for the "google.longrunning.Operations" service.
-    static let google_longrunning_Operations = GRPCCore.ServiceDescriptor(fullyQualifiedService: "google.longrunning.Operations")
+    public static let google_longrunning_Operations = GRPCCore.ServiceDescriptor(fullyQualifiedService: "google.longrunning.Operations")
 }
 
 // MARK: google.longrunning.Operations (server)
 
 @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
-public extension Google_Longrunning_Operations {
+extension Google_Longrunning_Operations {
     /// Streaming variant of the service protocol for the "google.longrunning.Operations" service.
     ///
     /// This protocol is the lowest-level of the service protocols generated for this service
@@ -135,7 +130,7 @@ public extension Google_Longrunning_Operations {
     /// > Source IDL Documentation:
     /// >
     /// > Manages long-running operations with an API service.
-    /// >
+    /// > 
     /// > When an API method normally takes long time to complete, it can be designed
     /// > to return [Operation][google.longrunning.Operation] to the client, and the
     /// > client can use this interface to receive the real response asynchronously by
@@ -143,7 +138,7 @@ public extension Google_Longrunning_Operations {
     /// > (such as Pub/Sub API) to receive the response.  Any API service that returns
     /// > long-running operations should implement the `Operations` interface so
     /// > developers can have a consistent client experience.
-    protocol StreamingServiceProtocol: GRPCCore.RegistrableRPCService {
+    public protocol StreamingServiceProtocol: GRPCCore.RegistrableRPCService {
         /// Handle the "ListOperations" method.
         ///
         /// > Source IDL Documentation:
@@ -160,7 +155,7 @@ public extension Google_Longrunning_Operations {
         /// - Returns: A streaming response of `Google_Longrunning_ListOperationsResponse` messages.
         func listOperations(
             request: GRPCCore.StreamingServerRequest<Google_Longrunning_ListOperationsRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Google_Longrunning_ListOperationsResponse>
 
         /// Handle the "GetOperation" method.
@@ -180,7 +175,7 @@ public extension Google_Longrunning_Operations {
         /// - Returns: A streaming response of `Google_Longrunning_Operation` messages.
         func getOperation(
             request: GRPCCore.StreamingServerRequest<Google_Longrunning_GetOperationRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Google_Longrunning_Operation>
 
         /// Handle the "DeleteOperation" method.
@@ -201,7 +196,7 @@ public extension Google_Longrunning_Operations {
         /// - Returns: A streaming response of `SwiftProtobuf.Google_Protobuf_Empty` messages.
         func deleteOperation(
             request: GRPCCore.StreamingServerRequest<Google_Longrunning_DeleteOperationRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<SwiftProtobuf.Google_Protobuf_Empty>
 
         /// Handle the "CancelOperation" method.
@@ -229,7 +224,7 @@ public extension Google_Longrunning_Operations {
         /// - Returns: A streaming response of `SwiftProtobuf.Google_Protobuf_Empty` messages.
         func cancelOperation(
             request: GRPCCore.StreamingServerRequest<Google_Longrunning_CancelOperationRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<SwiftProtobuf.Google_Protobuf_Empty>
 
         /// Handle the "WaitOperation" method.
@@ -255,7 +250,7 @@ public extension Google_Longrunning_Operations {
         /// - Returns: A streaming response of `Google_Longrunning_Operation` messages.
         func waitOperation(
             request: GRPCCore.StreamingServerRequest<Google_Longrunning_WaitOperationRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Google_Longrunning_Operation>
     }
 
@@ -270,7 +265,7 @@ public extension Google_Longrunning_Operations {
     /// > Source IDL Documentation:
     /// >
     /// > Manages long-running operations with an API service.
-    /// >
+    /// > 
     /// > When an API method normally takes long time to complete, it can be designed
     /// > to return [Operation][google.longrunning.Operation] to the client, and the
     /// > client can use this interface to receive the real response asynchronously by
@@ -278,7 +273,7 @@ public extension Google_Longrunning_Operations {
     /// > (such as Pub/Sub API) to receive the response.  Any API service that returns
     /// > long-running operations should implement the `Operations` interface so
     /// > developers can have a consistent client experience.
-    protocol ServiceProtocol: Google_Longrunning_Operations.StreamingServiceProtocol {
+    public protocol ServiceProtocol: Google_Longrunning_Operations.StreamingServiceProtocol {
         /// Handle the "ListOperations" method.
         ///
         /// > Source IDL Documentation:
@@ -295,7 +290,7 @@ public extension Google_Longrunning_Operations {
         /// - Returns: A response containing a single `Google_Longrunning_ListOperationsResponse` message.
         func listOperations(
             request: GRPCCore.ServerRequest<Google_Longrunning_ListOperationsRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Google_Longrunning_ListOperationsResponse>
 
         /// Handle the "GetOperation" method.
@@ -315,7 +310,7 @@ public extension Google_Longrunning_Operations {
         /// - Returns: A response containing a single `Google_Longrunning_Operation` message.
         func getOperation(
             request: GRPCCore.ServerRequest<Google_Longrunning_GetOperationRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Google_Longrunning_Operation>
 
         /// Handle the "DeleteOperation" method.
@@ -336,7 +331,7 @@ public extension Google_Longrunning_Operations {
         /// - Returns: A response containing a single `SwiftProtobuf.Google_Protobuf_Empty` message.
         func deleteOperation(
             request: GRPCCore.ServerRequest<Google_Longrunning_DeleteOperationRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<SwiftProtobuf.Google_Protobuf_Empty>
 
         /// Handle the "CancelOperation" method.
@@ -364,7 +359,7 @@ public extension Google_Longrunning_Operations {
         /// - Returns: A response containing a single `SwiftProtobuf.Google_Protobuf_Empty` message.
         func cancelOperation(
             request: GRPCCore.ServerRequest<Google_Longrunning_CancelOperationRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<SwiftProtobuf.Google_Protobuf_Empty>
 
         /// Handle the "WaitOperation" method.
@@ -390,7 +385,7 @@ public extension Google_Longrunning_Operations {
         /// - Returns: A response containing a single `Google_Longrunning_Operation` message.
         func waitOperation(
             request: GRPCCore.ServerRequest<Google_Longrunning_WaitOperationRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Google_Longrunning_Operation>
     }
 
@@ -403,7 +398,7 @@ public extension Google_Longrunning_Operations {
     /// > Source IDL Documentation:
     /// >
     /// > Manages long-running operations with an API service.
-    /// >
+    /// > 
     /// > When an API method normally takes long time to complete, it can be designed
     /// > to return [Operation][google.longrunning.Operation] to the client, and the
     /// > client can use this interface to receive the real response asynchronously by
@@ -411,7 +406,7 @@ public extension Google_Longrunning_Operations {
     /// > (such as Pub/Sub API) to receive the response.  Any API service that returns
     /// > long-running operations should implement the `Operations` interface so
     /// > developers can have a consistent client experience.
-    protocol SimpleServiceProtocol: Google_Longrunning_Operations.ServiceProtocol {
+    public protocol SimpleServiceProtocol: Google_Longrunning_Operations.ServiceProtocol {
         /// Handle the "ListOperations" method.
         ///
         /// > Source IDL Documentation:
@@ -428,7 +423,7 @@ public extension Google_Longrunning_Operations {
         /// - Returns: A `Google_Longrunning_ListOperationsResponse` to respond with.
         func listOperations(
             request: Google_Longrunning_ListOperationsRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Google_Longrunning_ListOperationsResponse
 
         /// Handle the "GetOperation" method.
@@ -448,7 +443,7 @@ public extension Google_Longrunning_Operations {
         /// - Returns: A `Google_Longrunning_Operation` to respond with.
         func getOperation(
             request: Google_Longrunning_GetOperationRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Google_Longrunning_Operation
 
         /// Handle the "DeleteOperation" method.
@@ -469,7 +464,7 @@ public extension Google_Longrunning_Operations {
         /// - Returns: A `SwiftProtobuf.Google_Protobuf_Empty` to respond with.
         func deleteOperation(
             request: Google_Longrunning_DeleteOperationRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> SwiftProtobuf.Google_Protobuf_Empty
 
         /// Handle the "CancelOperation" method.
@@ -497,7 +492,7 @@ public extension Google_Longrunning_Operations {
         /// - Returns: A `SwiftProtobuf.Google_Protobuf_Empty` to respond with.
         func cancelOperation(
             request: Google_Longrunning_CancelOperationRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> SwiftProtobuf.Google_Protobuf_Empty
 
         /// Handle the "WaitOperation" method.
@@ -523,15 +518,15 @@ public extension Google_Longrunning_Operations {
         /// - Returns: A `Google_Longrunning_Operation` to respond with.
         func waitOperation(
             request: Google_Longrunning_WaitOperationRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Google_Longrunning_Operation
     }
 }
 
 // Default implementation of 'registerMethods(with:)'.
 @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
-public extension Google_Longrunning_Operations.StreamingServiceProtocol {
-    func registerMethods(with router: inout GRPCCore.RPCRouter<some GRPCCore.ServerTransport>) {
+extension Google_Longrunning_Operations.StreamingServiceProtocol {
+    public func registerMethods<Transport>(with router: inout GRPCCore.RPCRouter<Transport>) where Transport: GRPCCore.ServerTransport {
         router.registerHandler(
             forMethod: Google_Longrunning_Operations.Method.ListOperations.descriptor,
             deserializer: GRPCProtobuf.ProtobufDeserializer<Google_Longrunning_ListOperationsRequest>(),
@@ -539,9 +534,9 @@ public extension Google_Longrunning_Operations.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.listOperations(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Google_Longrunning_Operations.Method.GetOperation.descriptor,
@@ -550,9 +545,9 @@ public extension Google_Longrunning_Operations.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.getOperation(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Google_Longrunning_Operations.Method.DeleteOperation.descriptor,
@@ -561,9 +556,9 @@ public extension Google_Longrunning_Operations.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.deleteOperation(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Google_Longrunning_Operations.Method.CancelOperation.descriptor,
@@ -572,9 +567,9 @@ public extension Google_Longrunning_Operations.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.cancelOperation(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Google_Longrunning_Operations.Method.WaitOperation.descriptor,
@@ -583,67 +578,67 @@ public extension Google_Longrunning_Operations.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.waitOperation(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
     }
 }
 
 // Default implementation of streaming methods from 'StreamingServiceProtocol'.
 @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
-public extension Google_Longrunning_Operations.ServiceProtocol {
-    func listOperations(
+extension Google_Longrunning_Operations.ServiceProtocol {
+    public func listOperations(
         request: GRPCCore.StreamingServerRequest<Google_Longrunning_ListOperationsRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Google_Longrunning_ListOperationsResponse> {
-        let response = try await listOperations(
+        let response = try await self.listOperations(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func getOperation(
+    public func getOperation(
         request: GRPCCore.StreamingServerRequest<Google_Longrunning_GetOperationRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Google_Longrunning_Operation> {
-        let response = try await getOperation(
+        let response = try await self.getOperation(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func deleteOperation(
+    public func deleteOperation(
         request: GRPCCore.StreamingServerRequest<Google_Longrunning_DeleteOperationRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<SwiftProtobuf.Google_Protobuf_Empty> {
-        let response = try await deleteOperation(
+        let response = try await self.deleteOperation(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func cancelOperation(
+    public func cancelOperation(
         request: GRPCCore.StreamingServerRequest<Google_Longrunning_CancelOperationRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<SwiftProtobuf.Google_Protobuf_Empty> {
-        let response = try await cancelOperation(
+        let response = try await self.cancelOperation(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func waitOperation(
+    public func waitOperation(
         request: GRPCCore.StreamingServerRequest<Google_Longrunning_WaitOperationRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Google_Longrunning_Operation> {
-        let response = try await waitOperation(
+        let response = try await self.waitOperation(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
@@ -651,69 +646,69 @@ public extension Google_Longrunning_Operations.ServiceProtocol {
 
 // Default implementation of methods from 'ServiceProtocol'.
 @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
-public extension Google_Longrunning_Operations.SimpleServiceProtocol {
-    func listOperations(
+extension Google_Longrunning_Operations.SimpleServiceProtocol {
+    public func listOperations(
         request: GRPCCore.ServerRequest<Google_Longrunning_ListOperationsRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Google_Longrunning_ListOperationsResponse> {
-        try await GRPCCore.ServerResponse<Google_Longrunning_ListOperationsResponse>(
-            message: listOperations(
+        return GRPCCore.ServerResponse<Google_Longrunning_ListOperationsResponse>(
+            message: try await self.listOperations(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func getOperation(
+    public func getOperation(
         request: GRPCCore.ServerRequest<Google_Longrunning_GetOperationRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Google_Longrunning_Operation> {
-        try await GRPCCore.ServerResponse<Google_Longrunning_Operation>(
-            message: getOperation(
+        return GRPCCore.ServerResponse<Google_Longrunning_Operation>(
+            message: try await self.getOperation(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func deleteOperation(
+    public func deleteOperation(
         request: GRPCCore.ServerRequest<Google_Longrunning_DeleteOperationRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<SwiftProtobuf.Google_Protobuf_Empty> {
-        try await GRPCCore.ServerResponse<SwiftProtobuf.Google_Protobuf_Empty>(
-            message: deleteOperation(
+        return GRPCCore.ServerResponse<SwiftProtobuf.Google_Protobuf_Empty>(
+            message: try await self.deleteOperation(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func cancelOperation(
+    public func cancelOperation(
         request: GRPCCore.ServerRequest<Google_Longrunning_CancelOperationRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<SwiftProtobuf.Google_Protobuf_Empty> {
-        try await GRPCCore.ServerResponse<SwiftProtobuf.Google_Protobuf_Empty>(
-            message: cancelOperation(
+        return GRPCCore.ServerResponse<SwiftProtobuf.Google_Protobuf_Empty>(
+            message: try await self.cancelOperation(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func waitOperation(
+    public func waitOperation(
         request: GRPCCore.ServerRequest<Google_Longrunning_WaitOperationRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Google_Longrunning_Operation> {
-        try await GRPCCore.ServerResponse<Google_Longrunning_Operation>(
-            message: waitOperation(
+        return GRPCCore.ServerResponse<Google_Longrunning_Operation>(
+            message: try await self.waitOperation(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 }

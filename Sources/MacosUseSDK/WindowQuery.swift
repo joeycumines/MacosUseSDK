@@ -67,7 +67,7 @@ public func fetchAXWindowInfo(
         }
     }
 
-    guard let windows = windows, !windows.isEmpty else {
+    guard let windows, !windows.isEmpty else {
         logger.error("[fetchAXWindowInfo] No elements available from kAXWindows or kAXChildren for PID \(pid, privacy: .public)")
         return nil
     }
@@ -93,8 +93,9 @@ public func fetchAXWindowInfo(
         // kAXChildren returns ALL UI elements (buttons, groups, images, etc.), not just windows.
         // We must verify the element is actually a window before attempting to match it.
         var roleRef: CFTypeRef?
-              if AXUIElementCopyAttributeValue(axWindow, kAXRoleAttribute as CFString, &roleRef) == .success,
-                  let role = roleRef as? String {
+        if AXUIElementCopyAttributeValue(axWindow, kAXRoleAttribute as CFString, &roleRef) == .success,
+           let role = roleRef as? String
+        {
             // Allow standard window roles. Reject non-window elements.
             // Role is typically "AXWindow" for windows (not "AXButton", "AXGroup", etc.)
             if role != "AXWindow" {
@@ -118,7 +119,7 @@ public func fetchAXWindowInfo(
         let idResult = _AXUIElementGetWindow(axWindow, &axID)
 
         // If ID matches perfectly, fetch remaining attributes and return immediately
-        if idResult == .success && axID == windowId {
+        if idResult == .success, axID == windowId {
             logger.debug("[fetchAXWindowInfo] EXACT ID match for window \(windowId, privacy: .public) via _AXUIElementGetWindow")
 
             // Fetch remaining attributes for this confirmed window
@@ -169,12 +170,12 @@ public func fetchAXWindowInfo(
                 isMinimized: axMinimized,
                 isHidden: false,
                 isMain: axMain,
-                isFocused: axMain
+                isFocused: axMain,
             )
         }
 
         // If ID is valid but MISMATCHES, skip this element (it is definitely the wrong window)
-        if idResult == .success && axID != 0 && axID != windowId {
+        if idResult == .success, axID != 0, axID != windowId {
             logger.debug("[fetchAXWindowInfo] Skipping window with ID \(axID, privacy: .public) (looking for \(windowId, privacy: .public))")
             continue
         }
@@ -237,8 +238,8 @@ public func fetchAXWindowInfo(
         // -- Title (Secondary Heuristic) --
         let axTitle = values[2] as? String ?? ""
         // If expectedTitle is provided and matches exactly, apply a bonus (reduce score)
-        if let expectedTitle = expectedTitle, !expectedTitle.isEmpty, axTitle == expectedTitle {
-            score *= 0.5  // Give 50% weight reduction for exact title match
+        if let expectedTitle, !expectedTitle.isEmpty, axTitle == expectedTitle {
+            score *= 0.5 // Give 50% weight reduction for exact title match
         }
 
         // If this candidate is closer than previous ones, verify and store it

@@ -19,391 +19,389 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-private struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
-    struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
-    typealias Version = _2
+fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+  struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
+  typealias Version = _2
 }
 
 /// A resource representing an individual window within an application.
 /// Contains only cheap CoreGraphics data. For expensive AX state queries,
 /// use GetWindowState to fetch the WindowState singleton sub-resource.
 public struct Macosusesdk_V1_Window: Sendable {
-    // SwiftProtobuf.Message conformance is added in an extension below. See the
-    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-    // methods supported on all messages.
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
 
-    /// Resource name in the format "applications/{application}/windows/{window}"
-    /// where {application} is the process ID and {window} is the window ID.
-    public var name: String = .init()
+  /// Resource name in the format "applications/{application}/windows/{window}"
+  /// where {application} is the process ID and {window} is the window ID.
+  public var name: String = String()
 
-    /// The title of the window.
-    ///
-    /// Data Source (AX Authority): Fresh Accessibility API query (kAXTitleAttribute).
-    /// This field is queried from AX on every request and reflects the immediate state.
-    /// It is NOT cached from CGWindowList, ensuring mutation responses return up-to-date values.
-    public var title: String = .init()
+  /// The title of the window.
+  ///
+  /// Data Source (AX Authority): Fresh Accessibility API query (kAXTitleAttribute).
+  /// This field is queried from AX on every request and reflects the immediate state.
+  /// It is NOT cached from CGWindowList, ensuring mutation responses return up-to-date values.
+  public var title: String = String()
 
-    /// Bounding rectangle of the window.
-    ///
-    /// Data Source (AX Authority): Fresh Accessibility API queries (kAXPositionAttribute, kAXSizeAttribute).
-    /// These fields are queried from AX on every request and reflect the immediate state after mutations.
-    /// They are NOT cached from CGWindowList (which can lag by 10-100ms), ensuring mutation responses
-    /// (MoveWindow, ResizeWindow) return the exact requested values without polling delays.
-    public var bounds: Macosusesdk_V1_Bounds {
-        get { _bounds ?? Macosusesdk_V1_Bounds() }
-        set { _bounds = newValue }
-    }
+  /// Bounding rectangle of the window.
+  ///
+  /// Data Source (AX Authority): Fresh Accessibility API queries (kAXPositionAttribute, kAXSizeAttribute).
+  /// These fields are queried from AX on every request and reflect the immediate state after mutations.
+  /// They are NOT cached from CGWindowList (which can lag by 10-100ms), ensuring mutation responses
+  /// (MoveWindow, ResizeWindow) return the exact requested values without polling delays.
+  public var bounds: Macosusesdk_V1_Bounds {
+    get {return _bounds ?? Macosusesdk_V1_Bounds()}
+    set {_bounds = newValue}
+  }
+  /// Returns true if `bounds` has been explicitly set.
+  public var hasBounds: Bool {return self._bounds != nil}
+  /// Clears the value of `bounds`. Subsequent reads from it will return its default value.
+  public mutating func clearBounds() {self._bounds = nil}
 
-    /// Returns true if `bounds` has been explicitly set.
-    public var hasBounds: Bool { _bounds != nil }
-    /// Clears the value of `bounds`. Subsequent reads from it will return its default value.
-    public mutating func clearBounds() { _bounds = nil }
+  /// Z-order index (higher values are in front).
+  ///
+  /// Data Source (Registry Authority): Cached value from CGWindowList via WindowRegistry.
+  /// This is a stable metadata field that does not change during window mutations (move/resize).
+  /// Defaults to 0 if registry data is unavailable.
+  public var zIndex: Int32 = 0
 
-    /// Z-order index (higher values are in front).
-    ///
-    /// Data Source (Registry Authority): Cached value from CGWindowList via WindowRegistry.
-    /// This is a stable metadata field that does not change during window mutations (move/resize).
-    /// Defaults to 0 if registry data is unavailable.
-    public var zIndex: Int32 = 0
+  /// Whether the window is currently visible on screen.
+  ///
+  /// Data Source (Hybrid Authority - Differs by RPC):
+  ///
+  /// GetWindow (AX-First Visibility):
+  ///   Computes visible using fresh AX queries with optimistic assumption:
+  ///     visible = (!axMinimized && !axHidden) ? true : (registry.isOnScreen ?? false)
+  ///
+  ///   This AX-first approach ensures mutation responses (MoveWindow/ResizeWindow) immediately
+  ///   report visible=true without waiting for stale CGWindowList to update. Fresh AX state
+  ///   (minimized, hidden) is authoritative; registry is only consulted as fallback.
+  ///
+  /// ListWindows (Registry-Only Performance):
+  ///   Returns registry.isOnScreen directly from cached CGWindowList with NO per-window AX queries.
+  ///   This ensures <50ms response regardless of window count, suitable for high-frequency polling.
+  ///   Registry data may lag 10-100ms behind actual state during rapid window mutations.
+  ///
+  /// Recommendation:
+  ///   - Use ListWindows for fast enumeration and UI rendering
+  ///   - Use GetWindow for authoritative visibility after mutations
+  ///   - Use GetWindowState for expensive AX state details (modal, focused, etc.)
+  public var visible: Bool = false
 
-    /// Whether the window is currently visible on screen.
-    ///
-    /// Data Source (Hybrid Authority - Differs by RPC):
-    ///
-    /// GetWindow (AX-First Visibility):
-    ///   Computes visible using fresh AX queries with optimistic assumption:
-    ///     visible = (!axMinimized && !axHidden) ? true : (registry.isOnScreen ?? false)
-    ///
-    ///   This AX-first approach ensures mutation responses (MoveWindow/ResizeWindow) immediately
-    ///   report visible=true without waiting for stale CGWindowList to update. Fresh AX state
-    ///   (minimized, hidden) is authoritative; registry is only consulted as fallback.
-    ///
-    /// ListWindows (Registry-Only Performance):
-    ///   Returns registry.isOnScreen directly from cached CGWindowList with NO per-window AX queries.
-    ///   This ensures <50ms response regardless of window count, suitable for high-frequency polling.
-    ///   Registry data may lag 10-100ms behind actual state during rapid window mutations.
-    ///
-    /// Recommendation:
-    ///   - Use ListWindows for fast enumeration and UI rendering
-    ///   - Use GetWindow for authoritative visibility after mutations
-    ///   - Use GetWindowState for expensive AX state details (modal, focused, etc.)
-    public var visible: Bool = false
+  /// Bundle identifier of the application that owns this window.
+  ///
+  /// Data Source (Registry Authority): Resolved via NSRunningApplication from cached CGWindowList metadata.
+  /// This is a stable metadata field that does not change during window mutations.
+  /// Empty string if NSRunningApplication resolution fails or registry data is unavailable.
+  public var bundleID: String = String()
 
-    /// Bundle identifier of the application that owns this window.
-    ///
-    /// Data Source (Registry Authority): Resolved via NSRunningApplication from cached CGWindowList metadata.
-    /// This is a stable metadata field that does not change during window mutations.
-    /// Empty string if NSRunningApplication resolution fails or registry data is unavailable.
-    public var bundleID: String = .init()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-    public var unknownFields = SwiftProtobuf.UnknownStorage()
+  public init() {}
 
-    public init() {}
-
-    fileprivate var _bounds: Macosusesdk_V1_Bounds?
+  fileprivate var _bounds: Macosusesdk_V1_Bounds? = nil
 }
 
 /// Bounding rectangle for window positioning.
 public struct Macosusesdk_V1_Bounds: Sendable {
-    // SwiftProtobuf.Message conformance is added in an extension below. See the
-    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-    // methods supported on all messages.
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
 
-    /// X coordinate of the window's origin.
-    public var x: Double = 0
+  /// X coordinate of the window's origin.
+  public var x: Double = 0
 
-    /// Y coordinate of the window's origin.
-    public var y: Double = 0
+  /// Y coordinate of the window's origin.
+  public var y: Double = 0
 
-    /// Width of the window.
-    public var width: Double = 0
+  /// Width of the window.
+  public var width: Double = 0
 
-    /// Height of the window.
-    public var height: Double = 0
+  /// Height of the window.
+  public var height: Double = 0
 
-    public var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-    public init() {}
+  public init() {}
 }
 
 /// Detailed state information about a window, fetched via expensive AX queries.
 /// This is a singleton sub-resource that clients must explicitly request.
 /// Use GetWindowState to fetch this data on-demand.
 public struct Macosusesdk_V1_WindowState: Sendable {
-    // SwiftProtobuf.Message conformance is added in an extension below. See the
-    // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-    // methods supported on all messages.
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
 
-    /// Resource name in the format "applications/{application}/windows/{window}/state"
-    public var name: String = .init()
+  /// Resource name in the format "applications/{application}/windows/{window}/state"
+  public var name: String = String()
 
-    /// Whether the window can be resized.
-    ///
-    /// Data Source: AX query of AXSizeSettable attribute.
-    /// This is an expensive query that should only be fetched on-demand via GetWindowState.
-    public var resizable: Bool = false
+  /// Whether the window can be resized.
+  ///
+  /// Data Source: AX query of AXSizeSettable attribute.
+  /// This is an expensive query that should only be fetched on-demand via GetWindowState.
+  public var resizable: Bool = false
 
-    /// Whether the window can be minimized.
-    ///
-    /// Data Source: AX query checking existence of AXMinimizeButton attribute.
-    /// This is an expensive query that should only be fetched on-demand via GetWindowState.
-    public var minimizable: Bool = false
+  /// Whether the window can be minimized.
+  ///
+  /// Data Source: AX query checking existence of AXMinimizeButton attribute.
+  /// This is an expensive query that should only be fetched on-demand via GetWindowState.
+  public var minimizable: Bool = false
 
-    /// Whether the window can be closed.
-    ///
-    /// Data Source: AX query checking existence of AXCloseButton attribute.
-    /// This is an expensive query that should only be fetched on-demand via GetWindowState.
-    public var closable: Bool = false
+  /// Whether the window can be closed.
+  ///
+  /// Data Source: AX query checking existence of AXCloseButton attribute.
+  /// This is an expensive query that should only be fetched on-demand via GetWindowState.
+  public var closable: Bool = false
 
-    /// Whether the window is a modal dialog.
-    ///
-    /// Data Source: AX queries of kAXModalAttribute and kAXSubroleAttribute.
-    /// True if explicitly marked modal or subrole contains "Dialog" or "Sheet".
-    /// This is an expensive query that should only be fetched on-demand via GetWindowState.
-    public var modal: Bool = false
+  /// Whether the window is a modal dialog.
+  ///
+  /// Data Source: AX queries of kAXModalAttribute and kAXSubroleAttribute.
+  /// True if explicitly marked modal or subrole contains "Dialog" or "Sheet".
+  /// This is an expensive query that should only be fetched on-demand via GetWindowState.
+  public var modal: Bool = false
 
-    /// Whether the window is a floating window.
-    ///
-    /// Data Source: AX query of kAXSubroleAttribute.
-    /// True if subrole contains "Floating".
-    /// This is an expensive query that should only be fetched on-demand via GetWindowState.
-    public var floating: Bool = false
+  /// Whether the window is a floating window.
+  ///
+  /// Data Source: AX query of kAXSubroleAttribute.
+  /// True if subrole contains "Floating".
+  /// This is an expensive query that should only be fetched on-demand via GetWindowState.
+  public var floating: Bool = false
 
-    /// Whether the window is explicitly hidden according to AX attributes.
-    ///
-    /// Data Source: Fresh AX query of kAXHiddenAttribute.
-    /// True means the window is explicitly hidden by the application (NOT minimized to dock).
-    /// This field is distinct from:
-    ///   - Window.visible (hybrid formula combining registry + AX state)
-    ///   - minimized (window is in dock, not explicitly hidden)
-    ///
-    /// Note: This field is ALSO queried in Window responses (as part of the visible formula),
-    /// but Window responses may use cached registry data for performance. GetWindowState
-    /// guarantees a fresh AX query.
-    public var axHidden: Bool = false
+  /// Whether the window is explicitly hidden according to AX attributes.
+  ///
+  /// Data Source: Fresh AX query of kAXHiddenAttribute.
+  /// True means the window is explicitly hidden by the application (NOT minimized to dock).
+  /// This field is distinct from:
+  ///   - Window.visible (hybrid formula combining registry + AX state)
+  ///   - minimized (window is in dock, not explicitly hidden)
+  ///
+  /// Note: This field is ALSO queried in Window responses (as part of the visible formula),
+  /// but Window responses may use cached registry data for performance. GetWindowState
+  /// guarantees a fresh AX query.
+  public var axHidden: Bool = false
 
-    /// Whether the window is minimized (in the dock).
-    ///
-    /// Data Source: Fresh AX query of kAXMinimizedAttribute.
-    /// True means the window is minimized to the dock (NOT explicitly hidden).
-    ///
-    /// Note: This field is ALSO queried in Window responses (as part of the visible formula),
-    /// but clients requiring authoritative minimized state should use GetWindowState to ensure
-    /// the most up-to-date value, especially immediately after minimize/restore operations.
-    public var minimized: Bool = false
+  /// Whether the window is minimized (in the dock).
+  ///
+  /// Data Source: Fresh AX query of kAXMinimizedAttribute.
+  /// True means the window is minimized to the dock (NOT explicitly hidden).
+  ///
+  /// Note: This field is ALSO queried in Window responses (as part of the visible formula),
+  /// but clients requiring authoritative minimized state should use GetWindowState to ensure
+  /// the most up-to-date value, especially immediately after minimize/restore operations.
+  public var minimized: Bool = false
 
-    /// Whether the window is focused (is the main window).
-    ///
-    /// Data Source: Fresh AX query of kAXMainAttribute.
-    /// True if this window is the application's main (focused) window.
-    /// This is an expensive query that should only be fetched on-demand via GetWindowState.
-    public var focused: Bool = false
+  /// Whether the window is focused (is the main window).
+  ///
+  /// Data Source: Fresh AX query of kAXMainAttribute.
+  /// True if this window is the application's main (focused) window.
+  /// This is an expensive query that should only be fetched on-demand via GetWindowState.
+  public var focused: Bool = false
 
-    /// Whether the window is in full-screen mode.
-    ///
-    /// Data Source: Currently UNIMPLEMENTED (kAXFullscreenAttribute is not standard).
-    /// Optional: unset (nil) if the AX API does not provide a definitive answer.
-    /// Clients should check HasFullscreen() before accessing this field.
-    public var fullscreen: Bool {
-        get { _fullscreen ?? false }
-        set { _fullscreen = newValue }
-    }
+  /// Whether the window is in full-screen mode.
+  ///
+  /// Data Source: Currently UNIMPLEMENTED (kAXFullscreenAttribute is not standard).
+  /// Optional: unset (nil) if the AX API does not provide a definitive answer.
+  /// Clients should check HasFullscreen() before accessing this field.
+  public var fullscreen: Bool {
+    get {return _fullscreen ?? false}
+    set {_fullscreen = newValue}
+  }
+  /// Returns true if `fullscreen` has been explicitly set.
+  public var hasFullscreen: Bool {return self._fullscreen != nil}
+  /// Clears the value of `fullscreen`. Subsequent reads from it will return its default value.
+  public mutating func clearFullscreen() {self._fullscreen = nil}
 
-    /// Returns true if `fullscreen` has been explicitly set.
-    public var hasFullscreen: Bool { _fullscreen != nil }
-    /// Clears the value of `fullscreen`. Subsequent reads from it will return its default value.
-    public mutating func clearFullscreen() { _fullscreen = nil }
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-    public var unknownFields = SwiftProtobuf.UnknownStorage()
+  public init() {}
 
-    public init() {}
-
-    fileprivate var _fullscreen: Bool?
+  fileprivate var _fullscreen: Bool? = nil
 }
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
-private let _protobuf_package = "macosusesdk.v1"
+fileprivate let _protobuf_package = "macosusesdk.v1"
 
 extension Macosusesdk_V1_Window: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-    public static let protoMessageName: String = _protobuf_package + ".Window"
-    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}title\0\u{1}bounds\0\u{3}z_index\0\u{1}visible\0\u{4}\u{5}bundle_id\0")
+  public static let protoMessageName: String = _protobuf_package + ".Window"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}title\0\u{1}bounds\0\u{3}z_index\0\u{1}visible\0\u{4}\u{5}bundle_id\0")
 
-    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
-        while let fieldNumber = try decoder.nextFieldNumber() {
-            // The use of inline closures is to circumvent an issue where the compiler
-            // allocates stack space for every case branch when no optimizations are
-            // enabled. https://github.com/apple/swift-protobuf/issues/1034
-            switch fieldNumber {
-            case 1: try decoder.decodeSingularStringField(value: &name)
-            case 2: try decoder.decodeSingularStringField(value: &title)
-            case 3: try decoder.decodeSingularMessageField(value: &_bounds)
-            case 4: try decoder.decodeSingularInt32Field(value: &zIndex)
-            case 5: try decoder.decodeSingularBoolField(value: &visible)
-            case 10: try decoder.decodeSingularStringField(value: &bundleID)
-            default: break
-            }
-        }
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.title) }()
+      case 3: try { try decoder.decodeSingularMessageField(value: &self._bounds) }()
+      case 4: try { try decoder.decodeSingularInt32Field(value: &self.zIndex) }()
+      case 5: try { try decoder.decodeSingularBoolField(value: &self.visible) }()
+      case 10: try { try decoder.decodeSingularStringField(value: &self.bundleID) }()
+      default: break
+      }
     }
+  }
 
-    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
-        // The use of inline closures is to circumvent an issue where the compiler
-        // allocates stack space for every if/case branch local when no optimizations
-        // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-        // https://github.com/apple/swift-protobuf/issues/1182
-        if !name.isEmpty {
-            try visitor.visitSingularStringField(value: name, fieldNumber: 1)
-        }
-        if !title.isEmpty {
-            try visitor.visitSingularStringField(value: title, fieldNumber: 2)
-        }
-        try { if let v = self._bounds {
-            try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
-        } }()
-        if zIndex != 0 {
-            try visitor.visitSingularInt32Field(value: zIndex, fieldNumber: 4)
-        }
-        if visible != false {
-            try visitor.visitSingularBoolField(value: visible, fieldNumber: 5)
-        }
-        if !bundleID.isEmpty {
-            try visitor.visitSingularStringField(value: bundleID, fieldNumber: 10)
-        }
-        try unknownFields.traverse(visitor: &visitor)
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
     }
+    if !self.title.isEmpty {
+      try visitor.visitSingularStringField(value: self.title, fieldNumber: 2)
+    }
+    try { if let v = self._bounds {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
+    } }()
+    if self.zIndex != 0 {
+      try visitor.visitSingularInt32Field(value: self.zIndex, fieldNumber: 4)
+    }
+    if self.visible != false {
+      try visitor.visitSingularBoolField(value: self.visible, fieldNumber: 5)
+    }
+    if !self.bundleID.isEmpty {
+      try visitor.visitSingularStringField(value: self.bundleID, fieldNumber: 10)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
 
-    public static func == (lhs: Macosusesdk_V1_Window, rhs: Macosusesdk_V1_Window) -> Bool {
-        if lhs.name != rhs.name { return false }
-        if lhs.title != rhs.title { return false }
-        if lhs._bounds != rhs._bounds { return false }
-        if lhs.zIndex != rhs.zIndex { return false }
-        if lhs.visible != rhs.visible { return false }
-        if lhs.bundleID != rhs.bundleID { return false }
-        if lhs.unknownFields != rhs.unknownFields { return false }
-        return true
-    }
+  public static func ==(lhs: Macosusesdk_V1_Window, rhs: Macosusesdk_V1_Window) -> Bool {
+    if lhs.name != rhs.name {return false}
+    if lhs.title != rhs.title {return false}
+    if lhs._bounds != rhs._bounds {return false}
+    if lhs.zIndex != rhs.zIndex {return false}
+    if lhs.visible != rhs.visible {return false}
+    if lhs.bundleID != rhs.bundleID {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
 }
 
 extension Macosusesdk_V1_Bounds: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-    public static let protoMessageName: String = _protobuf_package + ".Bounds"
-    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}x\0\u{1}y\0\u{1}width\0\u{1}height\0")
+  public static let protoMessageName: String = _protobuf_package + ".Bounds"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}x\0\u{1}y\0\u{1}width\0\u{1}height\0")
 
-    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
-        while let fieldNumber = try decoder.nextFieldNumber() {
-            // The use of inline closures is to circumvent an issue where the compiler
-            // allocates stack space for every case branch when no optimizations are
-            // enabled. https://github.com/apple/swift-protobuf/issues/1034
-            switch fieldNumber {
-            case 1: try decoder.decodeSingularDoubleField(value: &x)
-            case 2: try decoder.decodeSingularDoubleField(value: &y)
-            case 3: try decoder.decodeSingularDoubleField(value: &width)
-            case 4: try decoder.decodeSingularDoubleField(value: &height)
-            default: break
-            }
-        }
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularDoubleField(value: &self.x) }()
+      case 2: try { try decoder.decodeSingularDoubleField(value: &self.y) }()
+      case 3: try { try decoder.decodeSingularDoubleField(value: &self.width) }()
+      case 4: try { try decoder.decodeSingularDoubleField(value: &self.height) }()
+      default: break
+      }
     }
+  }
 
-    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
-        if x.bitPattern != 0 {
-            try visitor.visitSingularDoubleField(value: x, fieldNumber: 1)
-        }
-        if y.bitPattern != 0 {
-            try visitor.visitSingularDoubleField(value: y, fieldNumber: 2)
-        }
-        if width.bitPattern != 0 {
-            try visitor.visitSingularDoubleField(value: width, fieldNumber: 3)
-        }
-        if height.bitPattern != 0 {
-            try visitor.visitSingularDoubleField(value: height, fieldNumber: 4)
-        }
-        try unknownFields.traverse(visitor: &visitor)
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.x.bitPattern != 0 {
+      try visitor.visitSingularDoubleField(value: self.x, fieldNumber: 1)
     }
+    if self.y.bitPattern != 0 {
+      try visitor.visitSingularDoubleField(value: self.y, fieldNumber: 2)
+    }
+    if self.width.bitPattern != 0 {
+      try visitor.visitSingularDoubleField(value: self.width, fieldNumber: 3)
+    }
+    if self.height.bitPattern != 0 {
+      try visitor.visitSingularDoubleField(value: self.height, fieldNumber: 4)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
 
-    public static func == (lhs: Macosusesdk_V1_Bounds, rhs: Macosusesdk_V1_Bounds) -> Bool {
-        if lhs.x != rhs.x { return false }
-        if lhs.y != rhs.y { return false }
-        if lhs.width != rhs.width { return false }
-        if lhs.height != rhs.height { return false }
-        if lhs.unknownFields != rhs.unknownFields { return false }
-        return true
-    }
+  public static func ==(lhs: Macosusesdk_V1_Bounds, rhs: Macosusesdk_V1_Bounds) -> Bool {
+    if lhs.x != rhs.x {return false}
+    if lhs.y != rhs.y {return false}
+    if lhs.width != rhs.width {return false}
+    if lhs.height != rhs.height {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
 }
 
 extension Macosusesdk_V1_WindowState: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-    public static let protoMessageName: String = _protobuf_package + ".WindowState"
-    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}resizable\0\u{1}minimizable\0\u{1}closable\0\u{1}modal\0\u{1}floating\0\u{3}ax_hidden\0\u{1}minimized\0\u{1}focused\0\u{1}fullscreen\0")
+  public static let protoMessageName: String = _protobuf_package + ".WindowState"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}resizable\0\u{1}minimizable\0\u{1}closable\0\u{1}modal\0\u{1}floating\0\u{3}ax_hidden\0\u{1}minimized\0\u{1}focused\0\u{1}fullscreen\0")
 
-    public mutating func decodeMessage(decoder: inout some SwiftProtobuf.Decoder) throws {
-        while let fieldNumber = try decoder.nextFieldNumber() {
-            // The use of inline closures is to circumvent an issue where the compiler
-            // allocates stack space for every case branch when no optimizations are
-            // enabled. https://github.com/apple/swift-protobuf/issues/1034
-            switch fieldNumber {
-            case 1: try decoder.decodeSingularStringField(value: &name)
-            case 2: try decoder.decodeSingularBoolField(value: &resizable)
-            case 3: try decoder.decodeSingularBoolField(value: &minimizable)
-            case 4: try decoder.decodeSingularBoolField(value: &closable)
-            case 5: try decoder.decodeSingularBoolField(value: &modal)
-            case 6: try decoder.decodeSingularBoolField(value: &floating)
-            case 7: try decoder.decodeSingularBoolField(value: &axHidden)
-            case 8: try decoder.decodeSingularBoolField(value: &minimized)
-            case 9: try decoder.decodeSingularBoolField(value: &focused)
-            case 10: try decoder.decodeSingularBoolField(value: &_fullscreen)
-            default: break
-            }
-        }
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      case 2: try { try decoder.decodeSingularBoolField(value: &self.resizable) }()
+      case 3: try { try decoder.decodeSingularBoolField(value: &self.minimizable) }()
+      case 4: try { try decoder.decodeSingularBoolField(value: &self.closable) }()
+      case 5: try { try decoder.decodeSingularBoolField(value: &self.modal) }()
+      case 6: try { try decoder.decodeSingularBoolField(value: &self.floating) }()
+      case 7: try { try decoder.decodeSingularBoolField(value: &self.axHidden) }()
+      case 8: try { try decoder.decodeSingularBoolField(value: &self.minimized) }()
+      case 9: try { try decoder.decodeSingularBoolField(value: &self.focused) }()
+      case 10: try { try decoder.decodeSingularBoolField(value: &self._fullscreen) }()
+      default: break
+      }
     }
+  }
 
-    public func traverse(visitor: inout some SwiftProtobuf.Visitor) throws {
-        // The use of inline closures is to circumvent an issue where the compiler
-        // allocates stack space for every if/case branch local when no optimizations
-        // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-        // https://github.com/apple/swift-protobuf/issues/1182
-        if !name.isEmpty {
-            try visitor.visitSingularStringField(value: name, fieldNumber: 1)
-        }
-        if resizable != false {
-            try visitor.visitSingularBoolField(value: resizable, fieldNumber: 2)
-        }
-        if minimizable != false {
-            try visitor.visitSingularBoolField(value: minimizable, fieldNumber: 3)
-        }
-        if closable != false {
-            try visitor.visitSingularBoolField(value: closable, fieldNumber: 4)
-        }
-        if modal != false {
-            try visitor.visitSingularBoolField(value: modal, fieldNumber: 5)
-        }
-        if floating != false {
-            try visitor.visitSingularBoolField(value: floating, fieldNumber: 6)
-        }
-        if axHidden != false {
-            try visitor.visitSingularBoolField(value: axHidden, fieldNumber: 7)
-        }
-        if minimized != false {
-            try visitor.visitSingularBoolField(value: minimized, fieldNumber: 8)
-        }
-        if focused != false {
-            try visitor.visitSingularBoolField(value: focused, fieldNumber: 9)
-        }
-        try { if let v = self._fullscreen {
-            try visitor.visitSingularBoolField(value: v, fieldNumber: 10)
-        } }()
-        try unknownFields.traverse(visitor: &visitor)
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
     }
+    if self.resizable != false {
+      try visitor.visitSingularBoolField(value: self.resizable, fieldNumber: 2)
+    }
+    if self.minimizable != false {
+      try visitor.visitSingularBoolField(value: self.minimizable, fieldNumber: 3)
+    }
+    if self.closable != false {
+      try visitor.visitSingularBoolField(value: self.closable, fieldNumber: 4)
+    }
+    if self.modal != false {
+      try visitor.visitSingularBoolField(value: self.modal, fieldNumber: 5)
+    }
+    if self.floating != false {
+      try visitor.visitSingularBoolField(value: self.floating, fieldNumber: 6)
+    }
+    if self.axHidden != false {
+      try visitor.visitSingularBoolField(value: self.axHidden, fieldNumber: 7)
+    }
+    if self.minimized != false {
+      try visitor.visitSingularBoolField(value: self.minimized, fieldNumber: 8)
+    }
+    if self.focused != false {
+      try visitor.visitSingularBoolField(value: self.focused, fieldNumber: 9)
+    }
+    try { if let v = self._fullscreen {
+      try visitor.visitSingularBoolField(value: v, fieldNumber: 10)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
 
-    public static func == (lhs: Macosusesdk_V1_WindowState, rhs: Macosusesdk_V1_WindowState) -> Bool {
-        if lhs.name != rhs.name { return false }
-        if lhs.resizable != rhs.resizable { return false }
-        if lhs.minimizable != rhs.minimizable { return false }
-        if lhs.closable != rhs.closable { return false }
-        if lhs.modal != rhs.modal { return false }
-        if lhs.floating != rhs.floating { return false }
-        if lhs.axHidden != rhs.axHidden { return false }
-        if lhs.minimized != rhs.minimized { return false }
-        if lhs.focused != rhs.focused { return false }
-        if lhs._fullscreen != rhs._fullscreen { return false }
-        if lhs.unknownFields != rhs.unknownFields { return false }
-        return true
-    }
+  public static func ==(lhs: Macosusesdk_V1_WindowState, rhs: Macosusesdk_V1_WindowState) -> Bool {
+    if lhs.name != rhs.name {return false}
+    if lhs.resizable != rhs.resizable {return false}
+    if lhs.minimizable != rhs.minimizable {return false}
+    if lhs.closable != rhs.closable {return false}
+    if lhs.modal != rhs.modal {return false}
+    if lhs.floating != rhs.floating {return false}
+    if lhs.axHidden != rhs.axHidden {return false}
+    if lhs.minimized != rhs.minimized {return false}
+    if lhs.focused != rhs.focused {return false}
+    if lhs._fullscreen != rhs._fullscreen {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
 }

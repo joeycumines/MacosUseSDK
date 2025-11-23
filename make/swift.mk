@@ -122,10 +122,14 @@ SWIFT_PACKAGE_PATHS_EXCLUDE_PATTERNS ?=
 SWIFT_PACKAGE_SLUGS_NO_TESTS ?=
 # used to exclude packages from the update* targets
 SWIFT_PACKAGE_SLUGS_NO_UPDATE ?=
-# used to exclude packages from the lint* targets
+# used to exclude packages from swiftlint targets
 SWIFT_PACKAGE_SLUGS_NO_LINT ?=
-# used to exclude packages from the format* targets
+# used to exclude packages from swiftformat targets
 SWIFT_PACKAGE_SLUGS_NO_FORMAT ?=
+# exclude files from swiftlint, use % for wildcard, space-separated, paths start with "./"
+SWIFT_PACKAGE_FILES_NO_LINT ?=
+# exclude files from swiftformat, use % for wildcard, space-separated, paths start with "./"
+SWIFT_PACKAGE_FILES_NO_FORMAT ?=
 
 # configurable, but unlikely to need to be configured
 
@@ -291,7 +295,7 @@ $(SWIFT_TARGET_PREFIX)lint-style: $($(SWIFT_MK_VAR_PREFIX)LINT_STYLE_TARGETS) ##
 
 .PHONY: $(addprefix $(SWIFT_TARGET_PREFIX)lint-style.,$(SWIFT_PACKAGE_SLUGS_EXCL_NO_LINT))
 $(addprefix $(SWIFT_TARGET_PREFIX)lint-style.,$(SWIFT_PACKAGE_SLUGS_EXCL_NO_LINT)): $(SWIFT_TARGET_PREFIX)lint-style.%:
-	$(SWIFTLINT) $(SWIFTLINT_FLAGS) $(call swift_package_files,$(call swift_package_slug_to_path,$*))
+	$(SWIFTLINT) $(SWIFTLINT_FLAGS) $(filter-out $(SWIFT_PACKAGE_FILES_NO_LINT),$(call swift_package_files,$(call swift_package_slug_to_path,$*)))
 
 .PHONY: $(addprefix $(SWIFT_TARGET_PREFIX)lint-style.,$(SWIFT_PACKAGE_SLUGS_INCL_NO_LINT))
 $(addprefix $(SWIFT_TARGET_PREFIX)lint-style.,$(SWIFT_PACKAGE_SLUGS_INCL_NO_LINT)): $(SWIFT_TARGET_PREFIX)lint-style.%:
@@ -305,7 +309,7 @@ $(SWIFT_TARGET_PREFIX)lint-format: $($(SWIFT_MK_VAR_PREFIX)LINT_FORMAT_TARGETS) 
 
 .PHONY: $(addprefix $(SWIFT_TARGET_PREFIX)lint-format.,$(SWIFT_PACKAGE_SLUGS_EXCL_NO_FORMAT))
 $(addprefix $(SWIFT_TARGET_PREFIX)lint-format.,$(SWIFT_PACKAGE_SLUGS_EXCL_NO_FORMAT)): $(SWIFT_TARGET_PREFIX)lint-format.%:
-	$(SWIFTFORMAT) $(SWIFTFORMAT_LINT_FLAGS) $(call swift_package_files,$(call swift_package_slug_to_path,$*))
+	$(SWIFTFORMAT) $(SWIFTFORMAT_LINT_FLAGS) $(filter-out $(SWIFT_PACKAGE_FILES_NO_FORMAT),$(call swift_package_files,$(call swift_package_slug_to_path,$*)))
 
 .PHONY: $(addprefix $(SWIFT_TARGET_PREFIX)lint-format.,$(SWIFT_PACKAGE_SLUGS_INCL_NO_FORMAT))
 $(addprefix $(SWIFT_TARGET_PREFIX)lint-format.,$(SWIFT_PACKAGE_SLUGS_INCL_NO_FORMAT)): $(SWIFT_TARGET_PREFIX)lint-format.%:
@@ -380,7 +384,7 @@ $(SWIFT_TARGET_PREFIX)format: $($(SWIFT_MK_VAR_PREFIX)FORMAT_TARGETS) ## Runs sw
 
 .PHONY: $(addprefix $(SWIFT_TARGET_PREFIX)format.,$(SWIFT_PACKAGE_SLUGS_EXCL_NO_FORMAT))
 $(addprefix $(SWIFT_TARGET_PREFIX)format.,$(SWIFT_PACKAGE_SLUGS_EXCL_NO_FORMAT)): $(SWIFT_TARGET_PREFIX)format.%:
-	$(SWIFTFORMAT) $(SWIFTFORMAT_FLAGS) $(call swift_package_files,$(call swift_package_slug_to_path,$*))
+	$(SWIFTFORMAT) $(SWIFTFORMAT_FLAGS) $(filter-out $(SWIFT_PACKAGE_FILES_NO_FORMAT),$(call swift_package_files,$(call swift_package_slug_to_path,$*)))
 
 .PHONY: $(addprefix $(SWIFT_TARGET_PREFIX)format.,$(SWIFT_PACKAGE_SLUGS_INCL_NO_FORMAT))
 $(addprefix $(SWIFT_TARGET_PREFIX)format.,$(SWIFT_PACKAGE_SLUGS_INCL_NO_FORMAT)): $(SWIFT_TARGET_PREFIX)format.%:
@@ -394,7 +398,7 @@ $(SWIFT_TARGET_PREFIX)fix: $($(SWIFT_MK_VAR_PREFIX)FIX_TARGETS) ## Runs swiftlin
 
 .PHONY: $($(SWIFT_MK_VAR_PREFIX)FIX_TARGETS)
 $($(SWIFT_MK_VAR_PREFIX)FIX_TARGETS): $(SWIFT_TARGET_PREFIX)fix.%:
-	$(SWIFTFIX) $(SWIFTFIX_FLAGS) $(call swift_package_files,$(call swift_package_slug_to_path,$*))
+	$(SWIFTFIX) $(SWIFTFIX_FLAGS) $(filter-out $(SWIFT_PACKAGE_FILES_NO_LINT),$(call swift_package_files,$(call swift_package_slug_to_path,$*)))
 
 # update, update.<swift package slug>
 

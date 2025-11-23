@@ -29,9 +29,9 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-private struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
-    struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
-    typealias Version = _2
+fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+  struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
+  typealias Version = _2
 }
 
 /// An indicator of the behavior of a given field (for example, that a field
@@ -41,110 +41,111 @@ private struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVer
 ///
 /// Note: This enum **may** receive new values in the future.
 public enum Google_Api_FieldBehavior: SwiftProtobuf.Enum, Swift.CaseIterable {
-    public typealias RawValue = Int
+  public typealias RawValue = Int
 
-    /// Conventional default for enums. Do not use this.
-    case unspecified // = 0
+  /// Conventional default for enums. Do not use this.
+  case unspecified // = 0
 
-    /// Specifically denotes a field as optional.
-    /// While all fields in protocol buffers are optional, this may be specified
-    /// for emphasis if appropriate.
-    case optional // = 1
+  /// Specifically denotes a field as optional.
+  /// While all fields in protocol buffers are optional, this may be specified
+  /// for emphasis if appropriate.
+  case `optional` // = 1
 
-    /// Denotes a field as required.
-    /// This indicates that the field **must** be provided as part of the request,
-    /// and failure to do so will cause an error (usually `INVALID_ARGUMENT`).
-    case required // = 2
+  /// Denotes a field as required.
+  /// This indicates that the field **must** be provided as part of the request,
+  /// and failure to do so will cause an error (usually `INVALID_ARGUMENT`).
+  case `required` // = 2
 
-    /// Denotes a field as output only.
-    /// This indicates that the field is provided in responses, but including the
-    /// field in a request does nothing (the server *must* ignore it and
-    /// *must not* throw an error as a result of the field's presence).
-    case outputOnly // = 3
+  /// Denotes a field as output only.
+  /// This indicates that the field is provided in responses, but including the
+  /// field in a request does nothing (the server *must* ignore it and
+  /// *must not* throw an error as a result of the field's presence).
+  case outputOnly // = 3
 
-    /// Denotes a field as input only.
-    /// This indicates that the field is provided in requests, and the
-    /// corresponding field is not included in output.
-    case inputOnly // = 4
+  /// Denotes a field as input only.
+  /// This indicates that the field is provided in requests, and the
+  /// corresponding field is not included in output.
+  case inputOnly // = 4
 
-    /// Denotes a field as immutable.
-    /// This indicates that the field may be set once in a request to create a
-    /// resource, but may not be changed thereafter.
-    case immutable // = 5
+  /// Denotes a field as immutable.
+  /// This indicates that the field may be set once in a request to create a
+  /// resource, but may not be changed thereafter.
+  case immutable // = 5
 
-    /// Denotes that a (repeated) field is an unordered list.
-    /// This indicates that the service may provide the elements of the list
-    /// in any arbitrary  order, rather than the order the user originally
-    /// provided. Additionally, the list's order may or may not be stable.
-    case unorderedList // = 6
+  /// Denotes that a (repeated) field is an unordered list.
+  /// This indicates that the service may provide the elements of the list
+  /// in any arbitrary  order, rather than the order the user originally
+  /// provided. Additionally, the list's order may or may not be stable.
+  case unorderedList // = 6
 
-    /// Denotes that this field returns a non-empty default value if not set.
-    /// This indicates that if the user provides the empty value in a request,
-    /// a non-empty value will be returned. The user will not be aware of what
-    /// non-empty value to expect.
-    case nonEmptyDefault // = 7
+  /// Denotes that this field returns a non-empty default value if not set.
+  /// This indicates that if the user provides the empty value in a request,
+  /// a non-empty value will be returned. The user will not be aware of what
+  /// non-empty value to expect.
+  case nonEmptyDefault // = 7
 
-    /// Denotes that the field in a resource (a message annotated with
-    /// google.api.resource) is used in the resource name to uniquely identify the
-    /// resource. For AIP-compliant APIs, this should only be applied to the
-    /// `name` field on the resource.
-    ///
-    /// This behavior should not be applied to references to other resources within
-    /// the message.
-    ///
-    /// The identifier field of resources often have different field behavior
-    /// depending on the request it is embedded in (e.g. for Create methods name
-    /// is optional and unused, while for Update methods it is required). Instead
-    /// of method-specific annotations, only `IDENTIFIER` is required.
-    case identifier // = 8
-    case UNRECOGNIZED(Int)
+  /// Denotes that the field in a resource (a message annotated with
+  /// google.api.resource) is used in the resource name to uniquely identify the
+  /// resource. For AIP-compliant APIs, this should only be applied to the
+  /// `name` field on the resource.
+  ///
+  /// This behavior should not be applied to references to other resources within
+  /// the message.
+  ///
+  /// The identifier field of resources often have different field behavior
+  /// depending on the request it is embedded in (e.g. for Create methods name
+  /// is optional and unused, while for Update methods it is required). Instead
+  /// of method-specific annotations, only `IDENTIFIER` is required.
+  case identifier // = 8
+  case UNRECOGNIZED(Int)
 
-    public init() {
-        self = .unspecified
+  public init() {
+    self = .unspecified
+  }
+
+  public init?(rawValue: Int) {
+    switch rawValue {
+    case 0: self = .unspecified
+    case 1: self = .optional
+    case 2: self = .required
+    case 3: self = .outputOnly
+    case 4: self = .inputOnly
+    case 5: self = .immutable
+    case 6: self = .unorderedList
+    case 7: self = .nonEmptyDefault
+    case 8: self = .identifier
+    default: self = .UNRECOGNIZED(rawValue)
     }
+  }
 
-    public init?(rawValue: Int) {
-        switch rawValue {
-        case 0: self = .unspecified
-        case 1: self = .optional
-        case 2: self = .required
-        case 3: self = .outputOnly
-        case 4: self = .inputOnly
-        case 5: self = .immutable
-        case 6: self = .unorderedList
-        case 7: self = .nonEmptyDefault
-        case 8: self = .identifier
-        default: self = .UNRECOGNIZED(rawValue)
-        }
+  public var rawValue: Int {
+    switch self {
+    case .unspecified: return 0
+    case .optional: return 1
+    case .required: return 2
+    case .outputOnly: return 3
+    case .inputOnly: return 4
+    case .immutable: return 5
+    case .unorderedList: return 6
+    case .nonEmptyDefault: return 7
+    case .identifier: return 8
+    case .UNRECOGNIZED(let i): return i
     }
+  }
 
-    public var rawValue: Int {
-        switch self {
-        case .unspecified: 0
-        case .optional: 1
-        case .required: 2
-        case .outputOnly: 3
-        case .inputOnly: 4
-        case .immutable: 5
-        case .unorderedList: 6
-        case .nonEmptyDefault: 7
-        case .identifier: 8
-        case let .UNRECOGNIZED(i): i
-        }
-    }
+  // The compiler won't synthesize support with the UNRECOGNIZED case.
+  public static let allCases: [Google_Api_FieldBehavior] = [
+    .unspecified,
+    .optional,
+    .required,
+    .outputOnly,
+    .inputOnly,
+    .immutable,
+    .unorderedList,
+    .nonEmptyDefault,
+    .identifier,
+  ]
 
-    // The compiler won't synthesize support with the UNRECOGNIZED case.
-    public static let allCases: [Google_Api_FieldBehavior] = [
-        .unspecified,
-        .optional,
-        .required,
-        .outputOnly,
-        .inputOnly,
-        .immutable,
-        .unorderedList,
-        .nonEmptyDefault,
-        .identifier,
-    ]
 }
 
 // MARK: - Extension support defined in field_behavior.proto.
@@ -156,23 +157,25 @@ public enum Google_Api_FieldBehavior: SwiftProtobuf.Enum, Swift.CaseIterable {
 // declaration. To avoid naming collisions, the names are prefixed with the name of
 // the scope where the extend directive occurs.
 
-public extension SwiftProtobuf.Google_Protobuf_FieldOptions {
-    /// A designation of a specific field behavior (required, output only, etc.)
-    /// in protobuf messages.
-    ///
-    /// Examples:
-    ///
-    ///   string name = 1 [(google.api.field_behavior) = REQUIRED];
-    ///   State state = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
-    ///   google.protobuf.Duration ttl = 1
-    ///     [(google.api.field_behavior) = INPUT_ONLY];
-    ///   google.protobuf.Timestamp expire_time = 1
-    ///     [(google.api.field_behavior) = OUTPUT_ONLY,
-    ///      (google.api.field_behavior) = IMMUTABLE];
-    var Google_Api_fieldBehavior: [Google_Api_FieldBehavior] {
-        get { getExtensionValue(ext: Google_Api_Extensions_field_behavior) ?? [] }
-        set { setExtensionValue(ext: Google_Api_Extensions_field_behavior, value: newValue) }
-    }
+extension SwiftProtobuf.Google_Protobuf_FieldOptions {
+
+  /// A designation of a specific field behavior (required, output only, etc.)
+  /// in protobuf messages.
+  ///
+  /// Examples:
+  ///
+  ///   string name = 1 [(google.api.field_behavior) = REQUIRED];
+  ///   State state = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+  ///   google.protobuf.Duration ttl = 1
+  ///     [(google.api.field_behavior) = INPUT_ONLY];
+  ///   google.protobuf.Timestamp expire_time = 1
+  ///     [(google.api.field_behavior) = OUTPUT_ONLY,
+  ///      (google.api.field_behavior) = IMMUTABLE];
+  public var Google_Api_fieldBehavior: [Google_Api_FieldBehavior] {
+    get {return getExtensionValue(ext: Google_Api_Extensions_field_behavior) ?? []}
+    set {setExtensionValue(ext: Google_Api_Extensions_field_behavior, value: newValue)}
+  }
+
 }
 
 // MARK: - File's ExtensionMap: Google_Api_FieldBehavior_Extensions
@@ -182,7 +185,7 @@ public extension SwiftProtobuf.Google_Protobuf_FieldOptions {
 /// in parsing, or it can be combined with other `SwiftProtobuf.SimpleExtensionMap`s to create
 /// a larger `SwiftProtobuf.SimpleExtensionMap`.
 public let Google_Api_FieldBehavior_Extensions: SwiftProtobuf.SimpleExtensionMap = [
-    Google_Api_Extensions_field_behavior,
+  Google_Api_Extensions_field_behavior
 ]
 
 // Extension Objects - The only reason these might be needed is when manually
@@ -202,12 +205,12 @@ public let Google_Api_FieldBehavior_Extensions: SwiftProtobuf.SimpleExtensionMap
 ///     [(google.api.field_behavior) = OUTPUT_ONLY,
 ///      (google.api.field_behavior) = IMMUTABLE];
 public let Google_Api_Extensions_field_behavior = SwiftProtobuf.MessageExtension<SwiftProtobuf.RepeatedEnumExtensionField<Google_Api_FieldBehavior>, SwiftProtobuf.Google_Protobuf_FieldOptions>(
-    _protobuf_fieldNumber: 1052,
-    fieldName: "google.api.field_behavior",
+  _protobuf_fieldNumber: 1052,
+  fieldName: "google.api.field_behavior"
 )
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
 extension Google_Api_FieldBehavior: SwiftProtobuf._ProtoNameProviding {
-    public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0FIELD_BEHAVIOR_UNSPECIFIED\0\u{1}OPTIONAL\0\u{1}REQUIRED\0\u{1}OUTPUT_ONLY\0\u{1}INPUT_ONLY\0\u{1}IMMUTABLE\0\u{1}UNORDERED_LIST\0\u{1}NON_EMPTY_DEFAULT\0\u{1}IDENTIFIER\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0FIELD_BEHAVIOR_UNSPECIFIED\0\u{1}OPTIONAL\0\u{1}REQUIRED\0\u{1}OUTPUT_ONLY\0\u{1}INPUT_ONLY\0\u{1}IMMUTABLE\0\u{1}UNORDERED_LIST\0\u{1}NON_EMPTY_DEFAULT\0\u{1}IDENTIFIER\0")
 }

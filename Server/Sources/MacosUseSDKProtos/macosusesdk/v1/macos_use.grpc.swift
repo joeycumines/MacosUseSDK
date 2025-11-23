@@ -34,10 +34,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "OpenApplication".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "OpenApplication",
+                method: "OpenApplication"
             )
         }
-
         /// Namespace for "GetApplication" metadata.
         public enum GetApplication {
             /// Request type for "GetApplication".
@@ -47,10 +46,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "GetApplication".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "GetApplication",
+                method: "GetApplication"
             )
         }
-
         /// Namespace for "ListApplications" metadata.
         public enum ListApplications {
             /// Request type for "ListApplications".
@@ -60,10 +58,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "ListApplications".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "ListApplications",
+                method: "ListApplications"
             )
         }
-
         /// Namespace for "DeleteApplication" metadata.
         public enum DeleteApplication {
             /// Request type for "DeleteApplication".
@@ -73,10 +70,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "DeleteApplication".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "DeleteApplication",
+                method: "DeleteApplication"
             )
         }
-
         /// Namespace for "CreateInput" metadata.
         public enum CreateInput {
             /// Request type for "CreateInput".
@@ -86,10 +82,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "CreateInput".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "CreateInput",
+                method: "CreateInput"
             )
         }
-
         /// Namespace for "GetInput" metadata.
         public enum GetInput {
             /// Request type for "GetInput".
@@ -99,10 +94,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "GetInput".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "GetInput",
+                method: "GetInput"
             )
         }
-
         /// Namespace for "ListInputs" metadata.
         public enum ListInputs {
             /// Request type for "ListInputs".
@@ -112,10 +106,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "ListInputs".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "ListInputs",
+                method: "ListInputs"
             )
         }
-
         /// Namespace for "TraverseAccessibility" metadata.
         public enum TraverseAccessibility {
             /// Request type for "TraverseAccessibility".
@@ -125,10 +118,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "TraverseAccessibility".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "TraverseAccessibility",
+                method: "TraverseAccessibility"
             )
         }
-
         /// Namespace for "WatchAccessibility" metadata.
         public enum WatchAccessibility {
             /// Request type for "WatchAccessibility".
@@ -138,10 +130,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "WatchAccessibility".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "WatchAccessibility",
+                method: "WatchAccessibility"
             )
         }
-
         /// Namespace for "GetWindow" metadata.
         public enum GetWindow {
             /// Request type for "GetWindow".
@@ -151,10 +142,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "GetWindow".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "GetWindow",
+                method: "GetWindow"
             )
         }
-
         /// Namespace for "ListWindows" metadata.
         public enum ListWindows {
             /// Request type for "ListWindows".
@@ -164,10 +154,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "ListWindows".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "ListWindows",
+                method: "ListWindows"
             )
         }
-
         /// Namespace for "GetWindowState" metadata.
         public enum GetWindowState {
             /// Request type for "GetWindowState".
@@ -177,10 +166,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "GetWindowState".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "GetWindowState",
+                method: "GetWindowState"
             )
         }
-
         /// Namespace for "FocusWindow" metadata.
         public enum FocusWindow {
             /// Request type for "FocusWindow".
@@ -190,10 +178,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "FocusWindow".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "FocusWindow",
+                method: "FocusWindow"
             )
         }
-
         /// Namespace for "MoveWindow" metadata.
         public enum MoveWindow {
             /// Request type for "MoveWindow".
@@ -203,10 +190,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "MoveWindow".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "MoveWindow",
+                method: "MoveWindow"
             )
         }
-
         /// Namespace for "ResizeWindow" metadata.
         public enum ResizeWindow {
             /// Request type for "ResizeWindow".
@@ -216,10 +202,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "ResizeWindow".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "ResizeWindow",
+                method: "ResizeWindow"
             )
         }
-
         /// Namespace for "MinimizeWindow" metadata.
         public enum MinimizeWindow {
             /// Request type for "MinimizeWindow".
@@ -229,10 +214,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "MinimizeWindow".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "MinimizeWindow",
+                method: "MinimizeWindow"
             )
         }
-
         /// Namespace for "RestoreWindow" metadata.
         public enum RestoreWindow {
             /// Request type for "RestoreWindow".
@@ -242,10 +226,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "RestoreWindow".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "RestoreWindow",
+                method: "RestoreWindow"
             )
         }
-
         /// Namespace for "CloseWindow" metadata.
         public enum CloseWindow {
             /// Request type for "CloseWindow".
@@ -255,10 +238,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "CloseWindow".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "CloseWindow",
+                method: "CloseWindow"
             )
         }
-
         /// Namespace for "FindElements" metadata.
         public enum FindElements {
             /// Request type for "FindElements".
@@ -268,10 +250,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "FindElements".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "FindElements",
+                method: "FindElements"
             )
         }
-
         /// Namespace for "FindRegionElements" metadata.
         public enum FindRegionElements {
             /// Request type for "FindRegionElements".
@@ -281,10 +262,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "FindRegionElements".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "FindRegionElements",
+                method: "FindRegionElements"
             )
         }
-
         /// Namespace for "GetElement" metadata.
         public enum GetElement {
             /// Request type for "GetElement".
@@ -294,10 +274,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "GetElement".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "GetElement",
+                method: "GetElement"
             )
         }
-
         /// Namespace for "ClickElement" metadata.
         public enum ClickElement {
             /// Request type for "ClickElement".
@@ -307,10 +286,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "ClickElement".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "ClickElement",
+                method: "ClickElement"
             )
         }
-
         /// Namespace for "WriteElementValue" metadata.
         public enum WriteElementValue {
             /// Request type for "WriteElementValue".
@@ -320,10 +298,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "WriteElementValue".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "WriteElementValue",
+                method: "WriteElementValue"
             )
         }
-
         /// Namespace for "GetElementActions" metadata.
         public enum GetElementActions {
             /// Request type for "GetElementActions".
@@ -333,10 +310,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "GetElementActions".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "GetElementActions",
+                method: "GetElementActions"
             )
         }
-
         /// Namespace for "PerformElementAction" metadata.
         public enum PerformElementAction {
             /// Request type for "PerformElementAction".
@@ -346,10 +322,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "PerformElementAction".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "PerformElementAction",
+                method: "PerformElementAction"
             )
         }
-
         /// Namespace for "WaitElement" metadata.
         public enum WaitElement {
             /// Request type for "WaitElement".
@@ -359,10 +334,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "WaitElement".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "WaitElement",
+                method: "WaitElement"
             )
         }
-
         /// Namespace for "WaitElementState" metadata.
         public enum WaitElementState {
             /// Request type for "WaitElementState".
@@ -372,10 +346,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "WaitElementState".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "WaitElementState",
+                method: "WaitElementState"
             )
         }
-
         /// Namespace for "CreateObservation" metadata.
         public enum CreateObservation {
             /// Request type for "CreateObservation".
@@ -385,10 +358,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "CreateObservation".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "CreateObservation",
+                method: "CreateObservation"
             )
         }
-
         /// Namespace for "GetObservation" metadata.
         public enum GetObservation {
             /// Request type for "GetObservation".
@@ -398,10 +370,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "GetObservation".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "GetObservation",
+                method: "GetObservation"
             )
         }
-
         /// Namespace for "ListObservations" metadata.
         public enum ListObservations {
             /// Request type for "ListObservations".
@@ -411,10 +382,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "ListObservations".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "ListObservations",
+                method: "ListObservations"
             )
         }
-
         /// Namespace for "CancelObservation" metadata.
         public enum CancelObservation {
             /// Request type for "CancelObservation".
@@ -424,10 +394,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "CancelObservation".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "CancelObservation",
+                method: "CancelObservation"
             )
         }
-
         /// Namespace for "StreamObservations" metadata.
         public enum StreamObservations {
             /// Request type for "StreamObservations".
@@ -437,10 +406,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "StreamObservations".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "StreamObservations",
+                method: "StreamObservations"
             )
         }
-
         /// Namespace for "CreateSession" metadata.
         public enum CreateSession {
             /// Request type for "CreateSession".
@@ -450,10 +418,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "CreateSession".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "CreateSession",
+                method: "CreateSession"
             )
         }
-
         /// Namespace for "GetSession" metadata.
         public enum GetSession {
             /// Request type for "GetSession".
@@ -463,10 +430,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "GetSession".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "GetSession",
+                method: "GetSession"
             )
         }
-
         /// Namespace for "ListSessions" metadata.
         public enum ListSessions {
             /// Request type for "ListSessions".
@@ -476,10 +442,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "ListSessions".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "ListSessions",
+                method: "ListSessions"
             )
         }
-
         /// Namespace for "DeleteSession" metadata.
         public enum DeleteSession {
             /// Request type for "DeleteSession".
@@ -489,10 +454,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "DeleteSession".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "DeleteSession",
+                method: "DeleteSession"
             )
         }
-
         /// Namespace for "BeginTransaction" metadata.
         public enum BeginTransaction {
             /// Request type for "BeginTransaction".
@@ -502,10 +466,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "BeginTransaction".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "BeginTransaction",
+                method: "BeginTransaction"
             )
         }
-
         /// Namespace for "CommitTransaction" metadata.
         public enum CommitTransaction {
             /// Request type for "CommitTransaction".
@@ -515,10 +478,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "CommitTransaction".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "CommitTransaction",
+                method: "CommitTransaction"
             )
         }
-
         /// Namespace for "RollbackTransaction" metadata.
         public enum RollbackTransaction {
             /// Request type for "RollbackTransaction".
@@ -528,10 +490,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "RollbackTransaction".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "RollbackTransaction",
+                method: "RollbackTransaction"
             )
         }
-
         /// Namespace for "GetSessionSnapshot" metadata.
         public enum GetSessionSnapshot {
             /// Request type for "GetSessionSnapshot".
@@ -541,10 +502,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "GetSessionSnapshot".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "GetSessionSnapshot",
+                method: "GetSessionSnapshot"
             )
         }
-
         /// Namespace for "CaptureScreenshot" metadata.
         public enum CaptureScreenshot {
             /// Request type for "CaptureScreenshot".
@@ -554,10 +514,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "CaptureScreenshot".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "CaptureScreenshot",
+                method: "CaptureScreenshot"
             )
         }
-
         /// Namespace for "CaptureWindowScreenshot" metadata.
         public enum CaptureWindowScreenshot {
             /// Request type for "CaptureWindowScreenshot".
@@ -567,10 +526,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "CaptureWindowScreenshot".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "CaptureWindowScreenshot",
+                method: "CaptureWindowScreenshot"
             )
         }
-
         /// Namespace for "CaptureElementScreenshot" metadata.
         public enum CaptureElementScreenshot {
             /// Request type for "CaptureElementScreenshot".
@@ -580,10 +538,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "CaptureElementScreenshot".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "CaptureElementScreenshot",
+                method: "CaptureElementScreenshot"
             )
         }
-
         /// Namespace for "CaptureRegionScreenshot" metadata.
         public enum CaptureRegionScreenshot {
             /// Request type for "CaptureRegionScreenshot".
@@ -593,10 +550,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "CaptureRegionScreenshot".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "CaptureRegionScreenshot",
+                method: "CaptureRegionScreenshot"
             )
         }
-
         /// Namespace for "GetClipboard" metadata.
         public enum GetClipboard {
             /// Request type for "GetClipboard".
@@ -606,10 +562,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "GetClipboard".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "GetClipboard",
+                method: "GetClipboard"
             )
         }
-
         /// Namespace for "WriteClipboard" metadata.
         public enum WriteClipboard {
             /// Request type for "WriteClipboard".
@@ -619,10 +574,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "WriteClipboard".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "WriteClipboard",
+                method: "WriteClipboard"
             )
         }
-
         /// Namespace for "ClearClipboard" metadata.
         public enum ClearClipboard {
             /// Request type for "ClearClipboard".
@@ -632,10 +586,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "ClearClipboard".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "ClearClipboard",
+                method: "ClearClipboard"
             )
         }
-
         /// Namespace for "GetClipboardHistory" metadata.
         public enum GetClipboardHistory {
             /// Request type for "GetClipboardHistory".
@@ -645,10 +598,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "GetClipboardHistory".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "GetClipboardHistory",
+                method: "GetClipboardHistory"
             )
         }
-
         /// Namespace for "AutomateOpenFileDialog" metadata.
         public enum AutomateOpenFileDialog {
             /// Request type for "AutomateOpenFileDialog".
@@ -658,10 +610,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "AutomateOpenFileDialog".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "AutomateOpenFileDialog",
+                method: "AutomateOpenFileDialog"
             )
         }
-
         /// Namespace for "AutomateSaveFileDialog" metadata.
         public enum AutomateSaveFileDialog {
             /// Request type for "AutomateSaveFileDialog".
@@ -671,10 +622,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "AutomateSaveFileDialog".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "AutomateSaveFileDialog",
+                method: "AutomateSaveFileDialog"
             )
         }
-
         /// Namespace for "SelectFile" metadata.
         public enum SelectFile {
             /// Request type for "SelectFile".
@@ -684,10 +634,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "SelectFile".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "SelectFile",
+                method: "SelectFile"
             )
         }
-
         /// Namespace for "SelectDirectory" metadata.
         public enum SelectDirectory {
             /// Request type for "SelectDirectory".
@@ -697,10 +646,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "SelectDirectory".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "SelectDirectory",
+                method: "SelectDirectory"
             )
         }
-
         /// Namespace for "DragFiles" metadata.
         public enum DragFiles {
             /// Request type for "DragFiles".
@@ -710,10 +658,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "DragFiles".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "DragFiles",
+                method: "DragFiles"
             )
         }
-
         /// Namespace for "CreateMacro" metadata.
         public enum CreateMacro {
             /// Request type for "CreateMacro".
@@ -723,10 +670,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "CreateMacro".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "CreateMacro",
+                method: "CreateMacro"
             )
         }
-
         /// Namespace for "GetMacro" metadata.
         public enum GetMacro {
             /// Request type for "GetMacro".
@@ -736,10 +682,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "GetMacro".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "GetMacro",
+                method: "GetMacro"
             )
         }
-
         /// Namespace for "ListMacros" metadata.
         public enum ListMacros {
             /// Request type for "ListMacros".
@@ -749,10 +694,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "ListMacros".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "ListMacros",
+                method: "ListMacros"
             )
         }
-
         /// Namespace for "UpdateMacro" metadata.
         public enum UpdateMacro {
             /// Request type for "UpdateMacro".
@@ -762,10 +706,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "UpdateMacro".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "UpdateMacro",
+                method: "UpdateMacro"
             )
         }
-
         /// Namespace for "DeleteMacro" metadata.
         public enum DeleteMacro {
             /// Request type for "DeleteMacro".
@@ -775,10 +718,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "DeleteMacro".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "DeleteMacro",
+                method: "DeleteMacro"
             )
         }
-
         /// Namespace for "ExecuteMacro" metadata.
         public enum ExecuteMacro {
             /// Request type for "ExecuteMacro".
@@ -788,10 +730,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "ExecuteMacro".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "ExecuteMacro",
+                method: "ExecuteMacro"
             )
         }
-
         /// Namespace for "ExecuteAppleScript" metadata.
         public enum ExecuteAppleScript {
             /// Request type for "ExecuteAppleScript".
@@ -801,10 +742,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "ExecuteAppleScript".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "ExecuteAppleScript",
+                method: "ExecuteAppleScript"
             )
         }
-
         /// Namespace for "ExecuteJavaScript" metadata.
         public enum ExecuteJavaScript {
             /// Request type for "ExecuteJavaScript".
@@ -814,10 +754,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "ExecuteJavaScript".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "ExecuteJavaScript",
+                method: "ExecuteJavaScript"
             )
         }
-
         /// Namespace for "ExecuteShellCommand" metadata.
         public enum ExecuteShellCommand {
             /// Request type for "ExecuteShellCommand".
@@ -827,10 +766,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "ExecuteShellCommand".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "ExecuteShellCommand",
+                method: "ExecuteShellCommand"
             )
         }
-
         /// Namespace for "ValidateScript" metadata.
         public enum ValidateScript {
             /// Request type for "ValidateScript".
@@ -840,10 +778,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "ValidateScript".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "ValidateScript",
+                method: "ValidateScript"
             )
         }
-
         /// Namespace for "GetScriptingDictionaries" metadata.
         public enum GetScriptingDictionaries {
             /// Request type for "GetScriptingDictionaries".
@@ -853,10 +790,9 @@ public enum Macosusesdk_V1_MacosUse {
             /// Descriptor for "GetScriptingDictionaries".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "GetScriptingDictionaries",
+                method: "GetScriptingDictionaries"
             )
         }
-
         /// Descriptors for all methods in the "macosusesdk.v1.MacosUse" service.
         public static let descriptors: [GRPCCore.MethodDescriptor] = [
             OpenApplication.descriptor,
@@ -922,21 +858,21 @@ public enum Macosusesdk_V1_MacosUse {
             ExecuteJavaScript.descriptor,
             ExecuteShellCommand.descriptor,
             ValidateScript.descriptor,
-            GetScriptingDictionaries.descriptor,
+            GetScriptingDictionaries.descriptor
         ]
     }
 }
 
 @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
-public extension GRPCCore.ServiceDescriptor {
+extension GRPCCore.ServiceDescriptor {
     /// Service descriptor for the "macosusesdk.v1.MacosUse" service.
-    static let macosusesdk_v1_MacosUse = GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse")
+    public static let macosusesdk_v1_MacosUse = GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse")
 }
 
 // MARK: macosusesdk.v1.MacosUse (server)
 
 @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
-public extension Macosusesdk_V1_MacosUse {
+extension Macosusesdk_V1_MacosUse {
     /// Streaming variant of the service protocol for the "macosusesdk.v1.MacosUse" service.
     ///
     /// This protocol is the lowest-level of the service protocols generated for this service
@@ -951,7 +887,7 @@ public extension Macosusesdk_V1_MacosUse {
     /// > Source IDL Documentation:
     /// >
     /// > MacosUse is the primary service for automating macOS applications.
-    protocol StreamingServiceProtocol: GRPCCore.RegistrableRPCService {
+    public protocol StreamingServiceProtocol: GRPCCore.RegistrableRPCService {
         /// Handle the "OpenApplication" method.
         ///
         /// > Source IDL Documentation:
@@ -967,7 +903,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Google_Longrunning_Operation` messages.
         func openApplication(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_OpenApplicationRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Google_Longrunning_Operation>
 
         /// Handle the "GetApplication" method.
@@ -985,7 +921,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_Application` messages.
         func getApplication(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetApplicationRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Application>
 
         /// Handle the "ListApplications" method.
@@ -1003,7 +939,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_ListApplicationsResponse` messages.
         func listApplications(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ListApplicationsRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ListApplicationsResponse>
 
         /// Handle the "DeleteApplication" method.
@@ -1021,7 +957,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `SwiftProtobuf.Google_Protobuf_Empty` messages.
         func deleteApplication(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_DeleteApplicationRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<SwiftProtobuf.Google_Protobuf_Empty>
 
         /// Handle the "CreateInput" method.
@@ -1039,7 +975,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_Input` messages.
         func createInput(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_CreateInputRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Input>
 
         /// Handle the "GetInput" method.
@@ -1057,7 +993,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_Input` messages.
         func getInput(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetInputRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Input>
 
         /// Handle the "ListInputs" method.
@@ -1075,7 +1011,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_ListInputsResponse` messages.
         func listInputs(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ListInputsRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ListInputsResponse>
 
         /// Handle the "TraverseAccessibility" method.
@@ -1093,7 +1029,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_TraverseAccessibilityResponse` messages.
         func traverseAccessibility(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_TraverseAccessibilityRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_TraverseAccessibilityResponse>
 
         /// Handle the "WatchAccessibility" method.
@@ -1111,7 +1047,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_WatchAccessibilityResponse` messages.
         func watchAccessibility(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_WatchAccessibilityRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_WatchAccessibilityResponse>
 
         /// Handle the "GetWindow" method.
@@ -1129,7 +1065,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_Window` messages.
         func getWindow(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetWindowRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Window>
 
         /// Handle the "ListWindows" method.
@@ -1147,7 +1083,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_ListWindowsResponse` messages.
         func listWindows(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ListWindowsRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ListWindowsResponse>
 
         /// Handle the "GetWindowState" method.
@@ -1165,7 +1101,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_WindowState` messages.
         func getWindowState(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetWindowStateRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_WindowState>
 
         /// Handle the "FocusWindow" method.
@@ -1183,7 +1119,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_Window` messages.
         func focusWindow(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_FocusWindowRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Window>
 
         /// Handle the "MoveWindow" method.
@@ -1201,7 +1137,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_Window` messages.
         func moveWindow(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_MoveWindowRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Window>
 
         /// Handle the "ResizeWindow" method.
@@ -1219,7 +1155,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_Window` messages.
         func resizeWindow(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ResizeWindowRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Window>
 
         /// Handle the "MinimizeWindow" method.
@@ -1237,7 +1173,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_Window` messages.
         func minimizeWindow(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_MinimizeWindowRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Window>
 
         /// Handle the "RestoreWindow" method.
@@ -1255,7 +1191,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_Window` messages.
         func restoreWindow(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_RestoreWindowRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Window>
 
         /// Handle the "CloseWindow" method.
@@ -1273,7 +1209,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_CloseWindowResponse` messages.
         func closeWindow(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_CloseWindowRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_CloseWindowResponse>
 
         /// Handle the "FindElements" method.
@@ -1291,7 +1227,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_FindElementsResponse` messages.
         func findElements(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_FindElementsRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_FindElementsResponse>
 
         /// Handle the "FindRegionElements" method.
@@ -1309,7 +1245,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_FindRegionElementsResponse` messages.
         func findRegionElements(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_FindRegionElementsRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_FindRegionElementsResponse>
 
         /// Handle the "GetElement" method.
@@ -1327,7 +1263,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_Type_Element` messages.
         func getElement(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetElementRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_Type_Element>
 
         /// Handle the "ClickElement" method.
@@ -1345,7 +1281,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_ClickElementResponse` messages.
         func clickElement(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ClickElementRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ClickElementResponse>
 
         /// Handle the "WriteElementValue" method.
@@ -1363,7 +1299,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_WriteElementValueResponse` messages.
         func writeElementValue(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_WriteElementValueRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_WriteElementValueResponse>
 
         /// Handle the "GetElementActions" method.
@@ -1381,7 +1317,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_ElementActions` messages.
         func getElementActions(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetElementActionsRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ElementActions>
 
         /// Handle the "PerformElementAction" method.
@@ -1399,7 +1335,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_PerformElementActionResponse` messages.
         func performElementAction(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_PerformElementActionRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_PerformElementActionResponse>
 
         /// Handle the "WaitElement" method.
@@ -1417,7 +1353,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Google_Longrunning_Operation` messages.
         func waitElement(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_WaitElementRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Google_Longrunning_Operation>
 
         /// Handle the "WaitElementState" method.
@@ -1435,7 +1371,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Google_Longrunning_Operation` messages.
         func waitElementState(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_WaitElementStateRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Google_Longrunning_Operation>
 
         /// Handle the "CreateObservation" method.
@@ -1453,7 +1389,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Google_Longrunning_Operation` messages.
         func createObservation(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_CreateObservationRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Google_Longrunning_Operation>
 
         /// Handle the "GetObservation" method.
@@ -1471,7 +1407,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_Observation` messages.
         func getObservation(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetObservationRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Observation>
 
         /// Handle the "ListObservations" method.
@@ -1489,7 +1425,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_ListObservationsResponse` messages.
         func listObservations(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ListObservationsRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ListObservationsResponse>
 
         /// Handle the "CancelObservation" method.
@@ -1507,7 +1443,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_Observation` messages.
         func cancelObservation(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_CancelObservationRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Observation>
 
         /// Handle the "StreamObservations" method.
@@ -1525,7 +1461,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_StreamObservationsResponse` messages.
         func streamObservations(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_StreamObservationsRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_StreamObservationsResponse>
 
         /// Handle the "CreateSession" method.
@@ -1543,7 +1479,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_Session` messages.
         func createSession(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_CreateSessionRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Session>
 
         /// Handle the "GetSession" method.
@@ -1561,7 +1497,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_Session` messages.
         func getSession(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetSessionRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Session>
 
         /// Handle the "ListSessions" method.
@@ -1579,7 +1515,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_ListSessionsResponse` messages.
         func listSessions(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ListSessionsRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ListSessionsResponse>
 
         /// Handle the "DeleteSession" method.
@@ -1597,7 +1533,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `SwiftProtobuf.Google_Protobuf_Empty` messages.
         func deleteSession(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_DeleteSessionRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<SwiftProtobuf.Google_Protobuf_Empty>
 
         /// Handle the "BeginTransaction" method.
@@ -1615,7 +1551,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_BeginTransactionResponse` messages.
         func beginTransaction(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_BeginTransactionRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_BeginTransactionResponse>
 
         /// Handle the "CommitTransaction" method.
@@ -1633,7 +1569,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_Transaction` messages.
         func commitTransaction(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_CommitTransactionRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Transaction>
 
         /// Handle the "RollbackTransaction" method.
@@ -1651,7 +1587,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_Transaction` messages.
         func rollbackTransaction(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_RollbackTransactionRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Transaction>
 
         /// Handle the "GetSessionSnapshot" method.
@@ -1669,7 +1605,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_SessionSnapshot` messages.
         func getSessionSnapshot(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetSessionSnapshotRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_SessionSnapshot>
 
         /// Handle the "CaptureScreenshot" method.
@@ -1687,7 +1623,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_CaptureScreenshotResponse` messages.
         func captureScreenshot(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_CaptureScreenshotRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_CaptureScreenshotResponse>
 
         /// Handle the "CaptureWindowScreenshot" method.
@@ -1705,7 +1641,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_CaptureWindowScreenshotResponse` messages.
         func captureWindowScreenshot(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_CaptureWindowScreenshotRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_CaptureWindowScreenshotResponse>
 
         /// Handle the "CaptureElementScreenshot" method.
@@ -1723,7 +1659,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_CaptureElementScreenshotResponse` messages.
         func captureElementScreenshot(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_CaptureElementScreenshotRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_CaptureElementScreenshotResponse>
 
         /// Handle the "CaptureRegionScreenshot" method.
@@ -1741,7 +1677,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_CaptureRegionScreenshotResponse` messages.
         func captureRegionScreenshot(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_CaptureRegionScreenshotRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_CaptureRegionScreenshotResponse>
 
         /// Handle the "GetClipboard" method.
@@ -1759,7 +1695,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_Clipboard` messages.
         func getClipboard(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetClipboardRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Clipboard>
 
         /// Handle the "WriteClipboard" method.
@@ -1777,7 +1713,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_WriteClipboardResponse` messages.
         func writeClipboard(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_WriteClipboardRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_WriteClipboardResponse>
 
         /// Handle the "ClearClipboard" method.
@@ -1795,7 +1731,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_ClearClipboardResponse` messages.
         func clearClipboard(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ClearClipboardRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ClearClipboardResponse>
 
         /// Handle the "GetClipboardHistory" method.
@@ -1813,7 +1749,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_ClipboardHistory` messages.
         func getClipboardHistory(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetClipboardHistoryRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ClipboardHistory>
 
         /// Handle the "AutomateOpenFileDialog" method.
@@ -1831,7 +1767,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_AutomateOpenFileDialogResponse` messages.
         func automateOpenFileDialog(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_AutomateOpenFileDialogRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_AutomateOpenFileDialogResponse>
 
         /// Handle the "AutomateSaveFileDialog" method.
@@ -1849,7 +1785,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_AutomateSaveFileDialogResponse` messages.
         func automateSaveFileDialog(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_AutomateSaveFileDialogRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_AutomateSaveFileDialogResponse>
 
         /// Handle the "SelectFile" method.
@@ -1867,7 +1803,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_SelectFileResponse` messages.
         func selectFile(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_SelectFileRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_SelectFileResponse>
 
         /// Handle the "SelectDirectory" method.
@@ -1885,7 +1821,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_SelectDirectoryResponse` messages.
         func selectDirectory(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_SelectDirectoryRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_SelectDirectoryResponse>
 
         /// Handle the "DragFiles" method.
@@ -1903,7 +1839,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_DragFilesResponse` messages.
         func dragFiles(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_DragFilesRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_DragFilesResponse>
 
         /// Handle the "CreateMacro" method.
@@ -1921,7 +1857,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_Macro` messages.
         func createMacro(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_CreateMacroRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Macro>
 
         /// Handle the "GetMacro" method.
@@ -1939,7 +1875,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_Macro` messages.
         func getMacro(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetMacroRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Macro>
 
         /// Handle the "ListMacros" method.
@@ -1957,7 +1893,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_ListMacrosResponse` messages.
         func listMacros(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ListMacrosRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ListMacrosResponse>
 
         /// Handle the "UpdateMacro" method.
@@ -1975,7 +1911,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_Macro` messages.
         func updateMacro(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_UpdateMacroRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Macro>
 
         /// Handle the "DeleteMacro" method.
@@ -1993,7 +1929,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `SwiftProtobuf.Google_Protobuf_Empty` messages.
         func deleteMacro(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_DeleteMacroRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<SwiftProtobuf.Google_Protobuf_Empty>
 
         /// Handle the "ExecuteMacro" method.
@@ -2011,7 +1947,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Google_Longrunning_Operation` messages.
         func executeMacro(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ExecuteMacroRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Google_Longrunning_Operation>
 
         /// Handle the "ExecuteAppleScript" method.
@@ -2029,7 +1965,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_ExecuteAppleScriptResponse` messages.
         func executeAppleScript(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ExecuteAppleScriptRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ExecuteAppleScriptResponse>
 
         /// Handle the "ExecuteJavaScript" method.
@@ -2047,7 +1983,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_ExecuteJavaScriptResponse` messages.
         func executeJavaScript(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ExecuteJavaScriptRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ExecuteJavaScriptResponse>
 
         /// Handle the "ExecuteShellCommand" method.
@@ -2065,7 +2001,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_ExecuteShellCommandResponse` messages.
         func executeShellCommand(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ExecuteShellCommandRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ExecuteShellCommandResponse>
 
         /// Handle the "ValidateScript" method.
@@ -2083,7 +2019,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_ValidateScriptResponse` messages.
         func validateScript(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ValidateScriptRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ValidateScriptResponse>
 
         /// Handle the "GetScriptingDictionaries" method.
@@ -2101,7 +2037,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_ScriptingDictionaries` messages.
         func getScriptingDictionaries(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetScriptingDictionariesRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ScriptingDictionaries>
     }
 
@@ -2116,7 +2052,7 @@ public extension Macosusesdk_V1_MacosUse {
     /// > Source IDL Documentation:
     /// >
     /// > MacosUse is the primary service for automating macOS applications.
-    protocol ServiceProtocol: Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
+    public protocol ServiceProtocol: Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
         /// Handle the "OpenApplication" method.
         ///
         /// > Source IDL Documentation:
@@ -2132,7 +2068,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Google_Longrunning_Operation` message.
         func openApplication(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_OpenApplicationRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Google_Longrunning_Operation>
 
         /// Handle the "GetApplication" method.
@@ -2150,7 +2086,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_Application` message.
         func getApplication(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_GetApplicationRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Application>
 
         /// Handle the "ListApplications" method.
@@ -2168,7 +2104,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_ListApplicationsResponse` message.
         func listApplications(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_ListApplicationsRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ListApplicationsResponse>
 
         /// Handle the "DeleteApplication" method.
@@ -2186,7 +2122,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `SwiftProtobuf.Google_Protobuf_Empty` message.
         func deleteApplication(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_DeleteApplicationRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<SwiftProtobuf.Google_Protobuf_Empty>
 
         /// Handle the "CreateInput" method.
@@ -2204,7 +2140,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_Input` message.
         func createInput(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_CreateInputRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Input>
 
         /// Handle the "GetInput" method.
@@ -2222,7 +2158,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_Input` message.
         func getInput(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_GetInputRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Input>
 
         /// Handle the "ListInputs" method.
@@ -2240,7 +2176,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_ListInputsResponse` message.
         func listInputs(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_ListInputsRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ListInputsResponse>
 
         /// Handle the "TraverseAccessibility" method.
@@ -2258,7 +2194,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_TraverseAccessibilityResponse` message.
         func traverseAccessibility(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_TraverseAccessibilityRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_TraverseAccessibilityResponse>
 
         /// Handle the "WatchAccessibility" method.
@@ -2276,7 +2212,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_WatchAccessibilityResponse` messages.
         func watchAccessibility(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_WatchAccessibilityRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_WatchAccessibilityResponse>
 
         /// Handle the "GetWindow" method.
@@ -2294,7 +2230,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_Window` message.
         func getWindow(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_GetWindowRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Window>
 
         /// Handle the "ListWindows" method.
@@ -2312,7 +2248,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_ListWindowsResponse` message.
         func listWindows(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_ListWindowsRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ListWindowsResponse>
 
         /// Handle the "GetWindowState" method.
@@ -2330,7 +2266,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_WindowState` message.
         func getWindowState(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_GetWindowStateRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_WindowState>
 
         /// Handle the "FocusWindow" method.
@@ -2348,7 +2284,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_Window` message.
         func focusWindow(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_FocusWindowRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Window>
 
         /// Handle the "MoveWindow" method.
@@ -2366,7 +2302,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_Window` message.
         func moveWindow(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_MoveWindowRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Window>
 
         /// Handle the "ResizeWindow" method.
@@ -2384,7 +2320,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_Window` message.
         func resizeWindow(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_ResizeWindowRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Window>
 
         /// Handle the "MinimizeWindow" method.
@@ -2402,7 +2338,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_Window` message.
         func minimizeWindow(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_MinimizeWindowRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Window>
 
         /// Handle the "RestoreWindow" method.
@@ -2420,7 +2356,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_Window` message.
         func restoreWindow(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_RestoreWindowRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Window>
 
         /// Handle the "CloseWindow" method.
@@ -2438,7 +2374,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_CloseWindowResponse` message.
         func closeWindow(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_CloseWindowRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_CloseWindowResponse>
 
         /// Handle the "FindElements" method.
@@ -2456,7 +2392,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_FindElementsResponse` message.
         func findElements(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_FindElementsRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_FindElementsResponse>
 
         /// Handle the "FindRegionElements" method.
@@ -2474,7 +2410,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_FindRegionElementsResponse` message.
         func findRegionElements(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_FindRegionElementsRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_FindRegionElementsResponse>
 
         /// Handle the "GetElement" method.
@@ -2492,7 +2428,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_Type_Element` message.
         func getElement(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_GetElementRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_Type_Element>
 
         /// Handle the "ClickElement" method.
@@ -2510,7 +2446,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_ClickElementResponse` message.
         func clickElement(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_ClickElementRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ClickElementResponse>
 
         /// Handle the "WriteElementValue" method.
@@ -2528,7 +2464,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_WriteElementValueResponse` message.
         func writeElementValue(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_WriteElementValueRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_WriteElementValueResponse>
 
         /// Handle the "GetElementActions" method.
@@ -2546,7 +2482,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_ElementActions` message.
         func getElementActions(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_GetElementActionsRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ElementActions>
 
         /// Handle the "PerformElementAction" method.
@@ -2564,7 +2500,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_PerformElementActionResponse` message.
         func performElementAction(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_PerformElementActionRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_PerformElementActionResponse>
 
         /// Handle the "WaitElement" method.
@@ -2582,7 +2518,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Google_Longrunning_Operation` message.
         func waitElement(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_WaitElementRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Google_Longrunning_Operation>
 
         /// Handle the "WaitElementState" method.
@@ -2600,7 +2536,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Google_Longrunning_Operation` message.
         func waitElementState(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_WaitElementStateRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Google_Longrunning_Operation>
 
         /// Handle the "CreateObservation" method.
@@ -2618,7 +2554,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Google_Longrunning_Operation` message.
         func createObservation(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_CreateObservationRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Google_Longrunning_Operation>
 
         /// Handle the "GetObservation" method.
@@ -2636,7 +2572,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_Observation` message.
         func getObservation(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_GetObservationRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Observation>
 
         /// Handle the "ListObservations" method.
@@ -2654,7 +2590,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_ListObservationsResponse` message.
         func listObservations(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_ListObservationsRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ListObservationsResponse>
 
         /// Handle the "CancelObservation" method.
@@ -2672,7 +2608,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_Observation` message.
         func cancelObservation(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_CancelObservationRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Observation>
 
         /// Handle the "StreamObservations" method.
@@ -2690,7 +2626,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A streaming response of `Macosusesdk_V1_StreamObservationsResponse` messages.
         func streamObservations(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_StreamObservationsRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_StreamObservationsResponse>
 
         /// Handle the "CreateSession" method.
@@ -2708,7 +2644,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_Session` message.
         func createSession(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_CreateSessionRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Session>
 
         /// Handle the "GetSession" method.
@@ -2726,7 +2662,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_Session` message.
         func getSession(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_GetSessionRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Session>
 
         /// Handle the "ListSessions" method.
@@ -2744,7 +2680,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_ListSessionsResponse` message.
         func listSessions(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_ListSessionsRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ListSessionsResponse>
 
         /// Handle the "DeleteSession" method.
@@ -2762,7 +2698,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `SwiftProtobuf.Google_Protobuf_Empty` message.
         func deleteSession(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_DeleteSessionRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<SwiftProtobuf.Google_Protobuf_Empty>
 
         /// Handle the "BeginTransaction" method.
@@ -2780,7 +2716,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_BeginTransactionResponse` message.
         func beginTransaction(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_BeginTransactionRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_BeginTransactionResponse>
 
         /// Handle the "CommitTransaction" method.
@@ -2798,7 +2734,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_Transaction` message.
         func commitTransaction(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_CommitTransactionRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Transaction>
 
         /// Handle the "RollbackTransaction" method.
@@ -2816,7 +2752,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_Transaction` message.
         func rollbackTransaction(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_RollbackTransactionRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Transaction>
 
         /// Handle the "GetSessionSnapshot" method.
@@ -2834,7 +2770,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_SessionSnapshot` message.
         func getSessionSnapshot(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_GetSessionSnapshotRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_SessionSnapshot>
 
         /// Handle the "CaptureScreenshot" method.
@@ -2852,7 +2788,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_CaptureScreenshotResponse` message.
         func captureScreenshot(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_CaptureScreenshotRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_CaptureScreenshotResponse>
 
         /// Handle the "CaptureWindowScreenshot" method.
@@ -2870,7 +2806,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_CaptureWindowScreenshotResponse` message.
         func captureWindowScreenshot(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_CaptureWindowScreenshotRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_CaptureWindowScreenshotResponse>
 
         /// Handle the "CaptureElementScreenshot" method.
@@ -2888,7 +2824,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_CaptureElementScreenshotResponse` message.
         func captureElementScreenshot(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_CaptureElementScreenshotRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_CaptureElementScreenshotResponse>
 
         /// Handle the "CaptureRegionScreenshot" method.
@@ -2906,7 +2842,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_CaptureRegionScreenshotResponse` message.
         func captureRegionScreenshot(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_CaptureRegionScreenshotRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_CaptureRegionScreenshotResponse>
 
         /// Handle the "GetClipboard" method.
@@ -2924,7 +2860,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_Clipboard` message.
         func getClipboard(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_GetClipboardRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Clipboard>
 
         /// Handle the "WriteClipboard" method.
@@ -2942,7 +2878,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_WriteClipboardResponse` message.
         func writeClipboard(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_WriteClipboardRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_WriteClipboardResponse>
 
         /// Handle the "ClearClipboard" method.
@@ -2960,7 +2896,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_ClearClipboardResponse` message.
         func clearClipboard(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_ClearClipboardRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ClearClipboardResponse>
 
         /// Handle the "GetClipboardHistory" method.
@@ -2978,7 +2914,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_ClipboardHistory` message.
         func getClipboardHistory(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_GetClipboardHistoryRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ClipboardHistory>
 
         /// Handle the "AutomateOpenFileDialog" method.
@@ -2996,7 +2932,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_AutomateOpenFileDialogResponse` message.
         func automateOpenFileDialog(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_AutomateOpenFileDialogRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_AutomateOpenFileDialogResponse>
 
         /// Handle the "AutomateSaveFileDialog" method.
@@ -3014,7 +2950,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_AutomateSaveFileDialogResponse` message.
         func automateSaveFileDialog(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_AutomateSaveFileDialogRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_AutomateSaveFileDialogResponse>
 
         /// Handle the "SelectFile" method.
@@ -3032,7 +2968,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_SelectFileResponse` message.
         func selectFile(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_SelectFileRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_SelectFileResponse>
 
         /// Handle the "SelectDirectory" method.
@@ -3050,7 +2986,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_SelectDirectoryResponse` message.
         func selectDirectory(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_SelectDirectoryRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_SelectDirectoryResponse>
 
         /// Handle the "DragFiles" method.
@@ -3068,7 +3004,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_DragFilesResponse` message.
         func dragFiles(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_DragFilesRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_DragFilesResponse>
 
         /// Handle the "CreateMacro" method.
@@ -3086,7 +3022,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_Macro` message.
         func createMacro(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_CreateMacroRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Macro>
 
         /// Handle the "GetMacro" method.
@@ -3104,7 +3040,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_Macro` message.
         func getMacro(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_GetMacroRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Macro>
 
         /// Handle the "ListMacros" method.
@@ -3122,7 +3058,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_ListMacrosResponse` message.
         func listMacros(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_ListMacrosRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ListMacrosResponse>
 
         /// Handle the "UpdateMacro" method.
@@ -3140,7 +3076,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_Macro` message.
         func updateMacro(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_UpdateMacroRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Macro>
 
         /// Handle the "DeleteMacro" method.
@@ -3158,7 +3094,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `SwiftProtobuf.Google_Protobuf_Empty` message.
         func deleteMacro(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_DeleteMacroRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<SwiftProtobuf.Google_Protobuf_Empty>
 
         /// Handle the "ExecuteMacro" method.
@@ -3176,7 +3112,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Google_Longrunning_Operation` message.
         func executeMacro(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_ExecuteMacroRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Google_Longrunning_Operation>
 
         /// Handle the "ExecuteAppleScript" method.
@@ -3194,7 +3130,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_ExecuteAppleScriptResponse` message.
         func executeAppleScript(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_ExecuteAppleScriptRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ExecuteAppleScriptResponse>
 
         /// Handle the "ExecuteJavaScript" method.
@@ -3212,7 +3148,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_ExecuteJavaScriptResponse` message.
         func executeJavaScript(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_ExecuteJavaScriptRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ExecuteJavaScriptResponse>
 
         /// Handle the "ExecuteShellCommand" method.
@@ -3230,7 +3166,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_ExecuteShellCommandResponse` message.
         func executeShellCommand(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_ExecuteShellCommandRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ExecuteShellCommandResponse>
 
         /// Handle the "ValidateScript" method.
@@ -3248,7 +3184,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_ValidateScriptResponse` message.
         func validateScript(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_ValidateScriptRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ValidateScriptResponse>
 
         /// Handle the "GetScriptingDictionaries" method.
@@ -3266,7 +3202,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A response containing a single `Macosusesdk_V1_ScriptingDictionaries` message.
         func getScriptingDictionaries(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_GetScriptingDictionariesRequest>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ScriptingDictionaries>
     }
 
@@ -3279,7 +3215,7 @@ public extension Macosusesdk_V1_MacosUse {
     /// > Source IDL Documentation:
     /// >
     /// > MacosUse is the primary service for automating macOS applications.
-    protocol SimpleServiceProtocol: Macosusesdk_V1_MacosUse.ServiceProtocol {
+    public protocol SimpleServiceProtocol: Macosusesdk_V1_MacosUse.ServiceProtocol {
         /// Handle the "OpenApplication" method.
         ///
         /// > Source IDL Documentation:
@@ -3295,7 +3231,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Google_Longrunning_Operation` to respond with.
         func openApplication(
             request: Macosusesdk_V1_OpenApplicationRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Google_Longrunning_Operation
 
         /// Handle the "GetApplication" method.
@@ -3313,7 +3249,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_Application` to respond with.
         func getApplication(
             request: Macosusesdk_V1_GetApplicationRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_Application
 
         /// Handle the "ListApplications" method.
@@ -3331,7 +3267,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_ListApplicationsResponse` to respond with.
         func listApplications(
             request: Macosusesdk_V1_ListApplicationsRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_ListApplicationsResponse
 
         /// Handle the "DeleteApplication" method.
@@ -3349,7 +3285,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `SwiftProtobuf.Google_Protobuf_Empty` to respond with.
         func deleteApplication(
             request: Macosusesdk_V1_DeleteApplicationRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> SwiftProtobuf.Google_Protobuf_Empty
 
         /// Handle the "CreateInput" method.
@@ -3367,7 +3303,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_Input` to respond with.
         func createInput(
             request: Macosusesdk_V1_CreateInputRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_Input
 
         /// Handle the "GetInput" method.
@@ -3385,7 +3321,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_Input` to respond with.
         func getInput(
             request: Macosusesdk_V1_GetInputRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_Input
 
         /// Handle the "ListInputs" method.
@@ -3403,7 +3339,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_ListInputsResponse` to respond with.
         func listInputs(
             request: Macosusesdk_V1_ListInputsRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_ListInputsResponse
 
         /// Handle the "TraverseAccessibility" method.
@@ -3421,7 +3357,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_TraverseAccessibilityResponse` to respond with.
         func traverseAccessibility(
             request: Macosusesdk_V1_TraverseAccessibilityRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_TraverseAccessibilityResponse
 
         /// Handle the "WatchAccessibility" method.
@@ -3440,7 +3376,7 @@ public extension Macosusesdk_V1_MacosUse {
         func watchAccessibility(
             request: Macosusesdk_V1_WatchAccessibilityRequest,
             response: GRPCCore.RPCWriter<Macosusesdk_V1_WatchAccessibilityResponse>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws
 
         /// Handle the "GetWindow" method.
@@ -3458,7 +3394,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_Window` to respond with.
         func getWindow(
             request: Macosusesdk_V1_GetWindowRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_Window
 
         /// Handle the "ListWindows" method.
@@ -3476,7 +3412,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_ListWindowsResponse` to respond with.
         func listWindows(
             request: Macosusesdk_V1_ListWindowsRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_ListWindowsResponse
 
         /// Handle the "GetWindowState" method.
@@ -3494,7 +3430,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_WindowState` to respond with.
         func getWindowState(
             request: Macosusesdk_V1_GetWindowStateRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_WindowState
 
         /// Handle the "FocusWindow" method.
@@ -3512,7 +3448,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_Window` to respond with.
         func focusWindow(
             request: Macosusesdk_V1_FocusWindowRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_Window
 
         /// Handle the "MoveWindow" method.
@@ -3530,7 +3466,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_Window` to respond with.
         func moveWindow(
             request: Macosusesdk_V1_MoveWindowRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_Window
 
         /// Handle the "ResizeWindow" method.
@@ -3548,7 +3484,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_Window` to respond with.
         func resizeWindow(
             request: Macosusesdk_V1_ResizeWindowRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_Window
 
         /// Handle the "MinimizeWindow" method.
@@ -3566,7 +3502,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_Window` to respond with.
         func minimizeWindow(
             request: Macosusesdk_V1_MinimizeWindowRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_Window
 
         /// Handle the "RestoreWindow" method.
@@ -3584,7 +3520,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_Window` to respond with.
         func restoreWindow(
             request: Macosusesdk_V1_RestoreWindowRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_Window
 
         /// Handle the "CloseWindow" method.
@@ -3602,7 +3538,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_CloseWindowResponse` to respond with.
         func closeWindow(
             request: Macosusesdk_V1_CloseWindowRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_CloseWindowResponse
 
         /// Handle the "FindElements" method.
@@ -3620,7 +3556,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_FindElementsResponse` to respond with.
         func findElements(
             request: Macosusesdk_V1_FindElementsRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_FindElementsResponse
 
         /// Handle the "FindRegionElements" method.
@@ -3638,7 +3574,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_FindRegionElementsResponse` to respond with.
         func findRegionElements(
             request: Macosusesdk_V1_FindRegionElementsRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_FindRegionElementsResponse
 
         /// Handle the "GetElement" method.
@@ -3656,7 +3592,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_Type_Element` to respond with.
         func getElement(
             request: Macosusesdk_V1_GetElementRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_Type_Element
 
         /// Handle the "ClickElement" method.
@@ -3674,7 +3610,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_ClickElementResponse` to respond with.
         func clickElement(
             request: Macosusesdk_V1_ClickElementRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_ClickElementResponse
 
         /// Handle the "WriteElementValue" method.
@@ -3692,7 +3628,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_WriteElementValueResponse` to respond with.
         func writeElementValue(
             request: Macosusesdk_V1_WriteElementValueRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_WriteElementValueResponse
 
         /// Handle the "GetElementActions" method.
@@ -3710,7 +3646,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_ElementActions` to respond with.
         func getElementActions(
             request: Macosusesdk_V1_GetElementActionsRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_ElementActions
 
         /// Handle the "PerformElementAction" method.
@@ -3728,7 +3664,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_PerformElementActionResponse` to respond with.
         func performElementAction(
             request: Macosusesdk_V1_PerformElementActionRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_PerformElementActionResponse
 
         /// Handle the "WaitElement" method.
@@ -3746,7 +3682,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Google_Longrunning_Operation` to respond with.
         func waitElement(
             request: Macosusesdk_V1_WaitElementRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Google_Longrunning_Operation
 
         /// Handle the "WaitElementState" method.
@@ -3764,7 +3700,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Google_Longrunning_Operation` to respond with.
         func waitElementState(
             request: Macosusesdk_V1_WaitElementStateRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Google_Longrunning_Operation
 
         /// Handle the "CreateObservation" method.
@@ -3782,7 +3718,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Google_Longrunning_Operation` to respond with.
         func createObservation(
             request: Macosusesdk_V1_CreateObservationRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Google_Longrunning_Operation
 
         /// Handle the "GetObservation" method.
@@ -3800,7 +3736,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_Observation` to respond with.
         func getObservation(
             request: Macosusesdk_V1_GetObservationRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_Observation
 
         /// Handle the "ListObservations" method.
@@ -3818,7 +3754,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_ListObservationsResponse` to respond with.
         func listObservations(
             request: Macosusesdk_V1_ListObservationsRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_ListObservationsResponse
 
         /// Handle the "CancelObservation" method.
@@ -3836,7 +3772,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_Observation` to respond with.
         func cancelObservation(
             request: Macosusesdk_V1_CancelObservationRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_Observation
 
         /// Handle the "StreamObservations" method.
@@ -3855,7 +3791,7 @@ public extension Macosusesdk_V1_MacosUse {
         func streamObservations(
             request: Macosusesdk_V1_StreamObservationsRequest,
             response: GRPCCore.RPCWriter<Macosusesdk_V1_StreamObservationsResponse>,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws
 
         /// Handle the "CreateSession" method.
@@ -3873,7 +3809,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_Session` to respond with.
         func createSession(
             request: Macosusesdk_V1_CreateSessionRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_Session
 
         /// Handle the "GetSession" method.
@@ -3891,7 +3827,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_Session` to respond with.
         func getSession(
             request: Macosusesdk_V1_GetSessionRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_Session
 
         /// Handle the "ListSessions" method.
@@ -3909,7 +3845,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_ListSessionsResponse` to respond with.
         func listSessions(
             request: Macosusesdk_V1_ListSessionsRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_ListSessionsResponse
 
         /// Handle the "DeleteSession" method.
@@ -3927,7 +3863,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `SwiftProtobuf.Google_Protobuf_Empty` to respond with.
         func deleteSession(
             request: Macosusesdk_V1_DeleteSessionRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> SwiftProtobuf.Google_Protobuf_Empty
 
         /// Handle the "BeginTransaction" method.
@@ -3945,7 +3881,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_BeginTransactionResponse` to respond with.
         func beginTransaction(
             request: Macosusesdk_V1_BeginTransactionRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_BeginTransactionResponse
 
         /// Handle the "CommitTransaction" method.
@@ -3963,7 +3899,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_Transaction` to respond with.
         func commitTransaction(
             request: Macosusesdk_V1_CommitTransactionRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_Transaction
 
         /// Handle the "RollbackTransaction" method.
@@ -3981,7 +3917,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_Transaction` to respond with.
         func rollbackTransaction(
             request: Macosusesdk_V1_RollbackTransactionRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_Transaction
 
         /// Handle the "GetSessionSnapshot" method.
@@ -3999,7 +3935,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_SessionSnapshot` to respond with.
         func getSessionSnapshot(
             request: Macosusesdk_V1_GetSessionSnapshotRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_SessionSnapshot
 
         /// Handle the "CaptureScreenshot" method.
@@ -4017,7 +3953,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_CaptureScreenshotResponse` to respond with.
         func captureScreenshot(
             request: Macosusesdk_V1_CaptureScreenshotRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_CaptureScreenshotResponse
 
         /// Handle the "CaptureWindowScreenshot" method.
@@ -4035,7 +3971,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_CaptureWindowScreenshotResponse` to respond with.
         func captureWindowScreenshot(
             request: Macosusesdk_V1_CaptureWindowScreenshotRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_CaptureWindowScreenshotResponse
 
         /// Handle the "CaptureElementScreenshot" method.
@@ -4053,7 +3989,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_CaptureElementScreenshotResponse` to respond with.
         func captureElementScreenshot(
             request: Macosusesdk_V1_CaptureElementScreenshotRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_CaptureElementScreenshotResponse
 
         /// Handle the "CaptureRegionScreenshot" method.
@@ -4071,7 +4007,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_CaptureRegionScreenshotResponse` to respond with.
         func captureRegionScreenshot(
             request: Macosusesdk_V1_CaptureRegionScreenshotRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_CaptureRegionScreenshotResponse
 
         /// Handle the "GetClipboard" method.
@@ -4089,7 +4025,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_Clipboard` to respond with.
         func getClipboard(
             request: Macosusesdk_V1_GetClipboardRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_Clipboard
 
         /// Handle the "WriteClipboard" method.
@@ -4107,7 +4043,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_WriteClipboardResponse` to respond with.
         func writeClipboard(
             request: Macosusesdk_V1_WriteClipboardRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_WriteClipboardResponse
 
         /// Handle the "ClearClipboard" method.
@@ -4125,7 +4061,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_ClearClipboardResponse` to respond with.
         func clearClipboard(
             request: Macosusesdk_V1_ClearClipboardRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_ClearClipboardResponse
 
         /// Handle the "GetClipboardHistory" method.
@@ -4143,7 +4079,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_ClipboardHistory` to respond with.
         func getClipboardHistory(
             request: Macosusesdk_V1_GetClipboardHistoryRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_ClipboardHistory
 
         /// Handle the "AutomateOpenFileDialog" method.
@@ -4161,7 +4097,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_AutomateOpenFileDialogResponse` to respond with.
         func automateOpenFileDialog(
             request: Macosusesdk_V1_AutomateOpenFileDialogRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_AutomateOpenFileDialogResponse
 
         /// Handle the "AutomateSaveFileDialog" method.
@@ -4179,7 +4115,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_AutomateSaveFileDialogResponse` to respond with.
         func automateSaveFileDialog(
             request: Macosusesdk_V1_AutomateSaveFileDialogRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_AutomateSaveFileDialogResponse
 
         /// Handle the "SelectFile" method.
@@ -4197,7 +4133,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_SelectFileResponse` to respond with.
         func selectFile(
             request: Macosusesdk_V1_SelectFileRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_SelectFileResponse
 
         /// Handle the "SelectDirectory" method.
@@ -4215,7 +4151,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_SelectDirectoryResponse` to respond with.
         func selectDirectory(
             request: Macosusesdk_V1_SelectDirectoryRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_SelectDirectoryResponse
 
         /// Handle the "DragFiles" method.
@@ -4233,7 +4169,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_DragFilesResponse` to respond with.
         func dragFiles(
             request: Macosusesdk_V1_DragFilesRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_DragFilesResponse
 
         /// Handle the "CreateMacro" method.
@@ -4251,7 +4187,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_Macro` to respond with.
         func createMacro(
             request: Macosusesdk_V1_CreateMacroRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_Macro
 
         /// Handle the "GetMacro" method.
@@ -4269,7 +4205,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_Macro` to respond with.
         func getMacro(
             request: Macosusesdk_V1_GetMacroRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_Macro
 
         /// Handle the "ListMacros" method.
@@ -4287,7 +4223,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_ListMacrosResponse` to respond with.
         func listMacros(
             request: Macosusesdk_V1_ListMacrosRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_ListMacrosResponse
 
         /// Handle the "UpdateMacro" method.
@@ -4305,7 +4241,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_Macro` to respond with.
         func updateMacro(
             request: Macosusesdk_V1_UpdateMacroRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_Macro
 
         /// Handle the "DeleteMacro" method.
@@ -4323,7 +4259,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `SwiftProtobuf.Google_Protobuf_Empty` to respond with.
         func deleteMacro(
             request: Macosusesdk_V1_DeleteMacroRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> SwiftProtobuf.Google_Protobuf_Empty
 
         /// Handle the "ExecuteMacro" method.
@@ -4341,7 +4277,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Google_Longrunning_Operation` to respond with.
         func executeMacro(
             request: Macosusesdk_V1_ExecuteMacroRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Google_Longrunning_Operation
 
         /// Handle the "ExecuteAppleScript" method.
@@ -4359,7 +4295,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_ExecuteAppleScriptResponse` to respond with.
         func executeAppleScript(
             request: Macosusesdk_V1_ExecuteAppleScriptRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_ExecuteAppleScriptResponse
 
         /// Handle the "ExecuteJavaScript" method.
@@ -4377,7 +4313,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_ExecuteJavaScriptResponse` to respond with.
         func executeJavaScript(
             request: Macosusesdk_V1_ExecuteJavaScriptRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_ExecuteJavaScriptResponse
 
         /// Handle the "ExecuteShellCommand" method.
@@ -4395,7 +4331,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_ExecuteShellCommandResponse` to respond with.
         func executeShellCommand(
             request: Macosusesdk_V1_ExecuteShellCommandRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_ExecuteShellCommandResponse
 
         /// Handle the "ValidateScript" method.
@@ -4413,7 +4349,7 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_ValidateScriptResponse` to respond with.
         func validateScript(
             request: Macosusesdk_V1_ValidateScriptRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_ValidateScriptResponse
 
         /// Handle the "GetScriptingDictionaries" method.
@@ -4431,15 +4367,15 @@ public extension Macosusesdk_V1_MacosUse {
         /// - Returns: A `Macosusesdk_V1_ScriptingDictionaries` to respond with.
         func getScriptingDictionaries(
             request: Macosusesdk_V1_GetScriptingDictionariesRequest,
-            context: GRPCCore.ServerContext,
+            context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_ScriptingDictionaries
     }
 }
 
 // Default implementation of 'registerMethods(with:)'.
 @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
-public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
-    func registerMethods(with router: inout GRPCCore.RPCRouter<some GRPCCore.ServerTransport>) {
+extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
+    public func registerMethods<Transport>(with router: inout GRPCCore.RPCRouter<Transport>) where Transport: GRPCCore.ServerTransport {
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.OpenApplication.descriptor,
             deserializer: GRPCProtobuf.ProtobufDeserializer<Macosusesdk_V1_OpenApplicationRequest>(),
@@ -4447,9 +4383,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.openApplication(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.GetApplication.descriptor,
@@ -4458,9 +4394,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.getApplication(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.ListApplications.descriptor,
@@ -4469,9 +4405,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.listApplications(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.DeleteApplication.descriptor,
@@ -4480,9 +4416,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.deleteApplication(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.CreateInput.descriptor,
@@ -4491,9 +4427,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.createInput(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.GetInput.descriptor,
@@ -4502,9 +4438,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.getInput(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.ListInputs.descriptor,
@@ -4513,9 +4449,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.listInputs(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.TraverseAccessibility.descriptor,
@@ -4524,9 +4460,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.traverseAccessibility(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.WatchAccessibility.descriptor,
@@ -4535,9 +4471,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.watchAccessibility(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.GetWindow.descriptor,
@@ -4546,9 +4482,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.getWindow(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.ListWindows.descriptor,
@@ -4557,9 +4493,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.listWindows(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.GetWindowState.descriptor,
@@ -4568,9 +4504,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.getWindowState(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.FocusWindow.descriptor,
@@ -4579,9 +4515,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.focusWindow(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.MoveWindow.descriptor,
@@ -4590,9 +4526,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.moveWindow(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.ResizeWindow.descriptor,
@@ -4601,9 +4537,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.resizeWindow(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.MinimizeWindow.descriptor,
@@ -4612,9 +4548,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.minimizeWindow(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.RestoreWindow.descriptor,
@@ -4623,9 +4559,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.restoreWindow(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.CloseWindow.descriptor,
@@ -4634,9 +4570,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.closeWindow(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.FindElements.descriptor,
@@ -4645,9 +4581,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.findElements(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.FindRegionElements.descriptor,
@@ -4656,9 +4592,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.findRegionElements(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.GetElement.descriptor,
@@ -4667,9 +4603,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.getElement(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.ClickElement.descriptor,
@@ -4678,9 +4614,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.clickElement(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.WriteElementValue.descriptor,
@@ -4689,9 +4625,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.writeElementValue(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.GetElementActions.descriptor,
@@ -4700,9 +4636,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.getElementActions(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.PerformElementAction.descriptor,
@@ -4711,9 +4647,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.performElementAction(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.WaitElement.descriptor,
@@ -4722,9 +4658,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.waitElement(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.WaitElementState.descriptor,
@@ -4733,9 +4669,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.waitElementState(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.CreateObservation.descriptor,
@@ -4744,9 +4680,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.createObservation(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.GetObservation.descriptor,
@@ -4755,9 +4691,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.getObservation(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.ListObservations.descriptor,
@@ -4766,9 +4702,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.listObservations(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.CancelObservation.descriptor,
@@ -4777,9 +4713,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.cancelObservation(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.StreamObservations.descriptor,
@@ -4788,9 +4724,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.streamObservations(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.CreateSession.descriptor,
@@ -4799,9 +4735,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.createSession(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.GetSession.descriptor,
@@ -4810,9 +4746,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.getSession(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.ListSessions.descriptor,
@@ -4821,9 +4757,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.listSessions(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.DeleteSession.descriptor,
@@ -4832,9 +4768,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.deleteSession(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.BeginTransaction.descriptor,
@@ -4843,9 +4779,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.beginTransaction(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.CommitTransaction.descriptor,
@@ -4854,9 +4790,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.commitTransaction(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.RollbackTransaction.descriptor,
@@ -4865,9 +4801,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.rollbackTransaction(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.GetSessionSnapshot.descriptor,
@@ -4876,9 +4812,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.getSessionSnapshot(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.CaptureScreenshot.descriptor,
@@ -4887,9 +4823,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.captureScreenshot(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.CaptureWindowScreenshot.descriptor,
@@ -4898,9 +4834,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.captureWindowScreenshot(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.CaptureElementScreenshot.descriptor,
@@ -4909,9 +4845,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.captureElementScreenshot(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.CaptureRegionScreenshot.descriptor,
@@ -4920,9 +4856,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.captureRegionScreenshot(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.GetClipboard.descriptor,
@@ -4931,9 +4867,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.getClipboard(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.WriteClipboard.descriptor,
@@ -4942,9 +4878,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.writeClipboard(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.ClearClipboard.descriptor,
@@ -4953,9 +4889,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.clearClipboard(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.GetClipboardHistory.descriptor,
@@ -4964,9 +4900,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.getClipboardHistory(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.AutomateOpenFileDialog.descriptor,
@@ -4975,9 +4911,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.automateOpenFileDialog(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.AutomateSaveFileDialog.descriptor,
@@ -4986,9 +4922,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.automateSaveFileDialog(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.SelectFile.descriptor,
@@ -4997,9 +4933,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.selectFile(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.SelectDirectory.descriptor,
@@ -5008,9 +4944,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.selectDirectory(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.DragFiles.descriptor,
@@ -5019,9 +4955,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.dragFiles(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.CreateMacro.descriptor,
@@ -5030,9 +4966,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.createMacro(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.GetMacro.descriptor,
@@ -5041,9 +4977,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.getMacro(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.ListMacros.descriptor,
@@ -5052,9 +4988,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.listMacros(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.UpdateMacro.descriptor,
@@ -5063,9 +4999,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.updateMacro(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.DeleteMacro.descriptor,
@@ -5074,9 +5010,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.deleteMacro(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.ExecuteMacro.descriptor,
@@ -5085,9 +5021,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.executeMacro(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.ExecuteAppleScript.descriptor,
@@ -5096,9 +5032,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.executeAppleScript(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.ExecuteJavaScript.descriptor,
@@ -5107,9 +5043,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.executeJavaScript(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.ExecuteShellCommand.descriptor,
@@ -5118,9 +5054,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.executeShellCommand(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.ValidateScript.descriptor,
@@ -5129,9 +5065,9 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.validateScript(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.GetScriptingDictionaries.descriptor,
@@ -5140,716 +5076,716 @@ public extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             handler: { request, context in
                 try await self.getScriptingDictionaries(
                     request: request,
-                    context: context,
+                    context: context
                 )
-            },
+            }
         )
     }
 }
 
 // Default implementation of streaming methods from 'StreamingServiceProtocol'.
 @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
-public extension Macosusesdk_V1_MacosUse.ServiceProtocol {
-    func openApplication(
+extension Macosusesdk_V1_MacosUse.ServiceProtocol {
+    public func openApplication(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_OpenApplicationRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Google_Longrunning_Operation> {
-        let response = try await openApplication(
+        let response = try await self.openApplication(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func getApplication(
+    public func getApplication(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetApplicationRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Application> {
-        let response = try await getApplication(
+        let response = try await self.getApplication(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func listApplications(
+    public func listApplications(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ListApplicationsRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ListApplicationsResponse> {
-        let response = try await listApplications(
+        let response = try await self.listApplications(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func deleteApplication(
+    public func deleteApplication(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_DeleteApplicationRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<SwiftProtobuf.Google_Protobuf_Empty> {
-        let response = try await deleteApplication(
+        let response = try await self.deleteApplication(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func createInput(
+    public func createInput(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_CreateInputRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Input> {
-        let response = try await createInput(
+        let response = try await self.createInput(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func getInput(
+    public func getInput(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetInputRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Input> {
-        let response = try await getInput(
+        let response = try await self.getInput(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func listInputs(
+    public func listInputs(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ListInputsRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ListInputsResponse> {
-        let response = try await listInputs(
+        let response = try await self.listInputs(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func traverseAccessibility(
+    public func traverseAccessibility(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_TraverseAccessibilityRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_TraverseAccessibilityResponse> {
-        let response = try await traverseAccessibility(
+        let response = try await self.traverseAccessibility(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func watchAccessibility(
+    public func watchAccessibility(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_WatchAccessibilityRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_WatchAccessibilityResponse> {
-        let response = try await watchAccessibility(
+        let response = try await self.watchAccessibility(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return response
     }
 
-    func getWindow(
+    public func getWindow(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetWindowRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Window> {
-        let response = try await getWindow(
+        let response = try await self.getWindow(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func listWindows(
+    public func listWindows(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ListWindowsRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ListWindowsResponse> {
-        let response = try await listWindows(
+        let response = try await self.listWindows(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func getWindowState(
+    public func getWindowState(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetWindowStateRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_WindowState> {
-        let response = try await getWindowState(
+        let response = try await self.getWindowState(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func focusWindow(
+    public func focusWindow(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_FocusWindowRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Window> {
-        let response = try await focusWindow(
+        let response = try await self.focusWindow(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func moveWindow(
+    public func moveWindow(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_MoveWindowRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Window> {
-        let response = try await moveWindow(
+        let response = try await self.moveWindow(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func resizeWindow(
+    public func resizeWindow(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ResizeWindowRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Window> {
-        let response = try await resizeWindow(
+        let response = try await self.resizeWindow(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func minimizeWindow(
+    public func minimizeWindow(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_MinimizeWindowRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Window> {
-        let response = try await minimizeWindow(
+        let response = try await self.minimizeWindow(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func restoreWindow(
+    public func restoreWindow(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_RestoreWindowRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Window> {
-        let response = try await restoreWindow(
+        let response = try await self.restoreWindow(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func closeWindow(
+    public func closeWindow(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_CloseWindowRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_CloseWindowResponse> {
-        let response = try await closeWindow(
+        let response = try await self.closeWindow(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func findElements(
+    public func findElements(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_FindElementsRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_FindElementsResponse> {
-        let response = try await findElements(
+        let response = try await self.findElements(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func findRegionElements(
+    public func findRegionElements(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_FindRegionElementsRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_FindRegionElementsResponse> {
-        let response = try await findRegionElements(
+        let response = try await self.findRegionElements(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func getElement(
+    public func getElement(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetElementRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_Type_Element> {
-        let response = try await getElement(
+        let response = try await self.getElement(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func clickElement(
+    public func clickElement(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ClickElementRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ClickElementResponse> {
-        let response = try await clickElement(
+        let response = try await self.clickElement(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func writeElementValue(
+    public func writeElementValue(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_WriteElementValueRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_WriteElementValueResponse> {
-        let response = try await writeElementValue(
+        let response = try await self.writeElementValue(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func getElementActions(
+    public func getElementActions(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetElementActionsRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ElementActions> {
-        let response = try await getElementActions(
+        let response = try await self.getElementActions(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func performElementAction(
+    public func performElementAction(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_PerformElementActionRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_PerformElementActionResponse> {
-        let response = try await performElementAction(
+        let response = try await self.performElementAction(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func waitElement(
+    public func waitElement(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_WaitElementRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Google_Longrunning_Operation> {
-        let response = try await waitElement(
+        let response = try await self.waitElement(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func waitElementState(
+    public func waitElementState(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_WaitElementStateRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Google_Longrunning_Operation> {
-        let response = try await waitElementState(
+        let response = try await self.waitElementState(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func createObservation(
+    public func createObservation(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_CreateObservationRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Google_Longrunning_Operation> {
-        let response = try await createObservation(
+        let response = try await self.createObservation(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func getObservation(
+    public func getObservation(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetObservationRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Observation> {
-        let response = try await getObservation(
+        let response = try await self.getObservation(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func listObservations(
+    public func listObservations(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ListObservationsRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ListObservationsResponse> {
-        let response = try await listObservations(
+        let response = try await self.listObservations(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func cancelObservation(
+    public func cancelObservation(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_CancelObservationRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Observation> {
-        let response = try await cancelObservation(
+        let response = try await self.cancelObservation(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func streamObservations(
+    public func streamObservations(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_StreamObservationsRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_StreamObservationsResponse> {
-        let response = try await streamObservations(
+        let response = try await self.streamObservations(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return response
     }
 
-    func createSession(
+    public func createSession(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_CreateSessionRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Session> {
-        let response = try await createSession(
+        let response = try await self.createSession(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func getSession(
+    public func getSession(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetSessionRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Session> {
-        let response = try await getSession(
+        let response = try await self.getSession(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func listSessions(
+    public func listSessions(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ListSessionsRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ListSessionsResponse> {
-        let response = try await listSessions(
+        let response = try await self.listSessions(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func deleteSession(
+    public func deleteSession(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_DeleteSessionRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<SwiftProtobuf.Google_Protobuf_Empty> {
-        let response = try await deleteSession(
+        let response = try await self.deleteSession(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func beginTransaction(
+    public func beginTransaction(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_BeginTransactionRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_BeginTransactionResponse> {
-        let response = try await beginTransaction(
+        let response = try await self.beginTransaction(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func commitTransaction(
+    public func commitTransaction(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_CommitTransactionRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Transaction> {
-        let response = try await commitTransaction(
+        let response = try await self.commitTransaction(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func rollbackTransaction(
+    public func rollbackTransaction(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_RollbackTransactionRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Transaction> {
-        let response = try await rollbackTransaction(
+        let response = try await self.rollbackTransaction(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func getSessionSnapshot(
+    public func getSessionSnapshot(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetSessionSnapshotRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_SessionSnapshot> {
-        let response = try await getSessionSnapshot(
+        let response = try await self.getSessionSnapshot(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func captureScreenshot(
+    public func captureScreenshot(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_CaptureScreenshotRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_CaptureScreenshotResponse> {
-        let response = try await captureScreenshot(
+        let response = try await self.captureScreenshot(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func captureWindowScreenshot(
+    public func captureWindowScreenshot(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_CaptureWindowScreenshotRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_CaptureWindowScreenshotResponse> {
-        let response = try await captureWindowScreenshot(
+        let response = try await self.captureWindowScreenshot(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func captureElementScreenshot(
+    public func captureElementScreenshot(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_CaptureElementScreenshotRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_CaptureElementScreenshotResponse> {
-        let response = try await captureElementScreenshot(
+        let response = try await self.captureElementScreenshot(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func captureRegionScreenshot(
+    public func captureRegionScreenshot(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_CaptureRegionScreenshotRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_CaptureRegionScreenshotResponse> {
-        let response = try await captureRegionScreenshot(
+        let response = try await self.captureRegionScreenshot(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func getClipboard(
+    public func getClipboard(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetClipboardRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Clipboard> {
-        let response = try await getClipboard(
+        let response = try await self.getClipboard(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func writeClipboard(
+    public func writeClipboard(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_WriteClipboardRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_WriteClipboardResponse> {
-        let response = try await writeClipboard(
+        let response = try await self.writeClipboard(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func clearClipboard(
+    public func clearClipboard(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ClearClipboardRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ClearClipboardResponse> {
-        let response = try await clearClipboard(
+        let response = try await self.clearClipboard(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func getClipboardHistory(
+    public func getClipboardHistory(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetClipboardHistoryRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ClipboardHistory> {
-        let response = try await getClipboardHistory(
+        let response = try await self.getClipboardHistory(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func automateOpenFileDialog(
+    public func automateOpenFileDialog(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_AutomateOpenFileDialogRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_AutomateOpenFileDialogResponse> {
-        let response = try await automateOpenFileDialog(
+        let response = try await self.automateOpenFileDialog(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func automateSaveFileDialog(
+    public func automateSaveFileDialog(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_AutomateSaveFileDialogRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_AutomateSaveFileDialogResponse> {
-        let response = try await automateSaveFileDialog(
+        let response = try await self.automateSaveFileDialog(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func selectFile(
+    public func selectFile(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_SelectFileRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_SelectFileResponse> {
-        let response = try await selectFile(
+        let response = try await self.selectFile(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func selectDirectory(
+    public func selectDirectory(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_SelectDirectoryRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_SelectDirectoryResponse> {
-        let response = try await selectDirectory(
+        let response = try await self.selectDirectory(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func dragFiles(
+    public func dragFiles(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_DragFilesRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_DragFilesResponse> {
-        let response = try await dragFiles(
+        let response = try await self.dragFiles(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func createMacro(
+    public func createMacro(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_CreateMacroRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Macro> {
-        let response = try await createMacro(
+        let response = try await self.createMacro(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func getMacro(
+    public func getMacro(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetMacroRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Macro> {
-        let response = try await getMacro(
+        let response = try await self.getMacro(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func listMacros(
+    public func listMacros(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ListMacrosRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ListMacrosResponse> {
-        let response = try await listMacros(
+        let response = try await self.listMacros(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func updateMacro(
+    public func updateMacro(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_UpdateMacroRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Macro> {
-        let response = try await updateMacro(
+        let response = try await self.updateMacro(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func deleteMacro(
+    public func deleteMacro(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_DeleteMacroRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<SwiftProtobuf.Google_Protobuf_Empty> {
-        let response = try await deleteMacro(
+        let response = try await self.deleteMacro(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func executeMacro(
+    public func executeMacro(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ExecuteMacroRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Google_Longrunning_Operation> {
-        let response = try await executeMacro(
+        let response = try await self.executeMacro(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func executeAppleScript(
+    public func executeAppleScript(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ExecuteAppleScriptRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ExecuteAppleScriptResponse> {
-        let response = try await executeAppleScript(
+        let response = try await self.executeAppleScript(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func executeJavaScript(
+    public func executeJavaScript(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ExecuteJavaScriptRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ExecuteJavaScriptResponse> {
-        let response = try await executeJavaScript(
+        let response = try await self.executeJavaScript(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func executeShellCommand(
+    public func executeShellCommand(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ExecuteShellCommandRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ExecuteShellCommandResponse> {
-        let response = try await executeShellCommand(
+        let response = try await self.executeShellCommand(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func validateScript(
+    public func validateScript(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ValidateScriptRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ValidateScriptResponse> {
-        let response = try await validateScript(
+        let response = try await self.validateScript(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    func getScriptingDictionaries(
+    public func getScriptingDictionaries(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetScriptingDictionariesRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ScriptingDictionaries> {
-        let response = try await getScriptingDictionaries(
+        let response = try await self.getScriptingDictionaries(
             request: GRPCCore.ServerRequest(stream: request),
-            context: context,
+            context: context
         )
         return GRPCCore.StreamingServerResponse(single: response)
     }
@@ -5857,844 +5793,844 @@ public extension Macosusesdk_V1_MacosUse.ServiceProtocol {
 
 // Default implementation of methods from 'ServiceProtocol'.
 @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
-public extension Macosusesdk_V1_MacosUse.SimpleServiceProtocol {
-    func openApplication(
+extension Macosusesdk_V1_MacosUse.SimpleServiceProtocol {
+    public func openApplication(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_OpenApplicationRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Google_Longrunning_Operation> {
-        try await GRPCCore.ServerResponse<Google_Longrunning_Operation>(
-            message: openApplication(
+        return GRPCCore.ServerResponse<Google_Longrunning_Operation>(
+            message: try await self.openApplication(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func getApplication(
+    public func getApplication(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_GetApplicationRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Application> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_Application>(
-            message: getApplication(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_Application>(
+            message: try await self.getApplication(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func listApplications(
+    public func listApplications(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_ListApplicationsRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ListApplicationsResponse> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_ListApplicationsResponse>(
-            message: listApplications(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_ListApplicationsResponse>(
+            message: try await self.listApplications(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func deleteApplication(
+    public func deleteApplication(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_DeleteApplicationRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<SwiftProtobuf.Google_Protobuf_Empty> {
-        try await GRPCCore.ServerResponse<SwiftProtobuf.Google_Protobuf_Empty>(
-            message: deleteApplication(
+        return GRPCCore.ServerResponse<SwiftProtobuf.Google_Protobuf_Empty>(
+            message: try await self.deleteApplication(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func createInput(
+    public func createInput(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_CreateInputRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Input> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_Input>(
-            message: createInput(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_Input>(
+            message: try await self.createInput(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func getInput(
+    public func getInput(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_GetInputRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Input> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_Input>(
-            message: getInput(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_Input>(
+            message: try await self.getInput(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func listInputs(
+    public func listInputs(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_ListInputsRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ListInputsResponse> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_ListInputsResponse>(
-            message: listInputs(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_ListInputsResponse>(
+            message: try await self.listInputs(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func traverseAccessibility(
+    public func traverseAccessibility(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_TraverseAccessibilityRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_TraverseAccessibilityResponse> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_TraverseAccessibilityResponse>(
-            message: traverseAccessibility(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_TraverseAccessibilityResponse>(
+            message: try await self.traverseAccessibility(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func watchAccessibility(
+    public func watchAccessibility(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_WatchAccessibilityRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_WatchAccessibilityResponse> {
-        GRPCCore.StreamingServerResponse<Macosusesdk_V1_WatchAccessibilityResponse>(
+        return GRPCCore.StreamingServerResponse<Macosusesdk_V1_WatchAccessibilityResponse>(
             metadata: [:],
             producer: { writer in
                 try await self.watchAccessibility(
                     request: request.message,
                     response: writer,
-                    context: context,
+                    context: context
                 )
                 return [:]
-            },
+            }
         )
     }
 
-    func getWindow(
+    public func getWindow(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_GetWindowRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Window> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_Window>(
-            message: getWindow(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_Window>(
+            message: try await self.getWindow(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func listWindows(
+    public func listWindows(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_ListWindowsRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ListWindowsResponse> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_ListWindowsResponse>(
-            message: listWindows(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_ListWindowsResponse>(
+            message: try await self.listWindows(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func getWindowState(
+    public func getWindowState(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_GetWindowStateRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_WindowState> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_WindowState>(
-            message: getWindowState(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_WindowState>(
+            message: try await self.getWindowState(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func focusWindow(
+    public func focusWindow(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_FocusWindowRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Window> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_Window>(
-            message: focusWindow(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_Window>(
+            message: try await self.focusWindow(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func moveWindow(
+    public func moveWindow(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_MoveWindowRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Window> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_Window>(
-            message: moveWindow(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_Window>(
+            message: try await self.moveWindow(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func resizeWindow(
+    public func resizeWindow(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_ResizeWindowRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Window> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_Window>(
-            message: resizeWindow(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_Window>(
+            message: try await self.resizeWindow(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func minimizeWindow(
+    public func minimizeWindow(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_MinimizeWindowRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Window> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_Window>(
-            message: minimizeWindow(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_Window>(
+            message: try await self.minimizeWindow(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func restoreWindow(
+    public func restoreWindow(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_RestoreWindowRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Window> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_Window>(
-            message: restoreWindow(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_Window>(
+            message: try await self.restoreWindow(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func closeWindow(
+    public func closeWindow(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_CloseWindowRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_CloseWindowResponse> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_CloseWindowResponse>(
-            message: closeWindow(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_CloseWindowResponse>(
+            message: try await self.closeWindow(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func findElements(
+    public func findElements(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_FindElementsRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_FindElementsResponse> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_FindElementsResponse>(
-            message: findElements(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_FindElementsResponse>(
+            message: try await self.findElements(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func findRegionElements(
+    public func findRegionElements(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_FindRegionElementsRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_FindRegionElementsResponse> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_FindRegionElementsResponse>(
-            message: findRegionElements(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_FindRegionElementsResponse>(
+            message: try await self.findRegionElements(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func getElement(
+    public func getElement(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_GetElementRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_Type_Element> {
-        try await GRPCCore.ServerResponse<Macosusesdk_Type_Element>(
-            message: getElement(
+        return GRPCCore.ServerResponse<Macosusesdk_Type_Element>(
+            message: try await self.getElement(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func clickElement(
+    public func clickElement(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_ClickElementRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ClickElementResponse> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_ClickElementResponse>(
-            message: clickElement(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_ClickElementResponse>(
+            message: try await self.clickElement(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func writeElementValue(
+    public func writeElementValue(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_WriteElementValueRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_WriteElementValueResponse> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_WriteElementValueResponse>(
-            message: writeElementValue(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_WriteElementValueResponse>(
+            message: try await self.writeElementValue(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func getElementActions(
+    public func getElementActions(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_GetElementActionsRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ElementActions> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_ElementActions>(
-            message: getElementActions(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_ElementActions>(
+            message: try await self.getElementActions(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func performElementAction(
+    public func performElementAction(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_PerformElementActionRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_PerformElementActionResponse> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_PerformElementActionResponse>(
-            message: performElementAction(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_PerformElementActionResponse>(
+            message: try await self.performElementAction(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func waitElement(
+    public func waitElement(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_WaitElementRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Google_Longrunning_Operation> {
-        try await GRPCCore.ServerResponse<Google_Longrunning_Operation>(
-            message: waitElement(
+        return GRPCCore.ServerResponse<Google_Longrunning_Operation>(
+            message: try await self.waitElement(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func waitElementState(
+    public func waitElementState(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_WaitElementStateRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Google_Longrunning_Operation> {
-        try await GRPCCore.ServerResponse<Google_Longrunning_Operation>(
-            message: waitElementState(
+        return GRPCCore.ServerResponse<Google_Longrunning_Operation>(
+            message: try await self.waitElementState(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func createObservation(
+    public func createObservation(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_CreateObservationRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Google_Longrunning_Operation> {
-        try await GRPCCore.ServerResponse<Google_Longrunning_Operation>(
-            message: createObservation(
+        return GRPCCore.ServerResponse<Google_Longrunning_Operation>(
+            message: try await self.createObservation(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func getObservation(
+    public func getObservation(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_GetObservationRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Observation> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_Observation>(
-            message: getObservation(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_Observation>(
+            message: try await self.getObservation(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func listObservations(
+    public func listObservations(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_ListObservationsRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ListObservationsResponse> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_ListObservationsResponse>(
-            message: listObservations(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_ListObservationsResponse>(
+            message: try await self.listObservations(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func cancelObservation(
+    public func cancelObservation(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_CancelObservationRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Observation> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_Observation>(
-            message: cancelObservation(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_Observation>(
+            message: try await self.cancelObservation(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func streamObservations(
+    public func streamObservations(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_StreamObservationsRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_StreamObservationsResponse> {
-        GRPCCore.StreamingServerResponse<Macosusesdk_V1_StreamObservationsResponse>(
+        return GRPCCore.StreamingServerResponse<Macosusesdk_V1_StreamObservationsResponse>(
             metadata: [:],
             producer: { writer in
                 try await self.streamObservations(
                     request: request.message,
                     response: writer,
-                    context: context,
+                    context: context
                 )
                 return [:]
-            },
+            }
         )
     }
 
-    func createSession(
+    public func createSession(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_CreateSessionRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Session> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_Session>(
-            message: createSession(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_Session>(
+            message: try await self.createSession(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func getSession(
+    public func getSession(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_GetSessionRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Session> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_Session>(
-            message: getSession(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_Session>(
+            message: try await self.getSession(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func listSessions(
+    public func listSessions(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_ListSessionsRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ListSessionsResponse> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_ListSessionsResponse>(
-            message: listSessions(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_ListSessionsResponse>(
+            message: try await self.listSessions(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func deleteSession(
+    public func deleteSession(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_DeleteSessionRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<SwiftProtobuf.Google_Protobuf_Empty> {
-        try await GRPCCore.ServerResponse<SwiftProtobuf.Google_Protobuf_Empty>(
-            message: deleteSession(
+        return GRPCCore.ServerResponse<SwiftProtobuf.Google_Protobuf_Empty>(
+            message: try await self.deleteSession(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func beginTransaction(
+    public func beginTransaction(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_BeginTransactionRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_BeginTransactionResponse> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_BeginTransactionResponse>(
-            message: beginTransaction(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_BeginTransactionResponse>(
+            message: try await self.beginTransaction(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func commitTransaction(
+    public func commitTransaction(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_CommitTransactionRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Transaction> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_Transaction>(
-            message: commitTransaction(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_Transaction>(
+            message: try await self.commitTransaction(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func rollbackTransaction(
+    public func rollbackTransaction(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_RollbackTransactionRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Transaction> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_Transaction>(
-            message: rollbackTransaction(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_Transaction>(
+            message: try await self.rollbackTransaction(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func getSessionSnapshot(
+    public func getSessionSnapshot(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_GetSessionSnapshotRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_SessionSnapshot> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_SessionSnapshot>(
-            message: getSessionSnapshot(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_SessionSnapshot>(
+            message: try await self.getSessionSnapshot(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func captureScreenshot(
+    public func captureScreenshot(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_CaptureScreenshotRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_CaptureScreenshotResponse> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_CaptureScreenshotResponse>(
-            message: captureScreenshot(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_CaptureScreenshotResponse>(
+            message: try await self.captureScreenshot(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func captureWindowScreenshot(
+    public func captureWindowScreenshot(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_CaptureWindowScreenshotRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_CaptureWindowScreenshotResponse> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_CaptureWindowScreenshotResponse>(
-            message: captureWindowScreenshot(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_CaptureWindowScreenshotResponse>(
+            message: try await self.captureWindowScreenshot(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func captureElementScreenshot(
+    public func captureElementScreenshot(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_CaptureElementScreenshotRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_CaptureElementScreenshotResponse> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_CaptureElementScreenshotResponse>(
-            message: captureElementScreenshot(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_CaptureElementScreenshotResponse>(
+            message: try await self.captureElementScreenshot(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func captureRegionScreenshot(
+    public func captureRegionScreenshot(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_CaptureRegionScreenshotRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_CaptureRegionScreenshotResponse> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_CaptureRegionScreenshotResponse>(
-            message: captureRegionScreenshot(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_CaptureRegionScreenshotResponse>(
+            message: try await self.captureRegionScreenshot(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func getClipboard(
+    public func getClipboard(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_GetClipboardRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Clipboard> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_Clipboard>(
-            message: getClipboard(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_Clipboard>(
+            message: try await self.getClipboard(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func writeClipboard(
+    public func writeClipboard(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_WriteClipboardRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_WriteClipboardResponse> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_WriteClipboardResponse>(
-            message: writeClipboard(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_WriteClipboardResponse>(
+            message: try await self.writeClipboard(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func clearClipboard(
+    public func clearClipboard(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_ClearClipboardRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ClearClipboardResponse> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_ClearClipboardResponse>(
-            message: clearClipboard(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_ClearClipboardResponse>(
+            message: try await self.clearClipboard(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func getClipboardHistory(
+    public func getClipboardHistory(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_GetClipboardHistoryRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ClipboardHistory> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_ClipboardHistory>(
-            message: getClipboardHistory(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_ClipboardHistory>(
+            message: try await self.getClipboardHistory(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func automateOpenFileDialog(
+    public func automateOpenFileDialog(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_AutomateOpenFileDialogRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_AutomateOpenFileDialogResponse> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_AutomateOpenFileDialogResponse>(
-            message: automateOpenFileDialog(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_AutomateOpenFileDialogResponse>(
+            message: try await self.automateOpenFileDialog(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func automateSaveFileDialog(
+    public func automateSaveFileDialog(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_AutomateSaveFileDialogRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_AutomateSaveFileDialogResponse> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_AutomateSaveFileDialogResponse>(
-            message: automateSaveFileDialog(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_AutomateSaveFileDialogResponse>(
+            message: try await self.automateSaveFileDialog(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func selectFile(
+    public func selectFile(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_SelectFileRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_SelectFileResponse> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_SelectFileResponse>(
-            message: selectFile(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_SelectFileResponse>(
+            message: try await self.selectFile(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func selectDirectory(
+    public func selectDirectory(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_SelectDirectoryRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_SelectDirectoryResponse> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_SelectDirectoryResponse>(
-            message: selectDirectory(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_SelectDirectoryResponse>(
+            message: try await self.selectDirectory(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func dragFiles(
+    public func dragFiles(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_DragFilesRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_DragFilesResponse> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_DragFilesResponse>(
-            message: dragFiles(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_DragFilesResponse>(
+            message: try await self.dragFiles(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func createMacro(
+    public func createMacro(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_CreateMacroRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Macro> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_Macro>(
-            message: createMacro(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_Macro>(
+            message: try await self.createMacro(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func getMacro(
+    public func getMacro(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_GetMacroRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Macro> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_Macro>(
-            message: getMacro(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_Macro>(
+            message: try await self.getMacro(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func listMacros(
+    public func listMacros(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_ListMacrosRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ListMacrosResponse> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_ListMacrosResponse>(
-            message: listMacros(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_ListMacrosResponse>(
+            message: try await self.listMacros(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func updateMacro(
+    public func updateMacro(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_UpdateMacroRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Macro> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_Macro>(
-            message: updateMacro(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_Macro>(
+            message: try await self.updateMacro(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func deleteMacro(
+    public func deleteMacro(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_DeleteMacroRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<SwiftProtobuf.Google_Protobuf_Empty> {
-        try await GRPCCore.ServerResponse<SwiftProtobuf.Google_Protobuf_Empty>(
-            message: deleteMacro(
+        return GRPCCore.ServerResponse<SwiftProtobuf.Google_Protobuf_Empty>(
+            message: try await self.deleteMacro(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func executeMacro(
+    public func executeMacro(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_ExecuteMacroRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Google_Longrunning_Operation> {
-        try await GRPCCore.ServerResponse<Google_Longrunning_Operation>(
-            message: executeMacro(
+        return GRPCCore.ServerResponse<Google_Longrunning_Operation>(
+            message: try await self.executeMacro(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func executeAppleScript(
+    public func executeAppleScript(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_ExecuteAppleScriptRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ExecuteAppleScriptResponse> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_ExecuteAppleScriptResponse>(
-            message: executeAppleScript(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_ExecuteAppleScriptResponse>(
+            message: try await self.executeAppleScript(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func executeJavaScript(
+    public func executeJavaScript(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_ExecuteJavaScriptRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ExecuteJavaScriptResponse> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_ExecuteJavaScriptResponse>(
-            message: executeJavaScript(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_ExecuteJavaScriptResponse>(
+            message: try await self.executeJavaScript(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func executeShellCommand(
+    public func executeShellCommand(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_ExecuteShellCommandRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ExecuteShellCommandResponse> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_ExecuteShellCommandResponse>(
-            message: executeShellCommand(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_ExecuteShellCommandResponse>(
+            message: try await self.executeShellCommand(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func validateScript(
+    public func validateScript(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_ValidateScriptRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ValidateScriptResponse> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_ValidateScriptResponse>(
-            message: validateScript(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_ValidateScriptResponse>(
+            message: try await self.validateScript(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 
-    func getScriptingDictionaries(
+    public func getScriptingDictionaries(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_GetScriptingDictionariesRequest>,
-        context: GRPCCore.ServerContext,
+        context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ScriptingDictionaries> {
-        try await GRPCCore.ServerResponse<Macosusesdk_V1_ScriptingDictionaries>(
-            message: getScriptingDictionaries(
+        return GRPCCore.ServerResponse<Macosusesdk_V1_ScriptingDictionaries>(
+            message: try await self.getScriptingDictionaries(
                 request: request.message,
-                context: context,
+                context: context
             ),
-            metadata: [:],
+            metadata: [:]
         )
     }
 }

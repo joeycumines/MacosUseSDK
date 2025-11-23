@@ -7,7 +7,26 @@ MAKEFILE_TARGET_PREFIXES := $(MAKEFILE_TARGET_PREFIXES) SWIFT_TARGET_PREFIX
 SWIFT_DAG__Server := root
 GO_MODULE_SLUGS_NO_PACKAGES ?= hack.google-api-linter
 GO_MODULE_SLUGS_NO_UPDATE ?= hack.google-api-linter
-SWIFT_PACKAGE_SLUGS_NO_FORMAT ?= root
+# excludes generated files + files that are largely unchanged from upstream
+SWIFT_PACKAGE_FILES_NO_LINT_OR_FORMAT ?= \
+./Server/Sources/MacosUseSDKProtos/% \
+./Sources/VisualInputTool/main.swift \
+./Sources/TraversalTool/main.swift \
+./Sources/MacosUseSDK/InputController.swift \
+./Sources/MacosUseSDK/HighlightInput.swift \
+./Sources/MacosUseSDK/CombinedActions.swift \
+./Sources/MacosUseSDK/DrawVisuals.swift \
+./Sources/MacosUseSDK/AppOpener.swift \
+./Sources/MacosUseSDK/ActionCoordinator.swift \
+./Sources/MacosUseSDK/AccessibilityTraversal.swift \
+./Sources/InputControllerTool/main.swift \
+./Sources/HighlightTraversalTool/main.swift \
+./Sources/AppOpenerTool/main.swift \
+./Sources/ActionTool/main.swift \
+./Tests/MacosUseSDKTests/CombinedActionsDiffTests.swift \
+./Tests/MacosUseSDKTests/CombinedActionsFocusVisualizationTests.swift
+SWIFT_PACKAGE_FILES_NO_LINT ?= $(SWIFT_PACKAGE_FILES_NO_LINT_OR_FORMAT)
+SWIFT_PACKAGE_FILES_NO_FORMAT ?= $(SWIFT_PACKAGE_FILES_NO_LINT_OR_FORMAT)
 
 -include $(PROJECT_ROOT)/config.mk
 include $(PROJECT_ROOT)/make/go.mk
