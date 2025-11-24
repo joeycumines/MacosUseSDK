@@ -47,7 +47,7 @@ func main() async throws {
     logger.info("Singleton actors initialized with shared registry")
 
     // Create the single, correct service provider
-    let macosUseService = MacosUseServiceProvider(
+    let macosUseService = MacosUseService(
         stateStore: stateStore,
         operationStore: operationStore,
         windowRegistry: sharedWindowRegistry,

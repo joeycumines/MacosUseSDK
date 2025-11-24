@@ -8,7 +8,7 @@ import MacosUseSDK
 import OSLog
 import SwiftProtobuf
 
-extension MacosUseServiceProvider {
+extension MacosUseService {
     func parsePID(fromName name: String) throws -> pid_t {
         try ParsingHelpers.parsePID(fromName: name)
     }

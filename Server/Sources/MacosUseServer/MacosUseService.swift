@@ -8,12 +8,8 @@ import MacosUseSDK
 import OSLog
 import SwiftProtobuf
 
-/// This is the single, correct gRPC provider for the `MacosUse` service.
-///
-/// It implements the generated `Macosusesdk_V1_MacosUse.ServiceProtocol` protocol
-/// and acts as the bridge between gRPC requests and the `AutomationCoordinator`.
-final class MacosUseServiceProvider: Macosusesdk_V1_MacosUse.ServiceProtocol {
-    static let logger = MacosUseSDK.sdkLogger(category: "MacosUseServiceProvider")
+final class MacosUseService: Macosusesdk_V1_MacosUse.ServiceProtocol {
+    static let logger = MacosUseSDK.sdkLogger(category: "MacosUseService")
     let stateStore: AppStateStore
     let operationStore: OperationStore
     let windowRegistry: WindowRegistry

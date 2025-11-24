@@ -51,7 +51,7 @@ struct WindowMethodsTests {
         let registry = WindowRegistry(system: mock)
         try await registry.refreshWindows()
 
-        let provider = MacosUseServiceProvider(stateStore: AppStateStore(), operationStore: OperationStore(), windowRegistry: registry, system: mock)
+        let provider = MacosUseService(stateStore: AppStateStore(), operationStore: OperationStore(), windowRegistry: registry, system: mock)
 
         let element = try await provider.findWindowElement(pid: pid, windowId: winID)
         let response = try await provider.buildWindowResponseFromAX(name: "applications/\(pid):\(winID)", pid: pid, windowId: winID, window: element, registryInfo: nil)
@@ -80,7 +80,7 @@ struct WindowMethodsTests {
         // Get registry metadata to pass to buildWindowResponseFromAX
         let registryInfo = try await registry.getWindow(winID)
 
-        let provider = MacosUseServiceProvider(stateStore: AppStateStore(), operationStore: OperationStore(), windowRegistry: registry, system: mock)
+        let provider = MacosUseService(stateStore: AppStateStore(), operationStore: OperationStore(), windowRegistry: registry, system: mock)
 
         let element = try await provider.findWindowElement(pid: pid, windowId: winID)
         let response = try await provider.buildWindowResponseFromAX(name: "applications/\(pid)/windows/\(winID)", pid: pid, windowId: winID, window: element, registryInfo: registryInfo)
@@ -109,7 +109,7 @@ struct WindowMethodsTests {
         // Get registry metadata to pass to buildWindowResponseFromAX
         let registryInfo = try await registry.getWindow(winID)
 
-        let provider = MacosUseServiceProvider(stateStore: AppStateStore(), operationStore: OperationStore(), windowRegistry: registry, system: mock)
+        let provider = MacosUseService(stateStore: AppStateStore(), operationStore: OperationStore(), windowRegistry: registry, system: mock)
 
         let element = try await provider.findWindowElement(pid: pid, windowId: winID)
         let response = try await provider.buildWindowResponseFromAX(name: "applications/\(pid)/windows/\(winID)", pid: pid, windowId: winID, window: element, registryInfo: registryInfo)
@@ -132,7 +132,7 @@ struct WindowMethodsTests {
         let registry = WindowRegistry(system: mock)
         try await registry.refreshWindows()
 
-        let provider = MacosUseServiceProvider(stateStore: AppStateStore(), operationStore: OperationStore(), windowRegistry: registry, system: mock)
+        let provider = MacosUseService(stateStore: AppStateStore(), operationStore: OperationStore(), windowRegistry: registry, system: mock)
 
         // findWindowElement should throw NOT_FOUND when AX fetch fails
         await #expect(throws: (any Error).self) {

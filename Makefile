@@ -62,7 +62,7 @@ fix: go.fix swift.fix ## Apply automatic fixes to source files.
 generate: ## Generate all code.
 	@$(MAKE) --no-print-directory buf.generate
 	@$(MAKE) --no-print-directory go.generate
-	@$(MAKE) --no-print-directory fmt
+	@$(MAKE) --no-print-directory fix
 
 .PHONY: gen
 gen: generate ## Alias for 'generate'.

@@ -8,7 +8,7 @@ import MacosUseSDK
 import OSLog
 import SwiftProtobuf
 
-extension MacosUseServiceProvider {
+extension MacosUseService {
     func openApplication(
         request: ServerRequest<Macosusesdk_V1_OpenApplicationRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Google_Longrunning_Operation> {

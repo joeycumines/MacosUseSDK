@@ -8,7 +8,7 @@ import MacosUseSDK
 import OSLog
 import SwiftProtobuf
 
-extension MacosUseServiceProvider {
+extension MacosUseService {
     func getWindow(
         request: ServerRequest<Macosusesdk_V1_GetWindowRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_Window> {

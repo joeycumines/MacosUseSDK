@@ -8,7 +8,7 @@ import MacosUseSDK
 import OSLog
 import SwiftProtobuf
 
-extension MacosUseServiceProvider {
+extension MacosUseService {
     func findMatchingElement(
         _ targetElement: Macosusesdk_Type_Element, in elements: [Macosusesdk_Type_Element],
     ) -> Macosusesdk_Type_Element? {
