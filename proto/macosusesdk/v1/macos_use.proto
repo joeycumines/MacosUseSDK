@@ -36,8 +36,6 @@ option java_package = "com.macosusesdk.v1";
 
 // MacosUse is the primary service for automating macOS applications.
 service MacosUse {
-  option (google.api.default_host) = "macosusesdk.localhost";
-
   // Opens or activates an application. This is a long-running operation.
   rpc OpenApplication(OpenApplicationRequest) returns (google.longrunning.Operation) {
     option (google.api.http) = {

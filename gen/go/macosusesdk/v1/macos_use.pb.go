@@ -7498,7 +7498,7 @@ const file_macosusesdk_v1_macos_use_proto_rawDesc = "" +
 	"\bwarnings\x18\x03 \x03(\tR\bwarnings\"@\n" +
 	"\x1fGetScriptingDictionariesRequest\x12\x1d\n" +
 	"\x04name\x18\x01 \x01(\tB\t\xe0A\x02\xfaA\x03\n" +
-	"\x01*R\x04name2\xf6Q\n" +
+	"\x01*R\x04name2\xdcQ\n" +
 	"\bMacosUse\x12\xba\x01\n" +
 	"\x0fOpenApplication\x12&.macosusesdk.v1.OpenApplicationRequest\x1a\x1d.google.longrunning.Operation\"`\xcaA2\n" +
 	"\x17OpenApplicationResponse\x12\x17OpenApplicationMetadata\x82\xd3\xe4\x93\x02%:\x01*\" /v1/applications:openApplication\x12~\n" +
@@ -7576,7 +7576,7 @@ const file_macosusesdk_v1_macos_use_proto_rawDesc = "" +
 	"\x11ExecuteJavaScript\x12(.macosusesdk.v1.ExecuteJavaScriptRequest\x1a).macosusesdk.v1.ExecuteJavaScriptResponse\"1\xdaA\x06script\x82\xd3\xe4\x93\x02\":\x01*\"\x1d/v1/scripts:executeJavaScript\x12\xa4\x01\n" +
 	"\x13ExecuteShellCommand\x12*.macosusesdk.v1.ExecuteShellCommandRequest\x1a+.macosusesdk.v1.ExecuteShellCommandResponse\"4\xdaA\acommand\x82\xd3\xe4\x93\x02$:\x01*\"\x1f/v1/scripts:executeShellCommand\x12\x94\x01\n" +
 	"\x0eValidateScript\x12%.macosusesdk.v1.ValidateScriptRequest\x1a&.macosusesdk.v1.ValidateScriptResponse\"3\xdaA\vtype,script\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/v1/scripts:validateScript\x12\xa3\x01\n" +
-	"\x18GetScriptingDictionaries\x12/.macosusesdk.v1.GetScriptingDictionariesRequest\x1a%.macosusesdk.v1.ScriptingDictionaries\"/\xdaA\x04name\x82\xd3\xe4\x93\x02\"\x12 /v1/{name=scriptingDictionaries}\x1a\x18\xcaA\x15macosusesdk.localhostB\xc4\x01\n" +
+	"\x18GetScriptingDictionaries\x12/.macosusesdk.v1.GetScriptingDictionariesRequest\x1a%.macosusesdk.v1.ScriptingDictionaries\"/\xdaA\x04name\x82\xd3\xe4\x93\x02\"\x12 /v1/{name=scriptingDictionaries}B\xc4\x01\n" +
 	"\x12com.macosusesdk.v1B\rMacosUseProtoP\x01ZFgithub.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1\xa2\x02\x03MXX\xaa\x02\x0eMacosusesdk.V1\xca\x02\x0eMacosusesdk\\V1\xe2\x02\x1aMacosusesdk\\V1\\GPBMetadata\xea\x02\x0fMacosusesdk::V1b\x06proto3"
 
 var (
