@@ -1565,7 +1565,7 @@ var File_macosusesdk_v1_macro_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_macro_proto_rawDesc = "" +
 	"\n" +
-	"\x1amacosusesdk/v1/macro.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1amacosusesdk/v1/input.proto\"\xfc\x03\n" +
+	"\x1amacosusesdk/v1/macro.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1amacosusesdk/v1/input.proto\"\xf6\x03\n" +
 	"\x05Macro\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12&\n" +
 	"\fdisplay_name\x18\x02 \x01(\tB\x03\xe0A\x02R\vdisplayName\x12%\n" +
@@ -1579,8 +1579,8 @@ const file_macosusesdk_v1_macro_proto_rawDesc = "" +
 	"\vupdate_time\x18\a \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\n" +
 	"updateTime\x12,\n" +
 	"\x0fexecution_count\x18\b \x01(\x03B\x03\xe0A\x03R\x0eexecutionCount\x12\x17\n" +
-	"\x04tags\x18\t \x03(\tB\x03\xe0A\x01R\x04tags:?\xeaA<\n" +
-	"\x1bmacosusesdk.localhost/Macro\x12\x0emacros/{macro}*\x06macros2\x05macro\"\xb4\x03\n" +
+	"\x04tags\x18\t \x03(\tB\x03\xe0A\x01R\x04tags:9\xeaA6\n" +
+	"\x15macosusesdk.com/Macro\x12\x0emacros/{macro}*\x06macros2\x05macro\"\xae\x03\n" +
 	"\x11ExecutionLogEntry\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12F\n" +
 	"\x0eexecution_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\rexecutionTime\x12&\n" +
@@ -1588,8 +1588,8 @@ const file_macosusesdk_v1_macro_proto_rawDesc = "" +
 	"\vdescription\x18\x04 \x01(\tB\x03\xe0A\x03R\vdescription\x12\x1d\n" +
 	"\asuccess\x18\x05 \x01(\bB\x03\xe0A\x03R\asuccess\x12\x19\n" +
 	"\x05error\x18\x06 \x01(\tB\x03\xe0A\x03R\x05error\x12\x1f\n" +
-	"\bduration\x18\a \x01(\x01B\x03\xe0A\x03R\bduration:\x93\x01\xeaA\x8f\x01\n" +
-	"'macosusesdk.localhost/ExecutionLogEntry\x12<macros/{macro}/executions/{execution}/logEntries/{log_entry}*\x13executionLogEntries2\x11executionLogEntry\"\x95\x03\n" +
+	"\bduration\x18\a \x01(\x01B\x03\xe0A\x03R\bduration:\x8d\x01\xeaA\x89\x01\n" +
+	"!macosusesdk.com/ExecutionLogEntry\x12<macros/{macro}/executions/{execution}/logEntries/{log_entry}*\x13executionLogEntries2\x11executionLogEntry\"\x95\x03\n" +
 	"\vMacroAction\x123\n" +
 	"\x05input\x18\x01 \x01(\v2\x1b.macosusesdk.v1.InputActionH\x00R\x05input\x120\n" +
 	"\x04wait\x18\x02 \x01(\v2\x1a.macosusesdk.v1.WaitActionH\x00R\x04wait\x12E\n" +

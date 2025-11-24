@@ -20,7 +20,7 @@ option java_package = "com.macosusesdk.v1";
 // transaction-like semantics for atomic operation groups.
 message Session {
   option (google.api.resource) = {
-    type: "macosusesdk.localhost/Session"
+    type: "macosusesdk.com/Session"
     pattern: "sessions/{session}"
     singular: "session"
     plural: "sessions"
@@ -81,7 +81,7 @@ message Transaction {
   // Session this transaction belongs to.
   string session = 2 [
     (google.api.field_behavior) = OUTPUT_ONLY,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Session"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Session"}
   ];
 
   // Transaction state.

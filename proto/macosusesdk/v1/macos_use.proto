@@ -612,7 +612,7 @@ message GetApplicationRequest {
   // Resource name of the application.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Application"}
   ];
 }
 
@@ -643,7 +643,7 @@ message DeleteApplicationRequest {
   // Resource name of the application.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Application"}
   ];
 
   // If set to true, any pending inputs for this application will also be deleted.
@@ -655,7 +655,7 @@ message CreateInputRequest {
   // Parent resource. Either "applications/{application}" or "" for desktop inputs.
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {child_type: "macosusesdk.localhost/Input"}
+    (google.api.resource_reference) = {child_type: "macosusesdk.com/Input"}
   ];
 
   // The input to create.
@@ -670,7 +670,7 @@ message GetInputRequest {
   // Resource name of the input.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Input"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Input"}
   ];
 }
 
@@ -679,7 +679,7 @@ message ListInputsRequest {
   // Parent resource. Either "applications/{application}" or "" for desktop inputs.
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {child_type: "macosusesdk.localhost/Input"}
+    (google.api.resource_reference) = {child_type: "macosusesdk.com/Input"}
   ];
 
   // Maximum number of inputs to return.
@@ -710,7 +710,7 @@ message TraverseAccessibilityRequest {
   // Resource name of the application.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Application"}
   ];
 
   // Whether to return only visible elements.
@@ -737,7 +737,7 @@ message WatchAccessibilityRequest {
   // Resource name of the application.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Application"}
   ];
 
   // Poll interval in seconds.
@@ -1073,7 +1073,7 @@ message GetWindowRequest {
   // Resource name of the window.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Window"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Window"}
   ];
 }
 
@@ -1082,7 +1082,7 @@ message ListWindowsRequest {
   // Parent application.
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Application"}
   ];
 
   // Maximum number of windows to return.
@@ -1100,7 +1100,7 @@ message GetWindowStateRequest {
   // Format: applications/{application}/windows/{window}/state
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/WindowState"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/WindowState"}
   ];
 }
 
@@ -1120,7 +1120,7 @@ message FocusWindowRequest {
   // Resource name of the window.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Window"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Window"}
   ];
 }
 
@@ -1129,7 +1129,7 @@ message MoveWindowRequest {
   // Resource name of the window.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Window"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Window"}
   ];
 
   // New X coordinate.
@@ -1144,7 +1144,7 @@ message ResizeWindowRequest {
   // Resource name of the window.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Window"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Window"}
   ];
 
   // New width.
@@ -1159,7 +1159,7 @@ message MinimizeWindowRequest {
   // Resource name of the window.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Window"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Window"}
   ];
 }
 
@@ -1168,7 +1168,7 @@ message RestoreWindowRequest {
   // Resource name of the window.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Window"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Window"}
   ];
 }
 
@@ -1177,7 +1177,7 @@ message CloseWindowRequest {
   // Resource name of the window.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Window"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Window"}
   ];
 
   // Whether to force close without confirmation.
@@ -1195,7 +1195,7 @@ message CreateObservationRequest {
   // Parent application.
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Application"}
   ];
 
   // The observation to create.
@@ -1208,7 +1208,7 @@ message CreateObservationRequest {
 // Metadata for CreateObservation operation.
 message CreateObservationMetadata {
   // The observation being created.
-  string observation = 1 [(google.api.resource_reference) = {type: "macosusesdk.localhost/Observation"}];
+  string observation = 1 [(google.api.resource_reference) = {type: "macosusesdk.com/Observation"}];
 
   // Observation type.
   ObservationType type = 2;
@@ -1219,7 +1219,7 @@ message GetObservationRequest {
   // Resource name of the observation.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Observation"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Observation"}
   ];
 }
 
@@ -1228,7 +1228,7 @@ message ListObservationsRequest {
   // Parent application.
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Application"}
   ];
 
   // Maximum number of observations to return.
@@ -1256,7 +1256,7 @@ message CancelObservationRequest {
   // Resource name of the observation.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Observation"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Observation"}
   ];
 }
 
@@ -1265,7 +1265,7 @@ message StreamObservationsRequest {
   // Resource name of the observation.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Observation"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Observation"}
   ];
 }
 
@@ -1289,7 +1289,7 @@ message GetSessionRequest {
   // Resource name of the session.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Session"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Session"}
   ];
 }
 
@@ -1316,7 +1316,7 @@ message DeleteSessionRequest {
   // Resource name of the session.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Session"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Session"}
   ];
 
   // Whether to force delete active sessions.
@@ -1337,7 +1337,7 @@ message GetMacroRequest {
   // Resource name of the macro.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Macro"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Macro"}
   ];
 }
 
@@ -1373,7 +1373,7 @@ message DeleteMacroRequest {
   // Resource name of the macro.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Macro"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Macro"}
   ];
 
   // If true, delete child resources (executions, logs).
@@ -1385,7 +1385,7 @@ message ExecuteMacroRequest {
   // Macro to execute.
   string macro = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Macro"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Macro"}
   ];
 
   // Parameter values (for parameterized macros).
@@ -1394,7 +1394,7 @@ message ExecuteMacroRequest {
   // Application context (if needed).
   string application = 3 [
     (google.api.field_behavior) = OPTIONAL,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Application"}
   ];
 
   // Execution options.
@@ -1437,7 +1437,7 @@ message ExecuteMacroResponse {
 // Metadata for ExecuteMacro operation.
 message ExecuteMacroMetadata {
   // Macro being executed.
-  string macro = 1 [(google.api.resource_reference) = {type: "macosusesdk.localhost/Macro"}];
+  string macro = 1 [(google.api.resource_reference) = {type: "macosusesdk.com/Macro"}];
 
   // Current action index.
   int32 current_action = 2;
@@ -1454,7 +1454,7 @@ message BeginTransactionRequest {
   // Session name.
   string session = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Session"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Session"}
   ];
 
   // Transaction isolation level.
@@ -1491,7 +1491,7 @@ message CommitTransactionRequest {
   // Format: sessions/{session}
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Session"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Session"}
   ];
 
   // Transaction ID to commit.
@@ -1504,7 +1504,7 @@ message RollbackTransactionRequest {
   // Format: sessions/{session}
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Session"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Session"}
   ];
 
   // The revision to rollback to.
@@ -1520,7 +1520,7 @@ message GetSessionSnapshotRequest {
   // Format: sessions/{session}
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Session"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Session"}
   ];
 }
 
@@ -1562,7 +1562,7 @@ message CaptureWindowScreenshotRequest {
   // Window to capture.
   string window = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Window"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Window"}
   ];
 
   // Image format.
@@ -1593,7 +1593,7 @@ message CaptureWindowScreenshotResponse {
   int32 height = 4;
 
   // Window that was captured.
-  string window = 5 [(google.api.resource_reference) = {type: "macosusesdk.localhost/Window"}];
+  string window = 5 [(google.api.resource_reference) = {type: "macosusesdk.com/Window"}];
 
   // OCR-extracted text (if requested).
   string ocr_text = 6;
@@ -1689,7 +1689,7 @@ message GetClipboardRequest {
   // Format: clipboard (singleton)
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Clipboard"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Clipboard"}
   ];
 }
 
@@ -1735,7 +1735,7 @@ message AutomateOpenFileDialogRequest {
   // Application context.
   string application = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Application"}
   ];
 
   // File path to select (if known).
@@ -1771,7 +1771,7 @@ message AutomateSaveFileDialogRequest {
   // Application context.
   string application = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Application"}
   ];
 
   // File path to save to.
@@ -1807,7 +1807,7 @@ message SelectFileRequest {
   // Application context.
   string application = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Application"}
   ];
 
   // File path to select.
@@ -1834,7 +1834,7 @@ message SelectDirectoryRequest {
   // Application context.
   string application = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Application"}
   ];
 
   // Directory path to select.
@@ -1864,7 +1864,7 @@ message DragFilesRequest {
   // Application context.
   string application = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.localhost/Application"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Application"}
   ];
 
   // File paths to drag.

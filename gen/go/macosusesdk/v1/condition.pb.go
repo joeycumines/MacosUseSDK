@@ -94,12 +94,12 @@ var File_macosusesdk_v1_condition_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_condition_proto_rawDesc = "" +
 	"\n" +
-	"\x1emacosusesdk/v1/condition.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\"\xef\x01\n" +
+	"\x1emacosusesdk/v1/condition.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\"\xe8\x01\n" +
 	"\x12AttributeCondition\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12!\n" +
 	"\tattribute\x18\x02 \x01(\tB\x03\xe0A\x02R\tattribute\x12\x19\n" +
-	"\x05value\x18\x03 \x01(\tB\x03\xe0A\x02R\x05value:\x81\x01\xeaA~\n" +
-	"(macosusesdk.localhost/AttributeCondition\x12)attributeConditions/{attribute_condition}*\x13attributeConditions2\x12attributeConditionB\xc5\x01\n" +
+	"\x05value\x18\x03 \x01(\tB\x03\xe0A\x02R\x05value:{\xeaAx\n" +
+	"\"macosusesdk.com/AttributeCondition\x12)attributeConditions/{attribute_condition}*\x13attributeConditions2\x12attributeConditionB\xc5\x01\n" +
 	"\x12com.macosusesdk.v1B\x0eConditionProtoP\x01ZFgithub.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1\xa2\x02\x03MXX\xaa\x02\x0eMacosusesdk.V1\xca\x02\x0eMacosusesdk\\V1\xe2\x02\x1aMacosusesdk\\V1\\GPBMetadata\xea\x02\x0fMacosusesdk::V1b\x06proto3"
 
 var (

@@ -407,7 +407,7 @@ var File_macosusesdk_v1_window_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_window_proto_rawDesc = "" +
 	"\n" +
-	"\x1bmacosusesdk/v1/window.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\"\xb1\x02\n" +
+	"\x1bmacosusesdk/v1/window.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\"\xab\x02\n" +
 	"\x06Window\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12\x19\n" +
 	"\x05title\x18\x02 \x01(\tB\x03\xe0A\x03R\x05title\x123\n" +
@@ -415,13 +415,13 @@ const file_macosusesdk_v1_window_proto_rawDesc = "" +
 	"\az_index\x18\x04 \x01(\x05B\x03\xe0A\x03R\x06zIndex\x12\x1d\n" +
 	"\avisible\x18\x05 \x01(\bB\x03\xe0A\x03R\avisible\x12 \n" +
 	"\tbundle_id\x18\n" +
-	" \x01(\tB\x03\xe0A\x03R\bbundleId:_\xeaA\\\n" +
-	"\x1cmacosusesdk.localhost/Window\x12+applications/{application}/windows/{window}*\awindows2\x06window\"R\n" +
+	" \x01(\tB\x03\xe0A\x03R\bbundleId:Y\xeaAV\n" +
+	"\x16macosusesdk.com/Window\x12+applications/{application}/windows/{window}*\awindows2\x06window\"R\n" +
 	"\x06Bounds\x12\f\n" +
 	"\x01x\x18\x01 \x01(\x01R\x01x\x12\f\n" +
 	"\x01y\x18\x02 \x01(\x01R\x01y\x12\x14\n" +
 	"\x05width\x18\x03 \x01(\x01R\x05width\x12\x16\n" +
-	"\x06height\x18\x04 \x01(\x01R\x06height\"\xe0\x03\n" +
+	"\x06height\x18\x04 \x01(\x01R\x06height\"\xda\x03\n" +
 	"\vWindowState\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12!\n" +
 	"\tresizable\x18\x02 \x01(\bB\x03\xe0A\x03R\tresizable\x12%\n" +
@@ -435,8 +435,8 @@ const file_macosusesdk_v1_window_proto_rawDesc = "" +
 	"\n" +
 	"fullscreen\x18\n" +
 	" \x01(\bB\x03\xe0A\x03H\x00R\n" +
-	"fullscreen\x88\x01\x01:t\xeaAq\n" +
-	"!macosusesdk.localhost/WindowState\x121applications/{application}/windows/{window}/state*\fwindowStates2\vwindowStateB\r\n" +
+	"fullscreen\x88\x01\x01:n\xeaAk\n" +
+	"\x1bmacosusesdk.com/WindowState\x121applications/{application}/windows/{window}/state*\fwindowStates2\vwindowStateB\r\n" +
 	"\v_fullscreenB\xc2\x01\n" +
 	"\x12com.macosusesdk.v1B\vWindowProtoP\x01ZFgithub.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1\xa2\x02\x03MXX\xaa\x02\x0eMacosusesdk.V1\xca\x02\x0eMacosusesdk\\V1\xe2\x02\x1aMacosusesdk\\V1\\GPBMetadata\xea\x02\x0fMacosusesdk::V1b\x06proto3"
 

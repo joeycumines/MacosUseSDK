@@ -19,7 +19,7 @@ option java_package = "com.macosusesdk.v1";
 // An observation monitors UI changes and streams events.
 message Observation {
   option (google.api.resource) = {
-    type: "macosusesdk.localhost/Observation"
+    type: "macosusesdk.com/Observation"
     pattern: "applications/{application}/observations/{observation}"
     singular: "observation"
     plural: "observations"
@@ -86,7 +86,7 @@ message ObservationFilter {
 // An event from an observation.
 message ObservationEvent {
   // Observation that generated this event.
-  string observation = 1 [(google.api.resource_reference) = {type: "macosusesdk.localhost/Observation"}];
+  string observation = 1 [(google.api.resource_reference) = {type: "macosusesdk.com/Observation"}];
 
   // When the event occurred.
   google.protobuf.Timestamp event_time = 2;

@@ -18,7 +18,7 @@ option java_package = "com.macosusesdk.v1";
 // is actively tracking for automation.
 message Application {
   option (google.api.resource) = {
-    type: "macosusesdk.localhost/Application"
+    type: "macosusesdk.com/Application"
     pattern: "applications/{application}"
     singular: "application"
     plural: "applications"

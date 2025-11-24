@@ -20,7 +20,7 @@ option java_package = "com.macosusesdk.v1";
 // Macros can be replayed to automate repetitive tasks.
 message Macro {
   option (google.api.resource) = {
-    type: "macosusesdk.localhost/Macro"
+    type: "macosusesdk.com/Macro"
     pattern: "macros/{macro}"
     singular: "macro"
     plural: "macros"
@@ -58,7 +58,7 @@ message Macro {
 // Log entry for macro execution.
 message ExecutionLogEntry {
   option (google.api.resource) = {
-    type: "macosusesdk.localhost/ExecutionLogEntry"
+    type: "macosusesdk.com/ExecutionLogEntry"
     pattern: "macros/{macro}/executions/{execution}/logEntries/{log_entry}"
     singular: "executionLogEntry"
     plural: "executionLogEntries"

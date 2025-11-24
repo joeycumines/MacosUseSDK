@@ -17,7 +17,7 @@ option java_package = "com.macosusesdk.v1";
 // Attribute condition for waiting.
 message AttributeCondition {
   option (google.api.resource) = {
-    type: "macosusesdk.localhost/AttributeCondition"
+    type: "macosusesdk.com/AttributeCondition"
     pattern: "attributeConditions/{attribute_condition}"
     singular: "attributeCondition"
     plural: "attributeConditions"

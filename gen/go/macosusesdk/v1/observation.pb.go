@@ -926,7 +926,7 @@ var File_macosusesdk_v1_observation_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_observation_proto_rawDesc = "" +
 	"\n" +
-	" macosusesdk/v1/observation.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1emacosusesdk/type/element.proto\"\x97\x05\n" +
+	" macosusesdk/v1/observation.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1emacosusesdk/type/element.proto\"\x91\x05\n" +
 	"\vObservation\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x128\n" +
 	"\x04type\x18\x02 \x01(\x0e2\x1f.macosusesdk.v1.ObservationTypeB\x03\xe0A\x02R\x04type\x12<\n" +
@@ -943,18 +943,18 @@ const file_macosusesdk_v1_observation_proto_rawDesc = "" +
 	"\fSTATE_ACTIVE\x10\x02\x12\x13\n" +
 	"\x0fSTATE_COMPLETED\x10\x03\x12\x13\n" +
 	"\x0fSTATE_CANCELLED\x10\x04\x12\x10\n" +
-	"\fSTATE_FAILED\x10\x05:x\xeaAu\n" +
-	"!macosusesdk.localhost/Observation\x125applications/{application}/observations/{observation}*\fobservations2\vobservation\"\xa5\x01\n" +
+	"\fSTATE_FAILED\x10\x05:r\xeaAo\n" +
+	"\x1bmacosusesdk.com/Observation\x125applications/{application}/observations/{observation}*\fobservations2\vobservation\"\xa5\x01\n" +
 	"\x11ObservationFilter\x12(\n" +
 	"\rpoll_interval\x18\x01 \x01(\x01B\x03\xe0A\x01R\fpollInterval\x12&\n" +
 	"\fvisible_only\x18\x02 \x01(\bB\x03\xe0A\x01R\vvisibleOnly\x12\x19\n" +
 	"\x05roles\x18\x03 \x03(\tB\x03\xe0A\x01R\x05roles\x12#\n" +
 	"\n" +
 	"attributes\x18\x04 \x03(\tB\x03\xe0A\x01R\n" +
-	"attributes\"\xb0\x04\n" +
-	"\x10ObservationEvent\x12H\n" +
-	"\vobservation\x18\x01 \x01(\tB&\xfaA#\n" +
-	"!macosusesdk.localhost/ObservationR\vobservation\x129\n" +
+	"attributes\"\xaa\x04\n" +
+	"\x10ObservationEvent\x12B\n" +
+	"\vobservation\x18\x01 \x01(\tB \xfaA\x1d\n" +
+	"\x1bmacosusesdk.com/ObservationR\vobservation\x129\n" +
 	"\n" +
 	"event_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\teventTime\x12\x1a\n" +
 	"\bsequence\x18\x03 \x01(\x03R\bsequence\x12C\n" +

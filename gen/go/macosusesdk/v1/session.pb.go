@@ -524,7 +524,7 @@ var File_macosusesdk_v1_session_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_session_proto_rawDesc = "" +
 	"\n" +
-	"\x1cmacosusesdk/v1/session.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd7\x05\n" +
+	"\x1cmacosusesdk/v1/session.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd1\x05\n" +
 	"\aSession\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12&\n" +
 	"\fdisplay_name\x18\x02 \x01(\tB\x03\xe0A\x01R\vdisplayName\x128\n" +
@@ -545,12 +545,12 @@ const file_macosusesdk_v1_session_proto_rawDesc = "" +
 	"\x14STATE_IN_TRANSACTION\x10\x02\x12\x14\n" +
 	"\x10STATE_TERMINATED\x10\x03\x12\x11\n" +
 	"\rSTATE_EXPIRED\x10\x04\x12\x10\n" +
-	"\fSTATE_FAILED\x10\x05:I\xeaAF\n" +
-	"\x1dmacosusesdk.localhost/Session\x12\x12sessions/{session}*\bsessions2\asession\"\xdf\x03\n" +
+	"\fSTATE_FAILED\x10\x05:C\xeaA@\n" +
+	"\x17macosusesdk.com/Session\x12\x12sessions/{session}*\bsessions2\asession\"\xd9\x03\n" +
 	"\vTransaction\x12*\n" +
-	"\x0etransaction_id\x18\x01 \x01(\tB\x03\xe0A\x03R\rtransactionId\x12?\n" +
-	"\asession\x18\x02 \x01(\tB%\xe0A\x03\xfaA\x1f\n" +
-	"\x1dmacosusesdk.localhost/SessionR\asession\x12<\n" +
+	"\x0etransaction_id\x18\x01 \x01(\tB\x03\xe0A\x03R\rtransactionId\x129\n" +
+	"\asession\x18\x02 \x01(\tB\x1f\xe0A\x03\xfaA\x19\n" +
+	"\x17macosusesdk.com/SessionR\asession\x12<\n" +
 	"\x05state\x18\x03 \x01(\x0e2!.macosusesdk.v1.Transaction.StateB\x03\xe0A\x03R\x05state\x12>\n" +
 	"\n" +
 	"start_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\tstartTime\x12.\n" +

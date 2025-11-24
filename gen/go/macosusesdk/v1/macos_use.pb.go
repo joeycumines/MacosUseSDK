@@ -7005,49 +7005,49 @@ const file_macosusesdk_v1_macos_use_proto_rawDesc = "" +
 	"\x17OpenApplicationResponse\x12=\n" +
 	"\vapplication\x18\x01 \x01(\v2\x1b.macosusesdk.v1.ApplicationR\vapplication\")\n" +
 	"\x17OpenApplicationMetadata\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"V\n" +
-	"\x15GetApplicationRequest\x12=\n" +
-	"\x04name\x18\x01 \x01(\tB)\xe0A\x02\xfaA#\n" +
-	"!macosusesdk.localhost/ApplicationR\x04name\"_\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"P\n" +
+	"\x15GetApplicationRequest\x127\n" +
+	"\x04name\x18\x01 \x01(\tB#\xe0A\x02\xfaA\x1d\n" +
+	"\x1bmacosusesdk.com/ApplicationR\x04name\"_\n" +
 	"\x17ListApplicationsRequest\x12 \n" +
 	"\tpage_size\x18\x01 \x01(\x05B\x03\xe0A\x01R\bpageSize\x12\"\n" +
 	"\n" +
 	"page_token\x18\x02 \x01(\tB\x03\xe0A\x01R\tpageToken\"\x83\x01\n" +
 	"\x18ListApplicationsResponse\x12?\n" +
 	"\fapplications\x18\x01 \x03(\v2\x1b.macosusesdk.v1.ApplicationR\fapplications\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"t\n" +
-	"\x18DeleteApplicationRequest\x12=\n" +
-	"\x04name\x18\x01 \x01(\tB)\xe0A\x02\xfaA#\n" +
-	"!macosusesdk.localhost/ApplicationR\x04name\x12\x19\n" +
-	"\x05force\x18\x02 \x01(\bB\x03\xe0A\x01R\x05force\"\xa3\x01\n" +
-	"\x12CreateInputRequest\x12;\n" +
-	"\x06parent\x18\x01 \x01(\tB#\xe0A\x02\xfaA\x1d\x12\x1bmacosusesdk.localhost/InputR\x06parent\x120\n" +
-	"\x05input\x18\x02 \x01(\v2\x15.macosusesdk.v1.InputB\x03\xe0A\x02R\x05input\x12\x1e\n" +
-	"\binput_id\x18\x03 \x01(\tB\x03\xe0A\x01R\ainputId\"J\n" +
-	"\x0fGetInputRequest\x127\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"n\n" +
+	"\x18DeleteApplicationRequest\x127\n" +
 	"\x04name\x18\x01 \x01(\tB#\xe0A\x02\xfaA\x1d\n" +
-	"\x1bmacosusesdk.localhost/InputR\x04name\"\xb3\x01\n" +
-	"\x11ListInputsRequest\x12;\n" +
-	"\x06parent\x18\x01 \x01(\tB#\xe0A\x02\xfaA\x1d\x12\x1bmacosusesdk.localhost/InputR\x06parent\x12 \n" +
+	"\x1bmacosusesdk.com/ApplicationR\x04name\x12\x19\n" +
+	"\x05force\x18\x02 \x01(\bB\x03\xe0A\x01R\x05force\"\x9d\x01\n" +
+	"\x12CreateInputRequest\x125\n" +
+	"\x06parent\x18\x01 \x01(\tB\x1d\xe0A\x02\xfaA\x17\x12\x15macosusesdk.com/InputR\x06parent\x120\n" +
+	"\x05input\x18\x02 \x01(\v2\x15.macosusesdk.v1.InputB\x03\xe0A\x02R\x05input\x12\x1e\n" +
+	"\binput_id\x18\x03 \x01(\tB\x03\xe0A\x01R\ainputId\"D\n" +
+	"\x0fGetInputRequest\x121\n" +
+	"\x04name\x18\x01 \x01(\tB\x1d\xe0A\x02\xfaA\x17\n" +
+	"\x15macosusesdk.com/InputR\x04name\"\xad\x01\n" +
+	"\x11ListInputsRequest\x125\n" +
+	"\x06parent\x18\x01 \x01(\tB\x1d\xe0A\x02\xfaA\x17\x12\x15macosusesdk.com/InputR\x06parent\x12 \n" +
 	"\tpage_size\x18\x02 \x01(\x05B\x03\xe0A\x01R\bpageSize\x12\"\n" +
 	"\n" +
 	"page_token\x18\x03 \x01(\tB\x03\xe0A\x01R\tpageToken\x12\x1b\n" +
 	"\x06filter\x18\x04 \x01(\tB\x03\xe0A\x01R\x06filter\"k\n" +
 	"\x12ListInputsResponse\x12-\n" +
 	"\x06inputs\x18\x01 \x03(\v2\x15.macosusesdk.v1.InputR\x06inputs\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\x85\x01\n" +
-	"\x1cTraverseAccessibilityRequest\x12=\n" +
-	"\x04name\x18\x01 \x01(\tB)\xe0A\x02\xfaA#\n" +
-	"!macosusesdk.localhost/ApplicationR\x04name\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\x7f\n" +
+	"\x1cTraverseAccessibilityRequest\x127\n" +
+	"\x04name\x18\x01 \x01(\tB#\xe0A\x02\xfaA\x1d\n" +
+	"\x1bmacosusesdk.com/ApplicationR\x04name\x12&\n" +
 	"\fvisible_only\x18\x02 \x01(\bB\x03\xe0A\x01R\vvisibleOnly\"\xe5\x01\n" +
 	"\x1dTraverseAccessibilityResponse\x12\x10\n" +
 	"\x03app\x18\x01 \x01(\tR\x03app\x125\n" +
 	"\belements\x18\x02 \x03(\v2\x19.macosusesdk.type.ElementR\belements\x126\n" +
 	"\x05stats\x18\x03 \x01(\v2 .macosusesdk.type.TraversalStatsR\x05stats\x12C\n" +
-	"\x0fprocessing_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x0eprocessingTime\"\xac\x01\n" +
-	"\x19WatchAccessibilityRequest\x12=\n" +
-	"\x04name\x18\x01 \x01(\tB)\xe0A\x02\xfaA#\n" +
-	"!macosusesdk.localhost/ApplicationR\x04name\x12(\n" +
+	"\x0fprocessing_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x0eprocessingTime\"\xa6\x01\n" +
+	"\x19WatchAccessibilityRequest\x127\n" +
+	"\x04name\x18\x01 \x01(\tB#\xe0A\x02\xfaA\x1d\n" +
+	"\x1bmacosusesdk.com/ApplicationR\x04name\x12(\n" +
 	"\rpoll_interval\x18\x02 \x01(\x01B\x03\xe0A\x01R\fpollInterval\x12&\n" +
 	"\fvisible_only\x18\x03 \x01(\bB\x03\xe0A\x01R\vvisibleOnly\"\xbf\x01\n" +
 	"\x1aWatchAccessibilityResponse\x12/\n" +
@@ -7162,100 +7162,100 @@ const file_macosusesdk_v1_macos_use_proto_rawDesc = "" +
 	"\aelement\x18\x01 \x01(\v2\x19.macosusesdk.type.ElementR\aelement\"t\n" +
 	"\x18WaitElementStateMetadata\x12<\n" +
 	"\tcondition\x18\x01 \x01(\v2\x1e.macosusesdk.v1.StateConditionR\tcondition\x12\x1a\n" +
-	"\battempts\x18\x02 \x01(\x05R\battempts\"L\n" +
-	"\x10GetWindowRequest\x128\n" +
-	"\x04name\x18\x01 \x01(\tB$\xe0A\x02\xfaA\x1e\n" +
-	"\x1cmacosusesdk.localhost/WindowR\x04name\"\x9d\x01\n" +
-	"\x12ListWindowsRequest\x12A\n" +
-	"\x06parent\x18\x01 \x01(\tB)\xe0A\x02\xfaA#\n" +
-	"!macosusesdk.localhost/ApplicationR\x06parent\x12 \n" +
+	"\battempts\x18\x02 \x01(\x05R\battempts\"F\n" +
+	"\x10GetWindowRequest\x122\n" +
+	"\x04name\x18\x01 \x01(\tB\x1e\xe0A\x02\xfaA\x18\n" +
+	"\x16macosusesdk.com/WindowR\x04name\"\x97\x01\n" +
+	"\x12ListWindowsRequest\x12;\n" +
+	"\x06parent\x18\x01 \x01(\tB#\xe0A\x02\xfaA\x1d\n" +
+	"\x1bmacosusesdk.com/ApplicationR\x06parent\x12 \n" +
 	"\tpage_size\x18\x02 \x01(\x05B\x03\xe0A\x01R\bpageSize\x12\"\n" +
 	"\n" +
-	"page_token\x18\x03 \x01(\tB\x03\xe0A\x01R\tpageToken\"V\n" +
-	"\x15GetWindowStateRequest\x12=\n" +
-	"\x04name\x18\x01 \x01(\tB)\xe0A\x02\xfaA#\n" +
-	"!macosusesdk.localhost/WindowStateR\x04name\"o\n" +
+	"page_token\x18\x03 \x01(\tB\x03\xe0A\x01R\tpageToken\"P\n" +
+	"\x15GetWindowStateRequest\x127\n" +
+	"\x04name\x18\x01 \x01(\tB#\xe0A\x02\xfaA\x1d\n" +
+	"\x1bmacosusesdk.com/WindowStateR\x04name\"o\n" +
 	"\x13ListWindowsResponse\x120\n" +
 	"\awindows\x18\x01 \x03(\v2\x16.macosusesdk.v1.WindowR\awindows\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"N\n" +
-	"\x12FocusWindowRequest\x128\n" +
-	"\x04name\x18\x01 \x01(\tB$\xe0A\x02\xfaA\x1e\n" +
-	"\x1cmacosusesdk.localhost/WindowR\x04name\"s\n" +
-	"\x11MoveWindowRequest\x128\n" +
-	"\x04name\x18\x01 \x01(\tB$\xe0A\x02\xfaA\x1e\n" +
-	"\x1cmacosusesdk.localhost/WindowR\x04name\x12\x11\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"H\n" +
+	"\x12FocusWindowRequest\x122\n" +
+	"\x04name\x18\x01 \x01(\tB\x1e\xe0A\x02\xfaA\x18\n" +
+	"\x16macosusesdk.com/WindowR\x04name\"m\n" +
+	"\x11MoveWindowRequest\x122\n" +
+	"\x04name\x18\x01 \x01(\tB\x1e\xe0A\x02\xfaA\x18\n" +
+	"\x16macosusesdk.com/WindowR\x04name\x12\x11\n" +
 	"\x01x\x18\x02 \x01(\x01B\x03\xe0A\x02R\x01x\x12\x11\n" +
-	"\x01y\x18\x03 \x01(\x01B\x03\xe0A\x02R\x01y\"\x87\x01\n" +
-	"\x13ResizeWindowRequest\x128\n" +
-	"\x04name\x18\x01 \x01(\tB$\xe0A\x02\xfaA\x1e\n" +
-	"\x1cmacosusesdk.localhost/WindowR\x04name\x12\x19\n" +
+	"\x01y\x18\x03 \x01(\x01B\x03\xe0A\x02R\x01y\"\x81\x01\n" +
+	"\x13ResizeWindowRequest\x122\n" +
+	"\x04name\x18\x01 \x01(\tB\x1e\xe0A\x02\xfaA\x18\n" +
+	"\x16macosusesdk.com/WindowR\x04name\x12\x19\n" +
 	"\x05width\x18\x02 \x01(\x01B\x03\xe0A\x02R\x05width\x12\x1b\n" +
-	"\x06height\x18\x03 \x01(\x01B\x03\xe0A\x02R\x06height\"Q\n" +
-	"\x15MinimizeWindowRequest\x128\n" +
-	"\x04name\x18\x01 \x01(\tB$\xe0A\x02\xfaA\x1e\n" +
-	"\x1cmacosusesdk.localhost/WindowR\x04name\"P\n" +
-	"\x14RestoreWindowRequest\x128\n" +
-	"\x04name\x18\x01 \x01(\tB$\xe0A\x02\xfaA\x1e\n" +
-	"\x1cmacosusesdk.localhost/WindowR\x04name\"i\n" +
-	"\x12CloseWindowRequest\x128\n" +
-	"\x04name\x18\x01 \x01(\tB$\xe0A\x02\xfaA\x1e\n" +
-	"\x1cmacosusesdk.localhost/WindowR\x04name\x12\x19\n" +
+	"\x06height\x18\x03 \x01(\x01B\x03\xe0A\x02R\x06height\"K\n" +
+	"\x15MinimizeWindowRequest\x122\n" +
+	"\x04name\x18\x01 \x01(\tB\x1e\xe0A\x02\xfaA\x18\n" +
+	"\x16macosusesdk.com/WindowR\x04name\"J\n" +
+	"\x14RestoreWindowRequest\x122\n" +
+	"\x04name\x18\x01 \x01(\tB\x1e\xe0A\x02\xfaA\x18\n" +
+	"\x16macosusesdk.com/WindowR\x04name\"c\n" +
+	"\x12CloseWindowRequest\x122\n" +
+	"\x04name\x18\x01 \x01(\tB\x1e\xe0A\x02\xfaA\x18\n" +
+	"\x16macosusesdk.com/WindowR\x04name\x12\x19\n" +
 	"\x05force\x18\x02 \x01(\bB\x03\xe0A\x01R\x05force\"/\n" +
 	"\x13CloseWindowResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xcd\x01\n" +
-	"\x18CreateObservationRequest\x12A\n" +
-	"\x06parent\x18\x01 \x01(\tB)\xe0A\x02\xfaA#\n" +
-	"!macosusesdk.localhost/ApplicationR\x06parent\x12B\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xc7\x01\n" +
+	"\x18CreateObservationRequest\x12;\n" +
+	"\x06parent\x18\x01 \x01(\tB#\xe0A\x02\xfaA\x1d\n" +
+	"\x1bmacosusesdk.com/ApplicationR\x06parent\x12B\n" +
 	"\vobservation\x18\x02 \x01(\v2\x1b.macosusesdk.v1.ObservationB\x03\xe0A\x02R\vobservation\x12*\n" +
-	"\x0eobservation_id\x18\x03 \x01(\tB\x03\xe0A\x01R\robservationId\"\x9a\x01\n" +
-	"\x19CreateObservationMetadata\x12H\n" +
-	"\vobservation\x18\x01 \x01(\tB&\xfaA#\n" +
-	"!macosusesdk.localhost/ObservationR\vobservation\x123\n" +
-	"\x04type\x18\x02 \x01(\x0e2\x1f.macosusesdk.v1.ObservationTypeR\x04type\"V\n" +
-	"\x15GetObservationRequest\x12=\n" +
-	"\x04name\x18\x01 \x01(\tB)\xe0A\x02\xfaA#\n" +
-	"!macosusesdk.localhost/ObservationR\x04name\"\xa2\x01\n" +
-	"\x17ListObservationsRequest\x12A\n" +
-	"\x06parent\x18\x01 \x01(\tB)\xe0A\x02\xfaA#\n" +
-	"!macosusesdk.localhost/ApplicationR\x06parent\x12 \n" +
+	"\x0eobservation_id\x18\x03 \x01(\tB\x03\xe0A\x01R\robservationId\"\x94\x01\n" +
+	"\x19CreateObservationMetadata\x12B\n" +
+	"\vobservation\x18\x01 \x01(\tB \xfaA\x1d\n" +
+	"\x1bmacosusesdk.com/ObservationR\vobservation\x123\n" +
+	"\x04type\x18\x02 \x01(\x0e2\x1f.macosusesdk.v1.ObservationTypeR\x04type\"P\n" +
+	"\x15GetObservationRequest\x127\n" +
+	"\x04name\x18\x01 \x01(\tB#\xe0A\x02\xfaA\x1d\n" +
+	"\x1bmacosusesdk.com/ObservationR\x04name\"\x9c\x01\n" +
+	"\x17ListObservationsRequest\x12;\n" +
+	"\x06parent\x18\x01 \x01(\tB#\xe0A\x02\xfaA\x1d\n" +
+	"\x1bmacosusesdk.com/ApplicationR\x06parent\x12 \n" +
 	"\tpage_size\x18\x02 \x01(\x05B\x03\xe0A\x01R\bpageSize\x12\"\n" +
 	"\n" +
 	"page_token\x18\x03 \x01(\tB\x03\xe0A\x01R\tpageToken\"\x83\x01\n" +
 	"\x18ListObservationsResponse\x12?\n" +
 	"\fobservations\x18\x01 \x03(\v2\x1b.macosusesdk.v1.ObservationR\fobservations\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"Y\n" +
-	"\x18CancelObservationRequest\x12=\n" +
-	"\x04name\x18\x01 \x01(\tB)\xe0A\x02\xfaA#\n" +
-	"!macosusesdk.localhost/ObservationR\x04name\"Z\n" +
-	"\x19StreamObservationsRequest\x12=\n" +
-	"\x04name\x18\x01 \x01(\tB)\xe0A\x02\xfaA#\n" +
-	"!macosusesdk.localhost/ObservationR\x04name\"T\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"S\n" +
+	"\x18CancelObservationRequest\x127\n" +
+	"\x04name\x18\x01 \x01(\tB#\xe0A\x02\xfaA\x1d\n" +
+	"\x1bmacosusesdk.com/ObservationR\x04name\"T\n" +
+	"\x19StreamObservationsRequest\x127\n" +
+	"\x04name\x18\x01 \x01(\tB#\xe0A\x02\xfaA\x1d\n" +
+	"\x1bmacosusesdk.com/ObservationR\x04name\"T\n" +
 	"\x1aStreamObservationsResponse\x126\n" +
 	"\x05event\x18\x01 \x01(\v2 .macosusesdk.v1.ObservationEventR\x05event\"r\n" +
 	"\x14CreateSessionRequest\x126\n" +
 	"\asession\x18\x01 \x01(\v2\x17.macosusesdk.v1.SessionB\x03\xe0A\x02R\asession\x12\"\n" +
 	"\n" +
-	"session_id\x18\x02 \x01(\tB\x03\xe0A\x01R\tsessionId\"N\n" +
-	"\x11GetSessionRequest\x129\n" +
-	"\x04name\x18\x01 \x01(\tB%\xe0A\x02\xfaA\x1f\n" +
-	"\x1dmacosusesdk.localhost/SessionR\x04name\"[\n" +
+	"session_id\x18\x02 \x01(\tB\x03\xe0A\x01R\tsessionId\"H\n" +
+	"\x11GetSessionRequest\x123\n" +
+	"\x04name\x18\x01 \x01(\tB\x1f\xe0A\x02\xfaA\x19\n" +
+	"\x17macosusesdk.com/SessionR\x04name\"[\n" +
 	"\x13ListSessionsRequest\x12 \n" +
 	"\tpage_size\x18\x01 \x01(\x05B\x03\xe0A\x01R\bpageSize\x12\"\n" +
 	"\n" +
 	"page_token\x18\x02 \x01(\tB\x03\xe0A\x01R\tpageToken\"s\n" +
 	"\x14ListSessionsResponse\x123\n" +
 	"\bsessions\x18\x01 \x03(\v2\x17.macosusesdk.v1.SessionR\bsessions\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"l\n" +
-	"\x14DeleteSessionRequest\x129\n" +
-	"\x04name\x18\x01 \x01(\tB%\xe0A\x02\xfaA\x1f\n" +
-	"\x1dmacosusesdk.localhost/SessionR\x04name\x12\x19\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"f\n" +
+	"\x14DeleteSessionRequest\x123\n" +
+	"\x04name\x18\x01 \x01(\tB\x1f\xe0A\x02\xfaA\x19\n" +
+	"\x17macosusesdk.com/SessionR\x04name\x12\x19\n" +
 	"\x05force\x18\x02 \x01(\bB\x03\xe0A\x01R\x05force\"f\n" +
 	"\x12CreateMacroRequest\x120\n" +
 	"\x05macro\x18\x01 \x01(\v2\x15.macosusesdk.v1.MacroB\x03\xe0A\x02R\x05macro\x12\x1e\n" +
-	"\bmacro_id\x18\x02 \x01(\tB\x03\xe0A\x01R\amacroId\"J\n" +
-	"\x0fGetMacroRequest\x127\n" +
-	"\x04name\x18\x01 \x01(\tB#\xe0A\x02\xfaA\x1d\n" +
-	"\x1bmacosusesdk.localhost/MacroR\x04name\"Y\n" +
+	"\bmacro_id\x18\x02 \x01(\tB\x03\xe0A\x01R\amacroId\"D\n" +
+	"\x0fGetMacroRequest\x121\n" +
+	"\x04name\x18\x01 \x01(\tB\x1d\xe0A\x02\xfaA\x17\n" +
+	"\x15macosusesdk.com/MacroR\x04name\"Y\n" +
 	"\x11ListMacrosRequest\x12 \n" +
 	"\tpage_size\x18\x01 \x01(\x05B\x03\xe0A\x01R\bpageSize\x12\"\n" +
 	"\n" +
@@ -7266,17 +7266,17 @@ const file_macosusesdk_v1_macos_use_proto_rawDesc = "" +
 	"\x12UpdateMacroRequest\x120\n" +
 	"\x05macro\x18\x01 \x01(\v2\x15.macosusesdk.v1.MacroB\x03\xe0A\x02R\x05macro\x12@\n" +
 	"\vupdate_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskB\x03\xe0A\x01R\n" +
-	"updateMask\"h\n" +
-	"\x12DeleteMacroRequest\x127\n" +
-	"\x04name\x18\x01 \x01(\tB#\xe0A\x02\xfaA\x1d\n" +
-	"\x1bmacosusesdk.localhost/MacroR\x04name\x12\x19\n" +
-	"\x05force\x18\x02 \x01(\bB\x03\xe0A\x01R\x05force\"\x8c\x03\n" +
-	"\x13ExecuteMacroRequest\x129\n" +
-	"\x05macro\x18\x01 \x01(\tB#\xe0A\x02\xfaA\x1d\n" +
-	"\x1bmacosusesdk.localhost/MacroR\x05macro\x12h\n" +
-	"\x10parameter_values\x18\x02 \x03(\v28.macosusesdk.v1.ExecuteMacroRequest.ParameterValuesEntryB\x03\xe0A\x01R\x0fparameterValues\x12K\n" +
-	"\vapplication\x18\x03 \x01(\tB)\xe0A\x01\xfaA#\n" +
-	"!macosusesdk.localhost/ApplicationR\vapplication\x12?\n" +
+	"updateMask\"b\n" +
+	"\x12DeleteMacroRequest\x121\n" +
+	"\x04name\x18\x01 \x01(\tB\x1d\xe0A\x02\xfaA\x17\n" +
+	"\x15macosusesdk.com/MacroR\x04name\x12\x19\n" +
+	"\x05force\x18\x02 \x01(\bB\x03\xe0A\x01R\x05force\"\x80\x03\n" +
+	"\x13ExecuteMacroRequest\x123\n" +
+	"\x05macro\x18\x01 \x01(\tB\x1d\xe0A\x02\xfaA\x17\n" +
+	"\x15macosusesdk.com/MacroR\x05macro\x12h\n" +
+	"\x10parameter_values\x18\x02 \x03(\v28.macosusesdk.v1.ExecuteMacroRequest.ParameterValuesEntryB\x03\xe0A\x01R\x0fparameterValues\x12E\n" +
+	"\vapplication\x18\x03 \x01(\tB#\xe0A\x01\xfaA\x1d\n" +
+	"\x1bmacosusesdk.com/ApplicationR\vapplication\x12?\n" +
 	"\aoptions\x18\x04 \x01(\v2 .macosusesdk.v1.ExecutionOptionsB\x03\xe0A\x01R\aoptions\x1aB\n" +
 	"\x14ParameterValuesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
@@ -7291,16 +7291,16 @@ const file_macosusesdk_v1_macos_use_proto_rawDesc = "" +
 	"\x10actions_executed\x18\x02 \x01(\x05R\x0factionsExecuted\x12H\n" +
 	"\x12execution_duration\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\x11executionDuration\x12\x14\n" +
 	"\x05error\x18\x04 \x01(\tR\x05error\x123\n" +
-	"\x03log\x18\x05 \x03(\v2!.macosusesdk.v1.ExecutionLogEntryR\x03log\"\xe0\x01\n" +
-	"\x14ExecuteMacroMetadata\x126\n" +
-	"\x05macro\x18\x01 \x01(\tB \xfaA\x1d\n" +
-	"\x1bmacosusesdk.localhost/MacroR\x05macro\x12%\n" +
+	"\x03log\x18\x05 \x03(\v2!.macosusesdk.v1.ExecutionLogEntryR\x03log\"\xda\x01\n" +
+	"\x14ExecuteMacroMetadata\x120\n" +
+	"\x05macro\x18\x01 \x01(\tB\x1a\xfaA\x17\n" +
+	"\x15macosusesdk.com/MacroR\x05macro\x12%\n" +
 	"\x0ecurrent_action\x18\x02 \x01(\x05R\rcurrentAction\x12#\n" +
 	"\rtotal_actions\x18\x03 \x01(\x05R\ftotalActions\x12D\n" +
-	"\x10elapsed_duration\x18\x04 \x01(\v2\x19.google.protobuf.DurationR\x0felapsedDuration\"\xd8\x02\n" +
-	"\x17BeginTransactionRequest\x12?\n" +
-	"\asession\x18\x01 \x01(\tB%\xe0A\x02\xfaA\x1f\n" +
-	"\x1dmacosusesdk.localhost/SessionR\asession\x12d\n" +
+	"\x10elapsed_duration\x18\x04 \x01(\v2\x19.google.protobuf.DurationR\x0felapsedDuration\"\xd2\x02\n" +
+	"\x17BeginTransactionRequest\x129\n" +
+	"\asession\x18\x01 \x01(\tB\x1f\xe0A\x02\xfaA\x19\n" +
+	"\x17macosusesdk.com/SessionR\asession\x12d\n" +
 	"\x0fisolation_level\x18\x02 \x01(\x0e26.macosusesdk.v1.BeginTransactionRequest.IsolationLevelB\x03\xe0A\x01R\x0eisolationLevel\x12\x1d\n" +
 	"\atimeout\x18\x03 \x01(\x01B\x03\xe0A\x01R\atimeout\"w\n" +
 	"\x0eIsolationLevel\x12\x1f\n" +
@@ -7309,20 +7309,20 @@ const file_macosusesdk_v1_macos_use_proto_rawDesc = "" +
 	"\x1eISOLATION_LEVEL_READ_COMMITTED\x10\x02\"t\n" +
 	"\x18BeginTransactionResponse\x12%\n" +
 	"\x0etransaction_id\x18\x01 \x01(\tR\rtransactionId\x121\n" +
-	"\asession\x18\x02 \x01(\v2\x17.macosusesdk.v1.SessionR\asession\"\x81\x01\n" +
-	"\x18CommitTransactionRequest\x129\n" +
-	"\x04name\x18\x01 \x01(\tB%\xe0A\x02\xfaA\x1f\n" +
-	"\x1dmacosusesdk.localhost/SessionR\x04name\x12*\n" +
-	"\x0etransaction_id\x18\x02 \x01(\tB\x03\xe0A\x02R\rtransactionId\"\xa9\x01\n" +
-	"\x1aRollbackTransactionRequest\x129\n" +
-	"\x04name\x18\x01 \x01(\tB%\xe0A\x02\xfaA\x1f\n" +
-	"\x1dmacosusesdk.localhost/SessionR\x04name\x12$\n" +
+	"\asession\x18\x02 \x01(\v2\x17.macosusesdk.v1.SessionR\asession\"{\n" +
+	"\x18CommitTransactionRequest\x123\n" +
+	"\x04name\x18\x01 \x01(\tB\x1f\xe0A\x02\xfaA\x19\n" +
+	"\x17macosusesdk.com/SessionR\x04name\x12*\n" +
+	"\x0etransaction_id\x18\x02 \x01(\tB\x03\xe0A\x02R\rtransactionId\"\xa3\x01\n" +
+	"\x1aRollbackTransactionRequest\x123\n" +
+	"\x04name\x18\x01 \x01(\tB\x1f\xe0A\x02\xfaA\x19\n" +
+	"\x17macosusesdk.com/SessionR\x04name\x12$\n" +
 	"\vrevision_id\x18\x02 \x01(\tB\x03\xe0A\x02R\n" +
 	"revisionId\x12*\n" +
-	"\x0etransaction_id\x18\x03 \x01(\tB\x03\xe0A\x02R\rtransactionId\"V\n" +
-	"\x19GetSessionSnapshotRequest\x129\n" +
-	"\x04name\x18\x01 \x01(\tB%\xe0A\x02\xfaA\x1f\n" +
-	"\x1dmacosusesdk.localhost/SessionR\x04name\"\xc1\x01\n" +
+	"\x0etransaction_id\x18\x03 \x01(\tB\x03\xe0A\x02R\rtransactionId\"P\n" +
+	"\x19GetSessionSnapshotRequest\x123\n" +
+	"\x04name\x18\x01 \x01(\tB\x1f\xe0A\x02\xfaA\x19\n" +
+	"\x17macosusesdk.com/SessionR\x04name\"\xc1\x01\n" +
 	"\x18CaptureScreenshotRequest\x128\n" +
 	"\x06format\x18\x01 \x01(\x0e2\x1b.macosusesdk.v1.ImageFormatB\x03\xe0A\x01R\x06format\x12\x1d\n" +
 	"\aquality\x18\x02 \x01(\x05B\x03\xe0A\x01R\aquality\x12\x1d\n" +
@@ -7334,22 +7334,22 @@ const file_macosusesdk_v1_macos_use_proto_rawDesc = "" +
 	"\x06format\x18\x02 \x01(\x0e2\x1b.macosusesdk.v1.ImageFormatR\x06format\x12\x14\n" +
 	"\x05width\x18\x03 \x01(\x05R\x05width\x12\x16\n" +
 	"\x06height\x18\x04 \x01(\x05R\x06height\x12\x19\n" +
-	"\bocr_text\x18\x05 \x01(\tR\aocrText\"\x92\x02\n" +
-	"\x1eCaptureWindowScreenshotRequest\x12<\n" +
-	"\x06window\x18\x01 \x01(\tB$\xe0A\x02\xfaA\x1e\n" +
-	"\x1cmacosusesdk.localhost/WindowR\x06window\x128\n" +
+	"\bocr_text\x18\x05 \x01(\tR\aocrText\"\x8c\x02\n" +
+	"\x1eCaptureWindowScreenshotRequest\x126\n" +
+	"\x06window\x18\x01 \x01(\tB\x1e\xe0A\x02\xfaA\x18\n" +
+	"\x16macosusesdk.com/WindowR\x06window\x128\n" +
 	"\x06format\x18\x02 \x01(\x0e2\x1b.macosusesdk.v1.ImageFormatB\x03\xe0A\x01R\x06format\x12\x1d\n" +
 	"\aquality\x18\x03 \x01(\x05B\x03\xe0A\x01R\aquality\x12*\n" +
 	"\x0einclude_shadow\x18\x04 \x01(\bB\x03\xe0A\x01R\rincludeShadow\x12-\n" +
-	"\x10include_ocr_text\x18\x05 \x01(\bB\x03\xe0A\x01R\x0eincludeOcrText\"\xf9\x01\n" +
+	"\x10include_ocr_text\x18\x05 \x01(\bB\x03\xe0A\x01R\x0eincludeOcrText\"\xf3\x01\n" +
 	"\x1fCaptureWindowScreenshotResponse\x12\x1d\n" +
 	"\n" +
 	"image_data\x18\x01 \x01(\fR\timageData\x123\n" +
 	"\x06format\x18\x02 \x01(\x0e2\x1b.macosusesdk.v1.ImageFormatR\x06format\x12\x14\n" +
 	"\x05width\x18\x03 \x01(\x05R\x05width\x12\x16\n" +
-	"\x06height\x18\x04 \x01(\x05R\x06height\x129\n" +
-	"\x06window\x18\x05 \x01(\tB!\xfaA\x1e\n" +
-	"\x1cmacosusesdk.localhost/WindowR\x06window\x12\x19\n" +
+	"\x06height\x18\x04 \x01(\x05R\x06height\x123\n" +
+	"\x06window\x18\x05 \x01(\tB\x1b\xfaA\x18\n" +
+	"\x16macosusesdk.com/WindowR\x06window\x12\x19\n" +
 	"\bocr_text\x18\x06 \x01(\tR\aocrText\"\x8f\x02\n" +
 	"\x1fCaptureElementScreenshotRequest\x12!\n" +
 	"\x06parent\x18\x01 \x01(\tB\t\xe0A\x02\xfaA\x03\n" +
@@ -7382,10 +7382,10 @@ const file_macosusesdk_v1_macos_use_proto_rawDesc = "" +
 	"\x05width\x18\x03 \x01(\x05R\x05width\x12\x16\n" +
 	"\x06height\x18\x04 \x01(\x05R\x06height\x120\n" +
 	"\x06region\x18\x05 \x01(\v2\x18.macosusesdk.type.RegionR\x06region\x12\x19\n" +
-	"\bocr_text\x18\x06 \x01(\tR\aocrText\"R\n" +
-	"\x13GetClipboardRequest\x12;\n" +
-	"\x04name\x18\x01 \x01(\tB'\xe0A\x02\xfaA!\n" +
-	"\x1fmacosusesdk.localhost/ClipboardR\x04name\"\x84\x01\n" +
+	"\bocr_text\x18\x06 \x01(\tR\aocrText\"L\n" +
+	"\x13GetClipboardRequest\x125\n" +
+	"\x04name\x18\x01 \x01(\tB!\xe0A\x02\xfaA\x1b\n" +
+	"\x19macosusesdk.com/ClipboardR\x04name\"\x84\x01\n" +
 	"\x15WriteClipboardRequest\x12?\n" +
 	"\acontent\x18\x01 \x01(\v2 .macosusesdk.v1.ClipboardContentB\x03\xe0A\x01R\acontent\x12*\n" +
 	"\x0eclear_existing\x18\x02 \x01(\bB\x03\xe0A\x01R\rclearExisting\"c\n" +
@@ -7397,10 +7397,10 @@ const file_macosusesdk_v1_macos_use_proto_rawDesc = "" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\";\n" +
 	"\x1aGetClipboardHistoryRequest\x12\x1d\n" +
 	"\x04name\x18\x01 \x01(\tB\t\xe0A\x02\xfaA\x03\n" +
-	"\x01*R\x04name\"\xb3\x02\n" +
-	"\x1dAutomateOpenFileDialogRequest\x12K\n" +
-	"\vapplication\x18\x01 \x01(\tB)\xe0A\x02\xfaA#\n" +
-	"!macosusesdk.localhost/ApplicationR\vapplication\x12 \n" +
+	"\x01*R\x04name\"\xad\x02\n" +
+	"\x1dAutomateOpenFileDialogRequest\x12E\n" +
+	"\vapplication\x18\x01 \x01(\tB#\xe0A\x02\xfaA\x1d\n" +
+	"\x1bmacosusesdk.com/ApplicationR\vapplication\x12 \n" +
 	"\tfile_path\x18\x02 \x01(\tB\x03\xe0A\x01R\bfilePath\x120\n" +
 	"\x11default_directory\x18\x03 \x01(\tB\x03\xe0A\x01R\x10defaultDirectory\x12&\n" +
 	"\ffile_filters\x18\x04 \x03(\tB\x03\xe0A\x01R\vfileFilters\x12\x1d\n" +
@@ -7409,10 +7409,10 @@ const file_macosusesdk_v1_macos_use_proto_rawDesc = "" +
 	"\x1eAutomateOpenFileDialogResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12%\n" +
 	"\x0eselected_paths\x18\x02 \x03(\tR\rselectedPaths\x12\x14\n" +
-	"\x05error\x18\x03 \x01(\tR\x05error\"\xc1\x02\n" +
-	"\x1dAutomateSaveFileDialogRequest\x12K\n" +
-	"\vapplication\x18\x01 \x01(\tB)\xe0A\x02\xfaA#\n" +
-	"!macosusesdk.localhost/ApplicationR\vapplication\x12 \n" +
+	"\x05error\x18\x03 \x01(\tR\x05error\"\xbb\x02\n" +
+	"\x1dAutomateSaveFileDialogRequest\x12E\n" +
+	"\vapplication\x18\x01 \x01(\tB#\xe0A\x02\xfaA\x1d\n" +
+	"\x1bmacosusesdk.com/ApplicationR\vapplication\x12 \n" +
 	"\tfile_path\x18\x02 \x01(\tB\x03\xe0A\x02R\bfilePath\x120\n" +
 	"\x11default_directory\x18\x03 \x01(\tB\x03\xe0A\x01R\x10defaultDirectory\x12.\n" +
 	"\x10default_filename\x18\x04 \x01(\tB\x03\xe0A\x01R\x0fdefaultFilename\x12\x1d\n" +
@@ -7422,29 +7422,29 @@ const file_macosusesdk_v1_macos_use_proto_rawDesc = "" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1d\n" +
 	"\n" +
 	"saved_path\x18\x02 \x01(\tR\tsavedPath\x12\x14\n" +
-	"\x05error\x18\x03 \x01(\tR\x05error\"\xac\x01\n" +
-	"\x11SelectFileRequest\x12K\n" +
-	"\vapplication\x18\x01 \x01(\tB)\xe0A\x02\xfaA#\n" +
-	"!macosusesdk.localhost/ApplicationR\vapplication\x12 \n" +
+	"\x05error\x18\x03 \x01(\tR\x05error\"\xa6\x01\n" +
+	"\x11SelectFileRequest\x12E\n" +
+	"\vapplication\x18\x01 \x01(\tB#\xe0A\x02\xfaA\x1d\n" +
+	"\x1bmacosusesdk.com/ApplicationR\vapplication\x12 \n" +
 	"\tfile_path\x18\x02 \x01(\tB\x03\xe0A\x02R\bfilePath\x12(\n" +
 	"\rreveal_finder\x18\x03 \x01(\bB\x03\xe0A\x01R\frevealFinder\"i\n" +
 	"\x12SelectFileResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12#\n" +
 	"\rselected_path\x18\x02 \x01(\tR\fselectedPath\x12\x14\n" +
-	"\x05error\x18\x03 \x01(\tR\x05error\"\xbd\x01\n" +
-	"\x16SelectDirectoryRequest\x12K\n" +
-	"\vapplication\x18\x01 \x01(\tB)\xe0A\x02\xfaA#\n" +
-	"!macosusesdk.localhost/ApplicationR\vapplication\x12*\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error\"\xb7\x01\n" +
+	"\x16SelectDirectoryRequest\x12E\n" +
+	"\vapplication\x18\x01 \x01(\tB#\xe0A\x02\xfaA\x1d\n" +
+	"\x1bmacosusesdk.com/ApplicationR\vapplication\x12*\n" +
 	"\x0edirectory_path\x18\x02 \x01(\tB\x03\xe0A\x02R\rdirectoryPath\x12*\n" +
 	"\x0ecreate_missing\x18\x03 \x01(\bB\x03\xe0A\x01R\rcreateMissing\"\x88\x01\n" +
 	"\x17SelectDirectoryResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12#\n" +
 	"\rselected_path\x18\x02 \x01(\tR\fselectedPath\x12\x18\n" +
 	"\acreated\x18\x03 \x01(\bR\acreated\x12\x14\n" +
-	"\x05error\x18\x04 \x01(\tR\x05error\"\xd5\x01\n" +
-	"\x10DragFilesRequest\x12K\n" +
-	"\vapplication\x18\x01 \x01(\tB)\xe0A\x02\xfaA#\n" +
-	"!macosusesdk.localhost/ApplicationR\vapplication\x12\"\n" +
+	"\x05error\x18\x04 \x01(\tR\x05error\"\xcf\x01\n" +
+	"\x10DragFilesRequest\x12E\n" +
+	"\vapplication\x18\x01 \x01(\tB#\xe0A\x02\xfaA\x1d\n" +
+	"\x1bmacosusesdk.com/ApplicationR\vapplication\x12\"\n" +
 	"\n" +
 	"file_paths\x18\x02 \x03(\tB\x03\xe0A\x02R\tfilePaths\x12/\n" +
 	"\x11target_element_id\x18\x03 \x01(\tB\x03\xe0A\x02R\x0ftargetElementId\x12\x1f\n" +

@@ -19,7 +19,7 @@ option java_package = "com.macosusesdk.v1";
 // use GetWindowState to fetch the WindowState singleton sub-resource.
 message Window {
   option (google.api.resource) = {
-    type: "macosusesdk.localhost/Window"
+    type: "macosusesdk.com/Window"
     pattern: "applications/{application}/windows/{window}"
     singular: "window"
     plural: "windows"
@@ -102,7 +102,7 @@ message Bounds {
 // Use GetWindowState to fetch this data on-demand.
 message WindowState {
   option (google.api.resource) = {
-    type: "macosusesdk.localhost/WindowState"
+    type: "macosusesdk.com/WindowState"
     pattern: "applications/{application}/windows/{window}/state"
     singular: "windowState"
     plural: "windowStates"
