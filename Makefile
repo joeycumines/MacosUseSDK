@@ -1,3 +1,7 @@
+ifneq ($(filter 3.%,$(MAKE_VERSION)),)
+$(error GNU Make version 4.x or higher is required. You are using version $(MAKE_VERSION). Please upgrade your Make installation.)
+endif
+
 .DEFAULT_GOAL := all
 ROOT_MAKEFILE := $(abspath $(lastword $(MAKEFILE_LIST)))
 PROJECT_ROOT := $(patsubst %/,%,$(dir $(ROOT_MAKEFILE)))
