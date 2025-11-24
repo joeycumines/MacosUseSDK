@@ -59,7 +59,7 @@ jobs:
           setup_only: true
       - name: Install homebrew dependencies
         run: |-
-          brew install swiftformat swiftlint
+          brew install swiftformat swiftlint make
       - name: Run a full build
         run: |-
-          make -j "$(sysctl -n hw.ncpu)"
+          gmake -j "$(sysctl -n hw.ncpu)"
