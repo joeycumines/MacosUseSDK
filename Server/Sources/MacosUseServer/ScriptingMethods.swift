@@ -256,9 +256,9 @@ extension MacosUseService {
 
         // For each application, check if it has scripting support
         for app in applications {
-            // Resolve bundle ID from PID
+            // Resolve bundle ID from PID via injected SystemOperations
             let pid = app.pid
-            let bundleId = resolveBundleID(forPID: pid) ?? "unknown"
+            let bundleId = system.getRunningApplicationBundleID(pid: pid) ?? "unknown"
 
             // Create dictionary entry for the application
             let dictionary = Macosusesdk_V1_ScriptingDictionary.with {

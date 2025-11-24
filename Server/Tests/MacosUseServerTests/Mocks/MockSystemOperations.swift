@@ -7,17 +7,22 @@ import Foundation
 final class MockSystemOperations: SystemOperations {
     var cgWindowList: [[String: Any]]
     var axWindowInfos: [String: WindowInfoResult]
+    var bundleIDs: [pid_t: String]
 
-    init(cgWindowList: [[String: Any]] = [], axWindowInfos: [String: WindowInfoResult] = [:]) {
+    init(cgWindowList: [[String: Any]] = [], axWindowInfos: [String: WindowInfoResult] = [:], bundleIDs: [pid_t: String] = [:]) {
         self.cgWindowList = cgWindowList
         self.axWindowInfos = axWindowInfos
+        self.bundleIDs = bundleIDs
     }
 
     func cgWindowListCopyWindowInfo(options _: CGWindowListOption, relativeToWindow _: CGWindowID) -> [[String: Any]] {
         cgWindowList
     }
 
-    func getRunningApplicationBundleID(pid _: pid_t) -> String? { "com.example.mock" }
+    func getRunningApplicationBundleID(pid: pid_t) -> String? {
+        if let v = bundleIDs[pid] { return v }
+        return "com.example.mock"
+    }
 
     func createAXApplication(pid: Int32) -> AnyObject? {
         // Create a real AXUIElement for the PID so code can unsafeDowncast

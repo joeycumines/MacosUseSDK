@@ -21,9 +21,4 @@ final class MacosUseService: Macosusesdk_V1_MacosUse.ServiceProtocol {
         self.windowRegistry = windowRegistry
         self.system = system
     }
-
-    /// Resolve bundle ID from PID using NSRunningApplication.
-    func resolveBundleID(forPID pid: pid_t) -> String? {
-        NSRunningApplication(processIdentifier: pid)?.bundleIdentifier
-    }
 }
