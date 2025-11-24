@@ -1,5 +1,6 @@
 // swiftlint:disable all -- Largely unchanged from upstream.
 
+import AppKit // Needed for NSScreen
 import CoreGraphics  // Needed for CGPoint, CGKeyCode, CGEventFlags
 import OSLog
 
@@ -518,12 +519,21 @@ public enum CombinedActions {
 
     // Step 2b: Dispatch Click Visualization
     logger.info(
-      "dispatching showVisualFeedback for click (duration: \(actionHighlightDuration, privacy: .public)s)...")
-    // Use Task to ensure it runs on MainActor, respecting showVisualFeedback's requirement
+      "dispatching visual feedback for click (duration: \(actionHighlightDuration, privacy: .public)s)...")
+    // Use Task to ensure it runs on MainActor
     Task { @MainActor in
-      MacosUseSDK.showVisualFeedback(at: point, type: .circle, duration: actionHighlightDuration)
+      let screenHeight = NSScreen.main?.frame.height ?? 0
+      // Calculate frame for circle feedback (approx 154x154 based on legacy logic)
+      let size: CGFloat = 154
+      let originX = point.x - (size / 2.0)
+      let originY = screenHeight - point.y - (size / 2.0)
+      let frame = CGRect(x: originX, y: originY, width: size, height: size)
+
+      let descriptor = OverlayDescriptor(frame: frame, type: .circle)
+      let config = VisualsConfig(duration: actionHighlightDuration, animationStyle: .pulseAndFade)
+      await presentVisuals(overlays: [descriptor], configuration: config)
     }
-    logger.info("showVisualFeedback for click dispatched.")
+    logger.info("visual feedback for click dispatched.")
 
     // Step 3: Wait for UI to Update (after action, before second traversal)
     logger.info(
@@ -544,11 +554,19 @@ public enum CombinedActions {
 
     // Step 6: Dispatch Highlighting of the "After" Elements
     logger.info(
-      "calling drawHighlightBoxes (duration: \(traversalHighlightDuration, privacy: .public)s) for afterTraversal elements...")
-    // This call returns immediately after dispatching the UI work.
-    // It uses the @MainActor function drawHighlightBoxes.
-    drawHighlightBoxes(for: afterTraversal.elements, duration: traversalHighlightDuration)
-    logger.info("drawHighlightBoxes dispatched highlight drawing.")
+      "dispatching highlight overlays (duration: \(traversalHighlightDuration, privacy: .public)s) for afterTraversal elements...")
+
+    let elementsToHighlight = afterTraversal.elements
+    Task { @MainActor in
+        let screenHeight = NSScreen.main?.frame.height ?? 0
+        let descriptors = elementsToHighlight.compactMap { OverlayDescriptor(element: $0, screenHeight: screenHeight) }
+
+        if !descriptors.isEmpty {
+            let config = VisualsConfig(duration: traversalHighlightDuration, animationStyle: .none)
+            await presentVisuals(overlays: descriptors, configuration: config)
+        }
+    }
+    logger.info("highlight overlays dispatched.")
 
     // Step 7: Prepare and Return Result (using data from the *second* traversal)
     let result = ActionDiffResult(
@@ -600,24 +618,25 @@ public enum CombinedActions {
 
     // Step 2b: Dispatch Key Press Visualization (Caption)
     let captionText = "[KEY PRESS]"
-    let captionSize = CGSize(width: 250, height: 80)  // Keep caption size definition here or centralize
+    let captionSize = CGSize(width: 250, height: 80)
     logger.info(
-      "dispatching showVisualFeedback for key press (duration: \(actionHighlightDuration, privacy: .public)s)...")
+      "dispatching visual feedback for key press (duration: \(actionHighlightDuration, privacy: .public)s)...")
     Task { @MainActor in
-      // Use the internal top-level function directly
       if let screenCenter = getMainScreenCenter() {
-        MacosUseSDK.showVisualFeedback(
-          at: screenCenter,
-          type: .caption(text: captionText),
-          size: captionSize,
-          duration: actionHighlightDuration
-        )
+        // screenCenter is in AppKit coordinates (bottom-left origin), so no flip needed
+        let originX = screenCenter.x - (captionSize.width / 2.0)
+        let originY = screenCenter.y - (captionSize.height / 2.0)
+        let frame = CGRect(x: originX, y: originY, width: captionSize.width, height: captionSize.height)
+
+        let descriptor = OverlayDescriptor(frame: frame, type: .caption(text: captionText))
+        let config = VisualsConfig(duration: actionHighlightDuration, animationStyle: .scaleInFadeOut)
+        await presentVisuals(overlays: [descriptor], configuration: config)
       } else {
         logger.warning(
           "[\(#function, privacy: .public)] could not get screen center for key press caption.")
       }
     }
-    logger.info("showVisualFeedback for key press dispatched.")
+    logger.info("visual feedback for key press dispatched.")
 
     // Step 3: Wait for UI to Update
     logger.info(
@@ -638,9 +657,19 @@ public enum CombinedActions {
 
     // Step 6: Dispatch Highlighting of the "After" Elements
     logger.info(
-      "calling drawHighlightBoxes (duration: \(traversalHighlightDuration, privacy: .public)s) for afterTraversal elements...")
-    drawHighlightBoxes(for: afterTraversal.elements, duration: traversalHighlightDuration)
-    logger.info("drawHighlightBoxes dispatched highlight drawing.")
+      "dispatching highlight overlays (duration: \(traversalHighlightDuration, privacy: .public)s) for afterTraversal elements...")
+
+    let elementsToHighlight = afterTraversal.elements
+    Task { @MainActor in
+        let screenHeight = NSScreen.main?.frame.height ?? 0
+        let descriptors = elementsToHighlight.compactMap { OverlayDescriptor(element: $0, screenHeight: screenHeight) }
+
+        if !descriptors.isEmpty {
+            let config = VisualsConfig(duration: traversalHighlightDuration, animationStyle: .none)
+            await presentVisuals(overlays: descriptors, configuration: config)
+        }
+    }
+    logger.info("highlight overlays dispatched.")
 
     // Step 7: Prepare and Return Result
     let result = ActionDiffResult(
@@ -691,25 +720,26 @@ public enum CombinedActions {
     // Step 2b: Dispatch Text Writing Visualization (Caption)
     let defaultDuration = 1.0
     let calculatedDuration = max(defaultDuration, 0.5 + Double(text.count) * 0.05)
-    let finalDuration = actionHighlightDuration ?? calculatedDuration  // Use provided or calculated duration
-    let captionSize = CGSize(width: 450, height: 100)  // Keep caption size definition here or centralize
+    let finalDuration = actionHighlightDuration ?? calculatedDuration
+    let captionSize = CGSize(width: 450, height: 100)
     logger.info(
-      "dispatching showVisualFeedback for write text (duration: \(finalDuration, privacy: .public)s)...")
+      "dispatching visual feedback for write text (duration: \(finalDuration, privacy: .public)s)...")
     Task { @MainActor in
-      // Use the internal top-level function directly
       if let screenCenter = getMainScreenCenter() {
-        MacosUseSDK.showVisualFeedback(
-          at: screenCenter,
-          type: .caption(text: text),  // Show the actual typed text
-          size: captionSize,
-          duration: finalDuration
-        )
+        // screenCenter is in AppKit coordinates (bottom-left origin), so no flip needed
+        let originX = screenCenter.x - (captionSize.width / 2.0)
+        let originY = screenCenter.y - (captionSize.height / 2.0)
+        let frame = CGRect(x: originX, y: originY, width: captionSize.width, height: captionSize.height)
+
+        let descriptor = OverlayDescriptor(frame: frame, type: .caption(text: text))
+        let config = VisualsConfig(duration: finalDuration, animationStyle: .scaleInFadeOut)
+        await presentVisuals(overlays: [descriptor], configuration: config)
       } else {
         logger.warning(
           "[\(#function, privacy: .public)] could not get screen center for write text caption.")
       }
     }
-    logger.info("showVisualFeedback for write text dispatched.")
+    logger.info("visual feedback for write text dispatched.")
 
     // Step 3: Wait for UI to Update
     logger.info(
@@ -730,9 +760,19 @@ public enum CombinedActions {
 
     // Step 6: Dispatch Highlighting of the "After" Elements
     logger.info(
-      "calling drawHighlightBoxes (duration: \(traversalHighlightDuration, privacy: .public)s) for afterTraversal elements...")
-    drawHighlightBoxes(for: afterTraversal.elements, duration: traversalHighlightDuration)
-    logger.info("drawHighlightBoxes dispatched highlight drawing.")
+      "dispatching highlight overlays (duration: \(traversalHighlightDuration, privacy: .public)s) for afterTraversal elements...")
+
+    let elementsToHighlight = afterTraversal.elements
+    Task { @MainActor in
+        let screenHeight = NSScreen.main?.frame.height ?? 0
+        let descriptors = elementsToHighlight.compactMap { OverlayDescriptor(element: $0, screenHeight: screenHeight) }
+
+        if !descriptors.isEmpty {
+            let config = VisualsConfig(duration: traversalHighlightDuration, animationStyle: .none)
+            await presentVisuals(overlays: descriptors, configuration: config)
+        }
+    }
+    logger.info("highlight overlays dispatched.")
 
     // Step 7: Prepare and Return Result
     let result = ActionDiffResult(

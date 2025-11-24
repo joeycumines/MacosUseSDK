@@ -98,13 +98,12 @@ guard let action = action else {
 // --- Action Handling ---
 var success = false
 var message: String?
-var requiresRunLoopWait = true  // Default to true, as all actions now have visualization
 
 // Variable to hold the actual duration used for visualization
 var visualizationDuration: Double = 0.5  // Default fallback
 
-// Use a Task for the main logic to easily call async/await and @MainActor functions
-Task {
+// Use a Task on MainActor to easily call async/await and presentVisuals
+Task { @MainActor in
   do {
     switch action {
     case "keypress":
@@ -149,20 +148,20 @@ Task {
       log("Calling pressKey library function...")
       try await MacosUseSDK.pressKey(keyCode: finalKeyCode, flags: flags)  // Input simulation
 
-      log("Dispatching showVisualFeedback for keypress...")
-      // Dispatch visualization separately (@MainActor is handled by showVisualFeedback)
+      log("Calling presentVisuals for keypress...")
       let captionText = "[KEY PRESS]"
       let captionSize = CGSize(width: 250, height: 80)
       if let screenCenter = MacosUseSDK.getMainScreenCenter() {
-        MacosUseSDK.showVisualFeedback(
-          at: screenCenter,
-          type: .caption(text: captionText),
-          size: captionSize,
-          duration: visualizationDuration
-        )
+        // screenCenter is AppKit (bottom-left), so no flip needed for NSWindow frame
+        let originX = screenCenter.x - (captionSize.width / 2.0)
+        let originY = screenCenter.y - (captionSize.height / 2.0)
+        let frame = CGRect(x: originX, y: originY, width: captionSize.width, height: captionSize.height)
+
+        let descriptor = OverlayDescriptor(frame: frame, type: .caption(text: captionText))
+        let config = VisualsConfig(duration: visualizationDuration, animationStyle: .scaleInFadeOut)
+        await MacosUseSDK.presentVisuals(overlays: [descriptor], configuration: config)
       } else {
         fputs("warning: could not get screen center for key press caption.\n", stderr)
-        requiresRunLoopWait = false  // Don't wait if viz failed
       }
 
       success = true
@@ -191,9 +190,17 @@ Task {
       default: break  // Should not happen
       }
 
-      log("Dispatching showVisualFeedback for \(action)...")
-      // Dispatch visualization separately
-      MacosUseSDK.showVisualFeedback(at: point, type: .circle, duration: visualizationDuration)
+      log("Calling presentVisuals for \(action)...")
+      let screenHeight = NSScreen.main?.frame.height ?? 0
+      let size: CGFloat = 154 // Approx size from legacy logic
+      // point is AX (top-left), so flip Y for AppKit
+      let originX = point.x - (size / 2.0)
+      let originY = screenHeight - point.y - (size / 2.0)
+      let frame = CGRect(x: originX, y: originY, width: size, height: size)
+
+      let descriptor = OverlayDescriptor(frame: frame, type: .circle)
+      let config = VisualsConfig(duration: visualizationDuration, animationStyle: .pulseAndFade)
+      await MacosUseSDK.presentVisuals(overlays: [descriptor], configuration: config)
 
       success = true
       message = "\(action) simulated at (\(x), \(y)) with visualization."
@@ -214,19 +221,19 @@ Task {
       log("Calling writeText library function...")
       try await MacosUseSDK.writeText(text)  // Input simulation
 
-      log("Dispatching showVisualFeedback for writetext...")
-      // Dispatch visualization separately
+      log("Calling presentVisuals for writetext...")
       let captionSize = CGSize(width: 450, height: 100)
       if let screenCenter = MacosUseSDK.getMainScreenCenter() {
-        MacosUseSDK.showVisualFeedback(
-          at: screenCenter,
-          type: .caption(text: text),  // Show actual text
-          size: captionSize,
-          duration: visualizationDuration
-        )
+        // screenCenter is AppKit (bottom-left), so no flip needed
+        let originX = screenCenter.x - (captionSize.width / 2.0)
+        let originY = screenCenter.y - (captionSize.height / 2.0)
+        let frame = CGRect(x: originX, y: originY, width: captionSize.width, height: captionSize.height)
+
+        let descriptor = OverlayDescriptor(frame: frame, type: .caption(text: text))
+        let config = VisualsConfig(duration: visualizationDuration, animationStyle: .scaleInFadeOut)
+        await MacosUseSDK.presentVisuals(overlays: [descriptor], configuration: config)
       } else {
         fputs("warning: could not get screen center for write text caption.\n", stderr)
-        requiresRunLoopWait = false  // Don't wait if viz failed
       }
 
       success = true
@@ -237,28 +244,9 @@ Task {
       throw MacosUseSDKError.inputInvalidArgument("Unknown action '\(action)'")
     }
 
-    // --- Log final status before potentially waiting ---
+    // --- Log final status ---
     finish(success: success, message: message)
-
-    // --- Keep Main Thread Alive for Visualization (if needed) ---
-    if requiresRunLoopWait {
-      let waitTime = visualizationDuration + 0.5  // Wait slightly longer
-      log("Waiting for \(waitTime) seconds for visualization to complete...")
-      // Use RunLoop directly since we are in a Task that might not be on the main thread initially
-      DispatchQueue.main.async {
-        RunLoop.main.run(until: Date(timeIntervalSinceNow: waitTime))
-        log("Run loop finished. Exiting.")
-        exit(0)  // Exit normally after waiting
-      }
-      // Keep the task alive until the run loop finishes
-      try await Task.sleep(nanoseconds: UInt64((waitTime + 0.1) * 1_000_000_000))
-      // Fallback exit if the run loop mechanism doesn't exit
-      exit(0)
-
-    } else {
-      log("No visualization triggered or viz failed, exiting immediately.")
-      exit(0)  // Exit normally without waiting
-    }
+    exit(0) // Exit cleanly after everything is done
 
   } catch let error as MacosUseSDKError {
     finish(success: false, message: "MacosUseSDK Error: \(error.localizedDescription)")

@@ -392,9 +392,16 @@ public func performAction(
     if let elementsToHighlight = finalTraversalData?.elements, !elementsToHighlight.isEmpty {
       logger.info(
         "[Coordinator] Highlighting \(elementsToHighlight.count, privacy: .public) elements from final traversal (showAnimation=true)...")
-      // No need for try/catch as drawHighlightBoxes is async and handles errors internally via logs
-      drawHighlightBoxes(for: elementsToHighlight, duration: options.animationDuration)
-      // Note: Highlighting starts and runs async, this function returns before it finishes.
+
+      let screenHeight = NSScreen.main?.frame.height ?? 1080
+      let descriptors = elementsToHighlight.compactMap { OverlayDescriptor(element: $0, screenHeight: screenHeight) }
+
+      if !descriptors.isEmpty {
+        let config = VisualsConfig(duration: options.animationDuration, animationStyle: .none)
+        Task { @MainActor in
+          await presentVisuals(overlays: descriptors, configuration: config)
+        }
+      }
     } else if finalTraversalData == nil && options.traverseAfter {
       logger.warning(
         "[Coordinator] Animation requested, but post-action traversal failed or was skipped (cannot highlight).")

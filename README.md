@@ -44,7 +44,7 @@ All tools output informational logs and timing data to `stderr`. Primary output 
     # Open by path
     swift run AppOpenerTool /System/Applications/Utilities/Terminal.app
     # Example output (stdout)
-    # 54321 
+    # 54321
     ```
 
 ### TraversalTool
@@ -158,7 +158,7 @@ import Foundation // For Dispatch etc.
 Task {
     do {
         // Find Calculator PID (replace with actual logic or use AppOpenerTool output)
-        // let calcPID: Int32 = ... 
+        // let calcPID: Int32 = ...
         // let response = try MacosUseSDK.traverseAccessibilityTree(pid: calcPID, onlyVisibleElements: true)
         // print("Found \(response.elements.count) visible elements.")
 

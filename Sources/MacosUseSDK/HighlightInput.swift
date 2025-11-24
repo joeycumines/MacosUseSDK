@@ -1,6 +1,6 @@
 // swiftlint:disable all -- Largely unchanged from upstream.
 
-import AppKit  // For DispatchQueue, showVisualFeedback
+import AppKit  // For DispatchQueue
 import CoreGraphics
 import Foundation
 import OSLog
@@ -22,11 +22,16 @@ public func clickMouseAndVisualize(at point: CGPoint, duration: Double = 0.5) as
   try await clickMouse(at: point)
 
   // Restore the correct async dispatch:
-  DispatchQueue.main.async {
-    Task { @MainActor in
-      // Ensure FeedbackType is used if it's public/internal enum
-      showVisualFeedback(at: point, type: FeedbackType.circle, duration: duration)
-    }
+  Task { @MainActor in
+      let screenHeight = NSScreen.main?.frame.height ?? 0
+      let size: CGFloat = 154
+      let originX = point.x - (size / 2.0)
+      let originY = screenHeight - point.y - (size / 2.0)
+      let frame = CGRect(x: originX, y: originY, width: size, height: size)
+
+      let descriptor = OverlayDescriptor(frame: frame, type: .circle)
+      let config = VisualsConfig(duration: duration, animationStyle: .pulseAndFade)
+      await presentVisuals(overlays: [descriptor], configuration: config)
   }
   logger.info("left click simulation and visualization dispatched.")
 }
@@ -42,10 +47,16 @@ public func doubleClickMouseAndVisualize(at point: CGPoint, duration: Double = 0
   // Call the original input function
   try await doubleClickMouse(at: point)
   // Schedule visualization on the main thread
-  DispatchQueue.main.async {
-    Task { @MainActor in
-      showVisualFeedback(at: point, type: FeedbackType.circle, duration: duration)
-    }
+  Task { @MainActor in
+      let screenHeight = NSScreen.main?.frame.height ?? 0
+      let size: CGFloat = 154
+      let originX = point.x - (size / 2.0)
+      let originY = screenHeight - point.y - (size / 2.0)
+      let frame = CGRect(x: originX, y: originY, width: size, height: size)
+
+      let descriptor = OverlayDescriptor(frame: frame, type: .circle)
+      let config = VisualsConfig(duration: duration, animationStyle: .pulseAndFade)
+      await presentVisuals(overlays: [descriptor], configuration: config)
   }
   logger.info("double-click simulation and visualization dispatched.")
 }
@@ -61,10 +72,16 @@ public func rightClickMouseAndVisualize(at point: CGPoint, duration: Double = 0.
   // Call the original input function
   try await rightClickMouse(at: point)
   // Schedule visualization on the main thread
-  DispatchQueue.main.async {
-    Task { @MainActor in
-      showVisualFeedback(at: point, type: FeedbackType.circle, duration: duration)
-    }
+  Task { @MainActor in
+      let screenHeight = NSScreen.main?.frame.height ?? 0
+      let size: CGFloat = 154
+      let originX = point.x - (size / 2.0)
+      let originY = screenHeight - point.y - (size / 2.0)
+      let frame = CGRect(x: originX, y: originY, width: size, height: size)
+
+      let descriptor = OverlayDescriptor(frame: frame, type: .circle)
+      let config = VisualsConfig(duration: duration, animationStyle: .pulseAndFade)
+      await presentVisuals(overlays: [descriptor], configuration: config)
   }
   logger.info("right-click simulation and visualization dispatched.")
 }
@@ -80,10 +97,16 @@ public func moveMouseAndVisualize(to point: CGPoint, duration: Double = 0.5) asy
   // Call the original input function
   try await moveMouse(to: point)
   // Schedule visualization on the main thread
-  DispatchQueue.main.async {
-    Task { @MainActor in
-      showVisualFeedback(at: point, type: FeedbackType.circle, duration: duration)
-    }
+  Task { @MainActor in
+      let screenHeight = NSScreen.main?.frame.height ?? 0
+      let size: CGFloat = 154
+      let originX = point.x - (size / 2.0)
+      let originY = screenHeight - point.y - (size / 2.0)
+      let frame = CGRect(x: originX, y: originY, width: size, height: size)
+
+      let descriptor = OverlayDescriptor(frame: frame, type: .circle)
+      let config = VisualsConfig(duration: duration, animationStyle: .pulseAndFade)
+      await presentVisuals(overlays: [descriptor], configuration: config)
   }
   logger.info("mouse move simulation and visualization dispatched.")
 }
@@ -107,24 +130,23 @@ public func pressKeyAndVisualize(
   try await pressKey(keyCode: keyCode, flags: flags)
 
   // Always dispatch caption visualization to the main thread at screen center
-  DispatchQueue.main.async {
-    Task { @MainActor in
+  Task { @MainActor in
       // Get screen center for caption placement
       if let screenCenter = getMainScreenCenter() {
         logger.info(
           "[Main Thread] Displaying key press caption at screen center: \(String(describing: screenCenter), privacy: .public).")
-        // Show the caption feedback
-        showVisualFeedback(
-          at: screenCenter,
-          type: .caption(text: captionText),
-          size: captionSize,
-          duration: duration
-        )
+
+        let originX = screenCenter.x - (captionSize.width / 2.0)
+        let originY = screenCenter.y - (captionSize.height / 2.0)
+        let frame = CGRect(x: originX, y: originY, width: captionSize.width, height: captionSize.height)
+
+        let descriptor = OverlayDescriptor(frame: frame, type: .caption(text: captionText))
+        let config = VisualsConfig(duration: duration, animationStyle: .scaleInFadeOut)
+        await presentVisuals(overlays: [descriptor], configuration: config)
       } else {
         logger.warning(
           "[Main Thread] could not get main screen center for key press caption visualization.")
       }
-    }
   }
   logger.info("key press simulation complete, caption visualization dispatched.")
 }
@@ -148,24 +170,23 @@ public func writeTextAndVisualize(_ text: String, duration: Double? = nil) async
   try await writeText(text)
 
   // Always dispatch caption visualization to the main thread at screen center
-  DispatchQueue.main.async {
-    Task { @MainActor in
+  Task { @MainActor in
       // Get screen center for caption placement
       if let screenCenter = getMainScreenCenter() {
         logger.info(
           "[Main Thread] Displaying text writing caption at screen center: \(String(describing: screenCenter), privacy: .public).")
-        // Show the caption feedback with the typed text
-        showVisualFeedback(
-          at: screenCenter,
-          type: .caption(text: text),  // Pass the actual text here
-          size: captionSize,
-          duration: finalDuration
-        )
+
+        let originX = screenCenter.x - (captionSize.width / 2.0)
+        let originY = screenCenter.y - (captionSize.height / 2.0)
+        let frame = CGRect(x: originX, y: originY, width: captionSize.width, height: captionSize.height)
+
+        let descriptor = OverlayDescriptor(frame: frame, type: .caption(text: text))
+        let config = VisualsConfig(duration: finalDuration, animationStyle: .scaleInFadeOut)
+        await presentVisuals(overlays: [descriptor], configuration: config)
       } else {
         logger.warning(
           "[Main Thread] could not get main screen center for text writing caption visualization.")
       }
-    }
   }
   logger.info("text writing simulation complete, caption visualization dispatched.")
 }

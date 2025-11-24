@@ -76,17 +76,6 @@ Task {
     fputs(
       "info: Traversal complete. Found \(responseData.elements.count) visible elements.\n", stderr)
 
-    // 3. Dispatch Highlighting using the traversal results
-    fputs(
-      "info: Calling drawHighlightBoxes with \(responseData.elements.count) elements...\n", stderr)
-    // Ensure this call happens on the main actor, drawHighlightBoxes requires it.
-    // Since we are in a Task, explicitly hop to MainActor.
-    await MainActor.run {
-      MacosUseSDK.drawHighlightBoxes(for: responseData.elements, duration: highlightDuration)
-    }
-    fputs("info: drawHighlightBoxes call dispatched successfully.\n", stderr)
-    fputs("      Overlays appear/disappear asynchronously on the main thread.\n", stderr)
-
     // 4. Encode the ResponseData to JSON
     fputs("info: Encoding traversal response to JSON...\n", stderr)
     let encoder = JSONEncoder()
@@ -101,21 +90,30 @@ Task {
     print(jsonString)  // Print JSON to stdout
     fputs("info: Successfully printed JSON response to stdout.\n", stderr)
 
-    // 6. Keep the Main Thread Alive for UI Updates
-    // IMPORTANT: Still need this for the visual highlights to appear/disappear
-    // We need to schedule this *after* the async work above has potentially returned.
-    let waitTime = highlightDuration + 1.0  // Wait a bit longer than the effect
-    fputs("info: Keeping the tool alive for \(waitTime) seconds to allow UI updates...\n", stderr)
-    // Use DispatchQueue.main.async to schedule the RunLoop wait on the main thread
-    DispatchQueue.main.async {
-      RunLoop.main.run(until: Date(timeIntervalSinceNow: waitTime))
-      fputs("info: Run loop finished. Tool exiting normally.\n", stderr)
-      exit(0)  // Success
+    // 3. Dispatch Highlighting using the traversal results
+    fputs(
+      "info: Preparing visual highlights for \(responseData.elements.count) elements...\n", stderr)
+
+    await MainActor.run {
+        let screenHeight = NSScreen.main?.frame.height ?? 1080
+        let descriptors = responseData.elements.compactMap { OverlayDescriptor(element: $0, screenHeight: screenHeight) }
+
+        if !descriptors.isEmpty {
+             fputs("info: Presenting visuals for \(highlightDuration) seconds...\n", stderr)
+             let config = VisualsConfig(duration: highlightDuration, animationStyle: .none)
+
+             Task { @MainActor in
+                 await presentVisuals(overlays: descriptors, configuration: config)
+                 fputs("info: Visuals complete. Exiting.\n", stderr)
+                 exit(0)
+             }
+        } else {
+             fputs("info: No valid elements to highlight. Exiting.\n", stderr)
+             exit(0)
+        }
     }
-    // Allow the Task itself to stay alive while the main thread waits
-    try await Task.sleep(nanoseconds: UInt64((waitTime + 0.1) * 1_000_000_000))
-    // Fallback exit if runloop doesn't trigger exit
-    exit(0)
+
+    // Task completes here, but the inner Task (visuals) keeps running on MainActor until exit(0)
 
   } catch let error as MacosUseSDKError {
     // Specific SDK errors
