@@ -1,5 +1,5 @@
 import Foundation
-import MacosUseSDKProtos
+import MacosUseProto
 import SwiftProtobuf
 
 /// Simple in-memory operation store for google.longrunning.Operation objects.

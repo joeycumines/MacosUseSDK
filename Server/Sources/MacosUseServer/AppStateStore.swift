@@ -1,5 +1,5 @@
 import Foundation
-import MacosUseSDKProtos
+import MacosUseProto
 
 /// Thread-safe state container using copy-on-write semantics.
 /// This is the immutable "view" of the server state that can be safely shared.

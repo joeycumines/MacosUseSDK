@@ -1,6 +1,6 @@
 import AppKit
 import Foundation
-import MacosUseSDKProtos
+import MacosUseProto
 import SwiftProtobuf
 import UniformTypeIdentifiers
 

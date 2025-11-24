@@ -1,7 +1,7 @@
 import AppKit
 import ApplicationServices
 import Foundation
-import MacosUseSDKProtos
+import MacosUseProto
 
 /// Detects UI changes using accessibility notifications.
 ///

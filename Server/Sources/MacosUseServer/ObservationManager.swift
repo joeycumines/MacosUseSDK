@@ -1,7 +1,7 @@
 import ApplicationServices
 import Foundation
+import MacosUseProto
 import MacosUseSDK
-import MacosUseSDKProtos
 import OSLog
 import SwiftProtobuf
 

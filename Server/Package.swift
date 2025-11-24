@@ -27,11 +27,11 @@ let package = Package(
         // Target for the generated Swift Protobuf and gRPC stubs
         // This makes the generated code available to the server target
         .target(
-            name: "MacosUseSDKProtos",
+            name: "MacosUseProto",
             dependencies: [
                 .product(name: "GRPCProtobuf", package: "grpc-swift-protobuf"),
             ],
-            path: "Sources/MacosUseSDKProtos",
+            path: "Sources/MacosUseProto",
             // The expr protos are not used; avoid dangling excludes which
             // trigger warnings by only including the directories we need.
             sources: ["macosusesdk/", "google/"],
@@ -45,7 +45,7 @@ let package = Package(
                 .product(name: "GRPCCore", package: "grpc-swift-2"),
                 .product(name: "GRPCNIOTransportHTTP2", package: "grpc-swift-nio-transport"),
                 "MacosUseSDK",
-                "MacosUseSDKProtos", // Add dependency on the generated protos
+                "MacosUseProto", // Add dependency on the generated protos
             ],
             path: "Sources/MacosUseServer",
             swiftSettings: [

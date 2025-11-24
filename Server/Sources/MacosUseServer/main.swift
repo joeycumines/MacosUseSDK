@@ -5,8 +5,8 @@ import OSLog
 
 import GRPCCore
 import GRPCNIOTransportHTTP2
+import MacosUseProto
 import MacosUseSDK
-import MacosUseSDKProtos
 import NIOCore
 
 private let logger = MacosUseSDK.sdkLogger(category: "Main")

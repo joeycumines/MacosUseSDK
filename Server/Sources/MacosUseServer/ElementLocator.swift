@@ -1,8 +1,8 @@
 import ApplicationServices
 import Foundation
 import GRPCCore
+import MacosUseProto
 import MacosUseSDK
-import MacosUseSDKProtos
 import OSLog
 
 private let logger = MacosUseSDK.sdkLogger(category: "ElementLocator")

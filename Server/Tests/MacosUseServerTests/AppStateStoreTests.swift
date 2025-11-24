@@ -1,4 +1,4 @@
-import MacosUseSDKProtos
+import MacosUseProto
 import XCTest
 
 @testable import MacosUseServer

@@ -1,5 +1,5 @@
 import Foundation
-import MacosUseSDKProtos
+import MacosUseProto
 import SwiftProtobuf
 
 /// Thread-safe registry for macro storage and management

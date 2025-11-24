@@ -11,12 +11,12 @@ inputs:
   - module: buf.build/googleapis/googleapis
 plugins:
   - remote: buf.build/apple/swift
-    out: Server/Sources/MacosUseSDKProtos
+    out: Server/Sources/MacosUseProto
     opt:
       - Visibility=Public
     include_imports: true
   - remote: buf.build/grpc/swift-protobuf
-    out: Server/Sources/MacosUseSDKProtos
+    out: Server/Sources/MacosUseProto
     opt:
       - Visibility=Public
       - Server=true

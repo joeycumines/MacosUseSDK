@@ -13,7 +13,7 @@ GO_MODULE_SLUGS_NO_PACKAGES ?= hack.google-api-linter
 GO_MODULE_SLUGS_NO_UPDATE ?= hack.google-api-linter
 # excludes generated files + files that are largely unchanged from upstream
 SWIFT_PACKAGE_FILES_NO_LINT_OR_FORMAT ?= \
-./Server/Sources/MacosUseSDKProtos/% \
+./Server/Sources/MacosUseProto/% \
 ./Sources/VisualInputTool/main.swift \
 ./Sources/TraversalTool/main.swift \
 ./Sources/MacosUseSDK/InputController.swift \
@@ -56,6 +56,7 @@ lint: go.lint proto-lint swift.lint ## Lint all source files.
 
 .PHONY: fix
 fix: go.fix swift.fix ## Apply automatic fixes to source files.
+	@$(MAKE) --no-print-directory fmt
 
 .PHONY: generate
 generate: ## Generate all code.

@@ -5,7 +5,7 @@
 import AppKit
 import ApplicationServices
 import Foundation
-import MacosUseSDKProtos
+import MacosUseProto
 @preconcurrency import ScreenCaptureKit
 import UniformTypeIdentifiers
 import Vision

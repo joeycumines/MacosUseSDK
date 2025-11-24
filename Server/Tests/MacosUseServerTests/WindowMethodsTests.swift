@@ -4,7 +4,7 @@ import Foundation
 import GRPCCore
 import Testing
 
-@testable import MacosUseSDKProtos
+@testable import MacosUseProto
 @testable import MacosUseServer
 
 @Suite("Window Methods Tests")

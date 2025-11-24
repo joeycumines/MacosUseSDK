@@ -2,8 +2,8 @@ import AppKit
 import CoreGraphics
 import Foundation
 import GRPCCore
+import MacosUseProto
 import MacosUseSDK
-import MacosUseSDKProtos
 import OSLog
 import SwiftProtobuf
 

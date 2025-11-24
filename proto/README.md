@@ -197,7 +197,7 @@ option java_package = "com.macosusesdk...";
 
 Generated code is committed to the repository:
 
-  - `Server/Sources/MacosUseSDKProtos/`: Swift server stubs
+  - `Server/Sources/MacosUseProto/`: Swift server stubs
   - `gen/go/`: Go client stubs
 
 ### Regenerating Code

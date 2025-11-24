@@ -1,6 +1,6 @@
 import Foundation
 import GRPCCore
-import MacosUseSDKProtos
+import MacosUseProto
 import SwiftProtobuf
 
 /// Provider for google.longrunning.Operations that proxies to OperationStore.
