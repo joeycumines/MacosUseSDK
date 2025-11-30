@@ -62,16 +62,19 @@ func TestClipboardTextFlow(t *testing.T) {
 		t.Fatalf("ClearClipboard failed: %v", err)
 	}
 
-	// Small delay to allow system pasteboard update
-	time.Sleep(100 * time.Millisecond)
+	// Poll until clipboard is cleared (avoid time.Sleep).
+	verifyCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 
-	got2, err := client.GetClipboard(ctx, &pb.GetClipboardRequest{Name: "clipboard"})
+	err = PollUntilContext(verifyCtx, 50*time.Millisecond, func() (bool, error) {
+		got2, err := client.GetClipboard(ctx, &pb.GetClipboardRequest{Name: "clipboard"})
+		if err != nil {
+			return false, nil
+		}
+		return len(got2.AvailableTypes) == 0, nil
+	})
 	if err != nil {
-		t.Fatalf("GetClipboard after clear failed: %v", err)
-	}
-	// On clear, available types should be empty
-	if len(got2.AvailableTypes) != 0 {
-		t.Fatalf("expected no available types after clear, got: %v", got2.AvailableTypes)
+		t.Fatalf("clipboard not cleared within timeout: %v", err)
 	}
 }
 
@@ -107,16 +110,25 @@ func TestClipboardHistory(t *testing.T) {
 		t.Fatalf("WriteClipboard second failed: %v", err)
 	}
 
-	// Allow history to record
-	time.Sleep(50 * time.Millisecond)
+	// Poll until history has at least two entries (avoid time.Sleep).
+	histCtx, histCancel := context.WithTimeout(ctx, 5*time.Second)
+	defer histCancel()
 
+	err = PollUntilContext(histCtx, 50*time.Millisecond, func() (bool, error) {
+		hist, err := client.GetClipboardHistory(ctx, &pb.GetClipboardHistoryRequest{Name: "clipboard/history"})
+		if err != nil {
+			return false, nil
+		}
+		return len(hist.Entries) >= 2, nil
+	})
+	if err != nil {
+		t.Fatalf("GetClipboardHistory did not contain expected entries within timeout: %v", err)
+	}
+
+	// Fetch final history for assertions
 	hist, err := client.GetClipboardHistory(ctx, &pb.GetClipboardHistoryRequest{Name: "clipboard/history"})
 	if err != nil {
 		t.Fatalf("GetClipboardHistory failed: %v", err)
-	}
-
-	if len(hist.Entries) < 2 {
-		t.Fatalf("expected at least 2 history entries, got %d", len(hist.Entries))
 	}
 
 	// Most recent should be the last write: history-two

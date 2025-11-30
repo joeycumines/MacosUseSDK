@@ -323,11 +323,22 @@ func TestWindowChangeObservation(t *testing.T) {
 	// CRITICAL FIX: Remove bounds verification polling (same rationale as Test 1a).
 
 	// 7. Test Case 2: Window Move
-	t.Log("Test 2: Moving window...")
+	// Calculate target position that is different from initial
+	targetX := float64(100)
+	targetY := float64(100)
+	// Ensure they're different from initial
+	if initialBounds.X == targetX {
+		targetX = 50
+	}
+	if initialBounds.Y == targetY {
+		targetY = 50
+	}
+
+	t.Logf("Test 2: Moving window to (%.0f, %.0f)...", targetX, targetY)
 	_, err = client.MoveWindow(ctx, &pb.MoveWindowRequest{
 		Name: initialWindow.Name,
-		X:    200,
-		Y:    200,
+		X:    targetX,
+		Y:    targetY,
 	})
 	if err != nil {
 		t.Fatalf("MoveWindow failed: %v", err)

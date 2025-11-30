@@ -27,15 +27,6 @@
 - **Golden Apps:** `TextEdit`, `Calculator`, `Finder`.
 - **Lifecycle:** Tests must clean up resources (DeleteApplication) aggressively.
 
-### **4.3 Swift SDK Visual Feedback Stability**
-- **Status:** Completed.
-- **Issue:** `DrawVisuals` overlay windows were either crashing (Signal 11) or failing to close.
-- **Resolution:**
-    - Replaced `Task.sleep` with `DispatchQueue.main.asyncAfter` to avoid reentrancy/state corruption issues.
-    - Set `isReleasedWhenClosed = false` on `NSWindow` to allow safe manual lifecycle management.
-    - Explicitly called `orderOut` and `close` in the async callback.
-    - Verified with `test-swift-with-oslog` target.
-
 ### **Correctness & Verification Guarantees**
 1.  **State-Difference Assertions:** Mutator RPCs must be followed by Accessor RPCs to verify delta.
 2.  **PollUntil Pattern:** No `time.Sleep()`. Use polling with timeouts.

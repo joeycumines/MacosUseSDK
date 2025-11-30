@@ -270,6 +270,11 @@ actor ObservationManager {
     // This function now exhaustively rescues windows that have temporarily dropped out of kAXWindows
     // but still exist in kAXChildren (orphaned), regardless of their minimized state.
     // It extracts REAL attributes from the AX element, preventing false DESTROYED events.
+    //
+    // BUG FIX (2025-11-30): The orphan rescue was ONLY checking cgWindows, but after a mutation
+    // (MoveWindow, ResizeWindow, etc.) the window can be temporarily absent from BOTH kAXWindows
+    // AND CGWindowList (due to cache invalidation + CGWindowList staleness). Now we ALSO check
+    // previousWindows directly to rescue windows that were being tracked but dropped from all sources.
     private nonisolated func handleOrphanedWindows(
         axWindows: [AXWindowSnapshot],
         cgWindows: [WindowRegistry.WindowInfo],
@@ -278,83 +283,104 @@ actor ObservationManager {
     ) async throws -> [AXWindowSnapshot] {
         var result = axWindows
         let axWindowIDs = Set(axWindows.map(\.windowID))
+        let cgWindowIDs = Set(cgWindows.map(\.windowID))
         let previousWindowMap = Dictionary(uniqueKeysWithValues: previousWindows.map { ($0.windowID, $0) })
 
-        // PERFORMANCE FIX: Hoist AXUIElementCreateApplication and kAXChildren fetch OUTSIDE the loop.
-        // This makes orphan-rescue linear (O(N)) per poll: one `kAXChildren` fetch + a single scan
-        // instead of performing repeated per-orphan AX fetches.
-        var children: [AXUIElement]?
+        // Build list of window IDs we need to try to rescue:
+        // 1. Windows in cgWindows but not in axWindows (and we were tracking them)
+        // 2. Windows in previousWindows but not in axWindows AND not in cgWindows (dropped from both!)
+        var orphanCandidateIDs = Set<CGWindowID>()
+        for cgWin in cgWindows where !axWindowIDs.contains(cgWin.windowID) && previousWindowMap[cgWin.windowID] != nil {
+            orphanCandidateIDs.insert(cgWin.windowID)
+        }
+        // CRITICAL FIX: Also check previous windows that dropped from BOTH sources
+        for prevWin in previousWindows where !axWindowIDs.contains(prevWin.windowID) && !cgWindowIDs.contains(prevWin.windowID) {
+            orphanCandidateIDs.insert(prevWin.windowID)
+        }
 
-        // Check if we even have any orphans to process before doing the expensive fetch
-        let hasOrphans = cgWindows.contains { !axWindowIDs.contains($0.windowID) && previousWindowMap[$0.windowID] != nil }
+        // If no orphans to rescue, return early
+        guard !orphanCandidateIDs.isEmpty else { return result }
 
-        if hasOrphans {
-            guard let appElementAny = system.createAXApplication(pid: pid) else { return result }
-            let appElement = unsafeDowncast(appElementAny, to: AXUIElement.self)
-            var childrenValue: CFTypeRef?
-            if AXUIElementCopyAttributeValue(appElement, kAXChildrenAttribute as CFString, &childrenValue) == .success {
-                children = childrenValue as? [AXUIElement]
+        // Fetch kAXChildren for orphan rescue
+        guard let appElementAny = system.createAXApplication(pid: pid) else { return result }
+        let appElement = unsafeDowncast(appElementAny, to: AXUIElement.self)
+        var childrenValue: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(appElement, kAXChildrenAttribute as CFString, &childrenValue) == .success,
+              let axChildren = childrenValue as? [AXUIElement]
+        else {
+            return result
+        }
+
+        // Build a map of windowID -> AXUIElement from children for fast lookup
+        var childWindowMap: [CGWindowID: AXUIElement] = [:]
+        for child in axChildren {
+            if let axWindowID = system.getAXWindowID(element: child as AnyObject) {
+                childWindowMap[axWindowID] = child
             }
         }
 
-        guard let axChildren = children else { return result }
+        // Attempt to rescue each orphan candidate
+        for windowID in orphanCandidateIDs {
+            // FIRST try to find in kAXChildren by window ID (best source of truth)
+            if let child = childWindowMap[windowID] {
+                // FOUND IT! Now fetch its TRUE state using batched IPC.
+                let attrs = fetchWindowAttributes(child)
 
-        // Check each CG window that is NOT in the main AX list
-        for cgWin in cgWindows where !axWindowIDs.contains(cgWin.windowID) {
-            // Only attempt to rescue windows we were previously tracking
-            // We need the previous record to know it's worth rescuing, but we will NOT rely on its data.
-            guard previousWindowMap[cgWin.windowID] != nil else { continue }
+                // Get bounds - Use AX truth, fallback to previous bounds if missing
+                var posValue: CFTypeRef?
+                var sizeValue: CFTypeRef?
+                var axBounds = previousWindowMap[windowID]?.bounds ?? .zero // Fallback to previous bounds
 
-            var rescuedWindow: AXWindowSnapshot?
-
-            // Search the pre-fetched children list
-            for child in axChildren {
-                if let axWindowID = system.getAXWindowID(element: child as AnyObject), axWindowID == cgWin.windowID {
-                    // FOUND IT! Now fetch its TRUE state using batched IPC.
-                    let attrs = fetchWindowAttributes(child)
-
-                    // 4. Check Frame (Position/Size) - Use AX truth, fallback to CG if missing
-                    var posValue: CFTypeRef?
-                    var sizeValue: CFTypeRef?
-                    var axBounds = cgWin.bounds // Fallback
-
-                    if AXUIElementCopyAttributeValue(child, kAXPositionAttribute as CFString, &posValue) == .success,
-                       let posVal = posValue, CFGetTypeID(posVal) == AXValueGetTypeID()
-                    {
-                        let posAx = unsafeDowncast(posVal, to: AXValue.self)
-                        if AXValueGetType(posAx) == .cgPoint {
-                            var p = CGPoint.zero
-                            AXValueGetValue(posAx, .cgPoint, &p)
-                            axBounds.origin = p
-                        }
+                if AXUIElementCopyAttributeValue(child, kAXPositionAttribute as CFString, &posValue) == .success,
+                   let posVal = posValue, CFGetTypeID(posVal) == AXValueGetTypeID()
+                {
+                    let posAx = unsafeDowncast(posVal, to: AXValue.self)
+                    if AXValueGetType(posAx) == .cgPoint {
+                        var p = CGPoint.zero
+                        AXValueGetValue(posAx, .cgPoint, &p)
+                        axBounds.origin = p
                     }
-
-                    if AXUIElementCopyAttributeValue(child, kAXSizeAttribute as CFString, &sizeValue) == .success,
-                       let sizeVal = sizeValue, CFGetTypeID(sizeVal) == AXValueGetTypeID()
-                    {
-                        let sizeAx = unsafeDowncast(sizeVal, to: AXValue.self)
-                        if AXValueGetType(sizeAx) == .cgSize {
-                            var s = CGSize.zero
-                            AXValueGetValue(sizeAx, .cgSize, &s)
-                            axBounds.size = s
-                        }
-                    }
-
-                    rescuedWindow = AXWindowSnapshot(
-                        windowID: cgWin.windowID,
-                        title: attrs.title,
-                        bounds: axBounds,
-                        minimized: attrs.minimized,
-                        visible: !attrs.minimized && !attrs.hidden, // Consistent visibility definition
-                        focused: attrs.focused,
-                    )
-                    break
                 }
-            }
 
-            if let rescued = rescuedWindow {
-                result.append(rescued)
+                if AXUIElementCopyAttributeValue(child, kAXSizeAttribute as CFString, &sizeValue) == .success,
+                   let sizeVal = sizeValue, CFGetTypeID(sizeVal) == AXValueGetTypeID()
+                {
+                    let sizeAx = unsafeDowncast(sizeVal, to: AXValue.self)
+                    if AXValueGetType(sizeAx) == .cgSize {
+                        var s = CGSize.zero
+                        AXValueGetValue(sizeAx, .cgSize, &s)
+                        axBounds.size = s
+                    }
+                }
+
+                let rescuedWindow = AXWindowSnapshot(
+                    windowID: windowID,
+                    title: attrs.title,
+                    bounds: axBounds,
+                    minimized: attrs.minimized,
+                    visible: !attrs.minimized && !attrs.hidden,
+                    focused: attrs.focused,
+                )
+                result.append(rescuedWindow)
+            } else if cgWindowIDs.contains(windowID), let prevSnapshot = previousWindowMap[windowID] {
+                // FALLBACK: Window is still in CGWindowList but _AXUIElementGetWindow failed for all kAXChildren.
+                // This can happen during MoveWindow when the window's AX element is temporarily in a weird state.
+                // IMPORTANT: Only rescue if the CGWindow is still on-screen (isOnScreen: true). Otherwise,
+                // the window may have been closed and CGWindowList is just lagging behind.
+                if let cgWin = cgWindows.first(where: { $0.windowID == windowID }), cgWin.isOnScreen {
+                    let rescuedWindow = AXWindowSnapshot(
+                        windowID: windowID,
+                        title: cgWin.title.isEmpty ? prevSnapshot.title : cgWin.title,
+                        bounds: cgWin.bounds,
+                        minimized: prevSnapshot.minimized,
+                        visible: prevSnapshot.visible,
+                        focused: prevSnapshot.focused,
+                    )
+                    result.append(rescuedWindow)
+                }
+                // If not on screen, don't rescue - window was likely closed
             }
+            // If window not found anywhere, let it be destroyed normally
         }
 
         return result

@@ -39,7 +39,7 @@ extension MacosUseService {
             // Write to clipboard
             let clipboard = try await ClipboardManager.shared.writeClipboard(
                 content: req.content,
-                clearExisting: req.clearExisting_p,
+                req.clearExisting_p,
             )
 
             let response = Macosusesdk_V1_WriteClipboardResponse.with {

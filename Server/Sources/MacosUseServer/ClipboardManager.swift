@@ -94,14 +94,14 @@ actor ClipboardManager {
     }
 
     /// Write content to clipboard.
-    func writeClipboard(content: Macosusesdk_V1_ClipboardContent, clearExisting: Bool) async throws
+    func writeClipboard(content: Macosusesdk_V1_ClipboardContent, _: Bool) async throws
         -> Macosusesdk_V1_Clipboard
     {
         let pasteboard = NSPasteboard.general
 
-        if clearExisting {
-            pasteboard.clearContents()
-        }
+        // CRITICAL: NSPasteboard documentation states clearing before writing is recommended.
+        // We MUST always clear before writing to ensure proper ownership transfer.
+        pasteboard.clearContents()
 
         var success = false
 

@@ -42,12 +42,29 @@ Previous sins (now corrected, not to be repeated):
 - **Pagination (AIP-158):** You MUST implement `page_size`, `page_token`, and `next_page_token` for ALL List/Find RPCs, and `page_token`/`next_page_token` MUST be treated as opaque by clients (no reliance on internal structure such as `"offset:N"`).
 - **State-Difference Assertions:** Tests MUST NOT rely on "Happy Path" OK statuses. Every mutator RPC (Click, Move, Resize) MUST be followed by an accessor RPC to verify the *delta* in state.
 - **Wait-For-Convergence:** Tests MUST use a `PollUntil` pattern. `time.Sleep` is FORBIDDEN in tests.
+- **NSPasteboard Correctness (2025-11-30):** ClipboardManager MUST call `pasteboard.clearContents()` before EVERY write operation. Apple documentation states: "Clearing the pasteboard before writing is recommended." The previous implementation conditionally cleared based on a parameter, which violated this requirement and caused unreliable clipboard behavior.
 
 **API Scope:**
 - Expose ALL functionality via the `MacosUse` service (consolidated service).
-- Include all resources: Window, Element, Observation, Session, Macro, Screenshot, Clipboard, File, Script.
+- Include all resources: Window, Element, Observation, Session, Macro, Screenshot, Clipboard, File, Script, **Display**.
 - Support advanced inputs: Modifiers, Special Keys, Mouse Operations (drag, right-click).
 - Support VS Code integration patterns (multi-window, advanced targeting).
+- **Display API (NEW 2025-11-30):** Must expose display/screen enumeration via `ListDisplays` RPC. Each Display resource must include:
+  - Display ID (CGDirectDisplayID)
+  - Frame (position and size in global coordinate space)
+  - Visible frame (excluding menu bar and dock)
+  - Whether it is the main display
+  - Scale factor (Retina)
+  This is critical for multi-monitor setups where window coordinates are in global coordinate space.
+
+**Coordinate System Documentation (CRITICAL 2025-11-30):**
+- macOS uses **multiple coordinate systems** that clients MUST understand:
+  - **Global Display Coordinates** (used by CGWindowList, AX, CGEvent): Origin at **top-left of the main display**. Y increases downward. Secondary displays can have negative X (left of main) or negative Y (above main).
+  - **AppKit Coordinates** (used by NSWindow, NSScreen.frame): Origin at **bottom-left of the main display**. Y increases upward.
+- Window bounds returned by `ListWindows` and `GetWindow` use **Global Display Coordinates** (top-left origin).
+- Input coordinates (clicks, mouse moves) sent via `CreateInput` are interpreted as **Global Display Coordinates** (top-left origin).
+- The proto API documentation MUST clearly specify which coordinate system is used for each field.
+- NO coordinate conversion is needed between Window bounds and Input positions (both use the same coordinate system).
 
 **Core Graphics/Cocoa/Accessibility Race Condition Mitigation:** Do not rely on `NSRunningApplication(processIdentifier:)` or `CGWindowListCopyWindowInfo` (and related `CGWindow*` APIs) for process/window liveness or existence checks when performing AX actions. These APIs can lag behind the real-time state of the Accessibility server. Always attempt AX actions (e.g., `AXUIElementCreateApplication(pid)`, `AXUIElementCopyAttributeValue`) directly, then handle invalid process/element errors if they occur. Using CG/NS APIs as a "guard" or "pre-check" introduces a race condition where valid AX targets are rejected because the slower API hasn't updated yet.
 
