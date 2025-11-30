@@ -66,6 +66,8 @@ Previous sins (now corrected, not to be repeated):
 - The proto API documentation MUST clearly specify which coordinate system is used for each field.
 - NO coordinate conversion is needed between Window bounds and Input positions (both use the same coordinate system).
 
+**Authoring Guidance:** When writing code comments or documentation, always state explicitly which coordinate system is referenced. Use the phrases "Global Display Coordinates (top-left origin)" for AX/CGEvent/CGWindowList and "AppKit Coordinates (bottom-left origin)" for NSWindow/NSScreen. Avoid ambiguous shorthand such as "CGEvent coordinates" without the origin direction — this has led to prior incorrect comments.
+
 **Core Graphics/Cocoa/Accessibility Race Condition Mitigation:** Do not rely on `NSRunningApplication(processIdentifier:)` or `CGWindowListCopyWindowInfo` (and related `CGWindow*` APIs) for process/window liveness or existence checks when performing AX actions. These APIs can lag behind the real-time state of the Accessibility server. Always attempt AX actions (e.g., `AXUIElementCreateApplication(pid)`, `AXUIElementCopyAttributeValue`) directly, then handle invalid process/element errors if they occur. Using CG/NS APIs as a "guard" or "pre-check" introduces a race condition where valid AX targets are rejected because the slower API hasn't updated yet.
 
 ## Testing and Tooling

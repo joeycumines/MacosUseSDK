@@ -815,7 +815,9 @@ message FindRegionElementsRequest {
     (google.api.resource_reference) = {type: "*"}
   ];
 
-  // Region to search within (screen coordinates).
+  // Region to search within.
+  // Uses Global Display Coordinates (top-left origin, Y increases downward).
+  // See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
   macosusesdk.type.Region region = 2 [(google.api.field_behavior) = REQUIRED];
 
   // Optional selector for additional filtering.
@@ -1646,7 +1648,9 @@ message CaptureElementScreenshotResponse {
 
 // Request to capture a screenshot of a screen region.
 message CaptureRegionScreenshotRequest {
-  // Region to capture (screen coordinates).
+  // Region to capture.
+  // Uses Global Display Coordinates (top-left origin, Y increases downward).
+  // See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
   macosusesdk.type.Region region = 1 [(google.api.field_behavior) = REQUIRED];
 
   // Image format.

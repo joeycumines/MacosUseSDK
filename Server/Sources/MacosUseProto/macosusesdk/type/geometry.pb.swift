@@ -24,16 +24,29 @@ fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAP
   typealias Version = _2
 }
 
-/// A 2D point with x and y coordinates (screen coordinates).
+/// A 2D point with x and y coordinates.
+///
+/// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+/// This matches macOS CGEvent and Accessibility API coordinate space:
+///   - Origin (0,0) is at the TOP-LEFT corner of the main display
+///   - X increases rightward
+///   - Y increases downward
+///   - Secondary displays can have negative coordinates if positioned left/above the main display
+///
+/// This coordinate system is used consistently throughout the API for:
+///   - Window bounds (Window.bounds)
+///   - Input positions (MouseClick.position, MouseMove.position, etc.)
+///   - Element positions (Element.bounds)
+///   - Screenshot regions (CaptureRegionScreenshotRequest.region)
 public struct Macosusesdk_Type_Point: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// X coordinate.
+  /// X coordinate in Global Display Coordinates (pixels from left edge of main display).
   public var x: Double = 0
 
-  /// Y coordinate.
+  /// Y coordinate in Global Display Coordinates (pixels from top edge of main display).
   public var y: Double = 0
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -41,22 +54,25 @@ public struct Macosusesdk_Type_Point: Sendable {
   public init() {}
 }
 
-/// A rectangular region with x, y, width, height (screen coordinates).
+/// A rectangular region with x, y, width, height.
+///
+/// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+/// See Point message documentation for detailed coordinate system explanation.
 public struct Macosusesdk_Type_Region: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// X coordinate of the region's origin (screen coordinates).
+  /// X coordinate of the region's origin in Global Display Coordinates.
   public var x: Double = 0
 
-  /// Y coordinate of the region's origin (screen coordinates).
+  /// Y coordinate of the region's origin in Global Display Coordinates.
   public var y: Double = 0
 
-  /// Width of the region.
+  /// Width of the region in pixels.
   public var width: Double = 0
 
-  /// Height of the region.
+  /// Height of the region in pixels.
   public var height: Double = 0
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()

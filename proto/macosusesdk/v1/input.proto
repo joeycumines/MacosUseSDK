@@ -100,8 +100,13 @@ message InputAction {
 }
 
 // Mouse click action.
+//
+// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
 message MouseClick {
-  // Position to click.
+  // Position to click in Global Display Coordinates.
+  // This uses the same coordinate system as Window.bounds, allowing direct use of
+  // window coordinates for click targets.
   macosusesdk.type.Point position = 1 [(google.api.field_behavior) = REQUIRED];
 
   // Click type.
@@ -172,8 +177,11 @@ message KeyPress {
 }
 
 // Mouse move action.
+//
+// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
 message MouseMove {
-  // Target position.
+  // Target position in Global Display Coordinates.
   macosusesdk.type.Point position = 1 [(google.api.field_behavior) = REQUIRED];
 
   // Duration of movement in seconds (for smooth animation).
@@ -181,11 +189,14 @@ message MouseMove {
 }
 
 // Mouse drag action.
+//
+// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
 message MouseDrag {
-  // Starting position.
+  // Starting position in Global Display Coordinates.
   macosusesdk.type.Point start_position = 1 [(google.api.field_behavior) = REQUIRED];
 
-  // Ending position.
+  // Ending position in Global Display Coordinates.
   macosusesdk.type.Point end_position = 2 [(google.api.field_behavior) = REQUIRED];
 
   // Duration of drag in seconds.
@@ -196,8 +207,12 @@ message MouseDrag {
 }
 
 // Scroll action.
+//
+// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
 message Scroll {
   // Position to scroll at (optional, uses current mouse position if not set).
+  // In Global Display Coordinates.
   macosusesdk.type.Point position = 1 [(google.api.field_behavior) = OPTIONAL];
 
   // Horizontal scroll amount (positive = right, negative = left).
@@ -211,8 +226,11 @@ message Scroll {
 }
 
 // Hover action.
+//
+// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
 message Hover {
-  // Position to hover at.
+  // Position to hover at in Global Display Coordinates.
   macosusesdk.type.Point position = 1 [(google.api.field_behavior) = REQUIRED];
 
   // Duration to hover in seconds.
@@ -220,8 +238,11 @@ message Hover {
 }
 
 // Multi-touch gesture.
+//
+// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
 message Gesture {
-  // Center point of the gesture.
+  // Center point of the gesture in Global Display Coordinates.
   macosusesdk.type.Point center = 1 [(google.api.field_behavior) = REQUIRED];
 
   // Gesture type.

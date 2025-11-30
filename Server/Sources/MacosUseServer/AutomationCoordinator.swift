@@ -270,8 +270,9 @@ extension AutomationCoordinator {
             let clickType = mouseClick.clickType
             let clickCount = mouseClick.clickCount
 
-            // CRITICAL: Proto coordinates come from AXUIElement (kAXPositionAttribute) which uses
-            // the same coordinate system as CGEvent (bottom-left origin). NO conversion needed.
+            // CRITICAL: Proto coordinates come from AXUIElement (kAXPositionAttribute) which use
+            // the same Global Display Coordinate System as CGEvent (top-left origin).
+            // NO conversion needed.
             let point = CGPoint(x: mouseClick.position.x, y: mouseClick.position.y)
 
             if clickType == .right {
@@ -290,8 +291,9 @@ extension AutomationCoordinator {
             guard mouseMove.hasPosition else {
                 throw CoordinatorError.invalidKeyCombo("move missing position")
             }
-            // CRITICAL: Proto coordinates come from AXUIElement (kAXPositionAttribute) which uses
-            // the same coordinate system as CGEvent (bottom-left origin). NO conversion needed.
+            // CRITICAL: Proto coordinates come from AXUIElement (kAXPositionAttribute) which use
+            // the same Global Display Coordinate System as CGEvent (top-left origin).
+            // NO conversion needed.
             return .move(to: CGPoint(x: mouseMove.position.x, y: mouseMove.position.y))
         case .none:
             throw CoordinatorError.invalidKeyCombo("empty input type")

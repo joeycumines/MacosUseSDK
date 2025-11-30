@@ -25,12 +25,25 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// A 2D point with x and y coordinates (screen coordinates).
+// A 2D point with x and y coordinates.
+//
+// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+// This matches macOS CGEvent and Accessibility API coordinate space:
+//   - Origin (0,0) is at the TOP-LEFT corner of the main display
+//   - X increases rightward
+//   - Y increases downward
+//   - Secondary displays can have negative coordinates if positioned left/above the main display
+//
+// This coordinate system is used consistently throughout the API for:
+//   - Window bounds (Window.bounds)
+//   - Input positions (MouseClick.position, MouseMove.position, etc.)
+//   - Element positions (Element.bounds)
+//   - Screenshot regions (CaptureRegionScreenshotRequest.region)
 type Point struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// X coordinate.
+	// X coordinate in Global Display Coordinates (pixels from left edge of main display).
 	X float64 `protobuf:"fixed64,1,opt,name=x,proto3" json:"x,omitempty"`
-	// Y coordinate.
+	// Y coordinate in Global Display Coordinates (pixels from top edge of main display).
 	Y             float64 `protobuf:"fixed64,2,opt,name=y,proto3" json:"y,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -80,16 +93,19 @@ func (x *Point) GetY() float64 {
 	return 0
 }
 
-// A rectangular region with x, y, width, height (screen coordinates).
+// A rectangular region with x, y, width, height.
+//
+// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+// See Point message documentation for detailed coordinate system explanation.
 type Region struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// X coordinate of the region's origin (screen coordinates).
+	// X coordinate of the region's origin in Global Display Coordinates.
 	X float64 `protobuf:"fixed64,1,opt,name=x,proto3" json:"x,omitempty"`
-	// Y coordinate of the region's origin (screen coordinates).
+	// Y coordinate of the region's origin in Global Display Coordinates.
 	Y float64 `protobuf:"fixed64,2,opt,name=y,proto3" json:"y,omitempty"`
-	// Width of the region.
+	// Width of the region in pixels.
 	Width float64 `protobuf:"fixed64,3,opt,name=width,proto3" json:"width,omitempty"`
-	// Height of the region.
+	// Height of the region in pixels.
 	Height        float64 `protobuf:"fixed64,4,opt,name=height,proto3" json:"height,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

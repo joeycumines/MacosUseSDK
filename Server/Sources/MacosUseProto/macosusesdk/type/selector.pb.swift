@@ -33,7 +33,7 @@ fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAP
 ///    - text: "Submit"                     → Exact text match (AXValue or AXTitle)
 ///    - text_contains: "Submit"            → Substring match (case-sensitive)
 ///    - text_regex: "^Submit.*"            → Regex match using NSRegularExpression
-///    - position: {x: 100, y: 200, tol: 5} → Match element at screen coordinates ±tolerance
+///    - position: {x: 100, y: 200, tol: 5} → Match element at Global Display Coordinates ±tolerance
 ///    - attributes: {"AXEnabled": "1"}     → Match custom accessibility attributes (all must match)
 ///
 /// 2. COMPOUND SELECTORS (fully implemented):
@@ -185,15 +185,18 @@ public struct Macosusesdk_Type_ElementSelector: Sendable {
 }
 
 /// Select element by screen position.
+///
+/// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+/// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
 public struct Macosusesdk_Type_PositionSelector: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// X coordinate (screen coordinates).
+  /// X coordinate in Global Display Coordinates.
   public var x: Double = 0
 
-  /// Y coordinate (screen coordinates).
+  /// Y coordinate in Global Display Coordinates.
   public var y: Double = 0
 
   /// Tolerance for matching position (in pixels).

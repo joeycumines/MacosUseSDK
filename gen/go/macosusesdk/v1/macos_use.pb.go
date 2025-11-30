@@ -1206,7 +1206,9 @@ type FindRegionElementsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Parent context (same as FindElementsRequest).
 	Parent string `protobuf:"bytes,1,opt,name=parent,proto3" json:"parent,omitempty"`
-	// Region to search within (screen coordinates).
+	// Region to search within.
+	// Uses Global Display Coordinates (top-left origin, Y increases downward).
+	// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
 	Region *_type.Region `protobuf:"bytes,2,opt,name=region,proto3" json:"region,omitempty"`
 	// Optional selector for additional filtering.
 	Selector *_type.ElementSelector `protobuf:"bytes,3,opt,name=selector,proto3" json:"selector,omitempty"`
@@ -5195,7 +5197,9 @@ func (x *CaptureElementScreenshotResponse) GetOcrText() string {
 // Request to capture a screenshot of a screen region.
 type CaptureRegionScreenshotRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Region to capture (screen coordinates).
+	// Region to capture.
+	// Uses Global Display Coordinates (top-left origin, Y increases downward).
+	// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
 	Region *_type.Region `protobuf:"bytes,1,opt,name=region,proto3" json:"region,omitempty"`
 	// Image format.
 	Format ImageFormat `protobuf:"varint,2,opt,name=format,proto3,enum=macosusesdk.v1.ImageFormat" json:"format,omitempty"`

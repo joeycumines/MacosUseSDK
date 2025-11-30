@@ -38,6 +38,9 @@ message Window {
 
   // Bounding rectangle of the window.
   //
+  // COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+  // See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
+  //
   // Data Source (AX Authority): Fresh Accessibility API queries (kAXPositionAttribute, kAXSizeAttribute).
   // These fields are queried from AX on every request and reflect the immediate state after mutations.
   // They are NOT cached from CGWindowList (which can lag by 10-100ms), ensuring mutation responses
@@ -83,17 +86,20 @@ message Window {
 }
 
 // Bounding rectangle for window positioning.
+//
+// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
 message Bounds {
-  // X coordinate of the window's origin.
+  // X coordinate of the window's origin in Global Display Coordinates.
   double x = 1;
 
-  // Y coordinate of the window's origin.
+  // Y coordinate of the window's origin in Global Display Coordinates.
   double y = 2;
 
-  // Width of the window.
+  // Width of the window in pixels.
   double width = 3;
 
-  // Height of the window.
+  // Height of the window in pixels.
   double height = 4;
 }
 

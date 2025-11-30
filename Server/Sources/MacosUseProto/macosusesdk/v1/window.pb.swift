@@ -45,6 +45,9 @@ public struct Macosusesdk_V1_Window: Sendable {
 
   /// Bounding rectangle of the window.
   ///
+  /// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+  /// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
+  ///
   /// Data Source (AX Authority): Fresh Accessibility API queries (kAXPositionAttribute, kAXSizeAttribute).
   /// These fields are queried from AX on every request and reflect the immediate state after mutations.
   /// They are NOT cached from CGWindowList (which can lag by 10-100ms), ensuring mutation responses
@@ -103,21 +106,24 @@ public struct Macosusesdk_V1_Window: Sendable {
 }
 
 /// Bounding rectangle for window positioning.
+///
+/// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+/// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
 public struct Macosusesdk_V1_Bounds: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// X coordinate of the window's origin.
+  /// X coordinate of the window's origin in Global Display Coordinates.
   public var x: Double = 0
 
-  /// Y coordinate of the window's origin.
+  /// Y coordinate of the window's origin in Global Display Coordinates.
   public var y: Double = 0
 
-  /// Width of the window.
+  /// Width of the window in pixels.
   public var width: Double = 0
 
-  /// Height of the window.
+  /// Height of the window in pixels.
   public var height: Double = 0
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()

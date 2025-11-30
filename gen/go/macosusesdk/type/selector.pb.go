@@ -91,7 +91,7 @@ func (CompoundSelector_Operator) EnumDescriptor() ([]byte, []int) {
 //   - text: "Submit"                     → Exact text match (AXValue or AXTitle)
 //   - text_contains: "Submit"            → Substring match (case-sensitive)
 //   - text_regex: "^Submit.*"            → Regex match using NSRegularExpression
-//   - position: {x: 100, y: 200, tol: 5} → Match element at screen coordinates ±tolerance
+//   - position: {x: 100, y: 200, tol: 5} → Match element at Global Display Coordinates ±tolerance
 //   - attributes: {"AXEnabled": "1"}     → Match custom accessibility attributes (all must match)
 //
 // 2. COMPOUND SELECTORS (fully implemented):
@@ -319,11 +319,14 @@ func (*ElementSelector_Attributes) isElementSelector_Criteria() {}
 func (*ElementSelector_Compound) isElementSelector_Criteria() {}
 
 // Select element by screen position.
+//
+// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
 type PositionSelector struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// X coordinate (screen coordinates).
+	// X coordinate in Global Display Coordinates.
 	X float64 `protobuf:"fixed64,1,opt,name=x,proto3" json:"x,omitempty"`
-	// Y coordinate (screen coordinates).
+	// Y coordinate in Global Display Coordinates.
 	Y float64 `protobuf:"fixed64,2,opt,name=y,proto3" json:"y,omitempty"`
 	// Tolerance for matching position (in pixels).
 	Tolerance     float64 `protobuf:"fixed64,3,opt,name=tolerance,proto3" json:"tolerance,omitempty"`

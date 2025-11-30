@@ -641,9 +641,14 @@ func (*InputAction_Hover) isInputAction_InputType() {}
 func (*InputAction_Gesture) isInputAction_InputType() {}
 
 // Mouse click action.
+//
+// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
 type MouseClick struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Position to click.
+	// Position to click in Global Display Coordinates.
+	// This uses the same coordinate system as Window.bounds, allowing direct use of
+	// window coordinates for click targets.
 	Position *_type.Point `protobuf:"bytes,1,opt,name=position,proto3" json:"position,omitempty"`
 	// Click type.
 	ClickType MouseClick_ClickType `protobuf:"varint,2,opt,name=click_type,json=clickType,proto3,enum=macosusesdk.v1.MouseClick_ClickType" json:"click_type,omitempty"`
@@ -824,9 +829,12 @@ func (x *KeyPress) GetModifiers() []KeyPress_Modifier {
 }
 
 // Mouse move action.
+//
+// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
 type MouseMove struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Target position.
+	// Target position in Global Display Coordinates.
 	Position *_type.Point `protobuf:"bytes,1,opt,name=position,proto3" json:"position,omitempty"`
 	// Duration of movement in seconds (for smooth animation).
 	Duration      float64 `protobuf:"fixed64,2,opt,name=duration,proto3" json:"duration,omitempty"`
@@ -879,11 +887,14 @@ func (x *MouseMove) GetDuration() float64 {
 }
 
 // Mouse drag action.
+//
+// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
 type MouseDrag struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Starting position.
+	// Starting position in Global Display Coordinates.
 	StartPosition *_type.Point `protobuf:"bytes,1,opt,name=start_position,json=startPosition,proto3" json:"start_position,omitempty"`
-	// Ending position.
+	// Ending position in Global Display Coordinates.
 	EndPosition *_type.Point `protobuf:"bytes,2,opt,name=end_position,json=endPosition,proto3" json:"end_position,omitempty"`
 	// Duration of drag in seconds.
 	Duration float64 `protobuf:"fixed64,3,opt,name=duration,proto3" json:"duration,omitempty"`
@@ -952,9 +963,13 @@ func (x *MouseDrag) GetButton() MouseClick_ClickType {
 }
 
 // Scroll action.
+//
+// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
 type Scroll struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Position to scroll at (optional, uses current mouse position if not set).
+	// In Global Display Coordinates.
 	Position *_type.Point `protobuf:"bytes,1,opt,name=position,proto3" json:"position,omitempty"`
 	// Horizontal scroll amount (positive = right, negative = left).
 	Horizontal float64 `protobuf:"fixed64,2,opt,name=horizontal,proto3" json:"horizontal,omitempty"`
@@ -1025,9 +1040,12 @@ func (x *Scroll) GetDuration() float64 {
 }
 
 // Hover action.
+//
+// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
 type Hover struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Position to hover at.
+	// Position to hover at in Global Display Coordinates.
 	Position *_type.Point `protobuf:"bytes,1,opt,name=position,proto3" json:"position,omitempty"`
 	// Duration to hover in seconds.
 	Duration      float64 `protobuf:"fixed64,2,opt,name=duration,proto3" json:"duration,omitempty"`
@@ -1080,9 +1098,12 @@ func (x *Hover) GetDuration() float64 {
 }
 
 // Multi-touch gesture.
+//
+// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
 type Gesture struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Center point of the gesture.
+	// Center point of the gesture in Global Display Coordinates.
 	Center *_type.Point `protobuf:"bytes,1,opt,name=center,proto3" json:"center,omitempty"`
 	// Gesture type.
 	GestureType Gesture_GestureType `protobuf:"varint,2,opt,name=gesture_type,json=gestureType,proto3,enum=macosusesdk.v1.Gesture_GestureType" json:"gesture_type,omitempty"`

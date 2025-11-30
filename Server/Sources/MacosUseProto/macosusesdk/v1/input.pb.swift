@@ -250,12 +250,17 @@ public struct Macosusesdk_V1_InputAction: Sendable {
 }
 
 /// Mouse click action.
+///
+/// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+/// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
 public struct Macosusesdk_V1_MouseClick: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Position to click.
+  /// Position to click in Global Display Coordinates.
+  /// This uses the same coordinate system as Window.bounds, allowing direct use of
+  /// window coordinates for click targets.
   public var position: Macosusesdk_Type_Point {
     get {return _position ?? Macosusesdk_Type_Point()}
     set {_position = newValue}
@@ -436,12 +441,15 @@ public struct Macosusesdk_V1_KeyPress: Sendable {
 }
 
 /// Mouse move action.
+///
+/// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+/// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
 public struct Macosusesdk_V1_MouseMove: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Target position.
+  /// Target position in Global Display Coordinates.
   public var position: Macosusesdk_Type_Point {
     get {return _position ?? Macosusesdk_Type_Point()}
     set {_position = newValue}
@@ -462,12 +470,15 @@ public struct Macosusesdk_V1_MouseMove: Sendable {
 }
 
 /// Mouse drag action.
+///
+/// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+/// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
 public struct Macosusesdk_V1_MouseDrag: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Starting position.
+  /// Starting position in Global Display Coordinates.
   public var startPosition: Macosusesdk_Type_Point {
     get {return _startPosition ?? Macosusesdk_Type_Point()}
     set {_startPosition = newValue}
@@ -477,7 +488,7 @@ public struct Macosusesdk_V1_MouseDrag: Sendable {
   /// Clears the value of `startPosition`. Subsequent reads from it will return its default value.
   public mutating func clearStartPosition() {self._startPosition = nil}
 
-  /// Ending position.
+  /// Ending position in Global Display Coordinates.
   public var endPosition: Macosusesdk_Type_Point {
     get {return _endPosition ?? Macosusesdk_Type_Point()}
     set {_endPosition = newValue}
@@ -502,12 +513,16 @@ public struct Macosusesdk_V1_MouseDrag: Sendable {
 }
 
 /// Scroll action.
+///
+/// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+/// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
 public struct Macosusesdk_V1_Scroll: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
   /// Position to scroll at (optional, uses current mouse position if not set).
+  /// In Global Display Coordinates.
   public var position: Macosusesdk_Type_Point {
     get {return _position ?? Macosusesdk_Type_Point()}
     set {_position = newValue}
@@ -534,12 +549,15 @@ public struct Macosusesdk_V1_Scroll: Sendable {
 }
 
 /// Hover action.
+///
+/// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+/// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
 public struct Macosusesdk_V1_Hover: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Position to hover at.
+  /// Position to hover at in Global Display Coordinates.
   public var position: Macosusesdk_Type_Point {
     get {return _position ?? Macosusesdk_Type_Point()}
     set {_position = newValue}
@@ -560,12 +578,15 @@ public struct Macosusesdk_V1_Hover: Sendable {
 }
 
 /// Multi-touch gesture.
+///
+/// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+/// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
 public struct Macosusesdk_V1_Gesture: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Center point of the gesture.
+  /// Center point of the gesture in Global Display Coordinates.
   public var center: Macosusesdk_Type_Point {
     get {return _center ?? Macosusesdk_Type_Point()}
     set {_center = newValue}

@@ -442,7 +442,9 @@ public struct Macosusesdk_V1_FindRegionElementsRequest: Sendable {
   /// Parent context (same as FindElementsRequest).
   public var parent: String = String()
 
-  /// Region to search within (screen coordinates).
+  /// Region to search within.
+  /// Uses Global Display Coordinates (top-left origin, Y increases downward).
+  /// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
   public var region: Macosusesdk_Type_Region {
     get {return _region ?? Macosusesdk_Type_Region()}
     set {_region = newValue}
@@ -2063,7 +2065,9 @@ public struct Macosusesdk_V1_CaptureRegionScreenshotRequest: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Region to capture (screen coordinates).
+  /// Region to capture.
+  /// Uses Global Display Coordinates (top-left origin, Y increases downward).
+  /// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
   public var region: Macosusesdk_Type_Region {
     get {return _region ?? Macosusesdk_Type_Region()}
     set {_region = newValue}

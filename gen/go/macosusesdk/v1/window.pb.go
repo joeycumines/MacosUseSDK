@@ -42,6 +42,9 @@ type Window struct {
 	Title string `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
 	// Bounding rectangle of the window.
 	//
+	// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+	// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
+	//
 	// Data Source (AX Authority): Fresh Accessibility API queries (kAXPositionAttribute, kAXSizeAttribute).
 	// These fields are queried from AX on every request and reflect the immediate state after mutations.
 	// They are NOT cached from CGWindowList (which can lag by 10-100ms), ensuring mutation responses
@@ -160,15 +163,18 @@ func (x *Window) GetBundleId() string {
 }
 
 // Bounding rectangle for window positioning.
+//
+// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
 type Bounds struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// X coordinate of the window's origin.
+	// X coordinate of the window's origin in Global Display Coordinates.
 	X float64 `protobuf:"fixed64,1,opt,name=x,proto3" json:"x,omitempty"`
-	// Y coordinate of the window's origin.
+	// Y coordinate of the window's origin in Global Display Coordinates.
 	Y float64 `protobuf:"fixed64,2,opt,name=y,proto3" json:"y,omitempty"`
-	// Width of the window.
+	// Width of the window in pixels.
 	Width float64 `protobuf:"fixed64,3,opt,name=width,proto3" json:"width,omitempty"`
-	// Height of the window.
+	// Height of the window in pixels.
 	Height        float64 `protobuf:"fixed64,4,opt,name=height,proto3" json:"height,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
