@@ -645,11 +645,8 @@ extension MacosUseService {
 
                     if let firstElement = elementsWithPaths.first {
                         // Element found! Complete the operation
+                        // Element already has elementID from findElements() registration
                         var elementWithId = firstElement.element
-                        let elementId = try await ElementRegistry.shared.registerElement(
-                            elementWithId, pid: parsePID(fromName: req.parent),
-                        )
-                        elementWithId.elementID = elementId
                         elementWithId.path = firstElement.path
 
                         let response = Macosusesdk_V1_WaitElementResponse.with {

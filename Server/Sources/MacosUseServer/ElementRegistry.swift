@@ -81,7 +81,8 @@ public actor ElementRegistry {
     /// Get the AXUIElement reference for an element ID.
     /// - Parameter elementId: The element ID
     /// - Returns: The AXUIElement if available and not expired
-    /// - Note: This MUST be called from MainActor context since AXUIElement requires it
+    /// - Note: AXUIElement is thread-safe (CoreFoundation-based), but some callers
+    ///         may need to call this from MainActor for other AppKit operations.
     public func getAXElement(_ elementId: String) async -> AXUIElement? {
         guard let cached = elementCache[elementId] else {
             logger.warning("Element \(elementId, privacy: .private) not found")
