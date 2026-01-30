@@ -201,7 +201,19 @@ public actor ElementLocator {
 
         case let .position(positionSelector):
             guard element.hasX, element.hasY else { return false }
-            let distance = hypot(element.x - positionSelector.x, element.y - positionSelector.y)
+            // Calculate distance from element CENTER (not top-left corner)
+            // Center = (x + width/2, y + height/2)
+            let centerX: Double
+            let centerY: Double
+            if element.hasWidth, element.hasHeight {
+                centerX = element.x + element.width / 2.0
+                centerY = element.y + element.height / 2.0
+            } else {
+                // Fallback to top-left if dimensions unavailable
+                centerX = element.x
+                centerY = element.y
+            }
+            let distance = hypot(centerX - positionSelector.x, centerY - positionSelector.y)
             return distance <= positionSelector.tolerance
 
         case let .attributes(attributeSelector):
@@ -220,8 +232,11 @@ public actor ElementLocator {
             case .or:
                 return subMatches.contains(true)
             case .not:
-                // NOT with single selector
-                return compoundSelector.selectors.count == 1 && !subMatches[0]
+                // NOT(selectors) = true if ANY sub-selector evaluates to false
+                // This is equivalent to !(A AND B AND C...) = !A OR !B OR !C...
+                // If empty selectors, return false (undefined behavior)
+                guard !subMatches.isEmpty else { return false }
+                return !subMatches.allSatisfy(\.self)
             case .UNRECOGNIZED:
                 return false
             }
