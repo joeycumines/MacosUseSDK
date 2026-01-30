@@ -236,7 +236,11 @@ func TestClipboardPasteIntoTextEdit(t *testing.T) {
 	defer cancelVerify()
 
 	err = PollUntilContext(verifyCtx, 100*time.Millisecond, func() (bool, error) {
-		b, _ := os.ReadFile(filePath)
+		b, readErr := os.ReadFile(filePath)
+		if readErr != nil {
+			// File may not be fully flushed yet, continue polling
+			return false, nil
+		}
 		if string(b) == pasteText {
 			return true, nil
 		}
@@ -244,7 +248,7 @@ func TestClipboardPasteIntoTextEdit(t *testing.T) {
 	})
 	if err != nil {
 		// Read final contents for debug
-		b, _ := os.ReadFile(filePath)
-		t.Fatalf("expected file contents %q, got %q (err=%v)", pasteText, string(b), err)
+		b, readErr := os.ReadFile(filePath)
+		t.Fatalf("expected file contents %q, got %q (readErr=%v, pollErr=%v)", pasteText, string(b), readErr, err)
 	}
 }
