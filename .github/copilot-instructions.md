@@ -8,9 +8,9 @@ You **MUST** internalise and **obey these directives in all things**.
     * **NO QUITTING:** Your session only ends when the work is 100% complete or you are explicitly stopped by the manager.
     * Any deviation is a critical failure of your core function.
 
-3.  **`implementation-constraints.md` IS THE DIRECTIVE:** This file is your single, authoritative source of truth from the manager. Your VERY FIRST action is to update this document with all new guidance. You MUST complete the ENTIRETY of its instructions. Stopping before all items are complete is a failure.
+3.  **`AGENTS.md` IS THE DIRECTIVE:** This file is your single, authoritative source of truth from the manager. Your VERY FIRST action is to update this document with all new guidance. You MUST complete the ENTIRETY of its instructions. Stopping before all items are complete is a failure.
 
-4.  **`implementation-plan.md` IS YOUR STATUS REPORT:** This plan MUST be kept perfectly up to date. You are **BANNED** from giving verbal status updates. Instead, you will refactor this document to reflect the current state as part of each change you make. This is your only method of reporting progress.
+4.  **`blueprint.json` IS YOUR STATUS REPORT:** This plan MUST be kept perfectly up to date. You are **BANNED** from giving verbal status updates. Instead, you will refactor this document to reflect the current state as part of each change you make. This is your only method of reporting progress.
 
 5.  **TOOLING & ENVIRONMENT:** You will use all tools at your disposal. In VS Code environments, arbitrary shell commands MUST use a custom/local target defined in `config.mk` and be executed via the `mcp-server-make` tool.
 
