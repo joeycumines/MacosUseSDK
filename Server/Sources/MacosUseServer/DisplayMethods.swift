@@ -8,6 +8,11 @@ import MacosUseSDK
 import OSLog
 import SwiftProtobuf
 
+// swiftlint:disable conditional_assignment
+// Notes: conditional_assignment is intentionally disabled here because we assign
+// several related properties of the Display proto using expression-style logic
+// to keep the conversion localized and clear.
+
 extension MacosUseService {
     func listDisplays(
         request: ServerRequest<Macosusesdk_V1_ListDisplaysRequest>,
@@ -20,57 +25,83 @@ extension MacosUseService {
         let maxDisplays: UInt32 = 64
         var activeDisplays = [CGDirectDisplayID](repeating: 0, count: Int(maxDisplays))
         var displayCount: UInt32 = 0
-        let err = CGGetActiveDisplayList(maxDisplays, &activeDisplays, &displayCount)
+        let err = activeDisplays.withUnsafeMutableBufferPointer { ptr in
+            CGGetActiveDisplayList(maxDisplays, ptr.baseAddress, &displayCount)
+        }
         if err != CGError.success {
             throw RPCError(code: .internalError, message: "Failed to enumerate displays: \(err)")
         }
 
-        var displays: [Macosusesdk_V1_Display] = []
+        // Build list of (did, bounds) so we can compute visible frames on the MainActor in a single hop
+        var displayInfos: [(did: CGDirectDisplayID, bounds: CGRect)] = []
         for i in 0 ..< Int(displayCount) {
             let did = activeDisplays[i]
             let bounds = CGDisplayBounds(did)
+            displayInfos.append((did: did, bounds: bounds))
+        }
 
-            var displayMsg = Macosusesdk_V1_Display()
-            displayMsg.displayID = Int64(did)
-            displayMsg.frame = Macosusesdk_Type_Region.with {
-                $0.x = Double(bounds.origin.x)
-                $0.y = Double(bounds.origin.y)
-                $0.width = Double(bounds.size.width)
-                $0.height = Double(bounds.size.height)
+        // Query NSScreen on the main thread once and capture only Sendable primitives (local offsets and scale)
+        let screenMap: [CGDirectDisplayID: (localVisibleX: Double, localVisibleY: Double, visibleW: Double, visibleH: Double, scale: Double)] = await MainActor.run {
+            var m: [CGDirectDisplayID: (Double, Double, Double, Double, Double)] = [:]
+            for screen in NSScreen.screens {
+                if let n = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber {
+                    let did = CGDirectDisplayID(n.uint32Value)
+                    // visibleFrame and frame are in AppKit coordinates (bottom-left origin, global)
+                    let screenFrame = screen.frame
+                    let visibleFrame = screen.visibleFrame
+
+                    // Compute local offsets of visibleFrame relative to the screen's frame (both AppKit coords)
+                    let localX = Double(visibleFrame.origin.x - screenFrame.origin.x)
+                    let localY = Double(visibleFrame.origin.y - screenFrame.origin.y)
+
+                    m[did] = (localX, localY, Double(visibleFrame.size.width), Double(visibleFrame.size.height), Double(screen.backingScaleFactor))
+                }
             }
+            return m
+        }
 
-            // Some NSScreen APIs must be used on the main thread. Capture only Sendable values (NSRect, Double).
-            var visibleRegion = Macosusesdk_Type_Region()
-            var backingScale = 1.0
-            let (maybeVisibleFrame, maybeBackingScale): (NSRect?, Double) = await MainActor.run {
-                if let screen = NSScreen.screens.first(where: { scr in
-                    if let n = scr.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber {
-                        return n.uint32Value == did
+        var displays: [Macosusesdk_V1_Display] = []
+        for info in displayInfos {
+            let did = info.did
+            let bounds = info.bounds
+
+            let displayMsg = Macosusesdk_V1_Display.with {
+                $0.displayID = Int64(did)
+
+                // Frame in Global Display Coordinates (top-left origin)
+                $0.frame = Macosusesdk_Type_Region.with {
+                    $0.x = Double(bounds.origin.x)
+                    $0.y = Double(bounds.origin.y)
+                    $0.width = Double(bounds.size.width)
+                    $0.height = Double(bounds.size.height)
+                }
+
+                // Visible frame: compute from NSScreen local offsets if available
+                $0.visibleFrame = if let entry = screenMap[did] {
+                    Macosusesdk_Type_Region.with {
+                        $0.x = Double(bounds.origin.x + CGFloat(entry.localVisibleX))
+                        $0.y = Double(bounds.origin.y + (bounds.size.height - CGFloat(entry.localVisibleY + entry.visibleH)))
+                        $0.width = entry.visibleW
+                        $0.height = entry.visibleH
                     }
-                    return false
-                }) {
-                    return (screen.visibleFrame, screen.backingScaleFactor)
+                } else {
+                    // Fallback to full frame if NSScreen not found
+                    Macosusesdk_Type_Region.with {
+                        $0.x = Double(bounds.origin.x)
+                        $0.y = Double(bounds.origin.y)
+                        $0.width = Double(bounds.size.width)
+                        $0.height = Double(bounds.size.height)
+                    }
                 }
-                return (nil, 1.0)
-            }
 
-            if let visibleFrame = maybeVisibleFrame {
-                backingScale = maybeBackingScale
-                visibleRegion = Macosusesdk_Type_Region.with {
-                    $0.x = Double(bounds.origin.x + visibleFrame.origin.x)
-                    // Convert from AppKit (bottom-left origin) visibleFrame to Global Display Coordinates (top-left origin)
-                    $0.y = Double(bounds.origin.y + (bounds.size.height - (visibleFrame.origin.y + visibleFrame.size.height)))
-                    $0.width = Double(visibleFrame.size.width)
-                    $0.height = Double(visibleFrame.size.height)
+                $0.scale = if let entry = screenMap[did] {
+                    entry.scale
+                } else {
+                    1.0
                 }
-            } else {
-                // Fallback to full frame if NSScreen not found
-                visibleRegion = displayMsg.frame
-            }
 
-            displayMsg.visibleFrame = visibleRegion
-            displayMsg.isMain = (CGDisplayIsMain(did) != 0)
-            displayMsg.scale = backingScale
+                $0.isMain = (CGDisplayIsMain(did) != 0)
+            }
 
             displays.append(displayMsg)
         }
@@ -80,12 +111,13 @@ extension MacosUseService {
 
         // Pagination per AIP-158
         let offset: Int = if req.pageToken.isEmpty { 0 } else { try decodePageToken(req.pageToken) }
+
         let pageSize = req.pageSize > 0 ? Int(req.pageSize) : 100
         let totalCount = displays.count
         let startIndex = min(offset, totalCount)
         let endIndex = min(startIndex + pageSize, totalCount)
         let page = Array(displays[startIndex ..< endIndex])
-        let nextPageToken = if endIndex < totalCount { encodePageToken(offset: endIndex) } else { "" }
+        let nextPageToken = endIndex < totalCount ? encodePageToken(offset: endIndex) : ""
 
         let response = Macosusesdk_V1_ListDisplaysResponse.with {
             $0.displays = page

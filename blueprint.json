@@ -20,7 +20,7 @@
   "project_title": "Implementation Plan: MacosUseSDK gRPC Service",
   "status_section": {
     "label": "STATUS SECTION (ACTION-FOCUSED)",
-    "current_state": "In Progress: Implementing ListDisplays (SRV-007)",
+    "current_state": "SRV-007 ListDisplays COMPLETE. Next: Review diff vs main; fix window_metadata_test race condition.",
     "update_instruction": "To provide an update, return to this 'status_section' object and modify the 'current_state'."
   },
   "implementation_phases": [
@@ -122,10 +122,13 @@
           "category": "Server",
           "title": "Implement ListDisplays RPC",
           "description": "Add ListDisplays RPC implementation and integration tests that enumerate system displays and return Display messages with frame, visible_frame, is_main, and scale.",
+          "status": "complete",
+          "notes": "Implementation verified by 2 contiguous clean peer reviews. Coordinate conversion correct. Test validates frame dimensions, position constraints, and scale.",
           "steps": [
             "Add Server/Sources/MacosUseServer/DisplayMethods.swift with `func listDisplays` implementation using CGGetActiveDisplayList, CGDisplayBounds, and (on MainActor) NSScreen.visibleFrame and backingScaleFactor.",
             "Implement pagination using encodePageToken/decodePageToken per AIP-158.",
-            "Add integration test `integration/display_test.go` verifying at least one display and the correctness of returned fields.",
+            "Add integration test `integration/display_test.go` verifying at least one display and the correctness of returned fields. (FIX: repair corrupted file content if necessary.)",
+            "Run `mcp-server-make swift.all` then `mcp-server-make make-all-with-log` to verify Swift and Go tests and lints pass.",
             "Update docs/ and AGENTS.md if necessary to document coordinate system and Display semantics."
           ]
         }
