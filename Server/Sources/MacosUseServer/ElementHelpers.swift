@@ -24,7 +24,7 @@ extension MacosUseService {
             targetCenterX = targetElement.x
             targetCenterY = targetElement.y
         }
-        let tolerance: Double = 5.0
+        let tolerance = 5.0
 
         return elements.first { element in
             guard element.hasX, element.hasY else { return false }
