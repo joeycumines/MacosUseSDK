@@ -20,7 +20,7 @@
   "project_title": "Implementation Plan: MacosUseSDK gRPC Service",
   "status_section": {
     "label": "STATUS SECTION (ACTION-FOCUSED)",
-    "current_state": "All improvements committed: SRV-003/004/005/007, window ID regeneration fixes, docs. 1.5 hours remaining. Running targeted test validation.",
+    "current_state": "Completed: SRV-003/004/005/006/007, window ID regeneration fixes. Remaining: SDK-001/002 (hierarchical paths), SRV-001/002 (path integrity). ~1 hour remaining.",
     "update_instruction": "To provide an update, return to this 'status_section' object and modify the 'current_state'."
   },
   "implementation_phases": [
@@ -112,6 +112,8 @@
           "category": "Server",
           "title": "Harden ElementRegistry",
           "description": "Ensure atomic operations in the registry to prevent race conditions during element lookup and expiration.",
+          "status": "complete",
+          "notes": "ElementRegistry is an actor, ensuring serialized access. Fixed fragile force-unwrap pattern in updateElement by using safe optional binding with existing element.",
           "steps": [
             "Review `ElementRegistry.swift` for any split check-then-modify patterns that could lead to crashes or inconsistencies.",
             "Ensure that if an element is found to be expired during `getElement`, its removal is handled safely without affecting the current request if possible, or returned as `nil` consistently."

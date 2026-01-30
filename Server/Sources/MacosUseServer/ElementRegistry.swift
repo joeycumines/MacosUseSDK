@@ -109,13 +109,13 @@ public actor ElementRegistry {
         element: Macosusesdk_Type_Element,
         axElement: AXUIElement? = nil,
     ) -> Bool {
-        guard elementCache[elementId] != nil else { return false }
+        guard let existing = elementCache[elementId] else { return false }
 
         let cachedElement = CachedElement(
             element: element,
-            axElement: axElement,
+            axElement: axElement ?? existing.axElement,
             timestamp: Date(),
-            pid: elementCache[elementId]!.pid,
+            pid: existing.pid,
         )
 
         elementCache[elementId] = cachedElement
