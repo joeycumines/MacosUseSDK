@@ -269,6 +269,25 @@ flowchart TD
   linkStyle default stroke:#444,stroke-width:1px;
 ```
 
+### 6.4 Window ID Regeneration After Mutations
+
+**Critical macOS Behavior:** After certain window mutations (Move, Resize, Minimize, Restore), the `CGWindowID` can regenerate asynchronously. This is an undocumented but reproducible macOS behavior where the Window Server may assign a new ID to the same logical window.
+
+**Symptoms:**
+- A `MoveWindow` RPC succeeds, but the old window ID becomes invalid.
+- Subsequent `GetWindow` calls with the old ID fail with "not found".
+- Observations may emit `Destroyed` followed by `Created` events for the same logical window.
+
+**Mitigations Implemented:**
+1. **Single-Window Fallback:** If a PID has exactly one window, accept it regardless of ID mismatch (Windows can't be ambiguous if there's only one).
+2. **Bounds-Based Matching:** When ID lookup fails, fall back to heuristic matching using expected geometry.
+3. **Response Name Update:** Mutation RPCs return the *current* window name (which includes the new ID if regenerated), not the original request name.
+4. **Position-Based Rediscovery:** In tests and client code, use position-based window discovery after mutations rather than relying on cached window IDs.
+
+**Test Implications:**
+- Tests should accept `Destroyed`/`Created` event pairs as valid alternatives to `Moved` events when ID regeneration occurs.
+- Tests should use fresh `ListWindows` calls to rediscover window names after geometry mutations.
+
 -----
 
 ## 7\. Alternatives Considered
