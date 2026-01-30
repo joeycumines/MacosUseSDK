@@ -2,6 +2,10 @@ import AppKit
 import ApplicationServices
 import Foundation
 import MacosUseProto
+import MacosUseSDK
+import OSLog
+
+private let logger = MacosUseSDK.sdkLogger(category: "ChangeDetector")
 
 /// Detects UI changes using accessibility notifications.
 ///
@@ -44,7 +48,13 @@ class ChangeDetector {
             pid,
             { (_: AXObserver, element: AXUIElement, notification: CFString, refcon: UnsafeMutableRawPointer?) in
                 // This callback runs on a background thread
-                let detector = Unmanaged<ChangeDetector>.fromOpaque(refcon!).takeUnretainedValue()
+                // Guard against nil refcon (should never happen, but defensive programming)
+                guard let refcon else {
+                    // Cannot use Logger in C callback; use os_log directly
+                    os_log(.fault, "ChangeDetector callback received nil refcon")
+                    return
+                }
+                let detector = Unmanaged<ChangeDetector>.fromOpaque(refcon).takeUnretainedValue()
 
                 // Forward to main actor
                 Task { @MainActor in
