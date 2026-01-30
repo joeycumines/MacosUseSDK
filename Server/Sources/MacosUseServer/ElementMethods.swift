@@ -111,17 +111,13 @@ extension MacosUseService {
             ""
         }
 
-        // Convert to proto elements and register them
+        // Build response elements - elements from ElementLocator are already registered
+        // with their AXUIElement references preserved. Do NOT re-register them.
         var elements = [Macosusesdk_Type_Element]()
-        let pid = try parsePID(fromName: req.parent)
         for (element, path) in pageElementsWithPaths {
-            let protoElement = element
-            // Generate and assign element ID
-            let elementId = await ElementRegistry.shared.registerElement(protoElement, pid: pid)
-            var protoWithId = protoElement
-            protoWithId.elementID = elementId
-            protoWithId.path = path
-            elements.append(protoWithId)
+            var protoWithPath = element
+            protoWithPath.path = path
+            elements.append(protoWithPath)
         }
 
         let response = Macosusesdk_V1_FindElementsResponse.with {
@@ -174,17 +170,13 @@ extension MacosUseService {
             ""
         }
 
-        // Convert to proto elements and register them
+        // Build response elements - elements from ElementLocator are already registered
+        // with their AXUIElement references preserved. Do NOT re-register them.
         var elements = [Macosusesdk_Type_Element]()
-        let pid = try parsePID(fromName: req.parent)
         for (element, path) in pageElementsWithPaths {
-            let protoElement = element
-            // Generate and assign element ID
-            let elementId = await ElementRegistry.shared.registerElement(protoElement, pid: pid)
-            var protoWithId = protoElement
-            protoWithId.elementID = elementId
-            protoWithId.path = path
-            elements.append(protoWithId)
+            var protoWithPath = element
+            protoWithPath.path = path
+            elements.append(protoWithPath)
         }
 
         let response = Macosusesdk_V1_FindRegionElementsResponse.with {
