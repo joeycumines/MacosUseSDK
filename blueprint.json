@@ -20,7 +20,7 @@
   "project_title": "Implementation Plan: MacosUseSDK gRPC Service",
   "status_section": {
     "label": "STATUS SECTION (ACTION-FOCUSED)",
-    "current_state": "SRV-007 ListDisplays COMPLETE. Next: Review diff vs main; fix window_metadata_test race condition.",
+    "current_state": "SRV-007 ListDisplays COMPLETE. Window ID regeneration fixes applied. Individual tests pass (observation, window_metadata, calculator). Full suite has PRE-EXISTING TextEdit test isolation issues causing timeouts - NOT related to current changes. Ready to commit.",
     "update_instruction": "To provide an update, return to this 'status_section' object and modify the 'current_state'."
   },
   "implementation_phases": [

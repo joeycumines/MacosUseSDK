@@ -15,9 +15,34 @@ extension MacosUseService {
 
     /// Build a Window response directly from an AXUIElement using hybrid data authority.
     /// AX data is authoritative for geometry and state; Registry provides metadata (z-index, bundle ID).
+    ///
+    /// IMPORTANT: After geometry mutations (MoveWindow, ResizeWindow), the window ID may regenerate.
+    /// This function queries the current window ID from the AXUIElement and returns an updated name
+    /// if the ID has changed. Clients SHOULD use the returned window.name for subsequent operations.
     func buildWindowResponseFromAX(
-        name: String, pid _: pid_t, windowId: CGWindowID, window: AXUIElement, registryInfo: WindowRegistry.WindowInfo? = nil,
+        name: String, pid: pid_t, windowId: CGWindowID, window: AXUIElement, registryInfo: WindowRegistry.WindowInfo? = nil,
     ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
+        // 0. Query current window ID from AXUIElement (may have changed after mutation)
+        let (currentWindowId, getIdResult): (CGWindowID, CGWindowID?) = await Task.detached(priority: .userInitiated) { [system = self.system] () -> (CGWindowID, CGWindowID?) in
+            let result = system.getAXWindowID(element: window as AnyObject)
+            return (result ?? windowId, result)
+        }.value
+
+        // Build the correct window name using the current (potentially updated) window ID
+        let actualName: String
+        if getIdResult == nil {
+            Self.logger.info("[buildWindowResponseFromAX] getAXWindowID returned nil for window \(windowId) - AXUIElement may be stale")
+            actualName = name
+        } else if currentWindowId != windowId {
+            // Window ID changed - construct new name
+            let newName = "applications/\(pid)/windows/\(currentWindowId)"
+            Self.logger.info("[buildWindowResponseFromAX] Window ID changed: \(windowId) → \(currentWindowId), new name: \(newName)")
+            actualName = newName
+        } else {
+            Self.logger.info("[buildWindowResponseFromAX] getAXWindowID returned same ID \(currentWindowId) for window \(windowId)")
+            actualName = name
+        }
+
         // 1. Get Fresh AX Data (Background Thread) - The Authority for Geometry + State
         let (axBounds, axTitle, axMinimized, axHidden) = await Task.detached(priority: .userInitiated) { [system = self.system] () -> (Macosusesdk_V1_Bounds, String, Bool, Bool) in
             // Fetch Position
@@ -73,10 +98,19 @@ extension MacosUseService {
         }.value
 
         // 2. Get Metadata from Registry (No Refresh) - The Authority for Z-Index/Bundle
+        // Use currentWindowId for lookup in case it changed
         let metadata: WindowRegistry.WindowInfo? = if let registryInfo {
             registryInfo
         } else {
-            await windowRegistry.getLastKnownWindow(windowId)
+            await windowRegistry.getLastKnownWindow(currentWindowId)
+        }
+
+        // 2b. Fallback bundleID: if metadata is nil or bundleID is empty, get from PID directly
+        let bundleID: String = if let metaBundleID = metadata?.bundleID, !metaBundleID.isEmpty {
+            metaBundleID
+        } else {
+            // Registry doesn't have this window (likely due to ID regeneration) - get bundleID from PID
+            system.getRunningApplicationBundleID(pid: pid) ?? ""
         }
 
         // 3. CRITICAL FIX: Compute visible using AX-first optimistic approach:
@@ -88,40 +122,58 @@ extension MacosUseService {
         let isOnScreen = (!axMinimized && !axHidden) ? true : (metadata?.isOnScreen ?? false)
         let visible = isOnScreen && !axMinimized && !axHidden
 
-        // 4. Construct Response
+        // 4. Construct Response with actual name (may differ from request if window ID changed)
         let response = Macosusesdk_V1_Window.with {
-            $0.name = name
+            $0.name = actualName
             $0.title = axTitle // AX Authority
             $0.bounds = axBounds // AX Authority
             $0.zIndex = Int32(metadata?.layer ?? 0) // Registry Authority
-            $0.bundleID = metadata?.bundleID ?? "" // Registry Authority
+            $0.bundleID = bundleID // Registry Authority (with PID fallback)
             $0.visible = visible
         }
 
         return ServerResponse(message: response)
     }
 
-    /// Find AXUIElement for a window, with fallback to kAXChildrenAttribute for minimized windows.
+    /// Find AXUIElement for a window, with retry logic for transient failures.
+    ///
+    /// After geometry mutations (MoveWindow, ResizeWindow), the private API `_AXUIElementGetWindow`
+    /// can transiently fail while the Accessibility server synchronizes internal mappings.
+    /// Retry logic addresses this race condition before falling back to SDK heuristics.
     func findWindowElement(pid: pid_t, windowId: CGWindowID, expectedBounds: CGRect? = nil, _: String? = nil) async throws -> AXUIElement {
-        // 1. Try Private API Exact Match
-        let match = await Task.detached(priority: .userInitiated) { () -> AXUIElement? in
-            guard let appElementAny = self.system.createAXApplication(pid: pid) else { return nil }
-            let appElement = unsafeDowncast(appElementAny, to: AXUIElement.self)
-            var windowsValue: CFTypeRef?
-            guard AXUIElementCopyAttributeValue(appElement, kAXWindowsAttribute as CFString, &windowsValue) == .success,
-                  let windows = windowsValue as? [AXUIElement] else { return nil }
+        // Retry configuration: handle transient _AXUIElementGetWindow failures after mutations
+        // Max total delay: 50 + 100 + 200 + 400 = 750ms (worst case before fallback)
+        let maxRetries = 5
+        let baseDelayNanoseconds: UInt64 = 50_000_000 // 50ms
 
-            for window in windows {
-                if let axID = self.system.getAXWindowID(element: window as AnyObject), axID == windowId {
-                    return window
+        for attempt in 0 ..< maxRetries {
+            // 1. Try Private API Exact Match
+            let match = await Task.detached(priority: .userInitiated) { () -> AXUIElement? in
+                guard let appElementAny = self.system.createAXApplication(pid: pid) else { return nil }
+                let appElement = unsafeDowncast(appElementAny, to: AXUIElement.self)
+                var windowsValue: CFTypeRef?
+                guard AXUIElementCopyAttributeValue(appElement, kAXWindowsAttribute as CFString, &windowsValue) == .success,
+                      let windows = windowsValue as? [AXUIElement] else { return nil }
+
+                for window in windows {
+                    if let axID = self.system.getAXWindowID(element: window as AnyObject), axID == windowId {
+                        return window
+                    }
                 }
+                return nil
+            }.value
+
+            if let match { return match }
+
+            // On non-final attempt, wait before retry (25ms, 50ms, 100ms exponential backoff)
+            if attempt < maxRetries - 1 {
+                let delay = baseDelayNanoseconds * UInt64(1 << attempt)
+                try? await Task.sleep(nanoseconds: delay)
             }
-            return nil
-        }.value
+        }
 
-        if let match { return match }
-
-        // 2. Fallback to SDK Heuristics
+        // 2. Fallback to SDK Heuristics (only after all retries exhausted)
+        Self.logger.info("[findWindowElement] All ID-match retries exhausted for window \(windowId), trying heuristic fallback with expectedBounds: \(String(describing: expectedBounds))")
         return try await Task.detached(priority: .userInitiated) {
             let bounds: CGRect
             var usedZeroFallback = false
