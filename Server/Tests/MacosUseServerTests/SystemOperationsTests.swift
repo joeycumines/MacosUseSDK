@@ -3,9 +3,8 @@ import CoreGraphics
 // The mock below keeps AX elements opaque (AnyObject) so the test only depends
 // on Foundation + CoreGraphics; this verifies the interface compiles cleanly.
 import Foundation
-import Testing
-
 @testable import MacosUseServer
+import Testing
 
 @Suite("SystemOperations Interface Tests")
 struct SystemOperationsTests {
@@ -14,14 +13,33 @@ struct SystemOperationsTests {
             []
         }
 
-        func getRunningApplicationBundleID(pid _: Int32) -> String? { nil }
+        func getRunningApplicationBundleID(pid _: Int32) -> String? {
+            nil
+        }
 
-        func createAXApplication(pid _: Int32) -> AnyObject? { nil }
-        func copyAXAttribute(element _: AnyObject, attribute _: String) -> Any? { nil }
-        func copyAXMultipleAttributes(element _: AnyObject, attributes _: [String]) -> [String: Any]? { nil }
-        func setAXAttribute(element _: AnyObject, attribute _: String, value _: Any) -> Int32 { 1 }
-        func performAXAction(element _: AnyObject, action _: String) -> Int32 { 1 }
-        func getAXWindowID(element _: AnyObject) -> CGWindowID? { nil }
+        func createAXApplication(pid _: Int32) -> AnyObject? {
+            nil
+        }
+
+        func copyAXAttribute(element _: AnyObject, attribute _: String) -> Any? {
+            nil
+        }
+
+        func copyAXMultipleAttributes(element _: AnyObject, attributes _: [String]) -> [String: Any]? {
+            nil
+        }
+
+        func setAXAttribute(element _: AnyObject, attribute _: String, value _: Any) -> Int32 {
+            1
+        }
+
+        func performAXAction(element _: AnyObject, action _: String) -> Int32 {
+            1
+        }
+
+        func getAXWindowID(element _: AnyObject) -> CGWindowID? {
+            nil
+        }
 
         func fetchAXWindowInfo(pid _: Int32, windowId _: CGWindowID, expectedBounds _: CGRect) -> WindowInfoResult? {
             let element = NSObject()
@@ -30,7 +48,7 @@ struct SystemOperationsTests {
     }
 
     @Test("Mock conforms to SystemOperations and methods compile")
-    func mockConforms() throws {
+    func mockConforms() {
         let sys: SystemOperations = MockSystemOperations()
 
         _ = sys.cgWindowListCopyWindowInfo(options: .optionOnScreenOnly, relativeToWindow: kCGNullWindowID)

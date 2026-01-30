@@ -1,0 +1,53 @@
+// Copyright 2025 Joseph Cumines
+//
+// Display resource and listing RPCs
+
+syntax = "proto3";
+
+package macosusesdk.v1;
+
+import "google/api/field_behavior.proto";
+import "macosusesdk/type/geometry.proto";
+
+option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
+option java_multiple_files = true;
+option java_outer_classname = "DisplayProto";
+option java_package = "com.macosusesdk.v1";
+
+// A physical display/screen attached to the system.
+message Display {
+  // Display ID (CGDirectDisplayID). Treated as opaque by clients.
+  int64 display_id = 1;
+
+  // Display frame in Global Display Coordinates (top-left origin).
+  macosusesdk.type.Region frame = 2;
+
+  // Visible frame (excluding menu bar and dock) in Global Display Coordinates (top-left origin).
+  macosusesdk.type.Region visible_frame = 3;
+
+  // True if this is the main (primary) display.
+  bool is_main = 4;
+
+  // Scale factor (backingScaleFactor). For Retina displays this is typically 2.0.
+  double scale = 5;
+}
+
+// Request to list displays.
+message ListDisplaysRequest {
+  // Maximum number of displays to return.
+  int32 page_size = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Page token from a previous ListDisplays call.
+  // This token is opaque and its structure must not be relied upon by clients.
+  string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from listing displays.
+message ListDisplaysResponse {
+  // The displays in arbitrary order. For stable ordering use the display_id.
+  repeated Display displays = 1;
+
+  // Token to retrieve the next page of results. This token is opaque and its structure must
+  // not be relied upon by clients. An empty value indicates no more results are available.
+  string next_page_token = 2;
+}

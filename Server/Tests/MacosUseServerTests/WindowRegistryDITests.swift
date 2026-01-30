@@ -1,8 +1,7 @@
 import CoreGraphics
 import Foundation
-import Testing
-
 @testable import MacosUseServer
+import Testing
 
 @Suite("WindowRegistry DI Tests")
 struct WindowRegistryDITests {
@@ -17,16 +16,37 @@ struct WindowRegistryDITests {
             windowList
         }
 
-        func getRunningApplicationBundleID(pid _: pid_t) -> String? { "com.example.test" }
+        func getRunningApplicationBundleID(pid _: pid_t) -> String? {
+            "com.example.test"
+        }
 
-        func createAXApplication(pid _: Int32) -> AnyObject? { nil }
-        func copyAXAttribute(element _: AnyObject, attribute _: String) -> Any? { nil }
-        func copyAXMultipleAttributes(element _: AnyObject, attributes _: [String]) -> [String: Any]? { nil }
-        func setAXAttribute(element _: AnyObject, attribute _: String, value _: Any) -> Int32 { 1 }
-        func performAXAction(element _: AnyObject, action _: String) -> Int32 { 1 }
-        func getAXWindowID(element _: AnyObject) -> CGWindowID? { nil }
+        func createAXApplication(pid _: Int32) -> AnyObject? {
+            nil
+        }
 
-        func fetchAXWindowInfo(pid _: Int32, windowId _: CGWindowID, expectedBounds _: CGRect) -> WindowInfoResult? { nil }
+        func copyAXAttribute(element _: AnyObject, attribute _: String) -> Any? {
+            nil
+        }
+
+        func copyAXMultipleAttributes(element _: AnyObject, attributes _: [String]) -> [String: Any]? {
+            nil
+        }
+
+        func setAXAttribute(element _: AnyObject, attribute _: String, value _: Any) -> Int32 {
+            1
+        }
+
+        func performAXAction(element _: AnyObject, action _: String) -> Int32 {
+            1
+        }
+
+        func getAXWindowID(element _: AnyObject) -> CGWindowID? {
+            nil
+        }
+
+        func fetchAXWindowInfo(pid _: Int32, windowId _: CGWindowID, expectedBounds _: CGRect) -> WindowInfoResult? {
+            nil
+        }
     }
 
     static func makeWindowDict(windowID: CGWindowID, ownerPID: pid_t, x: CGFloat, y: CGFloat, w: CGFloat, h: CGFloat, title: String, layer: Int32, isOnScreen: Bool) -> [String: Any] {

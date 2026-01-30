@@ -1,14 +1,13 @@
 import ApplicationServices
 import CoreGraphics
 import Foundation
-import Testing
-
 @testable import MacosUseServer
+import Testing
 
 @Suite("ProductionSystemOperations Tests")
 struct ProductionSystemOperationsTests {
     @Test("ProductionSystemOperations conforms and returns CG window list")
-    func returnsCGWindowList() async throws {
+    func returnsCGWindowList() {
         let sys: SystemOperations = ProductionSystemOperations.shared
 
         let windows = sys.cgWindowListCopyWindowInfo(options: [.optionAll, .excludeDesktopElements], relativeToWindow: kCGNullWindowID)
@@ -17,7 +16,7 @@ struct ProductionSystemOperationsTests {
     }
 
     @Test("fetchAXWindowInfo returns nil for obviously-missing pid/window")
-    func fetchAXWindowInfoMissing() async throws {
+    func fetchAXWindowInfoMissing() {
         let sys: SystemOperations = ProductionSystemOperations.shared
 
         // Try with pid 0 + window 0 — should be absent and thus return nil.

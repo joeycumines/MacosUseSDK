@@ -20,7 +20,7 @@
   "project_title": "Implementation Plan: MacosUseSDK gRPC Service",
   "status_section": {
     "label": "STATUS SECTION (ACTION-FOCUSED)",
-    "current_state": "Pending Phase 4 execution",
+    "current_state": "In Progress: Implementing ListDisplays (SRV-007)",
     "update_instruction": "To provide an update, return to this 'status_section' object and modify the 'current_state'."
   },
   "implementation_phases": [
@@ -116,9 +116,22 @@
             "Review `ElementRegistry.swift` for any split check-then-modify patterns that could lead to crashes or inconsistencies.",
             "Ensure that if an element is found to be expired during `getElement`, its removal is handled safely without affecting the current request if possible, or returned as `nil` consistently."
           ]
+        },
+        {
+          "id": "SRV-007",
+          "category": "Server",
+          "title": "Implement ListDisplays RPC",
+          "description": "Add ListDisplays RPC implementation and integration tests that enumerate system displays and return Display messages with frame, visible_frame, is_main, and scale.",
+          "steps": [
+            "Add Server/Sources/MacosUseServer/DisplayMethods.swift with `func listDisplays` implementation using CGGetActiveDisplayList, CGDisplayBounds, and (on MainActor) NSScreen.visibleFrame and backingScaleFactor.",
+            "Implement pagination using encodePageToken/decodePageToken per AIP-158.",
+            "Add integration test `integration/display_test.go` verifying at least one display and the correctness of returned fields.",
+            "Update docs/ and AGENTS.md if necessary to document coordinate system and Display semantics."
+          ]
         }
       ]
     },
+
     {
       "phase_id": "Phase 4",
       "title": "Testing Strategy",

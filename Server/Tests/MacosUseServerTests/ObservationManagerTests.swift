@@ -1,8 +1,7 @@
 import CoreGraphics
 import Foundation
-import Testing
-
 @testable import MacosUseServer
+import Testing
 
 /// Helper to create AXWindowSnapshot for tests
 extension AXWindowSnapshot {

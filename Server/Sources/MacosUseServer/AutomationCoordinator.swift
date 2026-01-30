@@ -364,7 +364,9 @@ public enum InputActionInfo {
     case pressKey(String)
     case moveTo(x: Double, y: Double)
 
-    var type: InputActionInfo { self }
+    var type: InputActionInfo {
+        self
+    }
 }
 
 public enum PrimaryActionInfo {

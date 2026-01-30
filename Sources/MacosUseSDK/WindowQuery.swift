@@ -5,7 +5,7 @@ import ApplicationServices
 import Foundation
 import OSLog
 
-// Private API declaration for getting CGWindowID from AXUIElement
+/// Private API declaration for getting CGWindowID from AXUIElement
 @_silgen_name("_AXUIElementGetWindow")
 func _AXUIElementGetWindow(_ element: AXUIElement, _ id: UnsafeMutablePointer<CGWindowID>) -> AXError
 

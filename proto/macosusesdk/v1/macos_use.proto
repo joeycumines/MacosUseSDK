@@ -21,6 +21,7 @@ import "macosusesdk/type/selector.proto";
 import "macosusesdk/v1/application.proto";
 import "macosusesdk/v1/clipboard.proto";
 import "macosusesdk/v1/condition.proto";
+import "macosusesdk/v1/display.proto";
 import "macosusesdk/v1/input.proto";
 import "macosusesdk/v1/macro.proto";
 import "macosusesdk/v1/observation.proto";
@@ -421,6 +422,11 @@ service MacosUse {
       body: "*"
     };
     option (google.api.method_signature) = "region";
+  }
+
+  // Lists displays attached to the system.
+  rpc ListDisplays(ListDisplaysRequest) returns (ListDisplaysResponse) {
+    option (google.api.http) = {get: "/v1/displays"};
   }
 
   // Gets clipboard contents.

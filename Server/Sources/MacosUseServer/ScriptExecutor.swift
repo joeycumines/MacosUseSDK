@@ -291,7 +291,8 @@ actor ScriptExecutor {
             try process.run()
         } catch {
             throw ScriptExecutionError.processError(
-                "Failed to launch process: \(error.localizedDescription)")
+                "Failed to launch process: \(error.localizedDescription)",
+            )
         }
 
         // Write stdin if provided

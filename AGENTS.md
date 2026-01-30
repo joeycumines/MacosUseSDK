@@ -76,7 +76,19 @@ Previous sins (now corrected, not to be repeated):
 **Authoring Guidance:** When writing code comments or documentation, always state explicitly which coordinate system is referenced. Use the phrases "Global Display Coordinates (top-left origin)" for AX/CGEvent/CGWindowList and "AppKit Coordinates (bottom-left origin)" for NSWindow/NSScreen. Avoid ambiguous shorthand such as "CGEvent coordinates" without the origin direction — this has led to prior incorrect comments.
 
 **Core Graphics/Cocoa/Accessibility Race Condition Mitigation:** Do not rely on `NSRunningApplication(processIdentifier:)` or `CGWindowListCopyWindowInfo` (and related `CGWindow*` APIs) for process/window liveness or existence checks when performing AX actions. These APIs can lag behind the real-time state of the Accessibility server. Always attempt AX actions (e.g., `AXUIElementCreateApplication(pid)`, `AXUIElementCopyAttributeValue`) directly, then handle invalid process/element errors if they occur. Using CG/NS APIs as a "guard" or "pre-check" introduces a race condition where valid AX targets are rejected because the slower API hasn't updated yet.
+## Peer Review & runSubagent Requirements (MANDATORY)
 
+- The use of the `runSubagent` tool for automated peer review is MANDATORY for substantive changes (bug fixes, behavior changes, API additions, or any PR touching server/SDK core logic).
+- Before inviting automated reviewers, the implementer MUST reach a local maximum of correctness: write and run unit tests, run integration tests where applicable, run linters and formatters, and perform a careful self-review of design and security implications.
+- Each automated peer-review `runSubagent` invocation MUST be provided the following instruction text verbatim to ensure high-effort, high-scrutiny reviews. The agent MUST be instructed to `GUARANTEE` correctness and to produce both a succinct summary and a detailed analysis:
+
+  "Ensure, or rather GUARANTEE the correctness of my PR. Since you're _guaranteeing_ it, sink commensurate effort; you care deeply about keeping your word, after all. Assume, from start to finish, that there's _always_ another problem, and you just haven't caught it yet. Question all information provided - _only_ if it is simply impossible to verify are you allowed to trust, and if you trust you MUST specify that (as briefly as possible). Provide a succinct summary then more detailed analysis. Your succinct summary must be such that removing any single part, or applying any transformation or adjustment of wording, would make it materially worse."
+
+- The implementer MUST NOT treat an automated review as authoritative without fully verifying its findings locally. Do not accept 'no findings' at face value — perform independent validation: run tests, static analysis, and manual spot-checks.
+- Commit gating: no change SHALL be committed or merged until it has passed two contiguous, issue-free automated `runSubagent` reviews (i.e., fix findings from the first review, then run the second review which must also be issue-free). The implementer is responsible for the contents of commits; an automated review is an aid, not a substitute for engineering diligence.
+- Archive each automated review in `review/reports/` as both machine-readable JSON (structured verdicts, file paths, and line references) and a human-readable markdown summary. Link these artifacts in the PR description and in `./blueprint.json`.
+- Temporary files or helper artifacts created to facilitate review or testing MUST be deleted prior to or as part of the same change set that introduces permanent changes.
+- Update `./blueprint.json` to reflect review status, unresolved items, and remaining work as part of every change set. Do NOT use AGENTS.md for status tracking or add ephemeral statuses here.
 ## Testing and Tooling
 
 - **Atomic Testing:** ALL new behavior and ALL modifications MUST be accompanied by automated tests in the SAME change set.

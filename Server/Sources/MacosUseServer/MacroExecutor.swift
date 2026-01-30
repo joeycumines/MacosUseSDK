@@ -443,7 +443,8 @@ public actor MacroExecutor {
                             }
                             $0.clickType = .left
                             $0.clickCount = 1
-                        })
+                        },
+                    )
                 },
                 pid: context.pid,
                 showAnimation: false,
@@ -460,7 +461,8 @@ public actor MacroExecutor {
                     $0.inputType = .typeText(
                         Macosusesdk_V1_TextInput.with {
                             $0.text = text
-                        })
+                        },
+                    )
                 },
                 pid: context.pid,
                 showAnimation: false,
@@ -525,12 +527,12 @@ public actor MacroExecutor {
     }
 }
 
-// Helper function to parse selector string into ElementSelector proto
-// Supports formats:
-// - "role:Button" -> role selector
-// - "text:OK" -> exact text match
-// - "textContains:Submit" -> text contains
-// - "Button" -> defaults to role selector (backward compatible)
+/// Helper function to parse selector string into ElementSelector proto
+/// Supports formats:
+/// - "role:Button" -> role selector
+/// - "text:OK" -> exact text match
+/// - "textContains:Submit" -> text contains
+/// - "Button" -> defaults to role selector (backward compatible)
 private func parseSelectorString(_ str: String) -> Macosusesdk_Type_ElementSelector {
     if str.hasPrefix("role:") {
         Macosusesdk_Type_ElementSelector.with {
@@ -556,7 +558,7 @@ private func parseSelectorString(_ str: String) -> Macosusesdk_Type_ElementSelec
     }
 }
 
-// Helper function to parse PID from resource name - now uses shared ParsingHelpers
+/// Helper function to parse PID from resource name - now uses shared ParsingHelpers
 private func parsePID(fromName name: String) throws -> pid_t {
     do {
         return try ParsingHelpers.parsePID(fromName: name)

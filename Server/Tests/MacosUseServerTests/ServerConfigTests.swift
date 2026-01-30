@@ -1,6 +1,5 @@
-import XCTest
-
 @testable import MacosUseServer
+import XCTest
 
 /// Tests for ServerConfig
 final class ServerConfigTests: XCTestCase {

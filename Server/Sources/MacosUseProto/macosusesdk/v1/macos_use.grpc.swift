@@ -20,13 +20,13 @@ import SwiftProtobuf
 
 /// Namespace containing generated types for the "macosusesdk.v1.MacosUse" service.
 @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
-public enum Macosusesdk_V1_MacosUse {
+public enum Macosusesdk_V1_MacosUse: Sendable {
     /// Service descriptor for the "macosusesdk.v1.MacosUse" service.
     public static let descriptor = GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse")
     /// Namespace for method metadata.
-    public enum Method {
+    public enum Method: Sendable {
         /// Namespace for "OpenApplication" metadata.
-        public enum OpenApplication {
+        public enum OpenApplication: Sendable {
             /// Request type for "OpenApplication".
             public typealias Input = Macosusesdk_V1_OpenApplicationRequest
             /// Response type for "OpenApplication".
@@ -38,7 +38,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "GetApplication" metadata.
-        public enum GetApplication {
+        public enum GetApplication: Sendable {
             /// Request type for "GetApplication".
             public typealias Input = Macosusesdk_V1_GetApplicationRequest
             /// Response type for "GetApplication".
@@ -50,7 +50,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "ListApplications" metadata.
-        public enum ListApplications {
+        public enum ListApplications: Sendable {
             /// Request type for "ListApplications".
             public typealias Input = Macosusesdk_V1_ListApplicationsRequest
             /// Response type for "ListApplications".
@@ -62,7 +62,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "DeleteApplication" metadata.
-        public enum DeleteApplication {
+        public enum DeleteApplication: Sendable {
             /// Request type for "DeleteApplication".
             public typealias Input = Macosusesdk_V1_DeleteApplicationRequest
             /// Response type for "DeleteApplication".
@@ -74,7 +74,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "CreateInput" metadata.
-        public enum CreateInput {
+        public enum CreateInput: Sendable {
             /// Request type for "CreateInput".
             public typealias Input = Macosusesdk_V1_CreateInputRequest
             /// Response type for "CreateInput".
@@ -86,7 +86,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "GetInput" metadata.
-        public enum GetInput {
+        public enum GetInput: Sendable {
             /// Request type for "GetInput".
             public typealias Input = Macosusesdk_V1_GetInputRequest
             /// Response type for "GetInput".
@@ -98,7 +98,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "ListInputs" metadata.
-        public enum ListInputs {
+        public enum ListInputs: Sendable {
             /// Request type for "ListInputs".
             public typealias Input = Macosusesdk_V1_ListInputsRequest
             /// Response type for "ListInputs".
@@ -110,7 +110,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "TraverseAccessibility" metadata.
-        public enum TraverseAccessibility {
+        public enum TraverseAccessibility: Sendable {
             /// Request type for "TraverseAccessibility".
             public typealias Input = Macosusesdk_V1_TraverseAccessibilityRequest
             /// Response type for "TraverseAccessibility".
@@ -122,7 +122,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "WatchAccessibility" metadata.
-        public enum WatchAccessibility {
+        public enum WatchAccessibility: Sendable {
             /// Request type for "WatchAccessibility".
             public typealias Input = Macosusesdk_V1_WatchAccessibilityRequest
             /// Response type for "WatchAccessibility".
@@ -134,7 +134,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "GetWindow" metadata.
-        public enum GetWindow {
+        public enum GetWindow: Sendable {
             /// Request type for "GetWindow".
             public typealias Input = Macosusesdk_V1_GetWindowRequest
             /// Response type for "GetWindow".
@@ -146,7 +146,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "ListWindows" metadata.
-        public enum ListWindows {
+        public enum ListWindows: Sendable {
             /// Request type for "ListWindows".
             public typealias Input = Macosusesdk_V1_ListWindowsRequest
             /// Response type for "ListWindows".
@@ -158,7 +158,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "GetWindowState" metadata.
-        public enum GetWindowState {
+        public enum GetWindowState: Sendable {
             /// Request type for "GetWindowState".
             public typealias Input = Macosusesdk_V1_GetWindowStateRequest
             /// Response type for "GetWindowState".
@@ -170,7 +170,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "FocusWindow" metadata.
-        public enum FocusWindow {
+        public enum FocusWindow: Sendable {
             /// Request type for "FocusWindow".
             public typealias Input = Macosusesdk_V1_FocusWindowRequest
             /// Response type for "FocusWindow".
@@ -182,7 +182,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "MoveWindow" metadata.
-        public enum MoveWindow {
+        public enum MoveWindow: Sendable {
             /// Request type for "MoveWindow".
             public typealias Input = Macosusesdk_V1_MoveWindowRequest
             /// Response type for "MoveWindow".
@@ -194,7 +194,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "ResizeWindow" metadata.
-        public enum ResizeWindow {
+        public enum ResizeWindow: Sendable {
             /// Request type for "ResizeWindow".
             public typealias Input = Macosusesdk_V1_ResizeWindowRequest
             /// Response type for "ResizeWindow".
@@ -206,7 +206,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "MinimizeWindow" metadata.
-        public enum MinimizeWindow {
+        public enum MinimizeWindow: Sendable {
             /// Request type for "MinimizeWindow".
             public typealias Input = Macosusesdk_V1_MinimizeWindowRequest
             /// Response type for "MinimizeWindow".
@@ -218,7 +218,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "RestoreWindow" metadata.
-        public enum RestoreWindow {
+        public enum RestoreWindow: Sendable {
             /// Request type for "RestoreWindow".
             public typealias Input = Macosusesdk_V1_RestoreWindowRequest
             /// Response type for "RestoreWindow".
@@ -230,7 +230,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "CloseWindow" metadata.
-        public enum CloseWindow {
+        public enum CloseWindow: Sendable {
             /// Request type for "CloseWindow".
             public typealias Input = Macosusesdk_V1_CloseWindowRequest
             /// Response type for "CloseWindow".
@@ -242,7 +242,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "FindElements" metadata.
-        public enum FindElements {
+        public enum FindElements: Sendable {
             /// Request type for "FindElements".
             public typealias Input = Macosusesdk_V1_FindElementsRequest
             /// Response type for "FindElements".
@@ -254,7 +254,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "FindRegionElements" metadata.
-        public enum FindRegionElements {
+        public enum FindRegionElements: Sendable {
             /// Request type for "FindRegionElements".
             public typealias Input = Macosusesdk_V1_FindRegionElementsRequest
             /// Response type for "FindRegionElements".
@@ -266,7 +266,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "GetElement" metadata.
-        public enum GetElement {
+        public enum GetElement: Sendable {
             /// Request type for "GetElement".
             public typealias Input = Macosusesdk_V1_GetElementRequest
             /// Response type for "GetElement".
@@ -278,7 +278,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "ClickElement" metadata.
-        public enum ClickElement {
+        public enum ClickElement: Sendable {
             /// Request type for "ClickElement".
             public typealias Input = Macosusesdk_V1_ClickElementRequest
             /// Response type for "ClickElement".
@@ -290,7 +290,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "WriteElementValue" metadata.
-        public enum WriteElementValue {
+        public enum WriteElementValue: Sendable {
             /// Request type for "WriteElementValue".
             public typealias Input = Macosusesdk_V1_WriteElementValueRequest
             /// Response type for "WriteElementValue".
@@ -302,7 +302,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "GetElementActions" metadata.
-        public enum GetElementActions {
+        public enum GetElementActions: Sendable {
             /// Request type for "GetElementActions".
             public typealias Input = Macosusesdk_V1_GetElementActionsRequest
             /// Response type for "GetElementActions".
@@ -314,7 +314,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "PerformElementAction" metadata.
-        public enum PerformElementAction {
+        public enum PerformElementAction: Sendable {
             /// Request type for "PerformElementAction".
             public typealias Input = Macosusesdk_V1_PerformElementActionRequest
             /// Response type for "PerformElementAction".
@@ -326,7 +326,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "WaitElement" metadata.
-        public enum WaitElement {
+        public enum WaitElement: Sendable {
             /// Request type for "WaitElement".
             public typealias Input = Macosusesdk_V1_WaitElementRequest
             /// Response type for "WaitElement".
@@ -338,7 +338,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "WaitElementState" metadata.
-        public enum WaitElementState {
+        public enum WaitElementState: Sendable {
             /// Request type for "WaitElementState".
             public typealias Input = Macosusesdk_V1_WaitElementStateRequest
             /// Response type for "WaitElementState".
@@ -350,7 +350,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "CreateObservation" metadata.
-        public enum CreateObservation {
+        public enum CreateObservation: Sendable {
             /// Request type for "CreateObservation".
             public typealias Input = Macosusesdk_V1_CreateObservationRequest
             /// Response type for "CreateObservation".
@@ -362,7 +362,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "GetObservation" metadata.
-        public enum GetObservation {
+        public enum GetObservation: Sendable {
             /// Request type for "GetObservation".
             public typealias Input = Macosusesdk_V1_GetObservationRequest
             /// Response type for "GetObservation".
@@ -374,7 +374,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "ListObservations" metadata.
-        public enum ListObservations {
+        public enum ListObservations: Sendable {
             /// Request type for "ListObservations".
             public typealias Input = Macosusesdk_V1_ListObservationsRequest
             /// Response type for "ListObservations".
@@ -386,7 +386,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "CancelObservation" metadata.
-        public enum CancelObservation {
+        public enum CancelObservation: Sendable {
             /// Request type for "CancelObservation".
             public typealias Input = Macosusesdk_V1_CancelObservationRequest
             /// Response type for "CancelObservation".
@@ -398,7 +398,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "StreamObservations" metadata.
-        public enum StreamObservations {
+        public enum StreamObservations: Sendable {
             /// Request type for "StreamObservations".
             public typealias Input = Macosusesdk_V1_StreamObservationsRequest
             /// Response type for "StreamObservations".
@@ -410,7 +410,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "CreateSession" metadata.
-        public enum CreateSession {
+        public enum CreateSession: Sendable {
             /// Request type for "CreateSession".
             public typealias Input = Macosusesdk_V1_CreateSessionRequest
             /// Response type for "CreateSession".
@@ -422,7 +422,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "GetSession" metadata.
-        public enum GetSession {
+        public enum GetSession: Sendable {
             /// Request type for "GetSession".
             public typealias Input = Macosusesdk_V1_GetSessionRequest
             /// Response type for "GetSession".
@@ -434,7 +434,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "ListSessions" metadata.
-        public enum ListSessions {
+        public enum ListSessions: Sendable {
             /// Request type for "ListSessions".
             public typealias Input = Macosusesdk_V1_ListSessionsRequest
             /// Response type for "ListSessions".
@@ -446,7 +446,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "DeleteSession" metadata.
-        public enum DeleteSession {
+        public enum DeleteSession: Sendable {
             /// Request type for "DeleteSession".
             public typealias Input = Macosusesdk_V1_DeleteSessionRequest
             /// Response type for "DeleteSession".
@@ -458,7 +458,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "BeginTransaction" metadata.
-        public enum BeginTransaction {
+        public enum BeginTransaction: Sendable {
             /// Request type for "BeginTransaction".
             public typealias Input = Macosusesdk_V1_BeginTransactionRequest
             /// Response type for "BeginTransaction".
@@ -470,7 +470,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "CommitTransaction" metadata.
-        public enum CommitTransaction {
+        public enum CommitTransaction: Sendable {
             /// Request type for "CommitTransaction".
             public typealias Input = Macosusesdk_V1_CommitTransactionRequest
             /// Response type for "CommitTransaction".
@@ -482,7 +482,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "RollbackTransaction" metadata.
-        public enum RollbackTransaction {
+        public enum RollbackTransaction: Sendable {
             /// Request type for "RollbackTransaction".
             public typealias Input = Macosusesdk_V1_RollbackTransactionRequest
             /// Response type for "RollbackTransaction".
@@ -494,7 +494,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "GetSessionSnapshot" metadata.
-        public enum GetSessionSnapshot {
+        public enum GetSessionSnapshot: Sendable {
             /// Request type for "GetSessionSnapshot".
             public typealias Input = Macosusesdk_V1_GetSessionSnapshotRequest
             /// Response type for "GetSessionSnapshot".
@@ -506,7 +506,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "CaptureScreenshot" metadata.
-        public enum CaptureScreenshot {
+        public enum CaptureScreenshot: Sendable {
             /// Request type for "CaptureScreenshot".
             public typealias Input = Macosusesdk_V1_CaptureScreenshotRequest
             /// Response type for "CaptureScreenshot".
@@ -518,7 +518,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "CaptureWindowScreenshot" metadata.
-        public enum CaptureWindowScreenshot {
+        public enum CaptureWindowScreenshot: Sendable {
             /// Request type for "CaptureWindowScreenshot".
             public typealias Input = Macosusesdk_V1_CaptureWindowScreenshotRequest
             /// Response type for "CaptureWindowScreenshot".
@@ -530,7 +530,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "CaptureElementScreenshot" metadata.
-        public enum CaptureElementScreenshot {
+        public enum CaptureElementScreenshot: Sendable {
             /// Request type for "CaptureElementScreenshot".
             public typealias Input = Macosusesdk_V1_CaptureElementScreenshotRequest
             /// Response type for "CaptureElementScreenshot".
@@ -542,7 +542,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "CaptureRegionScreenshot" metadata.
-        public enum CaptureRegionScreenshot {
+        public enum CaptureRegionScreenshot: Sendable {
             /// Request type for "CaptureRegionScreenshot".
             public typealias Input = Macosusesdk_V1_CaptureRegionScreenshotRequest
             /// Response type for "CaptureRegionScreenshot".
@@ -553,8 +553,20 @@ public enum Macosusesdk_V1_MacosUse {
                 method: "CaptureRegionScreenshot"
             )
         }
+        /// Namespace for "ListDisplays" metadata.
+        public enum ListDisplays: Sendable {
+            /// Request type for "ListDisplays".
+            public typealias Input = Macosusesdk_V1_ListDisplaysRequest
+            /// Response type for "ListDisplays".
+            public typealias Output = Macosusesdk_V1_ListDisplaysResponse
+            /// Descriptor for "ListDisplays".
+            public static let descriptor = GRPCCore.MethodDescriptor(
+                service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
+                method: "ListDisplays"
+            )
+        }
         /// Namespace for "GetClipboard" metadata.
-        public enum GetClipboard {
+        public enum GetClipboard: Sendable {
             /// Request type for "GetClipboard".
             public typealias Input = Macosusesdk_V1_GetClipboardRequest
             /// Response type for "GetClipboard".
@@ -566,7 +578,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "WriteClipboard" metadata.
-        public enum WriteClipboard {
+        public enum WriteClipboard: Sendable {
             /// Request type for "WriteClipboard".
             public typealias Input = Macosusesdk_V1_WriteClipboardRequest
             /// Response type for "WriteClipboard".
@@ -578,7 +590,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "ClearClipboard" metadata.
-        public enum ClearClipboard {
+        public enum ClearClipboard: Sendable {
             /// Request type for "ClearClipboard".
             public typealias Input = Macosusesdk_V1_ClearClipboardRequest
             /// Response type for "ClearClipboard".
@@ -590,7 +602,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "GetClipboardHistory" metadata.
-        public enum GetClipboardHistory {
+        public enum GetClipboardHistory: Sendable {
             /// Request type for "GetClipboardHistory".
             public typealias Input = Macosusesdk_V1_GetClipboardHistoryRequest
             /// Response type for "GetClipboardHistory".
@@ -602,7 +614,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "AutomateOpenFileDialog" metadata.
-        public enum AutomateOpenFileDialog {
+        public enum AutomateOpenFileDialog: Sendable {
             /// Request type for "AutomateOpenFileDialog".
             public typealias Input = Macosusesdk_V1_AutomateOpenFileDialogRequest
             /// Response type for "AutomateOpenFileDialog".
@@ -614,7 +626,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "AutomateSaveFileDialog" metadata.
-        public enum AutomateSaveFileDialog {
+        public enum AutomateSaveFileDialog: Sendable {
             /// Request type for "AutomateSaveFileDialog".
             public typealias Input = Macosusesdk_V1_AutomateSaveFileDialogRequest
             /// Response type for "AutomateSaveFileDialog".
@@ -626,7 +638,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "SelectFile" metadata.
-        public enum SelectFile {
+        public enum SelectFile: Sendable {
             /// Request type for "SelectFile".
             public typealias Input = Macosusesdk_V1_SelectFileRequest
             /// Response type for "SelectFile".
@@ -638,7 +650,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "SelectDirectory" metadata.
-        public enum SelectDirectory {
+        public enum SelectDirectory: Sendable {
             /// Request type for "SelectDirectory".
             public typealias Input = Macosusesdk_V1_SelectDirectoryRequest
             /// Response type for "SelectDirectory".
@@ -650,7 +662,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "DragFiles" metadata.
-        public enum DragFiles {
+        public enum DragFiles: Sendable {
             /// Request type for "DragFiles".
             public typealias Input = Macosusesdk_V1_DragFilesRequest
             /// Response type for "DragFiles".
@@ -662,7 +674,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "CreateMacro" metadata.
-        public enum CreateMacro {
+        public enum CreateMacro: Sendable {
             /// Request type for "CreateMacro".
             public typealias Input = Macosusesdk_V1_CreateMacroRequest
             /// Response type for "CreateMacro".
@@ -674,7 +686,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "GetMacro" metadata.
-        public enum GetMacro {
+        public enum GetMacro: Sendable {
             /// Request type for "GetMacro".
             public typealias Input = Macosusesdk_V1_GetMacroRequest
             /// Response type for "GetMacro".
@@ -686,7 +698,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "ListMacros" metadata.
-        public enum ListMacros {
+        public enum ListMacros: Sendable {
             /// Request type for "ListMacros".
             public typealias Input = Macosusesdk_V1_ListMacrosRequest
             /// Response type for "ListMacros".
@@ -698,7 +710,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "UpdateMacro" metadata.
-        public enum UpdateMacro {
+        public enum UpdateMacro: Sendable {
             /// Request type for "UpdateMacro".
             public typealias Input = Macosusesdk_V1_UpdateMacroRequest
             /// Response type for "UpdateMacro".
@@ -710,7 +722,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "DeleteMacro" metadata.
-        public enum DeleteMacro {
+        public enum DeleteMacro: Sendable {
             /// Request type for "DeleteMacro".
             public typealias Input = Macosusesdk_V1_DeleteMacroRequest
             /// Response type for "DeleteMacro".
@@ -722,7 +734,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "ExecuteMacro" metadata.
-        public enum ExecuteMacro {
+        public enum ExecuteMacro: Sendable {
             /// Request type for "ExecuteMacro".
             public typealias Input = Macosusesdk_V1_ExecuteMacroRequest
             /// Response type for "ExecuteMacro".
@@ -734,7 +746,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "ExecuteAppleScript" metadata.
-        public enum ExecuteAppleScript {
+        public enum ExecuteAppleScript: Sendable {
             /// Request type for "ExecuteAppleScript".
             public typealias Input = Macosusesdk_V1_ExecuteAppleScriptRequest
             /// Response type for "ExecuteAppleScript".
@@ -746,7 +758,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "ExecuteJavaScript" metadata.
-        public enum ExecuteJavaScript {
+        public enum ExecuteJavaScript: Sendable {
             /// Request type for "ExecuteJavaScript".
             public typealias Input = Macosusesdk_V1_ExecuteJavaScriptRequest
             /// Response type for "ExecuteJavaScript".
@@ -758,7 +770,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "ExecuteShellCommand" metadata.
-        public enum ExecuteShellCommand {
+        public enum ExecuteShellCommand: Sendable {
             /// Request type for "ExecuteShellCommand".
             public typealias Input = Macosusesdk_V1_ExecuteShellCommandRequest
             /// Response type for "ExecuteShellCommand".
@@ -770,7 +782,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "ValidateScript" metadata.
-        public enum ValidateScript {
+        public enum ValidateScript: Sendable {
             /// Request type for "ValidateScript".
             public typealias Input = Macosusesdk_V1_ValidateScriptRequest
             /// Response type for "ValidateScript".
@@ -782,7 +794,7 @@ public enum Macosusesdk_V1_MacosUse {
             )
         }
         /// Namespace for "GetScriptingDictionaries" metadata.
-        public enum GetScriptingDictionaries {
+        public enum GetScriptingDictionaries: Sendable {
             /// Request type for "GetScriptingDictionaries".
             public typealias Input = Macosusesdk_V1_GetScriptingDictionariesRequest
             /// Response type for "GetScriptingDictionaries".
@@ -839,6 +851,7 @@ public enum Macosusesdk_V1_MacosUse {
             CaptureWindowScreenshot.descriptor,
             CaptureElementScreenshot.descriptor,
             CaptureRegionScreenshot.descriptor,
+            ListDisplays.descriptor,
             GetClipboard.descriptor,
             WriteClipboard.descriptor,
             ClearClipboard.descriptor,
@@ -1679,6 +1692,24 @@ extension Macosusesdk_V1_MacosUse {
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_CaptureRegionScreenshotRequest>,
             context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_CaptureRegionScreenshotResponse>
+
+        /// Handle the "ListDisplays" method.
+        ///
+        /// > Source IDL Documentation:
+        /// >
+        /// > Lists displays attached to the system.
+        ///
+        /// - Parameters:
+        ///   - request: A streaming request of `Macosusesdk_V1_ListDisplaysRequest` messages.
+        ///   - context: Context providing information about the RPC.
+        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
+        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
+        ///     to an internal error.
+        /// - Returns: A streaming response of `Macosusesdk_V1_ListDisplaysResponse` messages.
+        func listDisplays(
+            request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ListDisplaysRequest>,
+            context: GRPCCore.ServerContext
+        ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ListDisplaysResponse>
 
         /// Handle the "GetClipboard" method.
         ///
@@ -2845,6 +2876,24 @@ extension Macosusesdk_V1_MacosUse {
             context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_CaptureRegionScreenshotResponse>
 
+        /// Handle the "ListDisplays" method.
+        ///
+        /// > Source IDL Documentation:
+        /// >
+        /// > Lists displays attached to the system.
+        ///
+        /// - Parameters:
+        ///   - request: A request containing a single `Macosusesdk_V1_ListDisplaysRequest` message.
+        ///   - context: Context providing information about the RPC.
+        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
+        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
+        ///     to an internal error.
+        /// - Returns: A response containing a single `Macosusesdk_V1_ListDisplaysResponse` message.
+        func listDisplays(
+            request: GRPCCore.ServerRequest<Macosusesdk_V1_ListDisplaysRequest>,
+            context: GRPCCore.ServerContext
+        ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ListDisplaysResponse>
+
         /// Handle the "GetClipboard" method.
         ///
         /// > Source IDL Documentation:
@@ -4010,6 +4059,24 @@ extension Macosusesdk_V1_MacosUse {
             context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_CaptureRegionScreenshotResponse
 
+        /// Handle the "ListDisplays" method.
+        ///
+        /// > Source IDL Documentation:
+        /// >
+        /// > Lists displays attached to the system.
+        ///
+        /// - Parameters:
+        ///   - request: A `Macosusesdk_V1_ListDisplaysRequest` message.
+        ///   - context: Context providing information about the RPC.
+        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
+        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
+        ///     to an internal error.
+        /// - Returns: A `Macosusesdk_V1_ListDisplaysResponse` to respond with.
+        func listDisplays(
+            request: Macosusesdk_V1_ListDisplaysRequest,
+            context: GRPCCore.ServerContext
+        ) async throws -> Macosusesdk_V1_ListDisplaysResponse
+
         /// Handle the "GetClipboard" method.
         ///
         /// > Source IDL Documentation:
@@ -4861,6 +4928,17 @@ extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             }
         )
         router.registerHandler(
+            forMethod: Macosusesdk_V1_MacosUse.Method.ListDisplays.descriptor,
+            deserializer: GRPCProtobuf.ProtobufDeserializer<Macosusesdk_V1_ListDisplaysRequest>(),
+            serializer: GRPCProtobuf.ProtobufSerializer<Macosusesdk_V1_ListDisplaysResponse>(),
+            handler: { request, context in
+                try await self.listDisplays(
+                    request: request,
+                    context: context
+                )
+            }
+        )
+        router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.GetClipboard.descriptor,
             deserializer: GRPCProtobuf.ProtobufDeserializer<Macosusesdk_V1_GetClipboardRequest>(),
             serializer: GRPCProtobuf.ProtobufSerializer<Macosusesdk_V1_Clipboard>(),
@@ -5564,6 +5642,17 @@ extension Macosusesdk_V1_MacosUse.ServiceProtocol {
         context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_CaptureRegionScreenshotResponse> {
         let response = try await self.captureRegionScreenshot(
+            request: GRPCCore.ServerRequest(stream: request),
+            context: context
+        )
+        return GRPCCore.StreamingServerResponse(single: response)
+    }
+
+    public func listDisplays(
+        request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ListDisplaysRequest>,
+        context: GRPCCore.ServerContext
+    ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ListDisplaysResponse> {
+        let response = try await self.listDisplays(
             request: GRPCCore.ServerRequest(stream: request),
             context: context
         )
@@ -6367,6 +6456,19 @@ extension Macosusesdk_V1_MacosUse.SimpleServiceProtocol {
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_CaptureRegionScreenshotResponse> {
         return GRPCCore.ServerResponse<Macosusesdk_V1_CaptureRegionScreenshotResponse>(
             message: try await self.captureRegionScreenshot(
+                request: request.message,
+                context: context
+            ),
+            metadata: [:]
+        )
+    }
+
+    public func listDisplays(
+        request: GRPCCore.ServerRequest<Macosusesdk_V1_ListDisplaysRequest>,
+        context: GRPCCore.ServerContext
+    ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ListDisplaysResponse> {
+        return GRPCCore.ServerResponse<Macosusesdk_V1_ListDisplaysResponse>(
+            message: try await self.listDisplays(
                 request: request.message,
                 context: context
             ),

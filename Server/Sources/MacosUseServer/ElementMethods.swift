@@ -269,7 +269,8 @@ extension MacosUseService {
                             }
                             $0.clickType = .left
                             $0.clickCount = 1
-                        })
+                        },
+                    )
                 },
                 pid: pid,
                 showAnimation: false,
@@ -287,7 +288,8 @@ extension MacosUseService {
                             }
                             $0.clickType = .left
                             $0.clickCount = 2
-                        })
+                        },
+                    )
                 },
                 pid: pid,
                 showAnimation: false,
@@ -305,7 +307,8 @@ extension MacosUseService {
                             }
                             $0.clickType = .right
                             $0.clickCount = 1
-                        })
+                        },
+                    )
                 },
                 pid: pid,
                 showAnimation: false,
@@ -378,7 +381,8 @@ extension MacosUseService {
                         }
                         $0.clickType = .left
                         $0.clickCount = 1
-                    })
+                    },
+                )
             },
             pid: pid,
             showAnimation: false,
@@ -391,7 +395,8 @@ extension MacosUseService {
                 $0.inputType = .typeText(
                     Macosusesdk_V1_TextInput.with {
                         $0.text = req.value
-                    })
+                    },
+                )
             },
             pid: pid,
             showAnimation: false,
@@ -554,7 +559,8 @@ extension MacosUseService {
                             }
                             $0.clickType = .left
                             $0.clickCount = 1
-                        })
+                        },
+                    )
                 },
                 pid: pid,
                 showAnimation: false,
@@ -572,7 +578,8 @@ extension MacosUseService {
                             }
                             $0.clickType = .right
                             $0.clickCount = 1
-                        })
+                        },
+                    )
                 },
                 pid: pid,
                 showAnimation: false,
@@ -719,7 +726,8 @@ extension MacosUseService {
                                 Macosusesdk_Type_ElementSelector.with { $0.criteria = .role(foundElement.role) },
                                 Macosusesdk_Type_ElementSelector.with { $0.criteria = .text(foundElement.text) },
                             ]
-                        })
+                        },
+                    )
                 }
             }
 

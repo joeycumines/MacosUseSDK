@@ -1,17 +1,16 @@
 import AppKit
 import Darwin
 import Foundation
-import OSLog
-
 import GRPCCore
 import GRPCNIOTransportHTTP2
 import MacosUseProto
 import MacosUseSDK
 import NIOCore
+import OSLog
 
 private let logger = MacosUseSDK.sdkLogger(category: "Main")
 
-// Main entry point for the MacosUseServer
+/// Main entry point for the MacosUseServer
 func main() async throws {
     logger.info("MacosUseServer starting...")
 

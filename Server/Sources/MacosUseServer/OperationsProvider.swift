@@ -11,7 +11,7 @@ final class OperationsProvider: Google_Longrunning_Operations.ServiceProtocol {
         self.operationStore = operationStore
     }
 
-    // List operations - simple implementation ignoring filter/pagination
+    /// List operations - simple implementation ignoring filter/pagination
     func listOperations(
         request: ServerRequest<Google_Longrunning_ListOperationsRequest>,
         context _: ServerContext,

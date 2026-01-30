@@ -3,8 +3,8 @@
 
 import PackageDescription
 
-// NOTE: gRPC Swift 2 requires macOS 15+ for its Swift 6 concurrency features.
-// The deployment target is set to macOS 15 to ensure compatibility.
+/// NOTE: gRPC Swift 2 requires macOS 15+ for its Swift 6 concurrency features.
+/// The deployment target is set to macOS 15 to ensure compatibility.
 let package = Package(
     name: "MacosUseServer",
     platforms: [

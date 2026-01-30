@@ -1,7 +1,6 @@
 import ApplicationServices
 import CoreGraphics
 import Foundation
-
 @testable import MacosUseServer
 
 final class MockSystemOperations: SystemOperations {
@@ -60,10 +59,21 @@ final class MockSystemOperations: SystemOperations {
         return nil
     }
 
-    func copyAXMultipleAttributes(element _: AnyObject, attributes _: [String]) -> [String: Any]? { nil }
-    func setAXAttribute(element _: AnyObject, attribute _: String, value _: Any) -> Int32 { 1 }
-    func performAXAction(element _: AnyObject, action _: String) -> Int32 { 1 }
-    func getAXWindowID(element _: AnyObject) -> CGWindowID? { nil }
+    func copyAXMultipleAttributes(element _: AnyObject, attributes _: [String]) -> [String: Any]? {
+        nil
+    }
+
+    func setAXAttribute(element _: AnyObject, attribute _: String, value _: Any) -> Int32 {
+        1
+    }
+
+    func performAXAction(element _: AnyObject, action _: String) -> Int32 {
+        1
+    }
+
+    func getAXWindowID(element _: AnyObject) -> CGWindowID? {
+        nil
+    }
 
     func fetchAXWindowInfo(pid: Int32, windowId: CGWindowID, expectedBounds _: CGRect) -> WindowInfoResult? {
         let key = "\(pid):\(windowId)"

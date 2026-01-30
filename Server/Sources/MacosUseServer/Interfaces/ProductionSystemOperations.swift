@@ -4,7 +4,7 @@ import CoreGraphics
 import Foundation
 import MacosUseSDK
 
-// Add this declaration here to ensure ProductionSystemOperations compiles independently
+/// Add this declaration here to ensure ProductionSystemOperations compiles independently
 @_silgen_name("_AXUIElementGetWindow")
 func _AXUIElementGetWindow(_ element: AXUIElement, _ id: UnsafeMutablePointer<CGWindowID>) -> AXError
 
@@ -77,5 +77,5 @@ public final class ProductionSystemOperations: SystemOperations {
     }
 }
 
-// The class is effectively stateless and safe for cross-task usage.
+/// The class is effectively stateless and safe for cross-task usage.
 extension ProductionSystemOperations: @unchecked Sendable {}
