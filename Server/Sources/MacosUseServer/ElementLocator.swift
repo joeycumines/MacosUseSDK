@@ -24,6 +24,7 @@ public actor ElementLocator {
     ///   - visibleOnly: Whether to only consider visible elements
     ///   - maxResults: Maximum number of elements to return (0 for unlimited)
     /// - Returns: Array of matching elements with their hierarchy paths
+    /// - Note: Selector validation (including regex patterns) is performed by SelectorParser before this method.
     public func findElements(
         selector: Macosusesdk_Type_ElementSelector,
         parent: String,
@@ -59,6 +60,7 @@ public actor ElementLocator {
     ///   - visibleOnly: Whether to only consider visible elements
     ///   - maxResults: Maximum number of elements to return
     /// - Returns: Array of elements within the region
+    /// - Note: Selector validation (including regex patterns) is performed by SelectorParser before this method.
     public func findElementsInRegion(
         region: Macosusesdk_Type_Region,
         selector: Macosusesdk_Type_ElementSelector?,
