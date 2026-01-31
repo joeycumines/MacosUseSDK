@@ -68,6 +68,11 @@ public struct ElementData: Codable, Hashable, Sendable {
   public var enabled: Bool?
   public var focused: Bool?
   public var attributes: [String: String]
+  /// Hierarchical path from application root to this element.
+  /// - Positive indices (0, 1, 2, ...): child index via AXChildren
+  /// - Negative indices (-1, -2, ...): window index via AXWindows (encoded as -(windowIndex + 1))
+  /// - Special value -10000: main window via AXMainWindow
+  public var path: [Int32]
 
   // Implement Hashable for use in Set
   public func hash(into hasher: inout Hasher) {
@@ -77,15 +82,16 @@ public struct ElementData: Codable, Hashable, Sendable {
     hasher.combine(y)
     hasher.combine(width)
     hasher.combine(height)
+    hasher.combine(path)
   }
   public static func == (lhs: ElementData, rhs: ElementData) -> Bool {
     lhs.role == rhs.role && lhs.text == rhs.text && lhs.x == rhs.x && lhs.y == rhs.y
-      && lhs.width == rhs.width && lhs.height == rhs.height
+      && lhs.width == rhs.width && lhs.height == rhs.height && lhs.path == rhs.path
   }
 
   // Add this enum to exclude axElement from Codable
   enum CodingKeys: String, CodingKey {
-    case role, text, x, y, width, height, enabled, focused, attributes
+    case role, text, x, y, width, height, enabled, focused, attributes, path
     // axElement is deliberately excluded - it cannot be encoded/decoded
   }
 }
@@ -194,7 +200,7 @@ private class AccessibilityTraversalOperation {
 
     // 4. Start Traversal
     // fputs("info: starting accessibility tree traversal...\n", stderr) // Optional start log
-    walkElementTree(element: appElement, depth: 0)
+    walkElementTree(element: appElement, depth: 0, path: [])
     logStepCompletion(
       "traversing accessibility tree (\(collectedElements.count) elements collected)")
 
@@ -363,7 +369,7 @@ private class AccessibilityTraversalOperation {
   }
 
   // Recursive traversal function (now a method)
-  func walkElementTree(element: AXUIElement, depth: Int) {
+  func walkElementTree(element: AXUIElement, depth: Int, path: [Int32]) {
     // 1. Check for cycles and depth limit
     if visitedElements.contains(element) || depth > maxDepth {
       // fputs("debug: skipping visited or too deep element (depth: \(depth))\n", stderr)
@@ -418,7 +424,8 @@ private class AccessibilityTraversalOperation {
         role: displayRole, text: combinedText,
         x: finalX, y: finalY, width: finalWidth, height: finalHeight,
         axElement: SendableAXUIElement(element), enabled: enabled, focused: focused,
-        attributes: attributes
+        attributes: attributes,
+        path: path
       )
 
       if collectedElements.insert(elementData).inserted {
@@ -455,37 +462,43 @@ private class AccessibilityTraversalOperation {
     }
 
     // 5. Recursively traverse children, windows, main window
-    // a) Windows
+    // a) Windows (use negative indices starting from -1 to distinguish from regular children)
     if let windowsValue = copyAttributeValue(
       element: element, attribute: kAXWindowsAttribute as String) {
       if let windowsArray = windowsValue as? [AXUIElement] {
-        for windowElement in windowsArray where !visitedElements.contains(windowElement) {
-          walkElementTree(element: windowElement, depth: depth + 1)
+        for (windowIndex, windowElement) in windowsArray.enumerated()
+        where !visitedElements.contains(windowElement) {
+          // Use -(windowIndex + 1) to distinguish windows from children
+          let windowPath = path + [Int32(-(windowIndex + 1))]
+          walkElementTree(element: windowElement, depth: depth + 1, path: windowPath)
         }
       } else if CFGetTypeID(windowsValue) == CFArrayGetTypeID() {
         // fputs("warning: attribute \(kAXWindowsAttribute) was CFArray but failed bridge to [AXUIElement]\n", stderr)
       }
     }
 
-    // b) Main Window
+    // b) Main Window (use special index -10000 to distinguish)
     if let mainWindowValue = copyAttributeValue(
       element: element, attribute: kAXMainWindowAttribute as String) {
       if CFGetTypeID(mainWindowValue) == AXUIElementGetTypeID() {
         let mainWindowElement = mainWindowValue as! AXUIElement
         if !visitedElements.contains(mainWindowElement) {
-          walkElementTree(element: mainWindowElement, depth: depth + 1)
+          let mainWindowPath = path + [Int32(-10000)]
+          walkElementTree(element: mainWindowElement, depth: depth + 1, path: mainWindowPath)
         }
       } else {
         // fputs("warning: attribute \(kAXMainWindowAttribute) was not an AXUIElement\n", stderr)
       }
     }
 
-    // c) Regular Children
+    // c) Regular Children (use 0-based indices)
     if let childrenValue = copyAttributeValue(
       element: element, attribute: kAXChildrenAttribute as String) {
       if let childrenArray = childrenValue as? [AXUIElement] {
-        for childElement in childrenArray where !visitedElements.contains(childElement) {
-          walkElementTree(element: childElement, depth: depth + 1)
+        for (childIndex, childElement) in childrenArray.enumerated()
+        where !visitedElements.contains(childElement) {
+          let childPath = path + [Int32(childIndex)]
+          walkElementTree(element: childElement, depth: depth + 1, path: childPath)
         }
       } else if CFGetTypeID(childrenValue) == CFArrayGetTypeID() {
         // fputs("warning: attribute \(kAXChildrenAttribute) was CFArray but failed bridge to [AXUIElement]\n", stderr)
