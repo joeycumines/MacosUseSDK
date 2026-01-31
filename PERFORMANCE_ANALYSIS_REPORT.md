@@ -184,7 +184,6 @@ private nonisolated func monitorObservation(name: String, initialState: Observat
 **Performance Impact:**
 - Runs continuously for every active observation
 - Each poll triggers full AX traversal or window enumeration
-- NO differential updates or caching of previous state beyond local var
 - Multiple observations cause duplicate work
 
 **Hot Code:**
@@ -201,10 +200,9 @@ while !Task.isCancelled {
 
 **Performance Issues:**
 1. Full traversal even with NO changes (wasted work)
-2. NO caching of traversal results across poll cycles
-3. Element comparison uses O(n*m) for all elements
-4. Window observation calls `fetchAXWindows()` which does batch AX queries
-5. Separate observations don't share traversal results
+2. Element comparison uses O(n*m) for all elements
+3. Window observation calls `fetchAXWindows()` which does batch AX queries
+4. Separate observations don't share traversal results
 
 **Impact on Server:**
 - 10 observations at 1s poll = 10 full traversals per second
@@ -264,85 +262,7 @@ public func writeText(_ text: String) async throws {
 
 ---
 
-## 2. Caching Mechanisms
-
-### 2.1 Window Registry Cache
-
-**Implementation:** `Server/Sources/MacosUseServer/WindowRegistry.swift`
-
-```swift
-// Lines 27-28: 1-second TTL
-private let cacheTTL: TimeInterval = 1.0
-
-// Lines 64-70: Evicts ALL stale entries
-windowCache = windowCache.filter { $0.value.timestamp >= staleThreshold }
-```
-
-**Analysis:**
-- ✅ Cache exists
-- ❌ TTL too aggressive (1 second)
-- ❌ No LRU or cache size limits (only TTL-based)
-- ❌ Evicts all stale entries at once (no gradual eviction)
-
-**Recommendations:**
-- Increase TTL to 5-10 seconds for non-mutating queries
-- Implement LRU eviction with size limit (e.g., 1000 windows)
-- Partial refresh: only refresh windows that changed (use AX notification if possible)
-
----
-
-### 2.2 Element Registry Cache
-
-**Implementation:** `Server/Sources/MacosUseServer/ElementRegistry.swift`
-
-```swift
-// Lines 29: 30-second TTL
-private let cacheExpiration: TimeInterval = 30.0
-
-// Lines 145-164: Background cleanup every 10s
-private func startCleanupTask() async {
-    while true {
-        try await Task.sleep(nanoseconds: 10 * 1_000_000_000)
-        cleanupExpiredElements()
-    }
-}
-```
-
-**Analysis:**
-- ✅ Cache exists with reasonable TTL
-- ✅ Cleanup task prevents memory leak
-- ❌ NO caching of traversal results (only individual elements)
-- ❌ NO query result caching (findElements always traverses)
-- ❌ No pre-fetching
-
-**Recommendations:**
-- Implement traversal result cache keyed by (pid, visibleOnly)
-- Use partial invalidation when elements mutate
-- Consider LRU for traversal cache
-
----
-
-### 2.3 No Caching In These Areas
-
-#### 2.3.1 AX Attributes
-**Missing:** Cache element attributes between queries
-**Impact:**Every `getElement` call re-queries AX for same element
-
-#### 2.3.2 Traversal Results
-**Missing:** Cache full traversal results
-**Impact:** Every `traverseAccessibilityTree` call rebuilds entire element tree
-
-#### 2.3.3 Screenshots
-**Missing:** No caching of recent captures
-**Impact:** Polling applications that use screenshots cannot benefit
-
-#### 2.3.4 Input State
-**Missing:** No reuse of CGEventSource
-**Impact:** Every input operation creates new source
-
----
-
-## 3. Expensive Operations in Hot Paths
+## 2. Expensive Operations in Hot Paths
 
 ### 3.1 AX Attribute Queries
 

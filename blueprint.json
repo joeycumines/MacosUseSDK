@@ -20,7 +20,7 @@
   "project_title": "Implementation Plan: MacosUseSDK gRPC Service",
   "status_section": {
     "label": "STATUS SECTION (ACTION-FOCUSED)",
-    "current_state": "536 Swift tests (388 MacosUseServer + 125 MacosUseSDK + 23 Swift Testing), 0 failures. All Go integration tests pass. Session commits: b9ddf02, b2e073b, 99d93f5, ea1b1ec, b351c1c, 157779c, 6f7e850, e0b9d66 (27 AppOpenerError tests).",
+    "current_state": "583 Swift tests (388 MacosUseServer + 172 MacosUseSDK + 23 Swift Testing), 0 failures. All Go integration tests pass. Session commits: b9ddf02-3b16bf4 (10 test commits). Latest: 20 AttributeChangeDetail non-text tests.",
     "update_instruction": "To provide an update, return to this 'status_section' object and modify the 'current_state'."
   },
   "implementation_phases": [
