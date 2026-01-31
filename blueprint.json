@@ -20,7 +20,7 @@
   "project_title": "Implementation Plan: MacosUseSDK gRPC Service",
   "status_section": {
     "label": "STATUS SECTION (ACTION-FOCUSED)",
-    "current_state": "Added ParsingHelpers tests (23 tests for PID parsing and page token AIP-158). Total 75 Swift unit tests, all passing. Page token functions consolidated to ParsingHelpers. Pending: SDK-001/002 hierarchical path.",
+    "current_state": "Added MacroRegistry unit tests (13 tests). Total 88 Swift unit tests, all passing. Comprehensive coverage: SelectorParser, ElementLocator, ParsingHelpers, MacroRegistry. Pending: SDK-001/002 hierarchical path.",
     "update_instruction": "To provide an update, return to this 'status_section' object and modify the 'current_state'."
   },
   "implementation_phases": [
