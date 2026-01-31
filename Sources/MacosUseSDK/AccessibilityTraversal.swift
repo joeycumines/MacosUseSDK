@@ -14,11 +14,20 @@ private let logger = sdkLogger(category: "AccessibilityTraversal")
 // managed by the Accessibility framework. We only store/pass references.
 extension AXUIElement: @retroactive @unchecked Sendable {}
 
-// Wrapper to provide Hashable conformance for AXUIElement
-// AXUIElement is a CFTypeRef which is thread-safe by nature
+/// A Sendable and Hashable wrapper around `AXUIElement`.
+///
+/// `AXUIElement` is a Core Foundation type that does not natively conform to
+/// Swift's `Sendable` or `Hashable` protocols. This wrapper provides both,
+/// enabling safe use across concurrency domains and in collections like `Set`.
+///
+/// The underlying `AXUIElement` is thread-safe by nature (CFTypeRef), so
+/// the `@unchecked Sendable` conformance is safe.
 public struct SendableAXUIElement: @unchecked Sendable, Hashable {
+  /// The wrapped accessibility element reference.
   public let element: AXUIElement
 
+  /// Creates a new wrapper around an `AXUIElement`.
+  /// - Parameter element: The accessibility element to wrap.
   public init(_ element: AXUIElement) {
     self.element = element
   }
@@ -34,11 +43,17 @@ public struct SendableAXUIElement: @unchecked Sendable, Hashable {
 }
 
 // --- Error Enum ---
+
+/// Errors that can occur during accessibility traversal operations.
 public enum MacosUseSDKError: Error, LocalizedError {
+  /// Accessibility access is denied. The user must grant permissions in System Settings.
   case accessibilityDenied
+  /// No running application was found with the specified PID.
   case appNotFound(pid: Int32)
+  /// JSON encoding of the response failed.
   case jsonEncodingFailed(Error)
-  case internalError(String)  // For unexpected issues
+  /// An unexpected internal error occurred.
+  case internalError(String)
 
   public var errorDescription: String? {
     switch self {
@@ -57,16 +72,32 @@ public enum MacosUseSDKError: Error, LocalizedError {
 
 // --- Public Data Structures for API Response ---
 
+/// Represents a single UI element discovered during accessibility traversal.
+///
+/// Each `ElementData` contains the element's role, text content, position, size,
+/// and other accessibility attributes. Elements are uniquely identified within
+/// a traversal by their hierarchical `path`.
 public struct ElementData: Codable, Hashable, Sendable {
+  /// The accessibility role of the element (e.g., "AXButton", "AXTextField").
   public var role: String
+  /// The text content of the element, if available.
   public var text: String?
+  /// The x-coordinate of the element's top-left corner in global display coordinates.
   public var x: Double?
+  /// The y-coordinate of the element's top-left corner in global display coordinates.
   public var y: Double?
+  /// The width of the element in points.
   public var width: Double?
+  /// The height of the element in points.
   public var height: Double?
+  /// The underlying AXUIElement reference for performing accessibility actions.
+  /// Excluded from Codable encoding.
   public var axElement: SendableAXUIElement?
+  /// Whether the element is enabled for interaction.
   public var enabled: Bool?
+  /// Whether the element currently has keyboard focus.
   public var focused: Bool?
+  /// Additional accessibility attributes as key-value pairs.
   public var attributes: [String: String]
   /// Hierarchical path from application root to this element.
   /// - Positive indices (0, 1, 2, ...): child index via AXChildren
@@ -96,21 +127,40 @@ public struct ElementData: Codable, Hashable, Sendable {
   }
 }
 
+/// Statistics about the accessibility traversal operation.
+///
+/// Provides counts of collected elements, excluded elements, and breakdowns
+/// by element type and reason for exclusion.
 public struct Statistics: Codable, Sendable {
+  /// Total number of elements collected.
   public var count: Int = 0
+  /// Number of elements excluded during traversal.
   public var excluded_count: Int = 0
+  /// Number of elements excluded because they have non-interactable roles.
   public var excluded_non_interactable: Int = 0
+  /// Number of elements excluded because they have no text content.
   public var excluded_no_text: Int = 0
+  /// Number of collected elements that have text content.
   public var with_text_count: Int = 0
+  /// Number of collected elements without text content.
   public var without_text_count: Int = 0
+  /// Number of elements with valid geometry (position and size).
   public var visible_elements_count: Int = 0
+  /// Count of elements by their accessibility role.
   public var role_counts: [String: Int] = [:]
 }
 
+/// The result of an accessibility tree traversal operation.
+///
+/// Contains all collected elements, traversal statistics, and timing information.
 public struct ResponseData: Codable, Sendable {
+  /// The display name of the application that was traversed.
   public let app_name: String
+  /// The collected UI elements from the accessibility tree.
   public var elements: [ElementData]
+  /// Statistics about the traversal operation.
   public var stats: Statistics
+  /// The time taken to complete the traversal, in seconds (as a formatted string).
   public let processing_time_seconds: String
 }
 
