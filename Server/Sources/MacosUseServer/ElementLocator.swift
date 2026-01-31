@@ -169,8 +169,8 @@ public actor ElementLocator {
             var elementWithId = protoElement
             elementWithId.elementID = elementId
 
-            // For now, use sequential index as path (FIXME: implement proper hierarchical paths)
-            elementsWithPaths.append((elementWithId, [Int32(index)]))
+            // Use the hierarchical path from SDK traversal
+            elementsWithPaths.append((elementWithId, elementData.path))
         }
 
         return elementsWithPaths

@@ -20,7 +20,7 @@
   "project_title": "Implementation Plan: MacosUseSDK gRPC Service",
   "status_section": {
     "label": "STATUS SECTION (ACTION-FOCUSED)",
-    "current_state": "Added MacroRegistry unit tests (13 tests). Total 88 Swift unit tests, all passing. Comprehensive coverage: SelectorParser, ElementLocator, ParsingHelpers, MacroRegistry. Pending: SDK-001/002 hierarchical path.",
+    "current_state": "SDK-001/002 hierarchical path COMPLETED. 104 Swift unit tests, 0 failures. Added: ScriptExecutor security tests (12), ClipboardError tests (4). Pending: SRV-001/002/003/004/005 server-side path integration.",
     "update_instruction": "To provide an update, return to this 'status_section' object and modify the 'current_state'."
   },
   "implementation_phases": [
