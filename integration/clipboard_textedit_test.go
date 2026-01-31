@@ -37,11 +37,15 @@ func TestClipboardPasteIntoTextEdit(t *testing.T) {
 	CleanupApplication(t, ctx, client, "/Applications/TextEdit.app")
 
 	// Create a temporary file that TextEdit will open
+	// IMPORTANT: Pre-populate with placeholder text so TextEdit opens THIS file,
+	// not a new "Untitled" document. Empty files cause TextEdit to create a new doc,
+	// and Cmd+S would then open a Save dialog instead of saving to our path.
 	dir := t.TempDir()
 	fname := fmt.Sprintf("paste-integration-%d.txt", time.Now().UnixNano())
 	filePath := filepath.Join(dir, fname)
 
-	if err := os.WriteFile(filePath, []byte(""), 0600); err != nil {
+	const placeholderText = "PLACEHOLDER_TEXT_FOR_TEXTEDIT"
+	if err := os.WriteFile(filePath, []byte(placeholderText), 0600); err != nil {
 		t.Fatalf("failed to create temp file: %v", err)
 	}
 
@@ -165,7 +169,37 @@ func TestClipboardPasteIntoTextEdit(t *testing.T) {
 	}
 	time.Sleep(200 * time.Millisecond) // Allow activation to complete
 
-	// Press Cmd+V to paste
+	// Press Cmd+A to select all (selects the placeholder text so paste will replace it)
+	selectAllInput, err := client.CreateInput(ctx, &pb.CreateInputRequest{
+		Parent: app.Name,
+		Input: &pb.Input{
+			Action: &pb.InputAction{
+				InputType: &pb.InputAction_PressKey{
+					PressKey: &pb.KeyPress{
+						Key:       "a",
+						Modifiers: []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_COMMAND},
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("CreateInput select-all failed: %v", err)
+	}
+
+	// Wait for select-all to finish
+	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
+		st, err := client.GetInput(ctx, &pb.GetInputRequest{Name: selectAllInput.Name})
+		if err != nil {
+			return false, nil
+		}
+		return st.State == pb.Input_STATE_COMPLETED || st.State == pb.Input_STATE_FAILED, nil
+	})
+	if err != nil {
+		t.Fatalf("select-all input did not complete: %v", err)
+	}
+
+	// Press Cmd+V to paste (replaces selected placeholder text)
 	pasteInput, err := client.CreateInput(ctx, &pb.CreateInputRequest{
 		Parent: app.Name,
 		Input: &pb.Input{

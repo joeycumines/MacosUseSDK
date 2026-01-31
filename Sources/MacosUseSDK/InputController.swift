@@ -4,7 +4,6 @@ import AppKit  // Needed for Process and potentially other things later
 import CoreGraphics
 import Foundation
 import OSLog
-import OSLog
 
 private let logger = sdkLogger(category: "InputController")
 
