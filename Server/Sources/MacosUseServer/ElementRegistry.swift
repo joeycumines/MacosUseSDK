@@ -24,14 +24,55 @@ public actor ElementRegistry {
     private var elementCache: [String: CachedElement] = [:]
 
     /// Cache expiration time (elements expire after 30 seconds)
-    private let cacheExpiration: TimeInterval = 30.0
+    private let cacheExpiration: TimeInterval
+
+    /// Clock function for testing (returns current Date)
+    private let clock: @Sendable () -> Date
+
+    /// ID generator function for testing
+    private let idGenerator: @Sendable () -> String
+
+    /// Whether to start the background cleanup task
+    private let startCleanupOnInit: Bool
 
     private init() {
+        cacheExpiration = 30.0
+        clock = { Date() }
+        idGenerator = {
+            let timestamp = Int(Date().timeIntervalSince1970 * 1000)
+            let random = Int.random(in: 0 ..< 1_000_000)
+            return "elem_\(timestamp)_\(random)"
+        }
+        startCleanupOnInit = true
         logger.info("Initialized")
 
         // Start cleanup task
         Task {
             await startCleanupTask()
+        }
+    }
+
+    /// Internal initializer for testing with injectable dependencies.
+    /// - Parameters:
+    ///   - cacheExpiration: TTL for cached elements
+    ///   - clock: Function returning current time
+    ///   - idGenerator: Function generating element IDs
+    ///   - startCleanup: Whether to start background cleanup task
+    init(
+        cacheExpiration: TimeInterval,
+        clock: @escaping @Sendable () -> Date,
+        idGenerator: @escaping @Sendable () -> String,
+        startCleanup: Bool = false,
+    ) {
+        self.cacheExpiration = cacheExpiration
+        self.clock = clock
+        self.idGenerator = idGenerator
+        startCleanupOnInit = startCleanup
+
+        if startCleanup {
+            Task {
+                await startCleanupTask()
+            }
         }
     }
 
@@ -46,11 +87,11 @@ public actor ElementRegistry {
         axElement: AXUIElement? = nil,
         pid: pid_t,
     ) -> String {
-        let elementId = generateElementId()
+        let elementId = idGenerator()
         let cachedElement = CachedElement(
             element: element,
             axElement: axElement,
-            timestamp: Date(),
+            timestamp: clock(),
             pid: pid,
         )
 
@@ -69,7 +110,7 @@ public actor ElementRegistry {
         }
 
         // Check if expired
-        if Date().timeIntervalSince(cached.timestamp) > cacheExpiration {
+        if clock().timeIntervalSince(cached.timestamp) > cacheExpiration {
             logger.warning("Element \(elementId, privacy: .private) expired, removing from cache")
             elementCache.removeValue(forKey: elementId)
             return nil
@@ -90,7 +131,7 @@ public actor ElementRegistry {
         }
 
         // Check if expired
-        if Date().timeIntervalSince(cached.timestamp) > cacheExpiration {
+        if clock().timeIntervalSince(cached.timestamp) > cacheExpiration {
             logger.warning("Element \(elementId, privacy: .private) expired")
             elementCache.removeValue(forKey: elementId)
             return nil
@@ -115,7 +156,7 @@ public actor ElementRegistry {
         let cachedElement = CachedElement(
             element: element,
             axElement: axElement ?? existing.axElement,
-            timestamp: Date(),
+            timestamp: clock(),
             pid: existing.pid,
         )
 
@@ -153,8 +194,9 @@ public actor ElementRegistry {
     /// - Returns: Dictionary with cache statistics
     public func getCacheStats() -> [String: Int] {
         let totalElements = elementCache.count
+        let now = clock()
         let expiredElements = elementCache.count(where: {
-            Date().timeIntervalSince($0.value.timestamp) > cacheExpiration
+            now.timeIntervalSince($0.value.timestamp) > cacheExpiration
         })
 
         return [
@@ -168,13 +210,6 @@ public actor ElementRegistry {
     /// - Returns: Number of elements currently in cache
     public func getCachedElementCount() -> Int {
         elementCache.count
-    }
-
-    private func generateElementId() -> String {
-        // Generate a unique ID using timestamp and random component
-        let timestamp = Int(Date().timeIntervalSince1970 * 1000)
-        let random = Int.random(in: 0 ..< 1_000_000)
-        return "elem_\(timestamp)_\(random)"
     }
 
     private func startCleanupTask() async {
@@ -191,7 +226,7 @@ public actor ElementRegistry {
     }
 
     private func cleanupExpiredElements() {
-        let now = Date()
+        let now = clock()
         let expiredKeys = elementCache.filter {
             now.timeIntervalSince($0.value.timestamp) > cacheExpiration
         }.keys
@@ -203,5 +238,10 @@ public actor ElementRegistry {
         if !expiredKeys.isEmpty {
             logger.info("Cleaned up \(expiredKeys.count, privacy: .public) expired elements")
         }
+    }
+
+    /// Manually trigger cleanup of expired elements (for testing).
+    func triggerCleanup() {
+        cleanupExpiredElements()
     }
 }

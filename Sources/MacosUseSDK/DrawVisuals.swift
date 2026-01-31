@@ -57,7 +57,13 @@ public extension OverlayDescriptor {
         let convertedY = screenHeight - CGFloat(y) - CGFloat(h)
         let frame = CGRect(x: CGFloat(x), y: convertedY, width: CGFloat(w), height: CGFloat(h))
 
-        let text = (element.text?.isEmpty ?? true) ? element.role : element.text!
+        // Use text if non-empty, otherwise fall back to role
+        let text: String
+        if let elementText = element.text, !elementText.isEmpty {
+            text = elementText
+        } else {
+            text = element.role
+        }
         self.init(frame: frame, type: .box(text: text))
     }
 }
