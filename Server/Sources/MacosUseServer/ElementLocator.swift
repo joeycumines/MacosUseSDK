@@ -176,7 +176,13 @@ public actor ElementLocator {
         return elementsWithPaths
     }
 
-    private func matchesSelector(
+    /// Check if an element matches a selector.
+    /// - Parameters:
+    ///   - element: The element to check
+    ///   - selector: The selector to match against
+    /// - Returns: True if the element matches the selector
+    /// - Note: Internal visibility for unit testing with @testable import.
+    func matchesSelector(
         _ element: Macosusesdk_Type_Element, selector: Macosusesdk_Type_ElementSelector,
     ) -> Bool {
         switch selector.criteria {

@@ -20,7 +20,7 @@
   "project_title": "Implementation Plan: MacosUseSDK gRPC Service",
   "status_section": {
     "label": "STATUS SECTION (ACTION-FOCUSED)",
-    "current_state": "SelectorParser regex error messages now include localizedDescription for debugging. ElementLocator maintains defense-in-depth. Tests pass. Pending: SDK-001/002 hierarchical path, unit tests for NOT operator and position selector.",
+    "current_state": "Added 44 unit tests (SelectorParserTests: 23, ElementLocatorMatchingTests: 21) covering NOT operator, position Euclidean distance, regex validation, and compound selectors. All 52 Swift tests pass. Pending: SDK-001/002 hierarchical path implementation.",
     "update_instruction": "To provide an update, return to this 'status_section' object and modify the 'current_state'."
   },
   "implementation_phases": [
