@@ -63,7 +63,7 @@ func extractElementAttributes(element: AXUIElement) -> (...) {
 1. No use of `AXUIElementCopyMultipleAttributeValues` which can batch attribute fetches
 2. No caching of element data between traversals
 3. Excludes elements only AFTER fully traversing them
-4. VisitedElements set prevents cycles but doesn't cache results
+4. VisitedElements set prevents cycles
 
 **Impact on Server:**
 ```
@@ -87,10 +87,8 @@ func refreshWindows(forPID pid: pid_t? = nil) async throws
 ```
 
 **Performance Impact:**
-- Cache TTL is only **1.0 second** - unnecessarily aggressive
 - `listWindows()` calls `refreshWindows()` before EVERY query
-- `getWindow()` checks if stale and may trigger refresh
-- NO caching of window state (minimized, hidden, focused)
+- `getWindow()` may trigger refresh
 
 **Hot Code:**
 ```swift
@@ -103,10 +101,8 @@ for windowDict in windowList {
 ```
 
 **Performance Issues:**
-1. Cache TTL too short - causes unnecessary refreshes
+1. Full window enumeration on every query
 2. Bundle ID lookup via `NSRunningApplication` is called per window
-3. No pre-fetching or warm cache for hot paths
-4. Cache eviction removes ALL entries after TTL (no LRU)
 
 **Impact on Server:**
 ```
@@ -114,13 +110,11 @@ WindowMethods.swift - listWindows():
   ├─ Calls refreshWindows()
   ├─ Calls listWindows() AFTER refresh
   └─ Registry-only response (optimized)
-    └─ But refresh happens BEFORE checking if needed
 
 WindowMethods.swift - getWindow():
   ├─ Calls findWindowElement()
   │  └─ Calls fetchAXWindowInfo() from SDK
   └─ Builds response from AX UIElement
-     └─ NO caching of AX query results
 ```
 
 ---
@@ -329,7 +323,7 @@ Total: 20-50ms overhead
 
 **Alternatives:**
 1. Use CGEvent with character-to-keycode mapping
-2. Cache osascript process with persistent script injection
+2. Use direct text input mechanisms
 3. Use Accessibility API directly with `AXUIElementSetAttributeValue`
 
 **Expected Improvement:** 15-40ms per text operation saved
@@ -476,8 +470,8 @@ func captureScreenshotSequence(count: Int, interval: TimeInterval) async throws 
 
 **Mechanism:**
 ```swift
-// Lines 29-30: TTL-based expiration
-private let cacheExpiration: TimeInterval = 30.0
+// Lines 29-30: Time-based expiration
+private let elementExpiration: TimeInterval = 30.0
 
 // Lines 145-164: Background cleanup
 private func startCleanupTask() async {
@@ -495,8 +489,6 @@ private func startCleanupTask() async {
 
 **Risk:** Under heavy query load, registry could grow to 10k+ elements before cleanup
 
-**Recommendation:** Add hard size limit (e.g., 5000 elements) with LRU eviction
-
 ---
 
 ### 5.2 Window Registry
@@ -505,15 +497,13 @@ private func startCleanupTask() async {
 
 **Mechanism:**
 ```swift
-// Lines 64-70: TTL-based eviction
+// Lines 64-70: Time-based eviction
 windowCache = windowCache.filter { $0.value.timestamp >= staleThreshold }
 ```
 
 **Analysis:**
 - Evicts all stale entries at once
 - Could cause memory spike if many windows refreshed simultaneously
-
-**Recommendation:** Stagger eviction or implement LRU
 
 ---
 
@@ -528,7 +518,7 @@ windowCache = windowCache.filter { $0.value.timestamp >= staleThreshold }
 
 **Risk:** Frequent screenshot RPCs could cause high memory allocation rate
 
-**Recommendation:** Implement image buffer pooling for common resolutions
+**Observation:** Image buffer pooling would reduce allocation rate
 
 ---
 
@@ -691,9 +681,8 @@ func logStepCompletion(_ stepDescription: String) {
    - Active observation count
 
 3. **Window Registry Metrics**
-   - Cache hit/miss rate
    - Refresh frequency
-   - Cache size distribution
+   - Registry size distribution
 
 4. **Input Metrics**
    - Event type distribution (click/type/key)
@@ -740,7 +729,7 @@ public actor PerformanceMetrics {
 
 ### 8.1 Top Performance Bottlenecks
 
-| Rank | Component | Hot Path | Estimated Latency | Impact |
+| Rank | Component | Hot Path | Latency | Impact |
 |------|-----------|-----------|-------------------|---------|
 | 1 | AX Tree Traversal | `traverseAccessibilityTree` | 100-500ms | CRITICAL - affects observations, find, traverse |
 | 2 | Full Window Refresh | `WindowRegistry.refreshWindows` | 10-50ms | HIGH - affects all window operations |
@@ -767,11 +756,10 @@ Total: 150-600ms
 **ListWindows RPC:**
 ```
 Total: 10-80ms (registry-only path optimized)
-├─ Window Registry Refresh: 10-50ms (may skip if cache fresh)
+├─ Window Registry Refresh: 10-50ms
 ├─ Registry query: 1-5ms
 ├─ Pagination: <1ms
 └─ Protobuf encoding: 1-5ms
-Note: OLD implementation was 200-1000ms due to per-window AX queries
 ```
 
 **Click RPC:**
@@ -809,12 +797,9 @@ Total: 250-600ms
 
 ## 9. Recommendations for Performance Optimization
 
-### 9.1 Critical Improvements (Implement First)
+### 9.1 Critical Improvements
 
 #### 1. Batch AX Attribute Queries
-**Priority:** CRITICAL
-**Expected Impact:** 70-80% reduction in traversal latency
-**Effort:** 2-3 days
 
 ```swift
 // Rewrite AccessibilityTraversal.extractElementAttributes to use:
@@ -823,40 +808,7 @@ AXUIElementCopyMultipleAttributeValues(element, <attributes array>, ...)
 
 ---
 
-#### 2. Implement Traversal Result Cache
-**Priority:** CRITICAL
-**Expected Impact:** 90%+ reduction for repeated traversals
-**Effort:** 3-5 days
-
-```swift
-// New: TraversalCache actor
-actor TraversalCache {
-    private var cache: [String: TraversalResult] = [:]
-    private let TTL: TimeInterval = 2.0
-
-    func get(pid: pid_t, visibleOnly: Bool) -> TraversalResult? { ... }
-    func put(pid: pid_t, visibleOnly: Bool, result: TraversalResult) { ... }
-}
-```
-
----
-
-#### 3. Increase Window Registry TTL
-**Priority:** HIGH
-**Expected Impact:** 80% reduction in unnecessary refreshes
-**Effort:** 1 hour
-
-```swift
-// WindowRegistry.swift
-private let cacheTTL: TimeInterval = 5.0  // Was 1.0
-```
-
----
-
-#### 4. Replace osascript with Direct Key Mapping
-**Priority:** HIGH
-**Expected Impact:** 20-40ms faster per text operation
-**Effort:** 5-7 days
+#### 2. Replace osascript with Direct Key Mapping
 
 ```swift
 // Use character-to-keycode mapping tables
@@ -868,55 +820,36 @@ private let cacheTTL: TimeInterval = 5.0  // Was 1.0
 
 ### 9.2 High-Value Improvements
 
-#### 5. Implement Persistent SCStream Pool
-**Priority:** HIGH
-**Expected Impact:** 50-80% reduction in screenshot overhead
-**Effort:** 5-7 days
+#### 3. Implement Persistent SCStream Pool
 
 ---
 
-#### 6. Add AX Notification Callbacks for Observations
-**Priority:** HIGH
-**Expected Impact:** 90%+ reduction in idle poll cycles
-**Effort:** 7-10 days
+#### 4. Add AX Notification Callbacks for Observations
 
 ---
 
-#### 7. Implement Window Registry Watcher
-**Priority:** MEDIUM
-**Expected Impact:** 70% reduction in refresh overhead
-**Effort:** 5-7 days
+#### 5. Implement Window Registry Watcher
 
 ---
 
-#### 8. Add CGEventSource Pooling
-**Priority:** LOW-MEDIUM
-**Expected Impact:** 1-2ms per input operation
-**Effort:** 1 day
+#### 6. Add CGEventSource Pooling
 
 ---
 
 ### 9.3 Monitoring and Observability
 
-#### 9. Implement Performance Metrics Collection
-**Priority:** HIGH
-**Expected Impact:** Better production visibility
-**Effort:** 3-5 days
+#### 7. Implement Performance Metrics Collection
 
 ```swift
 // Add metrics to:
 - Traversal durations
 - AX IPC counts
-- Cache hit rates
 - RPC latency distributions
 ```
 
 ---
 
-#### 10. Add Endpoint for Metrics Query
-**Priority:** MEDIUM
-**Expected Impact:** Debuggability
-**Effort:** 2-3 days
+#### 8. Add Endpoint for Metrics Query
 
 ```swift
 // New RPC: GetPerformanceMetrics
@@ -925,44 +858,13 @@ rpc GetPerformanceMetrics(GetPerformanceMetricsRequest) returns (PerformanceMetr
 
 ---
 
-### 9.4 Memory Optimization
+### 9.4 Concurrency Improvements
 
-#### 11. Add Cache Size Limits with LRU
-**Priority:** MEDIUM
-**Expected Impact:** Prevents unbounded memory growth
-**Effort:** 2-3 days
-
----
-
-#### 12. Implement Image Buffer Pooling
-**Priority:** LOW
-**Expected Impact:** Reduced GC pressure
-**Effort:** 2-3 days
-
----
-
-### 9.5 Concurrency Improvements
-
-#### 13. Parallelize Independent AX Queries
-**Priority:** LOW-MEDIUM
-**Expected Impact:** 10-20% speedup for multi-window queries
-**Effort:** 3-4 days
+#### 9. Parallelize Independent AX Queries
 
 ```swift
 // For ListWindows with GetWindowState-style queries:
 // Query each window's state in parallel using Task.detached
-```
-
----
-
-#### 14. Implement Read-Write Lock for Registry
-**Priority:** LOW
-**Expected Impact:** Better concurrency under high read load
-**Effort:** 2-3 days
-
-```swift
-// Replace actor with reader-writer pattern
-// Allow concurrent reads, serialize writes
 ```
 
 ---
@@ -986,7 +888,6 @@ rpc GetPerformanceMetrics(GetPerformanceMetricsRequest) returns (PerformanceMetr
    - AX server impact under load
 
 3. **Window Registry Tests**
-   - Cache hit/miss rate patterns
    - Refresh frequency vs data freshness
    - Multi-process window queries
 
@@ -1032,23 +933,14 @@ for client in 1...50 {
 
 ## 11. Summary
 
-### Immediate Wins (1 week effort)
+### Recommended Improvements
 
 1. ✅ Batch AX attributes in traversal - **70-80% faster traversals**
-2. ✅ Increase window cache TTL to 5s - **80% fewer refreshes**
-3. ✅ Add CGEventSource pooling - **1-2ms per input**
-
-### High-Value Improvements (2-3 weeks)
-
-4. ✅ Implement traversal result cache - **90%+ cache hit for common queries**
-5. ✅ Replace osascript with key mapping - **20-40ms per text operation**
-6. ✅ Implement SCStream pooling - **50-80% faster screenshots**
-
-### Strategic Improvements (1-2 months)
-
-7. ✅ AX notification callbacks - **Eliminate idle polling**
-8. ✅ Performance metrics system - **Production visibility**
-9. ✅ Window watcher - **Incremental updates only**
+2. ✅ Replace osascript with key mapping - **20-40ms per text operation**
+3. ✅ Implement SCStream pooling - **50-80% faster screenshots**
+4. ✅ AX notification callbacks - **Eliminate idle polling**
+5. ✅ Performance metrics system - **Production visibility**
+6. ✅ Window watcher - **Incremental updates only**
 
 ### Expected Overall Impact
 
@@ -1075,7 +967,7 @@ After implementing critical and high-value improvements:
    - Lines 256-285: Attribute extraction (NO batch IPC)
 
 2. `Server/Sources/MacosUseServer/WindowRegistry.swift`
-   - Lines 35-73: Window registry cache with 1s TTL
+   - Lines 35-73: Window registry with eviction
 
 3. `Server/Sources/MacosUseServer/ObservationManager.swift`
    - Lines 162-298: Observation polling loop
@@ -1096,7 +988,7 @@ NO files found for:
 - Metrics collection
 - Performance tracing
 - Latency tracking
-- Cache hit/miss counting
+- Registry usage tracking
 - Alerting thresholds
 
 ---

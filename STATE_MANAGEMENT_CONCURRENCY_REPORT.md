@@ -34,10 +34,10 @@ The server predominantly uses Swift's **actor-based concurrency model**, which p
 | Manager | Responsibility | State Type | Key Operations |
 |---------|---------------|-------------|----------------|
 | **AppStateStore** | Central state container (`ServerState`) | `ServerState` struct (CoW) | Add/remove targets, inputs, snapshots |
-| **WindowRegistry** | Window metadata cache | `[CGWindowID: WindowInfo]` | Refresh, list, invalidate, position-based lookup |
+| **WindowRegistry** | Window metadata storage | `[CGWindowID: WindowInfo]` | Refresh, list, invalidate, position-based lookup |
 | **ObservationManager** | Active observations + streaming | `[String: ObservationState]` | Create/start/stop observations, event streaming |
 | **SessionManager** | Sessions + transactions | `[String: SessionState]` | CRUD sessions, transaction lifecycle |
-| **ElementRegistry** | Element ID mappings | `[String: CachedElement]` | Register/retrieve elements, TTL-based cleanup |
+| **ElementRegistry** | Element ID mappings | `[String: CachedElement]` | Register/retrieve elements, cleanup |
 | **MacroRegistry** | Macro storage | `[String: Macro]` | CRUD macros, execution counting |
 | **AutomationCoordinator** | SDK operations | Singleton | Open apps, traverse, input actions |
 
@@ -340,12 +340,11 @@ private var eventStreams: [String: [UUID: AsyncStream<...>.Continuation]] = [:]
 ### 4.2 Resource Cleanup
 
 **WindowRegistry:**
-- Cache TTL: 1 second
 - Automatic eviction on stale entries
 - Manual invalidation after mutations
 
 **ElementRegistry:**
-- Cache TTL: 30 seconds with background cleanup every 10 seconds
+- Background cleanup every 10 seconds
 - PID-wise cleanup on app quit
 - Manual trigger for testing
 
@@ -424,11 +423,10 @@ extension AXUIElement: @retroactive @unchecked Sendable {}
 - However, AX elements reference window/element state that can change
 
 **Mitigation:**
-- Elements are cached with TTL (30s)
 - State is fetched fresh per operation
-- No assumption about element liveness beyond TTL window
+- No assumption about element liveness beyond cleanup window
 
-**Assessment:** ✅ ACCEPTABLE given TTL and fresh fetch patterns
+**Assessment:** ✅ ACCEPTABLE given fresh fetch patterns
 
 ### 6.2 ProductionSystemOperations: @unchecked Sendable
 
@@ -469,10 +467,10 @@ public func getRunningApplicationBundleID(pid: pid_t) -> String? {
 | Actor | Access Frequency | contention Risk | Mitigation |
 |-------|------------------|----------------|------------|
 | **AppStateStore** | Low (session lifecycle) | None | N/A |
-| **WindowRegistry** | High (list windows on poll) | Medium | Cache with 1s TTL |
+| **WindowRegistry** | High (list windows on poll) | Medium | Window refresh |
 | **ObservationManager** | Medium (observation operations) | Low | Per-observation isolation |
 | **AutomationCoordinator** | High (every RPC) | LOW | `@MainActor` isolation (intentional) |
-| **ElementRegistry** | Medium (traversal results) | Low | 30s TTL + cleanup |
+| **ElementRegistry** | Medium (traversal results) | Low | Cleanup |
 
 ### 7.2 Bottleneck: MainActor
 
@@ -516,12 +514,11 @@ public func handlePerformAction(...) async throws -> ...
 
 **Strengths:**
 - Copy-on-write snapshots are cheap
-- Cached window registry reduces AX calls
 - Observation loops are per-PID, not global
 
 **Potential Limitations:**
 - MainActor serialization limits concurrent automation operations
-- 1s window cache TTL could be stale for high-frequency polling
+- Window refresh on every query could be stale for high-frequency polling
 - Per-observation tasks could accumulate if not cleaned up
 
 **Recommendation:** Monitor for:
@@ -535,7 +532,7 @@ public func handlePerformAction(...) async throws -> ...
 - Swift's ARC prevents leaks
 - Actor isolation prevents concurrent access bugs
 - Structured cleanup on termination
-- TTL mechanisms for large caches
+- Cleanup mechanisms for stored elements
 
 **No obvious leaks detected.**
 
@@ -555,8 +552,6 @@ public func handlePerformAction(...) async throws -> ...
 
 ## 9. Recommendations
 
-### 9.1 HIGH PRIORITY
-
 1. **Document Unsafe Singleton Pattern**
    - Add documentation to `ObservationManager.shared` and `MacroExecutor.shared`
    - Explain why `nonisolated(unsafe)` is safe in this context
@@ -566,8 +561,6 @@ public func handlePerformAction(...) async throws -> ...
    - Implement the suggested atomic continuation cleanup
    - Ensure no events can be published after `finish()` is called
 
-### 9.2 MEDIUM PRIORITY
-
 3. **Add Task Completion Tracking**
    - Implement cleanup handlers for observation tasks
    - Ensure task dict is cleaned even on abnormal termination
@@ -575,14 +568,12 @@ public func handlePerformAction(...) async throws -> ...
 4. **Performance Monitoring**
    - Add prometheus/metrics for MainActor contention
    - Track observation task lifetimes
-   - Monitor cache hit rates for WindowRegistry and ElementRegistry
+   - Monitor refresh rates for WindowRegistry and ElementRegistry
 
 5. **Concurrency Testing**
    - Add stress tests with 100+ concurrent RPCs
    - Test rapid observation create/cancel cycles
    - Verify no deadlocks under contention
-
-### 9.3 LOW PRIORITY
 
 6. **Consider Dependency Injection**
    - Replace singletons with proper DI
@@ -610,7 +601,7 @@ The MacosUseSDK server demonstrates **strong state management and concurrency de
 - Performance monitoring should be added for production deployments
 
 ### Production Readiness: APPROVED WITH MINOR REMEDIATIONS
-With the HIGH PRIORITY fixes addressed, the architecture is suitable for production deployment. The design choices reflect a mature understanding of both Swift concurrency and macOS platform constraints.
+With documented fixes addressed, the architecture is suitable for production deployment. The design choices reflect a mature understanding of both Swift concurrency and macOS platform constraints.
 
 ---
 

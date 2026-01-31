@@ -81,7 +81,7 @@
 
 **Critical Implementation Details:**
 - **Hybrid Data Authority:** GetWindow uses AX-first for geometry/state to return fresh values immediately after mutations
-- **Registry Authority:** ListWindows uses WindowRegistry cache only for performance (no AX queries per window)
+- **Registry Authority:** ListWindows uses WindowRegistry only for performance (no AX queries per window)
 - **Window ID Regeneration:** MoveWindow and ResizeWindow detect and handle CGWindowID regen via bounds matching
 - **AX State Polling:** MinimizeWindow and RestoreWindow poll to verify state propagated (2s timeout)
 
@@ -131,8 +131,7 @@
 3. Consider allowing direct action name passthrough to `AXUIElementPerformAction()` for custom app-specific actions
 4. Remove the `throw RPCError(code: .unimplemented, ...)` fallback, replacing with a direct attempt to perform the action string
 
-**Severity:** LOW/MEDIUM
-- **Production Impact:** Most common element interactions (click, type, right-click for menus) are fully functional
+**Production Impact:** Most common element interactions (click, type, right-click for menus) are fully functional
 - **Gap:** Only affects custom or less-common semantic actions; clients can work around by using coordinate-based input
 
 ---
@@ -342,7 +341,7 @@
    - Consistent use in window bounds and input positions
    - Correct conversions in `ListDisplays`
 
-7. **Hybrid AX/Registry Data Authority:**
+- **Data Authority:**
    - `ListWindows` uses registry-only for performance (<50ms)
    - `GetWindow` uses AX-first for fresh state after mutations
    - Prevents O(N*M) AX query performance pitfall
@@ -381,7 +380,7 @@ default:
 
 ### Recommended Improvements
 
-1. **Expand Element Actions (Medium Priority)**
+1. **Expand Element Actions**
    - Add mappings for additional standard AX actions:
      - `"raise"` → `kAXRaiseAction`
      - `"confirm"` → `kAXConfirmAction` (if available)
@@ -389,24 +388,21 @@ default:
      - `"increment"` → `kAXIncrementAction`
      - `"decrement"` → `kAXDecrementAction`
    - Consider allowing unknown action names to be passed directly to `AXUIElementPerformAction()`
-   - Estimated effort: 2-4 hours
 
-2. **Enhance Scripting Dictionaries (Low Priority)**
+2. **Enhance Scripting Dictionaries**
    - `GetScriptingDictionaries` returns generic placeholder data
    - For production value, implement sdef file parsing to extract:
      - Actual application-specific commands
      - Application-specific classes and properties
-   - Estimated effort: 1-2 days (requires sdef parsing library)
 
-3. **Improve Accessibility Watch Diffing (Low Priority)**
+3. **Improve Accessibility Watch Diffing**
    - `WatchAccessibility` uses naive "everything modified" after first response
    - Implement proper diff algorithm to distinguish between:
      - Added elements (new element IDs)
      - Removed elements (missing element IDs)
      - Modified elements (same ID, different attributes)
-   - Estimated effort: 4-6 hours
 
-4. **Add Comprehensive Logging (Low Priority - Already Partly Done)**
+4. **Add Comprehensive Logging (Already Partly Done)**
    - Most methods already use structured logging via `Logger` with privacy annotations
    - Consider adding request/response logging at DEBUG level for troubleshooting
    - Ensure all diagnostic output uses `Logger` (not `fputs`) per AGENTS.md constraints
