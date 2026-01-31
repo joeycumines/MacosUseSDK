@@ -144,9 +144,9 @@ public actor ElementLocator {
     private func traverseWithPaths(pid: pid_t, visibleOnly: Bool) async throws -> [(
         Macosusesdk_Type_Element, [Int32],
     )] {
-        let sdkResponse = try await MainActor.run {
-            try MacosUseSDK.traverseAccessibilityTree(pid: pid, onlyVisibleElements: visibleOnly)
-        }
+        // AXUIElement operations are thread-safe (CFTypeRef), so no MainActor.run needed.
+        // This allows traversal to run on background threads without blocking the main thread.
+        let sdkResponse = try MacosUseSDK.traverseAccessibilityTree(pid: pid, onlyVisibleElements: visibleOnly)
 
         var elementsWithPaths: [(Macosusesdk_Type_Element, [Int32])] = []
 
