@@ -60,13 +60,13 @@ struct ScriptValidationResult {
 }
 
 /// Utility for executing scripts (AppleScript, JXA, Shell).
+///
+/// Security Note: This executor implements defense-in-depth checks for obviously
+/// dangerous patterns like `rm -rf /` and `sudo`. These checks are not a security
+/// sandbox and can be bypassed by determined users. They serve to prevent accidental
+/// catastrophic operations.
 actor ScriptExecutor {
     static let shared = ScriptExecutor()
-
-    private var compiledScripts: [String: NSAppleScript] = [:]
-    private let scriptQueue = DispatchQueue(
-        label: "com.macosusesdk.scriptexecutor", qos: .userInitiated,
-    )
 
     private init() {}
 
@@ -419,25 +419,21 @@ actor ScriptExecutor {
     }
 
     private func validateAppleScriptSecurity(_ script: String) throws {
-        // Basic security checks for AppleScript
-        // Prevent potentially dangerous operations
-        _ = [
-            "do shell script", // Allow but warn
-            "rm -rf",
-            "sudo",
-            "/etc/passwd",
-            "system events", // Allow but be aware
-        ]
-
         let lowerScript = script.lowercased()
 
         // Check for extremely dangerous patterns
         if lowerScript.contains("rm -rf /") {
-            throw ScriptExecutionError.securityViolation("Dangerous file deletion operation detected")
+            throw ScriptExecutionError.securityViolation(
+                "Recursive deletion of root directory detected ('rm -rf /'). " +
+                    "This operation is blocked for safety. Use a specific path instead.",
+            )
         }
 
         if lowerScript.contains("sudo") {
-            throw ScriptExecutionError.securityViolation("Privilege escalation not allowed")
+            throw ScriptExecutionError.securityViolation(
+                "Privilege escalation via 'sudo' is not allowed. " +
+                    "Scripts run with the permissions of the current user.",
+            )
         }
 
         // Note: "do shell script" is common in AppleScript, so we allow it
@@ -445,15 +441,20 @@ actor ScriptExecutor {
     }
 
     private func validateJavaScriptSecurity(_ script: String) throws {
-        // Basic security checks for JXA
         let lowerScript = script.lowercased()
 
         if lowerScript.contains("sudo") {
-            throw ScriptExecutionError.securityViolation("Privilege escalation not allowed")
+            throw ScriptExecutionError.securityViolation(
+                "Privilege escalation via 'sudo' is not allowed in JXA scripts. " +
+                    "Scripts run with the permissions of the current user.",
+            )
         }
 
         if lowerScript.contains("rm -rf /") {
-            throw ScriptExecutionError.securityViolation("Dangerous file deletion operation detected")
+            throw ScriptExecutionError.securityViolation(
+                "Recursive deletion of root directory detected ('rm -rf /'). " +
+                    "This operation is blocked for safety. Use a specific path instead.",
+            )
         }
     }
 
@@ -462,17 +463,19 @@ actor ScriptExecutor {
 
         // Check for dangerous commands
         if lowerCommand.contains("rm -rf /") {
-            throw ScriptExecutionError.securityViolation("Dangerous file deletion operation detected")
+            throw ScriptExecutionError.securityViolation(
+                "Recursive deletion of root directory detected ('rm -rf /'). " +
+                    "This operation is blocked for safety. Use a specific path instead.",
+            )
         }
 
-        if lowerCommand.hasPrefix("sudo") || args.contains(where: { $0.lowercased() == "sudo" }) {
-            throw ScriptExecutionError.securityViolation("Privilege escalation not allowed")
-        }
-
-        // Check for command injection patterns
-        if command.contains(";") || command.contains("&&") || command.contains("||") {
-            // Allow but be aware - these are common in legitimate shell commands
-            // In production, might want more sophisticated parsing
+        // Check for sudo in command or args - use contains() to catch command chains
+        // e.g., "echo test && sudo rm foo"
+        if lowerCommand.contains("sudo") || args.contains(where: { $0.lowercased() == "sudo" }) {
+            throw ScriptExecutionError.securityViolation(
+                "Privilege escalation via 'sudo' is not allowed. " +
+                    "Shell commands run with the permissions of the current user.",
+            )
         }
     }
 
