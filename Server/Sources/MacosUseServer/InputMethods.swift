@@ -10,28 +10,15 @@ import SwiftProtobuf
 
 extension MacosUseService {
     /// Encode an offset into an opaque page token per AIP-158.
-    /// The token is base64-encoded to prevent clients from relying on its structure.
+    /// Delegates to ParsingHelpers for the canonical implementation.
     func encodePageToken(offset: Int) -> String {
-        let tokenString = "offset:\(offset)"
-        return Data(tokenString.utf8).base64EncodedString()
+        ParsingHelpers.encodePageToken(offset: offset)
     }
 
     /// Decode an opaque page token to retrieve the offset per AIP-158.
-    /// Throws invalidArgument if the token is malformed.
+    /// Delegates to ParsingHelpers for the canonical implementation.
     func decodePageToken(_ token: String) throws -> Int {
-        guard let data = Data(base64Encoded: token),
-              let tokenString = String(data: data, encoding: .utf8)
-        else {
-            throw RPCError(code: .invalidArgument, message: "Invalid page_token format")
-        }
-
-        let components = tokenString.split(separator: ":")
-        guard components.count == 2, components[0] == "offset",
-              let parsedOffset = Int(components[1]), parsedOffset >= 0
-        else {
-            throw RPCError(code: .invalidArgument, message: "Invalid page_token format")
-        }
-        return parsedOffset
+        try ParsingHelpers.decodePageToken(token)
     }
 
     func createInput(request: ServerRequest<Macosusesdk_V1_CreateInputRequest>, context _: ServerContext)
