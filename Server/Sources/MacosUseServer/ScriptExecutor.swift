@@ -496,7 +496,9 @@ actor ScriptExecutor {
             }
 
             // Return first result (either operation or timeout)
-            let result = try await group.next()!
+            guard let result = try await group.next() else {
+                throw ScriptExecutionError.executionFailed("Task group was cancelled before completion")
+            }
             group.cancelAll()
             return result
         }

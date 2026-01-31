@@ -167,7 +167,23 @@ func TestClipboardPasteIntoTextEdit(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to activate TextEdit: %v", err)
 	}
-	time.Sleep(200 * time.Millisecond) // Allow activation to complete
+
+	// Poll until TextEdit is frontmost (avoids time.Sleep)
+	activationCtx, cancelActivation := context.WithTimeout(ctx, 2*time.Second)
+	defer cancelActivation()
+	err = PollUntilContext(activationCtx, 50*time.Millisecond, func() (bool, error) {
+		resp, err := client.ExecuteAppleScript(ctx, &pb.ExecuteAppleScriptRequest{
+			Script: `tell application "System Events" to return name of first application process whose frontmost is true`,
+		})
+		if err != nil {
+			return false, nil // Retry
+		}
+		// Result should be "TextEdit"
+		return resp.GetOutput() == "TextEdit", nil
+	})
+	if err != nil {
+		t.Logf("Warning: could not confirm TextEdit is frontmost: %v (proceeding anyway)", err)
+	}
 
 	// Press Cmd+A to select all (selects the placeholder text so paste will replace it)
 	selectAllInput, err := client.CreateInput(ctx, &pb.CreateInputRequest{

@@ -368,7 +368,10 @@ actor SessionManager {
 
             // Remove expired sessions
             for (name, _) in expiredSessions {
-                var state = sessions[name]!
+                guard var state = sessions[name] else {
+                    // Already removed by another operation
+                    continue
+                }
                 state.session.state = .expired
                 sessions[name] = state
 
