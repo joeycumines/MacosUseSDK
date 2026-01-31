@@ -338,14 +338,18 @@ func TestWindowChangeObservation(t *testing.T) {
 
 	// 7. Test Case 2: Window Move
 	// Calculate target position that is different from initial
-	targetX := float64(100)
-	targetY := float64(100)
-	// Ensure they're different from initial
+	// CRITICAL: Use highly unique positions to avoid collision with TextEdit phantom windows
+	// that may exist in the observation baseline. TextEdit creates many transient windows
+	// during startup at various common positions (100,100), (150,150), (181,103), etc.
+	// Using very distinctive coordinates minimizes collision risk.
+	targetX := float64(567)
+	targetY := float64(234)
+	// Ensure they're actually different from current window position
 	if initialBounds.X == targetX {
-		targetX = 50
+		targetX = 678
 	}
 	if initialBounds.Y == targetY {
-		targetY = 50
+		targetY = 345
 	}
 
 	t.Logf("Test 2: Moving window to (%.0f, %.0f)...", targetX, targetY)
@@ -401,7 +405,7 @@ func TestWindowChangeObservation(t *testing.T) {
 
 	// After ID regeneration, rediscover the current window
 	// The observation detected a DESTROYED event, so we need to find the window again
-	// Look for a window near the target position (100, 100) since that's where we moved it
+	// Look for a window near the target position (567, 234) since that's where we moved it
 	var refreshedWindow *pb.Window
 	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
 		listResp, err := client.ListWindows(ctx, &pb.ListWindowsRequest{
