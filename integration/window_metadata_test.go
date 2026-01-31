@@ -252,8 +252,5 @@ func TestWindowMetadataPreservation(t *testing.T) {
 	// The MoveWindow test above validates that metadata preservation works correctly
 	// for single mutation operations, which covers the critical use case.
 	t.Log("Skipping ResizeWindow/MinimizeWindow/RestoreWindow tests due to window ID regeneration race condition")
-	t.Log("Test completed successfully - MoveWindow metadata preservation verified")
-
-	// Use currentWindowName to avoid unused variable error
-	_ = currentWindowName
+	t.Logf("Test completed successfully - MoveWindow metadata preservation verified (final window: %s)", currentWindowName)
 }

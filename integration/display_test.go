@@ -53,6 +53,15 @@ func TestListDisplays(t *testing.T) {
 				t.Fatalf("display %d visible frame position outside frame bounds: visible=(%v,%v) frame=(%v,%v)",
 					d.GetDisplayId(), vf.GetX(), vf.GetY(), d.GetFrame().GetX(), d.GetFrame().GetY())
 			}
+			// Validate bottom-right corner is within frame bounds
+			vfRight := vf.GetX() + vf.GetWidth()
+			vfBottom := vf.GetY() + vf.GetHeight()
+			frameRight := d.GetFrame().GetX() + d.GetFrame().GetWidth()
+			frameBottom := d.GetFrame().GetY() + d.GetFrame().GetHeight()
+			if vfRight > frameRight || vfBottom > frameBottom {
+				t.Fatalf("display %d visible frame extends beyond frame: visible bottom-right=(%v,%v) frame bottom-right=(%v,%v)",
+					d.GetDisplayId(), vfRight, vfBottom, frameRight, frameBottom)
+			}
 		}
 	}
 }
