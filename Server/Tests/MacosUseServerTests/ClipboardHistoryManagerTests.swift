@@ -25,7 +25,7 @@ final class ClipboardHistoryManagerTests: XCTestCase {
     // MARK: - ClipboardHistoryManager Tests
 
     func testAddEntry_addsToHistory() async {
-        let manager = await ClipboardHistoryManager.shared
+        let manager = ClipboardHistoryManager.shared
 
         // Create content and add entry
         var content = Macosusesdk_V1_ClipboardContent()
@@ -39,7 +39,7 @@ final class ClipboardHistoryManagerTests: XCTestCase {
     }
 
     func testAddEntry_mostRecentFirst() async {
-        let manager = await ClipboardHistoryManager.shared
+        let manager = ClipboardHistoryManager.shared
 
         // Add first entry
         var content1 = Macosusesdk_V1_ClipboardContent()
@@ -63,7 +63,7 @@ final class ClipboardHistoryManagerTests: XCTestCase {
     }
 
     func testAddEntry_setCopiedTime() async {
-        let manager = await ClipboardHistoryManager.shared
+        let manager = ClipboardHistoryManager.shared
 
         let beforeAdd = Date()
 
@@ -84,7 +84,7 @@ final class ClipboardHistoryManagerTests: XCTestCase {
     }
 
     func testAddEntry_setsSourceApplication() async {
-        let manager = await ClipboardHistoryManager.shared
+        let manager = ClipboardHistoryManager.shared
 
         var content = Macosusesdk_V1_ClipboardContent()
         content.type = .text
@@ -100,7 +100,7 @@ final class ClipboardHistoryManagerTests: XCTestCase {
     }
 
     func testGetHistory_emptyByDefault() async {
-        let manager = await ClipboardHistoryManager.shared
+        let manager = ClipboardHistoryManager.shared
 
         let history = await manager.getHistory()
 
@@ -109,7 +109,7 @@ final class ClipboardHistoryManagerTests: XCTestCase {
     }
 
     func testAddEntry_limitEnforcedAtMaxEntries() async {
-        let manager = await ClipboardHistoryManager.shared
+        let manager = ClipboardHistoryManager.shared
         let maxEntries = await manager._maxEntries
 
         // Add entries up to max + 10
@@ -134,7 +134,7 @@ final class ClipboardHistoryManagerTests: XCTestCase {
     }
 
     func testAddEntry_differentContentTypes() async {
-        let manager = await ClipboardHistoryManager.shared
+        let manager = ClipboardHistoryManager.shared
 
         // Add text
         var textContent = Macosusesdk_V1_ClipboardContent()
