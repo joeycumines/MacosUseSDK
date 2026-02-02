@@ -8,10 +8,7 @@ import MacosUseSDK
 import OSLog
 import SwiftProtobuf
 
-// swiftlint:disable conditional_assignment
-// Notes: conditional_assignment is intentionally disabled here because we assign
-// several related properties of the Display proto using expression-style logic
-// to keep the conversion localized and clear.
+// swiftlint:disable:next conditional_assignment
 
 extension MacosUseService {
     func listDisplays(
