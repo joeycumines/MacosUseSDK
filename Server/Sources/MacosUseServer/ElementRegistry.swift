@@ -32,9 +32,6 @@ public actor ElementRegistry {
     /// ID generator function for testing
     private let idGenerator: @Sendable () -> String
 
-    /// Whether to start the background cleanup task
-    private let startCleanupOnInit: Bool
-
     private init() {
         cacheExpiration = 30.0
         clock = { Date() }
@@ -43,7 +40,6 @@ public actor ElementRegistry {
             let random = Int.random(in: 0 ..< 1_000_000)
             return "elem_\(timestamp)_\(random)"
         }
-        startCleanupOnInit = true
         logger.info("Initialized")
 
         // Start cleanup task
@@ -67,7 +63,6 @@ public actor ElementRegistry {
         self.cacheExpiration = cacheExpiration
         self.clock = clock
         self.idGenerator = idGenerator
-        startCleanupOnInit = startCleanup
 
         if startCleanup {
             Task {
