@@ -6,12 +6,7 @@
   },
   "global_alerts": [
     {
-      "priority": "CRITICAL",
-      "warning": "ON TOOLS: Use `config.mk` to create custom targets to run with Make. ALWAYS use custom targets that *limit* the amount of output you receive. For example, piping through tail, with FEW lines output. Prior to tail, pipe to tee. The file ./build.log in the root of the project is gitignored, so use that. That way you can *search* the output. To be clear, timing dependent tests are BANNED. As are those that take too long to run. Testing retries, for example, MUST be done in a way that supports avoiding running afoul of those CRITICAL rules. Abide. OBEY."
-    },
-    {
-      "priority": "CRITICAL_REPEATED",
-      "warning": "ON TOOLS: Use `config.mk` to create custom targets to run with Make. ALWAYS use custom targets that *limit* the amount of output you receive. Prior to tail, pipe to tee. The file ./build.log in the root of the project is gitignored, so use that. That way you can *search* the output. To be clear, timing dependent tests are BANNED. As are those that take too long to run. Testing retries, for example, MUST be done in a way that supports avoiding running afoul of those CRITICAL rules. Abide. OBEY."
+      "context": "ON TOOLS: Use `config.mk` to create custom targets to run with Make. ALWAYS use custom targets that *limit* the amount of output you receive. For example, piping through tail, with FEW lines output. Prior to tail, pipe to tee. The file ./build.log in the root of the project is gitignored, so use that. That way you can *search* the output. To be clear, timing dependent tests are BANNED. As are those that take too long to run. Testing retries, for example, MUST be done in a way that supports avoiding running afoul of those CRITICAL rules. Abide. OBEY."
     }
   ],
   "mandatory_directives": {
@@ -20,82 +15,170 @@
     "execution_hours": "18",
     "execution_start_file": "./.work-session-start.txt"
   },
-  "project_title": "Implementation Plan: MacosUseSDK gRPC Service",
+  "project_title": "Implementation Plan: MacosUseSDK gRPC Service - MCP Tool Completion",
   "status_section": {
     "label": "STATUS SECTION (ACTION-FOCUSED)",
-    "current_state": "MCP tool core infrastructure complete. Build passes. Working on MCP tool tests and accessibility traversal.",
+    "current_state": "MCP tool has 5/34 tools implemented. Critical gap analysis complete in docs/07-mcp-review.md. Executing P0 tasks.",
     "tasks": [
       {
-        "id": "D-1",
-        "description": "Fix display.proto - Add google.api.resource annotation to Display message",
-        "status": "completed",
-        "priority": "CRITICAL"
+        "id": "MCP-P0-1",
+        "description": "Implement capture_screenshot MCP tool with max_width/max_height scaling",
+        "status": "pending"
       },
       {
-        "id": "D-2",
-        "description": "Run Google API linter (api-linter) and ensure passing",
-        "status": "completed",
-        "priority": "CRITICAL"
+        "id": "MCP-P0-2",
+        "description": "Implement click MCP tool for coordinate-based clicking (left/right/double/triple)",
+        "status": "pending"
       },
       {
-        "id": "D-3",
-        "description": "Regenerate Go code from protos using make targets",
-        "status": "completed",
-        "priority": "CRITICAL"
+        "id": "MCP-P0-3",
+        "description": "Implement type_text MCP tool wrapping CreateInput with TextInput",
+        "status": "pending"
       },
       {
-        "id": "D-4",
-        "description": "Run ALL checks to ensure they ALL pass correctly",
-        "status": "completed",
-        "priority": "CRITICAL"
+        "id": "MCP-P0-4",
+        "description": "Implement press_key MCP tool wrapping CreateInput with KeyPress",
+        "status": "pending"
       },
       {
-        "id": "D-5",
-        "description": "Run buf lint and ensure clean",
-        "status": "completed",
-        "priority": "CRITICAL"
+        "id": "MCP-P1-1",
+        "description": "Implement is_error soft failure pattern in all tool handlers",
+        "status": "pending"
       },
       {
-        "id": "D-6",
-        "description": "Implement DisplayMethods.getDisplay in Swift server",
-        "status": "completed",
-        "priority": "CRITICAL"
+        "id": "MCP-P1-2",
+        "description": "Add display grounding (display_width_px, display_height_px) to initialize response",
+        "status": "pending"
       },
       {
-        "id": "M-1",
-        "description": "Design MCP tool for standard output integration with Go SDK API",
-        "status": "completed",
-        "priority": "CRITICAL"
+        "id": "MCP-P1-3",
+        "description": "Implement mouse_move MCP tool",
+        "status": "pending"
       },
       {
-        "id": "M-2",
-        "description": "Implement MCP tool Go code (cmd/mcp-tool, internal/server, internal/transport)",
-        "status": "completed",
-        "priority": "CRITICAL"
+        "id": "MCP-P1-4",
+        "description": "Implement scroll MCP tool",
+        "status": "pending"
       },
       {
-        "id": "M-3",
-        "description": "Write tests for MCP tool integration",
-        "status": "in-progress",
-        "priority": "CRITICAL"
+        "id": "MCP-P1-5",
+        "description": "Implement drag MCP tool",
+        "status": "pending"
       },
       {
-        "id": "M-4",
-        "description": "Add additional MCP tool handlers (click, type_text, etc.)",
-        "status": "pending",
-        "priority": "MEDIUM"
+        "id": "MCP-P2-1",
+        "description": "Implement open_application MCP tool",
+        "status": "pending"
       },
       {
-        "id": "T-1",
-        "description": "Fix accessibility traversal implementation issues from docs/04",
-        "status": "pending",
-        "priority": "CRITICAL"
+        "id": "MCP-P2-2",
+        "description": "Implement focus_window MCP tool",
+        "status": "pending"
+      },
+      {
+        "id": "MCP-P2-3",
+        "description": "Implement write_clipboard MCP tool",
+        "status": "pending"
+      },
+      {
+        "id": "MCP-P2-4",
+        "description": "Implement clear_clipboard MCP tool",
+        "status": "pending"
+      },
+      {
+        "id": "MCP-P2-5",
+        "description": "Implement get_application, list_applications, delete_application MCP tools",
+        "status": "pending"
+      },
+      {
+        "id": "MCP-P2-6",
+        "description": "Implement get_window, move_window, resize_window, minimize_window, restore_window, close_window MCP tools",
+        "status": "pending"
+      },
+      {
+        "id": "MCP-P2-7",
+        "description": "Implement click_element, write_element_value, perform_element_action MCP tools",
+        "status": "pending"
+      },
+      {
+        "id": "MCP-P2-8",
+        "description": "Implement capture_window_screenshot, capture_element_screenshot, capture_region_screenshot MCP tools",
+        "status": "pending"
+      },
+      {
+        "id": "MCP-P2-9",
+        "description": "Implement observation MCP tools (create, get, list, cancel)",
+        "status": "pending"
+      },
+      {
+        "id": "MCP-P2-10",
+        "description": "Implement scripting MCP tools (execute_apple_script, execute_javascript, execute_shell_command, validate_script)",
+        "status": "pending"
+      },
+      {
+        "id": "MCP-P2-11",
+        "description": "Implement session MCP tools (create, get, list, delete)",
+        "status": "pending"
+      },
+      {
+        "id": "MCP-P2-12",
+        "description": "Implement macro MCP tools (create, get, list, execute)",
+        "status": "pending"
+      },
+      {
+        "id": "MCP-P3-1",
+        "description": "Fix get_display schema bug (display_id vs name mismatch)",
+        "status": "pending"
+      },
+      {
+        "id": "MCP-P3-2",
+        "description": "Add required arrays to all tool schemas",
+        "status": "pending"
+      },
+      {
+        "id": "MCP-P3-3",
+        "description": "Add proper ElementSelector nested schema",
+        "status": "pending"
+      },
+      {
+        "id": "MCP-P3-4",
+        "description": "Implement shutdown and exit MCP methods",
+        "status": "pending"
+      },
+      {
+        "id": "MCP-P3-5",
+        "description": "Send notifications/initialized after initialize",
+        "status": "pending"
+      },
+      {
+        "id": "MCP-P3-6",
+        "description": "Populate capabilities object in initialize response",
+        "status": "pending"
+      },
+      {
+        "id": "MCP-TEST-1",
+        "description": "Write unit tests for all P0 MCP tools",
+        "status": "pending"
+      },
+      {
+        "id": "MCP-TEST-2",
+        "description": "Write integration tests for screenshot flow",
+        "status": "pending"
+      },
+      {
+        "id": "MCP-TEST-3",
+        "description": "Write integration tests for input flow (click, type, key)",
+        "status": "pending"
+      },
+      {
+        "id": "MCP-DOC-1",
+        "description": "Update docs/06-mcp-tool-design.md to reflect actual implementation",
+        "status": "pending"
       },
       {
         "id": "V-1",
-        "description": "Two consecutive VERIFIED subagent runs for all critical paths",
-        "status": "pending",
-        "priority": "CRITICAL"
+        "description": "Run make-all-with-log and verify all tests pass",
+        "status": "pending"
       }
     ]
   },
