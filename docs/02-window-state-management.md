@@ -271,7 +271,7 @@ flowchart TD
 
 ### 6.4 Window ID Regeneration After Mutations
 
-**Critical macOS Behavior:** After certain window mutations (Move, Resize, Minimize, Restore), the `CGWindowID` can regenerate asynchronously. This is an undocumented but reproducible macOS behavior where the Window Server may assign a new ID to the same logical window.
+**Critical macOS Behavior:** After certain window mutations, the `CGWindowID` may appear to change. This is frequently observed in non-native applications (e.g., Electron) or when Accessibility references become stale. To handle this instability, we treat the Window ID as ephemeral.
 
 **Symptoms:**
 - A `MoveWindow` RPC succeeds, but the old window ID becomes invalid.
