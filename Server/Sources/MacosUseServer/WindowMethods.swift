@@ -208,12 +208,6 @@ extension MacosUseService {
         let registryInfo = await windowRegistry.getLastKnownWindow(windowId)
 
         // Check if window ID changed by looking for the window at the new position
-        let expectedBounds = CGRect(
-            x: req.x,
-            y: req.y,
-            width: registryInfo?.bounds.width ?? 0,
-            height: registryInfo?.bounds.height ?? 0,
-        )
         let movedWindowInfo = await windowRegistry.findWindowByPosition(pid: pid, x: req.x, y: req.y)
 
         // Note: We do NOT try to re-acquire the AXUIElement even if the ID changed.

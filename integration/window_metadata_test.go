@@ -54,15 +54,6 @@ func rediscoverWindowAfterMutation(
 
 // TestWindowMetadataPreservation verifies that window metadata (bundleID, zIndex, visible)
 // is correctly preserved and updated in responses after window mutation operations.
-//
-// Test Flow:
-// 1. Open TextEdit
-// 2. Get initial window with bundleID, zIndex, visible
-// 3. Call MoveWindow and verify response contains correct bundleID, zIndex, visible (not empty/zero/false)
-// 4. Call ResizeWindow and verify response contains correct bundleID, zIndex, visible
-// 5. Call MinimizeWindow and verify visible becomes false
-// 6. Call RestoreWindow and verify visible becomes true
-// 7. Cleanup by deleting application
 func TestWindowMetadataPreservation(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
@@ -247,7 +238,6 @@ func TestWindowMetadataPreservation(t *testing.T) {
 	// (especially in rapid succession), the CGWindowID can regenerate asynchronously,
 	// causing the window to be temporarily unfindable. This is a fundamental macOS
 	// behavior that requires more sophisticated window tracking to handle reliably.
-	// See: https://github.com/joeycumines/MacosUseSDK/issues/TBD
 	//
 	// The MoveWindow test above validates that metadata preservation works correctly
 	// for single mutation operations, which covers the critical use case.

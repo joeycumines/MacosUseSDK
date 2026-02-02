@@ -165,7 +165,7 @@ extension MacosUseService {
 
             if let match { return match }
 
-            // On non-final attempt, wait before retry (25ms, 50ms, 100ms exponential backoff)
+            // On non-final attempt, wait before retry
             if attempt < maxRetries - 1 {
                 let delay = baseDelayNanoseconds * UInt64(1 << attempt)
                 try? await Task.sleep(nanoseconds: delay)
