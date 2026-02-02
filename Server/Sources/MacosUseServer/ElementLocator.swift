@@ -150,7 +150,7 @@ public actor ElementLocator {
 
         var elementsWithPaths: [(Macosusesdk_Type_Element, [Int32])] = []
 
-        for (_, elementData) in sdkResponse.elements.enumerated() {
+        for elementData in sdkResponse.elements {
             let protoElement = Macosusesdk_Type_Element.with {
                 $0.role = elementData.role
                 if let text = elementData.text { $0.text = text }

@@ -71,6 +71,7 @@ const (
 	MacosUse_CaptureElementScreenshot_FullMethodName = "/macosusesdk.v1.MacosUse/CaptureElementScreenshot"
 	MacosUse_CaptureRegionScreenshot_FullMethodName  = "/macosusesdk.v1.MacosUse/CaptureRegionScreenshot"
 	MacosUse_ListDisplays_FullMethodName             = "/macosusesdk.v1.MacosUse/ListDisplays"
+	MacosUse_GetDisplay_FullMethodName               = "/macosusesdk.v1.MacosUse/GetDisplay"
 	MacosUse_GetClipboard_FullMethodName             = "/macosusesdk.v1.MacosUse/GetClipboard"
 	MacosUse_WriteClipboard_FullMethodName           = "/macosusesdk.v1.MacosUse/WriteClipboard"
 	MacosUse_ClearClipboard_FullMethodName           = "/macosusesdk.v1.MacosUse/ClearClipboard"
@@ -189,6 +190,8 @@ type MacosUseClient interface {
 	CaptureRegionScreenshot(ctx context.Context, in *CaptureRegionScreenshotRequest, opts ...grpc.CallOption) (*CaptureRegionScreenshotResponse, error)
 	// Lists displays attached to the system.
 	ListDisplays(ctx context.Context, in *ListDisplaysRequest, opts ...grpc.CallOption) (*ListDisplaysResponse, error)
+	// Gets a specific display.
+	GetDisplay(ctx context.Context, in *GetDisplayRequest, opts ...grpc.CallOption) (*Display, error)
 	// Gets clipboard contents.
 	GetClipboard(ctx context.Context, in *GetClipboardRequest, opts ...grpc.CallOption) (*Clipboard, error)
 	// Writes clipboard contents.
@@ -707,6 +710,16 @@ func (c *macosUseClient) ListDisplays(ctx context.Context, in *ListDisplaysReque
 	return out, nil
 }
 
+func (c *macosUseClient) GetDisplay(ctx context.Context, in *GetDisplayRequest, opts ...grpc.CallOption) (*Display, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Display)
+	err := c.cc.Invoke(ctx, MacosUse_GetDisplay_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *macosUseClient) GetClipboard(ctx context.Context, in *GetClipboardRequest, opts ...grpc.CallOption) (*Clipboard, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Clipboard)
@@ -1003,6 +1016,8 @@ type MacosUseServer interface {
 	CaptureRegionScreenshot(context.Context, *CaptureRegionScreenshotRequest) (*CaptureRegionScreenshotResponse, error)
 	// Lists displays attached to the system.
 	ListDisplays(context.Context, *ListDisplaysRequest) (*ListDisplaysResponse, error)
+	// Gets a specific display.
+	GetDisplay(context.Context, *GetDisplayRequest) (*Display, error)
 	// Gets clipboard contents.
 	GetClipboard(context.Context, *GetClipboardRequest) (*Clipboard, error)
 	// Writes clipboard contents.
@@ -1187,6 +1202,9 @@ func (UnimplementedMacosUseServer) CaptureRegionScreenshot(context.Context, *Cap
 }
 func (UnimplementedMacosUseServer) ListDisplays(context.Context, *ListDisplaysRequest) (*ListDisplaysResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListDisplays not implemented")
+}
+func (UnimplementedMacosUseServer) GetDisplay(context.Context, *GetDisplayRequest) (*Display, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetDisplay not implemented")
 }
 func (UnimplementedMacosUseServer) GetClipboard(context.Context, *GetClipboardRequest) (*Clipboard, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetClipboard not implemented")
@@ -2065,6 +2083,24 @@ func _MacosUse_ListDisplays_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MacosUse_GetDisplay_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDisplayRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MacosUseServer).GetDisplay(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MacosUse_GetDisplay_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MacosUseServer).GetDisplay(ctx, req.(*GetDisplayRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _MacosUse_GetClipboard_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetClipboardRequest)
 	if err := dec(in); err != nil {
@@ -2603,6 +2639,10 @@ var MacosUse_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListDisplays",
 			Handler:    _MacosUse_ListDisplays_Handler,
+		},
+		{
+			MethodName: "GetDisplay",
+			Handler:    _MacosUse_GetDisplay_Handler,
 		},
 		{
 			MethodName: "GetClipboard",

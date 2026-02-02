@@ -10,18 +10,81 @@
     },
     {
       "priority": "CRITICAL_REPEATED",
-      "warning": "ON TOOLS: Use `config.mk` to create custom targets to run with Make. ALWAYS use custom targets that *limit* the amount of output you receive. For example, piping through tail, with FEW lines output. Prior to tail, pipe to tee. The file ./build.log in the root of the project is gitignored, so use that. That way you can *search* the output. To be clear, timing dependent tests are BANNED. As are those that take too long to run. Testing retries, for example, MUST be done in a way that supports avoiding running afoul of those CRITICAL rules. Abide. OBEY."
+      "warning": "ON TOOLS: Use `config.mk` to create custom targets to run with Make. ALWAYS use custom targets that *limit* the amount of output you receive. Prior to tail, pipe to tee. The file ./build.log in the root of the project is gitignored, so use that. That way you can *search* the output. To be clear, timing dependent tests are BANNED. As are those that take too long to run. Testing retries, for example, MUST be done in a way that supports avoiding running afoul of those CRITICAL rules. Abide. OBEY."
     }
   ],
   "mandatory_directives": {
     "subagent_policy": "!! MANDATORY OPERATIONAL DIRECTIVE !!",
-    "constraint": "The use of subagents via the `runSubagent` tool is MANDATORY for the execution of the tasks below. Tasks are grouped specifically to be run in distinct subagent contexts to prevent context window exhaustion. Do not attempt to solve all groups in a single turn."
+    "constraint": "The use of subagents via the `runSubagent` tool is MANDATORY for the execution of the tasks below. Tasks are grouped specifically to be run in distinct subagent contexts to prevent context window exhaustion. Do not attempt to solve all groups in a single turn.",
+    "execution_hours": "18",
+    "execution_start_file": "./.work-session-start.txt"
   },
   "project_title": "Implementation Plan: MacosUseSDK gRPC Service",
   "status_section": {
     "label": "STATUS SECTION (ACTION-FOCUSED)",
-    "current_state": "Pending Phase 4 execution",
-    "update_instruction": "To provide an update, return to this 'status_section' object and modify the 'current_state'."
+    "current_state": "M-1 (MCP design) complete. M-2 and M-3 in progress. V-1 verification pending.",
+    "tasks": [
+      {
+        "id": "D-1",
+        "description": "Fix display.proto - Add google.api.resource annotation to Display message",
+        "status": "completed",
+        "priority": "CRITICAL"
+      },
+      {
+        "id": "D-2",
+        "description": "Run Google API linter (api-linter) and ensure passing",
+        "status": "completed",
+        "priority": "CRITICAL"
+      },
+      {
+        "id": "D-3",
+        "description": "Regenerate Go code from protos using make targets",
+        "status": "completed",
+        "priority": "CRITICAL"
+      },
+      {
+        "id": "D-4",
+        "description": "Run ALL checks to ensure they ALL pass correctly",
+        "status": "pending",
+        "priority": "CRITICAL"
+      },
+      {
+        "id": "D-5",
+        "description": "Run buf lint and ensure clean",
+        "status": "pending",
+        "priority": "CRITICAL"
+      },
+      {
+        "id": "M-1",
+        "description": "Design MCP tool for standard output integration with Go SDK API",
+        "status": "pending",
+        "priority": "CRITICAL"
+      },
+      {
+        "id": "M-2",
+        "description": "Implement MCP tool Go code",
+        "status": "pending",
+        "priority": "CRITICAL"
+      },
+      {
+        "id": "M-3",
+        "description": "Write tests for MCP tool integration",
+        "status": "pending",
+        "priority": "CRITICAL"
+      },
+      {
+        "id": "T-1",
+        "description": "Fix accessibility traversal implementation issues from docs/04",
+        "status": "pending",
+        "priority": "CRITICAL"
+      },
+      {
+        "id": "V-1",
+        "description": "Two consecutive VERIFIED subagent runs for all critical paths",
+        "status": "pending",
+        "priority": "CRITICAL"
+      }
+    ]
   },
   "implementation_phases": [
     {

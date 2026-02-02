@@ -27,19 +27,21 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// A physical display/screen attached to the system.
+// A resource representing a physical display/screen attached to the system.
 type Display struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// Resource name in the format "displays/{display}" where {display} is the display ID.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// Display ID (CGDirectDisplayID). Treated as opaque by clients.
-	DisplayId int64 `protobuf:"varint,1,opt,name=display_id,json=displayId,proto3" json:"display_id,omitempty"`
+	DisplayId int64 `protobuf:"varint,2,opt,name=display_id,json=displayId,proto3" json:"display_id,omitempty"`
 	// Display frame in Global Display Coordinates (top-left origin).
-	Frame *_type.Region `protobuf:"bytes,2,opt,name=frame,proto3" json:"frame,omitempty"`
+	Frame *_type.Region `protobuf:"bytes,3,opt,name=frame,proto3" json:"frame,omitempty"`
 	// Visible frame (excluding menu bar and dock) in Global Display Coordinates (top-left origin).
-	VisibleFrame *_type.Region `protobuf:"bytes,3,opt,name=visible_frame,json=visibleFrame,proto3" json:"visible_frame,omitempty"`
+	VisibleFrame *_type.Region `protobuf:"bytes,4,opt,name=visible_frame,json=visibleFrame,proto3" json:"visible_frame,omitempty"`
 	// True if this is the main (primary) display.
-	IsMain bool `protobuf:"varint,4,opt,name=is_main,json=isMain,proto3" json:"is_main,omitempty"`
+	IsMain bool `protobuf:"varint,5,opt,name=is_main,json=isMain,proto3" json:"is_main,omitempty"`
 	// Scale factor (backingScaleFactor). For Retina displays this is typically 2.0.
-	Scale         float64 `protobuf:"fixed64,5,opt,name=scale,proto3" json:"scale,omitempty"`
+	Scale         float64 `protobuf:"fixed64,6,opt,name=scale,proto3" json:"scale,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -72,6 +74,13 @@ func (x *Display) ProtoReflect() protoreflect.Message {
 // Deprecated: Use Display.ProtoReflect.Descriptor instead.
 func (*Display) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_display_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *Display) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
 }
 
 func (x *Display) GetDisplayId() int64 {
@@ -165,6 +174,52 @@ func (x *ListDisplaysRequest) GetPageToken() string {
 	return ""
 }
 
+// Request to get a specific display.
+type GetDisplayRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Resource name of the display.
+	Name          string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetDisplayRequest) Reset() {
+	*x = GetDisplayRequest{}
+	mi := &file_macosusesdk_v1_display_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetDisplayRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetDisplayRequest) ProtoMessage() {}
+
+func (x *GetDisplayRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_macosusesdk_v1_display_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetDisplayRequest.ProtoReflect.Descriptor instead.
+func (*GetDisplayRequest) Descriptor() ([]byte, []int) {
+	return file_macosusesdk_v1_display_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *GetDisplayRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
 // Response from listing displays.
 type ListDisplaysResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -179,7 +234,7 @@ type ListDisplaysResponse struct {
 
 func (x *ListDisplaysResponse) Reset() {
 	*x = ListDisplaysResponse{}
-	mi := &file_macosusesdk_v1_display_proto_msgTypes[2]
+	mi := &file_macosusesdk_v1_display_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -191,7 +246,7 @@ func (x *ListDisplaysResponse) String() string {
 func (*ListDisplaysResponse) ProtoMessage() {}
 
 func (x *ListDisplaysResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_display_proto_msgTypes[2]
+	mi := &file_macosusesdk_v1_display_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -204,7 +259,7 @@ func (x *ListDisplaysResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDisplaysResponse.ProtoReflect.Descriptor instead.
 func (*ListDisplaysResponse) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_display_proto_rawDescGZIP(), []int{2}
+	return file_macosusesdk_v1_display_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ListDisplaysResponse) GetDisplays() []*Display {
@@ -225,18 +280,23 @@ var File_macosusesdk_v1_display_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_display_proto_rawDesc = "" +
 	"\n" +
-	"\x1cmacosusesdk/v1/display.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1fmacosusesdk/type/geometry.proto\"\xc6\x01\n" +
-	"\aDisplay\x12\x1d\n" +
+	"\x1cmacosusesdk/v1/display.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fmacosusesdk/type/geometry.proto\"\xbd\x02\n" +
+	"\aDisplay\x12\x17\n" +
+	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12\"\n" +
 	"\n" +
-	"display_id\x18\x01 \x01(\x03R\tdisplayId\x12.\n" +
-	"\x05frame\x18\x02 \x01(\v2\x18.macosusesdk.type.RegionR\x05frame\x12=\n" +
-	"\rvisible_frame\x18\x03 \x01(\v2\x18.macosusesdk.type.RegionR\fvisibleFrame\x12\x17\n" +
-	"\ais_main\x18\x04 \x01(\bR\x06isMain\x12\x14\n" +
-	"\x05scale\x18\x05 \x01(\x01R\x05scale\"[\n" +
+	"display_id\x18\x02 \x01(\x03B\x03\xe0A\x03R\tdisplayId\x123\n" +
+	"\x05frame\x18\x03 \x01(\v2\x18.macosusesdk.type.RegionB\x03\xe0A\x03R\x05frame\x12B\n" +
+	"\rvisible_frame\x18\x04 \x01(\v2\x18.macosusesdk.type.RegionB\x03\xe0A\x03R\fvisibleFrame\x12\x1c\n" +
+	"\ais_main\x18\x05 \x01(\bB\x03\xe0A\x03R\x06isMain\x12\x19\n" +
+	"\x05scale\x18\x06 \x01(\x01B\x03\xe0A\x03R\x05scale:C\xeaA@\n" +
+	"\x17macosusesdk.com/Display\x12\x12displays/{display}*\bdisplays2\adisplay\"[\n" +
 	"\x13ListDisplaysRequest\x12 \n" +
 	"\tpage_size\x18\x01 \x01(\x05B\x03\xe0A\x01R\bpageSize\x12\"\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tB\x03\xe0A\x01R\tpageToken\"s\n" +
+	"page_token\x18\x02 \x01(\tB\x03\xe0A\x01R\tpageToken\"H\n" +
+	"\x11GetDisplayRequest\x123\n" +
+	"\x04name\x18\x01 \x01(\tB\x1f\xe0A\x02\xfaA\x19\n" +
+	"\x17macosusesdk.com/DisplayR\x04name\"s\n" +
 	"\x14ListDisplaysResponse\x123\n" +
 	"\bdisplays\x18\x01 \x03(\v2\x17.macosusesdk.v1.DisplayR\bdisplays\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageTokenB\xc3\x01\n" +
@@ -254,16 +314,17 @@ func file_macosusesdk_v1_display_proto_rawDescGZIP() []byte {
 	return file_macosusesdk_v1_display_proto_rawDescData
 }
 
-var file_macosusesdk_v1_display_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_macosusesdk_v1_display_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_macosusesdk_v1_display_proto_goTypes = []any{
 	(*Display)(nil),              // 0: macosusesdk.v1.Display
 	(*ListDisplaysRequest)(nil),  // 1: macosusesdk.v1.ListDisplaysRequest
-	(*ListDisplaysResponse)(nil), // 2: macosusesdk.v1.ListDisplaysResponse
-	(*_type.Region)(nil),         // 3: macosusesdk.type.Region
+	(*GetDisplayRequest)(nil),    // 2: macosusesdk.v1.GetDisplayRequest
+	(*ListDisplaysResponse)(nil), // 3: macosusesdk.v1.ListDisplaysResponse
+	(*_type.Region)(nil),         // 4: macosusesdk.type.Region
 }
 var file_macosusesdk_v1_display_proto_depIdxs = []int32{
-	3, // 0: macosusesdk.v1.Display.frame:type_name -> macosusesdk.type.Region
-	3, // 1: macosusesdk.v1.Display.visible_frame:type_name -> macosusesdk.type.Region
+	4, // 0: macosusesdk.v1.Display.frame:type_name -> macosusesdk.type.Region
+	4, // 1: macosusesdk.v1.Display.visible_frame:type_name -> macosusesdk.type.Region
 	0, // 2: macosusesdk.v1.ListDisplaysResponse.displays:type_name -> macosusesdk.v1.Display
 	3, // [3:3] is the sub-list for method output_type
 	3, // [3:3] is the sub-list for method input_type
@@ -283,7 +344,7 @@ func file_macosusesdk_v1_display_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_macosusesdk_v1_display_proto_rawDesc), len(file_macosusesdk_v1_display_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -429,6 +429,12 @@ service MacosUse {
     option (google.api.http) = {get: "/v1/displays"};
   }
 
+  // Gets a specific display.
+  rpc GetDisplay(GetDisplayRequest) returns (Display) {
+    option (google.api.http) = {get: "/v1/{name=displays/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
   // Gets clipboard contents.
   rpc GetClipboard(GetClipboardRequest) returns (Clipboard) {
     option (google.api.http) = {get: "/v1/{name=clipboard}"};

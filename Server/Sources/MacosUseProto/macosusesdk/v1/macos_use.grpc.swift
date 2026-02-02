@@ -565,6 +565,18 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
                 method: "ListDisplays"
             )
         }
+        /// Namespace for "GetDisplay" metadata.
+        public enum GetDisplay: Sendable {
+            /// Request type for "GetDisplay".
+            public typealias Input = Macosusesdk_V1_GetDisplayRequest
+            /// Response type for "GetDisplay".
+            public typealias Output = Macosusesdk_V1_Display
+            /// Descriptor for "GetDisplay".
+            public static let descriptor = GRPCCore.MethodDescriptor(
+                service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
+                method: "GetDisplay"
+            )
+        }
         /// Namespace for "GetClipboard" metadata.
         public enum GetClipboard: Sendable {
             /// Request type for "GetClipboard".
@@ -852,6 +864,7 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             CaptureElementScreenshot.descriptor,
             CaptureRegionScreenshot.descriptor,
             ListDisplays.descriptor,
+            GetDisplay.descriptor,
             GetClipboard.descriptor,
             WriteClipboard.descriptor,
             ClearClipboard.descriptor,
@@ -1710,6 +1723,24 @@ extension Macosusesdk_V1_MacosUse {
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ListDisplaysRequest>,
             context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ListDisplaysResponse>
+
+        /// Handle the "GetDisplay" method.
+        ///
+        /// > Source IDL Documentation:
+        /// >
+        /// > Gets a specific display.
+        ///
+        /// - Parameters:
+        ///   - request: A streaming request of `Macosusesdk_V1_GetDisplayRequest` messages.
+        ///   - context: Context providing information about the RPC.
+        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
+        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
+        ///     to an internal error.
+        /// - Returns: A streaming response of `Macosusesdk_V1_Display` messages.
+        func getDisplay(
+            request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetDisplayRequest>,
+            context: GRPCCore.ServerContext
+        ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Display>
 
         /// Handle the "GetClipboard" method.
         ///
@@ -2894,6 +2925,24 @@ extension Macosusesdk_V1_MacosUse {
             context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ListDisplaysResponse>
 
+        /// Handle the "GetDisplay" method.
+        ///
+        /// > Source IDL Documentation:
+        /// >
+        /// > Gets a specific display.
+        ///
+        /// - Parameters:
+        ///   - request: A request containing a single `Macosusesdk_V1_GetDisplayRequest` message.
+        ///   - context: Context providing information about the RPC.
+        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
+        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
+        ///     to an internal error.
+        /// - Returns: A response containing a single `Macosusesdk_V1_Display` message.
+        func getDisplay(
+            request: GRPCCore.ServerRequest<Macosusesdk_V1_GetDisplayRequest>,
+            context: GRPCCore.ServerContext
+        ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Display>
+
         /// Handle the "GetClipboard" method.
         ///
         /// > Source IDL Documentation:
@@ -4077,6 +4126,24 @@ extension Macosusesdk_V1_MacosUse {
             context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_ListDisplaysResponse
 
+        /// Handle the "GetDisplay" method.
+        ///
+        /// > Source IDL Documentation:
+        /// >
+        /// > Gets a specific display.
+        ///
+        /// - Parameters:
+        ///   - request: A `Macosusesdk_V1_GetDisplayRequest` message.
+        ///   - context: Context providing information about the RPC.
+        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
+        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
+        ///     to an internal error.
+        /// - Returns: A `Macosusesdk_V1_Display` to respond with.
+        func getDisplay(
+            request: Macosusesdk_V1_GetDisplayRequest,
+            context: GRPCCore.ServerContext
+        ) async throws -> Macosusesdk_V1_Display
+
         /// Handle the "GetClipboard" method.
         ///
         /// > Source IDL Documentation:
@@ -4939,6 +5006,17 @@ extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             }
         )
         router.registerHandler(
+            forMethod: Macosusesdk_V1_MacosUse.Method.GetDisplay.descriptor,
+            deserializer: GRPCProtobuf.ProtobufDeserializer<Macosusesdk_V1_GetDisplayRequest>(),
+            serializer: GRPCProtobuf.ProtobufSerializer<Macosusesdk_V1_Display>(),
+            handler: { request, context in
+                try await self.getDisplay(
+                    request: request,
+                    context: context
+                )
+            }
+        )
+        router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.GetClipboard.descriptor,
             deserializer: GRPCProtobuf.ProtobufDeserializer<Macosusesdk_V1_GetClipboardRequest>(),
             serializer: GRPCProtobuf.ProtobufSerializer<Macosusesdk_V1_Clipboard>(),
@@ -5653,6 +5731,17 @@ extension Macosusesdk_V1_MacosUse.ServiceProtocol {
         context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ListDisplaysResponse> {
         let response = try await self.listDisplays(
+            request: GRPCCore.ServerRequest(stream: request),
+            context: context
+        )
+        return GRPCCore.StreamingServerResponse(single: response)
+    }
+
+    public func getDisplay(
+        request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetDisplayRequest>,
+        context: GRPCCore.ServerContext
+    ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Display> {
+        let response = try await self.getDisplay(
             request: GRPCCore.ServerRequest(stream: request),
             context: context
         )
@@ -6469,6 +6558,19 @@ extension Macosusesdk_V1_MacosUse.SimpleServiceProtocol {
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ListDisplaysResponse> {
         return GRPCCore.ServerResponse<Macosusesdk_V1_ListDisplaysResponse>(
             message: try await self.listDisplays(
+                request: request.message,
+                context: context
+            ),
+            metadata: [:]
+        )
+    }
+
+    public func getDisplay(
+        request: GRPCCore.ServerRequest<Macosusesdk_V1_GetDisplayRequest>,
+        context: GRPCCore.ServerContext
+    ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Display> {
+        return GRPCCore.ServerResponse<Macosusesdk_V1_Display>(
+            message: try await self.getDisplay(
                 request: request.message,
                 context: context
             ),

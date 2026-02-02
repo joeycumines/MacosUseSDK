@@ -8,8 +8,6 @@ import MacosUseSDK
 import OSLog
 import SwiftProtobuf
 
-// swiftlint:disable:next conditional_assignment
-
 extension MacosUseService {
     func listDisplays(
         request: ServerRequest<Macosusesdk_V1_ListDisplaysRequest>,

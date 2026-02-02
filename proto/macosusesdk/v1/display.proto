@@ -7,6 +7,7 @@ syntax = "proto3";
 package macosusesdk.v1;
 
 import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
 import "macosusesdk/type/geometry.proto";
 
 option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
@@ -14,22 +15,32 @@ option java_multiple_files = true;
 option java_outer_classname = "DisplayProto";
 option java_package = "com.macosusesdk.v1";
 
-// A physical display/screen attached to the system.
+// A resource representing a physical display/screen attached to the system.
 message Display {
+  option (google.api.resource) = {
+    type: "macosusesdk.com/Display"
+    pattern: "displays/{display}"
+    singular: "display"
+    plural: "displays"
+  };
+
+  // Resource name in the format "displays/{display}" where {display} is the display ID.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
   // Display ID (CGDirectDisplayID). Treated as opaque by clients.
-  int64 display_id = 1;
+  int64 display_id = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Display frame in Global Display Coordinates (top-left origin).
-  macosusesdk.type.Region frame = 2;
+  macosusesdk.type.Region frame = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Visible frame (excluding menu bar and dock) in Global Display Coordinates (top-left origin).
-  macosusesdk.type.Region visible_frame = 3;
+  macosusesdk.type.Region visible_frame = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // True if this is the main (primary) display.
-  bool is_main = 4;
+  bool is_main = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Scale factor (backingScaleFactor). For Retina displays this is typically 2.0.
-  double scale = 5;
+  double scale = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to list displays.
@@ -40,6 +51,15 @@ message ListDisplaysRequest {
   // Page token from a previous ListDisplays call.
   // This token is opaque and its structure must not be relied upon by clients.
   string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request to get a specific display.
+message GetDisplayRequest {
+  // Resource name of the display.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.com/Display"}
+  ];
 }
 
 // Response from listing displays.
