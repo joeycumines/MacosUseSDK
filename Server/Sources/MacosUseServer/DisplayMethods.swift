@@ -121,4 +121,87 @@ extension MacosUseService {
 
         return ServerResponse(message: response)
     }
+
+    func getDisplay(
+        request: ServerRequest<Macosusesdk_V1_GetDisplayRequest>,
+        context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_Display> {
+        let req = request.message
+        Self.logger.info("getDisplay called for \(req.name)")
+
+        // Parse the display ID from the resource name
+        // Format: displays/{display_id}
+        let components = req.name.split(separator: "/")
+        guard components.count == 2, components[0] == "displays" else {
+            throw RPCError(
+                code: .invalidArgument,
+                message: "Invalid display resource name: \(req.name). Expected format: displays/{display_id}",
+            )
+        }
+
+        guard let displayID = UInt32(components[1]) else {
+            throw RPCError(
+                code: .invalidArgument,
+                message: "Invalid display ID: \(components[1])",
+            )
+        }
+
+        // Get display bounds
+        let bounds = CGDisplayBounds(displayID)
+        if bounds.origin.x.isNaN || bounds.origin.y.isNaN {
+            throw RPCError(
+                code: .notFound,
+                message: "Display not found: \(displayID)",
+            )
+        }
+
+        // Query NSScreen for visible frame and scale
+        let screenInfo = await MainActor.run { () -> (localVisibleX: Double, localVisibleY: Double, visibleW: Double, visibleH: Double, scale: Double)? in
+            for screen in NSScreen.screens {
+                if let n = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber {
+                    let screenDid = CGDirectDisplayID(n.uint32Value)
+                    if screenDid == displayID {
+                        let screenFrame = screen.frame
+                        let visibleFrame = screen.visibleFrame
+                        let localX = Double(visibleFrame.origin.x - screenFrame.origin.x)
+                        let localY = Double(visibleFrame.origin.y - screenFrame.origin.y)
+                        return (localX, localY, Double(visibleFrame.size.width), Double(visibleFrame.size.height), Double(screen.backingScaleFactor))
+                    }
+                }
+            }
+            return nil
+        }
+
+        let displayMsg = Macosusesdk_V1_Display.with {
+            $0.name = req.name
+            $0.displayID = Int64(displayID)
+
+            // Frame in Global Display Coordinates (top-left origin)
+            $0.frame = Macosusesdk_Type_Region.with {
+                $0.x = Double(bounds.origin.x)
+                $0.y = Double(bounds.origin.y)
+                $0.width = Double(bounds.size.width)
+                $0.height = Double(bounds.size.height)
+            }
+
+            // Visible frame
+            if let entry = screenInfo {
+                $0.visibleFrame = Macosusesdk_Type_Region.with {
+                    $0.x = Double(bounds.origin.x + CGFloat(entry.localVisibleX))
+                    $0.y = Double(bounds.origin.y + (bounds.size.height - CGFloat(entry.localVisibleY + entry.visibleH)))
+                    $0.width = entry.visibleW
+                    $0.height = entry.visibleH
+                }
+                $0.scale = entry.scale
+            } else {
+                // Fallback to full frame
+                $0.visibleFrame = $0.frame
+                $0.scale = 1.0
+            }
+
+            $0.isMain = (CGDisplayIsMain(displayID) != 0)
+        }
+
+        return ServerResponse(message: displayMsg)
+    }
 }
