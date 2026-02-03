@@ -63,8 +63,8 @@ func (s *MCPServer) handleListWindows(call *ToolCall) (*ToolResult, error) {
 		if w.Visible {
 			visibleMark = " [visible]"
 		}
-		lines = append(lines, fmt.Sprintf("- %s (%s)%s @ (%.0f, %.0f) %.0fx%.0f",
-			w.Title, w.Name, visibleMark, w.Bounds.X, w.Bounds.Y, w.Bounds.Width, w.Bounds.Height))
+		lines = append(lines, fmt.Sprintf("- %s (%s)%s @ %s",
+			w.Title, w.Name, visibleMark, boundsString(w.Bounds)))
 	}
 
 	resultText := fmt.Sprintf("Found %d windows:\n%s", len(resp.Windows), strings.Join(lines, "\n"))
@@ -113,12 +113,12 @@ func (s *MCPServer) handleGetWindow(call *ToolCall) (*ToolResult, error) {
 			Type: "text",
 			Text: fmt.Sprintf(`Window: %s
   Title: %s
-  Position: (%.0f, %.0f)
-  Size: %.0fx%.0f
+  Position: %s
+  Size: %s
   Visible: %v
   Z-Index: %d
   Bundle ID: %s`,
-				w.Name, w.Title, w.Bounds.X, w.Bounds.Y, w.Bounds.Width, w.Bounds.Height,
+				w.Name, w.Title, boundsPosition(w.Bounds), boundsSize(w.Bounds),
 				w.Visible, w.ZIndex, w.BundleId),
 		}},
 	}, nil
@@ -200,7 +200,7 @@ func (s *MCPServer) handleMoveWindow(call *ToolCall) (*ToolResult, error) {
 	return &ToolResult{
 		Content: []Content{{
 			Type: "text",
-			Text: fmt.Sprintf("Moved window %s to (%.0f, %.0f)", w.Title, w.Bounds.X, w.Bounds.Y),
+			Text: fmt.Sprintf("Moved window %s to %s", w.Title, boundsPosition(w.Bounds)),
 		}},
 	}, nil
 }
@@ -252,7 +252,7 @@ func (s *MCPServer) handleResizeWindow(call *ToolCall) (*ToolResult, error) {
 	return &ToolResult{
 		Content: []Content{{
 			Type: "text",
-			Text: fmt.Sprintf("Resized window %s to %.0fx%.0f", w.Title, w.Bounds.Width, w.Bounds.Height),
+			Text: fmt.Sprintf("Resized window %s to %s", w.Title, boundsSize(w.Bounds)),
 		}},
 	}, nil
 }

@@ -1276,7 +1276,9 @@ func (s *MCPServer) handleMessage(tr *transport.StdioTransport, msg *transport.M
 					Message: fmt.Sprintf("Invalid request: %v", err),
 				},
 			}
-			tr.WriteMessage(response)
+			if err := tr.WriteMessage(response); err != nil {
+				log.Printf("Error writing response: %v", err)
+			}
 			return
 		}
 
@@ -1293,7 +1295,9 @@ func (s *MCPServer) handleMessage(tr *transport.StdioTransport, msg *transport.M
 					Message: fmt.Sprintf("Tool not found: %s", params.Name),
 				},
 			}
-			tr.WriteMessage(response)
+			if err := tr.WriteMessage(response); err != nil {
+				log.Printf("Error writing response: %v", err)
+			}
 			return
 		}
 
@@ -1312,7 +1316,9 @@ func (s *MCPServer) handleMessage(tr *transport.StdioTransport, msg *transport.M
 					Message: err.Error(),
 				},
 			}
-			tr.WriteMessage(response)
+			if err := tr.WriteMessage(response); err != nil {
+				log.Printf("Error writing response: %v", err)
+			}
 			return
 		}
 
@@ -1345,7 +1351,9 @@ func (s *MCPServer) handleMessage(tr *transport.StdioTransport, msg *transport.M
 			Message: fmt.Sprintf("Method not found: %s", msg.Method),
 		},
 	}
-	tr.WriteMessage(response)
+	if err := tr.WriteMessage(response); err != nil {
+		log.Printf("Error writing response: %v", err)
+	}
 }
 
 // getDisplayGroundingInfo returns JSON string with display information for grounding

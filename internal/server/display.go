@@ -45,10 +45,9 @@ func (s *MCPServer) handleListDisplays(call *ToolCall) (*ToolResult, error) {
 			mainMark = " (main)"
 		}
 		lines = append(lines, fmt.Sprintf(
-			"- Display %d%s: %.0fx%.0f @ (%.0f, %.0f), scale %.1f",
+			"- Display %d%s: %s, scale %.1f",
 			d.DisplayId, mainMark,
-			d.Frame.Width, d.Frame.Height,
-			d.Frame.X, d.Frame.Y,
+			frameString(d.Frame),
 			d.Scale,
 		))
 	}
@@ -105,13 +104,13 @@ func (s *MCPServer) handleGetDisplay(call *ToolCall) (*ToolResult, error) {
 				Type: "text",
 				Text: fmt.Sprintf(`Display: %s
   Display ID: %d%s
-  Frame: %.0fx%.0f @ (%.0f, %.0f)
-  Visible Frame: %.0fx%.0f @ (%.0f, %.0f)
+  Frame: %s
+  Visible Frame: %s
   Scale: %.1f`,
 					display.Name,
 					display.DisplayId, mainMark,
-					display.Frame.Width, display.Frame.Height, display.Frame.X, display.Frame.Y,
-					display.VisibleFrame.Width, display.VisibleFrame.Height, display.VisibleFrame.X, display.VisibleFrame.Y,
+					frameString(display.Frame),
+					frameString(display.VisibleFrame),
 					display.Scale,
 				),
 			},
