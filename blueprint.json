@@ -658,7 +658,7 @@
         "task": "Add SSE streaming integration tests",
         "file": "integration/transport_test.go",
         "deliverable": "Tests for streaming observation events over SSE",
-        "status": "PENDING"
+        "status": "DEFERRED (requires SSE client implementation and real server coordination)"
       },
       {
         "step": 13,
