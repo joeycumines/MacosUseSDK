@@ -57,7 +57,10 @@ func DefaultHTTPConfig() *HTTPTransportConfig {
 	}
 }
 
-// HTTPTransport implements HTTP/SSE transport for MCP
+// HTTPTransport implements HTTP/SSE transport for MCP.
+// It provides POST /message for JSON-RPC requests, GET /events for SSE streaming,
+// and GET /health for server health checks. This is a non-standard MCP transport
+// extension documented in docs/05-mcp-integration.md.
 type HTTPTransport struct {
 	config     *HTTPTransportConfig
 	server     *http.Server
@@ -68,7 +71,9 @@ type HTTPTransport struct {
 	closed     atomic.Bool
 }
 
-// ClientRegistry manages connected SSE clients
+// ClientRegistry manages connected SSE clients and event distribution.
+// It maintains a thread-safe registry of clients and an event store for
+// reconnection handling via Last-Event-ID.
 type ClientRegistry struct {
 	clients    map[string]*SSEClient
 	eventStore *EventStore
@@ -76,7 +81,8 @@ type ClientRegistry struct {
 	nextID     atomic.Uint64
 }
 
-// SSEClient represents a connected SSE client
+// SSEClient represents a connected SSE client with its event channel.
+// The ResponseChan is buffered to prevent blocking on slow clients.
 type SSEClient struct {
 	ResponseChan chan *SSEEvent
 	CreatedAt    time.Time
@@ -84,14 +90,16 @@ type SSEClient struct {
 	LastEventID  string
 }
 
-// SSEEvent represents a Server-Sent Event
+// SSEEvent represents a Server-Sent Event with optional id, event type, and data.
+// The ID is used for reconnection handling via Last-Event-ID header.
 type SSEEvent struct {
 	ID    string
 	Event string
 	Data  string
 }
 
-// EventStore stores recent events for reconnection handling
+// EventStore stores recent events for reconnection handling.
+// When a client reconnects with Last-Event-ID, missed events can be replayed.
 type EventStore struct {
 	eventMap map[string]*SSEEvent
 	events   []*SSEEvent

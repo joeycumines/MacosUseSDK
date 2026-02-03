@@ -18,6 +18,39 @@ import (
 // defaultJPEGQuality is the default quality setting for JPEG screenshots (1-100).
 const defaultJPEGQuality = 85
 
+// parseImageFormat converts a string format name to ImageFormat enum.
+// Returns PNG as default for empty or unknown formats.
+func parseImageFormat(format string) pb.ImageFormat {
+	switch format {
+	case "jpeg", "jpg":
+		return pb.ImageFormat_IMAGE_FORMAT_JPEG
+	case "tiff":
+		return pb.ImageFormat_IMAGE_FORMAT_TIFF
+	default:
+		return pb.ImageFormat_IMAGE_FORMAT_PNG
+	}
+}
+
+// imageFormatToMediaType returns the MIME type for the given image format.
+func imageFormatToMediaType(f pb.ImageFormat) string {
+	switch f {
+	case pb.ImageFormat_IMAGE_FORMAT_JPEG:
+		return "image/jpeg"
+	case pb.ImageFormat_IMAGE_FORMAT_TIFF:
+		return "image/tiff"
+	default:
+		return "image/png"
+	}
+}
+
+// applyDefaultQuality returns the quality value, applying the default if zero.
+func applyDefaultQuality(quality int32) int32 {
+	if quality == 0 {
+		return defaultJPEGQuality
+	}
+	return quality
+}
+
 // handleCaptureScreenshot handles the capture_screenshot tool
 func (s *MCPServer) handleCaptureScreenshot(call *ToolCall) (*ToolResult, error) {
 	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
@@ -45,19 +78,8 @@ func (s *MCPServer) handleCaptureScreenshot(call *ToolCall) (*ToolResult, error)
 		}, nil
 	}
 
-	// Map format string to proto enum
-	format := pb.ImageFormat_IMAGE_FORMAT_PNG
-	switch params.Format {
-	case "jpeg", "jpg":
-		format = pb.ImageFormat_IMAGE_FORMAT_JPEG
-	case "tiff":
-		format = pb.ImageFormat_IMAGE_FORMAT_TIFF
-	}
-
-	quality := params.Quality
-	if quality == 0 {
-		quality = defaultJPEGQuality
-	}
+	format := parseImageFormat(params.Format)
+	quality := applyDefaultQuality(params.Quality)
 
 	resp, err := s.client.CaptureScreenshot(ctx, &pb.CaptureScreenshotRequest{
 		Format:         format,
@@ -72,17 +94,8 @@ func (s *MCPServer) handleCaptureScreenshot(call *ToolCall) (*ToolResult, error)
 		}, nil
 	}
 
-	// Encode image data as base64
 	imageData := base64.StdEncoding.EncodeToString(resp.ImageData)
-
-	// Determine media type based on format
-	mediaType := "image/png"
-	switch resp.Format {
-	case pb.ImageFormat_IMAGE_FORMAT_JPEG:
-		mediaType = "image/jpeg"
-	case pb.ImageFormat_IMAGE_FORMAT_TIFF:
-		mediaType = "image/tiff"
-	}
+	mediaType := imageFormatToMediaType(resp.Format)
 
 	result := &ToolResult{
 		Content: []Content{
@@ -137,18 +150,8 @@ func (s *MCPServer) handleCaptureRegionScreenshot(call *ToolCall) (*ToolResult, 
 		}, nil
 	}
 
-	format := pb.ImageFormat_IMAGE_FORMAT_PNG
-	switch params.Format {
-	case "jpeg", "jpg":
-		format = pb.ImageFormat_IMAGE_FORMAT_JPEG
-	case "tiff":
-		format = pb.ImageFormat_IMAGE_FORMAT_TIFF
-	}
-
-	quality := params.Quality
-	if quality == 0 {
-		quality = defaultJPEGQuality
-	}
+	format := parseImageFormat(params.Format)
+	quality := applyDefaultQuality(params.Quality)
 
 	resp, err := s.client.CaptureRegionScreenshot(ctx, &pb.CaptureRegionScreenshotRequest{
 		Region: &typepb.Region{
@@ -169,13 +172,7 @@ func (s *MCPServer) handleCaptureRegionScreenshot(call *ToolCall) (*ToolResult, 
 	}
 
 	imageData := base64.StdEncoding.EncodeToString(resp.ImageData)
-	mediaType := "image/png"
-	switch resp.Format {
-	case pb.ImageFormat_IMAGE_FORMAT_JPEG:
-		mediaType = "image/jpeg"
-	case pb.ImageFormat_IMAGE_FORMAT_TIFF:
-		mediaType = "image/tiff"
-	}
+	mediaType := imageFormatToMediaType(resp.Format)
 
 	result := &ToolResult{
 		Content: []Content{
@@ -227,19 +224,8 @@ func (s *MCPServer) handleCaptureWindowScreenshot(call *ToolCall) (*ToolResult, 
 		}, nil
 	}
 
-	// Map format string to proto enum
-	format := pb.ImageFormat_IMAGE_FORMAT_PNG
-	switch params.Format {
-	case "jpeg", "jpg":
-		format = pb.ImageFormat_IMAGE_FORMAT_JPEG
-	case "tiff":
-		format = pb.ImageFormat_IMAGE_FORMAT_TIFF
-	}
-
-	quality := params.Quality
-	if quality == 0 {
-		quality = defaultJPEGQuality
-	}
+	format := parseImageFormat(params.Format)
+	quality := applyDefaultQuality(params.Quality)
 
 	resp, err := s.client.CaptureWindowScreenshot(ctx, &pb.CaptureWindowScreenshotRequest{
 		Window:         params.Window,
@@ -256,13 +242,7 @@ func (s *MCPServer) handleCaptureWindowScreenshot(call *ToolCall) (*ToolResult, 
 	}
 
 	imageData := base64.StdEncoding.EncodeToString(resp.ImageData)
-	mediaType := "image/png"
-	switch resp.Format {
-	case pb.ImageFormat_IMAGE_FORMAT_JPEG:
-		mediaType = "image/jpeg"
-	case pb.ImageFormat_IMAGE_FORMAT_TIFF:
-		mediaType = "image/tiff"
-	}
+	mediaType := imageFormatToMediaType(resp.Format)
 
 	result := &ToolResult{
 		Content: []Content{

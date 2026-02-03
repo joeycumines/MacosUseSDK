@@ -20,20 +20,35 @@ const (
 	TransportHTTP TransportType = "sse"
 )
 
-// Config holds the configuration for the MCP tool
+// Config holds the configuration for the MCP tool, loaded from environment variables.
+// All fields have sensible defaults via the Load function.
 type Config struct {
-	ServerAddr           string
-	ServerCertFile       string
-	HTTPAddress          string
-	HTTPSocketPath       string
-	CORSOrigin           string
-	Transport            TransportType
-	HeartbeatInterval    time.Duration
-	HTTPReadTimeout      time.Duration
-	HTTPWriteTimeout     time.Duration
-	RequestTimeout       int
-	ServerTLS            bool
-	Debug                bool
+	// ServerAddr is the gRPC server address (env: MACOS_USE_SERVER_ADDR, default: localhost:50051)
+	ServerAddr string
+	// ServerCertFile is the path to the server TLS certificate (env: MACOS_USE_SERVER_CERT_FILE, optional)
+	ServerCertFile string
+	// HTTPAddress is the HTTP/SSE server listen address (env: MCP_HTTP_ADDRESS, default: :8080)
+	HTTPAddress string
+	// HTTPSocketPath is the Unix socket path for HTTP transport (env: MCP_HTTP_SOCKET, optional)
+	HTTPSocketPath string
+	// CORSOrigin is the allowed CORS origin (env: MCP_CORS_ORIGIN, default: *)
+	CORSOrigin string
+	// Transport is the transport type: "stdio" or "sse" (env: MCP_TRANSPORT, default: stdio)
+	Transport TransportType
+	// HeartbeatInterval is the SSE heartbeat interval (env: MCP_HEARTBEAT_INTERVAL, default: 30s)
+	HeartbeatInterval time.Duration
+	// HTTPReadTimeout is the HTTP server read timeout (env: MCP_HTTP_READ_TIMEOUT, default: 30s)
+	HTTPReadTimeout time.Duration
+	// HTTPWriteTimeout is the HTTP server write timeout (env: MCP_HTTP_WRITE_TIMEOUT, default: 30s)
+	HTTPWriteTimeout time.Duration
+	// RequestTimeout is the gRPC request timeout in seconds (env: MACOS_USE_REQUEST_TIMEOUT, default: 30)
+	RequestTimeout int
+	// ServerTLS enables TLS for gRPC (env: MACOS_USE_SERVER_TLS, default: false)
+	ServerTLS bool
+	// Debug enables debug logging (env: MACOS_USE_DEBUG, default: false)
+	Debug bool
+	// ShellCommandsEnabled enables shell command execution (env: MCP_SHELL_COMMANDS_ENABLED, default: false)
+	// WARNING: Enabling this allows arbitrary command execution and should only be used in trusted environments.
 	ShellCommandsEnabled bool
 }
 
