@@ -36,21 +36,21 @@ func NewStdioTransport(stdin io.Reader, stdout io.Writer) *StdioTransport {
 //
 //lint:ignore BETTERALIGN struct is intentionally ordered for clarity
 type Message struct {
-	Error   *ErrorObj
-	JSONRPC string
-	Method  string
-	ID      json.RawMessage
-	Params  json.RawMessage
-	Result  json.RawMessage
+	Error   *ErrorObj       `json:"error,omitempty"`
+	JSONRPC string          `json:"jsonrpc"`
+	Method  string          `json:"method,omitempty"`
+	ID      json.RawMessage `json:"id,omitempty"`
+	Params  json.RawMessage `json:"params,omitempty"`
+	Result  json.RawMessage `json:"result,omitempty"`
 }
 
 // ErrorObj represents a JSON-RPC 2.0 error
 //
 //lint:ignore BETTERALIGN struct is intentionally ordered for clarity
 type ErrorObj struct {
-	Message string
-	Data    json.RawMessage
-	Code    int
+	Message string          `json:"message"`
+	Data    json.RawMessage `json:"data,omitempty"`
+	Code    int             `json:"code"`
 }
 
 // ReadMessage reads a JSON-RPC 2.0 message

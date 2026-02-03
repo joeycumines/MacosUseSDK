@@ -166,6 +166,14 @@ func (s *MCPServer) registerTools() {
 						"type":        "boolean",
 						"description": "Whether to include OCR text extraction in response",
 					},
+					"max_width": map[string]interface{}{
+						"type":        "integer",
+						"description": "Maximum width to resize the image to (for token efficiency). 0 = no resize.",
+					},
+					"max_height": map[string]interface{}{
+						"type":        "integer",
+						"description": "Maximum height to resize the image to (for token efficiency). 0 = no resize.",
+					},
 				},
 			},
 			Handler: s.handleCaptureScreenshot,
