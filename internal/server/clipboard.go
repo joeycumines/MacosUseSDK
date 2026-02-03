@@ -79,7 +79,7 @@ func (s *MCPServer) handleWriteClipboard(call *ToolCall) (*ToolResult, error) {
 	if params.Text == "" {
 		return &ToolResult{
 			IsError: true,
-			Content: []Content{{Type: "text", Text: "Text parameter is required"}},
+			Content: []Content{{Type: "text", Text: "text parameter is required"}},
 		}, nil
 	}
 

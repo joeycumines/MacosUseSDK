@@ -63,6 +63,76 @@ For cloud-based agents or "Cloud Computer" scenarios, MCP utilizes SSE for serve
 | **Primary Use Case** | Local Desktop Assistant (Claude Desktop) | Cloud Agents / CI/CD Automation |
 | **Message Direction** | Bidirectional Pipe | Simplex Streams (Push/Pull) |
 
+## **1A. MacosUseSDK HTTP/SSE Transport Extension (Non-Standard)**
+
+> **⚠️ IMPORTANT:** The HTTP/SSE transport described in this section is a **project-specific extension** that is **not part of the official MCP specification** (version 2025-11-25). The canonical MCP protocol defines only stdio as the standard transport layer. This HTTP transport is provided as a convenience for scenarios where stdio is not practical (e.g., web-based clients, remote access, multi-client scenarios). Clients should not expect interoperability with other MCP servers/clients using this transport pattern.
+
+### **1A.1 Transport Architecture**
+
+MacosUseSDK implements a custom HTTP/SSE transport for JSON-RPC 2.0 communication that supplements the standard stdio transport. This extension follows the general patterns described in the MCP specification's SSE over HTTP discussion but uses a custom endpoint structure.
+
+**Endpoints:**
+
+| Endpoint | Method | Description |
+| :---- | :---- | :---- |
+| `/message` | POST | Submit JSON-RPC 2.0 request messages. Returns synchronous JSON-RPC response. |
+| `/events` | GET | Server-Sent Events (SSE) stream for real-time event broadcast. |
+| `/health` | GET | Health check endpoint returning server status. |
+
+### **1A.2 Message Flow**
+
+1. **Client → Server:** HTTP POST to `/message` with JSON-RPC 2.0 request body.
+2. **Server → Client (sync):** JSON-RPC 2.0 response returned in HTTP response body.
+3. **Server → Client (async):** Responses also broadcast as SSE events with event type `message`.
+
+**SSE Event Format:**
+```
+id: <monotonic-event-id>
+event: message
+data: <json-rpc-2.0-response>
+```
+
+### **1A.3 Reconnection Support**
+
+The HTTP transport implements SSE reconnection handling per the HTML5 EventSource specification:
+
+- Clients may send `Last-Event-ID` header on reconnection to `/events`.
+- Server maintains a rolling buffer of recent events (default: 1000 events).
+- Missed events since `Last-Event-ID` are replayed on reconnection.
+
+### **1A.4 Configuration**
+
+| Environment Variable | Description | Default |
+| :---- | :---- | :---- |
+| `MACOS_USE_HTTP_ENABLED` | Enable HTTP transport | `false` |
+| `MACOS_USE_HTTP_ADDRESS` | Listen address (e.g., `:8080`) | `:8080` |
+| `MACOS_USE_SOCKET_PATH` | Unix socket path (takes precedence over address) | None |
+| `MACOS_USE_HTTP_CORS_ORIGIN` | CORS allowed origin | `*` |
+| `MACOS_USE_HTTP_HEARTBEAT_INTERVAL` | SSE heartbeat interval | `15s` |
+
+### **1A.5 Security Considerations**
+
+**⚠️ WARNING:** The current HTTP transport implementation has significant security limitations:
+
+1. **No TLS:** All traffic is transmitted in plaintext. For production use, deploy behind a TLS-terminating reverse proxy (e.g., nginx, Caddy).
+2. **No Authentication:** The transport does not implement authentication. All clients with network access can interact with the server.
+3. **CORS Defaults to `*`:** The default configuration permits all origins. Restrict `MACOS_USE_HTTP_CORS_ORIGIN` in production.
+4. **Local Network Only:** The HTTP transport is intended for local development or trusted network environments only.
+
+**Recommended Deployment Pattern:**
+```
+[Client] → HTTPS → [Reverse Proxy (TLS + Auth)] → HTTP → [MacosUseSDK Server]
+```
+
+### **1A.6 Implementation Notes**
+
+- The HTTP transport uses Go's `net/http` package with configurable timeouts.
+- `WriteTimeout` is disabled by default (0) to support long-lived SSE connections.
+- Unix domain socket support is available for local IPC without TCP overhead.
+- The transport implements the `Transport` interface but `ReadMessage()` returns an error directing users to use the callback-based `Serve(handler)` pattern.
+
+---
+
 ## **2\. Anthropic Computer Use Interface: The Reference Implementation**
 
 Anthropic’s implementation of Computer Use, specifically the computer\_20251124 tool definition, serves as the current reference architecture for the industry. Unlike traditional tool use which relies on rigid, pre-defined JSON schemas for every parameter, the Computer Use tool is "schema-less" in its training but strictly defined in its execution harness. The model is fine-tuned to understand the tool's capabilities implicitly, allowing for more fluid interaction with the OS.13

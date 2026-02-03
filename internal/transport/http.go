@@ -445,13 +445,12 @@ func (t *HTTPTransport) Serve(handler func(*Message) (*Message, error)) error {
 // ReadMessage is provided for Transport interface compatibility but is not the
 // primary message handling pattern for HTTPTransport. The HTTP transport uses
 // the callback-based Serve(handler) pattern instead, where messages are delivered
-// directly to the handler function. This method will block until shutdown.
-// Use Serve() instead for HTTP transport.
+// directly to the handler function. This method returns immediately with an error
+// explaining the correct usage pattern.
 func (t *HTTPTransport) ReadMessage() (*Message, error) {
 	// HTTP transport uses callback pattern via Serve(handler).
-	// Block until shutdown rather than blocking forever on an unused channel.
-	<-t.shutdownCh
-	return nil, fmt.Errorf("transport closed: HTTP transport uses Serve(handler) callback pattern, not ReadMessage")
+	// Return immediately with a clear error rather than blocking.
+	return nil, fmt.Errorf("ReadMessage is not supported by HTTPTransport: use Serve(handler) callback pattern instead")
 }
 
 // WriteMessage broadcasts a message to all connected SSE clients

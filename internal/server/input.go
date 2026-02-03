@@ -18,7 +18,13 @@ import (
 // defaultApplicationParent is the parent pattern for inputs targeting any/active application
 const defaultApplicationParent = "applications/-"
 
-// handleClick handles the click tool for coordinate-based clicking
+// handleClick handles the click tool for coordinate-based clicking.
+//
+// Coordinates use Global Display Coordinates (top-left origin):
+//   - Origin (0,0) is at the top-left corner of the main display
+//   - Y increases downward
+//   - Secondary displays may have negative X (left of main) or Y (above main)
+//   - No bounds checking is performed; out-of-bounds clicks may be ignored by macOS
 func (s *MCPServer) handleClick(call *ToolCall) (*ToolResult, error) {
 	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
 	defer cancel()
@@ -142,7 +148,7 @@ func (s *MCPServer) handleTypeText(call *ToolCall) (*ToolResult, error) {
 	if params.Text == "" {
 		return &ToolResult{
 			IsError: true,
-			Content: []Content{{Type: "text", Text: "Text parameter is required"}},
+			Content: []Content{{Type: "text", Text: "text parameter is required"}},
 		}, nil
 	}
 
@@ -212,7 +218,7 @@ func (s *MCPServer) handlePressKey(call *ToolCall) (*ToolResult, error) {
 	if params.Key == "" {
 		return &ToolResult{
 			IsError: true,
-			Content: []Content{{Type: "text", Text: "Key parameter is required"}},
+			Content: []Content{{Type: "text", Text: "key parameter is required"}},
 		}, nil
 	}
 
@@ -280,15 +286,21 @@ func (s *MCPServer) handlePressKey(call *ToolCall) (*ToolResult, error) {
 	}, nil
 }
 
-// handleMouseMove handles the mouse_move tool for cursor positioning
+// handleMouseMove handles the mouse_move tool for cursor positioning.
+//
+// Coordinates use Global Display Coordinates (top-left origin):
+//   - Origin (0,0) is at the top-left corner of the main display
+//   - Y increases downward
+//   - Secondary displays may have negative X (left of main) or Y (above main)
+//   - No bounds checking is performed; out-of-bounds moves may result in cursor at screen edge
 func (s *MCPServer) handleMouseMove(call *ToolCall) (*ToolResult, error) {
 	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
 	defer cancel()
 
 	var params struct {
-		// Target X coordinate
+		// X coordinate in Global Display Coordinates (top-left origin)
 		X float64 `json:"x"`
-		// Target Y coordinate
+		// Y coordinate in Global Display Coordinates (top-left origin)
 		Y float64 `json:"y"`
 		// Duration for smooth animation (seconds)
 		Duration float64 `json:"duration"`
@@ -341,7 +353,10 @@ func (s *MCPServer) handleMouseMove(call *ToolCall) (*ToolResult, error) {
 	}, nil
 }
 
-// handleScroll handles the scroll tool for scrolling content
+// handleScroll handles the scroll tool for scrolling content.
+//
+// Coordinates use Global Display Coordinates (top-left origin) when specified.
+// If X/Y are not provided, scroll occurs at the current mouse position.
 func (s *MCPServer) handleScroll(call *ToolCall) (*ToolResult, error) {
 	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
 	defer cancel()
@@ -435,19 +450,24 @@ func (s *MCPServer) handleScroll(call *ToolCall) (*ToolResult, error) {
 	}, nil
 }
 
-// handleDrag handles the drag tool for drag-and-drop operations
+// handleDrag handles the drag tool for drag-and-drop operations.
+//
+// Coordinates use Global Display Coordinates (top-left origin):
+//   - Origin (0,0) is at the top-left corner of the main display
+//   - Y increases downward
+//   - Secondary displays may have negative X (left of main) or Y (above main)
 func (s *MCPServer) handleDrag(call *ToolCall) (*ToolResult, error) {
 	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
 	defer cancel()
 
 	var params struct {
-		// Start X coordinate
+		// StartX coordinate in Global Display Coordinates (top-left origin)
 		StartX float64 `json:"start_x"`
-		// Start Y coordinate
+		// StartY coordinate in Global Display Coordinates (top-left origin)
 		StartY float64 `json:"start_y"`
-		// End X coordinate
+		// EndX coordinate in Global Display Coordinates (top-left origin)
 		EndX float64 `json:"end_x"`
-		// End Y coordinate
+		// EndY coordinate in Global Display Coordinates (top-left origin)
 		EndY float64 `json:"end_y"`
 		// Duration of drag in seconds
 		Duration float64 `json:"duration"`
@@ -515,7 +535,12 @@ func (s *MCPServer) handleDrag(call *ToolCall) (*ToolResult, error) {
 	}, nil
 }
 
-// handleHover handles the hover tool for holding mouse position for a duration
+// handleHover handles the hover tool for holding mouse position for a duration.
+//
+// Coordinates use Global Display Coordinates (top-left origin):
+//   - Origin (0,0) is at the top-left corner of the main display
+//   - Y increases downward
+//   - Secondary displays may have negative X (left of main) or Y (above main)
 func (s *MCPServer) handleHover(call *ToolCall) (*ToolResult, error) {
 	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
 	defer cancel()
@@ -580,7 +605,12 @@ func (s *MCPServer) handleHover(call *ToolCall) (*ToolResult, error) {
 	}, nil
 }
 
-// handleGesture handles multi-touch gesture actions
+// handleGesture handles multi-touch gesture actions.
+//
+// Coordinates use Global Display Coordinates (top-left origin):
+//   - CenterX/CenterY specify the gesture center point
+//   - Origin (0,0) is at the top-left corner of the main display
+//   - Y increases downward
 func (s *MCPServer) handleGesture(call *ToolCall) (*ToolResult, error) {
 	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
 	defer cancel()

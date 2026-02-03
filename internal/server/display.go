@@ -75,7 +75,14 @@ func (s *MCPServer) handleGetDisplay(call *ToolCall) (*ToolResult, error) {
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
 		return &ToolResult{
 			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to parse arguments: %v", err)}},
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Invalid parameters: %v", err)}},
+		}, nil
+	}
+
+	if params.Name == "" {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: "name parameter is required (e.g., 'displays/12345')"}},
 		}, nil
 	}
 

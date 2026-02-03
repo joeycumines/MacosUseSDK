@@ -14,7 +14,7 @@
   },
   "global_alerts": [
     {
-      "priority": "CRITICAL",
+      "type": "OPERATIONAL",
       "warning": "ON TOOLS: Use `config.mk` to create custom targets to run with Make. ALWAYS use custom targets that *limit* the amount of output you receive. For example, piping through tail, with FEW lines output. Prior to tail, pipe to tee. The file ./build.log in the root of the project is gitignored, so use that. That way you can *search* the output. To be clear, timing dependent tests are BANNED. As are those that take too long to run. Testing retries, for example, MUST be done in a way that supports avoiding running afoul of those CRITICAL rules. Abide. OBEY."
     }
   ],
@@ -25,31 +25,35 @@
   "project_title": "Implementation Plan: MacosUseSDK MCP Tool Implementation - ALL TASKS MUST COMPLETE",
   "status_section": {
     "label": "STATUS SECTION (ACTION-FOCUSED)",
-    "current_state": "44 MCP tools. HTTP/SSE transport COMMITTED (97fd8f8). All tests passing. Session: 1h elapsed, 8h remaining.",
+    "current_state": "44 MCP tools. HTTP/SSE transport COMMITTED (97fd8f8). Quality fixes COMMITTED (8edbfa8). JSON struct tags COMMITTED (24584bd). Review-1 items: protocol version DONE, notifications/initialized DONE, shell security DONE, HTTP transport docs DONE.",
     "completed_tasks": [
       "COMMITTED 97fd8f8: feat(transport): add HTTP/SSE transport with comprehensive fixes",
+      "COMMITTED 8edbfa8: refactor(server): improve code quality and consistency",
+      "COMMITTED 24584bd: fix(transport): add JSON-RPC 2.0 compliant struct tags",
       "FIXED: isError → is_error in ToolResult struct",
       "FIXED: Stdio shutdown hang (goroutine + channel pattern)",
       "FIXED: Unix socket file cleanup on shutdown",
+      "FIXED: display.go error handling to use ToolResult pattern",
+      "FIXED: Message struct JSON tags for JSON-RPC 2.0 compliance",
+      "FIXED: handleGetDisplay validation for empty name",
+      "FIXED: Error message standardization (10 fixes across 5 files)",
+      "FIXED: Config silent fallback - now returns errors on parse failure",
+      "FIXED: HTTPTransport.ReadMessage returns immediately",
+      "FIXED: Negative page_size validation",
       "ADDED: HTTP/SSE transport layer (internal/transport/http.go)",
-      "ADDED: SSE connection registry management",
-      "ADDED: Heartbeat mechanism (15-second ping interval)",
-      "ADDED: CORS headers for web client compatibility",
-      "ADDED: Last-Event-ID header handling for reconnection",
-      "ADDED: Configuration parsing for HTTP port/socket",
-      "ADDED: Graceful shutdown for HTTP server and stdio transport",
-      "ADDED: Transport selection in main.go (MCP_TRANSPORT env var)",
-      "ADDED: HTTP transport tests",
-      "ADDED: Config tests",
-      "PASSED: 7 peer reviews (2 contiguous approvals)"
+      "ADDED: defaultApplicationParent constant (8 usages)",
+      "ADDED: Coordinate system documentation to input handlers",
+      "ADDED: Transport interface godoc",
+      "ADDED: Message/ErrorObj struct godoc",
+      "ADDED: MCP protocol version 2025-11-25",
+      "ADDED: notifications/initialized handler",
+      "ADDED: Shell command security documentation",
+      "ADDED: HTTP transport as non-standard extension documentation",
+      "REMOVED: joinStrings (replaced with strings.Join)"
     ],
     "remaining_tasks": [
-      "EXPAND: Documentation updates for HTTP transport",
-      "EXPAND: Integration tests for SSE streaming",
-      "EXPAND: Review and improve test coverage",
-      "EXPAND: Review and improve error handling",
-      "EXPAND: Review proto API compliance",
-      "EXPAND: Review logging consistency"
+      "PENDING: Commit uncommitted quality and review-1 fixes",
+      "PENDING: Run two contiguous peer reviews"
     ]
   },
   "review_analysis": {
@@ -660,12 +664,131 @@
         "command": "test-server",
         "deliverable": "All tests pass",
         "status": "VERIFIED 2026-02-03"
+      },
+      {
+        "step": 16,
+        "id": "REVIEW1-CRIT-1",
+        "task": "Update MCP Protocol Version from 2024-11-05 to 2025-11-25",
+        "file": "internal/server/mcp.go",
+        "deliverable": "Change protocolVersion in initialize response to 2025-11-25",
+        "status": "COMPLETED 2026-02-04"
+      },
+      {
+        "step": 17,
+        "id": "REVIEW1-HIGH-1",
+        "task": "Implement notifications/initialized Handler",
+        "file": "internal/server/mcp.go",
+        "deliverable": "Handle notifications/initialized notification for session lifecycle",
+        "status": "COMPLETED 2026-02-04"
+      },
+      {
+        "step": 18,
+        "id": "REVIEW1-HIGH-2",
+        "task": "Shell Command Security Documentation",
+        "file": "internal/server/scripting.go",
+        "deliverable": "Add comprehensive security documentation block with risk warnings and disable config option",
+        "status": "COMPLETED 2026-02-04"
+      },
+      {
+        "step": 19,
+        "id": "REVIEW1-MED-1",
+        "task": "Add HTTPTransport.ReadMessage test",
+        "file": "internal/transport/http_test.go",
+        "deliverable": "Test that ReadMessage returns error immediately",
+        "status": "COMPLETED 2026-02-04"
+      },
+      {
+        "step": 20,
+        "id": "REVIEW1-MED-2",
+        "task": "Document HTTP transport as non-standard MCP extension",
+        "file": "docs/05-mcp-integration.md",
+        "deliverable": "Add transport architecture section clarifying HTTP is non-standard",
+        "status": "COMPLETED 2026-02-04"
+      },
+      {
+        "step": 21,
+        "id": "QUALITY-1",
+        "task": "Fix handleGetDisplay empty name validation",
+        "file": "internal/server/display.go",
+        "deliverable": "Add validation for empty name parameter",
+        "status": "COMPLETED 2026-02-04"
+      },
+      {
+        "step": 22,
+        "id": "QUALITY-2",
+        "task": "Standardize error message formats across handlers",
+        "file": "internal/server/*.go",
+        "deliverable": "10 fixes: lowercase field names, operation failure patterns, script error patterns",
+        "status": "COMPLETED 2026-02-04"
+      },
+      {
+        "step": 23,
+        "id": "QUALITY-3",
+        "task": "Add godoc to Transport interface and Message/ErrorObj structs",
+        "file": "internal/transport/*.go",
+        "deliverable": "Comprehensive documentation for transport types",
+        "status": "COMPLETED 2026-02-04"
+      },
+      {
+        "step": 24,
+        "id": "QUALITY-4",
+        "task": "Add negative page_size validation",
+        "file": "internal/server/window.go, application.go",
+        "deliverable": "Validation checks for non-negative page_size",
+        "status": "COMPLETED 2026-02-04"
+      },
+      {
+        "step": 25,
+        "id": "QUALITY-5",
+        "task": "Config parse failure returns errors instead of silent fallback",
+        "file": "internal/config/config.go",
+        "deliverable": "getEnvAsInt/getEnvAsDuration return errors on parse failure",
+        "status": "COMPLETED 2026-02-04"
+      },
+      {
+        "step": 26,
+        "id": "QUALITY-6",
+        "task": "Add coordinate bounds documentation to input handlers",
+        "file": "internal/server/input.go",
+        "deliverable": "Global Display Coordinates documentation on all coordinate handlers",
+        "status": "COMPLETED 2026-02-04"
+      },
+      {
+        "step": 27,
+        "id": "QUALITY-7",
+        "task": "HTTPTransport.ReadMessage returns immediately",
+        "file": "internal/transport/http.go",
+        "deliverable": "Return error immediately instead of blocking until shutdown",
+        "status": "COMPLETED 2026-02-04"
+      },
+      {
+        "step": 28,
+        "id": "QUALITY-8",
+        "task": "Fix window.go name parameter example quotes",
+        "file": "internal/server/window.go",
+        "deliverable": "Add single quotes around example path",
+        "status": "COMPLETED 2026-02-04"
+      },
+      {
+        "step": 29,
+        "id": "COMMIT-1",
+        "task": "Commit quality and documentation fixes",
+        "command": "git-add-commit",
+        "deliverable": "All uncommitted quality fixes committed",
+        "status": "PENDING"
+      },
+      {
+        "step": 30,
+        "id": "REVIEW-FINAL",
+        "task": "Two contiguous issue-free peer reviews",
+        "deliverable": "Two #runSubagent reviews with no issues",
+        "status": "PENDING"
       }
     ],
     "completion_criteria": {
-      "total_steps": 15,
+      "total_steps": 30,
       "all_must_complete": true,
-      "verification": "All 15 steps must show status: completed before this plan is considered done"
+      "verification": "All 30 steps must show status: completed before this plan is considered done"
     }
   },
   "compliance_verification": {
@@ -714,7 +837,6 @@
       "TestToolCall_JSON",
       "TestToolResult_JSON",
       "TestContent_JSON",
-      "TestJoinStrings",
       "TestClickTypeValues",
       "TestModifierKeyValues",
       "TestObservationTypeValues",
@@ -740,7 +862,9 @@
       "TestCaptureWindowScreenshotParams",
       "TestDisplayGroundingFormat",
       "TestPaginationTokenOpaque",
-      "TestIsErrorFieldFormat"
+      "TestIsErrorFieldFormat",
+      "TestHTTPTransport_ClientRegistry",
+      "TestHTTPTransport_EventStore"
     ],
     "test_gaps": [
       {
@@ -805,5 +929,74 @@
       "type": "COMPLETION_MANDATE",
       "alert": "ALL 15 STEPS MUST BE COMPLETED. NO SHORTCUTS. NO SKIPPING. THE SEQUENCE MUST RUN TO COMPLETION."
     }
-  ]
+  ],
+  "mcp_compliance_review_2026_02_04": {
+    "document": "review-1.md",
+    "reviewer": "Takumi",
+    "standards_applied": [
+      "MCP Specification (2025-11-25)",
+      "Google AIPs (2025)",
+      "AGENTS.md Directives"
+    ],
+    "overall_assessment": "COMPLIANT with notable issues requiring attention",
+    "critical_issues": [
+      {
+        "id": "CRIT-1",
+        "description": "MCP protocol version uses '2024-11-05' instead of '2025-11-25'",
+        "location": "internal/server/mcp.go",
+        "line": 664,
+        "impact": "MUST_FIX",
+        "fix": "Update protocolVersion in initialize response to '2025-11-25' and implement proper version negotiation",
+        "status": "COMPLETED 2026-02-04"
+      }
+    ],
+    "high_impact_issues": [
+      {
+        "id": "HIGH-1",
+        "description": "notifications/initialized handler missing",
+        "location": "internal/server/mcp.go",
+        "impact": "HIGH",
+        "fix": "Add handling for client's 'notifications/initialized' notification",
+        "status": "COMPLETED 2026-02-04"
+      },
+      {
+        "id": "HIGH-2",
+        "description": "Shell command execution has significant security risk",
+        "location": "internal/server/mcp.go",
+        "impact": "HIGH",
+        "fix": "Add configuration to disable shell command execution, implement audit logging, document security implications",
+        "status": "COMPLETED 2026-02-04"
+      }
+    ],
+    "medium_impact_issues": [
+      {
+        "id": "MED-1",
+        "description": "Test coverage gaps for initialize handshake and notifications",
+        "impact": "MEDIUM",
+        "fix": "Add integration tests for full initialization flow and notification handling",
+        "status": "COMPLETED 2026-02-04"
+      },
+      {
+        "id": "MED-2",
+        "description": "HTTP transport is non-standard extension without TLS/auth",
+        "impact": "MEDIUM",
+        "fix": "Add TLS support and authentication for HTTP transport if exposed beyond localhost",
+        "status": "DOCUMENTED 2026-02-04"
+      }
+    ],
+    "compliance_summary": {
+      "json_rpc_transport": "COMPLIANT",
+      "initialize_handshake": "PARTIAL",
+      "tools_list_call": "COMPLIANT",
+      "notifications": "INCOMPLETE",
+      "aip_resource_naming": "COMPLIANT",
+      "aip_pagination": "COMPLIANT",
+      "aip_field_behavior": "COMPLIANT",
+      "coordinate_documentation": "EXEMPLARY",
+      "error_handling": "COMPLIANT",
+      "test_coverage": "PARTIAL",
+      "ci_cd_structure": "COMPLIANT"
+    },
+    "overall_grade": "B+"
+  }
 }

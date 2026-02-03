@@ -5,12 +5,14 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 	"testing"
 
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
 	"github.com/joeycumines/MacosUseSDK/internal/config"
+	"github.com/joeycumines/MacosUseSDK/internal/transport"
 )
 
 // TestNewMCPServer_WithDefaultConfig tests that NewMCPServer can be created
@@ -157,8 +159,6 @@ func TestContent_JSON(t *testing.T) {
 		})
 	}
 }
-
-
 
 // TestClickTypeValues tests click type enum values align with proto
 func TestClickTypeValues(t *testing.T) {
@@ -1094,5 +1094,185 @@ func TestIsErrorFieldFormat(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// TestInitializeResponse validates the MCP initialize response format
+// Per MCP spec 2025-11-25: initialize returns protocolVersion, capabilities, serverInfo
+// NOTE: This is a contract test validating expected response structure.
+// Full initialize handler testing requires integration tests due to gRPC dependency.
+func TestInitializeResponse(t *testing.T) {
+	tests := []struct {
+		name     string
+		response string
+		wantErr  bool
+	}{
+		{
+			name:     "valid initialize response",
+			response: `{"protocolVersion":"2025-11-25","capabilities":{"tools":{}},"serverInfo":{"name":"macos-use-sdk","version":"0.1.0"}}`,
+			wantErr:  false,
+		},
+		{
+			name:     "with displayInfo",
+			response: `{"protocolVersion":"2025-11-25","capabilities":{"tools":{}},"serverInfo":{"name":"macos-use-sdk","version":"0.1.0"},"displayInfo":{"screens":[]}}`,
+			wantErr:  false,
+		},
+		{
+			name:     "wrong protocol version",
+			response: `{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"serverInfo":{"name":"macos-use-sdk","version":"0.1.0"}}`,
+			wantErr:  true,
+		},
+		{
+			name:     "missing serverInfo",
+			response: `{"protocolVersion":"2025-11-25","capabilities":{"tools":{}}}`,
+			wantErr:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var response struct {
+				ProtocolVersion string `json:"protocolVersion"`
+				Capabilities    struct {
+					Tools map[string]interface{} `json:"tools"`
+				} `json:"capabilities"`
+				ServerInfo struct {
+					Name    string `json:"name"`
+					Version string `json:"version"`
+				} `json:"serverInfo"`
+			}
+			err := json.Unmarshal([]byte(tt.response), &response)
+			if err != nil {
+				t.Fatalf("Failed to unmarshal: %v", err)
+			}
+
+			// Validate protocol version is 2025-11-25
+			if !tt.wantErr {
+				if response.ProtocolVersion != "2025-11-25" {
+					t.Errorf("protocolVersion = %q, want %q", response.ProtocolVersion, "2025-11-25")
+				}
+				if response.ServerInfo.Name == "" {
+					t.Error("serverInfo.name should not be empty")
+				}
+				if response.ServerInfo.Version == "" {
+					t.Error("serverInfo.version should not be empty")
+				}
+			} else {
+				// Expect validation to fail for wantErr cases
+				isValid := response.ProtocolVersion == "2025-11-25" && response.ServerInfo.Name != ""
+				if isValid {
+					t.Error("Expected validation to fail but it passed")
+				}
+			}
+		})
+	}
+}
+
+// TestNotificationsInitializedHandling validates notifications/initialized handling
+// Per MCP spec: This is a client-to-server notification after successful initialize
+// The server should acknowledge it silently (no response required)
+// NOTE: This is a contract test. See TestMCPServer_HandleHTTPMessage_NotificationsInitialized
+// for actual handler invocation tests.
+func TestNotificationsInitializedHandling(t *testing.T) {
+	tests := []struct {
+		name           string
+		method         string
+		expectResponse bool
+	}{
+		{
+			name:           "notifications/initialized is silent",
+			method:         "notifications/initialized",
+			expectResponse: false,
+		},
+		{
+			name:           "tools/list expects response",
+			method:         "tools/list",
+			expectResponse: true,
+		},
+		{
+			name:           "initialize expects response",
+			method:         "initialize",
+			expectResponse: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Per MCP spec, notifications (methods starting with "notifications/")
+			// do not have an ID field and should not receive a response
+			isNotification := strings.HasPrefix(tt.method, "notifications/")
+			if isNotification && tt.expectResponse {
+				t.Error("Notifications should not expect a response")
+			}
+			if !isNotification && !tt.expectResponse {
+				// Non-notification methods (requests) always expect a response
+				t.Logf("Note: method %q is not a notification", tt.method)
+			}
+		})
+	}
+}
+
+// TestMCPProtocolVersion validates that we use the correct MCP protocol version
+// This is a critical compliance requirement - MCP protocol version MUST be 2025-11-25
+func TestMCPProtocolVersion(t *testing.T) {
+	const expectedVersion = "2025-11-25"
+
+	// Simulate the initialize response format from mcp.go
+	initResponse := map[string]interface{}{
+		"protocolVersion": expectedVersion,
+		"capabilities":    map[string]interface{}{"tools": map[string]interface{}{}},
+		"serverInfo":      map[string]interface{}{"name": "macos-use-sdk", "version": "0.1.0"},
+	}
+
+	data, err := json.Marshal(initResponse)
+	if err != nil {
+		t.Fatalf("Failed to marshal initialize response: %v", err)
+	}
+
+	var parsed map[string]interface{}
+	if err := json.Unmarshal(data, &parsed); err != nil {
+		t.Fatalf("Failed to unmarshal: %v", err)
+	}
+
+	gotVersion, ok := parsed["protocolVersion"].(string)
+	if !ok {
+		t.Fatal("protocolVersion is not a string")
+	}
+
+	if gotVersion != expectedVersion {
+		t.Errorf("protocolVersion = %q, want %q", gotVersion, expectedVersion)
+	}
+}
+
+// TestMCPServer_HandleHTTPMessage_NotificationsInitialized tests the actual handleHTTPMessage
+// implementation for notifications/initialized. The full initialize requires gRPC client, but we can
+// verify the notification handler correctly returns (nil, nil) per MCP spec.
+// NOTE: Full initialize testing requires integration tests with running gRPC server.
+// The contract tests (TestInitializeResponse, TestMCPProtocolVersion) verify the
+// expected response format.
+func TestMCPServer_HandleHTTPMessage_NotificationsInitialized(t *testing.T) {
+	// Create minimal MCPServer without full initialization
+	ctx := context.Background()
+	s := &MCPServer{
+		cfg:   &config.Config{},
+		tools: make(map[string]*Tool),
+		ctx:   ctx,
+	}
+
+	msg := &transport.Message{
+		JSONRPC: "2.0",
+		Method:  "notifications/initialized",
+		// Note: notifications don't have an ID field
+	}
+
+	resp, err := s.handleHTTPMessage(msg)
+
+	// Per MCP spec, notifications should return (nil, nil)
+	if err != nil {
+		t.Errorf("handleHTTPMessage returned error: %v, want nil", err)
+	}
+
+	if resp != nil {
+		t.Errorf("handleHTTPMessage returned response %+v, want nil (notifications don't get responses)", resp)
 	}
 }

@@ -1061,8 +1061,16 @@ func (s *MCPServer) handleHTTPMessage(msg *transport.Message) (*transport.Messag
 		return &transport.Message{
 			JSONRPC: "2.0",
 			ID:      msg.ID,
-			Result:  []byte(fmt.Sprintf(`{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"serverInfo":{"name":"macos-use-sdk","version":"0.1.0"},"displayInfo":%s}`, displayInfo)),
+			Result:  []byte(fmt.Sprintf(`{"protocolVersion":"2025-11-25","capabilities":{"tools":{}},"serverInfo":{"name":"macos-use-sdk","version":"0.1.0"},"displayInfo":%s}`, displayInfo)),
 		}, nil
+	}
+
+	// Handle notifications/initialized - client acknowledgment of successful initialization
+	// Per MCP spec: clients send this notification after receiving initialize response
+	if msg.Method == "notifications/initialized" {
+		// This is a notification, no response required
+		// Could be used for session lifecycle management in the future
+		return nil, nil
 	}
 
 	// Handle shutdown request
@@ -1184,11 +1192,18 @@ func (s *MCPServer) handleMessage(tr *transport.StdioTransport, msg *transport.M
 		response := &transport.Message{
 			JSONRPC: "2.0",
 			ID:      msg.ID,
-			Result:  []byte(fmt.Sprintf(`{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"serverInfo":{"name":"macos-use-sdk","version":"0.1.0"},"displayInfo":%s}`, displayInfo)),
+			Result:  []byte(fmt.Sprintf(`{"protocolVersion":"2025-11-25","capabilities":{"tools":{}},"serverInfo":{"name":"macos-use-sdk","version":"0.1.0"},"displayInfo":%s}`, displayInfo)),
 		}
 		if err := tr.WriteMessage(response); err != nil {
 			log.Printf("Error writing response: %v", err)
 		}
+		return
+	}
+
+	// Handle notifications/initialized - client acknowledgment of successful initialization
+	// Per MCP spec: clients send this notification after receiving initialize response
+	if msg.Method == "notifications/initialized" {
+		// This is a notification, no response required
 		return
 	}
 

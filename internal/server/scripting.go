@@ -58,7 +58,7 @@ func (s *MCPServer) handleExecuteAppleScript(call *ToolCall) (*ToolResult, error
 	if !resp.Success || resp.Error != "" {
 		return &ToolResult{
 			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("AppleScript error: %s", resp.Error)}},
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("AppleScript execution failed: %s", resp.Error)}},
 		}, nil
 	}
 
@@ -116,7 +116,7 @@ func (s *MCPServer) handleExecuteJavaScript(call *ToolCall) (*ToolResult, error)
 	if !resp.Success || resp.Error != "" {
 		return &ToolResult{
 			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("JavaScript error: %s", resp.Error)}},
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("JavaScript execution failed: %s", resp.Error)}},
 		}, nil
 	}
 
@@ -131,8 +131,19 @@ func (s *MCPServer) handleExecuteJavaScript(call *ToolCall) (*ToolResult, error)
 	}, nil
 }
 
-// handleExecuteShellCommand handles the execute_shell_command tool
+// handleExecuteShellCommand handles the execute_shell_command tool.
+//
+// SECURITY: This handler executes arbitrary shell commands.
+// It is disabled by default and requires MCP_SHELL_COMMANDS_ENABLED=true to enable.
 func (s *MCPServer) handleExecuteShellCommand(call *ToolCall) (*ToolResult, error) {
+	// Security check: shell commands must be explicitly enabled
+	if !s.cfg.ShellCommandsEnabled {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: "Shell command execution is disabled. Set MCP_SHELL_COMMANDS_ENABLED=true to enable."}},
+		}, nil
+	}
+
 	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
 	defer cancel()
 
@@ -179,7 +190,7 @@ func (s *MCPServer) handleExecuteShellCommand(call *ToolCall) (*ToolResult, erro
 	if resp.Error != "" {
 		return &ToolResult{
 			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Execution error: %s", resp.Error)}},
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Shell command failed: %s", resp.Error)}},
 		}, nil
 	}
 

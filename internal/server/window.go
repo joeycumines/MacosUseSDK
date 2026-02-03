@@ -32,6 +32,13 @@ func (s *MCPServer) handleListWindows(call *ToolCall) (*ToolResult, error) {
 		}, nil
 	}
 
+	if params.PageSize < 0 {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: "page_size must be non-negative"}},
+		}, nil
+	}
+
 	resp, err := s.client.ListWindows(ctx, &pb.ListWindowsRequest{
 		Parent:    params.Parent,
 		PageSize:  params.PageSize,
@@ -89,7 +96,7 @@ func (s *MCPServer) handleGetWindow(call *ToolCall) (*ToolResult, error) {
 	if params.Name == "" {
 		return &ToolResult{
 			IsError: true,
-			Content: []Content{{Type: "text", Text: "name parameter is required (e.g., applications/123/windows/456)"}},
+			Content: []Content{{Type: "text", Text: "name parameter is required (e.g., 'applications/123/windows/456')"}},
 		}, nil
 	}
 
@@ -360,7 +367,7 @@ func (s *MCPServer) handleCloseWindow(call *ToolCall) (*ToolResult, error) {
 	if !resp.Success {
 		return &ToolResult{
 			IsError: true,
-			Content: []Content{{Type: "text", Text: "Window close operation was not successful"}},
+			Content: []Content{{Type: "text", Text: "Close window failed: operation was not successful"}},
 		}, nil
 	}
 

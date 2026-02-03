@@ -94,6 +94,26 @@ func TestLoad_TransportInvalid(t *testing.T) {
 	}
 }
 
+func TestLoad_InvalidInt(t *testing.T) {
+	os.Setenv("MACOS_USE_REQUEST_TIMEOUT", "not-a-number")
+	defer os.Unsetenv("MACOS_USE_REQUEST_TIMEOUT")
+
+	_, err := Load()
+	if err == nil {
+		t.Error("Load() should return error for invalid integer config")
+	}
+}
+
+func TestLoad_InvalidDuration(t *testing.T) {
+	os.Setenv("MCP_HEARTBEAT_INTERVAL", "not-a-duration")
+	defer os.Unsetenv("MCP_HEARTBEAT_INTERVAL")
+
+	_, err := Load()
+	if err == nil {
+		t.Error("Load() should return error for invalid duration config")
+	}
+}
+
 func TestLoad_HTTPConfig(t *testing.T) {
 	os.Setenv("MCP_HTTP_ADDRESS", ":9000")
 	os.Setenv("MCP_HTTP_SOCKET", "/tmp/mcp.sock")
@@ -152,15 +172,16 @@ func TestTransportTypeConstants(t *testing.T) {
 
 func TestGetEnvAsDuration(t *testing.T) {
 	tests := []struct {
-		name     string
-		envValue string
-		want     time.Duration
+		name      string
+		envValue  string
+		want      time.Duration
+		wantError bool
 	}{
-		{"valid duration", "30s", 30 * time.Second},
-		{"minutes", "5m", 5 * time.Minute},
-		{"milliseconds", "500ms", 500 * time.Millisecond},
-		{"empty fallback", "", 10 * time.Second},
-		{"invalid fallback", "invalid", 10 * time.Second},
+		{"valid duration", "30s", 30 * time.Second, false},
+		{"minutes", "5m", 5 * time.Minute, false},
+		{"milliseconds", "500ms", 500 * time.Millisecond, false},
+		{"empty fallback", "", 10 * time.Second, false},
+		{"invalid error", "invalid", 0, true},
 	}
 
 	for _, tt := range tests {
@@ -168,7 +189,17 @@ func TestGetEnvAsDuration(t *testing.T) {
 			os.Setenv("TEST_DURATION", tt.envValue)
 			defer os.Unsetenv("TEST_DURATION")
 
-			got := getEnvAsDuration("TEST_DURATION", 10*time.Second)
+			got, err := getEnvAsDuration("TEST_DURATION", 10*time.Second)
+			if tt.wantError {
+				if err == nil {
+					t.Errorf("getEnvAsDuration() expected error for %q", tt.envValue)
+				}
+				return
+			}
+			if err != nil {
+				t.Errorf("getEnvAsDuration() unexpected error: %v", err)
+				return
+			}
 			if got != tt.want {
 				t.Errorf("getEnvAsDuration() = %v, want %v", got, tt.want)
 			}
@@ -222,14 +253,15 @@ func TestGetEnvAsBool(t *testing.T) {
 
 func TestGetEnvAsInt(t *testing.T) {
 	tests := []struct {
-		value string
-		want  int
+		value     string
+		want      int
+		wantError bool
 	}{
-		{"42", 42},
-		{"0", 0},
-		{"-1", -1},
-		{"invalid", 10},
-		{"", 10},
+		{"42", 42, false},
+		{"0", 0, false},
+		{"-1", -1, false},
+		{"invalid", 0, true},
+		{"", 10, false},
 	}
 
 	for _, tt := range tests {
@@ -241,7 +273,17 @@ func TestGetEnvAsInt(t *testing.T) {
 				os.Unsetenv("TEST_INT")
 			}
 
-			got := getEnvAsInt("TEST_INT", 10)
+			got, err := getEnvAsInt("TEST_INT", 10)
+			if tt.wantError {
+				if err == nil {
+					t.Errorf("getEnvAsInt() expected error for %q", tt.value)
+				}
+				return
+			}
+			if err != nil {
+				t.Errorf("getEnvAsInt() unexpected error: %v", err)
+				return
+			}
 			if got != tt.want {
 				t.Errorf("getEnvAsInt(%q) = %d, want %d", tt.value, got, tt.want)
 			}

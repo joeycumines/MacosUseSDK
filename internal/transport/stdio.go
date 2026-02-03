@@ -32,25 +32,74 @@ func NewStdioTransport(stdin io.Reader, stdout io.Writer) *StdioTransport {
 	}
 }
 
-// Message represents a JSON-RPC 2.0 message
+// Message represents a JSON-RPC 2.0 message.
+//
+// This is a union type that can represent either a Request or a Response:
+//
+// Request format:
+//   - JSONRPC: "2.0" (required)
+//   - Method: The method name (required)
+//   - Params: Method parameters (optional)
+//   - ID: Request identifier (optional; omit for notifications)
+//
+// Response format:
+//   - JSONRPC: "2.0" (required)
+//   - Result: Success result (mutually exclusive with Error)
+//   - Error: Error object (mutually exclusive with Result)
+//   - ID: Matches the request ID (required; null for notification responses)
+//
+// Field names are lowercase per JSON-RPC 2.0 specification.
 //
 //lint:ignore BETTERALIGN struct is intentionally ordered for clarity
 type Message struct {
-	Error   *ErrorObj       `json:"error,omitempty"`
-	JSONRPC string          `json:"jsonrpc"`
-	Method  string          `json:"method,omitempty"`
-	ID      json.RawMessage `json:"id,omitempty"`
-	Params  json.RawMessage `json:"params,omitempty"`
-	Result  json.RawMessage `json:"result,omitempty"`
+	// Error contains error details for failed requests.
+	// Present only in error responses; mutually exclusive with Result.
+	Error *ErrorObj `json:"error,omitempty"`
+
+	// JSONRPC is always "2.0" per the JSON-RPC specification.
+	JSONRPC string `json:"jsonrpc"`
+
+	// Method is the name of the method to invoke.
+	// Present only in requests.
+	Method string `json:"method,omitempty"`
+
+	// ID is the request identifier.
+	// For requests: any JSON value (string, number, null).
+	// For responses: matches the request ID.
+	// Omitted for notifications (requests without responses).
+	ID json.RawMessage `json:"id,omitempty"`
+
+	// Params contains the method parameters.
+	// Present only in requests; may be object or array.
+	Params json.RawMessage `json:"params,omitempty"`
+
+	// Result contains the success response data.
+	// Present only in success responses; mutually exclusive with Error.
+	Result json.RawMessage `json:"result,omitempty"`
 }
 
-// ErrorObj represents a JSON-RPC 2.0 error
+// ErrorObj represents a JSON-RPC 2.0 error object.
+//
+// Standard error codes:
+//   - -32700: Parse error
+//   - -32600: Invalid Request
+//   - -32601: Method not found
+//   - -32602: Invalid params
+//   - -32603: Internal error
+//   - -32000 to -32099: Server error (reserved for implementation-defined errors)
 //
 //lint:ignore BETTERALIGN struct is intentionally ordered for clarity
 type ErrorObj struct {
-	Message string          `json:"message"`
-	Data    json.RawMessage `json:"data,omitempty"`
-	Code    int             `json:"code"`
+	// Message is a human-readable description of the error.
+	Message string `json:"message"`
+
+	// Data contains additional error information.
+	// May be any JSON value; structure is implementation-defined.
+	Data json.RawMessage `json:"data,omitempty"`
+
+	// Code is a number indicating the error type.
+	// See JSON-RPC 2.0 specification for standard codes.
+	Code int `json:"code"`
 }
 
 // ReadMessage reads a JSON-RPC 2.0 message

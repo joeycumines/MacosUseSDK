@@ -123,6 +123,13 @@ func (s *MCPServer) handleListApplications(call *ToolCall) (*ToolResult, error) 
 		}, nil
 	}
 
+	if params.PageSize < 0 {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: "page_size must be non-negative"}},
+		}, nil
+	}
+
 	resp, err := s.client.ListApplications(ctx, &pb.ListApplicationsRequest{
 		PageSize:  params.PageSize,
 		PageToken: params.PageToken,

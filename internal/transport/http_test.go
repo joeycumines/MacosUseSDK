@@ -200,6 +200,19 @@ func TestHTTPTransport_Close(t *testing.T) {
 	}
 }
 
+func TestHTTPTransport_ReadMessage(t *testing.T) {
+	tr := NewHTTPTransport(nil)
+
+	// HTTPTransport should return error immediately - it doesn't support ReadMessage
+	_, err := tr.ReadMessage()
+	if err == nil {
+		t.Error("Expected error from HTTPTransport.ReadMessage")
+	}
+	if !strings.Contains(err.Error(), "not supported") {
+		t.Errorf("Error should mention 'not supported', got: %v", err)
+	}
+}
+
 func TestHTTPTransport_WriteMessage(t *testing.T) {
 	tr := NewHTTPTransport(nil)
 
