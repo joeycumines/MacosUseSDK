@@ -1060,9 +1060,9 @@ func TestDisplayGroundingFormat(t *testing.T) {
 // Per AIP-158, page tokens must be opaque strings that clients should not interpret
 func TestPaginationTokenOpaque(t *testing.T) {
 	tests := []struct {
-		name       string
-		token      string
-		isOpaque   bool
+		name     string
+		token    string
+		isOpaque bool
 	}{
 		{"empty token", "", true},
 		{"base64 encoded", "eyJwYWdlX29mZnNldCI6MTB9", true},
