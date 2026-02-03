@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
@@ -59,7 +60,7 @@ func (s *MCPServer) handleListWindows(call *ToolCall) (*ToolResult, error) {
 			w.Title, w.Name, visibleMark, w.Bounds.X, w.Bounds.Y, w.Bounds.Width, w.Bounds.Height))
 	}
 
-	resultText := fmt.Sprintf("Found %d windows:\n%s", len(resp.Windows), joinStrings(lines, "\n"))
+	resultText := fmt.Sprintf("Found %d windows:\n%s", len(resp.Windows), strings.Join(lines, "\n"))
 	if resp.NextPageToken != "" {
 		resultText += fmt.Sprintf("\n\nMore results available. Use page_token: %s", resp.NextPageToken)
 	}

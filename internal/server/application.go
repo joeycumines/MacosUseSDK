@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
@@ -144,7 +145,7 @@ func (s *MCPServer) handleListApplications(call *ToolCall) (*ToolResult, error) 
 		lines = append(lines, fmt.Sprintf("- %s (%s, PID: %d)", app.DisplayName, app.Name, app.Pid))
 	}
 
-	result := fmt.Sprintf("Found %d applications:\n%s", len(resp.Applications), joinStrings(lines, "\n"))
+	result := fmt.Sprintf("Found %d applications:\n%s", len(resp.Applications), strings.Join(lines, "\n"))
 	if resp.NextPageToken != "" {
 		result += fmt.Sprintf("\n\nMore results available. Use page_token: %s", resp.NextPageToken)
 	}

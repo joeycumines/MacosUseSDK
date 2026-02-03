@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
@@ -174,7 +175,7 @@ func (s *MCPServer) handleListObservations(call *ToolCall) (*ToolResult, error) 
 	return &ToolResult{
 		Content: []Content{{
 			Type: "text",
-			Text: fmt.Sprintf("Found %d observations:\n%s", len(resp.Observations), joinStrings(lines, "\n")),
+			Text: fmt.Sprintf("Found %d observations:\n%s", len(resp.Observations), strings.Join(lines, "\n")),
 		}},
 	}, nil
 }

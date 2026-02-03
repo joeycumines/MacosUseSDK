@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	typepb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
@@ -78,7 +79,7 @@ func (s *MCPServer) handleFindElements(call *ToolCall) (*ToolResult, error) {
 	return &ToolResult{
 		Content: []Content{{
 			Type: "text",
-			Text: fmt.Sprintf("Found %d elements:\n%s", len(resp.Elements), joinStrings(lines, "\n")),
+			Text: fmt.Sprintf("Found %d elements:\n%s", len(resp.Elements), strings.Join(lines, "\n")),
 		}},
 	}, nil
 }
@@ -123,7 +124,7 @@ func (s *MCPServer) handleGetElement(call *ToolCall) (*ToolResult, error) {
 
 	actionsStr := "none"
 	if len(elem.Actions) > 0 {
-		actionsStr = joinStrings(elem.Actions, ", ")
+		actionsStr = strings.Join(elem.Actions, ", ")
 	}
 
 	return &ToolResult{
@@ -350,7 +351,7 @@ func (s *MCPServer) handleGetElementActions(call *ToolCall) (*ToolResult, error)
 	return &ToolResult{
 		Content: []Content{{
 			Type: "text",
-			Text: fmt.Sprintf("Available actions for %s:\n%s", params.Name, joinStrings(resp.Actions, ", ")),
+			Text: fmt.Sprintf("Available actions for %s:\n%s", params.Name, strings.Join(resp.Actions, ", ")),
 		}},
 	}, nil
 }

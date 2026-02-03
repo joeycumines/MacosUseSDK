@@ -15,6 +15,9 @@ import (
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
 )
 
+// defaultApplicationParent is the parent pattern for inputs targeting any/active application
+const defaultApplicationParent = "applications/-"
+
 // handleClick handles the click tool for coordinate-based clicking
 func (s *MCPServer) handleClick(call *ToolCall) (*ToolResult, error) {
 	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
@@ -60,7 +63,7 @@ func (s *MCPServer) handleClick(call *ToolCall) (*ToolResult, error) {
 	parent := params.Application
 	if parent == "" {
 		// Use a default parent pattern if no application specified
-		parent = "applications/-"
+		parent = defaultApplicationParent
 	}
 
 	input := &pb.Input{
@@ -145,7 +148,7 @@ func (s *MCPServer) handleTypeText(call *ToolCall) (*ToolResult, error) {
 
 	parent := params.Application
 	if parent == "" {
-		parent = "applications/-"
+		parent = defaultApplicationParent
 	}
 
 	input := &pb.Input{
@@ -234,7 +237,7 @@ func (s *MCPServer) handlePressKey(call *ToolCall) (*ToolResult, error) {
 
 	parent := params.Application
 	if parent == "" {
-		parent = "applications/-"
+		parent = defaultApplicationParent
 	}
 
 	input := &pb.Input{
@@ -302,7 +305,7 @@ func (s *MCPServer) handleMouseMove(call *ToolCall) (*ToolResult, error) {
 
 	parent := params.Application
 	if parent == "" {
-		parent = "applications/-"
+		parent = defaultApplicationParent
 	}
 
 	input := &pb.Input{
@@ -367,7 +370,7 @@ func (s *MCPServer) handleScroll(call *ToolCall) (*ToolResult, error) {
 
 	parent := params.Application
 	if parent == "" {
-		parent = "applications/-"
+		parent = defaultApplicationParent
 	}
 
 	scroll := &pb.Scroll{
@@ -471,7 +474,7 @@ func (s *MCPServer) handleDrag(call *ToolCall) (*ToolResult, error) {
 
 	parent := params.Application
 	if parent == "" {
-		parent = "applications/-"
+		parent = defaultApplicationParent
 	}
 
 	input := &pb.Input{
@@ -541,7 +544,7 @@ func (s *MCPServer) handleHover(call *ToolCall) (*ToolResult, error) {
 
 	parent := params.Application
 	if parent == "" {
-		parent = "applications/-"
+		parent = defaultApplicationParent
 	}
 
 	input := &pb.Input{
@@ -643,7 +646,7 @@ func (s *MCPServer) handleGesture(call *ToolCall) (*ToolResult, error) {
 
 	parent := params.Application
 	if parent == "" {
-		parent = "applications/-"
+		parent = defaultApplicationParent
 	}
 
 	fingerCount := params.FingerCount

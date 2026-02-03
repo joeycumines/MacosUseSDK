@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
@@ -178,7 +179,7 @@ func (s *MCPServer) handleGetClipboardHistory(call *ToolCall) (*ToolResult, erro
 	return &ToolResult{
 		Content: []Content{{
 			Type: "text",
-			Text: fmt.Sprintf("Clipboard history (%d entries):\n%s", len(resp.Entries), joinStrings(lines, "\n")),
+			Text: fmt.Sprintf("Clipboard history (%d entries):\n%s", len(resp.Entries), strings.Join(lines, "\n")),
 		}},
 	}, nil
 }

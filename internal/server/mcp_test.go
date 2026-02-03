@@ -158,49 +158,7 @@ func TestContent_JSON(t *testing.T) {
 	}
 }
 
-// TestJoinStrings tests the joinStrings helper function
-func TestJoinStrings(t *testing.T) {
-	tests := []struct {
-		name string
-		strs []string
-		sep  string
-		want string
-	}{
-		{
-			name: "empty slice",
-			strs: []string{},
-			sep:  ",",
-			want: "",
-		},
-		{
-			name: "single element",
-			strs: []string{"one"},
-			sep:  ",",
-			want: "one",
-		},
-		{
-			name: "multiple elements",
-			strs: []string{"one", "two", "three"},
-			sep:  ", ",
-			want: "one, two, three",
-		},
-		{
-			name: "newline separator",
-			strs: []string{"line1", "line2"},
-			sep:  "\n",
-			want: "line1\nline2",
-		},
-	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := joinStrings(tt.strs, tt.sep)
-			if got != tt.want {
-				t.Errorf("joinStrings() = %q, want %q", got, tt.want)
-			}
-		})
-	}
-}
 
 // TestClickTypeValues tests click type enum values align with proto
 func TestClickTypeValues(t *testing.T) {

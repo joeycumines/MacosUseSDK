@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
@@ -20,7 +21,10 @@ func (s *MCPServer) handleListDisplays(call *ToolCall) (*ToolResult, error) {
 
 	resp, err := s.client.ListDisplays(ctx, &pb.ListDisplaysRequest{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to list displays: %w", err)
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to list displays: %v", err)}},
+		}, nil
 	}
 
 	if len(resp.Displays) == 0 {
@@ -53,7 +57,7 @@ func (s *MCPServer) handleListDisplays(call *ToolCall) (*ToolResult, error) {
 		Content: []Content{
 			{
 				Type: "text",
-				Text: fmt.Sprintf("Found %d displays:\n%s", len(resp.Displays), joinStrings(lines, "\n")),
+				Text: fmt.Sprintf("Found %d displays:\n%s", len(resp.Displays), strings.Join(lines, "\n")),
 			},
 		},
 	}, nil
@@ -69,12 +73,18 @@ func (s *MCPServer) handleGetDisplay(call *ToolCall) (*ToolResult, error) {
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
-		return nil, fmt.Errorf("failed to parse arguments: %w", err)
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to parse arguments: %v", err)}},
+		}, nil
 	}
 
 	display, err := s.client.GetDisplay(ctx, &pb.GetDisplayRequest{Name: params.Name})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get display: %w", err)
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to get display: %v", err)}},
+		}, nil
 	}
 
 	mainMark := ""
@@ -100,16 +110,4 @@ func (s *MCPServer) handleGetDisplay(call *ToolCall) (*ToolResult, error) {
 			},
 		},
 	}, nil
-}
-
-// joinStrings joins strings with a separator
-func joinStrings(strs []string, sep string) string {
-	if len(strs) == 0 {
-		return ""
-	}
-	result := strs[0]
-	for i := 1; i < len(strs); i++ {
-		result += sep + strs[i]
-	}
-	return result
 }
