@@ -19,6 +19,16 @@ import (
 	"time"
 )
 
+// HTTP transport constants
+const (
+	// maxEventStoreSize is the maximum number of events to retain for reconnection replay.
+	maxEventStoreSize = 1000
+	// sseClientBufferSize is the buffer size for SSE client response channels.
+	sseClientBufferSize = 100
+	// serverShutdownTimeout is the timeout for graceful HTTP server shutdown.
+	serverShutdownTimeout = 5 * time.Second
+)
+
 // HTTPTransportConfig holds configuration for HTTP transport.
 // Address is the HTTP server address (e.g., ":8080" or "localhost:8080").
 // SocketPath is an optional Unix domain socket path (takes precedence over Address).
@@ -139,7 +149,7 @@ func (s *EventStore) GetSince(lastEventID string) []*SSEEvent {
 func NewClientRegistry() *ClientRegistry {
 	return &ClientRegistry{
 		clients:    make(map[string]*SSEClient),
-		eventStore: NewEventStore(1000),
+		eventStore: NewEventStore(maxEventStoreSize),
 	}
 }
 
@@ -151,7 +161,7 @@ func (r *ClientRegistry) Add(lastEventID string) *SSEClient {
 	id := fmt.Sprintf("client-%d", r.nextID.Add(1))
 	client := &SSEClient{
 		ID:           id,
-		ResponseChan: make(chan *SSEEvent, 100),
+		ResponseChan: make(chan *SSEEvent, sseClientBufferSize),
 		CreatedAt:    time.Now(),
 		LastEventID:  lastEventID,
 	}
@@ -481,7 +491,7 @@ func (t *HTTPTransport) Close() error {
 
 	close(t.shutdownCh)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), serverShutdownTimeout)
 	defer cancel()
 
 	if err := t.server.Shutdown(ctx); err != nil {

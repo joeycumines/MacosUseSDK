@@ -23,6 +23,14 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+// MCP server constants
+const (
+	// shutdownResponseDelay is the delay before shutdown to allow response to be sent.
+	shutdownResponseDelay = 100 * time.Millisecond
+	// displayInfoTimeout is the timeout for fetching display information.
+	displayInfoTimeout = 5 * time.Second
+)
+
 // MCPServer represents an MCP server
 //
 //lint:ignore BETTERALIGN struct is intentionally ordered for clarity
@@ -139,7 +147,9 @@ func (s *MCPServer) Shutdown() {
 	log.Println("Shutting down MCP server...")
 }
 
-// registerTools registers all available tools
+// registerTools initializes all MCP tool handlers for the server.
+// This registers all 44 tools across categories: screenshot, input, element,
+// window, display, clipboard, application, scripting, and observation.
 func (s *MCPServer) registerTools() {
 	s.tools = map[string]*Tool{
 		// === SCREENSHOT TOOLS (P0) ===
@@ -1077,7 +1087,7 @@ func (s *MCPServer) handleHTTPMessage(msg *transport.Message) (*transport.Messag
 	if msg.Method == "shutdown" {
 		go func() {
 			// Delay shutdown slightly to allow response to be sent
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(shutdownResponseDelay)
 			s.Shutdown()
 		}()
 		return &transport.Message{
@@ -1341,7 +1351,7 @@ func (s *MCPServer) handleMessage(tr *transport.StdioTransport, msg *transport.M
 // getDisplayGroundingInfo returns JSON string with display information for grounding
 // Format follows MCP computer tool specification with screens array
 func (s *MCPServer) getDisplayGroundingInfo() string {
-	ctx, cancel := context.WithTimeout(s.ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(s.ctx, displayInfoTimeout)
 	defer cancel()
 
 	resp, err := s.client.ListDisplays(ctx, &pb.ListDisplaysRequest{})

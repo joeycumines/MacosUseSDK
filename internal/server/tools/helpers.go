@@ -1,6 +1,12 @@
 // Copyright 2025 Joseph Cumines
 //
-// Tools helper package for MCP server
+// Package tools provides helper utilities for the MCP server implementation.
+// It includes polling utilities for long-running operations and element waiting.
+//
+// Key utilities:
+//   - PollUntilComplete: Polls a long-running operation until completion
+//   - PollUntilContext: Polls a condition function until success or timeout
+//   - WaitForElement: Waits for a UI element to appear using accessibility APIs
 
 package tools
 
@@ -65,9 +71,12 @@ func PollUntilContext(ctx context.Context, interval time.Duration, condition fun
 	}
 }
 
-// WaitForElement waits for an element to appear
-func WaitForElement(ctx context.Context, client pb.MacosUseClient, parent string, selector interface{}, timeout time.Duration) (*pb.FindElementsResponse, error) {
-	ticker := time.NewTicker(500 * time.Millisecond)
+// WaitForElement waits for an element to appear using the given selector.
+// The selector can be a *_type.ElementSelector or nil for no filtering.
+// It polls for elements at 500ms intervals until found or timeout.
+func WaitForElement(ctx context.Context, client pb.MacosUseClient, parent string, selector *_type.ElementSelector, timeout time.Duration) (*pb.FindElementsResponse, error) {
+	const pollInterval = 500 * time.Millisecond
+	ticker := time.NewTicker(pollInterval)
 	defer ticker.Stop()
 
 	deadline, cancel := context.WithTimeout(ctx, timeout)
@@ -78,15 +87,9 @@ func WaitForElement(ctx context.Context, client pb.MacosUseClient, parent string
 		case <-deadline.Done():
 			return nil, fmt.Errorf("timeout waiting for element")
 		case <-ticker.C:
-			selBytes, _ := selector.([]byte)
-			var sel *_type.ElementSelector
-			if selBytes != nil {
-				_ = selBytes // Could parse if needed
-			}
-
 			resp, err := client.FindElements(deadline, &pb.FindElementsRequest{
 				Parent:   parent,
-				Selector: sel,
+				Selector: selector,
 			})
 			if err != nil {
 				continue

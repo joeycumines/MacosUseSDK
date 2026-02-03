@@ -98,6 +98,13 @@ Previous sins (now corrected, not to be repeated):
 
 - [docs/02-window-state-management.md](docs/02-window-state-management.md)
 
+## MCP Specification References
+
+MCP compliance requirements are documented in docs/05-mcp-integration.md. Refer to that document for:
+- Protocol version requirements (2025-11-25)
+- Transport specifications and compliance status
+- Security and tooling details
+
 ## Proto API Structure
 
 - **Path:** Proto files MUST be located at `proto/macosusesdk/v1/` and mirror package structure.

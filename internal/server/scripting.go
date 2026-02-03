@@ -15,6 +15,9 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
+// defaultScriptTimeout is the default timeout for script execution in seconds.
+const defaultScriptTimeout = 30
+
 // handleExecuteAppleScript handles the execute_apple_script tool
 func (s *MCPServer) handleExecuteAppleScript(call *ToolCall) (*ToolResult, error) {
 	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
@@ -41,7 +44,7 @@ func (s *MCPServer) handleExecuteAppleScript(call *ToolCall) (*ToolResult, error
 
 	timeout := params.Timeout
 	if timeout <= 0 {
-		timeout = 30 // Default 30 second timeout
+		timeout = defaultScriptTimeout
 	}
 
 	resp, err := s.client.ExecuteAppleScript(ctx, &pb.ExecuteAppleScriptRequest{
@@ -99,7 +102,7 @@ func (s *MCPServer) handleExecuteJavaScript(call *ToolCall) (*ToolResult, error)
 
 	timeout := params.Timeout
 	if timeout <= 0 {
-		timeout = 30 // Default 30 second timeout
+		timeout = defaultScriptTimeout
 	}
 
 	resp, err := s.client.ExecuteJavaScript(ctx, &pb.ExecuteJavaScriptRequest{
@@ -170,7 +173,7 @@ func (s *MCPServer) handleExecuteShellCommand(call *ToolCall) (*ToolResult, erro
 
 	timeout := params.Timeout
 	if timeout <= 0 {
-		timeout = 30 // Default 30 second timeout
+		timeout = defaultScriptTimeout
 	}
 
 	resp, err := s.client.ExecuteShellCommand(ctx, &pb.ExecuteShellCommandRequest{

@@ -15,6 +15,9 @@ import (
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
 )
 
+// defaultJPEGQuality is the default quality setting for JPEG screenshots (1-100).
+const defaultJPEGQuality = 85
+
 // handleCaptureScreenshot handles the capture_screenshot tool
 func (s *MCPServer) handleCaptureScreenshot(call *ToolCall) (*ToolResult, error) {
 	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
@@ -53,7 +56,7 @@ func (s *MCPServer) handleCaptureScreenshot(call *ToolCall) (*ToolResult, error)
 
 	quality := params.Quality
 	if quality == 0 {
-		quality = 85 // Default JPEG quality
+		quality = defaultJPEGQuality
 	}
 
 	resp, err := s.client.CaptureScreenshot(ctx, &pb.CaptureScreenshotRequest{
@@ -144,7 +147,7 @@ func (s *MCPServer) handleCaptureRegionScreenshot(call *ToolCall) (*ToolResult, 
 
 	quality := params.Quality
 	if quality == 0 {
-		quality = 85
+		quality = defaultJPEGQuality
 	}
 
 	resp, err := s.client.CaptureRegionScreenshot(ctx, &pb.CaptureRegionScreenshotRequest{
@@ -235,7 +238,7 @@ func (s *MCPServer) handleCaptureWindowScreenshot(call *ToolCall) (*ToolResult, 
 
 	quality := params.Quality
 	if quality == 0 {
-		quality = 85
+		quality = defaultJPEGQuality
 	}
 
 	resp, err := s.client.CaptureWindowScreenshot(ctx, &pb.CaptureWindowScreenshotRequest{
