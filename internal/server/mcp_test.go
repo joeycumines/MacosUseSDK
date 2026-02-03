@@ -100,7 +100,7 @@ func TestToolResult_JSON(t *testing.T) {
 				},
 				IsError: true,
 			},
-			want: `{"content":[{"type":"text","text":"Something went wrong"}],"isError":true}`,
+			want: `{"content":[{"type":"text","text":"Something went wrong"}],"is_error":true}`,
 		},
 		{
 			name: "empty content",

@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"strings"
 	"sync"
 	"time"
 
@@ -26,14 +27,15 @@ import (
 //
 //lint:ignore BETTERALIGN struct is intentionally ordered for clarity
 type MCPServer struct {
-	client    pb.MacosUseClient
-	opsClient longrunningpb.OperationsClient
-	ctx       context.Context
-	cfg       *config.Config
-	conn      *grpc.ClientConn
-	tools     map[string]*Tool
-	cancel    context.CancelFunc
-	mu        sync.RWMutex
+	client        pb.MacosUseClient
+	opsClient     longrunningpb.OperationsClient
+	httpTransport *transport.HTTPTransport
+	ctx           context.Context
+	cfg           *config.Config
+	conn          *grpc.ClientConn
+	tools         map[string]*Tool
+	cancel        context.CancelFunc
+	mu            sync.RWMutex
 }
 
 // Tool represents an MCP tool
@@ -55,7 +57,7 @@ type ToolCall struct {
 // ToolResult represents a tool call result
 type ToolResult struct {
 	Content []Content `json:"content"`
-	IsError bool      `json:"isError,omitempty"`
+	IsError bool      `json:"is_error,omitempty"`
 }
 
 // Content represents a content item in a tool result
@@ -119,11 +121,22 @@ func (s *MCPServer) initGRPC() error {
 
 // Shutdown gracefully shuts down the server
 func (s *MCPServer) Shutdown() {
-	s.conn.Close()
-	if s.conn != nil {
-		s.cancel()
-		log.Println("Shutting down MCP server...")
+	// Close HTTP transport if active
+	s.mu.RLock()
+	httpTransport := s.httpTransport
+	s.mu.RUnlock()
+	if httpTransport != nil {
+		if err := httpTransport.Close(); err != nil {
+			log.Printf("Error closing HTTP transport: %v", err)
+		}
 	}
+
+	// Close gRPC connection
+	if s.conn != nil {
+		s.conn.Close()
+	}
+	s.cancel()
+	log.Println("Shutting down MCP server...")
 }
 
 // registerTools registers all available tools
@@ -981,27 +994,176 @@ func (s *MCPServer) registerTools() {
 func (s *MCPServer) Serve(tr *transport.StdioTransport) error {
 	log.Println("MCP server starting...")
 
+	// Use a goroutine for reading messages to allow context cancellation
+	type readResult struct {
+		msg *transport.Message
+		err error
+	}
+	msgCh := make(chan readResult)
+
+	go func() {
+		for {
+			msg, err := tr.ReadMessage()
+			select {
+			case msgCh <- readResult{msg, err}:
+				if err != nil {
+					return // Exit reader goroutine on error
+				}
+			case <-s.ctx.Done():
+				return // Exit reader goroutine on context cancellation
+			}
+		}
+	}()
+
 	for {
 		select {
 		case <-s.ctx.Done():
 			log.Println("MCP server stopping (context cancelled)")
+			tr.Close() // Close transport to unblock reader goroutine
 			return nil
-		default:
-			// Read a message
-			msg, err := tr.ReadMessage()
-			if err != nil {
-				if err == io.EOF {
+		case result := <-msgCh:
+			if result.err != nil {
+				if result.err == io.EOF || strings.Contains(result.err.Error(), "stdin closed") {
 					log.Println("MCP server stopping (EOF)")
 					return nil
 				}
-				log.Printf("Error reading message: %v", err)
+				log.Printf("Error reading message: %v", result.err)
 				continue
 			}
-
 			// Handle the message
-			go s.handleMessage(tr, msg)
+			go s.handleMessage(tr, result.msg)
 		}
 	}
+}
+
+// ServeHTTP starts serving MCP requests over HTTP/SSE
+func (s *MCPServer) ServeHTTP(tr *transport.HTTPTransport) error {
+	log.Println("MCP server starting with HTTP/SSE transport...")
+	s.mu.Lock()
+	s.httpTransport = tr
+	s.mu.Unlock()
+	return tr.Serve(s.handleHTTPMessage)
+}
+
+// handleHTTPMessage handles a single MCP message from HTTP transport
+func (s *MCPServer) handleHTTPMessage(msg *transport.Message) (*transport.Message, error) {
+	// Handle initialize request
+	if msg.Method == "initialize" {
+		displayInfo := s.getDisplayGroundingInfo()
+		return &transport.Message{
+			JSONRPC: "2.0",
+			ID:      msg.ID,
+			Result:  []byte(fmt.Sprintf(`{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"serverInfo":{"name":"macos-use-sdk","version":"0.1.0"},"displayInfo":%s}`, displayInfo)),
+		}, nil
+	}
+
+	// Handle shutdown request
+	if msg.Method == "shutdown" {
+		go func() {
+			// Delay shutdown slightly to allow response to be sent
+			time.Sleep(100 * time.Millisecond)
+			s.Shutdown()
+		}()
+		return &transport.Message{
+			JSONRPC: "2.0",
+			ID:      msg.ID,
+			Result:  []byte(`{}`),
+		}, nil
+	}
+
+	// Handle exit notification
+	if msg.Method == "exit" {
+		s.Shutdown()
+		return nil, nil
+	}
+
+	// Handle list_tools request
+	if msg.Method == "tools/list" {
+		s.mu.RLock()
+		tools := make([]map[string]interface{}, 0, len(s.tools))
+		for _, tool := range s.tools {
+			tools = append(tools, map[string]interface{}{
+				"name":        tool.Name,
+				"description": tool.Description,
+				"inputSchema": tool.InputSchema,
+			})
+		}
+		s.mu.RUnlock()
+
+		result, _ := json.Marshal(map[string]interface{}{"tools": tools})
+		return &transport.Message{
+			JSONRPC: "2.0",
+			ID:      msg.ID,
+			Result:  result,
+		}, nil
+	}
+
+	// Handle tool call
+	if msg.Method == "tools/call" {
+		var params struct {
+			Name      string          `json:"name"`
+			Arguments json.RawMessage `json:"arguments"`
+		}
+		if err := json.Unmarshal(msg.Params, &params); err != nil {
+			return &transport.Message{
+				JSONRPC: "2.0",
+				ID:      msg.ID,
+				Error: &transport.ErrorObj{
+					Code:    -32602,
+					Message: fmt.Sprintf("Invalid params: %v", err),
+				},
+			}, nil
+		}
+
+		s.mu.RLock()
+		tool, ok := s.tools[params.Name]
+		s.mu.RUnlock()
+
+		if !ok {
+			return &transport.Message{
+				JSONRPC: "2.0",
+				ID:      msg.ID,
+				Error: &transport.ErrorObj{
+					Code:    -32601,
+					Message: fmt.Sprintf("Tool not found: %s", params.Name),
+				},
+			}, nil
+		}
+
+		call := &ToolCall{
+			Name:      params.Name,
+			Arguments: params.Arguments,
+		}
+
+		result, err := tool.Handler(call)
+		if err != nil {
+			return &transport.Message{
+				JSONRPC: "2.0",
+				ID:      msg.ID,
+				Error: &transport.ErrorObj{
+					Code:    -32603,
+					Message: err.Error(),
+				},
+			}, nil
+		}
+
+		resultJSON, _ := json.Marshal(result)
+		return &transport.Message{
+			JSONRPC: "2.0",
+			ID:      msg.ID,
+			Result:  resultJSON,
+		}, nil
+	}
+
+	// Unknown method
+	return &transport.Message{
+		JSONRPC: "2.0",
+		ID:      msg.ID,
+		Error: &transport.ErrorObj{
+			Code:    -32601,
+			Message: fmt.Sprintf("Method not found: %s", msg.Method),
+		},
+	}, nil
 }
 
 // handleMessage handles a single MCP message

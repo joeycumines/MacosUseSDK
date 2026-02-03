@@ -1,0 +1,1104 @@
+diff --git a/baseline.blueprint.json b/baseline.blueprint.json
+index 2ab262d..2842010 100644
+--- a/baseline.blueprint.json
++++ b/baseline.blueprint.json
+@@ -1,7 +1,8 @@
+ {
+   "_meta": {
+     "filename": "blueprint.json",
+-    "maintenance_instruction": "KEEP THE PLAN UP TO DATE AS YOU EVOLVE THE CODE. DEVIATIONS TO THE PLAN MUST BE LOGGED WITHIN THE PLAN. THE PLAN MUST BE REASSESSED HOLISTICALLY AFTER ANY CHANGE OF ANY SIZE."
++    "maintenance_instruction": "KEEP THE PLAN UP TO DATE AS YOU EVOLVE THE CODE. DEVIATIONS TO THE PLAN MUST BE LOGGED WITHIN THE PLAN. THE PLAN MUST BE REASSESSED HOLISTICALLY AFTER ANY CHANGE OF ANY SIZE.",
++    "answering_the_question_are_you_done": "**!! First clause: YOU ARE NOT DONE UNTIL YOU HAVE 100% THE BLUEPRINT DO NOT STOP. Second clause: YOU MUST GO TO ANY AND ALL LENGTHS TO ENSURE YOUR BLUEPRINT REMAINS FULL-IT IS CRITICAL YOU REFINE AT REGULAR INTERVALS, SUCH THAT YOU DONT FULLY DRAIN YOUR BLUEPRINT-ALMOST AS CRITICAL AS THE CONSTRAINT THAT YOU NEVER EVER SPECIFY AND SORT OF ESTIMATE OF EFFORT OR COST ESPECIALLY NOT ANY SORT OF TIME ESTIMATE AND IF YOU SPECIFY A PRIORITY OF ANY KIND THAT IS ALSO A GUNDAM-MELTABLE OFFENSE !!**"
+   },
+   "global_alerts": [
+     {
+diff --git a/blueprint.json b/blueprint.json
+index f4f12c9..ae3efa4 100644
+--- a/blueprint.json
++++ b/blueprint.json
+@@ -2,251 +2,793 @@
+   "_meta": {
+     "filename": "blueprint.json",
+     "maintenance_instruction": "KEEP THE PLAN UP TO DATE AS YOU EVOLVE THE CODE. DEVIATIONS TO THE PLAN MUST BE LOGGED WITHIN THE PLAN. THE PLAN MUST BE REASSESSED HOLISTICALLY AFTER ANY CHANGE OF ANY SIZE.",
+-    "answering_the_question_are_you_done": "**!! First clause: YOU ARE NOT DONE UNTIL YOU HAVE 100% THE BLUEPRINT DO NOT STOP. Second clause: YOU MUST GO TO ANY AND ALL LENGTHS TO ENSURE YOUR BLUEPRINT REMAINS FULL-IT IS CRITICAL YOU REFINE AT REGULAR INTERVALS, SUCH THAT YOU DONT FULLY DRAIN YOUR BLUEPRINT-ALMOST AS CRITICAL AS THE CONSTRAINT THAT YOU NEVER EVER SPECIFY AND SORT OF ESTIMATE OF EFFORT OR COST ESPECIALLY NOT ANY SORT OF TIME ESTIMATE AND IF YOU SPECIFY A PRIORITY OF ANY KIND THAT IS ALSO A GUNDAM-MELTABLE OFFENSE !!**"
++    "answering_the_question_are_you_done": "**!! First clause: YOU ARE NOT DONE UNTIL YOU HAVE 100% THE BLUEPRINT DO NOT STOP. Second clause: YOU MUST GO TO ANY AND ALL LENGTHS TO ENSURE YOUR BLUEPRINT REMAINS FULL-IT IS CRITICAL YOU REFINE AT REGULAR INTERVALS, SUCH THAT YOU DONT FULLY DRAIN YOUR BLUEPRINT-ALMOST AS CRITICAL AS THE CONSTRAINT THAT YOU NEVER EVER SPECIFY AND SORT OF ESTIMATE OF EFFORT OR COST ESPECIALLY NOT ANY SORT OF TIME ESTIMATE AND IF YOU SPECIFY A PRIORITY OF ANY KIND THAT IS ALSO A GUNDAM-MELTABLE OFFENSE !!**",
++    "source_documents": [
++      "docs/07-mcp-tool-design-review.md",
++      "docs/05-mcp-integration.md",
++      "proto/macosusesdk/v1/macos_use.proto",
++      "internal/server/mcp.go",
++      "internal/server/mcp_test.go",
++      "docs/06-mcp-tool-design.md"
++    ]
+   },
+   "global_alerts": [
+     {
+-      "context": "ON TOOLS: Use `config.mk` to create custom targets to run with Make. ALWAYS use custom targets that *limit* the amount of output you receive. For example, piping through tail, with FEW lines output. Prior to tail, pipe to tee. The file ./build.log in the root of the project is gitignored, so use that. That way you can *search* the output. To be clear, timing dependent tests are BANNED. As are those that take too long to run. Testing retries, for example, MUST be done in a way that supports avoiding running afoul of those CRITICAL rules. Abide. OBEY."
++      "priority": "CRITICAL",
++      "warning": "ON TOOLS: Use `config.mk` to create custom targets to run with Make. ALWAYS use custom targets that *limit* the amount of output you receive. For example, piping through tail, with FEW lines output. Prior to tail, pipe to tee. The file ./build.log in the root of the project is gitignored, so use that. That way you can *search* the output. To be clear, timing dependent tests are BANNED. As are those that take too long to run. Testing retries, for example, MUST be done in a way that supports avoiding running afoul of those CRITICAL rules. Abide. OBEY."
+     }
+   ],
+   "mandatory_directives": {
+     "subagent_policy": "!! MANDATORY OPERATIONAL DIRECTIVE !!",
+-    "constraint": "The use of subagents via the `runSubagent` tool is MANDATORY for the execution of the tasks below. Tasks are grouped specifically to be run in distinct subagent contexts to prevent context window exhaustion. Do not attempt to solve all groups in a single turn.",
+-    "execution_hours": "18",
+-    "execution_start_file": "./.work-session-start.txt"
++    "constraint": "The use of subagents via the `runSubagent` tool is MANDATORY for the execution of the tasks below. Tasks are grouped specifically to be run in distinct subagent contexts to prevent context window exhaustion. Do not attempt to solve all groups in a single turn."
+   },
+-  "project_title": "Implementation Plan: MacosUseSDK gRPC Service - MCP Tool Completion (Post-Review)",
++  "project_title": "Implementation Plan: MacosUseSDK MCP Tool Implementation - ALL TASKS MUST COMPLETE",
+   "status_section": {
+     "label": "STATUS SECTION (ACTION-FOCUSED)",
+-    "current_state": "ALL MCP REVIEW TASKS COMPLETED. 47 tools implemented. All tests passing. Only deferred items remaining (Session, Macro tools).",
+-    "tasks": [
++    "current_state": "44 MCP tools implemented. HTTP/SSE transport NOT implemented. isError field FIXED (2026-02-03). Test count is correct at 44.",
++    "all_tasks_required": [
++      "ADD: HTTP/SSE transport layer (internal/transport/http.go)",
++      "ADD: SSE connection registry management",
++      "ADD: Heartbeat mechanism (30-second ping interval)",
++      "ADD: CORS headers for web client compatibility",
++      "ADD: Last-Event-ID header handling for reconnection",
++      "ADD: Configuration parsing for HTTP port/socket",
++      "ADD: Graceful shutdown handler for HTTP server",
++      "ADD: Transport selection in main server initialization",
++      "ADD: Transport-specific logging (OSLog)",
++      "ADD: SSE streaming integration tests",
++      "ADD: HTTP transport configuration tests",
++      "RUN: Build verification (make all)",
++      "RUN: Server tests pass (go test ./internal/server/...)"
++    ]
++  },
++  "review_analysis": {
++    "document": "docs/07-mcp-tool-design-review.md",
++    "review_date": "2026-02-03",
++    "current_tool_count": 44,
++    "expected_tool_count_after_implementation": 44,
++    "gap_analysis": {
++      "missing_tools": [],
++      "implemented_tools_since_review": [
++        "capture_window_screenshot (T1)",
++        "stream_observations (T2)",
++        "get_clipboard_history (T3)",
++        "validate_script (T4)",
++        "get_element_actions (T5)"
++      ],
++      "bugs_identified": [
++        {
++          "id": "T6",
++          "description": "isError → is_error naming bug in ToolResult struct",
++          "status": "FIXED 2026-02-03",
++          "location": "internal/server/mcp.go line 53"
++        }
++      ],
++      "transport_gap": {
++        "http_sse": "NOT IMPLEMENTED (T13-T21 pending)",
++        "stdio": "IMPLEMENTED"
++      }
++    }
++  },
++  "implemented_tools": {
++    "screenshot_tools": [
++      {
++        "name": "capture_screenshot",
++        "description": "Capture full screen screenshot",
++        "parameters": [
++          "format",
++          "quality",
++          "display",
++          "include_ocr"
++        ],
++        "status": "implemented"
++      },
+       {
+-        "id": "MCP-P2-11",
+-        "description": "Implement session MCP tools (create, get, list, delete) - DEFERRED until server implements Session resource",
+-        "status": "deferred"
++        "name": "capture_window_screenshot",
++        "description": "Capture specific window screenshot",
++        "parameters": [
++          "window",
++          "format",
++          "quality",
++          "include_shadow",
++          "include_ocr"
++        ],
++        "status": "implemented",
++        "review_id": "T1"
+       },
+       {
+-        "id": "MCP-P2-12",
+-        "description": "Implement macro MCP tools (create, get, list, execute) - DEFERRED until server implements Macro resource",
+-        "status": "deferred"
++        "name": "capture_region_screenshot",
++        "description": "Capture screen region screenshot",
++        "parameters": [
++          "x",
++          "y",
++          "width",
++          "height",
++          "format",
++          "quality",
++          "include_ocr"
++        ],
++        "status": "implemented"
+       }
+     ],
+-    "completed_since_session_start": [
+-      "MCP-P0-1: capture_screenshot with max_width/max_height",
+-      "MCP-P0-2: click with left/right/double/middle",  
+-      "MCP-P0-3: type_text wrapping TextInput",
+-      "MCP-P0-4: press_key wrapping KeyPress",
+-      "MCP-P1-1: is_error soft failure pattern in all handlers",
+-      "MCP-P1-2: display grounding in initialize response",
+-      "MCP-P1-3: mouse_move tool",
+-      "MCP-P1-4: scroll tool",
+-      "MCP-P1-5: drag tool",
+-      "MCP-P2-1: open_application tool",
+-      "MCP-P2-2: focus_window tool",
+-      "MCP-P2-3: write_clipboard tool",
+-      "MCP-P2-5: list_applications tool",
+-      "MCP-P2-6: get_window, move_window, resize_window, minimize_window, restore_window, close_window",
+-      "MCP-P2-7: get_element, click_element, write_element_value, perform_element_action",
+-      "MCP-P2-8: capture_window_screenshot, capture_region_screenshot",
+-      "MCP-P2-9: observation tools (create, get, list, cancel)",
+-      "MCP-P2-10: scripting tools (execute_apple_script, execute_javascript, execute_shell_command)",
+-      "MCP-P3-1: Fixed get_display schema (name parameter)",
+-      "MCP-P3-6: Capabilities object in initialize response",
+-      "MCP-TEST-1: Unit tests for MCP tool handlers (internal/server/mcp_test.go)",
+-      "MCP-TEST-2: Transport layer tests (internal/transport/stdio_test.go)",
+-      "MCP-DOC-1: Updated docs/06-mcp-tool-design.md with 36 implemented tools",
+-      "MCP-P4-1: hover tool for timed hover at position",
+-      "MCP-P4-2: gesture tool for multi-touch trackpad gestures",
+-      "MCP-P4-3: Global Display Coordinates documentation for all input tools",
+-      "MCP-P4-4: docs/06 - Blocked by Proto Limitations section for cursor_position, mouse_down/up, hold_key",
+-      "MCP-TEST-3: TestAllToolsExist validates 36 tools enumerated",
+-      "MCP-TEST-4: TestToolNaming validates snake_case convention",
+-      "MCP-TEST-5: TestClickButtonMapping validates button string to enum",
+-      "MCP-TEST-6: TestModifierStringMapping validates modifier string to enum",
+-      "MCP-TEST-7: TestCoordinateValidation validates coordinate handling",
+-      "MCP-TEST-8: TestClickCountValidation validates click count defaulting",
+-      "MCP-P5-1: get_application tool to retrieve specific tracked application",
+-      "MCP-P5-2: delete_application tool to stop tracking an application",
+-      "MCP-P5-3: clear_clipboard tool to clear clipboard contents",
+-      "MCP-DOC-2: Updated docs/06-mcp-tool-design.md to 39 tools",
+-      "V-1: Final validation passed - all tests green",
+-      "MCP-REV-DOC-1: Created docs/07-mcp-tool-design-review.md - Comprehensive analysis of design vs research vs implementation",
+-      "MCP-REV-H1: Added capture_window_screenshot tool",
+-      "MCP-REV-H2: Added stream_observations tool",
+-      "MCP-REV-H3: Fixed isError→is_error naming bug",
+-      "MCP-REV-H4: Added pagination to list_windows (page_size, page_token)",
+-      "MCP-REV-M1: Added get_clipboard_history tool",
+-      "MCP-REV-M2: Added validate_script tool",
+-      "MCP-REV-M3: Added get_element_actions tool",
+-      "MCP-REV-M4: Aligned display grounding format with MCP spec (screens array)",
+-      "MCP-REV-M5: Click tool already had button and click_count parameters",
+-      "MCP-REV-DOC-2: Updated docs/06-mcp-tool-design.md to 47 tools with new format",
+-      "MCP-REV-L1: Documented coordinate scaling limitation for MCP hosts",
+-      "MCP-REV-L2: Updated gesture tool schema - direction is for swipe only",
+-      "MCP-REV-L3: Added TestPaginationTokenOpaque for page_token opacity validation",
+-      "MCP-REV-L4: Added TestIsErrorFieldFormat for is_error field validation",
+-      "V-2: All tests pass (47 tools validated)"
++    "input_tools": [
++      {
++        "name": "click",
++        "description": "Click at screen coordinates",
++        "parameters": [
++          "x",
++          "y",
++          "button",
++          "click_count",
++          "show_animation"
++        ],
++        "status": "implemented"
++      },
++      {
++        "name": "type_text",
++        "description": "Type text as keyboard input",
++        "parameters": [
++          "text",
++          "char_delay",
++          "use_ime"
++        ],
++        "status": "implemented"
++      },
++      {
++        "name": "press_key",
++        "description": "Press key combination",
++        "parameters": [
++          "key",
++          "modifiers"
++        ],
++        "status": "implemented"
++      },
++      {
++        "name": "mouse_move",
++        "description": "Move mouse cursor to position",
++        "parameters": [
++          "x",
++          "y",
++          "duration"
++        ],
++        "status": "implemented"
++      },
++      {
++        "name": "scroll",
++        "description": "Scroll content vertically/horizontally",
++        "parameters": [
++          "x",
++          "y",
++          "horizontal",
++          "vertical",
++          "duration"
++        ],
++        "status": "implemented"
++      },
++      {
++        "name": "drag",
++        "description": "Drag from one position to another",
++        "parameters": [
++          "start_x",
++          "start_y",
++          "end_x",
++          "end_y",
++          "duration",
++          "button"
++        ],
++        "status": "implemented"
++      },
++      {
++        "name": "hover",
++        "description": "Hover mouse at position for duration",
++        "parameters": [
++          "x",
++          "y",
++          "duration",
++          "application"
++        ],
++        "status": "implemented"
++      },
++      {
++        "name": "gesture",
++        "description": "Multi-touch trackpad gesture",
++        "parameters": [
++          "center_x",
++          "center_y",
++          "gesture_type",
++          "scale",
++          "rotation",
++          "finger_count",
++          "direction",
++          "application"
++        ],
++        "status": "implemented"
++      }
++    ],
++    "element_tools": [
++      {
++        "name": "find_elements",
++        "description": "Find UI elements by criteria",
++        "parameters": [
++          "parent",
++          "selector"
++        ],
++        "status": "implemented"
++      },
++      {
++        "name": "get_element",
++        "description": "Get element details",
++        "parameters": [
++          "name"
++        ],
++        "status": "implemented"
++      },
++      {
++        "name": "get_element_actions",
++        "description": "Get available actions for element",
++        "parameters": [
++          "name"
++        ],
++        "status": "implemented",
++        "review_id": "T5"
++      },
++      {
++        "name": "click_element",
++        "description": "Click UI element via accessibility",
++        "parameters": [
++          "parent",
++          "element_id"
++        ],
++        "status": "implemented"
++      },
++      {
++        "name": "write_element_value",
++        "description": "Set element value",
++        "parameters": [
++          "parent",
++          "element_id",
++          "value"
++        ],
++        "status": "implemented"
++      },
++      {
++        "name": "perform_element_action",
++        "description": "Perform accessibility action",
++        "parameters": [
++          "parent",
++          "element_id",
++          "action"
++        ],
++        "status": "implemented"
++      }
++    ],
++    "window_tools": [
++      {
++        "name": "list_windows",
++        "description": "List all windows",
++        "parameters": [
++          "parent",
++          "page_size",
++          "page_token"
++        ],
++        "status": "implemented",
++        "pagination": "verified"
++      },
++      {
++        "name": "get_window",
++        "description": "Get window details",
++        "parameters": [
++          "name"
++        ],
++        "status": "implemented"
++      },
++      {
++        "name": "focus_window",
++        "description": "Focus (activate) window",
++        "parameters": [
++          "name"
++        ],
++        "status": "implemented"
++      },
++      {
++        "name": "move_window",
++        "description": "Move window to position",
++        "parameters": [
++          "name",
++          "x",
++          "y"
++        ],
++        "status": "implemented"
++      },
++      {
++        "name": "resize_window",
++        "description": "Resize window",
++        "parameters": [
++          "name",
++          "width",
++          "height"
++        ],
++        "status": "implemented"
++      },
++      {
++        "name": "minimize_window",
++        "description": "Minimize window to dock",
++        "parameters": [
++          "name"
++        ],
++        "status": "implemented"
++      },
++      {
++        "name": "restore_window",
++        "description": "Restore minimized window",
++        "parameters": [
++          "name"
++        ],
++        "status": "implemented"
++      },
++      {
++        "name": "close_window",
++        "description": "Close window",
++        "parameters": [
++          "name",
++          "force"
++        ],
++        "status": "implemented"
++      }
++    ],
++    "display_tools": [
++      {
++        "name": "list_displays",
++        "description": "List all connected displays",
++        "parameters": [],
++        "status": "implemented"
++      },
++      {
++        "name": "get_display",
++        "description": "Get display details",
++        "parameters": [
++          "name"
++        ],
++        "status": "implemented"
++      }
++    ],
++    "clipboard_tools": [
++      {
++        "name": "get_clipboard",
++        "description": "Get clipboard contents",
++        "parameters": [],
++        "status": "implemented"
++      },
++      {
++        "name": "write_clipboard",
++        "description": "Write to clipboard",
++        "parameters": [
++          "text"
++        ],
++        "status": "implemented"
++      },
++      {
++        "name": "clear_clipboard",
++        "description": "Clear clipboard contents",
++        "parameters": [],
++        "status": "implemented"
++      },
++      {
++        "name": "get_clipboard_history",
++        "description": "Get clipboard history",
++        "parameters": [],
++        "status": "implemented",
++        "review_id": "T3"
++      }
++    ],
++    "application_tools": [
++      {
++        "name": "open_application",
++        "description": "Open application by identifier",
++        "parameters": [
++          "id"
++        ],
++        "status": "implemented"
++      },
++      {
++        "name": "list_applications",
++        "description": "List tracked applications",
++        "parameters": [
++          "page_size",
++          "page_token"
++        ],
++        "status": "implemented"
++      },
++      {
++        "name": "get_application",
++        "description": "Get application details",
++        "parameters": [
++          "name"
++        ],
++        "status": "implemented"
++      },
++      {
++        "name": "delete_application",
++        "description": "Stop tracking application",
++        "parameters": [
++          "name"
++        ],
++        "status": "implemented"
++      }
++    ],
++    "scripting_tools": [
++      {
++        "name": "execute_apple_script",
++        "description": "Execute AppleScript",
++        "parameters": [
++          "script",
++          "timeout"
++        ],
++        "status": "implemented"
++      },
++      {
++        "name": "execute_javascript",
++        "description": "Execute JXA",
++        "parameters": [
++          "script",
++          "timeout"
++        ],
++        "status": "implemented"
++      },
++      {
++        "name": "execute_shell_command",
++        "description": "Execute shell command",
++        "parameters": [
++          "command",
++          "args",
++          "timeout"
++        ],
++        "status": "implemented"
++      },
++      {
++        "name": "validate_script",
++        "description": "Validate script without executing",
++        "parameters": [
++          "type",
++          "script"
++        ],
++        "status": "implemented",
++        "review_id": "T4"
++      }
++    ],
++    "observation_tools": [
++      {
++        "name": "create_observation",
++        "description": "Create observation for UI changes",
++        "parameters": [
++          "parent",
++          "type",
++          "visible_only",
++          "poll_interval",
++          "roles",
++          "attributes"
++        ],
++        "status": "implemented"
++      },
++      {
++        "name": "stream_observations",
++        "description": "Stream observation events real-time",
++        "parameters": [
++          "name",
++          "timeout"
++        ],
++        "status": "implemented",
++        "review_id": "T2"
++      },
++      {
++        "name": "get_observation",
++        "description": "Get observation status",
++        "parameters": [
++          "name"
++        ],
++        "status": "implemented"
++      },
++      {
++        "name": "list_observations",
++        "description": "List observations",
++        "parameters": [
++          "parent"
++        ],
++        "status": "implemented"
++      },
++      {
++        "name": "cancel_observation",
++        "description": "Cancel observation",
++        "parameters": [
++          "name"
++        ],
++        "status": "implemented"
++      }
++    ],
++    "deferred_tools": [
++      {
++        "category": "session_operations",
++        "tools": [
++          "create_session",
++          "get_session",
++          "list_sessions",
++          "delete_session"
++        ],
++        "reason": "Deferred until server implements Session resource"
++      },
++      {
++        "category": "macro_operations",
++        "tools": [
++          "create_macro",
++          "get_macro",
++          "list_macros",
++          "execute_macro"
++        ],
++        "reason": "Deferred until server implements Macro resource"
++      }
+     ]
+   },
+-  "review_summary": {
+-    "document": "docs/07-mcp-tool-design-review.md",
+-    "findings": {
+-      "total_tools_current": 47,
+-      "total_tools_required": 47,
+-      "missing_tools": [],
+-      "bugs": [],
+-      "compliance_issues": [
+-        "list_windows - pagination implemented",
+-        "Display grounding format - aligned with MCP spec"
++  "sequential_task_list": {
++    "description": "ALL TASKS MUST BE COMPLETED IN THIS SEQUENCE. NO EXCEPTIONS.",
++    "sequence": [
++      {
++        "step": 1,
++        "id": "FIX-1",
++        "task": "Fix isError → is_error in ToolResult struct",
++        "file": "internal/server/mcp.go",
++        "change": "Change line 53 from: IsError bool      `json:\"isError,omitempty\"` to: IsError bool      `json:\"is_error,omitempty\"`",
++        "status": "COMPLETED 2026-02-03"
++      },
++      {
++        "step": 2,
++        "id": "FIX-2",
++        "task": "Verify TestAllToolsExist matches actual tool count",
++        "file": "internal/server/mcp_test.go",
++        "change": "VERIFIED: Test expects 44 tools, 44 tools implemented - no change needed",
++        "status": "COMPLETED 2026-02-03 (no change required)"
++      },
++      {
++        "step": 3,
++        "id": "T13",
++        "task": "Create internal/transport/http.go implementing HTTP/SSE transport layer",
++        "file": "internal/transport/http.go",
++        "deliverable": "Complete HTTP transport implementation with POST /message and GET /events endpoints"
++      },
++      {
++        "step": 4,
++        "id": "T14",
++        "task": "Add SSE connection registry management to internal/transport/http.go",
++        "file": "internal/transport/http.go",
++        "deliverable": "ConnectionRegistry struct with Add, Remove, Get methods"
++      },
++      {
++        "step": 5,
++        "id": "T15",
++        "task": "Add heartbeat mechanism (30-second ping interval)",
++        "file": "internal/transport/http.go",
++        "deliverable": "Heartbeat goroutine sending ping events every 30 seconds"
++      },
++      {
++        "step": 6,
++        "id": "T16",
++        "task": "Add CORS headers for web client compatibility",
++        "file": "internal/transport/http.go",
++        "deliverable": "Access-Control-Allow-Origin and related CORS headers on all responses"
++      },
++      {
++        "step": 7,
++        "id": "T17",
++        "task": "Add Last-Event-ID header handling for reconnection",
++        "file": "internal/transport/http.go",
++        "deliverable": "Read Last-Event-ID header and use for event resumption"
++      },
++      {
++        "step": 8,
++        "id": "T18",
++        "task": "Add HTTP configuration parsing in internal/config/config.go",
++        "file": "internal/config/config.go",
++        "deliverable": "MCP_TRANSPORT, MCP_HTTP_PORT, MCP_HTTP_SOCKET environment variables"
++      },
++      {
++        "step": 9,
++        "id": "T19",
++        "task": "Add graceful shutdown handler for HTTP server",
++        "file": "internal/transport/http.go",
++        "deliverable": "Shutdown method with proper cleanup of active connections"
++      },
++      {
++        "step": 10,
++        "id": "T20",
++        "task": "Add transport selection in main server initialization",
++        "file": "cmd/mcp-tool/main.go",
++        "deliverable": "Read MCP_TRANSPORT env var and instantiate stdio or HTTP transport"
++      },
++      {
++        "step": 11,
++        "id": "T21",
++        "task": "Add transport-specific logging (OSLog) for HTTP transport",
++        "file": "internal/transport/http.go",
++        "deliverable": "Logger instances for HTTP server events"
++      },
++      {
++        "step": 12,
++        "id": "TEST-1",
++        "task": "Add SSE streaming integration tests",
++        "file": "integration/transport_test.go",
++        "deliverable": "Tests for streaming observation events over SSE"
++      },
++      {
++        "step": 13,
++        "id": "TEST-2",
++        "task": "Add HTTP transport configuration tests",
++        "file": "internal/config/config_test.go",
++        "deliverable": "Tests for environment variable parsing"
++      },
++      {
++        "step": 14,
++        "id": "BUILD",
++        "task": "Run build verification (make all)",
++        "command": "make-all-with-log",
++        "deliverable": "Build completes without errors",
++        "status": "VERIFIED 2026-02-03"
++      },
++      {
++        "step": 15,
++        "id": "TEST-RUN",
++        "task": "Run server tests (go test ./internal/server/...)",
++        "command": "test-server",
++        "deliverable": "All tests pass",
++        "status": "VERIFIED 2026-02-03"
++      }
++    ],
++    "completion_criteria": {
++      "total_steps": 15,
++      "all_must_complete": true,
++      "verification": "All 15 steps must show status: completed before this plan is considered done"
++    }
++  },
++  "compliance_verification": {
++    "coordinate_system": {
++      "status": "VERIFIED",
++      "documentation": "Global Display Coordinates (top-left origin) documented in all input tools",
++      "tools_documented": [
++        "click",
++        "mouse_move",
++        "scroll",
++        "drag",
++        "hover",
++        "gesture",
++        "capture_region_screenshot"
+       ]
++    },
++    "pagination_aip158": {
++      "status": "VERIFIED",
++      "tools_with_pagination": [
++        "list_windows",
++        "list_applications",
++        "list_observations",
++        "find_elements"
++      ],
++      "token_opacity": "VERIFIED (TestPaginationTokenOpaque exists)"
++    },
++    "error_handling": {
++      "status": "PARTIAL",
++      "is_error_field": "Test expects is_error, struct has isError",
++      "soft_failure_pattern": "VERIFIED (all handlers return is_error=true for non-blocking errors)"
++    },
++    "display_grounding": {
++      "status": "VERIFIED",
++      "format": "screens array with id, width, height, pixel_density, origin_x, origin_y",
++      "test": "TestDisplayGroundingFormat exists"
++    },
++    "stream_observations": {
++      "status": "VERIFIED",
++      "tool": "stream_observations implemented",
++      "streaming_capability": "Requires HTTP/SSE transport for full functionality"
+     }
+   },
+-  "implementation_phases": [
++  "test_coverage": {
++    "existing_tests": [
++      "TestNewMCPServer_WithDefaultConfig",
++      "TestToolCall_JSON",
++      "TestToolResult_JSON",
++      "TestContent_JSON",
++      "TestJoinStrings",
++      "TestClickTypeValues",
++      "TestModifierKeyValues",
++      "TestObservationTypeValues",
++      "TestScreenshotFormatValues",
++      "TestToolSchema_RequiredFields",
++      "TestJSONRPCResponse_Structure",
++      "TestErrorCodes",
++      "TestArgumentParsing",
++      "TestConfigDefaults",
++      "TestGestureTypeValues",
++      "TestGestureDirectionValues",
++      "TestHoverToolSchema",
++      "TestGestureToolSchema",
++      "TestAllToolsExist",
++      "TestToolNaming",
++      "TestClickButtonMapping",
++      "TestModifierStringMapping",
++      "TestCoordinateValidation",
++      "TestClickCountValidation",
++      "TestErrorResponseFormat",
++      "TestPaginationTokenHandling",
++      "TestListWindowsPaginationParams",
++      "TestCaptureWindowScreenshotParams",
++      "TestDisplayGroundingFormat",
++      "TestPaginationTokenOpaque",
++      "TestIsErrorFieldFormat"
++    ],
++    "test_gaps": [
++      {
++        "test": "SSE streaming integration tests",
++        "status": "PENDING (blocked by T13-T21)",
++        "file": "integration/transport_test.go"
++      },
++      {
++        "test": "HTTP transport configuration tests",
++        "status": "PENDING (blocked by T18)",
++        "file": "internal/config/config_test.go"
++      }
++    ]
++  },
++  "blocked_by_proto_limitations": [
+     {
+-      "phase_id": "Phase 5",
+-      "title": "Post-Review Fixes (MCP-REV)",
+-      "status": "COMPLETED",
+-      "subsections": [
+-        {
+-          "id": "5.1",
+-          "title": "HIGH Priority - Blocking Issues",
+-          "status": "COMPLETED",
+-          "tasks": [
+-            {
+-              "id": "MCP-REV-H1",
+-              "tool": "capture_window_screenshot",
+-              "description": "Add tool to capture specific window screenshots",
+-              "status": "completed"
+-            },
+-            {
+-              "id": "MCP-REV-H2",
+-              "tool": "stream_observations",
+-              "description": "Add streaming observation tool for real-time events",
+-              "status": "completed"
+-            },
+-            {
+-              "id": "MCP-REV-H3",
+-              "bug": "isError→is_error",
+-              "description": "Fix JSON response key from camelCase to snake_case",
+-              "status": "completed"
+-            },
+-            {
+-              "id": "MCP-REV-H4",
+-              "compliance": "pagination",
+-              "description": "Add page_size/page_token to list_windows tool",
+-              "status": "completed"
+-            }
+-          ]
+-        },
+-        {
+-          "id": "5.2",
+-          "title": "MEDIUM Priority - Feature Completeness",
+-          "status": "COMPLETED",
+-          "tasks": [
+-            {
+-              "id": "MCP-REV-M1",
+-              "tool": "get_clipboard_history",
+-              "status": "completed"
+-            },
+-            {
+-              "id": "MCP-REV-M2",
+-              "tool": "validate_script",
+-              "status": "completed"
+-            },
+-            {
+-              "id": "MCP-REV-M3",
+-              "tool": "get_element_actions",
+-              "status": "completed"
+-            },
+-            {
+-              "id": "MCP-REV-M4",
+-              "description": "Align display grounding with Anthropic format",
+-              "status": "completed"
+-            },
+-            {
+-              "id": "MCP-REV-M5",
+-              "description": "Update click tool schema - click already had button/click_count",
+-              "status": "completed"
+-            }
+-          ]
+-        },
+-        {
+-          "id": "5.3",
+-          "title": "LOW Priority - Polish & Tests",
+-          "status": "COMPLETED",
+-          "tasks": [
+-            {
+-              "id": "MCP-REV-L1",
+-              "description": "Document coordinate scaling limitation",
+-              "status": "completed"
+-            },
+-            {
+-              "id": "MCP-REV-L2",
+-              "description": "Update gesture schema for direction clarity",
+-              "status": "completed"
+-            },
+-            {
+-              "id": "MCP-REV-L3",
+-              "description": "Add pagination token tests",
+-              "status": "completed"
+-            },
+-            {
+-              "id": "MCP-REV-L4",
+-              "description": "Add error response format tests",
+-              "status": "completed"
+-            }
+-          ]
+-        },
+-        {
+-          "id": "5.4",
+-          "title": "Documentation Updates",
+-          "status": "COMPLETED",
+-          "tasks": [
+-            {
+-              "id": "MCP-REV-DOC-1",
+-              "description": "Update docs/06-mcp-tool-design.md to reflect all 47 tools",
+-              "status": "completed"
+-            }
+-          ]
+-        }
+-      ]
++      "action": "cursor_position",
++      "description": "Get current mouse cursor position",
++      "requirement": "New GetCursorPosition RPC needed"
+     },
+     {
+-      "phase_id": "Phase 6",
+-      "title": "Verification & Validation",
+-      "status": "COMPLETED",
+-      "tasks": [
+-        {
+-          "id": "V-2",
+-          "description": "Build verification - all tools compile",
+-          "status": "completed"
+-        },
+-        {
+-          "id": "V-3",
+-          "description": "Test verification - all existing tests pass",
+-          "status": "completed"
++      "action": "left_mouse_down / left_mouse_up",
++      "description": "Stateful mouse button events",
++      "requirement": "Proto only supports atomic click/drag"
++    },
++    {
++      "action": "hold_key",
++      "description": "Hold modifier key for duration",
++      "requirement": "duration field needed in KeyPress message"
++    }
++  ],
++  "environment_configuration": {
++    "transport_options": {
++      "stdio": {
++        "status": "implemented",
++        "file": "internal/transport/stdio.go"
++      },
++      "http_sse": {
++        "status": "step_3_to_11",
++        "file": "transport/http.go",
++        "endpoints_to_create": {
++          "POST /message": "JSON-RPC request endpoint",
++          "GET /events": "SSE streaming response endpoint",
++          "GET /health": "Health check endpoint",
++          "GET /metrics": "Prometheus metrics endpoint"
+         },
+-        {
+-          "id": "V-4",
+-          "description": "Schema validation - all tools have valid JSON Schema",
+-          "status": "completed"
++        "configuration_variables": {
++          "MCP_TRANSPORT": "stdio | sse",
++          "MCP_HTTP_PORT": "default: 8080",
++          "MCP_HTTP_SOCKET": "optional Unix domain socket path",
++          "MCP_HEARTBEAT_INTERVAL": "default: 30 seconds"
+         },
+-        {
+-          "id": "V-5",
+-          "description": "Final count verification - exactly 47 tools",
+-          "status": "completed"
+-        }
+-      ]
++        "sse_event_types": [
++          "message - JSON-RPC response or notification",
++          "heartbeat - Keep-alive ping",
++          "error - Connection-level errors",
++          "complete - Streaming response completion"
++        ]
++      }
+     }
+-  ],
++  },
+   "final_enforcement_protocol": [
+     {
+       "type": "POST_EXECUTION_WARNING",
+       "alert": "ON TOOLS: Use `config.mk` to create custom targets to run with Make. ALWAYS use custom targets that *limit* the amount of output you receive. For example, piping through tail, with FEW lines output. Prior to tail, pipe to tee. The file ./build.log in the root of the project is gitignored, so use that. That way you can *search* the output. To be clear, timing dependent tests are BANNED. As are those that take too long to run. Testing retries, for example, MUST be done in a way that supports avoiding running afoul of those CRITICAL rules. Abide. OBEY."
+     },
+     {
+-      "type": "POST_EXECUTION_WARNING_REPEATED",
+-      "alert": "ON TOOLS: Use `config.mk` to create custom targets to run with Make. ALWAYS use custom targets that *limit* the amount of output you receive. For example, piping through tail, with FEW lines output. Prior to tail, pipe to tee. The file ./build.log in the root of the project is gitignored, so use that. That way you can *search* the output. To be clear, timing dependent tests are BANNED. As are those that take too long to run. Testing retries, for example, MUST be done in a way that supports avoiding running afoul of those CRITICAL rules. Abide. OBEY."
++      "type": "COMPLETION_MANDATE",
++      "alert": "ALL 15 STEPS MUST BE COMPLETED. NO SHORTCUTS. NO SKIPPING. THE SEQUENCE MUST RUN TO COMPLETION."
+     }
+   ]
+ }
+diff --git a/docs/07-mcp-review.md b/docs/07-mcp-review.md
+deleted file mode 100644
+index 60d07b0..0000000
+--- a/docs/07-mcp-review.md
++++ /dev/null
+@@ -1,161 +0,0 @@
+-# MCP Tool Design Review - Alignment Analysis
+-
+-## Executive Summary
+-
+-**VERDICT: MAJOR GAPS IDENTIFIED**
+-
+-Document 06 lists 34 MCP tools; only 5 are implemented (~85% gap). Critical Computer Use actions from doc05 (screenshot, click, type, key) are missing entirely. The MCP server cannot currently function as a Computer Use agent interface.
+-
+-## Critical Gaps (P0 - Blocking)
+-
+-1. **No screenshot tool** - Cannot observe screen state (doc05 Section 2.1.2 `screenshot` action)
+-2. **No coordinate-based click** - Can only click elements, not arbitrary coordinates (doc05 `left_click`, `right_click`, etc.)
+-3. **No type_text tool** - Cannot inject keyboard text (doc05 `type` action)
+-4. **No press_key tool** - Cannot execute keyboard shortcuts (doc05 `key` action)
+-
+-## Severe Gaps (P1 - Limiting)
+-
+-5. **No is_error soft failure pattern** - All errors are hard JSON-RPC errors (doc05 Section 2.3.2)
+-6. **No screenshot scaling** - Native 4K images waste tokens (doc05 Section 2.3.1)
+-7. **No display grounding in initialize** - Missing `display_width_px`, `display_height_px` (doc05 Section 2.1.1)
+-8. **No cursor_position** - Cannot verify mouse position (doc05 "proprioception")
+-9. **No mouse_move/scroll tools** - Cannot hover or navigate content
+-
+-## Protocol Gaps
+-
+-| Missing Protocol Feature | Doc05 Reference |
+-|--------------------------|-----------------|
+-| `notifications/initialized` | Section 1.1.2 |
+-| `shutdown` / `exit` methods | Section 1.1.1 |
+-| `resources/list` / `resources/read` | Section 1.2 |
+-| Empty `capabilities` object | Section 1.1.2 |
+-| No SSE transport | Section 1.2.2 |
+-
+-## Action Space Comparison (doc05 Table 2 vs Implementation)
+-
+-| Doc05 Action | gRPC API | MCP Tool | Status |
+-|--------------|----------|----------|--------|
+-| `mouse_move` | `MouseMove` | - | ❌ Missing |
+-| `cursor_position` | - | - | ❌ API+MCP Missing |
+-| `left_click` | `MouseClick.CLICK_TYPE_LEFT` | - | ❌ MCP Missing |
+-| `right_click` | `MouseClick.CLICK_TYPE_RIGHT` | - | ❌ MCP Missing |
+-| `double_click` | `MouseClick.click_count=2` | - | ❌ MCP Missing |
+-| `left_click_drag` | `MouseDrag` | - | ❌ MCP Missing |
+-| `left_mouse_down` | - | - | ❌ API+MCP Missing |
+-| `left_mouse_up` | - | - | ❌ API+MCP Missing |
+-| `type` | `TextInput` | - | ❌ MCP Missing |
+-| `key` | `KeyPress` | - | ❌ MCP Missing |
+-| `hold_key` | - | - | ❌ API+MCP Missing |
+-| `scroll` | `Scroll` | - | ❌ MCP Missing |
+-| `screenshot` | `CaptureScreenshot` | - | ❌ MCP Missing |
+-| `zoom` (high-res crop) | - | - | ❌ API+MCP Missing |
+-
+-## Accessibility Integration Gaps
+-
+-1. **States array missing** - Element proto lacks `focusable`, `clickable`, `selected`, `expanded`, `checked`
+-2. **No Set-of-Marks (SoM)** - Cannot overlay element IDs on screenshots (doc05 Section 4.2)
+-3. **No hybrid screenshot+A11y response** - Screenshots don't include accessibility tree
+-4. **WatchAccessibility not exposed** - Streaming RPC exists but no MCP tool
+-
+-## Implemented vs Required Tools
+-
+-### Currently Implemented (5)
+-- `find_elements`
+-- `list_windows`
+-- `list_displays`
+-- `get_display`
+-- `get_clipboard`
+-
+-### Doc06 Required but Missing (29)
+-- `open_application`, `get_application`, `list_applications`, `delete_application`
+-- `get_window`, `focus_window`, `move_window`, `resize_window`, `minimize_window`, `restore_window`, `close_window`
+-- `click_element`, `write_element_value`, `perform_element_action`
+-- `find_region_elements`, 

@@ -20,8 +20,8 @@ func (s *MCPServer) handleListWindows(call *ToolCall) (*ToolResult, error) {
 
 	var params struct {
 		Parent    string `json:"parent"`
-		PageSize  int32  `json:"page_size"`
 		PageToken string `json:"page_token"`
+		PageSize  int32  `json:"page_size"`
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
