@@ -326,7 +326,7 @@ func TestJSONRPCResponse_Structure(t *testing.T) {
 				"jsonrpc": "2.0",
 				"id":      1,
 				"error": map[string]interface{}{
-					"code":    -32600,
+					"code":    transport.ErrCodeInvalidRequest,
 					"message": "Invalid Request",
 				},
 			},
@@ -365,21 +365,28 @@ func TestJSONRPCResponse_Structure(t *testing.T) {
 
 // TestErrorCodes tests JSON-RPC error code constants
 func TestErrorCodes(t *testing.T) {
-	codes := map[string]int{
-		"InvalidRequest": -32600,
-		"MethodNotFound": -32601,
-		"InvalidParams":  -32602,
-		"InternalError":  -32603,
-		"ParseError":     -32700,
-		"ServerError":    -32000,
-		"ServerErrorMax": -32099,
+	// Verify the defined constants match JSON-RPC 2.0 specification
+	if transport.ErrCodeInvalidRequest != -32600 {
+		t.Errorf("ErrCodeInvalidRequest = %d, want -32600", transport.ErrCodeInvalidRequest)
+	}
+	if transport.ErrCodeMethodNotFound != -32601 {
+		t.Errorf("ErrCodeMethodNotFound = %d, want -32601", transport.ErrCodeMethodNotFound)
+	}
+	if transport.ErrCodeInvalidParams != -32602 {
+		t.Errorf("ErrCodeInvalidParams = %d, want -32602", transport.ErrCodeInvalidParams)
+	}
+	if transport.ErrCodeInternalError != -32603 {
+		t.Errorf("ErrCodeInternalError = %d, want -32603", transport.ErrCodeInternalError)
+	}
+	if transport.ErrCodeParseError != -32700 {
+		t.Errorf("ErrCodeParseError = %d, want -32700", transport.ErrCodeParseError)
 	}
 
-	if codes["ServerError"] < -32099 || codes["ServerError"] > -32000 {
-		t.Errorf("ServerError code %d not in valid range", codes["ServerError"])
-	}
-	if codes["ServerErrorMax"] < -32099 || codes["ServerErrorMax"] > -32000 {
-		t.Errorf("ServerErrorMax code %d not in valid range", codes["ServerErrorMax"])
+	// Server error range test (reserved for implementation-defined errors)
+	serverErrorMin := -32000
+	serverErrorMax := -32099
+	if serverErrorMin < serverErrorMax || serverErrorMin > -32000 {
+		t.Errorf("Server error range incorrect: min=%d, max=%d", serverErrorMin, serverErrorMax)
 	}
 }
 

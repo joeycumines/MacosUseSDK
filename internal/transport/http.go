@@ -107,7 +107,8 @@ type EventStore struct {
 	maxSize  int
 }
 
-// NewEventStore creates a new event store
+// NewEventStore creates a new event store with the specified maximum capacity.
+// When the store is full, the oldest events are discarded to make room for new ones.
 func NewEventStore(maxSize int) *EventStore {
 	return &EventStore{
 		events:   make([]*SSEEvent, 0, maxSize),
@@ -116,7 +117,8 @@ func NewEventStore(maxSize int) *EventStore {
 	}
 }
 
-// Add adds an event to the store
+// Add adds an event to the store. If the store is at capacity,
+// the oldest event is removed to make room for the new event.
 func (s *EventStore) Add(event *SSEEvent) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -131,7 +133,9 @@ func (s *EventStore) Add(event *SSEEvent) {
 	s.eventMap[event.ID] = event
 }
 
-// GetSince returns events since the given ID
+// GetSince returns all events that occurred after the event with the given ID.
+// If lastEventID is empty or not found, returns nil (no replay).
+// This is used for SSE reconnection replay via the Last-Event-ID header.
 func (s *EventStore) GetSince(lastEventID string) []*SSEEvent {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -153,7 +157,8 @@ func (s *EventStore) GetSince(lastEventID string) []*SSEEvent {
 	return result
 }
 
-// NewClientRegistry creates a new client registry
+// NewClientRegistry creates a new client registry with an internal event store
+// for replay support. The registry manages SSE client connections and event broadcasting.
 func NewClientRegistry() *ClientRegistry {
 	return &ClientRegistry{
 		clients:    make(map[string]*SSEClient),
@@ -161,7 +166,9 @@ func NewClientRegistry() *ClientRegistry {
 	}
 }
 
-// Add adds a client to the registry
+// Add adds a new SSE client to the registry and returns the client handle.
+// The lastEventID is used for potential event replay on reconnection.
+// The client's ResponseChan receives events broadcast to all clients.
 func (r *ClientRegistry) Add(lastEventID string) *SSEClient {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -177,7 +184,8 @@ func (r *ClientRegistry) Add(lastEventID string) *SSEClient {
 	return client
 }
 
-// Remove removes a client from the registry
+// Remove removes a client from the registry and closes its event channel.
+// Safe to call multiple times; subsequent calls are no-ops.
 func (r *ClientRegistry) Remove(id string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -188,7 +196,7 @@ func (r *ClientRegistry) Remove(id string) {
 	}
 }
 
-// Get returns a client by ID
+// Get returns a client by ID, or (nil, false) if not found.
 func (r *ClientRegistry) Get(id string) (*SSEClient, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -196,7 +204,9 @@ func (r *ClientRegistry) Get(id string) (*SSEClient, bool) {
 	return client, ok
 }
 
-// Broadcast sends an event to all connected clients
+// Broadcast sends an event to all connected clients via their ResponseChan.
+// Events are also stored in the event store for replay on reconnection.
+// If a client's buffer is full, the event is dropped for that client with a warning log.
 func (r *ClientRegistry) Broadcast(event *SSEEvent) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -213,7 +223,7 @@ func (r *ClientRegistry) Broadcast(event *SSEEvent) {
 	}
 }
 
-// Count returns the number of connected clients
+// Count returns the current number of connected SSE clients.
 func (r *ClientRegistry) Count() int {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -298,7 +308,7 @@ func (t *HTTPTransport) handleMessage(w http.ResponseWriter, r *http.Request) {
 			JSONRPC: "2.0",
 			ID:      msg.ID,
 			Error: &ErrorObj{
-				Code:    -32603,
+				Code:    ErrCodeInternalError,
 				Message: err.Error(),
 			},
 		}
@@ -311,12 +321,16 @@ func (t *HTTPTransport) handleMessage(w http.ResponseWriter, r *http.Request) {
 
 	// Also broadcast the response as an SSE event for streaming clients
 	if response != nil {
-		eventData, _ := json.Marshal(response)
-		t.clients.Broadcast(&SSEEvent{
-			ID:    fmt.Sprintf("%d", t.eventID.Add(1)),
-			Event: "message",
-			Data:  string(eventData),
-		})
+		eventData, err := json.Marshal(response)
+		if err != nil {
+			log.Printf("Error marshaling SSE event data: %v", err)
+		} else {
+			t.clients.Broadcast(&SSEEvent{
+				ID:    fmt.Sprintf("%d", t.eventID.Add(1)),
+				Event: "message",
+				Data:  string(eventData),
+			})
+		}
 	}
 }
 

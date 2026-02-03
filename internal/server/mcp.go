@@ -1116,7 +1116,17 @@ func (s *MCPServer) handleHTTPMessage(msg *transport.Message) (*transport.Messag
 		}
 		s.mu.RUnlock()
 
-		result, _ := json.Marshal(map[string]interface{}{"tools": tools})
+		result, err := json.Marshal(map[string]interface{}{"tools": tools})
+		if err != nil {
+			return &transport.Message{
+				JSONRPC: "2.0",
+				ID:      msg.ID,
+				Error: &transport.ErrorObj{
+					Code:    transport.ErrCodeInternalError,
+					Message: "failed to marshal tools list",
+				},
+			}, nil
+		}
 		return &transport.Message{
 			JSONRPC: "2.0",
 			ID:      msg.ID,
@@ -1135,7 +1145,7 @@ func (s *MCPServer) handleHTTPMessage(msg *transport.Message) (*transport.Messag
 				JSONRPC: "2.0",
 				ID:      msg.ID,
 				Error: &transport.ErrorObj{
-					Code:    -32602,
+					Code:    transport.ErrCodeInvalidParams,
 					Message: fmt.Sprintf("Invalid params: %v", err),
 				},
 			}, nil
@@ -1150,7 +1160,7 @@ func (s *MCPServer) handleHTTPMessage(msg *transport.Message) (*transport.Messag
 				JSONRPC: "2.0",
 				ID:      msg.ID,
 				Error: &transport.ErrorObj{
-					Code:    -32601,
+					Code:    transport.ErrCodeMethodNotFound,
 					Message: fmt.Sprintf("Tool not found: %s", params.Name),
 				},
 			}, nil
@@ -1167,13 +1177,23 @@ func (s *MCPServer) handleHTTPMessage(msg *transport.Message) (*transport.Messag
 				JSONRPC: "2.0",
 				ID:      msg.ID,
 				Error: &transport.ErrorObj{
-					Code:    -32603,
+					Code:    transport.ErrCodeInternalError,
 					Message: err.Error(),
 				},
 			}, nil
 		}
 
-		resultJSON, _ := json.Marshal(result)
+		resultJSON, err := json.Marshal(result)
+		if err != nil {
+			return &transport.Message{
+				JSONRPC: "2.0",
+				ID:      msg.ID,
+				Error: &transport.ErrorObj{
+					Code:    transport.ErrCodeInternalError,
+					Message: "failed to marshal tool result",
+				},
+			}, nil
+		}
 		return &transport.Message{
 			JSONRPC: "2.0",
 			ID:      msg.ID,
@@ -1186,7 +1206,7 @@ func (s *MCPServer) handleHTTPMessage(msg *transport.Message) (*transport.Messag
 		JSONRPC: "2.0",
 		ID:      msg.ID,
 		Error: &transport.ErrorObj{
-			Code:    -32601,
+			Code:    transport.ErrCodeMethodNotFound,
 			Message: fmt.Sprintf("Method not found: %s", msg.Method),
 		},
 	}, nil
@@ -1249,7 +1269,22 @@ func (s *MCPServer) handleMessage(tr *transport.StdioTransport, msg *transport.M
 		}
 		s.mu.RUnlock()
 
-		result, _ := json.Marshal(map[string]interface{}{"tools": tools})
+		result, err := json.Marshal(map[string]interface{}{"tools": tools})
+		if err != nil {
+			log.Printf("Error marshaling tools list: %v", err)
+			response := &transport.Message{
+				JSONRPC: "2.0",
+				ID:      msg.ID,
+				Error: &transport.ErrorObj{
+					Code:    transport.ErrCodeInternalError,
+					Message: "failed to marshal tools list",
+				},
+			}
+			if err := tr.WriteMessage(response); err != nil {
+				log.Printf("Error writing response: %v", err)
+			}
+			return
+		}
 		response := &transport.Message{
 			JSONRPC: "2.0",
 			ID:      msg.ID,
@@ -1272,7 +1307,7 @@ func (s *MCPServer) handleMessage(tr *transport.StdioTransport, msg *transport.M
 				JSONRPC: "2.0",
 				ID:      msg.ID,
 				Error: &transport.ErrorObj{
-					Code:    -32600,
+					Code:    transport.ErrCodeInvalidRequest,
 					Message: fmt.Sprintf("Invalid request: %v", err),
 				},
 			}
@@ -1291,7 +1326,7 @@ func (s *MCPServer) handleMessage(tr *transport.StdioTransport, msg *transport.M
 				JSONRPC: "2.0",
 				ID:      msg.ID,
 				Error: &transport.ErrorObj{
-					Code:    -32601,
+					Code:    transport.ErrCodeMethodNotFound,
 					Message: fmt.Sprintf("Tool not found: %s", params.Name),
 				},
 			}
@@ -1312,7 +1347,7 @@ func (s *MCPServer) handleMessage(tr *transport.StdioTransport, msg *transport.M
 				JSONRPC: "2.0",
 				ID:      msg.ID,
 				Error: &transport.ErrorObj{
-					Code:    -32603,
+					Code:    transport.ErrCodeInternalError,
 					Message: err.Error(),
 				},
 			}
@@ -1330,7 +1365,22 @@ func (s *MCPServer) handleMessage(tr *transport.StdioTransport, msg *transport.M
 			resultMap["is_error"] = true
 		}
 
-		resultBytes, _ := json.Marshal(resultMap)
+		resultBytes, err := json.Marshal(resultMap)
+		if err != nil {
+			log.Printf("Error marshaling tool result: %v", err)
+			response := &transport.Message{
+				JSONRPC: "2.0",
+				ID:      msg.ID,
+				Error: &transport.ErrorObj{
+					Code:    transport.ErrCodeInternalError,
+					Message: "failed to marshal tool result",
+				},
+			}
+			if err := tr.WriteMessage(response); err != nil {
+				log.Printf("Error writing response: %v", err)
+			}
+			return
+		}
 		response := &transport.Message{
 			JSONRPC: "2.0",
 			ID:      msg.ID,
@@ -1347,7 +1397,7 @@ func (s *MCPServer) handleMessage(tr *transport.StdioTransport, msg *transport.M
 		JSONRPC: "2.0",
 		ID:      msg.ID,
 		Error: &transport.ErrorObj{
-			Code:    -32601,
+			Code:    transport.ErrCodeMethodNotFound,
 			Message: fmt.Sprintf("Method not found: %s", msg.Method),
 		},
 	}
@@ -1397,6 +1447,10 @@ func (s *MCPServer) getDisplayGroundingInfo() string {
 		"screens": screens,
 	}
 
-	infoBytes, _ := json.Marshal(info)
+	infoBytes, err := json.Marshal(info)
+	if err != nil {
+		log.Printf("Warning: failed to marshal display info: %v", err)
+		return `{"screens":[]}`
+	}
 	return string(infoBytes)
 }

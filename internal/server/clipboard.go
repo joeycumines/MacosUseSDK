@@ -100,10 +100,7 @@ func (s *MCPServer) handleWriteClipboard(call *ToolCall) (*ToolResult, error) {
 	}
 
 	// Truncate displayed text if too long
-	displayText := params.Text
-	if len(displayText) > 50 {
-		displayText = displayText[:47] + "..."
-	}
+	displayText := truncateText(params.Text)
 
 	return &ToolResult{
 		Content: []Content{{
@@ -170,9 +167,7 @@ func (s *MCPServer) handleGetClipboardHistory(call *ToolCall) (*ToolResult, erro
 				contentStr = fmt.Sprintf("[%s]", c.String())
 			}
 		}
-		if len(contentStr) > 50 {
-			contentStr = contentStr[:47] + "..."
-		}
+		contentStr = truncateText(contentStr)
 		lines = append(lines, fmt.Sprintf("%d. %s", i+1, contentStr))
 	}
 

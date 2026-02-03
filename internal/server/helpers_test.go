@@ -189,3 +189,53 @@ func TestFrameString(t *testing.T) {
 		})
 	}
 }
+
+func TestTruncateText(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "short text unchanged",
+			input:    "hello",
+			expected: "hello",
+		},
+		{
+			name:     "exactly at limit",
+			input:    "12345678901234567890123456789012345678901234567890", // 50 chars
+			expected: "12345678901234567890123456789012345678901234567890",
+		},
+		{
+			name:     "over limit truncated",
+			input:    "123456789012345678901234567890123456789012345678901", // 51 chars
+			expected: "12345678901234567890123456789012345678901234567890...",
+		},
+		{
+			name:     "empty string",
+			input:    "",
+			expected: "",
+		},
+		{
+			name:     "long text truncated",
+			input:    "This is a very long text that exceeds the maximum display length and should be truncated with an ellipsis at the end",
+			expected: "This is a very long text that exceeds the maximum ...",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := truncateText(tt.input)
+			if got != tt.expected {
+				t.Errorf("truncateText(%q) = %q, want %q", tt.input, got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestMaxDisplayTextLen(t *testing.T) {
+	// Verify the constant has the expected value
+	if maxDisplayTextLen != 50 {
+		t.Errorf("maxDisplayTextLen = %d, want 50", maxDisplayTextLen)
+	}
+}

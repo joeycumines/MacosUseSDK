@@ -181,10 +181,7 @@ func (s *MCPServer) handleTypeText(call *ToolCall) (*ToolResult, error) {
 	}
 
 	// Truncate displayed text if too long
-	displayText := params.Text
-	if len(displayText) > 50 {
-		displayText = displayText[:47] + "..."
-	}
+	displayText := truncateText(params.Text)
 
 	return &ToolResult{
 		Content: []Content{{

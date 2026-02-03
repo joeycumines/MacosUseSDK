@@ -196,7 +196,7 @@ func (t *StdioTransport) Serve(handler func(*Message) (*Message, error)) error {
 				JSONRPC: "2.0",
 				ID:      msg.ID,
 				Error: &ErrorObj{
-					Code:    -32603,
+					Code:    ErrCodeInternalError,
 					Message: err.Error(),
 				},
 			}

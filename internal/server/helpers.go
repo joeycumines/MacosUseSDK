@@ -9,6 +9,18 @@ import (
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
 )
 
+// maxDisplayTextLen is the maximum length for text shown in result summaries.
+// Longer text is truncated with "..." suffix.
+const maxDisplayTextLen = 50
+
+// truncateText truncates text to maxDisplayTextLen characters with "..." suffix if needed.
+func truncateText(s string) string {
+	if len(s) > maxDisplayTextLen {
+		return s[:maxDisplayTextLen] + "..."
+	}
+	return s
+}
+
 // errorResult creates a ToolResult with IsError=true and the given message.
 // This reduces boilerplate for error responses across handlers.
 func errorResult(msg string) *ToolResult {
