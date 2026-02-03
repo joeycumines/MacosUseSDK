@@ -1,8 +1,213 @@
 // Copyright 2025 Joseph Cumines
 //
-// Scripting tool handlers - placeholder for future implementation
+// Scripting tool handlers
 
 package server
 
-// This file is reserved for future scripting functionality.
-// Currently unimplemented to avoid unused function warnings.
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"time"
+
+	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	"google.golang.org/protobuf/types/known/durationpb"
+)
+
+// handleExecuteAppleScript handles the execute_apple_script tool
+func (s *MCPServer) handleExecuteAppleScript(call *ToolCall) (*ToolResult, error) {
+	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
+	defer cancel()
+
+	var params struct {
+		Script  string `json:"script"`
+		Timeout int32  `json:"timeout"`
+	}
+
+	if err := json.Unmarshal(call.Arguments, &params); err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Invalid parameters: %v", err)}},
+		}, nil
+	}
+
+	if params.Script == "" {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: "script parameter is required"}},
+		}, nil
+	}
+
+	timeout := params.Timeout
+	if timeout <= 0 {
+		timeout = 30 // Default 30 second timeout
+	}
+
+	resp, err := s.client.ExecuteAppleScript(ctx, &pb.ExecuteAppleScriptRequest{
+		Script:  params.Script,
+		Timeout: durationpb.New(time.Duration(timeout) * time.Second),
+	})
+	if err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to execute AppleScript: %v", err)}},
+		}, nil
+	}
+
+	if !resp.Success || resp.Error != "" {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("AppleScript error: %s", resp.Error)}},
+		}, nil
+	}
+
+	if resp.Output == "" {
+		return &ToolResult{
+			Content: []Content{{Type: "text", Text: "Script executed (no output)"}},
+		}, nil
+	}
+
+	return &ToolResult{
+		Content: []Content{{Type: "text", Text: fmt.Sprintf("AppleScript result: %s", resp.Output)}},
+	}, nil
+}
+
+// handleExecuteJavaScript handles the execute_javascript tool
+func (s *MCPServer) handleExecuteJavaScript(call *ToolCall) (*ToolResult, error) {
+	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
+	defer cancel()
+
+	var params struct {
+		Script  string `json:"script"`
+		Timeout int32  `json:"timeout"`
+	}
+
+	if err := json.Unmarshal(call.Arguments, &params); err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Invalid parameters: %v", err)}},
+		}, nil
+	}
+
+	if params.Script == "" {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: "script parameter is required"}},
+		}, nil
+	}
+
+	timeout := params.Timeout
+	if timeout <= 0 {
+		timeout = 30 // Default 30 second timeout
+	}
+
+	resp, err := s.client.ExecuteJavaScript(ctx, &pb.ExecuteJavaScriptRequest{
+		Script:  params.Script,
+		Timeout: durationpb.New(time.Duration(timeout) * time.Second),
+	})
+	if err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to execute JavaScript: %v", err)}},
+		}, nil
+	}
+
+	if !resp.Success || resp.Error != "" {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("JavaScript error: %s", resp.Error)}},
+		}, nil
+	}
+
+	if resp.Output == "" {
+		return &ToolResult{
+			Content: []Content{{Type: "text", Text: "Script executed (no output)"}},
+		}, nil
+	}
+
+	return &ToolResult{
+		Content: []Content{{Type: "text", Text: fmt.Sprintf("JavaScript result: %s", resp.Output)}},
+	}, nil
+}
+
+// handleExecuteShellCommand handles the execute_shell_command tool
+func (s *MCPServer) handleExecuteShellCommand(call *ToolCall) (*ToolResult, error) {
+	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
+	defer cancel()
+
+	var params struct {
+		Command          string   `json:"command"`
+		WorkingDirectory string   `json:"working_directory"`
+		Args             []string `json:"args"`
+		Timeout          int32    `json:"timeout"`
+	}
+
+	if err := json.Unmarshal(call.Arguments, &params); err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Invalid parameters: %v", err)}},
+		}, nil
+	}
+
+	if params.Command == "" {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: "command parameter is required"}},
+		}, nil
+	}
+
+	timeout := params.Timeout
+	if timeout <= 0 {
+		timeout = 30 // Default 30 second timeout
+	}
+
+	resp, err := s.client.ExecuteShellCommand(ctx, &pb.ExecuteShellCommandRequest{
+		Command:          params.Command,
+		Args:             params.Args,
+		WorkingDirectory: params.WorkingDirectory,
+		Timeout:          durationpb.New(time.Duration(timeout) * time.Second),
+	})
+	if err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to execute shell command: %v", err)}},
+		}, nil
+	}
+
+	// Check for execution error (not command failure)
+	if resp.Error != "" {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Execution error: %s", resp.Error)}},
+		}, nil
+	}
+
+	output := resp.Stdout
+	if resp.Stderr != "" {
+		if output != "" {
+			output += "\n\nSTDERR:\n" + resp.Stderr
+		} else {
+			output = "STDERR:\n" + resp.Stderr
+		}
+	}
+
+	if resp.ExitCode != 0 {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{
+				Type: "text",
+				Text: fmt.Sprintf("Command exited with code %d\n%s", resp.ExitCode, output),
+			}},
+		}, nil
+	}
+
+	if output == "" {
+		return &ToolResult{
+			Content: []Content{{Type: "text", Text: "Command executed (no output)"}},
+		}, nil
+	}
+
+	return &ToolResult{
+		Content: []Content{{Type: "text", Text: output}},
+	}, nil
+}

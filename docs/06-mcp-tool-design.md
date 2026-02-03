@@ -4,6 +4,8 @@
 
 This document describes the design of an MCP (Model Context Protocol) tool for standard output integration with the MacosUseSDK Go API. The MCP tool provides a JSON-RPC 2.0 interface over stdin/stdout for AI assistants to interact with the macOS automation capabilities.
 
+**Status:** 39 tools implemented and operational.
+
 ## Architecture
 
 ### Component Structure
@@ -12,7 +14,19 @@ This document describes the design of an MCP (Model Context Protocol) tool for s
 MCP Tool (Go executable)
 ├── stdin/stdout JSON-RPC 2.0 communication
 ├── gRPC client connection to MacosUseServer
+│   ├── pb.MacosUseClient (primary operations)
+│   └── longrunningpb.OperationsClient (async operations)
 └── Tool definitions and handlers
+    ├── internal/server/mcp.go (registry + lifecycle)
+    ├── internal/server/screenshot.go
+    ├── internal/server/input.go
+    ├── internal/server/element.go
+    ├── internal/server/window.go
+    ├── internal/server/display.go
+    ├── internal/server/clipboard.go
+    ├── internal/server/application.go
+    ├── internal/server/scripting.go
+    └── internal/server/observation.go
 ```
 
 ### Communication Protocol
@@ -25,155 +39,157 @@ The MCP tool uses JSON-RPC 2.0 over stdio:
 ### MCP Methods
 
 #### Server Lifecycle
-- `initialize`: Handshake and capability negotiation
-- `notifications/initialized`: Server ready notification
-- `shutdown`: Graceful shutdown request
-- `exit`: Exit the server
+- `initialize`: Handshake and capability negotiation (returns display grounding info)
+- `notifications/initialized`: Server ready notification _(not yet implemented)_
+- `shutdown`: Graceful shutdown request _(not yet implemented)_
+- `exit`: Exit the server _(not yet implemented)_
 
 #### Tool Discovery
-- `tools/list`: List available tools
+- `tools/list`: List available tools (39 tools)
 - `tools/call`: Execute a tool
 
-### Available Tools
+## Implemented Tools (39 Total)
 
-The MCP tool exposes the following categories of operations:
+### Screenshot Operations (2 tools)
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `capture_screenshot` | Capture full screen or window screenshot | `display_id`, `window_id`, `format`, `include_ocr`, `max_width`, `max_height` |
+| `capture_region_screenshot` | Capture a region screenshot | `x`, `y`, `width`, `height`, `display_id`, `format`, `include_ocr` |
 
-#### Application Management
-- `open_application`: Open or activate an application
-- `get_application`: Get a specific application
-- `list_applications`: List tracked applications
-- `delete_application`: Stop tracking an application
+### Input Operations (8 tools)
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `click` | Click at screen coordinates | `x`, `y`, `click_type`, `modifiers` |
+| `type_text` | Type text (with optional modifiers) | `text`, `modifiers` |
+| `press_key` | Press a key combination | `key`, `modifiers` |
+| `mouse_move` | Move mouse to coordinates | `x`, `y`, `smooth`, `duration_ms` |
+| `scroll` | Scroll at coordinates | `x`, `y`, `delta_x`, `delta_y` |
+| `drag` | Drag from one point to another | `start_x`, `start_y`, `end_x`, `end_y`, `duration_ms` |
+| `hover` | Hover at position for duration | `x`, `y`, `duration` |
+| `gesture` | Multi-touch gesture (trackpad) | `center_x`, `center_y`, `gesture_type`, `scale`, `rotation`, `finger_count`, `direction` |
 
-#### Window Operations
-- `get_window`: Get a specific window
-- `list_windows`: List windows for an application
-- `focus_window`: Focus a specific window
-- `move_window`: Move a window to a new position
-- `resize_window`: Resize a window
-- `minimize_window`: Minimize a window
-- `restore_window`: Restore a minimized window
-- `close_window`: Close a window
+### Element Operations (5 tools)
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `find_elements` | Find elements matching selector | `parent`, `role`, `title`, `identifier`, `page_size`, `page_token` |
+| `get_element` | Get a specific element | `parent`, `element_id` |
+| `click_element` | Click an element | `parent`, `element_id` |
+| `write_element_value` | Write value to an element | `parent`, `element_id`, `value` |
+| `perform_element_action` | Perform accessibility action | `parent`, `element_id`, `action` |
 
-#### Element Operations
-- `find_elements`: Find elements matching a selector
-- `find_region_elements`: Find elements within a screen region
-- `get_element`: Get a specific element
-- `click_element`: Click an element
-- `write_element_value`: Write an element's value
-- `perform_element_action`: Perform an accessibility action
+### Window Operations (8 tools)
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `list_windows` | List windows | `parent`, `page_size`, `page_token` |
+| `get_window` | Get a specific window | `name` |
+| `focus_window` | Focus a window | `name` |
+| `move_window` | Move a window | `name`, `x`, `y` |
+| `resize_window` | Resize a window | `name`, `width`, `height` |
+| `minimize_window` | Minimize a window | `name` |
+| `restore_window` | Restore a minimized window | `name` |
+| `close_window` | Close a window | `name` |
 
-#### Display Operations
-- `list_displays`: List all displays
-- `get_display`: Get a specific display
+### Display Operations (2 tools)
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `list_displays` | List all displays | `page_size`, `page_token` |
+| `get_display` | Get a specific display | `name` |
 
-#### Clipboard Operations
-- `get_clipboard`: Get clipboard contents
-- `write_clipboard`: Write clipboard contents
-- `clear_clipboard`: Clear clipboard contents
+### Clipboard Operations (3 tools)
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `get_clipboard` | Get clipboard contents | _(none)_ |
+| `write_clipboard` | Write to clipboard | `text`, `type` |
+| `clear_clipboard` | Clear clipboard contents | _(none)_ |
+
+### Application Operations (4 tools)
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `open_application` | Open or activate an application | `application_id` |
+| `list_applications` | List tracked applications | `page_size`, `page_token` |
+| `get_application` | Get a specific application | `name` |
+| `delete_application` | Stop tracking an application | `name` |
+
+### Scripting Operations (3 tools)
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `execute_apple_script` | Execute AppleScript | `script`, `timeout`, `compile_only` |
+| `execute_javascript` | Execute JavaScript for Automation | `script`, `timeout`, `compile_only` |
+| `execute_shell_command` | Execute a shell command | `command`, `args`, `working_directory`, `environment`, `timeout`, `stdin`, `shell` |
+
+### Observation Operations (4 tools)
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `create_observation` | Create an observation | `parent`, `type`, `poll_interval_ms`, `visible_only`, `roles`, `attributes` |
+| `get_observation` | Get observation state | `name` |
+| `list_observations` | List observations | `parent`, `page_size`, `page_token` |
+| `cancel_observation` | Cancel an observation | `name` |
+
+## Not Yet Implemented
+
+### Clipboard Operations (deferred)
 - `get_clipboard_history`: Get clipboard history
 
-#### Input Operations
-- `create_input`: Create an input action
-- `list_inputs`: List inputs
+### Scripting Operations (deferred)
+- `validate_script`: Validate a script without executing
 
-#### Observation Operations
-- `create_observation`: Create an observation
-- `get_observation`: Get an observation
-- `list_observations`: List observations
-- `cancel_observation`: Cancel an observation
+### Session Operations (deferred)
+- `create_session`, `get_session`, `list_sessions`, `delete_session`
 
-#### Scripting Operations
-- `execute_apple_script`: Execute AppleScript
-- `execute_javascript`: Execute JavaScript for Automation
-- `execute_shell_command`: Execute a shell command
-- `validate_script`: Validate a script
+### Macro Operations (deferred)
+- `create_macro`, `get_macro`, `list_macros`, `execute_macro`
 
-#### Screenshot Operations
-- `capture_screenshot`: Capture a full screen screenshot
-- `capture_window_screenshot`: Capture a window screenshot
-- `capture_element_screenshot`: Capture an element screenshot
-- `capture_region_screenshot`: Capture a region screenshot
+## Blocked by Proto Limitations
 
-#### Session Operations
-- `create_session`: Create a session
-- `get_session`: Get a session
-- `list_sessions`: List sessions
-- `delete_session`: Delete a session
+The following actions from docs/05-mcp-integration.md are not implementable without proto schema changes:
 
-#### Macro Operations
-- `create_macro`: Create a macro
-- `get_macro`: Get a macro
-- `list_macros`: List macros
-- `execute_macro`: Execute a macro
+### Input Operations (requires proto changes)
+- `cursor_position`: Get current mouse cursor position. Requires new `GetCursorPosition` RPC.
+- `left_mouse_down` / `left_mouse_up`: Stateful mouse button events for complex gestures. Proto only supports atomic click/drag operations.
+- `hold_key`: Hold a modifier key for a duration. Requires `duration` field in `KeyPress` message.
 
-### Tool Parameters Schema
+### Screenshot Operations (partially covered)
+- `zoom(coordinate, scale)`: High-res crop with scale factor. Functionally similar to `capture_region_screenshot` which captures a rectangular region. The "zoom" concept of preserving 1:1 pixel density is implicit when requesting a small region.
 
-Each tool follows a consistent parameter schema:
+## Error Handling
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "application": {
-      "type": "string",
-      "description": "Application ID, bundle ID, or path"
-    },
-    "window": {
-      "type": "string",
-      "description": "Window resource name"
-    },
-    "element": {
-      "type": "string",
-      "description": "Element ID or selector"
-    },
-    // ... tool-specific parameters
-  },
-  "required": ["application"]
-}
-```
+### Soft Failures (is_error pattern)
 
-### Error Handling
+Tool handlers return soft failures via the `is_error` field in the ToolResult:
+- Non-blocking errors (e.g., element not found) return `is_error: true` with descriptive text
+- Client can decide how to proceed based on the error message
+- This follows MCP conventions for tool error reporting
 
-Errors follow JSON-RPC 2.0 error codes:
+### JSON-RPC Errors
+
+Hard errors follow JSON-RPC 2.0 error codes:
 - `-32600`: Invalid Request
 - `-32601`: Method Not Found
 - `-32602`: Invalid Params
 - `-32603`: Internal Error
-- `-32000`: Server Error (custom, for gRPC errors)
+- `-32000` to `-32099`: Server Error (for gRPC errors)
 
-### Configuration
+## Display Grounding
+
+The `initialize` response includes display grounding information for coordinate-based operations:
+
+```json
+{
+  "protocolVersion": "2024-11-05",
+  "capabilities": {"tools": {}},
+  "serverInfo": {"name": "macos-use-sdk", "version": "0.1.0"},
+  "displayInfo": {
+    "display_width_px": 2560,
+    "display_height_px": 1440
+  }
+}
+```
+
+## Configuration
 
 Environment variables:
-- `MACOS_USE_SERVER_ADDR`: gRPC server address (default: `localhost:50051`)
-- `MACOS_USE_SERVER_TLS`: Use TLS for gRPC (default: false)
-
-## Implementation Plan
-
-### Phase 1: Core Infrastructure
-1. Create MCP tool package structure
-2. Implement JSON-RPC 2.0 transport over stdio
-3. Implement server lifecycle methods (initialize, shutdown)
-
-### Phase 2: Tool Definitions
-1. Define tool schemas for each operation
-2. Implement tool registration system
-3. Implement `tools/list` method
-
-### Phase 3: gRPC Integration
-1. Create gRPC client connection manager
-2. Implement request/response mapping
-3. Implement error handling and conversion
-
-### Phase 4: Tool Handlers
-1. Implement application management handlers
-2. Implement window operations handlers
-3. Implement element operations handlers
-4. Implement remaining operation handlers
-
-### Phase 5: Testing
-1. Write unit tests for core functionality
-2. Write integration tests with the server
-3. Test MCP protocol compliance
+- `MACOS_USE_SERVER_SOCKET`: Unix socket path (default: `/tmp/macos_use_server.sock`)
+- `MACOS_USE_SERVER_ADDR`: gRPC server address (alternative to socket)
 
 ## File Structure
 
@@ -185,26 +201,20 @@ internal/
 ├── transport/
 │   └── stdio.go          # JSON-RPC 2.0 over stdio
 ├── server/
-│   └── mcp.go            # MCP server implementation
-├── tools/
-│   ├── registry.go       # Tool registry
-│   ├── definitions.go    # Tool schemas
-│   └── handlers/         # Tool handlers
-│       ├── application.go
-│       ├── window.go
-│       ├── element.go
-│       ├── display.go
-│       ├── clipboard.go
-│       ├── input.go
-│       ├── observation.go
-│       ├── scripting.go
-│       ├── screenshot.go
-│       ├── session.go
-│       └── macro.go
+│   ├── mcp.go            # MCP server + tool registry
+│   ├── screenshot.go     # Screenshot handlers
+│   ├── input.go          # Input handlers
+│   ├── element.go        # Element handlers
+│   ├── window.go         # Window handlers
+│   ├── display.go        # Display handlers
+│   ├── clipboard.go      # Clipboard handlers
+│   ├── application.go    # Application handlers
+│   ├── scripting.go      # Scripting handlers
+│   └── observation.go    # Observation handlers
 └── config/
     └── config.go         # Configuration
 
-mcp_tool_test.go          # Integration tests
+integration/                # Integration tests
 ```
 
 ## Example Usage
@@ -212,11 +222,11 @@ mcp_tool_test.go          # Integration tests
 ### Starting the MCP Tool
 
 ```bash
-# Start with default settings
+# Start with default socket
 ./mcp-tool
 
-# Start with custom server address
-MACOS_USE_SERVER_ADDR=localhost:50052 ./mcp-tool
+# Start with custom socket path
+MACOS_USE_SERVER_SOCKET=/tmp/custom.sock ./mcp-tool
 ```
 
 ### Example MCP Request
@@ -227,8 +237,11 @@ MACOS_USE_SERVER_ADDR=localhost:50052 ./mcp-tool
   "id": 1,
   "method": "tools/call",
   "params": {
-    "name": "list_applications",
-    "arguments": {}
+    "name": "capture_screenshot",
+    "arguments": {
+      "max_width": 1280,
+      "include_ocr": true
+    }
   }
 }
 ```
@@ -242,22 +255,21 @@ MACOS_USE_SERVER_ADDR=localhost:50052 ./mcp-tool
   "result": {
     "content": [
       {
+        "type": "image",
+        "data": "base64-encoded-png...",
+        "mimeType": "image/png"
+      },
+      {
         "type": "text",
-        "text": "Found 2 applications:\\n- Calculator (applications/1)\\n- TextEdit (applications/2)"
+        "text": "OCR text extracted from screenshot..."
       }
     ]
   }
 }
 ```
 
-## Security Considerations
-
-1. **Input Validation**: All tool parameters are validated before being sent to the gRPC server
-2. **Resource Limits**: Timeouts and limits are enforced on all operations
-3. **Sandboxing**: The tool runs with the same permissions as the user
-
 ## Compatibility
 
 - Go 1.21+
-- MacOS 12.0+ (for full accessibility support)
+- macOS 12.0+ (for full accessibility support)
 - MCP Protocol 2024-11-05

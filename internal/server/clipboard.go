@@ -18,17 +18,12 @@ func (s *MCPServer) handleGetClipboard(call *ToolCall) (*ToolResult, error) {
 	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
 	defer cancel()
 
-	var params struct {
-		Name string `json:"name"`
-	}
-
-	if err := json.Unmarshal(call.Arguments, &params); err != nil {
-		return nil, fmt.Errorf("failed to parse arguments: %w", err)
-	}
-
-	clipboard, err := s.client.GetClipboard(ctx, &pb.GetClipboardRequest{Name: params.Name})
+	clipboard, err := s.client.GetClipboard(ctx, &pb.GetClipboardRequest{Name: "clipboard"})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get clipboard: %w", err)
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to get clipboard: %v", err)}},
+		}, nil
 	}
 
 	content := "(empty)"
@@ -38,6 +33,16 @@ func (s *MCPServer) handleGetClipboard(call *ToolCall) (*ToolResult, error) {
 			content = clipboard.Content.GetText()
 		case pb.ContentType_CONTENT_TYPE_RTF:
 			content = "[RTF data]"
+		case pb.ContentType_CONTENT_TYPE_HTML:
+			content = clipboard.Content.GetHtml()
+		case pb.ContentType_CONTENT_TYPE_IMAGE:
+			content = "[Image data]"
+		case pb.ContentType_CONTENT_TYPE_FILES:
+			if files := clipboard.Content.GetFiles(); files != nil {
+				content = fmt.Sprintf("[Files: %v]", files.Paths)
+			}
+		case pb.ContentType_CONTENT_TYPE_URL:
+			content = clipboard.Content.GetUrl()
 		default:
 			content = fmt.Sprintf("[%s]", c.String())
 		}
@@ -50,5 +55,80 @@ func (s *MCPServer) handleGetClipboard(call *ToolCall) (*ToolResult, error) {
 				Text: fmt.Sprintf("Clipboard content:\n%s", content),
 			},
 		},
+	}, nil
+}
+
+// handleWriteClipboard handles the write_clipboard tool
+func (s *MCPServer) handleWriteClipboard(call *ToolCall) (*ToolResult, error) {
+	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
+	defer cancel()
+
+	var params struct {
+		// Text content to write
+		Text string `json:"text"`
+	}
+
+	if err := json.Unmarshal(call.Arguments, &params); err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Invalid parameters: %v", err)}},
+		}, nil
+	}
+
+	if params.Text == "" {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: "Text parameter is required"}},
+		}, nil
+	}
+
+	_, err := s.client.WriteClipboard(ctx, &pb.WriteClipboardRequest{
+		Content: &pb.ClipboardContent{
+			Type: pb.ContentType_CONTENT_TYPE_TEXT,
+			Content: &pb.ClipboardContent_Text{
+				Text: params.Text,
+			},
+		},
+		ClearExisting: true,
+	})
+	if err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to write clipboard: %v", err)}},
+		}, nil
+	}
+
+	// Truncate displayed text if too long
+	displayText := params.Text
+	if len(displayText) > 50 {
+		displayText = displayText[:47] + "..."
+	}
+
+	return &ToolResult{
+		Content: []Content{{
+			Type: "text",
+			Text: fmt.Sprintf("Clipboard updated with %d characters: \"%s\"", len(params.Text), displayText),
+		}},
+	}, nil
+}
+
+// handleClearClipboard handles the clear_clipboard tool
+func (s *MCPServer) handleClearClipboard(call *ToolCall) (*ToolResult, error) {
+	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
+	defer cancel()
+
+	_, err := s.client.ClearClipboard(ctx, &pb.ClearClipboardRequest{})
+	if err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to clear clipboard: %v", err)}},
+		}, nil
+	}
+
+	return &ToolResult{
+		Content: []Content{{
+			Type: "text",
+			Text: "Clipboard cleared",
+		}},
 	}, nil
 }

@@ -11,6 +11,7 @@ import (
 	"io"
 	"log"
 	"sync"
+	"time"
 
 	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
@@ -128,36 +129,476 @@ func (s *MCPServer) Shutdown() {
 // registerTools registers all available tools
 func (s *MCPServer) registerTools() {
 	s.tools = map[string]*Tool{
+		// === SCREENSHOT TOOLS (P0) ===
+		"capture_screenshot": {
+			Name:        "capture_screenshot",
+			Description: "Capture a full screen screenshot. Returns base64-encoded image data. Essential for visual observation in Computer Use agents.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"format": map[string]interface{}{
+						"type":        "string",
+						"description": "Image format: png, jpeg, tiff. Default: png",
+						"enum":        []string{"png", "jpeg", "tiff"},
+					},
+					"quality": map[string]interface{}{
+						"type":        "integer",
+						"description": "JPEG quality (1-100). Only used for jpeg format. Default: 85",
+					},
+					"display": map[string]interface{}{
+						"type":        "integer",
+						"description": "Display index for multi-monitor setups. Default: 0 (main display)",
+					},
+					"include_ocr": map[string]interface{}{
+						"type":        "boolean",
+						"description": "Whether to include OCR text extraction in response",
+					},
+				},
+			},
+			Handler: s.handleCaptureScreenshot,
+		},
+		"capture_region_screenshot": {
+			Name:        "capture_region_screenshot",
+			Description: "Capture a screenshot of a specific screen region. Uses Global Display Coordinates (top-left origin). Useful for zooming in on UI elements.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"x":           map[string]interface{}{"type": "number", "description": "X coordinate of region origin (Global Display Coordinates)"},
+					"y":           map[string]interface{}{"type": "number", "description": "Y coordinate of region origin (Global Display Coordinates)"},
+					"width":       map[string]interface{}{"type": "number", "description": "Width of region in pixels"},
+					"height":      map[string]interface{}{"type": "number", "description": "Height of region in pixels"},
+					"format":      map[string]interface{}{"type": "string", "description": "Image format: png, jpeg, tiff"},
+					"quality":     map[string]interface{}{"type": "integer", "description": "JPEG quality (1-100)"},
+					"include_ocr": map[string]interface{}{"type": "boolean", "description": "Include OCR text extraction"},
+				},
+				"required": []string{"x", "y", "width", "height"},
+			},
+			Handler: s.handleCaptureRegionScreenshot,
+		},
+
+		// === INPUT TOOLS (P0/P1) ===
+		"click": {
+			Name:        "click",
+			Description: "Click at a specific screen coordinate. Uses Global Display Coordinates (top-left origin, Y increases downward).",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"x": map[string]interface{}{
+						"type":        "number",
+						"description": "X coordinate to click (Global Display Coordinates)",
+					},
+					"y": map[string]interface{}{
+						"type":        "number",
+						"description": "Y coordinate to click (Global Display Coordinates)",
+					},
+					"button": map[string]interface{}{
+						"type":        "string",
+						"description": "Mouse button: left, right, middle. Default: left",
+						"enum":        []string{"left", "right", "middle"},
+					},
+					"click_count": map[string]interface{}{
+						"type":        "integer",
+						"description": "Number of clicks: 1=single, 2=double, 3=triple. Default: 1",
+					},
+					"show_animation": map[string]interface{}{
+						"type":        "boolean",
+						"description": "Whether to show visual feedback animation",
+					},
+				},
+				"required": []string{"x", "y"},
+			},
+			Handler: s.handleClick,
+		},
+		"type_text": {
+			Name:        "type_text",
+			Description: "Type text as keyboard input. Simulates human typing.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"text": map[string]interface{}{
+						"type":        "string",
+						"description": "Text to type",
+					},
+					"char_delay": map[string]interface{}{
+						"type":        "number",
+						"description": "Delay between characters in seconds (for human-like typing)",
+					},
+					"use_ime": map[string]interface{}{
+						"type":        "boolean",
+						"description": "Whether to use IME for non-ASCII input",
+					},
+				},
+				"required": []string{"text"},
+			},
+			Handler: s.handleTypeText,
+		},
+		"press_key": {
+			Name:        "press_key",
+			Description: "Press a key combination. Supports modifier keys (command, option, control, shift).",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"key": map[string]interface{}{
+						"type":        "string",
+						"description": "Key to press (e.g., return, escape, a, f1, space, tab, delete)",
+					},
+					"modifiers": map[string]interface{}{
+						"type":        "array",
+						"items":       map[string]interface{}{"type": "string"},
+						"description": "Modifier keys to hold: command, option, control, shift, function",
+					},
+				},
+				"required": []string{"key"},
+			},
+			Handler: s.handlePressKey,
+		},
+		"mouse_move": {
+			Name:        "mouse_move",
+			Description: "Move the mouse cursor to a specific position. Uses Global Display Coordinates (top-left origin). Useful for triggering hover states.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"x": map[string]interface{}{
+						"type":        "number",
+						"description": "Target X coordinate (Global Display Coordinates)",
+					},
+					"y": map[string]interface{}{
+						"type":        "number",
+						"description": "Target Y coordinate (Global Display Coordinates)",
+					},
+					"duration": map[string]interface{}{
+						"type":        "number",
+						"description": "Duration for smooth animation in seconds",
+					},
+				},
+				"required": []string{"x", "y"},
+			},
+			Handler: s.handleMouseMove,
+		},
+		"scroll": {
+			Name:        "scroll",
+			Description: "Scroll content vertically and/or horizontally. Uses Global Display Coordinates (top-left origin).",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"x": map[string]interface{}{
+						"type":        "number",
+						"description": "X coordinate to scroll at (Global Display Coordinates, optional)",
+					},
+					"y": map[string]interface{}{
+						"type":        "number",
+						"description": "Y coordinate to scroll at (Global Display Coordinates, optional)",
+					},
+					"horizontal": map[string]interface{}{
+						"type":        "number",
+						"description": "Horizontal scroll amount (positive = right, negative = left)",
+					},
+					"vertical": map[string]interface{}{
+						"type":        "number",
+						"description": "Vertical scroll amount (positive = up, negative = down)",
+					},
+					"duration": map[string]interface{}{
+						"type":        "number",
+						"description": "Duration for momentum effect",
+					},
+				},
+			},
+			Handler: s.handleScroll,
+		},
+		"drag": {
+			Name:        "drag",
+			Description: "Drag from one position to another. Uses Global Display Coordinates (top-left origin). Used for drag-and-drop, selection, and slider operations.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"start_x":  map[string]interface{}{"type": "number", "description": "Start X coordinate (Global Display Coordinates)"},
+					"start_y":  map[string]interface{}{"type": "number", "description": "Start Y coordinate (Global Display Coordinates)"},
+					"end_x":    map[string]interface{}{"type": "number", "description": "End X coordinate (Global Display Coordinates)"},
+					"end_y":    map[string]interface{}{"type": "number", "description": "End Y coordinate (Global Display Coordinates)"},
+					"duration": map[string]interface{}{"type": "number", "description": "Duration of drag in seconds"},
+					"button":   map[string]interface{}{"type": "string", "description": "Mouse button: left, right, middle"},
+				},
+				"required": []string{"start_x", "start_y", "end_x", "end_y"},
+			},
+			Handler: s.handleDrag,
+		},
+		"hover": {
+			Name:        "hover",
+			Description: "Hover the mouse at a position for a specified duration. Triggers hover states and tooltips.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"x":           map[string]interface{}{"type": "number", "description": "X coordinate in Global Display Coordinates"},
+					"y":           map[string]interface{}{"type": "number", "description": "Y coordinate in Global Display Coordinates"},
+					"duration":    map[string]interface{}{"type": "number", "description": "Duration to hover in seconds (default: 1.0)"},
+					"application": map[string]interface{}{"type": "string", "description": "Application resource name (optional)"},
+				},
+				"required": []string{"x", "y"},
+			},
+			Handler: s.handleHover,
+		},
+		"gesture": {
+			Name:        "gesture",
+			Description: "Perform a multi-touch gesture (trackpad gestures). Uses Global Display Coordinates (top-left origin). Supports pinch, zoom, rotate, swipe, and force touch.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"center_x":     map[string]interface{}{"type": "number", "description": "Center X coordinate of gesture (Global Display Coordinates)"},
+					"center_y":     map[string]interface{}{"type": "number", "description": "Center Y coordinate of gesture (Global Display Coordinates)"},
+					"gesture_type": map[string]interface{}{"type": "string", "description": "Gesture type: pinch, zoom, rotate, swipe, force_touch"},
+					"scale":        map[string]interface{}{"type": "number", "description": "Scale factor for pinch/zoom (e.g., 0.5 = zoom out, 2.0 = zoom in)"},
+					"rotation":     map[string]interface{}{"type": "number", "description": "Rotation angle in degrees for rotate gesture"},
+					"finger_count": map[string]interface{}{"type": "integer", "description": "Number of fingers for swipe (default: 2)"},
+					"direction":    map[string]interface{}{"type": "string", "description": "Direction for swipe: up, down, left, right"},
+					"application":  map[string]interface{}{"type": "string", "description": "Application resource name (optional)"},
+				},
+				"required": []string{"center_x", "center_y", "gesture_type"},
+			},
+			Handler: s.handleGesture,
+		},
+
+		// === EXISTING TOOLS ===
 		"find_elements": {
 			Name:        "find_elements",
-			Description: "Find UI elements by criteria",
+			Description: "Find UI elements by criteria. Returns accessibility tree elements with role, text, position, and available actions.",
 			InputSchema: map[string]interface{}{
 				"type": "object",
 				"properties": map[string]interface{}{
 					"parent": map[string]interface{}{
 						"type":        "string",
-						"description": "Parent element ID to search within",
+						"description": "Parent context (e.g., applications/{id} or applications/{id}/windows/{id})",
 					},
 					"selector": map[string]interface{}{
 						"type":        "object",
-						"description": "Criteria to match elements (role, title, etc.)",
+						"description": "Criteria to match elements",
+						"properties": map[string]interface{}{
+							"role":  map[string]interface{}{"type": "string", "description": "Element role (e.g., button, textField)"},
+							"text":  map[string]interface{}{"type": "string", "description": "Element text content"},
+							"title": map[string]interface{}{"type": "string", "description": "Element title"},
+						},
 					},
 				},
+				"required": []string{"parent"},
 			},
 			Handler: s.handleFindElements,
 		},
+		"get_element": {
+			Name:        "get_element",
+			Description: "Get detailed information about a specific UI element including role, text, bounds, and available actions.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"type":        "string",
+						"description": "Element resource name (from find_elements result)",
+					},
+				},
+				"required": []string{"name"},
+			},
+			Handler: s.handleGetElement,
+		},
+		"click_element": {
+			Name:        "click_element",
+			Description: "Click on a UI element using accessibility APIs. More reliable than coordinate-based clicking for known elements.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"parent": map[string]interface{}{
+						"type":        "string",
+						"description": "Parent context (e.g., applications/{id}/windows/{id})",
+					},
+					"element_id": map[string]interface{}{
+						"type":        "string",
+						"description": "Element ID from find_elements result",
+					},
+				},
+				"required": []string{"parent", "element_id"},
+			},
+			Handler: s.handleClickElement,
+		},
+		"write_element_value": {
+			Name:        "write_element_value",
+			Description: "Set the value of a UI element (e.g., text field). Uses accessibility APIs for reliable text entry.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"parent": map[string]interface{}{
+						"type":        "string",
+						"description": "Parent context (e.g., applications/{id}/windows/{id})",
+					},
+					"element_id": map[string]interface{}{
+						"type":        "string",
+						"description": "Element ID from find_elements result",
+					},
+					"value": map[string]interface{}{
+						"type":        "string",
+						"description": "Value to set",
+					},
+				},
+				"required": []string{"parent", "element_id", "value"},
+			},
+			Handler: s.handleWriteElementValue,
+		},
+		"perform_element_action": {
+			Name:        "perform_element_action",
+			Description: "Perform an accessibility action on a UI element (e.g., press, increment, decrement, confirm).",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"parent": map[string]interface{}{
+						"type":        "string",
+						"description": "Parent context (e.g., applications/{id}/windows/{id})",
+					},
+					"element_id": map[string]interface{}{
+						"type":        "string",
+						"description": "Element ID from find_elements result",
+					},
+					"action": map[string]interface{}{
+						"type":        "string",
+						"description": "Action to perform (from element's actions list)",
+					},
+				},
+				"required": []string{"parent", "element_id", "action"},
+			},
+			Handler: s.handlePerformElementAction,
+		},
 		"list_windows": {
 			Name:        "list_windows",
-			Description: "List all open windows",
+			Description: "List all open windows across all tracked applications.",
 			InputSchema: map[string]interface{}{
 				"type":       "object",
 				"properties": map[string]interface{}{},
 			},
 			Handler: s.handleListWindows,
 		},
+		"get_window": {
+			Name:        "get_window",
+			Description: "Get details of a specific window including title, bounds, visibility, and z-index.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"type":        "string",
+						"description": "Window resource name (e.g., applications/123/windows/456)",
+					},
+				},
+				"required": []string{"name"},
+			},
+			Handler: s.handleGetWindow,
+		},
+		"focus_window": {
+			Name:        "focus_window",
+			Description: "Focus (activate) a window, bringing it to the front.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"type":        "string",
+						"description": "Window resource name (e.g., applications/123/windows/456)",
+					},
+				},
+				"required": []string{"name"},
+			},
+			Handler: s.handleFocusWindow,
+		},
+		"move_window": {
+			Name:        "move_window",
+			Description: "Move a window to a new position in global display coordinates (top-left origin).",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"type":        "string",
+						"description": "Window resource name (e.g., applications/123/windows/456)",
+					},
+					"x": map[string]interface{}{
+						"type":        "number",
+						"description": "New X position (global display coordinates)",
+					},
+					"y": map[string]interface{}{
+						"type":        "number",
+						"description": "New Y position (global display coordinates)",
+					},
+				},
+				"required": []string{"name", "x", "y"},
+			},
+			Handler: s.handleMoveWindow,
+		},
+		"resize_window": {
+			Name:        "resize_window",
+			Description: "Resize a window to new dimensions.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"type":        "string",
+						"description": "Window resource name (e.g., applications/123/windows/456)",
+					},
+					"width": map[string]interface{}{
+						"type":        "number",
+						"description": "New width in pixels",
+					},
+					"height": map[string]interface{}{
+						"type":        "number",
+						"description": "New height in pixels",
+					},
+				},
+				"required": []string{"name", "width", "height"},
+			},
+			Handler: s.handleResizeWindow,
+		},
+		"minimize_window": {
+			Name:        "minimize_window",
+			Description: "Minimize a window to the dock.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"type":        "string",
+						"description": "Window resource name (e.g., applications/123/windows/456)",
+					},
+				},
+				"required": []string{"name"},
+			},
+			Handler: s.handleMinimizeWindow,
+		},
+		"restore_window": {
+			Name:        "restore_window",
+			Description: "Restore a minimized window.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"type":        "string",
+						"description": "Window resource name (e.g., applications/123/windows/456)",
+					},
+				},
+				"required": []string{"name"},
+			},
+			Handler: s.handleRestoreWindow,
+		},
+		"close_window": {
+			Name:        "close_window",
+			Description: "Close a window.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"type":        "string",
+						"description": "Window resource name (e.g., applications/123/windows/456)",
+					},
+					"force": map[string]interface{}{
+						"type":        "boolean",
+						"description": "Force close without saving (default: false)",
+					},
+				},
+				"required": []string{"name"},
+			},
+			Handler: s.handleCloseWindow,
+		},
 		"list_displays": {
 			Name:        "list_displays",
-			Description: "List all connected displays",
+			Description: "List all connected displays with their frame coordinates, visible areas, and scale factors.",
 			InputSchema: map[string]interface{}{
 				"type":       "object",
 				"properties": map[string]interface{}{},
@@ -166,27 +607,264 @@ func (s *MCPServer) registerTools() {
 		},
 		"get_display": {
 			Name:        "get_display",
-			Description: "Get details of a specific display",
+			Description: "Get details of a specific display including frame, visible area, and whether it's the main display.",
 			InputSchema: map[string]interface{}{
 				"type": "object",
 				"properties": map[string]interface{}{
-					"display_id": map[string]interface{}{
+					"name": map[string]interface{}{
 						"type":        "string",
-						"description": "ID of the display to retrieve",
+						"description": "Display resource name (e.g., displays/12345)",
 					},
 				},
-				"required": []string{"display_id"},
+				"required": []string{"name"},
 			},
 			Handler: s.handleGetDisplay,
 		},
 		"get_clipboard": {
 			Name:        "get_clipboard",
-			Description: "Get text from clipboard",
+			Description: "Get clipboard contents. Supports text, RTF, HTML, images, files, and URLs.",
 			InputSchema: map[string]interface{}{
 				"type":       "object",
 				"properties": map[string]interface{}{},
 			},
 			Handler: s.handleGetClipboard,
+		},
+		"write_clipboard": {
+			Name:        "write_clipboard",
+			Description: "Write content to the clipboard.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"text": map[string]interface{}{
+						"type":        "string",
+						"description": "Text content to write to clipboard",
+					},
+				},
+				"required": []string{"text"},
+			},
+			Handler: s.handleWriteClipboard,
+		},
+		"clear_clipboard": {
+			Name:        "clear_clipboard",
+			Description: "Clear all clipboard contents.",
+			InputSchema: map[string]interface{}{
+				"type":       "object",
+				"properties": map[string]interface{}{},
+			},
+			Handler: s.handleClearClipboard,
+		},
+
+		// === APPLICATION TOOLS ===
+		"open_application": {
+			Name:        "open_application",
+			Description: "Open an application by name, bundle ID, or path. The application will be launched and tracked for automation.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"id": map[string]interface{}{
+						"type":        "string",
+						"description": "Application identifier: name (e.g., 'Calculator'), bundle ID (e.g., 'com.apple.calculator'), or path (e.g., '/Applications/Calculator.app')",
+					},
+				},
+				"required": []string{"id"},
+			},
+			Handler: s.handleOpenApplication,
+		},
+		"list_applications": {
+			Name:        "list_applications",
+			Description: "List all applications currently being tracked for automation.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"page_size": map[string]interface{}{
+						"type":        "integer",
+						"description": "Maximum number of applications to return per page",
+					},
+					"page_token": map[string]interface{}{
+						"type":        "string",
+						"description": "Token for pagination (from previous response)",
+					},
+				},
+			},
+			Handler: s.handleListApplications,
+		},
+		"get_application": {
+			Name:        "get_application",
+			Description: "Get details of a specific tracked application.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"type":        "string",
+						"description": "Application resource name (e.g., 'applications/1234')",
+					},
+				},
+				"required": []string{"name"},
+			},
+			Handler: s.handleGetApplication,
+		},
+		"delete_application": {
+			Name:        "delete_application",
+			Description: "Stop tracking an application. Does not terminate the application process.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"type":        "string",
+						"description": "Application resource name (e.g., 'applications/1234')",
+					},
+				},
+				"required": []string{"name"},
+			},
+			Handler: s.handleDeleteApplication,
+		},
+
+		// === SCRIPTING TOOLS ===
+		"execute_apple_script": {
+			Name:        "execute_apple_script",
+			Description: "Execute AppleScript code. Useful for automating macOS apps that expose AppleScript dictionaries.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"script": map[string]interface{}{
+						"type":        "string",
+						"description": "AppleScript source code to execute",
+					},
+					"timeout": map[string]interface{}{
+						"type":        "integer",
+						"description": "Timeout in seconds (default: 30)",
+					},
+				},
+				"required": []string{"script"},
+			},
+			Handler: s.handleExecuteAppleScript,
+		},
+		"execute_javascript": {
+			Name:        "execute_javascript",
+			Description: "Execute JavaScript for Automation (JXA) code. Modern alternative to AppleScript with JavaScript syntax.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"script": map[string]interface{}{
+						"type":        "string",
+						"description": "JavaScript source code to execute",
+					},
+					"timeout": map[string]interface{}{
+						"type":        "integer",
+						"description": "Timeout in seconds (default: 30)",
+					},
+				},
+				"required": []string{"script"},
+			},
+			Handler: s.handleExecuteJavaScript,
+		},
+		"execute_shell_command": {
+			Name:        "execute_shell_command",
+			Description: "Execute a shell command. Returns stdout, stderr, and exit code.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"command": map[string]interface{}{
+						"type":        "string",
+						"description": "Command to execute",
+					},
+					"args": map[string]interface{}{
+						"type":        "array",
+						"items":       map[string]interface{}{"type": "string"},
+						"description": "Command arguments",
+					},
+					"timeout": map[string]interface{}{
+						"type":        "integer",
+						"description": "Timeout in seconds (default: 30)",
+					},
+				},
+				"required": []string{"command"},
+			},
+			Handler: s.handleExecuteShellCommand,
+		},
+
+		// === OBSERVATION TOOLS ===
+		"create_observation": {
+			Name:        "create_observation",
+			Description: "Create an observation to monitor UI changes in an application. Observations can track element changes, window changes, or attribute changes.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"parent": map[string]interface{}{
+						"type":        "string",
+						"description": "Parent application (e.g., applications/{id})",
+					},
+					"type": map[string]interface{}{
+						"type":        "string",
+						"description": "Observation type: element_changes, window_changes, application_changes, attribute_changes, or tree_changes",
+						"enum":        []string{"element_changes", "window_changes", "application_changes", "attribute_changes", "tree_changes"},
+					},
+					"visible_only": map[string]interface{}{
+						"type":        "boolean",
+						"description": "Only observe visible elements (default: false)",
+					},
+					"poll_interval": map[string]interface{}{
+						"type":        "number",
+						"description": "Poll interval in seconds for polling-based observations",
+					},
+					"roles": map[string]interface{}{
+						"type":        "array",
+						"items":       map[string]interface{}{"type": "string"},
+						"description": "Specific element roles to observe (empty = all roles)",
+					},
+					"attributes": map[string]interface{}{
+						"type":        "array",
+						"items":       map[string]interface{}{"type": "string"},
+						"description": "Specific attributes to observe (for attribute change observations)",
+					},
+				},
+				"required": []string{"parent"},
+			},
+			Handler: s.handleCreateObservation,
+		},
+		"get_observation": {
+			Name:        "get_observation",
+			Description: "Get the current status of an observation.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"type":        "string",
+						"description": "Observation resource name",
+					},
+				},
+				"required": []string{"name"},
+			},
+			Handler: s.handleGetObservation,
+		},
+		"list_observations": {
+			Name:        "list_observations",
+			Description: "List all observations for an application.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"parent": map[string]interface{}{
+						"type":        "string",
+						"description": "Parent application (e.g., applications/{id}) or empty for all",
+					},
+				},
+			},
+			Handler: s.handleListObservations,
+		},
+		"cancel_observation": {
+			Name:        "cancel_observation",
+			Description: "Cancel an active observation.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"type":        "string",
+						"description": "Observation resource name to cancel",
+					},
+				},
+				"required": []string{"name"},
+			},
+			Handler: s.handleCancelObservation,
 		},
 	}
 }
@@ -222,14 +900,36 @@ func (s *MCPServer) Serve(tr *transport.StdioTransport) error {
 func (s *MCPServer) handleMessage(tr *transport.StdioTransport, msg *transport.Message) {
 	// Handle initialize request
 	if msg.Method == "initialize" {
+		// Get display information for grounding
+		displayInfo := s.getDisplayGroundingInfo()
+
 		response := &transport.Message{
 			JSONRPC: "2.0",
 			ID:      msg.ID,
-			Result:  []byte(`{"protocolVersion":"2024-11-05","capabilities":{},"serverInfo":{"name":"macos-use-sdk","version":"0.1.0"}}`),
+			Result:  []byte(fmt.Sprintf(`{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"serverInfo":{"name":"macos-use-sdk","version":"0.1.0"},"displayInfo":%s}`, displayInfo)),
 		}
 		if err := tr.WriteMessage(response); err != nil {
 			log.Printf("Error writing response: %v", err)
 		}
+		return
+	}
+
+	// Handle shutdown request
+	if msg.Method == "shutdown" {
+		response := &transport.Message{
+			JSONRPC: "2.0",
+			ID:      msg.ID,
+			Result:  []byte(`{}`),
+		}
+		if err := tr.WriteMessage(response); err != nil {
+			log.Printf("Error writing response: %v", err)
+		}
+		return
+	}
+
+	// Handle exit notification
+	if msg.Method == "exit" {
+		s.Shutdown()
 		return
 	}
 
@@ -343,4 +1043,58 @@ func (s *MCPServer) handleMessage(tr *transport.StdioTransport, msg *transport.M
 		},
 	}
 	tr.WriteMessage(response)
+}
+
+// getDisplayGroundingInfo returns JSON string with display information for grounding
+func (s *MCPServer) getDisplayGroundingInfo() string {
+	ctx, cancel := context.WithTimeout(s.ctx, 5*time.Second)
+	defer cancel()
+
+	resp, err := s.client.ListDisplays(ctx, &pb.ListDisplaysRequest{})
+	if err != nil {
+		log.Printf("Warning: failed to get display info for grounding: %v", err)
+		return `{"error":"failed to get display info"}`
+	}
+
+	if len(resp.Displays) == 0 {
+		return `{"displays":[]}`
+	}
+
+	// Find main display
+	var mainDisplay *pb.Display
+	for _, d := range resp.Displays {
+		if d.IsMain {
+			mainDisplay = d
+			break
+		}
+	}
+	if mainDisplay == nil {
+		mainDisplay = resp.Displays[0]
+	}
+
+	info := map[string]interface{}{
+		"display_width_px":  mainDisplay.Frame.Width,
+		"display_height_px": mainDisplay.Frame.Height,
+		"display_count":     len(resp.Displays),
+		"scale":             mainDisplay.Scale,
+		"displays":          make([]map[string]interface{}, 0, len(resp.Displays)),
+	}
+
+	for _, d := range resp.Displays {
+		dInfo := map[string]interface{}{
+			"name":    d.Name,
+			"is_main": d.IsMain,
+			"frame": map[string]interface{}{
+				"x":      d.Frame.X,
+				"y":      d.Frame.Y,
+				"width":  d.Frame.Width,
+				"height": d.Frame.Height,
+			},
+			"scale": d.Scale,
+		}
+		info["displays"] = append(info["displays"].([]map[string]interface{}), dInfo)
+	}
+
+	infoBytes, _ := json.Marshal(info)
+	return string(infoBytes)
 }
