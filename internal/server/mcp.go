@@ -1307,8 +1307,8 @@ func (s *MCPServer) handleMessage(tr *transport.StdioTransport, msg *transport.M
 				JSONRPC: "2.0",
 				ID:      msg.ID,
 				Error: &transport.ErrorObj{
-					Code:    transport.ErrCodeInvalidRequest,
-					Message: fmt.Sprintf("Invalid request: %v", err),
+					Code:    transport.ErrCodeInvalidParams,
+					Message: fmt.Sprintf("Invalid params: %v", err),
 				},
 			}
 			if err := tr.WriteMessage(response); err != nil {
