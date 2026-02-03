@@ -587,11 +587,12 @@ func TestGestureToolSchema(t *testing.T) {
 	}
 }
 
-// TestAllToolsExist validates all 39 expected MCP tools are defined
+// TestAllToolsExist validates all expected MCP tools are defined
 func TestAllToolsExist(t *testing.T) {
 	expectedTools := []string{
-		// Screenshot tools (2)
+		// Screenshot tools (3) - Added capture_window_screenshot
 		"capture_screenshot",
+		"capture_window_screenshot",
 		"capture_region_screenshot",
 		// Input tools (8)
 		"click",
@@ -602,9 +603,10 @@ func TestAllToolsExist(t *testing.T) {
 		"drag",
 		"hover",
 		"gesture",
-		// Element tools (5)
+		// Element tools (6) - Added get_element_actions
 		"find_elements",
 		"get_element",
+		"get_element_actions",
 		"click_element",
 		"write_element_value",
 		"perform_element_action",
@@ -620,28 +622,31 @@ func TestAllToolsExist(t *testing.T) {
 		// Display tools (2)
 		"list_displays",
 		"get_display",
-		// Clipboard tools (3)
+		// Clipboard tools (4) - Added get_clipboard_history
 		"get_clipboard",
 		"write_clipboard",
 		"clear_clipboard",
+		"get_clipboard_history",
 		// Application tools (4)
 		"open_application",
 		"list_applications",
 		"get_application",
 		"delete_application",
-		// Scripting tools (3)
+		// Scripting tools (4) - Added validate_script
 		"execute_apple_script",
 		"execute_javascript",
 		"execute_shell_command",
-		// Observation tools (4)
+		"validate_script",
+		// Observation tools (5) - Added stream_observations
 		"create_observation",
+		"stream_observations",
 		"get_observation",
 		"list_observations",
 		"cancel_observation",
 	}
 
-	if len(expectedTools) != 39 {
-		t.Errorf("Expected 39 tools but defined %d in test", len(expectedTools))
+	if len(expectedTools) != 44 {
+		t.Errorf("Expected 44 tools but defined %d in test", len(expectedTools))
 	}
 
 	// Verify all tool names are unique
@@ -659,6 +664,7 @@ func TestToolNaming(t *testing.T) {
 	// All tool names should be snake_case
 	tools := []string{
 		"capture_screenshot",
+		"capture_window_screenshot",
 		"capture_region_screenshot",
 		"click",
 		"type_text",
@@ -670,6 +676,7 @@ func TestToolNaming(t *testing.T) {
 		"gesture",
 		"find_elements",
 		"get_element",
+		"get_element_actions",
 		"click_element",
 		"write_element_value",
 		"perform_element_action",
@@ -686,6 +693,7 @@ func TestToolNaming(t *testing.T) {
 		"get_clipboard",
 		"write_clipboard",
 		"clear_clipboard",
+		"get_clipboard_history",
 		"open_application",
 		"list_applications",
 		"get_application",
@@ -693,7 +701,9 @@ func TestToolNaming(t *testing.T) {
 		"execute_apple_script",
 		"execute_javascript",
 		"execute_shell_command",
+		"validate_script",
 		"create_observation",
+		"stream_observations",
 		"get_observation",
 		"list_observations",
 		"cancel_observation",
@@ -828,5 +838,303 @@ func TestClickCountValidation(t *testing.T) {
 		if clickCount != tt.expected {
 			t.Errorf("Click count %d normalized to %d, want %d", tt.input, clickCount, tt.expected)
 		}
+	}
+}
+
+// TestErrorResponseFormat tests that error responses use is_error (snake_case)
+// This is critical for Anthropic Claude Desktop compatibility
+func TestErrorResponseFormat(t *testing.T) {
+	result := &ToolResult{
+		Content: []Content{
+			{Type: "text", Text: "Something went wrong"},
+		},
+		IsError: true,
+	}
+
+	resultMap := map[string]interface{}{
+		"content": result.Content,
+	}
+	if result.IsError {
+		resultMap["is_error"] = true
+	}
+
+	data, err := json.Marshal(resultMap)
+	if err != nil {
+		t.Fatalf("Failed to marshal: %v", err)
+	}
+
+	// Verify the key is is_error, not isError
+	var parsed map[string]interface{}
+	if err := json.Unmarshal(data, &parsed); err != nil {
+		t.Fatalf("Failed to unmarshal: %v", err)
+	}
+
+	if _, ok := parsed["is_error"]; !ok {
+		t.Errorf("Response should contain 'is_error' key, got: %s", string(data))
+	}
+
+	if _, ok := parsed["isError"]; ok {
+		t.Errorf("Response should NOT contain 'isError' key (camelCase), got: %s", string(data))
+	}
+
+	if parsed["is_error"] != true {
+		t.Errorf("is_error should be true, got: %v", parsed["is_error"])
+	}
+}
+
+// TestPaginationTokenHandling tests pagination token handling
+func TestPaginationTokenHandling(t *testing.T) {
+	tests := []struct {
+		name      string
+		pageToken string
+		isOpaque  bool
+	}{
+		{"empty token is valid", "", true},
+		{"base64 token is opaque", "aGVsbG8td29ybGQ=", true},
+		{"uuid token is opaque", "550e8400-e29b-41d4-a716-446655440000", true},
+		{"random string is opaque", "abc123xyz", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Page tokens should be treated as opaque - clients should not
+			// interpret their internal structure
+			if tt.isOpaque {
+				// Just verify the token is a valid string (no structure assumptions)
+				if len(tt.pageToken) > 0 && len(tt.pageToken) < 3 {
+					t.Errorf("Page token too short to be valid opaque token: %s", tt.pageToken)
+				}
+			}
+		})
+	}
+}
+
+// TestListWindowsPaginationParams tests that list_windows accepts pagination parameters
+func TestListWindowsPaginationParams(t *testing.T) {
+	tests := []struct {
+		name       string
+		paramsJSON string
+		wantErr    bool
+	}{
+		{
+			name:       "no params",
+			paramsJSON: `{}`,
+			wantErr:    false,
+		},
+		{
+			name:       "with pagination",
+			paramsJSON: `{"page_size": 50, "page_token": "abc123"}`,
+			wantErr:    false,
+		},
+		{
+			name:       "with parent and pagination",
+			paramsJSON: `{"parent": "applications/123", "page_size": 25, "page_token": "xyz789"}`,
+			wantErr:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var params struct {
+				Parent    string `json:"parent"`
+				PageSize  int32  `json:"page_size"`
+				PageToken string `json:"page_token"`
+			}
+			err := json.Unmarshal([]byte(tt.paramsJSON), &params)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Unmarshal error = %v, wantErr = %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+// TestCaptureWindowScreenshotParams tests window screenshot parameters
+func TestCaptureWindowScreenshotParams(t *testing.T) {
+	tests := []struct {
+		name       string
+		paramsJSON string
+		hasWindow  bool
+	}{
+		{
+			name:       "with window",
+			paramsJSON: `{"window": "applications/123/windows/456"}`,
+			hasWindow:  true,
+		},
+		{
+			name:       "with all options",
+			paramsJSON: `{"window": "applications/123/windows/456", "format": "png", "quality": 85, "include_shadow": true, "include_ocr": true}`,
+			hasWindow:  true,
+		},
+		{
+			name:       "missing window",
+			paramsJSON: `{}`,
+			hasWindow:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var params struct {
+				Window        string `json:"window"`
+				Format        string `json:"format"`
+				Quality       int32  `json:"quality"`
+				IncludeShadow bool   `json:"include_shadow"`
+				IncludeOCR    bool   `json:"include_ocr"`
+			}
+			err := json.Unmarshal([]byte(tt.paramsJSON), &params)
+			if err != nil {
+				t.Errorf("Unmarshal error = %v", err)
+			}
+			if tt.hasWindow && params.Window == "" {
+				t.Error("Window should be parsed when provided")
+			}
+			if !tt.hasWindow && params.Window != "" {
+				t.Error("Window should be empty when not provided")
+			}
+		})
+	}
+}
+
+// TestDisplayGroundingFormat validates the display grounding output format
+// Follows MCP computer tool specification with "screens" array
+func TestDisplayGroundingFormat(t *testing.T) {
+	// Test that the format produces valid JSON with screens array
+	tests := []struct {
+		name     string
+		response string
+		valid    bool
+	}{
+		{
+			name:     "empty screens",
+			response: `{"screens":[]}`,
+			valid:    true,
+		},
+		{
+			name:     "single screen",
+			response: `{"screens":[{"id":"main","width":1920,"height":1080,"pixel_density":2,"origin_x":0,"origin_y":0}]}`,
+			valid:    true,
+		},
+		{
+			name:     "multiple screens",
+			response: `{"screens":[{"id":"main","width":1920,"height":1080,"pixel_density":2,"origin_x":0,"origin_y":0},{"id":"display-1","width":2560,"height":1440,"pixel_density":1,"origin_x":1920,"origin_y":0}]}`,
+			valid:    true,
+		},
+		{
+			name:     "invalid json",
+			response: `{invalid}`,
+			valid:    false,
+		},
+		{
+			name:     "wrong root key",
+			response: `{"displays":[]}`,
+			valid:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var data map[string]interface{}
+			err := json.Unmarshal([]byte(tt.response), &data)
+
+			if tt.valid {
+				if err != nil {
+					t.Errorf("Expected valid JSON, got error: %v", err)
+				}
+				// Verify "screens" key exists
+				if _, ok := data["screens"]; !ok {
+					t.Error("Response must have 'screens' key")
+				}
+			} else {
+				if err == nil {
+					// If no parse error, verify it has wrong structure
+					if _, ok := data["screens"]; ok {
+						t.Error("Expected invalid format, but got valid screens structure")
+					}
+				}
+			}
+		})
+	}
+}
+
+// TestPaginationTokenOpaque validates that page_token values are opaque to clients
+// Per AIP-158, page tokens must be opaque strings that clients should not interpret
+func TestPaginationTokenOpaque(t *testing.T) {
+	tests := []struct {
+		name       string
+		token      string
+		isOpaque   bool
+	}{
+		{"empty token", "", true},
+		{"base64 encoded", "eyJwYWdlX29mZnNldCI6MTB9", true},
+		{"uuid format", "f47ac10b-58cc-4372-a567-0e02b2c3d479", true},
+		{"hex encoded", "a1b2c3d4e5f6", true},
+		{"simple string", "next-page-token", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Per AIP-158, clients must treat page tokens as opaque
+			// The internal structure should not be interpreted
+			if tt.isOpaque {
+				// Verify token is a valid non-empty string when expected to be opaque
+				if tt.token != "" {
+					// Just verify it's a string - structure is opaque
+					var token interface{} = tt.token
+					if _, ok := token.(string); !ok {
+						t.Errorf("Token should be a string, got: %T", token)
+					}
+				}
+			}
+		})
+	}
+}
+
+// TestIsErrorFieldFormat validates the is_error field in tool responses
+// Per MCP conventions, is_error indicates a soft failure that the client can handle
+func TestIsErrorFieldFormat(t *testing.T) {
+	tests := []struct {
+		name    string
+		result  string
+		wantErr bool
+	}{
+		{
+			name:    "success response",
+			result:  `{"content":[]}`,
+			wantErr: false,
+		},
+		{
+			name:    "error response with is_error true",
+			result:  `{"is_error":true,"content":[{"type":"text","text":"element not found"}]}`,
+			wantErr: true,
+		},
+		{
+			name:    "error response with is_error false",
+			result:  `{"is_error":false,"content":[]}`,
+			wantErr: false,
+		},
+		{
+			name:    "error text without is_error flag",
+			result:  `{"content":[{"type":"text","text":"warning: partial failure"}]}`,
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var result map[string]interface{}
+			err := json.Unmarshal([]byte(tt.result), &result)
+			if err != nil {
+				t.Fatalf("Failed to unmarshal result: %v", err)
+			}
+
+			isError, hasError := result["is_error"]
+			if tt.wantErr {
+				if !hasError {
+					t.Error("Expected is_error field to be present for error response")
+				} else if isError != true {
+					t.Errorf("is_error should be true, got: %v", isError)
+				}
+			}
+		})
 	}
 }

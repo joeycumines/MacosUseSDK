@@ -4,7 +4,7 @@
 
 This document describes the design of an MCP (Model Context Protocol) tool for standard output integration with the MacosUseSDK Go API. The MCP tool provides a JSON-RPC 2.0 interface over stdin/stdout for AI assistants to interact with the macOS automation capabilities.
 
-**Status:** 39 tools implemented and operational.
+**Status:** 47 tools implemented and operational.
 
 ## Architecture
 
@@ -45,21 +45,22 @@ The MCP tool uses JSON-RPC 2.0 over stdio:
 - `exit`: Exit the server _(not yet implemented)_
 
 #### Tool Discovery
-- `tools/list`: List available tools (39 tools)
+- `tools/list`: List available tools (47 tools)
 - `tools/call`: Execute a tool
 
-## Implemented Tools (39 Total)
+## Implemented Tools (47 Total)
 
-### Screenshot Operations (2 tools)
+### Screenshot Operations (3 tools)
 | Tool | Description | Parameters |
 |------|-------------|------------|
 | `capture_screenshot` | Capture full screen or window screenshot | `display_id`, `window_id`, `format`, `include_ocr`, `max_width`, `max_height` |
 | `capture_region_screenshot` | Capture a region screenshot | `x`, `y`, `width`, `height`, `display_id`, `format`, `include_ocr` |
+| `capture_window_screenshot` | Capture a specific window screenshot | `window`, `format`, `quality`, `include_shadow`, `include_ocr` |
 
 ### Input Operations (8 tools)
 | Tool | Description | Parameters |
 |------|-------------|------------|
-| `click` | Click at screen coordinates | `x`, `y`, `click_type`, `modifiers` |
+| `click` | Click at screen coordinates | `x`, `y`, `button`, `click_count`, `show_animation` |
 | `type_text` | Type text (with optional modifiers) | `text`, `modifiers` |
 | `press_key` | Press a key combination | `key`, `modifiers` |
 | `mouse_move` | Move mouse to coordinates | `x`, `y`, `smooth`, `duration_ms` |
@@ -68,11 +69,12 @@ The MCP tool uses JSON-RPC 2.0 over stdio:
 | `hover` | Hover at position for duration | `x`, `y`, `duration` |
 | `gesture` | Multi-touch gesture (trackpad) | `center_x`, `center_y`, `gesture_type`, `scale`, `rotation`, `finger_count`, `direction` |
 
-### Element Operations (5 tools)
+### Element Operations (6 tools)
 | Tool | Description | Parameters |
 |------|-------------|------------|
 | `find_elements` | Find elements matching selector | `parent`, `role`, `title`, `identifier`, `page_size`, `page_token` |
 | `get_element` | Get a specific element | `parent`, `element_id` |
+| `get_element_actions` | Get available actions for an element | `parent`, `element_id` |
 | `click_element` | Click an element | `parent`, `element_id` |
 | `write_element_value` | Write value to an element | `parent`, `element_id`, `value` |
 | `perform_element_action` | Perform accessibility action | `parent`, `element_id`, `action` |
@@ -95,12 +97,13 @@ The MCP tool uses JSON-RPC 2.0 over stdio:
 | `list_displays` | List all displays | `page_size`, `page_token` |
 | `get_display` | Get a specific display | `name` |
 
-### Clipboard Operations (3 tools)
+### Clipboard Operations (4 tools)
 | Tool | Description | Parameters |
 |------|-------------|------------|
 | `get_clipboard` | Get clipboard contents | _(none)_ |
 | `write_clipboard` | Write to clipboard | `text`, `type` |
 | `clear_clipboard` | Clear clipboard contents | _(none)_ |
+| `get_clipboard_history` | Get clipboard history | `limit`, `offset` |
 
 ### Application Operations (4 tools)
 | Tool | Description | Parameters |
@@ -110,33 +113,27 @@ The MCP tool uses JSON-RPC 2.0 over stdio:
 | `get_application` | Get a specific application | `name` |
 | `delete_application` | Stop tracking an application | `name` |
 
-### Scripting Operations (3 tools)
+### Scripting Operations (4 tools)
 | Tool | Description | Parameters |
 |------|-------------|------------|
 | `execute_apple_script` | Execute AppleScript | `script`, `timeout`, `compile_only` |
 | `execute_javascript` | Execute JavaScript for Automation | `script`, `timeout`, `compile_only` |
 | `execute_shell_command` | Execute a shell command | `command`, `args`, `working_directory`, `environment`, `timeout`, `stdin`, `shell` |
+| `validate_script` | Validate a script without executing | `script`, `type`, `compile_only` |
 
-### Observation Operations (4 tools)
+### Observation Operations (5 tools)
 | Tool | Description | Parameters |
 |------|-------------|------------|
 | `create_observation` | Create an observation | `parent`, `type`, `poll_interval_ms`, `visible_only`, `roles`, `attributes` |
+| `stream_observations` | Stream observation updates | `parent`, `types`, `roles`, `attributes`, `poll_interval_ms` |
 | `get_observation` | Get observation state | `name` |
 | `list_observations` | List observations | `parent`, `page_size`, `page_token` |
 | `cancel_observation` | Cancel an observation | `name` |
 
-## Not Yet Implemented
-
-### Clipboard Operations (deferred)
-- `get_clipboard_history`: Get clipboard history
-
-### Scripting Operations (deferred)
-- `validate_script`: Validate a script without executing
-
-### Session Operations (deferred)
+## Session Operations (deferred)
 - `create_session`, `get_session`, `list_sessions`, `delete_session`
 
-### Macro Operations (deferred)
+## Macro Operations (deferred)
 - `create_macro`, `get_macro`, `list_macros`, `execute_macro`
 
 ## Blocked by Proto Limitations
@@ -151,6 +148,15 @@ The following actions from docs/05-mcp-integration.md are not implementable with
 ### Screenshot Operations (partially covered)
 - `zoom(coordinate, scale)`: High-res crop with scale factor. Functionally similar to `capture_region_screenshot` which captures a rectangular region. The "zoom" concept of preserving 1:1 pixel density is implicit when requesting a small region.
 
+## Coordinate Scaling
+
+**Important:** The MCP server expects coordinates in **native pixel values** as reported by the display grounding information. MCP hosts that resize screenshots (e.g., to fit model context windows) **must** upscale predicted coordinates back to native resolution before sending to this server.
+
+For multi-monitor setups:
+- Use `screens[].origin_x` and `screens[].origin_y` to translate between display-local and global coordinates
+- Secondary displays may have negative origin coordinates
+- The `pixel_density` field indicates Retina scaling (2.0 = @2x, 1.0 = @1x)
+
 ## Error Handling
 
 ### Soft Failures (is_error pattern)
@@ -160,28 +166,25 @@ Tool handlers return soft failures via the `is_error` field in the ToolResult:
 - Client can decide how to proceed based on the error message
 - This follows MCP conventions for tool error reporting
 
-### JSON-RPC Errors
-
-Hard errors follow JSON-RPC 2.0 error codes:
-- `-32600`: Invalid Request
-- `-32601`: Method Not Found
-- `-32602`: Invalid Params
-- `-32603`: Internal Error
-- `-32000` to `-32099`: Server Error (for gRPC errors)
-
 ## Display Grounding
 
-The `initialize` response includes display grounding information for coordinate-based operations:
+The `initialize` response includes display grounding information for coordinate-based operations. The format follows the MCP computer tool specification:
 
 ```json
 {
   "protocolVersion": "2024-11-05",
   "capabilities": {"tools": {}},
   "serverInfo": {"name": "macos-use-sdk", "version": "0.1.0"},
-  "displayInfo": {
-    "display_width_px": 2560,
-    "display_height_px": 1440
-  }
+  "screens": [
+    {
+      "id": "main",
+      "width": 2560,
+      "height": 1440,
+      "pixel_density": 2,
+      "origin_x": 0,
+      "origin_y": 0
+    }
+  ]
 }
 ```
 

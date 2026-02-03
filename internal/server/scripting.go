@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
@@ -209,5 +210,74 @@ func (s *MCPServer) handleExecuteShellCommand(call *ToolCall) (*ToolResult, erro
 
 	return &ToolResult{
 		Content: []Content{{Type: "text", Text: output}},
+	}, nil
+}
+
+// handleValidateScript handles the validate_script tool
+func (s *MCPServer) handleValidateScript(call *ToolCall) (*ToolResult, error) {
+	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
+	defer cancel()
+
+	var params struct {
+		Type   string `json:"type"`
+		Script string `json:"script"`
+	}
+
+	if err := json.Unmarshal(call.Arguments, &params); err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Invalid parameters: %v", err)}},
+		}, nil
+	}
+
+	if params.Type == "" || params.Script == "" {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: "type and script parameters are required"}},
+		}, nil
+	}
+
+	// Map type string to proto enum
+	var scriptType pb.ScriptType
+	switch params.Type {
+	case "applescript":
+		scriptType = pb.ScriptType_SCRIPT_TYPE_APPLESCRIPT
+	case "javascript":
+		scriptType = pb.ScriptType_SCRIPT_TYPE_JXA
+	case "shell":
+		scriptType = pb.ScriptType_SCRIPT_TYPE_SHELL
+	default:
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Unknown script type: %s. Valid: applescript, javascript, shell", params.Type)}},
+		}, nil
+	}
+
+	resp, err := s.client.ValidateScript(ctx, &pb.ValidateScriptRequest{
+		Type:   scriptType,
+		Script: params.Script,
+	})
+	if err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to validate script: %v", err)}},
+		}, nil
+	}
+
+	if resp.Valid {
+		return &ToolResult{
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Script validation successful (%s)", params.Type)}},
+		}, nil
+	}
+
+	// Build error message from errors array
+	var errMsg string
+	if len(resp.Errors) > 0 {
+		errMsg = strings.Join(resp.Errors, "; ")
+	}
+
+	return &ToolResult{
+		IsError: true,
+		Content: []Content{{Type: "text", Text: fmt.Sprintf("Script validation failed: %s", errMsg)}},
 	}, nil
 }

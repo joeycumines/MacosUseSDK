@@ -157,6 +157,38 @@ func (s *MCPServer) registerTools() {
 			},
 			Handler: s.handleCaptureScreenshot,
 		},
+		"capture_window_screenshot": {
+			Name:        "capture_window_screenshot",
+			Description: "Capture a screenshot of a specific window. Essential for multi-window workflows like VS Code where you need focused visual feedback on the active window.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"window": map[string]interface{}{
+						"type":        "string",
+						"description": "Window resource name (e.g., applications/123/windows/456)",
+					},
+					"format": map[string]interface{}{
+						"type":        "string",
+						"description": "Image format: png, jpeg, tiff. Default: png",
+						"enum":        []string{"png", "jpeg", "tiff"},
+					},
+					"quality": map[string]interface{}{
+						"type":        "integer",
+						"description": "JPEG quality (1-100). Only used for jpeg format. Default: 85",
+					},
+					"include_shadow": map[string]interface{}{
+						"type":        "boolean",
+						"description": "Whether to include window shadow in screenshot. Default: false",
+					},
+					"include_ocr": map[string]interface{}{
+						"type":        "boolean",
+						"description": "Whether to include OCR text extraction in response",
+					},
+				},
+				"required": []string{"window"},
+			},
+			Handler: s.handleCaptureWindowScreenshot,
+		},
 		"capture_region_screenshot": {
 			Name:        "capture_region_screenshot",
 			Description: "Capture a screenshot of a specific screen region. Uses Global Display Coordinates (top-left origin). Useful for zooming in on UI elements.",
@@ -349,7 +381,7 @@ func (s *MCPServer) registerTools() {
 					"scale":        map[string]interface{}{"type": "number", "description": "Scale factor for pinch/zoom (e.g., 0.5 = zoom out, 2.0 = zoom in)"},
 					"rotation":     map[string]interface{}{"type": "number", "description": "Rotation angle in degrees for rotate gesture"},
 					"finger_count": map[string]interface{}{"type": "integer", "description": "Number of fingers for swipe (default: 2)"},
-					"direction":    map[string]interface{}{"type": "string", "description": "Direction for swipe: up, down, left, right"},
+					"direction":    map[string]interface{}{"type": "string", "description": "Direction for swipe gesture only: up, down, left, right"},
 					"application":  map[string]interface{}{"type": "string", "description": "Application resource name (optional)"},
 				},
 				"required": []string{"center_x", "center_y", "gesture_type"},
@@ -396,6 +428,21 @@ func (s *MCPServer) registerTools() {
 				"required": []string{"name"},
 			},
 			Handler: s.handleGetElement,
+		},
+		"get_element_actions": {
+			Name:        "get_element_actions",
+			Description: "Get available actions for a specific UI element. Returns list of actions like 'press', 'increment', 'decrement'.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"type":        "string",
+						"description": "Element resource name (e.g., applications/123/elements/456)",
+					},
+				},
+				"required": []string{"name"},
+			},
+			Handler: s.handleGetElementActions,
 		},
 		"click_element": {
 			Name:        "click_element",
@@ -466,8 +513,21 @@ func (s *MCPServer) registerTools() {
 			Name:        "list_windows",
 			Description: "List all open windows across all tracked applications.",
 			InputSchema: map[string]interface{}{
-				"type":       "object",
-				"properties": map[string]interface{}{},
+				"type": "object",
+				"properties": map[string]interface{}{
+					"parent": map[string]interface{}{
+						"type":        "string",
+						"description": "Parent application to filter windows (optional)",
+					},
+					"page_size": map[string]interface{}{
+						"type":        "integer",
+						"description": "Maximum number of windows to return per page (default: 100)",
+					},
+					"page_token": map[string]interface{}{
+						"type":        "string",
+						"description": "Token for pagination (from previous response, opaque to client)",
+					},
+				},
 			},
 			Handler: s.handleListWindows,
 		},
@@ -653,6 +713,15 @@ func (s *MCPServer) registerTools() {
 			},
 			Handler: s.handleClearClipboard,
 		},
+		"get_clipboard_history": {
+			Name:        "get_clipboard_history",
+			Description: "Get clipboard history (if available). Returns historical clipboard entries most recent first.",
+			InputSchema: map[string]interface{}{
+				"type":       "object",
+				"properties": map[string]interface{}{},
+			},
+			Handler: s.handleGetClipboardHistory,
+		},
 
 		// === APPLICATION TOOLS ===
 		"open_application": {
@@ -782,6 +851,26 @@ func (s *MCPServer) registerTools() {
 			},
 			Handler: s.handleExecuteShellCommand,
 		},
+		"validate_script": {
+			Name:        "validate_script",
+			Description: "Validate a script without executing. Useful for checking syntax before running dangerous operations.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"type": map[string]interface{}{
+						"type":        "string",
+						"description": "Script type: applescript, javascript, or shell",
+						"enum":        []string{"applescript", "javascript", "shell"},
+					},
+					"script": map[string]interface{}{
+						"type":        "string",
+						"description": "Script source code to validate",
+					},
+				},
+				"required": []string{"type", "script"},
+			},
+			Handler: s.handleValidateScript,
+		},
 
 		// === OBSERVATION TOOLS ===
 		"create_observation": {
@@ -821,6 +910,25 @@ func (s *MCPServer) registerTools() {
 				"required": []string{"parent"},
 			},
 			Handler: s.handleCreateObservation,
+		},
+		"stream_observations": {
+			Name:        "stream_observations",
+			Description: "Stream observation events in real-time. Returns a stream of ObservationEvent messages until the observation completes or is cancelled.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"type":        "string",
+						"description": "Observation resource name to stream (e.g., applications/{id}/observations/{obs})",
+					},
+					"timeout": map[string]interface{}{
+						"type":        "number",
+						"description": "Timeout in seconds for streaming (default: 300, max: 3600)",
+					},
+				},
+				"required": []string{"name"},
+			},
+			Handler: s.handleStreamObservations,
 		},
 		"get_observation": {
 			Name:        "get_observation",
@@ -1018,7 +1126,7 @@ func (s *MCPServer) handleMessage(tr *transport.StdioTransport, msg *transport.M
 			"content": result.Content,
 		}
 		if result.IsError {
-			resultMap["isError"] = true
+			resultMap["is_error"] = true
 		}
 
 		resultBytes, _ := json.Marshal(resultMap)
@@ -1046,6 +1154,7 @@ func (s *MCPServer) handleMessage(tr *transport.StdioTransport, msg *transport.M
 }
 
 // getDisplayGroundingInfo returns JSON string with display information for grounding
+// Format follows MCP computer tool specification with screens array
 func (s *MCPServer) getDisplayGroundingInfo() string {
 	ctx, cancel := context.WithTimeout(s.ctx, 5*time.Second)
 	defer cancel()
@@ -1053,46 +1162,36 @@ func (s *MCPServer) getDisplayGroundingInfo() string {
 	resp, err := s.client.ListDisplays(ctx, &pb.ListDisplaysRequest{})
 	if err != nil {
 		log.Printf("Warning: failed to get display info for grounding: %v", err)
-		return `{"error":"failed to get display info"}`
+		return `{"screens":[]}`
 	}
 
 	if len(resp.Displays) == 0 {
-		return `{"displays":[]}`
+		return `{"screens":[]}`
 	}
 
-	// Find main display
-	var mainDisplay *pb.Display
-	for _, d := range resp.Displays {
+	// Build screens array following MCP computer tool format
+	screens := make([]map[string]interface{}, 0, len(resp.Displays))
+
+	for i, d := range resp.Displays {
+		// Use display ID or index as identifier
+		id := fmt.Sprintf("display-%d", i)
 		if d.IsMain {
-			mainDisplay = d
-			break
+			id = "main"
 		}
-	}
-	if mainDisplay == nil {
-		mainDisplay = resp.Displays[0]
+
+		dInfo := map[string]interface{}{
+			"id":            id,
+			"width":         d.Frame.Width,
+			"height":        d.Frame.Height,
+			"pixel_density": d.Scale,
+			"origin_x":      d.Frame.X,
+			"origin_y":      d.Frame.Y,
+		}
+		screens = append(screens, dInfo)
 	}
 
 	info := map[string]interface{}{
-		"display_width_px":  mainDisplay.Frame.Width,
-		"display_height_px": mainDisplay.Frame.Height,
-		"display_count":     len(resp.Displays),
-		"scale":             mainDisplay.Scale,
-		"displays":          make([]map[string]interface{}, 0, len(resp.Displays)),
-	}
-
-	for _, d := range resp.Displays {
-		dInfo := map[string]interface{}{
-			"name":    d.Name,
-			"is_main": d.IsMain,
-			"frame": map[string]interface{}{
-				"x":      d.Frame.X,
-				"y":      d.Frame.Y,
-				"width":  d.Frame.Width,
-				"height": d.Frame.Height,
-			},
-			"scale": d.Scale,
-		}
-		info["displays"] = append(info["displays"].([]map[string]interface{}), dInfo)
+		"screens": screens,
 	}
 
 	infoBytes, _ := json.Marshal(info)

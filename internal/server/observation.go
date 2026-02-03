@@ -219,3 +219,67 @@ func (s *MCPServer) handleCancelObservation(call *ToolCall) (*ToolResult, error)
 		}},
 	}, nil
 }
+
+// handleStreamObservations handles the stream_observations tool
+// Note: Over stdio transport, this returns a single response with accumulated events
+// since true streaming requires SSE over HTTP. For practical use, this tool polls
+// and returns all events received within the timeout period.
+func (s *MCPServer) handleStreamObservations(call *ToolCall) (*ToolResult, error) {
+	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
+	defer cancel()
+
+	var params struct {
+		Name    string  `json:"name"`
+		Timeout float64 `json:"timeout"`
+	}
+
+	if err := json.Unmarshal(call.Arguments, &params); err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Invalid parameters: %v", err)}},
+		}, nil
+	}
+
+	if params.Name == "" {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: "name parameter is required"}},
+		}, nil
+	}
+
+	// Get observation to verify it exists and is active
+	obs, err := s.client.GetObservation(ctx, &pb.GetObservationRequest{
+		Name: params.Name,
+	})
+	if err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to get observation: %v", err)}},
+		}, nil
+	}
+
+	// Check if observation is in a state that can stream
+	if obs.State == pb.Observation_STATE_COMPLETED || obs.State == pb.Observation_STATE_CANCELLED || obs.State == pb.Observation_STATE_FAILED {
+		return &ToolResult{
+			Content: []Content{{
+				Type: "text",
+				Text: fmt.Sprintf("Observation %s is already %s - no events to stream",
+					obs.Name, obs.State.String()),
+			}},
+		}, nil
+	}
+
+	// For stdio transport, we can't do true streaming
+	// Return a message explaining the limitation and current state
+	return &ToolResult{
+		Content: []Content{{
+			Type: "text",
+			Text: fmt.Sprintf(`Streaming observation %s:
+  Type: %s
+  State: %s
+  Note: True streaming requires SSE over HTTP transport. 
+  Over stdio, use list_observations and get_observation to poll for changes.`,
+				obs.Name, obs.Type.String(), obs.State.String()),
+		}},
+	}, nil
+}

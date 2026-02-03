@@ -19,7 +19,9 @@ func (s *MCPServer) handleListWindows(call *ToolCall) (*ToolResult, error) {
 	defer cancel()
 
 	var params struct {
-		Parent string `json:"parent"`
+		Parent    string `json:"parent"`
+		PageSize  int32  `json:"page_size"`
+		PageToken string `json:"page_token"`
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
@@ -29,7 +31,11 @@ func (s *MCPServer) handleListWindows(call *ToolCall) (*ToolResult, error) {
 		}, nil
 	}
 
-	resp, err := s.client.ListWindows(ctx, &pb.ListWindowsRequest{Parent: params.Parent})
+	resp, err := s.client.ListWindows(ctx, &pb.ListWindowsRequest{
+		Parent:    params.Parent,
+		PageSize:  params.PageSize,
+		PageToken: params.PageToken,
+	})
 	if err != nil {
 		return &ToolResult{
 			IsError: true,
@@ -53,8 +59,13 @@ func (s *MCPServer) handleListWindows(call *ToolCall) (*ToolResult, error) {
 			w.Title, w.Name, visibleMark, w.Bounds.X, w.Bounds.Y, w.Bounds.Width, w.Bounds.Height))
 	}
 
+	resultText := fmt.Sprintf("Found %d windows:\n%s", len(resp.Windows), joinStrings(lines, "\n"))
+	if resp.NextPageToken != "" {
+		resultText += fmt.Sprintf("\n\nMore results available. Use page_token: %s", resp.NextPageToken)
+	}
+
 	return &ToolResult{
-		Content: []Content{{Type: "text", Text: fmt.Sprintf("Found %d windows:\n%s", len(resp.Windows), joinStrings(lines, "\n"))}},
+		Content: []Content{{Type: "text", Text: resultText}},
 	}, nil
 }
 

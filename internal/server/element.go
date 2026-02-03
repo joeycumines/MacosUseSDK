@@ -307,3 +307,50 @@ func (s *MCPServer) handlePerformElementAction(call *ToolCall) (*ToolResult, err
 		}},
 	}, nil
 }
+
+// handleGetElementActions handles the get_element_actions tool
+func (s *MCPServer) handleGetElementActions(call *ToolCall) (*ToolResult, error) {
+	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
+	defer cancel()
+
+	var params struct {
+		Name string `json:"name"`
+	}
+
+	if err := json.Unmarshal(call.Arguments, &params); err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Invalid parameters: %v", err)}},
+		}, nil
+	}
+
+	if params.Name == "" {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: "name parameter is required"}},
+		}, nil
+	}
+
+	resp, err := s.client.GetElementActions(ctx, &pb.GetElementActionsRequest{
+		Name: params.Name,
+	})
+	if err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to get element actions: %v", err)}},
+		}, nil
+	}
+
+	if len(resp.Actions) == 0 {
+		return &ToolResult{
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("No actions available for element: %s", params.Name)}},
+		}, nil
+	}
+
+	return &ToolResult{
+		Content: []Content{{
+			Type: "text",
+			Text: fmt.Sprintf("Available actions for %s:\n%s", params.Name, joinStrings(resp.Actions, ", ")),
+		}},
+	}, nil
+}

@@ -132,3 +132,53 @@ func (s *MCPServer) handleClearClipboard(call *ToolCall) (*ToolResult, error) {
 		}},
 	}, nil
 }
+
+// handleGetClipboardHistory handles the get_clipboard_history tool
+func (s *MCPServer) handleGetClipboardHistory(call *ToolCall) (*ToolResult, error) {
+	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
+	defer cancel()
+
+	resp, err := s.client.GetClipboardHistory(ctx, &pb.GetClipboardHistoryRequest{
+		Name: "clipboard/history",
+	})
+	if err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to get clipboard history: %v", err)}},
+		}, nil
+	}
+
+	if len(resp.Entries) == 0 {
+		return &ToolResult{
+			Content: []Content{{Type: "text", Text: "No clipboard history available"}},
+		}, nil
+	}
+
+	var lines []string
+	for i, entry := range resp.Entries {
+		var contentStr string
+		if entry.Content != nil {
+			switch c := entry.Content.Type; c {
+			case pb.ContentType_CONTENT_TYPE_TEXT:
+				contentStr = entry.Content.GetText()
+			case pb.ContentType_CONTENT_TYPE_URL:
+				contentStr = entry.Content.GetUrl()
+			case pb.ContentType_CONTENT_TYPE_IMAGE:
+				contentStr = "[Image]"
+			default:
+				contentStr = fmt.Sprintf("[%s]", c.String())
+			}
+		}
+		if len(contentStr) > 50 {
+			contentStr = contentStr[:47] + "..."
+		}
+		lines = append(lines, fmt.Sprintf("%d. %s", i+1, contentStr))
+	}
+
+	return &ToolResult{
+		Content: []Content{{
+			Type: "text",
+			Text: fmt.Sprintf("Clipboard history (%d entries):\n%s", len(resp.Entries), joinStrings(lines, "\n")),
+		}},
+	}, nil
+}

@@ -196,3 +196,90 @@ func (s *MCPServer) handleCaptureRegionScreenshot(call *ToolCall) (*ToolResult, 
 
 	return result, nil
 }
+
+// handleCaptureWindowScreenshot handles the capture_window_screenshot tool
+func (s *MCPServer) handleCaptureWindowScreenshot(call *ToolCall) (*ToolResult, error) {
+	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
+	defer cancel()
+
+	var params struct {
+		Window        string `json:"window"`
+		Format        string `json:"format"`
+		Quality       int32  `json:"quality"`
+		IncludeShadow bool   `json:"include_shadow"`
+		IncludeOCR    bool   `json:"include_ocr"`
+	}
+
+	if err := json.Unmarshal(call.Arguments, &params); err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Invalid parameters: %v", err)}},
+		}, nil
+	}
+
+	if params.Window == "" {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: "window parameter is required (e.g., applications/123/windows/456)"}},
+		}, nil
+	}
+
+	// Map format string to proto enum
+	format := pb.ImageFormat_IMAGE_FORMAT_PNG
+	switch params.Format {
+	case "jpeg", "jpg":
+		format = pb.ImageFormat_IMAGE_FORMAT_JPEG
+	case "tiff":
+		format = pb.ImageFormat_IMAGE_FORMAT_TIFF
+	}
+
+	quality := params.Quality
+	if quality == 0 {
+		quality = 85
+	}
+
+	resp, err := s.client.CaptureWindowScreenshot(ctx, &pb.CaptureWindowScreenshotRequest{
+		Window:         params.Window,
+		Format:         format,
+		Quality:        quality,
+		IncludeShadow:  params.IncludeShadow,
+		IncludeOcrText: params.IncludeOCR,
+	})
+	if err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to capture window screenshot: %v", err)}},
+		}, nil
+	}
+
+	imageData := base64.StdEncoding.EncodeToString(resp.ImageData)
+	mediaType := "image/png"
+	switch resp.Format {
+	case pb.ImageFormat_IMAGE_FORMAT_JPEG:
+		mediaType = "image/jpeg"
+	case pb.ImageFormat_IMAGE_FORMAT_TIFF:
+		mediaType = "image/tiff"
+	}
+
+	result := &ToolResult{
+		Content: []Content{
+			{
+				Type: "image",
+				Text: fmt.Sprintf("data:%s;base64,%s", mediaType, imageData),
+			},
+			{
+				Type: "text",
+				Text: fmt.Sprintf("Window screenshot captured: %dx%d pixels - Window: %s", resp.Width, resp.Height, resp.Window),
+			},
+		},
+	}
+
+	if params.IncludeOCR && resp.OcrText != "" {
+		result.Content = append(result.Content, Content{
+			Type: "text",
+			Text: fmt.Sprintf("OCR Text:\n%s", resp.OcrText),
+		})
+	}
+
+	return result, nil
+}
