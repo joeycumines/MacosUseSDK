@@ -1,7 +1,7 @@
 // Copyright 2025 Joseph Cumines
-//
-// Transport interface for MCP communication
 
+// Package transport provides MCP message transport interfaces and implementations
+// for JSON-RPC 2.0 communication over stdio and HTTP/SSE.
 package transport
 
 // JSON-RPC 2.0 standard error codes.

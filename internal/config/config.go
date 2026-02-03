@@ -1,7 +1,7 @@
 // Copyright 2025 Joseph Cumines
-//
-// Configuration package for MCP tool
 
+// Package config provides configuration loading for the MCP tool,
+// including environment variable parsing and default values.
 package config
 
 import (

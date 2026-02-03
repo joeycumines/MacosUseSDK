@@ -1,4 +1,6 @@
 // Copyright 2025 Joseph Cumines
+//
+// Helper functions for tool handlers
 
 package server
 
