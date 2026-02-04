@@ -120,7 +120,7 @@ The research document (docs/05-mcp-integration.md, Section 5.1) specifies a crit
 
 ```
 1. Capture: Screen at W_native, H_native
-2. Resscale to W_model, H_model (preserving aspect ratio)
+2. Resize to W_model, H_model (preserving aspect ratio)
 3. Inference: Model predicts atize: Down (x_model, y_model)
 4. Upscaling: x_native = x_model × (W_native / W_model)
 ```

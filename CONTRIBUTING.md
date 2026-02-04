@@ -5,7 +5,7 @@ Thank you for your interest in contributing to MacosUseSDK!
 ## Development Requirements
 
 - **macOS**: This project requires macOS for development (Accessibility APIs)
-- **Go 1.24+**: For the MCP server and integration tests
+- **Go 1.25+**: For the MCP server and integration tests
 - **Swift 6.1+**: For the gRPC server
 - **make**: GNU Make for build orchestration
 - **protoc** + **buf**: For protobuf code generation
