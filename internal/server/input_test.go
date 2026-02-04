@@ -1054,33 +1054,33 @@ func TestHandleGetInput_GRPCError(t *testing.T) {
 
 func TestClickCoordinates_TableDriven(t *testing.T) {
 	tests := []struct {
-		name           string
-		x, y           float64
-		wantContains   []string
+		name         string
+		x, y         float64
+		wantContains []string
 	}{
 		{
-			name:         "positive coordinates",
-			x:            100, y: 200,
+			name: "positive coordinates",
+			x:    100, y: 200,
 			wantContains: []string{"(100, 200)"},
 		},
 		{
-			name:         "origin coordinates",
-			x:            0, y: 0,
+			name: "origin coordinates",
+			x:    0, y: 0,
 			wantContains: []string{"(0, 0)"},
 		},
 		{
-			name:         "negative x (multi-monitor)",
-			x:            -500, y: 300,
+			name: "negative x (multi-monitor)",
+			x:    -500, y: 300,
 			wantContains: []string{"(-500, 300)"},
 		},
 		{
-			name:         "negative y (above main)",
-			x:            200, y: -100,
+			name: "negative y (above main)",
+			x:    200, y: -100,
 			wantContains: []string{"(200, -100)"},
 		},
 		{
-			name:         "large coordinates",
-			x:            5000, y: 2500,
+			name: "large coordinates",
+			x:    5000, y: 2500,
 			wantContains: []string{"(5000, 2500)"},
 		},
 	}

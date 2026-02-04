@@ -969,30 +969,30 @@ func TestHandleCursorPosition_TableDriven(t *testing.T) {
 		wantContains []string
 	}{
 		{
-			name:         "origin position",
-			x:            0, y: 0,
+			name: "origin position",
+			x:    0, y: 0,
 			display:      "displays/main",
 			wantIsError:  false,
 			wantContains: []string{"(0, 0)", "displays/main"},
 		},
 		{
-			name:         "fractional coordinates rounded",
-			x:            100.4, y: 200.6,
+			name: "fractional coordinates rounded",
+			x:    100.4, y: 200.6,
 			display:      "displays/1",
 			wantIsError:  false,
 			wantContains: []string{"(100, 201)", "displays/1"},
 		},
 		{
-			name:         "negative coordinates",
-			x:            -1920, y: -100,
+			name: "negative coordinates",
+			x:    -1920, y: -100,
 			display:      "displays/secondary",
 			wantIsError:  false,
 			wantContains: []string{"(-1920, -100)", "displays/secondary"},
 		},
 		{
-			name:        "gRPC error",
-			grpcErr:     errors.New("server unavailable"),
-			wantIsError: true,
+			name:         "gRPC error",
+			grpcErr:      errors.New("server unavailable"),
+			wantIsError:  true,
 			wantContains: []string{"Failed to get cursor position", "server unavailable"},
 		},
 	}

@@ -25,25 +25,25 @@ type AuditLogger struct {
 
 // redactedKeys is the list of argument keys that should be redacted in audit logs.
 var redactedKeys = map[string]bool{
-	"password":          true,
-	"secret":            true,
-	"token":             true,
-	"api_key":           true,
-	"apikey":            true,
-	"credential":        true,
-	"credentials":       true,
-	"private_key":       true,
-	"privatekey":        true,
-	"access_token":      true,
-	"refresh_token":     true,
-	"authorization":     true,
-	"auth":              true,
-	"bearer":            true,
-	"session_id":        true,
-	"cookie":            true,
-	"passphrase":        true,
-	"encryption_key":    true,
-	"decryption_key":    true,
+	"password":       true,
+	"secret":         true,
+	"token":          true,
+	"api_key":        true,
+	"apikey":         true,
+	"credential":     true,
+	"credentials":    true,
+	"private_key":    true,
+	"privatekey":     true,
+	"access_token":   true,
+	"refresh_token":  true,
+	"authorization":  true,
+	"auth":           true,
+	"bearer":         true,
+	"session_id":     true,
+	"cookie":         true,
+	"passphrase":     true,
+	"encryption_key": true,
+	"decryption_key": true,
 }
 
 // NewAuditLogger creates a new audit logger that writes to the specified file.
@@ -144,7 +144,7 @@ func redactArguments(args json.RawMessage) string {
 func redactMapValues(m map[string]interface{}) {
 	for key, value := range m {
 		lowerKey := strings.ToLower(key)
-		
+
 		// Check if key should be redacted
 		if redactedKeys[lowerKey] {
 			m[key] = "[REDACTED]"

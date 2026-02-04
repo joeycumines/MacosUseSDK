@@ -1939,10 +1939,10 @@ func (s *MCPServer) handleHTTPMessage(msg *transport.Message) (*transport.Messag
 		startTime := time.Now()
 
 		result, err := tool.Handler(call)
-		
+
 		// Calculate duration
 		duration := time.Since(startTime)
-		
+
 		// Determine status and record metrics
 		status := "ok"
 		if err != nil {

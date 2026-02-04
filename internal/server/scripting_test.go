@@ -20,10 +20,10 @@ import (
 type mockScriptingClient struct {
 	pb.MacosUseClient
 
-	executeAppleScriptFn      func(ctx context.Context, req *pb.ExecuteAppleScriptRequest) (*pb.ExecuteAppleScriptResponse, error)
-	executeJavaScriptFn       func(ctx context.Context, req *pb.ExecuteJavaScriptRequest) (*pb.ExecuteJavaScriptResponse, error)
-	executeShellCommandFn     func(ctx context.Context, req *pb.ExecuteShellCommandRequest) (*pb.ExecuteShellCommandResponse, error)
-	validateScriptFn          func(ctx context.Context, req *pb.ValidateScriptRequest) (*pb.ValidateScriptResponse, error)
+	executeAppleScriptFn       func(ctx context.Context, req *pb.ExecuteAppleScriptRequest) (*pb.ExecuteAppleScriptResponse, error)
+	executeJavaScriptFn        func(ctx context.Context, req *pb.ExecuteJavaScriptRequest) (*pb.ExecuteJavaScriptResponse, error)
+	executeShellCommandFn      func(ctx context.Context, req *pb.ExecuteShellCommandRequest) (*pb.ExecuteShellCommandResponse, error)
+	validateScriptFn           func(ctx context.Context, req *pb.ValidateScriptRequest) (*pb.ValidateScriptResponse, error)
 	getScriptingDictionariesFn func(ctx context.Context, req *pb.GetScriptingDictionariesRequest) (*pb.ScriptingDictionaries, error)
 }
 

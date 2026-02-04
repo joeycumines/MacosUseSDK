@@ -843,8 +843,8 @@ func TestHandleListApplications_TableDriven(t *testing.T) {
 			apps: []*pb.Application{
 				{Name: "applications/1", DisplayName: "App1", Pid: 1},
 			},
-			nextToken:   "next-page",
-			wantIsError: false,
+			nextToken:    "next-page",
+			wantIsError:  false,
 			wantContains: []string{"More results available", "next-page"},
 		},
 		{
@@ -919,9 +919,9 @@ func TestHandleGetApplication_TableDriven(t *testing.T) {
 		wantContains []string
 	}{
 		{
-			name: "success",
-			args: `{"name": "applications/123"}`,
-			app:  &pb.Application{Name: "applications/123", DisplayName: "TestApp", Pid: 123},
+			name:         "success",
+			args:         `{"name": "applications/123"}`,
+			app:          &pb.Application{Name: "applications/123", DisplayName: "TestApp", Pid: 123},
 			wantIsError:  false,
 			wantContains: []string{"Application:", "TestApp", "PID: 123"},
 		},

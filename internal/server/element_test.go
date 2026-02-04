@@ -1162,9 +1162,9 @@ func TestHandleWaitElement_Success(t *testing.T) {
 			}
 			// Return already-completed operation
 			return &longrunningpb.Operation{
-				Name:     "operations/wait-1",
-				Done:     true,
-				Result:   &longrunningpb.Operation_Response{Response: respAny},
+				Name:   "operations/wait-1",
+				Done:   true,
+				Result: &longrunningpb.Operation_Response{Response: respAny},
 			}, nil
 		},
 	}
@@ -1712,10 +1712,10 @@ func TestElementHandlers_ContentTypeIsText(t *testing.T) {
 		fn   func(*ToolCall) (*ToolResult, error)
 		args string
 	}{
-		"find_elements":         {server.handleFindElements, `{"selector": {"role": "AXButton"}}`},
-		"get_element":           {server.handleGetElement, `{"name": "elements/e1"}`},
-		"click_element":         {server.handleClickElement, `{"parent": "app", "element_id": "e1"}`},
-		"get_element_actions":   {server.handleGetElementActions, `{"name": "elements/e1"}`},
+		"find_elements":          {server.handleFindElements, `{"selector": {"role": "AXButton"}}`},
+		"get_element":            {server.handleGetElement, `{"name": "elements/e1"}`},
+		"click_element":          {server.handleClickElement, `{"parent": "app", "element_id": "e1"}`},
+		"get_element_actions":    {server.handleGetElementActions, `{"name": "elements/e1"}`},
 		"traverse_accessibility": {server.handleTraverseAccessibility, `{"name": "applications/1"}`},
 	}
 

@@ -23,13 +23,13 @@ type mockSessionClient struct {
 	mockMacosUseClient
 
 	// Session mocks
-	createSessionFunc      func(ctx context.Context, req *pb.CreateSessionRequest) (*pb.Session, error)
-	getSessionFunc         func(ctx context.Context, req *pb.GetSessionRequest) (*pb.Session, error)
-	listSessionsFunc       func(ctx context.Context, req *pb.ListSessionsRequest) (*pb.ListSessionsResponse, error)
-	deleteSessionFunc      func(ctx context.Context, req *pb.DeleteSessionRequest) (*emptypb.Empty, error)
-	getSessionSnapshotFunc func(ctx context.Context, req *pb.GetSessionSnapshotRequest) (*pb.SessionSnapshot, error)
-	beginTransactionFunc   func(ctx context.Context, req *pb.BeginTransactionRequest) (*pb.BeginTransactionResponse, error)
-	commitTransactionFunc  func(ctx context.Context, req *pb.CommitTransactionRequest) (*pb.Transaction, error)
+	createSessionFunc       func(ctx context.Context, req *pb.CreateSessionRequest) (*pb.Session, error)
+	getSessionFunc          func(ctx context.Context, req *pb.GetSessionRequest) (*pb.Session, error)
+	listSessionsFunc        func(ctx context.Context, req *pb.ListSessionsRequest) (*pb.ListSessionsResponse, error)
+	deleteSessionFunc       func(ctx context.Context, req *pb.DeleteSessionRequest) (*emptypb.Empty, error)
+	getSessionSnapshotFunc  func(ctx context.Context, req *pb.GetSessionSnapshotRequest) (*pb.SessionSnapshot, error)
+	beginTransactionFunc    func(ctx context.Context, req *pb.BeginTransactionRequest) (*pb.BeginTransactionResponse, error)
+	commitTransactionFunc   func(ctx context.Context, req *pb.CommitTransactionRequest) (*pb.Transaction, error)
 	rollbackTransactionFunc func(ctx context.Context, req *pb.RollbackTransactionRequest) (*pb.Transaction, error)
 
 	// Macro mocks

@@ -328,8 +328,8 @@ func (s *MCPServer) handleGetScriptingDictionaries(call *ToolCall) (*ToolResult,
 	dicts := make([]map[string]interface{}, 0, len(resp.Dictionaries))
 	for _, dict := range resp.Dictionaries {
 		dicts = append(dicts, map[string]interface{}{
-			"application":  dict.Application,
-			"bundle_id":    dict.BundleId,
+			"application":   dict.Application,
+			"bundle_id":     dict.BundleId,
 			"command_count": len(dict.Commands),
 		})
 	}
