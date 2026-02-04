@@ -660,6 +660,7 @@ struct AXWindowSnapshot: Hashable {
     }
 }
 
+/// Describes a change detected in window state during observation polling.
 enum WindowChange {
     case created(AXWindowSnapshot)
     case destroyed(AXWindowSnapshot)
@@ -671,6 +672,7 @@ enum WindowChange {
     case shown(AXWindowSnapshot)
 }
 
+/// Errors that can occur during observation lifecycle management.
 enum ObservationError: Error {
     case notFound
     case alreadyStarted
