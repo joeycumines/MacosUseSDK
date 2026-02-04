@@ -22,14 +22,14 @@
     "constraint": "The use of subagents via the `runSubagent` tool is MANDATORY for the execution of the tasks below. Tasks are grouped specifically to be run in distinct subagent contexts to prevent context window exhaustion. Do not attempt to solve all groups in a single turn."
   },
   "status_section": {
-    "current_state": "77 MCP tools + observability + godoc comments + lint targets + MCP protocol integration tests (T066-T072). All tests pass.",
+    "current_state": "77 MCP tools + comprehensive docs/10-api-reference.md created with all 77 tools, 18 env vars, coordinate systems, error codes. Build verified.",
     "commits_made": [
       "20358ac - feat(input): add cursor_position, hold_key, mouse_button_down/up MCP tools",
       "120c9d7 - test(integration): add HTTP transport tests",
       "2e1d260 - feat(security): add TLS and API key auth with constant-time comparison",
       "2267ae5 - feat(observability): add metrics, audit logging, rate limiting"
     ],
-    "verification_status": "verified - make-all-with-log, lint-all, api-lint, integration-test-http all pass"
+    "verification_status": "verified 2026-02-04 - make-all-with-log passes, all integration tests pass (~28s)"
   },
   "sequential_tasks": [
     {
@@ -471,79 +471,80 @@
       "id": "T073",
       "task": "Add wait_element MCP tool to expose WaitElement long-running operation",
       "file": "internal/server/element.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T074",
       "task": "Add wait_element_state MCP tool to expose WaitElementState long-running operation",
       "file": "internal/server/element.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T075",
       "task": "Add traverse_accessibility MCP tool to expose TraverseAccessibility RPC",
       "file": "internal/server/element.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T076",
       "task": "Add automate_open_file_dialog MCP tool to expose AutomateOpenFileDialog RPC",
       "file": "internal/server/file.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T077",
       "task": "Add automate_save_file_dialog MCP tool to expose AutomateSaveFileDialog RPC",
       "file": "internal/server/file.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T078",
       "task": "Add select_file MCP tool to expose SelectFile RPC",
       "file": "internal/server/file.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T079",
       "task": "Add select_directory MCP tool to expose SelectDirectory RPC",
       "file": "internal/server/file.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T080",
       "task": "Add drag_files MCP tool to expose DragFiles RPC",
       "file": "internal/server/file.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T081",
       "task": "Create internal/server/file.go with file dialog handlers",
       "file": "internal/server/file.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T082",
       "task": "Add file dialog tool registrations in internal/server/mcp.go",
       "file": "internal/server/mcp.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T083",
       "task": "Add find_region_elements MCP tool to expose FindRegionElements RPC",
       "file": "internal/server/element.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T084",
       "task": "Add capture_element_screenshot MCP tool to expose CaptureElementScreenshot RPC",
       "file": "internal/server/screenshot.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T085",
       "task": "Update TestAllToolsExist with final tool count after all additions",
       "file": "internal/server/mcp_test.go",
-      "status": "pending"
+      "status": "complete",
+      "note": "test already expects 77 tools"
     },
     {
       "id": "T086",
@@ -561,31 +562,31 @@
       "id": "T088",
       "task": "Create comprehensive API reference documentation in docs/10-api-reference.md",
       "file": "docs/10-api-reference.md",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T089",
       "task": "Document all MCP tool parameters and return values in docs/10-api-reference.md",
       "file": "docs/10-api-reference.md",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T090",
       "task": "Add coordinate system reference to docs/10-api-reference.md with diagrams",
       "file": "docs/10-api-reference.md",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T091",
       "task": "Add environment variable reference table to docs/10-api-reference.md",
       "file": "docs/10-api-reference.md",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T092",
       "task": "Add error code reference to docs/10-api-reference.md",
       "file": "docs/10-api-reference.md",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T093",
