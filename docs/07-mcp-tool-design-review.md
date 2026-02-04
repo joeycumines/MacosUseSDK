@@ -1,5 +1,8 @@
 # MCP Tool Design Review: Comprehensive Analysis
 
+> **⚠️ HISTORICAL DOCUMENT**  
+> This review was conducted on 2026-02-03 when the implementation had 39 tools. The project now has **77 MCP tools** and many of the gaps identified below have been addressed. See [docs/10-api-reference.md](10-api-reference.md) for the current state.
+
 **Review Date:** 2026-02-03  
 **Reviewer:** Takumi (匠)  
 **Documents Reviewed:**
