@@ -1200,3 +1200,431 @@ func TestSessionHandlers_ContentTypeIsText(t *testing.T) {
 		}
 	}
 }
+
+// ============================================================================
+// handleGetSessionSnapshot Tests
+// ============================================================================
+
+func TestHandleGetSessionSnapshot_Success(t *testing.T) {
+	mockClient := &mockSessionClient{
+		getSessionSnapshotFunc: func(ctx context.Context, req *pb.GetSessionSnapshotRequest) (*pb.SessionSnapshot, error) {
+			return &pb.SessionSnapshot{
+				Session:      &pb.Session{Name: "sessions/test"},
+				Applications: []string{"applications/1"},
+			}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "get_session_snapshot",
+		Arguments: json.RawMessage(`{"name": "sessions/test"}`),
+	}
+
+	result, err := server.handleGetSessionSnapshot(call)
+
+	if err != nil {
+		t.Fatalf("handleGetSessionSnapshot returned error: %v", err)
+	}
+	if result.IsError {
+		t.Errorf("Expected success, got error: %s", result.Content[0].Text)
+	}
+}
+
+func TestHandleGetSessionSnapshot_MissingName(t *testing.T) {
+	server := newTestMCPServer(&mockSessionClient{})
+	call := &ToolCall{
+		Name:      "get_session_snapshot",
+		Arguments: json.RawMessage(`{}`),
+	}
+
+	result, err := server.handleGetSessionSnapshot(call)
+
+	if err != nil {
+		t.Fatalf("handleGetSessionSnapshot returned error: %v", err)
+	}
+	if !result.IsError {
+		t.Error("Expected error result for missing name")
+	}
+	if !strings.Contains(result.Content[0].Text, "name") {
+		t.Errorf("Error should mention 'name', got: %s", result.Content[0].Text)
+	}
+}
+
+func TestHandleGetSessionSnapshot_GRPCError(t *testing.T) {
+	mockClient := &mockSessionClient{
+		getSessionSnapshotFunc: func(ctx context.Context, req *pb.GetSessionSnapshotRequest) (*pb.SessionSnapshot, error) {
+			return nil, errors.New("connection refused")
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "get_session_snapshot",
+		Arguments: json.RawMessage(`{"name": "sessions/test"}`),
+	}
+
+	result, err := server.handleGetSessionSnapshot(call)
+
+	if err != nil {
+		t.Fatalf("handleGetSessionSnapshot returned error: %v", err)
+	}
+	if !result.IsError {
+		t.Error("Expected error result for gRPC error")
+	}
+}
+
+// ============================================================================
+// handleBeginTransaction Tests
+// ============================================================================
+
+func TestHandleBeginTransaction_Success(t *testing.T) {
+	mockClient := &mockSessionClient{
+		beginTransactionFunc: func(ctx context.Context, req *pb.BeginTransactionRequest) (*pb.BeginTransactionResponse, error) {
+			return &pb.BeginTransactionResponse{
+				TransactionId: "tx-123",
+			}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "begin_transaction",
+		Arguments: json.RawMessage(`{"session": "sessions/test"}`),
+	}
+
+	result, err := server.handleBeginTransaction(call)
+
+	if err != nil {
+		t.Fatalf("handleBeginTransaction returned error: %v", err)
+	}
+	if result.IsError {
+		t.Errorf("Expected success, got error: %s", result.Content[0].Text)
+	}
+	if !strings.Contains(result.Content[0].Text, "tx-123") {
+		t.Errorf("Expected transaction ID in output, got: %s", result.Content[0].Text)
+	}
+}
+
+func TestHandleBeginTransaction_MissingSession(t *testing.T) {
+	server := newTestMCPServer(&mockSessionClient{})
+	call := &ToolCall{
+		Name:      "begin_transaction",
+		Arguments: json.RawMessage(`{}`),
+	}
+
+	result, err := server.handleBeginTransaction(call)
+
+	if err != nil {
+		t.Fatalf("handleBeginTransaction returned error: %v", err)
+	}
+	if !result.IsError {
+		t.Error("Expected error result for missing session")
+	}
+}
+
+func TestHandleBeginTransaction_GRPCError(t *testing.T) {
+	mockClient := &mockSessionClient{
+		beginTransactionFunc: func(ctx context.Context, req *pb.BeginTransactionRequest) (*pb.BeginTransactionResponse, error) {
+			return nil, errors.New("session not found")
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "begin_transaction",
+		Arguments: json.RawMessage(`{"session": "sessions/test"}`),
+	}
+
+	result, err := server.handleBeginTransaction(call)
+
+	if err != nil {
+		t.Fatalf("handleBeginTransaction returned error: %v", err)
+	}
+	if !result.IsError {
+		t.Error("Expected error result for gRPC error")
+	}
+}
+
+// ============================================================================
+// handleCommitTransaction Tests
+// ============================================================================
+
+func TestHandleCommitTransaction_Success(t *testing.T) {
+	mockClient := &mockSessionClient{
+		commitTransactionFunc: func(ctx context.Context, req *pb.CommitTransactionRequest) (*pb.Transaction, error) {
+			return &pb.Transaction{
+				TransactionId: "tx-123",
+				Session:       "sessions/test",
+				State:         pb.Transaction_STATE_COMMITTED,
+			}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "commit_transaction",
+		Arguments: json.RawMessage(`{"name": "sessions/test", "transaction_id": "tx-123"}`),
+	}
+
+	result, err := server.handleCommitTransaction(call)
+
+	if err != nil {
+		t.Fatalf("handleCommitTransaction returned error: %v", err)
+	}
+	if result.IsError {
+		t.Errorf("Expected success, got error: %s", result.Content[0].Text)
+	}
+}
+
+func TestHandleCommitTransaction_MissingName(t *testing.T) {
+	server := newTestMCPServer(&mockSessionClient{})
+	call := &ToolCall{
+		Name:      "commit_transaction",
+		Arguments: json.RawMessage(`{}`),
+	}
+
+	result, err := server.handleCommitTransaction(call)
+
+	if err != nil {
+		t.Fatalf("handleCommitTransaction returned error: %v", err)
+	}
+	if !result.IsError {
+		t.Error("Expected error result for missing name")
+	}
+}
+
+func TestHandleCommitTransaction_GRPCError(t *testing.T) {
+	mockClient := &mockSessionClient{
+		commitTransactionFunc: func(ctx context.Context, req *pb.CommitTransactionRequest) (*pb.Transaction, error) {
+			return nil, errors.New("transaction not found")
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "commit_transaction",
+		Arguments: json.RawMessage(`{"name": "sessions/test", "transaction_id": "tx-123"}`),
+	}
+
+	result, err := server.handleCommitTransaction(call)
+
+	if err != nil {
+		t.Fatalf("handleCommitTransaction returned error: %v", err)
+	}
+	if !result.IsError {
+		t.Error("Expected error result for gRPC error")
+	}
+}
+
+// ============================================================================
+// handleRollbackTransaction Tests
+// ============================================================================
+
+func TestHandleRollbackTransaction_Success(t *testing.T) {
+	mockClient := &mockSessionClient{
+		rollbackTransactionFunc: func(ctx context.Context, req *pb.RollbackTransactionRequest) (*pb.Transaction, error) {
+			return &pb.Transaction{
+				TransactionId: "tx-123",
+				Session:       "sessions/test",
+				State:         pb.Transaction_STATE_ROLLED_BACK,
+			}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "rollback_transaction",
+		Arguments: json.RawMessage(`{"name": "sessions/test", "transaction_id": "tx-123"}`),
+	}
+
+	result, err := server.handleRollbackTransaction(call)
+
+	if err != nil {
+		t.Fatalf("handleRollbackTransaction returned error: %v", err)
+	}
+	if result.IsError {
+		t.Errorf("Expected success, got error: %s", result.Content[0].Text)
+	}
+}
+
+func TestHandleRollbackTransaction_MissingName(t *testing.T) {
+	server := newTestMCPServer(&mockSessionClient{})
+	call := &ToolCall{
+		Name:      "rollback_transaction",
+		Arguments: json.RawMessage(`{}`),
+	}
+
+	result, err := server.handleRollbackTransaction(call)
+
+	if err != nil {
+		t.Fatalf("handleRollbackTransaction returned error: %v", err)
+	}
+	if !result.IsError {
+		t.Error("Expected error result for missing name")
+	}
+}
+
+func TestHandleRollbackTransaction_GRPCError(t *testing.T) {
+	mockClient := &mockSessionClient{
+		rollbackTransactionFunc: func(ctx context.Context, req *pb.RollbackTransactionRequest) (*pb.Transaction, error) {
+			return nil, errors.New("transaction already committed")
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "rollback_transaction",
+		Arguments: json.RawMessage(`{"name": "sessions/test", "transaction_id": "tx-123"}`),
+	}
+
+	result, err := server.handleRollbackTransaction(call)
+
+	if err != nil {
+		t.Fatalf("handleRollbackTransaction returned error: %v", err)
+	}
+	if !result.IsError {
+		t.Error("Expected error result for gRPC error")
+	}
+}
+
+// ============================================================================
+// handleDeleteMacro Tests
+// ============================================================================
+
+func TestHandleDeleteMacro_Success(t *testing.T) {
+	mockClient := &mockSessionClient{
+		deleteMacroFunc: func(ctx context.Context, req *pb.DeleteMacroRequest) (*emptypb.Empty, error) {
+			return &emptypb.Empty{}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "delete_macro",
+		Arguments: json.RawMessage(`{"name": "macros/test"}`),
+	}
+
+	result, err := server.handleDeleteMacro(call)
+
+	if err != nil {
+		t.Fatalf("handleDeleteMacro returned error: %v", err)
+	}
+	if result.IsError {
+		t.Errorf("Expected success, got error: %s", result.Content[0].Text)
+	}
+	if !strings.Contains(result.Content[0].Text, "Deleted") {
+		t.Errorf("Expected 'Deleted' in output, got: %s", result.Content[0].Text)
+	}
+}
+
+func TestHandleDeleteMacro_MissingName(t *testing.T) {
+	server := newTestMCPServer(&mockSessionClient{})
+	call := &ToolCall{
+		Name:      "delete_macro",
+		Arguments: json.RawMessage(`{}`),
+	}
+
+	result, err := server.handleDeleteMacro(call)
+
+	if err != nil {
+		t.Fatalf("handleDeleteMacro returned error: %v", err)
+	}
+	if !result.IsError {
+		t.Error("Expected error result for missing name")
+	}
+}
+
+func TestHandleDeleteMacro_GRPCError(t *testing.T) {
+	mockClient := &mockSessionClient{
+		deleteMacroFunc: func(ctx context.Context, req *pb.DeleteMacroRequest) (*emptypb.Empty, error) {
+			return nil, errors.New("macro not found")
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "delete_macro",
+		Arguments: json.RawMessage(`{"name": "macros/test"}`),
+	}
+
+	result, err := server.handleDeleteMacro(call)
+
+	if err != nil {
+		t.Fatalf("handleDeleteMacro returned error: %v", err)
+	}
+	if !result.IsError {
+		t.Error("Expected error result for gRPC error")
+	}
+}
+
+// ============================================================================
+// handleUpdateMacro Tests
+// ============================================================================
+
+func TestHandleUpdateMacro_Success(t *testing.T) {
+	mockClient := &mockSessionClient{
+		updateMacroFunc: func(ctx context.Context, req *pb.UpdateMacroRequest) (*pb.Macro, error) {
+			return &pb.Macro{
+				Name:        req.Macro.Name,
+				DisplayName: "Updated Name",
+				UpdateTime:  timestamppb.Now(),
+			}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "update_macro",
+		Arguments: json.RawMessage(`{"name": "macros/test", "display_name": "Updated Name"}`),
+	}
+
+	result, err := server.handleUpdateMacro(call)
+
+	if err != nil {
+		t.Fatalf("handleUpdateMacro returned error: %v", err)
+	}
+	if result.IsError {
+		t.Errorf("Expected success, got error: %s", result.Content[0].Text)
+	}
+}
+
+func TestHandleUpdateMacro_MissingName(t *testing.T) {
+	server := newTestMCPServer(&mockSessionClient{})
+	call := &ToolCall{
+		Name:      "update_macro",
+		Arguments: json.RawMessage(`{"display_name": "Test"}`),
+	}
+
+	result, err := server.handleUpdateMacro(call)
+
+	if err != nil {
+		t.Fatalf("handleUpdateMacro returned error: %v", err)
+	}
+	if !result.IsError {
+		t.Error("Expected error result for missing name")
+	}
+}
+
+func TestHandleUpdateMacro_GRPCError(t *testing.T) {
+	mockClient := &mockSessionClient{
+		updateMacroFunc: func(ctx context.Context, req *pb.UpdateMacroRequest) (*pb.Macro, error) {
+			return nil, errors.New("macro not found")
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "update_macro",
+		Arguments: json.RawMessage(`{"name": "macros/test", "display_name": "Updated"}`),
+	}
+
+	result, err := server.handleUpdateMacro(call)
+
+	if err != nil {
+		t.Fatalf("handleUpdateMacro returned error: %v", err)
+	}
+	if !result.IsError {
+		t.Error("Expected error result for gRPC error")
+	}
+}
