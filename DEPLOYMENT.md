@@ -53,7 +53,7 @@ gmake swift.build
 
 The default build configuration is `release` (defined in `make/swift.mk` as `SWIFT_CONFIGURATION ?= release`).
 
-Run in debug/development mode (default: loopback + port 8080):
+You can run the server directly (default: loopback + port 8080):
 
 ```sh
 ./Server/.build/release/MacosUseServer
