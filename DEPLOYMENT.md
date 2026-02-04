@@ -363,17 +363,3 @@ cp .build/release/MacosUseServer MacosUseServer.backup
 # After update, if needed:
 cp MacosUseServer.backup .build/release/MacosUseServer
 ```
-
-## Production Checklist
-
-- [ ] Proto stubs generated and committed
-- [ ] Server builds successfully
-- [ ] Accessibility permissions granted
-- [ ] Screen recording permission granted (if using animations)
-- [ ] Configuration tested (TCP or Unix socket)
-- [ ] Health checks working
-- [ ] Logging configured
-- [ ] Monitoring in place
-- [ ] Backup procedures documented
-- [ ] Client libraries available
-- [ ] Documentation up to date

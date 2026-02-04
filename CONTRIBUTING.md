@@ -72,18 +72,6 @@ make go.test.integration
 4. Run `make all` to verify
 5. Submit a PR with a descriptive title
 
-### Commit Messages
-
-Use conventional commits:
-
-```
-feat(scope): add new feature
-fix(scope): fix bug description
-test(scope): add test coverage
-docs(scope): update documentation
-refactor(scope): improve code structure
-```
-
 ## Architecture Overview
 
 See [docs/01-window-management-subsystems.md](docs/01-window-management-subsystems.md) for the system architecture.
