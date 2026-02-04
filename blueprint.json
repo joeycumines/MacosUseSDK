@@ -51,7 +51,7 @@
       "window_test.go": "54 tests - list_windows, get_window, get_window_state, focus_window, move_window, resize_window, minimize_window, restore_window, close_window handlers",
       "clipboard_test.go": "35 tests - get_clipboard, write_clipboard, clear_clipboard, get_clipboard_history handlers",
       "application_test.go": "40 tests - open_application, list_applications, get_application, delete_application handlers",
-      "session_test.go": "32 tests - create_session, get_session, list_sessions, delete_session, create_macro, get_macro, list_macros, execute_macro handlers",
+      "session_test.go": "50+ tests - create_session, get_session, list_sessions, delete_session, get_session_snapshot, begin_transaction, commit_transaction, rollback_transaction, create_macro, get_macro, list_macros, delete_macro, update_macro, execute_macro handlers",
       "input_test.go": "40 tests - click, type_text, press_key, drag, scroll, hold_key, mouse_button_down, mouse_button_up, get_input, cursor_position handlers",
       "observation_test.go": "30 tests - create_observation, get_observation, list_observations, cancel_observation, stream_observations handlers",
       "file_test.go": "45 tests - automate_open_file_dialog, automate_save_file_dialog, select_file, select_directory, drag_files handlers"
