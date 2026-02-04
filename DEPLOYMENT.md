@@ -1,12 +1,29 @@
 # Deployment Guide
 
-This guide covers deploying the MacosUseServer in various environments.
+This guide covers deploying the **MacosUseServer** (gRPC Swift server) in various environments.
 
 ## Prerequisites
 
-- macOS 12+ for the SDK; macOS 15+ is required to build/run the `MacosUseServer` (gRPC Swift 2 requires macOS 15+).
-- Swift 6.0+ (toolchain matching `// swift-tools-version: 6.0` in `Package.swift`).
-- Network access for gRPC clients (or local unix domain socket access).
+- macOS 15+ (required to build/run the gRPC Swift server - Swift 6 concurrency features).
+- Swift 6.0+ (toolchain matching `// swift-tools-version: 6.0` in `Server/Package.swift`).
+- **GNU Make 4.x+** (required by the project's Makefile):
+  ```sh
+  brew install make
+  ```
+  The Makefile uses `gmake` as the command name. On macOS, install GNU make via Homebrew and ensure `gmake` is in your PATH.
+
+## Build Commands Quick Reference
+
+```sh
+# View available Make targets (this is `gmake help`)
+gmake help
+
+# Build the release binary (default configuration: release)
+gmake swift.build
+
+# The binary will be at:
+Server/.build/release/MacosUseServer
+```
 
 ## Local Development
 
@@ -18,31 +35,29 @@ Preferred (explicit):
 buf generate
 ```
 
-Alternative (project Makefile wrappers):
+Alternative (project Makefile wrapper):
 
 ```sh
-make generate       # or: make regenerate-proto
+gmake generate # or: gmake regenerate-proto
 ```
 
 This will update buf dependencies and generate Swift server stubs and Go client stubs.
 
 ### 2. Build and Run (Local development)
 
-From the `Server` directory:
+Build the release binary:
 
 ```sh
-# Build release binary
-cd Server
-swift build -c release
-
-# Run (debug/development)
-swift run MacosUseServer
-
-# Or run the built release binary
-.build/release/MacosUseServer
+gmake swift.build
 ```
 
-Note: this repository does not provide a global `server-build`/`server-run` Make target; use the `Server` package commands above or `make generate` then `swift build` as shown.
+The default build configuration is `release` (defined in `make/swift.mk` as `SWIFT_CONFIGURATION ?= release`).
+
+Run in debug/development mode (default: loopback + port 8080):
+
+```sh
+./Server/.build/release/MacosUseServer
+```
 
 ### 3. Test with grpcurl
 
@@ -61,11 +76,19 @@ grpcurl -plaintext -d '{"identifier": "Calculator"}' \
 
 The server is configured via environment variables:
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `GRPC_LISTEN_ADDRESS` | `127.0.0.1` | IP address to bind to |
-| `GRPC_PORT` | `8080` | TCP port number |
-| `GRPC_UNIX_SOCKET` | (none) | Unix socket path (overrides TCP) |
+| Variable              | Default     | Description                                 |
+|-----------------------|-------------|---------------------------------------------|
+| `GRPC_LISTEN_ADDRESS` | `127.0.0.1` | IP address to bind to (loopback by default) |
+| `GRPC_PORT`           | `8080`      | TCP port number                             |
+| `GRPC_UNIX_SOCKET`    | (none)      | Unix socket path (overrides TCP)            |
+
+**Loopback Listening (Default)**:
+By default, the server binds to `127.0.0.1` (loopback), accepting only local connections:
+
+```sh
+# Default: listens on loopback interface only
+./Server/.build/release/MacosUseServer
+```
 
 ### Deployment Methods
 
@@ -74,16 +97,16 @@ The server is configured via environment variables:
 Build a release binary:
 
 ```sh
-cd Server
-swift build -c release
+gmake swift.build
 ```
 
 Run with custom configuration:
 
 ```sh
-export GRPC_LISTEN_ADDRESS="0.0.0.0"
+# Explicitly set loopback address (redundant, but clear)
+export GRPC_LISTEN_ADDRESS="127.0.0.1"
 export GRPC_PORT="9090"
-.build/release/MacosUseServer
+./Server/.build/release/MacosUseServer
 ```
 
 #### Option 2: Unix Socket (Recommended for Local Access)
@@ -92,7 +115,7 @@ Using a Unix socket provides better security for local-only access:
 
 ```sh
 export GRPC_UNIX_SOCKET="/var/run/macosuse.sock"
-.build/release/MacosUseServer
+./Server/.build/release/MacosUseServer
 ```
 
 Client connection (Go example using grpc-go):
@@ -100,7 +123,7 @@ Client connection (Go example using grpc-go):
 ```go
 conn, err := grpc.Dial("unix:///var/run/macosuse.sock", grpc.WithTransportCredentials(insecure.NewCredentials()))
 if err != nil {
-   // handle error
+// handle error
 }
 defer conn.Close()
 client := macosusesdkv1.NewDesktopServiceClient(conn)
@@ -114,33 +137,33 @@ Create `/Library/LaunchDaemons/com.macosusesdk.server.plist`:
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-<dict>
-    <key>Label</key>
-    <string>com.macosusesdk.server</string>
-
-    <key>ProgramArguments</key>
-    <array>
-        <string>/usr/local/bin/MacosUseServer</string>
-    </array>
-
-    <key>EnvironmentVariables</key>
     <dict>
-        <key>GRPC_UNIX_SOCKET</key>
-        <string>/var/run/macosuse.sock</string>
+        <key>Label</key>
+        <string>com.macosusesdk.server</string>
+
+        <key>ProgramArguments</key>
+        <array>
+            <string>/usr/local/bin/MacosUseServer</string>
+        </array>
+
+        <key>EnvironmentVariables</key>
+        <dict>
+            <key>GRPC_UNIX_SOCKET</key>
+            <string>/var/run/macosuse.sock</string>
+        </dict>
+
+        <key>RunAtLoad</key>
+        <true/>
+
+        <key>KeepAlive</key>
+        <true/>
+
+        <key>StandardOutPath</key>
+        <string>/var/log/macosuse.log</string>
+
+        <key>StandardErrorPath</key>
+        <string>/var/log/macosuse.error.log</string>
     </dict>
-
-    <key>RunAtLoad</key>
-    <true/>
-
-    <key>KeepAlive</key>
-    <true/>
-
-    <key>StandardOutPath</key>
-    <string>/var/log/macosuse.log</string>
-
-    <key>StandardErrorPath</key>
-    <string>/var/log/macosuse.error.log</string>
-</dict>
 </plist>
 ```
 
@@ -166,16 +189,19 @@ sudo launchctl list | grep -i macosusesdk
 
 ### 1. Network Access
 
-**Localhost Only (Recommended)**:
+**Localhost Only (Recommended - Default)**:
+
 ```sh
-export GRPC_LISTEN_ADDRESS="127.0.0.1"
-export GRPC_PORT="8080"
+# Already the default - no configuration needed
+./Server/.build/release/MacosUseServer
 ```
 
 **All Interfaces (Use with Caution)**:
+
 ```sh
 export GRPC_LISTEN_ADDRESS="0.0.0.0"
 export GRPC_PORT="8080"
+./Server/.build/release/MacosUseServer
 ```
 
 ### 2. TLS/SSL
@@ -213,6 +239,7 @@ grpcurl -plaintext localhost:8080 list
 ```
 
 Expected output (example):
+
 ```
 macosusesdk.v1.DesktopService
 macosusesdk.v1.TargetApplicationsService
@@ -223,7 +250,7 @@ macosusesdk.v1.TargetApplicationsService
 The server logs to stderr. Redirect for persistent logs:
 
 ```sh
-MacosUseServer 2>&1 | tee /var/log/macosuse.log
+./Server/.build/release/MacosUseServer 2>&1 | tee /var/log/macosuse.log
 ```
 
 ### Metrics (Future)
@@ -235,11 +262,13 @@ Integration with OpenTelemetry or Prometheus for metrics collection.
 ### Horizontal Scaling
 
 Each server instance can:
+
 - Track multiple applications independently
 - Serve multiple clients concurrently
 - Handle streaming connections efficiently
 
 For distributed setups:
+
 - Run multiple server instances on different machines
 - Use a load balancer for client connections
 - Coordinate via shared state (future: Redis, etcd, etc.)
@@ -247,11 +276,13 @@ For distributed setups:
 ### Resource Limits
 
 Each target application adds minimal overhead:
+
 - ~KB of memory for state tracking
 - All SDK calls serialized on main thread (macOS requirement)
 - Watch streams poll at configurable intervals
 
 Typical limits:
+
 - 100s of concurrent clients: No problem
 - 10s of target applications: No problem
 - Combining both: Monitor main thread saturation
@@ -266,8 +297,8 @@ Typical limits:
    ```
 
 2. Check accessibility:
-   - System Settings > Privacy & Security > Accessibility
-   - Add Terminal or your application
+    - System Settings > Privacy & Security > Accessibility
+    - Add Terminal or your application
 
 3. Check port availability:
    ```sh
@@ -319,10 +350,12 @@ Typical limits:
 ### State Persistence
 
 Currently, state is in-memory only. Tracked applications are:
+
 - Lost on server restart
 - Not shared between server instances
 
 Future improvements:
+
 - Persistent state storage
 - State synchronization between instances
 - Automatic reconnection to previously tracked apps
@@ -339,12 +372,12 @@ Future improvements:
 
 1. Build new version:
    ```sh
-   make server-build
+   gmake swift.build
    ```
 
 2. Test in staging:
    ```sh
-   GRPC_PORT=9090 make server-run
+   GRPC_PORT=9090 ./Server/.build/release/MacosUseServer
    ```
 
 3. Graceful shutdown:
@@ -359,7 +392,7 @@ Future improvements:
 Keep previous binary:
 
 ```sh
-cp .build/release/MacosUseServer MacosUseServer.backup
+cp Server/.build/release/MacosUseServer MacosUseServer.backup
 # After update, if needed:
-cp MacosUseServer.backup .build/release/MacosUseServer
+cp MacosUseServer.backup Server/.build/release/MacosUseServer
 ```
