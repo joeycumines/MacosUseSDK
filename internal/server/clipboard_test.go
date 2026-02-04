@@ -492,6 +492,38 @@ func TestHandleWriteClipboard_GRPCError(t *testing.T) {
 	}
 }
 
+// TestHandleWriteClipboard_WhitespaceOnlyText verifies that whitespace-only
+// text is valid (not rejected as empty). The validator only checks for empty
+// string, so "   " should pass validation and be sent to the server.
+func TestHandleWriteClipboard_WhitespaceOnlyText(t *testing.T) {
+	var writtenText string
+	mockClient := &mockClipboardClient{
+		writeClipboardFunc: func(ctx context.Context, req *pb.WriteClipboardRequest) (*pb.WriteClipboardResponse, error) {
+			writtenText = req.GetContent().GetText()
+			return &pb.WriteClipboardResponse{}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "write_clipboard",
+		Arguments: json.RawMessage(`{"text": "   "}`),
+	}
+
+	result, err := server.handleWriteClipboard(call)
+
+	if err != nil {
+		t.Fatalf("handleWriteClipboard returned Go error: %v", err)
+	}
+	// Whitespace-only text should be accepted (not an error)
+	if result.IsError {
+		t.Errorf("result.IsError = true, want false for whitespace-only text: %s", result.Content[0].Text)
+	}
+	if writtenText != "   " {
+		t.Errorf("written text = %q, want %q", writtenText, "   ")
+	}
+}
+
 // ============================================================================
 // handleClearClipboard Tests
 // ============================================================================
