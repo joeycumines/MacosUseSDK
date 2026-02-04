@@ -137,3 +137,9 @@ buf.curl: ## Invoke an RPC (requires BUF_CURL_METHOD and BUF_CURL_SERVER).
 .PHONY: buf.beta.studio-agent
 buf.beta.studio-agent: ## Run the Buf Studio agent (beta).
 	$(BUF) $(BUF_FLAGS) beta studio-agent $(BUF_AGENT_FLAGS)
+
+# Descriptor set generation for gRPC reflection
+.PHONY: buf.descriptor-sets
+buf.descriptor-sets: ## Generate FileDescriptorSet for gRPC reflection.
+	@mkdir -p $(PROJECT_ROOT)/Server/Sources/MacosUseServer/DescriptorSets
+	$(BUF) $(BUF_FLAGS) --error-format=$(BUF_ERROR_FORMAT) build --as-file-descriptor-set -o $(PROJECT_ROOT)/Server/Sources/MacosUseServer/DescriptorSets/macosuse_descriptors.pb $(BUF_INPUT)

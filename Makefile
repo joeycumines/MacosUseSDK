@@ -8,7 +8,8 @@ PROJECT_ROOT := $(patsubst %/,%,$(dir $(ROOT_MAKEFILE)))
 GO_TARGET_PREFIX := go.
 SWIFT_TARGET_PREFIX := swift.
 MAKEFILE_TARGET_PREFIXES := $(MAKEFILE_TARGET_PREFIXES) SWIFT_TARGET_PREFIX
-SWIFT_DAG__Server := root
+# Server package build depends on buf.descriptor-sets for gRPC reflection
+swift.build.Server: buf.descriptor-sets
 GO_MODULE_SLUGS_NO_PACKAGES ?= hack.google-api-linter
 GO_MODULE_SLUGS_NO_UPDATE ?= hack.google-api-linter
 # excludes generated files + files that are largely unchanged from upstream
@@ -57,11 +58,6 @@ lint: go.lint proto-lint swift.lint ## Lint all source files.
 .PHONY: fix
 fix: go.fix swift.fix ## Apply automatic fixes to source files.
 	@$(MAKE) --no-print-directory fmt
-
-.PHONY: buf.descriptor-sets
-buf.descriptor-sets: ## Generate FileDescriptorSet for gRPC reflection.
-	@mkdir -p Server/Sources/MacosUseServer/DescriptorSets
-	$(BUF) $(BUF_FLAGS) --error-format=$(BUF_ERROR_FORMAT) build --as-file-descriptor-set -o Server/Sources/MacosUseServer/DescriptorSets/macosuse_descriptors.pb $(BUF_INPUT)
 
 .PHONY: generate
 generate: ## Generate all code.

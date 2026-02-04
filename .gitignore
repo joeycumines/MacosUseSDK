@@ -19,3 +19,6 @@ coverage.lcov
 /directive.txt
 /tmp/
 /.claude/settings.local.json
+
+# Generated protobuf descriptor sets for gRPC reflection
+Server/Sources/MacosUseServer/DescriptorSets/*.pb
