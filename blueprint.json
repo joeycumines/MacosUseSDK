@@ -42,17 +42,19 @@
       "bb37777 - docs: add CONTRIBUTING.md and CHANGELOG.md for v1.0.0-beta",
       "5a8975c - test(session): add tests for transaction and macro CRUD handlers (18 new tests)",
       "969a3a3 - ci: add dependabot configuration for Go, Swift, and GitHub Actions",
-      "75eb2a1 - docs: add historical notice to outdated design review"
+      "75eb2a1 - docs: add historical notice to outdated design review",
+      "129c51c - test(input): add edge case tests for degenerate inputs (zero click_count, zero/negative duration, same start/end drag, zero scroll)",
+      "857d78e - test(clipboard): add whitespace-only text edge case test"
     ],
-    "verification_status": "DEEP QUALITY ANALYSIS PASSED 2026-02-04 - lint-all clean, api-lint clean, make-all-with-log passes (~31s integration), zero flaky test patterns, consistent PollUntilContext usage, no TODO/FIXME in source, all protos have comprehensive field docs. CHANGELOG.md tool names corrected for accuracy.",
+    "verification_status": "DEEP QUALITY ANALYSIS PASSED 2026-02-04 - lint-all clean, api-lint clean, make-all-with-log passes (~30s integration), zero flaky test patterns, consistent PollUntilContext usage, no TODO/FIXME in source, all protos have comprehensive field docs. Edge case tests added for input handlers (degenerate inputs) and clipboard (whitespace-only text).",
     "unit_test_coverage": {
       "display_test.go": "21 tests - list_displays, get_display, cursor_position handlers",
       "element_test.go": "45 tests - find_elements, get_element, click_element, write_element_value, perform_element_action, traverse_accessibility, find_region_elements, get_element_actions, wait_element, wait_element_state handlers",
       "window_test.go": "54 tests - list_windows, get_window, get_window_state, focus_window, move_window, resize_window, minimize_window, restore_window, close_window handlers",
-      "clipboard_test.go": "35 tests - get_clipboard, write_clipboard, clear_clipboard, get_clipboard_history handlers",
+      "clipboard_test.go": "36 tests - get_clipboard, write_clipboard, write_clipboard_whitespace_only, clear_clipboard, get_clipboard_history handlers",
       "application_test.go": "40 tests - open_application, list_applications, get_application, delete_application handlers",
       "session_test.go": "50+ tests - create_session, get_session, list_sessions, delete_session, get_session_snapshot, begin_transaction, commit_transaction, rollback_transaction, create_macro, get_macro, list_macros, delete_macro, update_macro, execute_macro handlers",
-      "input_test.go": "40 tests - click, type_text, press_key, drag, scroll, hold_key, mouse_button_down, mouse_button_up, get_input, cursor_position handlers",
+      "input_test.go": "45 tests - click, type_text, press_key, drag, scroll, hold_key, mouse_button_down, mouse_button_up, get_input, cursor_position + edge cases (zero click_count, zero/negative duration, same start/end drag, zero scroll)",
       "observation_test.go": "30 tests - create_observation, get_observation, list_observations, cancel_observation, stream_observations handlers",
       "file_test.go": "45 tests - automate_open_file_dialog, automate_save_file_dialog, select_file, select_directory, drag_files handlers"
     }
