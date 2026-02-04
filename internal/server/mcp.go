@@ -1,7 +1,16 @@
 // Copyright 2025 Joseph Cumines
-//
-// MCP server implementation
 
+// Package server implements a Model Context Protocol (MCP) server that proxies
+// macOS automation requests to a gRPC backend. It exposes 77 tools across 14
+// categories including window management, accessibility traversal, input control,
+// clipboard operations, session/macro management, and more.
+//
+// The server supports both stdio (for MCP clients like Claude Desktop) and
+// HTTP/SSE transports (for web-based integrations). All tools follow MCP
+// specification version 2025-11-25 with soft-error semantics (isError field
+// in ToolResult rather than RPC-level failures).
+//
+// See docs/10-api-reference.md for comprehensive tool documentation.
 package server
 
 import (
