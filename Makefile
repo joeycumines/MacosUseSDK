@@ -58,9 +58,15 @@ lint: go.lint proto-lint swift.lint ## Lint all source files.
 fix: go.fix swift.fix ## Apply automatic fixes to source files.
 	@$(MAKE) --no-print-directory fmt
 
+.PHONY: buf.descriptor-sets
+buf.descriptor-sets: ## Generate FileDescriptorSet for gRPC reflection.
+	@mkdir -p Server/Sources/MacosUseProto/DescriptorSets
+	$(BUF) $(BUF_FLAGS) --error-format=$(BUF_ERROR_FORMAT) build --as-file-descriptor-set -o Server/Sources/MacosUseProto/DescriptorSets/macosuse_descriptors.pb $(BUF_INPUT)
+
 .PHONY: generate
 generate: ## Generate all code.
 	@$(MAKE) --no-print-directory buf.generate
+	@$(MAKE) --no-print-directory buf.descriptor-sets
 	@$(MAKE) --no-print-directory go.generate
 	@$(MAKE) --no-print-directory fix
 

@@ -3,6 +3,7 @@ import Darwin
 import Foundation
 import GRPCCore
 import GRPCNIOTransportHTTP2
+import GRPCReflectionService
 import MacosUseProto
 import MacosUseSDK
 import NIOCore
@@ -40,6 +41,17 @@ func main() async throws {
     let sharedWindowRegistry = WindowRegistry(system: system)
     logger.info("Shared window registry created")
 
+    // Load descriptor sets for reflection service
+    let descriptorSetPaths = Bundle.module.paths(
+        forResourcesOfType: "pb",
+        inDirectory: "DescriptorSets",
+    )
+    if descriptorSetPaths.isEmpty {
+        logger.warning("No descriptor sets found for reflection service. Reflection will not be enabled.")
+    } else {
+        logger.info("Found \(descriptorSetPaths.count) descriptor set(s) for reflection: \(descriptorSetPaths.map { URL(fileURLWithPath: $0).lastPathComponent }.joined(separator: ", "), privacy: .public)")
+    }
+
     // Initialize singleton actors with the shared registry
     ObservationManager.shared = ObservationManager(windowRegistry: sharedWindowRegistry, system: system)
     MacroExecutor.shared = MacroExecutor(windowRegistry: sharedWindowRegistry)
@@ -57,6 +69,20 @@ func main() async throws {
     // Create Operations provider and register it so clients may poll LROs
     let operationsProvider = OperationsProvider(operationStore: operationStore)
     logger.info("Operations provider created")
+
+    // Build services array - all services must conform to GRPCCore.RegistrableRPCService
+    var services: [any GRPCCore.RegistrableRPCService] = [macosUseService, operationsProvider]
+
+    if !descriptorSetPaths.isEmpty {
+        do {
+            let reflectionService = try ReflectionService(descriptorSetFilePaths: descriptorSetPaths)
+            services.append(reflectionService)
+            logger.info("Reflection service registered")
+        } catch {
+            logger.error("Failed to initialize reflection service: \(error.localizedDescription, privacy: .public)")
+            logger.warning("Continuing without reflection service")
+        }
+    }
 
     // Set up and start gRPC server using the HTTP/2 NIO transport
     let address: GRPCNIOTransportCore.SocketAddress
@@ -79,7 +105,7 @@ func main() async throws {
             address: address,
             transportSecurity: .plaintext,
         ),
-        services: [macosUseService, operationsProvider],
+        services: services,
     )
 
     logger.info("gRPC server starting")

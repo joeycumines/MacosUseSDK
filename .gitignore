@@ -18,3 +18,4 @@ coverage.lcov
 /build.log
 /directive.txt
 /tmp/
+/.claude/settings.local.json
