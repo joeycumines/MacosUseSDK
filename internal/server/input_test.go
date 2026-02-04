@@ -1537,5 +1537,147 @@ func TestHandleListInputs_GRPCError(t *testing.T) {
 	}
 }
 
+// ============================================================================
+// Edge Case Tests for Input Handlers
+// ============================================================================
+
+func TestHandleClick_ZeroClickCount(t *testing.T) {
+	mockClient := &mockInputClient{
+		createInputFunc: func(ctx context.Context, req *pb.CreateInputRequest) (*pb.Input, error) {
+			// Verify that zero click_count is passed to the server
+			// The server should handle this appropriately (default to 1 or process as-is)
+			return &pb.Input{
+				Name:         "inputs/test-123",
+				State:        pb.Input_STATE_COMPLETED,
+				CreateTime:   timestamppb.Now(),
+				CompleteTime: timestamppb.Now(),
+			}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "click",
+		Arguments: json.RawMessage(`{"x": 100, "y": 200, "click_count": 0}`),
+	}
+
+	result, err := server.handleClick(call)
+
+	if err != nil {
+		t.Fatalf("handleClick returned error: %v", err)
+	}
+	// Zero click_count should either succeed or be handled gracefully
+	// Verifying that no panic or hard error occurs
+	if len(result.Content) == 0 {
+		t.Error("Expected result content")
+	}
+}
+
+func TestHandleHoldKey_ZeroDuration(t *testing.T) {
+	mockClient := &mockInputClient{
+		createInputFunc: func(ctx context.Context, req *pb.CreateInputRequest) (*pb.Input, error) {
+			return &pb.Input{
+				Name:         "inputs/test-hold",
+				State:        pb.Input_STATE_COMPLETED,
+				CreateTime:   timestamppb.Now(),
+				CompleteTime: timestamppb.Now(),
+			}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "hold_key",
+		Arguments: json.RawMessage(`{"key": "shift", "duration": 0}`),
+	}
+
+	result, err := server.handleHoldKey(call)
+
+	if err != nil {
+		t.Fatalf("handleHoldKey returned error: %v", err)
+	}
+	// Zero duration should succeed (instant press/release)
+	if len(result.Content) == 0 {
+		t.Error("Expected result content")
+	}
+}
+
+func TestHandleHoldKey_NegativeDuration(t *testing.T) {
+	server := newTestMCPServer(&mockInputClient{})
+	call := &ToolCall{
+		Name:      "hold_key",
+		Arguments: json.RawMessage(`{"key": "shift", "duration": -1.0}`),
+	}
+
+	result, err := server.handleHoldKey(call)
+
+	if err != nil {
+		t.Fatalf("handleHoldKey returned error: %v", err)
+	}
+	// Negative duration is an edge case - should either error or use default
+	// This test documents the behavior
+	if len(result.Content) == 0 {
+		t.Error("Expected result content")
+	}
+}
+
+func TestHandleDrag_SameStartEnd(t *testing.T) {
+	mockClient := &mockInputClient{
+		createInputFunc: func(ctx context.Context, req *pb.CreateInputRequest) (*pb.Input, error) {
+			return &pb.Input{
+				Name:         "inputs/test-drag",
+				State:        pb.Input_STATE_COMPLETED,
+				CreateTime:   timestamppb.Now(),
+				CompleteTime: timestamppb.Now(),
+			}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "drag",
+		Arguments: json.RawMessage(`{"start_x": 100, "start_y": 100, "end_x": 100, "end_y": 100}`),
+	}
+
+	result, err := server.handleDrag(call)
+
+	if err != nil {
+		t.Fatalf("handleDrag returned error: %v", err)
+	}
+	// Drag to same point is a no-op but should succeed
+	if result.IsError {
+		t.Errorf("Expected success for drag to same position: %s", result.Content[0].Text)
+	}
+}
+
+func TestHandleScroll_ZeroMovement(t *testing.T) {
+	mockClient := &mockInputClient{
+		createInputFunc: func(ctx context.Context, req *pb.CreateInputRequest) (*pb.Input, error) {
+			return &pb.Input{
+				Name:         "inputs/test-scroll",
+				State:        pb.Input_STATE_COMPLETED,
+				CreateTime:   timestamppb.Now(),
+				CompleteTime: timestamppb.Now(),
+			}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "scroll",
+		Arguments: json.RawMessage(`{"x": 100, "y": 200, "vertical": 0, "horizontal": 0}`),
+	}
+
+	result, err := server.handleScroll(call)
+
+	if err != nil {
+		t.Fatalf("handleScroll returned error: %v", err)
+	}
+	// Zero scroll in both directions is a no-op but should succeed
+	if result.IsError {
+		t.Errorf("Expected success for zero scroll: %s", result.Content[0].Text)
+	}
+}
+
 // Ensure typepb is used to avoid import error
 var _ = typepb.Point{}
