@@ -67,16 +67,16 @@ func TestPollUntilContext_ContextTimeout(t *testing.T) {
 func TestPollUntilContext_ContextCancelled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 
+	callCount := 0
 	condition := func() (bool, error) {
-		// Never succeeds
+		callCount++
+		// Cancel on the third invocation, triggering cancellation deterministically
+		if callCount >= 3 {
+			cancel()
+		}
+		// Never succeeds (returns false)
 		return false, nil
 	}
-
-	// Cancel after a short delay
-	go func() {
-		time.Sleep(30 * time.Millisecond)
-		cancel()
-	}()
 
 	err := PollUntilContext(ctx, 10*time.Millisecond, condition)
 	if err == nil {
@@ -84,6 +84,9 @@ func TestPollUntilContext_ContextCancelled(t *testing.T) {
 	}
 	if !errors.Is(err, context.Canceled) {
 		t.Errorf("expected context.Canceled, got: %v", err)
+	}
+	if callCount < 3 {
+		t.Errorf("expected at least 3 calls before cancellation, got %d", callCount)
 	}
 }
 

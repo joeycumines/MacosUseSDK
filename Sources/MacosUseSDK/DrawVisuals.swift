@@ -421,6 +421,31 @@ private func applyAnimation(to view: NSView, style: VisualsConfig.AnimationStyle
 /// Displays a temporary visual indicator (e.g., a circle, a caption) at specified screen coordinates.
 ///
 /// - Warning: This function is "fire-and-forget". For robust lifecycle management, use `presentVisuals`.
+///
+/// ## Migration Guide
+///
+/// Replace calls to `showVisualFeedback(at:type:size:duration:)` with the modern `presentVisuals` API:
+///
+/// ```swift
+/// // Before (deprecated):
+/// showVisualFeedback(at: point, type: .circle, duration: 0.5)
+///
+/// // After (recommended):
+/// let descriptor = OverlayDescriptor(
+///     frame: CGRect(origin: point, size: CGSize(width: 30, height: 30)),
+///     type: .circle
+/// )
+/// await presentVisuals(
+///     overlays: [descriptor],
+///     configuration: VisualsConfig(duration: 0.5, animationStyle: .pulseAndFade)
+/// )
+/// ```
+///
+/// Benefits of `presentVisuals`:
+/// - Proper async/await lifecycle with structured concurrency
+/// - Guaranteed cleanup via defer pattern
+/// - Support for multiple overlays in a single call
+/// - Configurable animation styles
 @available(*, deprecated, message: "Use `presentVisuals` for robust cancellation and lifecycle management.")
 @MainActor
 public func showVisualFeedback(
@@ -465,6 +490,31 @@ public func showVisualFeedback(
 /// Draws temporary overlay windows (highlight boxes) around the specified accessibility elements.
 ///
 /// - Warning: This function is "fire-and-forget". For robust lifecycle management, use `presentVisuals`.
+///
+/// ## Migration Guide
+///
+/// Replace calls to `drawHighlightBoxes(for:duration:)` with the modern `presentVisuals` API:
+///
+/// ```swift
+/// // Before (deprecated):
+/// drawHighlightBoxes(for: elements, duration: 3.0)
+///
+/// // After (recommended):
+/// let screenHeight = NSScreen.main?.frame.height ?? 0
+/// let descriptors = elements.compactMap { element in
+///     OverlayDescriptor(element: element, screenHeight: screenHeight)
+/// }
+/// await presentVisuals(
+///     overlays: descriptors,
+///     configuration: VisualsConfig(duration: 3.0, animationStyle: .none)
+/// )
+/// ```
+///
+/// Benefits of `presentVisuals`:
+/// - Proper async/await lifecycle with structured concurrency
+/// - Guaranteed cleanup via defer pattern
+/// - Easily combine with other overlay types (circles, captions)
+/// - Configurable animation styles
 @available(*, deprecated, message: "Use `presentVisuals` for robust cancellation and lifecycle management.")
 @MainActor
 public func drawHighlightBoxes(for elementsToHighlightInput: [ElementData], duration: Double = 3.0) {

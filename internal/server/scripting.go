@@ -61,7 +61,7 @@ func (s *MCPServer) handleExecuteAppleScript(call *ToolCall) (*ToolResult, error
 	if !resp.Success || resp.Error != "" {
 		return &ToolResult{
 			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("AppleScript execution failed: %s", resp.Error)}},
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("failed to execute AppleScript: %s", resp.Error)}},
 		}, nil
 	}
 
@@ -119,7 +119,7 @@ func (s *MCPServer) handleExecuteJavaScript(call *ToolCall) (*ToolResult, error)
 	if !resp.Success || resp.Error != "" {
 		return &ToolResult{
 			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("JavaScript execution failed: %s", resp.Error)}},
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("failed to execute JavaScript: %s", resp.Error)}},
 		}, nil
 	}
 
@@ -193,7 +193,7 @@ func (s *MCPServer) handleExecuteShellCommand(call *ToolCall) (*ToolResult, erro
 	if resp.Error != "" {
 		return &ToolResult{
 			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Shell command failed: %s", resp.Error)}},
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("failed to execute shell command: %s", resp.Error)}},
 		}, nil
 	}
 
@@ -292,7 +292,7 @@ func (s *MCPServer) handleValidateScript(call *ToolCall) (*ToolResult, error) {
 
 	return &ToolResult{
 		IsError: true,
-		Content: []Content{{Type: "text", Text: fmt.Sprintf("Script validation failed: %s", errMsg)}},
+		Content: []Content{{Type: "text", Text: fmt.Sprintf("failed to validate script: %s", errMsg)}},
 	}, nil
 }
 

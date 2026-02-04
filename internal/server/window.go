@@ -367,7 +367,7 @@ func (s *MCPServer) handleCloseWindow(call *ToolCall) (*ToolResult, error) {
 	if !resp.Success {
 		return &ToolResult{
 			IsError: true,
-			Content: []Content{{Type: "text", Text: "Close window failed: operation was not successful"}},
+			Content: []Content{{Type: "text", Text: "failed to close window: operation was not successful"}},
 		}, nil
 	}
 

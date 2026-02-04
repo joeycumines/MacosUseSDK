@@ -1,8 +1,12 @@
 # API Reference
 
-> **Version:** 0.1.0  
+> **Version:** 1.0.0-beta  
 > **Protocol:** MCP 2025-11-25  
 > **Last Updated:** 2026-02-04
+>
+> _Note: This API is under active development. Version follows [SemVer](https://semver.org/).
+> The version will be promoted to 1.0.0 stable once the API surface is finalized and all
+> integration tests pass consistently._
 
 This document provides a comprehensive API reference for MacosUseSDK, covering all 77 MCP tools, 18 environment variables, coordinate systems, and error codes.
 

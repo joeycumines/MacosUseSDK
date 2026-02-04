@@ -69,7 +69,7 @@ func (s *MCPServer) handleAutomateOpenFileDialog(call *ToolCall) (*ToolResult, e
 		}
 		return &ToolResult{
 			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Open file dialog automation failed: %s", errMsg)}},
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("failed to automate open file dialog: %s", errMsg)}},
 		}, nil
 	}
 
@@ -149,7 +149,7 @@ func (s *MCPServer) handleAutomateSaveFileDialog(call *ToolCall) (*ToolResult, e
 		}
 		return &ToolResult{
 			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Save file dialog automation failed: %s", errMsg)}},
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("failed to automate save file dialog: %s", errMsg)}},
 		}, nil
 	}
 
@@ -205,7 +205,7 @@ func (s *MCPServer) handleSelectFile(call *ToolCall) (*ToolResult, error) {
 		}
 		return &ToolResult{
 			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("File selection failed: %s", errMsg)}},
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("failed to select file: %s", errMsg)}},
 		}, nil
 	}
 
@@ -261,7 +261,7 @@ func (s *MCPServer) handleSelectDirectory(call *ToolCall) (*ToolResult, error) {
 		}
 		return &ToolResult{
 			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Directory selection failed: %s", errMsg)}},
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("failed to select directory: %s", errMsg)}},
 		}, nil
 	}
 
@@ -335,7 +335,7 @@ func (s *MCPServer) handleDragFiles(call *ToolCall) (*ToolResult, error) {
 		}
 		return &ToolResult{
 			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("File drag failed: %s", errMsg)}},
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("failed to drag files: %s", errMsg)}},
 		}, nil
 	}
 

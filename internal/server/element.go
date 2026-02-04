@@ -182,7 +182,7 @@ func (s *MCPServer) handleClickElement(call *ToolCall) (*ToolResult, error) {
 	if !resp.Success {
 		return &ToolResult{
 			IsError: true,
-			Content: []Content{{Type: "text", Text: "Click failed: operation was not successful"}},
+			Content: []Content{{Type: "text", Text: "failed to click: operation was not successful"}},
 		}, nil
 	}
 
@@ -239,7 +239,7 @@ func (s *MCPServer) handleWriteElementValue(call *ToolCall) (*ToolResult, error)
 	if !resp.Success {
 		return &ToolResult{
 			IsError: true,
-			Content: []Content{{Type: "text", Text: "Write value failed: operation was not successful"}},
+			Content: []Content{{Type: "text", Text: "failed to write value: operation was not successful"}},
 		}, nil
 	}
 
@@ -298,7 +298,7 @@ func (s *MCPServer) handlePerformElementAction(call *ToolCall) (*ToolResult, err
 	if !resp.Success {
 		return &ToolResult{
 			IsError: true,
-			Content: []Content{{Type: "text", Text: "Action failed: operation was not successful"}},
+			Content: []Content{{Type: "text", Text: "failed to perform action: operation was not successful"}},
 		}, nil
 	}
 

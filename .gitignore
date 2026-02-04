@@ -18,3 +18,7 @@ coverage.lcov
 /build.log
 /directive.txt
 /tmp/
+
+# Review artifacts
+/review-*.md
+/diff.log
