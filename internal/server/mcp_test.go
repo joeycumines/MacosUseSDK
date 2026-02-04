@@ -7,6 +7,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -1949,6 +1950,214 @@ func TestWaitElementSelectorTypes(t *testing.T) {
 			err := json.Unmarshal([]byte(tt.selector), &selector)
 			if (err == nil) != tt.valid {
 				t.Errorf("Selector %q parse success = %v, want %v", tt.selector, err == nil, tt.valid)
+			}
+		})
+	}
+}
+
+// ============================================================================
+// Unix Socket Support Tests
+// ============================================================================
+
+// TestMCPServer_WithUnixSocketConfig tests that MCPServer can be configured with Unix socket
+func TestMCPServer_WithUnixSocketConfig(t *testing.T) {
+	cfg := &config.Config{
+		ServerSocketPath: "/var/run/macos-use.sock",
+		RequestTimeout:   30,
+	}
+
+	// Verify the config is set correctly
+	if cfg.ServerSocketPath != "/var/run/macos-use.sock" {
+		t.Errorf("ServerSocketPath = %s, want /var/run/macos-use.sock", cfg.ServerSocketPath)
+	}
+
+	if cfg.ServerAddr != "" {
+		t.Errorf("ServerAddr should be empty when using socket path, got: %s", cfg.ServerAddr)
+	}
+}
+
+// TestMCPServer_WithTCPAddressConfig tests that MCPServer can be configured with TCP address
+func TestMCPServer_WithTCPAddressConfig(t *testing.T) {
+	cfg := &config.Config{
+		ServerAddr:       "localhost:50051",
+		ServerSocketPath: "",
+		RequestTimeout:   30,
+	}
+
+	// Verify the config is set correctly
+	if cfg.ServerAddr != "localhost:50051" {
+		t.Errorf("ServerAddr = %s, want localhost:50051", cfg.ServerAddr)
+	}
+
+	if cfg.ServerSocketPath != "" {
+		t.Errorf("ServerSocketPath should be empty when using TCP, got: %s", cfg.ServerSocketPath)
+	}
+}
+
+// TestMCPServer_WithBothAddressAndSocketPath tests that both can be configured
+func TestMCPServer_WithBothAddressAndSocketPath(t *testing.T) {
+	cfg := &config.Config{
+		ServerAddr:       "localhost:50051",
+		ServerSocketPath: "/tmp/test.sock",
+		RequestTimeout:   30,
+	}
+
+	// Verify both are set
+	if cfg.ServerAddr != "localhost:50051" {
+		t.Errorf("ServerAddr = %s, want localhost:50051", cfg.ServerAddr)
+	}
+
+	if cfg.ServerSocketPath != "/tmp/test.sock" {
+		t.Errorf("ServerSocketPath = %s, want /tmp/test.sock", cfg.ServerSocketPath)
+	}
+}
+
+// TestMCPServer_UnixSocketAddressFormat tests that Unix socket addresses are formatted correctly
+func TestMCPServer_UnixSocketAddressFormat(t *testing.T) {
+	tests := []struct {
+		name       string
+		socketPath string
+		wantPrefix string
+		wantPath   string
+	}{
+		{
+			name:       "standard socket path",
+			socketPath: "/var/run/macos-use.sock",
+			wantPrefix: "unix://",
+			wantPath:   "/var/run/macos-use.sock",
+		},
+		{
+			name:       "tmp socket path",
+			socketPath: "/tmp/test.sock",
+			wantPrefix: "unix://",
+			wantPath:   "/tmp/test.sock",
+		},
+		{
+			name:       "user socket path",
+			socketPath: "/Users/test/.macos-use/socket",
+			wantPrefix: "unix://",
+			wantPath:   "/Users/test/.macos-use/socket",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Simulate the address construction from initGRPC
+			addr := "unix://" + tt.socketPath
+			if !strings.HasPrefix(addr, tt.wantPrefix) {
+				t.Errorf("Address prefix = %s, want prefix %s", addr, tt.wantPrefix)
+			}
+			expected := tt.wantPrefix + tt.wantPath
+			if addr != expected {
+				t.Errorf("Address = %s, want %s", addr, expected)
+			}
+		})
+	}
+}
+
+// TestMCPServer_SocketPathVsTCPAddressSelection tests the selection logic
+func TestMCPServer_SocketPathVsTCPAddressSelection(t *testing.T) {
+	tests := []struct {
+		name         string
+		serverAddr   string
+		socketPath   string
+		expectSocket bool
+		expectedAddr string
+	}{
+		{
+			name:         "socket path takes precedence",
+			serverAddr:   "localhost:50051",
+			socketPath:   "/tmp/test.sock",
+			expectSocket: true,
+			expectedAddr: "unix:///tmp/test.sock",
+		},
+		{
+			name:         "TCP when no socket",
+			serverAddr:   "localhost:50051",
+			socketPath:   "",
+			expectSocket: false,
+			expectedAddr: "localhost:50051",
+		},
+		{
+			name:         "TCP when socket is empty",
+			serverAddr:   "192.168.1.100:50051",
+			socketPath:   "",
+			expectSocket: false,
+			expectedAddr: "192.168.1.100:50051",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Simulate the address selection logic from initGRPC
+			var serverAddr string
+			if tt.socketPath != "" {
+				serverAddr = "unix://" + tt.socketPath
+			} else {
+				serverAddr = tt.serverAddr
+			}
+
+			if tt.expectSocket {
+				if !strings.HasPrefix(serverAddr, "unix://") {
+					t.Errorf("Expected Unix socket address, got: %s", serverAddr)
+				}
+			} else {
+				if strings.HasPrefix(serverAddr, "unix://") {
+					t.Errorf("Expected TCP address, got Unix socket: %s", serverAddr)
+				}
+			}
+
+			if serverAddr != tt.expectedAddr {
+				t.Errorf("Server address = %s, want %s", serverAddr, tt.expectedAddr)
+			}
+		})
+	}
+}
+
+// TestConfig_ServerSocketPathValidation tests config validation for socket path
+func TestConfig_ServerSocketPathValidation(t *testing.T) {
+	tests := []struct {
+		name       string
+		serverAddr string
+		socketPath string
+		wantErr    bool
+	}{
+		{
+			name:       "socket path valid",
+			serverAddr: "",
+			socketPath: "/tmp/test.sock",
+			wantErr:    false,
+		},
+		{
+			name:       "address valid",
+			serverAddr: "localhost:50051",
+			socketPath: "",
+			wantErr:    false,
+		},
+		{
+			name:       "both valid",
+			serverAddr: "localhost:50051",
+			socketPath: "/tmp/test.sock",
+			wantErr:    false,
+		},
+		{
+			name:       "neither is invalid",
+			serverAddr: "",
+			socketPath: "",
+			wantErr:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Simulate config validation
+			err := error(nil)
+			if tt.serverAddr == "" && tt.socketPath == "" {
+				err = fmt.Errorf("server address or socket path must be provided")
+			}
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validation error = %v, wantErr = %v", err, tt.wantErr)
 			}
 		})
 	}

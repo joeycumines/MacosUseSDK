@@ -24,7 +24,11 @@ const (
 // All fields have sensible defaults via the Load function.
 type Config struct {
 	// ServerAddr is the gRPC server address (env: MACOS_USE_SERVER_ADDR, default: localhost:50051)
+	// When ServerSocketPath is set, this field is ignored.
 	ServerAddr string
+	// ServerSocketPath is the Unix socket path for the gRPC server (env: MACOS_USE_SERVER_SOCKET_PATH, optional)
+	// If set, the MCP server connects to the gRPC server via Unix socket.
+	ServerSocketPath string
 	// ServerCertFile is the path to the server TLS certificate (env: MACOS_USE_SERVER_CERT_FILE, optional)
 	ServerCertFile string
 	// HTTPAddress is the HTTP/SSE server listen address (env: MCP_HTTP_ADDRESS, default: :8080)
@@ -94,11 +98,12 @@ func Load() (*Config, error) {
 	}
 
 	cfg := &Config{
-		ServerAddr:     getEnv("MACOS_USE_SERVER_ADDR", "localhost:50051"),
-		ServerTLS:      getEnvAsBool("MACOS_USE_SERVER_TLS", false),
-		ServerCertFile: os.Getenv("MACOS_USE_SERVER_CERT_FILE"),
-		RequestTimeout: requestTimeout,
-		Debug:          getEnvAsBool("MACOS_USE_DEBUG", false),
+		ServerAddr:       getEnv("MACOS_USE_SERVER_ADDR", "localhost:50051"),
+		ServerSocketPath: os.Getenv("MACOS_USE_SERVER_SOCKET_PATH"),
+		ServerTLS:        getEnvAsBool("MACOS_USE_SERVER_TLS", false),
+		ServerCertFile:   os.Getenv("MACOS_USE_SERVER_CERT_FILE"),
+		RequestTimeout:   requestTimeout,
+		Debug:            getEnvAsBool("MACOS_USE_DEBUG", false),
 		// MCP Transport configuration
 		Transport:         TransportType(getEnv("MCP_TRANSPORT", "stdio")),
 		HTTPAddress:       getEnv("MCP_HTTP_ADDRESS", ":8080"),
@@ -120,8 +125,8 @@ func Load() (*Config, error) {
 		ShellCommandsEnabled: getEnvAsBool("MCP_SHELL_COMMANDS_ENABLED", false),
 	}
 
-	if cfg.ServerAddr == "" {
-		return nil, fmt.Errorf("server address cannot be empty")
+	if cfg.ServerAddr == "" && cfg.ServerSocketPath == "" {
+		return nil, fmt.Errorf("server address or socket path must be provided")
 	}
 
 	// Validate transport type

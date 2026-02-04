@@ -143,7 +143,18 @@ func (s *MCPServer) initGRPC() error {
 		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
 
-	conn, err := grpc.NewClient(s.cfg.ServerAddr, opts...)
+	// Determine the server address
+	var serverAddr string
+	if s.cfg.ServerSocketPath != "" {
+		// Use Unix socket for connection
+		serverAddr = "unix://" + s.cfg.ServerSocketPath
+		log.Printf("Connecting to gRPC server via Unix socket: %s", s.cfg.ServerSocketPath)
+	} else {
+		serverAddr = s.cfg.ServerAddr
+		log.Printf("Connecting to gRPC server at: %s", serverAddr)
+	}
+
+	conn, err := grpc.NewClient(serverAddr, opts...)
 	if err != nil {
 		return fmt.Errorf("failed to create client: %w", err)
 	}

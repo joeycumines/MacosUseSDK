@@ -467,3 +467,168 @@ func TestGetEnvAsFloat(t *testing.T) {
 		})
 	}
 }
+
+func TestLoad_ServerSocketPathConfig(t *testing.T) {
+	os.Setenv("MACOS_USE_SERVER_SOCKET_PATH", "/var/run/macos-use.sock")
+	defer os.Unsetenv("MACOS_USE_SERVER_SOCKET_PATH")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if cfg.ServerSocketPath != "/var/run/macos-use.sock" {
+		t.Errorf("ServerSocketPath = %s, want /var/run/macos-use.sock", cfg.ServerSocketPath)
+	}
+}
+
+func TestLoad_ServerSocketPathConfigDefault(t *testing.T) {
+	os.Unsetenv("MACOS_USE_SERVER_SOCKET_PATH")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if cfg.ServerSocketPath != "" {
+		t.Errorf("ServerSocketPath = %s, want empty (optional)", cfg.ServerSocketPath)
+	}
+}
+
+func TestLoad_ServerSocketPathWithAddress(t *testing.T) {
+	// Both socket path and address should be configurable
+	os.Setenv("MACOS_USE_SERVER_ADDR", "localhost:50051")
+	os.Setenv("MACOS_USE_SERVER_SOCKET_PATH", "/tmp/test.sock")
+	defer func() {
+		os.Unsetenv("MACOS_USE_SERVER_ADDR")
+		os.Unsetenv("MACOS_USE_SERVER_SOCKET_PATH")
+	}()
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if cfg.ServerAddr != "localhost:50051" {
+		t.Errorf("ServerAddr = %s, want localhost:50051", cfg.ServerAddr)
+	}
+
+	if cfg.ServerSocketPath != "/tmp/test.sock" {
+		t.Errorf("ServerSocketPath = %s, want /tmp/test.sock", cfg.ServerSocketPath)
+	}
+}
+
+func TestLoad_ValidationWithOnlySocketPath(t *testing.T) {
+	// Only socket path - should succeed (address uses default)
+	os.Setenv("MACOS_USE_SERVER_SOCKET_PATH", "/tmp/test.sock")
+	defer os.Unsetenv("MACOS_USE_SERVER_SOCKET_PATH")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if cfg.ServerSocketPath != "/tmp/test.sock" {
+		t.Errorf("ServerSocketPath = %s, want /tmp/test.sock", cfg.ServerSocketPath)
+	}
+
+	// ServerAddr should have default value
+	if cfg.ServerAddr != "localhost:50051" {
+		t.Errorf("ServerAddr = %s, want localhost:50051 (default)", cfg.ServerAddr)
+	}
+}
+
+func TestLoad_ServerTLSConfig(t *testing.T) {
+	os.Setenv("MACOS_USE_SERVER_TLS", "true")
+	defer os.Unsetenv("MACOS_USE_SERVER_TLS")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if cfg.ServerTLS != true {
+		t.Errorf("ServerTLS = %v, want true", cfg.ServerTLS)
+	}
+}
+
+func TestLoad_ServerTLSConfigFalse(t *testing.T) {
+	os.Setenv("MACOS_USE_SERVER_TLS", "false")
+	defer os.Unsetenv("MACOS_USE_SERVER_TLS")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if cfg.ServerTLS != false {
+		t.Errorf("ServerTLS = %v, want false", cfg.ServerTLS)
+	}
+}
+
+func TestLoad_ServerTLSConfigDefault(t *testing.T) {
+	os.Unsetenv("MACOS_USE_SERVER_TLS")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if cfg.ServerTLS != false {
+		t.Errorf("ServerTLS = %v, want false (default)", cfg.ServerTLS)
+	}
+}
+
+func TestLoad_ServerCertFileConfig(t *testing.T) {
+	os.Setenv("MACOS_USE_SERVER_CERT_FILE", "/path/to/server.crt")
+	defer os.Unsetenv("MACOS_USE_SERVER_CERT_FILE")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if cfg.ServerCertFile != "/path/to/server.crt" {
+		t.Errorf("ServerCertFile = %s, want /path/to/server.crt", cfg.ServerCertFile)
+	}
+}
+
+func TestLoad_ServerCertFileConfigDefault(t *testing.T) {
+	os.Unsetenv("MACOS_USE_SERVER_CERT_FILE")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if cfg.ServerCertFile != "" {
+		t.Errorf("ServerCertFile = %s, want empty (optional)", cfg.ServerCertFile)
+	}
+}
+
+func TestLoad_DebugConfig(t *testing.T) {
+	os.Setenv("MACOS_USE_DEBUG", "true")
+	defer os.Unsetenv("MACOS_USE_DEBUG")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if cfg.Debug != true {
+		t.Errorf("Debug = %v, want true", cfg.Debug)
+	}
+}
+
+func TestLoad_DebugConfigDefault(t *testing.T) {
+	os.Unsetenv("MACOS_USE_DEBUG")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if cfg.Debug != false {
+		t.Errorf("Debug = %v, want false (default)", cfg.Debug)
+	}
+}
