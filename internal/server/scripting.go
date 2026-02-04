@@ -295,3 +295,51 @@ func (s *MCPServer) handleValidateScript(call *ToolCall) (*ToolResult, error) {
 		Content: []Content{{Type: "text", Text: fmt.Sprintf("Script validation failed: %s", errMsg)}},
 	}, nil
 }
+
+// handleGetScriptingDictionaries handles the get_scripting_dictionaries tool
+func (s *MCPServer) handleGetScriptingDictionaries(call *ToolCall) (*ToolResult, error) {
+	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
+	defer cancel()
+
+	var params struct {
+		Name string `json:"name"`
+	}
+
+	if err := json.Unmarshal(call.Arguments, &params); err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Invalid parameters: %v", err)}},
+		}, nil
+	}
+
+	name := params.Name
+	if name == "" {
+		name = "scriptingDictionaries"
+	}
+
+	resp, err := s.client.GetScriptingDictionaries(ctx, &pb.GetScriptingDictionariesRequest{Name: name})
+	if err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to get scripting dictionaries: %v", err)}},
+		}, nil
+	}
+
+	dicts := make([]map[string]interface{}, 0, len(resp.Dictionaries))
+	for _, dict := range resp.Dictionaries {
+		dicts = append(dicts, map[string]interface{}{
+			"application":  dict.Application,
+			"bundle_id":    dict.BundleId,
+			"command_count": len(dict.Commands),
+		})
+	}
+
+	data, _ := json.MarshalIndent(map[string]interface{}{
+		"dictionaries": dicts,
+		"total":        len(dicts),
+	}, "", "  ")
+
+	return &ToolResult{
+		Content: []Content{{Type: "text", Text: string(data)}},
+	}, nil
+}

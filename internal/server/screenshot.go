@@ -266,3 +266,82 @@ func (s *MCPServer) handleCaptureWindowScreenshot(call *ToolCall) (*ToolResult, 
 
 	return result, nil
 }
+
+// handleCaptureElementScreenshot handles the capture_element_screenshot tool
+func (s *MCPServer) handleCaptureElementScreenshot(call *ToolCall) (*ToolResult, error) {
+	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
+	defer cancel()
+
+	var params struct {
+		Parent     string `json:"parent"`
+		ElementID  string `json:"element_id"`
+		Format     string `json:"format"`
+		Quality    int32  `json:"quality"`
+		Padding    int32  `json:"padding"`
+		IncludeOCR bool   `json:"include_ocr"`
+	}
+
+	if err := json.Unmarshal(call.Arguments, &params); err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Invalid parameters: %v", err)}},
+		}, nil
+	}
+
+	if params.Parent == "" {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: "parent parameter is required (e.g., applications/123)"}},
+		}, nil
+	}
+
+	if params.ElementID == "" {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: "element_id parameter is required"}},
+		}, nil
+	}
+
+	format := parseImageFormat(params.Format)
+	quality := applyDefaultQuality(params.Quality)
+
+	resp, err := s.client.CaptureElementScreenshot(ctx, &pb.CaptureElementScreenshotRequest{
+		Parent:         params.Parent,
+		ElementId:      params.ElementID,
+		Format:         format,
+		Quality:        quality,
+		Padding:        params.Padding,
+		IncludeOcrText: params.IncludeOCR,
+	})
+	if err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to capture element screenshot: %v", err)}},
+		}, nil
+	}
+
+	imageData := base64.StdEncoding.EncodeToString(resp.ImageData)
+	mediaType := imageFormatToMediaType(resp.Format)
+
+	elemResult := &ToolResult{
+		Content: []Content{
+			{
+				Type: "image",
+				Text: fmt.Sprintf("data:%s;base64,%s", mediaType, imageData),
+			},
+			{
+				Type: "text",
+				Text: fmt.Sprintf("Element screenshot captured: %dx%d pixels - Element: %s", resp.Width, resp.Height, resp.ElementId),
+			},
+		},
+	}
+
+	if params.IncludeOCR && resp.OcrText != "" {
+		elemResult.Content = append(elemResult.Content, Content{
+			Type: "text",
+			Text: fmt.Sprintf("OCR Text:\n%s", resp.OcrText),
+		})
+	}
+
+	return elemResult, nil
+}

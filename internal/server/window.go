@@ -375,3 +375,60 @@ func (s *MCPServer) handleCloseWindow(call *ToolCall) (*ToolResult, error) {
 		Content: []Content{{Type: "text", Text: fmt.Sprintf("Closed window: %s", params.Name)}},
 	}, nil
 }
+
+// handleGetWindowState handles the get_window_state tool
+func (s *MCPServer) handleGetWindowState(call *ToolCall) (*ToolResult, error) {
+	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
+	defer cancel()
+
+	var params struct {
+		Name string `json:"name"`
+	}
+
+	if err := json.Unmarshal(call.Arguments, &params); err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Invalid parameters: %v", err)}},
+		}, nil
+	}
+
+	if params.Name == "" {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: "name parameter is required (e.g., 'applications/123/windows/456/state')"}},
+		}, nil
+	}
+
+	// Ensure name ends with /state for the RPC
+	stateName := params.Name
+	if !strings.HasSuffix(stateName, "/state") {
+		stateName = stateName + "/state"
+	}
+
+	state, err := s.client.GetWindowState(ctx, &pb.GetWindowStateRequest{Name: stateName})
+	if err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to get window state: %v", err)}},
+		}, nil
+	}
+
+	// Format state information
+	var lines []string
+	lines = append(lines, fmt.Sprintf("Window State: %s", params.Name))
+	lines = append(lines, fmt.Sprintf("  Resizable: %v", state.Resizable))
+	lines = append(lines, fmt.Sprintf("  Minimizable: %v", state.Minimizable))
+	lines = append(lines, fmt.Sprintf("  Closable: %v", state.Closable))
+	lines = append(lines, fmt.Sprintf("  Modal: %v", state.Modal))
+	lines = append(lines, fmt.Sprintf("  Floating: %v", state.Floating))
+	lines = append(lines, fmt.Sprintf("  Hidden (AX): %v", state.AxHidden))
+	lines = append(lines, fmt.Sprintf("  Minimized: %v", state.Minimized))
+	lines = append(lines, fmt.Sprintf("  Focused: %v", state.Focused))
+	if state.Fullscreen != nil {
+		lines = append(lines, fmt.Sprintf("  Fullscreen: %v", *state.Fullscreen))
+	}
+
+	return &ToolResult{
+		Content: []Content{{Type: "text", Text: strings.Join(lines, "\n")}},
+	}, nil
+}

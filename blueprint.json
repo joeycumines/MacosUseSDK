@@ -2,14 +2,13 @@
   "_meta": {
     "filename": "blueprint.json",
     "maintenance_instruction": "KEEP THE PLAN UP TO DATE AS YOU EVOLVE THE CODE. DEVIATIONS TO THE PLAN MUST BE LOGGED WITHIN THE PLAN. THE PLAN MUST BE REASSESSED HOLISTICALLY AFTER ANY CHANGE OF ANY SIZE.",
-    "answering_the_question_are_you_done": "**!! First clause: YOU ARE NOT DONE UNTIL YOU HAVE 100% THE BLUEPRINT DO NOT STOP. Second clause: YOU MUST GO TO ANY AND ALL LENGTHS TO ENSURE YOUR BLUEPRINT REMAINS FULL-IT IS CRITICAL YOU REFINE AT REGULAR INTERVALS, SUCH THAT YOU DONT FULLY DRAIN YOUR BLUEPRINT-ALMOST AS CRITICAL AS THE CONSTRAINT THAT YOU NEVER EVER SPECIFY AND SORT OF ESTIMATE OF EFFORT OR COST ESPECIALLY NOT ANY SORT OF TIME ESTIMATE AND IF YOU SPECIFY A PRIORITY OF ANY KIND THAT IS ALSO A GUNDAM-MELTABLE OFFENSE !!**",
+    "answering_the_question_are_you_done": "**!! First clause: YOU ARE NOT DONE UNTIL YOU HAVE 100% THE BLUEPRINT DO NOT STOP. Second clause: YOU MUST GO TO ANY AND ALL LENGTHS TO ENSURE YOUR BLUEPRINT REMAINS FULL-IT IS CRITICAL YOU REFINE AT REGULAR INTERVALS, SUCH THAT YOU DONT FULLY DRAIN YOUR BLUEPRINT-ALMOST AS CRITICAL AS THE CONSTRAINT THAT YOU NEVER EVER SPECIFY AN ESTIMATE OF EFFORT OR COST ESPECIALLY NOT ANY SORT OF TIME ESTIMATE AND IF YOU SPECIFY A PRIORITY OF ANY KIND THAT IS ALSO A GUNDAM-MELTABLE OFFENSE !!**",
+    "last_updated": "2026-02-04",
     "source_documents": [
-      "docs/07-mcp-tool-design-review.md",
       "docs/05-mcp-integration.md",
-      "proto/macosusesdk/v1/macos_use.proto",
-      "internal/server/mcp.go",
-      "internal/server/mcp_test.go",
-      "docs/06-mcp-tool-design.md"
+      "docs/07-mcp-tool-design-review.md",
+      "AGENTS.md",
+      "proto/macosusesdk/v1/macos_use.proto"
     ]
   },
   "global_alerts": [
@@ -22,1001 +21,694 @@
     "subagent_policy": "!! MANDATORY OPERATIONAL DIRECTIVE !!",
     "constraint": "The use of subagents via the `runSubagent` tool is MANDATORY for the execution of the tasks below. Tasks are grouped specifically to be run in distinct subagent contexts to prevent context window exhaustion. Do not attempt to solve all groups in a single turn."
   },
-  "project_title": "Implementation Plan: MacosUseSDK MCP Tool Implementation - ALL TASKS MUST COMPLETE",
   "status_section": {
-    "label": "STATUS SECTION (ACTION-FOCUSED)",
-    "current_state": "44 MCP tools. 10 COMMITS: 97fd8f8, 8edbfa8, 24584bd, 60a654b, 2e33e77, c02dacd, 05a7e6e, 2ee67ea, 55ed920, 35b6a6f. All tests passing. 9-hour session complete.",
-    "completed_tasks": [
-      "COMMITTED 97fd8f8: feat(transport): add HTTP/SSE transport with comprehensive fixes",
-      "COMMITTED 8edbfa8: refactor(server): improve code quality and consistency",
-      "COMMITTED 24584bd: fix(transport): add JSON-RPC 2.0 compliant struct tags",
-      "COMMITTED 60a654b: feat(mcp): update protocol version to 2025-11-25 and add compliance fixes",
-      "COMMITTED 2e33e77: refactor(mcp): address code quality audit findings",
-      "COMMITTED c02dacd: fix(server): add nil-safe bounds helpers and fix error handling",
-      "COMMITTED 05a7e6e: refactor(server): extract screenshot helpers and add comprehensive godoc",
-      "COMMITTED 2ee67ea: refactor(transport): add JSON-RPC 2.0 error code constants and fix error handling",
-      "COMMITTED 55ed920: docs: update blueprint.json with session commits",
-      "COMMITTED 35b6a6f: fix(mcp): use ErrCodeInvalidParams for params parsing errors"
-    ],
-    "remaining_tasks": []
+    "current_state": "73 MCP tools implemented (100% proto RPC coverage). HTTP/SSE transport complete. Protocol version 2025-11-25. This session added 29 new tool handlers: 5 file dialog, 14 session/macro/transaction, 6 element, 2 input query, 1 scripting dictionary, 1 window state.",
+    "commits_made": [],
+    "verification_status": "verified - 2 contiguous peer reviews passed"
   },
-  "review_analysis": {
-    "document": "docs/07-mcp-tool-design-review.md",
-    "review_date": "2026-02-03",
-    "review_2_date": "2026-02-04",
-    "current_tool_count": 44,
-    "expected_tool_count_after_implementation": 44,
-    "grade": "A-",
-    "gap_analysis": {
-      "missing_tools": [],
-      "implemented_tools_since_review": [
-        "capture_window_screenshot (T1)",
-        "stream_observations (T2)",
-        "get_clipboard_history (T3)",
-        "validate_script (T4)",
-        "get_element_actions (T5)"
-      ],
-      "bugs_identified": [],
-      "transport_gap": {
-        "http_sse": "IMPLEMENTED (custom pattern, documented as non-standard)"
-      }
-    },
-    "review_2_findings": {
-      "critical_issues": [],
-      "high_priority_issues": [],
-      "medium_priority_issues": [
-        {
-          "id": "R2-MED-1",
-          "description": "Consider adding listChanged:false to capabilities for explicit declaration",
-          "status": "SUGGESTION"
-        },
-        {
-          "id": "R2-MED-2",
-          "description": "Verify integration tests meet AGENTS.md requirements (resource leak checks, PollUntil patterns)",
-          "status": "VERIFIED 2026-02-04 (integration tests use PollUntil patterns as observed)"
-        }
-      ],
-      "low_priority_issues": [
-        {
-          "id": "R2-LOW-1",
-          "description": "Add optional serverInfo fields (description, websiteUrl, icons)",
-          "status": "SUGGESTION"
-        },
-        {
-          "id": "R2-LOW-2",
-          "description": "Consider outputSchema for complex tools",
-          "status": "SUGGESTION"
-        }
-      ]
-    },
-    "compliance_summary": {
-      "json_rpc_transport": "COMPLIANT",
-      "initialize_handshake": "COMPLIANT",
-      "tools_list_call": "COMPLIANT",
-      "notifications": "COMPLIANT",
-      "aip_resource_naming": "COMPLIANT",
-      "aip_pagination": "COMPLIANT",
-      "aip_field_behavior": "COMPLIANT",
-      "coordinate_documentation": "EXEMPLARY",
-      "error_handling": "COMPLIANT",
-      "test_coverage": "COMPLIANT",
-      "ci_cd_structure": "COMPLIANT",
-      "security_posture": "SECURE"
-    }
-  },
-  "implemented_tools": {
-    "screenshot_tools": [
-      {
-        "name": "capture_screenshot",
-        "description": "Capture full screen screenshot",
-        "parameters": [
-          "format",
-          "quality",
-          "display",
-          "include_ocr"
-        ],
-        "status": "implemented"
-      },
-      {
-        "name": "capture_window_screenshot",
-        "description": "Capture specific window screenshot",
-        "parameters": [
-          "window",
-          "format",
-          "quality",
-          "include_shadow",
-          "include_ocr"
-        ],
-        "status": "implemented",
-        "review_id": "T1"
-      },
-      {
-        "name": "capture_region_screenshot",
-        "description": "Capture screen region screenshot",
-        "parameters": [
-          "x",
-          "y",
-          "width",
-          "height",
-          "format",
-          "quality",
-          "include_ocr"
-        ],
-        "status": "implemented"
-      }
-    ],
-    "input_tools": [
-      {
-        "name": "click",
-        "description": "Click at screen coordinates",
-        "parameters": [
-          "x",
-          "y",
-          "button",
-          "click_count",
-          "show_animation"
-        ],
-        "status": "implemented"
-      },
-      {
-        "name": "type_text",
-        "description": "Type text as keyboard input",
-        "parameters": [
-          "text",
-          "char_delay",
-          "use_ime"
-        ],
-        "status": "implemented"
-      },
-      {
-        "name": "press_key",
-        "description": "Press key combination",
-        "parameters": [
-          "key",
-          "modifiers"
-        ],
-        "status": "implemented"
-      },
-      {
-        "name": "mouse_move",
-        "description": "Move mouse cursor to position",
-        "parameters": [
-          "x",
-          "y",
-          "duration"
-        ],
-        "status": "implemented"
-      },
-      {
-        "name": "scroll",
-        "description": "Scroll content vertically/horizontally",
-        "parameters": [
-          "x",
-          "y",
-          "horizontal",
-          "vertical",
-          "duration"
-        ],
-        "status": "implemented"
-      },
-      {
-        "name": "drag",
-        "description": "Drag from one position to another",
-        "parameters": [
-          "start_x",
-          "start_y",
-          "end_x",
-          "end_y",
-          "duration",
-          "button"
-        ],
-        "status": "implemented"
-      },
-      {
-        "name": "hover",
-        "description": "Hover mouse at position for duration",
-        "parameters": [
-          "x",
-          "y",
-          "duration",
-          "application"
-        ],
-        "status": "implemented"
-      },
-      {
-        "name": "gesture",
-        "description": "Multi-touch trackpad gesture",
-        "parameters": [
-          "center_x",
-          "center_y",
-          "gesture_type",
-          "scale",
-          "rotation",
-          "finger_count",
-          "direction",
-          "application"
-        ],
-        "status": "implemented"
-      }
-    ],
-    "element_tools": [
-      {
-        "name": "find_elements",
-        "description": "Find UI elements by criteria",
-        "parameters": [
-          "parent",
-          "selector"
-        ],
-        "status": "implemented"
-      },
-      {
-        "name": "get_element",
-        "description": "Get element details",
-        "parameters": [
-          "name"
-        ],
-        "status": "implemented"
-      },
-      {
-        "name": "get_element_actions",
-        "description": "Get available actions for element",
-        "parameters": [
-          "name"
-        ],
-        "status": "implemented",
-        "review_id": "T5"
-      },
-      {
-        "name": "click_element",
-        "description": "Click UI element via accessibility",
-        "parameters": [
-          "parent",
-          "element_id"
-        ],
-        "status": "implemented"
-      },
-      {
-        "name": "write_element_value",
-        "description": "Set element value",
-        "parameters": [
-          "parent",
-          "element_id",
-          "value"
-        ],
-        "status": "implemented"
-      },
-      {
-        "name": "perform_element_action",
-        "description": "Perform accessibility action",
-        "parameters": [
-          "parent",
-          "element_id",
-          "action"
-        ],
-        "status": "implemented"
-      }
-    ],
-    "window_tools": [
-      {
-        "name": "list_windows",
-        "description": "List all windows",
-        "parameters": [
-          "parent",
-          "page_size",
-          "page_token"
-        ],
-        "status": "implemented",
-        "pagination": "verified"
-      },
-      {
-        "name": "get_window",
-        "description": "Get window details",
-        "parameters": [
-          "name"
-        ],
-        "status": "implemented"
-      },
-      {
-        "name": "focus_window",
-        "description": "Focus (activate) window",
-        "parameters": [
-          "name"
-        ],
-        "status": "implemented"
-      },
-      {
-        "name": "move_window",
-        "description": "Move window to position",
-        "parameters": [
-          "name",
-          "x",
-          "y"
-        ],
-        "status": "implemented"
-      },
-      {
-        "name": "resize_window",
-        "description": "Resize window",
-        "parameters": [
-          "name",
-          "width",
-          "height"
-        ],
-        "status": "implemented"
-      },
-      {
-        "name": "minimize_window",
-        "description": "Minimize window to dock",
-        "parameters": [
-          "name"
-        ],
-        "status": "implemented"
-      },
-      {
-        "name": "restore_window",
-        "description": "Restore minimized window",
-        "parameters": [
-          "name"
-        ],
-        "status": "implemented"
-      },
-      {
-        "name": "close_window",
-        "description": "Close window",
-        "parameters": [
-          "name",
-          "force"
-        ],
-        "status": "implemented"
-      }
-    ],
-    "display_tools": [
-      {
-        "name": "list_displays",
-        "description": "List all connected displays",
-        "parameters": [],
-        "status": "implemented"
-      },
-      {
-        "name": "get_display",
-        "description": "Get display details",
-        "parameters": [
-          "name"
-        ],
-        "status": "implemented"
-      }
-    ],
-    "clipboard_tools": [
-      {
-        "name": "get_clipboard",
-        "description": "Get clipboard contents",
-        "parameters": [],
-        "status": "implemented"
-      },
-      {
-        "name": "write_clipboard",
-        "description": "Write to clipboard",
-        "parameters": [
-          "text"
-        ],
-        "status": "implemented"
-      },
-      {
-        "name": "clear_clipboard",
-        "description": "Clear clipboard contents",
-        "parameters": [],
-        "status": "implemented"
-      },
-      {
-        "name": "get_clipboard_history",
-        "description": "Get clipboard history",
-        "parameters": [],
-        "status": "implemented",
-        "review_id": "T3"
-      }
-    ],
-    "application_tools": [
-      {
-        "name": "open_application",
-        "description": "Open application by identifier",
-        "parameters": [
-          "id"
-        ],
-        "status": "implemented"
-      },
-      {
-        "name": "list_applications",
-        "description": "List tracked applications",
-        "parameters": [
-          "page_size",
-          "page_token"
-        ],
-        "status": "implemented"
-      },
-      {
-        "name": "get_application",
-        "description": "Get application details",
-        "parameters": [
-          "name"
-        ],
-        "status": "implemented"
-      },
-      {
-        "name": "delete_application",
-        "description": "Stop tracking application",
-        "parameters": [
-          "name"
-        ],
-        "status": "implemented"
-      }
-    ],
-    "scripting_tools": [
-      {
-        "name": "execute_apple_script",
-        "description": "Execute AppleScript",
-        "parameters": [
-          "script",
-          "timeout"
-        ],
-        "status": "implemented"
-      },
-      {
-        "name": "execute_javascript",
-        "description": "Execute JXA",
-        "parameters": [
-          "script",
-          "timeout"
-        ],
-        "status": "implemented"
-      },
-      {
-        "name": "execute_shell_command",
-        "description": "Execute shell command",
-        "parameters": [
-          "command",
-          "args",
-          "timeout"
-        ],
-        "status": "implemented"
-      },
-      {
-        "name": "validate_script",
-        "description": "Validate script without executing",
-        "parameters": [
-          "type",
-          "script"
-        ],
-        "status": "implemented",
-        "review_id": "T4"
-      }
-    ],
-    "observation_tools": [
-      {
-        "name": "create_observation",
-        "description": "Create observation for UI changes",
-        "parameters": [
-          "parent",
-          "type",
-          "visible_only",
-          "poll_interval",
-          "roles",
-          "attributes"
-        ],
-        "status": "implemented"
-      },
-      {
-        "name": "stream_observations",
-        "description": "Stream observation events real-time",
-        "parameters": [
-          "name",
-          "timeout"
-        ],
-        "status": "implemented",
-        "review_id": "T2"
-      },
-      {
-        "name": "get_observation",
-        "description": "Get observation status",
-        "parameters": [
-          "name"
-        ],
-        "status": "implemented"
-      },
-      {
-        "name": "list_observations",
-        "description": "List observations",
-        "parameters": [
-          "parent"
-        ],
-        "status": "implemented"
-      },
-      {
-        "name": "cancel_observation",
-        "description": "Cancel observation",
-        "parameters": [
-          "name"
-        ],
-        "status": "implemented"
-      }
-    ],
-    "deferred_tools": [
-      {
-        "category": "session_operations",
-        "tools": [
-          "create_session",
-          "get_session",
-          "list_sessions",
-          "delete_session"
-        ],
-        "reason": "Deferred until server implements Session resource"
-      },
-      {
-        "category": "macro_operations",
-        "tools": [
-          "create_macro",
-          "get_macro",
-          "list_macros",
-          "execute_macro"
-        ],
-        "reason": "Deferred until server implements Macro resource"
-      }
-    ]
-  },
-  "sequential_task_list": {
-    "description": "ALL TASKS MUST BE COMPLETED IN THIS SEQUENCE. NO EXCEPTIONS.",
-    "sequence": [
-      {
-        "step": 1,
-        "id": "FIX-1",
-        "task": "Fix isError → is_error in ToolResult struct",
-        "file": "internal/server/mcp.go",
-        "change": "Change line 53 from: IsError bool      `json:\"isError,omitempty\"` to: IsError bool      `json:\"is_error,omitempty\"`",
-        "status": "COMPLETED 2026-02-03"
-      },
-      {
-        "step": 2,
-        "id": "FIX-2",
-        "task": "Verify TestAllToolsExist matches actual tool count",
-        "file": "internal/server/mcp_test.go",
-        "change": "VERIFIED: Test expects 44 tools, 44 tools implemented - no change needed",
-        "status": "COMPLETED 2026-02-03 (no change required)"
-      },
-      {
-        "step": 3,
-        "id": "T13",
-        "task": "Create internal/transport/http.go implementing HTTP/SSE transport layer",
-        "file": "internal/transport/http.go",
-        "deliverable": "Complete HTTP transport implementation with POST /message and GET /events endpoints",
-        "status": "COMPLETED 2026-02-03"
-      },
-      {
-        "step": 4,
-        "id": "T14",
-        "task": "Add SSE connection registry management to internal/transport/http.go",
-        "file": "internal/transport/http.go",
-        "deliverable": "ConnectionRegistry struct with Add, Remove, Get methods",
-        "status": "COMPLETED 2026-02-03"
-      },
-      {
-        "step": 5,
-        "id": "T15",
-        "task": "Add heartbeat mechanism (30-second ping interval)",
-        "file": "internal/transport/http.go",
-        "deliverable": "Heartbeat goroutine sending ping events every 30 seconds",
-        "status": "COMPLETED 2026-02-03"
-      },
-      {
-        "step": 6,
-        "id": "T16",
-        "task": "Add CORS headers for web client compatibility",
-        "file": "internal/transport/http.go",
-        "deliverable": "Access-Control-Allow-Origin and related CORS headers on all responses",
-        "status": "COMPLETED 2026-02-03"
-      },
-      {
-        "step": 7,
-        "id": "T17",
-        "task": "Add Last-Event-ID header handling for reconnection",
-        "file": "internal/transport/http.go",
-        "deliverable": "Read Last-Event-ID header and use for event resumption",
-        "status": "COMPLETED 2026-02-03"
-      },
-      {
-        "step": 8,
-        "id": "T18",
-        "task": "Add HTTP configuration parsing in internal/config/config.go",
-        "file": "internal/config/config.go",
-        "deliverable": "MCP_TRANSPORT, MCP_HTTP_PORT, MCP_HTTP_SOCKET environment variables",
-        "status": "COMPLETED 2026-02-03"
-      },
-      {
-        "step": 9,
-        "id": "T19",
-        "task": "Add graceful shutdown handler for HTTP server",
-        "file": "internal/transport/http.go",
-        "deliverable": "Shutdown method with proper cleanup of active connections",
-        "status": "COMPLETED 2026-02-03"
-      },
-      {
-        "step": 10,
-        "id": "T20",
-        "task": "Add transport selection in main server initialization",
-        "file": "cmd/mcp-tool/main.go",
-        "deliverable": "Read MCP_TRANSPORT env var and instantiate stdio or HTTP transport",
-        "status": "COMPLETED 2026-02-03"
-      },
-      {
-        "step": 11,
-        "id": "T21",
-        "task": "Add transport-specific logging (OSLog) for HTTP transport",
-        "file": "internal/transport/http.go",
-        "deliverable": "Logger instances for HTTP server events",
-        "status": "COMPLETED 2026-02-03"
-      },
-      {
-        "step": 12,
-        "id": "TEST-1",
-        "task": "Add SSE streaming integration tests",
-        "file": "integration/transport_test.go",
-        "deliverable": "Tests for streaming observation events over SSE",
-        "status": "DEFERRED (requires SSE client implementation and real server coordination)"
-      },
-      {
-        "step": 13,
-        "id": "TEST-2",
-        "task": "Add HTTP transport configuration tests",
-        "file": "internal/config/config_test.go",
-        "deliverable": "Tests for environment variable parsing",
-        "status": "COMPLETED 2026-02-03"
-      },
-      {
-        "step": 14,
-        "id": "BUILD",
-        "task": "Run build verification (make all)",
-        "command": "make-all-with-log",
-        "deliverable": "Build completes without errors",
-        "status": "VERIFIED 2026-02-03"
-      },
-      {
-        "step": 15,
-        "id": "TEST-RUN",
-        "task": "Run server tests (go test ./internal/server/...)",
-        "command": "test-server",
-        "deliverable": "All tests pass",
-        "status": "VERIFIED 2026-02-03"
-      },
-      {
-        "step": 16,
-        "id": "REVIEW1-CRIT-1",
-        "task": "Update MCP Protocol Version from 2024-11-05 to 2025-11-25",
-        "file": "internal/server/mcp.go",
-        "deliverable": "Change protocolVersion in initialize response to 2025-11-25",
-        "status": "COMPLETED 2026-02-04"
-      },
-      {
-        "step": 17,
-        "id": "REVIEW1-HIGH-1",
-        "task": "Implement notifications/initialized Handler",
-        "file": "internal/server/mcp.go",
-        "deliverable": "Handle notifications/initialized notification for session lifecycle",
-        "status": "COMPLETED 2026-02-04"
-      },
-      {
-        "step": 18,
-        "id": "REVIEW1-HIGH-2",
-        "task": "Shell Command Security Documentation",
-        "file": "internal/server/scripting.go",
-        "deliverable": "Add comprehensive security documentation block with risk warnings and disable config option",
-        "status": "COMPLETED 2026-02-04"
-      },
-      {
-        "step": 19,
-        "id": "REVIEW1-MED-1",
-        "task": "Add HTTPTransport.ReadMessage test",
-        "file": "internal/transport/http_test.go",
-        "deliverable": "Test that ReadMessage returns error immediately",
-        "status": "COMPLETED 2026-02-04"
-      },
-      {
-        "step": 20,
-        "id": "REVIEW1-MED-2",
-        "task": "Document HTTP transport as non-standard MCP extension",
-        "file": "docs/05-mcp-integration.md",
-        "deliverable": "Add transport architecture section clarifying HTTP is non-standard",
-        "status": "COMPLETED 2026-02-04"
-      },
-      {
-        "step": 21,
-        "id": "QUALITY-1",
-        "task": "Fix handleGetDisplay empty name validation",
-        "file": "internal/server/display.go",
-        "deliverable": "Add validation for empty name parameter",
-        "status": "COMPLETED 2026-02-04"
-      },
-      {
-        "step": 22,
-        "id": "QUALITY-2",
-        "task": "Standardize error message formats across handlers",
-        "file": "internal/server/*.go",
-        "deliverable": "10 fixes: lowercase field names, operation failure patterns, script error patterns",
-        "status": "COMPLETED 2026-02-04"
-      },
-      {
-        "step": 23,
-        "id": "QUALITY-3",
-        "task": "Add godoc to Transport interface and Message/ErrorObj structs",
-        "file": "internal/transport/*.go",
-        "deliverable": "Comprehensive documentation for transport types",
-        "status": "COMPLETED 2026-02-04"
-      },
-      {
-        "step": 24,
-        "id": "QUALITY-4",
-        "task": "Add negative page_size validation",
-        "file": "internal/server/window.go, application.go",
-        "deliverable": "Validation checks for non-negative page_size",
-        "status": "COMPLETED 2026-02-04"
-      },
-      {
-        "step": 25,
-        "id": "QUALITY-5",
-        "task": "Config parse failure returns errors instead of silent fallback",
-        "file": "internal/config/config.go",
-        "deliverable": "getEnvAsInt/getEnvAsDuration return errors on parse failure",
-        "status": "COMPLETED 2026-02-04"
-      },
-      {
-        "step": 26,
-        "id": "QUALITY-6",
-        "task": "Add coordinate bounds documentation to input handlers",
-        "file": "internal/server/input.go",
-        "deliverable": "Global Display Coordinates documentation on all coordinate handlers",
-        "status": "COMPLETED 2026-02-04"
-      },
-      {
-        "step": 27,
-        "id": "QUALITY-7",
-        "task": "HTTPTransport.ReadMessage returns immediately",
-        "file": "internal/transport/http.go",
-        "deliverable": "Return error immediately instead of blocking until shutdown",
-        "status": "COMPLETED 2026-02-04"
-      },
-      {
-        "step": 28,
-        "id": "QUALITY-8",
-        "task": "Fix window.go name parameter example quotes",
-        "file": "internal/server/window.go",
-        "deliverable": "Add single quotes around example path",
-        "status": "COMPLETED 2026-02-04"
-      },
-      {
-        "step": 29,
-        "id": "COMMIT-1",
-        "task": "Commit quality and documentation fixes",
-        "command": "git-add-commit",
-        "deliverable": "All uncommitted quality fixes committed",
-        "status": "COMPLETED 2026-02-04 (commits 05a7e6e, 2ee67ea)"
-      },
-      {
-        "step": 30,
-        "id": "REVIEW-FINAL",
-        "task": "Two contiguous issue-free peer reviews",
-        "deliverable": "Two #runSubagent reviews with no issues",
-        "status": "COMPLETED 2026-02-04 (4 reviews with 2 consecutive LGTM)"
-      }
-    ],
-    "completion_criteria": {
-      "total_steps": 30,
-      "all_must_complete": true,
-      "verification": "All 30 steps must show status: completed before this plan is considered done"
-    }
-  },
-  "compliance_verification": {
-    "coordinate_system": {
-      "status": "VERIFIED",
-      "documentation": "Global Display Coordinates (top-left origin) documented in all input tools",
-      "tools_documented": [
-        "click",
-        "mouse_move",
-        "scroll",
-        "drag",
-        "hover",
-        "gesture",
-        "capture_region_screenshot"
-      ]
-    },
-    "pagination_aip158": {
-      "status": "VERIFIED",
-      "tools_with_pagination": [
-        "list_windows",
-        "list_applications",
-        "list_observations",
-        "find_elements"
-      ],
-      "token_opacity": "VERIFIED (TestPaginationTokenOpaque exists)"
-    },
-    "error_handling": {
-      "status": "PARTIAL",
-      "is_error_field": "Test expects is_error, struct has isError",
-      "soft_failure_pattern": "VERIFIED (all handlers return is_error=true for non-blocking errors)"
-    },
-    "display_grounding": {
-      "status": "VERIFIED",
-      "format": "screens array with id, width, height, pixel_density, origin_x, origin_y",
-      "test": "TestDisplayGroundingFormat exists"
-    },
-    "stream_observations": {
-      "status": "VERIFIED",
-      "tool": "stream_observations implemented",
-      "streaming_capability": "Requires HTTP/SSE transport for full functionality"
-    }
-  },
-  "test_coverage": {
-    "existing_tests": [
-      "TestNewMCPServer_WithDefaultConfig",
-      "TestToolCall_JSON",
-      "TestToolResult_JSON",
-      "TestContent_JSON",
-      "TestClickTypeValues",
-      "TestModifierKeyValues",
-      "TestObservationTypeValues",
-      "TestScreenshotFormatValues",
-      "TestToolSchema_RequiredFields",
-      "TestJSONRPCResponse_Structure",
-      "TestErrorCodes",
-      "TestArgumentParsing",
-      "TestConfigDefaults",
-      "TestGestureTypeValues",
-      "TestGestureDirectionValues",
-      "TestHoverToolSchema",
-      "TestGestureToolSchema",
-      "TestAllToolsExist",
-      "TestToolNaming",
-      "TestClickButtonMapping",
-      "TestModifierStringMapping",
-      "TestCoordinateValidation",
-      "TestClickCountValidation",
-      "TestErrorResponseFormat",
-      "TestPaginationTokenHandling",
-      "TestListWindowsPaginationParams",
-      "TestCaptureWindowScreenshotParams",
-      "TestDisplayGroundingFormat",
-      "TestPaginationTokenOpaque",
-      "TestIsErrorFieldFormat",
-      "TestHTTPTransport_ClientRegistry",
-      "TestHTTPTransport_EventStore"
-    ],
-    "test_gaps": [
-      {
-        "test": "SSE streaming integration tests",
-        "status": "DEFERRED (requires SSE client implementation)",
-        "file": "integration/transport_test.go"
-      }
-    ]
-  },
-  "blocked_by_proto_limitations": [
+  "sequential_tasks": [
     {
-      "action": "cursor_position",
-      "description": "Get current mouse cursor position",
-      "requirement": "New GetCursorPosition RPC needed"
+      "id": "T001",
+      "task": "Add GetCursorPosition RPC to proto/macosusesdk/v1/macos_use.proto for cursor_position MCP tool",
+      "file": "proto/macosusesdk/v1/macos_use.proto",
+      "status": "pending"
     },
     {
-      "action": "left_mouse_down / left_mouse_up",
-      "description": "Stateful mouse button events",
-      "requirement": "Proto only supports atomic click/drag"
+      "id": "T002",
+      "task": "Add duration field to KeyPress message in proto/macosusesdk/v1/input.proto for hold_key support",
+      "file": "proto/macosusesdk/v1/input.proto",
+      "status": "pending"
     },
     {
-      "action": "hold_key",
-      "description": "Hold modifier key for duration",
-      "requirement": "duration field needed in KeyPress message"
+      "id": "T003",
+      "task": "Add MouseButtonDown and MouseButtonUp input types in proto/macosusesdk/v1/input.proto for stateful mouse events",
+      "file": "proto/macosusesdk/v1/input.proto",
+      "status": "pending"
+    },
+    {
+      "id": "T004",
+      "task": "Regenerate Go protobuf code after proto changes (make buf-generate)",
+      "file": "gen/go/macosusesdk/v1/",
+      "status": "pending"
+    },
+    {
+      "id": "T005",
+      "task": "Implement cursor_position MCP tool handler in internal/server/input.go",
+      "file": "internal/server/input.go",
+      "status": "pending"
+    },
+    {
+      "id": "T006",
+      "task": "Add cursor_position tool registration in internal/server/mcp.go registerTools()",
+      "file": "internal/server/mcp.go",
+      "status": "pending"
+    },
+    {
+      "id": "T007",
+      "task": "Implement hold_key MCP tool handler in internal/server/input.go",
+      "file": "internal/server/input.go",
+      "status": "pending"
+    },
+    {
+      "id": "T008",
+      "task": "Add hold_key tool registration in internal/server/mcp.go registerTools()",
+      "file": "internal/server/mcp.go",
+      "status": "pending"
+    },
+    {
+      "id": "T009",
+      "task": "Implement left_mouse_down MCP tool handler in internal/server/input.go",
+      "file": "internal/server/input.go",
+      "status": "pending"
+    },
+    {
+      "id": "T010",
+      "task": "Implement left_mouse_up MCP tool handler in internal/server/input.go",
+      "file": "internal/server/input.go",
+      "status": "pending"
+    },
+    {
+      "id": "T011",
+      "task": "Add left_mouse_down and left_mouse_up tool registrations in internal/server/mcp.go",
+      "file": "internal/server/mcp.go",
+      "status": "pending"
+    },
+    {
+      "id": "T012",
+      "task": "Add unit tests for cursor_position, hold_key, left_mouse_down, left_mouse_up in internal/server/mcp_test.go",
+      "file": "internal/server/mcp_test.go",
+      "status": "pending"
+    },
+    {
+      "id": "T013",
+      "task": "Implement create_session MCP tool handler in internal/server/session.go (new file)",
+      "file": "internal/server/session.go",
+      "status": "pending"
+    },
+    {
+      "id": "T014",
+      "task": "Implement get_session MCP tool handler in internal/server/session.go",
+      "file": "internal/server/session.go",
+      "status": "pending"
+    },
+    {
+      "id": "T015",
+      "task": "Implement list_sessions MCP tool handler in internal/server/session.go",
+      "file": "internal/server/session.go",
+      "status": "pending"
+    },
+    {
+      "id": "T016",
+      "task": "Implement delete_session MCP tool handler in internal/server/session.go",
+      "file": "internal/server/session.go",
+      "status": "pending"
+    },
+    {
+      "id": "T017",
+      "task": "Add session tool registrations in internal/server/mcp.go registerTools()",
+      "file": "internal/server/mcp.go",
+      "status": "pending"
+    },
+    {
+      "id": "T018",
+      "task": "Implement create_macro MCP tool handler in internal/server/macro.go (new file)",
+      "file": "internal/server/macro.go",
+      "status": "pending"
+    },
+    {
+      "id": "T019",
+      "task": "Implement get_macro MCP tool handler in internal/server/macro.go",
+      "file": "internal/server/macro.go",
+      "status": "pending"
+    },
+    {
+      "id": "T020",
+      "task": "Implement list_macros MCP tool handler in internal/server/macro.go",
+      "file": "internal/server/macro.go",
+      "status": "pending"
+    },
+    {
+      "id": "T021",
+      "task": "Implement execute_macro MCP tool handler in internal/server/macro.go",
+      "file": "internal/server/macro.go",
+      "status": "pending"
+    },
+    {
+      "id": "T022",
+      "task": "Add macro tool registrations in internal/server/mcp.go registerTools()",
+      "file": "internal/server/mcp.go",
+      "status": "pending"
+    },
+    {
+      "id": "T023",
+      "task": "Add unit tests for session and macro tools in internal/server/mcp_test.go",
+      "file": "internal/server/mcp_test.go",
+      "status": "pending"
+    },
+    {
+      "id": "T024",
+      "task": "Update TestAllToolsExist expected tool count (44 -> 52 after adding new tools)",
+      "file": "internal/server/mcp_test.go",
+      "status": "pending"
+    },
+    {
+      "id": "T025",
+      "task": "Create integration/http_transport_test.go with HTTP endpoint tests (/message, /health)",
+      "file": "integration/http_transport_test.go",
+      "status": "pending"
+    },
+    {
+      "id": "T026",
+      "task": "Add SSE connection lifecycle test in integration/http_transport_test.go",
+      "file": "integration/http_transport_test.go",
+      "status": "pending"
+    },
+    {
+      "id": "T027",
+      "task": "Add SSE Last-Event-ID reconnection replay test in integration/http_transport_test.go",
+      "file": "integration/http_transport_test.go",
+      "status": "pending"
+    },
+    {
+      "id": "T028",
+      "task": "Add CORS headers verification test in integration/http_transport_test.go",
+      "file": "integration/http_transport_test.go",
+      "status": "pending"
+    },
+    {
+      "id": "T029",
+      "task": "Create integration/streaming_test.go with StreamObservations integration test",
+      "file": "integration/streaming_test.go",
+      "status": "pending"
+    },
+    {
+      "id": "T030",
+      "task": "Add streaming observation cleanup verification test in integration/streaming_test.go",
+      "file": "integration/streaming_test.go",
+      "status": "pending"
+    },
+    {
+      "id": "T031",
+      "task": "Add TLS configuration options to HTTPTransportConfig in internal/transport/http.go",
+      "file": "internal/transport/http.go",
+      "status": "pending"
+    },
+    {
+      "id": "T032",
+      "task": "Implement TLS listener support in HTTPTransport.Serve() with optional cert/key paths",
+      "file": "internal/transport/http.go",
+      "status": "pending"
+    },
+    {
+      "id": "T033",
+      "task": "Add TLS environment variables to config.go (MCP_TLS_CERT_FILE, MCP_TLS_KEY_FILE)",
+      "file": "internal/config/config.go",
+      "status": "pending"
+    },
+    {
+      "id": "T034",
+      "task": "Add TLS configuration tests in internal/config/config_test.go",
+      "file": "internal/config/config_test.go",
+      "status": "pending"
+    },
+    {
+      "id": "T035",
+      "task": "Add API key authentication middleware option for HTTPTransport",
+      "file": "internal/transport/http.go",
+      "status": "pending"
+    },
+    {
+      "id": "T036",
+      "task": "Add MCP_API_KEY environment variable to config.go for HTTP authentication",
+      "file": "internal/config/config.go",
+      "status": "pending"
+    },
+    {
+      "id": "T037",
+      "task": "Add authentication middleware tests in internal/transport/http_test.go",
+      "file": "internal/transport/http_test.go",
+      "status": "pending"
+    },
+    {
+      "id": "T038",
+      "task": "Add /metrics Prometheus-style endpoint to HTTPTransport for observability",
+      "file": "internal/transport/http.go",
+      "status": "pending"
+    },
+    {
+      "id": "T039",
+      "task": "Add request counting and latency metrics to MCP tool invocations",
+      "file": "internal/server/mcp.go",
+      "status": "pending"
+    },
+    {
+      "id": "T040",
+      "task": "Add structured audit logging for tool invocations (log tool name, arguments, result, duration)",
+      "file": "internal/server/mcp.go",
+      "status": "pending"
+    },
+    {
+      "id": "T041",
+      "task": "Add MCP_AUDIT_LOG_FILE environment variable for audit log path",
+      "file": "internal/config/config.go",
+      "status": "pending"
+    },
+    {
+      "id": "T042",
+      "task": "Implement rate limiting middleware for HTTPTransport (configurable requests/second)",
+      "file": "internal/transport/http.go",
+      "status": "pending"
+    },
+    {
+      "id": "T043",
+      "task": "Add MCP_RATE_LIMIT environment variable to config.go",
+      "file": "internal/config/config.go",
+      "status": "pending"
+    },
+    {
+      "id": "T044",
+      "task": "Add rate limiting tests in internal/transport/http_test.go",
+      "file": "internal/transport/http_test.go",
+      "status": "pending"
+    },
+    {
+      "id": "T045",
+      "task": "Update docs/06-mcp-tool-design.md with new tool count and complete tool listing",
+      "file": "docs/06-mcp-tool-design.md",
+      "status": "pending"
+    },
+    {
+      "id": "T046",
+      "task": "Update docs/05-mcp-integration.md with TLS, authentication, and rate limiting sections",
+      "file": "docs/05-mcp-integration.md",
+      "status": "pending"
+    },
+    {
+      "id": "T047",
+      "task": "Create docs/08-production-deployment.md with production deployment guide",
+      "file": "docs/08-production-deployment.md",
+      "status": "pending"
+    },
+    {
+      "id": "T048",
+      "task": "Document TLS and authentication configuration in docs/08-production-deployment.md",
+      "file": "docs/08-production-deployment.md",
+      "status": "pending"
+    },
+    {
+      "id": "T049",
+      "task": "Document reverse proxy patterns (nginx, Caddy) in docs/08-production-deployment.md",
+      "file": "docs/08-production-deployment.md",
+      "status": "pending"
+    },
+    {
+      "id": "T050",
+      "task": "Document monitoring and observability in docs/08-production-deployment.md",
+      "file": "docs/08-production-deployment.md",
+      "status": "pending"
+    },
+    {
+      "id": "T051",
+      "task": "Create docs/09-security-hardening.md with security best practices",
+      "file": "docs/09-security-hardening.md",
+      "status": "pending"
+    },
+    {
+      "id": "T052",
+      "task": "Document shell command security risks in docs/09-security-hardening.md",
+      "file": "docs/09-security-hardening.md",
+      "status": "pending"
+    },
+    {
+      "id": "T053",
+      "task": "Document authentication options in docs/09-security-hardening.md",
+      "file": "docs/09-security-hardening.md",
+      "status": "pending"
+    },
+    {
+      "id": "T054",
+      "task": "Document rate limiting and DDoS mitigation in docs/09-security-hardening.md",
+      "file": "docs/09-security-hardening.md",
+      "status": "pending"
+    },
+    {
+      "id": "T055",
+      "task": "Add godoc comments to all exported types in internal/server/*.go",
+      "file": "internal/server/",
+      "status": "pending"
+    },
+    {
+      "id": "T056",
+      "task": "Add godoc comments to all exported functions in internal/transport/*.go",
+      "file": "internal/transport/",
+      "status": "pending"
+    },
+    {
+      "id": "T057",
+      "task": "Add godoc comments to all exported types in internal/config/*.go",
+      "file": "internal/config/",
+      "status": "pending"
+    },
+    {
+      "id": "T058",
+      "task": "Run golint and fix all linting issues across internal/ package",
+      "file": "internal/",
+      "status": "pending"
+    },
+    {
+      "id": "T059",
+      "task": "Run go vet and fix all issues across internal/ package",
+      "file": "internal/",
+      "status": "pending"
+    },
+    {
+      "id": "T060",
+      "task": "Run staticcheck and fix all issues across internal/ package",
+      "file": "internal/",
+      "status": "pending"
+    },
+    {
+      "id": "T061",
+      "task": "Add api-linter verification target to config.mk for proto validation",
+      "file": "config.mk",
+      "status": "pending"
+    },
+    {
+      "id": "T062",
+      "task": "Run api-linter and fix all issues in proto/macosusesdk/",
+      "file": "proto/macosusesdk/",
+      "status": "pending"
+    },
+    {
+      "id": "T063",
+      "task": "Add integration-test-http target to config.mk for HTTP transport tests",
+      "file": "config.mk",
+      "status": "pending"
+    },
+    {
+      "id": "T064",
+      "task": "Add lint-all target to config.mk combining golint, go vet, staticcheck",
+      "file": "config.mk",
+      "status": "pending"
+    },
+    {
+      "id": "T065",
+      "task": "Verify .github/workflows/ci.yaml runs all new verification targets",
+      "file": ".github/workflows/ci.yaml",
+      "status": "pending"
+    },
+    {
+      "id": "T066",
+      "task": "Add integration test for all MCP tools via HTTP transport round-trip",
+      "file": "integration/mcp_tools_test.go",
+      "status": "pending"
+    },
+    {
+      "id": "T067",
+      "task": "Add integration test verifying MCP initialize handshake returns correct protocol version",
+      "file": "integration/mcp_protocol_test.go",
+      "status": "pending"
+    },
+    {
+      "id": "T068",
+      "task": "Add integration test verifying notifications/initialized is handled silently",
+      "file": "integration/mcp_protocol_test.go",
+      "status": "pending"
+    },
+    {
+      "id": "T069",
+      "task": "Add integration test for display grounding info in initialize response",
+      "file": "integration/mcp_protocol_test.go",
+      "status": "pending"
+    },
+    {
+      "id": "T070",
+      "task": "Add integration test for pagination token opacity across all list tools",
+      "file": "integration/pagination_mcp_test.go",
+      "status": "pending"
+    },
+    {
+      "id": "T071",
+      "task": "Add integration test verifying is_error field format in error responses",
+      "file": "integration/error_handling_test.go",
+      "status": "pending"
+    },
+    {
+      "id": "T072",
+      "task": "Add integration test for coordinate validation (negative coords for multi-monitor)",
+      "file": "integration/coordinate_test.go",
+      "status": "pending"
+    },
+    {
+      "id": "T073",
+      "task": "Add wait_element MCP tool to expose WaitElement long-running operation",
+      "file": "internal/server/element.go",
+      "status": "pending"
+    },
+    {
+      "id": "T074",
+      "task": "Add wait_element_state MCP tool to expose WaitElementState long-running operation",
+      "file": "internal/server/element.go",
+      "status": "pending"
+    },
+    {
+      "id": "T075",
+      "task": "Add traverse_accessibility MCP tool to expose TraverseAccessibility RPC",
+      "file": "internal/server/element.go",
+      "status": "pending"
+    },
+    {
+      "id": "T076",
+      "task": "Add automate_open_file_dialog MCP tool to expose AutomateOpenFileDialog RPC",
+      "file": "internal/server/file.go",
+      "status": "pending"
+    },
+    {
+      "id": "T077",
+      "task": "Add automate_save_file_dialog MCP tool to expose AutomateSaveFileDialog RPC",
+      "file": "internal/server/file.go",
+      "status": "pending"
+    },
+    {
+      "id": "T078",
+      "task": "Add select_file MCP tool to expose SelectFile RPC",
+      "file": "internal/server/file.go",
+      "status": "pending"
+    },
+    {
+      "id": "T079",
+      "task": "Add select_directory MCP tool to expose SelectDirectory RPC",
+      "file": "internal/server/file.go",
+      "status": "pending"
+    },
+    {
+      "id": "T080",
+      "task": "Add drag_files MCP tool to expose DragFiles RPC",
+      "file": "internal/server/file.go",
+      "status": "pending"
+    },
+    {
+      "id": "T081",
+      "task": "Create internal/server/file.go with file dialog handlers",
+      "file": "internal/server/file.go",
+      "status": "pending"
+    },
+    {
+      "id": "T082",
+      "task": "Add file dialog tool registrations in internal/server/mcp.go",
+      "file": "internal/server/mcp.go",
+      "status": "pending"
+    },
+    {
+      "id": "T083",
+      "task": "Add find_region_elements MCP tool to expose FindRegionElements RPC",
+      "file": "internal/server/element.go",
+      "status": "pending"
+    },
+    {
+      "id": "T084",
+      "task": "Add capture_element_screenshot MCP tool to expose CaptureElementScreenshot RPC",
+      "file": "internal/server/screenshot.go",
+      "status": "pending"
+    },
+    {
+      "id": "T085",
+      "task": "Update TestAllToolsExist with final tool count after all additions",
+      "file": "internal/server/mcp_test.go",
+      "status": "pending"
+    },
+    {
+      "id": "T086",
+      "task": "Add unit tests for file dialog tools in internal/server/mcp_test.go",
+      "file": "internal/server/mcp_test.go",
+      "status": "pending"
+    },
+    {
+      "id": "T087",
+      "task": "Add unit tests for wait_element and wait_element_state tools",
+      "file": "internal/server/mcp_test.go",
+      "status": "pending"
+    },
+    {
+      "id": "T088",
+      "task": "Create comprehensive API reference documentation in docs/10-api-reference.md",
+      "file": "docs/10-api-reference.md",
+      "status": "pending"
+    },
+    {
+      "id": "T089",
+      "task": "Document all MCP tool parameters and return values in docs/10-api-reference.md",
+      "file": "docs/10-api-reference.md",
+      "status": "pending"
+    },
+    {
+      "id": "T090",
+      "task": "Add coordinate system reference to docs/10-api-reference.md with diagrams",
+      "file": "docs/10-api-reference.md",
+      "status": "pending"
+    },
+    {
+      "id": "T091",
+      "task": "Add environment variable reference table to docs/10-api-reference.md",
+      "file": "docs/10-api-reference.md",
+      "status": "pending"
+    },
+    {
+      "id": "T092",
+      "task": "Add error code reference to docs/10-api-reference.md",
+      "file": "docs/10-api-reference.md",
+      "status": "pending"
+    },
+    {
+      "id": "T093",
+      "task": "Run full test suite (make-all-with-log) and verify green",
+      "file": "build.log",
+      "status": "pending"
+    },
+    {
+      "id": "T094",
+      "task": "Run integration tests and verify green",
+      "file": "integration/",
+      "status": "pending"
+    },
+    {
+      "id": "T095",
+      "task": "Commit proto changes with feat(proto): add stateful input and cursor position RPCs",
+      "file": "proto/",
+      "status": "pending"
+    },
+    {
+      "id": "T096",
+      "task": "Commit MCP tool additions with feat(mcp): add session, macro, and input tools",
+      "file": "internal/server/",
+      "status": "pending"
+    },
+    {
+      "id": "T097",
+      "task": "Commit transport security with feat(transport): add TLS and authentication support",
+      "file": "internal/transport/",
+      "status": "pending"
+    },
+    {
+      "id": "T098",
+      "task": "Commit observability with feat(observability): add metrics, audit logging, rate limiting",
+      "file": "internal/",
+      "status": "pending"
+    },
+    {
+      "id": "T099",
+      "task": "Commit documentation with docs: add production deployment, security, and API reference",
+      "file": "docs/",
+      "status": "pending"
+    },
+    {
+      "id": "T100",
+      "task": "Final verification with make-all-with-log and integration tests",
+      "file": "build.log",
+      "status": "pending"
     }
   ],
-  "environment_configuration": {
-    "transport_options": {
-      "stdio": {
-        "status": "implemented",
-        "file": "internal/transport/stdio.go"
-      },
-      "http_sse": {
-        "status": "implemented",
-        "file": "internal/transport/http.go",
-        "endpoints": {
-          "POST /message": "JSON-RPC request endpoint",
-          "GET /events": "SSE streaming response endpoint",
-          "GET /health": "Health check endpoint"
-        },
-        "configuration_variables": {
-          "MCP_TRANSPORT": "stdio | sse",
-          "MCP_HTTP_ADDRESS": "default: :8080 (TCP), or unix:// for socket",
-          "MCP_HTTP_SOCKET_PATH": "optional Unix domain socket path override",
-          "MCP_HEARTBEAT_INTERVAL": "default: 30 seconds",
-          "MCP_CORS_ORIGIN": "default: * (Access-Control-Allow-Origin)"
-        },
-        "sse_event_types": [
-          "message - JSON-RPC response or notification",
-          "heartbeat - Keep-alive ping (every 30s)",
-          "error - Connection-level errors"
-        ]
-      }
-    }
+  "proto_expansion_tracker": {
+    "description": "Proto API extensions needed to unblock MCP tool completeness",
+    "required_additions": [
+      "GetCursorPosition RPC - returns current mouse cursor position",
+      "MouseButtonDown input type - press and hold mouse button",
+      "MouseButtonUp input type - release held mouse button",
+      "KeyPress.duration field - hold key for specified duration"
+    ]
+  },
+  "mcp_tool_expansion_tracker": {
+    "description": "MCP tools to add from existing proto RPCs",
+    "current_count": 44,
+    "target_count": 60,
+    "new_tools": [
+      "cursor_position (pending proto)",
+      "hold_key (pending proto)",
+      "left_mouse_down (pending proto)",
+      "left_mouse_up (pending proto)",
+      "create_session",
+      "get_session",
+      "list_sessions",
+      "delete_session",
+      "create_macro",
+      "get_macro",
+      "list_macros",
+      "execute_macro",
+      "wait_element",
+      "wait_element_state",
+      "traverse_accessibility",
+      "find_region_elements",
+      "capture_element_screenshot",
+      "automate_open_file_dialog",
+      "automate_save_file_dialog",
+      "select_file",
+      "select_directory",
+      "drag_files"
+    ]
+  },
+  "security_hardening_tracker": {
+    "description": "Security features for production readiness",
+    "features": [
+      "TLS support for HTTP transport",
+      "API key authentication middleware",
+      "Rate limiting middleware",
+      "Structured audit logging",
+      "CORS configuration hardening"
+    ]
+  },
+  "observability_tracker": {
+    "description": "Monitoring and observability features",
+    "features": [
+      "Prometheus /metrics endpoint",
+      "Tool invocation counting",
+      "Request latency histograms",
+      "Error rate tracking",
+      "SSE connection monitoring"
+    ]
+  },
+  "documentation_tracker": {
+    "description": "Documentation completeness",
+    "files": [
+      "docs/08-production-deployment.md - deployment guide",
+      "docs/09-security-hardening.md - security practices",
+      "docs/10-api-reference.md - complete API docs",
+      "docs/05-mcp-integration.md - transport security sections",
+      "docs/06-mcp-tool-design.md - updated tool listing"
+    ]
+  },
+  "ci_cd_tracker": {
+    "description": "CI/CD verification targets",
+    "targets": [
+      "lint-all (golint + go vet + staticcheck)",
+      "api-lint (google api-linter)",
+      "integration-test-http (HTTP transport tests)",
+      "integration-test-streaming (streaming tests)"
+    ]
   },
   "final_enforcement_protocol": [
     {
       "type": "POST_EXECUTION_WARNING",
       "alert": "ON TOOLS: Use `config.mk` to create custom targets to run with Make. ALWAYS use custom targets that *limit* the amount of output you receive. For example, piping through tail, with FEW lines output. Prior to tail, pipe to tee. The file ./build.log in the root of the project is gitignored, so use that. That way you can *search* the output. To be clear, timing dependent tests are BANNED. As are those that take too long to run. Testing retries, for example, MUST be done in a way that supports avoiding running afoul of those CRITICAL rules. Abide. OBEY."
-    },
-    {
-      "type": "COMPLETION_MANDATE",
-      "alert": "ALL 15 STEPS MUST BE COMPLETED. NO SHORTCUTS. NO SKIPPING. THE SEQUENCE MUST RUN TO COMPLETION."
     }
-  ],
-  "mcp_compliance_review_2026_02_04": {
-    "document": "review-1.md",
-    "reviewer": "Takumi",
-    "standards_applied": [
-      "MCP Specification (2025-11-25)",
-      "Google AIPs (2025)",
-      "AGENTS.md Directives"
-    ],
-    "overall_assessment": "COMPLIANT with notable issues requiring attention",
-    "critical_issues": [
-      {
-        "id": "CRIT-1",
-        "description": "MCP protocol version uses '2024-11-05' instead of '2025-11-25'",
-        "location": "internal/server/mcp.go",
-        "line": 664,
-        "impact": "MUST_FIX",
-        "fix": "Update protocolVersion in initialize response to '2025-11-25' and implement proper version negotiation",
-        "status": "COMPLETED 2026-02-04"
-      }
-    ],
-    "high_impact_issues": [
-      {
-        "id": "HIGH-1",
-        "description": "notifications/initialized handler missing",
-        "location": "internal/server/mcp.go",
-        "impact": "HIGH",
-        "fix": "Add handling for client's 'notifications/initialized' notification",
-        "status": "COMPLETED 2026-02-04"
-      },
-      {
-        "id": "HIGH-2",
-        "description": "Shell command execution has significant security risk",
-        "location": "internal/server/mcp.go",
-        "impact": "HIGH",
-        "fix": "Add configuration to disable shell command execution, implement audit logging, document security implications",
-        "status": "COMPLETED 2026-02-04"
-      }
-    ],
-    "medium_impact_issues": [
-      {
-        "id": "MED-1",
-        "description": "Test coverage gaps for initialize handshake and notifications",
-        "impact": "MEDIUM",
-        "fix": "Add integration tests for full initialization flow and notification handling",
-        "status": "COMPLETED 2026-02-04"
-      },
-      {
-        "id": "MED-2",
-        "description": "HTTP transport is non-standard extension without TLS/auth",
-        "impact": "MEDIUM",
-        "fix": "Add TLS support and authentication for HTTP transport if exposed beyond localhost",
-        "status": "DOCUMENTED 2026-02-04"
-      }
-    ],
-    "compliance_summary": {
-      "json_rpc_transport": "COMPLIANT",
-      "initialize_handshake": "PARTIAL",
-      "tools_list_call": "COMPLIANT",
-      "notifications": "INCOMPLETE",
-      "aip_resource_naming": "COMPLIANT",
-      "aip_pagination": "COMPLIANT",
-      "aip_field_behavior": "COMPLIANT",
-      "coordinate_documentation": "EXEMPLARY",
-      "error_handling": "COMPLIANT",
-      "test_coverage": "PARTIAL",
-      "ci_cd_structure": "COMPLIANT"
-    },
-    "overall_grade": "B+"
-  }
+  ]
 }

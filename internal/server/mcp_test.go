@@ -555,10 +555,11 @@ func TestGestureToolSchema(t *testing.T) {
 // TestAllToolsExist validates all expected MCP tools are defined
 func TestAllToolsExist(t *testing.T) {
 	expectedTools := []string{
-		// Screenshot tools (3) - Added capture_window_screenshot
+		// Screenshot tools (4)
 		"capture_screenshot",
 		"capture_window_screenshot",
 		"capture_region_screenshot",
+		"capture_element_screenshot",
 		// Input tools (8)
 		"click",
 		"type_text",
@@ -568,16 +569,21 @@ func TestAllToolsExist(t *testing.T) {
 		"drag",
 		"hover",
 		"gesture",
-		// Element tools (6) - Added get_element_actions
+		// Element tools (10)
 		"find_elements",
 		"get_element",
 		"get_element_actions",
 		"click_element",
 		"write_element_value",
 		"perform_element_action",
-		// Window tools (8)
+		"traverse_accessibility",
+		"find_region_elements",
+		"wait_element",
+		"wait_element_state",
+		// Window tools (9)
 		"list_windows",
 		"get_window",
+		"get_window_state",
 		"focus_window",
 		"move_window",
 		"resize_window",
@@ -587,7 +593,7 @@ func TestAllToolsExist(t *testing.T) {
 		// Display tools (2)
 		"list_displays",
 		"get_display",
-		// Clipboard tools (4) - Added get_clipboard_history
+		// Clipboard tools (4)
 		"get_clipboard",
 		"write_clipboard",
 		"clear_clipboard",
@@ -597,21 +603,51 @@ func TestAllToolsExist(t *testing.T) {
 		"list_applications",
 		"get_application",
 		"delete_application",
-		// Scripting tools (4) - Added validate_script
+		// Scripting tools (4)
 		"execute_apple_script",
 		"execute_javascript",
 		"execute_shell_command",
 		"validate_script",
-		// Observation tools (5) - Added stream_observations
+		// Observation tools (5)
 		"create_observation",
 		"stream_observations",
 		"get_observation",
 		"list_observations",
 		"cancel_observation",
+		// File dialog tools (5)
+		"automate_open_file_dialog",
+		"automate_save_file_dialog",
+		"select_file",
+		"select_directory",
+		"drag_files",
+		// Session tools (5)
+		"create_session",
+		"get_session",
+		"list_sessions",
+		"delete_session",
+		"get_session_snapshot",
+		// Transaction tools (3)
+		"begin_transaction",
+		"commit_transaction",
+		"rollback_transaction",
+		// Macro tools (6)
+		"create_macro",
+		"get_macro",
+		"list_macros",
+		"delete_macro",
+		"execute_macro",
+		"update_macro",
+		// Input query tools (2)
+		"get_input",
+		"list_inputs",
+		// Scripting dictionary tool (1)
+		"get_scripting_dictionaries",
+		// Accessibility watch tool (1)
+		"watch_accessibility",
 	}
 
-	if len(expectedTools) != 44 {
-		t.Errorf("Expected 44 tools but defined %d in test", len(expectedTools))
+	if len(expectedTools) != 73 {
+		t.Errorf("Expected 73 tools but defined %d in test", len(expectedTools))
 	}
 
 	// Verify all tool names are unique

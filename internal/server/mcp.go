@@ -1005,6 +1005,668 @@ func (s *MCPServer) registerTools() {
 			},
 			Handler: s.handleCancelObservation,
 		},
+
+		// === ACCESSIBILITY TOOLS ===
+		"traverse_accessibility": {
+			Name:        "traverse_accessibility",
+			Description: "Traverse the full accessibility tree of an application. Returns all UI elements with their roles, text, and positions. Essential for UI discovery.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"type":        "string",
+						"description": "Application resource name (e.g., applications/1234)",
+					},
+					"visible_only": map[string]interface{}{
+						"type":        "boolean",
+						"description": "Only return visible elements (default: false)",
+					},
+				},
+				"required": []string{"name"},
+			},
+			Handler: s.handleTraverseAccessibility,
+		},
+		"get_window_state": {
+			Name:        "get_window_state",
+			Description: "Get the detailed accessibility state of a window including focused element and all UI elements.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"type":        "string",
+						"description": "Window resource name (e.g., applications/123/windows/456)",
+					},
+				},
+				"required": []string{"name"},
+			},
+			Handler: s.handleGetWindowState,
+		},
+		"find_region_elements": {
+			Name:        "find_region_elements",
+			Description: "Find UI elements within a screen region. Uses Global Display Coordinates (top-left origin).",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"parent": map[string]interface{}{
+						"type":        "string",
+						"description": "Application or window resource name",
+					},
+					"x":      map[string]interface{}{"type": "number", "description": "X coordinate of region origin"},
+					"y":      map[string]interface{}{"type": "number", "description": "Y coordinate of region origin"},
+					"width":  map[string]interface{}{"type": "number", "description": "Width of region in pixels"},
+					"height": map[string]interface{}{"type": "number", "description": "Height of region in pixels"},
+					"selector": map[string]interface{}{
+						"type":        "object",
+						"description": "Optional selector for additional filtering",
+					},
+				},
+				"required": []string{"parent", "x", "y", "width", "height"},
+			},
+			Handler: s.handleFindRegionElements,
+		},
+		"wait_element": {
+			Name:        "wait_element",
+			Description: "Wait for an element matching a selector to appear. Polls until found or timeout.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"parent": map[string]interface{}{
+						"type":        "string",
+						"description": "Application or window resource name",
+					},
+					"selector": map[string]interface{}{
+						"type":        "object",
+						"description": "Element selector: {role, text, or text_contains}",
+					},
+					"timeout": map[string]interface{}{
+						"type":        "number",
+						"description": "Maximum wait time in seconds (default: 30)",
+					},
+					"poll_interval": map[string]interface{}{
+						"type":        "number",
+						"description": "Poll interval in seconds (default: 0.5)",
+					},
+				},
+				"required": []string{"parent", "selector"},
+			},
+			Handler: s.handleWaitElement,
+		},
+		"wait_element_state": {
+			Name:        "wait_element_state",
+			Description: "Wait for an element to reach a specific state (enabled, focused, text matches).",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"parent": map[string]interface{}{
+						"type":        "string",
+						"description": "Application or window resource name",
+					},
+					"element_id": map[string]interface{}{
+						"type":        "string",
+						"description": "Element ID to wait on",
+					},
+					"condition": map[string]interface{}{
+						"type":        "string",
+						"description": "State condition: enabled, focused, text_equals, text_contains",
+						"enum":        []string{"enabled", "focused", "text_equals", "text_contains"},
+					},
+					"value": map[string]interface{}{
+						"type":        "string",
+						"description": "Value for text_equals or text_contains conditions",
+					},
+					"timeout": map[string]interface{}{
+						"type":        "number",
+						"description": "Maximum wait time in seconds (default: 30)",
+					},
+					"poll_interval": map[string]interface{}{
+						"type":        "number",
+						"description": "Poll interval in seconds (default: 0.5)",
+					},
+				},
+				"required": []string{"parent", "element_id", "condition"},
+			},
+			Handler: s.handleWaitElementState,
+		},
+		"capture_element_screenshot": {
+			Name:        "capture_element_screenshot",
+			Description: "Capture a screenshot of a specific UI element. Useful for focused visual feedback.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"parent": map[string]interface{}{
+						"type":        "string",
+						"description": "Application resource name (e.g., applications/123)",
+					},
+					"element_id": map[string]interface{}{
+						"type":        "string",
+						"description": "Element ID to capture",
+					},
+					"format": map[string]interface{}{
+						"type":        "string",
+						"description": "Image format: png, jpeg, tiff",
+						"enum":        []string{"png", "jpeg", "tiff"},
+					},
+					"quality": map[string]interface{}{
+						"type":        "integer",
+						"description": "JPEG quality (1-100)",
+					},
+					"padding": map[string]interface{}{
+						"type":        "integer",
+						"description": "Padding around element in pixels",
+					},
+					"include_ocr": map[string]interface{}{
+						"type":        "boolean",
+						"description": "Whether to include OCR text extraction",
+					},
+				},
+				"required": []string{"parent", "element_id"},
+			},
+			Handler: s.handleCaptureElementScreenshot,
+		},
+
+		// === FILE DIALOG TOOLS ===
+		"automate_open_file_dialog": {
+			Name:        "automate_open_file_dialog",
+			Description: "Automate interacting with an open file dialog. Navigate to a directory, select files, and confirm the selection.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"application": map[string]interface{}{
+						"type":        "string",
+						"description": "Application resource name (e.g., applications/TextEdit)",
+					},
+					"file_path": map[string]interface{}{
+						"type":        "string",
+						"description": "File path to select (if known)",
+					},
+					"default_directory": map[string]interface{}{
+						"type":        "string",
+						"description": "Default directory to navigate to",
+					},
+					"file_filters": map[string]interface{}{
+						"type":        "array",
+						"items":       map[string]interface{}{"type": "string"},
+						"description": "File type filters (e.g., ['*.txt', '*.pdf'])",
+					},
+					"timeout": map[string]interface{}{
+						"type":        "number",
+						"description": "Timeout for dialog to appear in seconds",
+					},
+					"allow_multiple": map[string]interface{}{
+						"type":        "boolean",
+						"description": "Whether to allow multiple file selection",
+					},
+				},
+				"required": []string{"application"},
+			},
+			Handler: s.handleAutomateOpenFileDialog,
+		},
+		"automate_save_file_dialog": {
+			Name:        "automate_save_file_dialog",
+			Description: "Automate interacting with a save file dialog. Navigate to a directory, enter filename, and confirm the save.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"application": map[string]interface{}{
+						"type":        "string",
+						"description": "Application resource name (e.g., applications/TextEdit)",
+					},
+					"file_path": map[string]interface{}{
+						"type":        "string",
+						"description": "Full file path to save to",
+					},
+					"default_directory": map[string]interface{}{
+						"type":        "string",
+						"description": "Default directory to navigate to",
+					},
+					"default_filename": map[string]interface{}{
+						"type":        "string",
+						"description": "Default filename",
+					},
+					"timeout": map[string]interface{}{
+						"type":        "number",
+						"description": "Timeout for dialog to appear in seconds",
+					},
+					"confirm_overwrite": map[string]interface{}{
+						"type":        "boolean",
+						"description": "Whether to confirm overwrite if file exists",
+					},
+				},
+				"required": []string{"application", "file_path"},
+			},
+			Handler: s.handleAutomateSaveFileDialog,
+		},
+		"select_file": {
+			Name:        "select_file",
+			Description: "Programmatically select a file in a file browser or dialog context.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"application": map[string]interface{}{
+						"type":        "string",
+						"description": "Application resource name",
+					},
+					"file_path": map[string]interface{}{
+						"type":        "string",
+						"description": "File path to select",
+					},
+					"reveal_finder": map[string]interface{}{
+						"type":        "boolean",
+						"description": "Whether to reveal file in Finder after selection",
+					},
+				},
+				"required": []string{"application", "file_path"},
+			},
+			Handler: s.handleSelectFile,
+		},
+		"select_directory": {
+			Name:        "select_directory",
+			Description: "Programmatically select a directory in a directory browser or dialog context.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"application": map[string]interface{}{
+						"type":        "string",
+						"description": "Application resource name",
+					},
+					"directory_path": map[string]interface{}{
+						"type":        "string",
+						"description": "Directory path to select",
+					},
+					"create_missing": map[string]interface{}{
+						"type":        "boolean",
+						"description": "Whether to create directory if it doesn't exist",
+					},
+				},
+				"required": []string{"application", "directory_path"},
+			},
+			Handler: s.handleSelectDirectory,
+		},
+		"drag_files": {
+			Name:        "drag_files",
+			Description: "Drag and drop files onto a target UI element. Simulates file drop operation.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"application": map[string]interface{}{
+						"type":        "string",
+						"description": "Application resource name",
+					},
+					"file_paths": map[string]interface{}{
+						"type":        "array",
+						"items":       map[string]interface{}{"type": "string"},
+						"description": "File paths to drag",
+					},
+					"target_element_id": map[string]interface{}{
+						"type":        "string",
+						"description": "Target element ID to drop files onto",
+					},
+					"duration": map[string]interface{}{
+						"type":        "number",
+						"description": "Drag duration in seconds",
+					},
+				},
+				"required": []string{"application", "file_paths", "target_element_id"},
+			},
+			Handler: s.handleDragFiles,
+		},
+
+		// === SESSION TOOLS ===
+		"create_session": {
+			Name:        "create_session",
+			Description: "Create a new session for coordinating complex workflows. Sessions maintain context across multiple operations.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"session_id": map[string]interface{}{
+						"type":        "string",
+						"description": "Optional session ID. If not provided, server generates one.",
+					},
+					"display_name": map[string]interface{}{
+						"type":        "string",
+						"description": "Display name for the session",
+					},
+					"metadata": map[string]interface{}{
+						"type":        "object",
+						"description": "Session-scoped metadata (key-value pairs)",
+					},
+				},
+			},
+			Handler: s.handleCreateSession,
+		},
+		"get_session": {
+			Name:        "get_session",
+			Description: "Get details of a specific session.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"type":        "string",
+						"description": "Session resource name (e.g., sessions/123)",
+					},
+				},
+				"required": []string{"name"},
+			},
+			Handler: s.handleGetSession,
+		},
+		"list_sessions": {
+			Name:        "list_sessions",
+			Description: "List all sessions.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"page_size": map[string]interface{}{
+						"type":        "integer",
+						"description": "Maximum number of sessions to return",
+					},
+					"page_token": map[string]interface{}{
+						"type":        "string",
+						"description": "Page token from a previous list call",
+					},
+				},
+			},
+			Handler: s.handleListSessions,
+		},
+		"delete_session": {
+			Name:        "delete_session",
+			Description: "Delete a session.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"type":        "string",
+						"description": "Session resource name",
+					},
+					"force": map[string]interface{}{
+						"type":        "boolean",
+						"description": "Whether to force delete active sessions",
+					},
+				},
+				"required": []string{"name"},
+			},
+			Handler: s.handleDeleteSession,
+		},
+		"get_session_snapshot": {
+			Name:        "get_session_snapshot",
+			Description: "Get a snapshot of session state including applications, observations, and operation history.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"type":        "string",
+						"description": "Session resource name",
+					},
+				},
+				"required": []string{"name"},
+			},
+			Handler: s.handleGetSessionSnapshot,
+		},
+		"begin_transaction": {
+			Name:        "begin_transaction",
+			Description: "Begin a transaction within a session. Transactions group operations atomically.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"session": map[string]interface{}{
+						"type":        "string",
+						"description": "Session resource name",
+					},
+				},
+				"required": []string{"session"},
+			},
+			Handler: s.handleBeginTransaction,
+		},
+		"commit_transaction": {
+			Name:        "commit_transaction",
+			Description: "Commit a transaction, applying all queued operations.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"type":        "string",
+						"description": "Session resource name",
+					},
+					"transaction_id": map[string]interface{}{
+						"type":        "string",
+						"description": "Transaction ID to commit",
+					},
+				},
+				"required": []string{"name", "transaction_id"},
+			},
+			Handler: s.handleCommitTransaction,
+		},
+		"rollback_transaction": {
+			Name:        "rollback_transaction",
+			Description: "Rollback a transaction, discarding all queued operations.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"type":        "string",
+						"description": "Session resource name",
+					},
+					"transaction_id": map[string]interface{}{
+						"type":        "string",
+						"description": "Transaction ID to rollback",
+					},
+					"revision_id": map[string]interface{}{
+						"type":        "string",
+						"description": "Optional revision ID to rollback to",
+					},
+				},
+				"required": []string{"name", "transaction_id"},
+			},
+			Handler: s.handleRollbackTransaction,
+		},
+
+		// === MACRO TOOLS ===
+		"create_macro": {
+			Name:        "create_macro",
+			Description: "Create a new macro for recording and replaying action sequences.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"macro_id": map[string]interface{}{
+						"type":        "string",
+						"description": "Optional macro ID. If not provided, server generates one.",
+					},
+					"display_name": map[string]interface{}{
+						"type":        "string",
+						"description": "Display name for the macro",
+					},
+					"description": map[string]interface{}{
+						"type":        "string",
+						"description": "Description of what the macro does",
+					},
+					"tags": map[string]interface{}{
+						"type":        "array",
+						"items":       map[string]interface{}{"type": "string"},
+						"description": "Tags for categorization",
+					},
+				},
+				"required": []string{"display_name"},
+			},
+			Handler: s.handleCreateMacro,
+		},
+		"get_macro": {
+			Name:        "get_macro",
+			Description: "Get details of a specific macro including its actions.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"type":        "string",
+						"description": "Macro resource name (e.g., macros/123)",
+					},
+				},
+				"required": []string{"name"},
+			},
+			Handler: s.handleGetMacro,
+		},
+		"list_macros": {
+			Name:        "list_macros",
+			Description: "List all macros.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"page_size": map[string]interface{}{
+						"type":        "integer",
+						"description": "Maximum number of macros to return",
+					},
+					"page_token": map[string]interface{}{
+						"type":        "string",
+						"description": "Page token from a previous list call",
+					},
+				},
+			},
+			Handler: s.handleListMacros,
+		},
+		"delete_macro": {
+			Name:        "delete_macro",
+			Description: "Delete a macro.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"type":        "string",
+						"description": "Macro resource name",
+					},
+				},
+				"required": []string{"name"},
+			},
+			Handler: s.handleDeleteMacro,
+		},
+		"execute_macro": {
+			Name:        "execute_macro",
+			Description: "Execute a macro. Returns a long-running operation that can be tracked.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"macro": map[string]interface{}{
+						"type":        "string",
+						"description": "Macro resource name to execute",
+					},
+					"parameter_values": map[string]interface{}{
+						"type":        "object",
+						"description": "Parameter values for parameterized macros",
+					},
+				},
+				"required": []string{"macro"},
+			},
+			Handler: s.handleExecuteMacro,
+		},
+		"update_macro": {
+			Name:        "update_macro",
+			Description: "Update an existing macro's metadata.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"type":        "string",
+						"description": "Macro resource name to update",
+					},
+					"display_name": map[string]interface{}{
+						"type":        "string",
+						"description": "New display name",
+					},
+					"description": map[string]interface{}{
+						"type":        "string",
+						"description": "New description",
+					},
+					"tags": map[string]interface{}{
+						"type":        "array",
+						"items":       map[string]interface{}{"type": "string"},
+						"description": "New tags for categorization",
+					},
+				},
+				"required": []string{"name"},
+			},
+			Handler: s.handleUpdateMacro,
+		},
+
+		// === INPUT QUERY TOOLS ===
+		"get_input": {
+			Name:        "get_input",
+			Description: "Get details of a specific input action by resource name.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"type":        "string",
+						"description": "Input resource name (e.g., applications/123/inputs/456)",
+					},
+				},
+				"required": []string{"name"},
+			},
+			Handler: s.handleGetInput,
+		},
+		"list_inputs": {
+			Name:        "list_inputs",
+			Description: "List input history for an application with optional filtering.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"parent": map[string]interface{}{
+						"type":        "string",
+						"description": "Parent application (e.g., applications/123). Use applications/- for all.",
+					},
+					"page_size": map[string]interface{}{
+						"type":        "integer",
+						"description": "Maximum number of inputs to return",
+					},
+					"page_token": map[string]interface{}{
+						"type":        "string",
+						"description": "Page token from a previous list call",
+					},
+					"filter": map[string]interface{}{
+						"type":        "string",
+						"description": "Filter inputs by state: PENDING, EXECUTING, COMPLETED, FAILED",
+					},
+				},
+			},
+			Handler: s.handleListInputs,
+		},
+
+		// === SCRIPTING DICTIONARY TOOL ===
+		"get_scripting_dictionaries": {
+			Name:        "get_scripting_dictionaries",
+			Description: "Get available AppleScript dictionaries for scriptable applications.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"type":        "string",
+						"description": "Resource name (usually 'scriptingDictionaries')",
+					},
+				},
+			},
+			Handler: s.handleGetScriptingDictionaries,
+		},
+
+		// === ACCESSIBILITY WATCH TOOL ===
+		"watch_accessibility": {
+			Name:        "watch_accessibility",
+			Description: "Watch accessibility tree changes for an application. Returns initial snapshot. For continuous streaming, use stream_observations instead.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"type":        "string",
+						"description": "Application resource name to watch",
+					},
+					"poll_interval": map[string]interface{}{
+						"type":        "number",
+						"description": "Poll interval in seconds",
+					},
+					"visible_only": map[string]interface{}{
+						"type":        "boolean",
+						"description": "Only report changes to visible elements",
+					},
+				},
+				"required": []string{"name"},
+			},
+			Handler: s.handleWatchAccessibility,
+		},
 	}
 }
 

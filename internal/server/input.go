@@ -717,3 +717,100 @@ func (s *MCPServer) handleGesture(call *ToolCall) (*ToolResult, error) {
 		}},
 	}, nil
 }
+
+// handleGetInput handles the get_input tool for retrieving input details
+func (s *MCPServer) handleGetInput(call *ToolCall) (*ToolResult, error) {
+	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
+	defer cancel()
+
+	var params struct {
+		Name string `json:"name"`
+	}
+
+	if err := json.Unmarshal(call.Arguments, &params); err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Invalid parameters: %v", err)}},
+		}, nil
+	}
+
+	if params.Name == "" {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: "name parameter is required"}},
+		}, nil
+	}
+
+	resp, err := s.client.GetInput(ctx, &pb.GetInputRequest{Name: params.Name})
+	if err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to get input: %v", err)}},
+		}, nil
+	}
+
+	data, _ := json.MarshalIndent(map[string]interface{}{
+		"name":        resp.Name,
+		"state":       resp.State.String(),
+		"create_time": resp.CreateTime.AsTime().Format(time.RFC3339),
+	}, "", "  ")
+
+	return &ToolResult{
+		Content: []Content{{Type: "text", Text: string(data)}},
+	}, nil
+}
+
+// handleListInputs handles the list_inputs tool for listing input history
+func (s *MCPServer) handleListInputs(call *ToolCall) (*ToolResult, error) {
+	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
+	defer cancel()
+
+	var params struct {
+		PageToken string `json:"page_token"`
+		Filter    string `json:"filter"`
+		Parent    string `json:"parent"`
+		PageSize  int32  `json:"page_size"`
+	}
+
+	if err := json.Unmarshal(call.Arguments, &params); err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Invalid parameters: %v", err)}},
+		}, nil
+	}
+
+	parent := params.Parent
+	if parent == "" {
+		parent = defaultApplicationParent
+	}
+
+	resp, err := s.client.ListInputs(ctx, &pb.ListInputsRequest{
+		Parent:    parent,
+		PageSize:  params.PageSize,
+		PageToken: params.PageToken,
+		Filter:    params.Filter,
+	})
+	if err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to list inputs: %v", err)}},
+		}, nil
+	}
+
+	inputs := make([]map[string]interface{}, 0, len(resp.Inputs))
+	for _, input := range resp.Inputs {
+		inputs = append(inputs, map[string]interface{}{
+			"name":  input.Name,
+			"state": input.State.String(),
+		})
+	}
+
+	data, _ := json.MarshalIndent(map[string]interface{}{
+		"inputs":          inputs,
+		"next_page_token": resp.NextPageToken,
+	}, "", "  ")
+
+	return &ToolResult{
+		Content: []Content{{Type: "text", Text: string(data)}},
+	}, nil
+}
