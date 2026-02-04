@@ -56,7 +56,9 @@ type HTTPTransportConfig struct {
 	RateLimit         float64
 }
 
-// DefaultHTTPConfig returns default HTTP transport configuration
+// DefaultHTTPConfig returns the default HTTP transport configuration.
+// Address defaults to ":8080", heartbeat interval to 15 seconds,
+// CORS allows all origins, and read timeout is 30 seconds.
 func DefaultHTTPConfig() *HTTPTransportConfig {
 	return &HTTPTransportConfig{
 		Address:           ":8080",
@@ -242,7 +244,9 @@ func (r *ClientRegistry) Count() int {
 	return len(r.clients)
 }
 
-// NewHTTPTransport creates a new HTTP/SSE transport
+// NewHTTPTransport creates a new HTTP/SSE transport with the given configuration.
+// If config is nil, default configuration is used. The transport sets up routes
+// for /message, /events, /health, and /metrics endpoints.
 func NewHTTPTransport(config *HTTPTransportConfig) *HTTPTransport {
 	if config == nil {
 		config = DefaultHTTPConfig()
@@ -603,7 +607,8 @@ func (t *HTTPTransport) ReadMessage() (*Message, error) {
 	return nil, fmt.Errorf("ReadMessage is not supported by HTTPTransport: use Serve(handler) callback pattern instead")
 }
 
-// WriteMessage broadcasts a message to all connected SSE clients
+// WriteMessage broadcasts a message to all connected SSE clients.
+// The message is serialized to JSON and sent as an SSE event.
 func (t *HTTPTransport) WriteMessage(msg *Message) error {
 	if t.closed.Load() {
 		return fmt.Errorf("transport is closed")
@@ -624,7 +629,8 @@ func (t *HTTPTransport) WriteMessage(msg *Message) error {
 	return nil
 }
 
-// Close closes the HTTP transport
+// Close closes the HTTP transport and shuts down the server gracefully.
+// It signals all SSE clients and waits up to 5 seconds for cleanup.
 func (t *HTTPTransport) Close() error {
 	if t.closed.Swap(true) {
 		return nil
@@ -649,7 +655,7 @@ func (t *HTTPTransport) Close() error {
 	return nil
 }
 
-// IsClosed returns whether the transport is closed
+// IsClosed returns true if the transport has been closed.
 func (t *HTTPTransport) IsClosed() bool {
 	return t.closed.Load()
 }

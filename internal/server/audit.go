@@ -46,9 +46,9 @@ var redactedKeys = map[string]bool{
 	"decryption_key":    true,
 }
 
-// NewAuditLogger creates a new audit logger.
-// If filePath is empty, audit logging is disabled.
-// If filePath is non-empty, logs are written to that file.
+// NewAuditLogger creates a new audit logger that writes to the specified file.
+// If filePath is empty, audit logging is disabled. Returns an error if the
+// file cannot be opened.
 func NewAuditLogger(filePath string) (*AuditLogger, error) {
 	if filePath == "" {
 		return &AuditLogger{enabled: false}, nil
@@ -70,7 +70,8 @@ func NewAuditLogger(filePath string) (*AuditLogger, error) {
 	}, nil
 }
 
-// Close closes the audit log file if open.
+// Close closes the audit log file if it is open.
+// Safe to call multiple times. Returns any error from closing the file.
 func (a *AuditLogger) Close() error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -81,7 +82,7 @@ func (a *AuditLogger) Close() error {
 	return nil
 }
 
-// IsEnabled returns true if audit logging is enabled.
+// IsEnabled returns true if audit logging is enabled (file path was provided).
 func (a *AuditLogger) IsEnabled() bool {
 	if a == nil {
 		return false
@@ -92,6 +93,7 @@ func (a *AuditLogger) IsEnabled() bool {
 }
 
 // LogToolCall logs a tool invocation with redacted arguments.
+// Sensitive fields like passwords and tokens are automatically redacted.
 func (a *AuditLogger) LogToolCall(tool string, args json.RawMessage, status string, duration time.Duration) {
 	if !a.IsEnabled() {
 		return

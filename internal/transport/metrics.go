@@ -48,7 +48,9 @@ var defaultLatencyBuckets = []float64{
 	0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0,
 }
 
-// NewMetricsRegistry creates a new metrics registry with standard MCP metrics registered.
+// NewMetricsRegistry creates a new metrics registry with standard MCP metrics.
+// Pre-registered metrics include request counters, latency histograms,
+// SSE event counters, and active connection gauges.
 func NewMetricsRegistry() *MetricsRegistry {
 	m := &MetricsRegistry{
 		counters:   make(map[string]*counter),
@@ -89,7 +91,8 @@ func (m *MetricsRegistry) registerGauge(name string) {
 }
 
 // IncrementCounter increments a counter by 1 for the given label combination.
-// Labels should be formatted as: key1="value1",key2="value2"
+// Labels should be formatted as: key1="value1",key2="value2".
+// No-op if the counter is not registered.
 func (m *MetricsRegistry) IncrementCounter(name string, labels string) {
 	m.mu.RLock()
 	c, ok := m.counters[name]
@@ -104,6 +107,7 @@ func (m *MetricsRegistry) IncrementCounter(name string, labels string) {
 }
 
 // ObserveHistogram records a value in a histogram for the given label combination.
+// The value is added to all applicable buckets and the running sum.
 func (m *MetricsRegistry) ObserveHistogram(name string, labels string, value float64) {
 	m.mu.RLock()
 	h, ok := m.histograms[name]
@@ -136,7 +140,7 @@ func (m *MetricsRegistry) ObserveHistogram(name string, labels string, value flo
 	h.counts[labels][len(h.buckets)]++
 }
 
-// SetGauge sets a gauge to a specific value.
+// SetGauge sets a gauge to a specific value for the given label combination.
 func (m *MetricsRegistry) SetGauge(name string, labels string, value float64) {
 	m.mu.RLock()
 	g, ok := m.gauges[name]
@@ -150,7 +154,7 @@ func (m *MetricsRegistry) SetGauge(name string, labels string, value float64) {
 	g.mu.Unlock()
 }
 
-// IncrementGauge increments a gauge by delta.
+// IncrementGauge increments a gauge by delta for the given label combination.
 func (m *MetricsRegistry) IncrementGauge(name string, labels string, delta float64) {
 	m.mu.RLock()
 	g, ok := m.gauges[name]
@@ -165,6 +169,7 @@ func (m *MetricsRegistry) IncrementGauge(name string, labels string, delta float
 }
 
 // WritePrometheus writes all metrics in Prometheus text format to the writer.
+// Output is sorted alphabetically by metric name for deterministic output.
 func (m *MetricsRegistry) WritePrometheus(w io.Writer) error {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -315,7 +320,7 @@ func (m *MetricsRegistry) WritePrometheus(w io.Writer) error {
 }
 
 // RecordRequest records a tool invocation with count and latency metrics.
-// This is the main entry point for instrumentation from the MCP server.
+// This is the primary instrumentation entry point for the MCP server.
 func (m *MetricsRegistry) RecordRequest(tool string, status string, duration time.Duration) {
 	labels := fmt.Sprintf(`tool="%s",status="%s"`, tool, status)
 	m.IncrementCounter("mcp_requests_total", labels)
@@ -324,7 +329,7 @@ func (m *MetricsRegistry) RecordRequest(tool string, status string, duration tim
 	m.ObserveHistogram("mcp_request_duration_seconds", toolLabels, duration.Seconds())
 }
 
-// RecordSSEEvent records an SSE event being sent.
+// RecordSSEEvent records an SSE event transmission.
 func (m *MetricsRegistry) RecordSSEEvent() {
 	m.IncrementCounter("mcp_sse_events_sent_total", "")
 }
@@ -337,7 +342,7 @@ func (m *MetricsRegistry) SetSSEConnections(count int) {
 // Global metrics registry instance
 var defaultMetrics = NewMetricsRegistry()
 
-// DefaultMetrics returns the global metrics registry.
+// DefaultMetrics returns the global default metrics registry singleton.
 func DefaultMetrics() *MetricsRegistry {
 	return defaultMetrics
 }

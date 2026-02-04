@@ -22,14 +22,14 @@
     "constraint": "The use of subagents via the `runSubagent` tool is MANDATORY for the execution of the tasks below. Tasks are grouped specifically to be run in distinct subagent contexts to prevent context window exhaustion. Do not attempt to solve all groups in a single turn."
   },
   "status_section": {
-    "current_state": "77 MCP tools + observability features + documentation. All tests pass.",
+    "current_state": "77 MCP tools + observability + godoc comments + lint targets. All tests pass.",
     "commits_made": [
       "20358ac - feat(input): add cursor_position, hold_key, mouse_button_down/up MCP tools",
       "120c9d7 - test(integration): add HTTP transport tests",
       "2e1d260 - feat(security): add TLS and API key auth with constant-time comparison",
       "2267ae5 - feat(observability): add metrics, audit logging, rate limiting"
     ],
-    "verification_status": "verified - make-all-with-log passes, all unit and integration tests pass"
+    "verification_status": "verified - make-all-with-log, lint-all, api-lint, integration-test-http all pass"
   },
   "sequential_tasks": [
     {
@@ -362,61 +362,62 @@
       "id": "T055",
       "task": "Add godoc comments to all exported types in internal/server/*.go",
       "file": "internal/server/",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T056",
       "task": "Add godoc comments to all exported functions in internal/transport/*.go",
       "file": "internal/transport/",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T057",
       "task": "Add godoc comments to all exported types in internal/config/*.go",
       "file": "internal/config/",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T058",
       "task": "Run golint and fix all linting issues across internal/ package",
       "file": "internal/",
-      "status": "pending"
+      "status": "complete",
+      "note": "golint deprecated - staticcheck used instead"
     },
     {
       "id": "T059",
       "task": "Run go vet and fix all issues across internal/ package",
       "file": "internal/",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T060",
       "task": "Run staticcheck and fix all issues across internal/ package",
       "file": "internal/",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T061",
       "task": "Add api-linter verification target to config.mk for proto validation",
       "file": "config.mk",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T062",
       "task": "Run api-linter and fix all issues in proto/macosusesdk/",
       "file": "proto/macosusesdk/",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T063",
       "task": "Add integration-test-http target to config.mk for HTTP transport tests",
       "file": "config.mk",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T064",
       "task": "Add lint-all target to config.mk combining golint, go vet, staticcheck",
       "file": "config.mk",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T065",

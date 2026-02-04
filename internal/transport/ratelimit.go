@@ -22,9 +22,9 @@ type RateLimiter struct {
 	mu         sync.Mutex       // protects all fields
 }
 
-// NewRateLimiter creates a new rate limiter with the specified rate (requests per second).
-// The burst size is set to 2x the rate to allow for brief spikes.
-// If rate is 0 or negative, the limiter is disabled (always allows requests).
+// NewRateLimiter creates a new rate limiter with the specified rate.
+// The rate is in requests per second. The burst size is set to 2x the rate.
+// Returns nil if rate is 0 or negative (disabling rate limiting).
 func NewRateLimiter(requestsPerSecond float64) *RateLimiter {
 	if requestsPerSecond <= 0 {
 		return nil
@@ -42,7 +42,8 @@ func NewRateLimiter(requestsPerSecond float64) *RateLimiter {
 	}
 }
 
-// NewRateLimiterWithClock creates a rate limiter with an injectable clock for testing.
+// NewRateLimiterWithClock creates a rate limiter with an injectable clock.
+// This is primarily used for testing to control time progression.
 func NewRateLimiterWithClock(requestsPerSecond float64, clock func() time.Time) *RateLimiter {
 	if requestsPerSecond <= 0 {
 		return nil
@@ -61,9 +62,8 @@ func NewRateLimiterWithClock(requestsPerSecond float64, clock func() time.Time) 
 	}
 }
 
-// Allow checks if a request should be allowed based on current token availability.
-// Returns true if the request is allowed (and consumes one token), false if rate limited.
-// This method is thread-safe.
+// Allow checks if a request should be allowed and consumes a token if so.
+// Returns true if allowed, false if rate limited. Thread-safe.
 func (r *RateLimiter) Allow() bool {
 	if r == nil {
 		return true // nil limiter means no rate limiting
@@ -90,7 +90,8 @@ func (r *RateLimiter) Allow() bool {
 	return true
 }
 
-// Tokens returns the current number of available tokens (for testing/monitoring).
+// Tokens returns the current number of available tokens.
+// Returns -1 if the limiter is nil (disabled). Used for testing and monitoring.
 func (r *RateLimiter) Tokens() float64 {
 	if r == nil {
 		return -1 // indicates disabled
@@ -101,7 +102,8 @@ func (r *RateLimiter) Tokens() float64 {
 }
 
 // RateLimitMiddleware creates HTTP middleware that applies rate limiting.
-// If the rate limiter is nil, the middleware is a no-op passthrough.
+// The /health and /metrics endpoints are exempt. Returns 429 when rate limited.
+// If limiter is nil, the middleware is a passthrough.
 func RateLimitMiddleware(limiter *RateLimiter, next http.Handler) http.Handler {
 	if limiter == nil {
 		return next // no rate limiting

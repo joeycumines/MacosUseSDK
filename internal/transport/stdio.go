@@ -14,7 +14,9 @@ import (
 	"sync"
 )
 
-// StdioTransport implements JSON-RPC 2.0 transport over stdin/stdout
+// StdioTransport implements the Transport interface for JSON-RPC 2.0
+// communication over standard input/output streams. This is the default
+// transport for MCP and is used for local communication with parent processes.
 //
 //lint:ignore BETTERALIGN struct is intentionally ordered for clarity
 type StdioTransport struct {
@@ -24,7 +26,8 @@ type StdioTransport struct {
 	closed bool
 }
 
-// NewStdioTransport creates a new stdio transport
+// NewStdioTransport creates a new stdio transport with the given reader and writer.
+// The reader is typically os.Stdin and writer is typically os.Stdout.
 func NewStdioTransport(stdin io.Reader, stdout io.Writer) *StdioTransport {
 	return &StdioTransport{
 		reader: bufio.NewReader(stdin),
@@ -102,7 +105,9 @@ type ErrorObj struct {
 	Code int `json:"code"`
 }
 
-// ReadMessage reads a JSON-RPC 2.0 message
+// ReadMessage reads a JSON-RPC 2.0 message from stdin.
+// It blocks until a complete newline-delimited JSON message is available.
+// Returns an error if the transport is closed or reading fails.
 func (t *StdioTransport) ReadMessage() (*Message, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -132,7 +137,8 @@ func (t *StdioTransport) ReadMessage() (*Message, error) {
 	return &msg, nil
 }
 
-// WriteMessage writes a JSON-RPC 2.0 message
+// WriteMessage writes a JSON-RPC 2.0 message to stdout.
+// The message is serialized as a single line of JSON followed by a newline.
 func (t *StdioTransport) WriteMessage(msg *Message) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -156,7 +162,8 @@ func (t *StdioTransport) WriteMessage(msg *Message) error {
 	return nil
 }
 
-// Close closes the transport
+// Close closes the transport and marks it as unavailable.
+// Subsequent operations will return an error.
 func (t *StdioTransport) Close() error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -169,14 +176,16 @@ func (t *StdioTransport) Close() error {
 	return nil
 }
 
-// IsClosed returns whether the transport is closed
+// IsClosed returns true if the transport has been closed.
 func (t *StdioTransport) IsClosed() bool {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	return t.closed
 }
 
-// Serve starts serving JSON-RPC 2.0 messages
+// Serve starts serving JSON-RPC 2.0 messages using the provided handler.
+// It reads messages from stdin, dispatches them to the handler, and writes
+// responses to stdout. This method blocks until stdin is closed.
 func (t *StdioTransport) Serve(handler func(*Message) (*Message, error)) error {
 	for {
 		msg, err := t.ReadMessage()

@@ -23,7 +23,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-// MCP server constants
+// MCP server constants.
 const (
 	// shutdownResponseDelay is the delay before shutdown to allow response to be sent.
 	shutdownResponseDelay = 100 * time.Millisecond
@@ -31,7 +31,10 @@ const (
 	displayInfoTimeout = 5 * time.Second
 )
 
-// MCPServer represents an MCP server
+// MCPServer implements the Model Context Protocol (MCP) server.
+// It connects to a gRPC backend and exposes 77 MCP tools for macOS automation
+// including screenshot capture, input simulation, window management, and more.
+// The server supports both stdio and HTTP/SSE transports.
 //
 //lint:ignore BETTERALIGN struct is intentionally ordered for clarity
 type MCPServer struct {
@@ -47,7 +50,8 @@ type MCPServer struct {
 	mu            sync.RWMutex
 }
 
-// Tool represents an MCP tool
+// Tool represents an MCP tool with its handler, schema, and metadata.
+// Each tool is registered with the server and exposed via the MCP protocol.
 //
 //lint:ignore BETTERALIGN struct is intentionally ordered for clarity
 type Tool struct {
@@ -57,25 +61,30 @@ type Tool struct {
 	Description string
 }
 
-// ToolCall represents a tool call request
+// ToolCall represents an incoming MCP tool invocation request.
+// It contains the tool name and the JSON-encoded arguments.
 type ToolCall struct {
 	Name      string          `json:"name"`
 	Arguments json.RawMessage `json:"arguments"`
 }
 
-// ToolResult represents a tool call result
+// ToolResult represents the result of an MCP tool invocation.
+// It contains one or more content items (text, images, etc.) and an optional error flag.
 type ToolResult struct {
 	Content []Content `json:"content"`
 	IsError bool      `json:"is_error,omitempty"`
 }
 
-// Content represents a content item in a tool result
+// Content represents a content item in an MCP tool result.
+// Type is "text" for plain text or "image" for base64-encoded image data.
 type Content struct {
 	Type string `json:"type"`
 	Text string `json:"text,omitempty"`
 }
 
-// NewMCPServer creates a new MCP server
+// NewMCPServer creates a new MCP server with the given configuration.
+// It initializes the gRPC connection, audit logger, and registers all tools.
+// Returns an error if gRPC connection or audit logger initialization fails.
 func NewMCPServer(cfg *config.Config) (*MCPServer, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -137,7 +146,8 @@ func (s *MCPServer) initGRPC() error {
 	return nil
 }
 
-// Shutdown gracefully shuts down the server
+// Shutdown gracefully shuts down the server and releases all resources.
+// It closes the HTTP transport, audit logger, and gRPC connection.
 func (s *MCPServer) Shutdown() {
 	// Close HTTP transport if active
 	s.mu.RLock()
@@ -1751,7 +1761,8 @@ func (s *MCPServer) registerTools() {
 	}
 }
 
-// Serve starts serving MCP requests
+// Serve starts serving MCP requests over the given stdio transport.
+// It blocks until the transport is closed or the server context is cancelled.
 func (s *MCPServer) Serve(tr *transport.StdioTransport) error {
 	log.Println("MCP server starting...")
 
@@ -1797,7 +1808,8 @@ func (s *MCPServer) Serve(tr *transport.StdioTransport) error {
 	}
 }
 
-// ServeHTTP starts serving MCP requests over HTTP/SSE
+// ServeHTTP starts serving MCP requests over the HTTP/SSE transport.
+// It blocks until the transport is closed or an error occurs.
 func (s *MCPServer) ServeHTTP(tr *transport.HTTPTransport) error {
 	log.Println("MCP server starting with HTTP/SSE transport...")
 	s.mu.Lock()

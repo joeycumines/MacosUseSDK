@@ -65,7 +65,8 @@ type Config struct {
 	ShellCommandsEnabled bool
 }
 
-// Load loads the configuration from environment variables
+// Load loads configuration from environment variables and returns a Config.
+// All fields have sensible defaults. Returns an error if validation fails.
 func Load() (*Config, error) {
 	requestTimeout, err := getEnvAsInt("MACOS_USE_REQUEST_TIMEOUT", 30)
 	if err != nil {
