@@ -1,12 +1,23 @@
 # MacosUseSDK
 
-Library, command-line tools, and gRPC server to traverse the macOS accessibility tree and simulate user input actions. Allows interaction with UI elements of other applications.
+Library, command-line tools, and MCP/gRPC server to traverse the macOS accessibility tree and simulate user input actions. Allows interaction with UI elements of other applications.
 
 ## Components
 
 - **MacosUseSDK**: Core Swift library for accessibility automation
 - **Command-line Tools**: Standalone executables for common automation tasks
-- **gRPC Server**: Production-ready API server with resource-oriented gRPC API
+- **MCP Server**: Production-ready server exposing **77 MCP tools** for AI agent integration via [Model Context Protocol](https://modelcontextprotocol.io/)
+- **gRPC Server**: Resource-oriented gRPC API following [Google's AIPs](https://google.aip.dev/)
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [API Reference](docs/10-api-reference.md) | Complete reference for all 77 MCP tools, 18 environment variables, coordinate systems, and error codes |
+| [Production Deployment](docs/08-production-deployment.md) | Deployment guide with TLS, authentication, reverse proxy patterns, and monitoring |
+| [Security Hardening](docs/09-security-hardening.md) | Security best practices, shell command risks, authentication options |
+| [MCP Integration](docs/05-mcp-integration.md) | Protocol compliance, transport specifications, tool design |
+| [MCP Tool Design](docs/06-mcp-tool-design.md) | Detailed tool catalog with all 77 tools organized by category |
 
 
 https://github.com/user-attachments/assets/d8dc75ba-5b15-492c-bb40-d2bc5b65483e
@@ -190,43 +201,62 @@ The repository includes a production-ready gRPC server that exposes all SDK func
 
 ### Features
 
+- **77 MCP Tools** for comprehensive macOS automation
 - **Resource-oriented API** following [Google's AIPs](https://google.aip.dev/)
 - **Multi-application support**: Automate multiple applications simultaneously
 - **Real-time streaming**: Watch accessibility tree changes in real-time
 - **Thread-safe architecture**: CQRS-style with central control loop
-- **Flexible configuration**: TCP sockets or Unix domain sockets
+- **Flexible transport**: HTTP+SSE or Unix domain sockets
+- **Production-ready**: TLS, API key authentication, rate limiting, audit logging
 
 ### Quick Start
 
-1. Install [buf](https://buf.build/) for protobuf code generation
-2. Generate gRPC stubs:
-   ```sh
-   buf generate
-   ```
-3. Build and run the server:
-   ```sh
-   cd Server
-   swift build -c release
-   .build/release/MacosUseServer
-   ```
+```sh
+# Install buf for protobuf code generation
+brew install bufbuild/buf/buf
 
-See [Server/README.md](Server/README.md) for detailed documentation.
+# Generate gRPC stubs
+buf generate
+
+# Build and run the server
+cd Server && swift build -c release
+.build/release/MacosUseServer
+```
+
+### Environment Variables
+
+Key configuration options (see [API Reference](docs/10-api-reference.md#3-environment-variable-reference) for complete list):
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `MCP_HTTP_ADDR` | HTTP server address | `127.0.0.1:8080` |
+| `MCP_UNIX_SOCKET` | Unix socket path (if set, uses UDS) | - |
+| `MCP_TLS_CERT_FILE` | TLS certificate file path | - |
+| `MCP_TLS_KEY_FILE` | TLS private key file path | - |
+| `MCP_API_KEY` | API key for authentication | - |
+| `MCP_RATE_LIMIT` | Requests per second limit | `100` |
+
+See [Server/README.md](Server/README.md) for detailed server documentation.
 
 ### API Example
 
-Open Calculator and perform an action:
+Open Calculator and click using MCP tools over HTTP:
 
 ```sh
-# Open application
-grpcurl -plaintext -d '{"identifier": "Calculator"}' \
-  localhost:8080 macosusesdk.v1.DesktopService/OpenApplication
+# Initialize MCP session
+curl -X POST http://localhost:8080/message \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","clientInfo":{"name":"example"}}}'
 
-# Perform action (type "1+2=")
-grpcurl -plaintext -d '{
-  "name": "targetApplications/12345",
-  "action": {"input": {"type_text": "1+2="}},
-  "options": {"show_animation": true}
-}' localhost:8080 macosusesdk.v1.TargetApplicationsService/PerformAction
+# Call open_application tool
+curl -X POST http://localhost:8080/message \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"open_application","arguments":{"identifier":"Calculator"}}}'
+
+# Call click tool at coordinates
+curl -X POST http://localhost:8080/message \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"click","arguments":{"x":100,"y":200}}}'
 ```
 
 ## License
