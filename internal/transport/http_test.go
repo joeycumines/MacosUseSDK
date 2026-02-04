@@ -355,3 +355,219 @@ func TestSSEClient(t *testing.T) {
 		t.Errorf("ID = %s, want client-1", client.ID)
 	}
 }
+
+func TestHTTPTransport_AuthMiddleware_NoAuthRequired(t *testing.T) {
+	// Without APIKey, no auth should be required
+	tr := NewHTTPTransport(nil)
+
+	req := httptest.NewRequest("GET", "/health", nil)
+	w := httptest.NewRecorder()
+
+	tr.handleHealth(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("Status = %d, want 200 (no auth required)", w.Code)
+	}
+}
+
+func TestHTTPTransport_AuthMiddleware_ValidToken(t *testing.T) {
+	tr := NewHTTPTransport(&HTTPTransportConfig{
+		APIKey: "test-secret-key",
+	})
+
+	handler := tr.authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("authenticated"))
+	}))
+
+	req := httptest.NewRequest("POST", "/message", nil)
+	req.Header.Set("Authorization", "Bearer test-secret-key")
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("Status = %d, want 200", w.Code)
+	}
+}
+
+func TestHTTPTransport_AuthMiddleware_InvalidToken(t *testing.T) {
+	tr := NewHTTPTransport(&HTTPTransportConfig{
+		APIKey: "test-secret-key",
+	})
+
+	handler := tr.authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("POST", "/message", nil)
+	req.Header.Set("Authorization", "Bearer wrong-key")
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("Status = %d, want 401", w.Code)
+	}
+	if !strings.Contains(w.Body.String(), "Invalid API key") {
+		t.Errorf("Response = %s, want 'Invalid API key' message", w.Body.String())
+	}
+}
+
+func TestHTTPTransport_AuthMiddleware_MissingHeader(t *testing.T) {
+	tr := NewHTTPTransport(&HTTPTransportConfig{
+		APIKey: "test-secret-key",
+	})
+
+	handler := tr.authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("POST", "/message", nil)
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("Status = %d, want 401", w.Code)
+	}
+	if !strings.Contains(w.Body.String(), "Authorization header required") {
+		t.Errorf("Response = %s, want 'Authorization header required' message", w.Body.String())
+	}
+}
+
+func TestHTTPTransport_AuthMiddleware_InvalidFormat(t *testing.T) {
+	tr := NewHTTPTransport(&HTTPTransportConfig{
+		APIKey: "test-secret-key",
+	})
+
+	handler := tr.authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("POST", "/message", nil)
+	req.Header.Set("Authorization", "Basic dXNlcjpwYXNz") // Using Basic auth instead of Bearer
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("Status = %d, want 401", w.Code)
+	}
+	if !strings.Contains(w.Body.String(), "Invalid authorization format") {
+		t.Errorf("Response = %s, want 'Invalid authorization format' message", w.Body.String())
+	}
+}
+
+func TestHTTPTransport_AuthMiddleware_HealthExempt(t *testing.T) {
+	tr := NewHTTPTransport(&HTTPTransportConfig{
+		APIKey: "test-secret-key",
+	})
+
+	handler := tr.authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("health ok"))
+	}))
+
+	// Health endpoint without auth should still work
+	req := httptest.NewRequest("GET", "/health", nil)
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("Status = %d, want 200 (health is exempt from auth)", w.Code)
+	}
+}
+
+func TestHTTPTransport_IsTLSEnabled(t *testing.T) {
+	tests := []struct {
+		name    string
+		config  *HTTPTransportConfig
+		enabled bool
+	}{
+		{
+			name:    "both paths set",
+			config:  &HTTPTransportConfig{TLSCertFile: "/path/cert.pem", TLSKeyFile: "/path/key.pem"},
+			enabled: true,
+		},
+		{
+			name:    "only cert set",
+			config:  &HTTPTransportConfig{TLSCertFile: "/path/cert.pem"},
+			enabled: false,
+		},
+		{
+			name:    "only key set",
+			config:  &HTTPTransportConfig{TLSKeyFile: "/path/key.pem"},
+			enabled: false,
+		},
+		{
+			name:    "neither set",
+			config:  &HTTPTransportConfig{},
+			enabled: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tr := NewHTTPTransport(tt.config)
+			if got := tr.IsTLSEnabled(); got != tt.enabled {
+				t.Errorf("IsTLSEnabled() = %v, want %v", got, tt.enabled)
+			}
+		})
+	}
+}
+
+func TestHTTPTransport_IsAuthEnabled(t *testing.T) {
+	tests := []struct {
+		name    string
+		config  *HTTPTransportConfig
+		enabled bool
+	}{
+		{
+			name:    "api key set",
+			config:  &HTTPTransportConfig{APIKey: "secret"},
+			enabled: true,
+		},
+		{
+			name:    "api key empty",
+			config:  &HTTPTransportConfig{APIKey: ""},
+			enabled: false,
+		},
+		{
+			name:    "default config",
+			config:  nil,
+			enabled: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tr := NewHTTPTransport(tt.config)
+			if got := tr.IsAuthEnabled(); got != tt.enabled {
+				t.Errorf("IsAuthEnabled() = %v, want %v", got, tt.enabled)
+			}
+		})
+	}
+}
+
+func TestHTTPTransport_CORS_AuthorizationHeader(t *testing.T) {
+	// Verify CORS allows Authorization header
+	tr := NewHTTPTransport(&HTTPTransportConfig{
+		CORSOrigin: "https://allowed.com",
+	})
+
+	handler := tr.corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("OPTIONS", "/message", nil)
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	allowHeaders := w.Header().Get("Access-Control-Allow-Headers")
+	if !strings.Contains(allowHeaders, "Authorization") {
+		t.Errorf("Access-Control-Allow-Headers = %s, should include 'Authorization'", allowHeaders)
+	}
+}

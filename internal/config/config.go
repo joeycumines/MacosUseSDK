@@ -33,6 +33,13 @@ type Config struct {
 	HTTPSocketPath string
 	// CORSOrigin is the allowed CORS origin (env: MCP_CORS_ORIGIN, default: *)
 	CORSOrigin string
+	// TLSCertFile is the path to the TLS certificate for HTTPS (env: MCP_TLS_CERT_FILE, optional)
+	TLSCertFile string
+	// TLSKeyFile is the path to the TLS private key for HTTPS (env: MCP_TLS_KEY_FILE, optional)
+	TLSKeyFile string
+	// APIKey is the API key for Bearer token authentication (env: MCP_API_KEY, optional)
+	// If set, all requests (except /health) require Authorization: Bearer <key> header.
+	APIKey string
 	// Transport is the transport type: "stdio" or "sse" (env: MCP_TRANSPORT, default: stdio)
 	Transport TransportType
 	// HeartbeatInterval is the SSE heartbeat interval (env: MCP_HEARTBEAT_INTERVAL, default: 30s)
@@ -88,6 +95,11 @@ func Load() (*Config, error) {
 		CORSOrigin:        getEnv("MCP_CORS_ORIGIN", "*"),
 		HTTPReadTimeout:   httpReadTimeout,
 		HTTPWriteTimeout:  httpWriteTimeout,
+		// TLS configuration for HTTPS
+		TLSCertFile: os.Getenv("MCP_TLS_CERT_FILE"),
+		TLSKeyFile:  os.Getenv("MCP_TLS_KEY_FILE"),
+		// API key authentication
+		APIKey: os.Getenv("MCP_API_KEY"),
 		// Security: shell commands are disabled by default
 		ShellCommandsEnabled: getEnvAsBool("MCP_SHELL_COMMANDS_ENABLED", false),
 	}

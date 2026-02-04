@@ -22,9 +22,9 @@
     "constraint": "The use of subagents via the `runSubagent` tool is MANDATORY for the execution of the tasks below. Tasks are grouped specifically to be run in distinct subagent contexts to prevent context window exhaustion. Do not attempt to solve all groups in a single turn."
   },
   "status_section": {
-    "current_state": "77 MCP tools implemented (100% proto RPC coverage + extensions). HTTP transport integration tests (T025-T028) complete with 12 test functions covering health, message, SSE, CORS, and graceful shutdown.",
+    "current_state": "77 MCP tools implemented (100% proto RPC coverage + extensions). HTTP transport TLS and API key authentication implemented (T031-T037). All tests pass.",
     "commits_made": ["20358ac - feat(input): add cursor_position, hold_key, mouse_button_down/up MCP tools with full Swift SDK implementation"],
-    "verification_status": "verified - make-all-with-log passes, 12 HTTP transport tests pass"
+    "verification_status": "verified - make-all-with-log passes, all unit and integration tests pass"
   },
   "sequential_tasks": [
     {
@@ -213,43 +213,43 @@
       "id": "T031",
       "task": "Add TLS configuration options to HTTPTransportConfig in internal/transport/http.go",
       "file": "internal/transport/http.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T032",
       "task": "Implement TLS listener support in HTTPTransport.Serve() with optional cert/key paths",
       "file": "internal/transport/http.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T033",
       "task": "Add TLS environment variables to config.go (MCP_TLS_CERT_FILE, MCP_TLS_KEY_FILE)",
       "file": "internal/config/config.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T034",
       "task": "Add TLS configuration tests in internal/config/config_test.go",
       "file": "internal/config/config_test.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T035",
       "task": "Add API key authentication middleware option for HTTPTransport",
       "file": "internal/transport/http.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T036",
       "task": "Add MCP_API_KEY environment variable to config.go for HTTP authentication",
       "file": "internal/config/config.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T037",
       "task": "Add authentication middleware tests in internal/transport/http_test.go",
       "file": "internal/transport/http_test.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T038",

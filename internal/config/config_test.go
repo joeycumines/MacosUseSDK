@@ -21,6 +21,9 @@ func TestLoad_Defaults(t *testing.T) {
 	os.Unsetenv("MCP_HTTP_SOCKET")
 	os.Unsetenv("MCP_HEARTBEAT_INTERVAL")
 	os.Unsetenv("MCP_CORS_ORIGIN")
+	os.Unsetenv("MCP_TLS_CERT_FILE")
+	os.Unsetenv("MCP_TLS_KEY_FILE")
+	os.Unsetenv("MCP_API_KEY")
 
 	cfg, err := Load()
 	if err != nil {
@@ -288,5 +291,72 @@ func TestGetEnvAsInt(t *testing.T) {
 				t.Errorf("getEnvAsInt(%q) = %d, want %d", tt.value, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestLoad_TLSConfig(t *testing.T) {
+	os.Setenv("MCP_TLS_CERT_FILE", "/path/to/cert.pem")
+	os.Setenv("MCP_TLS_KEY_FILE", "/path/to/key.pem")
+	defer func() {
+		os.Unsetenv("MCP_TLS_CERT_FILE")
+		os.Unsetenv("MCP_TLS_KEY_FILE")
+	}()
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if cfg.TLSCertFile != "/path/to/cert.pem" {
+		t.Errorf("TLSCertFile = %s, want /path/to/cert.pem", cfg.TLSCertFile)
+	}
+
+	if cfg.TLSKeyFile != "/path/to/key.pem" {
+		t.Errorf("TLSKeyFile = %s, want /path/to/key.pem", cfg.TLSKeyFile)
+	}
+}
+
+func TestLoad_TLSConfigDefaults(t *testing.T) {
+	os.Unsetenv("MCP_TLS_CERT_FILE")
+	os.Unsetenv("MCP_TLS_KEY_FILE")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if cfg.TLSCertFile != "" {
+		t.Errorf("TLSCertFile = %s, want empty (optional)", cfg.TLSCertFile)
+	}
+
+	if cfg.TLSKeyFile != "" {
+		t.Errorf("TLSKeyFile = %s, want empty (optional)", cfg.TLSKeyFile)
+	}
+}
+
+func TestLoad_APIKeyConfig(t *testing.T) {
+	os.Setenv("MCP_API_KEY", "test-secret-key-12345")
+	defer os.Unsetenv("MCP_API_KEY")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if cfg.APIKey != "test-secret-key-12345" {
+		t.Errorf("APIKey = %s, want test-secret-key-12345", cfg.APIKey)
+	}
+}
+
+func TestLoad_APIKeyConfigDefault(t *testing.T) {
+	os.Unsetenv("MCP_API_KEY")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if cfg.APIKey != "" {
+		t.Errorf("APIKey = %s, want empty (optional)", cfg.APIKey)
 	}
 }

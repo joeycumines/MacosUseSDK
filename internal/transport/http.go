@@ -6,6 +6,8 @@ package transport
 
 import (
 	"context"
+	"crypto/subtle"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -37,10 +39,16 @@ const (
 // ReadTimeout for HTTP server (default: 30s).
 // WriteTimeout for HTTP server (default: 0 = disabled for SSE compatibility).
 // Note: WriteTimeout is disabled by default because SSE streams require long-lived connections.
+// TLSCertFile is the path to the TLS certificate file (optional, enables TLS if set).
+// TLSKeyFile is the path to the TLS private key file (optional, required if TLSCertFile is set).
+// APIKey is the API key for Bearer token authentication (optional, no auth if empty).
 type HTTPTransportConfig struct {
 	Address           string
 	SocketPath        string
 	CORSOrigin        string
+	TLSCertFile       string
+	TLSKeyFile        string
+	APIKey            string
 	HeartbeatInterval time.Duration
 	ReadTimeout       time.Duration
 	WriteTimeout      time.Duration
@@ -258,8 +266,15 @@ func NewHTTPTransport(config *HTTPTransportConfig) *HTTPTransport {
 	mux.HandleFunc("/events", t.handleSSE)
 	mux.HandleFunc("/health", t.handleHealth)
 
+	// Build middleware chain: CORS wrapper -> Auth wrapper -> mux
+	var handler http.Handler = mux
+	handler = t.corsMiddleware(handler)
+	if config.APIKey != "" {
+		handler = t.authMiddleware(handler)
+	}
+
 	t.server = &http.Server{
-		Handler:      t.corsMiddleware(mux),
+		Handler:      handler,
 		ReadTimeout:  config.ReadTimeout,
 		WriteTimeout: config.WriteTimeout,
 	}
@@ -272,11 +287,46 @@ func (t *HTTPTransport) corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", t.config.CORSOrigin)
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Last-Event-ID")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Last-Event-ID, Authorization")
 		w.Header().Set("Access-Control-Expose-Headers", "Content-Type")
 
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+// authMiddleware validates Bearer token authentication.
+// If the APIKey is configured, requests must include a valid Authorization header.
+// The /health endpoint is exempt from authentication for load balancer health checks.
+func (t *HTTPTransport) authMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Health check endpoint is exempt from authentication
+		if r.URL.Path == "/health" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			http.Error(w, "Authorization header required", http.StatusUnauthorized)
+			return
+		}
+
+		// Expect "Bearer <token>" format
+		const bearerPrefix = "Bearer "
+		if !strings.HasPrefix(authHeader, bearerPrefix) {
+			http.Error(w, "Invalid authorization format, expected Bearer token", http.StatusUnauthorized)
+			return
+		}
+
+		token := strings.TrimPrefix(authHeader, bearerPrefix)
+		// Use constant-time comparison to prevent timing attacks
+		if subtle.ConstantTimeCompare([]byte(token), []byte(t.config.APIKey)) != 1 {
+			http.Error(w, "Invalid API key", http.StatusUnauthorized)
 			return
 		}
 
@@ -442,7 +492,9 @@ func (t *HTTPTransport) handleHealth(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Serve starts the HTTP server and handles messages
+// Serve starts the HTTP server and handles messages.
+// If TLSCertFile and TLSKeyFile are configured, the server uses TLS.
+// Otherwise, it serves plain HTTP.
 func (t *HTTPTransport) Serve(handler func(*Message) (*Message, error)) error {
 	t.handler = handler
 
@@ -468,10 +520,34 @@ func (t *HTTPTransport) Serve(handler func(*Message) (*Message, error)) error {
 		log.Printf("HTTP/SSE transport listening on %s", t.config.Address)
 	}
 
+	// If TLS is configured, wrap the listener with TLS
+	if t.config.TLSCertFile != "" && t.config.TLSKeyFile != "" {
+		cert, err := tls.LoadX509KeyPair(t.config.TLSCertFile, t.config.TLSKeyFile)
+		if err != nil {
+			return fmt.Errorf("failed to load TLS certificate: %w", err)
+		}
+		tlsConfig := &tls.Config{
+			Certificates: []tls.Certificate{cert},
+			MinVersion:   tls.VersionTLS12,
+		}
+		listener = tls.NewListener(listener, tlsConfig)
+		log.Printf("TLS enabled with certificate: %s", t.config.TLSCertFile)
+	}
+
 	if err := t.server.Serve(listener); err != nil && err != http.ErrServerClosed {
 		return err
 	}
 	return nil
+}
+
+// IsTLSEnabled returns true if TLS is configured for this transport.
+func (t *HTTPTransport) IsTLSEnabled() bool {
+	return t.config.TLSCertFile != "" && t.config.TLSKeyFile != ""
+}
+
+// IsAuthEnabled returns true if API key authentication is configured.
+func (t *HTTPTransport) IsAuthEnabled() bool {
+	return t.config.APIKey != ""
 }
 
 // ReadMessage is provided for Transport interface compatibility but is not the
