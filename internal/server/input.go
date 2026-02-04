@@ -30,18 +30,18 @@ func (s *MCPServer) handleClick(call *ToolCall) (*ToolResult, error) {
 	defer cancel()
 
 	var params struct {
+		// Click type: left, right, middle. Default: left
+		Button string `json:"button"`
+		// Application context (optional)
+		Application string `json:"application"`
 		// X coordinate in Global Display Coordinates (top-left origin)
 		X float64 `json:"x"`
 		// Y coordinate in Global Display Coordinates (top-left origin)
 		Y float64 `json:"y"`
-		// Click type: left, right, middle. Default: left
-		Button string `json:"button"`
 		// Number of clicks: 1=single, 2=double, 3=triple. Default: 1
 		ClickCount int32 `json:"click_count"`
 		// Whether to show visual feedback animation
 		ShowAnimation bool `json:"show_animation"`
-		// Application context (optional)
-		Application string `json:"application"`
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
@@ -130,12 +130,12 @@ func (s *MCPServer) handleTypeText(call *ToolCall) (*ToolResult, error) {
 	var params struct {
 		// Text to type
 		Text string `json:"text"`
+		// Application context (optional)
+		Application string `json:"application"`
 		// Delay between characters in seconds (for human-like typing)
 		CharDelay float64 `json:"char_delay"`
 		// Whether to use IME for non-ASCII input
 		UseIME bool `json:"use_ime"`
-		// Application context (optional)
-		Application string `json:"application"`
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
@@ -199,10 +199,10 @@ func (s *MCPServer) handlePressKey(call *ToolCall) (*ToolResult, error) {
 	var params struct {
 		// Key to press (e.g., "return", "escape", "a", "f1")
 		Key string `json:"key"`
-		// Modifier keys: command, option, control, shift, function
-		Modifiers []string `json:"modifiers"`
 		// Application context (optional)
 		Application string `json:"application"`
+		// Modifier keys: command, option, control, shift, function
+		Modifiers []string `json:"modifiers"`
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
@@ -295,14 +295,14 @@ func (s *MCPServer) handleMouseMove(call *ToolCall) (*ToolResult, error) {
 	defer cancel()
 
 	var params struct {
+		// Application context (optional)
+		Application string `json:"application"`
 		// X coordinate in Global Display Coordinates (top-left origin)
 		X float64 `json:"x"`
 		// Y coordinate in Global Display Coordinates (top-left origin)
 		Y float64 `json:"y"`
 		// Duration for smooth animation (seconds)
 		Duration float64 `json:"duration"`
-		// Application context (optional)
-		Application string `json:"application"`
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
@@ -363,14 +363,14 @@ func (s *MCPServer) handleScroll(call *ToolCall) (*ToolResult, error) {
 		X *float64 `json:"x"`
 		// Scroll position Y (optional, uses current mouse position if not set)
 		Y *float64 `json:"y"`
+		// Application context (optional)
+		Application string `json:"application"`
 		// Horizontal scroll amount (positive = right, negative = left)
 		Horizontal float64 `json:"horizontal"`
 		// Vertical scroll amount (positive = up, negative = down)
 		Vertical float64 `json:"vertical"`
 		// Duration for momentum effect
 		Duration float64 `json:"duration"`
-		// Application context (optional)
-		Application string `json:"application"`
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
@@ -458,6 +458,10 @@ func (s *MCPServer) handleDrag(call *ToolCall) (*ToolResult, error) {
 	defer cancel()
 
 	var params struct {
+		// Mouse button to use: left, right, middle. Default: left
+		Button string `json:"button"`
+		// Application context (optional)
+		Application string `json:"application"`
 		// StartX coordinate in Global Display Coordinates (top-left origin)
 		StartX float64 `json:"start_x"`
 		// StartY coordinate in Global Display Coordinates (top-left origin)
@@ -468,10 +472,6 @@ func (s *MCPServer) handleDrag(call *ToolCall) (*ToolResult, error) {
 		EndY float64 `json:"end_y"`
 		// Duration of drag in seconds
 		Duration float64 `json:"duration"`
-		// Mouse button to use: left, right, middle. Default: left
-		Button string `json:"button"`
-		// Application context (optional)
-		Application string `json:"application"`
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
@@ -543,14 +543,14 @@ func (s *MCPServer) handleHover(call *ToolCall) (*ToolResult, error) {
 	defer cancel()
 
 	var params struct {
+		// Application context (optional)
+		Application string `json:"application"`
 		// X coordinate in Global Display Coordinates (top-left origin)
 		X float64 `json:"x"`
 		// Y coordinate in Global Display Coordinates (top-left origin)
 		Y float64 `json:"y"`
 		// Duration to hover in seconds
 		Duration float64 `json:"duration"`
-		// Application context (optional)
-		Application string `json:"application"`
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
@@ -613,22 +613,22 @@ func (s *MCPServer) handleGesture(call *ToolCall) (*ToolResult, error) {
 	defer cancel()
 
 	var params struct {
+		// Gesture type: pinch, zoom, rotate, swipe, force_touch
+		GestureType string `json:"gesture_type"`
+		// Direction for swipe gestures: up, down, left, right
+		Direction string `json:"direction"`
+		// Application context (optional)
+		Application string `json:"application"`
 		// Center X coordinate in Global Display Coordinates (top-left origin)
 		CenterX float64 `json:"center_x"`
 		// Center Y coordinate in Global Display Coordinates (top-left origin)
 		CenterY float64 `json:"center_y"`
-		// Gesture type: pinch, zoom, rotate, swipe, force_touch
-		GestureType string `json:"gesture_type"`
 		// Scale factor for pinch/zoom gestures (e.g., 0.5 = zoom out, 2.0 = zoom in)
 		Scale float64 `json:"scale"`
 		// Rotation angle in degrees for rotate gestures
 		Rotation float64 `json:"rotation"`
 		// Number of fingers for swipe gestures (default: 2)
 		FingerCount int32 `json:"finger_count"`
-		// Direction for swipe gestures: up, down, left, right
-		Direction string `json:"direction"`
-		// Application context (optional)
-		Application string `json:"application"`
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
@@ -824,12 +824,11 @@ func (s *MCPServer) handleHoldKey(call *ToolCall) (*ToolResult, error) {
 	var params struct {
 		// Key to hold (e.g., "a", "space", "shift")
 		Key string `json:"key"`
-		// Duration to hold the key in seconds
-		Duration float64 `json:"duration"`
-		// Modifier keys: command, option, control, shift, function
-		Modifiers []string `json:"modifiers"`
 		// Application context (optional)
 		Application string `json:"application"`
+		// Modifier keys: command, option, control, shift, function
+		Modifiers []string `json:"modifiers"`
+		Duration  float64  `json:"duration"` // Duration to hold the key in seconds
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
@@ -919,16 +918,14 @@ func (s *MCPServer) handleMouseButtonDown(call *ToolCall) (*ToolResult, error) {
 	defer cancel()
 
 	var params struct {
-		// X coordinate in Global Display Coordinates (top-left origin)
-		X float64 `json:"x"`
-		// Y coordinate in Global Display Coordinates (top-left origin)
-		Y float64 `json:"y"`
 		// Button type: left, right, middle. Default: left
 		Button string `json:"button"`
-		// Modifier keys to hold during press: command, option, control, shift
-		Modifiers []string `json:"modifiers"`
 		// Application context (optional)
 		Application string `json:"application"`
+		// Modifier keys to hold during press: command, option, control, shift
+		Modifiers []string `json:"modifiers"`
+		X         float64  `json:"x"` // X coordinate in Global Display Coordinates (top-left origin)
+		Y         float64  `json:"y"` // Y coordinate in Global Display Coordinates (top-left origin)
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
@@ -1023,16 +1020,14 @@ func (s *MCPServer) handleMouseButtonUp(call *ToolCall) (*ToolResult, error) {
 	defer cancel()
 
 	var params struct {
-		// X coordinate in Global Display Coordinates (top-left origin)
-		X float64 `json:"x"`
-		// Y coordinate in Global Display Coordinates (top-left origin)
-		Y float64 `json:"y"`
 		// Button type: left, right, middle. Default: left
 		Button string `json:"button"`
-		// Modifier keys to hold during release: command, option, control, shift
-		Modifiers []string `json:"modifiers"`
 		// Application context (optional)
 		Application string `json:"application"`
+		// Modifier keys to hold during release: command, option, control, shift
+		Modifiers []string `json:"modifiers"`
+		X         float64  `json:"x"` // X coordinate in Global Display Coordinates (top-left origin)
+		Y         float64  `json:"y"` // Y coordinate in Global Display Coordinates (top-left origin)
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {

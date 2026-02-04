@@ -40,6 +40,10 @@ type Config struct {
 	// APIKey is the API key for Bearer token authentication (env: MCP_API_KEY, optional)
 	// If set, all requests (except /health) require Authorization: Bearer <key> header.
 	APIKey string
+	// AuditLogFile is the path to the audit log file (env: MCP_AUDIT_LOG_FILE, optional)
+	// If set, tool invocations are logged to this file in structured JSON format.
+	// If empty, audit logging is disabled.
+	AuditLogFile string
 	// Transport is the transport type: "stdio" or "sse" (env: MCP_TRANSPORT, default: stdio)
 	Transport TransportType
 	// HeartbeatInterval is the SSE heartbeat interval (env: MCP_HEARTBEAT_INTERVAL, default: 30s)
@@ -48,6 +52,8 @@ type Config struct {
 	HTTPReadTimeout time.Duration
 	// HTTPWriteTimeout is the HTTP server write timeout (env: MCP_HTTP_WRITE_TIMEOUT, default: 30s)
 	HTTPWriteTimeout time.Duration
+	// RateLimit is the rate limit in requests per second (env: MCP_RATE_LIMIT, default: 0 = disabled)
+	RateLimit float64
 	// RequestTimeout is the gRPC request timeout in seconds (env: MACOS_USE_REQUEST_TIMEOUT, default: 30)
 	RequestTimeout int
 	// ServerTLS enables TLS for gRPC (env: MACOS_USE_SERVER_TLS, default: false)
@@ -81,6 +87,11 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
+	rateLimit, err := getEnvAsFloat("MCP_RATE_LIMIT", 0)
+	if err != nil {
+		return nil, err
+	}
+
 	cfg := &Config{
 		ServerAddr:     getEnv("MACOS_USE_SERVER_ADDR", "localhost:50051"),
 		ServerTLS:      getEnvAsBool("MACOS_USE_SERVER_TLS", false),
@@ -100,6 +111,10 @@ func Load() (*Config, error) {
 		TLSKeyFile:  os.Getenv("MCP_TLS_KEY_FILE"),
 		// API key authentication
 		APIKey: os.Getenv("MCP_API_KEY"),
+		// Audit logging
+		AuditLogFile: os.Getenv("MCP_AUDIT_LOG_FILE"),
+		// Rate limiting
+		RateLimit: rateLimit,
 		// Security: shell commands are disabled by default
 		ShellCommandsEnabled: getEnvAsBool("MCP_SHELL_COMMANDS_ENABLED", false),
 	}
@@ -140,6 +155,19 @@ func getEnvAsInt(key string, defaultValue int) (int, error) {
 	_, err := fmt.Sscanf(value, "%d", &result)
 	if err != nil {
 		return 0, fmt.Errorf("invalid value for %s: %q (expected integer)", key, value)
+	}
+	return result, nil
+}
+
+func getEnvAsFloat(key string, defaultValue float64) (float64, error) {
+	value := os.Getenv(key)
+	if value == "" {
+		return defaultValue, nil
+	}
+	var result float64
+	_, err := fmt.Sscanf(value, "%f", &result)
+	if err != nil {
+		return 0, fmt.Errorf("invalid value for %s: %q (expected number)", key, value)
 	}
 	return result, nil
 }

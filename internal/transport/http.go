@@ -42,6 +42,7 @@ const (
 // TLSCertFile is the path to the TLS certificate file (optional, enables TLS if set).
 // TLSKeyFile is the path to the TLS private key file (optional, required if TLSCertFile is set).
 // APIKey is the API key for Bearer token authentication (optional, no auth if empty).
+// RateLimit is the rate limit in requests per second (0 = disabled).
 type HTTPTransportConfig struct {
 	Address           string
 	SocketPath        string
@@ -52,6 +53,7 @@ type HTTPTransportConfig struct {
 	HeartbeatInterval time.Duration
 	ReadTimeout       time.Duration
 	WriteTimeout      time.Duration
+	RateLimit         float64
 }
 
 // DefaultHTTPConfig returns default HTTP transport configuration
@@ -67,16 +69,18 @@ func DefaultHTTPConfig() *HTTPTransportConfig {
 
 // HTTPTransport implements HTTP/SSE transport for MCP.
 // It provides POST /message for JSON-RPC requests, GET /events for SSE streaming,
-// and GET /health for server health checks. This is a non-standard MCP transport
-// extension documented in docs/05-mcp-integration.md.
+// GET /health for server health checks, and GET /metrics for Prometheus-style metrics.
+// This is a non-standard MCP transport extension documented in docs/05-mcp-integration.md.
 type HTTPTransport struct {
-	config     *HTTPTransportConfig
-	server     *http.Server
-	handler    func(*Message) (*Message, error)
-	clients    *ClientRegistry
-	shutdownCh chan struct{}
-	eventID    atomic.Uint64
-	closed     atomic.Bool
+	config      *HTTPTransportConfig
+	server      *http.Server
+	handler     func(*Message) (*Message, error)
+	clients     *ClientRegistry
+	metrics     *MetricsRegistry
+	rateLimiter *RateLimiter
+	shutdownCh  chan struct{}
+	eventID     atomic.Uint64
+	closed      atomic.Bool
 }
 
 // ClientRegistry manages connected SSE clients and event distribution.
@@ -256,21 +260,27 @@ func NewHTTPTransport(config *HTTPTransportConfig) *HTTPTransport {
 	// SSE streams require long-lived connections, so we don't force a default.
 
 	t := &HTTPTransport{
-		config:     config,
-		clients:    NewClientRegistry(),
-		shutdownCh: make(chan struct{}),
+		config:      config,
+		clients:     NewClientRegistry(),
+		metrics:     NewMetricsRegistry(),
+		rateLimiter: NewRateLimiter(config.RateLimit),
+		shutdownCh:  make(chan struct{}),
 	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/message", t.handleMessage)
 	mux.HandleFunc("/events", t.handleSSE)
 	mux.HandleFunc("/health", t.handleHealth)
+	mux.HandleFunc("/metrics", t.handleMetrics)
 
-	// Build middleware chain: CORS wrapper -> Auth wrapper -> mux
+	// Build middleware chain: CORS wrapper -> Auth wrapper -> Rate limit wrapper -> mux
 	var handler http.Handler = mux
 	handler = t.corsMiddleware(handler)
 	if config.APIKey != "" {
 		handler = t.authMiddleware(handler)
+	}
+	if t.rateLimiter != nil {
+		handler = RateLimitMiddleware(t.rateLimiter, handler)
 	}
 
 	t.server = &http.Server{
@@ -380,6 +390,7 @@ func (t *HTTPTransport) handleMessage(w http.ResponseWriter, r *http.Request) {
 				Event: "message",
 				Data:  string(eventData),
 			})
+			t.metrics.RecordSSEEvent()
 		}
 	}
 }
@@ -405,7 +416,13 @@ func (t *HTTPTransport) handleSSE(w http.ResponseWriter, r *http.Request) {
 	lastEventID := r.Header.Get("Last-Event-ID")
 
 	client := t.clients.Add(lastEventID)
-	defer t.clients.Remove(client.ID)
+	defer func() {
+		t.clients.Remove(client.ID)
+		t.metrics.SetSSEConnections(t.clients.Count())
+	}()
+
+	// Update active connection count
+	t.metrics.SetSSEConnections(t.clients.Count())
 
 	log.Printf("SSE client connected: %s", client.ID)
 
@@ -492,6 +509,20 @@ func (t *HTTPTransport) handleHealth(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// handleMetrics handles GET /metrics for Prometheus-style metrics exposition.
+// Exposes mcp_requests_total, mcp_request_duration_seconds, mcp_sse_connections_active,
+// and mcp_sse_events_sent_total in Prometheus text format.
+func (t *HTTPTransport) handleMetrics(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	w.Header().Set("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
+	if err := t.metrics.WritePrometheus(w); err != nil {
+		log.Printf("Error writing metrics: %v", err)
+	}
+}
+
 // Serve starts the HTTP server and handles messages.
 // If TLSCertFile and TLSKeyFile are configured, the server uses TLS.
 // Otherwise, it serves plain HTTP.
@@ -550,6 +581,17 @@ func (t *HTTPTransport) IsAuthEnabled() bool {
 	return t.config.APIKey != ""
 }
 
+// Metrics returns the metrics registry for this transport.
+// This allows the MCP server to record request metrics for tool invocations.
+func (t *HTTPTransport) Metrics() *MetricsRegistry {
+	return t.metrics
+}
+
+// IsRateLimitEnabled returns true if rate limiting is configured.
+func (t *HTTPTransport) IsRateLimitEnabled() bool {
+	return t.rateLimiter != nil
+}
+
 // ReadMessage is provided for Transport interface compatibility but is not the
 // primary message handling pattern for HTTPTransport. The HTTP transport uses
 // the callback-based Serve(handler) pattern instead, where messages are delivered
@@ -577,6 +619,7 @@ func (t *HTTPTransport) WriteMessage(msg *Message) error {
 		Event: "message",
 		Data:  string(data),
 	})
+	t.metrics.RecordSSEEvent()
 
 	return nil
 }

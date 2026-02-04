@@ -22,8 +22,13 @@
     "constraint": "The use of subagents via the `runSubagent` tool is MANDATORY for the execution of the tasks below. Tasks are grouped specifically to be run in distinct subagent contexts to prevent context window exhaustion. Do not attempt to solve all groups in a single turn."
   },
   "status_section": {
-    "current_state": "77 MCP tools implemented (100% proto RPC coverage + extensions). HTTP transport TLS and API key authentication implemented (T031-T037). All tests pass.",
-    "commits_made": ["20358ac - feat(input): add cursor_position, hold_key, mouse_button_down/up MCP tools with full Swift SDK implementation"],
+    "current_state": "77 MCP tools + observability features. TLS/auth and T038-T044 (metrics, audit, rate limit) complete. All tests pass.",
+    "commits_made": [
+      "20358ac - feat(input): add cursor_position, hold_key, mouse_button_down/up MCP tools",
+      "120c9d7 - test(integration): add HTTP transport tests",
+      "2e1d260 - feat(security): add TLS and API key auth with constant-time comparison",
+      "PENDING - feat(observability): add metrics, audit logging, rate limiting"
+    ],
     "verification_status": "verified - make-all-with-log passes, all unit and integration tests pass"
   },
   "sequential_tasks": [
@@ -255,43 +260,43 @@
       "id": "T038",
       "task": "Add /metrics Prometheus-style endpoint to HTTPTransport for observability",
       "file": "internal/transport/http.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T039",
       "task": "Add request counting and latency metrics to MCP tool invocations",
       "file": "internal/server/mcp.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T040",
       "task": "Add structured audit logging for tool invocations (log tool name, arguments, result, duration)",
       "file": "internal/server/mcp.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T041",
       "task": "Add MCP_AUDIT_LOG_FILE environment variable for audit log path",
       "file": "internal/config/config.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T042",
       "task": "Implement rate limiting middleware for HTTPTransport (configurable requests/second)",
       "file": "internal/transport/http.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T043",
       "task": "Add MCP_RATE_LIMIT environment variable to config.go",
       "file": "internal/config/config.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T044",
       "task": "Add rate limiting tests in internal/transport/http_test.go",
       "file": "internal/transport/http_test.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T045",

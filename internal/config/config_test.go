@@ -24,6 +24,8 @@ func TestLoad_Defaults(t *testing.T) {
 	os.Unsetenv("MCP_TLS_CERT_FILE")
 	os.Unsetenv("MCP_TLS_KEY_FILE")
 	os.Unsetenv("MCP_API_KEY")
+	os.Unsetenv("MCP_AUDIT_LOG_FILE")
+	os.Unsetenv("MCP_RATE_LIMIT")
 
 	cfg, err := Load()
 	if err != nil {
@@ -358,5 +360,110 @@ func TestLoad_APIKeyConfigDefault(t *testing.T) {
 
 	if cfg.APIKey != "" {
 		t.Errorf("APIKey = %s, want empty (optional)", cfg.APIKey)
+	}
+}
+
+func TestLoad_AuditLogFileConfig(t *testing.T) {
+	os.Setenv("MCP_AUDIT_LOG_FILE", "/var/log/mcp-audit.log")
+	defer os.Unsetenv("MCP_AUDIT_LOG_FILE")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if cfg.AuditLogFile != "/var/log/mcp-audit.log" {
+		t.Errorf("AuditLogFile = %s, want /var/log/mcp-audit.log", cfg.AuditLogFile)
+	}
+}
+
+func TestLoad_AuditLogFileConfigDefault(t *testing.T) {
+	os.Unsetenv("MCP_AUDIT_LOG_FILE")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if cfg.AuditLogFile != "" {
+		t.Errorf("AuditLogFile = %s, want empty (disabled)", cfg.AuditLogFile)
+	}
+}
+
+func TestLoad_RateLimitConfig(t *testing.T) {
+	os.Setenv("MCP_RATE_LIMIT", "100.5")
+	defer os.Unsetenv("MCP_RATE_LIMIT")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if cfg.RateLimit != 100.5 {
+		t.Errorf("RateLimit = %v, want 100.5", cfg.RateLimit)
+	}
+}
+
+func TestLoad_RateLimitConfigDefault(t *testing.T) {
+	os.Unsetenv("MCP_RATE_LIMIT")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if cfg.RateLimit != 0 {
+		t.Errorf("RateLimit = %v, want 0 (disabled)", cfg.RateLimit)
+	}
+}
+
+func TestLoad_RateLimitInvalid(t *testing.T) {
+	os.Setenv("MCP_RATE_LIMIT", "not-a-number")
+	defer os.Unsetenv("MCP_RATE_LIMIT")
+
+	_, err := Load()
+	if err == nil {
+		t.Error("Load() should return error for invalid rate limit")
+	}
+}
+
+func TestGetEnvAsFloat(t *testing.T) {
+	tests := []struct {
+		value     string
+		want      float64
+		wantError bool
+	}{
+		{"42.5", 42.5, false},
+		{"0", 0, false},
+		{"-1.5", -1.5, false},
+		{"100", 100, false},
+		{"invalid", 0, true},
+		{"", 10.0, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.value, func(t *testing.T) {
+			if tt.value != "" {
+				os.Setenv("TEST_FLOAT", tt.value)
+				defer os.Unsetenv("TEST_FLOAT")
+			} else {
+				os.Unsetenv("TEST_FLOAT")
+			}
+
+			got, err := getEnvAsFloat("TEST_FLOAT", 10.0)
+			if tt.wantError {
+				if err == nil {
+					t.Errorf("getEnvAsFloat() expected error for %q", tt.value)
+				}
+				return
+			}
+			if err != nil {
+				t.Errorf("getEnvAsFloat() unexpected error: %v", err)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("getEnvAsFloat(%q) = %v, want %v", tt.value, got, tt.want)
+			}
+		})
 	}
 }

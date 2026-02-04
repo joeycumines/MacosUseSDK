@@ -571,3 +571,105 @@ func TestHTTPTransport_CORS_AuthorizationHeader(t *testing.T) {
 		t.Errorf("Access-Control-Allow-Headers = %s, should include 'Authorization'", allowHeaders)
 	}
 }
+
+func TestHTTPTransport_HandleMetrics(t *testing.T) {
+	tr := NewHTTPTransport(nil)
+
+	// Record some metrics
+	tr.metrics.RecordRequest("click", "ok", 50*time.Millisecond)
+	tr.metrics.RecordRequest("type_text", "error", 100*time.Millisecond)
+	tr.metrics.SetSSEConnections(3)
+	tr.metrics.RecordSSEEvent()
+
+	req := httptest.NewRequest("GET", "/metrics", nil)
+	w := httptest.NewRecorder()
+
+	tr.handleMetrics(w, req)
+
+	resp := w.Result()
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("Status = %d, want 200", resp.StatusCode)
+	}
+
+	contentType := resp.Header.Get("Content-Type")
+	if !strings.Contains(contentType, "text/plain") {
+		t.Errorf("Content-Type = %s, want text/plain", contentType)
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	bodyStr := string(body)
+
+	// Verify Prometheus format
+	if !strings.Contains(bodyStr, "# TYPE mcp_requests_total counter") {
+		t.Errorf("Missing counter type, got:\n%s", bodyStr)
+	}
+	if !strings.Contains(bodyStr, "# TYPE mcp_request_duration_seconds histogram") {
+		t.Errorf("Missing histogram type, got:\n%s", bodyStr)
+	}
+	if !strings.Contains(bodyStr, "# TYPE mcp_sse_connections_active gauge") {
+		t.Errorf("Missing gauge type, got:\n%s", bodyStr)
+	}
+	if !strings.Contains(bodyStr, `tool="click"`) {
+		t.Errorf("Missing click tool metric, got:\n%s", bodyStr)
+	}
+}
+
+func TestHTTPTransport_HandleMetrics_MethodNotAllowed(t *testing.T) {
+	tr := NewHTTPTransport(nil)
+
+	req := httptest.NewRequest("POST", "/metrics", nil)
+	w := httptest.NewRecorder()
+
+	tr.handleMetrics(w, req)
+
+	if w.Code != http.StatusMethodNotAllowed {
+		t.Errorf("Status = %d, want 405", w.Code)
+	}
+}
+
+func TestHTTPTransport_Metrics(t *testing.T) {
+	tr := NewHTTPTransport(nil)
+
+	m := tr.Metrics()
+	if m == nil {
+		t.Fatal("Metrics() returned nil")
+	}
+}
+
+func TestHTTPTransport_IsRateLimitEnabled(t *testing.T) {
+	tests := []struct {
+		name    string
+		config  *HTTPTransportConfig
+		enabled bool
+	}{
+		{
+			name:    "rate limit set",
+			config:  &HTTPTransportConfig{RateLimit: 10.0},
+			enabled: true,
+		},
+		{
+			name:    "rate limit zero",
+			config:  &HTTPTransportConfig{RateLimit: 0},
+			enabled: false,
+		},
+		{
+			name:    "rate limit negative",
+			config:  &HTTPTransportConfig{RateLimit: -1},
+			enabled: false,
+		},
+		{
+			name:    "default config",
+			config:  nil,
+			enabled: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tr := NewHTTPTransport(tt.config)
+			if got := tr.IsRateLimitEnabled(); got != tt.enabled {
+				t.Errorf("IsRateLimitEnabled() = %v, want %v", got, tt.enabled)
+			}
+		})
+	}
+}

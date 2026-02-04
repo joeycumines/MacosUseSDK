@@ -282,8 +282,8 @@ func (s *MCPServer) handleDragFiles(call *ToolCall) (*ToolResult, error) {
 
 	var params struct {
 		Application     string   `json:"application"`
-		FilePaths       []string `json:"file_paths"`
 		TargetElementID string   `json:"target_element_id"`
+		FilePaths       []string `json:"file_paths"`
 		Duration        float64  `json:"duration"`
 	}
 

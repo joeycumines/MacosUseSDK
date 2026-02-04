@@ -22,8 +22,8 @@ func (s *MCPServer) handleFindElements(call *ToolCall) (*ToolResult, error) {
 	defer cancel()
 
 	var params struct {
-		Parent   string                 `json:"parent"`
 		Selector map[string]interface{} `json:"selector"`
+		Parent   string                 `json:"parent"`
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
@@ -387,12 +387,12 @@ func (s *MCPServer) handleFindRegionElements(call *ToolCall) (*ToolResult, error
 	defer cancel()
 
 	var params struct {
+		Selector map[string]interface{} `json:"selector"`
 		Parent   string                 `json:"parent"`
 		X        float64                `json:"x"`
 		Y        float64                `json:"y"`
 		Width    float64                `json:"width"`
 		Height   float64                `json:"height"`
-		Selector map[string]interface{} `json:"selector"`
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
@@ -476,8 +476,8 @@ func (s *MCPServer) handleWaitElement(call *ToolCall) (*ToolResult, error) {
 	defer cancel()
 
 	var params struct {
-		Parent       string                 `json:"parent"`
 		Selector     map[string]interface{} `json:"selector"`
+		Parent       string                 `json:"parent"`
 		Timeout      float64                `json:"timeout"`
 		PollInterval float64                `json:"poll_interval"`
 	}

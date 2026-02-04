@@ -38,6 +38,7 @@ type MCPServer struct {
 	client        pb.MacosUseClient
 	opsClient     longrunningpb.OperationsClient
 	httpTransport *transport.HTTPTransport
+	auditLogger   *AuditLogger
 	ctx           context.Context
 	cfg           *config.Config
 	conn          *grpc.ClientConn
@@ -78,15 +79,24 @@ type Content struct {
 func NewMCPServer(cfg *config.Config) (*MCPServer, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
+	// Initialize audit logger
+	auditLogger, err := NewAuditLogger(cfg.AuditLogFile)
+	if err != nil {
+		cancel()
+		return nil, fmt.Errorf("failed to initialize audit logger: %w", err)
+	}
+
 	s := &MCPServer{
-		cfg:    cfg,
-		ctx:    ctx,
-		cancel: cancel,
-		tools:  make(map[string]*Tool),
+		cfg:         cfg,
+		ctx:         ctx,
+		cancel:      cancel,
+		tools:       make(map[string]*Tool),
+		auditLogger: auditLogger,
 	}
 
 	// Initialize gRPC connection
 	if err := s.initGRPC(); err != nil {
+		auditLogger.Close()
 		cancel()
 		return nil, fmt.Errorf("failed to initialize gRPC: %w", err)
 	}
@@ -136,6 +146,13 @@ func (s *MCPServer) Shutdown() {
 	if httpTransport != nil {
 		if err := httpTransport.Close(); err != nil {
 			log.Printf("Error closing HTTP transport: %v", err)
+		}
+	}
+
+	// Close audit logger
+	if s.auditLogger != nil {
+		if err := s.auditLogger.Close(); err != nil {
+			log.Printf("Error closing audit logger: %v", err)
 		}
 	}
 
@@ -1896,7 +1913,35 @@ func (s *MCPServer) handleHTTPMessage(msg *transport.Message) (*transport.Messag
 			Arguments: params.Arguments,
 		}
 
+		// Track start time for metrics
+		startTime := time.Now()
+
 		result, err := tool.Handler(call)
+		
+		// Calculate duration
+		duration := time.Since(startTime)
+		
+		// Determine status and record metrics
+		status := "ok"
+		if err != nil {
+			status = "error"
+		} else if result != nil && result.IsError {
+			status = "error"
+		}
+
+		// Record metrics if HTTP transport is available
+		s.mu.RLock()
+		httpTransport := s.httpTransport
+		s.mu.RUnlock()
+		if httpTransport != nil {
+			httpTransport.Metrics().RecordRequest(params.Name, status, duration)
+		}
+
+		// Record audit log
+		if s.auditLogger != nil {
+			s.auditLogger.LogToolCall(params.Name, params.Arguments, status, duration)
+		}
+
 		if err != nil {
 			return &transport.Message{
 				JSONRPC: "2.0",
@@ -2061,11 +2106,30 @@ func (s *MCPServer) handleMessage(tr *transport.StdioTransport, msg *transport.M
 			return
 		}
 
+		// Track start time for metrics
+		startTime := time.Now()
+
 		// Call the tool handler
 		result, err := tool.Handler(&ToolCall{
 			Name:      params.Name,
 			Arguments: params.Arguments,
 		})
+
+		// Calculate duration
+		duration := time.Since(startTime)
+
+		// Determine status
+		status := "ok"
+		if err != nil {
+			status = "error"
+		} else if result != nil && result.IsError {
+			status = "error"
+		}
+
+		// Record audit log (stdio transport has no metrics registry)
+		if s.auditLogger != nil {
+			s.auditLogger.LogToolCall(params.Name, params.Arguments, status, duration)
+		}
 
 		if err != nil {
 			response := &transport.Message{
