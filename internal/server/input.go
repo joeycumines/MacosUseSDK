@@ -814,3 +814,304 @@ func (s *MCPServer) handleListInputs(call *ToolCall) (*ToolResult, error) {
 		Content: []Content{{Type: "text", Text: string(data)}},
 	}, nil
 }
+
+// handleHoldKey handles the hold_key tool for holding a key down for a specified duration.
+// This is useful for modifier key holds or game-style input where key timing matters.
+func (s *MCPServer) handleHoldKey(call *ToolCall) (*ToolResult, error) {
+	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
+	defer cancel()
+
+	var params struct {
+		// Key to hold (e.g., "a", "space", "shift")
+		Key string `json:"key"`
+		// Duration to hold the key in seconds
+		Duration float64 `json:"duration"`
+		// Modifier keys: command, option, control, shift, function
+		Modifiers []string `json:"modifiers"`
+		// Application context (optional)
+		Application string `json:"application"`
+	}
+
+	if err := json.Unmarshal(call.Arguments, &params); err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Invalid parameters: %v", err)}},
+		}, nil
+	}
+
+	if params.Key == "" {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: "key parameter is required"}},
+		}, nil
+	}
+
+	if params.Duration <= 0 {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: "duration parameter must be positive"}},
+		}, nil
+	}
+
+	// Map modifier strings to proto enums
+	var modifiers []pb.KeyPress_Modifier
+	for _, mod := range params.Modifiers {
+		switch strings.ToLower(mod) {
+		case "command", "cmd":
+			modifiers = append(modifiers, pb.KeyPress_MODIFIER_COMMAND)
+		case "option", "alt":
+			modifiers = append(modifiers, pb.KeyPress_MODIFIER_OPTION)
+		case "control", "ctrl":
+			modifiers = append(modifiers, pb.KeyPress_MODIFIER_CONTROL)
+		case "shift":
+			modifiers = append(modifiers, pb.KeyPress_MODIFIER_SHIFT)
+		case "function", "fn":
+			modifiers = append(modifiers, pb.KeyPress_MODIFIER_FUNCTION)
+		case "capslock":
+			modifiers = append(modifiers, pb.KeyPress_MODIFIER_CAPS_LOCK)
+		}
+	}
+
+	parent := params.Application
+	if parent == "" {
+		parent = defaultApplicationParent
+	}
+
+	input := &pb.Input{
+		Action: &pb.InputAction{
+			InputType: &pb.InputAction_PressKey{
+				PressKey: &pb.KeyPress{
+					Key:          params.Key,
+					Modifiers:    modifiers,
+					HoldDuration: params.Duration,
+				},
+			},
+		},
+	}
+
+	resp, err := s.client.CreateInput(ctx, &pb.CreateInputRequest{
+		Parent: parent,
+		Input:  input,
+	})
+	if err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to hold key: %v", err)}},
+		}, nil
+	}
+
+	return &ToolResult{
+		Content: []Content{{
+			Type: "text",
+			Text: fmt.Sprintf("Held key '%s' for %.2fs - Input: %s", params.Key, params.Duration, resp.Name),
+		}},
+	}, nil
+}
+
+// handleMouseButtonDown handles the mouse_button_down tool for stateful mouse button press.
+// Use this with mouse_button_up for complex drag operations where intermediate moves are needed.
+//
+// Coordinates use Global Display Coordinates (top-left origin):
+//   - Origin (0,0) is at the top-left corner of the main display
+//   - Y increases downward
+func (s *MCPServer) handleMouseButtonDown(call *ToolCall) (*ToolResult, error) {
+	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
+	defer cancel()
+
+	var params struct {
+		// X coordinate in Global Display Coordinates (top-left origin)
+		X float64 `json:"x"`
+		// Y coordinate in Global Display Coordinates (top-left origin)
+		Y float64 `json:"y"`
+		// Button type: left, right, middle. Default: left
+		Button string `json:"button"`
+		// Modifier keys to hold during press: command, option, control, shift
+		Modifiers []string `json:"modifiers"`
+		// Application context (optional)
+		Application string `json:"application"`
+	}
+
+	if err := json.Unmarshal(call.Arguments, &params); err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Invalid parameters: %v", err)}},
+		}, nil
+	}
+
+	button := pb.MouseClick_CLICK_TYPE_LEFT
+	switch strings.ToLower(params.Button) {
+	case "right":
+		button = pb.MouseClick_CLICK_TYPE_RIGHT
+	case "middle":
+		button = pb.MouseClick_CLICK_TYPE_MIDDLE
+	}
+
+	// Map modifier strings to proto enums
+	var modifiers []pb.KeyPress_Modifier
+	for _, mod := range params.Modifiers {
+		switch strings.ToLower(mod) {
+		case "command", "cmd":
+			modifiers = append(modifiers, pb.KeyPress_MODIFIER_COMMAND)
+		case "option", "alt":
+			modifiers = append(modifiers, pb.KeyPress_MODIFIER_OPTION)
+		case "control", "ctrl":
+			modifiers = append(modifiers, pb.KeyPress_MODIFIER_CONTROL)
+		case "shift":
+			modifiers = append(modifiers, pb.KeyPress_MODIFIER_SHIFT)
+		case "function", "fn":
+			modifiers = append(modifiers, pb.KeyPress_MODIFIER_FUNCTION)
+		case "capslock":
+			modifiers = append(modifiers, pb.KeyPress_MODIFIER_CAPS_LOCK)
+		}
+	}
+
+	parent := params.Application
+	if parent == "" {
+		parent = defaultApplicationParent
+	}
+
+	input := &pb.Input{
+		Action: &pb.InputAction{
+			InputType: &pb.InputAction_ButtonDown{
+				ButtonDown: &pb.MouseButtonDown{
+					Position: &typepb.Point{
+						X: params.X,
+						Y: params.Y,
+					},
+					Button:    button,
+					Modifiers: modifiers,
+				},
+			},
+		},
+	}
+
+	resp, err := s.client.CreateInput(ctx, &pb.CreateInputRequest{
+		Parent: parent,
+		Input:  input,
+	})
+	if err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to press mouse button: %v", err)}},
+		}, nil
+	}
+
+	buttonName := "left"
+	switch button {
+	case pb.MouseClick_CLICK_TYPE_RIGHT:
+		buttonName = "right"
+	case pb.MouseClick_CLICK_TYPE_MIDDLE:
+		buttonName = "middle"
+	}
+
+	return &ToolResult{
+		Content: []Content{{
+			Type: "text",
+			Text: fmt.Sprintf("Pressed %s button down at (%.0f, %.0f) - Input: %s", buttonName, params.X, params.Y, resp.Name),
+		}},
+	}, nil
+}
+
+// handleMouseButtonUp handles the mouse_button_up tool for stateful mouse button release.
+// Use this after mouse_button_down to complete drag operations.
+//
+// Coordinates use Global Display Coordinates (top-left origin):
+//   - Origin (0,0) is at the top-left corner of the main display
+//   - Y increases downward
+func (s *MCPServer) handleMouseButtonUp(call *ToolCall) (*ToolResult, error) {
+	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
+	defer cancel()
+
+	var params struct {
+		// X coordinate in Global Display Coordinates (top-left origin)
+		X float64 `json:"x"`
+		// Y coordinate in Global Display Coordinates (top-left origin)
+		Y float64 `json:"y"`
+		// Button type: left, right, middle. Default: left
+		Button string `json:"button"`
+		// Modifier keys to hold during release: command, option, control, shift
+		Modifiers []string `json:"modifiers"`
+		// Application context (optional)
+		Application string `json:"application"`
+	}
+
+	if err := json.Unmarshal(call.Arguments, &params); err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Invalid parameters: %v", err)}},
+		}, nil
+	}
+
+	button := pb.MouseClick_CLICK_TYPE_LEFT
+	switch strings.ToLower(params.Button) {
+	case "right":
+		button = pb.MouseClick_CLICK_TYPE_RIGHT
+	case "middle":
+		button = pb.MouseClick_CLICK_TYPE_MIDDLE
+	}
+
+	// Map modifier strings to proto enums
+	var modifiers []pb.KeyPress_Modifier
+	for _, mod := range params.Modifiers {
+		switch strings.ToLower(mod) {
+		case "command", "cmd":
+			modifiers = append(modifiers, pb.KeyPress_MODIFIER_COMMAND)
+		case "option", "alt":
+			modifiers = append(modifiers, pb.KeyPress_MODIFIER_OPTION)
+		case "control", "ctrl":
+			modifiers = append(modifiers, pb.KeyPress_MODIFIER_CONTROL)
+		case "shift":
+			modifiers = append(modifiers, pb.KeyPress_MODIFIER_SHIFT)
+		case "function", "fn":
+			modifiers = append(modifiers, pb.KeyPress_MODIFIER_FUNCTION)
+		case "capslock":
+			modifiers = append(modifiers, pb.KeyPress_MODIFIER_CAPS_LOCK)
+		}
+	}
+
+	parent := params.Application
+	if parent == "" {
+		parent = defaultApplicationParent
+	}
+
+	input := &pb.Input{
+		Action: &pb.InputAction{
+			InputType: &pb.InputAction_ButtonUp{
+				ButtonUp: &pb.MouseButtonUp{
+					Position: &typepb.Point{
+						X: params.X,
+						Y: params.Y,
+					},
+					Button:    button,
+					Modifiers: modifiers,
+				},
+			},
+		},
+	}
+
+	resp, err := s.client.CreateInput(ctx, &pb.CreateInputRequest{
+		Parent: parent,
+		Input:  input,
+	})
+	if err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to release mouse button: %v", err)}},
+		}, nil
+	}
+
+	buttonName := "left"
+	switch button {
+	case pb.MouseClick_CLICK_TYPE_RIGHT:
+		buttonName = "right"
+	case pb.MouseClick_CLICK_TYPE_MIDDLE:
+		buttonName = "middle"
+	}
+
+	return &ToolResult{
+		Content: []Content{{
+			Type: "text",
+			Text: fmt.Sprintf("Released %s button at (%.0f, %.0f) - Input: %s", buttonName, params.X, params.Y, resp.Name),
+		}},
+	}, nil
+}

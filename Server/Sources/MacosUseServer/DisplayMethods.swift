@@ -204,4 +204,49 @@ extension MacosUseService {
 
         return ServerResponse(message: displayMsg)
     }
+
+    func captureCursorPosition(
+        request _: ServerRequest<Macosusesdk_V1_CaptureCursorPositionRequest>,
+        context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_CaptureCursorPositionResponse> {
+        Self.logger.info("captureCursorPosition called")
+
+        // Get cursor position from CoreGraphics
+        // CGEvent returns Mouse Position in Global Display Coordinates (top-left origin)
+        guard let event = CGEvent(source: nil) else {
+            throw RPCError(code: .internalError, message: "Failed to create CGEvent for cursor position")
+        }
+        let cursorLocation = event.location
+
+        // Find which display the cursor is on
+        var displayForCursor = "displays/unknown"
+        let maxDisplays: UInt32 = 64
+        var activeDisplays = [CGDirectDisplayID](repeating: 0, count: Int(maxDisplays))
+        var displayCount: UInt32 = 0
+        let err = activeDisplays.withUnsafeMutableBufferPointer { ptr in
+            CGGetActiveDisplayList(maxDisplays, ptr.baseAddress, &displayCount)
+        }
+        if err == CGError.success {
+            for i in 0 ..< Int(displayCount) {
+                let did = activeDisplays[i]
+                let bounds = CGDisplayBounds(did)
+                if cursorLocation.x >= bounds.origin.x,
+                   cursorLocation.x < bounds.origin.x + bounds.size.width,
+                   cursorLocation.y >= bounds.origin.y,
+                   cursorLocation.y < bounds.origin.y + bounds.size.height
+                {
+                    displayForCursor = "displays/\(did)"
+                    break
+                }
+            }
+        }
+
+        let response = Macosusesdk_V1_CaptureCursorPositionResponse.with {
+            $0.x = cursorLocation.x
+            $0.y = cursorLocation.y
+            $0.display = displayForCursor
+        }
+
+        return ServerResponse(message: response)
+    }
 }

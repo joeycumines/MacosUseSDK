@@ -560,13 +560,16 @@ func TestAllToolsExist(t *testing.T) {
 		"capture_window_screenshot",
 		"capture_region_screenshot",
 		"capture_element_screenshot",
-		// Input tools (8)
+		// Input tools (11)
 		"click",
 		"type_text",
 		"press_key",
+		"hold_key",
 		"mouse_move",
 		"scroll",
 		"drag",
+		"mouse_button_down",
+		"mouse_button_up",
 		"hover",
 		"gesture",
 		// Element tools (10)
@@ -590,9 +593,10 @@ func TestAllToolsExist(t *testing.T) {
 		"minimize_window",
 		"restore_window",
 		"close_window",
-		// Display tools (2)
+		// Display tools (3)
 		"list_displays",
 		"get_display",
+		"cursor_position",
 		// Clipboard tools (4)
 		"get_clipboard",
 		"write_clipboard",
@@ -646,8 +650,8 @@ func TestAllToolsExist(t *testing.T) {
 		"watch_accessibility",
 	}
 
-	if len(expectedTools) != 73 {
-		t.Errorf("Expected 73 tools but defined %d in test", len(expectedTools))
+	if len(expectedTools) != 77 {
+		t.Errorf("Expected 77 tools but defined %d in test", len(expectedTools))
 	}
 
 	// Verify all tool names are unique

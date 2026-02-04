@@ -79,6 +79,103 @@ public func pressKey(keyCode: CGKeyCode, flags: CGEventFlags = []) async throws 
   logger.info("key press simulation complete.")
 }
 
+/// Simulates pressing and holding a key for a specified duration.
+/// - Parameters:
+///   - keyCode: The `CGKeyCode` of the key to press.
+///   - flags: The modifier flags (`CGEventFlags`) to apply (e.g., `.maskCommand`, `.maskShift`).
+///   - duration: The duration in seconds to hold the key down before releasing.
+/// - Throws: `MacosUseSDKError` if the event source cannot be created or the event cannot be posted.
+public func pressKeyHold(keyCode: CGKeyCode, flags: CGEventFlags = [], duration: Double) async throws {
+  logger.info(
+    "simulating key hold: (code: \(keyCode, privacy: .public), flags: \(flags.rawValue, privacy: .public), duration: \(duration, privacy: .public)s)"
+  )
+  let source = try createEventSource()
+
+  let keyDown = CGEvent(keyboardEventSource: source, virtualKey: keyCode, keyDown: true)
+  keyDown?.flags = flags
+  try await postEvent(keyDown, actionDescription: "key down (code: \(keyCode), flags: \(flags.rawValue))")
+
+  // Hold the key for the specified duration
+  try await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000))
+
+  let keyUp = CGEvent(keyboardEventSource: source, virtualKey: keyCode, keyDown: false)
+  keyUp?.flags = flags
+  try await postEvent(keyUp, actionDescription: "key up (code: \(keyCode), flags: \(flags.rawValue))")
+  logger.info("key hold simulation complete.")
+}
+
+/// Simulates pressing a mouse button down without releasing.
+/// Used for stateful drag operations where button down and up are separate events.
+/// - Parameters:
+///   - point: The `CGPoint` where the button should be pressed (Global Display Coordinates).
+///   - button: The mouse button (`.left`, `.right`, `.center`).
+///   - modifiers: Optional modifier flags to hold during the press.
+/// - Throws: `MacosUseSDKError` if the event source cannot be created or the event cannot be posted.
+public func mouseButtonDown(at point: CGPoint, button: CGMouseButton = .left, modifiers: CGEventFlags = [])
+  async throws
+{
+  logger.info(
+    "simulating mouse button down at: (\(point.x, privacy: .public), \(point.y, privacy: .public)), button: \(button.rawValue, privacy: .public)"
+  )
+  let source = try createEventSource()
+
+  let mouseType: CGEventType
+  switch button {
+  case .left:
+    mouseType = .leftMouseDown
+  case .right:
+    mouseType = .rightMouseDown
+  case .center:
+    mouseType = .otherMouseDown
+  default:
+    mouseType = .leftMouseDown
+  }
+
+  let mouseDown = CGEvent(
+    mouseEventSource: source, mouseType: mouseType, mouseCursorPosition: point,
+    mouseButton: button
+  )
+  mouseDown?.flags = modifiers
+  try await postEvent(mouseDown, actionDescription: "mouse button down at (\(point.x), \(point.y))")
+  logger.info("mouse button down simulation complete.")
+}
+
+/// Simulates releasing a mouse button.
+/// Used for stateful drag operations where button down and up are separate events.
+/// - Parameters:
+///   - point: The `CGPoint` where the button should be released (Global Display Coordinates).
+///   - button: The mouse button (`.left`, `.right`, `.center`).
+///   - modifiers: Optional modifier flags to hold during the release.
+/// - Throws: `MacosUseSDKError` if the event source cannot be created or the event cannot be posted.
+public func mouseButtonUp(at point: CGPoint, button: CGMouseButton = .left, modifiers: CGEventFlags = [])
+  async throws
+{
+  logger.info(
+    "simulating mouse button up at: (\(point.x, privacy: .public), \(point.y, privacy: .public)), button: \(button.rawValue, privacy: .public)"
+  )
+  let source = try createEventSource()
+
+  let mouseType: CGEventType
+  switch button {
+  case .left:
+    mouseType = .leftMouseUp
+  case .right:
+    mouseType = .rightMouseUp
+  case .center:
+    mouseType = .otherMouseUp
+  default:
+    mouseType = .leftMouseUp
+  }
+
+  let mouseUp = CGEvent(
+    mouseEventSource: source, mouseType: mouseType, mouseCursorPosition: point,
+    mouseButton: button
+  )
+  mouseUp?.flags = modifiers
+  try await postEvent(mouseUp, actionDescription: "mouse button up at (\(point.x), \(point.y))")
+  logger.info("mouse button up simulation complete.")
+}
+
 /// Simulates a left mouse click at the specified screen coordinates.
 /// Does not move the cursor first. Call `moveMouse` beforehand if needed.
 /// - Parameter point: The `CGPoint` where the click should occur.

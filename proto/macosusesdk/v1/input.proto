@@ -96,6 +96,12 @@ message InputAction {
 
     // Multi-touch gesture.
     Gesture gesture = 17;
+
+    // Press mouse button down (for stateful drag operations).
+    MouseButtonDown button_down = 18;
+
+    // Release mouse button (for stateful drag operations).
+    MouseButtonUp button_up = 19;
   }
 }
 
@@ -150,6 +156,9 @@ message KeyPress {
 
   // Modifier keys to hold during press.
   repeated Modifier modifiers = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Duration to hold the key in seconds. If 0 or unset, performs a normal press/release.
+  double hold_duration = 3 [(google.api.field_behavior) = OPTIONAL];
 
   // Modifier key enumeration.
   enum Modifier {
@@ -298,4 +307,34 @@ message Gesture {
     // Swipe right.
     DIRECTION_RIGHT = 4;
   }
+}
+
+// Mouse button press action (without release).
+// Used for stateful drag operations where button down and up are separate events.
+//
+// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+message MouseButtonDown {
+  // Position where button is pressed in Global Display Coordinates.
+  macosusesdk.type.Point position = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Button type.
+  MouseClick.ClickType button = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Modifier keys to hold during press.
+  repeated KeyPress.Modifier modifiers = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Mouse button release action.
+// Used for stateful drag operations where button down and up are separate events.
+//
+// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+message MouseButtonUp {
+  // Position where button is released in Global Display Coordinates.
+  macosusesdk.type.Point position = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Button type.
+  MouseClick.ClickType button = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Modifier keys to hold during release.
+  repeated KeyPress.Modifier modifiers = 3 [(google.api.field_behavior) = OPTIONAL];
 }

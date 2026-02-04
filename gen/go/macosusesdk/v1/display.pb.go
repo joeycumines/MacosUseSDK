@@ -276,6 +276,108 @@ func (x *ListDisplaysResponse) GetNextPageToken() string {
 	return ""
 }
 
+// Request to capture the current cursor position.
+// Reserved for future expansion (e.g., coordinate space options).
+type CaptureCursorPositionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CaptureCursorPositionRequest) Reset() {
+	*x = CaptureCursorPositionRequest{}
+	mi := &file_macosusesdk_v1_display_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CaptureCursorPositionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CaptureCursorPositionRequest) ProtoMessage() {}
+
+func (x *CaptureCursorPositionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_macosusesdk_v1_display_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CaptureCursorPositionRequest.ProtoReflect.Descriptor instead.
+func (*CaptureCursorPositionRequest) Descriptor() ([]byte, []int) {
+	return file_macosusesdk_v1_display_proto_rawDescGZIP(), []int{4}
+}
+
+// Response with the current cursor position.
+type CaptureCursorPositionResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Cursor X coordinate in Global Display Coordinates (top-left origin).
+	X float64 `protobuf:"fixed64,1,opt,name=x,proto3" json:"x,omitempty"`
+	// Cursor Y coordinate in Global Display Coordinates (top-left origin).
+	Y float64 `protobuf:"fixed64,2,opt,name=y,proto3" json:"y,omitempty"`
+	// Display the cursor is currently on.
+	Display       string `protobuf:"bytes,3,opt,name=display,proto3" json:"display,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CaptureCursorPositionResponse) Reset() {
+	*x = CaptureCursorPositionResponse{}
+	mi := &file_macosusesdk_v1_display_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CaptureCursorPositionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CaptureCursorPositionResponse) ProtoMessage() {}
+
+func (x *CaptureCursorPositionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_macosusesdk_v1_display_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CaptureCursorPositionResponse.ProtoReflect.Descriptor instead.
+func (*CaptureCursorPositionResponse) Descriptor() ([]byte, []int) {
+	return file_macosusesdk_v1_display_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *CaptureCursorPositionResponse) GetX() float64 {
+	if x != nil {
+		return x.X
+	}
+	return 0
+}
+
+func (x *CaptureCursorPositionResponse) GetY() float64 {
+	if x != nil {
+		return x.Y
+	}
+	return 0
+}
+
+func (x *CaptureCursorPositionResponse) GetDisplay() string {
+	if x != nil {
+		return x.Display
+	}
+	return ""
+}
+
 var File_macosusesdk_v1_display_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_display_proto_rawDesc = "" +
@@ -299,7 +401,13 @@ const file_macosusesdk_v1_display_proto_rawDesc = "" +
 	"\x17macosusesdk.com/DisplayR\x04name\"s\n" +
 	"\x14ListDisplaysResponse\x123\n" +
 	"\bdisplays\x18\x01 \x03(\v2\x17.macosusesdk.v1.DisplayR\bdisplays\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageTokenB\xc3\x01\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\x1e\n" +
+	"\x1cCaptureCursorPositionRequest\"\x80\x01\n" +
+	"\x1dCaptureCursorPositionResponse\x12\x11\n" +
+	"\x01x\x18\x01 \x01(\x01B\x03\xe0A\x03R\x01x\x12\x11\n" +
+	"\x01y\x18\x02 \x01(\x01B\x03\xe0A\x03R\x01y\x129\n" +
+	"\adisplay\x18\x03 \x01(\tB\x1f\xe0A\x03\xfaA\x19\n" +
+	"\x17macosusesdk.com/DisplayR\adisplayB\xc3\x01\n" +
 	"\x12com.macosusesdk.v1B\fDisplayProtoP\x01ZFgithub.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1\xa2\x02\x03MXX\xaa\x02\x0eMacosusesdk.V1\xca\x02\x0eMacosusesdk\\V1\xe2\x02\x1aMacosusesdk\\V1\\GPBMetadata\xea\x02\x0fMacosusesdk::V1b\x06proto3"
 
 var (
@@ -314,17 +422,19 @@ func file_macosusesdk_v1_display_proto_rawDescGZIP() []byte {
 	return file_macosusesdk_v1_display_proto_rawDescData
 }
 
-var file_macosusesdk_v1_display_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_macosusesdk_v1_display_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_macosusesdk_v1_display_proto_goTypes = []any{
-	(*Display)(nil),              // 0: macosusesdk.v1.Display
-	(*ListDisplaysRequest)(nil),  // 1: macosusesdk.v1.ListDisplaysRequest
-	(*GetDisplayRequest)(nil),    // 2: macosusesdk.v1.GetDisplayRequest
-	(*ListDisplaysResponse)(nil), // 3: macosusesdk.v1.ListDisplaysResponse
-	(*_type.Region)(nil),         // 4: macosusesdk.type.Region
+	(*Display)(nil),                       // 0: macosusesdk.v1.Display
+	(*ListDisplaysRequest)(nil),           // 1: macosusesdk.v1.ListDisplaysRequest
+	(*GetDisplayRequest)(nil),             // 2: macosusesdk.v1.GetDisplayRequest
+	(*ListDisplaysResponse)(nil),          // 3: macosusesdk.v1.ListDisplaysResponse
+	(*CaptureCursorPositionRequest)(nil),  // 4: macosusesdk.v1.CaptureCursorPositionRequest
+	(*CaptureCursorPositionResponse)(nil), // 5: macosusesdk.v1.CaptureCursorPositionResponse
+	(*_type.Region)(nil),                  // 6: macosusesdk.type.Region
 }
 var file_macosusesdk_v1_display_proto_depIdxs = []int32{
-	4, // 0: macosusesdk.v1.Display.frame:type_name -> macosusesdk.type.Region
-	4, // 1: macosusesdk.v1.Display.visible_frame:type_name -> macosusesdk.type.Region
+	6, // 0: macosusesdk.v1.Display.frame:type_name -> macosusesdk.type.Region
+	6, // 1: macosusesdk.v1.Display.visible_frame:type_name -> macosusesdk.type.Region
 	0, // 2: macosusesdk.v1.ListDisplaysResponse.displays:type_name -> macosusesdk.v1.Display
 	3, // [3:3] is the sub-list for method output_type
 	3, // [3:3] is the sub-list for method input_type
@@ -344,7 +454,7 @@ func file_macosusesdk_v1_display_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_macosusesdk_v1_display_proto_rawDesc), len(file_macosusesdk_v1_display_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

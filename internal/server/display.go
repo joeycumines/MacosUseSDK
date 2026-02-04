@@ -117,3 +117,31 @@ func (s *MCPServer) handleGetDisplay(call *ToolCall) (*ToolResult, error) {
 		},
 	}, nil
 }
+
+// handleCursorPosition handles the cursor_position tool.
+//
+// Retrieves the current cursor position in Global Display Coordinates (top-left origin):
+//   - Origin (0,0) is at the top-left corner of the main display
+//   - Y increases downward
+//   - Also returns which display the cursor is currently on
+func (s *MCPServer) handleCursorPosition(_ *ToolCall) (*ToolResult, error) {
+	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
+	defer cancel()
+
+	resp, err := s.client.CaptureCursorPosition(ctx, &pb.CaptureCursorPositionRequest{})
+	if err != nil {
+		return &ToolResult{
+			IsError: true,
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to get cursor position: %v", err)}},
+		}, nil
+	}
+
+	return &ToolResult{
+		Content: []Content{
+			{
+				Type: "text",
+				Text: fmt.Sprintf("Cursor position: (%.0f, %.0f) on %s", resp.X, resp.Y, resp.Display),
+			},
+		},
+	}, nil
+}

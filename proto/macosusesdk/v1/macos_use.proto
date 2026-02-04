@@ -435,6 +435,15 @@ service MacosUse {
     option (google.api.method_signature) = "name";
   }
 
+  // Captures the current cursor position.
+  // Returns coordinates in Global Display Coordinates (top-left origin).
+  rpc CaptureCursorPosition(CaptureCursorPositionRequest) returns (CaptureCursorPositionResponse) {
+    option (google.api.http) = {
+      post: "/v1/cursor:captureCursorPosition"
+      body: "*"
+    };
+  }
+
   // Gets clipboard contents.
   rpc GetClipboard(GetClipboardRequest) returns (Clipboard) {
     option (google.api.http) = {get: "/v1/{name=clipboard}"};

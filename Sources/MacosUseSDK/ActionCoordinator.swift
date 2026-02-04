@@ -17,7 +17,13 @@ public enum InputAction: Sendable {
   case type(text: String)
   // Use keyName for easier specification, maps to CGKeyCode internally
   case press(keyName: String, flags: CGEventFlags = [])
+  /// Hold a key down for a specified duration before releasing
+  case pressHold(keyName: String, flags: CGEventFlags = [], duration: Double)
   case move(to: CGPoint)
+  /// Press mouse button down without releasing (for stateful drag operations)
+  case mouseDown(point: CGPoint, button: CGMouseButton = .left, modifiers: CGEventFlags = [])
+  /// Release mouse button (for stateful drag operations)
+  case mouseUp(point: CGPoint, button: CGMouseButton = .left, modifiers: CGEventFlags = [])
 }
 
 /// Defines the main action to be performed.
@@ -481,6 +487,24 @@ private func executeInputAction(_ action: InputAction, options: ActionOptions) a
       logger.info("simulating mouse move to \(String(describing: point), privacy: .public) (no visualization)")
       try await moveMouse(to: point)
     }
+  case .pressHold(let keyName, let flags, let duration):
+    guard let keyCode = mapKeyNameToKeyCode(keyName) else {
+      throw MacosUseSDKError.inputInvalidArgument("Unknown key name: \(keyName)")
+    }
+    logger.info(
+      "simulating key hold \(keyName, privacy: .public) for \(duration, privacy: .public)s (no visualization for hold)"
+    )
+    try await pressKeyHold(keyCode: keyCode, flags: flags, duration: duration)
+  case .mouseDown(let point, let button, let modifiers):
+    logger.info(
+      "simulating mouse button down at \(String(describing: point), privacy: .public) button: \(button.rawValue, privacy: .public)"
+    )
+    try await mouseButtonDown(at: point, button: button, modifiers: modifiers)
+  case .mouseUp(let point, let button, let modifiers):
+    logger.info(
+      "simulating mouse button up at \(String(describing: point), privacy: .public) button: \(button.rawValue, privacy: .public)"
+    )
+    try await mouseButtonUp(at: point, button: button, modifiers: modifiers)
   }
 }
 

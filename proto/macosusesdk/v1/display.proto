@@ -71,3 +71,22 @@ message ListDisplaysResponse {
   // not be relied upon by clients. An empty value indicates no more results are available.
   string next_page_token = 2;
 }
+
+// Request to capture the current cursor position.
+// Reserved for future expansion (e.g., coordinate space options).
+message CaptureCursorPositionRequest {}
+
+// Response with the current cursor position.
+message CaptureCursorPositionResponse {
+  // Cursor X coordinate in Global Display Coordinates (top-left origin).
+  double x = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Cursor Y coordinate in Global Display Coordinates (top-left origin).
+  double y = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Display the cursor is currently on.
+  string display = 3 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.resource_reference) = {type: "macosusesdk.com/Display"}
+  ];
+}

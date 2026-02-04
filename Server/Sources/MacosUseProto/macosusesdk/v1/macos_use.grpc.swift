@@ -577,6 +577,18 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
                 method: "GetDisplay"
             )
         }
+        /// Namespace for "CaptureCursorPosition" metadata.
+        public enum CaptureCursorPosition: Sendable {
+            /// Request type for "CaptureCursorPosition".
+            public typealias Input = Macosusesdk_V1_CaptureCursorPositionRequest
+            /// Response type for "CaptureCursorPosition".
+            public typealias Output = Macosusesdk_V1_CaptureCursorPositionResponse
+            /// Descriptor for "CaptureCursorPosition".
+            public static let descriptor = GRPCCore.MethodDescriptor(
+                service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
+                method: "CaptureCursorPosition"
+            )
+        }
         /// Namespace for "GetClipboard" metadata.
         public enum GetClipboard: Sendable {
             /// Request type for "GetClipboard".
@@ -865,6 +877,7 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             CaptureRegionScreenshot.descriptor,
             ListDisplays.descriptor,
             GetDisplay.descriptor,
+            CaptureCursorPosition.descriptor,
             GetClipboard.descriptor,
             WriteClipboard.descriptor,
             ClearClipboard.descriptor,
@@ -1741,6 +1754,25 @@ extension Macosusesdk_V1_MacosUse {
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetDisplayRequest>,
             context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Display>
+
+        /// Handle the "CaptureCursorPosition" method.
+        ///
+        /// > Source IDL Documentation:
+        /// >
+        /// > Captures the current cursor position.
+        /// > Returns coordinates in Global Display Coordinates (top-left origin).
+        ///
+        /// - Parameters:
+        ///   - request: A streaming request of `Macosusesdk_V1_CaptureCursorPositionRequest` messages.
+        ///   - context: Context providing information about the RPC.
+        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
+        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
+        ///     to an internal error.
+        /// - Returns: A streaming response of `Macosusesdk_V1_CaptureCursorPositionResponse` messages.
+        func captureCursorPosition(
+            request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_CaptureCursorPositionRequest>,
+            context: GRPCCore.ServerContext
+        ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_CaptureCursorPositionResponse>
 
         /// Handle the "GetClipboard" method.
         ///
@@ -2943,6 +2975,25 @@ extension Macosusesdk_V1_MacosUse {
             context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Display>
 
+        /// Handle the "CaptureCursorPosition" method.
+        ///
+        /// > Source IDL Documentation:
+        /// >
+        /// > Captures the current cursor position.
+        /// > Returns coordinates in Global Display Coordinates (top-left origin).
+        ///
+        /// - Parameters:
+        ///   - request: A request containing a single `Macosusesdk_V1_CaptureCursorPositionRequest` message.
+        ///   - context: Context providing information about the RPC.
+        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
+        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
+        ///     to an internal error.
+        /// - Returns: A response containing a single `Macosusesdk_V1_CaptureCursorPositionResponse` message.
+        func captureCursorPosition(
+            request: GRPCCore.ServerRequest<Macosusesdk_V1_CaptureCursorPositionRequest>,
+            context: GRPCCore.ServerContext
+        ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_CaptureCursorPositionResponse>
+
         /// Handle the "GetClipboard" method.
         ///
         /// > Source IDL Documentation:
@@ -4144,6 +4195,25 @@ extension Macosusesdk_V1_MacosUse {
             context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_Display
 
+        /// Handle the "CaptureCursorPosition" method.
+        ///
+        /// > Source IDL Documentation:
+        /// >
+        /// > Captures the current cursor position.
+        /// > Returns coordinates in Global Display Coordinates (top-left origin).
+        ///
+        /// - Parameters:
+        ///   - request: A `Macosusesdk_V1_CaptureCursorPositionRequest` message.
+        ///   - context: Context providing information about the RPC.
+        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
+        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
+        ///     to an internal error.
+        /// - Returns: A `Macosusesdk_V1_CaptureCursorPositionResponse` to respond with.
+        func captureCursorPosition(
+            request: Macosusesdk_V1_CaptureCursorPositionRequest,
+            context: GRPCCore.ServerContext
+        ) async throws -> Macosusesdk_V1_CaptureCursorPositionResponse
+
         /// Handle the "GetClipboard" method.
         ///
         /// > Source IDL Documentation:
@@ -5017,6 +5087,17 @@ extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             }
         )
         router.registerHandler(
+            forMethod: Macosusesdk_V1_MacosUse.Method.CaptureCursorPosition.descriptor,
+            deserializer: GRPCProtobuf.ProtobufDeserializer<Macosusesdk_V1_CaptureCursorPositionRequest>(),
+            serializer: GRPCProtobuf.ProtobufSerializer<Macosusesdk_V1_CaptureCursorPositionResponse>(),
+            handler: { request, context in
+                try await self.captureCursorPosition(
+                    request: request,
+                    context: context
+                )
+            }
+        )
+        router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.GetClipboard.descriptor,
             deserializer: GRPCProtobuf.ProtobufDeserializer<Macosusesdk_V1_GetClipboardRequest>(),
             serializer: GRPCProtobuf.ProtobufSerializer<Macosusesdk_V1_Clipboard>(),
@@ -5742,6 +5823,17 @@ extension Macosusesdk_V1_MacosUse.ServiceProtocol {
         context: GRPCCore.ServerContext
     ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Display> {
         let response = try await self.getDisplay(
+            request: GRPCCore.ServerRequest(stream: request),
+            context: context
+        )
+        return GRPCCore.StreamingServerResponse(single: response)
+    }
+
+    public func captureCursorPosition(
+        request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_CaptureCursorPositionRequest>,
+        context: GRPCCore.ServerContext
+    ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_CaptureCursorPositionResponse> {
+        let response = try await self.captureCursorPosition(
             request: GRPCCore.ServerRequest(stream: request),
             context: context
         )
@@ -6571,6 +6663,19 @@ extension Macosusesdk_V1_MacosUse.SimpleServiceProtocol {
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Display> {
         return GRPCCore.ServerResponse<Macosusesdk_V1_Display>(
             message: try await self.getDisplay(
+                request: request.message,
+                context: context
+            ),
+            metadata: [:]
+        )
+    }
+
+    public func captureCursorPosition(
+        request: GRPCCore.ServerRequest<Macosusesdk_V1_CaptureCursorPositionRequest>,
+        context: GRPCCore.ServerContext
+    ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_CaptureCursorPositionResponse> {
+        return GRPCCore.ServerResponse<Macosusesdk_V1_CaptureCursorPositionResponse>(
+            message: try await self.captureCursorPosition(
                 request: request.message,
                 context: context
             ),

@@ -192,6 +192,18 @@ public actor AutomationCoordinator {
             } else {
                 try await MacosUseSDK.moveMouse(to: point)
             }
+        case let .pressHold(keyName, flags, duration):
+            guard let keyCode = MacosUseSDK.mapKeyNameToKeyCode(keyName) else {
+                throw CoordinatorError.invalidKeyName(keyName)
+            }
+            // pressKeyHold does not have a visualization variant currently
+            try await MacosUseSDK.pressKeyHold(keyCode: keyCode, flags: flags, duration: duration)
+        case let .mouseDown(point, button, modifiers):
+            // No visualization for stateful mouse events
+            try await MacosUseSDK.mouseButtonDown(at: point, button: button, modifiers: modifiers)
+        case let .mouseUp(point, button, modifiers):
+            // No visualization for stateful mouse events
+            try await MacosUseSDK.mouseButtonUp(at: point, button: button, modifiers: modifiers)
         }
     }
 }
@@ -286,6 +298,10 @@ extension AutomationCoordinator {
             return .type(text: textInput.text)
         case let .pressKey(keyPress):
             let flags = try convertModifiers(keyPress.modifiers)
+            // Check if holdDuration is set (non-zero means hold key)
+            if keyPress.holdDuration > 0 {
+                return .pressHold(keyName: keyPress.key, flags: flags, duration: keyPress.holdDuration)
+            }
             return .press(keyName: keyPress.key, flags: flags)
         case let .moveMouse(mouseMove):
             guard mouseMove.hasPosition else {
@@ -295,10 +311,37 @@ extension AutomationCoordinator {
             // the same Global Display Coordinate System as CGEvent (top-left origin).
             // NO conversion needed.
             return .move(to: CGPoint(x: mouseMove.position.x, y: mouseMove.position.y))
+        case let .buttonDown(buttonDown):
+            guard buttonDown.hasPosition else {
+                throw CoordinatorError.invalidKeyCombo("buttonDown missing position")
+            }
+            let point = CGPoint(x: buttonDown.position.x, y: buttonDown.position.y)
+            let button = convertButtonType(buttonDown.button)
+            let modifiers = try convertModifiers(buttonDown.modifiers)
+            return .mouseDown(point: point, button: button, modifiers: modifiers)
+        case let .buttonUp(buttonUp):
+            guard buttonUp.hasPosition else {
+                throw CoordinatorError.invalidKeyCombo("buttonUp missing position")
+            }
+            let point = CGPoint(x: buttonUp.position.x, y: buttonUp.position.y)
+            let button = convertButtonType(buttonUp.button)
+            let modifiers = try convertModifiers(buttonUp.modifiers)
+            return .mouseUp(point: point, button: button, modifiers: modifiers)
         case .none:
             throw CoordinatorError.invalidKeyCombo("empty input type")
         default:
             throw CoordinatorError.invalidKeyCombo("unsupported input type")
+        }
+    }
+
+    private nonisolated func convertButtonType(_ buttonType: Macosusesdk_V1_MouseClick.ClickType) -> CGMouseButton {
+        switch buttonType {
+        case .right:
+            .right
+        case .middle:
+            .center
+        default:
+            .left
         }
     }
 

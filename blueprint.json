@@ -22,154 +22,154 @@
     "constraint": "The use of subagents via the `runSubagent` tool is MANDATORY for the execution of the tasks below. Tasks are grouped specifically to be run in distinct subagent contexts to prevent context window exhaustion. Do not attempt to solve all groups in a single turn."
   },
   "status_section": {
-    "current_state": "73 MCP tools implemented (100% proto RPC coverage). HTTP/SSE transport complete. Protocol version 2025-11-25. This session added 29 new tool handlers: 5 file dialog, 14 session/macro/transaction, 6 element, 2 input query, 1 scripting dictionary, 1 window state.",
+    "current_state": "77 MCP tools implemented (100% proto RPC coverage + extensions). This session: CaptureCursorPosition RPC, KeyPress.hold_duration, MouseButtonDown/MouseButtonUp; Swift SDK/Server implementation with pressKeyHold, mouseButtonDown/Up; Go handlers with function/capslock modifier support.",
     "commits_made": [],
-    "verification_status": "verified - 2 contiguous peer reviews passed"
+    "verification_status": "verified - 2 contiguous peer reviews passed (Reviews 1 and 3)"
   },
   "sequential_tasks": [
     {
       "id": "T001",
       "task": "Add GetCursorPosition RPC to proto/macosusesdk/v1/macos_use.proto for cursor_position MCP tool",
       "file": "proto/macosusesdk/v1/macos_use.proto",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T002",
       "task": "Add duration field to KeyPress message in proto/macosusesdk/v1/input.proto for hold_key support",
       "file": "proto/macosusesdk/v1/input.proto",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T003",
       "task": "Add MouseButtonDown and MouseButtonUp input types in proto/macosusesdk/v1/input.proto for stateful mouse events",
       "file": "proto/macosusesdk/v1/input.proto",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T004",
       "task": "Regenerate Go protobuf code after proto changes (make buf-generate)",
       "file": "gen/go/macosusesdk/v1/",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T005",
-      "task": "Implement cursor_position MCP tool handler in internal/server/input.go",
-      "file": "internal/server/input.go",
-      "status": "pending"
+      "task": "Implement cursor_position MCP tool handler in internal/server/display.go",
+      "file": "internal/server/display.go",
+      "status": "complete"
     },
     {
       "id": "T006",
       "task": "Add cursor_position tool registration in internal/server/mcp.go registerTools()",
       "file": "internal/server/mcp.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T007",
       "task": "Implement hold_key MCP tool handler in internal/server/input.go",
       "file": "internal/server/input.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T008",
       "task": "Add hold_key tool registration in internal/server/mcp.go registerTools()",
       "file": "internal/server/mcp.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T009",
-      "task": "Implement left_mouse_down MCP tool handler in internal/server/input.go",
+      "task": "Implement mouse_button_down MCP tool handler in internal/server/input.go",
       "file": "internal/server/input.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T010",
-      "task": "Implement left_mouse_up MCP tool handler in internal/server/input.go",
+      "task": "Implement mouse_button_up MCP tool handler in internal/server/input.go",
       "file": "internal/server/input.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T011",
-      "task": "Add left_mouse_down and left_mouse_up tool registrations in internal/server/mcp.go",
+      "task": "Add mouse_button_down and mouse_button_up tool registrations in internal/server/mcp.go",
       "file": "internal/server/mcp.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T012",
-      "task": "Add unit tests for cursor_position, hold_key, left_mouse_down, left_mouse_up in internal/server/mcp_test.go",
+      "task": "Add unit tests for cursor_position, hold_key, mouse_button_down, mouse_button_up in internal/server/mcp_test.go",
       "file": "internal/server/mcp_test.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T013",
       "task": "Implement create_session MCP tool handler in internal/server/session.go (new file)",
       "file": "internal/server/session.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T014",
       "task": "Implement get_session MCP tool handler in internal/server/session.go",
       "file": "internal/server/session.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T015",
       "task": "Implement list_sessions MCP tool handler in internal/server/session.go",
       "file": "internal/server/session.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T016",
       "task": "Implement delete_session MCP tool handler in internal/server/session.go",
       "file": "internal/server/session.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T017",
       "task": "Add session tool registrations in internal/server/mcp.go registerTools()",
       "file": "internal/server/mcp.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T018",
-      "task": "Implement create_macro MCP tool handler in internal/server/macro.go (new file)",
-      "file": "internal/server/macro.go",
-      "status": "pending"
+      "task": "Implement create_macro MCP tool handler in internal/server/session.go",
+      "file": "internal/server/session.go",
+      "status": "complete"
     },
     {
       "id": "T019",
-      "task": "Implement get_macro MCP tool handler in internal/server/macro.go",
-      "file": "internal/server/macro.go",
-      "status": "pending"
+      "task": "Implement get_macro MCP tool handler in internal/server/session.go",
+      "file": "internal/server/session.go",
+      "status": "complete"
     },
     {
       "id": "T020",
-      "task": "Implement list_macros MCP tool handler in internal/server/macro.go",
-      "file": "internal/server/macro.go",
-      "status": "pending"
+      "task": "Implement list_macros MCP tool handler in internal/server/session.go",
+      "file": "internal/server/session.go",
+      "status": "complete"
     },
     {
       "id": "T021",
-      "task": "Implement execute_macro MCP tool handler in internal/server/macro.go",
-      "file": "internal/server/macro.go",
-      "status": "pending"
+      "task": "Implement execute_macro MCP tool handler in internal/server/session.go",
+      "file": "internal/server/session.go",
+      "status": "complete"
     },
     {
       "id": "T022",
       "task": "Add macro tool registrations in internal/server/mcp.go registerTools()",
       "file": "internal/server/mcp.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T023",
       "task": "Add unit tests for session and macro tools in internal/server/mcp_test.go",
       "file": "internal/server/mcp_test.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T024",
-      "task": "Update TestAllToolsExist expected tool count (44 -> 52 after adding new tools)",
+      "task": "Update TestAllToolsExist expected tool count (now 77 tools)",
       "file": "internal/server/mcp_test.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T025",

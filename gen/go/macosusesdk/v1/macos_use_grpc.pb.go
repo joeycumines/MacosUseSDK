@@ -72,6 +72,7 @@ const (
 	MacosUse_CaptureRegionScreenshot_FullMethodName  = "/macosusesdk.v1.MacosUse/CaptureRegionScreenshot"
 	MacosUse_ListDisplays_FullMethodName             = "/macosusesdk.v1.MacosUse/ListDisplays"
 	MacosUse_GetDisplay_FullMethodName               = "/macosusesdk.v1.MacosUse/GetDisplay"
+	MacosUse_CaptureCursorPosition_FullMethodName    = "/macosusesdk.v1.MacosUse/CaptureCursorPosition"
 	MacosUse_GetClipboard_FullMethodName             = "/macosusesdk.v1.MacosUse/GetClipboard"
 	MacosUse_WriteClipboard_FullMethodName           = "/macosusesdk.v1.MacosUse/WriteClipboard"
 	MacosUse_ClearClipboard_FullMethodName           = "/macosusesdk.v1.MacosUse/ClearClipboard"
@@ -192,6 +193,9 @@ type MacosUseClient interface {
 	ListDisplays(ctx context.Context, in *ListDisplaysRequest, opts ...grpc.CallOption) (*ListDisplaysResponse, error)
 	// Gets a specific display.
 	GetDisplay(ctx context.Context, in *GetDisplayRequest, opts ...grpc.CallOption) (*Display, error)
+	// Captures the current cursor position.
+	// Returns coordinates in Global Display Coordinates (top-left origin).
+	CaptureCursorPosition(ctx context.Context, in *CaptureCursorPositionRequest, opts ...grpc.CallOption) (*CaptureCursorPositionResponse, error)
 	// Gets clipboard contents.
 	GetClipboard(ctx context.Context, in *GetClipboardRequest, opts ...grpc.CallOption) (*Clipboard, error)
 	// Writes clipboard contents.
@@ -720,6 +724,16 @@ func (c *macosUseClient) GetDisplay(ctx context.Context, in *GetDisplayRequest, 
 	return out, nil
 }
 
+func (c *macosUseClient) CaptureCursorPosition(ctx context.Context, in *CaptureCursorPositionRequest, opts ...grpc.CallOption) (*CaptureCursorPositionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CaptureCursorPositionResponse)
+	err := c.cc.Invoke(ctx, MacosUse_CaptureCursorPosition_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *macosUseClient) GetClipboard(ctx context.Context, in *GetClipboardRequest, opts ...grpc.CallOption) (*Clipboard, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Clipboard)
@@ -1018,6 +1032,9 @@ type MacosUseServer interface {
 	ListDisplays(context.Context, *ListDisplaysRequest) (*ListDisplaysResponse, error)
 	// Gets a specific display.
 	GetDisplay(context.Context, *GetDisplayRequest) (*Display, error)
+	// Captures the current cursor position.
+	// Returns coordinates in Global Display Coordinates (top-left origin).
+	CaptureCursorPosition(context.Context, *CaptureCursorPositionRequest) (*CaptureCursorPositionResponse, error)
 	// Gets clipboard contents.
 	GetClipboard(context.Context, *GetClipboardRequest) (*Clipboard, error)
 	// Writes clipboard contents.
@@ -1205,6 +1222,9 @@ func (UnimplementedMacosUseServer) ListDisplays(context.Context, *ListDisplaysRe
 }
 func (UnimplementedMacosUseServer) GetDisplay(context.Context, *GetDisplayRequest) (*Display, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetDisplay not implemented")
+}
+func (UnimplementedMacosUseServer) CaptureCursorPosition(context.Context, *CaptureCursorPositionRequest) (*CaptureCursorPositionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CaptureCursorPosition not implemented")
 }
 func (UnimplementedMacosUseServer) GetClipboard(context.Context, *GetClipboardRequest) (*Clipboard, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetClipboard not implemented")
@@ -2101,6 +2121,24 @@ func _MacosUse_GetDisplay_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MacosUse_CaptureCursorPosition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CaptureCursorPositionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MacosUseServer).CaptureCursorPosition(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MacosUse_CaptureCursorPosition_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MacosUseServer).CaptureCursorPosition(ctx, req.(*CaptureCursorPositionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _MacosUse_GetClipboard_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetClipboardRequest)
 	if err := dec(in); err != nil {
@@ -2643,6 +2681,10 @@ var MacosUse_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetDisplay",
 			Handler:    _MacosUse_GetDisplay_Handler,
+		},
+		{
+			MethodName: "CaptureCursorPosition",
+			Handler:    _MacosUse_CaptureCursorPosition_Handler,
 		},
 		{
 			MethodName: "GetClipboard",

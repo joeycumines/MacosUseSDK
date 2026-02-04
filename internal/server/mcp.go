@@ -308,12 +308,36 @@ func (s *MCPServer) registerTools() {
 					"modifiers": map[string]interface{}{
 						"type":        "array",
 						"items":       map[string]interface{}{"type": "string"},
-						"description": "Modifier keys to hold: command, option, control, shift, function",
+						"description": "Modifier keys to hold: command, option, control, shift, function, capslock",
 					},
 				},
 				"required": []string{"key"},
 			},
 			Handler: s.handlePressKey,
+		},
+		"hold_key": {
+			Name:        "hold_key",
+			Description: "Hold a key down for a specified duration. Useful for modifier key holds or game-style input where key timing matters.",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"key": map[string]interface{}{
+						"type":        "string",
+						"description": "Key to hold (e.g., a, space, shift)",
+					},
+					"duration": map[string]interface{}{
+						"type":        "number",
+						"description": "Duration to hold the key in seconds",
+					},
+					"modifiers": map[string]interface{}{
+						"type":        "array",
+						"items":       map[string]interface{}{"type": "string"},
+						"description": "Modifier keys to hold: command, option, control, shift, function, capslock",
+					},
+				},
+				"required": []string{"key", "duration"},
+			},
+			Handler: s.handleHoldKey,
 		},
 		"mouse_move": {
 			Name:        "mouse_move",
@@ -384,6 +408,36 @@ func (s *MCPServer) registerTools() {
 				"required": []string{"start_x", "start_y", "end_x", "end_y"},
 			},
 			Handler: s.handleDrag,
+		},
+		"mouse_button_down": {
+			Name:        "mouse_button_down",
+			Description: "Press a mouse button down at a position without releasing. Use with mouse_button_up for stateful drag operations with intermediate moves. Uses Global Display Coordinates (top-left origin).",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"x":         map[string]interface{}{"type": "number", "description": "X coordinate (Global Display Coordinates)"},
+					"y":         map[string]interface{}{"type": "number", "description": "Y coordinate (Global Display Coordinates)"},
+					"button":    map[string]interface{}{"type": "string", "description": "Mouse button: left, right, middle"},
+					"modifiers": map[string]interface{}{"type": "array", "items": map[string]interface{}{"type": "string"}, "description": "Modifier keys: command, option, control, shift"},
+				},
+				"required": []string{"x", "y"},
+			},
+			Handler: s.handleMouseButtonDown,
+		},
+		"mouse_button_up": {
+			Name:        "mouse_button_up",
+			Description: "Release a mouse button at a position. Use after mouse_button_down to complete drag operations. Uses Global Display Coordinates (top-left origin).",
+			InputSchema: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"x":         map[string]interface{}{"type": "number", "description": "X coordinate (Global Display Coordinates)"},
+					"y":         map[string]interface{}{"type": "number", "description": "Y coordinate (Global Display Coordinates)"},
+					"button":    map[string]interface{}{"type": "string", "description": "Mouse button: left, right, middle"},
+					"modifiers": map[string]interface{}{"type": "array", "items": map[string]interface{}{"type": "string"}, "description": "Modifier keys: command, option, control, shift"},
+				},
+				"required": []string{"x", "y"},
+			},
+			Handler: s.handleMouseButtonUp,
 		},
 		"hover": {
 			Name:        "hover",
@@ -710,6 +764,15 @@ func (s *MCPServer) registerTools() {
 				"required": []string{"name"},
 			},
 			Handler: s.handleGetDisplay,
+		},
+		"cursor_position": {
+			Name:        "cursor_position",
+			Description: "Get the current cursor position in Global Display Coordinates (top-left origin). Returns X/Y coordinates and which display the cursor is on.",
+			InputSchema: map[string]interface{}{
+				"type":       "object",
+				"properties": map[string]interface{}{},
+			},
+			Handler: s.handleCursorPosition,
 		},
 		"get_clipboard": {
 			Name:        "get_clipboard",
