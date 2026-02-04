@@ -807,6 +807,128 @@ Cancel an active observation.
 |-----------|------|----------|-------------|
 | `name` | string | **Yes** | Observation resource name |
 
+#### Observation Workflow Examples
+
+##### Example 1: Monitoring Window Changes in TextEdit
+
+This workflow demonstrates creating an observation to watch for window changes, then detecting when a new document appears.
+
+**Step 1: Open the application and create observation**
+
+Request:
+```json
+{
+  "method": "tools/call",
+  "params": {
+    "name": "open_application",
+    "arguments": {"id": "TextEdit"}
+  }
+}
+```
+
+Response:
+```json
+{
+  "result": {
+    "content": [{"type": "text", "text": "{\"name\":\"applications/12345\",\"bundle_id\":\"com.apple.TextEdit\",\"title\":\"TextEdit\"}"}]
+  }
+}
+```
+
+**Step 2: Create an observation for window changes**
+
+Request:
+```json
+{
+  "method": "tools/call",
+  "params": {
+    "name": "create_observation",
+    "arguments": {
+      "parent": "applications/12345",
+      "type": "window_changes",
+      "poll_interval": 0.5
+    }
+  }
+}
+```
+
+Response:
+```json
+{
+  "result": {
+    "content": [{"type": "text", "text": "{\"name\":\"applications/12345/observations/obs-001\",\"state\":\"ACTIVE\"}"}]
+  }
+}
+```
+
+**Step 3: Stream observations (long-polling for changes)**
+
+Request:
+```json
+{
+  "method": "tools/call",
+  "params": {
+    "name": "stream_observations",
+    "arguments": {
+      "name": "applications/12345/observations/obs-001",
+      "timeout": 30
+    }
+  }
+}
+```
+
+Response (when new window opens):
+```json
+{
+  "result": {
+    "content": [{"type": "text", "text": "{\"events\":[{\"type\":\"WINDOW_CREATED\",\"window\":{\"name\":\"applications/12345/windows/67890\",\"title\":\"Untitled\"}}]}"}]
+  }
+}
+```
+
+**Step 4: Cancel observation when done**
+
+Request:
+```json
+{
+  "method": "tools/call",
+  "params": {
+    "name": "cancel_observation",
+    "arguments": {"name": "applications/12345/observations/obs-001"}
+  }
+}
+```
+
+Response:
+```json
+{
+  "result": {
+    "content": [{"type": "text", "text": "{\"cancelled\":true}"}]
+  }
+}
+```
+
+##### Example 2: Watching for Element State Changes
+
+Watch for a specific button to become enabled:
+
+Request:
+```json
+{
+  "method": "tools/call",
+  "params": {
+    "name": "create_observation",
+    "arguments": {
+      "parent": "applications/12345",
+      "type": "attribute_changes",
+      "roles": ["AXButton"],
+      "attributes": ["AXEnabled"],
+      "visible_only": true
+    }
+  }
+}
+```
+
 ---
 
 ### 2.10 Accessibility Tools
@@ -975,6 +1097,194 @@ Drag and drop files onto a target UI element.
 | `commit_transaction` | Commit transaction |
 | `rollback_transaction` | Rollback transaction |
 
+#### Session Workflow Examples
+
+##### Example 1: Basic Session Lifecycle (Create → Use → Delete)
+
+Sessions provide a way to coordinate complex multi-step workflows, track metadata, and manage application state.
+
+**Step 1: Create a session for an automation workflow**
+
+Request:
+```json
+{
+  "method": "tools/call",
+  "params": {
+    "name": "create_session",
+    "arguments": {
+      "display_name": "Document Processing Workflow",
+      "metadata": {
+        "task": "process_invoices",
+        "started_by": "automation_script",
+        "batch_id": "batch-2026-02-04"
+      }
+    }
+  }
+}
+```
+
+Response:
+```json
+{
+  "result": {
+    "content": [{"type": "text", "text": "{\"name\":\"sessions/sess-a1b2c3\",\"display_name\":\"Document Processing Workflow\",\"create_time\":\"2026-02-04T10:00:00Z\",\"state\":\"ACTIVE\"}"}]
+  }
+}
+```
+
+**Step 2: Perform automation actions (open app, interact with windows)**
+
+Request:
+```json
+{
+  "method": "tools/call",
+  "params": {
+    "name": "open_application",
+    "arguments": {"id": "TextEdit"}
+  }
+}
+```
+
+**Step 3: Get session snapshot to inspect tracked state**
+
+Request:
+```json
+{
+  "method": "tools/call",
+  "params": {
+    "name": "get_session_snapshot",
+    "arguments": {"name": "sessions/sess-a1b2c3"}
+  }
+}
+```
+
+Response:
+```json
+{
+  "result": {
+    "content": [{"type": "text", "text": "{\"session\":\"sessions/sess-a1b2c3\",\"applications\":[{\"name\":\"applications/12345\",\"bundle_id\":\"com.apple.TextEdit\"}],\"observations\":[],\"operation_count\":5}"}]
+  }
+}
+```
+
+**Step 4: Get session details**
+
+Request:
+```json
+{
+  "method": "tools/call",
+  "params": {
+    "name": "get_session",
+    "arguments": {"name": "sessions/sess-a1b2c3"}
+  }
+}
+```
+
+Response:
+```json
+{
+  "result": {
+    "content": [{"type": "text", "text": "{\"name\":\"sessions/sess-a1b2c3\",\"display_name\":\"Document Processing Workflow\",\"metadata\":{\"task\":\"process_invoices\",\"started_by\":\"automation_script\",\"batch_id\":\"batch-2026-02-04\"},\"state\":\"ACTIVE\",\"create_time\":\"2026-02-04T10:00:00Z\"}"}]
+  }
+}
+```
+
+**Step 5: Delete session when workflow is complete**
+
+Request:
+```json
+{
+  "method": "tools/call",
+  "params": {
+    "name": "delete_session",
+    "arguments": {"name": "sessions/sess-a1b2c3"}
+  }
+}
+```
+
+Response:
+```json
+{
+  "result": {
+    "content": [{"type": "text", "text": "{\"deleted\":true}"}]
+  }
+}
+```
+
+##### Example 2: Using Transactions for Atomic Operations
+
+Transactions allow grouping operations that should succeed or fail together:
+
+**Begin a transaction:**
+```json
+{
+  "method": "tools/call",
+  "params": {
+    "name": "begin_transaction",
+    "arguments": {"session": "sessions/sess-a1b2c3"}
+  }
+}
+```
+
+Response:
+```json
+{
+  "result": {
+    "content": [{"type": "text", "text": "{\"transaction_id\":\"txn-001\",\"session\":\"sessions/sess-a1b2c3\"}"}]
+  }
+}
+```
+
+**Commit if all operations succeed:**
+```json
+{
+  "method": "tools/call",
+  "params": {
+    "name": "commit_transaction",
+    "arguments": {
+      "name": "sessions/sess-a1b2c3",
+      "transaction_id": "txn-001"
+    }
+  }
+}
+```
+
+**Or rollback if something fails:**
+```json
+{
+  "method": "tools/call",
+  "params": {
+    "name": "rollback_transaction",
+    "arguments": {
+      "name": "sessions/sess-a1b2c3",
+      "transaction_id": "txn-001"
+    }
+  }
+}
+```
+
+##### Example 3: Listing All Sessions
+
+Request:
+```json
+{
+  "method": "tools/call",
+  "params": {
+    "name": "list_sessions",
+    "arguments": {"page_size": 10}
+  }
+}
+```
+
+Response:
+```json
+{
+  "result": {
+    "content": [{"type": "text", "text": "{\"sessions\":[{\"name\":\"sessions/sess-a1b2c3\",\"display_name\":\"Document Processing Workflow\",\"state\":\"ACTIVE\"},{\"name\":\"sessions/sess-d4e5f6\",\"display_name\":\"Daily Report Generator\",\"state\":\"ACTIVE\"}]}"}]
+  }
+}
+```
+
 #### create_session
 
 Create a new session for coordinating complex workflows.
@@ -1060,6 +1370,187 @@ Rollback a transaction.
 | `delete_macro` | Delete macro |
 | `execute_macro` | Execute macro |
 | `update_macro` | Update macro metadata |
+
+#### Macro Workflow Examples
+
+##### Example 1: Creating and Executing a Macro
+
+Macros allow you to define reusable action sequences that can be executed multiple times. This example shows creating a macro that opens a new TextEdit document.
+
+**Step 1: Create a new macro**
+
+Request:
+```json
+{
+  "method": "tools/call",
+  "params": {
+    "name": "create_macro",
+    "arguments": {
+      "display_name": "New TextEdit Document",
+      "description": "Opens TextEdit and creates a new document with a timestamp",
+      "tags": ["textedit", "documents", "automation"]
+    }
+  }
+}
+```
+
+Response:
+```json
+{
+  "result": {
+    "content": [{"type": "text", "text": "{\"name\":\"macros/macro-a1b2c3\",\"display_name\":\"New TextEdit Document\",\"description\":\"Opens TextEdit and creates a new document with a timestamp\",\"tags\":[\"textedit\",\"documents\",\"automation\"],\"create_time\":\"2026-02-04T10:00:00Z\"}"}]
+  }
+}
+```
+
+**Step 2: Execute the macro**
+
+Request:
+```json
+{
+  "method": "tools/call",
+  "params": {
+    "name": "execute_macro",
+    "arguments": {
+      "macro": "macros/macro-a1b2c3"
+    }
+  }
+}
+```
+
+Response:
+```json
+{
+  "result": {
+    "content": [{"type": "text", "text": "{\"operation\":\"operations/op-xyz789\",\"done\":true,\"result\":{\"success\":true,\"actions_executed\":3}}"}]
+  }
+}
+```
+
+##### Example 2: Managing Macros
+
+**List all macros with filtering by tags:**
+
+Request:
+```json
+{
+  "method": "tools/call",
+  "params": {
+    "name": "list_macros",
+    "arguments": {"page_size": 20}
+  }
+}
+```
+
+Response:
+```json
+{
+  "result": {
+    "content": [{"type": "text", "text": "{\"macros\":[{\"name\":\"macros/macro-a1b2c3\",\"display_name\":\"New TextEdit Document\",\"tags\":[\"textedit\",\"documents\",\"automation\"]},{\"name\":\"macros/macro-d4e5f6\",\"display_name\":\"Close All Windows\",\"tags\":[\"cleanup\",\"windows\"]}]}"}]
+  }
+}
+```
+
+**Get details of a specific macro:**
+
+Request:
+```json
+{
+  "method": "tools/call",
+  "params": {
+    "name": "get_macro",
+    "arguments": {"name": "macros/macro-a1b2c3"}
+  }
+}
+```
+
+Response:
+```json
+{
+  "result": {
+    "content": [{"type": "text", "text": "{\"name\":\"macros/macro-a1b2c3\",\"display_name\":\"New TextEdit Document\",\"description\":\"Opens TextEdit and creates a new document with a timestamp\",\"tags\":[\"textedit\",\"documents\",\"automation\"],\"create_time\":\"2026-02-04T10:00:00Z\",\"update_time\":\"2026-02-04T10:00:00Z\",\"execution_count\":5}"}]
+  }
+}
+```
+
+**Update macro metadata:**
+
+Request:
+```json
+{
+  "method": "tools/call",
+  "params": {
+    "name": "update_macro",
+    "arguments": {
+      "name": "macros/macro-a1b2c3",
+      "display_name": "New TextEdit Document (v2)",
+      "description": "Opens TextEdit, creates a new document, and adds timestamp header",
+      "tags": ["textedit", "documents", "automation", "updated"]
+    }
+  }
+}
+```
+
+Response:
+```json
+{
+  "result": {
+    "content": [{"type": "text", "text": "{\"name\":\"macros/macro-a1b2c3\",\"display_name\":\"New TextEdit Document (v2)\",\"update_time\":\"2026-02-04T11:00:00Z\"}"}]
+  }
+}
+```
+
+**Delete a macro when no longer needed:**
+
+Request:
+```json
+{
+  "method": "tools/call",
+  "params": {
+    "name": "delete_macro",
+    "arguments": {"name": "macros/macro-a1b2c3"}
+  }
+}
+```
+
+Response:
+```json
+{
+  "result": {
+    "content": [{"type": "text", "text": "{\"deleted\":true}"}]
+  }
+}
+```
+
+##### Example 3: Executing a Parameterized Macro
+
+Macros can accept parameter values at execution time:
+
+Request:
+```json
+{
+  "method": "tools/call",
+  "params": {
+    "name": "execute_macro",
+    "arguments": {
+      "macro": "macros/macro-save-file",
+      "parameter_values": {
+        "filename": "quarterly-report.txt",
+        "directory": "/Users/myuser/Documents"
+      }
+    }
+  }
+}
+```
+
+Response:
+```json
+{
+  "result": {
+    "content": [{"type": "text", "text": "{\"operation\":\"operations/op-abc123\",\"done\":true,\"result\":{\"success\":true,\"actions_executed\":5,\"file_saved\":\"/Users/myuser/Documents/quarterly-report.txt\"}}"}]
+  }
+}
+```
 
 #### create_macro
 

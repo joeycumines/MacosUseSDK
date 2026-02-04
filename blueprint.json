@@ -22,7 +22,7 @@
     "constraint": "The use of subagents via the `runSubagent` tool is MANDATORY for the execution of the tasks below. Tasks are grouped specifically to be run in distinct subagent contexts to prevent context window exhaustion. Do not attempt to solve all groups in a single turn."
   },
   "status_section": {
-    "current_state": "77 MCP tools, comprehensive documentation, all tests pass. Unit tests expanded: display_test.go (21 tests), element_test.go (45 tests), window_test.go (54 tests), clipboard_test.go (35 tests), application_test.go (40 tests), observation_test.go (30 tests), file_test.go (45 tests).",
+    "current_state": "77 MCP tools, comprehensive documentation with workflow examples, all tests pass. Unit tests expanded: display_test.go (21 tests), element_test.go (45 tests), window_test.go (54 tests), clipboard_test.go (35 tests), application_test.go (40 tests), observation_test.go (30 tests), file_test.go (45 tests).",
     "commits_made": [
       "20358ac - feat(input): add cursor_position, hold_key, mouse_button_down/up MCP tools",
       "120c9d7 - test(integration): add HTTP transport tests",
