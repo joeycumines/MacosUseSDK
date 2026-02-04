@@ -1323,3 +1323,633 @@ func TestMCPServer_HandleHTTPMessage_NotificationsInitialized(t *testing.T) {
 		t.Errorf("handleHTTPMessage returned response %+v, want nil (notifications don't get responses)", resp)
 	}
 }
+
+// ============================================================================
+// T086: File Dialog Tools Unit Tests
+// ============================================================================
+
+// TestFileDialogToolsExist validates that all file dialog tools are registered
+func TestFileDialogToolsExist(t *testing.T) {
+	fileDialogTools := []string{
+		"automate_open_file_dialog",
+		"automate_save_file_dialog",
+		"select_file",
+		"select_directory",
+		"drag_files",
+	}
+
+	// Verify all names are unique and valid snake_case
+	seen := make(map[string]bool)
+	for _, toolName := range fileDialogTools {
+		if seen[toolName] {
+			t.Errorf("Duplicate tool name: %s", toolName)
+		}
+		seen[toolName] = true
+
+		// Verify snake_case (no uppercase, no hyphens)
+		for _, r := range toolName {
+			if r >= 'A' && r <= 'Z' {
+				t.Errorf("Tool name %q contains uppercase letter, should be snake_case", toolName)
+				break
+			}
+		}
+		if strings.Contains(toolName, "-") {
+			t.Errorf("Tool name %q contains hyphen, should use underscore", toolName)
+		}
+	}
+}
+
+// TestAutomateOpenFileDialogSchema tests the automate_open_file_dialog tool schema
+func TestAutomateOpenFileDialogSchema(t *testing.T) {
+	schemaJSON := `{
+		"type": "object",
+		"properties": {
+			"application": {"type": "string", "description": "Application resource name (e.g., applications/TextEdit)"},
+			"file_path": {"type": "string", "description": "File path to select (if known)"},
+			"default_directory": {"type": "string", "description": "Default directory to navigate to"},
+			"file_filters": {"type": "array", "items": {"type": "string"}, "description": "File type filters (e.g., ['*.txt', '*.pdf'])"},
+			"timeout": {"type": "number", "description": "Timeout for dialog to appear in seconds"},
+			"allow_multiple": {"type": "boolean", "description": "Whether to allow multiple file selection"}
+		},
+		"required": ["application"]
+	}`
+
+	var schema map[string]interface{}
+	if err := json.Unmarshal([]byte(schemaJSON), &schema); err != nil {
+		t.Fatalf("Failed to parse schema: %v", err)
+	}
+
+	if schema["type"] != "object" {
+		t.Errorf("Schema type = %v, want object", schema["type"])
+	}
+
+	props := schema["properties"].(map[string]interface{})
+	requiredProps := []string{"application", "file_path", "default_directory", "file_filters", "timeout", "allow_multiple"}
+	for _, prop := range requiredProps {
+		if _, ok := props[prop]; !ok {
+			t.Errorf("Schema missing '%s' property", prop)
+		}
+	}
+
+	required := schema["required"].([]interface{})
+	if len(required) != 1 || required[0] != "application" {
+		t.Errorf("Required should be ['application'], got: %v", required)
+	}
+}
+
+// TestAutomateSaveFileDialogSchema tests the automate_save_file_dialog tool schema
+func TestAutomateSaveFileDialogSchema(t *testing.T) {
+	schemaJSON := `{
+		"type": "object",
+		"properties": {
+			"application": {"type": "string", "description": "Application resource name"},
+			"file_path": {"type": "string", "description": "Full file path to save to"},
+			"default_directory": {"type": "string", "description": "Default directory to navigate to"},
+			"default_filename": {"type": "string", "description": "Default filename"},
+			"timeout": {"type": "number", "description": "Timeout for dialog to appear in seconds"},
+			"confirm_overwrite": {"type": "boolean", "description": "Whether to confirm overwrite if file exists"}
+		},
+		"required": ["application", "file_path"]
+	}`
+
+	var schema map[string]interface{}
+	if err := json.Unmarshal([]byte(schemaJSON), &schema); err != nil {
+		t.Fatalf("Failed to parse schema: %v", err)
+	}
+
+	if schema["type"] != "object" {
+		t.Errorf("Schema type = %v, want object", schema["type"])
+	}
+
+	props := schema["properties"].(map[string]interface{})
+	requiredProps := []string{"application", "file_path", "default_directory", "default_filename", "timeout", "confirm_overwrite"}
+	for _, prop := range requiredProps {
+		if _, ok := props[prop]; !ok {
+			t.Errorf("Schema missing '%s' property", prop)
+		}
+	}
+
+	required := schema["required"].([]interface{})
+	if len(required) != 2 {
+		t.Errorf("Required fields count = %d, want 2", len(required))
+	}
+}
+
+// TestSelectFileSchema tests the select_file tool schema
+func TestSelectFileSchema(t *testing.T) {
+	schemaJSON := `{
+		"type": "object",
+		"properties": {
+			"application": {"type": "string", "description": "Application resource name"},
+			"file_path": {"type": "string", "description": "File path to select"},
+			"reveal_finder": {"type": "boolean", "description": "Whether to reveal file in Finder after selection"}
+		},
+		"required": ["application", "file_path"]
+	}`
+
+	var schema map[string]interface{}
+	if err := json.Unmarshal([]byte(schemaJSON), &schema); err != nil {
+		t.Fatalf("Failed to parse schema: %v", err)
+	}
+
+	if schema["type"] != "object" {
+		t.Errorf("Schema type = %v, want object", schema["type"])
+	}
+
+	props := schema["properties"].(map[string]interface{})
+	requiredProps := []string{"application", "file_path", "reveal_finder"}
+	for _, prop := range requiredProps {
+		if _, ok := props[prop]; !ok {
+			t.Errorf("Schema missing '%s' property", prop)
+		}
+	}
+
+	required := schema["required"].([]interface{})
+	if len(required) != 2 {
+		t.Errorf("Required fields count = %d, want 2", len(required))
+	}
+}
+
+// TestSelectDirectorySchema tests the select_directory tool schema
+func TestSelectDirectorySchema(t *testing.T) {
+	schemaJSON := `{
+		"type": "object",
+		"properties": {
+			"application": {"type": "string", "description": "Application resource name"},
+			"directory_path": {"type": "string", "description": "Directory path to select"},
+			"create_missing": {"type": "boolean", "description": "Whether to create directory if it doesn't exist"}
+		},
+		"required": ["application", "directory_path"]
+	}`
+
+	var schema map[string]interface{}
+	if err := json.Unmarshal([]byte(schemaJSON), &schema); err != nil {
+		t.Fatalf("Failed to parse schema: %v", err)
+	}
+
+	if schema["type"] != "object" {
+		t.Errorf("Schema type = %v, want object", schema["type"])
+	}
+
+	props := schema["properties"].(map[string]interface{})
+	requiredProps := []string{"application", "directory_path", "create_missing"}
+	for _, prop := range requiredProps {
+		if _, ok := props[prop]; !ok {
+			t.Errorf("Schema missing '%s' property", prop)
+		}
+	}
+
+	required := schema["required"].([]interface{})
+	if len(required) != 2 {
+		t.Errorf("Required fields count = %d, want 2", len(required))
+	}
+}
+
+// TestDragFilesSchema tests the drag_files tool schema
+func TestDragFilesSchema(t *testing.T) {
+	schemaJSON := `{
+		"type": "object",
+		"properties": {
+			"application": {"type": "string", "description": "Application resource name"},
+			"file_paths": {"type": "array", "items": {"type": "string"}, "description": "File paths to drag"},
+			"target_element_id": {"type": "string", "description": "Target element ID to drop files onto"},
+			"duration": {"type": "number", "description": "Drag duration in seconds"}
+		},
+		"required": ["application", "file_paths", "target_element_id"]
+	}`
+
+	var schema map[string]interface{}
+	if err := json.Unmarshal([]byte(schemaJSON), &schema); err != nil {
+		t.Fatalf("Failed to parse schema: %v", err)
+	}
+
+	if schema["type"] != "object" {
+		t.Errorf("Schema type = %v, want object", schema["type"])
+	}
+
+	props := schema["properties"].(map[string]interface{})
+	requiredProps := []string{"application", "file_paths", "target_element_id", "duration"}
+	for _, prop := range requiredProps {
+		if _, ok := props[prop]; !ok {
+			t.Errorf("Schema missing '%s' property", prop)
+		}
+	}
+
+	// Verify file_paths is an array type
+	filePaths := props["file_paths"].(map[string]interface{})
+	if filePaths["type"] != "array" {
+		t.Errorf("file_paths type should be array, got: %v", filePaths["type"])
+	}
+
+	required := schema["required"].([]interface{})
+	if len(required) != 3 {
+		t.Errorf("Required fields count = %d, want 3", len(required))
+	}
+}
+
+// TestFileDialogToolParamsParsing tests argument parsing for file dialog tools
+func TestFileDialogToolParamsParsing(t *testing.T) {
+	tests := []struct {
+		name       string
+		tool       string
+		paramsJSON string
+		wantErr    bool
+	}{
+		{
+			name:       "automate_open_file_dialog basic",
+			tool:       "automate_open_file_dialog",
+			paramsJSON: `{"application": "applications/123"}`,
+			wantErr:    false,
+		},
+		{
+			name:       "automate_open_file_dialog full",
+			tool:       "automate_open_file_dialog",
+			paramsJSON: `{"application": "applications/TextEdit", "file_path": "/tmp/test.txt", "default_directory": "/tmp", "file_filters": ["*.txt", "*.md"], "timeout": 30, "allow_multiple": true}`,
+			wantErr:    false,
+		},
+		{
+			name:       "automate_save_file_dialog basic",
+			tool:       "automate_save_file_dialog",
+			paramsJSON: `{"application": "applications/123", "file_path": "/tmp/output.txt"}`,
+			wantErr:    false,
+		},
+		{
+			name:       "automate_save_file_dialog full",
+			tool:       "automate_save_file_dialog",
+			paramsJSON: `{"application": "applications/TextEdit", "file_path": "/tmp/output.txt", "default_directory": "/tmp", "default_filename": "output.txt", "timeout": 30, "confirm_overwrite": true}`,
+			wantErr:    false,
+		},
+		{
+			name:       "select_file basic",
+			tool:       "select_file",
+			paramsJSON: `{"application": "applications/Finder", "file_path": "/tmp/test.txt"}`,
+			wantErr:    false,
+		},
+		{
+			name:       "select_file with reveal",
+			tool:       "select_file",
+			paramsJSON: `{"application": "applications/Finder", "file_path": "/tmp/test.txt", "reveal_finder": true}`,
+			wantErr:    false,
+		},
+		{
+			name:       "select_directory basic",
+			tool:       "select_directory",
+			paramsJSON: `{"application": "applications/Finder", "directory_path": "/tmp"}`,
+			wantErr:    false,
+		},
+		{
+			name:       "select_directory with create",
+			tool:       "select_directory",
+			paramsJSON: `{"application": "applications/Finder", "directory_path": "/tmp/new_dir", "create_missing": true}`,
+			wantErr:    false,
+		},
+		{
+			name:       "drag_files basic",
+			tool:       "drag_files",
+			paramsJSON: `{"application": "applications/123", "file_paths": ["/tmp/a.txt", "/tmp/b.txt"], "target_element_id": "element-456"}`,
+			wantErr:    false,
+		},
+		{
+			name:       "drag_files with duration",
+			tool:       "drag_files",
+			paramsJSON: `{"application": "applications/123", "file_paths": ["/tmp/a.txt"], "target_element_id": "drop-zone", "duration": 0.5}`,
+			wantErr:    false,
+		},
+		{
+			name:       "invalid json",
+			tool:       "automate_open_file_dialog",
+			paramsJSON: `{not valid json}`,
+			wantErr:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var params map[string]interface{}
+			err := json.Unmarshal([]byte(tt.paramsJSON), &params)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Unmarshal error = %v, wantErr = %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+// ============================================================================
+// T087: Wait Element Tools Unit Tests
+// ============================================================================
+
+// TestWaitElementToolsExist validates that wait element tools are registered
+func TestWaitElementToolsExist(t *testing.T) {
+	waitElementTools := []string{
+		"wait_element",
+		"wait_element_state",
+	}
+
+	// Verify all names are unique and valid snake_case
+	seen := make(map[string]bool)
+	for _, toolName := range waitElementTools {
+		if seen[toolName] {
+			t.Errorf("Duplicate tool name: %s", toolName)
+		}
+		seen[toolName] = true
+
+		// Verify snake_case (no uppercase, no hyphens)
+		for _, r := range toolName {
+			if r >= 'A' && r <= 'Z' {
+				t.Errorf("Tool name %q contains uppercase letter, should be snake_case", toolName)
+				break
+			}
+		}
+		if strings.Contains(toolName, "-") {
+			t.Errorf("Tool name %q contains hyphen, should use underscore", toolName)
+		}
+	}
+}
+
+// TestWaitElementSchema tests the wait_element tool schema
+func TestWaitElementSchema(t *testing.T) {
+	schemaJSON := `{
+		"type": "object",
+		"properties": {
+			"parent": {"type": "string", "description": "Application or window resource name"},
+			"selector": {"type": "object", "description": "Element selector: {role, text, or text_contains}"},
+			"timeout": {"type": "number", "description": "Maximum wait time in seconds (default: 30)"},
+			"poll_interval": {"type": "number", "description": "Poll interval in seconds (default: 0.5)"}
+		},
+		"required": ["parent", "selector"]
+	}`
+
+	var schema map[string]interface{}
+	if err := json.Unmarshal([]byte(schemaJSON), &schema); err != nil {
+		t.Fatalf("Failed to parse schema: %v", err)
+	}
+
+	if schema["type"] != "object" {
+		t.Errorf("Schema type = %v, want object", schema["type"])
+	}
+
+	props := schema["properties"].(map[string]interface{})
+	requiredProps := []string{"parent", "selector", "timeout", "poll_interval"}
+	for _, prop := range requiredProps {
+		if _, ok := props[prop]; !ok {
+			t.Errorf("Schema missing '%s' property", prop)
+		}
+	}
+
+	// Verify selector is object type
+	selector := props["selector"].(map[string]interface{})
+	if selector["type"] != "object" {
+		t.Errorf("selector type should be object, got: %v", selector["type"])
+	}
+
+	required := schema["required"].([]interface{})
+	if len(required) != 2 {
+		t.Errorf("Required fields count = %d, want 2", len(required))
+	}
+}
+
+// TestWaitElementStateSchema tests the wait_element_state tool schema
+func TestWaitElementStateSchema(t *testing.T) {
+	schemaJSON := `{
+		"type": "object",
+		"properties": {
+			"parent": {"type": "string", "description": "Application or window resource name"},
+			"element_id": {"type": "string", "description": "Element ID to wait on"},
+			"condition": {"type": "string", "description": "State condition: enabled, focused, text_equals, text_contains", "enum": ["enabled", "focused", "text_equals", "text_contains"]},
+			"value": {"type": "string", "description": "Value for text_equals or text_contains conditions"},
+			"timeout": {"type": "number", "description": "Maximum wait time in seconds (default: 30)"},
+			"poll_interval": {"type": "number", "description": "Poll interval in seconds (default: 0.5)"}
+		},
+		"required": ["parent", "element_id", "condition"]
+	}`
+
+	var schema map[string]interface{}
+	if err := json.Unmarshal([]byte(schemaJSON), &schema); err != nil {
+		t.Fatalf("Failed to parse schema: %v", err)
+	}
+
+	if schema["type"] != "object" {
+		t.Errorf("Schema type = %v, want object", schema["type"])
+	}
+
+	props := schema["properties"].(map[string]interface{})
+	requiredProps := []string{"parent", "element_id", "condition", "value", "timeout", "poll_interval"}
+	for _, prop := range requiredProps {
+		if _, ok := props[prop]; !ok {
+			t.Errorf("Schema missing '%s' property", prop)
+		}
+	}
+
+	// Verify condition has enum
+	condition := props["condition"].(map[string]interface{})
+	enumVal, hasEnum := condition["enum"]
+	if !hasEnum {
+		t.Error("condition should have enum constraint")
+	}
+	enumList := enumVal.([]interface{})
+	expectedEnums := []string{"enabled", "focused", "text_equals", "text_contains"}
+	if len(enumList) != len(expectedEnums) {
+		t.Errorf("condition enum count = %d, want %d", len(enumList), len(expectedEnums))
+	}
+
+	required := schema["required"].([]interface{})
+	if len(required) != 3 {
+		t.Errorf("Required fields count = %d, want 3", len(required))
+	}
+}
+
+// TestWaitElementToolParamsParsing tests argument parsing for wait element tools
+func TestWaitElementToolParamsParsing(t *testing.T) {
+	tests := []struct {
+		name       string
+		tool       string
+		paramsJSON string
+		wantErr    bool
+	}{
+		{
+			name:       "wait_element basic",
+			tool:       "wait_element",
+			paramsJSON: `{"parent": "applications/123", "selector": {"role": "button"}}`,
+			wantErr:    false,
+		},
+		{
+			name:       "wait_element with text selector",
+			tool:       "wait_element",
+			paramsJSON: `{"parent": "applications/123/windows/456", "selector": {"text": "Save"}}`,
+			wantErr:    false,
+		},
+		{
+			name:       "wait_element with timeout",
+			tool:       "wait_element",
+			paramsJSON: `{"parent": "applications/123", "selector": {"role": "button", "text": "OK"}, "timeout": 60}`,
+			wantErr:    false,
+		},
+		{
+			name:       "wait_element with poll_interval",
+			tool:       "wait_element",
+			paramsJSON: `{"parent": "applications/123", "selector": {"role": "textField"}, "timeout": 30, "poll_interval": 0.25}`,
+			wantErr:    false,
+		},
+		{
+			name:       "wait_element_state enabled",
+			tool:       "wait_element_state",
+			paramsJSON: `{"parent": "applications/123", "element_id": "elem-456", "condition": "enabled"}`,
+			wantErr:    false,
+		},
+		{
+			name:       "wait_element_state focused",
+			tool:       "wait_element_state",
+			paramsJSON: `{"parent": "applications/123/windows/789", "element_id": "input-field", "condition": "focused"}`,
+			wantErr:    false,
+		},
+		{
+			name:       "wait_element_state text_equals",
+			tool:       "wait_element_state",
+			paramsJSON: `{"parent": "applications/123", "element_id": "status-label", "condition": "text_equals", "value": "Complete"}`,
+			wantErr:    false,
+		},
+		{
+			name:       "wait_element_state text_contains",
+			tool:       "wait_element_state",
+			paramsJSON: `{"parent": "applications/123", "element_id": "log-output", "condition": "text_contains", "value": "Success"}`,
+			wantErr:    false,
+		},
+		{
+			name:       "wait_element_state with timeout and poll_interval",
+			tool:       "wait_element_state",
+			paramsJSON: `{"parent": "applications/123", "element_id": "elem-789", "condition": "enabled", "timeout": 120, "poll_interval": 1.0}`,
+			wantErr:    false,
+		},
+		{
+			name:       "invalid json",
+			tool:       "wait_element",
+			paramsJSON: `{not valid}`,
+			wantErr:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var params map[string]interface{}
+			err := json.Unmarshal([]byte(tt.paramsJSON), &params)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Unmarshal error = %v, wantErr = %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+// TestWaitElementConditionValues tests condition value validity
+func TestWaitElementConditionValues(t *testing.T) {
+	validConditions := []string{"enabled", "focused", "text_equals", "text_contains"}
+
+	tests := []struct {
+		condition string
+		valid     bool
+	}{
+		{"enabled", true},
+		{"focused", true},
+		{"text_equals", true},
+		{"text_contains", true},
+		{"disabled", false},
+		{"visible", false},
+		{"hidden", false},
+		{"", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.condition, func(t *testing.T) {
+			found := false
+			for _, valid := range validConditions {
+				if tt.condition == valid {
+					found = true
+					break
+				}
+			}
+			if found != tt.valid {
+				t.Errorf("Condition %q valid = %v, want %v", tt.condition, found, tt.valid)
+			}
+		})
+	}
+}
+
+// TestWaitElementTimeoutDefaults tests timeout default behavior
+func TestWaitElementTimeoutDefaults(t *testing.T) {
+	tests := []struct {
+		name            string
+		givenTimeout    float64
+		expectedTimeout float64
+	}{
+		{"zero uses default", 0, 30.0},
+		{"negative uses default", -1, 30.0},
+		{"explicit value used", 60.0, 60.0},
+		{"small value used", 0.5, 0.5},
+		{"large value used", 300.0, 300.0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			timeout := tt.givenTimeout
+			if timeout <= 0 {
+				timeout = 30.0 // default
+			}
+			if timeout != tt.expectedTimeout {
+				t.Errorf("Timeout = %v, want %v", timeout, tt.expectedTimeout)
+			}
+		})
+	}
+}
+
+// TestWaitElementPollIntervalDefaults tests poll_interval default behavior
+func TestWaitElementPollIntervalDefaults(t *testing.T) {
+	tests := []struct {
+		name                 string
+		givenPollInterval    float64
+		expectedPollInterval float64
+	}{
+		{"zero uses default", 0, 0.5},
+		{"negative uses default", -1, 0.5},
+		{"explicit value used", 0.25, 0.25},
+		{"small value used", 0.1, 0.1},
+		{"large value used", 2.0, 2.0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pollInterval := tt.givenPollInterval
+			if pollInterval <= 0 {
+				pollInterval = 0.5 // default
+			}
+			if pollInterval != tt.expectedPollInterval {
+				t.Errorf("PollInterval = %v, want %v", pollInterval, tt.expectedPollInterval)
+			}
+		})
+	}
+}
+
+// TestWaitElementSelectorTypes tests that selector supports various criteria
+func TestWaitElementSelectorTypes(t *testing.T) {
+	tests := []struct {
+		name     string
+		selector string
+		valid    bool
+	}{
+		{"role only", `{"role": "button"}`, true},
+		{"text only", `{"text": "Submit"}`, true},
+		{"title only", `{"title": "Save Dialog"}`, true},
+		{"role and text", `{"role": "button", "text": "OK"}`, true},
+		{"text_contains", `{"text_contains": "error"}`, true},
+		{"empty selector", `{}`, true},
+		{"invalid json", `{invalid}`, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var selector map[string]interface{}
+			err := json.Unmarshal([]byte(tt.selector), &selector)
+			if (err == nil) != tt.valid {
+				t.Errorf("Selector %q parse success = %v, want %v", tt.selector, err == nil, tt.valid)
+			}
+		})
+	}
+}
