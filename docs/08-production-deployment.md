@@ -57,7 +57,7 @@ MCP_TRANSPORT=sse \
   MCP_API_KEY="$MCP_API_KEY" \
   MCP_RATE_LIMIT=100 \
   MCP_AUDIT_LOG_FILE=./audit.log \
-  ./mcp-tool
+  ./macos-use-mcp
 ```
 
 ## TLS Certificate Setup
@@ -82,7 +82,7 @@ MCP_TRANSPORT=sse \
   MCP_TLS_CERT_FILE=/etc/letsencrypt/live/mcp.yourdomain.com/fullchain.pem \
   MCP_TLS_KEY_FILE=/etc/letsencrypt/live/mcp.yourdomain.com/privkey.pem \
   MCP_API_KEY="$MCP_API_KEY" \
-  ./mcp-tool
+  ./macos-use-mcp
 ```
 
 ### Option 2: Self-Signed Certificate (Internal Use)
@@ -323,7 +323,7 @@ Environment=MCP_RATE_LIMIT=100
 Environment=MCP_AUDIT_LOG_FILE=/var/log/mcp/audit.log
 EnvironmentFile=/etc/macos-use-sdk/env  # Contains MCP_API_KEY
 
-ExecStart=/opt/macos-use-sdk/mcp-tool
+ExecStart=/opt/macos-use-sdk/macos-use-mcp
 Restart=always
 RestartSec=5
 
@@ -361,7 +361,7 @@ sudo journalctl -u macos-use-mcp -f
     
     <key>ProgramArguments</key>
     <array>
-        <string>/opt/macos-use-sdk/mcp-tool</string>
+        <string>/opt/macos-use-sdk/macos-use-mcp</string>
     </array>
     
     <key>EnvironmentVariables</key>
@@ -442,7 +442,7 @@ openssl s_client -connect localhost:8443 -CAfile ca.crt
 ```bash
 # Grant Accessibility permissions
 # System Preferences → Security & Privacy → Privacy → Accessibility
-# Add Terminal.app or the mcp-tool binary
+# Add Terminal.app or the macos-use-mcp binary
 ```
 
 **Connection refused:**

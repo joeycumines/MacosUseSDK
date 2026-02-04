@@ -128,7 +128,7 @@ When both `MCP_TLS_CERT_FILE` and `MCP_TLS_KEY_FILE` are set, the server starts 
 MCP_TRANSPORT=sse \
   MCP_TLS_CERT_FILE=/etc/ssl/certs/server.crt \
   MCP_TLS_KEY_FILE=/etc/ssl/private/server.key \
-  ./mcp-tool
+  ./macos-use-mcp
 ```
 
 #### Authentication Configuration
@@ -142,7 +142,7 @@ When `MCP_API_KEY` is set, all requests (except `/health` and `/metrics`) requir
 **Example:**
 ```bash
 # Server
-MCP_TRANSPORT=sse MCP_API_KEY=your-secret-key ./mcp-tool
+MCP_TRANSPORT=sse MCP_API_KEY=your-secret-key ./macos-use-mcp
 
 # Client
 curl -H "Authorization: Bearer your-secret-key" \
@@ -161,7 +161,7 @@ When set to a positive value, the server enforces a token bucket rate limiter wi
 **Example:**
 ```bash
 # Allow 100 requests per second with burst of 200
-MCP_TRANSPORT=sse MCP_RATE_LIMIT=100 ./mcp-tool
+MCP_TRANSPORT=sse MCP_RATE_LIMIT=100 ./macos-use-mcp
 ```
 
 #### Audit Logging Configuration

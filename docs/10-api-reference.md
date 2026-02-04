@@ -1693,7 +1693,7 @@ export MCP_API_KEY="$(openssl rand -base64 32)"
 export MCP_RATE_LIMIT="100"
 export MCP_AUDIT_LOG_FILE="/var/log/mcp-audit.log"
 export MCP_CORS_ORIGIN="https://myapp.example.com"
-./mcp-tool
+./macos-use-mcp
 ```
 
 ---

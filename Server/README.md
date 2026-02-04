@@ -133,7 +133,7 @@ See [docs/08-production-deployment.md](../docs/08-production-deployment.md) and 
                             │ JSON-RPC over stdio/SSE
                             ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                       mcp-tool (Go)                             │
+│                       macos-use-mcp (Go)                             │
 │                  MCP Protocol Handler                           │
 └───────────────────────────┬─────────────────────────────────────┘
                             │ gRPC

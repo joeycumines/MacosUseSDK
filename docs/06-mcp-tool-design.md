@@ -286,7 +286,7 @@ The `initialize` response includes display grounding information for coordinate-
 ## File Structure
 
 ```
-cmd/mcp-tool/
+cmd/macos-use-mcp/
 └── main.go
 
 internal/
@@ -321,24 +321,24 @@ integration/                # Integration tests
 
 ```bash
 # Start with default configuration
-./mcp-tool
+./macos-use-mcp
 
 # Start with custom gRPC address
-MACOS_USE_SERVER_ADDR=localhost:50052 ./mcp-tool
+MACOS_USE_SERVER_ADDR=localhost:50052 ./macos-use-mcp
 ```
 
 ### Starting with HTTP/SSE Transport
 
 ```bash
 # Enable HTTP transport on port 8080
-MCP_TRANSPORT=sse MCP_HTTP_ADDRESS=:8080 ./mcp-tool
+MCP_TRANSPORT=sse MCP_HTTP_ADDRESS=:8080 ./macos-use-mcp
 
 # With TLS and authentication
 MCP_TRANSPORT=sse \
   MCP_TLS_CERT_FILE=/path/to/cert.pem \
   MCP_TLS_KEY_FILE=/path/to/key.pem \
   MCP_API_KEY=your-secret-key \
-  ./mcp-tool
+  ./macos-use-mcp
 ```
 
 ### Example MCP Request

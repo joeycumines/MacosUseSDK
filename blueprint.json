@@ -38,7 +38,7 @@
       "4b624f7 - test: add comprehensive unit tests for all handler categories",
       "e2e0042 - fix: improve observation test reliability with PollUntilContext",
       "edd1be4 - docs: enhance README with 77 tools, doc links, and modern examples",
-      "5251b2a - docs: add package-level godoc and READMEs for cmd/mcp-tool and internal",
+      "5251b2a - docs: add package-level godoc and READMEs for cmd/macos-use-mcp and internal",
       "bb37777 - docs: add CONTRIBUTING.md and CHANGELOG.md for v1.0.0-beta",
       "5a8975c - test(session): add tests for transaction and macro CRUD handlers (18 new tests)",
       "969a3a3 - ci: add dependabot configuration for Go, Swift, and GitHub Actions",

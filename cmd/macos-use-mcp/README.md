@@ -1,15 +1,12 @@
 # MCP Tool
 
-The `mcp-tool` binary is a Model Context Protocol (MCP) server that proxies 77 macOS automation tools to AI assistants like Claude Desktop.
+The `macos-use-mcp` binary is a Model Context Protocol (MCP) server that proxies 77 macOS automation tools to AI assistants like Claude Desktop.
 
 ## Building
 
 ```sh
 # Build from project root
-go build -o mcp-tool ./cmd/mcp-tool
-
-# Or via Makefile
-make go.build.mcp-tool
+go build -o macos-use-mcp ./cmd/macos-use-mcp
 ```
 
 ## Running
@@ -19,7 +16,7 @@ make go.build.mcp-tool
 For MCP clients like Claude Desktop:
 
 ```sh
-./mcp-tool
+./macos-use-mcp
 ```
 
 ### HTTP/SSE Transport
@@ -29,7 +26,7 @@ For web-based integrations:
 ```sh
 export MCP_TRANSPORT=http
 export MCP_HTTP_ADDRESS=:8080
-./mcp-tool
+./macos-use-mcp
 ```
 
 ## Configuration
@@ -69,7 +66,7 @@ Add to `~/.config/claude/mcp_settings.json`:
 {
   "mcpServers": {
     "macos-use": {
-      "command": "/path/to/mcp-tool",
+      "command": "/path/to/macos-use-mcp",
       "env": {
         "GRPC_SERVER_ADDR": "localhost:50051",
         "MCP_LOG_LEVEL": "warn"

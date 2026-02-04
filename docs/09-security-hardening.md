@@ -55,7 +55,7 @@ export MCP_API_KEY=$(openssl rand -base64 32)
 echo "$MCP_API_KEY" > /etc/macos-use-sdk/api-key
 
 # Start server
-MCP_TRANSPORT=sse MCP_API_KEY="$MCP_API_KEY" ./mcp-tool
+MCP_TRANSPORT=sse MCP_API_KEY="$MCP_API_KEY" ./macos-use-mcp
 ```
 
 **Client usage:**
@@ -183,7 +183,7 @@ For environments requiring shell access, run the MCP server in a sandbox:
 ```
 
 ```bash
-sandbox-exec -f mcp-server.sb ./mcp-tool
+sandbox-exec -f mcp-server.sb ./macos-use-mcp
 ```
 
 ### Mitigation 4: Container Isolation
@@ -192,9 +192,9 @@ Run in a minimal container with no shell:
 
 ```dockerfile
 FROM gcr.io/distroless/base:nonroot
-COPY mcp-tool /app/mcp-tool
+COPY macos-use-mcp /app/macos-use-mcp
 USER nonroot
-ENTRYPOINT ["/app/mcp-tool"]
+ENTRYPOINT ["/app/macos-use-mcp"]
 ```
 
 ## Scripting Security (AppleScript/JXA)
@@ -234,7 +234,7 @@ The MCP server implements token bucket rate limiting:
 
 ```bash
 # 100 requests/second with burst of 200
-MCP_RATE_LIMIT=100 ./mcp-tool
+MCP_RATE_LIMIT=100 ./macos-use-mcp
 ```
 
 **Behavior:**
