@@ -60,8 +60,8 @@ fix: go.fix swift.fix ## Apply automatic fixes to source files.
 
 .PHONY: buf.descriptor-sets
 buf.descriptor-sets: ## Generate FileDescriptorSet for gRPC reflection.
-	@mkdir -p Server/Sources/MacosUseProto/DescriptorSets
-	$(BUF) $(BUF_FLAGS) --error-format=$(BUF_ERROR_FORMAT) build --as-file-descriptor-set -o Server/Sources/MacosUseProto/DescriptorSets/macosuse_descriptors.pb $(BUF_INPUT)
+	@mkdir -p Server/Sources/MacosUseServer/DescriptorSets
+	$(BUF) $(BUF_FLAGS) --error-format=$(BUF_ERROR_FORMAT) build --as-file-descriptor-set -o Server/Sources/MacosUseServer/DescriptorSets/macosuse_descriptors.pb $(BUF_INPUT)
 
 .PHONY: generate
 generate: ## Generate all code.

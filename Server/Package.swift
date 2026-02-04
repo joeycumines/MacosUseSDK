@@ -35,10 +35,7 @@ let package = Package(
             path: "Sources/MacosUseProto",
             // The expr protos are not used; avoid dangling excludes which
             // trigger warnings by only including the directories we need.
-            sources: ["macosusesdk/", "google/", "BundleMarker.swift"],
-            resources: [
-                .copy("DescriptorSets"),
-            ],
+            sources: ["macosusesdk/", "google/"],
             swiftSettings: [
                 .unsafeFlags(["-Xfrontend", "-warn-concurrency"]),
             ],
