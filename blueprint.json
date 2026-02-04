@@ -22,7 +22,7 @@
     "constraint": "The use of subagents via the `runSubagent` tool is MANDATORY for the execution of the tasks below. Tasks are grouped specifically to be run in distinct subagent contexts to prevent context window exhaustion. Do not attempt to solve all groups in a single turn."
   },
   "status_section": {
-    "current_state": "77 MCP tools + observability + godoc comments + lint targets. All tests pass.",
+    "current_state": "77 MCP tools + observability + godoc comments + lint targets + MCP protocol integration tests (T066-T072). All tests pass.",
     "commits_made": [
       "20358ac - feat(input): add cursor_position, hold_key, mouse_button_down/up MCP tools",
       "120c9d7 - test(integration): add HTTP transport tests",
@@ -429,43 +429,43 @@
       "id": "T066",
       "task": "Add integration test for all MCP tools via HTTP transport round-trip",
       "file": "integration/mcp_tools_test.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T067",
       "task": "Add integration test verifying MCP initialize handshake returns correct protocol version",
       "file": "integration/mcp_protocol_test.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T068",
       "task": "Add integration test verifying notifications/initialized is handled silently",
       "file": "integration/mcp_protocol_test.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T069",
       "task": "Add integration test for display grounding info in initialize response",
       "file": "integration/mcp_protocol_test.go",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T070",
       "task": "Add integration test for pagination token opacity across all list tools",
-      "file": "integration/pagination_mcp_test.go",
-      "status": "pending"
+      "file": "integration/pagination_token_opacity_test.go",
+      "status": "complete"
     },
     {
       "id": "T071",
       "task": "Add integration test verifying is_error field format in error responses",
-      "file": "integration/error_handling_test.go",
-      "status": "pending"
+      "file": "integration/error_format_test.go",
+      "status": "complete"
     },
     {
       "id": "T072",
       "task": "Add integration test for coordinate validation (negative coords for multi-monitor)",
-      "file": "integration/coordinate_test.go",
-      "status": "pending"
+      "file": "integration/coordinate_validation_test.go",
+      "status": "complete"
     },
     {
       "id": "T073",
