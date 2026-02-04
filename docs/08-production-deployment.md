@@ -351,13 +351,13 @@ sudo journalctl -u macos-use-mcp -f
 ## launchd Configuration (macOS Native)
 
 ```xml
-<!-- ~/Library/LaunchAgents/com.macos-use-sdk.mcp.plist -->
+<!-- ~/Library/LaunchAgents/com.macosusesdk.mcp.plist -->
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.macos-use-sdk.mcp</string>
+    <string>com.macosusesdk.mcp</string>
     
     <key>ProgramArguments</key>
     <array>
@@ -397,13 +397,13 @@ sudo journalctl -u macos-use-mcp -f
 
 ```bash
 # Load the service
-launchctl load ~/Library/LaunchAgents/com.macos-use-sdk.mcp.plist
+launchctl load ~/Library/LaunchAgents/com.macosusesdk.mcp.plist
 
 # Check status
 launchctl list | grep macos-use-sdk
 
 # Unload
-launchctl unload ~/Library/LaunchAgents/com.macos-use-sdk.mcp.plist
+launchctl unload ~/Library/LaunchAgents/com.macosusesdk.mcp.plist
 ```
 
 ## Health Checks
