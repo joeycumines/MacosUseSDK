@@ -403,70 +403,79 @@ func TestWindowChangeObservation(t *testing.T) {
 		t.Error("Expected window change event after move but did not receive it")
 	}
 
-	// After ID regeneration, rediscover the current window
-	// The observation detected a DESTROYED event, so we need to find the window again
-	// Look for a window near the target position (567, 234) since that's where we moved it
-	var refreshedWindow *pb.Window
+	// After ID regeneration, rediscover the current window AND validate via AX
+	// The observation detected a window change event, so we need to find the window again.
+	// Look for a window near the target position (567, 234) since that's where we moved it.
+	// CRITICAL FIX: Wrap rediscovery + GetWindow validation in single retry loop.
+	// If GetWindow fails (window ID regenerated again), retry the entire sequence.
+	var validatedWindow *pb.Window
 	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
-		listResp, err := client.ListWindows(ctx, &pb.ListWindowsRequest{
+		// Step 1: Rediscover via ListWindows (CGWindowList)
+		listResp, listErr := client.ListWindows(ctx, &pb.ListWindowsRequest{
 			Parent: app.Name,
 		})
-		if err != nil {
-			return false, err
+		if listErr != nil {
+			return false, listErr
 		}
+
+		var candidateWindow *pb.Window
 		// First pass: find a window near the target position (within 50 pixels)
 		for _, w := range listResp.Windows {
 			if w.Bounds != nil && w.Bounds.Width > 400 && w.Bounds.Height > 200 {
 				if math.Abs(w.Bounds.X-targetX) < 50 && math.Abs(w.Bounds.Y-targetY) < 50 {
-					refreshedWindow = w
+					candidateWindow = w
 					t.Logf("Rediscovered window at target (%.0f, %.0f): %s", w.Bounds.X, w.Bounds.Y, w.Name)
-					return true, nil
+					break
 				}
 			}
 		}
 		// Second pass: find a window that's NOT at the original position
-		// This handles cases where macOS constrains the window position
-		for _, w := range listResp.Windows {
-			if w.Bounds != nil && w.Bounds.Width > 400 && w.Bounds.Height > 200 {
-				// Check if this window has significantly moved from the original position
-				if math.Abs(w.Bounds.X-initialBounds.X) > 20 || math.Abs(w.Bounds.Y-initialBounds.Y) > 20 {
-					refreshedWindow = w
-					t.Logf("Rediscovered moved window at (%.0f, %.0f): %s", w.Bounds.X, w.Bounds.Y, w.Name)
-					return true, nil
+		if candidateWindow == nil {
+			for _, w := range listResp.Windows {
+				if w.Bounds != nil && w.Bounds.Width > 400 && w.Bounds.Height > 200 {
+					if math.Abs(w.Bounds.X-initialBounds.X) > 20 || math.Abs(w.Bounds.Y-initialBounds.Y) > 20 {
+						candidateWindow = w
+						t.Logf("Rediscovered moved window at (%.0f, %.0f): %s", w.Bounds.X, w.Bounds.Y, w.Name)
+						break
+					}
 				}
 			}
 		}
 		// Third pass: just pick any reasonably sized window as last resort
-		for _, w := range listResp.Windows {
-			if w.Bounds != nil && w.Bounds.Width > 400 && w.Bounds.Height > 200 {
-				refreshedWindow = w
-				t.Logf("Rediscovered window (fallback) at (%.0f, %.0f): %s", w.Bounds.X, w.Bounds.Y, w.Name)
-				return true, nil
+		if candidateWindow == nil {
+			for _, w := range listResp.Windows {
+				if w.Bounds != nil && w.Bounds.Width > 400 && w.Bounds.Height > 200 {
+					candidateWindow = w
+					t.Logf("Rediscovered window (fallback) at (%.0f, %.0f): %s", w.Bounds.X, w.Bounds.Y, w.Name)
+					break
+				}
 			}
 		}
-		return false, nil
-	})
-	if err != nil || refreshedWindow == nil {
-		t.Fatalf("Failed to rediscover window after move: %v", err)
-	}
-	if refreshedWindow.Name != currentWindowName {
-		t.Logf("Window name changed during rediscovery: %s → %s", currentWindowName, refreshedWindow.Name)
-		currentWindowName = refreshedWindow.Name
-	}
+		if candidateWindow == nil {
+			// No candidate found yet, keep polling
+			return false, nil
+		}
 
-	// CRITICAL: Call GetWindow to validate the window name and get current ID from AX
-	// ListWindows returns cached CGWindowList data which can have stale window IDs
-	validatedWindow, err := client.GetWindow(ctx, &pb.GetWindowRequest{
-		Name: currentWindowName,
+		// Step 2: Validate via GetWindow (AX-based)
+		// If this fails, the window ID likely regenerated again - retry the whole sequence
+		getResp, getErr := client.GetWindow(ctx, &pb.GetWindowRequest{
+			Name: candidateWindow.Name,
+		})
+		if getErr != nil {
+			t.Logf("GetWindow failed for %s (will retry): %v", candidateWindow.Name, getErr)
+			// Return false to continue polling - window ID might have regenerated
+			return false, nil
+		}
+
+		// Success: both ListWindows and GetWindow agree on the window
+		validatedWindow = getResp
+		return true, nil
 	})
-	if err != nil {
-		// Window ID might have regenerated again - the test environment is unstable
-		t.Logf("Warning: GetWindow failed for %s: %v - skipping remaining tests", currentWindowName, err)
-		t.Log("Test completed partially - MoveWindow observation verified, subsequent tests skipped due to window ID instability")
-		return
+	if err != nil || validatedWindow == nil {
+		t.Fatalf("Failed to rediscover and validate window after move: %v", err)
 	}
 	if validatedWindow.Name != currentWindowName {
-		t.Logf("Window name changed during GetWindow validation: %s → %s", currentWindowName, validatedWindow.Name)
+		t.Logf("Window name changed during rediscovery: %s → %s", currentWindowName, validatedWindow.Name)
 		currentWindowName = validatedWindow.Name
 	}
 
