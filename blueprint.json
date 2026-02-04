@@ -22,12 +22,12 @@
     "constraint": "The use of subagents via the `runSubagent` tool is MANDATORY for the execution of the tasks below. Tasks are grouped specifically to be run in distinct subagent contexts to prevent context window exhaustion. Do not attempt to solve all groups in a single turn."
   },
   "status_section": {
-    "current_state": "77 MCP tools + observability features. TLS/auth and T038-T044 (metrics, audit, rate limit) complete. All tests pass.",
+    "current_state": "77 MCP tools + observability features + documentation. All tests pass.",
     "commits_made": [
       "20358ac - feat(input): add cursor_position, hold_key, mouse_button_down/up MCP tools",
       "120c9d7 - test(integration): add HTTP transport tests",
       "2e1d260 - feat(security): add TLS and API key auth with constant-time comparison",
-      "PENDING - feat(observability): add metrics, audit logging, rate limiting"
+      "2267ae5 - feat(observability): add metrics, audit logging, rate limiting"
     ],
     "verification_status": "verified - make-all-with-log passes, all unit and integration tests pass"
   },
@@ -302,61 +302,61 @@
       "id": "T045",
       "task": "Update docs/06-mcp-tool-design.md with new tool count and complete tool listing",
       "file": "docs/06-mcp-tool-design.md",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T046",
       "task": "Update docs/05-mcp-integration.md with TLS, authentication, and rate limiting sections",
       "file": "docs/05-mcp-integration.md",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T047",
       "task": "Create docs/08-production-deployment.md with production deployment guide",
       "file": "docs/08-production-deployment.md",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T048",
       "task": "Document TLS and authentication configuration in docs/08-production-deployment.md",
       "file": "docs/08-production-deployment.md",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T049",
       "task": "Document reverse proxy patterns (nginx, Caddy) in docs/08-production-deployment.md",
       "file": "docs/08-production-deployment.md",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T050",
       "task": "Document monitoring and observability in docs/08-production-deployment.md",
       "file": "docs/08-production-deployment.md",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T051",
       "task": "Create docs/09-security-hardening.md with security best practices",
       "file": "docs/09-security-hardening.md",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T052",
       "task": "Document shell command security risks in docs/09-security-hardening.md",
       "file": "docs/09-security-hardening.md",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T053",
       "task": "Document authentication options in docs/09-security-hardening.md",
       "file": "docs/09-security-hardening.md",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T054",
       "task": "Document rate limiting and DDoS mitigation in docs/09-security-hardening.md",
       "file": "docs/09-security-hardening.md",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "id": "T055",

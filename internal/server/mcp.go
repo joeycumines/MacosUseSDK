@@ -165,8 +165,9 @@ func (s *MCPServer) Shutdown() {
 }
 
 // registerTools initializes all MCP tool handlers for the server.
-// This registers all 44 tools across categories: screenshot, input, element,
-// window, display, clipboard, application, scripting, and observation.
+// This registers 77 tools across categories: screenshot, input, element,
+// window, display, clipboard, application, scripting, observation,
+// accessibility, file dialog, session, macro, and input query.
 func (s *MCPServer) registerTools() {
 	s.tools = map[string]*Tool{
 		// === SCREENSHOT TOOLS (P0) ===

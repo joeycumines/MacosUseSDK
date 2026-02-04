@@ -102,29 +102,146 @@ The HTTP transport implements SSE reconnection handling per the HTML5 EventSourc
 
 ### **1A.4 Configuration**
 
+#### Core Environment Variables
+
 | Environment Variable | Description | Default |
 | :---- | :---- | :---- |
-| `MACOS_USE_HTTP_ENABLED` | Enable HTTP transport | `false` |
-| `MACOS_USE_HTTP_ADDRESS` | Listen address (e.g., `:8080`) | `:8080` |
-| `MACOS_USE_SOCKET_PATH` | Unix socket path (takes precedence over address) | None |
-| `MACOS_USE_HTTP_CORS_ORIGIN` | CORS allowed origin | `*` |
-| `MACOS_USE_HTTP_HEARTBEAT_INTERVAL` | SSE heartbeat interval | `15s` |
+| `MCP_TRANSPORT` | Transport type: `stdio` or `sse` | `stdio` |
+| `MCP_HTTP_ADDRESS` | HTTP/SSE listen address | `:8080` |
+| `MCP_HTTP_SOCKET` | Unix socket path (takes precedence over address) | _(none)_ |
+| `MCP_CORS_ORIGIN` | CORS allowed origin | `*` |
+| `MCP_HEARTBEAT_INTERVAL` | SSE heartbeat interval | `30s` |
+| `MCP_HTTP_READ_TIMEOUT` | HTTP read timeout | `30s` |
+| `MCP_HTTP_WRITE_TIMEOUT` | HTTP write timeout | `30s` |
 
-### **1A.5 Security Considerations**
+#### TLS Configuration
 
-**⚠️ WARNING:** The current HTTP transport implementation has significant security limitations:
+| Environment Variable | Description | Default |
+| :---- | :---- | :---- |
+| `MCP_TLS_CERT_FILE` | Path to TLS certificate for HTTPS | _(none)_ |
+| `MCP_TLS_KEY_FILE` | Path to TLS private key for HTTPS | _(none)_ |
 
-1. **No TLS:** All traffic is transmitted in plaintext. For production use, deploy behind a TLS-terminating reverse proxy (e.g., nginx, Caddy).
-2. **No Authentication:** The transport does not implement authentication. All clients with network access can interact with the server.
-3. **CORS Defaults to `*`:** The default configuration permits all origins. Restrict `MACOS_USE_HTTP_CORS_ORIGIN` in production.
-4. **Local Network Only:** The HTTP transport is intended for local development or trusted network environments only.
+When both `MCP_TLS_CERT_FILE` and `MCP_TLS_KEY_FILE` are set, the server starts with HTTPS instead of HTTP. The certificate should be in PEM format.
 
-**Recommended Deployment Pattern:**
+**Example:**
+```bash
+MCP_TRANSPORT=sse \
+  MCP_TLS_CERT_FILE=/etc/ssl/certs/server.crt \
+  MCP_TLS_KEY_FILE=/etc/ssl/private/server.key \
+  ./mcp-tool
 ```
-[Client] → HTTPS → [Reverse Proxy (TLS + Auth)] → HTTP → [MacosUseSDK Server]
+
+#### Authentication Configuration
+
+| Environment Variable | Description | Default |
+| :---- | :---- | :---- |
+| `MCP_API_KEY` | API key for Bearer token authentication | _(none)_ |
+
+When `MCP_API_KEY` is set, all requests (except `/health` and `/metrics`) require the `Authorization: Bearer <key>` header. The server uses constant-time comparison to prevent timing attacks.
+
+**Example:**
+```bash
+# Server
+MCP_TRANSPORT=sse MCP_API_KEY=your-secret-key ./mcp-tool
+
+# Client
+curl -H "Authorization: Bearer your-secret-key" \
+     -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' \
+     http://localhost:8080/message
 ```
 
-### **1A.6 Implementation Notes**
+#### Rate Limiting Configuration
+
+| Environment Variable | Description | Default |
+| :---- | :---- | :---- |
+| `MCP_RATE_LIMIT` | Rate limit in requests per second | `0` (disabled) |
+
+When set to a positive value, the server enforces a token bucket rate limiter with burst capacity of 2x the rate. Requests exceeding the limit receive HTTP 429 (Too Many Requests) with a `Retry-After: 1` header. The `/health` and `/metrics` endpoints are exempt from rate limiting.
+
+**Example:**
+```bash
+# Allow 100 requests per second with burst of 200
+MCP_TRANSPORT=sse MCP_RATE_LIMIT=100 ./mcp-tool
+```
+
+#### Audit Logging Configuration
+
+| Environment Variable | Description | Default |
+| :---- | :---- | :---- |
+| `MCP_AUDIT_LOG_FILE` | Path to audit log file | _(none)_ |
+
+When set, all tool invocations are logged to the specified file in structured JSON format. The audit log includes:
+- Tool name
+- Arguments (with sensitive values redacted)
+- Status (ok/error)
+- Duration in seconds
+- UTC timestamp
+
+Sensitive keys automatically redacted: `password`, `secret`, `token`, `api_key`, `credential`, `private_key`, etc.
+
+**Example log entry:**
+```json
+{"time":"2026-02-04T12:00:00Z","level":"INFO","msg":"tool_invocation","tool":"click","arguments":"{\"x\":100,\"y\":200}","status":"ok","duration_seconds":0.015,"timestamp":"2026-02-04T12:00:00Z"}
+```
+
+### **1A.5 Observability: Metrics Endpoint**
+
+The HTTP transport exposes a `/metrics` endpoint that provides Prometheus-compatible metrics in text format.
+
+**Available Metrics:**
+
+| Metric | Type | Labels | Description |
+| :---- | :---- | :---- | :---- |
+| `mcp_requests_total` | Counter | `tool`, `status` | Total number of tool invocations |
+| `mcp_request_duration_seconds` | Histogram | `tool` | Tool invocation latency distribution |
+| `mcp_sse_events_sent_total` | Counter | _(none)_ | Total SSE events broadcast |
+| `mcp_sse_connections_active` | Gauge | _(none)_ | Current number of SSE connections |
+
+**Histogram Buckets (seconds):** 0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0
+
+**Example Prometheus scrape config:**
+```yaml
+scrape_configs:
+  - job_name: 'macos-use-mcp'
+    static_configs:
+      - targets: ['localhost:8080']
+    metrics_path: '/metrics'
+```
+
+**Example query:**
+```promql
+# Request rate by tool
+rate(mcp_requests_total[5m])
+
+# 95th percentile latency
+histogram_quantile(0.95, rate(mcp_request_duration_seconds_bucket[5m]))
+```
+
+### **1A.6 Security Configuration**
+
+The HTTP transport now supports production-grade security features:
+
+1. **TLS:** Native TLS termination via `MCP_TLS_CERT_FILE` and `MCP_TLS_KEY_FILE`. For certificate management, use Let's Encrypt or your organization's PKI.
+
+2. **Authentication:** API key authentication via `MCP_API_KEY` with constant-time comparison. For production, use a strong random key (e.g., `openssl rand -base64 32`).
+
+3. **Rate Limiting:** Token bucket rate limiter via `MCP_RATE_LIMIT` to prevent abuse and ensure fair resource allocation.
+
+4. **CORS:** Configurable origin restriction via `MCP_CORS_ORIGIN`. Set to your client's origin in production.
+
+5. **Shell Command Protection:** Shell command execution is disabled by default (`MCP_SHELL_COMMANDS_ENABLED=false`). Only enable in trusted environments with explicit opt-in.
+
+**Production Deployment Pattern:**
+```
+[Client] → HTTPS (TLS + API Key) → [MacosUseSDK Server] → gRPC → [MacosUseServer]
+```
+
+Or with a reverse proxy:
+```
+[Client] → HTTPS → [Reverse Proxy] → HTTP → [MacosUseSDK Server] → gRPC → [MacosUseServer]
+```
+
+### **1A.7 Implementation Notes**
 
 - The HTTP transport uses Go's `net/http` package with configurable timeouts.
 - `WriteTimeout` is disabled by default (0) to support long-lived SSE connections.
