@@ -35,14 +35,14 @@
       "7517ab7 - test: add unit tests for file dialog and wait element tools",
       "d4cbc3a - feat: complete all 100 blueprint tasks with verification",
       "75bc58c - chore: quick wins - Server README, .gitignore, deprecated docs",
-      "1c7ac5a - test: comprehensive screenshot handler tests",
       "4b624f7 - test: add comprehensive unit tests for all handler categories",
-      "81c44a5 - fix: resolve time.Sleep violation and error format standardization",
-      "052e74f - test: expand screenshot test coverage to 57 tests",
       "e2e0042 - fix: improve observation test reliability with PollUntilContext",
-      "5085fe9 - docs: expand API reference examples for sessions, macros, observations",
       "edd1be4 - docs: enhance README with 77 tools, doc links, and modern examples",
-      "LATEST - docs: add package-level godoc and READMEs for cmd/mcp-tool and internal"
+      "5251b2a - docs: add package-level godoc and READMEs for cmd/mcp-tool and internal",
+      "bb37777 - docs: add CONTRIBUTING.md and CHANGELOG.md for v1.0.0-beta",
+      "5a8975c - test(session): add tests for transaction and macro CRUD handlers (18 new tests)",
+      "969a3a3 - ci: add dependabot configuration for Go, Swift, and GitHub Actions",
+      "75eb2a1 - docs: add historical notice to outdated design review"
     ],
     "verification_status": "DEEP QUALITY ANALYSIS PASSED 2026-02-04 - lint-all clean, api-lint clean, make-all-with-log passes (~31s integration), zero flaky test patterns, consistent PollUntilContext usage, no TODO/FIXME in source, all protos have comprehensive field docs. CHANGELOG.md tool names corrected for accuracy.",
     "unit_test_coverage": {
