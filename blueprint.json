@@ -22,7 +22,7 @@
     "constraint": "The use of subagents via the `runSubagent` tool is MANDATORY for the execution of the tasks below. Tasks are grouped specifically to be run in distinct subagent contexts to prevent context window exhaustion. Do not attempt to solve all groups in a single turn."
   },
   "status_section": {
-    "current_state": "77 MCP tools, comprehensive documentation, all tests pass. Unit tests expanded: display_test.go (21 tests), element_test.go (45 tests), window_test.go (54 tests covering all 9 window handlers).",
+    "current_state": "77 MCP tools, comprehensive documentation, all tests pass. Unit tests expanded: display_test.go (21 tests), element_test.go (45 tests), window_test.go (54 tests), clipboard_test.go (35 tests), application_test.go (40 tests).",
     "commits_made": [
       "20358ac - feat(input): add cursor_position, hold_key, mouse_button_down/up MCP tools",
       "120c9d7 - test(integration): add HTTP transport tests",
@@ -34,11 +34,13 @@
       "63481d0 - docs: add comprehensive API reference documentation",
       "7517ab7 - test: add unit tests for file dialog and wait element tools"
     ],
-    "verification_status": "verified 2026-02-04 - make-all-with-log passes, all integration tests pass (~30s), window handler tests pass (54 tests)",
+    "verification_status": "verified 2026-02-04 - make-all-with-log passes, all integration tests pass (~30s)",
     "unit_test_coverage": {
       "display_test.go": "21 tests - list_displays, get_display, cursor_position handlers",
       "element_test.go": "45 tests - find_elements, get_element, click_element, write_element_value, perform_element_action, traverse_accessibility, find_region_elements, get_element_actions, wait_element, wait_element_state handlers",
-      "window_test.go": "54 tests - list_windows, get_window, get_window_state, focus_window, move_window, resize_window, minimize_window, restore_window, close_window handlers"
+      "window_test.go": "54 tests - list_windows, get_window, get_window_state, focus_window, move_window, resize_window, minimize_window, restore_window, close_window handlers",
+      "clipboard_test.go": "35 tests - get_clipboard, write_clipboard, clear_clipboard, get_clipboard_history handlers",
+      "application_test.go": "40 tests - open_application, list_applications, get_application, delete_application handlers"
     }
   },
   "sequential_tasks": [
