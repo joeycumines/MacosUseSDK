@@ -11,20 +11,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### MCP Server (77 Tools)
 
-- **Input Tools**: `click`, `type_text`, `press_key`, `drag`, `scroll`, `hold_key`, `mouse_button_down`, `mouse_button_up`, `cursor_position`, `get_input`
-- **Element Tools**: `find_elements`, `get_element`, `click_element`, `write_element_value`, `perform_element_action`, `traverse_accessibility`, `find_region_elements`, `get_element_actions`, `wait_element`, `wait_element_state`
-- **Window Tools**: `list_windows`, `get_window`, `get_window_state`, `focus_window`, `move_window`, `resize_window`, `minimize_window`, `restore_window`, `close_window`
-- **Display Tools**: `list_displays`, `get_display`, `capture_cursor_position`
-- **Screenshot Tools**: `create_screenshot`
-- **Clipboard Tools**: `get_clipboard`, `write_clipboard`, `clear_clipboard`, `get_clipboard_history`
-- **Application Tools**: `open_application`, `list_applications`, `get_application`, `delete_application`
-- **Session Tools**: `create_session`, `get_session`, `list_sessions`, `delete_session`
-- **Macro Tools**: `create_macro`, `get_macro`, `list_macros`, `delete_macro`, `execute_macro`
-- **Observation Tools**: `create_observation`, `get_observation`, `list_observations`, `cancel_observation`, `stream_observations`
-- **Scripting Tools**: `execute_applescript`, `execute_jxa`, `execute_shell`, `execute_shortcuts`
-- **File Dialog Tools**: `automate_open_file_dialog`, `automate_save_file_dialog`, `select_file`, `select_directory`, `drag_files`
-- **Accessibility Tools**: `list_accessibility_roles`, `read_accessibility_hierarchy`, `highlight_element`
-- **Discovery Tools**: `get_automation_capabilities`
+- **Screenshot Tools (4)**: `capture_screenshot`, `capture_window_screenshot`, `capture_region_screenshot`, `capture_element_screenshot`
+- **Input Tools (11)**: `click`, `type_text`, `press_key`, `hold_key`, `mouse_move`, `scroll`, `drag`, `mouse_button_down`, `mouse_button_up`, `hover`, `gesture`
+- **Element Tools (10)**: `find_elements`, `get_element`, `get_element_actions`, `click_element`, `write_element_value`, `perform_element_action`, `traverse_accessibility`, `find_region_elements`, `wait_element`, `wait_element_state`
+- **Window Tools (9)**: `list_windows`, `get_window`, `get_window_state`, `focus_window`, `move_window`, `resize_window`, `minimize_window`, `restore_window`, `close_window`
+- **Display Tools (3)**: `list_displays`, `get_display`, `cursor_position`
+- **Clipboard Tools (4)**: `get_clipboard`, `write_clipboard`, `clear_clipboard`, `get_clipboard_history`
+- **Application Tools (4)**: `open_application`, `list_applications`, `get_application`, `delete_application`
+- **Scripting Tools (4)**: `execute_apple_script`, `execute_javascript`, `execute_shell_command`, `validate_script`
+- **Observation Tools (5)**: `create_observation`, `stream_observations`, `get_observation`, `list_observations`, `cancel_observation`
+- **Session Tools (8)**: `create_session`, `get_session`, `list_sessions`, `delete_session`, `get_session_snapshot`, `begin_transaction`, `commit_transaction`, `rollback_transaction`
+- **Macro Tools (6)**: `create_macro`, `get_macro`, `list_macros`, `delete_macro`, `execute_macro`, `update_macro`
+- **File Dialog Tools (5)**: `automate_open_file_dialog`, `automate_save_file_dialog`, `select_file`, `select_directory`, `drag_files`
+- **Input Query Tools (2)**: `get_input`, `list_inputs`
+- **Scripting Discovery Tools (2)**: `get_scripting_dictionaries`, `watch_accessibility`
 
 #### Security & Observability
 
