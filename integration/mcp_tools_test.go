@@ -25,7 +25,7 @@ func TestMCPTools_HTTPRoundTrip(t *testing.T) {
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd)
+	defer cleanupServer(t, serverCmd, serverAddr)
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
@@ -181,7 +181,7 @@ func TestMCPTools_Screenshot_HTTPRoundTrip(t *testing.T) {
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd)
+	defer cleanupServer(t, serverCmd, serverAddr)
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
@@ -228,7 +228,7 @@ func TestMCPTools_ClickTypeText_Workflow(t *testing.T) {
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd)
+	defer cleanupServer(t, serverCmd, serverAddr)
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
@@ -327,7 +327,7 @@ func TestMCPTools_InvalidTool_ReturnsError(t *testing.T) {
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd)
+	defer cleanupServer(t, serverCmd, serverAddr)
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
@@ -378,7 +378,7 @@ func TestMCPTools_MissingRequiredParams_ReturnsError(t *testing.T) {
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd)
+	defer cleanupServer(t, serverCmd, serverAddr)
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()

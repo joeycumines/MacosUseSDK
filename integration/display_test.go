@@ -10,7 +10,7 @@ import (
 func TestListDisplays(t *testing.T) {
 	ctx := context.Background()
 	cmd, addr := startServer(t, ctx)
-	defer cleanupServer(t, cmd)
+	defer cleanupServer(t, cmd, addr)
 
 	conn := connectToServer(t, ctx, addr)
 	defer conn.Close()

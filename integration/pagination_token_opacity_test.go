@@ -27,7 +27,7 @@ func TestMCPPaginationTokenOpacity_ListApplications(t *testing.T) {
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd)
+	defer cleanupServer(t, serverCmd, serverAddr)
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
@@ -107,7 +107,7 @@ func TestMCPPaginationTokenOpacity_ListWindows(t *testing.T) {
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd)
+	defer cleanupServer(t, serverCmd, serverAddr)
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
@@ -172,7 +172,7 @@ func TestMCPPaginationTokenOpacity_ViaHTTP(t *testing.T) {
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd)
+	defer cleanupServer(t, serverCmd, serverAddr)
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
@@ -236,7 +236,7 @@ func TestMCPPaginationTokenOpacity_FabricatedToken(t *testing.T) {
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd)
+	defer cleanupServer(t, serverCmd, serverAddr)
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()

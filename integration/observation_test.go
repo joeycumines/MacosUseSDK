@@ -22,12 +22,13 @@ import (
 // (move, resize, minimize, restore) to ensure subsequent reads reflect fresh state immediately.
 // This eliminates the stale-cache race condition that caused timeout failures.
 func TestWindowChangeObservation(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	// CRITICAL FIX: Reduced timeout from 3 minutes to 90 seconds to prevent CI hangs
+	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 	defer cancel()
 
 	// 1. Infrastructure Setup
 	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd)
+	defer cleanupServer(t, serverCmd, serverAddr)
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
@@ -201,6 +202,12 @@ func TestWindowChangeObservation(t *testing.T) {
 	// Channel to collect events
 	eventsChan := make(chan *pb.ObservationEvent, 10)
 	errChan := make(chan error, 1)
+
+	// CRITICAL FIX: Ensure channels are closed to prevent goroutine leaks
+	defer func() {
+		close(eventsChan)
+		close(errChan)
+	}()
 
 	// Start goroutine to receive events
 	go func() {

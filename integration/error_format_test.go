@@ -24,7 +24,7 @@ func TestMCPErrorFormat_IsErrorField(t *testing.T) {
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd)
+	defer cleanupServer(t, serverCmd, serverAddr)
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
@@ -87,7 +87,7 @@ func TestMCPErrorFormat_InvalidToolName(t *testing.T) {
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd)
+	defer cleanupServer(t, serverCmd, serverAddr)
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
@@ -144,7 +144,7 @@ func TestMCPErrorFormat_InvalidParams(t *testing.T) {
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd)
+	defer cleanupServer(t, serverCmd, serverAddr)
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
@@ -191,7 +191,7 @@ func TestMCPErrorFormat_UnknownMethod(t *testing.T) {
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd)
+	defer cleanupServer(t, serverCmd, serverAddr)
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
@@ -234,7 +234,7 @@ func TestMCPErrorFormat_MalformedJSON(t *testing.T) {
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd)
+	defer cleanupServer(t, serverCmd, serverAddr)
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
@@ -262,7 +262,7 @@ func TestMCPErrorFormat_SoftError(t *testing.T) {
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd)
+	defer cleanupServer(t, serverCmd, serverAddr)
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()

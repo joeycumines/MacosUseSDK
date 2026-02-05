@@ -14,7 +14,6 @@ import (
 )
 
 const (
-	defaultServerAddr = "localhost:50051"
 	calculatorAppName = "Calculator"
 )
 
@@ -30,7 +29,7 @@ func TestCalculatorAddition(t *testing.T) {
 
 	// Start server
 	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd)
+	defer cleanupServer(t, serverCmd, serverAddr)
 
 	// Connect to server
 	conn := connectToServer(t, ctx, serverAddr)
@@ -121,7 +120,7 @@ func TestCalculatorMultiplication(t *testing.T) {
 
 	// Start server
 	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd)
+	defer cleanupServer(t, serverCmd, serverAddr)
 
 	// Connect to server
 	conn := connectToServer(t, ctx, serverAddr)
@@ -360,7 +359,7 @@ func TestServerHealthCheck(t *testing.T) {
 
 	// Start server
 	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd)
+	defer cleanupServer(t, serverCmd, serverAddr)
 
 	// Connect to server
 	conn := connectToServer(t, ctx, serverAddr)

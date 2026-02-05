@@ -25,7 +25,7 @@ func TestClipboardPasteIntoTextEdit(t *testing.T) {
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd)
+	defer cleanupServer(t, serverCmd, serverAddr)
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()

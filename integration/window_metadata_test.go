@@ -60,7 +60,7 @@ func TestWindowMetadataPreservation(t *testing.T) {
 
 	// 1. Infrastructure Setup
 	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd)
+	defer cleanupServer(t, serverCmd, serverAddr)
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()

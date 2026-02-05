@@ -27,7 +27,7 @@ func TestCoordinateValidation_NegativeCoordinates(t *testing.T) {
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd)
+	defer cleanupServer(t, serverCmd, serverAddr)
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
@@ -119,7 +119,7 @@ func TestCoordinateValidation_ClickAtExtremeCoords(t *testing.T) {
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd)
+	defer cleanupServer(t, serverCmd, serverAddr)
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
@@ -187,7 +187,7 @@ func TestCoordinateValidation_MCPViaHTTP(t *testing.T) {
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd)
+	defer cleanupServer(t, serverCmd, serverAddr)
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
@@ -261,7 +261,7 @@ func TestCoordinateValidation_DisplayOrigins(t *testing.T) {
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd)
+	defer cleanupServer(t, serverCmd, serverAddr)
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
