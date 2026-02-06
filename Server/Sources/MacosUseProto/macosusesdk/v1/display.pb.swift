@@ -81,6 +81,7 @@ public struct Macosusesdk_V1_ListDisplaysRequest: Sendable {
 
   /// Page token from a previous ListDisplays call.
   /// This token is opaque and its structure must not be relied upon by clients.
+  /// Only its presence or absence should be used to determine pagination state.
   public var pageToken: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -111,8 +112,9 @@ public struct Macosusesdk_V1_ListDisplaysResponse: Sendable {
   /// The displays in arbitrary order. For stable ordering use the display_id.
   public var displays: [Macosusesdk_V1_Display] = []
 
-  /// Token to retrieve the next page of results. This token is opaque and its structure must
-  /// not be relied upon by clients. An empty value indicates no more results are available.
+  /// Token to retrieve the next page of results.
+  /// This token is opaque and its structure must not be relied upon by clients.
+  /// Only its presence or absence should be used to determine pagination state.
   public var nextPageToken: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()

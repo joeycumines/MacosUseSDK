@@ -125,6 +125,7 @@ type ListDisplaysRequest struct {
 	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	// Page token from a previous ListDisplays call.
 	// This token is opaque and its structure must not be relied upon by clients.
+	// Only its presence or absence should be used to determine pagination state.
 	PageToken     string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -225,8 +226,9 @@ type ListDisplaysResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The displays in arbitrary order. For stable ordering use the display_id.
 	Displays []*Display `protobuf:"bytes,1,rep,name=displays,proto3" json:"displays,omitempty"`
-	// Token to retrieve the next page of results. This token is opaque and its structure must
-	// not be relied upon by clients. An empty value indicates no more results are available.
+	// Token to retrieve the next page of results.
+	// This token is opaque and its structure must not be relied upon by clients.
+	// Only its presence or absence should be used to determine pagination state.
 	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
