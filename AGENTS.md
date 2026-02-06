@@ -26,6 +26,7 @@
 
 - **DO NOT BREAK THE BUILD:** You must run the core `all` target constantly. Use `mcp-server-make make-all-with-log` after every file change.
 - **Resource Leak Check:** Integration tests must ensure proper cleanup of observations and connections at teardown.
+- **CI PRE-MERGE BLOCKER:** Before any merge to main, ALL critical issues documented in `pre-merge-blueprint.json` MUST be resolved and CI MUST pass. See `PRE_MERGE_STATUS.md` for current blocking issues.
 
 **3. LOG OUTPUT PRIVACY:**
 

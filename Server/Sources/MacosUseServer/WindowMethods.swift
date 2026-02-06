@@ -215,7 +215,7 @@ extension MacosUseService {
         // querying current state). buildWindowResponseFromAX will query the actual ID
         // from the element and update the name accordingly.
         if let movedWindow = movedWindowInfo, movedWindow.windowID != windowId {
-            Self.logger.info("[moveWindow] Window ID changed: \(windowId) → \(movedWindow.windowID)")
+            Self.logger.info("[moveWindow] Window ID changed: \(windowId, privacy: .public) → \(movedWindow.windowID, privacy: .public)")
         }
 
         // Invalidate old cache entry
@@ -316,7 +316,7 @@ extension MacosUseService {
 
         if let resizedWindow = resizedWindowInfo, resizedWindow.windowID != windowId {
             // Window ID changed - use the new ID and re-acquire AXUIElement
-            Self.logger.info("[resizeWindow] Window ID changed: \(windowId) → \(resizedWindow.windowID)")
+            Self.logger.info("[resizeWindow] Window ID changed: \(windowId, privacy: .public) → \(resizedWindow.windowID, privacy: .public)")
             actualWindowId = resizedWindow.windowID
             actualName = "applications/\(pid)/windows/\(actualWindowId)"
             // Re-acquire fresh AXUIElement for the new window ID

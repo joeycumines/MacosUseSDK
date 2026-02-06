@@ -127,7 +127,7 @@ extension MacosUseService {
         context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_Display> {
         let req = request.message
-        Self.logger.info("getDisplay called for \(req.name)")
+        Self.logger.info("getDisplay called for \(req.name, privacy: .public)")
 
         // Parse the display ID from the resource name
         // Format: displays/{display_id}

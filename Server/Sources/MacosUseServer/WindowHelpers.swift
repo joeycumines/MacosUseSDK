@@ -31,15 +31,15 @@ extension MacosUseService {
         // Build the correct window name using the current (potentially updated) window ID
         let actualName: String
         if getIdResult == nil {
-            Self.logger.info("[buildWindowResponseFromAX] getAXWindowID returned nil for window \(windowId) - AXUIElement may be stale")
+            Self.logger.info("[buildWindowResponseFromAX] getAXWindowID returned nil for window \(windowId, privacy: .public) - AXUIElement may be stale")
             actualName = name
         } else if currentWindowId != windowId {
             // Window ID changed - construct new name
             let newName = "applications/\(pid)/windows/\(currentWindowId)"
-            Self.logger.info("[buildWindowResponseFromAX] Window ID changed: \(windowId) → \(currentWindowId), new name: \(newName)")
+            Self.logger.info("[buildWindowResponseFromAX] Window ID changed: \(windowId, privacy: .public) → \(currentWindowId, privacy: .public), new name: \(newName, privacy: .private)")
             actualName = newName
         } else {
-            Self.logger.info("[buildWindowResponseFromAX] getAXWindowID returned same ID \(currentWindowId) for window \(windowId)")
+            Self.logger.info("[buildWindowResponseFromAX] getAXWindowID returned same ID \(currentWindowId, privacy: .public) for window \(windowId, privacy: .public)")
             actualName = name
         }
 
@@ -173,7 +173,7 @@ extension MacosUseService {
         }
 
         // 2. Fallback to SDK Heuristics (only after all retries exhausted)
-        Self.logger.info("[findWindowElement] All ID-match retries exhausted for window \(windowId), trying heuristic fallback with expectedBounds: \(String(describing: expectedBounds))")
+        Self.logger.info("[findWindowElement] All ID-match retries exhausted for window \(windowId, privacy: .public), trying heuristic fallback with expectedBounds: \(String(describing: expectedBounds), privacy: .public)")
         return try await Task.detached(priority: .userInitiated) {
             let bounds: CGRect
             var usedZeroFallback = false
