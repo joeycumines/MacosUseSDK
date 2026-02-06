@@ -1640,13 +1640,14 @@ List input history for an application.
 
 ## 3. Environment Variable Reference
 
-MacosUseSDK supports **18 environment variables** for configuration.
+MacosUseSDK supports **19 environment variables** for configuration.
 
 ### 3.1 Core Configuration
 
 | Variable | Description | Type | Default | Example |
 |----------|-------------|------|---------|---------|
 | `MACOS_USE_SERVER_ADDR` | gRPC server address | string | `localhost:50051` | `192.168.1.100:50051` |
+| `MACOS_USE_SERVER_SOCKET_PATH` | Unix socket path for gRPC (overrides addr) | string | _(none)_ | `/tmp/macosuse.sock` |
 | `MACOS_USE_SERVER_TLS` | Enable TLS for gRPC | boolean | `false` | `true` |
 | `MACOS_USE_SERVER_CERT_FILE` | gRPC server TLS certificate path | string | _(none)_ | `/etc/ssl/server.crt` |
 | `MACOS_USE_REQUEST_TIMEOUT` | gRPC request timeout in seconds | integer | `30` | `60` |
