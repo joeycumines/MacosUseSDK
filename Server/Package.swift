@@ -38,6 +38,7 @@ let package = Package(
             sources: ["macosusesdk/", "google/"],
             swiftSettings: [
                 .unsafeFlags(["-Xfrontend", "-warn-concurrency"]),
+                .unsafeFlags(["-warnings-as-errors"]),
             ],
         ),
         .executableTarget(
@@ -55,6 +56,7 @@ let package = Package(
             ],
             swiftSettings: [
                 .unsafeFlags(["-Xfrontend", "-warn-concurrency"]),
+                .unsafeFlags(["-warnings-as-errors"]),
             ],
         ),
         .testTarget(

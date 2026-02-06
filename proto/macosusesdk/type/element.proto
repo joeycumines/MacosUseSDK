@@ -19,10 +19,10 @@ message Element {
   // Text content of the element, if any.
   optional string text = 2;
 
-  // X coordinate of the element's position.
+  // X coordinate of the element's position in Global Display Coordinates (top-left origin, Y increases downward).
   optional double x = 3;
 
-  // Y coordinate of the element's position.
+  // Y coordinate of the element's position in Global Display Coordinates (top-left origin, Y increases downward).
   optional double y = 4;
 
   // Width of the element.

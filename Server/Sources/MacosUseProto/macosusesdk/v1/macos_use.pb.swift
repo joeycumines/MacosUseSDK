@@ -1172,10 +1172,10 @@ public struct Macosusesdk_V1_MoveWindowRequest: Sendable {
   /// Resource name of the window.
   public var name: String = String()
 
-  /// New X coordinate.
+  /// New X coordinate in Global Display Coordinates (top-left origin, Y increases downward).
   public var x: Double = 0
 
-  /// New Y coordinate.
+  /// New Y coordinate in Global Display Coordinates (top-left origin, Y increases downward).
   public var y: Double = 0
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -1464,6 +1464,8 @@ public struct Macosusesdk_V1_ListSessionsRequest: Sendable {
   public var pageSize: Int32 = 0
 
   /// Page token from a previous ListSessions call.
+  /// This token is opaque and its structure must not be relied upon by clients.
+  /// Only its presence or absence should be used to determine pagination state.
   public var pageToken: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -1481,6 +1483,8 @@ public struct Macosusesdk_V1_ListSessionsResponse: Sendable {
   public var sessions: [Macosusesdk_V1_Session] = []
 
   /// Token to retrieve the next page of results.
+  /// This token is opaque and its structure must not be relied upon by clients.
+  /// Only its presence or absence should be used to determine pagination state.
   public var nextPageToken: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -1555,6 +1559,8 @@ public struct Macosusesdk_V1_ListMacrosRequest: Sendable {
   public var pageSize: Int32 = 0
 
   /// Page token from a previous ListMacros call.
+  /// This token is opaque and its structure must not be relied upon by clients.
+  /// Only its presence or absence should be used to determine pagination state.
   public var pageToken: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -1572,6 +1578,8 @@ public struct Macosusesdk_V1_ListMacrosResponse: Sendable {
   public var macros: [Macosusesdk_V1_Macro] = []
 
   /// Token to retrieve the next page of results.
+  /// This token is opaque and its structure must not be relied upon by clients.
+  /// Only its presence or absence should be used to determine pagination state.
   public var nextPageToken: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()

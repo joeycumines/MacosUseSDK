@@ -1155,10 +1155,10 @@ message MoveWindowRequest {
     (google.api.resource_reference) = {type: "macosusesdk.com/Window"}
   ];
 
-  // New X coordinate.
+  // New X coordinate in Global Display Coordinates (top-left origin, Y increases downward).
   double x = 2 [(google.api.field_behavior) = REQUIRED];
 
-  // New Y coordinate.
+  // New Y coordinate in Global Display Coordinates (top-left origin, Y increases downward).
   double y = 3 [(google.api.field_behavior) = REQUIRED];
 }
 
@@ -1322,6 +1322,8 @@ message ListSessionsRequest {
   int32 page_size = 1 [(google.api.field_behavior) = OPTIONAL];
 
   // Page token from a previous ListSessions call.
+  // This token is opaque and its structure must not be relied upon by clients.
+  // Only its presence or absence should be used to determine pagination state.
   string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
 }
 
@@ -1331,6 +1333,8 @@ message ListSessionsResponse {
   repeated Session sessions = 1;
 
   // Token to retrieve the next page of results.
+  // This token is opaque and its structure must not be relied upon by clients.
+  // Only its presence or absence should be used to determine pagination state.
   string next_page_token = 2;
 }
 
@@ -1370,6 +1374,8 @@ message ListMacrosRequest {
   int32 page_size = 1 [(google.api.field_behavior) = OPTIONAL];
 
   // Page token from a previous ListMacros call.
+  // This token is opaque and its structure must not be relied upon by clients.
+  // Only its presence or absence should be used to determine pagination state.
   string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
 }
 
@@ -1379,6 +1385,8 @@ message ListMacrosResponse {
   repeated Macro macros = 1;
 
   // Token to retrieve the next page of results.
+  // This token is opaque and its structure must not be relied upon by clients.
+  // Only its presence or absence should be used to determine pagination state.
   string next_page_token = 2;
 }
 

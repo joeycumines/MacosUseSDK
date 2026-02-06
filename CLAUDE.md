@@ -58,6 +58,10 @@ make lint
 
 # Run all linters (Go-specific)
 make lint-all
+
+# IMPORTANT: Use gmake for Go linters (not direct staticcheck invocation)
+gmake go.staticcheck  # NOT: staticcheck ./...
+gmake go.vet          # Runs go vet with proper flags
 ```
 
 ### Running the gRPC Server

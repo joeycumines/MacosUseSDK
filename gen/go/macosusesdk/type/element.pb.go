@@ -32,9 +32,9 @@ type Element struct {
 	Role string `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"`
 	// Text content of the element, if any.
 	Text *string `protobuf:"bytes,2,opt,name=text,proto3,oneof" json:"text,omitempty"`
-	// X coordinate of the element's position.
+	// X coordinate of the element's position in Global Display Coordinates (top-left origin, Y increases downward).
 	X *float64 `protobuf:"fixed64,3,opt,name=x,proto3,oneof" json:"x,omitempty"`
-	// Y coordinate of the element's position.
+	// Y coordinate of the element's position in Global Display Coordinates (top-left origin, Y increases downward).
 	Y *float64 `protobuf:"fixed64,4,opt,name=y,proto3,oneof" json:"y,omitempty"`
 	// Width of the element.
 	Width *float64 `protobuf:"fixed64,5,opt,name=width,proto3,oneof" json:"width,omitempty"`

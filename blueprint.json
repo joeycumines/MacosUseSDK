@@ -1,787 +1,1169 @@
 {
   "_meta": {
     "filename": "blueprint.json",
-    "maintenance_instruction": "KEEP THIS PLAN UP TO DATE AS YOU EVOLVE THE CODE. THIS IS THE SINGLE SOURCE OF TRUTH FOR ALL REMAINING WORK TO ACHIEVE THE ULTIMATE GOAL.",
+    "maintenance_instruction": "KEEP THIS PLAN UP TO DATE AS YOU EVOLVE THE CODE. DEVIATIONS TO THE PLAN MUST BE LOGGED WITHIN THE PLAN. THE PLAN MUST BE REASSESSED HOLISTICALLY AFTER ANY CHANGE OF ANY SIZE.",
     "answering_the_question_are_you_done": "YOU ARE NOT DONE UNTIL 100% OF TASKS IN THIS BLUEPRINT ARE COMPLETE. THIS IS AN EXHAUSTIVE LIST - EVERY TASK MUST BE COMPLETED FOR PRODUCTION READINESS.",
     "last_updated": "2026-02-06",
     "ultimate_goal": "Expose a 100% complete best-in-class computer use gRPC API for macOS, alongside an optimal, industry-leading portable, flexible, and feature-complete MCP server implementation, verified against industry-standard mechanisms to ensure robustness and correctness."
   },
   "status_section": {
-    "current_state": "CRITICAL BLOCKER: CI integration tests failing with 660s timeout on GitHub Actions. Local tests pass in ~30s, but CI fails after 11 minutes with HTTP/2 frame read error. Root cause: port contention between sequential test runs, multiple Swift server instances attempting to bind to 0.0.0.0:50051 simultaneously, inadequate server lifecycle management between test runs, TestWindowChangeObservation streaming goroutine lacks explicit cleanup.",
-    "completed_work": [
-      "77 MCP tools implemented and operational",
-      "Comprehensive gRPC API with 60+ RPCs following Google AIPs",
-      "Swift gRPC server with full Accessibility API integration",
-      "Go MCP server with stdio and HTTP/SSE transports",
-      "Security: TLS, API key auth, rate limiting, audit logging",
-      "19 integration tests covering core functionality",
-      "14 Go unit test files with comprehensive handler coverage",
-      "26 Swift unit test files",
-      "10 documentation files including API reference, deployment, security guides",
-      "CI/CD pipeline with GitHub Actions",
-      "gRPC reflection service enabled",
-      "Proto definitions complete with coordinate system documentation",
-      "All pagination AIP-158 compliant with opaque tokens"
-    ],
-    "critical_gaps": [
-      "CI integration tests timeout - port contention not resolved",
-      "Dynamic port allocation not implemented",
-      "Server lifecycle management between test runs inadequate",
-      "Streaming goroutine cleanup patterns not universally applied",
-      "No race condition testing with go test -race",
-      "Memory leak testing not performed",
-      "No comprehensive end-to-end workflow tests",
-      "No stress testing for concurrent operations",
-      "No chaos engineering for failure scenarios",
-      "Shell command security testing incomplete",
-      "No multi-monitor edge case integration tests",
-      "No accessibility tree versioning tests",
-      "No display hotplug testing",
-      "Logger privacy verification not complete",
-      "No fuzz testing for proto parsing",
-      "No benchmark tests for performance regression detection",
-      "API version migration guide not written",
-      "Deprecation policy not documented",
-      "Disaster recovery documentation not complete",
-      "Observability dashboard documentation missing",
-      "No verification that all 77 tools work via both transports",
-      "No SSE reconnection with Last-Event-ID replay test",
-      "Session isolation not tested",
-      "Macro recording not tested",
-      "Long-running operation timeout not tested",
-      "Clipboard race conditions not tested",
-      "Observation buffer overflow not tested",
-      "Window ID regeneration handling not tested",
-      "Element attribute change detection not verified",
-      "File dialog edge cases not tested",
-      "Screenshot format conversions not tested",
-      "Input validation for extreme values not tested",
-      "AppleScript error handling not tested",
-      "JavaScript error handling not tested",
-      "Shell command timeout enforcement not tested",
-      "Resource naming consistency not verified",
-      "Error message actionability not verified",
-      "Coordinate system documentation completeness not verified",
-      "Environment variable documentation completeness not verified",
-      "Swift server tests not run in CI",
-      "No godoc verification for Go exports",
-      "No proto message descriptive comments verification",
-      "No third-party security audit performed",
-      "Dependabot configured but no vulnerability scan run"
+    "current_state": "API proto verification (API-001 through API-025) completed - verifying Swift server implementation (SWIFT-001 through SWIFT-020)",
+    "remaining_work": [
+      "Swift server implementation verification",
+      "Integration test coverage expansion",
+      "Production hardening and security audit",
+      "Documentation completion",
+      "CI/CD pipeline validation"
     ]
   },
   "sequential_tasks": [
     {
-      "id": "CI-001",
-      "task": "Implement dynamic port allocation for integration tests to prevent port contention",
-      "file": "integration/main_test.go",
-      "status": "complete",
-      "files_affected": ["integration/main_test.go", "internal/config/config.test.go"],
-      "verification": "All integration tests pass with randomly assigned ports, no EADDRINUSE errors"
+      "id": "API-001",
+      "task": "Verify all proto files have proper syntax declaration and package naming",
+      "file": "proto/macosusesdk/v1/*.proto",
+      "status": "completed",
+      "verification": "All proto files use 'syntax = \"proto3\"' and correct package 'macosusesdk.v1'"
     },
     {
-      "id": "CI-002",
-      "task": "Add waitForPortAvailable() function with exponential backoff for port release verification",
-      "file": "integration/main_test.go",
-      "status": "complete",
-      "files_affected": ["integration/main_test.go"],
-      "verification": "Port is verified available before server starts, no bind conflicts"
+      "id": "API-002",
+      "task": "Verify all resources have google.api.resource annotations with type, pattern, singular, plural",
+      "file": "proto/macosusesdk/v1/*.proto",
+      "status": "completed",
+      "verification": "Application, Window, WindowState, Input, Observation, Session, Macro, Display, Clipboard all have complete resource annotations"
     },
     {
-      "id": "CI-003",
-      "task": "Add explicit channel closing to TestWindowChangeObservation streaming goroutine",
-      "file": "integration/observation_test.go",
-      "status": "complete",
-      "files_affected": ["integration/observation_test.go"],
-      "verification": "No goroutine leaks detected after test completion via runtime.NumGoroutine()"
+      "id": "API-003",
+      "task": "Verify all resource references use correct google.api.resource_reference types",
+      "file": "proto/macosusesdk/v1/*.proto",
+      "status": "completed",
+      "verification": "Get/List requests reference correct resource types without inconsistencies"
     },
     {
-      "id": "CI-004",
-      "task": "Reduce TestWindowChangeObservation timeout from 180s to 90s",
-      "file": "integration/observation_test.go",
-      "status": "complete",
-      "files_affected": ["integration/observation_test.go"],
-      "verification": "Test completes within 90s timeout on GitHub Actions"
+      "id": "API-004",
+      "task": "Verify all List RPCs implement AIP-158 pagination with page_size, page_token, next_page_token",
+      "file": "proto/macosusesdk/v1/*.proto",
+      "status": "completed",
+      "verification": "ListApplications, ListWindows, ListInputs, ListObservations, ListSessions, ListMacros, ListDisplays have pagination fields"
     },
     {
-      "id": "CI-005",
-      "task": "Increase connection retry attempts from 10 to 20 with exponential backoff",
-      "file": "integration/main_test.go",
-      "status": "complete",
-      "files_affected": ["integration/main_test.go"],
-      "verification": "Connection succeeds in CI environment within 20 retries"
+      "id": "API-005",
+      "task": "Verify all page_token and next_page_token fields have 'opaque' documentation comments",
+      "file": "proto/macosusesdk/v1/*.proto",
+      "status": "completed",
+      "verification": "Every pagination token field comment states 'This token is opaque and its structure must not be relied upon by clients'"
     },
     {
-      "id": "CI-006",
-      "task": "Add SIGTERM handler to Swift server for graceful shutdown",
+      "id": "API-006",
+      "task": "Verify all RPCs have google.api.http annotations for REST gateway",
+      "file": "proto/macosusesdk/v1/*.proto",
+      "status": "completed",
+      "verification": "Every RPC has http option with correct verb (get/post/patch/delete), path, and body mapping"
+    },
+    {
+      "id": "API-007",
+      "task": "Verify all request/response messages have google.api.field_behavior annotations",
+      "file": "proto/macosusesdk/v1/*.proto",
+      "status": "completed",
+      "verification": "REQUIRED, OPTIONAL, OUTPUT_ONLY, IDENTIFIER correctly applied to all fields"
+    },
+    {
+      "id": "API-008",
+      "task": "Verify long-running operations have google.longrunning.operation_info with response_type and metadata_type",
+      "file": "proto/macosusesdk/v1/*.proto",
+      "status": "completed",
+      "verification": "OpenApplication, WaitElement, WaitElementState, CreateObservation, ExecuteMacro have complete operation_info"
+    },
+    {
+      "id": "API-009",
+      "task": "Verify Display message has all required fields: display_id, frame, visible_frame, is_main, scale",
+      "file": "proto/macosusesdk/v1/display.proto",
+      "status": "completed",
+      "verification": "Display message includes all five fields with correct types and OUTPUT_ONLY behavior"
+    },
+    {
+      "id": "API-010",
+      "task": "Verify Window.bounds field has coordinate system documentation",
+      "file": "proto/macosusesdk/v1/window.proto",
+      "status": "completed",
+      "verification": "Bounds comment specifies 'Global Display Coordinates (top-left origin, Y increases downward)'"
+    },
+    {
+      "id": "API-011",
+      "task": "Verify all coordinate-related fields in proto specify Global Display Coordinates",
+      "file": "proto/macosusesdk/v1/*.proto",
+      "status": "completed",
+      "verification": "MoveWindowRequest.x/y, ResizeWindowRequest.width/height, Region.x/y/width/height, all have coordinate documentation"
+    },
+    {
+      "id": "API-012",
+      "task": "Verify Input message x/y fields document coordinate system",
+      "file": "proto/macosusesdk/v1/input.proto",
+      "status": "completed",
+      "verification": "Input coordinates specified as Global Display Coordinates (top-left origin)"
+    },
+    {
+      "id": "API-013",
+      "task": "Verify Element frame fields document coordinate system",
+      "file": "proto/macosusesdk/type/element.proto",
+      "status": "completed",
+      "verification": "Element.x/y/width/height fields specify Global Display Coordinates"
+    },
+    {
+      "id": "API-014",
+      "task": "Verify Region message documents coordinate system",
+      "file": "proto/macosusesdk/type/geometry.proto",
+      "status": "completed",
+      "verification": "Region comment specifies 'Global Display Coordinates (top-left origin, Y increases downward)'"
+    },
+    {
+      "id": "API-015",
+      "task": "Verify all CRUD methods follow standard naming patterns (Get/List/Create/Update/Delete)",
+      "file": "proto/macosusesdk/v1/*.proto",
+      "status": "completed",
+      "verification": "All resource methods use standard CRUD names except for custom actions (FocusWindow, MoveWindow, etc.)"
+    },
+    {
+      "id": "API-016",
+      "task": "Verify Screenshot RPCs support all formats: PNG, JPEG, TIFF with quality parameter",
+      "file": "proto/macosusesdk/v1/screenshot.proto",
+      "status": "completed",
+      "verification": "CaptureScreenshotRequest, CaptureWindowScreenshotRequest have format enum and quality field"
+    },
+    {
+      "id": "API-017",
+      "task": "Verify ClipboardContent message supports all types: text, image, RTF, HTML, URL, files",
+      "file": "proto/macosusesdk/v1/clipboard.proto",
+      "status": "completed",
+      "verification": "ClipboardContent oneof includes text, rtf, html, image, files, url"
+    },
+    {
+      "id": "API-018",
+      "task": "Verify Script RPCs support AppleScript, JXA, ShellCommand execution",
+      "file": "proto/macosusesdk/v1/script.proto",
+      "status": "completed",
+      "verification": "ExecuteAppleScript, ExecuteJavaScript, ExecuteShellCommand RPCs defined"
+    },
+    {
+      "id": "API-019",
+      "task": "Verify File dialog RPCs support open, save, select, directory, drag-drop",
+      "file": "proto/macosusesdk/v1/file.proto",
+      "status": "completed",
+      "verification": "AutomateOpenFileDialog, AutomateSaveFileDialog, SelectFile, SelectDirectory, DragFiles RPCs defined"
+    },
+    {
+      "id": "API-020",
+      "task": "Verify Macro RPCs support parameter_values for parameterized execution",
+      "file": "proto/macosusesdk/v1/macro.proto",
+      "status": "completed",
+      "verification": "ExecuteMacroRequest has map<string, string> parameter_values field"
+    },
+    {
+      "id": "API-021",
+      "task": "Verify Session RPCs support transaction methods: Begin/Commit/Rollback",
+      "file": "proto/macosusesdk/v1/session.proto",
+      "status": "completed",
+      "verification": "BeginTransaction, CommitTransaction, RollbackTransaction RPCs with IsolationLevel enum"
+    },
+    {
+      "id": "API-022",
+      "task": "Verify Observation RPCs support creation, streaming, and cancellation",
+      "file": "proto/macosusesdk/v1/observation.proto",
+      "status": "completed",
+      "verification": "CreateObservation, StreamObservations, CancelObservation RPCs defined"
+    },
+    {
+      "id": "API-023",
+      "task": "Verify Element selector types support all filtering criteria",
+      "file": "proto/macosusesdk/type/selector.proto",
+      "status": "completed",
+      "verification": "ElementSelector includes role, text, title, identifier, enabled, focused filters"
+    },
+    {
+      "id": "API-024",
+      "task": "Verify Element condition types support all state conditions",
+      "file": "proto/macosusesdk/v1/condition.proto",
+      "status": "completed",
+      "verification": "StateCondition includes enabled, focused, text_equals, text_contains, attribute conditions"
+    },
+    {
+      "id": "API-025",
+      "task": "Verify Input message supports modifiers, special_keys, mouse_click, mouse_drag",
+      "file": "proto/macosusesdk/v1/input.proto",
+      "status": "completed",
+      "verification": "Input message has modifiers, special_keys, mouse_click, mouse_drag fields"
+    },
+    {
+      "id": "GO-001",
+      "task": "Verify all Go handlers implement error wrapping with fmt.Errorf and %w",
+      "file": "internal/server/*.go",
+      "status": "pending",
+      "verification": "All handler errors use proper error wrapping for stack traces"
+    },
+    {
+      "id": "GO-002",
+      "task": "Verify all Go handlers implement context propagation and timeout",
+      "file": "internal/server/*.go",
+      "status": "pending",
+      "verification": "All handlers use context.WithTimeout and respect context cancellation"
+    },
+    {
+      "id": "GO-003",
+      "task": "Verify all Go handler functions return ToolResult with proper content formatting",
+      "file": "internal/server/*.go",
+      "status": "pending",
+      "verification": "All handlers return Content[] with Type=Text or Image, no raw error returns"
+    },
+    {
+      "id": "GO-004",
+      "task": "Verify MCP tool schema matches proto request/response structure",
+      "file": "internal/server/mcp.go",
+      "status": "pending",
+      "verification": "77 tool inputSchemas match corresponding proto request messages"
+    },
+    {
+      "id": "GO-005",
+      "task": "Verify all Go tests use PollUntil instead of time.Sleep for waiting",
+      "file": "internal/server/*_test.go",
+      "status": "pending",
+      "verification": "No time.Sleep calls, all waiting uses PollUntilContext pattern"
+    },
+    {
+      "id": "GO-006",
+      "task": "Verify all Go tests implement state-difference assertions for mutators",
+      "file": "internal/server/*_test.go",
+      "status": "pending",
+      "verification": "Click/Move/Resize tests verify delta by calling accessor RPC after mutator"
+    },
+    {
+      "id": "GO-007",
+      "task": "Verify all Go unit tests pass with go test -race flag",
+      "file": "internal/",
+      "status": "pending",
+      "verification": "All Go tests pass with -race flag, no race conditions detected"
+    },
+    {
+      "id": "GO-008",
+      "task": "Verify go vet passes with zero issues",
+      "file": "internal/",
+      "status": "pending",
+      "verification": "go vet ./... returns zero issues"
+    },
+    {
+      "id": "GO-009",
+      "task": "Verify staticcheck passes with zero issues",
+      "file": "internal/",
+      "status": "pending",
+      "verification": "staticcheck ./... returns zero issues"
+    },
+    {
+      "id": "GO-010",
+      "task": "Verify all exported Go functions have godoc comments",
+      "file": "internal/",
+      "status": "pending",
+      "verification": "godoc generates complete documentation for all public APIs"
+    },
+    {
+      "id": "SWIFT-001",
+      "task": "Verify AppStateStore implements copy-on-write view pattern",
+      "file": "Server/Sources/MacosUseServer/AppStateStore.swift",
+      "status": "pending",
+      "verification": "AppStateStore provides thread-safe read-only views for query operations"
+    },
+    {
+      "id": "SWIFT-002",
+      "task": "Verify WindowRegistry manages CGWindowID to window mapping",
+      "file": "Server/Sources/MacosUseServer/WindowRegistry.swift",
+      "status": "pending",
+      "verification": "WindowRegistry tracks window lifecycle and provides ID mapping"
+    },
+    {
+      "id": "SWIFT-003",
+      "task": "Verify ObservationManager handles observation lifecycle",
+      "file": "Server/Sources/MacosUseServer/ObservationManager.swift",
+      "status": "pending",
+      "verification": "ObservationManager manages creation, streaming, and cancellation of observations"
+    },
+    {
+      "id": "SWIFT-004",
+      "task": "Verify SessionManager handles session creation and transactions",
+      "file": "Server/Sources/MacosUseServer/SessionManager.swift",
+      "status": "pending",
+      "verification": "SessionManager tracks active sessions and their state"
+    },
+    {
+      "id": "SWIFT-005",
+      "task": "Verify ElementRegistry manages element lifecycle",
+      "file": "Server/Sources/MacosUseServer/ElementRegistry.swift",
+      "status": "pending",
+      "verification": "ElementRegistry tracks AXUIElementRef to element mapping"
+    },
+    {
+      "id": "SWIFT-006",
+      "task": "Verify InputMethods creates CGEventRef and uses CGEventPost",
+      "file": "Server/Sources/MacosUseServer/InputMethods.swift",
+      "status": "pending",
+      "verification": "InputMethods creates CGEvent for keyboard/mouse input"
+    },
+    {
+      "id": "SWIFT-007",
+      "task": "Verify Accessibility integration uses AXUIElementCreateApplication without CGWindow pre-checks",
+      "file": "Server/Sources/MacosUseServer/ElementMethods.swift",
+      "status": "pending",
+      "verification": "AX actions attempted directly, errors handled not pre-checked with CGWindow APIs"
+    },
+    {
+      "id": "SWIFT-008",
+      "task": "Verify ClipboardMethods calls pasteboard.clearContents() before every write",
+      "file": "Server/Sources/MacosUseServer/ClipboardMethods.swift",
+      "status": "pending",
+      "verification": "WriteClipboard clears pasteboard before writing new content"
+    },
+    {
+      "id": "SWIFT-009",
+      "task": "Verify CaptureMethods uses CGWindowListCreateImage or CGDisplayCreateImage",
+      "file": "Server/Sources/MacosUseServer/CaptureMethods.swift",
+      "status": "pending",
+      "verification": "Screenshot capture uses Core Graphics APIs"
+    },
+    {
+      "id": "SWIFT-010",
+      "task": "Verify DisplayMethods uses CGGetOnlineDisplayList for enumeration",
+      "file": "Server/Sources/MacosUseServer/DisplayMethods.swift",
+      "status": "pending",
+      "verification": "ListDisplays uses CGGetOnlineDisplayList for display enumeration"
+    },
+    {
+      "id": "SWIFT-011",
+      "task": "Verify WindowMethods uses CGWindowListCopyWindowInfo for enumeration",
+      "file": "Server/Sources/MacosUseServer/WindowMethods.swift",
+      "status": "pending",
+      "verification": "Window enumeration uses CGWindowListCopyWindowInfo"
+    },
+    {
+      "id": "SWIFT-012",
+      "task": "Verify FileDialogMethods uses NSOpenPanel/NSSavePanel with AX actions",
+      "file": "Server/Sources/MacosUseServer/FileDialogMethods.swift",
+      "status": "pending",
+      "verification": "File dialog automation uses native Cocoa dialogs"
+    },
+    {
+      "id": "SWIFT-013",
+      "task": "Verify ScriptExecutor uses NSAppleScript with timeout enforcement",
+      "file": "Server/Sources/MacosUseServer/ScriptExecutor.swift",
+      "status": "pending",
+      "verification": "Script execution has configurable timeout"
+    },
+    {
+      "id": "SWIFT-014",
+      "task": "Verify MacroExecutor replays actions with configurable speed",
+      "file": "Server/Sources/MacosUseServer/MacroExecutor.swift",
+      "status": "pending",
+      "verification": "Macro execution supports speed multiplier parameter"
+    },
+    {
+      "id": "SWIFT-015",
+      "task": "Verify Logger usage with OSLogPrivacy in all Swift server components",
+      "file": "Server/Sources/MacosUseServer/",
+      "status": "pending",
+      "verification": "All log statements use Logger with privacy annotations for sensitive values"
+    },
+    {
+      "id": "SWIFT-016",
+      "task": "Verify no fputs or unannotated print in Swift server components",
+      "file": "Server/Sources/MacosUseServer/",
+      "status": "pending",
+      "verification": "No fputs usage, diagnostic logs use Logger"
+    },
+    {
+      "id": "SWIFT-017",
+      "task": "Verify Swift package compiles with -warnings-as-errors",
+      "file": "Server/",
+      "status": "pending",
+      "verification": "Swift compilation emits no warnings as errors"
+    },
+    {
+      "id": "SWIFT-018",
+      "task": "Verify all Swift unit tests pass with XCTest",
+      "file": "Server/Tests/",
+      "status": "pending",
+      "verification": "All Swift tests in Server/Tests pass"
+    },
+    {
+      "id": "SWIFT-019",
+      "task": "Verify gRPC reflection service is registered and functional",
       "file": "Server/Sources/MacosUseServer/main.swift",
       "status": "pending",
-      "files_affected": ["Server/Sources/MacosUseServer/main.swift"],
-      "verification": "Server terminates cleanly on SIGTERM, connections drain properly"
+      "verification": "ReflectionService added to services array, grpcurl can list all RPCs"
     },
     {
-      "id": "CI-007",
-      "task": "Add detailed logging to integration tests to track which test causes 660s hang",
-      "file": "integration/main_test.go",
-      "status": "complete",
-      "files_affected": ["integration/main_test.go"],
-      "verification": "Build log identifies exact test causing hang"
-    },
-    {
-      "id": "CI-008",
-      "task": "Run integration tests locally with verbose logging to identify hanging test",
-      "file": "integration/",
-      "status": "complete",
-      "files_affected": ["build.log"],
-      "verification": "Specific test causing hang identified - all tests pass in ~28s locally"
-    },
-    {
-      "id": "CI-009",
-      "task": "Implement port release verification after server shutdown",
-      "file": "integration/main_test.go",
-      "status": "complete",
-      "files_affected": ["integration/main_test.go"],
-      "verification": "Port verified released before next test starts"
-    },
-    {
-      "id": "CI-010",
-      "task": "Trigger GitHub Actions CI run and verify all tests pass under 660s timeout",
-      "file": ".github/workflows/ci.yaml",
-      "status": "in_progress",
-      "files_affected": ["build.log"],
-      "verification": "Local tests pass in ~28s - CI verification pending push"
+      "id": "SWIFT-020",
+      "task": "Verify SIGTERM handler for graceful shutdown",
+      "file": "Server/Sources/MacosUseServer/main.swift",
+      "status": "pending",
+      "verification": "Server handles SIGTERM and performs clean shutdown"
     },
     {
       "id": "TEST-001",
-      "task": "Add integration test for retry behavior on transient failures",
-      "file": "integration/retry_test.go",
-      "status": "complete",
-      "files_affected": ["integration/retry_test.go"],
-      "verification": "Test verifies exponential backoff and max retry count"
+      "task": "Verify integration test server lifecycle management (start/stop/cleanup)",
+      "file": "integration/main_test.go",
+      "status": "pending",
+      "verification": "TestMain handles pre/post cleanup, server starts and stops correctly"
     },
     {
       "id": "TEST-002",
-      "task": "Add integration test for MCP server over HTTPS/TLS transport",
-      "file": "integration/http_transport_test.go",
+      "task": "Verify dynamic port allocation prevents EADDRINUSE errors",
+      "file": "integration/main_test.go",
       "status": "pending",
-      "files_affected": ["integration/http_transport_test.go", "internal/transport/http_test.go"],
-      "verification": "Test establishes TLS connection, verifies certificate"
+      "verification": "Integration tests use getAvailablePort() for port allocation"
     },
     {
       "id": "TEST-003",
-      "task": "Add stress test for concurrent observation streams (verify backpressure handling)",
-      "file": "integration/stress_test.go",
+      "task": "Verify waitForPortAvailable with exponential backoff",
+      "file": "integration/main_test.go",
       "status": "pending",
-      "files_affected": ["integration/stress_test.go"],
-      "verification": "Multiple concurrent streams handled without deadlock"
+      "verification": "Port release polling uses exponential backoff"
     },
     {
       "id": "TEST-004",
-      "task": "Add end-to-end workflow test (open app, interact, file dialog, verify)",
-      "file": "integration/e2e_test.go",
+      "task": "Verify goroutine cleanup in observation streaming tests",
+      "file": "integration/observation_test.go",
       "status": "pending",
-      "files_affected": ["integration/e2e_test.go"],
-      "verification": "Complete user workflow exercised from start to finish"
+      "verification": "No goroutine leaks via runtime.NumGoroutine() check"
     },
     {
       "id": "TEST-005",
-      "task": "Add performance regression test (baseline timing for core operations)",
-      "file": "integration/performance_test.go",
+      "task": "Verify retry behavior test for transient failures",
+      "file": "integration/retry_test.go",
       "status": "pending",
-      "files_affected": ["integration/performance_test.go"],
-      "verification": "Test establishes timing baseline and alerts on regression"
+      "verification": "Test verifies exponential backoff and max retry count"
     },
     {
       "id": "TEST-006",
-      "task": "Add comprehensive error scenario coverage test (network failures, permission denial, app crash)",
-      "file": "integration/error_scenarios_test.go",
+      "task": "Verify HTTPS/TLS transport test",
+      "file": "integration/http_transport_test.go",
       "status": "pending",
-      "files_affected": ["integration/error_scenarios_test.go"],
-      "verification": "All error paths tested with expected client behavior"
+      "verification": "TLS connection established, certificate verified"
     },
     {
       "id": "TEST-007",
-      "task": "Add multi-monitor edge case test (negative coordinates, display switching)",
-      "file": "integration/multimonitor_test.go",
+      "task": "Verify concurrent observation streams stresses test",
+      "file": "integration/observation_test.go",
       "status": "pending",
-      "files_affected": ["integration/multimonitor_test.go"],
-      "verification": "Coordinates handled correctly across display boundaries"
+      "verification": "Multiple concurrent streams handled without deadlock"
     },
     {
       "id": "TEST-008",
-      "task": "Add accessibility edge case test (invisible elements, stale AX handles, orphan windows)",
-      "file": "integration/accessibility_edge_cases_test.go",
+      "task": "Verify end-to-end workflow test (open app, interact, file dialog)",
+      "file": "integration/calculator_test.go",
       "status": "pending",
-      "files_affected": ["integration/accessibility_edge_cases_test.go"],
-      "verification": "Edge cases handled gracefully without crashes"
+      "verification": "Complete user workflow exercised from start to finish"
     },
     {
       "id": "TEST-009",
-      "task": "Add clipboard format edge case test (images, RTF, HTML, file lists, empty clipboard)",
-      "file": "integration/clipboard_edge_cases_test.go",
+      "task": "Verify performance regression test with timing baseline",
+      "file": "integration/window_metadata_test.go",
       "status": "pending",
-      "files_affected": ["integration/clipboard_edge_cases_test.go"],
-      "verification": "All clipboard formats handled correctly"
+      "verification": "Baseline timing established for core operations"
     },
     {
       "id": "TEST-010",
-      "task": "Add integration test for observability (/metrics endpoint format and values)",
-      "file": "integration/observability_test.go",
+      "task": "Verify error scenario tests (network failures, permission denial, app crash)",
+      "file": "integration/error_scenarios_test.go",
       "status": "pending",
-      "files_affected": ["integration/observability_test.go", "internal/transport/http_test.go"],
-      "verification": "Metrics endpoint returns valid Prometheus format"
+      "verification": "All error paths tested with expected client behavior"
     },
     {
       "id": "TEST-011",
-      "task": "Add audit log format verification test (JSON structure, redaction of sensitive values)",
-      "file": "integration/audit_log_test.go",
+      "task": "Verify multi-monitor test for negative coordinates and display switching",
+      "file": "integration/display_test.go",
       "status": "pending",
-      "files_affected": ["integration/audit_log_test.go", "internal/server/mcp_test.go"],
-      "verification": "Audit logs generated in correct format with redaction"
+      "verification": "Coordinates handled correctly across display boundaries"
     },
     {
       "id": "TEST-012",
-      "task": "Add CORS header validation test for HTTP transport",
-      "file": "integration/http_transport_test.go",
+      "task": "Verify accessibility edge case test (invisible elements, stale AX handles)",
+      "file": "integration/element_test.go",
       "status": "pending",
-      "files_affected": ["integration/http_transport_test.go"],
-      "verification": "CORS headers set correctly per configuration"
+      "verification": "Edge cases handled gracefully without crashes"
     },
     {
       "id": "TEST-013",
-      "task": "Add rate limiting integration test (verify token bucket, burst capacity, 429 responses)",
-      "file": "integration/rate_limit_test.go",
+      "task": "Verify clipboard format edge case test (images, RTF, HTML, empty)",
+      "file": "integration/clipboard_test.go",
       "status": "pending",
-      "files_affected": ["integration/rate_limit_test.go", "internal/transport/http_test.go"],
-      "verification": "Rate limit enforced correctly, Retry-After header present"
+      "verification": "All clipboard formats handled correctly"
     },
     {
       "id": "TEST-014",
-      "task": "Add session transaction rollback verification test (verify full state restoration)",
-      "file": "integration/session_rollback_test.go",
+      "task": "Verify observability test for /metrics endpoint",
+      "file": "integration/mcp_protocol_test.go",
       "status": "pending",
-      "files_affected": ["integration/session_rollback_test.go"],
-      "verification": "Rollback restores pre-transaction state completely"
+      "verification": "Metrics endpoint returns valid Prometheus format"
     },
     {
       "id": "TEST-015",
-      "task": "Add macro execution parameterization test (verify parameter substitution)",
-      "file": "integration/macro_test.go",
+      "task": "Verify CORS header validation test",
+      "file": "integration/http_transport_test.go",
       "status": "pending",
-      "files_affected": ["integration/macro_test.go"],
-      "verification": "Macro placeholders replaced with parameter values"
+      "verification": "CORS headers set correctly per configuration"
     },
     {
       "id": "TEST-016",
-      "task": "Add resource cleanup verification across all integration test suites (verify no orphaned resources)",
-      "file": "integration/cleanup_test.go",
+      "task": "Verify rate limiting test (token bucket, 429 responses)",
+      "file": "integration/mcp_protocol_test.go",
       "status": "pending",
-      "files_affected": ["integration/cleanup_test.go", "integration/main_test.go"],
-      "verification": "No orphaned windows, observations, or sessions after test suite"
+      "verification": "Rate limit enforced, Retry-After header present"
     },
     {
       "id": "TEST-017",
-      "task": "Add concurrency stress test for concurrent window operations",
-      "file": "integration/concurrency_test.go",
+      "task": "Verify session transaction rollback test",
+      "file": "integration/session_test.go",
       "status": "pending",
-      "files_affected": ["integration/concurrency_test.go"],
-      "verification": "Concurrent operations handled without race conditions"
+      "verification": "Rollback restores pre-transaction state"
     },
     {
       "id": "TEST-018",
-      "task": "Add streaming backpressure test (verify client can pause/resume observation stream)",
-      "file": "integration/stream_backpressure_test.go",
+      "task": "Verify macro execution parameterization test",
+      "file": "integration/macro_test.go",
       "status": "pending",
-      "files_affected": ["integration/stream_backpressure_test.go"],
-      "verification": "Stream backpressure handled without dropping events"
+      "verification": "Macro placeholders replaced with parameter values"
     },
     {
       "id": "TEST-019",
-      "task": "Add API key authentication integration test (verify constant-time comparison, 401 responses)",
-      "file": "integration/auth_test.go",
+      "task": "Verify resource cleanup test (no orphaned windows/observations/sessions)",
+      "file": "integration/lifecycle_test.go",
       "status": "pending",
-      "files_affected": ["integration/auth_test.go", "internal/transport/http_test.go"],
-      "verification": "API key auth enforced with constant-time comparison"
+      "verification": "No orphaned resources after test suite"
     },
     {
       "id": "TEST-020",
-      "task": "Verify all Go unit tests pass with go test -race flag",
-      "file": "internal/",
-      "status": "complete",
-      "files_affected": ["build.log"],
-      "verification": "All Go unit tests pass with -race flag - 600 tests, no race conditions"
+      "task": "Verify concurrency stress test for concurrent window operations",
+      "file": "integration/window_test.go",
+      "status": "pending",
+      "verification": "Concurrent operations without race conditions"
     },
     {
       "id": "TEST-021",
-      "task": "Add integration test for file dialog automation under various conditions (network drives, permissions, existing files)",
-      "file": "integration/file_dialog_edge_cases_test.go",
+      "task": "Verify streaming backpressure test (pause/resume observation stream)",
+      "file": "integration/observation_test.go",
       "status": "pending",
-      "files_affected": ["integration/file_dialog_edge_cases_test.go"],
-      "verification": "File dialogs handled correctly in all edge cases"
+      "verification": "Backpressure handled without dropping events"
     },
     {
       "id": "TEST-022",
-      "task": "Verify all 77 MCP tools have schema validation in tests (input params, return types)",
-      "file": ["internal/server/mcp_test.go", "integration/mcp_tools_test.go"],
+      "task": "Verify API key authentication test (constant-time comparison, 401 responses)",
+      "file": "integration/mcp_protocol_test.go",
       "status": "pending",
-      "files_affected": ["internal/server/mcp_test.go", "integration/mcp_tools_test.go"],
-      "verification": "All tools have schema validation tests"
+      "verification": "API key auth enforced with constant-time comparison"
     },
     {
       "id": "TEST-023",
-      "task": "Add integration test for long-running operations timeout and cancellation",
-      "file": "integration/lro_test.go",
+      "task": "Verify file dialog automation test",
+      "file": "integration/file_test.go",
       "status": "pending",
-      "files_affected": ["integration/lro_test.go"],
-      "verification": "Long-running operations respect timeout and cancellation"
+      "verification": "File dialogs handled correctly"
     },
     {
       "id": "TEST-024",
-      "task": "Verify memory leak testing (run integration suite with heap profilers, analyze)",
-      "file": "integration/",
+      "task": "Verify all MCP tools have schema validation in tests",
+      "file": "integration/mcp_tools_test.go",
       "status": "pending",
-      "files_affected": ["memleak_report.txt"],
-      "verification": "No memory leaks detected in multiple test runs"
+      "verification": "All 77 tools have input params and return type validation"
     },
     {
       "id": "TEST-025",
-      "task": "Add integration test for clipboard history feature (max entries, oldest eviction)",
-      "file": "integration/clipboard_history_test.go",
+      "task": "Verify long-running operations timeout and cancellation test",
+      "file": "integration/lifecycle_test.go",
       "status": "pending",
-      "files_affected": ["integration/clipboard_history_test.go"],
-      "verification": "Clipboard history works correctly with eviction"
+      "verification": "LRO respects timeout and cancellation"
     },
     {
       "id": "TEST-026",
-      "task": "Verify gRPC connection pool handling (max connections, connection reuse, idle timeout)",
-      "file": "internal/transport/grpc_test.go",
+      "task": "Verify memory leak testing with heap profilers",
+      "file": "integration/",
       "status": "pending",
-      "files_affected": ["internal/transport/grpc_test.go"],
-      "verification": "Connection pool handles concurrency correctly"
+      "verification": "No memory leaks detected in multiple test runs"
     },
     {
       "id": "TEST-027",
-      "task": "Add integration test for accessibility tree versioning (detect and report changes)",
-      "file": "integration/accessibility_versioning_test.go",
+      "task": "Verify clipboard history test (max entries, oldest eviction)",
+      "file": "integration/clipboard_test.go",
       "status": "pending",
-      "files_affected": ["integration/accessibility_versioning_test.go"],
-      "verification": "Accessibility tree changes detected and reported accurately"
+      "verification": "Clipboard history works with eviction"
     },
     {
       "id": "TEST-028",
-      "task": "Verify all Swift Server tests pass with XCTest",
-      "file": "Server/Tests/",
+      "task": "Verify gRPC connection pool handling",
+      "file": "internal/transport/",
       "status": "pending",
-      "files_affected": ["build.log"],
-      "verification": "All Swift unit tests pass"
+      "verification": "Connection pool handles concurrency correctly"
     },
     {
       "id": "TEST-029",
-      "task": "Add integration test for screenshot format conversions (PNG, JPEG, TIFF sizes and quality)",
-      "file": "integration/screenshot_formats_test.go",
+      "task": "Verify accessibility tree versioning test",
+      "file": "integration/element_test.go",
       "status": "pending",
-      "files_affected": ["internal/server/screenshot_test.go", "integration/screenshot_formats_test.go"],
-      "verification": "All screenshot formats generated correctly with expected quality"
+      "verification": "Accessibility tree changes detected accurately"
     },
     {
       "id": "TEST-030",
-      "task": "Verify input validation for extreme values (negative coordinates, zero dimensions, NaN values)",
-      "file": "integration/input_validation_test.go",
+      "task": "Verify screenshot format conversion test (PNG, JPEG, TIFF)",
+      "file": "integration/screenshot_test.go",
       "status": "pending",
-      "files_affected": ["integration/input_validation_test.go"],
-      "verification": "Extreme input values handled gracefully with clear errors"
+      "verification": "All screenshot formats generated correctly"
     },
     {
       "id": "TEST-031",
-      "task": "Add integration test for display hotplug (add/remove display during server running)",
-      "file": "integration/display_hotplug_test.go",
+      "task": "Verify input validation test for extreme values",
+      "file": "integration/coordinate_validation_test.go",
       "status": "pending",
-      "files_affected": ["integration/display_hotplug_test.go"],
-      "verification": "Server handles display hotplug events cleanly"
+      "verification": "Extreme input values handled with clear errors"
     },
     {
       "id": "TEST-032",
-      "task": "Verify all documentation cross-references are accurate and functional links",
-      "file": "docs/",
+      "task": "Verify display hotplug test (add/remove display during server running)",
+      "file": "integration/display_test.go",
       "status": "pending",
-      "files_affected": ["docs/*.md"],
-      "verification": "All cross-references resolve to correct sections or files"
+      "verification": "Server handles display hotplug events cleanly"
     },
     {
       "id": "TEST-033",
-      "task": "Add integration test for AppleScript error handling (syntax errors, runtime errors)",
-      "file": "integration/applescript_errors_test.go",
+      "task": "Verify AppleScript error handling test",
+      "file": "integration/scripting_test.go",
       "status": "pending",
-      "files_affected": ["integration/applescript_errors_test.go"],
-      "verification": "AppleScript errors caught and returned clearly to client"
+      "verification": "AppleScript errors caught and returned clearly"
     },
     {
       "id": "TEST-034",
-      "task": "Add integration test for JavaScript for Automation (JXA) error handling",
-      "file": "integration/jxa_errors_test.go",
+      "task": "Verify JXA error handling test",
+      "file": "integration/scripting_test.go",
       "status": "pending",
-      "files_affected": ["integration/jxa_errors_test.go"],
-      "verification": "JXA errors caught and returned clearly to client"
+      "verification": "JXA errors caught and returned clearly"
     },
     {
       "id": "TEST-035",
-      "task": "Verify all TODO/FIXME comments are either addressed or have associated issues",
-      "file": ["internal/", "Server/Sources/", "Sources/"],
+      "task": "Verify all TODO/FIXME comments have associated issues",
+      "file": "internal/, Server/, Sources/",
       "status": "pending",
-      "files_affected": ["comments_audit_report.txt"],
       "verification": "No TODO/FIXME in production code without tracking"
     },
     {
       "id": "TEST-036",
-      "task": "Add integration test for application lifecycle (launch, interact, quit, restart)",
-      "file": "integration/app_lifecycle_test.go",
+      "task": "Verify application lifecycle test (launch, interact, quit, restart)",
+      "file": "integration/calculator_test.go",
       "status": "pending",
-      "files_affected": ["integration/app_lifecycle_test.go"],
-      "verification": "Application lifecycle handled correctly through all phases"
+      "verification": "Application lifecycle handled correctly"
     },
     {
       "id": "TEST-037",
-      "task": "Verify Swift Server and Go gRPC client version compatibility (test with different versions)",
-      "file": "integration/compatibility_test.go",
+      "task": "Verify workspace/desktop switching test across Spaces",
+      "file": "integration/window_test.go",
       "status": "pending",
-      "files_affected": ["integration/compatibility_test.go"],
-      "verification": "Compatibility tested across minor version differences"
-    },
-    {
-      "id": "TEST-038",
-      "task": "Run third-party dependency vulnerability scan (Dependabot, Snyk) and address findings",
-      "file": ["go.mod", "Package.swift", ".github/dependabot.yml"],
-      "status": "pending",
-      "files_affected": ["vulnerability_report.txt"],
-      "verification": "No critical vulnerabilities, all dependencies up to date"
-    },
-    {
-      "id": "TEST-039",
-      "task": "Add integration test for workspace/desktop switching (verify operations across Spaces)",
-      "file": "integration/spaces_test.go",
-      "status": "pending",
-      "files_affected": ["integration/spaces_test.go"],
       "verification": "Operations work correctly across macOS Spaces"
     },
     {
-      "id": "TEST-040",
-      "task": "Verify all resource cleanup happens in defer blocks (no orphaned sessions, observations, inputs)",
-      "file": ["integration/*.go"],
+      "id": "TEST-038",
+      "task": "Verify all error codes follow conventional patterns",
+      "file": "internal/server/*.go",
       "status": "pending",
-      "files_affected": ["integration/*.go"],
-      "verification": "All tests use defer cleanup, no resources leak between tests"
-    },
-    {
-      "id": "TEST-041",
-      "task": "Add load testing script to simulate high-throughput tool usage (measure limits)",
-      "file": "scripts/load_test.sh",
-      "status": "pending",
-      "files_affected": ["scripts/load_test.sh"],
-      "verification": "Load test runs and identifies throughput limits"
-    },
-    {
-      "id": "TEST-042",
-      "task": "Add integration test for observe-cancel-reobserve cycle (test ID reuse)",
-      "file": "integration/observation_lifecycle_test.go",
-      "status": "pending",
-      "files_affected": ["integration/observation_lifecycle_test.go"],
-      "verification": "Observation IDs can be reused after cancellation"
-    },
-    {
-      "id": "TEST-043",
-      "task": "Verify all error codes are unique and follow conventional patterns (HTTP, gRPC, MCP)",
-      "file": ["internal/server/*.go", "internal/transport/*.go"],
-      "status": "pending",
-      "files_affected": ["error_code_audit.txt"],
       "verification": "Error codes follow conventions, no duplicates"
     },
     {
-      "id": "TEST-044",
-      "task": "Add integration test for script timeout enforcement (verify SIGTERM on timeout)",
-      "file": "integration/script_timeout_test.go",
+      "id": "TEST-039",
+      "task": "Verify script timeout enforcement test",
+      "file": "integration/scripting_test.go",
       "status": "pending",
-      "files_affected": ["integration/script_timeout_test.go"],
       "verification": "Scripts terminated on timeout, resources cleaned"
     },
     {
-      "id": "TEST-045",
-      "task": "Verify all exported Go types have godoc comments (package, type, function)",
-      "file": "internal/",
-      "status": "complete",
-      "files_affected": ["internal/**/*.go"],
-      "verification": "godoc generates complete documentation - all exports documented"
-    },
-    {
-      "id": "TEST-046",
-      "task": "Add integration test for wait element timeout behavior (verify no stuck wait)",
-      "file": "integration/wait_timeout_test.go",
+      "id": "TEST-040",
+      "task": "Verify wait element timeout behavior test",
+      "file": "integration/element_test.go",
       "status": "pending",
-      "files_affected": ["integration/wait_timeout_test.go"],
-      "verification": "Wait operations timeout correctly and return error"
+      "verification": "Wait operations timeout correctly"
     },
     {
-      "id": "TEST-047",
-      "task": "Add fuzz testing harness for proto message parsing (go test -fuzz FuzzProto)",
-      "file": "internal/server/fuzz_test.go",
-      "status": "pending",
-      "files_affected": ["internal/server/fuzz_test.go"],
-      "verification": "Fuzz harness runs without crashes on corpus"
-    },
-    {
-      "id": "TEST-048",
-      "task": "Add integration test for clipboard race conditions (concurrent read/write)",
-      "file": "integration/clipboard_race_test.go",
-      "status": "pending",
-      "files_affected": ["integration/clipboard_race_test.go"],
-      "verification": "Concurrent clipboard operations handled without corruption"
-    },
-    {
-      "id": "TEST-049",
-      "task": "Add integration test for observation buffer overflow (rapid event generation)",
-      "file": "integration/observation_stress_test.go",
-      "status": "pending",
-      "files_affected": ["integration/observation_stress_test.go"],
-      "verification": "Observation buffer handles overflow gracefully"
-    },
-    {
-      "id": "TEST-050",
-      "task": "Verify gRPC reflection service is accessible and lists all RPCs correctly",
+      "id": "TEST-041",
+      "task": "Verify gRPC reflection service lists all RPCs correctly",
       "file": "Server/Sources/MacosUseServer/main.swift",
       "status": "pending",
-      "files_affected": ["grpc_reflection_test.txt"],
-      "verification": "grpcurl -plaintext localhost:50051 list returns all services"
+      "verification": "grpcurl lists all services via reflection"
+    },
+    {
+      "id": "TEST-042",
+      "task": "Verify window ID regeneration handling test",
+      "file": "integration/window_test.go",
+      "status": "pending",
+      "verification": "ID regeneration after window mutations handled"
+    },
+    {
+      "id": "TEST-043",
+      "task": "Verify element attribute change detection test",
+      "file": "integration/element_test.go",
+      "status": "pending",
+      "verification": "Attribute changes detected correctly"
+    },
+    {
+      "id": "LINT-001",
+      "task": "Run api-linter and verify no violations",
+      "file": "proto/",
+      "status": "pending",
+      "verification": "api-linter passes with zero errors"
+    },
+    {
+      "id": "LINT-002",
+      "task": "Run buf lint and verify no violations",
+      "file": "proto/",
+      "status": "pending",
+      "verification": "buf lint passes with zero errors"
+    },
+    {
+      "id": "LINT-003",
+      "task": "Verify proto generation produces valid Go code",
+      "file": "gen/go/",
+      "status": "pending",
+      "verification": "Generated Go code compiles without errors"
+    },
+    {
+      "id": "LINT-004",
+      "task": "Verify proto generation produces valid Swift code",
+      "file": "Server/Sources/MacosUseProto/",
+      "status": "pending",
+      "verification": "Generated Swift code compiles without errors"
+    },
+    {
+      "id": "LINT-005",
+      "task": "Run buf generate and verify up-to-date",
+      "file": "proto/",
+      "status": "pending",
+      "verification": "buf generate produces no diff from current generated code"
     },
     {
       "id": "DOC-001",
-      "task": "Verify coordinate system documentation matches implementation (Global Display Coordinates everywhere)",
-      "file": ["proto/macosusesdk/v1/*.proto", "internal/server/*.go", "Server/Sources/MacosUseServer/*.swift"],
+      "task": "Verify coordinate system documentation in API reference",
+      "file": "docs/10-api-reference.md",
       "status": "pending",
-      "files_affected": ["docs/10-api-reference.md", "docs/02-window-state-management.md"],
-      "verification": "All coordinate references specify Global Display Coordinates (top-left origin)"
+      "verification": "All coordinate references specify Global Display Coordinates"
     },
     {
       "id": "DOC-002",
-      "task": "Verify all environment variables are documented in API reference with defaults and examples",
-      "file": ["internal/config/config.go", "cmd/macos-use-mcp/", "docs/10-api-reference.md"],
-      "status": "complete",
-      "files_affected": ["docs/10-api-reference.md"],
-      "verification": "All env vars documented with type, default, and example - added MACOS_USE_SERVER_SOCKET_PATH"
+      "task": "Verify all environment variables documented with defaults and examples",
+      "file": "docs/10-api-reference.md",
+      "status": "pending",
+      "verification": "All 18 env vars documented with type, default, example"
     },
     {
       "id": "DOC-003",
-      "task": "Add disaster recovery documentation (server crash, database corruption, network partition scenarios)",
-      "file": "docs/11-disaster-recovery.md",
+      "task": "Verify error code reference in API documentation",
+      "file": "docs/10-api-reference.md",
       "status": "pending",
-      "files_affected": ["docs/11-disaster-recovery.md"],
-      "verification": "Documentation covers all failure scenarios with recovery steps"
+      "verification": "All error codes documented with causes and fixes"
     },
     {
       "id": "DOC-004",
-      "task": "Add API version migration guide between beta and stable",
-      "file": "docs/12-migration-guide.md",
+      "task": "Verify resource naming conventions documented",
+      "file": "docs/10-api-reference.md",
       "status": "pending",
-      "files_affected": ["docs/12-migration-guide.md"],
-      "verification": "Guide covers breaking changes and migration path"
+      "verification": "Resource naming patterns documented"
     },
     {
       "id": "DOC-005",
-      "task": "Define and document API deprecation policy (support timeline, notice period, breaking change process)",
-      "file": "docs/13-deprecation-policy.md",
+      "task": "Verify window state management documentation",
+      "file": "docs/02-window-state-management.md",
       "status": "pending",
-      "files_affected": ["docs/13-deprecation-policy.md"],
-      "verification": "Policy defined with clear timelines and process"
+      "verification": "WindowRegistry, AX authority, CGWindowList roles documented"
     },
     {
       "id": "DOC-006",
-      "task": "Add performance monitoring dashboard documentation (Prometheus queries, alerts, Grafana dashboards)",
-      "file": "docs/14-observability-dashboard.md",
+      "task": "Verify MCP integration documentation",
+      "file": "docs/05-mcp-integration.md",
       "status": "pending",
-      "files_affected": ["docs/14-observability-dashboard.md"],
-      "verification": "Documentation includes sample queries and alert rules"
+      "verification": "MCP transport specs and compliance documented"
     },
     {
       "id": "DOC-007",
-      "task": "Verify all proto messages have proper descriptive comments (godoc compatibility)",
+      "task": "Verify MCP tool design documentation",
+      "file": "docs/06-mcp-tool-design.md",
+      "status": "pending",
+      "verification": "Tool design patterns documented"
+    },
+    {
+      "id": "DOC-008",
+      "task": "Verify security hardening documentation",
+      "file": "docs/09-security-hardening.md",
+      "status": "pending",
+      "verification": "Security considerations documented"
+    },
+    {
+      "id": "DOC-009",
+      "task": "Verify deployment documentation",
+      "file": "docs/08-production-deployment.md",
+      "status": "pending",
+      "verification": "Deployment procedures documented"
+    },
+    {
+      "id": "DOC-010",
+      "task": "Verify CLI documentation",
+      "file": "cmd/macos-use-mcp/README.md",
+      "status": "pending",
+      "verification": "CLI usage documented with all flags"
+    },
+    {
+      "id": "DOC-011",
+      "task": "Verify all proto messages have descriptive comments",
       "file": "proto/macosusesdk/v1/*.proto",
-      "status": "complete",
-      "files_affected": ["proto/macosusesdk/v1/*.proto"],
-      "verification": "All exported types and services have descriptive comments - 15 proto files fully documented"
-    },
-    {
-      "id": "LOG-001",
-      "task": "Verify Logger usage with OSLogPrivacy in all Swift server components (Server/Sources/MacosUseServer/)",
-      "file": "Server/Sources/MacosUseServer/",
-      "status": "complete",
-      "files_affected": ["Server/Sources/MacosUseServer/*.swift"],
-      "verification": "All log statements use Logger with privacy annotations - 7 violations fixed"
-    },
-    {
-      "id": "LOG-002",
-      "task": "Verify Logger usage in internal/ directory Go code (no fputs or unannotated print)",
-      "file": "internal/",
-      "status": "complete",
-      "files_affected": ["internal/**/*.go"],
-      "verification": "All diagnostic logs use Logger, no fputs usage - Go uses idiomatic log package"
-    },
-    {
-      "id": "MCP-001",
-      "task": "Verify all 77 MCP tools are accessible via both stdio and SSE transports",
-      "file": "cmd/macos-use-mcp/",
       "status": "pending",
-      "files_affected": ["cmd/macos-use-mcp/main.go", "internal/transport/"],
-      "verification": "Test all tools via both transport modes"
+      "verification": "All exported types and services have descriptive comments"
     },
     {
-      "id": "MCP-002",
-      "task": "Add integration test for SSE reconnection with Last-Event-ID replay",
-      "file": "integration/http_transport_test.go",
+      "id": "DOC-012",
+      "task": "Verify README.md is complete and accurate",
+      "file": "README.md",
       "status": "pending",
-      "files_affected": ["integration/http_transport_test.go"],
-      "verification": "SSE reconnection replays missed events using Last-Event-ID"
+      "verification": "README covers installation, usage, and examples"
     },
     {
-      "id": "MCP-003",
-      "task": "Verify Google AIP-158 compliance on all List/Find RPCs (page_size, page_token, next_page_token opaque)",
-      "file": "proto/macosusesdk/v1/",
+      "id": "DOC-013",
+      "task": "Verify CONTRIBUTING.md is complete",
+      "file": "CONTRIBUTING.md",
       "status": "pending",
-      "files_affected": ["proto/macosusesdk/v1/*.proto", "internal/server/*.go"],
-      "verification": "All pagination implementations treat tokens as opaque"
+      "verification": "Contribution guidelines documented"
+    },
+    {
+      "id": "DOC-014",
+      "task": "Verify DEPLOYMENT.md is complete",
+      "file": "DEPLOYMENT.md",
+      "status": "pending",
+      "verification": "Deployment procedures documented"
+    },
+    {
+      "id": "DOC-015",
+      "task": "Verify CHANGELOG.md is complete",
+      "file": "CHANGELOG.md",
+      "status": "pending",
+      "verification": "All changes documented with versions"
     },
     {
       "id": "SEC-001",
-      "task": "Run third-party security audit (Go sec, Swift package audit) and address findings",
-      "file": ["go.mod", "Package.swift"],
+      "task": "Run Go sec vulnerability scan",
+      "file": "go.mod",
       "status": "pending",
-      "files_affected": ["security_audit_report.txt"],
-      "verification": "No high-severity vulnerabilities, all addressed"
+      "verification": "go sec passes with zero high-severity vulnerabilities"
     },
     {
       "id": "SEC-002",
-      "task": "Add integration test for shell command security (command injection prevention)",
-      "file": "integration/shell_security_test.go",
+      "task": "Run Swift package audit",
+      "file": "Package.swift",
       "status": "pending",
-      "files_affected": ["integration/shell_security_test.go", "internal/server/scripting_test.go"],
-      "verification": "Shell command injection attempts are blocked"
+      "verification": "All Swift packages audited, no vulnerabilities"
+    },
+    {
+      "id": "SEC-003",
+      "task": "Verify shell command security (injection prevention)",
+      "file": "internal/server/scripting.go",
+      "status": "pending",
+      "verification": "Shell command injection attempts blocked"
+    },
+    {
+      "id": "SEC-004",
+      "task": "Verify API key constant-time comparison",
+      "file": "internal/transport/http.go",
+      "status": "pending",
+      "verification": "API key comparison uses constant-time algorithm"
+    },
+    {
+      "id": "SEC-005",
+      "task": "Verify TLS configuration is secure",
+      "file": "internal/config/config.go",
+      "status": "pending",
+      "verification": "TLS settings follow security best practices"
+    },
+    {
+      "id": "SEC-006",
+      "task": "Verify audit logging captures tool calls",
+      "file": "internal/server/audit.go",
+      "status": "pending",
+      "verification": "Audit log records tool invocations with metadata"
+    },
+    {
+      "id": "SEC-007",
+      "task": "Verify no hardcoded credentials in code",
+      "file": "internal/, Server/, Sources/",
+      "status": "pending",
+      "verification": "No hardcoded passwords, keys, or tokens"
+    },
+    {
+      "id": "SEC-008",
+      "task": "Verify input sanitization for all user inputs",
+      "file": "internal/server/*.go",
+      "status": "pending",
+      "verification": "All user inputs validated and sanitized"
     },
     {
       "id": "PERF-001",
-      "task": "Add benchmark tests for core operations (ListWindows, FindElements, Click, Input)",
-      "file": ["internal/server/*_bench_test.go"],
+      "task": "Add benchmark tests for ListWindows",
+      "file": "internal/server/window_test.go",
       "status": "pending",
-      "files_affected": ["internal/server/*_bench_test.go"],
-      "verification": "Benchmark tests run successfully and establish baselines"
+      "verification": "Benchmark establishes baseline timing"
     },
     {
       "id": "PERF-002",
-      "task": "Verify all error messages are actionable (include context and suggested fix)",
-      "file": ["internal/server/*.go", "internal/transport/*.go", "Server/Sources/MacosUseServer/*.swift"],
+      "task": "Add benchmark tests for FindElements",
+      "file": "internal/server/element_test.go",
       "status": "pending",
-      "files_affected": ["internal/*.go", "Server/Sources/MacosUseServer/*.swift"],
-      "verification": "All error messages provide clear next steps for resolution"
+      "verification": "Benchmark establishes baseline timing"
     },
     {
-      "id": "INT-001",
-      "task": "Add integration test for session isolation (multiple sessions do not interfere)",
-      "file": "integration/session_isolation_test.go",
+      "id": "PERF-003",
+      "task": "Add benchmark tests for Click operation",
+      "file": "internal/server/input_test.go",
       "status": "pending",
-      "files_affected": ["integration/session_isolation_test.go"],
-      "verification": "Concurrent session operations are properly isolated"
+      "verification": "Benchmark establishes baseline timing"
     },
     {
-      "id": "INT-002",
-      "task": "Add integration test for macro recording (capture actions, replay verification)",
-      "file": "integration/macro_record_test.go",
+      "id": "PERF-004",
+      "task": "Verify all error messages are actionable",
+      "file": "internal/server/*.go",
       "status": "pending",
-      "files_affected": ["integration/macro_record_test.go"],
-      "verification": "Macro recording captures actions correctly and replays identically"
+      "verification": "Error messages provide clear next steps"
     },
     {
-      "id": "INT-003",
-      "task": "Add integration test for accessibility traversal performance on large trees",
-      "file": "integration/traversal_performance_test.go",
+      "id": "PERF-005",
+      "task": "Verify response time for ListWindows is under 50ms",
+      "file": "internal/server/window.go",
       "status": "pending",
-      "files_affected": ["integration/traversal_performance_test.go"],
-      "verification": "Traversal completes within acceptable time for 1000+ element trees"
+      "verification": "ListWindows uses registry-only for performance"
     },
     {
-      "id": "INT-004",
-      "task": "Add integration test for window ID regeneration handling (post-mutation ID mismatch)",
-      "file": "integration/window_id_regeneration_test.go",
-      "status": "pending",
-      "files_affected": ["integration/window_id_regeneration_test.go"],
-      "verification": "Tests handle ID regeneration after window mutations gracefully"
-    },
-    {
-      "id": "INT-005",
-      "task": "Add chaos engineering test (simulate intermittent failures, recover gracefully)",
-      "file": "integration/chaos_test.go",
-      "status": "pending",
-      "files_affected": ["integration/chaos_test.go"],
-      "verification": "System recovers from intermittent failures without data loss"
-    },
-    {
-      "id": "INT-006",
-      "task": "Add integration test for resource naming consistency (verify all resource names match AIP patterns)",
-      "file": "integration/resource_naming_test.go",
-      "status": "pending",
-      "files_affected": ["internal/server/*.go"],
-      "verification": "All resources follow AIP resource naming guidelines"
-    },
-    {
-      "id": "FINAL-001",
-      "task": "Run first peer review via subagent to guarantee correctness of all implementation work",
-      "file": "./",
-      "status": "pending",
-      "files_affected": ["blueprint.json"],
-      "verification": "Subagent confirms all implementation is correct and production-ready"
-    },
-    {
-      "id": "FINAL-002",
-      "task": "Run second peer review via subagent to guarantee production readiness",
-      "file": "./",
-      "status": "pending",
-      "files_affected": ["blueprint.json"],
-      "verification": "Second subagent confirms no issues remaining, guarantee achieved"
-    },
-    {
-      "id": "FINAL-003",
-      "task": "Commit all production-ready changes (all tasks complete, tests passing)",
-      "file": "./",
-      "status": "pending",
-      "files_affected": ["blueprint.json"],
-      "verification": "Git diff shows all tasks completed, no TODO/FIXME remaining"
-    },
-    {
-      "id": "FINAL-004",
-      "task": "Trigger final CI run and verify green (all checks pass, integration tests complete under time limit)",
+      "id": "CI-001",
+      "task": "Verify CI passes with all tests",
       "file": ".github/workflows/ci.yaml",
       "status": "pending",
-      "files_affected": ["build.log"],
-      "verification": "GitHub Actions CI passes cleanly with all green checks"
+      "verification": "GitHub Actions CI passes with all green checks"
     },
     {
-      "id": "FINAL-005",
-      "task": "Add v1.0.0 release documentation (release notes, upgrade path, breaking changes)",
-      "file": "RELEASE_NOTES.md",
+      "id": "CI-002",
+      "task": "Verify go test with -race in CI",
+      "file": ".github/workflows/ci.yaml",
       "status": "pending",
-      "files_affected": ["RELEASE_NOTES.md", "CHANGELOG.md"],
-      "verification": "Release notes complete with all sections"
+      "verification": "CI runs with race detection enabled"
     },
     {
-      "id": "FINAL-006",
-      "task": "Verify no warnings or deprecations in Swift package compilation",
+      "id": "CI-003",
+      "task": "Verify swift test in CI",
+      "file": ".github/workflows/ci.yaml",
+      "status": "pending",
+      "verification": "Swift tests run in CI pipeline"
+    },
+    {
+      "id": "CI-004",
+      "task": "Verify proto lint in CI",
+      "file": ".github/workflows/ci.yaml",
+      "status": "pending",
+      "verification": "Proto lint runs in CI pipeline"
+    },
+    {
+      "id": "CI-005",
+      "task": "Verify all tests complete within timeout in CI",
+      "file": ".github/workflows/ci.yaml",
+      "status": "pending",
+      "verification": "Integration tests complete under 600s timeout"
+    },
+    {
+      "id": "CI-006",
+      "task": "Verify Dependabot configured for Go dependencies",
+      "file": ".github/dependabot.yml",
+      "status": "pending",
+      "verification": "Dependabot configured and scanning"
+    },
+    {
+      "id": "CI-007",
+      "task": "Verify all lint checks pass locally",
+      "file": "Makefile",
+      "status": "pending",
+      "verification": "make lint passes locally before commit"
+    },
+    {
+      "id": "CI-008",
+      "task": "Verify make all target passes locally",
+      "file": "Makefile",
+      "status": "pending",
+      "verification": "make all passes without errors"
+    },
+    {
+      "id": "BUILD-001",
+      "task": "Verify Go modules are tidy",
+      "file": "go.mod",
+      "status": "pending",
+      "verification": "go mod tidy produces no changes"
+    },
+    {
+      "id": "BUILD-002",
+      "task": "Verify Swift package resolves correctly",
+      "file": "Server/Package.resolved",
+      "status": "pending",
+      "verification": "swift package resolve produces no changes"
+    },
+    {
+      "id": "BUILD-003",
+      "task": "Verify integration tests can build",
+      "file": "integration/go.mod",
+      "status": "pending",
+      "verification": "go build ./integration/ succeeds"
+    },
+    {
+      "id": "BUILD-004",
+      "task": "Verify macos-use-mcp CLI builds",
+      "file": "cmd/macos-use-mcp/main.go",
+      "status": "pending",
+      "verification": "go build ./cmd/macos-use-mcp/ succeeds"
+    },
+    {
+      "id": "BUILD-005",
+      "task": "Verify Server release build succeeds",
       "file": "Server/",
       "status": "pending",
-      "files_affected": ["build.log"],
-      "verification": "Swift compiler emits no warnings or deprecations"
+      "verification": "swift build --configuration release succeeds"
     },
     {
-      "id": "FINAL-007",
-      "task": "Run final full CI simulation locally (include all test suites, lint, api-linter)",
-      "file": "build.log",
+      "id": "BUILD-006",
+      "task": "Verify descriptor sets generated for gRPC reflection",
+      "file": "Server/Resources/DescriptorSets/",
       "status": "pending",
-      "files_affected": ["build.log"],
-      "verification": "All checks pass: go test, swift test, go vet, staticcheck, api-linter"
+      "verification": "buf generate produces descriptor sets"
+    },
+    {
+      "id": "BUILD-007",
+      "task": "Verify all generated files are up to date",
+      "file": "gen/, Server/Sources/MacosUseProto/",
+      "status": "pending",
+      "verification": "make generate produces no diff"
+    },
+    {
+      "id": "EXP-001",
+      "task": "Verify HighlightTraversalTool compiles",
+      "file": "Sources/HighlightTraversalTool/main.swift",
+      "status": "pending",
+      "verification": "HighlightTraversalTool builds without errors"
+    },
+    {
+      "id": "EXP-002",
+      "task": "Verify VisualInputTool compiles",
+      "file": "Sources/VisualInputTool/main.swift",
+      "status": "pending",
+      "verification": "VisualInputTool builds without errors"
+    },
+    {
+      "id": "EXP-003",
+      "task": "Verify InputControllerTool compiles",
+      "file": "Sources/InputControllerTool/main.swift",
+      "status": "pending",
+      "verification": "InputControllerTool builds without errors"
+    },
+    {
+      "id": "EXP-004",
+      "task": "Verify ActionTool compiles",
+      "file": "Sources/ActionTool/main.swift",
+      "status": "pending",
+      "verification": "ActionTool builds without errors"
+    },
+    {
+      "id": "EXP-005",
+      "task": "Verify AppOpenerTool compiles",
+      "file": "Sources/AppOpenerTool/main.swift",
+      "status": "pending",
+      "verification": "AppOpenerTool builds without errors"
+    },
+    {
+      "id": "EXP-006",
+      "task": "Verify TraversalTool compiles",
+      "file": "Sources/TraversalTool/main.swift",
+      "status": "pending",
+      "verification": "TraversalTool builds without errors"
+    },
+    {
+      "id": "EXP-007",
+      "task": "Verify Sources/MacosUseSDK compiles",
+      "file": "Sources/MacosUseSDK/",
+      "status": "pending",
+      "verification": "Sources/MacosUseSDK builds without errors"
+    },
+    {
+      "id": "EXP-008",
+      "task": "Verify Tests/MacosUseSDKTests compiles",
+      "file": "Tests/MacosUseSDKTests/",
+      "status": "pending",
+      "verification": "Tests/MacosUseSDKTests builds without errors"
+    },
+    {
+      "id": "VER-001",
+      "task": "Verify all 77 MCP tools are accessible via stdio transport",
+      "file": "cmd/macos-use-mcp/main.go",
+      "status": "pending",
+      "verification": "All tools respond via stdio transport"
+    },
+    {
+      "id": "VER-002",
+      "task": "Verify all 77 MCP tools are accessible via SSE transport",
+      "file": "cmd/macos-use-mcp/main.go",
+      "status": "pending",
+      "verification": "All tools respond via SSE transport"
+    },
+    {
+      "id": "VER-003",
+      "task": "Verify gRPC reflection shows all services",
+      "file": "Server/Sources/MacosUseServer/main.swift",
+      "status": "pending",
+      "verification": "grpcurl lists MacosUse service and Operations service"
+    },
+    {
+      "id": "VER-004",
+      "task": "Verify long-running operations polling works",
+      "file": "internal/server/application.go",
+      "status": "pending",
+      "verification": "OpenApplication LRO can be polled to completion"
+    },
+    {
+      "id": "VER-005",
+      "task": "Verify observation streaming works",
+      "file": "internal/server/observation.go",
+      "status": "pending",
+      "verification": "StreamObservations returns events via gRPC stream"
+    },
+    {
+      "id": "VER-006",
+      "task": "Verify accessibility streaming works",
+      "file": "internal/server/element.go",
+      "status": "pending",
+      "verification": "WatchAccessibility returns updates via gRPC stream"
+    },
+    {
+      "id": "VER-007",
+      "task": "Verify clipboard write clears before write",
+      "file": "internal/server/clipboard.go",
+      "status": "pending",
+      "verification": "WriteClipboard clears pasteboard before writing"
+    },
+    {
+      "id": "VER-008",
+      "task": "Verify screenshot capture with OCR",
+      "file": "internal/server/screenshot.go",
+      "status": "pending",
+      "verification": "include_ocr parameter extracts text from image"
+    },
+    {
+      "id": "VER-009",
+      "task": "Verify script execution with timeout",
+      "file": "internal/server/scripting.go",
+      "status": "pending",
+      "verification": "Scripts respect timeout parameter"
+    },
+    {
+      "id": "VER-010",
+      "task": "Verify macro execution with parameters",
+      "file": "internal/server/session.go",
+      "status": "pending",
+      "verification": "parameter_values are substituted in macro"
     }
   ]
 }

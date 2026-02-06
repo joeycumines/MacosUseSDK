@@ -43,7 +43,7 @@ public struct Macosusesdk_Type_Element: Sendable {
   /// Clears the value of `text`. Subsequent reads from it will return its default value.
   public mutating func clearText() {self._text = nil}
 
-  /// X coordinate of the element's position.
+  /// X coordinate of the element's position in Global Display Coordinates (top-left origin, Y increases downward).
   public var x: Double {
     get {return _x ?? 0}
     set {_x = newValue}
@@ -53,7 +53,7 @@ public struct Macosusesdk_Type_Element: Sendable {
   /// Clears the value of `x`. Subsequent reads from it will return its default value.
   public mutating func clearX() {self._x = nil}
 
-  /// Y coordinate of the element's position.
+  /// Y coordinate of the element's position in Global Display Coordinates (top-left origin, Y increases downward).
   public var y: Double {
     get {return _y ?? 0}
     set {_y = newValue}

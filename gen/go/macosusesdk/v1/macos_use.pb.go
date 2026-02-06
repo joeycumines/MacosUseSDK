@@ -2767,9 +2767,9 @@ type MoveWindowRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Resource name of the window.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	// New X coordinate.
+	// New X coordinate in Global Display Coordinates (top-left origin, Y increases downward).
 	X float64 `protobuf:"fixed64,2,opt,name=x,proto3" json:"x,omitempty"`
-	// New Y coordinate.
+	// New Y coordinate in Global Display Coordinates (top-left origin, Y increases downward).
 	Y             float64 `protobuf:"fixed64,3,opt,name=y,proto3" json:"y,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -3616,6 +3616,8 @@ type ListSessionsRequest struct {
 	// Maximum number of sessions to return.
 	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	// Page token from a previous ListSessions call.
+	// This token is opaque and its structure must not be relied upon by clients.
+	// Only its presence or absence should be used to determine pagination state.
 	PageToken     string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -3671,6 +3673,8 @@ type ListSessionsResponse struct {
 	// The sessions.
 	Sessions []*Session `protobuf:"bytes,1,rep,name=sessions,proto3" json:"sessions,omitempty"`
 	// Token to retrieve the next page of results.
+	// This token is opaque and its structure must not be relied upon by clients.
+	// Only its presence or absence should be used to determine pagination state.
 	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -3882,6 +3886,8 @@ type ListMacrosRequest struct {
 	// Maximum number of macros to return.
 	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	// Page token from a previous ListMacros call.
+	// This token is opaque and its structure must not be relied upon by clients.
+	// Only its presence or absence should be used to determine pagination state.
 	PageToken     string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -3937,6 +3943,8 @@ type ListMacrosResponse struct {
 	// The macros.
 	Macros []*Macro `protobuf:"bytes,1,rep,name=macros,proto3" json:"macros,omitempty"`
 	// Token to retrieve the next page of results.
+	// This token is opaque and its structure must not be relied upon by clients.
+	// Only its presence or absence should be used to determine pagination state.
 	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
