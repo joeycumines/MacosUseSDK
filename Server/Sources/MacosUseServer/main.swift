@@ -15,16 +15,21 @@ private let logger = MacosUseSDK.sdkLogger(category: "Main")
 
 /// C-compatible signal handler for graceful shutdown
 /// Converts SIGTERM to SIGINT which Swift runtime handles for task cancellation
-private let signalHandler: @convention(c) (Int32) -> Void = { _ in
+/// MUST be nonisolated(unsafe) to work with signal() C API
+private nonisolated(unsafe) let signalHandler: @convention(c) (Int32) -> Void = { _ in
     // Send SIGINT to trigger Swift runtime cancellation
     kill(getpid(), SIGINT)
 }
 
 /// Install signal handlers for graceful shutdown
-private func installSignalHandlers() {
+/// MUST be nonisolated to call signal() C API
+private nonisolated func installSignalHandlers() {
     // Install SIGTERM handler (converted to SIGINT for Swift runtime)
     _ = signal(SIGTERM, signalHandler)
-    logger.info("Installed SIGTERM handler")
+    // Log after installation (in MainActor context)
+    Task { @MainActor in
+        logger.info("Installed SIGTERM handler")
+    }
 
     // SIGINT (Ctrl+C) is automatically handled by Swift runtime
     // for Task cancellation, no need to install handler
@@ -42,7 +47,7 @@ func main() async throws {
 
     // CRITICAL: Initialize NSApplication before any SDK calls
     // This is mandatory for the MacosUseSDK to function properly
-    _ = await NSApplication.shared
+    _ = NSApplication.shared
     logger.info("NSApplication initialized")
 
     // Load configuration from environment

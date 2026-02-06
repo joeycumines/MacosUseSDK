@@ -33,8 +33,13 @@ let package = Package(
                 .product(name: "GRPCProtobuf", package: "grpc-swift-protobuf"),
             ],
             path: "Sources/MacosUseProto",
-            // The expr protos are not used; avoid dangling excludes which
-            // trigger warnings by only including the directories we need.
+            // Exclude unused proto directories to avoid build conflicts
+            exclude: ["google/api/expr/", "google/api/field_info.pb.swift", "google/api/field_info.grpc.swift",
+                       "google/api/httpbody.pb.swift", "google/api/httpbody.grpc.swift",
+                       "google/api/routing.pb.swift", "google/api/routing.grpc.swift",
+                       "google/api/visibility.pb.swift", "google/api/visibility.grpc.swift",
+                       "google/bytestream/", "google/geo/", "google/iam/", "google/rpc/context/",
+                       "google/type/"],
             sources: ["macosusesdk/", "google/"],
             swiftSettings: [
                 .unsafeFlags(["-Xfrontend", "-warn-concurrency"]),
