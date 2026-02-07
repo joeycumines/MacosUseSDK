@@ -167,12 +167,17 @@ grpcurl -plaintext "unix://$HOME/Library/Caches/macosuse.sock" list
 # Call a simple RPC
 grpcurl -plaintext -d '{}' \
   "unix://$HOME/Library/Caches/macosuse.sock" \
-  macosusesdk.v1.DesktopService/GetHostname
+  macosusesdk.v1.MacosUse/ListDisplays
 
-# Call ListWindows with application filter
-grpcurl -plaintext -d '{"application_name": "Finder"}' \
+# Get a specific display
+grpcurl -plaintext -d '{"name": "displays/1"}' \
   "unix://$HOME/Library/Caches/macosuse.sock" \
-  macosusesdk.v1.DesktopService/ListWindows
+  macosusesdk.v1.MacosUse/GetDisplay
+
+# List windows for an application
+grpcurl -plaintext -d '{"parent": "applications/1234"}' \
+  "unix://$HOME/Library/Caches/macosuse.sock" \
+  macosusesdk.v1.MacosUse/ListWindows
 ```
 
 Client connection (Go example using grpc-go):
@@ -183,7 +188,7 @@ if err != nil {
 // handle error
 }
 defer conn.Close()
-client := macosusesdkv1.NewDesktopServiceClient(conn)
+client := macosusesdkv1.NewMacosUseClient(conn)
 ```
 
 #### Option 3: launchd Service (macOS System Service~/Library/Launch)
@@ -303,17 +308,16 @@ grpcurl -plaintext localhost:8080 list
 # Unix socket health check
 grpcurl -plaintext "unix://$HOME/Library/Caches/macosuse.sock" list
 
-# Quick connectivity test with GetHostname
+# Quick connectivity test with ListDisplays
 grpcurl -plaintext -d '{}' \
   "unix://$HOME/Library/Caches/macosuse.sock" \
-  macosusesdk.v1.DesktopService/GetHostname
+  macosusesdk.v1.MacosUse/ListDisplays
 ```
 
 Expected output (example):
 
 ```
-macosusesdk.v1.DesktopService
-macosusesdk.v1.TargetApplicationsService
+macosusesdk.v1.MacosUse
 ```
 
 ### Logging
