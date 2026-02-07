@@ -5,9 +5,23 @@ import ApplicationServices
 import Foundation
 import OSLog
 
-// Private API declaration for getting CGWindowID from AXUIElement
-@_silgen_name("_AXUIElementGetWindow")
-func _AXUIElementGetWindow(_ element: AXUIElement, _ id: UnsafeMutablePointer<CGWindowID>) -> AXError
+/// Function pointer type for the private _AXUIElementGetWindow API.
+/// Resolved dynamically via dlsym to avoid hard-linking a private symbol
+/// that could be removed in future macOS releases.
+///
+/// NOTE: This pattern is duplicated in Server/Sources/MacosUseServer/Interfaces/ProductionSystemOperations.swift
+/// because the SDK and Server are separate modules. Changes here must be mirrored there.
+private typealias AXUIElementGetWindowFn = @convention(c) (AXUIElement, UnsafeMutablePointer<CGWindowID>) -> AXError
+
+/// Lazily resolved function pointer for _AXUIElementGetWindow.
+/// Returns nil if the symbol is not available (e.g., removed in a future macOS version).
+/// Thread-safe: dlsym is documented as thread-safe and the result is immutable.
+private let _axUIElementGetWindowFn: AXUIElementGetWindowFn? = {
+    guard let sym = dlsym(dlopen(nil, RTLD_LAZY), "_AXUIElementGetWindow") else {
+        return nil
+    }
+    return unsafeBitCast(sym, to: AXUIElementGetWindowFn.self)
+}()
 
 private let logger = sdkLogger(category: "WindowQuery")
 
@@ -103,8 +117,12 @@ public func fetchAXWindowInfo(
                 // when kAXChildren includes controls/groups. Note this excludes
                 // non-standard window-like roles (AXDrawer/AXPopover), accepting
                 // false negatives over false positives.
+                logger.debug("[fetchAXWindowInfo] Skipping element with role '\(role, privacy: .public)' (not AXWindow)")
                 continue
             }
+        } else {
+            // Role fetch failed - log this
+            logger.debug("[fetchAXWindowInfo] Role fetch failed for element, proceeding with fail-open")
         }
         // NOTE: If `AXUIElementCopyAttributeValue(..., kAXRoleAttribute)` fails, `roleRef` will be nil
         // and this `if` body will not execute. In that case we intentionally "fail-open" and allow
@@ -112,11 +130,17 @@ public func fetchAXWindowInfo(
         // behavior prevents transient AX errors from causing false negatives when trying to
         // resolve windows during race conditions.
 
-        // CRITICAL FIX 2: Prioritize ID Match via _AXUIElementGetWindow
-        // If the private API works and returns a matching ID, this is the source of truth.
+        // CRITICAL FIX 2: Prioritize ID Match via _AXUIElementGetWindow (resolved via dlsym)
+        // If the private API is available and returns a matching ID, this is the source of truth.
         // Use it as an instant "gold standard" match (Score 0).
+        // If the private API is unavailable (dlsym returned nil), skip directly to heuristic matching.
         var axID: CGWindowID = 0
-        let idResult = _AXUIElementGetWindow(axWindow, &axID)
+        let idResult: AXError = if let getWindowFn = _axUIElementGetWindowFn {
+            getWindowFn(axWindow, &axID)
+        } else {
+            // Private API not available — proceed directly to heuristic matching
+            .failure
+        }
 
         // If ID matches perfectly, fetch remaining attributes and return immediately
         if idResult == .success, axID == windowId {
@@ -174,13 +198,27 @@ public func fetchAXWindowInfo(
             )
         }
 
-        // If ID is valid but MISMATCHES, skip this element (it is definitely the wrong window)
+        // If ID is valid but MISMATCHES, check if bounds allow fallback matching
+        // CRITICAL FIX: After geometry mutations (MoveWindow, ResizeWindow), the CGWindowID can
+        // regenerate. If expectedBounds is non-zero and matches this window's bounds closely,
+        // we should consider this window as a potential match rather than immediately skipping.
+        // EXCEPTION: If there's only 1 window (unambiguous), accept it even with ID mismatch.
         if idResult == .success, axID != 0, axID != windowId {
-            logger.debug("[fetchAXWindowInfo] Skipping window with ID \(axID, privacy: .public) (looking for \(windowId, privacy: .public))")
-            continue
+            let singleWindowFallback = (windows.count == 1)
+            if !singleWindowFallback, expectedBounds == .zero {
+                // No bounds available for fallback AND multiple windows - strictly rely on ID match
+                logger.debug("[fetchAXWindowInfo] Skipping window with ID \(axID, privacy: .public) (looking for \(windowId, privacy: .public))")
+                continue
+            }
+            if singleWindowFallback {
+                logger.info("[fetchAXWindowInfo] ID mismatch (\(axID, privacy: .public) vs \(windowId, privacy: .public)) but only 1 window from app - using it unambiguously")
+            } else {
+                // Allow this window to proceed to heuristic matching (we'll verify bounds below)
+                logger.debug("[fetchAXWindowInfo] ID mismatch (\(axID, privacy: .public) vs \(windowId, privacy: .public)) but will try bounds fallback with expectedBounds (\(expectedBounds.origin.x, privacy: .public), \(expectedBounds.origin.y, privacy: .public)) \(expectedBounds.width, privacy: .public)x\(expectedBounds.height, privacy: .public)")
+            }
         }
 
-        // Proceed with heuristic matching if ID check failed or returned 0
+        // Proceed with heuristic matching if ID check failed, returned 0, or we're doing bounds fallback
         var valuesArray: CFArray?
         let valuesResult = AXUIElementCopyMultipleAttributeValues(axWindow, attributes as CFArray, AXCopyMultipleAttributeOptions(), &valuesArray)
 
@@ -259,10 +297,14 @@ public func fetchAXWindowInfo(
             // If a window is minimized, it is effectively hidden from view.
             let isHidden = false
 
+            // Use the actual matched window ID (axID) if available, otherwise fall back to requested windowId
+            // This handles the case where the window ID has regenerated but we matched by bounds
+            let matchedWindowId = (idResult == .success && axID != 0) ? axID : windowId
+
             let candidate = WindowInfo(
                 element: axWindow,
                 pid: pid,
-                windowId: windowId,
+                windowId: matchedWindowId,
                 bounds: axBounds,
                 title: axTitle,
                 isMinimized: axMinimized,
@@ -284,17 +326,27 @@ public func fetchAXWindowInfo(
     // NOTE: This threshold also intentionally absorbs the common "shadow penalty":
     // Quartz (CG) often reports bounds including drop-shadows and resize chrome while AX
     // reports content bounds. See the docs subsection "Heuristic fairness, biases, and alternatives"
-    // in `docs/02-window-state-management.md#heuristic-fairness-biases-and-alternatives` for details.
+    // in `docs/window-state-management.md#heuristic-fairness-biases-and-alternatives` for details.
     // WARNING: If the private API `_AXUIElementGetWindow` fails (returns error/0) AND the
     // candidate AX element has moved a very large distance since the last CG snapshot
     // (e.g., >~1200px across monitors), the score can exceed this threshold and the
     // lookup will reject the candidate — causing `GetWindow` to return `nil` briefly.
     // This is an intentional 'fail-closed' tradeoff to avoid mismatching a different window
     // when the private API is unavailable.
+    //
+    // EXCEPTION: If there's only 1 window from this app, accept it regardless of score.
+    // When there's no ambiguity (single window), bounds matching is not needed - we know
+    // this is the window we're looking for because it's the ONLY window from this process.
+    // This handles cases where CGWindowList is extremely stale after window ID regeneration.
+    let singleWindowFromApp = (windows.count == 1)
     let scoreThreshold: CGFloat = 1000.0
     if bestScore < scoreThreshold {
         logger.debug("[fetchAXWindowInfo] Matched window \(windowId, privacy: .public) with score \(bestScore, privacy: .public)")
         return bestMatch
+    } else if singleWindowFromApp, let match = bestMatch {
+        // Single window from app - accept unambiguously regardless of score
+        logger.info("[fetchAXWindowInfo] Accepting single window from app with high score \(bestScore, privacy: .public) (window ID changed: \(match.windowId, privacy: .public))")
+        return match
     } else if bestScore < CGFloat.greatestFiniteMagnitude {
         logger.warning("[fetchAXWindowInfo] Best match for window \(windowId, privacy: .public) has score \(bestScore, privacy: .public) (threshold: \(scoreThreshold)), rejecting as too far")
     } else {

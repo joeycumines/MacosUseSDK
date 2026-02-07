@@ -140,14 +140,18 @@ There is no public API to convert a `CGWindowID` (Quartz) to an `AXUIElement` (A
 
 ### 4.1 Tier 1: Private API (Gold Standard)
 
-We define the private symbol:
+We resolve the private symbol at runtime via `dlsym`:
 
 ```swift
-@_silgen_name("_AXUIElementGetWindow")
-func _AXUIElementGetWindow(_ element: AXUIElement, _ id: UnsafeMutablePointer<CGWindowID>) -> AXError
+typealias AXUIElementGetWindowFunc = @convention(c) (AXUIElement, UnsafeMutablePointer<CGWindowID>) -> AXError
+
+let handle = dlopen(nil, RTLD_LAZY)
+let sym = dlsym(handle, "_AXUIElementGetWindow")
 ```
 
-We attempt to call this on candidate AX elements. If it returns a `CGWindowID` matching our target, we have a deterministic 1:1 match. This is preferred 100% of the time.
+If `dlsym` returns a non-nil pointer, we cast it to the expected function signature and call it on candidate AX elements. If it returns a `CGWindowID` matching our target, we have a deterministic 1:1 match. This is preferred 100% of the time.
+
+**Graceful degradation:** Unlike `@_silgen_name` (which would crash at launch if the symbol were absent), the `dlsym` approach gracefully returns `nil` when the private symbol is unavailable — for example, if Apple removes it in a future macOS version. In that case, the code silently falls back to Tier 2 heuristic matching with no user-visible error.
 
 ### 4.2 Tier 2: The "1000px Heuristic"
 
@@ -155,8 +159,9 @@ If the private API fails (SIP restrictions or OS changes), we fall back to geome
 
 1.  We fetch the target window's `bounds` from Quartz.
 2.  We iterate over the application's AX windows.
-3.  We calculate a score: `|AX.x - Quartz.x| + |AX.y - Quartz.y| + ...`
+3.  We calculate a score using Euclidean distance via `hypot()`: `hypot(AX.x - Quartz.x, AX.y - Quartz.y) + hypot(AX.width - Quartz.width, AX.height - Quartz.height)`.
 4.  **The Threshold:** We accept a match only if the score is **\< 1000.0**.
+5.  **Single-Window Fallback:** When only one AX window exists for the PID, the match is accepted regardless of score, bypassing the 1000px threshold. A single window cannot be ambiguous.
 
 #### Heuristic Fairness, Biases, and Analysis
 
@@ -173,8 +178,8 @@ The geometry-based matching heuristic is intentionally pragmatic but not neutral
 
 Realistic examples observed in implementation:
 
-  * **Stacked clones:** Two identical windows offset by \~20px produce very small scores (≈40). The heuristic easily picks the intended window.
-  * **Electron shadow / custom chrome:** AX content (1000×800) vs CG bounds (1020×820) gives scores ∼30–40 — well under 1000.
+  * **Stacked clones:** Two identical windows offset by \~20px produce very small scores (≈28 via `hypot(20,20)`). The heuristic easily picks the intended window.
+  * **Electron shadow / custom chrome:** AX content (1000×800) vs CG bounds (1020×820) gives scores ∼28–30 (`hypot(20,20) + hypot(0,0)`) — well under 1000.
   * **Multi-monitor jump:** Moving a window from x=0 to x=3840 yields scores ≫1000; that correctly rejects the match to avoid cross-monitor false matches.
 
 -----
@@ -269,6 +274,25 @@ flowchart TD
   linkStyle default stroke:#444,stroke-width:1px;
 ```
 
+### 6.4 Window ID Regeneration After Mutations
+
+**Critical macOS Behavior:** After certain window mutations, the `CGWindowID` may appear to change. This is frequently observed in non-native applications (e.g., Electron) or when Accessibility references become stale. To handle this instability, we treat the Window ID as ephemeral.
+
+**Symptoms:**
+- A `MoveWindow` RPC succeeds, but the old window ID becomes invalid.
+- Subsequent `GetWindow` calls with the old ID fail with "not found".
+- Observations may emit `Destroyed` followed by `Created` events for the same logical window.
+
+**Mitigations Implemented:**
+1. **Single-Window Fallback:** If a PID has exactly one window, accept it regardless of ID mismatch (Windows can't be ambiguous if there's only one).
+2. **Bounds-Based Matching:** When ID lookup fails, fall back to heuristic matching using expected geometry.
+3. **Response Name Update:** Mutation RPCs return the *current* window name (which includes the new ID if regenerated), not the original request name.
+4. **Position-Based Rediscovery:** In tests and client code, use position-based window discovery after mutations rather than relying on cached window IDs.
+
+**Test Implications:**
+- Tests should accept `Destroyed`/`Created` event pairs as valid alternatives to `Moved` events when ID regeneration occurs.
+- Tests should use fresh `ListWindows` calls to rediscover window names after geometry mutations.
+
 -----
 
 ## 7\. Alternatives Considered
@@ -300,30 +324,6 @@ A more mathematically rigorous mapping between CG and AX windows via a **Hungari
   * **Decision:** The implementation opts for greedy per-window matching with `_AXUIElementGetWindow` as the primary authority.
 
 -----
-
-## 8\. Implementation Checklist & Critical Details
-
-When modifying this subsystem, strictly adhere to the following constraints derived from the `docs/03-actual-window-state-management-impl.md` analysis:
-
-  * **File:** `Server/Sources/MacosUseServer/WindowHelpers.swift`
-
-      * [ ] **Constraint:** `buildWindowResponseFromAX` must always use `Task.detached` to prevent Main Actor blocking during expensive IPC calls.
-      * [ ] **Constraint:** Visibility logic must remain `!axMinimized && !axHidden` for `GetWindow` responses.
-
-  * **File:** `Sources/MacosUseSDK/WindowQuery.swift`
-
-      * [ ] **Constraint:** `fetchAXWindowInfo` must implement the `_AXUIElementGetWindow` private call.
-      * [ ] **Constraint:** The fallback heuristic must remain at `1000.0`. Do not lower this without extensive regression testing on multi-monitor setups.
-      * [ ] **Constraint:** **Must** attempt `kAXChildrenAttribute` if `kAXWindowsAttribute` is empty to handle orphans.
-
-  * **File:** `Server/Sources/MacosUseServer/WindowMethods.swift`
-
-      * [ ] **Constraint:** Mutation RPCs (Minimize, Move) must implement a **PollUntil** pattern (typically 2.0s timeout) to verify the state change via AX before returning success. Do not return simply because the write command was sent.
-      * [ ] **Constraint:** **Must** call `windowRegistry.invalidate(windowID:)` immediately after any mutation to prevent stale reads on subsequent calls.
-
-  * **File:** `Server/Sources/MacosUseServer/WindowRegistry.swift`
-
-      * [ ] **Constraint:** **Must** use `[.optionAll, .excludeDesktopElements]` to ensure off-screen windows are tracked.
 
 ## 9\. Conclusion
 

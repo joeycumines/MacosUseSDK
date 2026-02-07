@@ -24,6 +24,7 @@ public actor ElementLocator {
     ///   - visibleOnly: Whether to only consider visible elements
     ///   - maxResults: Maximum number of elements to return (0 for unlimited)
     /// - Returns: Array of matching elements with their hierarchy paths
+    /// - Note: Selector validation (including regex patterns) is performed by SelectorParser before this method.
     public func findElements(
         selector: Macosusesdk_Type_ElementSelector,
         parent: String,
@@ -59,6 +60,7 @@ public actor ElementLocator {
     ///   - visibleOnly: Whether to only consider visible elements
     ///   - maxResults: Maximum number of elements to return
     /// - Returns: Array of elements within the region
+    /// - Note: Selector validation (including regex patterns) is performed by SelectorParser before this method.
     public func findElementsInRegion(
         region: Macosusesdk_Type_Region,
         selector: Macosusesdk_Type_ElementSelector?,
@@ -142,13 +144,13 @@ public actor ElementLocator {
     private func traverseWithPaths(pid: pid_t, visibleOnly: Bool) async throws -> [(
         Macosusesdk_Type_Element, [Int32],
     )] {
-        let sdkResponse = try await MainActor.run {
-            try MacosUseSDK.traverseAccessibilityTree(pid: pid, onlyVisibleElements: visibleOnly)
-        }
+        // AXUIElement operations are thread-safe (CFTypeRef), so no MainActor.run needed.
+        // This allows traversal to run on background threads without blocking the main thread.
+        let sdkResponse = try MacosUseSDK.traverseAccessibilityTree(pid: pid, onlyVisibleElements: visibleOnly)
 
         var elementsWithPaths: [(Macosusesdk_Type_Element, [Int32])] = []
 
-        for (index, elementData) in sdkResponse.elements.enumerated() {
+        for elementData in sdkResponse.elements {
             let protoElement = Macosusesdk_Type_Element.with {
                 $0.role = elementData.role
                 if let text = elementData.text { $0.text = text }
@@ -167,14 +169,20 @@ public actor ElementLocator {
             var elementWithId = protoElement
             elementWithId.elementID = elementId
 
-            // For now, use sequential index as path (FIXME: implement proper hierarchical paths)
-            elementsWithPaths.append((elementWithId, [Int32(index)]))
+            // Use the hierarchical path from SDK traversal
+            elementsWithPaths.append((elementWithId, elementData.path))
         }
 
         return elementsWithPaths
     }
 
-    private func matchesSelector(
+    /// Check if an element matches a selector.
+    /// - Parameters:
+    ///   - element: The element to check
+    ///   - selector: The selector to match against
+    /// - Returns: True if the element matches the selector
+    /// - Note: Internal visibility for unit testing with @testable import.
+    func matchesSelector(
         _ element: Macosusesdk_Type_Element, selector: Macosusesdk_Type_ElementSelector,
     ) -> Bool {
         switch selector.criteria {
@@ -201,7 +209,19 @@ public actor ElementLocator {
 
         case let .position(positionSelector):
             guard element.hasX, element.hasY else { return false }
-            let distance = hypot(element.x - positionSelector.x, element.y - positionSelector.y)
+            // Calculate distance from element CENTER (not top-left corner)
+            // Center = (x + width/2, y + height/2)
+            let centerX: Double
+            let centerY: Double
+            if element.hasWidth, element.hasHeight {
+                centerX = element.x + element.width / 2.0
+                centerY = element.y + element.height / 2.0
+            } else {
+                // Fallback to top-left if dimensions unavailable
+                centerX = element.x
+                centerY = element.y
+            }
+            let distance = hypot(centerX - positionSelector.x, centerY - positionSelector.y)
             return distance <= positionSelector.tolerance
 
         case let .attributes(attributeSelector):
@@ -220,8 +240,11 @@ public actor ElementLocator {
             case .or:
                 return subMatches.contains(true)
             case .not:
-                // NOT with single selector
-                return compoundSelector.selectors.count == 1 && !subMatches[0]
+                // NOT(selectors) = true if ANY sub-selector evaluates to false
+                // This is equivalent to !(A AND B AND C...) = !A OR !B OR !C...
+                // If empty selectors, return false (undefined behavior)
+                guard !subMatches.isEmpty else { return false }
+                return !subMatches.allSatisfy(\.self)
             case .UNRECOGNIZED:
                 return false
             }

@@ -17,7 +17,7 @@ func TestListWindowsPagination(t *testing.T) {
 
 	// 1. Infrastructure Setup
 	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd)
+	defer cleanupServer(t, serverCmd, serverAddr)
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
@@ -120,7 +120,7 @@ func TestListApplicationsPagination(t *testing.T) {
 
 	// 1. Infrastructure Setup
 	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd)
+	defer cleanupServer(t, serverCmd, serverAddr)
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
@@ -263,7 +263,7 @@ func TestListInputsPagination(t *testing.T) {
 
 	// 1. Infrastructure Setup
 	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd)
+	defer cleanupServer(t, serverCmd, serverAddr)
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()

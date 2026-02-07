@@ -16,3 +16,8 @@ coverage.out
 coverage.lcov
 /coverage-all.lcov
 /build.log
+/directive.txt
+/tmp/
+/.claude/*.local.*
+# Generated protobuf descriptor sets for gRPC reflection (optional)
+/Server/Sources/MacosUseServer/DescriptorSets/*.pb

@@ -251,7 +251,8 @@ final class FileDialogAutomation {
                 return (directoryPath, true)
             } catch {
                 throw FileDialogError.creationFailed(
-                    "Failed to create directory: \(error.localizedDescription)")
+                    "Failed to create directory: \(error.localizedDescription)",
+                )
             }
         }
     }

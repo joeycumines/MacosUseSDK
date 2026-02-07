@@ -1,0 +1,57 @@
+# Dependabot configuration
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates
+
+version: 2
+updates:
+  # Go modules
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "deps(go)"
+    labels:
+      - "dependencies"
+      - "go"
+
+  - package-ecosystem: "gomod"
+    directory: "/integration"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "deps(go)"
+    labels:
+      - "dependencies"
+      - "go"
+
+  # Swift Package Manager
+  - package-ecosystem: "swift"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "deps(swift)"
+    labels:
+      - "dependencies"
+      - "swift"
+
+  - package-ecosystem: "swift"
+    directory: "/Server"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "deps(swift)"
+    labels:
+      - "dependencies"
+      - "swift"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "deps(ci)"
+    labels:
+      - "dependencies"
+      - "github-actions"

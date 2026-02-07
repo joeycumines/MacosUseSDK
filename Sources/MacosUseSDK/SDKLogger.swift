@@ -1,7 +1,7 @@
 import Foundation
 import OSLog
 
-/// Use Logger and OSLogPrivacy to log messages with appropriate privacy levels.
+// Use Logger and OSLogPrivacy to log messages with appropriate privacy levels.
 
 private let subsystem = "com.macosusesdk"
 

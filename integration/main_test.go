@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
 	"os/exec"
 	"testing"
@@ -68,6 +69,40 @@ func killStrayServers() {
 	cmd := exec.Command("killall", "-9", "MacosUseServer")
 	_ = cmd.Run() // Ignore errors (server may not be running)
 	// Port release is handled by server startup retry logic
+}
+
+// getAvailablePort returns an available port number by binding to port 0
+// and letting the OS assign an available port.
+func getAvailablePort(t *testing.T) int {
+	t.Helper()
+	lAddr, err := net.ResolveTCPAddr("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("Failed to resolve TCP addr: %v", err)
+	}
+	l, err := net.ListenTCP("tcp", lAddr)
+	if err != nil {
+		t.Fatalf("Failed to listen on TCP: %v", err)
+	}
+	defer l.Close()
+	return l.Addr().(*net.TCPAddr).Port
+}
+
+// waitForPortAvailable polls until the specified port is available or timeout is reached.
+// This prevents port contention between sequential test runs.
+func waitForPortAvailable(t testing.TB, ctx context.Context, addr string) error {
+	t.Logf("Waiting for port to be available: %s", addr)
+
+	return PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
+		testConn, err := net.DialTimeout("tcp", addr, 100*time.Millisecond)
+		if err != nil {
+			// Connection failed - port is available
+			return true, nil
+		}
+		testConn.Close()
+		// Connection succeeded - port still in use
+		t.Logf("Port %s still in use, retrying...", addr)
+		return false, nil
+	})
 }
 
 // killGoldenApplications forcefully terminates all golden test applications.
@@ -151,14 +186,27 @@ func CleanupApplication(t *testing.T, ctx context.Context, client pb.MacosUseCli
 	}
 }
 
-// cleanupServer stops the server
-func cleanupServer(t *testing.T, cmd *exec.Cmd) {
+// cleanupServer stops the server and verifies port release
+func cleanupServer(t *testing.T, cmd *exec.Cmd, serverAddr string) {
 	if cmd != nil && cmd.Process != nil {
-		t.Log("Stopping server...")
+		t.Logf("Stopping server (PID %d) at %s...", cmd.Process.Pid, serverAddr)
+		startTime := time.Now()
 		if err := cmd.Process.Kill(); err != nil {
 			t.Logf("Warning: Failed to kill server: %v", err)
 		}
 		cmd.Wait()
+		elapsed := time.Since(startTime)
+		t.Logf("Server stopped in %v", elapsed)
+
+		// CI-009: Verify port release after server shutdown
+		t.Logf("Verifying port release for %s...", serverAddr)
+		releaseCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := waitForPortAvailable(t, releaseCtx, serverAddr); err != nil {
+			t.Logf("Warning: Port %s not released after server kill: %v", serverAddr, err)
+		} else {
+			t.Logf("Port %s confirmed released", serverAddr)
+		}
 	}
 }
 
@@ -171,17 +219,28 @@ func startServer(t *testing.T, ctx context.Context) (*exec.Cmd, string) {
 		return nil, addr
 	}
 
+	// CRITICAL FIX: Use dynamic port allocation to prevent CI port contention
+	port := getAvailablePort(t)
+	serverAddr := fmt.Sprintf("127.0.0.1:%d", port)
+	t.Logf("Allocated dynamic port %d for server", port)
+
 	// Kill any stray servers before starting a new one to prevent port conflicts
 	killStrayServers()
+	// Wait for port to be available before attempting to start server
+	portWaitCtx, portCancel := context.WithTimeout(ctx, 10*time.Second)
+	defer portCancel()
 
-	// Start the server
-	serverAddr := defaultServerAddr
+	if err := waitForPortAvailable(t, portWaitCtx, serverAddr); err != nil {
+		t.Fatalf("Port %s not available after stray server kill: %v", serverAddr, err)
+	}
+
+	// Start the server with dynamic port
 	t.Logf("Starting MacosUse server on %s...", serverAddr)
 
 	cmd := exec.CommandContext(ctx, "../Server/.build/release/MacosUseServer")
 	cmd.Env = append(os.Environ(),
-		"GRPC_LISTEN_ADDRESS=0.0.0.0",
-		"GRPC_PORT=50051",
+		"GRPC_LISTEN_ADDRESS=127.0.0.1",
+		fmt.Sprintf("GRPC_PORT=%d", port),
 	)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -221,8 +280,8 @@ func connectToServer(t *testing.T, ctx context.Context, addr string) *grpc.Clien
 	var conn *grpc.ClientConn
 	var err error
 
-	// Retry connection with backoff
-	for i := 0; i < 10; i++ {
+	// CRITICAL FIX: Increased retry count from 10 to 20 with exponential backoff for CI environment
+	for i := 0; i < 20; i++ {
 		conn, err = grpc.NewClient(
 			addr,
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -238,10 +297,12 @@ func connectToServer(t *testing.T, ctx context.Context, addr string) *grpc.Clien
 			conn.Close()
 		}
 
-		t.Logf("Connection attempt %d failed, retrying... (error: %v)", i+1, err)
+		t.Logf("Connection attempt %d/20 failed, retrying... (error: %v)", i+1, err)
 
-		// Use PollUntil instead of sleep
-		retryCtx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
+		// CRITICAL FIX: Exponential backoff (100ms → 200ms → 400ms... capped at 1.6s)
+		retryDelay := time.Duration(100<<min(i, 5)) * time.Millisecond
+
+		retryCtx, cancel := context.WithTimeout(ctx, retryDelay)
 		_ = PollUntilContext(retryCtx, 50*time.Millisecond, func() (bool, error) {
 			return true, nil
 		})

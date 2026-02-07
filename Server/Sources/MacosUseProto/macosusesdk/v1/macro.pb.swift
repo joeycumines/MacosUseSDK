@@ -49,21 +49,21 @@ public struct Macosusesdk_V1_Macro: Sendable {
 
   /// When the macro was created.
   public var createTime: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {return _createTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    get {_createTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
     set {_createTime = newValue}
   }
   /// Returns true if `createTime` has been explicitly set.
-  public var hasCreateTime: Bool {return self._createTime != nil}
+  public var hasCreateTime: Bool {self._createTime != nil}
   /// Clears the value of `createTime`. Subsequent reads from it will return its default value.
   public mutating func clearCreateTime() {self._createTime = nil}
 
   /// When the macro was last modified.
   public var updateTime: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {return _updateTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    get {_updateTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
     set {_updateTime = newValue}
   }
   /// Returns true if `updateTime` has been explicitly set.
-  public var hasUpdateTime: Bool {return self._updateTime != nil}
+  public var hasUpdateTime: Bool {self._updateTime != nil}
   /// Clears the value of `updateTime`. Subsequent reads from it will return its default value.
   public mutating func clearUpdateTime() {self._updateTime = nil}
 
@@ -92,11 +92,11 @@ public struct Macosusesdk_V1_ExecutionLogEntry: Sendable {
 
   /// When the action executed.
   public var executionTime: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {return _executionTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    get {_executionTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
     set {_executionTime = newValue}
   }
   /// Returns true if `executionTime` has been explicitly set.
-  public var hasExecutionTime: Bool {return self._executionTime != nil}
+  public var hasExecutionTime: Bool {self._executionTime != nil}
   /// Clears the value of `executionTime`. Subsequent reads from it will return its default value.
   public mutating func clearExecutionTime() {self._executionTime = nil}
 
@@ -221,11 +221,11 @@ public struct Macosusesdk_V1_WaitAction: Sendable {
 
   /// Optional condition to wait for.
   public var condition: Macosusesdk_V1_WaitCondition {
-    get {return _condition ?? Macosusesdk_V1_WaitCondition()}
+    get {_condition ?? Macosusesdk_V1_WaitCondition()}
     set {_condition = newValue}
   }
   /// Returns true if `condition` has been explicitly set.
-  public var hasCondition: Bool {return self._condition != nil}
+  public var hasCondition: Bool {self._condition != nil}
   /// Clears the value of `condition`. Subsequent reads from it will return its default value.
   public mutating func clearCondition() {self._condition = nil}
 
@@ -299,11 +299,11 @@ public struct Macosusesdk_V1_ConditionalAction: Sendable {
 
   /// Condition to evaluate.
   public var condition: Macosusesdk_V1_MacroCondition {
-    get {return _condition ?? Macosusesdk_V1_MacroCondition()}
+    get {_condition ?? Macosusesdk_V1_MacroCondition()}
     set {_condition = newValue}
   }
   /// Returns true if `condition` has been explicitly set.
-  public var hasCondition: Bool {return self._condition != nil}
+  public var hasCondition: Bool {self._condition != nil}
   /// Clears the value of `condition`. Subsequent reads from it will return its default value.
   public mutating func clearCondition() {self._condition = nil}
 

@@ -57,7 +57,13 @@ public extension OverlayDescriptor {
         let convertedY = screenHeight - CGFloat(y) - CGFloat(h)
         let frame = CGRect(x: CGFloat(x), y: convertedY, width: CGFloat(w), height: CGFloat(h))
 
-        let text = (element.text?.isEmpty ?? true) ? element.role : element.text!
+        // Use text if non-empty, otherwise fall back to role
+        let text: String
+        if let elementText = element.text, !elementText.isEmpty {
+            text = elementText
+        } else {
+            text = element.role
+        }
         self.init(frame: frame, type: .box(text: text))
     }
 }
@@ -415,6 +421,31 @@ private func applyAnimation(to view: NSView, style: VisualsConfig.AnimationStyle
 /// Displays a temporary visual indicator (e.g., a circle, a caption) at specified screen coordinates.
 ///
 /// - Warning: This function is "fire-and-forget". For robust lifecycle management, use `presentVisuals`.
+///
+/// ## Migration Guide
+///
+/// Replace calls to `showVisualFeedback(at:type:size:duration:)` with the modern `presentVisuals` API:
+///
+/// ```swift
+/// // Before (deprecated):
+/// showVisualFeedback(at: point, type: .circle, duration: 0.5)
+///
+/// // After (recommended):
+/// let descriptor = OverlayDescriptor(
+///     frame: CGRect(origin: point, size: CGSize(width: 30, height: 30)),
+///     type: .circle
+/// )
+/// await presentVisuals(
+///     overlays: [descriptor],
+///     configuration: VisualsConfig(duration: 0.5, animationStyle: .pulseAndFade)
+/// )
+/// ```
+///
+/// Benefits of `presentVisuals`:
+/// - Proper async/await lifecycle with structured concurrency
+/// - Guaranteed cleanup via defer pattern
+/// - Support for multiple overlays in a single call
+/// - Configurable animation styles
 @available(*, deprecated, message: "Use `presentVisuals` for robust cancellation and lifecycle management.")
 @MainActor
 public func showVisualFeedback(
@@ -459,6 +490,31 @@ public func showVisualFeedback(
 /// Draws temporary overlay windows (highlight boxes) around the specified accessibility elements.
 ///
 /// - Warning: This function is "fire-and-forget". For robust lifecycle management, use `presentVisuals`.
+///
+/// ## Migration Guide
+///
+/// Replace calls to `drawHighlightBoxes(for:duration:)` with the modern `presentVisuals` API:
+///
+/// ```swift
+/// // Before (deprecated):
+/// drawHighlightBoxes(for: elements, duration: 3.0)
+///
+/// // After (recommended):
+/// let screenHeight = NSScreen.main?.frame.height ?? 0
+/// let descriptors = elements.compactMap { element in
+///     OverlayDescriptor(element: element, screenHeight: screenHeight)
+/// }
+/// await presentVisuals(
+///     overlays: descriptors,
+///     configuration: VisualsConfig(duration: 3.0, animationStyle: .none)
+/// )
+/// ```
+///
+/// Benefits of `presentVisuals`:
+/// - Proper async/await lifecycle with structured concurrency
+/// - Guaranteed cleanup via defer pattern
+/// - Easily combine with other overlay types (circles, captions)
+/// - Configurable animation styles
 @available(*, deprecated, message: "Use `presentVisuals` for robust cancellation and lifecycle management.")
 @MainActor
 public func drawHighlightBoxes(for elementsToHighlightInput: [ElementData], duration: Double = 3.0) {
@@ -467,31 +523,34 @@ public func drawHighlightBoxes(for elementsToHighlightInput: [ElementData], dura
 
     let screenHeight = NSScreen.main?.frame.height ?? 0
 
-    // 1. Filter elements (Preserving original logic)
-    let validElements = elementsToHighlightInput.filter {
-        $0.x != nil && $0.y != nil && $0.width != nil && $0.width! > 0 && $0.height != nil
-            && $0.height! > 0
+    // 1. Map to Descriptors, filtering out elements with invalid geometry
+    let descriptors: [OverlayDescriptor] = elementsToHighlightInput.compactMap { element in
+        guard let originalX = element.x,
+              let originalY = element.y,
+              let elementWidth = element.width, elementWidth > 0,
+              let elementHeight = element.height, elementHeight > 0
+        else {
+            return nil
+        }
+        let convertedY = screenHeight - originalY - elementHeight
+        let frame = NSRect(x: originalX, y: convertedY, width: elementWidth, height: elementHeight)
+
+        // Use text if non-empty, otherwise fall back to role
+        let textToShow: String
+        if let text = element.text, !text.isEmpty {
+            textToShow = text
+        } else {
+            textToShow = element.role
+        }
+        return OverlayDescriptor(frame: frame, type: .box(text: textToShow))
     }
 
-    if validElements.isEmpty {
+    if descriptors.isEmpty {
         logger.info("No elements with valid geometry provided to highlight.")
         return
     }
 
-    // 2. Map to Descriptors
-    let descriptors: [OverlayDescriptor] = validElements.map { element in
-        let originalX = element.x!
-        let originalY = element.y!
-        let elementWidth = element.width!
-        let elementHeight = element.height!
-        let convertedY = screenHeight - originalY - elementHeight
-        let frame = NSRect(x: originalX, y: convertedY, width: elementWidth, height: elementHeight)
-
-        let textToShow = (element.text?.isEmpty ?? true) ? element.role : element.text!
-        return OverlayDescriptor(frame: frame, type: .box(text: textToShow))
-    }
-
-    // 3. Launch Unstructured Task using new API
+    // 2. Launch Unstructured Task using new API
     Task {
         await presentVisuals(
             overlays: descriptors,

@@ -4,7 +4,6 @@ import AppKit  // For DispatchQueue
 import CoreGraphics
 import Foundation
 import OSLog
-import OSLog
 
 private let logger = sdkLogger(category: "HighlightInput")
 

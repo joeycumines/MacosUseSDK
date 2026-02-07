@@ -2,6 +2,10 @@ import AppKit
 import ApplicationServices
 import Foundation
 import MacosUseProto
+import MacosUseSDK
+import OSLog
+
+private let logger = MacosUseSDK.sdkLogger(category: "ChangeDetector")
 
 /// Detects UI changes using accessibility notifications.
 ///
@@ -44,7 +48,13 @@ class ChangeDetector {
             pid,
             { (_: AXObserver, element: AXUIElement, notification: CFString, refcon: UnsafeMutableRawPointer?) in
                 // This callback runs on a background thread
-                let detector = Unmanaged<ChangeDetector>.fromOpaque(refcon!).takeUnretainedValue()
+                // Guard against nil refcon (should never happen, but defensive programming)
+                guard let refcon else {
+                    // Cannot use Logger in C callback; use os_log directly
+                    os_log(.fault, "ChangeDetector callback received nil refcon")
+                    return
+                }
+                let detector = Unmanaged<ChangeDetector>.fromOpaque(refcon).takeUnretainedValue()
 
                 // Forward to main actor
                 Task { @MainActor in
@@ -183,20 +193,20 @@ class ChangeDetector {
         }
     }
 
-    private func handleAppActivated(app _: NSRunningApplication) {
-        // TODO: Notify observers about app activation
+    private func handleAppActivated(app: NSRunningApplication) {
+        logger.info("App activated: \(app.localizedName ?? "unknown", privacy: .private) (pid: \(app.processIdentifier, privacy: .private))")
     }
 
-    private func handleAppDeactivated(app _: NSRunningApplication) {
-        // TODO: Notify observers about app deactivation
+    private func handleAppDeactivated(app: NSRunningApplication) {
+        logger.info("App deactivated: \(app.localizedName ?? "unknown", privacy: .private) (pid: \(app.processIdentifier, privacy: .private))")
     }
 
-    private func handleAppLaunched(app _: NSRunningApplication) {
-        // TODO: Notify observers about app launch
+    private func handleAppLaunched(app: NSRunningApplication) {
+        logger.info("App launched: \(app.localizedName ?? "unknown", privacy: .private) (pid: \(app.processIdentifier, privacy: .private))")
     }
 
     private func handleAppTerminated(app: NSRunningApplication) {
-        // TODO: Notify observers about app termination
+        logger.info("App terminated: \(app.localizedName ?? "unknown", privacy: .private) (pid: \(app.processIdentifier, privacy: .private))")
         // Clean up observers for terminated app
         if let observer = observers[app.processIdentifier] {
             CFRunLoopRemoveSource(

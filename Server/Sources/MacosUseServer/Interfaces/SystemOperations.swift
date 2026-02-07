@@ -21,7 +21,7 @@ public protocol SystemOperations: Sendable {
     func performAXAction(element: AnyObject, action: String) -> Int32
     func getAXWindowID(element: AnyObject) -> CGWindowID?
 
-    // SDK boundary
+    /// SDK boundary
     func fetchAXWindowInfo(pid: Int32, windowId: CGWindowID, expectedBounds: CGRect) -> WindowInfoResult?
 }
 

@@ -1,7 +1,6 @@
 import MacosUseProto
-import XCTest
-
 @testable import MacosUseServer
+import XCTest
 
 /// Tests for the AppStateStore actor
 final class AppStateStoreTests: XCTestCase {

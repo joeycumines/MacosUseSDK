@@ -234,4 +234,4 @@ When modifying the API:
 2.  Regenerate code with `buf generate`
 3.  Run linters for all protos and code using `make lint`
 4.  Update this README with structural or design changes, notable AIPs, or learnings
-5.  Update `implementation-plan.md` with significant changes
+5.  Update `blueprint.json` with significant changes

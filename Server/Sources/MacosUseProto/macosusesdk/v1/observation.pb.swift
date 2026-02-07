@@ -104,41 +104,41 @@ public struct Macosusesdk_V1_Observation: Sendable {
 
   /// When the observation was created.
   public var createTime: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {return _createTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    get {_createTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
     set {_createTime = newValue}
   }
   /// Returns true if `createTime` has been explicitly set.
-  public var hasCreateTime: Bool {return self._createTime != nil}
+  public var hasCreateTime: Bool {self._createTime != nil}
   /// Clears the value of `createTime`. Subsequent reads from it will return its default value.
   public mutating func clearCreateTime() {self._createTime = nil}
 
   /// When the observation started.
   public var startTime: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {return _startTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    get {_startTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
     set {_startTime = newValue}
   }
   /// Returns true if `startTime` has been explicitly set.
-  public var hasStartTime: Bool {return self._startTime != nil}
+  public var hasStartTime: Bool {self._startTime != nil}
   /// Clears the value of `startTime`. Subsequent reads from it will return its default value.
   public mutating func clearStartTime() {self._startTime = nil}
 
   /// When the observation ended (if completed or cancelled).
   public var endTime: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {return _endTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    get {_endTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
     set {_endTime = newValue}
   }
   /// Returns true if `endTime` has been explicitly set.
-  public var hasEndTime: Bool {return self._endTime != nil}
+  public var hasEndTime: Bool {self._endTime != nil}
   /// Clears the value of `endTime`. Subsequent reads from it will return its default value.
   public mutating func clearEndTime() {self._endTime = nil}
 
   /// Filter configuration for the observation.
   public var filter: Macosusesdk_V1_ObservationFilter {
-    get {return _filter ?? Macosusesdk_V1_ObservationFilter()}
+    get {_filter ?? Macosusesdk_V1_ObservationFilter()}
     set {_filter = newValue}
   }
   /// Returns true if `filter` has been explicitly set.
-  public var hasFilter: Bool {return self._filter != nil}
+  public var hasFilter: Bool {self._filter != nil}
   /// Clears the value of `filter`. Subsequent reads from it will return its default value.
   public mutating func clearFilter() {self._filter = nil}
 
@@ -249,11 +249,11 @@ public struct Macosusesdk_V1_ObservationEvent: Sendable {
 
   /// When the event occurred.
   public var eventTime: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {return _eventTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    get {_eventTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
     set {_eventTime = newValue}
   }
   /// Returns true if `eventTime` has been explicitly set.
-  public var hasEventTime: Bool {return self._eventTime != nil}
+  public var hasEventTime: Bool {self._eventTime != nil}
   /// Clears the value of `eventTime`. Subsequent reads from it will return its default value.
   public mutating func clearEventTime() {self._eventTime = nil}
 
@@ -338,11 +338,11 @@ public struct Macosusesdk_V1_ElementEvent: Sendable {
 
   /// The element.
   public var element: Macosusesdk_Type_Element {
-    get {return _element ?? Macosusesdk_Type_Element()}
+    get {_element ?? Macosusesdk_Type_Element()}
     set {_element = newValue}
   }
   /// Returns true if `element` has been explicitly set.
-  public var hasElement: Bool {return self._element != nil}
+  public var hasElement: Bool {self._element != nil}
   /// Clears the value of `element`. Subsequent reads from it will return its default value.
   public mutating func clearElement() {self._element = nil}
 
@@ -361,27 +361,27 @@ public struct Macosusesdk_V1_ElementModified: @unchecked Sendable {
 
   /// The element before modification.
   public var oldElement: Macosusesdk_Type_Element {
-    get {return _storage._oldElement ?? Macosusesdk_Type_Element()}
+    get {_storage._oldElement ?? Macosusesdk_Type_Element()}
     set {_uniqueStorage()._oldElement = newValue}
   }
   /// Returns true if `oldElement` has been explicitly set.
-  public var hasOldElement: Bool {return _storage._oldElement != nil}
+  public var hasOldElement: Bool {_storage._oldElement != nil}
   /// Clears the value of `oldElement`. Subsequent reads from it will return its default value.
   public mutating func clearOldElement() {_uniqueStorage()._oldElement = nil}
 
   /// The element after modification.
   public var newElement: Macosusesdk_Type_Element {
-    get {return _storage._newElement ?? Macosusesdk_Type_Element()}
+    get {_storage._newElement ?? Macosusesdk_Type_Element()}
     set {_uniqueStorage()._newElement = newValue}
   }
   /// Returns true if `newElement` has been explicitly set.
-  public var hasNewElement: Bool {return _storage._newElement != nil}
+  public var hasNewElement: Bool {_storage._newElement != nil}
   /// Clears the value of `newElement`. Subsequent reads from it will return its default value.
   public mutating func clearNewElement() {_uniqueStorage()._newElement = nil}
 
   /// Changed attributes.
   public var changes: [Macosusesdk_V1_AttributeChange] {
-    get {return _storage._changes}
+    get {_storage._changes}
     set {_uniqueStorage()._changes = newValue}
   }
 

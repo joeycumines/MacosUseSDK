@@ -1,9 +1,8 @@
 import AppKit
 import CoreGraphics
 import Foundation
-import Testing
-
 @testable import MacosUseServer
+import Testing
 
 /// Unit tests for WindowRegistry focusing on window detection and filtering behavior.
 @Suite("WindowRegistry Tests")

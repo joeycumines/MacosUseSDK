@@ -124,4 +124,30 @@ actor WindowRegistry {
     func getLastKnownWindow(_ windowID: CGWindowID) -> WindowInfo? {
         windowCache[windowID]
     }
+
+    /// Find a window for a given PID that has the specified position.
+    /// Used after MoveWindow to find the window that may have a new CGWindowID.
+    /// Returns nil if no window matches or if multiple windows match (ambiguous).
+    func findWindowByPosition(pid: pid_t, x: Double, y: Double, tolerance: Double = 5.0) -> WindowInfo? {
+        let matches = windowCache.values.filter { info in
+            info.ownerPID == pid &&
+                abs(info.bounds.origin.x - x) <= tolerance &&
+                abs(info.bounds.origin.y - y) <= tolerance
+        }
+        return matches.count == 1 ? matches.first : nil
+    }
+
+    /// Find a window for a given PID by approximate bounds match.
+    /// Used after geometry mutations to find the window that may have a new CGWindowID.
+    /// Returns nil if no window matches or if multiple windows match (ambiguous).
+    func findWindowByBounds(pid: pid_t, bounds: CGRect, tolerance: Double = 5.0) -> WindowInfo? {
+        let matches = windowCache.values.filter { info in
+            info.ownerPID == pid &&
+                abs(info.bounds.origin.x - bounds.origin.x) <= tolerance &&
+                abs(info.bounds.origin.y - bounds.origin.y) <= tolerance &&
+                abs(info.bounds.width - bounds.width) <= tolerance &&
+                abs(info.bounds.height - bounds.height) <= tolerance
+        }
+        return matches.count == 1 ? matches.first : nil
+    }
 }

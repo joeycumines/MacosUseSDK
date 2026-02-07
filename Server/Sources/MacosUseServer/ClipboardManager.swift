@@ -184,6 +184,19 @@ actor ClipboardHistoryManager {
         }
     }
 
+    #if DEBUG
+        /// Reset history for testing purposes.
+        /// - Warning: Only available in DEBUG builds.
+        func _resetForTesting() {
+            history = []
+        }
+
+        /// Expose maxEntries for testing purposes.
+        var _maxEntries: Int {
+            maxEntries
+        }
+    #endif
+
     /// Get the name of the active application.
     private func getActiveApplicationName() -> String {
         if let activeApp = NSWorkspace.shared.frontmostApplication {

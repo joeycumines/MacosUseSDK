@@ -65,22 +65,27 @@ public struct AttributeChangeDetail: Codable, Sendable {
     // Use CollectionDifference to find insertions and removals
     let diff = new.difference(from: old)
 
-    var addedChars: [Character] = []
-    var removedChars: [Character] = []
+    var addedItems: [(offset: Int, char: Character)] = []
+    var removedItems: [(offset: Int, char: Character)] = []
 
     // Process the calculated difference
     for change in diff {
       switch change {
-      case .insert(_, let element, _):
-        addedChars.append(element)
-      case .remove(_, let element, _):
-        removedChars.append(element)
+      case .insert(let offset, let element, _):
+        addedItems.append((offset, element))
+      case .remove(let offset, let element, _):
+        removedItems.append((offset, element))
       }
     }
 
+    // Sort by offset to preserve original string order
+    // (CollectionDifference may report removals in descending offset order)
+    addedItems.sort { $0.offset < $1.offset }
+    removedItems.sort { $0.offset < $1.offset }
+
     // Assign collected characters to the respective fields, or nil if empty
-    self.addedText = addedChars.isEmpty ? nil : String(addedChars)
-    self.removedText = removedChars.isEmpty ? nil : String(removedChars)
+    self.addedText = addedItems.isEmpty ? nil : String(addedItems.map(\.char))
+    self.removedText = removedItems.isEmpty ? nil : String(removedItems.map(\.char))
 
     // Since we now have potentially more granular diff info,
     // we consistently set oldValue/newValue to nil for text changes
@@ -266,32 +271,132 @@ public enum CombinedActions {
 
   // --- Helper Function for Diffing ---
 
-  /// Calculates the difference between two sets of ElementData based on set operations.
+  /// Calculates the detailed difference between two sets of ElementData using
+  /// heuristic matching: elements are paired by role and position proximity,
+  /// and attribute-level changes are detected for matched pairs.
+  ///
+  /// This is the single, canonical diff implementation used by both
+  /// `CombinedActions` and `ActionCoordinator.performAction`.
+  ///
   /// - Parameters:
   ///   - beforeElements: The list of elements from the first traversal.
   ///   - afterElements: The list of elements from the second traversal.
-  /// - Returns: A `TraversalDiff` struct containing added and removed elements.
-  private static func calculateDiff(beforeElements: [ElementData], afterElements: [ElementData])
-    -> TraversalDiff {
+  ///   - positionTolerance: Maximum distance in points to consider a position match. Default 5.0.
+  /// - Returns: A `TraversalDiff` struct containing added, removed, and modified elements.
+  static func calculateDiff(
+    beforeElements: [ElementData],
+    afterElements: [ElementData],
+    positionTolerance: Double = 5.0
+  ) -> TraversalDiff {
     logger.debug(
       "calculating diff between \(beforeElements.count, privacy: .public) (before) and \(afterElements.count, privacy: .public) (after) elements.")
-    // Convert arrays to Sets for efficient comparison. Relies on ElementData being Hashable.
-    let beforeSet = Set(beforeElements)
-    let afterSet = Set(afterElements)
 
-    // Elements present in 'after' but not in 'before' are added.
-    let addedElements = Array(afterSet.subtracting(beforeSet))
-    logger.debug("diff calculation - found \(addedElements.count, privacy: .public) added elements.")
+    var added: [ElementData] = []
+    var removed: [ElementData] = []
+    var modified: [ModifiedElement] = []
 
-    // Elements present in 'before' but not in 'after' are removed.
-    let removedElements = Array(beforeSet.subtracting(afterSet))
-    logger.debug("diff calculation - found \(removedElements.count, privacy: .public) removed elements.")
+    let remainingAfter = afterElements
+    var matchedAfterIndices = Set<Int>()
 
-    // Sort results for consistent output (optional, but helpful)
-    let sortedAdded = addedElements.sorted(by: elementSortPredicate)
-    let sortedRemoved = removedElements.sorted(by: elementSortPredicate)
+    // Iterate through 'before' elements to find matches or mark as removed
+    for beforeElement in beforeElements {
+      var bestMatchIndex: Int?
+      var smallestDistanceSq: Double = .greatestFiniteMagnitude
 
-    return TraversalDiff(added: sortedAdded, removed: sortedRemoved, modified: [])
+      // Find potential matches in the 'after' list
+      for (index, afterElement) in remainingAfter.enumerated() {
+        // Skip if already matched or role doesn't match
+        if matchedAfterIndices.contains(index) || beforeElement.role != afterElement.role {
+          continue
+        }
+
+        // Check position proximity (if coordinates exist)
+        if let bx = beforeElement.x, let by = beforeElement.y, let ax = afterElement.x,
+          let ay = afterElement.y
+        {
+          let dx = bx - ax
+          let dy = by - ay
+          let distanceSq = (dx * dx) + (dy * dy)
+
+          if distanceSq <= (positionTolerance * positionTolerance) {
+            // Found a plausible match based on role and position
+            // If multiple are close, pick the closest one
+            if distanceSq < smallestDistanceSq {
+              smallestDistanceSq = distanceSq
+              bestMatchIndex = index
+            }
+          }
+        } else if beforeElement.x == nil && afterElement.x == nil && beforeElement.y == nil
+          && afterElement.y == nil
+        {
+          // If *both* lack position, consider them potentially matched if role and text match
+          if let bt = beforeElement.text, let at = afterElement.text, bt == at {
+            if bestMatchIndex == nil {  // Only if no positional match found yet
+              bestMatchIndex = index
+            }
+          }
+        }
+      }
+
+      if let matchIndex = bestMatchIndex {
+        // Found a match
+        let afterElement = remainingAfter[matchIndex]
+        matchedAfterIndices.insert(matchIndex)
+
+        // Compare attributes to detect modifications
+        var attributeChanges: [AttributeChangeDetail] = []
+
+        // Handle TEXT change using the dedicated CollectionDifference initializer
+        if beforeElement.text != afterElement.text {
+          attributeChanges.append(
+            AttributeChangeDetail(textBefore: beforeElement.text, textAfter: afterElement.text))
+        }
+
+        // Handle geometric attributes using tolerance-based comparison
+        if !areDoublesEqual(beforeElement.x, afterElement.x) {
+          attributeChanges.append(
+            AttributeChangeDetail(attribute: "x", before: beforeElement.x, after: afterElement.x))
+        }
+        if !areDoublesEqual(beforeElement.y, afterElement.y) {
+          attributeChanges.append(
+            AttributeChangeDetail(attribute: "y", before: beforeElement.y, after: afterElement.y))
+        }
+        if !areDoublesEqual(beforeElement.width, afterElement.width) {
+          attributeChanges.append(
+            AttributeChangeDetail(
+              attribute: "width", before: beforeElement.width, after: afterElement.width))
+        }
+        if !areDoublesEqual(beforeElement.height, afterElement.height) {
+          attributeChanges.append(
+            AttributeChangeDetail(
+              attribute: "height", before: beforeElement.height, after: afterElement.height))
+        }
+
+        if !attributeChanges.isEmpty {
+          modified.append(
+            ModifiedElement(before: beforeElement, after: afterElement, changes: attributeChanges))
+        }
+      } else {
+        // No match found for this 'before' element, it was removed
+        removed.append(beforeElement)
+      }
+    }
+
+    // Any 'after' elements not matched are 'added'
+    for (index, afterElement) in remainingAfter.enumerated() {
+      if !matchedAfterIndices.contains(index) {
+        added.append(afterElement)
+      }
+    }
+
+    // Sort results for consistent output
+    let sortedAdded = added.sorted(by: elementSortPredicate)
+    let sortedRemoved = removed.sorted(by: elementSortPredicate)
+
+    logger.debug(
+      "diff calculation complete: Added=\(sortedAdded.count, privacy: .public), Removed=\(sortedRemoved.count, privacy: .public), Modified=\(modified.count, privacy: .public)")
+
+    return TraversalDiff(added: sortedAdded, removed: sortedRemoved, modified: modified)
   }
 
   // Helper sorting predicate (consistent with AccessibilityTraversalOperation)
@@ -785,4 +890,22 @@ public enum CombinedActions {
     return result
   }
 
+}
+
+// --- Helper function for comparing optional Doubles ---
+// Default tolerance of 1.0 point prevents false-positive "modified" entries
+// from subpixel coordinate jitter on Retina displays, where elements commonly
+// report fractional coordinates (e.g., 156.333) that shift by < 1pt between traversals.
+func areDoublesEqual(_ d1: Double?, _ d2: Double?, tolerance: Double = 1.0) -> Bool {
+  switch (d1, d2) {
+  case (nil, nil):
+    return true  // Both nil are considered equal in this context
+  case (let val1?, let val2?):
+    // Exact equality check first, handles zero tolerance correctly
+    if val1 == val2 { return true }
+    // Use tolerance for floating point comparison if both exist
+    return abs(val1 - val2) < tolerance
+  default:
+    return false  // One is nil, the other is not
+  }
 }

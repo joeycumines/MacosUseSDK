@@ -53,7 +53,10 @@ public struct SelectorParser {
             do {
                 _ = try NSRegularExpression(pattern: pattern, options: [])
             } catch {
-                throw RPCError(code: .invalidArgument, message: "Invalid regex pattern: \(pattern)")
+                throw RPCError(
+                    code: .invalidArgument,
+                    message: "Invalid regex pattern '\(pattern)': \(error.localizedDescription)",
+                )
             }
 
         case let .position(positionSelector):

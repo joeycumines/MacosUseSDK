@@ -14,14 +14,14 @@ public struct ServerConfig {
     /// Initialize configuration from environment variables
     public static func fromEnvironment() -> ServerConfig {
         let host = ProcessInfo.processInfo.environment["GRPC_LISTEN_ADDRESS"]
-        let hostValue = host?.isEmpty == false ? host : "127.0.0.1"
+        let hostValue = (host?.isEmpty == false ? host : nil) ?? "127.0.0.1"
         let portStr = ProcessInfo.processInfo.environment["GRPC_PORT"]
-        let portValue = portStr?.isEmpty == false ? Int(portStr!) : nil
+        let portValue = portStr.flatMap { $0.isEmpty ? nil : Int($0) }
         let port = portValue ?? 8080
         let socket = ProcessInfo.processInfo.environment["GRPC_UNIX_SOCKET"]
 
         return ServerConfig(
-            listenAddress: hostValue!,
+            listenAddress: hostValue,
             port: port,
             unixSocketPath: socket,
         )

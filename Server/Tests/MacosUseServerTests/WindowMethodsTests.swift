@@ -2,10 +2,9 @@ import ApplicationServices
 import CoreGraphics
 import Foundation
 import GRPCCore
-import Testing
-
 @testable import MacosUseProto
 @testable import MacosUseServer
+import Testing
 
 @Suite("Window Methods Tests")
 struct WindowMethodsTests {

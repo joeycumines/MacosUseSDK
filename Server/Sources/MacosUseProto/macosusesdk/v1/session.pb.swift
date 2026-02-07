@@ -44,31 +44,31 @@ public struct Macosusesdk_V1_Session: Sendable {
 
   /// When the session was created.
   public var createTime: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {return _createTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    get {_createTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
     set {_createTime = newValue}
   }
   /// Returns true if `createTime` has been explicitly set.
-  public var hasCreateTime: Bool {return self._createTime != nil}
+  public var hasCreateTime: Bool {self._createTime != nil}
   /// Clears the value of `createTime`. Subsequent reads from it will return its default value.
   public mutating func clearCreateTime() {self._createTime = nil}
 
   /// When the session was last accessed.
   public var lastAccessTime: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {return _lastAccessTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    get {_lastAccessTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
     set {_lastAccessTime = newValue}
   }
   /// Returns true if `lastAccessTime` has been explicitly set.
-  public var hasLastAccessTime: Bool {return self._lastAccessTime != nil}
+  public var hasLastAccessTime: Bool {self._lastAccessTime != nil}
   /// Clears the value of `lastAccessTime`. Subsequent reads from it will return its default value.
   public mutating func clearLastAccessTime() {self._lastAccessTime = nil}
 
   /// When the session expires (auto-cleanup).
   public var expireTime: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {return _expireTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    get {_expireTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
     set {_expireTime = newValue}
   }
   /// Returns true if `expireTime` has been explicitly set.
-  public var hasExpireTime: Bool {return self._expireTime != nil}
+  public var hasExpireTime: Bool {self._expireTime != nil}
   /// Clears the value of `expireTime`. Subsequent reads from it will return its default value.
   public mutating func clearExpireTime() {self._expireTime = nil}
 
@@ -158,45 +158,45 @@ public struct Macosusesdk_V1_Transaction: @unchecked Sendable {
 
   /// Transaction ID.
   public var transactionID: String {
-    get {return _storage._transactionID}
+    get {_storage._transactionID}
     set {_uniqueStorage()._transactionID = newValue}
   }
 
   /// Session this transaction belongs to.
   public var session: String {
-    get {return _storage._session}
+    get {_storage._session}
     set {_uniqueStorage()._session = newValue}
   }
 
   /// Transaction state.
   public var state: Macosusesdk_V1_Transaction.State {
-    get {return _storage._state}
+    get {_storage._state}
     set {_uniqueStorage()._state = newValue}
   }
 
   /// When the transaction started.
   public var startTime: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {return _storage._startTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    get {_storage._startTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
     set {_uniqueStorage()._startTime = newValue}
   }
   /// Returns true if `startTime` has been explicitly set.
-  public var hasStartTime: Bool {return _storage._startTime != nil}
+  public var hasStartTime: Bool {_storage._startTime != nil}
   /// Clears the value of `startTime`. Subsequent reads from it will return its default value.
   public mutating func clearStartTime() {_uniqueStorage()._startTime = nil}
 
   /// Number of operations in the transaction.
   public var operationsCount: Int32 {
-    get {return _storage._operationsCount}
+    get {_storage._operationsCount}
     set {_uniqueStorage()._operationsCount = newValue}
   }
 
   /// The updated session on committed or rolled back transaction.
   public var updatedSession: Macosusesdk_V1_Session {
-    get {return _storage._updatedSession ?? Macosusesdk_V1_Session()}
+    get {_storage._updatedSession ?? Macosusesdk_V1_Session()}
     set {_uniqueStorage()._updatedSession = newValue}
   }
   /// Returns true if `updatedSession` has been explicitly set.
-  public var hasUpdatedSession: Bool {return _storage._updatedSession != nil}
+  public var hasUpdatedSession: Bool {_storage._updatedSession != nil}
   /// Clears the value of `updatedSession`. Subsequent reads from it will return its default value.
   public mutating func clearUpdatedSession() {_uniqueStorage()._updatedSession = nil}
 
@@ -272,11 +272,11 @@ public struct Macosusesdk_V1_SessionSnapshot: Sendable {
 
   /// Session state.
   public var session: Macosusesdk_V1_Session {
-    get {return _session ?? Macosusesdk_V1_Session()}
+    get {_session ?? Macosusesdk_V1_Session()}
     set {_session = newValue}
   }
   /// Returns true if `session` has been explicitly set.
-  public var hasSession: Bool {return self._session != nil}
+  public var hasSession: Bool {self._session != nil}
   /// Clears the value of `session`. Subsequent reads from it will return its default value.
   public mutating func clearSession() {self._session = nil}
 
@@ -304,11 +304,11 @@ public struct Macosusesdk_V1_OperationRecord: Sendable {
 
   /// When the operation occurred.
   public var operationTime: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {return _operationTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    get {_operationTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
     set {_operationTime = newValue}
   }
   /// Returns true if `operationTime` has been explicitly set.
-  public var hasOperationTime: Bool {return self._operationTime != nil}
+  public var hasOperationTime: Bool {self._operationTime != nil}
   /// Clears the value of `operationTime`. Subsequent reads from it will return its default value.
   public mutating func clearOperationTime() {self._operationTime = nil}
 

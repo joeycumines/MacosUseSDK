@@ -48,11 +48,11 @@ public struct Macosusesdk_V1_OpenApplicationResponse: Sendable {
 
   /// The application resource that was opened.
   public var application: Macosusesdk_V1_Application {
-    get {return _application ?? Macosusesdk_V1_Application()}
+    get {_application ?? Macosusesdk_V1_Application()}
     set {_application = newValue}
   }
   /// Returns true if `application` has been explicitly set.
-  public var hasApplication: Bool {return self._application != nil}
+  public var hasApplication: Bool {self._application != nil}
   /// Clears the value of `application`. Subsequent reads from it will return its default value.
   public mutating func clearApplication() {self._application = nil}
 
@@ -154,23 +154,23 @@ public struct Macosusesdk_V1_CreateInputRequest: @unchecked Sendable {
 
   /// Parent resource. Either "applications/{application}" or "" for desktop inputs.
   public var parent: String {
-    get {return _storage._parent}
+    get {_storage._parent}
     set {_uniqueStorage()._parent = newValue}
   }
 
   /// The input to create.
   public var input: Macosusesdk_V1_Input {
-    get {return _storage._input ?? Macosusesdk_V1_Input()}
+    get {_storage._input ?? Macosusesdk_V1_Input()}
     set {_uniqueStorage()._input = newValue}
   }
   /// Returns true if `input` has been explicitly set.
-  public var hasInput: Bool {return _storage._input != nil}
+  public var hasInput: Bool {_storage._input != nil}
   /// Clears the value of `input`. Subsequent reads from it will return its default value.
   public mutating func clearInput() {_uniqueStorage()._input = nil}
 
   /// Optional input ID. If not provided, the server generates one.
   public var inputID: String {
-    get {return _storage._inputID}
+    get {_storage._inputID}
     set {_uniqueStorage()._inputID = newValue}
   }
 
@@ -270,21 +270,21 @@ public struct Macosusesdk_V1_TraverseAccessibilityResponse: Sendable {
 
   /// Statistics about the traversal.
   public var stats: Macosusesdk_Type_TraversalStats {
-    get {return _stats ?? Macosusesdk_Type_TraversalStats()}
+    get {_stats ?? Macosusesdk_Type_TraversalStats()}
     set {_stats = newValue}
   }
   /// Returns true if `stats` has been explicitly set.
-  public var hasStats: Bool {return self._stats != nil}
+  public var hasStats: Bool {self._stats != nil}
   /// Clears the value of `stats`. Subsequent reads from it will return its default value.
   public mutating func clearStats() {self._stats = nil}
 
   /// Processing time.
   public var processingTime: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {return _processingTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    get {_processingTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
     set {_processingTime = newValue}
   }
   /// Returns true if `processingTime` has been explicitly set.
-  public var hasProcessingTime: Bool {return self._processingTime != nil}
+  public var hasProcessingTime: Bool {self._processingTime != nil}
   /// Clears the value of `processingTime`. Subsequent reads from it will return its default value.
   public mutating func clearProcessingTime() {self._processingTime = nil}
 
@@ -344,27 +344,27 @@ public struct Macosusesdk_V1_ModifiedElement: @unchecked Sendable {
 
   /// The element before modification.
   public var oldElement: Macosusesdk_Type_Element {
-    get {return _storage._oldElement ?? Macosusesdk_Type_Element()}
+    get {_storage._oldElement ?? Macosusesdk_Type_Element()}
     set {_uniqueStorage()._oldElement = newValue}
   }
   /// Returns true if `oldElement` has been explicitly set.
-  public var hasOldElement: Bool {return _storage._oldElement != nil}
+  public var hasOldElement: Bool {_storage._oldElement != nil}
   /// Clears the value of `oldElement`. Subsequent reads from it will return its default value.
   public mutating func clearOldElement() {_uniqueStorage()._oldElement = nil}
 
   /// The element after modification.
   public var newElement: Macosusesdk_Type_Element {
-    get {return _storage._newElement ?? Macosusesdk_Type_Element()}
+    get {_storage._newElement ?? Macosusesdk_Type_Element()}
     set {_uniqueStorage()._newElement = newValue}
   }
   /// Returns true if `newElement` has been explicitly set.
-  public var hasNewElement: Bool {return _storage._newElement != nil}
+  public var hasNewElement: Bool {_storage._newElement != nil}
   /// Clears the value of `newElement`. Subsequent reads from it will return its default value.
   public mutating func clearNewElement() {_uniqueStorage()._newElement = nil}
 
   /// List of changed attributes (uses AttributeChange from observation.proto).
   public var changes: [Macosusesdk_V1_AttributeChange] {
-    get {return _storage._changes}
+    get {_storage._changes}
     set {_uniqueStorage()._changes = newValue}
   }
 
@@ -388,11 +388,11 @@ public struct Macosusesdk_V1_FindElementsRequest: Sendable {
 
   /// Selector for finding elements.
   public var selector: Macosusesdk_Type_ElementSelector {
-    get {return _selector ?? Macosusesdk_Type_ElementSelector()}
+    get {_selector ?? Macosusesdk_Type_ElementSelector()}
     set {_selector = newValue}
   }
   /// Returns true if `selector` has been explicitly set.
-  public var hasSelector: Bool {return self._selector != nil}
+  public var hasSelector: Bool {self._selector != nil}
   /// Clears the value of `selector`. Subsequent reads from it will return its default value.
   public mutating func clearSelector() {self._selector = nil}
 
@@ -446,21 +446,21 @@ public struct Macosusesdk_V1_FindRegionElementsRequest: Sendable {
   /// Uses Global Display Coordinates (top-left origin, Y increases downward).
   /// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
   public var region: Macosusesdk_Type_Region {
-    get {return _region ?? Macosusesdk_Type_Region()}
+    get {_region ?? Macosusesdk_Type_Region()}
     set {_region = newValue}
   }
   /// Returns true if `region` has been explicitly set.
-  public var hasRegion: Bool {return self._region != nil}
+  public var hasRegion: Bool {self._region != nil}
   /// Clears the value of `region`. Subsequent reads from it will return its default value.
   public mutating func clearRegion() {self._region = nil}
 
   /// Optional selector for additional filtering.
   public var selector: Macosusesdk_Type_ElementSelector {
-    get {return _selector ?? Macosusesdk_Type_ElementSelector()}
+    get {_selector ?? Macosusesdk_Type_ElementSelector()}
     set {_selector = newValue}
   }
   /// Returns true if `selector` has been explicitly set.
-  public var hasSelector: Bool {return self._selector != nil}
+  public var hasSelector: Bool {self._selector != nil}
   /// Clears the value of `selector`. Subsequent reads from it will return its default value.
   public mutating func clearSelector() {self._selector = nil}
 
@@ -623,11 +623,11 @@ public struct Macosusesdk_V1_ClickElementResponse: Sendable {
 
   /// The element that was clicked.
   public var element: Macosusesdk_Type_Element {
-    get {return _element ?? Macosusesdk_Type_Element()}
+    get {_element ?? Macosusesdk_Type_Element()}
     set {_element = newValue}
   }
   /// Returns true if `element` has been explicitly set.
-  public var hasElement: Bool {return self._element != nil}
+  public var hasElement: Bool {self._element != nil}
   /// Clears the value of `element`. Subsequent reads from it will return its default value.
   public mutating func clearElement() {self._element = nil}
 
@@ -696,11 +696,11 @@ public struct Macosusesdk_V1_WriteElementValueResponse: Sendable {
 
   /// The element that was modified.
   public var element: Macosusesdk_Type_Element {
-    get {return _element ?? Macosusesdk_Type_Element()}
+    get {_element ?? Macosusesdk_Type_Element()}
     set {_element = newValue}
   }
   /// Returns true if `element` has been explicitly set.
-  public var hasElement: Bool {return self._element != nil}
+  public var hasElement: Bool {self._element != nil}
   /// Clears the value of `element`. Subsequent reads from it will return its default value.
   public mutating func clearElement() {self._element = nil}
 
@@ -798,11 +798,11 @@ public struct Macosusesdk_V1_PerformElementActionResponse: Sendable {
 
   /// The element.
   public var element: Macosusesdk_Type_Element {
-    get {return _element ?? Macosusesdk_Type_Element()}
+    get {_element ?? Macosusesdk_Type_Element()}
     set {_element = newValue}
   }
   /// Returns true if `element` has been explicitly set.
-  public var hasElement: Bool {return self._element != nil}
+  public var hasElement: Bool {self._element != nil}
   /// Clears the value of `element`. Subsequent reads from it will return its default value.
   public mutating func clearElement() {self._element = nil}
 
@@ -824,11 +824,11 @@ public struct Macosusesdk_V1_WaitElementRequest: Sendable {
 
   /// Selector for the element to wait for.
   public var selector: Macosusesdk_Type_ElementSelector {
-    get {return _selector ?? Macosusesdk_Type_ElementSelector()}
+    get {_selector ?? Macosusesdk_Type_ElementSelector()}
     set {_selector = newValue}
   }
   /// Returns true if `selector` has been explicitly set.
-  public var hasSelector: Bool {return self._selector != nil}
+  public var hasSelector: Bool {self._selector != nil}
   /// Clears the value of `selector`. Subsequent reads from it will return its default value.
   public mutating func clearSelector() {self._selector = nil}
 
@@ -853,11 +853,11 @@ public struct Macosusesdk_V1_WaitElementResponse: Sendable {
 
   /// The element that appeared.
   public var element: Macosusesdk_Type_Element {
-    get {return _element ?? Macosusesdk_Type_Element()}
+    get {_element ?? Macosusesdk_Type_Element()}
     set {_element = newValue}
   }
   /// Returns true if `element` has been explicitly set.
-  public var hasElement: Bool {return self._element != nil}
+  public var hasElement: Bool {self._element != nil}
   /// Clears the value of `element`. Subsequent reads from it will return its default value.
   public mutating func clearElement() {self._element = nil}
 
@@ -876,11 +876,11 @@ public struct Macosusesdk_V1_WaitElementMetadata: Sendable {
 
   /// The selector being waited for.
   public var selector: Macosusesdk_Type_ElementSelector {
-    get {return _selector ?? Macosusesdk_Type_ElementSelector()}
+    get {_selector ?? Macosusesdk_Type_ElementSelector()}
     set {_selector = newValue}
   }
   /// Returns true if `selector` has been explicitly set.
-  public var hasSelector: Bool {return self._selector != nil}
+  public var hasSelector: Bool {self._selector != nil}
   /// Clears the value of `selector`. Subsequent reads from it will return its default value.
   public mutating func clearSelector() {self._selector = nil}
 
@@ -926,11 +926,11 @@ public struct Macosusesdk_V1_WaitElementStateRequest: Sendable {
 
   /// State condition to wait for.
   public var condition: Macosusesdk_V1_StateCondition {
-    get {return _condition ?? Macosusesdk_V1_StateCondition()}
+    get {_condition ?? Macosusesdk_V1_StateCondition()}
     set {_condition = newValue}
   }
   /// Returns true if `condition` has been explicitly set.
-  public var hasCondition: Bool {return self._condition != nil}
+  public var hasCondition: Bool {self._condition != nil}
   /// Clears the value of `condition`. Subsequent reads from it will return its default value.
   public mutating func clearCondition() {self._condition = nil}
 
@@ -1038,11 +1038,11 @@ public struct Macosusesdk_V1_WaitElementStateResponse: Sendable {
 
   /// The element in the expected state.
   public var element: Macosusesdk_Type_Element {
-    get {return _element ?? Macosusesdk_Type_Element()}
+    get {_element ?? Macosusesdk_Type_Element()}
     set {_element = newValue}
   }
   /// Returns true if `element` has been explicitly set.
-  public var hasElement: Bool {return self._element != nil}
+  public var hasElement: Bool {self._element != nil}
   /// Clears the value of `element`. Subsequent reads from it will return its default value.
   public mutating func clearElement() {self._element = nil}
 
@@ -1061,11 +1061,11 @@ public struct Macosusesdk_V1_WaitElementStateMetadata: Sendable {
 
   /// The condition being waited for.
   public var condition: Macosusesdk_V1_StateCondition {
-    get {return _condition ?? Macosusesdk_V1_StateCondition()}
+    get {_condition ?? Macosusesdk_V1_StateCondition()}
     set {_condition = newValue}
   }
   /// Returns true if `condition` has been explicitly set.
-  public var hasCondition: Bool {return self._condition != nil}
+  public var hasCondition: Bool {self._condition != nil}
   /// Clears the value of `condition`. Subsequent reads from it will return its default value.
   public mutating func clearCondition() {self._condition = nil}
 
@@ -1172,10 +1172,10 @@ public struct Macosusesdk_V1_MoveWindowRequest: Sendable {
   /// Resource name of the window.
   public var name: String = String()
 
-  /// New X coordinate.
+  /// New X coordinate in Global Display Coordinates (top-left origin, Y increases downward).
   public var x: Double = 0
 
-  /// New Y coordinate.
+  /// New Y coordinate in Global Display Coordinates (top-left origin, Y increases downward).
   public var y: Double = 0
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -1273,11 +1273,11 @@ public struct Macosusesdk_V1_CreateObservationRequest: Sendable {
 
   /// The observation to create.
   public var observation: Macosusesdk_V1_Observation {
-    get {return _observation ?? Macosusesdk_V1_Observation()}
+    get {_observation ?? Macosusesdk_V1_Observation()}
     set {_observation = newValue}
   }
   /// Returns true if `observation` has been explicitly set.
-  public var hasObservation: Bool {return self._observation != nil}
+  public var hasObservation: Bool {self._observation != nil}
   /// Clears the value of `observation`. Subsequent reads from it will return its default value.
   public mutating func clearObservation() {self._observation = nil}
 
@@ -1399,11 +1399,11 @@ public struct Macosusesdk_V1_StreamObservationsResponse: Sendable {
 
   /// The observation event.
   public var event: Macosusesdk_V1_ObservationEvent {
-    get {return _event ?? Macosusesdk_V1_ObservationEvent()}
+    get {_event ?? Macosusesdk_V1_ObservationEvent()}
     set {_event = newValue}
   }
   /// Returns true if `event` has been explicitly set.
-  public var hasEvent: Bool {return self._event != nil}
+  public var hasEvent: Bool {self._event != nil}
   /// Clears the value of `event`. Subsequent reads from it will return its default value.
   public mutating func clearEvent() {self._event = nil}
 
@@ -1422,11 +1422,11 @@ public struct Macosusesdk_V1_CreateSessionRequest: Sendable {
 
   /// The session to create.
   public var session: Macosusesdk_V1_Session {
-    get {return _session ?? Macosusesdk_V1_Session()}
+    get {_session ?? Macosusesdk_V1_Session()}
     set {_session = newValue}
   }
   /// Returns true if `session` has been explicitly set.
-  public var hasSession: Bool {return self._session != nil}
+  public var hasSession: Bool {self._session != nil}
   /// Clears the value of `session`. Subsequent reads from it will return its default value.
   public mutating func clearSession() {self._session = nil}
 
@@ -1464,6 +1464,8 @@ public struct Macosusesdk_V1_ListSessionsRequest: Sendable {
   public var pageSize: Int32 = 0
 
   /// Page token from a previous ListSessions call.
+  /// This token is opaque and its structure must not be relied upon by clients.
+  /// Only its presence or absence should be used to determine pagination state.
   public var pageToken: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -1481,6 +1483,8 @@ public struct Macosusesdk_V1_ListSessionsResponse: Sendable {
   public var sessions: [Macosusesdk_V1_Session] = []
 
   /// Token to retrieve the next page of results.
+  /// This token is opaque and its structure must not be relied upon by clients.
+  /// Only its presence or absence should be used to determine pagination state.
   public var nextPageToken: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -1513,11 +1517,11 @@ public struct Macosusesdk_V1_CreateMacroRequest: Sendable {
 
   /// The macro to create.
   public var macro: Macosusesdk_V1_Macro {
-    get {return _macro ?? Macosusesdk_V1_Macro()}
+    get {_macro ?? Macosusesdk_V1_Macro()}
     set {_macro = newValue}
   }
   /// Returns true if `macro` has been explicitly set.
-  public var hasMacro: Bool {return self._macro != nil}
+  public var hasMacro: Bool {self._macro != nil}
   /// Clears the value of `macro`. Subsequent reads from it will return its default value.
   public mutating func clearMacro() {self._macro = nil}
 
@@ -1555,6 +1559,8 @@ public struct Macosusesdk_V1_ListMacrosRequest: Sendable {
   public var pageSize: Int32 = 0
 
   /// Page token from a previous ListMacros call.
+  /// This token is opaque and its structure must not be relied upon by clients.
+  /// Only its presence or absence should be used to determine pagination state.
   public var pageToken: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -1572,6 +1578,8 @@ public struct Macosusesdk_V1_ListMacrosResponse: Sendable {
   public var macros: [Macosusesdk_V1_Macro] = []
 
   /// Token to retrieve the next page of results.
+  /// This token is opaque and its structure must not be relied upon by clients.
+  /// Only its presence or absence should be used to determine pagination state.
   public var nextPageToken: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -1587,21 +1595,21 @@ public struct Macosusesdk_V1_UpdateMacroRequest: Sendable {
 
   /// The macro to update. The name field must be set.
   public var macro: Macosusesdk_V1_Macro {
-    get {return _macro ?? Macosusesdk_V1_Macro()}
+    get {_macro ?? Macosusesdk_V1_Macro()}
     set {_macro = newValue}
   }
   /// Returns true if `macro` has been explicitly set.
-  public var hasMacro: Bool {return self._macro != nil}
+  public var hasMacro: Bool {self._macro != nil}
   /// Clears the value of `macro`. Subsequent reads from it will return its default value.
   public mutating func clearMacro() {self._macro = nil}
 
   /// Fields to update.
   public var updateMask: SwiftProtobuf.Google_Protobuf_FieldMask {
-    get {return _updateMask ?? SwiftProtobuf.Google_Protobuf_FieldMask()}
+    get {_updateMask ?? SwiftProtobuf.Google_Protobuf_FieldMask()}
     set {_updateMask = newValue}
   }
   /// Returns true if `updateMask` has been explicitly set.
-  public var hasUpdateMask: Bool {return self._updateMask != nil}
+  public var hasUpdateMask: Bool {self._updateMask != nil}
   /// Clears the value of `updateMask`. Subsequent reads from it will return its default value.
   public mutating func clearUpdateMask() {self._updateMask = nil}
 
@@ -1647,11 +1655,11 @@ public struct Macosusesdk_V1_ExecuteMacroRequest: Sendable {
 
   /// Execution options.
   public var options: Macosusesdk_V1_ExecutionOptions {
-    get {return _options ?? Macosusesdk_V1_ExecutionOptions()}
+    get {_options ?? Macosusesdk_V1_ExecutionOptions()}
     set {_options = newValue}
   }
   /// Returns true if `options` has been explicitly set.
-  public var hasOptions: Bool {return self._options != nil}
+  public var hasOptions: Bool {self._options != nil}
   /// Clears the value of `options`. Subsequent reads from it will return its default value.
   public mutating func clearOptions() {self._options = nil}
 
@@ -1699,11 +1707,11 @@ public struct Macosusesdk_V1_ExecuteMacroResponse: Sendable {
 
   /// Execution duration.
   public var executionDuration: SwiftProtobuf.Google_Protobuf_Duration {
-    get {return _executionDuration ?? SwiftProtobuf.Google_Protobuf_Duration()}
+    get {_executionDuration ?? SwiftProtobuf.Google_Protobuf_Duration()}
     set {_executionDuration = newValue}
   }
   /// Returns true if `executionDuration` has been explicitly set.
-  public var hasExecutionDuration: Bool {return self._executionDuration != nil}
+  public var hasExecutionDuration: Bool {self._executionDuration != nil}
   /// Clears the value of `executionDuration`. Subsequent reads from it will return its default value.
   public mutating func clearExecutionDuration() {self._executionDuration = nil}
 
@@ -1737,11 +1745,11 @@ public struct Macosusesdk_V1_ExecuteMacroMetadata: Sendable {
 
   /// Elapsed duration.
   public var elapsedDuration: SwiftProtobuf.Google_Protobuf_Duration {
-    get {return _elapsedDuration ?? SwiftProtobuf.Google_Protobuf_Duration()}
+    get {_elapsedDuration ?? SwiftProtobuf.Google_Protobuf_Duration()}
     set {_elapsedDuration = newValue}
   }
   /// Returns true if `elapsedDuration` has been explicitly set.
-  public var hasElapsedDuration: Bool {return self._elapsedDuration != nil}
+  public var hasElapsedDuration: Bool {self._elapsedDuration != nil}
   /// Clears the value of `elapsedDuration`. Subsequent reads from it will return its default value.
   public mutating func clearElapsedDuration() {self._elapsedDuration = nil}
 
@@ -1828,11 +1836,11 @@ public struct Macosusesdk_V1_BeginTransactionResponse: Sendable {
 
   /// Session with updated state.
   public var session: Macosusesdk_V1_Session {
-    get {return _session ?? Macosusesdk_V1_Session()}
+    get {_session ?? Macosusesdk_V1_Session()}
     set {_session = newValue}
   }
   /// Returns true if `session` has been explicitly set.
-  public var hasSession: Bool {return self._session != nil}
+  public var hasSession: Bool {self._session != nil}
   /// Clears the value of `session`. Subsequent reads from it will return its default value.
   public mutating func clearSession() {self._session = nil}
 
@@ -2069,11 +2077,11 @@ public struct Macosusesdk_V1_CaptureRegionScreenshotRequest: Sendable {
   /// Uses Global Display Coordinates (top-left origin, Y increases downward).
   /// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
   public var region: Macosusesdk_Type_Region {
-    get {return _region ?? Macosusesdk_Type_Region()}
+    get {_region ?? Macosusesdk_Type_Region()}
     set {_region = newValue}
   }
   /// Returns true if `region` has been explicitly set.
-  public var hasRegion: Bool {return self._region != nil}
+  public var hasRegion: Bool {self._region != nil}
   /// Clears the value of `region`. Subsequent reads from it will return its default value.
   public mutating func clearRegion() {self._region = nil}
 
@@ -2116,11 +2124,11 @@ public struct Macosusesdk_V1_CaptureRegionScreenshotResponse: Sendable {
 
   /// Region that was captured.
   public var region: Macosusesdk_Type_Region {
-    get {return _region ?? Macosusesdk_Type_Region()}
+    get {_region ?? Macosusesdk_Type_Region()}
     set {_region = newValue}
   }
   /// Returns true if `region` has been explicitly set.
-  public var hasRegion: Bool {return self._region != nil}
+  public var hasRegion: Bool {self._region != nil}
   /// Clears the value of `region`. Subsequent reads from it will return its default value.
   public mutating func clearRegion() {self._region = nil}
 
@@ -2157,11 +2165,11 @@ public struct Macosusesdk_V1_WriteClipboardRequest: Sendable {
 
   /// Content to write on clipboard.
   public var content: Macosusesdk_V1_ClipboardContent {
-    get {return _content ?? Macosusesdk_V1_ClipboardContent()}
+    get {_content ?? Macosusesdk_V1_ClipboardContent()}
     set {_content = newValue}
   }
   /// Returns true if `content` has been explicitly set.
-  public var hasContent: Bool {return self._content != nil}
+  public var hasContent: Bool {self._content != nil}
   /// Clears the value of `content`. Subsequent reads from it will return its default value.
   public mutating func clearContent() {self._content = nil}
 
@@ -2467,11 +2475,11 @@ public struct Macosusesdk_V1_ExecuteAppleScriptRequest: Sendable {
 
   /// Timeout for script execution.
   public var timeout: SwiftProtobuf.Google_Protobuf_Duration {
-    get {return _timeout ?? SwiftProtobuf.Google_Protobuf_Duration()}
+    get {_timeout ?? SwiftProtobuf.Google_Protobuf_Duration()}
     set {_timeout = newValue}
   }
   /// Returns true if `timeout` has been explicitly set.
-  public var hasTimeout: Bool {return self._timeout != nil}
+  public var hasTimeout: Bool {self._timeout != nil}
   /// Clears the value of `timeout`. Subsequent reads from it will return its default value.
   public mutating func clearTimeout() {self._timeout = nil}
 
@@ -2502,11 +2510,11 @@ public struct Macosusesdk_V1_ExecuteAppleScriptResponse: Sendable {
 
   /// Execution duration.
   public var executionDuration: SwiftProtobuf.Google_Protobuf_Duration {
-    get {return _executionDuration ?? SwiftProtobuf.Google_Protobuf_Duration()}
+    get {_executionDuration ?? SwiftProtobuf.Google_Protobuf_Duration()}
     set {_executionDuration = newValue}
   }
   /// Returns true if `executionDuration` has been explicitly set.
-  public var hasExecutionDuration: Bool {return self._executionDuration != nil}
+  public var hasExecutionDuration: Bool {self._executionDuration != nil}
   /// Clears the value of `executionDuration`. Subsequent reads from it will return its default value.
   public mutating func clearExecutionDuration() {self._executionDuration = nil}
 
@@ -2528,11 +2536,11 @@ public struct Macosusesdk_V1_ExecuteJavaScriptRequest: Sendable {
 
   /// Timeout for script execution.
   public var timeout: SwiftProtobuf.Google_Protobuf_Duration {
-    get {return _timeout ?? SwiftProtobuf.Google_Protobuf_Duration()}
+    get {_timeout ?? SwiftProtobuf.Google_Protobuf_Duration()}
     set {_timeout = newValue}
   }
   /// Returns true if `timeout` has been explicitly set.
-  public var hasTimeout: Bool {return self._timeout != nil}
+  public var hasTimeout: Bool {self._timeout != nil}
   /// Clears the value of `timeout`. Subsequent reads from it will return its default value.
   public mutating func clearTimeout() {self._timeout = nil}
 
@@ -2563,11 +2571,11 @@ public struct Macosusesdk_V1_ExecuteJavaScriptResponse: Sendable {
 
   /// Execution duration.
   public var executionDuration: SwiftProtobuf.Google_Protobuf_Duration {
-    get {return _executionDuration ?? SwiftProtobuf.Google_Protobuf_Duration()}
+    get {_executionDuration ?? SwiftProtobuf.Google_Protobuf_Duration()}
     set {_executionDuration = newValue}
   }
   /// Returns true if `executionDuration` has been explicitly set.
-  public var hasExecutionDuration: Bool {return self._executionDuration != nil}
+  public var hasExecutionDuration: Bool {self._executionDuration != nil}
   /// Clears the value of `executionDuration`. Subsequent reads from it will return its default value.
   public mutating func clearExecutionDuration() {self._executionDuration = nil}
 
@@ -2598,11 +2606,11 @@ public struct Macosusesdk_V1_ExecuteShellCommandRequest: Sendable {
 
   /// Timeout for command execution.
   public var timeout: SwiftProtobuf.Google_Protobuf_Duration {
-    get {return _timeout ?? SwiftProtobuf.Google_Protobuf_Duration()}
+    get {_timeout ?? SwiftProtobuf.Google_Protobuf_Duration()}
     set {_timeout = newValue}
   }
   /// Returns true if `timeout` has been explicitly set.
-  public var hasTimeout: Bool {return self._timeout != nil}
+  public var hasTimeout: Bool {self._timeout != nil}
   /// Clears the value of `timeout`. Subsequent reads from it will return its default value.
   public mutating func clearTimeout() {self._timeout = nil}
 
@@ -2639,11 +2647,11 @@ public struct Macosusesdk_V1_ExecuteShellCommandResponse: Sendable {
 
   /// Execution duration.
   public var executionDuration: SwiftProtobuf.Google_Protobuf_Duration {
-    get {return _executionDuration ?? SwiftProtobuf.Google_Protobuf_Duration()}
+    get {_executionDuration ?? SwiftProtobuf.Google_Protobuf_Duration()}
     set {_executionDuration = newValue}
   }
   /// Returns true if `executionDuration` has been explicitly set.
-  public var hasExecutionDuration: Bool {return self._executionDuration != nil}
+  public var hasExecutionDuration: Bool {self._executionDuration != nil}
   /// Clears the value of `executionDuration`. Subsequent reads from it will return its default value.
   public mutating func clearExecutionDuration() {self._executionDuration = nil}
 

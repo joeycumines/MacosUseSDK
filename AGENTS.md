@@ -3,10 +3,11 @@
 ## Critical Ways of Working (STRICT MANDATES)
 
 **1. EXECUTION PROTOCOL (NON-NEGOTIABLE):**
+
 - **NO DIRECT SHELL COMMANDS:** You are FORBIDDEN from running complex multi-argument shell commands directly.
 - **MANDATORY `config.mk` PATTERN:** For ALL build steps, test runs, linting, or execution commands:
-  1.  Define a **custom temporary target** in `config.mk`.
-  2.  Execute it using the `mcp-server-make` tool.
+    1. Define a **custom temporary target** in `config.mk`.
+    2. Execute it using the `mcp-server-make` tool.
 - **FORBIDDEN ARGUMENT:** You MUST NOT specify the `file` option (e.g., `file=config.mk`) when invoking `mcp-server-make`. The invocation must rely strictly on the repository's default Makefile discovery (which includes `config.mk`).
 - **LOGGING REQUIREMENT:** All `config.mk` recipes producing significant output MUST use `| tee $(or $(PROJECT_ROOT),$(error If you are reading this you specified the `file` option when calling `mcp-server-make`. DONT DO THAT.))/build.log | tail -n 15` (or similar) to prevent context window flooding.
   For example (add if missing to `config.mk` within `ifndef CUSTOM_TARGETS_DEFINED ... endif` per `example.config.mk`):
@@ -22,10 +23,13 @@
   ```
 
 **2. CONTINUOUS VALIDATION:**
+
 - **DO NOT BREAK THE BUILD:** You must run the core `all` target constantly. Use `mcp-server-make make-all-with-log` after every file change.
 - **Resource Leak Check:** Integration tests must ensure proper cleanup of observations and connections at teardown.
+- **CI PRE-MERGE BLOCKER:** Before any merge to main, ALL critical issues documented in `pre-merge-blueprint.json` MUST be resolved and CI MUST pass. See `PRE_MERGE_STATUS.md` for current blocking issues.
 
 **3. LOG OUTPUT PRIVACY:**
+
 - AVOID and REPLACE ad-hoc `fputs` or unannotated `print` with `Logger` and `OSLogPrivacy` for any message emitted from Swift server components or SDK helpers in `Server/Sources/MacosUseServer` and `Sources/MacosUseSDK`.
 - `fputs` is forbidden in these server/SDK directories for diagnostic logs — it bypasses OS unified logging and cannot mark privacy. Use `Logger` with explicit `privacy` annotations for every interpolated value. For user-facing CLI help text (static strings) `print` is allowed only outside `Server/Sources/MacosUseServer` and `Sources/MacosUseSDK`.
 
@@ -34,33 +38,37 @@
 Constraints in this section describe *requirements*, not current status.
 
 The gRPC server MUST:
+
 - Strictly follow **Google's AIPs** (2025 standards). When in doubt between `buf lint` and Google's AIPs, Google's AIPs take precedence.
 - Support configuration via environment variables (socket paths, addresses).
 - Maintain the **State Store** architecture: `AppStateStore` (copy-on-write view for queries), `WindowRegistry`, `ObservationManager`, and `SessionManager`.
 
 Previous sins (now corrected, not to be repeated):
+
 - **Pagination (AIP-158):** You MUST implement `page_size`, `page_token`, and `next_page_token` for ALL List/Find RPCs, and `page_token`/`next_page_token` MUST be treated as opaque by clients (no reliance on internal structure such as `"offset:N"`).
 - **State-Difference Assertions:** Tests MUST NOT rely on "Happy Path" OK statuses. Every mutator RPC (Click, Move, Resize) MUST be followed by an accessor RPC to verify the *delta* in state.
 - **Wait-For-Convergence:** Tests MUST use a `PollUntil` pattern. `time.Sleep` is FORBIDDEN in tests.
 - **NSPasteboard Correctness (2025-11-30):** ClipboardManager MUST call `pasteboard.clearContents()` before EVERY write operation. Apple documentation states: "Clearing the pasteboard before writing is recommended." The previous implementation conditionally cleared based on a parameter, which violated this requirement and caused unreliable clipboard behavior.
 
 **API Scope:**
+
 - Expose ALL functionality via the `MacosUse` service (consolidated service).
 - Include all resources: Window, Element, Observation, Session, Macro, Screenshot, Clipboard, File, Script, **Display**.
 - Support advanced inputs: Modifiers, Special Keys, Mouse Operations (drag, right-click).
 - Support VS Code integration patterns (multi-window, advanced targeting).
 - **Display API (NEW 2025-11-30):** Must expose display/screen enumeration via `ListDisplays` RPC. Each Display resource must include:
-  - Display ID (CGDirectDisplayID)
-  - Frame (position and size in global coordinate space)
-  - Visible frame (excluding menu bar and dock)
-  - Whether it is the main display
-  - Scale factor (Retina)
-  This is critical for multi-monitor setups where window coordinates are in global coordinate space.
+    - Display ID (CGDirectDisplayID)
+    - Frame (position and size in global coordinate space)
+    - Visible frame (excluding menu bar and dock)
+    - Whether it is the main display
+    - Scale factor (Retina)
+      This is critical for multi-monitor setups where window coordinates are in global coordinate space.
 
 **Coordinate System Documentation (CRITICAL 2025-11-30):**
+
 - macOS uses **multiple coordinate systems** that clients MUST understand:
-  - **Global Display Coordinates** (used by CGWindowList, AX, CGEvent): Origin at **top-left of the main display**. Y increases downward. Secondary displays can have negative X (left of main) or negative Y (above main).
-  - **AppKit Coordinates** (used by NSWindow, NSScreen.frame): Origin at **bottom-left of the main display**. Y increases upward.
+    - **Global Display Coordinates** (used by CGWindowList, AX, CGEvent): Origin at **top-left of the main display**. Y increases downward. Secondary displays can have negative X (left of main) or negative Y (above main).
+    - **AppKit Coordinates** (used by NSWindow, NSScreen.frame): Origin at **bottom-left of the main display**. Y increases upward.
 - Window bounds returned by `ListWindows` and `GetWindow` use **Global Display Coordinates** (top-left origin).
 - Input coordinates (clicks, mouse moves) sent via `CreateInput` are interpreted as **Global Display Coordinates** (top-left origin).
 - The proto API documentation MUST clearly specify which coordinate system is used for each field.
@@ -79,17 +87,24 @@ Previous sins (now corrected, not to be repeated):
 
 ## Documentation and Planning
 
-- **Single Source of Truth:** ALL updates to the plan MUST be represented in `./implementation-plan.md`.
-- **No Status Files:** Do NOT create `IMPLEMENTATION_COMPLETE.md` or similar. Do NOT use `implementation-constraints.md` to track status, progress logs, or completion markers of any kind.
-- **Plan-Local Status Only:** The **STATUS SECTION (ACTION-FOCUSED)** at the top of `implementation-plan.md` is the only allowed place for high-level status, and it MUST list only remaining work, unresolved discrepancies, and critical patterns that must not be forgotten. Do not accumulate historical "done" items or emojis there.
+- **Single Source of Truth:** ALL updates to the plan MUST be represented in `./blueprint.json`.
+- **No Status Files:** Do NOT create `IMPLEMENTATION_COMPLETE.md` or similar. Do NOT use `AGENTS.md` to track status, progress logs, or completion markers of any kind.
+- **Plan-Local Status Only:** The **STATUS SECTION (ACTION-FOCUSED)** at the top of `blueprint.json` is the only allowed place for high-level status, and it MUST list only remaining work, unresolved discrepancies, and critical patterns that must not be forgotten. Do not accumulate historical "done" items or emojis there.
 - **Verification Before Completion Claims:** Before treating any item as complete, you MUST verify the implementation and its tests. If there is any doubt, treat the item as not done and keep (or re-add) a corresponding action in the plan.
-- **Living Document:** Keep `./implementation-plan.md` strictly aligned with this constraints document and the *actual* code reality. Update it as part of every change set, trimming completed/verified items from the status section rather than appending new ones.
+- **Living Document:** Keep `./blueprint.json` strictly aligned with this constraints document and the *actual* code reality. Update it as part of every change set, trimming completed/verified items from the status section rather than appending new ones.
 
 ## Master (LIVING) Documents
 
 **MUST BE KEPT UP TO DATE.** Must be analytical, terse, and precise.
 
-- [docs/02-window-state-management.md](docs/02-window-state-management.md)
+- [docs/window-state-management.md](docs/window-state-management.md)
+
+## MCP Specification References
+
+MCP compliance requirements are documented in docs/ai-artifacts/05-mcp-integration.md. Refer to that document for:
+- Protocol version requirements (2025-11-25)
+- Transport specifications and compliance status
+- Security and tooling details
 
 ## Proto API Structure
 

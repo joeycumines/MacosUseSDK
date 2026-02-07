@@ -30,13 +30,13 @@ import SwiftProtobuf
 
 /// Namespace containing generated types for the "google.longrunning.Operations" service.
 @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
-public enum Google_Longrunning_Operations {
+public enum Google_Longrunning_Operations: Sendable {
     /// Service descriptor for the "google.longrunning.Operations" service.
     public static let descriptor = GRPCCore.ServiceDescriptor(fullyQualifiedService: "google.longrunning.Operations")
     /// Namespace for method metadata.
-    public enum Method {
+    public enum Method: Sendable {
         /// Namespace for "ListOperations" metadata.
-        public enum ListOperations {
+        public enum ListOperations: Sendable {
             /// Request type for "ListOperations".
             public typealias Input = Google_Longrunning_ListOperationsRequest
             /// Response type for "ListOperations".
@@ -48,7 +48,7 @@ public enum Google_Longrunning_Operations {
             )
         }
         /// Namespace for "GetOperation" metadata.
-        public enum GetOperation {
+        public enum GetOperation: Sendable {
             /// Request type for "GetOperation".
             public typealias Input = Google_Longrunning_GetOperationRequest
             /// Response type for "GetOperation".
@@ -60,7 +60,7 @@ public enum Google_Longrunning_Operations {
             )
         }
         /// Namespace for "DeleteOperation" metadata.
-        public enum DeleteOperation {
+        public enum DeleteOperation: Sendable {
             /// Request type for "DeleteOperation".
             public typealias Input = Google_Longrunning_DeleteOperationRequest
             /// Response type for "DeleteOperation".
@@ -72,7 +72,7 @@ public enum Google_Longrunning_Operations {
             )
         }
         /// Namespace for "CancelOperation" metadata.
-        public enum CancelOperation {
+        public enum CancelOperation: Sendable {
             /// Request type for "CancelOperation".
             public typealias Input = Google_Longrunning_CancelOperationRequest
             /// Response type for "CancelOperation".
@@ -84,7 +84,7 @@ public enum Google_Longrunning_Operations {
             )
         }
         /// Namespace for "WaitOperation" metadata.
-        public enum WaitOperation {
+        public enum WaitOperation: Sendable {
             /// Request type for "WaitOperation".
             public typealias Input = Google_Longrunning_WaitOperationRequest
             /// Response type for "WaitOperation".

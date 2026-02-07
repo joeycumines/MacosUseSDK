@@ -12,17 +12,34 @@ extension MacosUseService {
     func findMatchingElement(
         _ targetElement: Macosusesdk_Type_Element, in elements: [Macosusesdk_Type_Element],
     ) -> Macosusesdk_Type_Element? {
-        // Simple matching by position (not ideal but works for basic cases)
+        // Simple matching by position using Euclidean distance from element centers
         guard targetElement.hasX, targetElement.hasY else { return nil }
-        let targetX = targetElement.x
-        let targetY = targetElement.y
+        // Use center if dimensions available, otherwise use position
+        let targetCenterX: Double
+        let targetCenterY: Double
+        if targetElement.hasWidth, targetElement.hasHeight {
+            targetCenterX = targetElement.x + targetElement.width / 2.0
+            targetCenterY = targetElement.y + targetElement.height / 2.0
+        } else {
+            targetCenterX = targetElement.x
+            targetCenterY = targetElement.y
+        }
+        let tolerance = 5.0
 
         return elements.first { element in
             guard element.hasX, element.hasY else { return false }
-            let x = element.x
-            let y = element.y
-            // Allow small tolerance for position matching
-            return abs(x - targetX) < 5 && abs(y - targetY) < 5
+            let centerX: Double
+            let centerY: Double
+            if element.hasWidth, element.hasHeight {
+                centerX = element.x + element.width / 2.0
+                centerY = element.y + element.height / 2.0
+            } else {
+                centerX = element.x
+                centerY = element.y
+            }
+            // Use Euclidean distance for consistent matching
+            let distance = hypot(centerX - targetCenterX, centerY - targetCenterY)
+            return distance < tolerance
         }
     }
 

@@ -202,13 +202,35 @@ extension MacosUseService {
 
         // CRITICAL FIX: Refresh and fetch registry metadata BEFORE invalidation (nil registry bug fix)
         try await windowRegistry.refreshWindows(forPID: pid)
+
+        // After move, the window may have a new CGWindowID. Try to find it by its new position.
+        // Also capture the original window's registry info for metadata.
         let registryInfo = await windowRegistry.getLastKnownWindow(windowId)
 
-        // Invalidate cache to ensure subsequent reads reflect the new position immediately
+        // Check if window ID changed by looking for the window at the new position
+        let movedWindowInfo = await windowRegistry.findWindowByPosition(pid: pid, x: req.x, y: req.y)
+
+        // Note: We do NOT try to re-acquire the AXUIElement even if the ID changed.
+        // The original window AXUIElement should still be valid (or stale but usable for
+        // querying current state). buildWindowResponseFromAX will query the actual ID
+        // from the element and update the name accordingly.
+        if let movedWindow = movedWindowInfo, movedWindow.windowID != windowId {
+            Self.logger.info("[moveWindow] Window ID changed: \(windowId, privacy: .public) → \(movedWindow.windowID, privacy: .public)")
+        }
+
+        // Invalidate old cache entry
         await windowRegistry.invalidate(windowID: windowId)
 
-        // Build response directly from AXUIElement (CGWindowList may be stale)
-        return try await buildWindowResponseFromAX(name: req.name, pid: pid, windowId: windowId, window: window, registryInfo: registryInfo)
+        // Build response using the original AXUIElement
+        // buildWindowResponseFromAX will query the current window ID from the element
+        // and return the updated name if it changed
+        return try await buildWindowResponseFromAX(
+            name: req.name,
+            pid: pid,
+            windowId: windowId,
+            window: window,
+            registryInfo: movedWindowInfo ?? registryInfo,
+        )
     }
 
     func resizeWindow(
@@ -228,7 +250,20 @@ extension MacosUseService {
             throw RPCError(code: .invalidArgument, message: "Invalid window name format")
         }
 
-        let window = try await findWindowElement(pid: pid, windowId: windowId)
+        // Get expected bounds from registry BEFORE finding the element.
+        // This enables bounds-based fallback if the window ID has already regenerated.
+        try await windowRegistry.refreshWindows(forPID: pid)
+        let preResizeInfo = await windowRegistry.getLastKnownWindow(windowId)
+        let preResizeBounds: CGRect? = if let info = preResizeInfo {
+            info.bounds
+        } else {
+            // If we can't find the window in registry, try a more aggressive bounds search
+            // using the window list (the window might have a new ID but similar bounds)
+            // For now, pass nil which will trigger existing fallback logic.
+            nil
+        }
+
+        let window = try await findWindowElement(pid: pid, windowId: windowId, expectedBounds: preResizeBounds)
 
         // Create AXValue, set size, and verify
         // CRITICAL FIX: AX set operations are thread-safe and should NOT block MainActor
@@ -262,13 +297,48 @@ extension MacosUseService {
 
         // CRITICAL FIX: Refresh and fetch registry metadata BEFORE invalidation (nil registry bug fix)
         try await windowRegistry.refreshWindows(forPID: pid)
-        let registryInfo = await windowRegistry.getLastKnownWindow(windowId)
 
-        // Invalidate cache to ensure subsequent reads reflect the new size immediately
+        // After resize, the window may have a new CGWindowID. Try to find it by its new bounds.
+        // Also capture the original window's registry info for metadata.
+        let registryInfo = await windowRegistry.getLastKnownWindow(windowId)
+        let expectedBounds = CGRect(
+            x: registryInfo?.bounds.origin.x ?? 0,
+            y: registryInfo?.bounds.origin.y ?? 0,
+            width: req.width,
+            height: req.height,
+        )
+
+        // Check if window ID changed by looking for the window with the new size
+        let resizedWindowInfo = await windowRegistry.findWindowByBounds(pid: pid, bounds: expectedBounds)
+        let actualWindowId: CGWindowID
+        let actualName: String
+        let actualWindow: AXUIElement
+
+        if let resizedWindow = resizedWindowInfo, resizedWindow.windowID != windowId {
+            // Window ID changed - use the new ID and re-acquire AXUIElement
+            Self.logger.info("[resizeWindow] Window ID changed: \(windowId, privacy: .public) → \(resizedWindow.windowID, privacy: .public)")
+            actualWindowId = resizedWindow.windowID
+            actualName = "applications/\(pid)/windows/\(actualWindowId)"
+            // Re-acquire fresh AXUIElement for the new window ID
+            actualWindow = try await findWindowElement(pid: pid, windowId: actualWindowId, expectedBounds: expectedBounds)
+        } else {
+            // Window ID didn't change (or we couldn't find a unique match)
+            actualWindowId = windowId
+            actualName = req.name
+            actualWindow = window
+        }
+
+        // Invalidate old cache entry
         await windowRegistry.invalidate(windowID: windowId)
 
-        // Build response directly from AXUIElement (CGWindowList may be stale)
-        return try await buildWindowResponseFromAX(name: req.name, pid: pid, windowId: windowId, window: window, registryInfo: registryInfo)
+        // Build response using the (possibly re-acquired) window element
+        return try await buildWindowResponseFromAX(
+            name: actualName,
+            pid: pid,
+            windowId: actualWindowId,
+            window: actualWindow,
+            registryInfo: resizedWindowInfo ?? registryInfo,
+        )
     }
 
     func minimizeWindow(

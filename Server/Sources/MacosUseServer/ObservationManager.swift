@@ -243,8 +243,8 @@ actor ObservationManager {
         }
     }
 
-    // PERFORMANCE FIX: Batch-fetch window attributes in a single IPC call
-    // This eliminates the sequential IPC overhead (4+ round-trips per window)
+    /// PERFORMANCE FIX: Batch-fetch window attributes in a single IPC call
+    /// This eliminates the sequential IPC overhead (4+ round-trips per window)
     private nonisolated func fetchWindowAttributes(_ element: AXUIElement) -> (title: String, minimized: Bool, hidden: Bool, focused: Bool?) {
         let attributes = [
             kAXTitleAttribute as String,
@@ -266,15 +266,15 @@ actor ObservationManager {
         return (title, minimized, hidden, focused)
     }
 
-    // GUARANTEED CORRECTNESS FIX:
-    // This function now exhaustively rescues windows that have temporarily dropped out of kAXWindows
-    // but still exist in kAXChildren (orphaned), regardless of their minimized state.
-    // It extracts REAL attributes from the AX element, preventing false DESTROYED events.
-    //
-    // BUG FIX (2025-11-30): The orphan rescue was ONLY checking cgWindows, but after a mutation
-    // (MoveWindow, ResizeWindow, etc.) the window can be temporarily absent from BOTH kAXWindows
-    // AND CGWindowList (due to cache invalidation + CGWindowList staleness). Now we ALSO check
-    // previousWindows directly to rescue windows that were being tracked but dropped from all sources.
+    /// GUARANTEED CORRECTNESS FIX:
+    /// This function now exhaustively rescues windows that have temporarily dropped out of kAXWindows
+    /// but still exist in kAXChildren (orphaned), regardless of their minimized state.
+    /// It extracts REAL attributes from the AX element, preventing false DESTROYED events.
+    ///
+    /// BUG FIX (2025-11-30): The orphan rescue was ONLY checking cgWindows, but after a mutation
+    /// (MoveWindow, ResizeWindow, etc.) the window can be temporarily absent from BOTH kAXWindows
+    /// AND CGWindowList (due to cache invalidation + CGWindowList staleness). Now we ALSO check
+    /// previousWindows directly to rescue windows that were being tracked but dropped from all sources.
     private nonisolated func handleOrphanedWindows(
         axWindows: [AXWindowSnapshot],
         cgWindows: [WindowRegistry.WindowInfo],
@@ -651,10 +651,16 @@ struct AXWindowSnapshot: Hashable {
     let visible: Bool
     let focused: Bool?
 
-    func hash(into hasher: inout Hasher) { hasher.combine(windowID) }
-    static func == (lhs: AXWindowSnapshot, rhs: AXWindowSnapshot) -> Bool { lhs.windowID == rhs.windowID }
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(windowID)
+    }
+
+    static func == (lhs: AXWindowSnapshot, rhs: AXWindowSnapshot) -> Bool {
+        lhs.windowID == rhs.windowID
+    }
 }
 
+/// Describes a change detected in window state during observation polling.
 enum WindowChange {
     case created(AXWindowSnapshot)
     case destroyed(AXWindowSnapshot)
@@ -666,6 +672,7 @@ enum WindowChange {
     case shown(AXWindowSnapshot)
 }
 
+/// Errors that can occur during observation lifecycle management.
 enum ObservationError: Error {
     case notFound
     case alreadyStarted

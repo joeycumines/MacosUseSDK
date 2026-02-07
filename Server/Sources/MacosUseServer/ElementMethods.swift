@@ -111,17 +111,13 @@ extension MacosUseService {
             ""
         }
 
-        // Convert to proto elements and register them
+        // Build response elements - elements from ElementLocator are already registered
+        // with their AXUIElement references preserved. Do NOT re-register them.
         var elements = [Macosusesdk_Type_Element]()
-        let pid = try parsePID(fromName: req.parent)
         for (element, path) in pageElementsWithPaths {
-            let protoElement = element
-            // Generate and assign element ID
-            let elementId = await ElementRegistry.shared.registerElement(protoElement, pid: pid)
-            var protoWithId = protoElement
-            protoWithId.elementID = elementId
-            protoWithId.path = path
-            elements.append(protoWithId)
+            var protoWithPath = element
+            protoWithPath.path = path
+            elements.append(protoWithPath)
         }
 
         let response = Macosusesdk_V1_FindElementsResponse.with {
@@ -174,17 +170,13 @@ extension MacosUseService {
             ""
         }
 
-        // Convert to proto elements and register them
+        // Build response elements - elements from ElementLocator are already registered
+        // with their AXUIElement references preserved. Do NOT re-register them.
         var elements = [Macosusesdk_Type_Element]()
-        let pid = try parsePID(fromName: req.parent)
         for (element, path) in pageElementsWithPaths {
-            let protoElement = element
-            // Generate and assign element ID
-            let elementId = await ElementRegistry.shared.registerElement(protoElement, pid: pid)
-            var protoWithId = protoElement
-            protoWithId.elementID = elementId
-            protoWithId.path = path
-            elements.append(protoWithId)
+            var protoWithPath = element
+            protoWithPath.path = path
+            elements.append(protoWithPath)
         }
 
         let response = Macosusesdk_V1_FindRegionElementsResponse.with {
@@ -269,7 +261,8 @@ extension MacosUseService {
                             }
                             $0.clickType = .left
                             $0.clickCount = 1
-                        })
+                        },
+                    )
                 },
                 pid: pid,
                 showAnimation: false,
@@ -287,7 +280,8 @@ extension MacosUseService {
                             }
                             $0.clickType = .left
                             $0.clickCount = 2
-                        })
+                        },
+                    )
                 },
                 pid: pid,
                 showAnimation: false,
@@ -305,7 +299,8 @@ extension MacosUseService {
                             }
                             $0.clickType = .right
                             $0.clickCount = 1
-                        })
+                        },
+                    )
                 },
                 pid: pid,
                 showAnimation: false,
@@ -378,7 +373,8 @@ extension MacosUseService {
                         }
                         $0.clickType = .left
                         $0.clickCount = 1
-                    })
+                    },
+                )
             },
             pid: pid,
             showAnimation: false,
@@ -391,7 +387,8 @@ extension MacosUseService {
                 $0.inputType = .typeText(
                     Macosusesdk_V1_TextInput.with {
                         $0.text = req.value
-                    })
+                    },
+                )
             },
             pid: pid,
             showAnimation: false,
@@ -554,7 +551,8 @@ extension MacosUseService {
                             }
                             $0.clickType = .left
                             $0.clickCount = 1
-                        })
+                        },
+                    )
                 },
                 pid: pid,
                 showAnimation: false,
@@ -572,7 +570,8 @@ extension MacosUseService {
                             }
                             $0.clickType = .right
                             $0.clickCount = 1
-                        })
+                        },
+                    )
                 },
                 pid: pid,
                 showAnimation: false,
@@ -646,11 +645,8 @@ extension MacosUseService {
 
                     if let firstElement = elementsWithPaths.first {
                         // Element found! Complete the operation
+                        // Element already has elementID from findElements() registration
                         var elementWithId = firstElement.element
-                        let elementId = try await ElementRegistry.shared.registerElement(
-                            elementWithId, pid: parsePID(fromName: req.parent),
-                        )
-                        elementWithId.elementID = elementId
                         elementWithId.path = firstElement.path
 
                         let response = Macosusesdk_V1_WaitElementResponse.with {
@@ -719,7 +715,8 @@ extension MacosUseService {
                                 Macosusesdk_Type_ElementSelector.with { $0.criteria = .role(foundElement.role) },
                                 Macosusesdk_Type_ElementSelector.with { $0.criteria = .text(foundElement.text) },
                             ]
-                        })
+                        },
+                    )
                 }
             }
 

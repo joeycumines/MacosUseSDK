@@ -14,7 +14,7 @@ func TestClipboardTextFlow(t *testing.T) {
 
 	// Start server
 	cmd, addr := startServer(t, ctx)
-	defer cleanupServer(t, cmd)
+	defer cleanupServer(t, cmd, addr)
 
 	conn := connectToServer(t, ctx, addr)
 	defer conn.Close()
@@ -83,7 +83,7 @@ func TestClipboardHistory(t *testing.T) {
 	ctx := context.Background()
 
 	cmd, addr := startServer(t, ctx)
-	defer cleanupServer(t, cmd)
+	defer cleanupServer(t, cmd, addr)
 
 	conn := connectToServer(t, ctx, addr)
 	defer conn.Close()

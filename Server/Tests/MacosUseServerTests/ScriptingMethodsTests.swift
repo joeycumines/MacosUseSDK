@@ -1,9 +1,8 @@
 import Foundation
 import GRPCCore
-import XCTest
-
 @testable import MacosUseProto
 @testable import MacosUseServer
+import XCTest
 
 final class ScriptingMethodsTests: XCTestCase {
     func testGetScriptingDictionariesUsesSystemBundleID() async throws {

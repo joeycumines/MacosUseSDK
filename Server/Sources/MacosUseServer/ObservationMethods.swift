@@ -53,7 +53,8 @@ extension MacosUseService {
                 // Get updated observation
                 guard
                     let startedObservation = await ObservationManager.shared.getObservation(
-                        name: observationName)
+                        name: observationName,
+                    )
                 else {
                     throw RPCError(code: .internalError, message: "Failed to start observation")
                 }

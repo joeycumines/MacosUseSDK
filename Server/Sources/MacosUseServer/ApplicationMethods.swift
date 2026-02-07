@@ -32,7 +32,8 @@ extension MacosUseService {
         Task { [operationStore, stateStore] in
             do {
                 let app = try await AutomationCoordinator.shared.handleOpenApplication(
-                    identifier: req.id)
+                    identifier: req.id,
+                )
                 await stateStore.addTarget(app)
 
                 let response = Macosusesdk_V1_OpenApplicationResponse.with {
