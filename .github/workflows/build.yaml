@@ -13,6 +13,7 @@ jobs:
       - name: Select Latest Stable Xcode
         shell: sh
         run: |-
+          set -eu || exit 1
           echo "Scanning for valid Xcode installations..."
           get_valid_xcodes() {
             for path in /Applications/Xcode_*.app; do
