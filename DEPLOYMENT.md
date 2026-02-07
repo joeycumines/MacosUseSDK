@@ -203,7 +203,7 @@ Create `Agents/com.macosusesdk.server.plist` (user agent, not system):
 
         <key>ProgramArguments</key>
         <array>
-            <string>/Users/YOU/bin/MacosUseServer</string>
+            <string>/Users/YOU/.local/bin/MacosUseServer</string>
         </array>
 
         <key>EnvironmentVariables</key>
@@ -231,8 +231,8 @@ Install and start:
 
 ```sh
 # Copy binary to user bin
-mkdir -p ~/bin
-cp Server/.build/release/MacosUseServer ~/bin/
+mkdir -p ~/.local/bin
+cp Server/.build/release/MacosUseServer ~/.local/bin/
 
 # Place the plist in user's LaunchAgents
 cp com.macosusesdk.server.plist ~/Library/LaunchAgents/
@@ -517,8 +517,7 @@ kill $(pgrep MacosUseServer)
 
 ```sh
 # Remove binary
-rm -f ~/bin/MacosUseServer # User binary
-sudo rm -f /usr/local/bin/MacosUseServer # System binary (if installed)
+rm -f ~/.local/bin/MacosUseServer # User binary
 
 # Remove launchd plist
 rm -f ~/Library/LaunchAgents/com.macosusesdk.server.plist
