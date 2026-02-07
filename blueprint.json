@@ -1,331 +1,42 @@
 {
-  "_meta": {
-    "filename": "blueprint.json",
-    "maintenance_instruction": "KEEP THE PLAN UP TO DATE AS YOU EVOLVE THE CODE. DEVIATIONS TO THE PLAN MUST BE LOGGED WITHIN THE PLAN. THE PLAN MUST BE REASSESSED HOLISTICALLY AFTER ANY CHANGE OF ANY SIZE.",
-    "answering_the_question_are_you_done": "**!! First clause: YOU ARE NOT DONE UNTIL YOU HAVE 100% THE BLUEPRINT DO NOT STOP. Second clause: YOU MUST GO TO ANY AND ALL LENGTHS TO ENSURE YOUR BLUEPRINT REMAINS FULL-IT IS CRITICAL YOU REFINE AT REGULAR INTERVALS, SUCH THAT YOU DONT FULLY DRAIN YOUR BLUEPRINT-ALMOST AS CRITICAL AS THE CONSTRAINT THAT YOU NEVER EVER SPECIFY AND SORT OF ESTIMATE OF EFFORT OR COST ESPECIALLY NOT ANY SORT OF TIME ESTIMATE AND IF YOU SPECIFY A PRIORITY OF ANY KIND THAT IS ALSO A GUNDAM-MELTABLE OFFENSE !!**"
+  "meta": {
+    "fileName": "blueprint.json",
+    "baselineBlueprintSource": "https://gist.github.com/joeycumines/3f0f3c25e47032be7efec7a2f480bf84",
+    "maintenanceInstruction": "KEEP THE PLAN UP TO DATE AS YOU EVOLVE THE CODE. DEVIATIONS TO THE PLAN MUST BE LOGGED WITHIN THE PLAN. THE PLAN MUST BE REASSESSED HOLISTICALLY AFTER ANY CHANGE OF ANY SIZE.",
+    "answeringTheQuestionAreYouDone": "**!! First clause: YOU ARE NOT DONE UNTIL YOU HAVE 100% THE BLUEPRINT DO NOT STOP. Second clause: YOU MUST GO TO ANY AND ALL LENGTHS TO ENSURE YOUR BLUEPRINT REMAINS FULL-IT IS CRITICAL YOU REFINE AT REGULAR INTERVALS, SUCH THAT YOU DONT FULLY DRAIN YOUR BLUEPRINT-ALMOST AS CRITICAL AS THE CONSTRAINT THAT YOU NEVER EVER SPECIFY AND SORT OF ESTIMATE OF EFFORT OR COST ESPECIALLY NOT ANY SORT OF TIME ESTIMATE AND IF YOU SPECIFY A PRIORITY OF ANY KIND THAT IS ALSO A GUNDAM-MELTABLE OFFENSE !!**"
   },
-  "global_alerts": [
+  "globalAlerts": [
     {
-      "alert": "ON TOOLS: Use config.mk custom targets invoked via mcp-server-make. Pipe output through tee to build.log and tail. No direct shell commands. No time.Sleep in tests."
+      "priority": "CRITICAL",
+      "warning": "ON TOOLS: Use `config.mk` to create custom targets to run with Make. ALWAYS use custom targets that *limit* the amount of output you receive. For example, piping through tail, with FEW lines output. Prior to tail, pipe to tee. The file ./build.log in the root of the project is gitignored, so use that. That way you can *search* the output. To be clear, timing dependent tests are BANNED. As are those that take too long to run. Testing retries, for example, MUST be done in a way that supports avoiding running afoul of those CRITICAL rules. Abide. OBEY."
+    },
+    {
+      "priority": "CRITICAL_REPEATED",
+      "warning": "ON TOOLS: Use `config.mk` to create custom targets to run with Make. ALWAYS use custom targets that *limit* the amount of output you receive. For example, piping through tail, with FEW lines output. Prior to tail, pipe to tee. The file ./build.log in the root of the project is gitignored, so use that. That way you can *search* the output. To be clear, timing dependent tests are BANNED. As are those that take too long to run. Testing retries, for example, MUST be done in a way that supports avoiding running afoul of those CRITICAL rules. Abide. OBEY."
     }
   ],
-  "mandatory_directives": {
-    "subagent_policy": "!! MANDATORY OPERATIONAL DIRECTIVE !!",
-    "constraint": "The use of subagents via the runSubagent tool is MANDATORY for review and validation. Tasks are grouped for execution in subagent contexts."
+  "mandatoryDirectives": {
+    "subagentPolicy": "!! MANDATORY OPERATIONAL DIRECTIVE !!",
+    "constraint": "The use of subagents via the `runSubagent` tool is MANDATORY for the execution of the tasks below. Tasks are grouped specifically to be run in distinct subagent contexts to prevent context window exhaustion. Do not attempt to solve all groups in a single turn."
   },
-  "status_section": {
-    "current_state": "Two contiguous clean subagent reviews passed. All fixes verified. Build green (388 Swift + all Go unit + integration tests). Committing.",
-    "remaining_work": [
-      "Commit all changes (task 41)",
-      "Remaining expansion tasks (42-50) if time permits"
-    ]
+  "statusSection": {
+    "currentState": ""
   },
-  "sequential_tasks": [
-    {
-      "id": 1,
-      "title": "Fix getStringValue data loss",
-      "description": "Expand getStringValue in AccessibilityTraversal.swift to handle CFNumber, CFBoolean, CFDate, and AXValue (CFRange) types via CFGetTypeID inspection. Rename to getDisplayString.",
-      "status": "done"
-    },
-    {
-      "id": 2,
-      "title": "Test getDisplayString conversions",
-      "description": "Add unit tests passing CFNumber, CFBoolean, CFDate to getDisplayString and asserting correct string output.",
-      "status": "not-started"
-    },
-    {
-      "id": 3,
-      "title": "Fix _AXUIElementGetWindow stability",
-      "description": "Replace @_silgen_name hard link in WindowQuery.swift with dlsym(RTLD_DEFAULT) runtime lookup. Fall back to heuristic matching if symbol not found.",
-      "status": "done"
-    },
-    {
-      "id": 4,
-      "title": "Test dlsym fallback path",
-      "description": "Add unit test verifying fetchAXWindowInfo works via heuristic matching when private API is unavailable.",
-      "status": "not-started"
-    },
-    {
-      "id": 5,
-      "title": "Fix InputController i18n",
-      "description": "Add TIS/UCKeyTranslate dynamic key resolution in InputController.swift for single-character inputs. Keep hardcoded values for function/special keys. Fall back to US-QWERTY if TIS fails.",
-      "status": "done"
-    },
-    {
-      "id": 6,
-      "title": "Test dynamic key resolution",
-      "description": "Add unit test verifying resolveKeyCode roundtrip: char -> keycode -> UCKeyTranslate -> same char.",
-      "status": "not-started"
-    },
-    {
-      "id": 7,
-      "title": "Fix AppOpener process targeting",
-      "description": "Replace .first on runningApplications with deterministic sort: prefer .regular activationPolicy, then isActive, then most recent launchDate.",
-      "status": "done"
-    },
-    {
-      "id": 8,
-      "title": "Test AppOpener instance sorting",
-      "description": "Add unit test with mock SortableApp struct verifying correct ranking of multiple instances.",
-      "status": "not-started"
-    },
-    {
-      "id": 9,
-      "title": "Fix statistics counting bug",
-      "description": "In walkElementTree, only increment excluded_non_interactable and excluded_no_text when those are the actual exclusion reasons, not when visibility is the cause.",
-      "status": "done"
-    },
-    {
-      "id": 10,
-      "title": "Test statistics accuracy",
-      "description": "Add unit test verifying that elements excluded for visibility do not increment text/interactability counters.",
-      "status": "not-started"
-    },
-    {
-      "id": 11,
-      "title": "Fix ElementData equality confusion",
-      "description": "Remove path from ElementData.== and hash(into:). Use role+text+geometry for equality. Path is metadata, not identity.",
-      "status": "done"
-    },
-    {
-      "id": 12,
-      "title": "Test ElementData identity semantics",
-      "description": "Add tests verifying elements with same content but different paths are treated as equal.",
-      "status": "done"
-    },
-    {
-      "id": 13,
-      "title": "Fix areDoublesEqual tolerance",
-      "description": "Change default tolerance in ActionCoordinator.areDoublesEqual from 0.01 to 1.0 points to avoid false positives on Retina displays.",
-      "status": "done"
-    },
-    {
-      "id": 14,
-      "title": "Unify diffing implementations",
-      "description": "Replace CombinedActions.calculateDiff naive set-subtraction with the heuristic matching from ActionCoordinator. Ensure modified array is populated.",
-      "status": "done"
-    },
-    {
-      "id": 15,
-      "title": "Test unified diffing logic",
-      "description": "Add unit tests: two ElementData arrays with moved and text-changed elements. Assert correct modified count with change details.",
-      "status": "done"
-    },
-    {
-      "id": 16,
-      "title": "Fix fire-and-forget visualization",
-      "description": "Documented fire-and-forget as intentional (cosmetic side-effect, presentVisuals handles own cleanup). Heavy refactor deferred — no behavior change needed.",
-      "status": "done"
-    },
-    {
-      "id": 17,
-      "title": "Test visualization lifecycle",
-      "description": "Visualization fire-and-forget is documented as intentional (task 16). No lifecycle test needed — cosmetic side-effect that handles own cleanup.",
-      "status": "done"
-    },
-    {
-      "id": 18,
-      "title": "Fix coordinate system docs",
-      "description": "Update ElementData doc comments to specify Quartz screen coordinates (origin top-left of primary display, y increases downward). Update HighlightInput comments.",
-      "status": "done"
-    },
-    {
-      "id": 19,
-      "title": "Build verification after SDK fixes",
-      "description": "Run make-all-with-log and swift-test-log to verify all SDK fixes compile and pass.",
-      "status": "done"
-    },
-    {
-      "id": 20,
-      "title": "Remove unused imports in tests",
-      "description": "Removed unused CoreGraphics imports from CombinedActionsTests, AccessibilityTraversalStatisticsTests, ActionCoordinatorTests. Removed unused duration/keyCode variables from HighlightInputTests.",
-      "status": "done"
-    },
-    {
-      "id": 21,
-      "title": "Fix trailing whitespace in tests",
-      "description": "Audit found no trailing whitespace in Swift test or SDK source files. Clean.",
-      "status": "done"
-    },
-    {
-      "id": 22,
-      "title": "Fix async test cleanup flakiness",
-      "description": "Replaced Task.sleep-based cleanup in AppOpenerTests with poll-until loop checking app.isTerminated.",
-      "status": "done"
-    },
-    {
-      "id": 23,
-      "title": "Add behavioral SDK tests",
-      "description": "Add tests that exercise actual SDK behavior: traversal logic, clickWithDiff bracketing, performAction sequencing. Not just struct verification.",
-      "status": "not-started"
-    },
-    {
-      "id": 24,
-      "title": "Consolidate review findings",
-      "description": "Subagent consolidated all 6 review files. 12/15 findings FIXED, 3 low-severity NOT FIXED (fire-and-forget by design, Task.sleep replaced, test fallback matched).",
-      "status": "done"
-    },
-    {
-      "id": 25,
-      "title": "Delete review files",
-      "description": "Deleted review-1.md through review-5.md and review-4-findings-1.md.",
-      "status": "done"
-    },
-    {
-      "id": 26,
-      "title": "Audit Server fputs/print usage",
-      "description": "Search Server/Sources for fputs and unannotated print. Replace with Logger and OSLogPrivacy annotations.",
-      "status": "done"
-    },
-    {
-      "id": 27,
-      "title": "Audit SDK fputs/print usage",
-      "description": "Search Sources/MacosUseSDK for any remaining fputs or unannotated print. Replace with Logger. Removed 12 dead commented-out fputs calls.",
-      "status": "done"
-    },
-    {
-      "id": 28,
-      "title": "Audit Go MCP server correctness",
-      "description": "Audited all internal/server/*.go. Fixed: stdio deadlock (split mutexes), MCP Content struct (data+mimeType fields), screenshot data-URI→proper image content, WaitElementState nil deref guard, screenshot unused params removed, UpdateMacro update_mask added.",
-      "status": "done"
-    },
-    {
-      "id": 29,
-      "title": "Audit Go transport layer",
-      "description": "Audited internal/transport/*.go. Fixed: Prometheus histogram double-counting (break+conditional Inf), HTTP 204 for notifications instead of null JSON. Added deadlock regression test and histogram cumulative bucket test.",
-      "status": "done"
-    },
-    {
-      "id": 30,
-      "title": "Audit proto API completeness",
-      "description": "Audited all proto files. Fixed Window.title comment (hybrid authority: ListWindows=Quartz, GetWindow=AX). Identified minor structural issues (resource annotations on inline types, singleton plural naming) — deferred as non-breaking.",
-      "status": "done"
-    },
-    {
-      "id": 31,
-      "title": "Run api-linter on protos",
-      "description": "Execute api-linter via hack/google-api-linter.sh and fix any AIP violations.",
-      "status": "not-started"
-    },
-    {
-      "id": 32,
-      "title": "Audit integration test coverage",
-      "description": "Review integration/ tests for coverage gaps. Verify Calculator, TextEdit, Finder scenarios cover all RPC operations.",
-      "status": "not-started"
-    },
-    {
-      "id": 33,
-      "title": "Verify no time.Sleep in tests",
-      "description": "Found 1 violation in integration/error_scenarios_test.go. Replaced with PollUntilContext loop polling ListWindows.",
-      "status": "done"
-    },
-    {
-      "id": 34,
-      "title": "Audit CI/CD workflows",
-      "description": "Found set -eu in build.yaml. Removed it. All workflows use reusable patterns, ci.yaml is sole entry point.",
-      "status": "done"
-    },
-    {
-      "id": 35,
-      "title": "Audit documentation accuracy",
-      "description": "Updated docs/window-state-management.md: dlsym instead of @_silgen_name, Euclidean distance (hypot) instead of Manhattan, single-window fallback documented, MoveWindow/ResizeWindow polling claim corrected.",
-      "status": "done"
-    },
-    {
-      "id": 36,
-      "title": "Verify Swift Server tests pass",
-      "description": "Verified via make-all-with-log. All Swift tests pass (388 tests, 0 failures).",
-      "status": "done"
-    },
-    {
-      "id": 37,
-      "title": "Verify Go tests pass",
-      "description": "Verified via make-all-with-log. All Go unit tests and integration tests pass.",
-      "status": "done"
-    },
-    {
-      "id": 38,
-      "title": "Full build verification",
-      "description": "Complete make-all-with-log passes: Swift build+test, Go build+vet+staticcheck+betteralign+test, integration tests, buf lint, api-linter.",
-      "status": "done"
-    },
-    {
-      "id": 39,
-      "title": "First subagent review pass",
-      "description": "Run subagent with guarantee-correctness prompt against diff vs HEAD. Fixed H1 (session.go log.Printf), M3 (cross-ref comments).",
-      "status": "done"
-    },
-    {
-      "id": 40,
-      "title": "Second subagent review pass",
-      "description": "Second contiguous review passed with zero findings. Commit unblocked.",
-      "status": "done"
-    },
-    {
-      "id": 41,
-      "title": "Commit SDK fixes batch",
-      "description": "Commit all SDK fixes with descriptive message after two clean reviews.",
-      "status": "done"
-    },
-    {
-      "id": 42,
-      "title": "Expand: SDK thread safety",
-      "description": "Address AccessibilityTraversalOperation thread safety. Add actor isolation or document single-threaded usage requirement.",
-      "status": "not-started"
-    },
-    {
-      "id": 43,
-      "title": "Expand: SDK error handling audit",
-      "description": "Audit all SDK error paths for proper error propagation and user-friendly messages.",
-      "status": "not-started"
-    },
-    {
-      "id": 44,
-      "title": "Expand: Integration test gaps",
-      "description": "Add integration tests for retry behavior, display enumeration, observation lifecycle, and error scenarios.",
-      "status": "not-started"
-    },
-    {
-      "id": 45,
-      "title": "Expand: Proto field documentation",
-      "description": "Add comprehensive field-level documentation to all proto files specifying coordinate systems, units, and valid ranges.",
-      "status": "not-started"
-    },
-    {
-      "id": 46,
-      "title": "Expand: MCP tool completeness",
-      "description": "Verify all 77 MCP tools are correctly defined with proper input schemas and error handling.",
-      "status": "not-started"
-    },
-    {
-      "id": 47,
-      "title": "Final full build and test",
-      "description": "Complete build, Swift tests, Go tests, lint. All must pass.",
-      "status": "not-started"
-    },
-    {
-      "id": 48,
-      "title": "Final subagent review 1",
-      "description": "Run guarantee-correctness subagent review on complete diff.",
-      "status": "not-started"
-    },
-    {
-      "id": 49,
-      "title": "Final subagent review 2",
-      "description": "Run second contiguous guarantee-correctness review. Must be clean.",
-      "status": "not-started"
-    },
-    {
-      "id": 50,
-      "title": "Final commit",
-      "description": "Commit all remaining changes after two clean reviews.",
-      "status": "not-started"
-    }
-  ],
-  "final_enforcement_protocol": [
+  "sequentialTasks": [],
+  "continuousVerification": {
+    "task": "Run 'make all' with full logging after EVERY significant change",
+    "description": "Execute 'make make-all-with-log' after: (a) Each code change, (b) Each test addition, (c) Each task completion, (d) Each bug fix.",
+    "failPolicy": "If ANY test fails, STOP IMMEDIATELY and fix the issue before proceeding. Zero tolerance for test failures, timing issues, non-determinism, or race conditions.",
+    "testCoverage": "You will ALWAYS aim for 100% effective test coverage, and VERIFY test coverage by means of the tooling available to you. You will NOT proceed to the next task until you have achieved 100% effective test coverage for the current task, and have verified that coverage with the tools available to you."
+  },
+  "finalEnforcementProtocol": [
     {
       "type": "POST_EXECUTION_WARNING",
-      "alert": "ON TOOLS: Use config.mk custom targets invoked via mcp-server-make. Pipe output through tee to build.log and tail. No direct shell commands."
+      "alert": "ON TOOLS: Use `config.mk` to create custom targets to run with Make. ALWAYS use custom targets that *limit* the amount of output you receive. For example, piping through tail, with FEW lines output. Prior to tail, pipe to tee. The file ./build.log in the root of the project is gitignored, so use that. That way you can *search* the output. To be clear, timing dependent tests are BANNED. As are those that take too long to run. Testing retries, for example, MUST be done in a way that supports avoiding running afoul of those CRITICAL rules. Abide. OBEY."
+    },
+    {
+      "type": "POST_EXECUTION_WARNING_REPEATED",
+      "alert": "ON TOOLS: Use `config.mk` to create custom targets to run with Make. ALWAYS use custom targets that *limit* the amount of output you receive. For example, piping through tail, with FEW lines output. Prior to tail, pipe to tee. The file ./build.log in the root of the project is gitignored, so use that. That way you can *search* the output. To be clear, timing dependent tests are BANNED. As are those that take too long to run. Testing retries, for example, MUST be done in a way that supports avoiding running afoul of those CRITICAL rules. Abide. OBEY."
     }
   ]
 }
