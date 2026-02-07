@@ -154,7 +154,9 @@ final class InputControllerTests: XCTestCase {
     }
 
     func testWhitespaceOnly_returnsNil() {
-        XCTAssertNil(mapKeyNameToKeyCode(" "))
+        // A single space character now resolves via TIS/UCKeyTranslate to KEY_SPACE (49)
+        XCTAssertEqual(mapKeyNameToKeyCode(" "), KEY_SPACE)
+        // Multi-character whitespace still returns nil (not a valid key name or single char)
         XCTAssertNil(mapKeyNameToKeyCode("  "))
     }
 

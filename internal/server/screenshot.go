@@ -65,10 +65,6 @@ func (s *MCPServer) handleCaptureScreenshot(call *ToolCall) (*ToolResult, error)
 		Display int32 `json:"display"`
 		// Whether to include OCR text extraction
 		IncludeOCR bool `json:"include_ocr"`
-		// Maximum width to resize the image to (for token efficiency)
-		MaxWidth int32 `json:"max_width"`
-		// Maximum height to resize the image to (for token efficiency)
-		MaxHeight int32 `json:"max_height"`
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
@@ -100,8 +96,9 @@ func (s *MCPServer) handleCaptureScreenshot(call *ToolCall) (*ToolResult, error)
 	result := &ToolResult{
 		Content: []Content{
 			{
-				Type: "image",
-				Text: fmt.Sprintf("data:%s;base64,%s", mediaType, imageData),
+				Type:     "image",
+				Data:     imageData,
+				MimeType: mediaType,
 			},
 		},
 	}
@@ -177,8 +174,9 @@ func (s *MCPServer) handleCaptureRegionScreenshot(call *ToolCall) (*ToolResult, 
 	result := &ToolResult{
 		Content: []Content{
 			{
-				Type: "image",
-				Text: fmt.Sprintf("data:%s;base64,%s", mediaType, imageData),
+				Type:     "image",
+				Data:     imageData,
+				MimeType: mediaType,
 			},
 			{
 				Type: "text",
@@ -247,8 +245,9 @@ func (s *MCPServer) handleCaptureWindowScreenshot(call *ToolCall) (*ToolResult, 
 	result := &ToolResult{
 		Content: []Content{
 			{
-				Type: "image",
-				Text: fmt.Sprintf("data:%s;base64,%s", mediaType, imageData),
+				Type:     "image",
+				Data:     imageData,
+				MimeType: mediaType,
 			},
 			{
 				Type: "text",
@@ -326,8 +325,9 @@ func (s *MCPServer) handleCaptureElementScreenshot(call *ToolCall) (*ToolResult,
 	elemResult := &ToolResult{
 		Content: []Content{
 			{
-				Type: "image",
-				Text: fmt.Sprintf("data:%s;base64,%s", mediaType, imageData),
+				Type:     "image",
+				Data:     imageData,
+				MimeType: mediaType,
 			},
 			{
 				Type: "text",

@@ -12,11 +12,10 @@ final class HighlightInputTests: XCTestCase {
     func testClickAndVisualize_createsOverlay() {
         // Test that clickAndVisualize creates proper overlay descriptors
         let point = CGPoint(x: 100, y: 50)
-        let duration = 0.5
 
         // We can't easily test the actual visual output without UI,
         // but we can verify the overlay creation logic
-        let screenHeight = NSScreen.main?.frame.height ?? 1080
+        let screenHeight = NSScreen.main?.frame.height ?? 0
 
         // Simulate the overlay creation logic
         let size: CGFloat = 154
@@ -35,8 +34,7 @@ final class HighlightInputTests: XCTestCase {
 
     func testDoubleClickAndVisualize_createsOverlay() {
         let point = CGPoint(x: 200, y: 100)
-        let duration = 0.5
-        let screenHeight: CGFloat = 1080
+        let screenHeight: CGFloat = NSScreen.main?.frame.height ?? 0
 
         // Double click uses same overlay logic as single click
         let size: CGFloat = 154
@@ -53,7 +51,7 @@ final class HighlightInputTests: XCTestCase {
 
     func testRightClickAndVisualize_createsOverlay() {
         let point = CGPoint(x: 150, y: 75)
-        let screenHeight: CGFloat = 1080
+        let screenHeight: CGFloat = NSScreen.main?.frame.height ?? 0
 
         let size: CGFloat = 154
         let originX = point.x - (size / 2.0)
@@ -68,10 +66,6 @@ final class HighlightInputTests: XCTestCase {
     // MARK: - Press Key and Visualize
 
     func testPressKeyAndVisualize_createsCaption() {
-        let keyCode: CGKeyCode = 36 // Return key
-        let duration = 0.5
-        let screenHeight = NSScreen.main?.frame.height ?? 1080
-
         // Key press visualization uses a caption at screen center
         guard let screenCenter = getMainScreenCenter() else {
             XCTSkip("No main screen available")
@@ -97,11 +91,10 @@ final class HighlightInputTests: XCTestCase {
 
     func testMoveMouseAndVisualize_createsOverlay() {
         let point = CGPoint(x: 300, y: 200)
-        let duration = 0.5
 
         // Move uses a smaller highlight box
         let size: CGFloat = 50
-        let screenHeight = NSScreen.main?.frame.height ?? 1080
+        let screenHeight = NSScreen.main?.frame.height ?? 0
         let originX = point.x - (size / 2.0)
         let originY = screenHeight - point.y - (size / 2.0)
         let frame = CGRect(x: originX, y: originY, width: size, height: size)

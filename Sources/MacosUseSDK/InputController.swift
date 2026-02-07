@@ -1,11 +1,100 @@
 // swiftlint:disable all -- Largely unchanged from upstream.
 
 import AppKit  // Needed for Process and potentially other things later
+import Carbon.HIToolbox
 import CoreGraphics
 import Foundation
 import OSLog
 
 private let logger = sdkLogger(category: "InputController")
+
+// --- Dynamic Key Code Resolution via TIS/UCKeyTranslate ---
+
+/// Resolves a `CGKeyCode` for a given character by querying the current keyboard
+/// input source via TIS and translating each virtual key code with `UCKeyTranslate`.
+///
+/// This enables correct key-code mapping on non-US keyboard layouts (AZERTY,
+/// QWERTZ, Dvorak, etc.) where the physical key that produces a given character
+/// differs from the US-QWERTY assumption.
+///
+/// - Parameter character: A single-character string to resolve (e.g. "a", "z", "/").
+/// - Returns: The `CGKeyCode` whose unmodified output matches `character`
+///   (case-insensitive), or `nil` if no match is found or the TIS APIs are
+///   unavailable.
+public func resolveKeyCode(for character: String) -> CGKeyCode? {
+  guard character.count == 1 else {
+    logger.warning(
+      "resolveKeyCode called with multi-character string; returning nil")
+    return nil
+  }
+
+  let target = character.lowercased()
+
+  // 1. Obtain the current keyboard input source.
+  guard let sourceRef = TISCopyCurrentKeyboardInputSource() else {
+    logger.warning("TISCopyCurrentKeyboardInputSource returned nil")
+    return nil
+  }
+  let source = sourceRef.takeRetainedValue()
+
+  // 2. Get the Unicode key layout data.
+  guard
+    let layoutDataRef = TISGetInputSourceProperty(
+      source, kTISPropertyUnicodeKeyLayoutData)
+  else {
+    logger.warning(
+      "TISGetInputSourceProperty returned nil for kTISPropertyUnicodeKeyLayoutData")
+    return nil
+  }
+
+  let layoutData = unsafeBitCast(layoutDataRef, to: CFData.self)
+  let layoutPtr = unsafeBitCast(
+    CFDataGetBytePtr(layoutData),
+    to: UnsafePointer<UCKeyboardLayout>.self
+  )
+
+  let keyboardType = UInt32(LMGetKbdType())
+
+  // 3. Iterate virtual key codes 0-127 and translate each.
+  var deadKeyState: UInt32 = 0
+  let maxLength = 4
+  var chars = [UniChar](repeating: 0, count: maxLength)
+  var actualLength = 0
+
+  for keyCode: UInt16 in 0...127 {
+    deadKeyState = 0
+    actualLength = 0
+
+    let status = UCKeyTranslate(
+      layoutPtr,
+      keyCode,
+      UInt16(kUCKeyActionDisplay),
+      0,  // no modifiers
+      keyboardType,
+      OptionBits(kUCKeyTranslateNoDeadKeysBit),
+      &deadKeyState,
+      maxLength,
+      &actualLength,
+      &chars
+    )
+
+    guard status == noErr, actualLength > 0 else { continue }
+
+    let produced = String(
+      utf16CodeUnits: chars, count: actualLength
+    ).lowercased()
+
+    if produced == target {
+      logger.debug(
+        "resolveKeyCode: '\(character, privacy: .public)' -> keyCode \(keyCode, privacy: .public)")
+      return CGKeyCode(keyCode)
+    }
+  }
+
+  logger.info(
+    "resolveKeyCode: no key code found for '\(character, privacy: .public)' on current layout")
+  return nil
+}
 
 // --- Add new Error Cases for Input Control ---
 extension MacosUseSDKError {
@@ -325,8 +414,10 @@ public func writeText(_ text: String) async throws {
 /// - Parameter keyName: The name of the key (e.g., "return", "a", "esc") or a string representation of the key code number.
 /// - Returns: The corresponding `CGKeyCode` or `nil` if the name is not recognized and cannot be parsed as a number.
 public func mapKeyNameToKeyCode(_ keyName: String) -> CGKeyCode? {
-  switch keyName.lowercased() {
-  // Special Keys
+  let lowered = keyName.lowercased()
+
+  // --- Special Keys (layout-independent, hardcoded) ---
+  switch lowered {
   case "return", "enter": return KEY_RETURN
   case "tab": return KEY_TAB
   case "space": return KEY_SPACE
@@ -337,7 +428,36 @@ public func mapKeyNameToKeyCode(_ keyName: String) -> CGKeyCode? {
   case "down": return KEY_ARROW_DOWN
   case "up": return KEY_ARROW_UP
 
-  // Letters (Standard US QWERTY Layout Key Codes) - Assuming US QWERTY. Might need adjustments for others.
+  // Function Keys (layout-independent, hardcoded)
+  case "f1": return 122
+  case "f2": return 120
+  case "f3": return 99
+  case "f4": return 118
+  case "f5": return 96
+  case "f6": return 97
+  case "f7": return 98
+  case "f8": return 100
+  case "f9": return 101
+  case "f10": return 109
+  case "f11": return 103
+  case "f12": return 111
+  // Add F13-F20 if needed
+  default:
+    break  // Fall through to dynamic / fallback resolution below.
+  }
+
+  // --- Single characters: try dynamic TIS/UCKeyTranslate resolution first ---
+  if lowered.count == 1 {
+    if let dynamicCode = resolveKeyCode(for: lowered) {
+      return dynamicCode
+    }
+    logger.info(
+      "dynamic resolution failed for '\(keyName, privacy: .public)', falling back to US-QWERTY map")
+  }
+
+  // --- Fallback: US-QWERTY hardcoded map ---
+  switch lowered {
+  // Letters
   case "a": return 0
   case "b": return 11
   case "c": return 8
@@ -389,21 +509,6 @@ public func mapKeyNameToKeyCode(_ keyName: String) -> CGKeyCode? {
   case ".": return 47
   case "/": return 44
   case "`": return 50  // Grave accent / Tilde
-
-  // Function Keys
-  case "f1": return 122
-  case "f2": return 120
-  case "f3": return 99
-  case "f4": return 118
-  case "f5": return 96
-  case "f6": return 97
-  case "f7": return 98
-  case "f8": return 100
-  case "f9": return 101
-  case "f10": return 109
-  case "f11": return 103
-  case "f12": return 111
-  // Add F13-F20 if needed
 
   default:
     // If not a known name, attempt to interpret it as a raw key code number

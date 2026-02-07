@@ -155,9 +155,23 @@ private class AppOpenerOperation {
     // (PID finding logic...)
     if let bID = bundleIdentifier {
       logger.info("checking running applications for bundle id: \(bID, privacy: .public)")
-      if let runningApp = NSRunningApplication.runningApplications(withBundleIdentifier: bID).first {
+      let candidates = NSRunningApplication.runningApplications(withBundleIdentifier: bID)
+      // Deterministic selection: prefer .regular activation policy, then active, then most recent launch
+      let bestCandidate = candidates.sorted { a, b in
+        // Primary: prefer .regular (foreground apps) over .accessory/.prohibited
+        let aPol = a.activationPolicy.rawValue
+        let bPol = b.activationPolicy.rawValue
+        if aPol != bPol { return aPol < bPol }
+        // Secondary: prefer currently active
+        if a.isActive != b.isActive { return a.isActive }
+        // Tertiary: prefer most recently launched
+        let aDate = a.launchDate ?? .distantPast
+        let bDate = b.launchDate ?? .distantPast
+        return aDate > bDate
+      }.first
+      if let runningApp = bestCandidate {
         foundPID = runningApp.processIdentifier
-        logger.info("found running instance with pid \(foundPID!, privacy: .public) for bundle id \(bID, privacy: .public).")
+        logger.info("found running instance with pid \(foundPID!, privacy: .public) for bundle id \(bID, privacy: .public) (policy: \(runningApp.activationPolicy.rawValue, privacy: .public), active: \(runningApp.isActive, privacy: .public)).")
       } else {
         logger.info(
           "no running instance found for bundle id \(bID, privacy: .public) before activation attempt.")

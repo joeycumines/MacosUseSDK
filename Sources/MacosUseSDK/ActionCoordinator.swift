@@ -274,119 +274,12 @@ public func performAction(
   if options.showDiff {
     logger.info("[Coordinator] Calculating detailed traversal diff...")
     if let beforeElements = result.traversalBefore?.elements,
-      let afterElements = result.traversalAfter?.elements {
-
-      // --- DETAILED DIFF LOGIC START ---
-      var added: [ElementData] = []
-      var removed: [ElementData] = []
-      var modified: [ModifiedElement] = []
-
-      // FIX: Use let for afterElements copy, since we iterate it but don't mutate this copy directly
-      let remainingAfter = afterElements
-      var matchedAfterIndices = Set<Int>()  // Keep track of matched 'after' elements
-
-      let positionTolerance: Double = 5.0  // Max distance in points to consider a position match
-
-      // Iterate through 'before' elements to find matches or mark as removed
-      for beforeElement in beforeElements {
-        var bestMatchIndex: Int?
-        var smallestDistanceSq: Double = .greatestFiniteMagnitude
-
-        // Find potential matches in the 'after' list
-        for (index, afterElement) in remainingAfter.enumerated() {
-          // Skip if already matched or role doesn't match
-          if matchedAfterIndices.contains(index) || beforeElement.role != afterElement.role {
-            continue
-          }
-
-          // Check position proximity (if coordinates exist)
-          if let bx = beforeElement.x, let by = beforeElement.y, let ax = afterElement.x,
-            let ay = afterElement.y {
-            let dx = bx - ax
-            let dy = by - ay
-            let distanceSq = (dx * dx) + (dy * dy)
-
-            if distanceSq <= (positionTolerance * positionTolerance) {
-              // Found a plausible match based on role and position
-              // If multiple are close, pick the closest one
-              if distanceSq < smallestDistanceSq {
-                smallestDistanceSq = distanceSq
-                bestMatchIndex = index
-              }
-            }
-          } else if beforeElement.x == nil && afterElement.x == nil && beforeElement.y == nil
-            && afterElement.y == nil {
-            // If *both* lack position, consider them potentially matched if role matches (and text?)
-            // For now, let's focus on positional matching primarily.
-            // Maybe add a fallback: if role matches AND text matches (and text exists)
-            if let bt = beforeElement.text, let at = afterElement.text, bt == at {
-              if bestMatchIndex == nil {  // Only if no positional match found yet
-                bestMatchIndex = index
-                // Don't update smallestDistanceSq here as it's not a positional match
-              }
-            }
-          }
-        }  // End inner loop through 'after' elements
-
-        if let matchIndex = bestMatchIndex {
-          // Found a match
-          let afterElement = remainingAfter[matchIndex]
-          matchedAfterIndices.insert(matchIndex)  // Mark as matched
-
-          // --- UPDATED Attribute Comparison ---
-          var attributeChanges: [AttributeChangeDetail] = []
-
-          // Handle TEXT change specifically using the dedicated initializer
-          if beforeElement.text != afterElement.text {
-            attributeChanges.append(
-              AttributeChangeDetail(textBefore: beforeElement.text, textAfter: afterElement.text))
-          }
-
-          // Handle other attributes using generic/double initializers
-          if !areDoublesEqual(beforeElement.x, afterElement.x) {
-            attributeChanges.append(
-              AttributeChangeDetail(attribute: "x", before: beforeElement.x, after: afterElement.x))
-          }
-          if !areDoublesEqual(beforeElement.y, afterElement.y) {
-            attributeChanges.append(
-              AttributeChangeDetail(attribute: "y", before: beforeElement.y, after: afterElement.y))
-          }
-          if !areDoublesEqual(beforeElement.width, afterElement.width) {
-            attributeChanges.append(
-              AttributeChangeDetail(
-                attribute: "width", before: beforeElement.width, after: afterElement.width))
-          }
-          if !areDoublesEqual(beforeElement.height, afterElement.height) {
-            attributeChanges.append(
-              AttributeChangeDetail(
-                attribute: "height", before: beforeElement.height, after: afterElement.height))
-          }
-          // --- End Updated Attribute Comparison ---
-
-          if !attributeChanges.isEmpty {
-            modified.append(
-              ModifiedElement(before: beforeElement, after: afterElement, changes: attributeChanges)
-            )
-          }
-        } else {
-          // No match found for this 'before' element, it was removed
-          removed.append(beforeElement)
-        }
-      }  // End outer loop through 'before' elements
-
-      // Any 'after' elements not matched are 'added'
-      for (index, afterElement) in remainingAfter.enumerated() {
-        if !matchedAfterIndices.contains(index) {
-          added.append(afterElement)
-        }
-      }
-
-      // Assign to result (using the TraversalDiff struct from CombinedActions.swift)
-      result.traversalDiff = TraversalDiff(added: added, removed: removed, modified: modified)
+      let afterElements = result.traversalAfter?.elements
+    {
+      result.traversalDiff = CombinedActions.calculateDiff(
+        beforeElements: beforeElements, afterElements: afterElements)
       logger.info(
-        "[Coordinator] Detailed diff calculated: Added=\(added.count, privacy: .public), Removed=\(removed.count, privacy: .public), Modified=\(modified.count, privacy: .public)")
-      // --- DETAILED DIFF LOGIC END ---
-
+        "[Coordinator] Detailed diff calculated: Added=\(result.traversalDiff?.added.count ?? 0, privacy: .public), Removed=\(result.traversalDiff?.removed.count ?? 0, privacy: .public), Modified=\(result.traversalDiff?.modified.count ?? 0, privacy: .public)")
     } else {
       logger.warning(
         "[Coordinator] Cannot calculate detailed diff because one or both traversals failed or were not performed.")
@@ -404,6 +297,10 @@ public func performAction(
 
       if !descriptors.isEmpty {
         let config = VisualsConfig(duration: options.animationDuration, animationStyle: .none)
+        // Fire-and-forget: visualization is a cosmetic side-effect that must not
+        // block the ActionResult return. presentVisuals handles its own cleanup
+        // (window lifecycle, timer-based removal). The Task is detached so callers
+        // receive results immediately while animation plays in the background.
         Task { @MainActor in
           await presentVisuals(overlays: descriptors, configuration: config)
         }
@@ -505,18 +402,5 @@ private func executeInputAction(_ action: InputAction, options: ActionOptions) a
       "simulating mouse button up at \(String(describing: point), privacy: .public) button: \(button.rawValue, privacy: .public)"
     )
     try await mouseButtonUp(at: point, button: button, modifiers: modifiers)
-  }
-}
-
-// --- ADD Helper function for comparing optional Doubles ---
-private func areDoublesEqual(_ d1: Double?, _ d2: Double?, tolerance: Double = 0.01) -> Bool {
-  switch (d1, d2) {
-  case (nil, nil):
-    return true  // Both nil are considered equal in this context
-  case (let val1?, let val2?):
-    // Use tolerance for floating point comparison if both exist
-    return abs(val1 - val2) < tolerance
-  default:
-    return false  // One is nil, the other is not
   }
 }

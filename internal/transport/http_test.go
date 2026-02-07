@@ -132,6 +132,35 @@ func TestHTTPTransport_HandleMessage_InvalidJSON(t *testing.T) {
 	}
 }
 
+// TestHTTPTransport_HandleMessage_Notification verifies that JSON-RPC 2.0
+// notifications (where handler returns nil, nil) produce a 204 No Content
+// response instead of encoding JSON null. A prior bug sent "null" as the
+// response body with 200 OK.
+func TestHTTPTransport_HandleMessage_Notification(t *testing.T) {
+	tr := NewHTTPTransport(nil)
+	tr.handler = func(msg *Message) (*Message, error) {
+		// Notifications return nil response
+		return nil, nil
+	}
+
+	body := bytes.NewBufferString(`{"jsonrpc":"2.0","method":"notifications/initialized"}`)
+	req := httptest.NewRequest("POST", "/message", body)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	tr.handleMessage(w, req)
+
+	resp := w.Result()
+	if resp.StatusCode != http.StatusNoContent {
+		t.Errorf("Status = %d, want 204 for notification", resp.StatusCode)
+	}
+
+	respBody, _ := io.ReadAll(resp.Body)
+	if len(respBody) > 0 {
+		t.Errorf("Expected empty body for notification, got: %s", respBody)
+	}
+}
+
 func TestHTTPTransport_HandleHealth(t *testing.T) {
 	tr := NewHTTPTransport(nil)
 

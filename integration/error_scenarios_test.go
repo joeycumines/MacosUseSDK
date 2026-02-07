@@ -210,8 +210,20 @@ func TestErrorScenarios_AppCrashDuringOperation(t *testing.T) {
 	cmd := exec.Command("killall", "-9", "Calculator")
 	_ = cmd.Run()
 
-	// Wait a moment for the crash to be detected
-	time.Sleep(500 * time.Millisecond)
+	// Wait for the crash to be detected — poll until the app's windows are gone.
+	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
+		resp, listErr := client.ListWindows(ctx, &pb.ListWindowsRequest{
+			Parent: app.Name,
+		})
+		if listErr != nil {
+			// gRPC error means the app is gone — that counts as detected.
+			return true, nil
+		}
+		return len(resp.Windows) == 0, nil
+	})
+	if err != nil {
+		t.Logf("Warning: poll for crash detection timed out: %v", err)
+	}
 
 	// Try to perform an operation on the crashed app
 	t.Log("Attempting operation on crashed app...")

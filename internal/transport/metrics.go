@@ -130,14 +130,20 @@ func (m *MetricsRegistry) ObserveHistogram(name string, labels string, value flo
 	h.sums[labels] += value
 	h.totals[labels]++
 
-	// Update bucket counts
+	// Place the observation in the smallest matching bucket.
+	// WritePrometheus accumulates these into Prometheus-style cumulative counts.
+	matched := false
 	for i, bound := range h.buckets {
 		if value <= bound {
 			h.counts[labels][i]++
+			matched = true
+			break
 		}
 	}
-	// Always increment +Inf bucket
-	h.counts[labels][len(h.buckets)]++
+	if !matched {
+		// Value exceeds all finite bounds; count only in the +Inf bucket.
+		h.counts[labels][len(h.buckets)]++
+	}
 }
 
 // SetGauge sets a gauge to a specific value for the given label combination.

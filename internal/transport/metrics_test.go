@@ -76,6 +76,69 @@ func TestMetricsRegistry_ObserveHistogram(t *testing.T) {
 	}
 }
 
+// TestMetricsRegistry_ObserveHistogram_CumulativeBuckets verifies that
+// Prometheus-format cumulative bucket counts are correct. A prior bug
+// double-incremented buckets: each observation incremented ALL buckets where
+// value <= bound, then WritePrometheus accumulated again, resulting in
+// exponentially inflated counts.
+func TestMetricsRegistry_ObserveHistogram_CumulativeBuckets(t *testing.T) {
+	m := NewMetricsRegistry()
+
+	// Observe 3 values: 0.002 (bucket 0.005), 0.05 (bucket 0.05), 15 (+Inf only)
+	m.ObserveHistogram("mcp_request_duration_seconds", `tool="test"`, 0.002)
+	m.ObserveHistogram("mcp_request_duration_seconds", `tool="test"`, 0.05)
+	m.ObserveHistogram("mcp_request_duration_seconds", `tool="test"`, 15.0)
+
+	var buf bytes.Buffer
+	if err := m.WritePrometheus(&buf); err != nil {
+		t.Fatalf("WritePrometheus error: %v", err)
+	}
+
+	output := buf.String()
+
+	// Expected cumulative counts:
+	// le=0.001 → 0 (0.002 > 0.001)
+	// le=0.005 → 1 (0.002 <= 0.005)
+	// le=0.01  → 1
+	// le=0.025 → 1
+	// le=0.05  → 2 (0.002 + 0.05)
+	// le=0.1   → 2
+	// le=0.25  → 2
+	// le=0.5   → 2
+	// le=1     → 2
+	// le=2.5   → 2
+	// le=5     → 2
+	// le=10    → 2
+	// le=+Inf  → 3 (includes 15.0)
+	wantBuckets := map[string]string{
+		`le="0.001"`: "0",
+		`le="0.005"`: "1",
+		`le="0.01"`:  "1",
+		`le="0.025"`: "1",
+		`le="0.05"`:  "2",
+		`le="0.1"`:   "2",
+		`le="0.25"`:  "2",
+		`le="0.5"`:   "2",
+		`le="1"`:     "2",
+		`le="2.5"`:   "2",
+		`le="5"`:     "2",
+		`le="10"`:    "2",
+		`le="+Inf"`:  "3",
+	}
+
+	for bucket, wantCount := range wantBuckets {
+		expected := `mcp_request_duration_seconds_bucket{tool="test",` + bucket + `} ` + wantCount
+		if !strings.Contains(output, expected) {
+			t.Errorf("Bucket %s: want count %s, not found in output:\n%s", bucket, wantCount, output)
+		}
+	}
+
+	// Total count must equal number of observations
+	if !strings.Contains(output, `mcp_request_duration_seconds_count{tool="test"} 3`) {
+		t.Errorf("Expected count=3 in output:\n%s", output)
+	}
+}
+
 func TestMetricsRegistry_SetGauge(t *testing.T) {
 	m := NewMetricsRegistry()
 

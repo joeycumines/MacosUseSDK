@@ -10,6 +10,7 @@ import (
 	"io"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestNewStdioTransport(t *testing.T) {
@@ -26,7 +27,7 @@ func TestNewStdioTransport(t *testing.T) {
 	if transport.writer == nil {
 		t.Error("Transport writer is nil")
 	}
-	if transport.closed {
+	if transport.closed.Load() {
 		t.Error("Transport should not be closed initially")
 	}
 }
@@ -364,4 +365,64 @@ func TestConcurrentAccess(t *testing.T) {
 
 	go transport.Close()
 	go transport.IsClosed()
+}
+
+// TestConcurrentReadWrite verifies that WriteMessage does not deadlock when
+// ReadMessage is blocked waiting for input. This was a critical bug: the old
+// implementation used a single mutex for both read and write, causing
+// WriteMessage to block indefinitely while ReadMessage held the lock during
+// a blocking stdin read.
+func TestConcurrentReadWrite(t *testing.T) {
+	// slowReader blocks on Read until we close the channel, simulating
+	// a stdin that has no data yet (the normal steady state).
+	pr, pw := io.Pipe()
+	var stdout bytes.Buffer
+	tr := NewStdioTransport(pr, &stdout)
+
+	// Start a goroutine that blocks on ReadMessage (stdin has no data).
+	readDone := make(chan error, 1)
+	go func() {
+		_, err := tr.ReadMessage()
+		readDone <- err
+	}()
+
+	// Give the reader goroutine time to block inside ReadString.
+	// (Not a sleep-based assertion; the actual assertion is below.)
+	select {
+	case <-readDone:
+		t.Fatal("ReadMessage should be blocking, but it returned early")
+	default:
+	}
+
+	// WriteMessage MUST succeed even though ReadMessage is blocked.
+	// Under the old single-mutex design this would deadlock.
+	writeDone := make(chan error, 1)
+	go func() {
+		writeDone <- tr.WriteMessage(&Message{
+			JSONRPC: "2.0",
+			ID:      json.RawMessage(`1`),
+			Result:  json.RawMessage(`{"ok":true}`),
+		})
+	}()
+
+	select {
+	case err := <-writeDone:
+		if err != nil {
+			t.Fatalf("WriteMessage failed: %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("WriteMessage deadlocked (timed out after 2s)")
+	}
+
+	// Clean up: send data so ReadMessage unblocks, then close.
+	_, _ = pw.Write([]byte(`{"jsonrpc":"2.0","method":"ping"}` + "\n"))
+	select {
+	case err := <-readDone:
+		if err != nil {
+			t.Fatalf("ReadMessage failed after unblocking: %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("ReadMessage did not unblock after write")
+	}
+	pw.Close()
 }

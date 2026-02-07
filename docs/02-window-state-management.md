@@ -140,14 +140,18 @@ There is no public API to convert a `CGWindowID` (Quartz) to an `AXUIElement` (A
 
 ### 4.1 Tier 1: Private API (Gold Standard)
 
-We define the private symbol:
+We resolve the private symbol at runtime via `dlsym`:
 
 ```swift
-@_silgen_name("_AXUIElementGetWindow")
-func _AXUIElementGetWindow(_ element: AXUIElement, _ id: UnsafeMutablePointer<CGWindowID>) -> AXError
+typealias AXUIElementGetWindowFunc = @convention(c) (AXUIElement, UnsafeMutablePointer<CGWindowID>) -> AXError
+
+let handle = dlopen(nil, RTLD_LAZY)
+let sym = dlsym(handle, "_AXUIElementGetWindow")
 ```
 
-We attempt to call this on candidate AX elements. If it returns a `CGWindowID` matching our target, we have a deterministic 1:1 match. This is preferred 100% of the time.
+If `dlsym` returns a non-nil pointer, we cast it to the expected function signature and call it on candidate AX elements. If it returns a `CGWindowID` matching our target, we have a deterministic 1:1 match. This is preferred 100% of the time.
+
+**Graceful degradation:** Unlike `@_silgen_name` (which would crash at launch if the symbol were absent), the `dlsym` approach gracefully returns `nil` when the private symbol is unavailable — for example, if Apple removes it in a future macOS version. In that case, the code silently falls back to Tier 2 heuristic matching with no user-visible error.
 
 ### 4.2 Tier 2: The "1000px Heuristic"
 
@@ -155,8 +159,9 @@ If the private API fails (SIP restrictions or OS changes), we fall back to geome
 
 1.  We fetch the target window's `bounds` from Quartz.
 2.  We iterate over the application's AX windows.
-3.  We calculate a score: `|AX.x - Quartz.x| + |AX.y - Quartz.y| + ...`
+3.  We calculate a score using Euclidean distance via `hypot()`: `hypot(AX.x - Quartz.x, AX.y - Quartz.y) + hypot(AX.width - Quartz.width, AX.height - Quartz.height)`.
 4.  **The Threshold:** We accept a match only if the score is **\< 1000.0**.
+5.  **Single-Window Fallback:** When only one AX window exists for the PID, the match is accepted regardless of score, bypassing the 1000px threshold. A single window cannot be ambiguous.
 
 #### Heuristic Fairness, Biases, and Analysis
 
@@ -173,8 +178,8 @@ The geometry-based matching heuristic is intentionally pragmatic but not neutral
 
 Realistic examples observed in implementation:
 
-  * **Stacked clones:** Two identical windows offset by \~20px produce very small scores (≈40). The heuristic easily picks the intended window.
-  * **Electron shadow / custom chrome:** AX content (1000×800) vs CG bounds (1020×820) gives scores ∼30–40 — well under 1000.
+  * **Stacked clones:** Two identical windows offset by \~20px produce very small scores (≈28 via `hypot(20,20)`). The heuristic easily picks the intended window.
+  * **Electron shadow / custom chrome:** AX content (1000×800) vs CG bounds (1020×820) gives scores ∼28–30 (`hypot(20,20) + hypot(0,0)`) — well under 1000.
   * **Multi-monitor jump:** Moving a window from x=0 to x=3840 yields scores ≫1000; that correctly rejects the match to avoid cross-monitor false matches.
 
 -----
@@ -337,7 +342,7 @@ When modifying this subsystem, strictly adhere to the following constraints deri
 
   * **File:** `Server/Sources/MacosUseServer/WindowMethods.swift`
 
-      * [ ] **Constraint:** Mutation RPCs (Minimize, Move) must implement a **PollUntil** pattern (typically 2.0s timeout) to verify the state change via AX before returning success. Do not return simply because the write command was sent.
+      * [ ] **Constraint:** MinimizeWindow and RestoreWindow must implement a **PollUntil** pattern (typically 2.0s timeout) to verify the state change via AX before returning success. MoveWindow and ResizeWindow set the AX attribute and immediately query fresh AX state to return accurate geometry — they do not poll.
       * [ ] **Constraint:** **Must** call `windowRegistry.invalidate(windowID:)` immediately after any mutation to prevent stale reads on subsequent calls.
 
   * **File:** `Server/Sources/MacosUseServer/WindowRegistry.swift`

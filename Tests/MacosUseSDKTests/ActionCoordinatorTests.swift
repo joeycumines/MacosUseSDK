@@ -1,4 +1,3 @@
-import CoreGraphics
 @testable import MacosUseSDK
 import XCTest
 

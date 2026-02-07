@@ -85,10 +85,18 @@ type ToolResult struct {
 }
 
 // Content represents a content item in an MCP tool result.
-// Type is "text" for plain text or "image" for base64-encoded image data.
+//
+// For type="text":
+//   - Text: the text content
+//
+// For type="image":
+//   - Data: base64-encoded image bytes (no data-URI prefix)
+//   - MimeType: MIME type (e.g., "image/png", "image/jpeg")
 type Content struct {
-	Type string `json:"type"`
-	Text string `json:"text,omitempty"`
+	Type     string `json:"type"`
+	Text     string `json:"text,omitempty"`
+	Data     string `json:"data,omitempty"`
+	MimeType string `json:"mimeType,omitempty"`
 }
 
 // NewMCPServer creates a new MCP server with the given configuration.
@@ -223,14 +231,6 @@ func (s *MCPServer) registerTools() {
 					"include_ocr": map[string]interface{}{
 						"type":        "boolean",
 						"description": "Whether to include OCR text extraction in response",
-					},
-					"max_width": map[string]interface{}{
-						"type":        "integer",
-						"description": "Maximum width to resize the image to (for token efficiency). 0 = no resize.",
-					},
-					"max_height": map[string]interface{}{
-						"type":        "integer",
-						"description": "Maximum height to resize the image to (for token efficiency). 0 = no resize.",
 					},
 				},
 			},

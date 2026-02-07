@@ -378,6 +378,12 @@ func (t *HTTPTransport) handleMessage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// JSON-RPC 2.0 notifications have no response; return 204 No Content.
+	if response == nil {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		log.Printf("Error encoding response: %v", err)

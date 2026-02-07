@@ -703,11 +703,18 @@ func (s *MCPServer) handleWaitElementState(call *ToolCall) (*ToolResult, error) 
 		}, nil
 	}
 
+	var elemInfo string
+	if resp.Element != nil {
+		elemInfo = fmt.Sprintf("%s (%s)", resp.Element.GetText(), resp.Element.GetRole())
+	} else {
+		elemInfo = "(element details unavailable)"
+	}
+
 	return &ToolResult{
 		Content: []Content{{
 			Type: "text",
-			Text: fmt.Sprintf("Element %s reached state '%s': %s (%s)",
-				params.ElementID, params.Condition, resp.Element.GetText(), resp.Element.Role),
+			Text: fmt.Sprintf("Element %s reached state '%s': %s",
+				params.ElementID, params.Condition, elemInfo),
 		}},
 	}, nil
 }

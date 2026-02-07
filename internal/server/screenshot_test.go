@@ -180,8 +180,11 @@ func TestHandleCaptureScreenshot_Success_PNG(t *testing.T) {
 	if result.Content[0].Type != "image" {
 		t.Errorf("first content type = %q, want 'image'", result.Content[0].Type)
 	}
-	if !strings.Contains(result.Content[0].Text, "data:image/png;base64,") {
-		t.Errorf("image content does not contain PNG data URI: %s", result.Content[0].Text)
+	if result.Content[0].MimeType != "image/png" {
+		t.Errorf("image content MimeType = %q, want 'image/png'", result.Content[0].MimeType)
+	}
+	if result.Content[0].Data == "" {
+		t.Error("image content Data is empty")
 	}
 
 	// Second content should be metadata text
@@ -226,8 +229,11 @@ func TestHandleCaptureScreenshot_Success_JPEG(t *testing.T) {
 		t.Errorf("result.IsError = true, want false")
 	}
 
-	if !strings.Contains(result.Content[0].Text, "data:image/jpeg;base64,") {
-		t.Errorf("image content does not contain JPEG data URI: %s", result.Content[0].Text)
+	if result.Content[0].MimeType != "image/jpeg" {
+		t.Errorf("image content MimeType = %q, want 'image/jpeg'", result.Content[0].MimeType)
+	}
+	if result.Content[0].Data == "" {
+		t.Error("image content Data is empty")
 	}
 }
 
@@ -1123,6 +1129,9 @@ func TestHandleCaptureScreenshot_TableDriven(t *testing.T) {
 			var foundText string
 			for _, c := range result.Content {
 				foundText += c.Text + "\n"
+				if c.MimeType != "" {
+					foundText += c.MimeType + "\n"
+				}
 			}
 			for _, want := range tt.wantContains {
 				if !strings.Contains(foundText, want) {
@@ -1517,14 +1526,17 @@ func TestScreenshotHandlers_Base64Encoding(t *testing.T) {
 		t.Fatalf("result.IsError = true: %s", result.Content[0].Text)
 	}
 
-	// Verify data URI format
-	text := result.Content[0].Text
-	if !strings.HasPrefix(text, "data:image/png;base64,") {
-		t.Errorf("image content does not start with data URI prefix: %s", text)
+	// Verify MimeType field
+	if result.Content[0].MimeType != "image/png" {
+		t.Errorf("image content MimeType = %q, want 'image/png'", result.Content[0].MimeType)
 	}
 
-	// Verify base64 encoding contains expected content
-	if !strings.Contains(text, "iVBORw0KGgo") { // Base64 of PNG header
-		t.Errorf("image content does not contain expected base64 encoded PNG header: %s", text)
+	// Verify base64 encoding in Data field contains expected content
+	data := result.Content[0].Data
+	if data == "" {
+		t.Fatal("image content Data is empty")
+	}
+	if !strings.Contains(data, "iVBORw0KGgo") { // Base64 of PNG header
+		t.Errorf("image content Data does not contain expected base64 encoded PNG header: %s", data)
 	}
 }

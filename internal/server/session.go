@@ -8,9 +8,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
 // handleCreateSession handles the create_session tool
@@ -601,7 +603,28 @@ func (s *MCPServer) handleUpdateMacro(call *ToolCall) (*ToolResult, error) {
 		Tags:        params.Tags,
 	}
 
-	resp, err := s.client.UpdateMacro(ctx, &pb.UpdateMacroRequest{Macro: macro})
+	// Build update_mask from fields present in the raw JSON to avoid
+	// overwriting unset fields with zero values (AIP-134).
+	rawFields := make(map[string]json.RawMessage)
+	if umErr := json.Unmarshal(call.Arguments, &rawFields); umErr != nil {
+		// Should never happen — call.Arguments was already parsed above.
+		log.Printf("Warning: could not re-parse arguments for update_mask: %v", umErr)
+	}
+	var paths []string
+	if _, ok := rawFields["display_name"]; ok {
+		paths = append(paths, "display_name")
+	}
+	if _, ok := rawFields["description"]; ok {
+		paths = append(paths, "description")
+	}
+	if _, ok := rawFields["tags"]; ok {
+		paths = append(paths, "tags")
+	}
+
+	resp, err := s.client.UpdateMacro(ctx, &pb.UpdateMacroRequest{
+		Macro:      macro,
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: paths},
+	})
 	if err != nil {
 		return &ToolResult{
 			IsError: true,

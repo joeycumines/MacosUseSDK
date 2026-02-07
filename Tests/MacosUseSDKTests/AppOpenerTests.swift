@@ -117,9 +117,12 @@ final class AppOpenerTests: XCTestCase {
 
         XCTAssertNotEqual(pid, 0, "Should have valid PID after launch")
 
-        // Cleanup
+        // Cleanup — poll until process is terminated (no Task.sleep).
         app.terminate()
-        try await Task.sleep(nanoseconds: 500_000_000)
+        for _ in 0 ..< 20 {
+            if app.isTerminated { break }
+            try await Task.sleep(nanoseconds: 50_000_000)
+        }
     }
 
     func testActivation_failureRecovery() async throws {
@@ -142,9 +145,12 @@ final class AppOpenerTests: XCTestCase {
 
         XCTAssertEqual(pid1, pid2, "Should return same PID for already-running app")
 
-        // Cleanup
+        // Cleanup — poll until process is terminated (no Task.sleep).
         app1.terminate()
-        try await Task.sleep(nanoseconds: 500_000_000)
+        for _ in 0 ..< 20 {
+            if app1.isTerminated { break }
+            try await Task.sleep(nanoseconds: 50_000_000)
+        }
     }
 
     // MARK: - Error Handling

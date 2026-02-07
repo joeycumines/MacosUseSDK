@@ -12,18 +12,26 @@ import (
 	"log"
 	"strings"
 	"sync"
+	"sync/atomic"
 )
 
 // StdioTransport implements the Transport interface for JSON-RPC 2.0
 // communication over standard input/output streams. This is the default
 // transport for MCP and is used for local communication with parent processes.
 //
+// Concurrency model:
+//   - ReadMessage is safe for a single reader goroutine (no serialization needed).
+//   - WriteMessage is safe for concurrent writer goroutines (serialized by writeMu).
+//   - Read and Write may proceed concurrently without deadlock because they do
+//     not share a mutex. This is critical: ReadMessage blocks on stdin and must
+//     never hold a lock that WriteMessage requires.
+//
 //lint:ignore BETTERALIGN struct is intentionally ordered for clarity
 type StdioTransport struct {
-	reader *bufio.Reader
-	writer io.Writer
-	mu     sync.Mutex
-	closed bool
+	reader  *bufio.Reader
+	writer  io.Writer
+	writeMu sync.Mutex // protects writer only; never held during blocking reads
+	closed  atomic.Bool
 }
 
 // NewStdioTransport creates a new stdio transport with the given reader and writer.
@@ -108,11 +116,12 @@ type ErrorObj struct {
 // ReadMessage reads a JSON-RPC 2.0 message from stdin.
 // It blocks until a complete newline-delimited JSON message is available.
 // Returns an error if the transport is closed or reading fails.
+//
+// This method does NOT hold a mutex during the blocking read so that
+// concurrent WriteMessage calls are never starved.
+// It is safe for exactly one goroutine to call ReadMessage at a time.
 func (t *StdioTransport) ReadMessage() (*Message, error) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
-	if t.closed {
+	if t.closed.Load() {
 		return nil, fmt.Errorf("transport is closed")
 	}
 
@@ -139,11 +148,12 @@ func (t *StdioTransport) ReadMessage() (*Message, error) {
 
 // WriteMessage writes a JSON-RPC 2.0 message to stdout.
 // The message is serialized as a single line of JSON followed by a newline.
+// Safe for concurrent use by multiple goroutines.
 func (t *StdioTransport) WriteMessage(msg *Message) error {
-	t.mu.Lock()
-	defer t.mu.Unlock()
+	t.writeMu.Lock()
+	defer t.writeMu.Unlock()
 
-	if t.closed {
+	if t.closed.Load() {
 		return fmt.Errorf("transport is closed")
 	}
 
@@ -165,22 +175,15 @@ func (t *StdioTransport) WriteMessage(msg *Message) error {
 // Close closes the transport and marks it as unavailable.
 // Subsequent operations will return an error.
 func (t *StdioTransport) Close() error {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
-	if t.closed {
-		return nil
+	if t.closed.Swap(true) {
+		return nil // already closed
 	}
-
-	t.closed = true
 	return nil
 }
 
 // IsClosed returns true if the transport has been closed.
 func (t *StdioTransport) IsClosed() bool {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	return t.closed
+	return t.closed.Load()
 }
 
 // Serve starts serving JSON-RPC 2.0 messages using the provided handler.

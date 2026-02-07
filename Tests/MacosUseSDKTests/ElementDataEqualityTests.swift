@@ -4,11 +4,13 @@ import XCTest
 /// Tests for ElementData's Hashable and Equatable conformance.
 ///
 /// ElementData has custom implementations for:
-/// - `hash(into:)` - combines role, text, x, y, width, height, path
-/// - `==` - compares the same 7 fields
+/// - `hash(into:)` - combines role, text, x, y, width, height
+/// - `==` - compares the same 6 fields
 ///
-/// Notably, `axElement`, `enabled`, `focused`, and `attributes` are NOT
+/// Notably, `path`, `axElement`, `enabled`, `focused`, and `attributes` are NOT
 /// included in equality/hashing, which is intentional for set-based diff logic.
+/// `path` is excluded because it represents a traversal artifact (position in the
+/// accessibility tree) rather than an intrinsic UI-visible property of the element.
 final class ElementDataEqualityTests: XCTestCase {
     // MARK: - Test Helpers
 
@@ -97,18 +99,20 @@ final class ElementDataEqualityTests: XCTestCase {
         XCTAssertNotEqual(e1, e2)
     }
 
-    func testEquality_differentPath_notEqual() {
+    func testEquality_differentPath_stillEqual() {
+        // path is excluded from equality — it is a traversal artifact, not an intrinsic property
         let e1 = makeElement(path: [0, 1, 2])
         let e2 = makeElement(path: [0, 1, 3])
 
-        XCTAssertNotEqual(e1, e2)
+        XCTAssertEqual(e1, e2)
     }
 
-    func testEquality_differentPathLength_notEqual() {
+    func testEquality_differentPathLength_stillEqual() {
+        // path is excluded from equality
         let e1 = makeElement(path: [0, 1])
         let e2 = makeElement(path: [0, 1, 2])
 
-        XCTAssertNotEqual(e1, e2)
+        XCTAssertEqual(e1, e2)
     }
 
     // MARK: - Equality ignores non-key fields
@@ -165,9 +169,9 @@ final class ElementDataEqualityTests: XCTestCase {
     }
 
     func testHashable_inSet_retainsDifferentElements() {
-        let e1 = makeElement(role: "AXButton", path: [0])
-        let e2 = makeElement(role: "AXTextField", path: [0])
-        let e3 = makeElement(role: "AXButton", path: [1])
+        let e1 = makeElement(role: "AXButton", text: "A")
+        let e2 = makeElement(role: "AXTextField", text: "A")
+        let e3 = makeElement(role: "AXButton", text: "B")
 
         let set: Set<ElementData> = [e1, e2, e3]
         XCTAssertEqual(set.count, 3)

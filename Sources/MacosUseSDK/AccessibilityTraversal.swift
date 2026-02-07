@@ -82,9 +82,11 @@ public struct ElementData: Codable, Hashable, Sendable {
   public var role: String
   /// The text content of the element, if available.
   public var text: String?
-  /// The x-coordinate of the element's top-left corner in global display coordinates.
+  /// The x-coordinate of the element's top-left corner in Quartz screen coordinates
+  /// (origin at top-left of primary display, X increases rightward).
   public var x: Double?
-  /// The y-coordinate of the element's top-left corner in global display coordinates.
+  /// The y-coordinate of the element's top-left corner in Quartz screen coordinates
+  /// (origin at top-left of primary display, Y increases downward).
   public var y: Double?
   /// The width of the element in points.
   public var width: Double?
@@ -105,7 +107,11 @@ public struct ElementData: Codable, Hashable, Sendable {
   /// - Special value -10000: main window via AXMainWindow
   public var path: [Int32]
 
-  // Implement Hashable for use in Set
+  // Implement Hashable for use in Set.
+  // NOTE: `path` is deliberately EXCLUDED from equality and hashing.
+  // Path encodes HOW an element was discovered (e.g., via AXWindows vs AXChildren),
+  // not WHAT it is. Two traversals of the same UI can discover the same element
+  // via different paths, and they should be treated as equal for diff purposes.
   public func hash(into hasher: inout Hasher) {
     hasher.combine(role)
     hasher.combine(text)
@@ -113,11 +119,10 @@ public struct ElementData: Codable, Hashable, Sendable {
     hasher.combine(y)
     hasher.combine(width)
     hasher.combine(height)
-    hasher.combine(path)
   }
   public static func == (lhs: ElementData, rhs: ElementData) -> Bool {
     lhs.role == rhs.role && lhs.text == rhs.text && lhs.x == rhs.x && lhs.y == rhs.y
-      && lhs.width == rhs.width && lhs.height == rhs.height && lhs.path == rhs.path
+      && lhs.width == rhs.width && lhs.height == rhs.height
   }
 
   // Add this enum to exclude axElement from Codable
@@ -249,13 +254,11 @@ private class AccessibilityTraversalOperation {
     }
 
     // 4. Start Traversal
-    // fputs("info: starting accessibility tree traversal...\n", stderr) // Optional start log
     walkElementTree(element: appElement, depth: 0, path: [])
     logStepCompletion(
       "traversing accessibility tree (\(collectedElements.count) elements collected)")
 
     // 5. Process Results
-    // fputs("info: sorting elements...\n", stderr) // Optional start log
     let sortedElements = collectedElements.sorted {
       let y0 = $0.y ?? Double.greatestFiniteMagnitude
       let y1 = $1.y ?? Double.greatestFiniteMagnitude
@@ -296,20 +299,47 @@ private class AccessibilityTraversalOperation {
     if result == .success {
       return value
     } else if result != .attributeUnsupported && result != .noValue {
-      // fputs("warning: could not get attribute '\(attribute)' for element: error \(result.rawValue)\n", stderr)
     }
     return nil
   }
 
-  // Extract string value
-  func getStringValue(_ value: CFTypeRef?) -> String? {
+  /// ISO 8601 formatter for CFDate display conversion. Lazily initialized.
+  /// The formatter is immutable after initialization; `nonisolated(unsafe)` is safe.
+  nonisolated(unsafe) private static let iso8601Formatter: ISO8601DateFormatter = {
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    return formatter
+  }()
+
+  /// Converts a CFTypeRef to its display string representation.
+  ///
+  /// Handles:
+  /// - CFString → String
+  /// - CFBoolean → "true" / "false"
+  /// - CFNumber → decimal string via NSNumber bridging
+  /// - CFDate → ISO 8601 formatted string
+  /// - AXValue (kAXValueTypeCFRange) → "{location, length}" format
+  func getDisplayString(_ value: CFTypeRef?) -> String? {
     guard let value = value else { return nil }
     let typeID = CFGetTypeID(value)
     if typeID == CFStringGetTypeID() {
       let cfString = value as! CFString
       return cfString as String
+    } else if typeID == CFBooleanGetTypeID() {
+      return CFBooleanGetValue((value as! CFBoolean)) ? "true" : "false"
+    } else if typeID == CFNumberGetTypeID() {
+      let nsNumber = value as! NSNumber
+      return nsNumber.stringValue
+    } else if typeID == CFDateGetTypeID() {
+      let cfDate = value as! CFDate
+      let date = cfDate as Date
+      return Self.iso8601Formatter.string(from: date)
     } else if typeID == AXValueGetTypeID() {
-      // AXValue conversion is complex, return nil for generic string conversion
+      let axValue = value as! AXValue
+      var range = CFRange(location: 0, length: 0)
+      if AXValueGetValue(axValue, .cfRange, &range) {
+        return "{\(range.location), \(range.length)}"
+      }
       return nil
     }
     return nil
@@ -329,7 +359,6 @@ private class AccessibilityTraversalOperation {
     if AXValueGetValue(axValue, .cgPoint, &pointValue) {
       return pointValue
     }
-    // fputs("warning: failed to extract cgpoint from axvalue.\n", stderr)
     return nil
   }
 
@@ -341,7 +370,6 @@ private class AccessibilityTraversalOperation {
     if AXValueGetValue(axValue, .cgSize, &sizeValue) {
       return sizeValue
     }
-    // fputs("warning: failed to extract cgsize from axvalue.\n", stderr)
     return nil
   }
 
@@ -360,11 +388,11 @@ private class AccessibilityTraversalOperation {
     var attributes: [String: String] = [:]
 
     if let roleValue = copyAttributeValue(element: element, attribute: kAXRoleAttribute as String) {
-      role = getStringValue(roleValue) ?? "AXUnknown"
+      role = getDisplayString(roleValue) ?? "AXUnknown"
     }
     if let roleDescValue = copyAttributeValue(
       element: element, attribute: kAXRoleDescriptionAttribute as String) {
-      roleDesc = getStringValue(roleDescValue)
+      roleDesc = getDisplayString(roleDescValue)
     }
 
     let textAttributes = [
@@ -373,7 +401,7 @@ private class AccessibilityTraversalOperation {
     ]
     for attr in textAttributes {
       if let attrValue = copyAttributeValue(element: element, attribute: attr),
-        let text = getStringValue(attrValue),
+        let text = getDisplayString(attrValue),
         !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
         textParts.append(text)
       }
@@ -410,7 +438,7 @@ private class AccessibilityTraversalOperation {
     ]
     for attr in commonAttributes {
       if let attrValue = copyAttributeValue(element: element, attribute: attr),
-        let strValue = getStringValue(attrValue) {
+        let strValue = getDisplayString(attrValue) {
         attributes[attr] = strValue
       }
     }
@@ -422,7 +450,6 @@ private class AccessibilityTraversalOperation {
   func walkElementTree(element: AXUIElement, depth: Int, path: [Int32]) {
     // 1. Check for cycles and depth limit
     if visitedElements.contains(element) || depth > maxDepth {
-      // fputs("debug: skipping visited or too deep element (depth: \(depth))\n", stderr)
       return
     }
     visitedElements.insert(element)
@@ -479,36 +506,22 @@ private class AccessibilityTraversalOperation {
       )
 
       if collectedElements.insert(elementData).inserted {
-        // Log addition (optional)
-        // let geometryStatus = isGeometricallyVisible ? "visible" : "not_visible"
-        // fputs("debug: + collect [\(geometryStatus)] | r: \(displayRole) | t: '\(combinedText ?? "nil")'\n", stderr)
-
         // Update text counts only for collected elements
         if hasText { statistics.with_text_count += 1 } else { statistics.without_text_count += 1 }
       } else {
-        // Log duplicate (optional)
-        // fputs("debug: = skip duplicate | r: \(displayRole) | t: '\(combinedText ?? "nil")'\n", stderr)
+        // Duplicate — already collected
       }
     } else {
-      // Log exclusion (MODIFIED logic)
-      var reasons: [String] = []
-      if !passesOriginalFilter {
-        if isNonInteractable { reasons.append("non-interactable role '\(role)'") }
-        if !hasText { reasons.append("no text") }
-      }
-      // Add visibility reason only if it was the deciding factor
-      if passesOriginalFilter && onlyVisibleElements && !isGeometricallyVisible {
-        reasons.append("not visible")
-      }
-      // fputs("debug: - exclude | r: \(role) | reason(s): \(reasons.joined(separator: ", "))\n", stderr)
 
       // Update exclusion counts
       statistics.excluded_count += 1
-      // Note: The specific exclusion reasons (non-interactable, no-text) might be slightly less precise
-      // if an element is excluded *only* because it's invisible, but this keeps the stats simple.
-      // We can refine this if needed.
-      if isNonInteractable { statistics.excluded_non_interactable += 1 }
-      if !hasText { statistics.excluded_no_text += 1 }
+      // Only increment reason-specific counters when those are the actual exclusion reasons.
+      // If element was excluded solely due to visibility (passesOriginalFilter=true but not visible),
+      // do NOT blame its text or role status.
+      if !passesOriginalFilter {
+        if isNonInteractable { statistics.excluded_non_interactable += 1 }
+        if !hasText { statistics.excluded_no_text += 1 }
+      }
     }
 
     // 5. Recursively traverse children, windows, main window
@@ -523,7 +536,6 @@ private class AccessibilityTraversalOperation {
           walkElementTree(element: windowElement, depth: depth + 1, path: windowPath)
         }
       } else if CFGetTypeID(windowsValue) == CFArrayGetTypeID() {
-        // fputs("warning: attribute \(kAXWindowsAttribute) was CFArray but failed bridge to [AXUIElement]\n", stderr)
       }
     }
 
@@ -537,7 +549,6 @@ private class AccessibilityTraversalOperation {
           walkElementTree(element: mainWindowElement, depth: depth + 1, path: mainWindowPath)
         }
       } else {
-        // fputs("warning: attribute \(kAXMainWindowAttribute) was not an AXUIElement\n", stderr)
       }
     }
 
@@ -551,7 +562,6 @@ private class AccessibilityTraversalOperation {
           walkElementTree(element: childElement, depth: depth + 1, path: childPath)
         }
       } else if CFGetTypeID(childrenValue) == CFArrayGetTypeID() {
-        // fputs("warning: attribute \(kAXChildrenAttribute) was CFArray but failed bridge to [AXUIElement]\n", stderr)
       }
     }
   }

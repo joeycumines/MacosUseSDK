@@ -5,9 +5,23 @@ import ApplicationServices
 import Foundation
 import OSLog
 
-/// Private API declaration for getting CGWindowID from AXUIElement
-@_silgen_name("_AXUIElementGetWindow")
-func _AXUIElementGetWindow(_ element: AXUIElement, _ id: UnsafeMutablePointer<CGWindowID>) -> AXError
+/// Function pointer type for the private _AXUIElementGetWindow API.
+/// Resolved dynamically via dlsym to avoid hard-linking a private symbol
+/// that could be removed in future macOS releases.
+///
+/// NOTE: This pattern is duplicated in Server/Sources/MacosUseServer/Interfaces/ProductionSystemOperations.swift
+/// because the SDK and Server are separate modules. Changes here must be mirrored there.
+private typealias AXUIElementGetWindowFn = @convention(c) (AXUIElement, UnsafeMutablePointer<CGWindowID>) -> AXError
+
+/// Lazily resolved function pointer for _AXUIElementGetWindow.
+/// Returns nil if the symbol is not available (e.g., removed in a future macOS version).
+/// Thread-safe: dlsym is documented as thread-safe and the result is immutable.
+private let _axUIElementGetWindowFn: AXUIElementGetWindowFn? = {
+    guard let sym = dlsym(dlopen(nil, RTLD_LAZY), "_AXUIElementGetWindow") else {
+        return nil
+    }
+    return unsafeBitCast(sym, to: AXUIElementGetWindowFn.self)
+}()
 
 private let logger = sdkLogger(category: "WindowQuery")
 
@@ -116,11 +130,17 @@ public func fetchAXWindowInfo(
         // behavior prevents transient AX errors from causing false negatives when trying to
         // resolve windows during race conditions.
 
-        // CRITICAL FIX 2: Prioritize ID Match via _AXUIElementGetWindow
-        // If the private API works and returns a matching ID, this is the source of truth.
+        // CRITICAL FIX 2: Prioritize ID Match via _AXUIElementGetWindow (resolved via dlsym)
+        // If the private API is available and returns a matching ID, this is the source of truth.
         // Use it as an instant "gold standard" match (Score 0).
+        // If the private API is unavailable (dlsym returned nil), skip directly to heuristic matching.
         var axID: CGWindowID = 0
-        let idResult = _AXUIElementGetWindow(axWindow, &axID)
+        let idResult: AXError = if let getWindowFn = _axUIElementGetWindowFn {
+            getWindowFn(axWindow, &axID)
+        } else {
+            // Private API not available — proceed directly to heuristic matching
+            .failure
+        }
 
         // If ID matches perfectly, fetch remaining attributes and return immediately
         if idResult == .success, axID == windowId {
