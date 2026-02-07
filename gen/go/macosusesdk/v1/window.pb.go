@@ -36,9 +36,9 @@ type Window struct {
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The title of the window.
 	//
-	// Data Source (AX Authority): Fresh Accessibility API query (kAXTitleAttribute).
-	// This field is queried from AX on every request and reflects the immediate state.
-	// It is NOT cached from CGWindowList, ensuring mutation responses return up-to-date values.
+	// Data Source (Hybrid Authority):
+	//   - ListWindows: Returns Quartz-cached title (kCGWindowName) for performance.
+	//   - GetWindow / Mutation responses: Fresh Accessibility API query (kAXTitleAttribute).
 	Title string `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
 	// Bounding rectangle of the window.
 	//

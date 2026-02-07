@@ -76,7 +76,8 @@ final class AppOpenerTests: XCTestCase {
             return
         }
 
-        let bundleName = bundle.localizedInfoDictionary?["CFBundleName"] as? String
+        let bundleName = (bundle.localizedInfoDictionary?["CFBundleName"] as? String)
+            ?? (bundle.infoDictionary?["CFBundleName"] as? String)
         XCTAssertNotNil(bundleName, "Calculator should have a bundle name")
     }
 
