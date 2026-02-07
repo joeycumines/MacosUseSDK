@@ -250,7 +250,7 @@ launchctl load ~/Library/LaunchAgents/com.macosusesdk.server.plist
 launchctl list | grep -i macosusesdk
 ```
 
-**Note:** Use `~/Library/LaunchAgents/` (per-user) not `/Library/LaunchDaemons/` (system-wide) unless you need system-wide accessibility permissions. The server will use your user's socket location and permissions.
+**Note:** Use `~/Library/LaunchAgents/` (per-user) not `/Library/LaunchDaemons/` (system-wide). The server will use your user's socket location and permissions.
 
 ## Security Considerations
 
@@ -504,9 +504,6 @@ If running via launchd:
 ```sh
 # User agent
 launchctl unload ~/Library/LaunchAgents/com.macosusesdk.server.plist
-
-# System daemon (if installed)
-sudo launchctl unload /Library/LaunchDaemons/com.macosusesdk.server.plist
 ```
 
 If running manually:
@@ -523,7 +520,6 @@ rm -f ~/.local/bin/MacosUseServer # User binary
 
 # Remove launchd plist
 rm -f ~/Library/LaunchAgents/com.macosusesdk.server.plist
-sudo rm -f /Library/LaunchDaemons/com.macosusesdk.server.plist
 
 # Remove socket (may still exist if server didn't clean up)
 rm -f "$HOME/Library/Caches/macosuse.sock"
