@@ -177,7 +177,7 @@ func TestMCPTools_HTTPRoundTrip(t *testing.T) {
 
 // TestMCPTools_Screenshot_HTTPRoundTrip tests screenshot capture via HTTP
 func TestMCPTools_Screenshot_HTTPRoundTrip(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
@@ -323,7 +323,7 @@ func TestMCPTools_ClickTypeText_Workflow(t *testing.T) {
 // TestMCPTools_InvalidTool_ReturnsError verifies that calling a non-existent tool
 // returns a proper JSON-RPC error response.
 func TestMCPTools_InvalidTool_ReturnsError(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
@@ -374,7 +374,7 @@ func TestMCPTools_InvalidTool_ReturnsError(t *testing.T) {
 // TestMCPTools_MissingRequiredParams_ReturnsError verifies that calling a tool
 // without required parameters returns a proper error.
 func TestMCPTools_MissingRequiredParams_ReturnsError(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)

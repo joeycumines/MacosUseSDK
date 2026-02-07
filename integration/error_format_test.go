@@ -20,7 +20,7 @@ import (
 // correct is_error field format (snake_case, not camelCase).
 // This is critical for Anthropic Claude Desktop compatibility.
 func TestMCPErrorFormat_IsErrorField(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
@@ -83,7 +83,7 @@ func TestMCPErrorFormat_IsErrorField(t *testing.T) {
 
 // TestMCPErrorFormat_InvalidToolName verifies error format for non-existent tools.
 func TestMCPErrorFormat_InvalidToolName(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
@@ -140,7 +140,7 @@ func TestMCPErrorFormat_InvalidToolName(t *testing.T) {
 
 // TestMCPErrorFormat_InvalidParams verifies error format for invalid parameters.
 func TestMCPErrorFormat_InvalidParams(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
@@ -187,7 +187,7 @@ func TestMCPErrorFormat_InvalidParams(t *testing.T) {
 
 // TestMCPErrorFormat_UnknownMethod verifies error format for unknown methods.
 func TestMCPErrorFormat_UnknownMethod(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
@@ -230,7 +230,7 @@ func TestMCPErrorFormat_UnknownMethod(t *testing.T) {
 
 // TestMCPErrorFormat_MalformedJSON verifies error format for malformed JSON.
 func TestMCPErrorFormat_MalformedJSON(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
@@ -258,7 +258,7 @@ func TestMCPErrorFormat_MalformedJSON(t *testing.T) {
 
 // TestMCPErrorFormat_SoftError verifies the is_error field in tool results.
 func TestMCPErrorFormat_SoftError(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)

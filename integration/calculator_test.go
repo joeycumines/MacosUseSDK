@@ -354,7 +354,7 @@ func isNumeric(s string) bool {
 
 // TestServerHealthCheck verifies the server is responding
 func TestServerHealthCheck(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	// Start server

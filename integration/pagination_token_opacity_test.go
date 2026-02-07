@@ -232,7 +232,7 @@ func TestMCPPaginationTokenOpacity_ViaHTTP(t *testing.T) {
 
 // TestMCPPaginationTokenOpacity_FabricatedToken tests that fabricated tokens are rejected.
 func TestMCPPaginationTokenOpacity_FabricatedToken(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)

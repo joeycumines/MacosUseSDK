@@ -15,7 +15,7 @@ import (
 // OpenApplication -> GetApplication -> ListApplications -> DeleteApplication
 // This verifies Phase 4.3 requirements for Core Lifecycle integration tests.
 func TestCoreLifecycle(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	// Start server

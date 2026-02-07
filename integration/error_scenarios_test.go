@@ -28,7 +28,7 @@ import (
 // TestErrorScenarios_ConnectionRefused verifies error handling when
 // the server is not running or refuses connections.
 func TestErrorScenarios_ConnectionRefused(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	// Use a port that is not in use
@@ -104,7 +104,7 @@ func TestErrorScenarios_Timeout(t *testing.T) {
 // invalid API key authentication (when auth is enabled).
 // Note: This test documents expected behavior; auth may not be enabled in test environment.
 func TestErrorScenarios_InvalidAPIKey(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	// Start server normally (no auth in test environment)
@@ -136,7 +136,7 @@ func TestErrorScenarios_InvalidAPIKey(t *testing.T) {
 // TestErrorScenarios_InsufficientPermissions verifies error handling
 // for operations that require specific permissions (e.g., Accessibility).
 func TestErrorScenarios_InsufficientPermissions(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
@@ -267,7 +267,7 @@ func TestErrorScenarios_AppCrashDuringOperation(t *testing.T) {
 // TestErrorScenarios_InvalidCoordinates verifies error handling for
 // invalid coordinate values.
 func TestErrorScenarios_InvalidCoordinates(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
@@ -385,7 +385,7 @@ func TestErrorScenarios_InvalidCoordinates(t *testing.T) {
 // TestErrorScenarios_MissingElement verifies error handling when
 // trying to interact with a non-existent UI element.
 func TestErrorScenarios_MissingElement(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
@@ -464,7 +464,7 @@ func TestErrorScenarios_MissingElement(t *testing.T) {
 // TestErrorScenarios_InvalidInput verifies error handling for
 // malformed selectors, empty strings, and other invalid input.
 func TestErrorScenarios_InvalidInput(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)

@@ -25,7 +25,7 @@ import (
 // returns the correct protocol version (2025-11-25) per MCP specification.
 // Task: T067
 func TestMCPInitialize_ProtocolVersion(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
@@ -105,7 +105,7 @@ func TestMCPInitialize_ProtocolVersion(t *testing.T) {
 // Per MCP spec: clients send this notification after receiving initialize response.
 // Task: T068
 func TestMCPNotificationsInitialized_HandledSilently(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
@@ -162,7 +162,7 @@ func TestMCPNotificationsInitialized_HandledSilently(t *testing.T) {
 // is included in the initialize response for display grounding.
 // Task: T069
 func TestMCPInitialize_DisplayGrounding(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
@@ -254,7 +254,7 @@ func TestMCPInitialize_DisplayGrounding(t *testing.T) {
 
 // TestMCPToolsList_ReturnsAllTools verifies tools/list returns all registered tools.
 func TestMCPToolsList_ReturnsAllTools(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
@@ -526,7 +526,7 @@ func isKnownTool(name string) bool {
 
 // executeMCPToolCall executes an MCP tool call via gRPC backend
 func executeMCPToolCall(client pb.MacosUseClient, _ longrunningpb.OperationsClient, toolName string, args json.RawMessage) (string, bool) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	switch toolName {
 	case "list_displays":

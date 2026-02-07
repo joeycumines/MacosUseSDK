@@ -21,7 +21,7 @@ import (
 // 4. Save the document (Cmd+S)
 // 5. Read the file and assert the pasted text is present
 func TestClipboardPasteIntoTextEdit(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)

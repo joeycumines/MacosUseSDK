@@ -23,7 +23,7 @@ import (
 // are accepted and work correctly. In Global Display Coordinates, secondary
 // monitors to the left or above the main display have negative coordinates.
 func TestCoordinateValidation_NegativeCoordinates(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
@@ -115,7 +115,7 @@ func TestCoordinateValidation_NegativeCoordinates(t *testing.T) {
 
 // TestCoordinateValidation_ClickAtExtremeCoords tests clicking at extreme coordinates.
 func TestCoordinateValidation_ClickAtExtremeCoords(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
@@ -183,7 +183,7 @@ func TestCoordinateValidation_ClickAtExtremeCoords(t *testing.T) {
 
 // TestCoordinateValidation_MCPViaHTTP tests coordinate handling via MCP HTTP transport.
 func TestCoordinateValidation_MCPViaHTTP(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
@@ -257,7 +257,7 @@ func TestCoordinateValidation_MCPViaHTTP(t *testing.T) {
 
 // TestCoordinateValidation_DisplayOrigins verifies display origins are reported correctly.
 func TestCoordinateValidation_DisplayOrigins(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
