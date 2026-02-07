@@ -70,16 +70,15 @@ grpcurl -plaintext -d '{}' \
   localhost:8080 macosusesdk.v1.MacosUse/ListApplications
 
 # Test with Unix socket
-SOCKET="$HOME/Library/Caches/macosuse.sock"
 grpcurl -plaintext -d '{}' \
-  "unix://$SOCKET" \
+  "unix://$HOME/Library/Caches/macosuse.sock" \
   macosusesdk.v1.MacosUse/ListApplications
 
 # List all available services
-grpcurl -plaintext "unix://$SOCKET" list
+grpcurl -plaintext "unix://$HOME/Library/Caches/macosuse.sock" list
 
 # Get service reflection info (if enabled)
-grpcurl -plaintext "unix://$SOCKET" grpc.reflection.v1alpha.ServerReflection/ServerReflectionInfo
+grpcurl -plaintext "unix://$HOME/Library/Caches/macosuse.sock" grpc.reflection.v1alpha.ServerReflection/ServerReflectionInfo
 ```
 
 ## Production Deployment
@@ -162,19 +161,17 @@ ls -la "$HOME/Library/Caches/macosuse.sock"
 Test the Unix socket with grpcurl:
 
 ```sh
-SOCKET="$HOME/Library/Caches/macosuse.sock"
-
 # List available RPCs
-grpcurl -plaintext "unix://$SOCKET" list
+grpcurl -plaintext "unix://$HOME/Library/Caches/macosuse.sock" list
 
 # Call a simple RPC
 grpcurl -plaintext -d '{}' \
-  "unix://$SOCKET" \
+  "unix://$HOME/Library/Caches/macosuse.sock" \
   macosusesdk.v1.DesktopService/GetHostname
 
 # Call ListWindows with application filter
 grpcurl -plaintext -d '{"application_name": "Finder"}' \
-  "unix://$SOCKET" \
+  "unix://$HOME/Library/Caches/macosuse.sock" \
   macosusesdk.v1.DesktopService/ListWindows
 ```
 
@@ -304,12 +301,11 @@ Use `grpcurl` for simple health checks and listing services:
 grpcurl -plaintext localhost:8080 list
 
 # Unix socket health check
-SOCKET="$HOME/Library/Caches/macosuse.sock"
-grpcurl -plaintext "unix://$SOCKET" list
+grpcurl -plaintext "unix://$HOME/Library/Caches/macosuse.sock" list
 
 # Quick connectivity test with GetHostname
 grpcurl -plaintext -d '{}' \
-  "unix://$SOCKET" \
+  "unix://$HOME/Library/Caches/macosuse.sock" \
   macosusesdk.v1.DesktopService/GetHostname
 ```
 
@@ -388,8 +384,7 @@ Typical limits:
    grpcurl -plaintext localhost:8080 list
 
    # Unix socket
-   SOCKET="$HOME/Library/Caches/macosuse.sock"
-   grpcurl -plaintext "unix://$SOCKET" list
+   grpcurl -plaintext "unix://$HOME/Library/Caches/macosuse.sock" list
    ```
 
 2. Check socket file exists and permissions:
