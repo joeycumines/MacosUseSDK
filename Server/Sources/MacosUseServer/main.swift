@@ -11,6 +11,16 @@ import OSLog
 
 private let logger = MacosUseSDK.sdkLogger(category: "Main")
 
+/// Restrictive umask for secure socket creation (0600 - owner read/write only)
+/// This ensures Unix domain sockets are not world-readable or world-writable
+private let secureUmask: mode_t = 0o177
+
+/// Set umask for secure socket/file creation
+/// Returns the previous umask value
+private func setSecureUmask() -> mode_t {
+    umask(secureUmask)
+}
+
 // MARK: - Signal Handling
 
 /// C-compatible signal handler for graceful shutdown
@@ -49,6 +59,10 @@ func main() async throws {
     // This is mandatory for the MacosUseSDK to function properly
     _ = NSApplication.shared
     logger.info("NSApplication initialized")
+
+    // Set secure umask BEFORE creating any sockets (owner read/write only: 0600)
+    _ = setSecureUmask()
+    logger.info("Set secure umask: \(secureUmask, privacy: .public)")
 
     // Load configuration from environment
     let config = ServerConfig.fromEnvironment()
@@ -140,7 +154,24 @@ func main() async throws {
 
     logger.info("gRPC server starting")
 
-    try await server.serve()
+    // Start server in background to allow explicit socket permission setting
+    async let serverTask: Void = server.serve()
+
+    // For Unix sockets, explicitly set restrictive permissions (defense in depth)
+    // This ensures the socket is owner-readable/writable only, even if umask failed
+    if let socketPath = config.unixSocketPath {
+        // Small delay to allow socket creation
+        try await Task.sleep(for: .milliseconds(100))
+        let permissions: mode_t = 0o600  // owner read/write only
+        if chmod(socketPath, permissions) == 0 {
+            logger.info("Set Unix socket permissions: 0\(String(permissions, radix: 8))")
+        } else {
+            logger.error("Failed to set Unix socket permissions: \(errno, privacy: .public)")
+        }
+    }
+
+    // Wait for server completion
+    try await serverTask
 }
 
 try await main()

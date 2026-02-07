@@ -141,15 +141,7 @@ export GRPC_UNIX_SOCKET="$HOME/Library/Caches/macosuse.sock"
 
 **Socket Permissions:**
 
-The socket is created with permissions based on the server's `umask`. For security:
-
-```sh
-# Restrict to owner-only (most secure)
-umask 0077 && ./Server/.build/release/MacosUseServer
-
-# Allow owner and group (if clients share a group)
-umask 0007 && ./Server/.build/release/MacosUseServer
-```
+The server automatically sets restrictive permissions (0600 - owner read/write only) on Unix domain sockets for security. This is enforced in code and does not rely on external umask settings.
 
 Verify permissions after creation:
 
@@ -214,9 +206,6 @@ Create `Agents/com.macosusesdk.server.plist` (user agent, not system):
             <string>/Users/YOU/Library/Caches/macosuse.sock</string>
         </dict>
 
-        <key>Umask</key>
-        <integer>0x0077</integer>
-
         <key>RunAtLoad</key>
         <true/>
 
@@ -231,6 +220,8 @@ Create `Agents/com.macosusesdk.server.plist` (user agent, not system):
     </dict>
 </plist>
 ```
+
+**Note:** Socket permissions (0600 - owner read/write only) are enforced by the server code. The launchd `Umask` key is unreliable for socket permissions and is intentionally omitted.
 
 Install and start:
 
@@ -248,9 +239,10 @@ launchctl load ~/Library/LaunchAgents/com.macosusesdk.server.plist
 
 # Check status
 launchctl list | grep -i macosusesdk
-```
 
-**Note:** Use `~/Library/LaunchAgents/` (per-user) not `/Library/LaunchDaemons/` (system-wide). The server will use your user's socket location and permissions.
+# Verify socket permissions (should be srwx------)
+ls -la "$HOME/Library/Caches/macosuse.sock"
+```
 
 ## Security Considerations
 
@@ -394,20 +386,18 @@ Typical limits:
 2. Check socket file exists and permissions:
    ```sh
    ls -la "$SOCKET"
-   # Expected format: srwxr-xr-x (with 's' indicating socket)
-   # Permissions should match umask used when server started
+   # Expected format: srwx------ (0600 - owner read/write only)
+   # The server enforces these permissions automatically
    ```
 
 3. Socket permission denied:
    ```sh
-   SOCKET="$HOME/Library/Caches/macosuse.sock"
-
-   # If socket is world-writable, check group ownership
-   chgrp staff "$SOCKET"  # Change group if needed
-   chmod 660 "$SOCKET"    # Adjust as needed
-
-   # Or restart server with restrictive umask
-   umask 0077 && GRPC_UNIX_SOCKET="$SOCKET" ./MacosUseServer
+   # If socket permissions are incorrect, the server will fix them on restart
+   # Stop the server and verify permissions are corrected after restart
+   launchctl unload ~/Library/LaunchAgents/com.macosusesdk.server.plist
+   launchctl load ~/Library/LaunchAgents/com.macosusesdk.server.plist
+   ls -la "$HOME/Library/Caches/macosuse.sock"
+   # Should show srwx------
    ```
 
 4. Check firewall settings (TCP only):
