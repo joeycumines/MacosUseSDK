@@ -45,31 +45,23 @@ func TestErrorScenarios_ConnectionRefused(t *testing.T) {
 
 	t.Logf("Testing connection to non-existent server at %s", addr)
 
-	// Try to connect with a short timeout
-	connCtx, connCancel := context.WithTimeout(ctx, 2*time.Second)
-	defer connCancel()
-
-	// Dial with context timeout
-	conn, err := grpc.DialContext(connCtx, addr,
+	// Dial always succeeds (lazy connection), error surfaces on RPC call
+	conn, err := grpc.NewClient(addr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithBlock(),
 	)
 	if err != nil {
-		// This is expected - connection should fail
-		t.Logf("✓ Connection correctly failed: %v", err)
-		return
+		t.Fatalf("Failed to create client: %v", err)
 	}
 	defer conn.Close()
 
-	// If we got here, connection unexpectedly succeeded
+	// RPC call should fail since no server is listening
 	client := pb.NewMacosUseClient(conn)
 	_, err = client.ListApplications(ctx, &pb.ListApplicationsRequest{})
 	if err != nil {
-		t.Logf("✓ RPC call correctly failed: %v", err)
-		return
+		t.Logf("✓ RPC correctly failed: %v", err)
+	} else {
+		t.Error("Expected RPC to fail, but it succeeded")
 	}
-
-	t.Error("Expected connection to fail, but it succeeded")
 }
 
 // TestErrorScenarios_Timeout verifies error handling when
@@ -85,26 +77,27 @@ func TestErrorScenarios_Timeout(t *testing.T) {
 
 	t.Logf("Testing timeout with non-routable address %s", addr)
 
-	connCtx, connCancel := context.WithTimeout(shortCtx, 100*time.Millisecond)
-	defer connCancel()
-
-	// Dial with context timeout
-	conn, err := grpc.DialContext(connCtx, addr,
+	// Dial always succeeds (lazy connection), timeout applies to RPC call
+	conn, err := grpc.NewClient(addr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithBlock(),
 	)
 	if err != nil {
-		// Expected - timeout or connection refused
-		if strings.Contains(err.Error(), "timeout") || strings.Contains(err.Error(), "deadline") {
-			t.Logf("✓ Timeout correctly detected: %v", err)
-		} else {
-			t.Logf("Connection failed (may be timeout): %v", err)
-		}
-		return
+		t.Fatalf("Failed to create client: %v", err)
 	}
 	defer conn.Close()
 
-	t.Error("Expected connection to timeout, but it succeeded")
+	// RPC call should timeout
+	client := pb.NewMacosUseClient(conn)
+	_, err = client.ListApplications(shortCtx, &pb.ListApplicationsRequest{})
+	if err != nil {
+		if strings.Contains(err.Error(), "timeout") || strings.Contains(err.Error(), "deadline") || strings.Contains(err.Error(), "context deadline") {
+			t.Logf("✓ Timeout correctly detected: %v", err)
+		} else {
+			t.Logf("RPC failed (may be timeout): %v", err)
+		}
+	} else {
+		t.Error("Expected RPC to timeout, but it succeeded")
+	}
 }
 
 // TestErrorScenarios_InvalidAPIKey verifies error handling for
