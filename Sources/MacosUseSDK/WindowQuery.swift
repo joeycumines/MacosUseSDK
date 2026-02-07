@@ -326,7 +326,7 @@ public func fetchAXWindowInfo(
     // NOTE: This threshold also intentionally absorbs the common "shadow penalty":
     // Quartz (CG) often reports bounds including drop-shadows and resize chrome while AX
     // reports content bounds. See the docs subsection "Heuristic fairness, biases, and alternatives"
-    // in `docs/02-window-state-management.md#heuristic-fairness-biases-and-alternatives` for details.
+    // in `docs/window-state-management.md#heuristic-fairness-biases-and-alternatives` for details.
     // WARNING: If the private API `_AXUIElementGetWindow` fails (returns error/0) AND the
     // candidate AX element has moved a very large distance since the last CG snapshot
     // (e.g., >~1200px across monitors), the score can exceed this threshold and the

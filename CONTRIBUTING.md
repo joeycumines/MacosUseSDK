@@ -72,10 +72,6 @@ make go.test.integration
 4. Run `make all` to verify
 5. Submit a PR with a descriptive title
 
-## Architecture Overview
-
-See [docs/01-window-management-subsystems.md](docs/01-window-management-subsystems.md) for the system architecture.
-
 Key components:
 - **Swift gRPC Server** (`Server/`): macOS Accessibility API integration
 - **Go MCP Server** (`internal/`): MCP proxy with 77 tools

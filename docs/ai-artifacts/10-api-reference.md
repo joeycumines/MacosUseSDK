@@ -1809,4 +1809,4 @@ applications/-/windows  # All windows across all applications
 - [Security Hardening Guide](09-security-hardening.md) - Security best practices
 - [MCP Integration Analysis](05-mcp-integration.md) - Protocol details, transport mechanisms
 - [MCP Tool Design](06-mcp-tool-design.md) - Tool design philosophy
-- [Window State Management](02-window-state-management.md) - AppStateStore, WindowRegistry architecture
+- [Window State Management](../window-state-management.md) - AppStateStore, WindowRegistry architecture

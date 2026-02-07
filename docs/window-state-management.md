@@ -325,30 +325,6 @@ A more mathematically rigorous mapping between CG and AX windows via a **Hungari
 
 -----
 
-## 8\. Implementation Checklist & Critical Details
-
-When modifying this subsystem, strictly adhere to the following constraints derived from the `docs/03-actual-window-state-management-impl.md` analysis:
-
-  * **File:** `Server/Sources/MacosUseServer/WindowHelpers.swift`
-
-      * [ ] **Constraint:** `buildWindowResponseFromAX` must always use `Task.detached` to prevent Main Actor blocking during expensive IPC calls.
-      * [ ] **Constraint:** Visibility logic must remain `!axMinimized && !axHidden` for `GetWindow` responses.
-
-  * **File:** `Sources/MacosUseSDK/WindowQuery.swift`
-
-      * [ ] **Constraint:** `fetchAXWindowInfo` must implement the `_AXUIElementGetWindow` private call.
-      * [ ] **Constraint:** The fallback heuristic must remain at `1000.0`. Do not lower this without extensive regression testing on multi-monitor setups.
-      * [ ] **Constraint:** **Must** attempt `kAXChildrenAttribute` if `kAXWindowsAttribute` is empty to handle orphans.
-
-  * **File:** `Server/Sources/MacosUseServer/WindowMethods.swift`
-
-      * [ ] **Constraint:** MinimizeWindow and RestoreWindow must implement a **PollUntil** pattern (typically 2.0s timeout) to verify the state change via AX before returning success. MoveWindow and ResizeWindow set the AX attribute and immediately query fresh AX state to return accurate geometry — they do not poll.
-      * [ ] **Constraint:** **Must** call `windowRegistry.invalidate(windowID:)` immediately after any mutation to prevent stale reads on subsequent calls.
-
-  * **File:** `Server/Sources/MacosUseServer/WindowRegistry.swift`
-
-      * [ ] **Constraint:** **Must** use `[.optionAll, .excludeDesktopElements]` to ensure off-screen windows are tracked.
-
 ## 9\. Conclusion
 
 This implementation accepts the reality of macOS's fractured windowing APIs. By using Quartz for the broad view and AX for the detailed view—and bridging them with rigorous heuristics and private APIs—we achieve a system that is performant for enumeration yet correct for manipulation. Any deviation from the "Hybrid Authority" model described here risks re-introducing the split-brain state inconsistencies this architecture was designed to solve.

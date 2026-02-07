@@ -52,4 +52,4 @@ go test -v ./internal/...
 
 ## Documentation
 
-See [docs/10-api-reference.md](../docs/10-api-reference.md) for the complete tool reference.
+See [docs/10-api-reference.md](../docs/ai-artifacts/10-api-reference.md) for the complete tool reference.

@@ -1,3 +1,11 @@
+> [!IMPORTANT]
+>
+> **Experimental AI-Driven Fork**
+>
+> This project was developed by [@joeycumines](https://github.com/joeycumines) with heavy usage of Agentic AI as part of refining a more AI-involved development workflow.
+>
+> While strict architectural direction was given (particularly around API semantics) and tooling was written by hand, **I am not a native Swift developer.** The code reflects an iterative AI generation process rather than expert-level fluency, though the project served as a surprisingly-successful learning vehicle, and regular human reviews were performed.
+
 # MacosUseSDK
 
 Library, command-line tools, and MCP/gRPC server to traverse the macOS accessibility tree and simulate user input actions. Allows interaction with UI elements of other applications.
@@ -13,11 +21,11 @@ Library, command-line tools, and MCP/gRPC server to traverse the macOS accessibi
 
 | Document | Description |
 |----------|-------------|
-| [API Reference](docs/10-api-reference.md) | Complete reference for all 77 MCP tools, 18 environment variables, coordinate systems, and error codes |
-| [Production Deployment](docs/08-production-deployment.md) | Deployment guide with TLS, authentication, reverse proxy patterns, and monitoring |
-| [Security Hardening](docs/09-security-hardening.md) | Security best practices, shell command risks, authentication options |
-| [MCP Integration](docs/05-mcp-integration.md) | Protocol compliance, transport specifications, tool design |
-| [MCP Tool Design](docs/06-mcp-tool-design.md) | Detailed tool catalog with all 77 tools organized by category |
+| [API Reference](docs/ai-artifacts/10-api-reference.md) | Complete reference for all 77 MCP tools, 18 environment variables, coordinate systems, and error codes |
+| [Production Deployment](docs/ai-artifacts/08-production-deployment.md) | Deployment guide with TLS, authentication, reverse proxy patterns, and monitoring |
+| [Security Hardening](docs/ai-artifacts/09-security-hardening.md) | Security best practices, shell command risks, authentication options |
+| [MCP Integration](docs/ai-artifacts/05-mcp-integration.md) | Protocol compliance, transport specifications, tool design |
+| [MCP Tool Design](docs/ai-artifacts/06-mcp-tool-design.md) | Detailed tool catalog with all 77 tools organized by category |
 
 
 https://github.com/user-attachments/assets/d8dc75ba-5b15-492c-bb40-d2bc5b65483e
@@ -225,7 +233,7 @@ cd Server && swift build -c release
 
 ### Environment Variables
 
-Key configuration options (see [API Reference](docs/10-api-reference.md#3-environment-variable-reference) for complete list):
+Key configuration options (see [API Reference](docs/ai-artifacts/10-api-reference.md#3-environment-variable-reference) for complete list):
 
 | Variable | Description | Default |
 |----------|-------------|---------|

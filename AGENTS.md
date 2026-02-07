@@ -97,11 +97,11 @@ Previous sins (now corrected, not to be repeated):
 
 **MUST BE KEPT UP TO DATE.** Must be analytical, terse, and precise.
 
-- [docs/02-window-state-management.md](docs/02-window-state-management.md)
+- [docs/window-state-management.md](docs/window-state-management.md)
 
 ## MCP Specification References
 
-MCP compliance requirements are documented in docs/05-mcp-integration.md. Refer to that document for:
+MCP compliance requirements are documented in docs/ai-artifacts/05-mcp-integration.md. Refer to that document for:
 - Protocol version requirements (2025-11-25)
 - Transport specifications and compliance status
 - Security and tooling details

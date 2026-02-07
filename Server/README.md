@@ -88,7 +88,7 @@ swift run MacosUseServer
 
 ## API Reference
 
-See [docs/10-api-reference.md](../docs/10-api-reference.md) for the complete API documentation including:
+See [docs/10-api-reference.md](../docs/ai-artifacts/10-api-reference.md) for the complete API documentation including:
 
 - 77 MCP tools across 14 categories
 - Coordinate system reference
@@ -121,7 +121,7 @@ For production deployments with TLS:
    export MCP_TLS_KEY_FILE="/path/to/key.pem"
    ```
 
-See [docs/08-production-deployment.md](../docs/08-production-deployment.md) and [docs/09-security-hardening.md](../docs/09-security-hardening.md) for comprehensive deployment guidance.
+See [docs/ai-artifacts/08-production-deployment.md](../docs/ai-artifacts/08-production-deployment.md) and [docs/ai-artifacts/09-security-hardening.md](../docs/ai-artifacts/09-security-hardening.md) for comprehensive deployment guidance.
 
 ## Architecture
 

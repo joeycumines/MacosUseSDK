@@ -41,11 +41,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Documentation
 
-- Comprehensive API reference (docs/10-api-reference.md)
-- Production deployment guide (docs/08-production-deployment.md)
-- Security hardening guide (docs/09-security-hardening.md)
-- MCP integration details (docs/05-mcp-integration.md)
-- Architecture documentation (docs/01-window-management-subsystems.md)
+- Comprehensive API reference (docs/ai-artifacts/10-api-reference.md)
+- Production deployment guide (docs/ai-artifacts/08-production-deployment.md)
+- Security hardening guide (docs/ai-artifacts/09-security-hardening.md)
+- MCP integration details (docs/ai-artifacts/05-mcp-integration.md)
+- Architecture documentation (docs/ai-artifacts/01-window-management-subsystems.md)
 
 ### Testing
 

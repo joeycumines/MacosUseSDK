@@ -228,7 +228,7 @@
     {
       "id": 35,
       "title": "Audit documentation accuracy",
-      "description": "Updated docs/02-window-state-management.md: dlsym instead of @_silgen_name, Euclidean distance (hypot) instead of Manhattan, single-window fallback documented, MoveWindow/ResizeWindow polling claim corrected.",
+      "description": "Updated docs/window-state-management.md: dlsym instead of @_silgen_name, Euclidean distance (hypot) instead of Manhattan, single-window fallback documented, MoveWindow/ResizeWindow polling claim corrected.",
       "status": "done"
     },
     {

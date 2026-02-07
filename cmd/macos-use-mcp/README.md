@@ -31,7 +31,7 @@ export MCP_HTTP_ADDRESS=:8080
 
 ## Configuration
 
-All configuration is via environment variables. See [docs/10-api-reference.md](../../docs/10-api-reference.md#environment-variables) for the complete reference.
+All configuration is via environment variables. See [docs/ai-artifacts/10-api-reference.md](../../docs/ai-artifacts/10-api-reference.md#environment-variables) for the complete reference.
 
 ### Core Variables
 
@@ -78,7 +78,7 @@ Add to `~/.config/claude/mcp_settings.json`:
 
 ## Related Documentation
 
-- [API Reference](../../docs/10-api-reference.md) - 77 tools documented with examples
-- [MCP Integration](../../docs/05-mcp-integration.md) - Protocol compliance details
-- [Production Deployment](../../docs/08-production-deployment.md) - Deployment guide
-- [Security Hardening](../../docs/09-security-hardening.md) - Security best practices
+- [API Reference](../../docs/ai-artifacts/10-api-reference.md) - 77 tools documented with examples
+- [MCP Integration](../../docs/ai-artifacts/05-mcp-integration.md) - Protocol compliance details
+- [Production Deployment](../../docs/ai-artifacts/08-production-deployment.md) - Deployment guide
+- [Security Hardening](../../docs/ai-artifacts/09-security-hardening.md) - Security best practices

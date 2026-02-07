@@ -72,7 +72,7 @@ func DefaultHTTPConfig() *HTTPTransportConfig {
 // HTTPTransport implements HTTP/SSE transport for MCP.
 // It provides POST /message for JSON-RPC requests, GET /events for SSE streaming,
 // GET /health for server health checks, and GET /metrics for Prometheus-style metrics.
-// This is a non-standard MCP transport extension documented in docs/05-mcp-integration.md.
+// This is a non-standard MCP transport extension documented in docs/ai-artifacts/05-mcp-integration.md.
 type HTTPTransport struct {
 	config      *HTTPTransportConfig
 	server      *http.Server
