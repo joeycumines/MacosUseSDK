@@ -65,9 +65,21 @@ You can run the server directly (default: loopback + port 8080):
 # Install grpcurl
 brew install grpcurl
 
-# Test the server
-grpcurl -plaintext -d '{"identifier": "Calculator"}' \
-  localhost:8080 macosusesdk.v1.DesktopService/OpenApplication
+# Test with TCP (default server)
+grpcurl -plaintext -d '{}' \
+  localhost:8080 macosusesdk.v1.MacosUse/ListApplications
+
+# Test with Unix socket
+SOCKET="$HOME/Library/Caches/macosuse.sock"
+grpcurl -plaintext -d '{}' \
+  "unix://$SOCKET" \
+  macosusesdk.v1.MacosUse/ListApplications
+
+# List all available services
+grpcurl -plaintext "unix://$SOCKET" list
+
+# Get service reflection info (if enabled)
+grpcurl -plaintext "unix://$SOCKET" grpc.reflection.v1alpha.ServerReflection/ServerReflectionInfo
 ```
 
 ## Production Deployment
@@ -114,14 +126,62 @@ export GRPC_PORT="9090"
 Using a Unix socket provides better security for local-only access:
 
 ```sh
-export GRPC_UNIX_SOCKET="/var/run/macosuse.sock"
+# Use a user-writable location (recommended)
+export GRPC_UNIX_SOCKET="$HOME/Library/Caches/macosuse.sock"
 ./Server/.build/release/MacosUseServer
+```
+
+**Socket Location Considerations:**
+
+| Location                             | Notes                                                    |
+|--------------------------------------|----------------------------------------------------------|
+| `$HOME/Library/Caches/`              | User-writable, persists across reboots, easy permissions |
+| `$HOME/Library/Application Support/` | User-writable, persists                                  |
+| `/tmp/`                              | World-writable, ephemeral (deleted on reboot)            |
+| `/var/run/`                          | Typically root-only, requires special handling           |
+
+**Socket Permissions:**
+
+The socket is created with permissions based on the server's `umask`. For security:
+
+```sh
+# Restrict to owner-only (most secure)
+umask 0077 && ./Server/.build/release/MacosUseServer
+
+# Allow owner and group (if clients share a group)
+umask 0007 && ./Server/.build/release/MacosUseServer
+```
+
+Verify permissions after creation:
+
+```sh
+ls -la "$HOME/Library/Caches/macosuse.sock"
+# Expected: srwx------  (600) for owner-only access
+```
+
+Test the Unix socket with grpcurl:
+
+```sh
+SOCKET="$HOME/Library/Caches/macosuse.sock"
+
+# List available RPCs
+grpcurl -plaintext "unix://$SOCKET" list
+
+# Call a simple RPC
+grpcurl -plaintext -d '{}' \
+  "unix://$SOCKET" \
+  macosusesdk.v1.DesktopService/GetHostname
+
+# Call ListWindows with application filter
+grpcurl -plaintext -d '{"application_name": "Finder"}' \
+  "unix://$SOCKET" \
+  macosusesdk.v1.DesktopService/ListWindows
 ```
 
 Client connection (Go example using grpc-go):
 
 ```go
-conn, err := grpc.Dial("unix:///var/run/macosuse.sock", grpc.WithTransportCredentials(insecure.NewCredentials()))
+conn, err := grpc.Dial("unix://$HOME/Library/Caches/macosuse.sock", grpc.WithTransportCredentials(insecure.NewCredentials()))
 if err != nil {
 // handle error
 }
@@ -129,9 +189,9 @@ defer conn.Close()
 client := macosusesdkv1.NewDesktopServiceClient(conn)
 ```
 
-#### Option 3: launchd Service (macOS System Service)
+#### Option 3: launchd Service (macOS System Service~/Library/Launch)
 
-Create `/Library/LaunchDaemons/com.macosusesdk.server.plist`:
+Create `Agents/com.macosusesdk.server.plist` (user agent, not system):
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -143,13 +203,13 @@ Create `/Library/LaunchDaemons/com.macosusesdk.server.plist`:
 
         <key>ProgramArguments</key>
         <array>
-            <string>/usr/local/bin/MacosUseServer</string>
+            <string>/Users/YOU/bin/MacosUseServer</string>
         </array>
 
         <key>EnvironmentVariables</key>
         <dict>
             <key>GRPC_UNIX_SOCKET</key>
-            <string>/var/run/macosuse.sock</string>
+            <string>/Users/YOU/Library/Caches/macosuse.sock</string>
         </dict>
 
         <key>RunAtLoad</key>
@@ -159,31 +219,33 @@ Create `/Library/LaunchDaemons/com.macosusesdk.server.plist`:
         <true/>
 
         <key>StandardOutPath</key>
-        <string>/var/log/macosuse.log</string>
+        <string>/Users/YOU/Library/Logs/macosuse.log</string>
 
         <key>StandardErrorPath</key>
-        <string>/var/log/macosuse.error.log</string>
+        <string>/Users/YOU/Library/Logs/macosuse.error.log</string>
     </dict>
 </plist>
 ```
 
-Install and start (ensure plist ownership and permissions):
+Install and start:
 
 ```sh
-# Copy binary
-sudo cp Server/.build/release/MacosUseServer /usr/local/bin/
+# Copy binary to user bin
+mkdir -p ~/bin
+cp Server/.build/release/MacosUseServer ~/bin/
 
-# Place the plist and set ownership/permissions
-sudo cp com.macosusesdk.server.plist /Library/LaunchDaemons/
-sudo chown root:wheel /Library/LaunchDaemons/com.macosusesdk.server.plist
-sudo chmod 644 /Library/LaunchDaemons/com.macosusesdk.server.plist
+# Place the plist in user's LaunchAgents
+cp com.macosusesdk.server.plist ~/Library/LaunchAgents/
+chmod 600 ~/Library/LaunchAgents/com.macosusesdk.server.plist
 
 # Load service
-sudo launchctl bootstrap system /Library/LaunchDaemons/com.macosusesdk.server.plist
+launchctl load ~/Library/LaunchAgents/com.macosusesdk.server.plist
 
 # Check status
-sudo launchctl list | grep -i macosusesdk
+launchctl list | grep -i macosusesdk
 ```
+
+**Note:** Use `~/Library/LaunchAgents/` (per-user) not `/Library/LaunchDaemons/` (system-wide) unless you need system-wide accessibility permissions. The server will use your user's socket location and permissions.
 
 ## Security Considerations
 
@@ -235,7 +297,17 @@ Grant these permissions to the terminal or application running the server.
 Use `grpcurl` for simple health checks and listing services:
 
 ```sh
+# TCP health check
 grpcurl -plaintext localhost:8080 list
+
+# Unix socket health check
+SOCKET="$HOME/Library/Caches/macosuse.sock"
+grpcurl -plaintext "unix://$SOCKET" list
+
+# Quick connectivity test with GetHostname
+grpcurl -plaintext -d '{}' \
+  "unix://$SOCKET" \
+  macosusesdk.v1.DesktopService/GetHostname
 ```
 
 Expected output (example):
@@ -309,15 +381,39 @@ Typical limits:
 
 1. Verify server is running:
    ```sh
+   # TCP
    grpcurl -plaintext localhost:8080 list
+
+   # Unix socket
+   SOCKET="$HOME/Library/Caches/macosuse.sock"
+   grpcurl -plaintext "unix://$SOCKET" list
    ```
 
-2. Check firewall settings:
+2. Check socket file exists and permissions:
+   ```sh
+   ls -la "$SOCKET"
+   # Expected format: srwxr-xr-x (with 's' indicating socket)
+   # Permissions should match umask used when server started
+   ```
+
+3. Socket permission denied:
+   ```sh
+   SOCKET="$HOME/Library/Caches/macosuse.sock"
+
+   # If socket is world-writable, check group ownership
+   chgrp staff "$SOCKET"  # Change group if needed
+   chmod 660 "$SOCKET"    # Adjust as needed
+
+   # Or restart server with restrictive umask
+   umask 0077 && GRPC_UNIX_SOCKET="$SOCKET" ./MacosUseServer
+   ```
+
+4. Check firewall settings (TCP only):
    ```sh
    sudo pfctl -s rules | grep 8080
    ```
 
-3. Verify network configuration:
+5. Verify network configuration (TCP only):
    ```sh
    netstat -an | grep 8080
    ```
@@ -396,3 +492,57 @@ cp Server/.build/release/MacosUseServer MacosUseServer.backup
 # After update, if needed:
 cp MacosUseServer.backup Server/.build/release/MacosUseServer
 ```
+
+## Uninstallation
+
+### Stop the Server
+
+If running via launchd:
+
+```sh
+# User agent
+launchctl unload ~/Library/LaunchAgents/com.macosusesdk.server.plist
+
+# System daemon (if installed)
+sudo launchctl unload /Library/LaunchDaemons/com.macosusesdk.server.plist
+```
+
+If running manually:
+
+```sh
+kill $(pgrep MacosUseServer)
+```
+
+### Remove Files
+
+```sh
+# Remove binary
+rm -f ~/bin/MacosUseServer # User binary
+sudo rm -f /usr/local/bin/MacosUseServer # System binary (if installed)
+
+# Remove launchd plist
+rm -f ~/Library/LaunchAgents/com.macosusesdk.server.plist
+sudo rm -f /Library/LaunchDaemons/com.macosusesdk.server.plist
+
+# Remove socket (may still exist if server didn't clean up)
+rm -f "$HOME/Library/Caches/macosuse.sock"
+
+# Remove logs
+rm -f "$HOME/Library/Logs/macosuse.log"
+rm -f "$HOME/Library/Logs/macosuse.error.log"
+
+# Remove build artifacts (optional - source remains in repo)
+rm -rf Server/.build/
+```
+
+### Remove Accessibility Permissions
+
+If you want to revoke the server's accessibility access:
+
+1. Open **System Settings** > **Privacy & Security** > **Accessibility**
+2. Remove **Terminal** or **iTerm2** (or whichever app you used to run the server)
+
+### Remove Screen Recording Permission
+
+1. Open **System Settings** > **Privacy & Security** > **Screen Recording**
+2. Remove the application you used to run the server
