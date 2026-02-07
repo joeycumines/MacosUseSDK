@@ -212,6 +212,9 @@ Create `Agents/com.macosusesdk.server.plist` (user agent, not system):
             <string>/Users/YOU/Library/Caches/macosuse.sock</string>
         </dict>
 
+        <key>Umask</key>
+        <integer>0x0077</integer>
+
         <key>RunAtLoad</key>
         <true/>
 
