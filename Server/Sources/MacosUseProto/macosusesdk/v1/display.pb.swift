@@ -38,21 +38,21 @@ public struct Macosusesdk_V1_Display: Sendable {
 
   /// Display frame in Global Display Coordinates (top-left origin).
   public var frame: Macosusesdk_Type_Region {
-    get {return _frame ?? Macosusesdk_Type_Region()}
+    get {_frame ?? Macosusesdk_Type_Region()}
     set {_frame = newValue}
   }
   /// Returns true if `frame` has been explicitly set.
-  public var hasFrame: Bool {return self._frame != nil}
+  public var hasFrame: Bool {self._frame != nil}
   /// Clears the value of `frame`. Subsequent reads from it will return its default value.
   public mutating func clearFrame() {self._frame = nil}
 
   /// Visible frame (excluding menu bar and dock) in Global Display Coordinates (top-left origin).
   public var visibleFrame: Macosusesdk_Type_Region {
-    get {return _visibleFrame ?? Macosusesdk_Type_Region()}
+    get {_visibleFrame ?? Macosusesdk_Type_Region()}
     set {_visibleFrame = newValue}
   }
   /// Returns true if `visibleFrame` has been explicitly set.
-  public var hasVisibleFrame: Bool {return self._visibleFrame != nil}
+  public var hasVisibleFrame: Bool {self._visibleFrame != nil}
   /// Clears the value of `visibleFrame`. Subsequent reads from it will return its default value.
   public mutating func clearVisibleFrame() {self._visibleFrame = nil}
 

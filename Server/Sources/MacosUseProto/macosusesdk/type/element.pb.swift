@@ -35,51 +35,51 @@ public struct Macosusesdk_Type_Element: Sendable {
 
   /// Text content of the element, if any.
   public var text: String {
-    get {return _text ?? String()}
+    get {_text ?? String()}
     set {_text = newValue}
   }
   /// Returns true if `text` has been explicitly set.
-  public var hasText: Bool {return self._text != nil}
+  public var hasText: Bool {self._text != nil}
   /// Clears the value of `text`. Subsequent reads from it will return its default value.
   public mutating func clearText() {self._text = nil}
 
   /// X coordinate of the element's position in Global Display Coordinates (top-left origin, Y increases downward).
   public var x: Double {
-    get {return _x ?? 0}
+    get {_x ?? 0}
     set {_x = newValue}
   }
   /// Returns true if `x` has been explicitly set.
-  public var hasX: Bool {return self._x != nil}
+  public var hasX: Bool {self._x != nil}
   /// Clears the value of `x`. Subsequent reads from it will return its default value.
   public mutating func clearX() {self._x = nil}
 
   /// Y coordinate of the element's position in Global Display Coordinates (top-left origin, Y increases downward).
   public var y: Double {
-    get {return _y ?? 0}
+    get {_y ?? 0}
     set {_y = newValue}
   }
   /// Returns true if `y` has been explicitly set.
-  public var hasY: Bool {return self._y != nil}
+  public var hasY: Bool {self._y != nil}
   /// Clears the value of `y`. Subsequent reads from it will return its default value.
   public mutating func clearY() {self._y = nil}
 
   /// Width of the element.
   public var width: Double {
-    get {return _width ?? 0}
+    get {_width ?? 0}
     set {_width = newValue}
   }
   /// Returns true if `width` has been explicitly set.
-  public var hasWidth: Bool {return self._width != nil}
+  public var hasWidth: Bool {self._width != nil}
   /// Clears the value of `width`. Subsequent reads from it will return its default value.
   public mutating func clearWidth() {self._width = nil}
 
   /// Height of the element.
   public var height: Double {
-    get {return _height ?? 0}
+    get {_height ?? 0}
     set {_height = newValue}
   }
   /// Returns true if `height` has been explicitly set.
-  public var hasHeight: Bool {return self._height != nil}
+  public var hasHeight: Bool {self._height != nil}
   /// Clears the value of `height`. Subsequent reads from it will return its default value.
   public mutating func clearHeight() {self._height = nil}
 
@@ -89,21 +89,21 @@ public struct Macosusesdk_Type_Element: Sendable {
 
   /// Whether the element is enabled for interaction.
   public var enabled: Bool {
-    get {return _enabled ?? false}
+    get {_enabled ?? false}
     set {_enabled = newValue}
   }
   /// Returns true if `enabled` has been explicitly set.
-  public var hasEnabled: Bool {return self._enabled != nil}
+  public var hasEnabled: Bool {self._enabled != nil}
   /// Clears the value of `enabled`. Subsequent reads from it will return its default value.
   public mutating func clearEnabled() {self._enabled = nil}
 
   /// Whether the element has keyboard focus.
   public var focused: Bool {
-    get {return _focused ?? false}
+    get {_focused ?? false}
     set {_focused = newValue}
   }
   /// Returns true if `focused` has been explicitly set.
-  public var hasFocused: Bool {return self._focused != nil}
+  public var hasFocused: Bool {self._focused != nil}
   /// Clears the value of `focused`. Subsequent reads from it will return its default value.
   public mutating func clearFocused() {self._focused = nil}
 

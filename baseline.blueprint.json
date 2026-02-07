@@ -18,58 +18,12 @@
     "subagent_policy": "!! MANDATORY OPERATIONAL DIRECTIVE !!",
     "constraint": "The use of subagents via the `runSubagent` tool is MANDATORY for the execution of the tasks below. Tasks are grouped specifically to be run in distinct subagent contexts to prevent context window exhaustion. Do not attempt to solve all groups in a single turn."
   },
-  "project_title": "Implementation Plan: MacosUseSDK gRPC Service",
   "status_section": {
-    "label": "STATUS SECTION (ACTION-FOCUSED)",
-    "current_state": "Pending Phase 4 execution",
-    "update_instruction": "To provide an update, return to this 'status_section' object and modify the 'current_state'."
+    "current_state": "",
+    "remaining_work": [
+    ]
   },
-  "implementation_phases": [
-    {
-      "phase_id": "Phase 4",
-      "title": "Testing Strategy",
-      "subsections": [
-        {
-          "id": "4.1",
-          "title": "Unit Tests",
-          "requirements": [
-            {
-              "type": "Requirement",
-              "content": "Every fix must have accompanying unit test verification."
-            },
-            {
-              "type": "Strictness",
-              "content": "`integration/observation_test.go` must remain an EFFECTIVE test of the logic it covers."
-            }
-          ]
-        },
-        {
-          "id": "4.2",
-          "title": "Test Harness",
-          "details": {
-            "golden_apps": [
-              "TextEdit",
-              "Calculator",
-              "Finder"
-            ],
-            "lifecycle_constraint": "Tests must clean up resources (DeleteApplication) aggressively."
-          }
-        },
-        {
-          "title": "Correctness & Verification Guarantees",
-          "guarantees": [
-            {
-              "rule": "State-Difference Assertions",
-              "description": "Mutator RPCs must be followed by Accessor RPCs to verify delta."
-            },
-            {
-              "rule": "PollUntil Pattern",
-              "description": "No `time.Sleep()`. Use polling with timeouts."
-            }
-          ]
-        }
-      ]
-    }
+  "sequential_tasks": [
   ],
   "final_enforcement_protocol": [
     {

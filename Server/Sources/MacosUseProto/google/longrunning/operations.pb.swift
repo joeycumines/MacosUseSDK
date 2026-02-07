@@ -51,11 +51,11 @@ public struct Google_Longrunning_Operation: Sendable {
   /// Some services might not provide such metadata.  Any method that returns a
   /// long-running operation should document the metadata type, if any.
   public var metadata: SwiftProtobuf.Google_Protobuf_Any {
-    get {return _metadata ?? SwiftProtobuf.Google_Protobuf_Any()}
+    get {_metadata ?? SwiftProtobuf.Google_Protobuf_Any()}
     set {_metadata = newValue}
   }
   /// Returns true if `metadata` has been explicitly set.
-  public var hasMetadata: Bool {return self._metadata != nil}
+  public var hasMetadata: Bool {self._metadata != nil}
   /// Clears the value of `metadata`. Subsequent reads from it will return its default value.
   public mutating func clearMetadata() {self._metadata = nil}
 
@@ -240,11 +240,11 @@ public struct Google_Longrunning_WaitOperationRequest: Sendable {
   /// will be at most the time permitted by the underlying HTTP/RPC protocol.
   /// If RPC context deadline is also specified, the shorter one will be used.
   public var timeout: SwiftProtobuf.Google_Protobuf_Duration {
-    get {return _timeout ?? SwiftProtobuf.Google_Protobuf_Duration()}
+    get {_timeout ?? SwiftProtobuf.Google_Protobuf_Duration()}
     set {_timeout = newValue}
   }
   /// Returns true if `timeout` has been explicitly set.
-  public var hasTimeout: Bool {return self._timeout != nil}
+  public var hasTimeout: Bool {self._timeout != nil}
   /// Clears the value of `timeout`. Subsequent reads from it will return its default value.
   public mutating func clearTimeout() {self._timeout = nil}
 

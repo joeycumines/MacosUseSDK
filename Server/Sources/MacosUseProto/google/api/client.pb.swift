@@ -174,11 +174,11 @@ public struct Google_Api_CommonLanguageSettings: Sendable {
 
   /// Configuration for which RPCs should be generated in the GAPIC client.
   public var selectiveGapicGeneration: Google_Api_SelectiveGapicGeneration {
-    get {return _selectiveGapicGeneration ?? Google_Api_SelectiveGapicGeneration()}
+    get {_selectiveGapicGeneration ?? Google_Api_SelectiveGapicGeneration()}
     set {_selectiveGapicGeneration = newValue}
   }
   /// Returns true if `selectiveGapicGeneration` has been explicitly set.
-  public var hasSelectiveGapicGeneration: Bool {return self._selectiveGapicGeneration != nil}
+  public var hasSelectiveGapicGeneration: Bool {self._selectiveGapicGeneration != nil}
   /// Clears the value of `selectiveGapicGeneration`. Subsequent reads from it will return its default value.
   public mutating func clearSelectiveGapicGeneration() {self._selectiveGapicGeneration = nil}
 
@@ -199,100 +199,100 @@ public struct Google_Api_ClientLibrarySettings: @unchecked Sendable {
   /// package for the API, ending in the version element.
   /// Examples: "google.cloud.speech.v1" and "google.spanner.admin.database.v1".
   public var version: String {
-    get {return _storage._version}
+    get {_storage._version}
     set {_uniqueStorage()._version = newValue}
   }
 
   /// Launch stage of this version of the API.
   public var launchStage: Google_Api_LaunchStage {
-    get {return _storage._launchStage}
+    get {_storage._launchStage}
     set {_uniqueStorage()._launchStage = newValue}
   }
 
   /// When using transport=rest, the client request will encode enums as
   /// numbers rather than strings.
   public var restNumericEnums: Bool {
-    get {return _storage._restNumericEnums}
+    get {_storage._restNumericEnums}
     set {_uniqueStorage()._restNumericEnums = newValue}
   }
 
   /// Settings for legacy Java features, supported in the Service YAML.
   public var javaSettings: Google_Api_JavaSettings {
-    get {return _storage._javaSettings ?? Google_Api_JavaSettings()}
+    get {_storage._javaSettings ?? Google_Api_JavaSettings()}
     set {_uniqueStorage()._javaSettings = newValue}
   }
   /// Returns true if `javaSettings` has been explicitly set.
-  public var hasJavaSettings: Bool {return _storage._javaSettings != nil}
+  public var hasJavaSettings: Bool {_storage._javaSettings != nil}
   /// Clears the value of `javaSettings`. Subsequent reads from it will return its default value.
   public mutating func clearJavaSettings() {_uniqueStorage()._javaSettings = nil}
 
   /// Settings for C++ client libraries.
   public var cppSettings: Google_Api_CppSettings {
-    get {return _storage._cppSettings ?? Google_Api_CppSettings()}
+    get {_storage._cppSettings ?? Google_Api_CppSettings()}
     set {_uniqueStorage()._cppSettings = newValue}
   }
   /// Returns true if `cppSettings` has been explicitly set.
-  public var hasCppSettings: Bool {return _storage._cppSettings != nil}
+  public var hasCppSettings: Bool {_storage._cppSettings != nil}
   /// Clears the value of `cppSettings`. Subsequent reads from it will return its default value.
   public mutating func clearCppSettings() {_uniqueStorage()._cppSettings = nil}
 
   /// Settings for PHP client libraries.
   public var phpSettings: Google_Api_PhpSettings {
-    get {return _storage._phpSettings ?? Google_Api_PhpSettings()}
+    get {_storage._phpSettings ?? Google_Api_PhpSettings()}
     set {_uniqueStorage()._phpSettings = newValue}
   }
   /// Returns true if `phpSettings` has been explicitly set.
-  public var hasPhpSettings: Bool {return _storage._phpSettings != nil}
+  public var hasPhpSettings: Bool {_storage._phpSettings != nil}
   /// Clears the value of `phpSettings`. Subsequent reads from it will return its default value.
   public mutating func clearPhpSettings() {_uniqueStorage()._phpSettings = nil}
 
   /// Settings for Python client libraries.
   public var pythonSettings: Google_Api_PythonSettings {
-    get {return _storage._pythonSettings ?? Google_Api_PythonSettings()}
+    get {_storage._pythonSettings ?? Google_Api_PythonSettings()}
     set {_uniqueStorage()._pythonSettings = newValue}
   }
   /// Returns true if `pythonSettings` has been explicitly set.
-  public var hasPythonSettings: Bool {return _storage._pythonSettings != nil}
+  public var hasPythonSettings: Bool {_storage._pythonSettings != nil}
   /// Clears the value of `pythonSettings`. Subsequent reads from it will return its default value.
   public mutating func clearPythonSettings() {_uniqueStorage()._pythonSettings = nil}
 
   /// Settings for Node client libraries.
   public var nodeSettings: Google_Api_NodeSettings {
-    get {return _storage._nodeSettings ?? Google_Api_NodeSettings()}
+    get {_storage._nodeSettings ?? Google_Api_NodeSettings()}
     set {_uniqueStorage()._nodeSettings = newValue}
   }
   /// Returns true if `nodeSettings` has been explicitly set.
-  public var hasNodeSettings: Bool {return _storage._nodeSettings != nil}
+  public var hasNodeSettings: Bool {_storage._nodeSettings != nil}
   /// Clears the value of `nodeSettings`. Subsequent reads from it will return its default value.
   public mutating func clearNodeSettings() {_uniqueStorage()._nodeSettings = nil}
 
   /// Settings for .NET client libraries.
   public var dotnetSettings: Google_Api_DotnetSettings {
-    get {return _storage._dotnetSettings ?? Google_Api_DotnetSettings()}
+    get {_storage._dotnetSettings ?? Google_Api_DotnetSettings()}
     set {_uniqueStorage()._dotnetSettings = newValue}
   }
   /// Returns true if `dotnetSettings` has been explicitly set.
-  public var hasDotnetSettings: Bool {return _storage._dotnetSettings != nil}
+  public var hasDotnetSettings: Bool {_storage._dotnetSettings != nil}
   /// Clears the value of `dotnetSettings`. Subsequent reads from it will return its default value.
   public mutating func clearDotnetSettings() {_uniqueStorage()._dotnetSettings = nil}
 
   /// Settings for Ruby client libraries.
   public var rubySettings: Google_Api_RubySettings {
-    get {return _storage._rubySettings ?? Google_Api_RubySettings()}
+    get {_storage._rubySettings ?? Google_Api_RubySettings()}
     set {_uniqueStorage()._rubySettings = newValue}
   }
   /// Returns true if `rubySettings` has been explicitly set.
-  public var hasRubySettings: Bool {return _storage._rubySettings != nil}
+  public var hasRubySettings: Bool {_storage._rubySettings != nil}
   /// Clears the value of `rubySettings`. Subsequent reads from it will return its default value.
   public mutating func clearRubySettings() {_uniqueStorage()._rubySettings = nil}
 
   /// Settings for Go client libraries.
   public var goSettings: Google_Api_GoSettings {
-    get {return _storage._goSettings ?? Google_Api_GoSettings()}
+    get {_storage._goSettings ?? Google_Api_GoSettings()}
     set {_uniqueStorage()._goSettings = newValue}
   }
   /// Returns true if `goSettings` has been explicitly set.
-  public var hasGoSettings: Bool {return _storage._goSettings != nil}
+  public var hasGoSettings: Bool {_storage._goSettings != nil}
   /// Clears the value of `goSettings`. Subsequent reads from it will return its default value.
   public mutating func clearGoSettings() {_uniqueStorage()._goSettings = nil}
 
@@ -397,11 +397,11 @@ public struct Google_Api_JavaSettings: Sendable {
 
   /// Some settings.
   public var common: Google_Api_CommonLanguageSettings {
-    get {return _common ?? Google_Api_CommonLanguageSettings()}
+    get {_common ?? Google_Api_CommonLanguageSettings()}
     set {_common = newValue}
   }
   /// Returns true if `common` has been explicitly set.
-  public var hasCommon: Bool {return self._common != nil}
+  public var hasCommon: Bool {self._common != nil}
   /// Clears the value of `common`. Subsequent reads from it will return its default value.
   public mutating func clearCommon() {self._common = nil}
 
@@ -420,11 +420,11 @@ public struct Google_Api_CppSettings: Sendable {
 
   /// Some settings.
   public var common: Google_Api_CommonLanguageSettings {
-    get {return _common ?? Google_Api_CommonLanguageSettings()}
+    get {_common ?? Google_Api_CommonLanguageSettings()}
     set {_common = newValue}
   }
   /// Returns true if `common` has been explicitly set.
-  public var hasCommon: Bool {return self._common != nil}
+  public var hasCommon: Bool {self._common != nil}
   /// Clears the value of `common`. Subsequent reads from it will return its default value.
   public mutating func clearCommon() {self._common = nil}
 
@@ -443,11 +443,11 @@ public struct Google_Api_PhpSettings: Sendable {
 
   /// Some settings.
   public var common: Google_Api_CommonLanguageSettings {
-    get {return _common ?? Google_Api_CommonLanguageSettings()}
+    get {_common ?? Google_Api_CommonLanguageSettings()}
     set {_common = newValue}
   }
   /// Returns true if `common` has been explicitly set.
-  public var hasCommon: Bool {return self._common != nil}
+  public var hasCommon: Bool {self._common != nil}
   /// Clears the value of `common`. Subsequent reads from it will return its default value.
   public mutating func clearCommon() {self._common = nil}
 
@@ -466,21 +466,21 @@ public struct Google_Api_PythonSettings: Sendable {
 
   /// Some settings.
   public var common: Google_Api_CommonLanguageSettings {
-    get {return _common ?? Google_Api_CommonLanguageSettings()}
+    get {_common ?? Google_Api_CommonLanguageSettings()}
     set {_common = newValue}
   }
   /// Returns true if `common` has been explicitly set.
-  public var hasCommon: Bool {return self._common != nil}
+  public var hasCommon: Bool {self._common != nil}
   /// Clears the value of `common`. Subsequent reads from it will return its default value.
   public mutating func clearCommon() {self._common = nil}
 
   /// Experimental features to be included during client library generation.
   public var experimentalFeatures: Google_Api_PythonSettings.ExperimentalFeatures {
-    get {return _experimentalFeatures ?? Google_Api_PythonSettings.ExperimentalFeatures()}
+    get {_experimentalFeatures ?? Google_Api_PythonSettings.ExperimentalFeatures()}
     set {_experimentalFeatures = newValue}
   }
   /// Returns true if `experimentalFeatures` has been explicitly set.
-  public var hasExperimentalFeatures: Bool {return self._experimentalFeatures != nil}
+  public var hasExperimentalFeatures: Bool {self._experimentalFeatures != nil}
   /// Clears the value of `experimentalFeatures`. Subsequent reads from it will return its default value.
   public mutating func clearExperimentalFeatures() {self._experimentalFeatures = nil}
 
@@ -531,11 +531,11 @@ public struct Google_Api_NodeSettings: Sendable {
 
   /// Some settings.
   public var common: Google_Api_CommonLanguageSettings {
-    get {return _common ?? Google_Api_CommonLanguageSettings()}
+    get {_common ?? Google_Api_CommonLanguageSettings()}
     set {_common = newValue}
   }
   /// Returns true if `common` has been explicitly set.
-  public var hasCommon: Bool {return self._common != nil}
+  public var hasCommon: Bool {self._common != nil}
   /// Clears the value of `common`. Subsequent reads from it will return its default value.
   public mutating func clearCommon() {self._common = nil}
 
@@ -554,11 +554,11 @@ public struct Google_Api_DotnetSettings: Sendable {
 
   /// Some settings.
   public var common: Google_Api_CommonLanguageSettings {
-    get {return _common ?? Google_Api_CommonLanguageSettings()}
+    get {_common ?? Google_Api_CommonLanguageSettings()}
     set {_common = newValue}
   }
   /// Returns true if `common` has been explicitly set.
-  public var hasCommon: Bool {return self._common != nil}
+  public var hasCommon: Bool {self._common != nil}
   /// Clears the value of `common`. Subsequent reads from it will return its default value.
   public mutating func clearCommon() {self._common = nil}
 
@@ -607,11 +607,11 @@ public struct Google_Api_RubySettings: Sendable {
 
   /// Some settings.
   public var common: Google_Api_CommonLanguageSettings {
-    get {return _common ?? Google_Api_CommonLanguageSettings()}
+    get {_common ?? Google_Api_CommonLanguageSettings()}
     set {_common = newValue}
   }
   /// Returns true if `common` has been explicitly set.
-  public var hasCommon: Bool {return self._common != nil}
+  public var hasCommon: Bool {self._common != nil}
   /// Clears the value of `common`. Subsequent reads from it will return its default value.
   public mutating func clearCommon() {self._common = nil}
 
@@ -630,11 +630,11 @@ public struct Google_Api_GoSettings: Sendable {
 
   /// Some settings.
   public var common: Google_Api_CommonLanguageSettings {
-    get {return _common ?? Google_Api_CommonLanguageSettings()}
+    get {_common ?? Google_Api_CommonLanguageSettings()}
     set {_common = newValue}
   }
   /// Returns true if `common` has been explicitly set.
-  public var hasCommon: Bool {return self._common != nil}
+  public var hasCommon: Bool {self._common != nil}
   /// Clears the value of `common`. Subsequent reads from it will return its default value.
   public mutating func clearCommon() {self._common = nil}
 
@@ -687,11 +687,11 @@ public struct Google_Api_MethodSettings: Sendable {
   ///          max_poll_delay: 360s # 6 minutes
   ///          total_poll_timeout: 54000s # 90 minutes
   public var longRunning: Google_Api_MethodSettings.LongRunning {
-    get {return _longRunning ?? Google_Api_MethodSettings.LongRunning()}
+    get {_longRunning ?? Google_Api_MethodSettings.LongRunning()}
     set {_longRunning = newValue}
   }
   /// Returns true if `longRunning` has been explicitly set.
-  public var hasLongRunning: Bool {return self._longRunning != nil}
+  public var hasLongRunning: Bool {self._longRunning != nil}
   /// Clears the value of `longRunning`. Subsequent reads from it will return its default value.
   public mutating func clearLongRunning() {self._longRunning = nil}
 
@@ -723,11 +723,11 @@ public struct Google_Api_MethodSettings: Sendable {
     /// Initial delay after which the first poll request will be made.
     /// Default value: 5 seconds.
     public var initialPollDelay: SwiftProtobuf.Google_Protobuf_Duration {
-      get {return _initialPollDelay ?? SwiftProtobuf.Google_Protobuf_Duration()}
+      get {_initialPollDelay ?? SwiftProtobuf.Google_Protobuf_Duration()}
       set {_initialPollDelay = newValue}
     }
     /// Returns true if `initialPollDelay` has been explicitly set.
-    public var hasInitialPollDelay: Bool {return self._initialPollDelay != nil}
+    public var hasInitialPollDelay: Bool {self._initialPollDelay != nil}
     /// Clears the value of `initialPollDelay`. Subsequent reads from it will return its default value.
     public mutating func clearInitialPollDelay() {self._initialPollDelay = nil}
 
@@ -739,22 +739,22 @@ public struct Google_Api_MethodSettings: Sendable {
     /// Maximum time between two subsequent poll requests.
     /// Default value: 45 seconds.
     public var maxPollDelay: SwiftProtobuf.Google_Protobuf_Duration {
-      get {return _maxPollDelay ?? SwiftProtobuf.Google_Protobuf_Duration()}
+      get {_maxPollDelay ?? SwiftProtobuf.Google_Protobuf_Duration()}
       set {_maxPollDelay = newValue}
     }
     /// Returns true if `maxPollDelay` has been explicitly set.
-    public var hasMaxPollDelay: Bool {return self._maxPollDelay != nil}
+    public var hasMaxPollDelay: Bool {self._maxPollDelay != nil}
     /// Clears the value of `maxPollDelay`. Subsequent reads from it will return its default value.
     public mutating func clearMaxPollDelay() {self._maxPollDelay = nil}
 
     /// Total polling timeout.
     /// Default value: 5 minutes.
     public var totalPollTimeout: SwiftProtobuf.Google_Protobuf_Duration {
-      get {return _totalPollTimeout ?? SwiftProtobuf.Google_Protobuf_Duration()}
+      get {_totalPollTimeout ?? SwiftProtobuf.Google_Protobuf_Duration()}
       set {_totalPollTimeout = newValue}
     }
     /// Returns true if `totalPollTimeout` has been explicitly set.
-    public var hasTotalPollTimeout: Bool {return self._totalPollTimeout != nil}
+    public var hasTotalPollTimeout: Bool {self._totalPollTimeout != nil}
     /// Clears the value of `totalPollTimeout`. Subsequent reads from it will return its default value.
     public mutating func clearTotalPollTimeout() {self._totalPollTimeout = nil}
 

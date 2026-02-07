@@ -105,11 +105,11 @@ public struct Macosusesdk_V1_Clipboard: Sendable {
 
   /// Clipboard content.
   public var content: Macosusesdk_V1_ClipboardContent {
-    get {return _content ?? Macosusesdk_V1_ClipboardContent()}
+    get {_content ?? Macosusesdk_V1_ClipboardContent()}
     set {_content = newValue}
   }
   /// Returns true if `content` has been explicitly set.
-  public var hasContent: Bool {return self._content != nil}
+  public var hasContent: Bool {self._content != nil}
   /// Clears the value of `content`. Subsequent reads from it will return its default value.
   public mutating func clearContent() {self._content = nil}
 
@@ -247,21 +247,21 @@ public struct Macosusesdk_V1_ClipboardHistoryEntry: Sendable {
 
   /// When this content was copied.
   public var copiedTime: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {return _copiedTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    get {_copiedTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
     set {_copiedTime = newValue}
   }
   /// Returns true if `copiedTime` has been explicitly set.
-  public var hasCopiedTime: Bool {return self._copiedTime != nil}
+  public var hasCopiedTime: Bool {self._copiedTime != nil}
   /// Clears the value of `copiedTime`. Subsequent reads from it will return its default value.
   public mutating func clearCopiedTime() {self._copiedTime = nil}
 
   /// Clipboard content.
   public var content: Macosusesdk_V1_ClipboardContent {
-    get {return _content ?? Macosusesdk_V1_ClipboardContent()}
+    get {_content ?? Macosusesdk_V1_ClipboardContent()}
     set {_content = newValue}
   }
   /// Returns true if `content` has been explicitly set.
-  public var hasContent: Bool {return self._content != nil}
+  public var hasContent: Bool {self._content != nil}
   /// Clears the value of `content`. Subsequent reads from it will return its default value.
   public mutating func clearContent() {self._content = nil}
 

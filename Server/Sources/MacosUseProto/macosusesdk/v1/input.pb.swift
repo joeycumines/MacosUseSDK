@@ -36,11 +36,11 @@ public struct Macosusesdk_V1_Input: Sendable {
 
   /// The specific action to perform or that was performed.
   public var action: Macosusesdk_V1_InputAction {
-    get {return _action ?? Macosusesdk_V1_InputAction()}
+    get {_action ?? Macosusesdk_V1_InputAction()}
     set {_action = newValue}
   }
   /// Returns true if `action` has been explicitly set.
-  public var hasAction: Bool {return self._action != nil}
+  public var hasAction: Bool {self._action != nil}
   /// Clears the value of `action`. Subsequent reads from it will return its default value.
   public mutating func clearAction() {self._action = nil}
 
@@ -49,21 +49,21 @@ public struct Macosusesdk_V1_Input: Sendable {
 
   /// When the input was created.
   public var createTime: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {return _createTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    get {_createTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
     set {_createTime = newValue}
   }
   /// Returns true if `createTime` has been explicitly set.
-  public var hasCreateTime: Bool {return self._createTime != nil}
+  public var hasCreateTime: Bool {self._createTime != nil}
   /// Clears the value of `createTime`. Subsequent reads from it will return its default value.
   public mutating func clearCreateTime() {self._createTime = nil}
 
   /// When the input completed (success or failure).
   public var completeTime: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {return _completeTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    get {_completeTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
     set {_completeTime = newValue}
   }
   /// Returns true if `completeTime` has been explicitly set.
-  public var hasCompleteTime: Bool {return self._completeTime != nil}
+  public var hasCompleteTime: Bool {self._completeTime != nil}
   /// Clears the value of `completeTime`. Subsequent reads from it will return its default value.
   public mutating func clearCompleteTime() {self._completeTime = nil}
 
@@ -284,11 +284,11 @@ public struct Macosusesdk_V1_MouseClick: Sendable {
   /// This uses the same coordinate system as Window.bounds, allowing direct use of
   /// window coordinates for click targets.
   public var position: Macosusesdk_Type_Point {
-    get {return _position ?? Macosusesdk_Type_Point()}
+    get {_position ?? Macosusesdk_Type_Point()}
     set {_position = newValue}
   }
   /// Returns true if `position` has been explicitly set.
-  public var hasPosition: Bool {return self._position != nil}
+  public var hasPosition: Bool {self._position != nil}
   /// Clears the value of `position`. Subsequent reads from it will return its default value.
   public mutating func clearPosition() {self._position = nil}
 
@@ -476,11 +476,11 @@ public struct Macosusesdk_V1_MouseMove: Sendable {
 
   /// Target position in Global Display Coordinates.
   public var position: Macosusesdk_Type_Point {
-    get {return _position ?? Macosusesdk_Type_Point()}
+    get {_position ?? Macosusesdk_Type_Point()}
     set {_position = newValue}
   }
   /// Returns true if `position` has been explicitly set.
-  public var hasPosition: Bool {return self._position != nil}
+  public var hasPosition: Bool {self._position != nil}
   /// Clears the value of `position`. Subsequent reads from it will return its default value.
   public mutating func clearPosition() {self._position = nil}
 
@@ -505,21 +505,21 @@ public struct Macosusesdk_V1_MouseDrag: Sendable {
 
   /// Starting position in Global Display Coordinates.
   public var startPosition: Macosusesdk_Type_Point {
-    get {return _startPosition ?? Macosusesdk_Type_Point()}
+    get {_startPosition ?? Macosusesdk_Type_Point()}
     set {_startPosition = newValue}
   }
   /// Returns true if `startPosition` has been explicitly set.
-  public var hasStartPosition: Bool {return self._startPosition != nil}
+  public var hasStartPosition: Bool {self._startPosition != nil}
   /// Clears the value of `startPosition`. Subsequent reads from it will return its default value.
   public mutating func clearStartPosition() {self._startPosition = nil}
 
   /// Ending position in Global Display Coordinates.
   public var endPosition: Macosusesdk_Type_Point {
-    get {return _endPosition ?? Macosusesdk_Type_Point()}
+    get {_endPosition ?? Macosusesdk_Type_Point()}
     set {_endPosition = newValue}
   }
   /// Returns true if `endPosition` has been explicitly set.
-  public var hasEndPosition: Bool {return self._endPosition != nil}
+  public var hasEndPosition: Bool {self._endPosition != nil}
   /// Clears the value of `endPosition`. Subsequent reads from it will return its default value.
   public mutating func clearEndPosition() {self._endPosition = nil}
 
@@ -549,11 +549,11 @@ public struct Macosusesdk_V1_Scroll: Sendable {
   /// Position to scroll at (optional, uses current mouse position if not set).
   /// In Global Display Coordinates.
   public var position: Macosusesdk_Type_Point {
-    get {return _position ?? Macosusesdk_Type_Point()}
+    get {_position ?? Macosusesdk_Type_Point()}
     set {_position = newValue}
   }
   /// Returns true if `position` has been explicitly set.
-  public var hasPosition: Bool {return self._position != nil}
+  public var hasPosition: Bool {self._position != nil}
   /// Clears the value of `position`. Subsequent reads from it will return its default value.
   public mutating func clearPosition() {self._position = nil}
 
@@ -584,11 +584,11 @@ public struct Macosusesdk_V1_Hover: Sendable {
 
   /// Position to hover at in Global Display Coordinates.
   public var position: Macosusesdk_Type_Point {
-    get {return _position ?? Macosusesdk_Type_Point()}
+    get {_position ?? Macosusesdk_Type_Point()}
     set {_position = newValue}
   }
   /// Returns true if `position` has been explicitly set.
-  public var hasPosition: Bool {return self._position != nil}
+  public var hasPosition: Bool {self._position != nil}
   /// Clears the value of `position`. Subsequent reads from it will return its default value.
   public mutating func clearPosition() {self._position = nil}
 
@@ -613,11 +613,11 @@ public struct Macosusesdk_V1_Gesture: Sendable {
 
   /// Center point of the gesture in Global Display Coordinates.
   public var center: Macosusesdk_Type_Point {
-    get {return _center ?? Macosusesdk_Type_Point()}
+    get {_center ?? Macosusesdk_Type_Point()}
     set {_center = newValue}
   }
   /// Returns true if `center` has been explicitly set.
-  public var hasCenter: Bool {return self._center != nil}
+  public var hasCenter: Bool {self._center != nil}
   /// Clears the value of `center`. Subsequent reads from it will return its default value.
   public mutating func clearCenter() {self._center = nil}
 
@@ -774,11 +774,11 @@ public struct Macosusesdk_V1_MouseButtonDown: Sendable {
 
   /// Position where button is pressed in Global Display Coordinates.
   public var position: Macosusesdk_Type_Point {
-    get {return _position ?? Macosusesdk_Type_Point()}
+    get {_position ?? Macosusesdk_Type_Point()}
     set {_position = newValue}
   }
   /// Returns true if `position` has been explicitly set.
-  public var hasPosition: Bool {return self._position != nil}
+  public var hasPosition: Bool {self._position != nil}
   /// Clears the value of `position`. Subsequent reads from it will return its default value.
   public mutating func clearPosition() {self._position = nil}
 
@@ -806,11 +806,11 @@ public struct Macosusesdk_V1_MouseButtonUp: Sendable {
 
   /// Position where button is released in Global Display Coordinates.
   public var position: Macosusesdk_Type_Point {
-    get {return _position ?? Macosusesdk_Type_Point()}
+    get {_position ?? Macosusesdk_Type_Point()}
     set {_position = newValue}
   }
   /// Returns true if `position` has been explicitly set.
-  public var hasPosition: Bool {return self._position != nil}
+  public var hasPosition: Bool {self._position != nil}
   /// Clears the value of `position`. Subsequent reads from it will return its default value.
   public mutating func clearPosition() {self._position = nil}
 

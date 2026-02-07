@@ -53,11 +53,11 @@ public struct Macosusesdk_V1_Window: Sendable {
   /// They are NOT cached from CGWindowList (which can lag by 10-100ms), ensuring mutation responses
   /// (MoveWindow, ResizeWindow) return the exact requested values without polling delays.
   public var bounds: Macosusesdk_V1_Bounds {
-    get {return _bounds ?? Macosusesdk_V1_Bounds()}
+    get {_bounds ?? Macosusesdk_V1_Bounds()}
     set {_bounds = newValue}
   }
   /// Returns true if `bounds` has been explicitly set.
-  public var hasBounds: Bool {return self._bounds != nil}
+  public var hasBounds: Bool {self._bounds != nil}
   /// Clears the value of `bounds`. Subsequent reads from it will return its default value.
   public mutating func clearBounds() {self._bounds = nil}
 
@@ -210,11 +210,11 @@ public struct Macosusesdk_V1_WindowState: Sendable {
   /// Optional: unset (nil) if the AX API does not provide a definitive answer.
   /// Clients should check HasFullscreen() before accessing this field.
   public var fullscreen: Bool {
-    get {return _fullscreen ?? false}
+    get {_fullscreen ?? false}
     set {_fullscreen = newValue}
   }
   /// Returns true if `fullscreen` has been explicitly set.
-  public var hasFullscreen: Bool {return self._fullscreen != nil}
+  public var hasFullscreen: Bool {self._fullscreen != nil}
   /// Clears the value of `fullscreen`. Subsequent reads from it will return its default value.
   public mutating func clearFullscreen() {self._fullscreen = nil}
 
