@@ -87,10 +87,29 @@ public actor AutomationCoordinator {
     }
 
     /// Traverses the accessibility tree for a given PID
-    public func handleTraverse(pid: pid_t, visibleOnly: Bool) async throws
+    /// - Parameters:
+    ///   - pid: The process identifier to traverse.
+    ///   - visibleOnly: When true, only geometrically visible elements are collected.
+    ///   - shouldActivate: When true, the target app is activated (brought to foreground) before
+    ///     traversal. Defaults to false so background polling (ObservationManager) never steals focus.
+    public func handleTraverse(pid: pid_t, visibleOnly: Bool, shouldActivate: Bool = false) async throws
         -> Macosusesdk_V1_TraverseAccessibilityResponse
     {
-        logger.info("Traversing accessibility tree for PID \(pid, privacy: .public)")
+        logger.info("Traversing accessibility tree for PID \(pid, privacy: .public) (shouldActivate=\(shouldActivate, privacy: .public))")
+
+        // When shouldActivate is true, mark the PID on the ChangeDetector *before*
+        // the activation so that the resulting NSWorkspace notification is suppressed
+        // and not echoed back as a user-initiated event.
+        //
+        // Accepted edge case: if the app is already active, activate() won't fire but
+        // sdkActivatedPIDs is still populated, causing a ≤500ms window of false
+        // deactivation suppression for this PID. This is rare (requesting activation
+        // for an already-active app) and the window is short.
+        if shouldActivate {
+            await MainActor.run {
+                ChangeDetector.shared.markSDKActivation(pid: pid)
+            }
+        }
 
         do {
             // CRITICAL FIX: Run traversal on background thread to prevent main thread blocking
@@ -99,6 +118,7 @@ public actor AutomationCoordinator {
                 try MacosUseSDK.traverseAccessibilityTree(
                     pid: pid,
                     onlyVisibleElements: visibleOnly,
+                    shouldActivate: shouldActivate,
                 )
             }.value
 

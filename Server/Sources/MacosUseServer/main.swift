@@ -93,7 +93,7 @@ func main() async throws {
     if descriptorSetPaths.isEmpty {
         logger.warning("No descriptor sets found for reflection service. Reflection will not be enabled.")
     } else {
-        logger.info("Found \(descriptorSetPaths.count) descriptor set(s) for reflection: \(descriptorSetPaths.map { URL(fileURLWithPath: $0).lastPathComponent }.joined(separator: ", "), privacy: .public)")
+        logger.info("Found \(descriptorSetPaths.count, privacy: .public) descriptor set(s) for reflection: \(descriptorSetPaths.map { URL(fileURLWithPath: $0).lastPathComponent }.joined(separator: ", "), privacy: .public)")
     }
 
     // Initialize singleton actors with the shared registry
@@ -164,7 +164,7 @@ func main() async throws {
         try await Task.sleep(for: .milliseconds(100))
         let permissions: mode_t = 0o600 // owner read/write only
         if chmod(socketPath, permissions) == 0 {
-            logger.info("Set Unix socket permissions: 0\(String(permissions, radix: 8))")
+            logger.info("Set Unix socket permissions: 0\(String(permissions, radix: 8), privacy: .public)")
         } else {
             logger.error("Failed to set Unix socket permissions: \(errno, privacy: .public)")
         }

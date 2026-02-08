@@ -74,9 +74,9 @@ public func fetchAXWindowInfo(
         result = AXUIElementCopyAttributeValue(appElement, kAXChildrenAttribute as CFString, &childrenRef)
         if result == .success {
             windows = childrenRef as? [AXUIElement]
-            logger.debug("[fetchAXWindowInfo] kAXChildren returned \(windows?.count ?? 0) elements")
+            logger.debug("[fetchAXWindowInfo] kAXChildren returned \(windows?.count ?? 0, privacy: .public) elements")
         } else {
-            logger.error("[fetchAXWindowInfo] kAXChildren fetch failed with AXError \(result.rawValue)")
+            logger.error("[fetchAXWindowInfo] kAXChildren fetch failed with AXError \(result.rawValue, privacy: .public)")
             windows = nil
         }
     }

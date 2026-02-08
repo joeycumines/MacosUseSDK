@@ -169,7 +169,7 @@ actor ObservationManager {
             do {
                 switch type {
                 case .elementChanges, .treeChanges:
-                    let traverseResult = try await AutomationCoordinator.shared.handleTraverse(pid: pid, visibleOnly: filter.visibleOnly)
+                    let traverseResult = try await AutomationCoordinator.shared.handleTraverse(pid: pid, visibleOnly: filter.visibleOnly, shouldActivate: false)
                     let currentElements = traverseResult.elements
                     let changes = detectElementChanges(previous: previousElements, current: currentElements)
                     for change in changes {
@@ -220,7 +220,7 @@ actor ObservationManager {
                 case .applicationChanges: break
 
                 case .attributeChanges:
-                    let traverseResult = try await AutomationCoordinator.shared.handleTraverse(pid: pid, visibleOnly: filter.visibleOnly)
+                    let traverseResult = try await AutomationCoordinator.shared.handleTraverse(pid: pid, visibleOnly: filter.visibleOnly, shouldActivate: false)
                     let currentElements = traverseResult.elements
                     let changes = detectAttributeChanges(previous: previousElements, current: currentElements, watchedAttributes: filter.attributes)
                     for change in changes {

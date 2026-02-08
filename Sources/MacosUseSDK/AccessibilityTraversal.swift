@@ -175,12 +175,15 @@ public struct ResponseData: Codable, Sendable {
 ///
 /// - Parameter pid: The Process ID (PID) of the target application.
 /// - Parameter onlyVisibleElements: If true, only collects elements with valid position and size. Defaults to false.
+/// - Parameter shouldActivate: If true, activates the target application before traversal. Defaults to false
+///   to avoid stealing focus during background polling (e.g. ObservationManager). Set to true only
+///   when the caller explicitly intends to bring the app to the foreground.
 /// - Returns: A `ResponseData` struct containing the collected elements, statistics, and timing information.
 /// - Throws: `MacosUseSDKError` if accessibility is denied, the app is not found, or an internal error occurs.
-public func traverseAccessibilityTree(pid: Int32, onlyVisibleElements: Bool = false) throws
+public func traverseAccessibilityTree(pid: Int32, onlyVisibleElements: Bool = false, shouldActivate: Bool = false) throws
   -> ResponseData {
   let operation = AccessibilityTraversalOperation(
-    pid: pid, onlyVisibleElements: onlyVisibleElements)
+    pid: pid, onlyVisibleElements: onlyVisibleElements, shouldActivate: shouldActivate)
   return try operation.executeTraversal()
 }
 
@@ -190,6 +193,7 @@ public func traverseAccessibilityTree(pid: Int32, onlyVisibleElements: Bool = fa
 private class AccessibilityTraversalOperation {
   let pid: Int32
   let onlyVisibleElements: Bool
+  let shouldActivate: Bool
   var visitedElements: Set<AXUIElement> = []
   var collectedElements: Set<ElementData> = []
   var statistics: Statistics = Statistics()
@@ -204,9 +208,10 @@ private class AccessibilityTraversalOperation {
     "AXToolbar", "AXDisclosureTriangle"
   ]
 
-  init(pid: Int32, onlyVisibleElements: Bool) {
+  init(pid: Int32, onlyVisibleElements: Bool, shouldActivate: Bool = false) {
     self.pid = pid
     self.onlyVisibleElements = onlyVisibleElements
+    self.shouldActivate = shouldActivate
   }
 
   // --- Main Execution Method ---
@@ -241,9 +246,9 @@ private class AccessibilityTraversalOperation {
     // and does not require the Window Server to be fully in sync.
     let appElement = AXUIElementCreateApplication(pid)
 
-    // 3. Activate App if needed (Only if we have a runningApp handle)
+    // 3. Activate App if needed (Only if we have a runningApp handle AND caller opted in)
     var didActivate = false
-    if let app = runningApp, app.activationPolicy == NSApplication.ActivationPolicy.regular {
+    if shouldActivate, let app = runningApp, app.activationPolicy == NSApplication.ActivationPolicy.regular {
       if !app.isActive {
         app.activate() // Default options are usually sufficient
         didActivate = true
@@ -251,6 +256,8 @@ private class AccessibilityTraversalOperation {
     }
     if didActivate {
       logStepCompletion("activating application '\(targetAppName)'")
+    } else if !shouldActivate {
+      logger.trace("skipping app activation (shouldActivate=false) for pid \(self.pid, privacy: .public)")
     }
 
     // 4. Start Traversal
@@ -571,7 +578,7 @@ private class AccessibilityTraversalOperation {
     let endTime = Date()
     let duration = endTime.timeIntervalSince(stepStartTime)
     let durationStr = String(format: "%.3f", duration)
-    logger.info("[\(durationStr)s] finished '\(stepDescription)'")
+    logger.info("[\(durationStr, privacy: .public)s] finished '\(stepDescription, privacy: .public)'")
     stepStartTime = endTime  // Reset start time for the next step
   }
 }  // End of AccessibilityTraversalOperation class
