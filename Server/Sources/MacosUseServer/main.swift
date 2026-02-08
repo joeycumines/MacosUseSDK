@@ -162,7 +162,7 @@ func main() async throws {
     if let socketPath = config.unixSocketPath {
         // Small delay to allow socket creation
         try await Task.sleep(for: .milliseconds(100))
-        let permissions: mode_t = 0o600  // owner read/write only
+        let permissions: mode_t = 0o600 // owner read/write only
         if chmod(socketPath, permissions) == 0 {
             logger.info("Set Unix socket permissions: 0\(String(permissions, radix: 8))")
         } else {

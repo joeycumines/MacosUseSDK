@@ -1,6 +1,6 @@
+import Darwin
 @testable import MacosUseServer
 import XCTest
-import Darwin
 
 /// Tests for ServerConfig and server security settings
 final class ServerConfigTests: XCTestCase {
