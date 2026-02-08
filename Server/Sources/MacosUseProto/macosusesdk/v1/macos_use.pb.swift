@@ -251,6 +251,11 @@ public struct Macosusesdk_V1_TraverseAccessibilityRequest: Sendable {
   /// Whether to return only visible elements.
   public var visibleOnly: Bool = false
 
+  /// Whether to activate (bring to foreground) the target application before
+  /// traversal. When false (the default), traversal is performed passively
+  /// without disturbing window ordering.
+  public var activate: Bool = false
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
@@ -3146,7 +3151,7 @@ extension Macosusesdk_V1_ListInputsResponse: SwiftProtobuf.Message, SwiftProtobu
 
 extension Macosusesdk_V1_TraverseAccessibilityRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".TraverseAccessibilityRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}visible_only\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}visible_only\0\u{1}activate\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -3156,6 +3161,7 @@ extension Macosusesdk_V1_TraverseAccessibilityRequest: SwiftProtobuf.Message, Sw
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
       case 2: try { try decoder.decodeSingularBoolField(value: &self.visibleOnly) }()
+      case 3: try { try decoder.decodeSingularBoolField(value: &self.activate) }()
       default: break
       }
     }
@@ -3168,12 +3174,16 @@ extension Macosusesdk_V1_TraverseAccessibilityRequest: SwiftProtobuf.Message, Sw
     if self.visibleOnly != false {
       try visitor.visitSingularBoolField(value: self.visibleOnly, fieldNumber: 2)
     }
+    if self.activate != false {
+      try visitor.visitSingularBoolField(value: self.activate, fieldNumber: 3)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_TraverseAccessibilityRequest, rhs: Macosusesdk_V1_TraverseAccessibilityRequest) -> Bool {
     if lhs.name != rhs.name {return false}
     if lhs.visibleOnly != rhs.visibleOnly {return false}
+    if lhs.activate != rhs.activate {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

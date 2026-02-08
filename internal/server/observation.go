@@ -26,6 +26,7 @@ func (s *MCPServer) handleCreateObservation(call *ToolCall) (*ToolResult, error)
 		Attributes   []string `json:"attributes"`
 		PollInterval float64  `json:"poll_interval"`
 		VisibleOnly  bool     `json:"visible_only"`
+		Activate     bool     `json:"activate"`
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
@@ -70,6 +71,8 @@ func (s *MCPServer) handleCreateObservation(call *ToolCall) (*ToolResult, error)
 			Attributes:   params.Attributes,
 		}
 	}
+
+	observation.Activate = params.Activate
 
 	op, err := s.client.CreateObservation(ctx, &pb.CreateObservationRequest{
 		Parent:      params.Parent,

@@ -28,6 +28,7 @@ actor ObservationManager {
         parent: String,
         filter: Macosusesdk_V1_ObservationFilter?,
         pid: pid_t,
+        activate: Bool = false,
     ) -> Macosusesdk_V1_Observation {
         let now = Date()
         let observation = Macosusesdk_V1_Observation.with {
@@ -35,12 +36,13 @@ actor ObservationManager {
             $0.type = type
             $0.state = .pending
             $0.createTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: now)
+            $0.activate = activate
             if let filter {
                 $0.filter = filter
             }
         }
 
-        let state = ObservationState(observation: observation, parent: parent, pid: pid)
+        let state = ObservationState(observation: observation, parent: parent, pid: pid, activate: activate)
         observations[name] = state
         sequenceCounters[name] = 0
         eventStreams[name] = [:]
@@ -158,6 +160,7 @@ actor ObservationManager {
         let type = initialState.observation.type
         let filter = initialState.observation.filter
         let pid = initialState.pid
+        let shouldActivate = initialState.activate
         let pollInterval = (filter.pollInterval > 0) ? filter.pollInterval : 1.0
 
         var previousElements: [Macosusesdk_Type_Element] = []
@@ -169,7 +172,7 @@ actor ObservationManager {
             do {
                 switch type {
                 case .elementChanges, .treeChanges:
-                    let traverseResult = try await AutomationCoordinator.shared.handleTraverse(pid: pid, visibleOnly: filter.visibleOnly, shouldActivate: false)
+                    let traverseResult = try await AutomationCoordinator.shared.handleTraverse(pid: pid, visibleOnly: filter.visibleOnly, shouldActivate: shouldActivate)
                     let currentElements = traverseResult.elements
                     let changes = detectElementChanges(previous: previousElements, current: currentElements)
                     for change in changes {
@@ -220,7 +223,7 @@ actor ObservationManager {
                 case .applicationChanges: break
 
                 case .attributeChanges:
-                    let traverseResult = try await AutomationCoordinator.shared.handleTraverse(pid: pid, visibleOnly: filter.visibleOnly, shouldActivate: false)
+                    let traverseResult = try await AutomationCoordinator.shared.handleTraverse(pid: pid, visibleOnly: filter.visibleOnly, shouldActivate: shouldActivate)
                     let currentElements = traverseResult.elements
                     let changes = detectAttributeChanges(previous: previousElements, current: currentElements, watchedAttributes: filter.attributes)
                     for change in changes {
@@ -635,6 +638,7 @@ private struct ObservationState {
     var observation: Macosusesdk_V1_Observation
     let parent: String
     let pid: pid_t
+    let activate: Bool
 }
 
 private enum ElementChange {

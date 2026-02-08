@@ -744,7 +744,11 @@ type TraverseAccessibilityRequest struct {
 	// Resource name of the application.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// Whether to return only visible elements.
-	VisibleOnly   bool `protobuf:"varint,2,opt,name=visible_only,json=visibleOnly,proto3" json:"visible_only,omitempty"`
+	VisibleOnly bool `protobuf:"varint,2,opt,name=visible_only,json=visibleOnly,proto3" json:"visible_only,omitempty"`
+	// Whether to activate (bring to foreground) the target application before
+	// traversal. When false (the default), traversal is performed passively
+	// without disturbing window ordering.
+	Activate      bool `protobuf:"varint,3,opt,name=activate,proto3" json:"activate,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -789,6 +793,13 @@ func (x *TraverseAccessibilityRequest) GetName() string {
 func (x *TraverseAccessibilityRequest) GetVisibleOnly() bool {
 	if x != nil {
 		return x.VisibleOnly
+	}
+	return false
+}
+
+func (x *TraverseAccessibilityRequest) GetActivate() bool {
+	if x != nil {
+		return x.Activate
 	}
 	return false
 }
@@ -7047,11 +7058,12 @@ const file_macosusesdk_v1_macos_use_proto_rawDesc = "" +
 	"\x06filter\x18\x04 \x01(\tB\x03\xe0A\x01R\x06filter\"k\n" +
 	"\x12ListInputsResponse\x12-\n" +
 	"\x06inputs\x18\x01 \x03(\v2\x15.macosusesdk.v1.InputR\x06inputs\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\x7f\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xa0\x01\n" +
 	"\x1cTraverseAccessibilityRequest\x127\n" +
 	"\x04name\x18\x01 \x01(\tB#\xe0A\x02\xfaA\x1d\n" +
 	"\x1bmacosusesdk.com/ApplicationR\x04name\x12&\n" +
-	"\fvisible_only\x18\x02 \x01(\bB\x03\xe0A\x01R\vvisibleOnly\"\xe5\x01\n" +
+	"\fvisible_only\x18\x02 \x01(\bB\x03\xe0A\x01R\vvisibleOnly\x12\x1f\n" +
+	"\bactivate\x18\x03 \x01(\bB\x03\xe0A\x01R\bactivate\"\xe5\x01\n" +
 	"\x1dTraverseAccessibilityResponse\x12\x10\n" +
 	"\x03app\x18\x01 \x01(\tR\x03app\x125\n" +
 	"\belements\x18\x02 \x03(\v2\x19.macosusesdk.type.ElementR\belements\x126\n" +

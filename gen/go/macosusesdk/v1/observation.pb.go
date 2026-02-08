@@ -316,7 +316,11 @@ type Observation struct {
 	// When the observation ended (if completed or cancelled).
 	EndTime *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
 	// Filter configuration for the observation.
-	Filter        *ObservationFilter `protobuf:"bytes,7,opt,name=filter,proto3" json:"filter,omitempty"`
+	Filter *ObservationFilter `protobuf:"bytes,7,opt,name=filter,proto3" json:"filter,omitempty"`
+	// Whether observation polling should activate (bring to foreground) the
+	// target application on each poll cycle. When false (the default), polling
+	// is performed passively without disturbing window ordering.
+	Activate      bool `protobuf:"varint,8,opt,name=activate,proto3" json:"activate,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -398,6 +402,13 @@ func (x *Observation) GetFilter() *ObservationFilter {
 		return x.Filter
 	}
 	return nil
+}
+
+func (x *Observation) GetActivate() bool {
+	if x != nil {
+		return x.Activate
+	}
+	return false
 }
 
 // Filter for observations.
@@ -926,7 +937,7 @@ var File_macosusesdk_v1_observation_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_observation_proto_rawDesc = "" +
 	"\n" +
-	" macosusesdk/v1/observation.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1emacosusesdk/type/element.proto\"\x91\x05\n" +
+	" macosusesdk/v1/observation.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1emacosusesdk/type/element.proto\"\xb2\x05\n" +
 	"\vObservation\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x128\n" +
 	"\x04type\x18\x02 \x01(\x0e2\x1f.macosusesdk.v1.ObservationTypeB\x03\xe0A\x02R\x04type\x12<\n" +
@@ -936,7 +947,8 @@ const file_macosusesdk_v1_observation_proto_rawDesc = "" +
 	"\n" +
 	"start_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\tstartTime\x12:\n" +
 	"\bend_time\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\aendTime\x12>\n" +
-	"\x06filter\x18\a \x01(\v2!.macosusesdk.v1.ObservationFilterB\x03\xe0A\x01R\x06filter\"\x7f\n" +
+	"\x06filter\x18\a \x01(\v2!.macosusesdk.v1.ObservationFilterB\x03\xe0A\x01R\x06filter\x12\x1f\n" +
+	"\bactivate\x18\b \x01(\bB\x03\xe0A\x01R\bactivate\"\x7f\n" +
 	"\x05State\x12\x15\n" +
 	"\x11STATE_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rSTATE_PENDING\x10\x01\x12\x10\n" +

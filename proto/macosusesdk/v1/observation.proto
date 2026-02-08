@@ -46,6 +46,11 @@ message Observation {
   // Filter configuration for the observation.
   ObservationFilter filter = 7 [(google.api.field_behavior) = OPTIONAL];
 
+  // Whether observation polling should activate (bring to foreground) the
+  // target application on each poll cycle. When false (the default), polling
+  // is performed passively without disturbing window ordering.
+  bool activate = 8 [(google.api.field_behavior) = OPTIONAL];
+
   // State of an observation.
   enum State {
     // Default unspecified state.

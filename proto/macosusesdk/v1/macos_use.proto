@@ -736,6 +736,11 @@ message TraverseAccessibilityRequest {
 
   // Whether to return only visible elements.
   bool visible_only = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to activate (bring to foreground) the target application before
+  // traversal. When false (the default), traversal is performed passively
+  // without disturbing window ordering.
+  bool activate = 3 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from traversing accessibility tree.

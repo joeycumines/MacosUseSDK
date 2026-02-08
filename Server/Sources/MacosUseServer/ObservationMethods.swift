@@ -33,6 +33,7 @@ extension MacosUseService {
             parent: req.parent,
             filter: req.observation.hasFilter ? req.observation.filter : nil,
             pid: pid,
+            activate: req.observation.activate,
         )
 
         // Create metadata

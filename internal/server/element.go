@@ -318,6 +318,7 @@ func (s *MCPServer) handleTraverseAccessibility(call *ToolCall) (*ToolResult, er
 	var params struct {
 		Name        string `json:"name"`
 		VisibleOnly bool   `json:"visible_only"`
+		Activate    bool   `json:"activate"`
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
@@ -337,6 +338,7 @@ func (s *MCPServer) handleTraverseAccessibility(call *ToolCall) (*ToolResult, er
 	resp, err := s.client.TraverseAccessibility(ctx, &pb.TraverseAccessibilityRequest{
 		Name:        params.Name,
 		VisibleOnly: params.VisibleOnly,
+		Activate:    params.Activate,
 	})
 	if err != nil {
 		return &ToolResult{

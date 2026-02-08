@@ -1048,6 +1048,10 @@ func (s *MCPServer) registerTools() {
 						"items":       map[string]interface{}{"type": "string"},
 						"description": "Specific attributes to observe (for attribute change observations)",
 					},
+					"activate": map[string]interface{}{
+						"type":        "boolean",
+						"description": "Activate (bring to foreground) the target app on each poll cycle (default: false). When false, polling is passive and does not disturb window ordering.",
+					},
 				},
 				"required": []string{"parent"},
 			},
@@ -1131,6 +1135,10 @@ func (s *MCPServer) registerTools() {
 					"visible_only": map[string]interface{}{
 						"type":        "boolean",
 						"description": "Only return visible elements (default: false)",
+					},
+					"activate": map[string]interface{}{
+						"type":        "boolean",
+						"description": "Bring the target app to foreground before traversal (default: false). When false, traversal is passive and does not disturb window ordering.",
 					},
 				},
 				"required": []string{"name"},

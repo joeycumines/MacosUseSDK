@@ -16,7 +16,7 @@ extension MacosUseService {
         Self.logger.info("traverseAccessibility called")
         let pid = try parsePID(fromName: req.name)
         let response = try await AutomationCoordinator.shared.handleTraverse(
-            pid: pid, visibleOnly: req.visibleOnly,
+            pid: pid, visibleOnly: req.visibleOnly, shouldActivate: req.activate,
         )
         return ServerResponse(message: response)
     }
