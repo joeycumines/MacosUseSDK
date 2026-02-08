@@ -33,38 +33,6 @@ public actor AutomationCoordinator {
         }
     }
 
-    /// Executes a global input action (not tied to a specific PID)
-    @MainActor
-    public func handleGlobalInput(
-        action: InputActionInfo, showAnimation: Bool, animationDuration: Double,
-    ) async throws {
-        logger.info("Executing global input action")
-
-        let sdkAction = try convertToSDKInputAction(action)
-
-        // Execute the action with or without visualization
-        try await executeInputAction(
-            sdkAction, showAnimation: showAnimation, animationDuration: animationDuration,
-        )
-    }
-
-    /// Performs an action on a specific target application
-    @MainActor
-    public func handlePerformAction(
-        pid: pid_t,
-        action: PrimaryActionInfo,
-        options: ActionOptionsInfo,
-    ) async throws -> ActionResultInfo {
-        logger.info("Performing action on PID \(pid, privacy: .public)")
-
-        let sdkAction = try convertToSDKPrimaryAction(action)
-        let sdkOptions = convertToSDKActionOptions(pid: pid, options: options)
-
-        let sdkResult = await MacosUseSDK.performAction(action: sdkAction, optionsInput: sdkOptions)
-
-        return try convertFromSDKActionResult(sdkResult)
-    }
-
     /// Executes an input action globally or on a specific PID
     @MainActor
     public func handleExecuteInput(
@@ -228,69 +196,7 @@ public actor AutomationCoordinator {
     }
 }
 
-// These functions convert between proto-like info structs and SDK types
-// They will be updated to use actual proto types once generated
-
 extension AutomationCoordinator {
-    private nonisolated func convertToSDKInputAction(_ action: InputActionInfo) throws
-        -> MacosUseSDK.InputAction
-    {
-        switch action.type {
-        case let .click(x, y):
-            return .click(point: CGPoint(x: x, y: y))
-        case let .doubleClick(x, y):
-            return .doubleClick(point: CGPoint(x: x, y: y))
-        case let .rightClick(x, y):
-            return .rightClick(point: CGPoint(x: x, y: y))
-        case let .typeText(text):
-            return .type(text: text)
-        case let .pressKey(keyCombo):
-            let (keyName, flags) = try parseKeyCombo(keyCombo)
-            return .press(keyName: keyName, flags: flags)
-        case let .moveTo(x, y):
-            return .move(to: CGPoint(x: x, y: y))
-        }
-    }
-
-    private nonisolated func convertToSDKPrimaryAction(_ action: PrimaryActionInfo) throws
-        -> MacosUseSDK.PrimaryAction
-    {
-        switch action {
-        case let .input(inputAction):
-            try .input(action: convertToSDKInputAction(inputAction))
-        case .traverseOnly:
-            .traverseOnly
-        }
-    }
-
-    private nonisolated func convertToSDKActionOptions(pid: pid_t, options: ActionOptionsInfo)
-        -> MacosUseSDK.ActionOptions
-    {
-        MacosUseSDK.ActionOptions(
-            traverseBefore: options.traverseBefore,
-            traverseAfter: options.traverseAfter,
-            showDiff: options.showDiff,
-            onlyVisibleElements: options.onlyVisibleElements,
-            showAnimation: options.showAnimation,
-            animationDuration: options.animationDuration,
-            pidForTraversal: pid,
-            delayAfterAction: options.delayAfterAction,
-        )
-    }
-
-    private nonisolated func convertFromSDKActionResult(_ result: MacosUseSDK.ActionResult) throws
-        -> ActionResultInfo
-    {
-        ActionResultInfo(
-            pid: result.openResult?.pid ?? 0,
-            appName: result.openResult?.appName ?? "",
-            traversalPid: result.traversalPid ?? 0,
-            primaryActionError: result.primaryActionError,
-            traversalBeforeError: result.traversalBeforeError,
-            traversalAfterError: result.traversalAfterError,
-        )
-    }
-
     private nonisolated func convertFromProtoInputAction(_ action: Macosusesdk_V1_InputAction) throws
         -> MacosUseSDK.InputAction
     {
@@ -387,97 +293,6 @@ extension AutomationCoordinator {
         }
         return flags
     }
-
-    private nonisolated func parseKeyCombo(_ combo: String) throws -> (
-        keyName: String, flags: CGEventFlags,
-    ) {
-        var flags: CGEventFlags = []
-        let parts = combo.split(separator: "+").map(String.init)
-
-        guard let keyName = parts.last else {
-            throw CoordinatorError.invalidKeyCombo(combo)
-        }
-
-        for modifier in parts.dropLast() {
-            switch modifier.lowercased() {
-            case "cmd", "command":
-                flags.insert(.maskCommand)
-            case "shift":
-                flags.insert(.maskShift)
-            case "alt", "option":
-                flags.insert(.maskAlternate)
-            case "ctrl", "control":
-                flags.insert(.maskControl)
-            default:
-                throw CoordinatorError.unknownModifier(modifier)
-            }
-        }
-
-        return (keyName, flags)
-    }
-}
-
-// These will be replaced with generated proto types
-
-public enum InputActionInfo {
-    case click(x: Double, y: Double)
-    case doubleClick(x: Double, y: Double)
-    case rightClick(x: Double, y: Double)
-    case typeText(String)
-    case pressKey(String)
-    case moveTo(x: Double, y: Double)
-
-    var type: InputActionInfo {
-        self
-    }
-}
-
-public enum PrimaryActionInfo {
-    case input(InputActionInfo)
-    case traverseOnly
-}
-
-public struct ActionOptionsInfo {
-    public let traverseBefore: Bool
-    public let traverseAfter: Bool
-    public let showDiff: Bool
-    public let onlyVisibleElements: Bool
-    public let showAnimation: Bool
-    public let animationDuration: Double
-    public let delayAfterAction: Double
-
-    public init(
-        traverseBefore: Bool = false,
-        traverseAfter: Bool = false,
-        showDiff: Bool = false,
-        onlyVisibleElements: Bool = false,
-        showAnimation: Bool = true,
-        animationDuration: Double = 0.8,
-        delayAfterAction: Double = 0.2,
-    ) {
-        self.traverseBefore = traverseBefore
-        self.traverseAfter = traverseAfter
-        self.showDiff = showDiff
-        self.onlyVisibleElements = onlyVisibleElements
-        self.showAnimation = showAnimation
-        self.animationDuration = animationDuration
-        self.delayAfterAction = delayAfterAction
-    }
-}
-
-public struct ActionResultInfo: Sendable {
-    public let pid: pid_t
-    public let appName: String
-    public let traversalPid: pid_t
-    public let primaryActionError: String?
-    public let traversalBeforeError: String?
-    public let traversalAfterError: String?
-}
-
-public struct ResponseDataInfo {
-    public let appName: String
-    public let elementCount: Int
-    public let processingTime: String
 }
 
 public enum CoordinatorError: Error, LocalizedError {

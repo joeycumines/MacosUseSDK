@@ -249,7 +249,8 @@ class ChangeDetector {
 
     /// Increments the per-PID activation counter and returns true if the circuit
     /// breaker has tripped (i.e. the event should be suppressed).
-    private func shouldCircuitBreak(pid: pid_t) -> Bool {
+    /// - Note: Internal for testing with @testable import.
+    func shouldCircuitBreak(pid: pid_t) -> Bool {
         let now = Date()
         if let entry = activationEventCounts[pid] {
             if now.timeIntervalSince(entry.windowStart) > circuitBreakerWindow {
@@ -270,6 +271,39 @@ class ChangeDetector {
             activationEventCounts[pid] = (count: 1, windowStart: now)
             return false
         }
+    }
+
+    // MARK: - Test Support (Internal API)
+
+    /// The maximum activation events before the circuit breaker trips.
+    /// - Note: Internal for testing with @testable import.
+    var testCircuitBreakerThreshold: Int {
+        circuitBreakerThreshold
+    }
+
+    /// The circuit breaker rolling window duration.
+    /// - Note: Internal for testing with @testable import.
+    var testCircuitBreakerWindow: TimeInterval {
+        circuitBreakerWindow
+    }
+
+    /// The SDK activation suppression window.
+    /// - Note: Internal for testing with @testable import.
+    var testSDKActivationWindow: TimeInterval {
+        sdkActivationWindow
+    }
+
+    /// Resets all activation tracking state. For testing only.
+    /// - Note: Internal for testing with @testable import.
+    func resetActivationState() {
+        sdkActivatedPIDs.removeAll()
+        activationEventCounts.removeAll()
+    }
+
+    /// Returns the current activation count for a PID. For testing only.
+    /// - Note: Internal for testing with @testable import.
+    func testGetActivationCount(pid: pid_t) -> Int? {
+        activationEventCounts[pid]?.count
     }
 
     private func handleAppActivated(app: NSRunningApplication) {

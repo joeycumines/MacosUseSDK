@@ -5,24 +5,6 @@ import ApplicationServices
 import Foundation
 import OSLog
 
-/// Function pointer type for the private _AXUIElementGetWindow API.
-/// Resolved dynamically via dlsym to avoid hard-linking a private symbol
-/// that could be removed in future macOS releases.
-///
-/// NOTE: This pattern is duplicated in Server/Sources/MacosUseServer/Interfaces/ProductionSystemOperations.swift
-/// because the SDK and Server are separate modules. Changes here must be mirrored there.
-private typealias AXUIElementGetWindowFn = @convention(c) (AXUIElement, UnsafeMutablePointer<CGWindowID>) -> AXError
-
-/// Lazily resolved function pointer for _AXUIElementGetWindow.
-/// Returns nil if the symbol is not available (e.g., removed in a future macOS version).
-/// Thread-safe: dlsym is documented as thread-safe and the result is immutable.
-private let _axUIElementGetWindowFn: AXUIElementGetWindowFn? = {
-    guard let sym = dlsym(dlopen(nil, RTLD_LAZY), "_AXUIElementGetWindow") else {
-        return nil
-    }
-    return unsafeBitCast(sym, to: AXUIElementGetWindowFn.self)
-}()
-
 private let logger = sdkLogger(category: "WindowQuery")
 
 /// Structure representing the resolved Accessibility state of a window.
@@ -134,13 +116,7 @@ public func fetchAXWindowInfo(
         // If the private API is available and returns a matching ID, this is the source of truth.
         // Use it as an instant "gold standard" match (Score 0).
         // If the private API is unavailable (dlsym returned nil), skip directly to heuristic matching.
-        var axID: CGWindowID = 0
-        let idResult: AXError = if let getWindowFn = _axUIElementGetWindowFn {
-            getWindowFn(axWindow, &axID)
-        } else {
-            // Private API not available — proceed directly to heuristic matching
-            .failure
-        }
+        let (idResult, axID) = resolveAXWindowID(for: axWindow)
 
         // If ID matches perfectly, fetch remaining attributes and return immediately
         if idResult == .success, axID == windowId {
