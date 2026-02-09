@@ -3,10 +3,14 @@
 package server
 
 import (
+	"errors"
+	"strings"
 	"testing"
 
 	_type "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func TestErrorResult(t *testing.T) {
@@ -237,5 +241,219 @@ func TestMaxDisplayTextLen(t *testing.T) {
 	// Verify the constant has the expected value
 	if maxDisplayTextLen != 50 {
 		t.Errorf("maxDisplayTextLen = %d, want 50", maxDisplayTextLen)
+	}
+}
+
+func TestFormatGRPCError_NilError(t *testing.T) {
+	result := formatGRPCError(nil, "test_tool")
+	if result != "" {
+		t.Errorf("formatGRPCError(nil) = %q, want empty string", result)
+	}
+}
+
+func TestFormatGRPCError_NonGRPCError(t *testing.T) {
+	err := errors.New("standard error message")
+	result := formatGRPCError(err, "test_tool")
+
+	expected := "Error in test_tool: standard error message"
+	if result != expected {
+		t.Errorf("formatGRPCError() = %q, want %q", result, expected)
+	}
+}
+
+func TestFormatGRPCError_GRPCStatusCodes(t *testing.T) {
+	tests := []struct {
+		name           string
+		code           codes.Code
+		message        string
+		toolName       string
+		wantCode       string
+		wantSuggestion string
+	}{
+		{
+			name:           "PermissionDenied",
+			code:           codes.PermissionDenied,
+			message:        "accessibility access denied",
+			toolName:       "click",
+			wantCode:       "PermissionDenied",
+			wantSuggestion: "Ensure accessibility permissions are granted",
+		},
+		{
+			name:           "NotFound",
+			code:           codes.NotFound,
+			message:        "window not found",
+			toolName:       "get_window",
+			wantCode:       "NotFound",
+			wantSuggestion: "Verify the resource exists",
+		},
+		{
+			name:           "InvalidArgument",
+			code:           codes.InvalidArgument,
+			message:        "invalid selector",
+			toolName:       "find_elements",
+			wantCode:       "InvalidArgument",
+			wantSuggestion: "Check the request parameters",
+		},
+		{
+			name:           "Unavailable",
+			code:           codes.Unavailable,
+			message:        "connection refused",
+			toolName:       "capture_screenshot",
+			wantCode:       "Unavailable",
+			wantSuggestion: "The gRPC server may be down",
+		},
+		{
+			name:           "DeadlineExceeded",
+			code:           codes.DeadlineExceeded,
+			message:        "operation timed out",
+			toolName:       "wait_element",
+			wantCode:       "DeadlineExceeded",
+			wantSuggestion: "Operation timed out",
+		},
+		{
+			name:           "Internal",
+			code:           codes.Internal,
+			message:        "internal server error",
+			toolName:       "traverse_accessibility",
+			wantCode:       "Internal",
+			wantSuggestion: "An internal server error occurred",
+		},
+		{
+			name:           "FailedPrecondition",
+			code:           codes.FailedPrecondition,
+			message:        "app not running",
+			toolName:       "open_application",
+			wantCode:       "FailedPrecondition",
+			wantSuggestion: "precondition not being met",
+		},
+		{
+			name:           "AlreadyExists",
+			code:           codes.AlreadyExists,
+			message:        "session already exists",
+			toolName:       "create_session",
+			wantCode:       "AlreadyExists",
+			wantSuggestion: "A resource with this identifier already exists",
+		},
+		{
+			name:           "ResourceExhausted",
+			code:           codes.ResourceExhausted,
+			message:        "rate limit exceeded",
+			toolName:       "list_windows",
+			wantCode:       "ResourceExhausted",
+			wantSuggestion: "Rate limit exceeded",
+		},
+		{
+			name:           "Unimplemented",
+			code:           codes.Unimplemented,
+			message:        "not implemented",
+			toolName:       "drag_files",
+			wantCode:       "Unimplemented",
+			wantSuggestion: "not implemented or supported",
+		},
+		{
+			name:           "UnknownCode_NoSuggestion",
+			code:           codes.Unknown,
+			message:        "unknown error",
+			toolName:       "test_tool",
+			wantCode:       "Unknown",
+			wantSuggestion: "", // No suggestion for Unknown code
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := status.Error(tt.code, tt.message)
+			result := formatGRPCError(err, tt.toolName)
+
+			// Check tool name is included
+			if !strings.Contains(result, tt.toolName) {
+				t.Errorf("result should contain tool name %q: %s", tt.toolName, result)
+			}
+
+			// Check code is included
+			if !strings.Contains(result, tt.wantCode) {
+				t.Errorf("result should contain code %q: %s", tt.wantCode, result)
+			}
+
+			// Check message is included
+			if !strings.Contains(result, tt.message) {
+				t.Errorf("result should contain message %q: %s", tt.message, result)
+			}
+
+			// Check suggestion is included (if expected)
+			if tt.wantSuggestion != "" {
+				if !strings.Contains(result, "Suggestion:") {
+					t.Errorf("result should contain 'Suggestion:': %s", result)
+				}
+				if !strings.Contains(result, tt.wantSuggestion) {
+					t.Errorf("result should contain suggestion %q: %s", tt.wantSuggestion, result)
+				}
+			} else {
+				// For Unknown code, verify no suggestion line
+				if strings.Contains(result, "Suggestion:") {
+					t.Errorf("result should NOT contain 'Suggestion:' for code %s: %s", tt.wantCode, result)
+				}
+			}
+		})
+	}
+}
+
+func TestFormatGRPCError_OutputFormat(t *testing.T) {
+	err := status.Error(codes.NotFound, "window not found")
+	result := formatGRPCError(err, "get_window")
+
+	// Verify the output format matches expected structure
+	expected := "Error in get_window: NotFound - window not found\nSuggestion: Verify the resource exists and the name/ID is correct"
+	if result != expected {
+		t.Errorf("formatGRPCError() format mismatch:\ngot:  %q\nwant: %q", result, expected)
+	}
+}
+
+func TestGRPCErrorResult(t *testing.T) {
+	err := status.Error(codes.PermissionDenied, "screen capture denied")
+	result := grpcErrorResult(err, "capture_screenshot")
+
+	// Verify it returns a ToolResult with IsError=true
+	if !result.IsError {
+		t.Error("expected IsError to be true")
+	}
+
+	// Verify content is set
+	if len(result.Content) != 1 {
+		t.Fatalf("expected 1 content item, got %d", len(result.Content))
+	}
+
+	// Verify content type
+	if result.Content[0].Type != "text" {
+		t.Errorf("expected type 'text', got %q", result.Content[0].Type)
+	}
+
+	// Verify the text contains expected parts
+	text := result.Content[0].Text
+	if !strings.Contains(text, "capture_screenshot") {
+		t.Errorf("result should contain tool name: %s", text)
+	}
+	if !strings.Contains(text, "PermissionDenied") {
+		t.Errorf("result should contain error code: %s", text)
+	}
+	if !strings.Contains(text, "screen capture denied") {
+		t.Errorf("result should contain error message: %s", text)
+	}
+	if !strings.Contains(text, "Suggestion:") {
+		t.Errorf("result should contain suggestion: %s", text)
+	}
+}
+
+func TestGRPCErrorResult_NonGRPCError(t *testing.T) {
+	err := errors.New("plain error")
+	result := grpcErrorResult(err, "test_tool")
+
+	if !result.IsError {
+		t.Error("expected IsError to be true")
+	}
+
+	text := result.Content[0].Text
+	if !strings.Contains(text, "Error in test_tool: plain error") {
+		t.Errorf("result should contain formatted message: %s", text)
 	}
 }

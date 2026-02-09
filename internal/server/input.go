@@ -93,10 +93,7 @@ func (s *MCPServer) handleClick(call *ToolCall) (*ToolResult, error) {
 		Input:  input,
 	})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to execute click: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "click"), nil
 	}
 
 	result := "single"
@@ -174,10 +171,7 @@ func (s *MCPServer) handleTypeText(call *ToolCall) (*ToolResult, error) {
 		Input:  input,
 	})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to type text: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "type_text"), nil
 	}
 
 	// Truncate displayed text if too long
@@ -259,10 +253,7 @@ func (s *MCPServer) handlePressKey(call *ToolCall) (*ToolResult, error) {
 		Input:  input,
 	})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to press key: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "press_key"), nil
 	}
 
 	// Build key combo string for display
@@ -336,10 +327,7 @@ func (s *MCPServer) handleMouseMove(call *ToolCall) (*ToolResult, error) {
 		Input:  input,
 	})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to move mouse: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "mouse_move"), nil
 	}
 
 	return &ToolResult{
@@ -412,10 +400,7 @@ func (s *MCPServer) handleScroll(call *ToolCall) (*ToolResult, error) {
 		Input:  input,
 	})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to scroll: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "scroll"), nil
 	}
 
 	direction := ""
@@ -518,10 +503,7 @@ func (s *MCPServer) handleDrag(call *ToolCall) (*ToolResult, error) {
 		Input:  input,
 	})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to drag: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "drag"), nil
 	}
 
 	return &ToolResult{
@@ -588,10 +570,7 @@ func (s *MCPServer) handleHover(call *ToolCall) (*ToolResult, error) {
 		Input:  input,
 	})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to hover: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "hover"), nil
 	}
 
 	return &ToolResult{
@@ -704,10 +683,7 @@ func (s *MCPServer) handleGesture(call *ToolCall) (*ToolResult, error) {
 		Input:  input,
 	})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to perform gesture: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "gesture"), nil
 	}
 
 	return &ToolResult{
@@ -743,10 +719,7 @@ func (s *MCPServer) handleGetInput(call *ToolCall) (*ToolResult, error) {
 
 	resp, err := s.client.GetInput(ctx, &pb.GetInputRequest{Name: params.Name})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to get input: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "get_input"), nil
 	}
 
 	data, _ := json.MarshalIndent(map[string]interface{}{
@@ -791,10 +764,7 @@ func (s *MCPServer) handleListInputs(call *ToolCall) (*ToolResult, error) {
 		Filter:    params.Filter,
 	})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to list inputs: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "list_inputs"), nil
 	}
 
 	inputs := make([]map[string]interface{}, 0, len(resp.Inputs))
@@ -893,10 +863,7 @@ func (s *MCPServer) handleHoldKey(call *ToolCall) (*ToolResult, error) {
 		Input:  input,
 	})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to hold key: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "hold_key"), nil
 	}
 
 	return &ToolResult{
@@ -987,10 +954,7 @@ func (s *MCPServer) handleMouseButtonDown(call *ToolCall) (*ToolResult, error) {
 		Input:  input,
 	})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to press mouse button: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "mouse_button_down"), nil
 	}
 
 	buttonName := "left"
@@ -1089,10 +1053,7 @@ func (s *MCPServer) handleMouseButtonUp(call *ToolCall) (*ToolResult, error) {
 		Input:  input,
 	})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to release mouse button: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "mouse_button_up"), nil
 	}
 
 	buttonName := "left"
