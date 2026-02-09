@@ -490,4 +490,312 @@ final class DisplayMethodsTests: XCTestCase {
             XCTAssertLessThanOrEqual(display.scale, 4.0, "Scale factor seems unreasonably large (>4.0)")
         }
     }
+
+    // MARK: - CaptureCursorPosition Tests
+
+    private func makeCaptureCursorPositionRequest(_ msg: Macosusesdk_V1_CaptureCursorPositionRequest = Macosusesdk_V1_CaptureCursorPositionRequest()) -> GRPCCore.ServerRequest<Macosusesdk_V1_CaptureCursorPositionRequest> {
+        GRPCCore.ServerRequest(metadata: GRPCCore.Metadata(), message: msg)
+    }
+
+    private func makeCaptureCursorPositionContext() -> GRPCCore.ServerContext {
+        GRPCCore.ServerContext(
+            descriptor: Macosusesdk_V1_MacosUse.Method.CaptureCursorPosition.descriptor,
+            remotePeer: "in-process:tests",
+            localPeer: "in-process:server",
+            cancellation: GRPCCore.ServerContext.RPCCancellationHandle(),
+        )
+    }
+
+    func testCaptureCursorPositionReturnsCoordinates() async throws {
+        let request = makeCaptureCursorPositionRequest()
+        let response = try await service.captureCursorPosition(
+            request: request, context: makeCaptureCursorPositionContext(),
+        )
+        let msg = try response.message
+
+        // Cursor position should be within reasonable display bounds
+        // x and y are in Global Display Coordinates (top-left origin)
+        // They can be negative for multi-monitor setups where secondary displays are left/above main
+        XCTAssertTrue(msg.x.isFinite, "Cursor x should be a finite number")
+        XCTAssertTrue(msg.y.isFinite, "Cursor y should be a finite number")
+    }
+
+    func testCaptureCursorPositionReturnsDisplayReference() async throws {
+        let request = makeCaptureCursorPositionRequest()
+        let response = try await service.captureCursorPosition(
+            request: request, context: makeCaptureCursorPositionContext(),
+        )
+        let msg = try response.message
+
+        // Should return a display reference in format "displays/{id}" or "displays/unknown"
+        XCTAssertTrue(
+            msg.display.hasPrefix("displays/"),
+            "Display reference should have format 'displays/{id}', got '\(msg.display)'",
+        )
+    }
+
+    func testCaptureCursorPositionDisplayIsKnown() async throws {
+        let request = makeCaptureCursorPositionRequest()
+        let response = try await service.captureCursorPosition(
+            request: request, context: makeCaptureCursorPositionContext(),
+        )
+        let msg = try response.message
+
+        // Under normal conditions, the cursor should be on a known display
+        // (not "displays/unknown") unless something unusual is happening
+        XCTAssertNotEqual(
+            msg.display, "displays/unknown",
+            "Cursor should be on a known display (got 'displays/unknown')",
+        )
+    }
+
+    func testCaptureCursorPositionWithinDisplayBounds() async throws {
+        // Get cursor position
+        let cursorRequest = makeCaptureCursorPositionRequest()
+        let cursorResponse = try await service.captureCursorPosition(
+            request: cursorRequest, context: makeCaptureCursorPositionContext(),
+        )
+        let cursorMsg = try cursorResponse.message
+
+        // Get displays
+        let listResponse = try await service.listDisplays(
+            request: makeListDisplaysRequest(), context: makeListDisplaysContext(),
+        )
+        let listMsg = try listResponse.message
+
+        // Cursor should be within at least one display's bounds
+        var foundInDisplay = false
+        for display in listMsg.displays {
+            let frame = display.frame
+            if cursorMsg.x >= frame.x,
+               cursorMsg.x < frame.x + frame.width,
+               cursorMsg.y >= frame.y,
+               cursorMsg.y < frame.y + frame.height
+            {
+                foundInDisplay = true
+                break
+            }
+        }
+
+        XCTAssertTrue(
+            foundInDisplay,
+            "Cursor position (\(cursorMsg.x), \(cursorMsg.y)) should be within at least one display's bounds",
+        )
+    }
+
+    func testCaptureCursorPositionDisplayMatchesListDisplays() async throws {
+        let cursorRequest = makeCaptureCursorPositionRequest()
+        let cursorResponse = try await service.captureCursorPosition(
+            request: cursorRequest, context: makeCaptureCursorPositionContext(),
+        )
+        let cursorMsg = try cursorResponse.message
+
+        // If not unknown, the display reference should correspond to a valid display
+        guard cursorMsg.display != "displays/unknown" else {
+            return
+        }
+
+        // Extract display ID from the reference
+        let components = cursorMsg.display.split(separator: "/")
+        guard components.count == 2,
+              components[0] == "displays",
+              let displayID = Int64(components[1])
+        else {
+            XCTFail("Invalid display reference format: \(cursorMsg.display)")
+            return
+        }
+
+        // Verify this display exists in listDisplays
+        let listResponse = try await service.listDisplays(
+            request: makeListDisplaysRequest(), context: makeListDisplaysContext(),
+        )
+        let listMsg = try listResponse.message
+
+        let matchingDisplays = listMsg.displays.filter { $0.displayID == displayID }
+        XCTAssertEqual(
+            matchingDisplays.count, 1,
+            "Display \(displayID) from cursor position should exist in listDisplays",
+        )
+    }
+
+    func testCaptureCursorPositionIsDeterministic() async throws {
+        // Cursor position is the same on consecutive calls (assuming cursor doesn't move)
+        let response1 = try await service.captureCursorPosition(
+            request: makeCaptureCursorPositionRequest(), context: makeCaptureCursorPositionContext(),
+        )
+        let msg1 = try response1.message
+
+        let response2 = try await service.captureCursorPosition(
+            request: makeCaptureCursorPositionRequest(), context: makeCaptureCursorPositionContext(),
+        )
+        let msg2 = try response2.message
+
+        // Coordinates should be very close (allowing for tiny floating point differences)
+        // Note: This may fail if cursor is actively being moved, but in test conditions it should be stable
+        XCTAssertEqual(msg1.x, msg2.x, accuracy: 1.0, "Cursor x should be stable between calls")
+        XCTAssertEqual(msg1.y, msg2.y, accuracy: 1.0, "Cursor y should be stable between calls")
+    }
+
+    // MARK: - Additional GetDisplay Edge Cases
+
+    func testGetDisplayResourceNameWithExtraSlashes() async throws {
+        var getRequest = Macosusesdk_V1_GetDisplayRequest()
+        getRequest.name = "displays/123/extra"
+
+        do {
+            _ = try await service.getDisplay(
+                request: makeGetDisplayRequest(getRequest), context: makeGetDisplayContext(),
+            )
+            XCTFail("Expected error for resource name with extra path segments")
+        } catch let error as RPCError {
+            XCTAssertEqual(error.code, .invalidArgument)
+            XCTAssertTrue(error.message.contains("Invalid display resource name"))
+        }
+    }
+
+    func testGetDisplayResourceNameWithLeadingSlash() async throws {
+        // Note: Swift's String.split omits empty subsequences by default,
+        // so "/displays/123" splits to ["displays", "123"] and passes parsing.
+        // It then correctly returns notFound for a non-existent display ID.
+        var getRequest = Macosusesdk_V1_GetDisplayRequest()
+        getRequest.name = "/displays/999999999"
+
+        do {
+            _ = try await service.getDisplay(
+                request: makeGetDisplayRequest(getRequest), context: makeGetDisplayContext(),
+            )
+            XCTFail("Expected error for non-existent display with leading slash")
+        } catch let error as RPCError {
+            // Leading slash is tolerated by the parser, but the display doesn't exist
+            XCTAssertEqual(error.code, .notFound)
+        }
+    }
+
+    func testGetDisplayResourceNameWrongPrefix() async throws {
+        var getRequest = Macosusesdk_V1_GetDisplayRequest()
+        getRequest.name = "monitors/123"
+
+        do {
+            _ = try await service.getDisplay(
+                request: makeGetDisplayRequest(getRequest), context: makeGetDisplayContext(),
+            )
+            XCTFail("Expected error for resource name with wrong prefix")
+        } catch let error as RPCError {
+            XCTAssertEqual(error.code, .invalidArgument)
+            XCTAssertTrue(error.message.contains("Invalid display resource name"))
+        }
+    }
+
+    func testGetDisplayZeroDisplayID() async throws {
+        // Note: On macOS, display ID 0 can actually be valid (often the main display).
+        // CGDisplayBounds(0) may return a valid non-zero rect.
+        // This test verifies the RPC handles display ID 0 without crashing.
+        var getRequest = Macosusesdk_V1_GetDisplayRequest()
+        getRequest.name = "displays/0"
+
+        // Display ID 0 may or may not exist depending on system configuration
+        do {
+            let response = try await service.getDisplay(
+                request: makeGetDisplayRequest(getRequest), context: makeGetDisplayContext(),
+            )
+            let msg = try response.message
+            // If it succeeds, display ID should be 0
+            XCTAssertEqual(msg.displayID, 0)
+        } catch let error as RPCError {
+            // If it fails, it should be notFound
+            XCTAssertEqual(error.code, .notFound)
+            XCTAssertTrue(error.message.contains("Display not found"))
+        }
+    }
+
+    func testGetDisplayNegativeDisplayID() async throws {
+        var getRequest = Macosusesdk_V1_GetDisplayRequest()
+        getRequest.name = "displays/-1"
+
+        do {
+            _ = try await service.getDisplay(
+                request: makeGetDisplayRequest(getRequest), context: makeGetDisplayContext(),
+            )
+            XCTFail("Expected error for negative display ID")
+        } catch let error as RPCError {
+            XCTAssertEqual(error.code, .invalidArgument)
+            XCTAssertTrue(error.message.contains("Invalid display ID"))
+        }
+    }
+
+    // MARK: - Additional ListDisplays Pagination Edge Cases
+
+    func testListDisplaysInvalidPageToken() async throws {
+        var request = Macosusesdk_V1_ListDisplaysRequest()
+        request.pageToken = "invalid-token"
+
+        do {
+            _ = try await service.listDisplays(
+                request: makeListDisplaysRequest(request), context: makeListDisplaysContext(),
+            )
+            XCTFail("Expected error for invalid page token")
+        } catch let error as RPCError {
+            XCTAssertEqual(error.code, .invalidArgument)
+        }
+    }
+
+    func testListDisplaysLargePageSizeReturnsAllDisplays() async throws {
+        var request = Macosusesdk_V1_ListDisplaysRequest()
+        request.pageSize = 1000
+
+        let response = try await service.listDisplays(
+            request: makeListDisplaysRequest(request), context: makeListDisplaysContext(),
+        )
+        let msg = try response.message
+
+        // With a large page size, all displays should fit in one page
+        XCTAssertGreaterThanOrEqual(msg.displays.count, 1, "Should return at least one display")
+        XCTAssertTrue(msg.nextPageToken.isEmpty, "Should not have next page with large page size")
+    }
+
+    func testListDisplaysZeroPageSizeUsesDefault() async throws {
+        var request = Macosusesdk_V1_ListDisplaysRequest()
+        request.pageSize = 0
+
+        let response = try await service.listDisplays(
+            request: makeListDisplaysRequest(request), context: makeListDisplaysContext(),
+        )
+        let msg = try response.message
+
+        // page_size = 0 should use default, which should return displays
+        XCTAssertGreaterThanOrEqual(msg.displays.count, 1, "Should return at least one display with default page size")
+    }
+
+    // MARK: - Display ID Type Edge Cases
+
+    func testGetDisplayLargeDisplayID() async throws {
+        var getRequest = Macosusesdk_V1_GetDisplayRequest()
+        // Use a very large but valid UInt32 value
+        getRequest.name = "displays/4294967295"
+
+        do {
+            _ = try await service.getDisplay(
+                request: makeGetDisplayRequest(getRequest), context: makeGetDisplayContext(),
+            )
+            XCTFail("Expected notFound for non-existent large display ID")
+        } catch let error as RPCError {
+            XCTAssertEqual(error.code, .notFound)
+        }
+    }
+
+    func testGetDisplayOverflowDisplayID() async throws {
+        var getRequest = Macosusesdk_V1_GetDisplayRequest()
+        // UInt32 max is 4294967295, this exceeds it
+        getRequest.name = "displays/4294967296"
+
+        do {
+            _ = try await service.getDisplay(
+                request: makeGetDisplayRequest(getRequest), context: makeGetDisplayContext(),
+            )
+            XCTFail("Expected error for overflow display ID")
+        } catch let error as RPCError {
+            XCTAssertEqual(error.code, .invalidArgument)
+            XCTAssertTrue(error.message.contains("Invalid display ID"))
+        }
+    }
 }
