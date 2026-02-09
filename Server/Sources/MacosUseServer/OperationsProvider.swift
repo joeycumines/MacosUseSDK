@@ -11,16 +11,40 @@ final class OperationsProvider: Google_Longrunning_Operations.ServiceProtocol {
         self.operationStore = operationStore
     }
 
-    /// List operations - simple implementation ignoring filter/pagination
+    /// List operations with optional filter and pagination.
+    /// Supports filtering by done status via 'filter' field (e.g., "done=true", "done=false").
+    /// Supports name prefix filtering via 'name' field.
     func listOperations(
         request: ServerRequest<Google_Longrunning_ListOperationsRequest>,
         context _: ServerContext,
     ) async throws -> ServerResponse<Google_Longrunning_ListOperationsResponse> {
-        _ = request.message
-        var response = Google_Longrunning_ListOperationsResponse()
-        let operations = await operationStore.listOperations()
+        let req = request.message
 
+        // Parse filter for done status
+        // AIP-160 filter syntax: "done=true" or "done=false"
+        var showOnlyDone: Bool?
+        let filter = req.filter.trimmingCharacters(in: .whitespaces)
+        if filter == "done=true" {
+            showOnlyDone = true
+        } else if filter == "done=false" {
+            showOnlyDone = false
+        }
+        // Note: We ignore filter expressions we don't understand per AIP-160 best practice
+        // (fail-open for forward compatibility)
+
+        // Extract name prefix from 'name' field (per google.longrunning.ListOperationsRequest)
+        let namePrefix = req.name.isEmpty ? nil : req.name
+
+        let (operations, nextPageToken) = await operationStore.listOperations(
+            namePrefix: namePrefix,
+            showOnlyDone: showOnlyDone,
+            pageSize: Int(req.pageSize),
+            pageToken: req.pageToken,
+        )
+
+        var response = Google_Longrunning_ListOperationsResponse()
         response.operations = operations
+        response.nextPageToken = nextPageToken
         return ServerResponse(message: response)
     }
 

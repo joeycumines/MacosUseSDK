@@ -53,9 +53,83 @@ public actor OperationStore {
         operations[name]
     }
 
-    /// List operations (simple implementation: ignore filter and pagination)
-    public func listOperations() -> [Google_Longrunning_Operation] {
-        Array(operations.values)
+    /// List operations with optional filtering and pagination.
+    /// - Parameters:
+    ///   - namePrefix: If provided, only operations whose name starts with this prefix are returned.
+    ///   - showOnlyDone: If provided, filters by done status (true = only done, false = only pending).
+    ///   - pageSize: Maximum number of operations to return. 0 or negative uses default of 100.
+    ///   - pageToken: Opaque token from a previous response. Empty string starts from the beginning.
+    /// - Returns: A tuple of (operations, nextPageToken). nextPageToken is empty if there are no more results.
+    public func listOperations(
+        namePrefix: String? = nil,
+        showOnlyDone: Bool? = nil,
+        pageSize: Int = 0,
+        pageToken: String = "",
+    ) -> (operations: [Google_Longrunning_Operation], nextPageToken: String) {
+        // Default page size
+        let effectivePageSize = pageSize > 0 ? pageSize : 100
+
+        // Apply filters
+        var filtered = operations.values.filter { op in
+            // Name prefix filter
+            if let prefix = namePrefix, !prefix.isEmpty {
+                if !op.name.hasPrefix(prefix) {
+                    return false
+                }
+            }
+            // Done status filter
+            if let wantDone = showOnlyDone {
+                if op.done != wantDone {
+                    return false
+                }
+            }
+            return true
+        }
+
+        // Sort by name for deterministic pagination
+        filtered.sort { $0.name < $1.name }
+
+        // Decode page token to get offset
+        let offset: Int = if pageToken.isEmpty {
+            0
+        } else if let decoded = decodeOperationsPageToken(pageToken) {
+            decoded
+        } else {
+            // Invalid page token - start from beginning
+            0
+        }
+
+        // Apply pagination
+        let startIndex = min(offset, filtered.count)
+        let endIndex = min(startIndex + effectivePageSize, filtered.count)
+        let page = Array(filtered[startIndex ..< endIndex])
+
+        // Generate next page token if there are more results
+        var nextToken = ""
+        if endIndex < filtered.count {
+            nextToken = encodeOperationsPageToken(offset: endIndex)
+        }
+
+        return (page, nextToken)
+    }
+
+    /// Encodes an offset into an opaque page token.
+    private func encodeOperationsPageToken(offset: Int) -> String {
+        // Use base64-encoded JSON for opacity
+        let data = try? JSONEncoder().encode(["offset": offset])
+        return data?.base64EncodedString() ?? ""
+    }
+
+    /// Decodes a page token to extract the offset.
+    private func decodeOperationsPageToken(_ token: String) -> Int? {
+        guard let data = Data(base64Encoded: token),
+              let decoded = try? JSONDecoder().decode([String: Int].self, from: data),
+              let offset = decoded["offset"],
+              offset >= 0
+        else {
+            return nil
+        }
+        return offset
     }
 
     /// Delete an operation by name
