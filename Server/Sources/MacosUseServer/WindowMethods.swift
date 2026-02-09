@@ -171,6 +171,24 @@ extension MacosUseService {
         let req = request.message
         Self.logger.info("moveWindow called")
 
+        // Validate coordinates are finite
+        guard req.x.isFinite else {
+            throw RPCErrorHelpers.validationError(
+                message: "x coordinate must be a finite number",
+                reason: "INVALID_COORDINATE",
+                field: "x",
+                value: String(req.x),
+            )
+        }
+        guard req.y.isFinite else {
+            throw RPCErrorHelpers.validationError(
+                message: "y coordinate must be a finite number",
+                reason: "INVALID_COORDINATE",
+                field: "y",
+                value: String(req.y),
+            )
+        }
+
         // Parse "applications/{pid}/windows/{windowId}"
         let components = req.name.split(separator: "/").map(String.init)
         guard components.count == 4,
@@ -238,6 +256,24 @@ extension MacosUseService {
     ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
         let req = request.message
         Self.logger.info("resizeWindow called")
+
+        // Validate dimensions are finite and positive
+        guard req.width.isFinite, req.width > 0 else {
+            throw RPCErrorHelpers.validationError(
+                message: "width must be a finite positive number",
+                reason: "INVALID_DIMENSION",
+                field: "width",
+                value: String(req.width),
+            )
+        }
+        guard req.height.isFinite, req.height > 0 else {
+            throw RPCErrorHelpers.validationError(
+                message: "height must be a finite positive number",
+                reason: "INVALID_DIMENSION",
+                field: "height",
+                value: String(req.height),
+            )
+        }
 
         // Parse "applications/{pid}/windows/{windowId}"
         let components = req.name.split(separator: "/").map(String.init)

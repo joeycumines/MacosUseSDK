@@ -14,6 +14,15 @@ extension MacosUseService {
     ) async throws -> ServerResponse<Google_Longrunning_Operation> {
         let req = request.message
 
+        // Validate id is not empty
+        guard !req.id.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "id is required (bundle identifier or application name)",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "id",
+            )
+        }
+
         // Create an operation and return immediately
         let opName = "operations/open/\(UUID().uuidString)"
 

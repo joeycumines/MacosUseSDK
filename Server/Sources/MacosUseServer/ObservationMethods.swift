@@ -84,6 +84,15 @@ extension MacosUseService {
         let req = request.message
         Self.logger.info("getObservation called")
 
+        // Validate name is not empty
+        guard !req.name.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "name is required",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "name",
+            )
+        }
+
         // Get observation from ObservationManager
         guard let observation = await ObservationManager.shared.getObservation(name: req.name)
         else {
@@ -141,6 +150,15 @@ extension MacosUseService {
         let req = request.message
         Self.logger.info("cancelObservation called")
 
+        // Validate name is not empty
+        guard !req.name.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "name is required",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "name",
+            )
+        }
+
         // Cancel observation in ObservationManager
         guard
             let observation = await ObservationManager.shared.cancelObservation(name: req.name)
@@ -157,6 +175,15 @@ extension MacosUseService {
     ) async throws -> StreamingServerResponse<Macosusesdk_V1_StreamObservationsResponse> {
         let req = request.message
         Self.logger.info("streamObservations called (streaming)")
+
+        // Validate name is not empty
+        guard !req.name.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "name is required",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "name",
+            )
+        }
 
         // Verify observation exists
         guard await ObservationManager.shared.getObservation(name: req.name) != nil else {

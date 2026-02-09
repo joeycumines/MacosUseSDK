@@ -302,6 +302,40 @@ extension MacosUseService {
         let req = request.message
         Self.logger.info("findRegionElements called")
 
+        // Validate region coordinates are finite
+        guard req.region.x.isFinite else {
+            throw RPCErrorHelpers.validationError(
+                message: "region.x must be a finite number",
+                reason: "INVALID_COORDINATE",
+                field: "region.x",
+                value: String(req.region.x),
+            )
+        }
+        guard req.region.y.isFinite else {
+            throw RPCErrorHelpers.validationError(
+                message: "region.y must be a finite number",
+                reason: "INVALID_COORDINATE",
+                field: "region.y",
+                value: String(req.region.y),
+            )
+        }
+        guard req.region.width.isFinite, req.region.width > 0 else {
+            throw RPCErrorHelpers.validationError(
+                message: "region.width must be a finite positive number",
+                reason: "INVALID_DIMENSION",
+                field: "region.width",
+                value: String(req.region.width),
+            )
+        }
+        guard req.region.height.isFinite, req.region.height > 0 else {
+            throw RPCErrorHelpers.validationError(
+                message: "region.height must be a finite positive number",
+                reason: "INVALID_DIMENSION",
+                field: "region.height",
+                value: String(req.region.height),
+            )
+        }
+
         // Validate selector if provided
         let selector =
             req.hasSelector ? try SelectorParser.shared.parseSelector(req.selector) : nil
@@ -360,6 +394,15 @@ extension MacosUseService {
     ) async throws -> ServerResponse<Macosusesdk_Type_Element> {
         let req = request.message
         Self.logger.info("getElement called")
+
+        // Validate name is not empty
+        guard !req.name.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "name is required",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "name",
+            )
+        }
 
         let response = try await ElementLocator.shared.getElement(name: req.name)
         return ServerResponse(message: response)
@@ -628,6 +671,15 @@ extension MacosUseService {
     ) async throws -> ServerResponse<Macosusesdk_V1_PerformElementActionResponse> {
         let req = request.message
         Self.logger.info("performElementAction called")
+
+        // Validate action is not empty
+        guard !req.action.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "action is required",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "action",
+            )
+        }
 
         let element: Macosusesdk_Type_Element
         let elementID: String
