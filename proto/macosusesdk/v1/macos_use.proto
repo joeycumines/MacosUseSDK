@@ -636,6 +636,11 @@ message GetApplicationRequest {
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {type: "macosusesdk.com/Application"}
   ];
+
+  // Optional. Field mask specifying which fields to return.
+  // If not specified or empty, all fields are returned.
+  // Supported fields: name, pid, display_name, bundle_id.
+  google.protobuf.FieldMask read_mask = 2 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Request to list applications.
@@ -647,6 +652,16 @@ message ListApplicationsRequest {
   // This token is opaque and its structure must not be relied upon by clients.
   // Only its presence or absence should be used to determine pagination state.
   string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. Ordering specification for results.
+  // Supported values: "name" (default), "pid", "display_name"
+  // Append " desc" for descending order (e.g., "name desc").
+  string order_by = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. Filter expression for results.
+  // Supported filters: name="..." (filters by display_name)
+  // Multiple conditions can be combined with spaces (AND semantics).
+  string filter = 4 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from listing applications.
@@ -1104,6 +1119,11 @@ message GetWindowRequest {
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {type: "macosusesdk.com/Window"}
   ];
+
+  // Optional. Field mask specifying which fields to return.
+  // If not specified or empty, all fields are returned.
+  // Supported fields: name, title, bounds, visible, z_index, minimized, bundle_id, state.
+  google.protobuf.FieldMask read_mask = 2 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Request to list windows.
@@ -1121,6 +1141,16 @@ message ListWindowsRequest {
   // This token is opaque and its structure must not be relied upon by clients.
   // Only its presence or absence should be used to determine pagination state.
   string page_token = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. Ordering specification for results.
+  // Supported values: "window_id" (default), "title", "z_order"
+  // Append " desc" for descending order (e.g., "title desc").
+  string order_by = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. Filter expression for results.
+  // Supported filters: title="...", visible=true/false, minimized=true/false
+  // Multiple conditions can be combined with spaces (AND semantics).
+  string filter = 5 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Request to get the state of a window.

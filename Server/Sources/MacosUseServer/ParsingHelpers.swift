@@ -1,5 +1,7 @@
 import Foundation
 import GRPCCore
+import MacosUseProto
+import SwiftProtobuf
 
 /// Shared parsing utilities for resource names and identifiers.
 enum ParsingHelpers {
@@ -260,5 +262,99 @@ enum ParsingHelpers {
             )
         }
         return DisplayResource(displayName: components[1])
+    }
+
+    // MARK: - FieldMask Helpers (AIP-157)
+
+    /// Applies a read_mask to a Window response per AIP-157.
+    /// If the mask is empty, all fields are returned.
+    /// Otherwise, only the specified fields are included (others are default values).
+    ///
+    /// Supported field paths: name, title, bounds, z_index, visible, bundle_id
+    ///
+    /// - Parameters:
+    ///   - window: The full window response with all fields populated.
+    ///   - readMask: The FieldMask specifying which fields to return.
+    /// - Returns: A new Window with only the requested fields populated.
+    static func applyFieldMask(
+        to window: Macosusesdk_V1_Window,
+        readMask: SwiftProtobuf.Google_Protobuf_FieldMask,
+    ) -> Macosusesdk_V1_Window {
+        // If read_mask is empty or contains "*", return all fields per AIP-157
+        if readMask.paths.isEmpty || readMask.paths.contains("*") {
+            return window
+        }
+
+        // Create a new window with only requested fields
+        var result = Macosusesdk_V1_Window()
+
+        // The 'name' field is ALWAYS included per AIP-157 guidance for identifier fields
+        result.name = window.name
+
+        for path in readMask.paths {
+            switch path {
+            case "name":
+                // Already included above
+                break
+            case "title":
+                result.title = window.title
+            case "bounds":
+                result.bounds = window.bounds
+            case "z_index":
+                result.zIndex = window.zIndex
+            case "visible":
+                result.visible = window.visible
+            case "bundle_id":
+                result.bundleID = window.bundleID
+            default:
+                // Unknown fields are silently ignored per AIP-157
+                break
+            }
+        }
+
+        return result
+    }
+
+    /// Applies a read_mask to an Application response per AIP-157.
+    /// If the mask is empty, all fields are returned.
+    /// Otherwise, only the specified fields are included (others are default values).
+    ///
+    /// Supported field paths: name, pid, display_name
+    ///
+    /// - Parameters:
+    ///   - application: The full application response with all fields populated.
+    ///   - readMask: The FieldMask specifying which fields to return.
+    /// - Returns: A new Application with only the requested fields populated.
+    static func applyFieldMask(
+        to application: Macosusesdk_V1_Application,
+        readMask: SwiftProtobuf.Google_Protobuf_FieldMask,
+    ) -> Macosusesdk_V1_Application {
+        // If read_mask is empty or contains "*", return all fields per AIP-157
+        if readMask.paths.isEmpty || readMask.paths.contains("*") {
+            return application
+        }
+
+        // Create a new application with only requested fields
+        var result = Macosusesdk_V1_Application()
+
+        // The 'name' field is ALWAYS included per AIP-157 guidance for identifier fields
+        result.name = application.name
+
+        for path in readMask.paths {
+            switch path {
+            case "name":
+                // Already included above
+                break
+            case "pid":
+                result.pid = application.pid
+            case "display_name":
+                result.displayName = application.displayName
+            default:
+                // Unknown fields are silently ignored per AIP-157
+                break
+            }
+        }
+
+        return result
     }
 }

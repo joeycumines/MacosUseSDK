@@ -74,7 +74,10 @@ extension MacosUseService {
         guard let app = await stateStore.getTarget(pid: pid) else {
             throw RPCError(code: .notFound, message: "Application not found")
         }
-        return ServerResponse(message: app)
+
+        // Apply read_mask per AIP-157
+        let filteredApp = ParsingHelpers.applyFieldMask(to: app, readMask: req.readMask)
+        return ServerResponse(message: filteredApp)
     }
 
     func listApplications(
@@ -82,10 +85,33 @@ extension MacosUseService {
     ) async throws -> ServerResponse<Macosusesdk_V1_ListApplicationsResponse> {
         let req = request.message
         Self.logger.info("listApplications called")
-        let allApps = await stateStore.listTargets()
+        var allApps = await stateStore.listTargets()
 
-        // Sort by name for deterministic ordering
-        let sortedApps = allApps.sorted { $0.name < $1.name }
+        // Apply filter if specified (AIP-160)
+        if !req.filter.isEmpty {
+            allApps = applyApplicationFilter(allApps, filter: req.filter)
+        }
+
+        // Parse order_by (AIP-132)
+        let orderBy = req.orderBy.isEmpty ? "name" : req.orderBy.lowercased()
+        let descending = orderBy.contains(" desc")
+        let field = orderBy.replacingOccurrences(of: " desc", with: "").trimmingCharacters(in: .whitespaces)
+
+        // Sort based on field
+        let sortedApps: [Macosusesdk_V1_Application] = switch field {
+        case "name":
+            allApps.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        case "pid":
+            allApps.sorted { $0.pid < $1.pid }
+        case "display_name":
+            allApps.sorted { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
+        default:
+            // Unknown field, use default name ordering
+            allApps.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        }
+
+        // Apply descending order if requested
+        let orderedApps = descending ? sortedApps.reversed() : Array(sortedApps)
 
         // Decode page_token to get offset
         let offset: Int = if req.pageToken.isEmpty {
@@ -96,12 +122,12 @@ extension MacosUseService {
 
         // Determine page size (default 100 if not specified or <= 0)
         let pageSize = req.pageSize > 0 ? Int(req.pageSize) : 100
-        let totalCount = sortedApps.count
+        let totalCount = orderedApps.count
 
         // Calculate slice bounds
         let startIndex = min(offset, totalCount)
         let endIndex = min(startIndex + pageSize, totalCount)
-        let pageApps = Array(sortedApps[startIndex ..< endIndex])
+        let pageApps = Array(orderedApps[startIndex ..< endIndex])
 
         // Generate next_page_token if more results exist
         let nextPageToken = if endIndex < totalCount {
@@ -115,6 +141,41 @@ extension MacosUseService {
             $0.nextPageToken = nextPageToken
         }
         return ServerResponse(message: response)
+    }
+
+    // MARK: - Filter Helpers
+
+    /// Applies filter expression to application list per AIP-160.
+    /// Supported filters: name="..." (filters by display_name)
+    /// Multiple conditions can be combined with spaces (AND semantics).
+    /// Note: Internal visibility for unit testing.
+    func applyApplicationFilter(_ apps: [Macosusesdk_V1_Application], filter: String) -> [Macosusesdk_V1_Application] {
+        var result = apps
+
+        // Filter by name (supports name="...", filters by displayName)
+        if let nameMatch = extractQuotedValueForApp(from: filter, key: "name") {
+            result = result.filter { $0.displayName.localizedCaseInsensitiveContains(nameMatch) }
+        }
+
+        return result
+    }
+
+    /// Extracts a quoted value from a filter expression like key="value"
+    /// Note: Internal visibility for unit testing.
+    func extractQuotedValueForApp(from filter: String, key: String) -> String? {
+        // Pattern: key="value" or key = "value"
+        let pattern = "\(key)\\s*=\\s*\"([^\"]*)\""
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) else {
+            return nil
+        }
+        let range = NSRange(filter.startIndex ..< filter.endIndex, in: filter)
+        guard let match = regex.firstMatch(in: filter, options: [], range: range) else {
+            return nil
+        }
+        guard let valueRange = Range(match.range(at: 1), in: filter) else {
+            return nil
+        }
+        return String(filter[valueRange])
     }
 
     func deleteApplication(
