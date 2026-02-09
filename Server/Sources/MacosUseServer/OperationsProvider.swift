@@ -22,8 +22,12 @@ final class OperationsProvider: Google_Longrunning_Operations.ServiceProtocol {
 
         // Parse filter for done status
         // AIP-160 filter syntax: "done=true" or "done=false"
+        // Normalize: trim whitespace/newlines, collapse internal spaces, lowercase
         var showOnlyDone: Bool?
-        let filter = req.filter.trimmingCharacters(in: .whitespaces)
+        let filter = req.filter
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: " ", with: "")
+            .lowercased()
         if filter == "done=true" {
             showOnlyDone = true
         } else if filter == "done=false" {
