@@ -20,11 +20,13 @@ public actor AutomationCoordinator {
     }
 
     /// Opens or activates an application and returns target info
+    /// - Parameter identifier: The application name, bundle ID, or path
+    /// - Parameter background: If true, opens without activating (stealing focus)
     @MainActor
-    public func handleOpenApplication(identifier: String) async throws -> Macosusesdk_V1_Application {
-        logger.info("Opening application: \(identifier, privacy: .private)")
+    public func handleOpenApplication(identifier: String, background: Bool = false) async throws -> Macosusesdk_V1_Application {
+        logger.info("Opening application: \(identifier, privacy: .private) background=\(background, privacy: .public)")
 
-        let result = try await MacosUseSDK.openApplication(identifier: identifier)
+        let result = try await MacosUseSDK.openApplication(identifier: identifier, background: background)
 
         return Macosusesdk_V1_Application.with {
             $0.name = "applications/\(result.pid)"

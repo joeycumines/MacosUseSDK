@@ -35,6 +35,11 @@ public struct Macosusesdk_V1_OpenApplicationRequest: Sendable {
   /// Examples: "Calculator", "com.apple.calculator", "/Applications/Calculator.app"
   public var id: String = String()
 
+  /// If true, the application is opened without being activated (brought to foreground).
+  /// The user's current focus is preserved. Defaults to false (activates app).
+  /// Uses NSWorkspace.OpenConfiguration.activates = false internally.
+  public var background: Bool = false
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
@@ -2776,7 +2781,7 @@ fileprivate let _protobuf_package = "macosusesdk.v1"
 
 extension Macosusesdk_V1_OpenApplicationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".OpenApplicationRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}id\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}id\0\u{1}background\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -2785,6 +2790,7 @@ extension Macosusesdk_V1_OpenApplicationRequest: SwiftProtobuf.Message, SwiftPro
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularStringField(value: &self.id) }()
+      case 2: try { try decoder.decodeSingularBoolField(value: &self.background) }()
       default: break
       }
     }
@@ -2794,11 +2800,15 @@ extension Macosusesdk_V1_OpenApplicationRequest: SwiftProtobuf.Message, SwiftPro
     if !self.id.isEmpty {
       try visitor.visitSingularStringField(value: self.id, fieldNumber: 1)
     }
+    if self.background != false {
+      try visitor.visitSingularBoolField(value: self.background, fieldNumber: 2)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_OpenApplicationRequest, rhs: Macosusesdk_V1_OpenApplicationRequest) -> Bool {
     if lhs.id != rhs.id {return false}
+    if lhs.background != rhs.background {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

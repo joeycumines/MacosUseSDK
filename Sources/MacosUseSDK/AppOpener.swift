@@ -49,13 +49,15 @@ public struct AppOpenerResult: Codable, Sendable {
 @MainActor
 private class AppOpenerOperation {
   let appIdentifier: String
+  let background: Bool
   let overallStartTime: Date = Date()
   var stepStartTime: Date
 
-  init(identifier: String) {
+  init(identifier: String, background: Bool) {
     self.appIdentifier = identifier
+    self.background = background
     self.stepStartTime = overallStartTime  // Initialize step timer
-    logger.info("starting AppOpenerOperation for: \(identifier, privacy: .private(mask: .hash))")
+    logger.info("starting AppOpenerOperation for: \(identifier, privacy: .private(mask: .hash)) background=\(background, privacy: .public)")
   }
 
   // Helper to log step completion times (Method definition)
@@ -197,8 +199,9 @@ private class AppOpenerOperation {
     // --- 3. Open/Activate Application ---
     // (Activation logic...)
     logger.info(
-      "attempting to open/activate application: \(finalAppName ?? appIdentifier, privacy: .private)")
+      "attempting to open/activate application: \(finalAppName ?? appIdentifier, privacy: .private) (background=\(self.background, privacy: .public))")
     let configuration = NSWorkspace.OpenConfiguration()  // Define configuration locally
+    configuration.activates = !background  // If background=true, don't activate (steal focus)
 
     do {
       // Await the async call AND extract the PID within an explicit MainActor Task
@@ -281,17 +284,18 @@ private class AppOpenerOperation {
 /// Outputs detailed logs to stderr.
 ///
 /// - Parameter identifier: The application name (e.g., "Calculator"), bundle ID (e.g., "com.apple.calculator"), or full path (e.g., "/System/Applications/Calculator.app").
+/// - Parameter background: If true, the application is opened without being activated (brought to foreground). The user's current focus is preserved. Defaults to false (activates app).
 /// - Returns: An `AppOpenerResult` containing the PID, application name, and processing time on success.
 /// - Throws: `MacosUseSDKError.AppOpenerError` if the application cannot be found, activated, or its PID determined.
 @MainActor
-public func openApplication(identifier: String) async throws -> AppOpenerResult {
+public func openApplication(identifier: String, background: Bool = false) async throws -> AppOpenerResult {
   // Input validation
   guard !identifier.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
     throw MacosUseSDKError.AppOpenerError.appNotFound(identifier: "(empty)")
   }
 
   // Create an instance of the helper class and execute its logic
-  let operation = AppOpenerOperation(identifier: identifier)
+  let operation = AppOpenerOperation(identifier: identifier, background: background)
   return try await operation.execute()
 }
 

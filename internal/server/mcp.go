@@ -900,6 +900,10 @@ func (s *MCPServer) registerTools() {
 						"type":        "string",
 						"description": "Application identifier: name (e.g., 'Calculator'), bundle ID (e.g., 'com.apple.calculator'), or path (e.g., '/Applications/Calculator.app')",
 					},
+					"background": map[string]interface{}{
+						"type":        "boolean",
+						"description": "If true, open the app without stealing focus. Default: false (activates).",
+					},
 				},
 				"required": []string{"id"},
 			},

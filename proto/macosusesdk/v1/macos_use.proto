@@ -615,6 +615,11 @@ message OpenApplicationRequest {
   // The identifier (name, bundle ID, or path) of the application to open.
   // Examples: "Calculator", "com.apple.calculator", "/Applications/Calculator.app"
   string id = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // If true, the application is opened without being activated (brought to foreground).
+  // The user's current focus is preserved. Defaults to false (activates app).
+  // Uses NSWorkspace.OpenConfiguration.activates = false internally.
+  bool background = 2 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from opening an application.
