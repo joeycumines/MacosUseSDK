@@ -6,6 +6,8 @@ syntax = "proto3";
 
 package macosusesdk.type;
 
+import "google/api/field_behavior.proto";
+
 option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type;macosusesdktype";
 option java_multiple_files = true;
 option java_outer_classname = "SelectorProto";
@@ -108,28 +110,28 @@ message ElementSelector {
 // See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
 message PositionSelector {
   // X coordinate in Global Display Coordinates.
-  double x = 1;
+  double x = 1 [(google.api.field_behavior) = REQUIRED];
 
   // Y coordinate in Global Display Coordinates.
-  double y = 2;
+  double y = 2 [(google.api.field_behavior) = REQUIRED];
 
   // Tolerance for matching position (in pixels).
-  double tolerance = 3;
+  double tolerance = 3 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Select element by accessibility attributes.
 message AttributeSelector {
   // Attributes to match (all must match).
-  map<string, string> attributes = 1;
+  map<string, string> attributes = 1 [(google.api.field_behavior) = REQUIRED];
 }
 
 // Compound selector combining multiple criteria.
 message CompoundSelector {
   // Operator for combining selectors.
-  Operator operator = 1;
+  Operator operator = 1 [(google.api.field_behavior) = REQUIRED];
 
   // Selectors to combine.
-  repeated ElementSelector selectors = 2;
+  repeated ElementSelector selectors = 2 [(google.api.field_behavior) = REQUIRED];
 
   // Operator for combining selectors.
   enum Operator {

@@ -561,19 +561,19 @@ const file_macosusesdk_v1_session_proto_rawDesc = "" +
 	"\fSTATE_ACTIVE\x10\x01\x12\x13\n" +
 	"\x0fSTATE_COMMITTED\x10\x02\x12\x15\n" +
 	"\x11STATE_ROLLED_BACK\x10\x03\x12\x10\n" +
-	"\fSTATE_FAILED\x10\x04\"\xc7\x01\n" +
-	"\x0fSessionSnapshot\x121\n" +
-	"\asession\x18\x01 \x01(\v2\x17.macosusesdk.v1.SessionR\asession\x12\"\n" +
-	"\fapplications\x18\x02 \x03(\tR\fapplications\x12\"\n" +
-	"\fobservations\x18\x03 \x03(\tR\fobservations\x129\n" +
-	"\ahistory\x18\x04 \x03(\v2\x1f.macosusesdk.v1.OperationRecordR\ahistory\"\xee\x01\n" +
-	"\x0fOperationRecord\x12A\n" +
-	"\x0eoperation_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\roperationTime\x12%\n" +
-	"\x0eoperation_type\x18\x02 \x01(\tR\roperationType\x12\x1a\n" +
-	"\bresource\x18\x03 \x01(\tR\bresource\x12\x18\n" +
-	"\asuccess\x18\x04 \x01(\bR\asuccess\x12\x14\n" +
-	"\x05error\x18\x05 \x01(\tR\x05error\x12%\n" +
-	"\x0etransaction_id\x18\x06 \x01(\tR\rtransactionIdB\xc3\x01\n" +
+	"\fSTATE_FAILED\x10\x04\"\xdb\x01\n" +
+	"\x0fSessionSnapshot\x126\n" +
+	"\asession\x18\x01 \x01(\v2\x17.macosusesdk.v1.SessionB\x03\xe0A\x03R\asession\x12'\n" +
+	"\fapplications\x18\x02 \x03(\tB\x03\xe0A\x03R\fapplications\x12'\n" +
+	"\fobservations\x18\x03 \x03(\tB\x03\xe0A\x03R\fobservations\x12>\n" +
+	"\ahistory\x18\x04 \x03(\v2\x1f.macosusesdk.v1.OperationRecordB\x03\xe0A\x03R\ahistory\"\x8c\x02\n" +
+	"\x0fOperationRecord\x12F\n" +
+	"\x0eoperation_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\roperationTime\x12*\n" +
+	"\x0eoperation_type\x18\x02 \x01(\tB\x03\xe0A\x03R\roperationType\x12\x1f\n" +
+	"\bresource\x18\x03 \x01(\tB\x03\xe0A\x03R\bresource\x12\x1d\n" +
+	"\asuccess\x18\x04 \x01(\bB\x03\xe0A\x03R\asuccess\x12\x19\n" +
+	"\x05error\x18\x05 \x01(\tB\x03\xe0A\x03R\x05error\x12*\n" +
+	"\x0etransaction_id\x18\x06 \x01(\tB\x03\xe0A\x03R\rtransactionIdB\xc3\x01\n" +
 	"\x12com.macosusesdk.v1B\fSessionProtoP\x01ZFgithub.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1\xa2\x02\x03MXX\xaa\x02\x0eMacosusesdk.V1\xca\x02\x0eMacosusesdk\\V1\xe2\x02\x1aMacosusesdk\\V1\\GPBMetadata\xea\x02\x0fMacosusesdk::V1b\x06proto3"
 
 var (

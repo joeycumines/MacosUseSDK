@@ -91,13 +91,16 @@ message ObservationFilter {
 // An event from an observation.
 message ObservationEvent {
   // Observation that generated this event.
-  string observation = 1 [(google.api.resource_reference) = {type: "macosusesdk.com/Observation"}];
+  string observation = 1 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.resource_reference) = {type: "macosusesdk.com/Observation"}
+  ];
 
   // When the event occurred.
-  google.protobuf.Timestamp event_time = 2;
+  google.protobuf.Timestamp event_time = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Event sequence number (monotonically increasing per observation).
-  int64 sequence = 3;
+  int64 sequence = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // The specific event type and data.
   oneof event_type {
@@ -121,43 +124,43 @@ message ObservationEvent {
 // Event related to an element.
 message ElementEvent {
   // The element.
-  macosusesdk.type.Element element = 1;
+  macosusesdk.type.Element element = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Event for an element modification.
 message ElementModified {
   // The element before modification.
-  macosusesdk.type.Element old_element = 1;
+  macosusesdk.type.Element old_element = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // The element after modification.
-  macosusesdk.type.Element new_element = 2;
+  macosusesdk.type.Element new_element = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Changed attributes.
-  repeated AttributeChange changes = 3;
+  repeated AttributeChange changes = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // A change to an element attribute.
 message AttributeChange {
   // Name of the attribute that changed.
-  string attribute = 1;
+  string attribute = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Old value of the attribute.
-  string old_value = 2;
+  string old_value = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // New value of the attribute.
-  string new_value = 3;
+  string new_value = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Event related to a window.
 message WindowEvent {
   // Type of window event.
-  WindowEventType event_type = 1;
+  WindowEventType event_type = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Window ID.
-  string window_id = 2;
+  string window_id = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Window title (if available).
-  string title = 3;
+  string title = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Window event type.
   enum WindowEventType {
@@ -196,7 +199,7 @@ message WindowEvent {
 // Event related to an application.
 message ApplicationEvent {
   // Type of application event.
-  ApplicationEventType event_type = 1;
+  ApplicationEventType event_type = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Application event type.
   enum ApplicationEventType {

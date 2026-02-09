@@ -30,10 +30,12 @@ message Display {
   // Display ID (CGDirectDisplayID). Treated as opaque by clients.
   int64 display_id = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
-  // Display frame in Global Display Coordinates (top-left origin).
+  // Display frame in Global Display Coordinates (top-left origin, Y increases downward).
+  // See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
   macosusesdk.type.Region frame = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 
-  // Visible frame (excluding menu bar and dock) in Global Display Coordinates (top-left origin).
+  // Visible frame (excluding menu bar and dock) in Global Display Coordinates (top-left origin, Y increases downward).
+  // See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
   macosusesdk.type.Region visible_frame = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // True if this is the main (primary) display.
@@ -66,12 +68,12 @@ message GetDisplayRequest {
 // Response from listing displays.
 message ListDisplaysResponse {
   // The displays in arbitrary order. For stable ordering use the display_id.
-  repeated Display displays = 1;
+  repeated Display displays = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Token to retrieve the next page of results.
   // This token is opaque and its structure must not be relied upon by clients.
   // Only its presence or absence should be used to determine pagination state.
-  string next_page_token = 2;
+  string next_page_token = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to capture the current cursor position.
@@ -79,11 +81,12 @@ message ListDisplaysResponse {
 message CaptureCursorPositionRequest {}
 
 // Response with the current cursor position.
+// Uses Global Display Coordinates (top-left origin, Y increases downward).
 message CaptureCursorPositionResponse {
-  // Cursor X coordinate in Global Display Coordinates (top-left origin).
+  // Cursor X coordinate in Global Display Coordinates (top-left origin, Y increases downward).
   double x = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
-  // Cursor Y coordinate in Global Display Coordinates (top-left origin).
+  // Cursor Y coordinate in Global Display Coordinates (top-left origin, Y increases downward).
   double y = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Display the cursor is currently on.

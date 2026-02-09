@@ -28,10 +28,10 @@ message Clipboard {
   string name = 1 [(google.api.field_behavior) = IDENTIFIER];
 
   // Clipboard content.
-  ClipboardContent content = 2;
+  ClipboardContent content = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Available content types on clipboard.
-  repeated ContentType available_types = 3;
+  repeated ContentType available_types = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Clipboard content (one of the supported types).
@@ -70,19 +70,19 @@ message FilePaths {
 // Clipboard history.
 message ClipboardHistory {
   // Historical clipboard entries (most recent first).
-  repeated ClipboardHistoryEntry entries = 1;
+  repeated ClipboardHistoryEntry entries = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // A clipboard history entry.
 message ClipboardHistoryEntry {
   // When this content was copied.
-  google.protobuf.Timestamp copied_time = 1;
+  google.protobuf.Timestamp copied_time = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Clipboard content.
-  ClipboardContent content = 2;
+  ClipboardContent content = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Source application (if known).
-  string source_application = 3;
+  string source_application = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Content type for clipboard operations.

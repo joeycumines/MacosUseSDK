@@ -34,9 +34,11 @@ type Display struct {
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// Display ID (CGDirectDisplayID). Treated as opaque by clients.
 	DisplayId int64 `protobuf:"varint,2,opt,name=display_id,json=displayId,proto3" json:"display_id,omitempty"`
-	// Display frame in Global Display Coordinates (top-left origin).
+	// Display frame in Global Display Coordinates (top-left origin, Y increases downward).
+	// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
 	Frame *_type.Region `protobuf:"bytes,3,opt,name=frame,proto3" json:"frame,omitempty"`
-	// Visible frame (excluding menu bar and dock) in Global Display Coordinates (top-left origin).
+	// Visible frame (excluding menu bar and dock) in Global Display Coordinates (top-left origin, Y increases downward).
+	// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
 	VisibleFrame *_type.Region `protobuf:"bytes,4,opt,name=visible_frame,json=visibleFrame,proto3" json:"visible_frame,omitempty"`
 	// True if this is the main (primary) display.
 	IsMain bool `protobuf:"varint,5,opt,name=is_main,json=isMain,proto3" json:"is_main,omitempty"`
@@ -317,11 +319,12 @@ func (*CaptureCursorPositionRequest) Descriptor() ([]byte, []int) {
 }
 
 // Response with the current cursor position.
+// Uses Global Display Coordinates (top-left origin, Y increases downward).
 type CaptureCursorPositionResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Cursor X coordinate in Global Display Coordinates (top-left origin).
+	// Cursor X coordinate in Global Display Coordinates (top-left origin, Y increases downward).
 	X float64 `protobuf:"fixed64,1,opt,name=x,proto3" json:"x,omitempty"`
-	// Cursor Y coordinate in Global Display Coordinates (top-left origin).
+	// Cursor Y coordinate in Global Display Coordinates (top-left origin, Y increases downward).
 	Y float64 `protobuf:"fixed64,2,opt,name=y,proto3" json:"y,omitempty"`
 	// Display the cursor is currently on.
 	Display       string `protobuf:"bytes,3,opt,name=display,proto3" json:"display,omitempty"`
@@ -400,10 +403,10 @@ const file_macosusesdk_v1_display_proto_rawDesc = "" +
 	"page_token\x18\x02 \x01(\tB\x03\xe0A\x01R\tpageToken\"H\n" +
 	"\x11GetDisplayRequest\x123\n" +
 	"\x04name\x18\x01 \x01(\tB\x1f\xe0A\x02\xfaA\x19\n" +
-	"\x17macosusesdk.com/DisplayR\x04name\"s\n" +
-	"\x14ListDisplaysResponse\x123\n" +
-	"\bdisplays\x18\x01 \x03(\v2\x17.macosusesdk.v1.DisplayR\bdisplays\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\x1e\n" +
+	"\x17macosusesdk.com/DisplayR\x04name\"}\n" +
+	"\x14ListDisplaysResponse\x128\n" +
+	"\bdisplays\x18\x01 \x03(\v2\x17.macosusesdk.v1.DisplayB\x03\xe0A\x03R\bdisplays\x12+\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tB\x03\xe0A\x03R\rnextPageToken\"\x1e\n" +
 	"\x1cCaptureCursorPositionRequest\"\x80\x01\n" +
 	"\x1dCaptureCursorPositionResponse\x12\x11\n" +
 	"\x01x\x18\x01 \x01(\x01B\x03\xe0A\x03R\x01x\x12\x11\n" +

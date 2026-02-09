@@ -484,11 +484,11 @@ var File_macosusesdk_v1_clipboard_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_clipboard_proto_rawDesc = "" +
 	"\n" +
-	"\x1emacosusesdk/v1/clipboard.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xe8\x01\n" +
+	"\x1emacosusesdk/v1/clipboard.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xf2\x01\n" +
 	"\tClipboard\x12\x17\n" +
-	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12:\n" +
-	"\acontent\x18\x02 \x01(\v2 .macosusesdk.v1.ClipboardContentR\acontent\x12D\n" +
-	"\x0favailable_types\x18\x03 \x03(\x0e2\x1b.macosusesdk.v1.ContentTypeR\x0eavailableTypes:@\xeaA=\n" +
+	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12?\n" +
+	"\acontent\x18\x02 \x01(\v2 .macosusesdk.v1.ClipboardContentB\x03\xe0A\x03R\acontent\x12I\n" +
+	"\x0favailable_types\x18\x03 \x03(\x0e2\x1b.macosusesdk.v1.ContentTypeB\x03\xe0A\x03R\x0eavailableTypes:@\xeaA=\n" +
 	"\x19macosusesdk.com/Clipboard\x12\tclipboard*\n" +
 	"clipboards2\tclipboard\"\xf2\x01\n" +
 	"\x10ClipboardContent\x124\n" +
@@ -502,14 +502,14 @@ const file_macosusesdk_v1_clipboard_proto_rawDesc = "" +
 	"\x03url\x18\x0f \x01(\tH\x00R\x03urlB\t\n" +
 	"\acontent\"&\n" +
 	"\tFilePaths\x12\x19\n" +
-	"\x05paths\x18\x01 \x03(\tB\x03\xe0A\x02R\x05paths\"S\n" +
-	"\x10ClipboardHistory\x12?\n" +
-	"\aentries\x18\x01 \x03(\v2%.macosusesdk.v1.ClipboardHistoryEntryR\aentries\"\xbf\x01\n" +
-	"\x15ClipboardHistoryEntry\x12;\n" +
-	"\vcopied_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"copiedTime\x12:\n" +
-	"\acontent\x18\x02 \x01(\v2 .macosusesdk.v1.ClipboardContentR\acontent\x12-\n" +
-	"\x12source_application\x18\x03 \x01(\tR\x11sourceApplication*\xb5\x01\n" +
+	"\x05paths\x18\x01 \x03(\tB\x03\xe0A\x02R\x05paths\"X\n" +
+	"\x10ClipboardHistory\x12D\n" +
+	"\aentries\x18\x01 \x03(\v2%.macosusesdk.v1.ClipboardHistoryEntryB\x03\xe0A\x03R\aentries\"\xce\x01\n" +
+	"\x15ClipboardHistoryEntry\x12@\n" +
+	"\vcopied_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\n" +
+	"copiedTime\x12?\n" +
+	"\acontent\x18\x02 \x01(\v2 .macosusesdk.v1.ClipboardContentB\x03\xe0A\x03R\acontent\x122\n" +
+	"\x12source_application\x18\x03 \x01(\tB\x03\xe0A\x03R\x11sourceApplication*\xb5\x01\n" +
 	"\vContentType\x12\x1c\n" +
 	"\x18CONTENT_TYPE_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11CONTENT_TYPE_TEXT\x10\x01\x12\x14\n" +
