@@ -274,8 +274,8 @@ func TestHandleClick_GRPCError(t *testing.T) {
 	}
 
 	text := result.Content[0].Text
-	if !strings.Contains(text, "Failed to execute click") {
-		t.Errorf("error text does not contain 'Failed to execute click': %s", text)
+	if !strings.Contains(text, "Error in click") {
+		t.Errorf("error text does not contain 'Error in click': %s", text)
 	}
 }
 
@@ -383,8 +383,8 @@ func TestHandleTypeText_GRPCError(t *testing.T) {
 	}
 
 	text := result.Content[0].Text
-	if !strings.Contains(text, "Failed to type text") {
-		t.Errorf("error text does not contain 'Failed to type text': %s", text)
+	if !strings.Contains(text, "Error in type_text") {
+		t.Errorf("error text does not contain 'Error in type_text': %s", text)
 	}
 }
 
@@ -506,8 +506,8 @@ func TestHandlePressKey_GRPCError(t *testing.T) {
 	}
 
 	text := result.Content[0].Text
-	if !strings.Contains(text, "Failed to press key") {
-		t.Errorf("error text does not contain 'Failed to press key': %s", text)
+	if !strings.Contains(text, "Error in press_key") {
+		t.Errorf("error text does not contain 'Error in press_key': %s", text)
 	}
 }
 
@@ -1681,3 +1681,831 @@ func TestHandleScroll_ZeroMovement(t *testing.T) {
 
 // Ensure typepb is used to avoid import error
 var _ = typepb.Point{}
+
+// ============================================================================
+// Modifier Key Mapping Tests (Task 48)
+// ============================================================================
+
+// TestModifierKeyMapping_AllModifiers verifies all modifier key names map to correct proto enums.
+func TestModifierKeyMapping_AllModifiers(t *testing.T) {
+	tests := []struct {
+		name         string
+		modifierName string
+		wantModifier pb.KeyPress_Modifier
+	}{
+		{"command maps to MODIFIER_COMMAND", "command", pb.KeyPress_MODIFIER_COMMAND},
+		{"cmd maps to MODIFIER_COMMAND", "cmd", pb.KeyPress_MODIFIER_COMMAND},
+		{"shift maps to MODIFIER_SHIFT", "shift", pb.KeyPress_MODIFIER_SHIFT},
+		{"control maps to MODIFIER_CONTROL", "control", pb.KeyPress_MODIFIER_CONTROL},
+		{"ctrl maps to MODIFIER_CONTROL", "ctrl", pb.KeyPress_MODIFIER_CONTROL},
+		{"option maps to MODIFIER_OPTION", "option", pb.KeyPress_MODIFIER_OPTION},
+		{"alt maps to MODIFIER_OPTION", "alt", pb.KeyPress_MODIFIER_OPTION},
+		{"function maps to MODIFIER_FUNCTION", "function", pb.KeyPress_MODIFIER_FUNCTION},
+		{"fn maps to MODIFIER_FUNCTION", "fn", pb.KeyPress_MODIFIER_FUNCTION},
+		{"capslock maps to MODIFIER_CAPS_LOCK", "capslock", pb.KeyPress_MODIFIER_CAPS_LOCK},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedModifiers []pb.KeyPress_Modifier
+			mockClient := &mockInputClient{
+				createInputFunc: func(ctx context.Context, req *pb.CreateInputRequest) (*pb.Input, error) {
+					pressKey := req.Input.Action.GetPressKey()
+					if pressKey != nil {
+						capturedModifiers = pressKey.Modifiers
+					}
+					return &pb.Input{Name: "inputs/key-123"}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+			args, _ := json.Marshal(map[string]interface{}{
+				"key":       "a",
+				"modifiers": []string{tt.modifierName},
+			})
+			call := &ToolCall{Name: "press_key", Arguments: args}
+
+			result, err := server.handlePressKey(call)
+			if err != nil {
+				t.Fatalf("handlePressKey returned error: %v", err)
+			}
+			if result.IsError {
+				t.Errorf("result.IsError = true, want false: %s", result.Content[0].Text)
+			}
+
+			if len(capturedModifiers) != 1 {
+				t.Fatalf("expected 1 modifier, got %d", len(capturedModifiers))
+			}
+			if capturedModifiers[0] != tt.wantModifier {
+				t.Errorf("got modifier %v, want %v", capturedModifiers[0], tt.wantModifier)
+			}
+		})
+	}
+}
+
+// TestModifierKeyMapping_CaseSensitivity verifies modifiers are case-insensitive.
+func TestModifierKeyMapping_CaseSensitivity(t *testing.T) {
+	tests := []struct {
+		name         string
+		modifierName string
+		wantModifier pb.KeyPress_Modifier
+	}{
+		{"COMMAND uppercase", "COMMAND", pb.KeyPress_MODIFIER_COMMAND},
+		{"Command mixed case", "Command", pb.KeyPress_MODIFIER_COMMAND},
+		{"SHIFT uppercase", "SHIFT", pb.KeyPress_MODIFIER_SHIFT},
+		{"Shift mixed case", "Shift", pb.KeyPress_MODIFIER_SHIFT},
+		{"CONTROL uppercase", "CONTROL", pb.KeyPress_MODIFIER_CONTROL},
+		{"Control mixed case", "Control", pb.KeyPress_MODIFIER_CONTROL},
+		{"OPTION uppercase", "OPTION", pb.KeyPress_MODIFIER_OPTION},
+		{"Option mixed case", "Option", pb.KeyPress_MODIFIER_OPTION},
+		{"FUNCTION uppercase", "FUNCTION", pb.KeyPress_MODIFIER_FUNCTION},
+		{"Function mixed case", "Function", pb.KeyPress_MODIFIER_FUNCTION},
+		{"CAPSLOCK uppercase", "CAPSLOCK", pb.KeyPress_MODIFIER_CAPS_LOCK},
+		{"CapsLock mixed case", "CapsLock", pb.KeyPress_MODIFIER_CAPS_LOCK},
+		{"CMD uppercase", "CMD", pb.KeyPress_MODIFIER_COMMAND},
+		{"Cmd mixed case", "Cmd", pb.KeyPress_MODIFIER_COMMAND},
+		{"CTRL uppercase", "CTRL", pb.KeyPress_MODIFIER_CONTROL},
+		{"Ctrl mixed case", "Ctrl", pb.KeyPress_MODIFIER_CONTROL},
+		{"ALT uppercase", "ALT", pb.KeyPress_MODIFIER_OPTION},
+		{"Alt mixed case", "Alt", pb.KeyPress_MODIFIER_OPTION},
+		{"FN uppercase", "FN", pb.KeyPress_MODIFIER_FUNCTION},
+		{"Fn mixed case", "Fn", pb.KeyPress_MODIFIER_FUNCTION},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedModifiers []pb.KeyPress_Modifier
+			mockClient := &mockInputClient{
+				createInputFunc: func(ctx context.Context, req *pb.CreateInputRequest) (*pb.Input, error) {
+					pressKey := req.Input.Action.GetPressKey()
+					if pressKey != nil {
+						capturedModifiers = pressKey.Modifiers
+					}
+					return &pb.Input{Name: "inputs/key-123"}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+			args, _ := json.Marshal(map[string]interface{}{
+				"key":       "a",
+				"modifiers": []string{tt.modifierName},
+			})
+			call := &ToolCall{Name: "press_key", Arguments: args}
+
+			result, err := server.handlePressKey(call)
+			if err != nil {
+				t.Fatalf("handlePressKey returned error: %v", err)
+			}
+			if result.IsError {
+				t.Errorf("result.IsError = true, want false: %s", result.Content[0].Text)
+			}
+
+			if len(capturedModifiers) != 1 {
+				t.Fatalf("expected 1 modifier, got %d", len(capturedModifiers))
+			}
+			if capturedModifiers[0] != tt.wantModifier {
+				t.Errorf("got modifier %v, want %v", capturedModifiers[0], tt.wantModifier)
+			}
+		})
+	}
+}
+
+// TestModifierKeyMapping_MultipleModifiers verifies multiple modifiers are mapped correctly.
+func TestModifierKeyMapping_MultipleModifiers(t *testing.T) {
+	tests := []struct {
+		name          string
+		modifiers     []string
+		wantModifiers []pb.KeyPress_Modifier
+	}{
+		{
+			name:      "command+shift",
+			modifiers: []string{"command", "shift"},
+			wantModifiers: []pb.KeyPress_Modifier{
+				pb.KeyPress_MODIFIER_COMMAND,
+				pb.KeyPress_MODIFIER_SHIFT,
+			},
+		},
+		{
+			name:      "command+option+control",
+			modifiers: []string{"command", "option", "control"},
+			wantModifiers: []pb.KeyPress_Modifier{
+				pb.KeyPress_MODIFIER_COMMAND,
+				pb.KeyPress_MODIFIER_OPTION,
+				pb.KeyPress_MODIFIER_CONTROL,
+			},
+		},
+		{
+			name:      "all modifiers",
+			modifiers: []string{"command", "option", "control", "shift", "function", "capslock"},
+			wantModifiers: []pb.KeyPress_Modifier{
+				pb.KeyPress_MODIFIER_COMMAND,
+				pb.KeyPress_MODIFIER_OPTION,
+				pb.KeyPress_MODIFIER_CONTROL,
+				pb.KeyPress_MODIFIER_SHIFT,
+				pb.KeyPress_MODIFIER_FUNCTION,
+				pb.KeyPress_MODIFIER_CAPS_LOCK,
+			},
+		},
+		{
+			name:      "cmd+ctrl aliases",
+			modifiers: []string{"cmd", "ctrl"},
+			wantModifiers: []pb.KeyPress_Modifier{
+				pb.KeyPress_MODIFIER_COMMAND,
+				pb.KeyPress_MODIFIER_CONTROL,
+			},
+		},
+		{
+			name:      "alt+fn aliases",
+			modifiers: []string{"alt", "fn"},
+			wantModifiers: []pb.KeyPress_Modifier{
+				pb.KeyPress_MODIFIER_OPTION,
+				pb.KeyPress_MODIFIER_FUNCTION,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedModifiers []pb.KeyPress_Modifier
+			mockClient := &mockInputClient{
+				createInputFunc: func(ctx context.Context, req *pb.CreateInputRequest) (*pb.Input, error) {
+					pressKey := req.Input.Action.GetPressKey()
+					if pressKey != nil {
+						capturedModifiers = pressKey.Modifiers
+					}
+					return &pb.Input{Name: "inputs/key-123"}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+			args, _ := json.Marshal(map[string]interface{}{
+				"key":       "a",
+				"modifiers": tt.modifiers,
+			})
+			call := &ToolCall{Name: "press_key", Arguments: args}
+
+			result, err := server.handlePressKey(call)
+			if err != nil {
+				t.Fatalf("handlePressKey returned error: %v", err)
+			}
+			if result.IsError {
+				t.Errorf("result.IsError = true, want false: %s", result.Content[0].Text)
+			}
+
+			if len(capturedModifiers) != len(tt.wantModifiers) {
+				t.Fatalf("expected %d modifiers, got %d", len(tt.wantModifiers), len(capturedModifiers))
+			}
+			for i, want := range tt.wantModifiers {
+				if capturedModifiers[i] != want {
+					t.Errorf("modifier[%d]: got %v, want %v", i, capturedModifiers[i], want)
+				}
+			}
+		})
+	}
+}
+
+// TestModifierKeyMapping_InvalidModifier verifies invalid modifier names are silently ignored.
+func TestModifierKeyMapping_InvalidModifier(t *testing.T) {
+	tests := []struct {
+		name            string
+		modifiers       []string
+		wantModifierLen int
+	}{
+		{"completely invalid", []string{"invalid_modifier"}, 0},
+		{"typo command", []string{"comand"}, 0},
+		{"empty string", []string{""}, 0},
+		{"valid and invalid mixed", []string{"command", "invalid", "shift"}, 2},
+		{"multiple invalid", []string{"foo", "bar", "baz"}, 0},
+		{"whitespace padding", []string{" command"}, 0}, // Note: whitespace not trimmed, so ignored
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedModifiers []pb.KeyPress_Modifier
+			mockClient := &mockInputClient{
+				createInputFunc: func(ctx context.Context, req *pb.CreateInputRequest) (*pb.Input, error) {
+					pressKey := req.Input.Action.GetPressKey()
+					if pressKey != nil {
+						capturedModifiers = pressKey.Modifiers
+					}
+					return &pb.Input{Name: "inputs/key-123"}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+			args, _ := json.Marshal(map[string]interface{}{
+				"key":       "a",
+				"modifiers": tt.modifiers,
+			})
+			call := &ToolCall{Name: "press_key", Arguments: args}
+
+			result, err := server.handlePressKey(call)
+			if err != nil {
+				t.Fatalf("handlePressKey returned error: %v", err)
+			}
+			// Invalid modifiers are silently ignored, not an error
+			if result.IsError {
+				t.Errorf("result.IsError = true, want false: %s", result.Content[0].Text)
+			}
+
+			if len(capturedModifiers) != tt.wantModifierLen {
+				t.Errorf("expected %d modifiers, got %d: %v", tt.wantModifierLen, len(capturedModifiers), capturedModifiers)
+			}
+		})
+	}
+}
+
+// TestModifierKeyMapping_HoldKey verifies modifiers work correctly in hold_key handler.
+func TestModifierKeyMapping_HoldKey(t *testing.T) {
+	tests := []struct {
+		name      string
+		modifiers []string
+		wantLen   int
+	}{
+		{"command modifier", []string{"command"}, 1},
+		{"cmd and shift", []string{"cmd", "shift"}, 2},
+		{"all aliases", []string{"cmd", "ctrl", "alt", "fn"}, 4},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedModifiers []pb.KeyPress_Modifier
+			mockClient := &mockInputClient{
+				createInputFunc: func(ctx context.Context, req *pb.CreateInputRequest) (*pb.Input, error) {
+					pressKey := req.Input.Action.GetPressKey()
+					if pressKey != nil {
+						capturedModifiers = pressKey.Modifiers
+					}
+					return &pb.Input{Name: "inputs/hold-123"}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+			args, _ := json.Marshal(map[string]interface{}{
+				"key":       "a",
+				"duration":  1.0,
+				"modifiers": tt.modifiers,
+			})
+			call := &ToolCall{Name: "hold_key", Arguments: args}
+
+			result, err := server.handleHoldKey(call)
+			if err != nil {
+				t.Fatalf("handleHoldKey returned error: %v", err)
+			}
+			if result.IsError {
+				t.Errorf("result.IsError = true, want false: %s", result.Content[0].Text)
+			}
+
+			if len(capturedModifiers) != tt.wantLen {
+				t.Errorf("expected %d modifiers, got %d", tt.wantLen, len(capturedModifiers))
+			}
+		})
+	}
+}
+
+// TestModifierKeyMapping_MouseButtonDown verifies modifiers work correctly in mouse_button_down handler.
+func TestModifierKeyMapping_MouseButtonDown(t *testing.T) {
+	tests := []struct {
+		name         string
+		modifiers    []string
+		wantModifier pb.KeyPress_Modifier
+	}{
+		{"command", []string{"command"}, pb.KeyPress_MODIFIER_COMMAND},
+		{"shift", []string{"shift"}, pb.KeyPress_MODIFIER_SHIFT},
+		{"control", []string{"control"}, pb.KeyPress_MODIFIER_CONTROL},
+		{"option", []string{"option"}, pb.KeyPress_MODIFIER_OPTION},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedModifiers []pb.KeyPress_Modifier
+			mockClient := &mockInputClient{
+				createInputFunc: func(ctx context.Context, req *pb.CreateInputRequest) (*pb.Input, error) {
+					buttonDown := req.Input.Action.GetButtonDown()
+					if buttonDown != nil {
+						capturedModifiers = buttonDown.Modifiers
+					}
+					return &pb.Input{Name: "inputs/down-123"}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+			args, _ := json.Marshal(map[string]interface{}{
+				"x":         100,
+				"y":         100,
+				"modifiers": tt.modifiers,
+			})
+			call := &ToolCall{Name: "mouse_button_down", Arguments: args}
+
+			result, err := server.handleMouseButtonDown(call)
+			if err != nil {
+				t.Fatalf("handleMouseButtonDown returned error: %v", err)
+			}
+			if result.IsError {
+				t.Errorf("result.IsError = true, want false: %s", result.Content[0].Text)
+			}
+
+			if len(capturedModifiers) != 1 {
+				t.Fatalf("expected 1 modifier, got %d", len(capturedModifiers))
+			}
+			if capturedModifiers[0] != tt.wantModifier {
+				t.Errorf("got modifier %v, want %v", capturedModifiers[0], tt.wantModifier)
+			}
+		})
+	}
+}
+
+// TestModifierKeyMapping_MouseButtonUp verifies modifiers work correctly in mouse_button_up handler.
+func TestModifierKeyMapping_MouseButtonUp(t *testing.T) {
+	tests := []struct {
+		name         string
+		modifiers    []string
+		wantModifier pb.KeyPress_Modifier
+	}{
+		{"command", []string{"command"}, pb.KeyPress_MODIFIER_COMMAND},
+		{"shift", []string{"shift"}, pb.KeyPress_MODIFIER_SHIFT},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedModifiers []pb.KeyPress_Modifier
+			mockClient := &mockInputClient{
+				createInputFunc: func(ctx context.Context, req *pb.CreateInputRequest) (*pb.Input, error) {
+					buttonUp := req.Input.Action.GetButtonUp()
+					if buttonUp != nil {
+						capturedModifiers = buttonUp.Modifiers
+					}
+					return &pb.Input{Name: "inputs/up-123"}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+			args, _ := json.Marshal(map[string]interface{}{
+				"x":         100,
+				"y":         100,
+				"modifiers": tt.modifiers,
+			})
+			call := &ToolCall{Name: "mouse_button_up", Arguments: args}
+
+			result, err := server.handleMouseButtonUp(call)
+			if err != nil {
+				t.Fatalf("handleMouseButtonUp returned error: %v", err)
+			}
+			if result.IsError {
+				t.Errorf("result.IsError = true, want false: %s", result.Content[0].Text)
+			}
+
+			if len(capturedModifiers) != 1 {
+				t.Fatalf("expected 1 modifier, got %d", len(capturedModifiers))
+			}
+			if capturedModifiers[0] != tt.wantModifier {
+				t.Errorf("got modifier %v, want %v", capturedModifiers[0], tt.wantModifier)
+			}
+		})
+	}
+}
+
+// ============================================================================
+// Mouse Button Mapping Tests (Task 48)
+// ============================================================================
+
+// TestMouseButtonMapping_Click verifies all button names map correctly in click handler.
+func TestMouseButtonMapping_Click(t *testing.T) {
+	tests := []struct {
+		name       string
+		buttonName string
+		wantButton pb.MouseClick_ClickType
+	}{
+		{"left explicit", "left", pb.MouseClick_CLICK_TYPE_LEFT},
+		{"right", "right", pb.MouseClick_CLICK_TYPE_RIGHT},
+		{"middle", "middle", pb.MouseClick_CLICK_TYPE_MIDDLE},
+		{"LEFT uppercase", "LEFT", pb.MouseClick_CLICK_TYPE_LEFT},
+		{"RIGHT uppercase", "RIGHT", pb.MouseClick_CLICK_TYPE_RIGHT},
+		{"MIDDLE uppercase", "MIDDLE", pb.MouseClick_CLICK_TYPE_MIDDLE},
+		{"Left mixed", "Left", pb.MouseClick_CLICK_TYPE_LEFT},
+		{"Right mixed", "Right", pb.MouseClick_CLICK_TYPE_RIGHT},
+		{"Middle mixed", "Middle", pb.MouseClick_CLICK_TYPE_MIDDLE},
+		{"empty defaults to left", "", pb.MouseClick_CLICK_TYPE_LEFT},
+		{"invalid defaults to left", "invalid", pb.MouseClick_CLICK_TYPE_LEFT},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedButton pb.MouseClick_ClickType
+			mockClient := &mockInputClient{
+				createInputFunc: func(ctx context.Context, req *pb.CreateInputRequest) (*pb.Input, error) {
+					click := req.Input.Action.GetClick()
+					if click != nil {
+						capturedButton = click.ClickType
+					}
+					return &pb.Input{Name: "inputs/click-123"}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+			args, _ := json.Marshal(map[string]interface{}{
+				"x":      100,
+				"y":      100,
+				"button": tt.buttonName,
+			})
+			call := &ToolCall{Name: "click", Arguments: args}
+
+			result, err := server.handleClick(call)
+			if err != nil {
+				t.Fatalf("handleClick returned error: %v", err)
+			}
+			if result.IsError {
+				t.Errorf("result.IsError = true, want false: %s", result.Content[0].Text)
+			}
+
+			if capturedButton != tt.wantButton {
+				t.Errorf("got button %v, want %v", capturedButton, tt.wantButton)
+			}
+		})
+	}
+}
+
+// TestMouseButtonMapping_Drag verifies button mapping in drag handler.
+func TestMouseButtonMapping_Drag(t *testing.T) {
+	tests := []struct {
+		name       string
+		buttonName string
+		wantButton pb.MouseClick_ClickType
+	}{
+		{"left explicit", "left", pb.MouseClick_CLICK_TYPE_LEFT},
+		{"right", "right", pb.MouseClick_CLICK_TYPE_RIGHT},
+		{"middle", "middle", pb.MouseClick_CLICK_TYPE_MIDDLE},
+		{"empty defaults to left", "", pb.MouseClick_CLICK_TYPE_LEFT},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedButton pb.MouseClick_ClickType
+			mockClient := &mockInputClient{
+				createInputFunc: func(ctx context.Context, req *pb.CreateInputRequest) (*pb.Input, error) {
+					drag := req.Input.Action.GetDrag()
+					if drag != nil {
+						capturedButton = drag.Button
+					}
+					return &pb.Input{Name: "inputs/drag-123"}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+			args, _ := json.Marshal(map[string]interface{}{
+				"start_x": 100,
+				"start_y": 100,
+				"end_x":   200,
+				"end_y":   200,
+				"button":  tt.buttonName,
+			})
+			call := &ToolCall{Name: "drag", Arguments: args}
+
+			result, err := server.handleDrag(call)
+			if err != nil {
+				t.Fatalf("handleDrag returned error: %v", err)
+			}
+			if result.IsError {
+				t.Errorf("result.IsError = true, want false: %s", result.Content[0].Text)
+			}
+
+			if capturedButton != tt.wantButton {
+				t.Errorf("got button %v, want %v", capturedButton, tt.wantButton)
+			}
+		})
+	}
+}
+
+// TestMouseButtonMapping_MouseButtonDown verifies button mapping in mouse_button_down handler.
+func TestMouseButtonMapping_MouseButtonDown(t *testing.T) {
+	tests := []struct {
+		name       string
+		buttonName string
+		wantButton pb.MouseClick_ClickType
+	}{
+		{"left", "left", pb.MouseClick_CLICK_TYPE_LEFT},
+		{"right", "right", pb.MouseClick_CLICK_TYPE_RIGHT},
+		{"middle", "middle", pb.MouseClick_CLICK_TYPE_MIDDLE},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedButton pb.MouseClick_ClickType
+			mockClient := &mockInputClient{
+				createInputFunc: func(ctx context.Context, req *pb.CreateInputRequest) (*pb.Input, error) {
+					buttonDown := req.Input.Action.GetButtonDown()
+					if buttonDown != nil {
+						capturedButton = buttonDown.Button
+					}
+					return &pb.Input{Name: "inputs/down-123"}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+			args, _ := json.Marshal(map[string]interface{}{
+				"x":      100,
+				"y":      100,
+				"button": tt.buttonName,
+			})
+			call := &ToolCall{Name: "mouse_button_down", Arguments: args}
+
+			result, err := server.handleMouseButtonDown(call)
+			if err != nil {
+				t.Fatalf("handleMouseButtonDown returned error: %v", err)
+			}
+			if result.IsError {
+				t.Errorf("result.IsError = true, want false: %s", result.Content[0].Text)
+			}
+
+			if capturedButton != tt.wantButton {
+				t.Errorf("got button %v, want %v", capturedButton, tt.wantButton)
+			}
+		})
+	}
+}
+
+// TestMouseButtonMapping_MouseButtonUp verifies button mapping in mouse_button_up handler.
+func TestMouseButtonMapping_MouseButtonUp(t *testing.T) {
+	tests := []struct {
+		name       string
+		buttonName string
+		wantButton pb.MouseClick_ClickType
+	}{
+		{"left", "left", pb.MouseClick_CLICK_TYPE_LEFT},
+		{"right", "right", pb.MouseClick_CLICK_TYPE_RIGHT},
+		{"middle", "middle", pb.MouseClick_CLICK_TYPE_MIDDLE},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedButton pb.MouseClick_ClickType
+			mockClient := &mockInputClient{
+				createInputFunc: func(ctx context.Context, req *pb.CreateInputRequest) (*pb.Input, error) {
+					buttonUp := req.Input.Action.GetButtonUp()
+					if buttonUp != nil {
+						capturedButton = buttonUp.Button
+					}
+					return &pb.Input{Name: "inputs/up-123"}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+			args, _ := json.Marshal(map[string]interface{}{
+				"x":      100,
+				"y":      100,
+				"button": tt.buttonName,
+			})
+			call := &ToolCall{Name: "mouse_button_up", Arguments: args}
+
+			result, err := server.handleMouseButtonUp(call)
+			if err != nil {
+				t.Fatalf("handleMouseButtonUp returned error: %v", err)
+			}
+			if result.IsError {
+				t.Errorf("result.IsError = true, want false: %s", result.Content[0].Text)
+			}
+
+			if capturedButton != tt.wantButton {
+				t.Errorf("got button %v, want %v", capturedButton, tt.wantButton)
+			}
+		})
+	}
+}
+
+// ============================================================================
+// Gesture Type and Direction Mapping Tests (Task 48)
+// ============================================================================
+
+// TestGestureTypeMapping verifies all gesture types are mapped correctly.
+func TestGestureTypeMapping(t *testing.T) {
+	tests := []struct {
+		name            string
+		gestureTypeName string
+		wantGestureType pb.Gesture_GestureType
+		wantError       bool
+	}{
+		{"pinch", "pinch", pb.Gesture_GESTURE_TYPE_PINCH, false},
+		{"zoom", "zoom", pb.Gesture_GESTURE_TYPE_ZOOM, false},
+		{"rotate", "rotate", pb.Gesture_GESTURE_TYPE_ROTATE, false},
+		{"swipe", "swipe", pb.Gesture_GESTURE_TYPE_SWIPE, false},
+		{"force_touch", "force_touch", pb.Gesture_GESTURE_TYPE_FORCE_TOUCH, false},
+		{"PINCH uppercase", "PINCH", pb.Gesture_GESTURE_TYPE_PINCH, false},
+		{"Zoom mixed", "Zoom", pb.Gesture_GESTURE_TYPE_ZOOM, false},
+		{"unknown returns error", "unknown", pb.Gesture_GESTURE_TYPE_UNSPECIFIED, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedGestureType pb.Gesture_GestureType
+			mockClient := &mockInputClient{
+				createInputFunc: func(ctx context.Context, req *pb.CreateInputRequest) (*pb.Input, error) {
+					gesture := req.Input.Action.GetGesture()
+					if gesture != nil {
+						capturedGestureType = gesture.GestureType
+					}
+					return &pb.Input{Name: "inputs/gesture-123"}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+			args, _ := json.Marshal(map[string]interface{}{
+				"gesture_type": tt.gestureTypeName,
+				"center_x":     100,
+				"center_y":     100,
+			})
+			call := &ToolCall{Name: "gesture", Arguments: args}
+
+			result, err := server.handleGesture(call)
+			if err != nil {
+				t.Fatalf("handleGesture returned error: %v", err)
+			}
+
+			if tt.wantError {
+				if !result.IsError {
+					t.Error("result.IsError = false, want true for unknown gesture type")
+				}
+				return
+			}
+
+			if result.IsError {
+				t.Errorf("result.IsError = true, want false: %s", result.Content[0].Text)
+			}
+
+			if capturedGestureType != tt.wantGestureType {
+				t.Errorf("got gesture type %v, want %v", capturedGestureType, tt.wantGestureType)
+			}
+		})
+	}
+}
+
+// TestGestureDirectionMapping verifies all gesture directions are mapped correctly.
+func TestGestureDirectionMapping(t *testing.T) {
+	tests := []struct {
+		name          string
+		directionName string
+		wantDirection pb.Gesture_Direction
+	}{
+		{"up", "up", pb.Gesture_DIRECTION_UP},
+		{"down", "down", pb.Gesture_DIRECTION_DOWN},
+		{"left", "left", pb.Gesture_DIRECTION_LEFT},
+		{"right", "right", pb.Gesture_DIRECTION_RIGHT},
+		{"UP uppercase", "UP", pb.Gesture_DIRECTION_UP},
+		{"Down mixed", "Down", pb.Gesture_DIRECTION_DOWN},
+		{"empty defaults to unspecified", "", pb.Gesture_DIRECTION_UNSPECIFIED},
+		{"invalid defaults to unspecified", "diagonal", pb.Gesture_DIRECTION_UNSPECIFIED},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedDirection pb.Gesture_Direction
+			mockClient := &mockInputClient{
+				createInputFunc: func(ctx context.Context, req *pb.CreateInputRequest) (*pb.Input, error) {
+					gesture := req.Input.Action.GetGesture()
+					if gesture != nil {
+						capturedDirection = gesture.Direction
+					}
+					return &pb.Input{Name: "inputs/gesture-123"}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+			args, _ := json.Marshal(map[string]interface{}{
+				"gesture_type": "swipe",
+				"center_x":     100,
+				"center_y":     100,
+				"direction":    tt.directionName,
+			})
+			call := &ToolCall{Name: "gesture", Arguments: args}
+
+			result, err := server.handleGesture(call)
+			if err != nil {
+				t.Fatalf("handleGesture returned error: %v", err)
+			}
+			if result.IsError {
+				t.Errorf("result.IsError = true, want false: %s", result.Content[0].Text)
+			}
+
+			if capturedDirection != tt.wantDirection {
+				t.Errorf("got direction %v, want %v", capturedDirection, tt.wantDirection)
+			}
+		})
+	}
+}
+
+// ============================================================================
+// Special Key Names Tests (Task 48)
+// ============================================================================
+
+// TestSpecialKeyNames verifies special key names are passed through correctly.
+// Note: The actual key code mapping happens in the Swift server, not the Go handler.
+// The Go handler simply passes the key name string to the gRPC service.
+func TestSpecialKeyNames(t *testing.T) {
+	tests := []struct {
+		name    string
+		keyName string
+	}{
+		{"return key", "return"},
+		{"escape key", "escape"},
+		{"tab key", "tab"},
+		{"space key", "space"},
+		{"delete key", "delete"},
+		{"backspace key", "backspace"},
+		{"up arrow", "up"},
+		{"down arrow", "down"},
+		{"left arrow", "left"},
+		{"right arrow", "right"},
+		{"home key", "home"},
+		{"end key", "end"},
+		{"page up", "pageup"},
+		{"page down", "pagedown"},
+		{"f1 key", "f1"},
+		{"f2 key", "f2"},
+		{"f3 key", "f3"},
+		{"f4 key", "f4"},
+		{"f5 key", "f5"},
+		{"f6 key", "f6"},
+		{"f7 key", "f7"},
+		{"f8 key", "f8"},
+		{"f9 key", "f9"},
+		{"f10 key", "f10"},
+		{"f11 key", "f11"},
+		{"f12 key", "f12"},
+		{"letter a", "a"},
+		{"letter z", "z"},
+		{"number 0", "0"},
+		{"number 9", "9"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedKey string
+			mockClient := &mockInputClient{
+				createInputFunc: func(ctx context.Context, req *pb.CreateInputRequest) (*pb.Input, error) {
+					pressKey := req.Input.Action.GetPressKey()
+					if pressKey != nil {
+						capturedKey = pressKey.Key
+					}
+					return &pb.Input{Name: "inputs/key-123"}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+			args, _ := json.Marshal(map[string]interface{}{
+				"key": tt.keyName,
+			})
+			call := &ToolCall{Name: "press_key", Arguments: args}
+
+			result, err := server.handlePressKey(call)
+			if err != nil {
+				t.Fatalf("handlePressKey returned error: %v", err)
+			}
+			if result.IsError {
+				t.Errorf("result.IsError = true, want false: %s", result.Content[0].Text)
+			}
+
+			if capturedKey != tt.keyName {
+				t.Errorf("got key %q, want %q", capturedKey, tt.keyName)
+			}
+		})
+	}
+}

@@ -351,8 +351,8 @@ func TestHandleCaptureScreenshot_GRPCError(t *testing.T) {
 	}
 
 	text := result.Content[0].Text
-	if !strings.Contains(text, "Failed to capture screenshot") {
-		t.Errorf("error text does not contain 'Failed to capture screenshot': %s", text)
+	if !strings.Contains(text, "Error in capture_screenshot") {
+		t.Errorf("error text does not contain 'Error in capture_screenshot': %s", text)
 	}
 	if !strings.Contains(text, "screen recording permission denied") {
 		t.Errorf("error text does not contain original error: %s", text)
@@ -544,7 +544,7 @@ func TestHandleCaptureRegionScreenshot_GRPCError(t *testing.T) {
 	}
 
 	text := result.Content[0].Text
-	if !strings.Contains(text, "Failed to capture region screenshot") {
+	if !strings.Contains(text, "Error in capture_region_screenshot") {
 		t.Errorf("error text does not contain expected message: %s", text)
 	}
 	if !strings.Contains(text, "region out of bounds") {
@@ -765,7 +765,7 @@ func TestHandleCaptureWindowScreenshot_GRPCError(t *testing.T) {
 	}
 
 	text := result.Content[0].Text
-	if !strings.Contains(text, "Failed to capture window screenshot") {
+	if !strings.Contains(text, "Error in capture_window_screenshot") {
 		t.Errorf("error text does not contain expected message: %s", text)
 	}
 	if !strings.Contains(text, "window not found") {
@@ -1030,7 +1030,7 @@ func TestHandleCaptureElementScreenshot_GRPCError(t *testing.T) {
 	}
 
 	text := result.Content[0].Text
-	if !strings.Contains(text, "Failed to capture element screenshot") {
+	if !strings.Contains(text, "Error in capture_element_screenshot") {
 		t.Errorf("error text does not contain expected message: %s", text)
 	}
 	if !strings.Contains(text, "element not visible") {
@@ -1098,7 +1098,7 @@ func TestHandleCaptureScreenshot_TableDriven(t *testing.T) {
 			args:         `{}`,
 			grpcErr:      errors.New("permission denied"),
 			wantIsError:  true,
-			wantContains: []string{"Failed to capture screenshot", "permission denied"},
+			wantContains: []string{"Error in capture_screenshot", "permission denied"},
 		},
 	}
 
@@ -1187,7 +1187,7 @@ func TestHandleCaptureWindowScreenshot_TableDriven(t *testing.T) {
 			args:         `{"window": "applications/1/windows/1"}`,
 			grpcErr:      errors.New("window minimized"),
 			wantIsError:  true,
-			wantContains: []string{"Failed to capture window screenshot", "window minimized"},
+			wantContains: []string{"Error in capture_window_screenshot", "window minimized"},
 		},
 	}
 
@@ -1284,7 +1284,7 @@ func TestHandleCaptureElementScreenshot_TableDriven(t *testing.T) {
 			args:         `{"parent": "applications/1", "element_id": "btn_1"}`,
 			grpcErr:      errors.New("element offscreen"),
 			wantIsError:  true,
-			wantContains: []string{"Failed to capture element screenshot", "element offscreen"},
+			wantContains: []string{"Error in capture_element_screenshot", "element offscreen"},
 		},
 	}
 
@@ -1380,7 +1380,7 @@ func TestHandleCaptureRegionScreenshot_TableDriven(t *testing.T) {
 			args:         `{"x": 0, "y": 0, "width": 100, "height": 100}`,
 			grpcErr:      errors.New("region outside display bounds"),
 			wantIsError:  true,
-			wantContains: []string{"Failed to capture region screenshot", "region outside display bounds"},
+			wantContains: []string{"Error in capture_region_screenshot", "region outside display bounds"},
 		},
 	}
 
@@ -1538,5 +1538,886 @@ func TestScreenshotHandlers_Base64Encoding(t *testing.T) {
 	}
 	if !strings.Contains(data, "iVBORw0KGgo") { // Base64 of PNG header
 		t.Errorf("image content Data does not contain expected base64 encoded PNG header: %s", data)
+	}
+}
+
+// ============================================================================
+// Format Options Tests (Task 47)
+// ============================================================================
+
+func TestCaptureScreenshot_FormatOptions_AllAccepted(t *testing.T) {
+	// Verify all valid format options (png, jpeg, jpg, tiff) are accepted
+	// and correctly forwarded to gRPC
+	tests := []struct {
+		name           string
+		format         string
+		expectedFormat pb.ImageFormat
+		expectedMime   string
+	}{
+		{
+			name:           "png format accepted",
+			format:         "png",
+			expectedFormat: pb.ImageFormat_IMAGE_FORMAT_PNG,
+			expectedMime:   "image/png",
+		},
+		{
+			name:           "jpeg format accepted",
+			format:         "jpeg",
+			expectedFormat: pb.ImageFormat_IMAGE_FORMAT_JPEG,
+			expectedMime:   "image/jpeg",
+		},
+		{
+			name:           "jpg format accepted (alias)",
+			format:         "jpg",
+			expectedFormat: pb.ImageFormat_IMAGE_FORMAT_JPEG,
+			expectedMime:   "image/jpeg",
+		},
+		{
+			name:           "tiff format accepted",
+			format:         "tiff",
+			expectedFormat: pb.ImageFormat_IMAGE_FORMAT_TIFF,
+			expectedMime:   "image/tiff",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedFormat pb.ImageFormat
+			mockClient := &mockScreenshotClient{
+				captureScreenshotFunc: func(ctx context.Context, req *pb.CaptureScreenshotRequest) (*pb.CaptureScreenshotResponse, error) {
+					capturedFormat = req.Format
+					return &pb.CaptureScreenshotResponse{
+						ImageData: []byte{0x00},
+						Format:    req.Format,
+						Width:     100,
+						Height:    100,
+					}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+			args := `{"format": "` + tt.format + `"}`
+			call := &ToolCall{Name: "capture_screenshot", Arguments: json.RawMessage(args)}
+
+			result, err := server.handleCaptureScreenshot(call)
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if result.IsError {
+				t.Errorf("result.IsError = true, want false: %s", result.Content[0].Text)
+			}
+			if capturedFormat != tt.expectedFormat {
+				t.Errorf("format forwarded to gRPC = %v, want %v", capturedFormat, tt.expectedFormat)
+			}
+			if result.Content[0].MimeType != tt.expectedMime {
+				t.Errorf("result MimeType = %q, want %q", result.Content[0].MimeType, tt.expectedMime)
+			}
+		})
+	}
+}
+
+func TestCaptureScreenshot_FormatCaseSensitivity(t *testing.T) {
+	// Document that format parsing is case-sensitive (lowercase only)
+	// Uppercase and mixed case default to PNG
+	tests := []struct {
+		name           string
+		format         string
+		expectedFormat pb.ImageFormat
+		description    string
+	}{
+		{
+			name:           "uppercase PNG defaults to PNG",
+			format:         "PNG",
+			expectedFormat: pb.ImageFormat_IMAGE_FORMAT_PNG,
+			description:    "uppercase is treated as unknown, defaults to PNG",
+		},
+		{
+			name:           "uppercase JPEG defaults to PNG",
+			format:         "JPEG",
+			expectedFormat: pb.ImageFormat_IMAGE_FORMAT_PNG,
+			description:    "uppercase is treated as unknown, defaults to PNG",
+		},
+		{
+			name:           "mixed case Jpeg defaults to PNG",
+			format:         "Jpeg",
+			expectedFormat: pb.ImageFormat_IMAGE_FORMAT_PNG,
+			description:    "mixed case is treated as unknown, defaults to PNG",
+		},
+		{
+			name:           "uppercase TIFF defaults to PNG",
+			format:         "TIFF",
+			expectedFormat: pb.ImageFormat_IMAGE_FORMAT_PNG,
+			description:    "uppercase is treated as unknown, defaults to PNG",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedFormat pb.ImageFormat
+			mockClient := &mockScreenshotClient{
+				captureScreenshotFunc: func(ctx context.Context, req *pb.CaptureScreenshotRequest) (*pb.CaptureScreenshotResponse, error) {
+					capturedFormat = req.Format
+					return &pb.CaptureScreenshotResponse{
+						ImageData: []byte{0x00},
+						Format:    req.Format,
+						Width:     100,
+						Height:    100,
+					}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+			args := `{"format": "` + tt.format + `"}`
+			call := &ToolCall{Name: "capture_screenshot", Arguments: json.RawMessage(args)}
+
+			result, err := server.handleCaptureScreenshot(call)
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if result.IsError {
+				t.Errorf("result.IsError = true, want false")
+			}
+			if capturedFormat != tt.expectedFormat {
+				t.Errorf("format forwarded to gRPC = %v, want %v (%s)", capturedFormat, tt.expectedFormat, tt.description)
+			}
+		})
+	}
+}
+
+func TestCaptureScreenshot_UnknownFormatDefaultsToPNG(t *testing.T) {
+	// Document that unknown format values default to PNG rather than rejecting
+	// This is the current behavior and is tested to document it
+	tests := []struct {
+		name   string
+		format string
+	}{
+		{"bmp format defaults to PNG", "bmp"},
+		{"gif format defaults to PNG", "gif"},
+		{"webp format defaults to PNG", "webp"},
+		{"heic format defaults to PNG", "heic"},
+		{"invalid format defaults to PNG", "invalid"},
+		{"random string defaults to PNG", "not-a-format"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedFormat pb.ImageFormat
+			mockClient := &mockScreenshotClient{
+				captureScreenshotFunc: func(ctx context.Context, req *pb.CaptureScreenshotRequest) (*pb.CaptureScreenshotResponse, error) {
+					capturedFormat = req.Format
+					return &pb.CaptureScreenshotResponse{
+						ImageData: []byte{0x00},
+						Format:    pb.ImageFormat_IMAGE_FORMAT_PNG,
+						Width:     100,
+						Height:    100,
+					}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+			args := `{"format": "` + tt.format + `"}`
+			call := &ToolCall{Name: "capture_screenshot", Arguments: json.RawMessage(args)}
+
+			result, err := server.handleCaptureScreenshot(call)
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if result.IsError {
+				t.Errorf("result.IsError = true, want false (unknown format should default, not error)")
+			}
+			if capturedFormat != pb.ImageFormat_IMAGE_FORMAT_PNG {
+				t.Errorf("unknown format %q did not default to PNG, got %v", tt.format, capturedFormat)
+			}
+		})
+	}
+}
+
+func TestCaptureScreenshot_EmptyFormatDefaultsToPNG(t *testing.T) {
+	// Verify empty format string defaults to PNG
+	var capturedFormat pb.ImageFormat
+	mockClient := &mockScreenshotClient{
+		captureScreenshotFunc: func(ctx context.Context, req *pb.CaptureScreenshotRequest) (*pb.CaptureScreenshotResponse, error) {
+			capturedFormat = req.Format
+			return &pb.CaptureScreenshotResponse{
+				ImageData: []byte{0x00},
+				Format:    pb.ImageFormat_IMAGE_FORMAT_PNG,
+				Width:     100,
+				Height:    100,
+			}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{Name: "capture_screenshot", Arguments: json.RawMessage(`{"format": ""}`)}
+
+	result, err := server.handleCaptureScreenshot(call)
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.IsError {
+		t.Errorf("result.IsError = true, want false")
+	}
+	if capturedFormat != pb.ImageFormat_IMAGE_FORMAT_PNG {
+		t.Errorf("empty format did not default to PNG, got %v", capturedFormat)
+	}
+}
+
+func TestCaptureScreenshot_MissingFormatDefaultsToPNG(t *testing.T) {
+	// Verify omitted format parameter defaults to PNG
+	var capturedFormat pb.ImageFormat
+	mockClient := &mockScreenshotClient{
+		captureScreenshotFunc: func(ctx context.Context, req *pb.CaptureScreenshotRequest) (*pb.CaptureScreenshotResponse, error) {
+			capturedFormat = req.Format
+			return &pb.CaptureScreenshotResponse{
+				ImageData: []byte{0x00},
+				Format:    pb.ImageFormat_IMAGE_FORMAT_PNG,
+				Width:     100,
+				Height:    100,
+			}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{Name: "capture_screenshot", Arguments: json.RawMessage(`{}`)}
+
+	result, err := server.handleCaptureScreenshot(call)
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.IsError {
+		t.Errorf("result.IsError = true, want false")
+	}
+	if capturedFormat != pb.ImageFormat_IMAGE_FORMAT_PNG {
+		t.Errorf("missing format did not default to PNG, got %v", capturedFormat)
+	}
+}
+
+// ============================================================================
+// Quality Parameter Tests (Task 47)
+// ============================================================================
+
+func TestCaptureScreenshot_QualityValidRange(t *testing.T) {
+	// Verify quality values in valid range (1-100) are accepted and forwarded
+	tests := []struct {
+		name            string
+		quality         int32
+		expectedQuality int32
+	}{
+		{"quality 1 (min valid)", 1, 1},
+		{"quality 50 (mid range)", 50, 50},
+		{"quality 85 (default value)", 85, 85},
+		{"quality 100 (max valid)", 100, 100},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedQuality int32
+			mockClient := &mockScreenshotClient{
+				captureScreenshotFunc: func(ctx context.Context, req *pb.CaptureScreenshotRequest) (*pb.CaptureScreenshotResponse, error) {
+					capturedQuality = req.Quality
+					return &pb.CaptureScreenshotResponse{
+						ImageData: []byte{0x00},
+						Format:    pb.ImageFormat_IMAGE_FORMAT_JPEG,
+						Width:     100,
+						Height:    100,
+					}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+			args := `{"format": "jpeg", "quality": ` + string(rune('0'+tt.quality/10)) + string(rune('0'+tt.quality%10)) + `}`
+			if tt.quality == 1 {
+				args = `{"format": "jpeg", "quality": 1}`
+			} else if tt.quality == 50 {
+				args = `{"format": "jpeg", "quality": 50}`
+			} else if tt.quality == 85 {
+				args = `{"format": "jpeg", "quality": 85}`
+			} else if tt.quality == 100 {
+				args = `{"format": "jpeg", "quality": 100}`
+			}
+			call := &ToolCall{Name: "capture_screenshot", Arguments: json.RawMessage(args)}
+
+			result, err := server.handleCaptureScreenshot(call)
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if result.IsError {
+				t.Errorf("result.IsError = true for valid quality %d: %s", tt.quality, result.Content[0].Text)
+			}
+			if capturedQuality != tt.expectedQuality {
+				t.Errorf("quality forwarded to gRPC = %d, want %d", capturedQuality, tt.expectedQuality)
+			}
+		})
+	}
+}
+
+func TestCaptureScreenshot_QualityZeroAppliesDefault(t *testing.T) {
+	// Verify quality=0 applies default (85) rather than forwarding 0
+	var capturedQuality int32
+	mockClient := &mockScreenshotClient{
+		captureScreenshotFunc: func(ctx context.Context, req *pb.CaptureScreenshotRequest) (*pb.CaptureScreenshotResponse, error) {
+			capturedQuality = req.Quality
+			return &pb.CaptureScreenshotResponse{
+				ImageData: []byte{0x00},
+				Format:    pb.ImageFormat_IMAGE_FORMAT_JPEG,
+				Width:     100,
+				Height:    100,
+			}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{Name: "capture_screenshot", Arguments: json.RawMessage(`{"format": "jpeg", "quality": 0}`)}
+
+	result, err := server.handleCaptureScreenshot(call)
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.IsError {
+		t.Errorf("result.IsError = true, want false")
+	}
+	if capturedQuality != defaultJPEGQuality {
+		t.Errorf("quality 0 did not apply default, got %d, want %d", capturedQuality, defaultJPEGQuality)
+	}
+}
+
+func TestCaptureScreenshot_QualityMissingAppliesDefault(t *testing.T) {
+	// Verify omitted quality applies default (85)
+	var capturedQuality int32
+	mockClient := &mockScreenshotClient{
+		captureScreenshotFunc: func(ctx context.Context, req *pb.CaptureScreenshotRequest) (*pb.CaptureScreenshotResponse, error) {
+			capturedQuality = req.Quality
+			return &pb.CaptureScreenshotResponse{
+				ImageData: []byte{0x00},
+				Format:    pb.ImageFormat_IMAGE_FORMAT_JPEG,
+				Width:     100,
+				Height:    100,
+			}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{Name: "capture_screenshot", Arguments: json.RawMessage(`{"format": "jpeg"}`)}
+
+	result, err := server.handleCaptureScreenshot(call)
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.IsError {
+		t.Errorf("result.IsError = true, want false")
+	}
+	if capturedQuality != defaultJPEGQuality {
+		t.Errorf("missing quality did not apply default, got %d, want %d", capturedQuality, defaultJPEGQuality)
+	}
+}
+
+func TestCaptureScreenshot_QualityPassedThrough(t *testing.T) {
+	// Document current behavior: values outside 1-100 are passed through
+	// (validation may be added at gRPC layer or later in Go layer)
+	tests := []struct {
+		name    string
+		quality int32
+	}{
+		{"quality 101 passed through", 101},
+		{"quality 150 passed through", 150},
+		{"quality 255 passed through", 255},
+		{"quality -1 passed through", -1},
+		{"quality -50 passed through", -50},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedQuality int32
+			mockClient := &mockScreenshotClient{
+				captureScreenshotFunc: func(ctx context.Context, req *pb.CaptureScreenshotRequest) (*pb.CaptureScreenshotResponse, error) {
+					capturedQuality = req.Quality
+					return &pb.CaptureScreenshotResponse{
+						ImageData: []byte{0x00},
+						Format:    pb.ImageFormat_IMAGE_FORMAT_JPEG,
+						Width:     100,
+						Height:    100,
+					}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+			args := `{"format": "jpeg", "quality": ` + qualityToJSON(tt.quality) + `}`
+			call := &ToolCall{Name: "capture_screenshot", Arguments: json.RawMessage(args)}
+
+			result, err := server.handleCaptureScreenshot(call)
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			// Document current behavior: out-of-range values are passed through
+			if result.IsError {
+				t.Logf("NOTE: quality %d returned error (validation active): %s", tt.quality, result.Content[0].Text)
+				return
+			}
+			if capturedQuality != tt.quality {
+				t.Errorf("quality %d not passed through, got %d", tt.quality, capturedQuality)
+			}
+		})
+	}
+}
+
+// qualityToJSON converts int32 to JSON number string
+func qualityToJSON(q int32) string {
+	if q < 0 {
+		return "-" + qualityToJSON(-q)
+	}
+	if q == 0 {
+		return "0"
+	}
+	result := ""
+	for q > 0 {
+		result = string(rune('0'+q%10)) + result
+		q /= 10
+	}
+	return result
+}
+
+// ============================================================================
+// Include OCR Flag Forwarding Tests (Task 47)
+// ============================================================================
+
+func TestCaptureScreenshot_IncludeOCRFlagForwarding(t *testing.T) {
+	// Verify include_ocr flag is correctly forwarded to gRPC
+	tests := []struct {
+		name        string
+		includeOCR  bool
+		expectedOCR bool
+	}{
+		{"include_ocr=true forwarded", true, true},
+		{"include_ocr=false forwarded", false, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedOCR bool
+			mockClient := &mockScreenshotClient{
+				captureScreenshotFunc: func(ctx context.Context, req *pb.CaptureScreenshotRequest) (*pb.CaptureScreenshotResponse, error) {
+					capturedOCR = req.IncludeOcrText
+					return &pb.CaptureScreenshotResponse{
+						ImageData: []byte{0x00},
+						Format:    pb.ImageFormat_IMAGE_FORMAT_PNG,
+						Width:     100,
+						Height:    100,
+					}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+			ocrValue := "false"
+			if tt.includeOCR {
+				ocrValue = "true"
+			}
+			args := `{"include_ocr": ` + ocrValue + `}`
+			call := &ToolCall{Name: "capture_screenshot", Arguments: json.RawMessage(args)}
+
+			result, err := server.handleCaptureScreenshot(call)
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if result.IsError {
+				t.Errorf("result.IsError = true, want false")
+			}
+			if capturedOCR != tt.expectedOCR {
+				t.Errorf("include_ocr forwarded to gRPC = %v, want %v", capturedOCR, tt.expectedOCR)
+			}
+		})
+	}
+}
+
+func TestCaptureScreenshot_IncludeOCRDefaultsFalse(t *testing.T) {
+	// Verify omitted include_ocr defaults to false
+	var capturedOCR bool
+	mockClient := &mockScreenshotClient{
+		captureScreenshotFunc: func(ctx context.Context, req *pb.CaptureScreenshotRequest) (*pb.CaptureScreenshotResponse, error) {
+			capturedOCR = req.IncludeOcrText
+			return &pb.CaptureScreenshotResponse{
+				ImageData: []byte{0x00},
+				Format:    pb.ImageFormat_IMAGE_FORMAT_PNG,
+				Width:     100,
+				Height:    100,
+			}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{Name: "capture_screenshot", Arguments: json.RawMessage(`{}`)}
+
+	result, err := server.handleCaptureScreenshot(call)
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.IsError {
+		t.Errorf("result.IsError = true, want false")
+	}
+	if capturedOCR != false {
+		t.Errorf("omitted include_ocr did not default to false, got %v", capturedOCR)
+	}
+}
+
+func TestCaptureWindowScreenshot_IncludeOCRFlagForwarding(t *testing.T) {
+	// Verify include_ocr flag is forwarded in window screenshot
+	var capturedOCR bool
+	mockClient := &mockScreenshotClient{
+		captureWindowScreenshotFunc: func(ctx context.Context, req *pb.CaptureWindowScreenshotRequest) (*pb.CaptureWindowScreenshotResponse, error) {
+			capturedOCR = req.IncludeOcrText
+			return &pb.CaptureWindowScreenshotResponse{
+				ImageData: []byte{0x00},
+				Format:    pb.ImageFormat_IMAGE_FORMAT_PNG,
+				Width:     100,
+				Height:    100,
+				Window:    req.Window,
+			}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "capture_window_screenshot",
+		Arguments: json.RawMessage(`{"window": "applications/1/windows/1", "include_ocr": true}`),
+	}
+
+	result, err := server.handleCaptureWindowScreenshot(call)
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.IsError {
+		t.Errorf("result.IsError = true, want false")
+	}
+	if capturedOCR != true {
+		t.Errorf("include_ocr not forwarded, got %v, want true", capturedOCR)
+	}
+}
+
+func TestCaptureRegionScreenshot_IncludeOCRFlagForwarding(t *testing.T) {
+	// Verify include_ocr flag is forwarded in region screenshot
+	var capturedOCR bool
+	mockClient := &mockScreenshotClient{
+		captureRegionScreenshotFunc: func(ctx context.Context, req *pb.CaptureRegionScreenshotRequest) (*pb.CaptureRegionScreenshotResponse, error) {
+			capturedOCR = req.IncludeOcrText
+			return &pb.CaptureRegionScreenshotResponse{
+				ImageData: []byte{0x00},
+				Format:    pb.ImageFormat_IMAGE_FORMAT_PNG,
+				Width:     100,
+				Height:    100,
+			}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "capture_region_screenshot",
+		Arguments: json.RawMessage(`{"x": 0, "y": 0, "width": 100, "height": 100, "include_ocr": true}`),
+	}
+
+	result, err := server.handleCaptureRegionScreenshot(call)
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.IsError {
+		t.Errorf("result.IsError = true, want false")
+	}
+	if capturedOCR != true {
+		t.Errorf("include_ocr not forwarded, got %v, want true", capturedOCR)
+	}
+}
+
+func TestCaptureElementScreenshot_IncludeOCRFlagForwarding(t *testing.T) {
+	// Verify include_ocr flag is forwarded in element screenshot
+	var capturedOCR bool
+	mockClient := &mockScreenshotClient{
+		captureElementScreenshotFunc: func(ctx context.Context, req *pb.CaptureElementScreenshotRequest) (*pb.CaptureElementScreenshotResponse, error) {
+			capturedOCR = req.IncludeOcrText
+			return &pb.CaptureElementScreenshotResponse{
+				ImageData: []byte{0x00},
+				Format:    pb.ImageFormat_IMAGE_FORMAT_PNG,
+				Width:     100,
+				Height:    100,
+				ElementId: req.ElementId,
+			}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "capture_element_screenshot",
+		Arguments: json.RawMessage(`{"parent": "applications/1", "element_id": "el1", "include_ocr": true}`),
+	}
+
+	result, err := server.handleCaptureElementScreenshot(call)
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.IsError {
+		t.Errorf("result.IsError = true, want false")
+	}
+	if capturedOCR != true {
+		t.Errorf("include_ocr not forwarded, got %v, want true", capturedOCR)
+	}
+}
+
+// ============================================================================
+// Format Forwarding Across All Handler Types (Task 47)
+// ============================================================================
+
+func TestCaptureWindowScreenshot_FormatForwarding(t *testing.T) {
+	// Verify format is correctly forwarded in window screenshot
+	tests := []struct {
+		format         string
+		expectedFormat pb.ImageFormat
+	}{
+		{"png", pb.ImageFormat_IMAGE_FORMAT_PNG},
+		{"jpeg", pb.ImageFormat_IMAGE_FORMAT_JPEG},
+		{"tiff", pb.ImageFormat_IMAGE_FORMAT_TIFF},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.format, func(t *testing.T) {
+			var capturedFormat pb.ImageFormat
+			mockClient := &mockScreenshotClient{
+				captureWindowScreenshotFunc: func(ctx context.Context, req *pb.CaptureWindowScreenshotRequest) (*pb.CaptureWindowScreenshotResponse, error) {
+					capturedFormat = req.Format
+					return &pb.CaptureWindowScreenshotResponse{
+						ImageData: []byte{0x00},
+						Format:    req.Format,
+						Width:     100,
+						Height:    100,
+						Window:    req.Window,
+					}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+			args := `{"window": "applications/1/windows/1", "format": "` + tt.format + `"}`
+			call := &ToolCall{Name: "capture_window_screenshot", Arguments: json.RawMessage(args)}
+
+			result, err := server.handleCaptureWindowScreenshot(call)
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if result.IsError {
+				t.Errorf("result.IsError = true, want false")
+			}
+			if capturedFormat != tt.expectedFormat {
+				t.Errorf("format forwarded = %v, want %v", capturedFormat, tt.expectedFormat)
+			}
+		})
+	}
+}
+
+func TestCaptureRegionScreenshot_FormatForwarding(t *testing.T) {
+	// Verify format is correctly forwarded in region screenshot
+	tests := []struct {
+		format         string
+		expectedFormat pb.ImageFormat
+	}{
+		{"png", pb.ImageFormat_IMAGE_FORMAT_PNG},
+		{"jpeg", pb.ImageFormat_IMAGE_FORMAT_JPEG},
+		{"tiff", pb.ImageFormat_IMAGE_FORMAT_TIFF},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.format, func(t *testing.T) {
+			var capturedFormat pb.ImageFormat
+			mockClient := &mockScreenshotClient{
+				captureRegionScreenshotFunc: func(ctx context.Context, req *pb.CaptureRegionScreenshotRequest) (*pb.CaptureRegionScreenshotResponse, error) {
+					capturedFormat = req.Format
+					return &pb.CaptureRegionScreenshotResponse{
+						ImageData: []byte{0x00},
+						Format:    req.Format,
+						Width:     100,
+						Height:    100,
+					}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+			args := `{"x": 0, "y": 0, "width": 100, "height": 100, "format": "` + tt.format + `"}`
+			call := &ToolCall{Name: "capture_region_screenshot", Arguments: json.RawMessage(args)}
+
+			result, err := server.handleCaptureRegionScreenshot(call)
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if result.IsError {
+				t.Errorf("result.IsError = true, want false")
+			}
+			if capturedFormat != tt.expectedFormat {
+				t.Errorf("format forwarded = %v, want %v", capturedFormat, tt.expectedFormat)
+			}
+		})
+	}
+}
+
+func TestCaptureElementScreenshot_FormatForwarding(t *testing.T) {
+	// Verify format is correctly forwarded in element screenshot
+	tests := []struct {
+		format         string
+		expectedFormat pb.ImageFormat
+	}{
+		{"png", pb.ImageFormat_IMAGE_FORMAT_PNG},
+		{"jpeg", pb.ImageFormat_IMAGE_FORMAT_JPEG},
+		{"tiff", pb.ImageFormat_IMAGE_FORMAT_TIFF},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.format, func(t *testing.T) {
+			var capturedFormat pb.ImageFormat
+			mockClient := &mockScreenshotClient{
+				captureElementScreenshotFunc: func(ctx context.Context, req *pb.CaptureElementScreenshotRequest) (*pb.CaptureElementScreenshotResponse, error) {
+					capturedFormat = req.Format
+					return &pb.CaptureElementScreenshotResponse{
+						ImageData: []byte{0x00},
+						Format:    req.Format,
+						Width:     100,
+						Height:    100,
+						ElementId: req.ElementId,
+					}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+			args := `{"parent": "applications/1", "element_id": "el1", "format": "` + tt.format + `"}`
+			call := &ToolCall{Name: "capture_element_screenshot", Arguments: json.RawMessage(args)}
+
+			result, err := server.handleCaptureElementScreenshot(call)
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if result.IsError {
+				t.Errorf("result.IsError = true, want false")
+			}
+			if capturedFormat != tt.expectedFormat {
+				t.Errorf("format forwarded = %v, want %v", capturedFormat, tt.expectedFormat)
+			}
+		})
+	}
+}
+
+// ============================================================================
+// Quality Forwarding Across All Handler Types (Task 47)
+// ============================================================================
+
+func TestCaptureWindowScreenshot_QualityForwarding(t *testing.T) {
+	// Verify quality is correctly forwarded in window screenshot
+	var capturedQuality int32
+	mockClient := &mockScreenshotClient{
+		captureWindowScreenshotFunc: func(ctx context.Context, req *pb.CaptureWindowScreenshotRequest) (*pb.CaptureWindowScreenshotResponse, error) {
+			capturedQuality = req.Quality
+			return &pb.CaptureWindowScreenshotResponse{
+				ImageData: []byte{0x00},
+				Format:    pb.ImageFormat_IMAGE_FORMAT_JPEG,
+				Width:     100,
+				Height:    100,
+				Window:    req.Window,
+			}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "capture_window_screenshot",
+		Arguments: json.RawMessage(`{"window": "applications/1/windows/1", "format": "jpeg", "quality": 75}`),
+	}
+
+	result, err := server.handleCaptureWindowScreenshot(call)
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.IsError {
+		t.Errorf("result.IsError = true, want false")
+	}
+	if capturedQuality != 75 {
+		t.Errorf("quality forwarded = %d, want 75", capturedQuality)
+	}
+}
+
+func TestCaptureRegionScreenshot_QualityForwarding(t *testing.T) {
+	// Verify quality is correctly forwarded in region screenshot
+	var capturedQuality int32
+	mockClient := &mockScreenshotClient{
+		captureRegionScreenshotFunc: func(ctx context.Context, req *pb.CaptureRegionScreenshotRequest) (*pb.CaptureRegionScreenshotResponse, error) {
+			capturedQuality = req.Quality
+			return &pb.CaptureRegionScreenshotResponse{
+				ImageData: []byte{0x00},
+				Format:    pb.ImageFormat_IMAGE_FORMAT_JPEG,
+				Width:     100,
+				Height:    100,
+			}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "capture_region_screenshot",
+		Arguments: json.RawMessage(`{"x": 0, "y": 0, "width": 100, "height": 100, "format": "jpeg", "quality": 90}`),
+	}
+
+	result, err := server.handleCaptureRegionScreenshot(call)
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.IsError {
+		t.Errorf("result.IsError = true, want false")
+	}
+	if capturedQuality != 90 {
+		t.Errorf("quality forwarded = %d, want 90", capturedQuality)
+	}
+}
+
+func TestCaptureElementScreenshot_QualityForwarding(t *testing.T) {
+	// Verify quality is correctly forwarded in element screenshot
+	var capturedQuality int32
+	mockClient := &mockScreenshotClient{
+		captureElementScreenshotFunc: func(ctx context.Context, req *pb.CaptureElementScreenshotRequest) (*pb.CaptureElementScreenshotResponse, error) {
+			capturedQuality = req.Quality
+			return &pb.CaptureElementScreenshotResponse{
+				ImageData: []byte{0x00},
+				Format:    pb.ImageFormat_IMAGE_FORMAT_JPEG,
+				Width:     100,
+				Height:    100,
+				ElementId: req.ElementId,
+			}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "capture_element_screenshot",
+		Arguments: json.RawMessage(`{"parent": "applications/1", "element_id": "el1", "format": "jpeg", "quality": 60}`),
+	}
+
+	result, err := server.handleCaptureElementScreenshot(call)
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.IsError {
+		t.Errorf("result.IsError = true, want false")
+	}
+	if capturedQuality != 60 {
+		t.Errorf("quality forwarded = %d, want 60", capturedQuality)
 	}
 }
