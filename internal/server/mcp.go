@@ -534,11 +534,11 @@ func (s *MCPServer) registerTools() {
 				"properties": map[string]interface{}{
 					"center_x":     map[string]interface{}{"type": "number", "description": "Center X coordinate of gesture (Global Display Coordinates)"},
 					"center_y":     map[string]interface{}{"type": "number", "description": "Center Y coordinate of gesture (Global Display Coordinates)"},
-					"gesture_type": map[string]interface{}{"type": "string", "description": "Gesture type: pinch, zoom, rotate, swipe, force_touch"},
+					"gesture_type": map[string]interface{}{"type": "string", "description": "Gesture type: pinch, zoom, rotate, swipe, force_touch", "enum": []string{"pinch", "zoom", "rotate", "swipe", "force_touch"}},
 					"scale":        map[string]interface{}{"type": "number", "description": "Scale factor for pinch/zoom (e.g., 0.5 = zoom out, 2.0 = zoom in)"},
 					"rotation":     map[string]interface{}{"type": "number", "description": "Rotation angle in degrees for rotate gesture"},
 					"finger_count": map[string]interface{}{"type": "integer", "description": "Number of fingers for swipe (default: 2)"},
-					"direction":    map[string]interface{}{"type": "string", "description": "Direction for swipe gesture only: up, down, left, right"},
+					"direction":    map[string]interface{}{"type": "string", "description": "Direction for swipe gesture only: up, down, left, right", "enum": []string{"up", "down", "left", "right"}},
 					"application":  map[string]interface{}{"type": "string", "description": "Application resource name (optional)"},
 				},
 				"required": []string{"center_x", "center_y", "gesture_type"},

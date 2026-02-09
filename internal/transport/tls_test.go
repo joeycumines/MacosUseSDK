@@ -522,7 +522,7 @@ func TestTLSServer_MismatchedCertAndKey(t *testing.T) {
 // =============================================================================
 
 // TestTLSServer_HTTPRequestToHTTPS verifies that plain HTTP requests to an
-// HTTPS server fail or return a bad response (connection error, malformed 
+// HTTPS server fail or return a bad response (connection error, malformed
 // response, or status code indicating failure).
 func TestTLSServer_HTTPRequestToHTTPS(t *testing.T) {
 	// Generate self-signed certificate

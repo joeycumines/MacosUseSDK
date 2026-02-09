@@ -281,19 +281,19 @@ func TestRateLimiter_RequestsWithinLimitPass(t *testing.T) {
 	}{
 		{
 			name:     "all requests within burst succeed",
-			rate:     5.0,   // burst = 10
-			requests: 10,    // exactly burst
+			rate:     5.0, // burst = 10
+			requests: 10,  // exactly burst
 			wantPass: 10,
 		},
 		{
 			name:     "partial burst succeeds",
-			rate:     10.0,  // burst = 20
-			requests: 15,    // less than burst
+			rate:     10.0, // burst = 20
+			requests: 15,   // less than burst
 			wantPass: 15,
 		},
 		{
 			name:     "single request succeeds",
-			rate:     1.0,   // burst = 2
+			rate:     1.0, // burst = 2
 			requests: 1,
 			wantPass: 1,
 		},
@@ -336,19 +336,19 @@ func TestRateLimiter_ExcessRequestsRejected(t *testing.T) {
 	}{
 		{
 			name:         "one excess request rejected",
-			rate:         2.0,    // burst = 4
+			rate:         2.0, // burst = 4
 			requests:     5,
 			wantRejected: 1,
 		},
 		{
 			name:         "multiple excess requests rejected",
-			rate:         3.0,    // burst = 6
+			rate:         3.0, // burst = 6
 			requests:     10,
 			wantRejected: 4,
 		},
 		{
 			name:         "double burst all excess rejected",
-			rate:         5.0,    // burst = 10
+			rate:         5.0, // burst = 10
 			requests:     20,
 			wantRejected: 10,
 		},
@@ -378,10 +378,10 @@ func TestRateLimiter_ExcessRequestsRejected(t *testing.T) {
 // returns HTTP 429 Too Many Requests when the rate limit is exceeded.
 func TestRateLimitMiddleware_HTTP429OnExcess(t *testing.T) {
 	tests := []struct {
-		name       string
-		rate       float64
-		requests   int
-		want429    int
+		name     string
+		rate     float64
+		requests int
+		want429  int
 	}{
 		{
 			name:     "one 429 for one excess",
