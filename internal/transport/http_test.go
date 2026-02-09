@@ -702,3 +702,392 @@ func TestHTTPTransport_IsRateLimitEnabled(t *testing.T) {
 		})
 	}
 }
+
+// =============================================================================
+// CORS Tests - Comprehensive coverage for CORS middleware behavior
+// =============================================================================
+
+// TestCORS_Preflight_ValidOrigin verifies OPTIONS preflight requests return
+// 204 No Content with correct CORS headers for various origin configurations.
+func TestCORS_Preflight_ValidOrigin(t *testing.T) {
+	tests := []struct {
+		name           string
+		configOrigin   string
+		requestOrigin  string
+		wantAllowedOrg string
+		wantStatus     int
+	}{
+		{
+			name:           "wildcard origin allows any request",
+			configOrigin:   "*",
+			requestOrigin:  "https://example.com",
+			wantAllowedOrg: "*",
+			wantStatus:     http.StatusNoContent,
+		},
+		{
+			name:           "specific origin echoes configured value",
+			configOrigin:   "https://allowed.example.com",
+			requestOrigin:  "https://allowed.example.com",
+			wantAllowedOrg: "https://allowed.example.com",
+			wantStatus:     http.StatusNoContent,
+		},
+		{
+			name:           "preflight without Origin header still returns configured CORS",
+			configOrigin:   "https://allowed.com",
+			requestOrigin:  "",
+			wantAllowedOrg: "https://allowed.com",
+			wantStatus:     http.StatusNoContent,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tr := NewHTTPTransport(&HTTPTransportConfig{
+				CORSOrigin: tt.configOrigin,
+			})
+
+			handler := tr.corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				t.Error("Next handler should not be called for OPTIONS")
+			}))
+
+			req := httptest.NewRequest("OPTIONS", "/message", nil)
+			if tt.requestOrigin != "" {
+				req.Header.Set("Origin", tt.requestOrigin)
+			}
+			w := httptest.NewRecorder()
+
+			handler.ServeHTTP(w, req)
+
+			if w.Code != tt.wantStatus {
+				t.Errorf("Status = %d, want %d", w.Code, tt.wantStatus)
+			}
+			if got := w.Header().Get("Access-Control-Allow-Origin"); got != tt.wantAllowedOrg {
+				t.Errorf("Access-Control-Allow-Origin = %q, want %q", got, tt.wantAllowedOrg)
+			}
+		})
+	}
+}
+
+// TestCORS_Preflight_InvalidOrigin verifies that when a specific origin is
+// configured, the server still echoes it back (current implementation does
+// not validate the incoming Origin header against an allowlist).
+func TestCORS_Preflight_InvalidOrigin(t *testing.T) {
+	tr := NewHTTPTransport(&HTTPTransportConfig{
+		CORSOrigin: "https://allowed.example.com",
+	})
+
+	handler := tr.corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Error("Next handler should not be called for OPTIONS")
+	}))
+
+	// Request from a different origin
+	req := httptest.NewRequest("OPTIONS", "/message", nil)
+	req.Header.Set("Origin", "https://malicious.example.com")
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	// Current implementation: origin is NOT validated, configured value is echoed
+	// The browser will reject the response if it doesn't match the request Origin,
+	// but the server doesn't perform this validation.
+	if w.Code != http.StatusNoContent {
+		t.Errorf("Status = %d, want %d", w.Code, http.StatusNoContent)
+	}
+	// Server echoes configured origin (not the request origin)
+	if got := w.Header().Get("Access-Control-Allow-Origin"); got != "https://allowed.example.com" {
+		t.Errorf("Access-Control-Allow-Origin = %q, want %q", got, "https://allowed.example.com")
+	}
+}
+
+// TestCORS_ActualRequest_ValidOrigin verifies that actual (non-preflight)
+// requests include CORS headers and proceed to the handler.
+func TestCORS_ActualRequest_ValidOrigin(t *testing.T) {
+	tests := []struct {
+		name           string
+		method         string
+		path           string
+		configOrigin   string
+		requestOrigin  string
+		wantAllowedOrg string
+	}{
+		{
+			name:           "GET request with wildcard origin",
+			method:         "GET",
+			path:           "/health",
+			configOrigin:   "*",
+			requestOrigin:  "https://client.example.com",
+			wantAllowedOrg: "*",
+		},
+		{
+			name:           "POST request with specific origin",
+			method:         "POST",
+			path:           "/message",
+			configOrigin:   "https://trusted.example.com",
+			requestOrigin:  "https://trusted.example.com",
+			wantAllowedOrg: "https://trusted.example.com",
+		},
+		{
+			name:           "GET request without Origin header",
+			method:         "GET",
+			path:           "/events",
+			configOrigin:   "https://app.example.com",
+			requestOrigin:  "",
+			wantAllowedOrg: "https://app.example.com",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tr := NewHTTPTransport(&HTTPTransportConfig{
+				CORSOrigin: tt.configOrigin,
+			})
+
+			handlerCalled := false
+			handler := tr.corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				handlerCalled = true
+				w.WriteHeader(http.StatusOK)
+			}))
+
+			req := httptest.NewRequest(tt.method, tt.path, nil)
+			if tt.requestOrigin != "" {
+				req.Header.Set("Origin", tt.requestOrigin)
+			}
+			w := httptest.NewRecorder()
+
+			handler.ServeHTTP(w, req)
+
+			if !handlerCalled {
+				t.Error("Handler was not called for non-OPTIONS request")
+			}
+			if got := w.Header().Get("Access-Control-Allow-Origin"); got != tt.wantAllowedOrg {
+				t.Errorf("Access-Control-Allow-Origin = %q, want %q", got, tt.wantAllowedOrg)
+			}
+		})
+	}
+}
+
+// TestCORS_ActualRequest_InvalidOrigin verifies CORS headers are echoed
+// even when the request Origin doesn't match the configured allowed origin.
+// Note: The browser enforces CORS, not the server. The server echoes the
+// configured origin and the browser rejects mismatches.
+func TestCORS_ActualRequest_InvalidOrigin(t *testing.T) {
+	tr := NewHTTPTransport(&HTTPTransportConfig{
+		CORSOrigin: "https://allowed.example.com",
+	})
+
+	handlerCalled := false
+	handler := tr.corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handlerCalled = true
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("POST", "/message", nil)
+	req.Header.Set("Origin", "https://malicious.example.com")
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	// Handler is still called (server doesn't block requests based on Origin)
+	if !handlerCalled {
+		t.Error("Handler should be called (server doesn't enforce CORS origin)")
+	}
+	// Server echoes configured origin, not request origin
+	if got := w.Header().Get("Access-Control-Allow-Origin"); got != "https://allowed.example.com" {
+		t.Errorf("Access-Control-Allow-Origin = %q, want %q", got, "https://allowed.example.com")
+	}
+}
+
+// TestCORS_AllowMethods verifies Access-Control-Allow-Methods header lists
+// the expected HTTP methods (GET, POST, OPTIONS).
+func TestCORS_AllowMethods(t *testing.T) {
+	tests := []struct {
+		name   string
+		method string
+	}{
+		{"OPTIONS preflight", "OPTIONS"},
+		{"GET request", "GET"},
+		{"POST request", "POST"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tr := NewHTTPTransport(nil)
+
+			handler := tr.corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			}))
+
+			req := httptest.NewRequest(tt.method, "/message", nil)
+			w := httptest.NewRecorder()
+
+			handler.ServeHTTP(w, req)
+
+			allowMethods := w.Header().Get("Access-Control-Allow-Methods")
+			expectedMethods := []string{"GET", "POST", "OPTIONS"}
+			for _, method := range expectedMethods {
+				if !strings.Contains(allowMethods, method) {
+					t.Errorf("Access-Control-Allow-Methods = %q, missing %q", allowMethods, method)
+				}
+			}
+		})
+	}
+}
+
+// TestCORS_AllowHeaders verifies Access-Control-Allow-Headers includes
+// required headers (Content-Type, Last-Event-ID, Authorization).
+func TestCORS_AllowHeaders(t *testing.T) {
+	tr := NewHTTPTransport(nil)
+
+	handler := tr.corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("OPTIONS", "/message", nil)
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	allowHeaders := w.Header().Get("Access-Control-Allow-Headers")
+	expectedHeaders := []string{"Content-Type", "Last-Event-ID", "Authorization"}
+	for _, header := range expectedHeaders {
+		if !strings.Contains(allowHeaders, header) {
+			t.Errorf("Access-Control-Allow-Headers = %q, missing %q", allowHeaders, header)
+		}
+	}
+}
+
+// TestCORS_ExposeHeaders verifies Access-Control-Expose-Headers includes
+// headers that should be accessible to client JavaScript.
+func TestCORS_ExposeHeaders(t *testing.T) {
+	tr := NewHTTPTransport(nil)
+
+	handler := tr.corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("GET", "/message", nil)
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	exposeHeaders := w.Header().Get("Access-Control-Expose-Headers")
+	if !strings.Contains(exposeHeaders, "Content-Type") {
+		t.Errorf("Access-Control-Expose-Headers = %q, missing 'Content-Type'", exposeHeaders)
+	}
+}
+
+// TestCORS_WildcardOriginHandling verifies that wildcard "*" origin behaves
+// correctly for both preflight and actual requests.
+func TestCORS_WildcardOriginHandling(t *testing.T) {
+	tests := []struct {
+		name          string
+		method        string
+		requestOrigin string
+	}{
+		{"preflight from any origin", "OPTIONS", "https://any-domain.com"},
+		{"preflight from localhost", "OPTIONS", "http://localhost:3000"},
+		{"GET from any origin", "GET", "https://example.org"},
+		{"POST from any origin", "POST", "https://api.client.com"},
+		{"request with null origin", "GET", "null"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tr := NewHTTPTransport(&HTTPTransportConfig{
+				CORSOrigin: "*",
+			})
+
+			handler := tr.corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			}))
+
+			req := httptest.NewRequest(tt.method, "/message", nil)
+			req.Header.Set("Origin", tt.requestOrigin)
+			w := httptest.NewRecorder()
+
+			handler.ServeHTTP(w, req)
+
+			// With wildcard "*", all origins should receive "*" in response
+			if got := w.Header().Get("Access-Control-Allow-Origin"); got != "*" {
+				t.Errorf("Access-Control-Allow-Origin = %q, want %q", got, "*")
+			}
+		})
+	}
+}
+
+// TestCORS_DefaultConfig verifies CORS behavior with default configuration.
+func TestCORS_DefaultConfig(t *testing.T) {
+	tr := NewHTTPTransport(nil) // Uses default config with CORSOrigin: "*"
+
+	handler := tr.corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("OPTIONS", "/message", nil)
+	req.Header.Set("Origin", "https://any-origin.com")
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	// Default config should allow all origins
+	if got := w.Header().Get("Access-Control-Allow-Origin"); got != "*" {
+		t.Errorf("Access-Control-Allow-Origin = %q, want %q (default)", got, "*")
+	}
+	if w.Code != http.StatusNoContent {
+		t.Errorf("Status = %d, want %d", w.Code, http.StatusNoContent)
+	}
+}
+
+// TestCORS_PreflightDoesNotCallNextHandler verifies that OPTIONS preflight
+// requests are handled entirely by the CORS middleware and do not reach
+// the underlying handler.
+func TestCORS_PreflightDoesNotCallNextHandler(t *testing.T) {
+	tr := NewHTTPTransport(nil)
+
+	handlerCalled := false
+	handler := tr.corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handlerCalled = true
+	}))
+
+	req := httptest.NewRequest("OPTIONS", "/message", nil)
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	if handlerCalled {
+		t.Error("Next handler should not be called for OPTIONS preflight")
+	}
+}
+
+// TestCORS_HeadersPresentOnAllEndpoints verifies CORS headers are set
+// regardless of the endpoint being accessed.
+func TestCORS_HeadersPresentOnAllEndpoints(t *testing.T) {
+	endpoints := []string{"/message", "/events", "/health", "/metrics"}
+
+	for _, endpoint := range endpoints {
+		t.Run(endpoint, func(t *testing.T) {
+			tr := NewHTTPTransport(&HTTPTransportConfig{
+				CORSOrigin: "https://test.example.com",
+			})
+
+			handler := tr.corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			}))
+
+			req := httptest.NewRequest("GET", endpoint, nil)
+			w := httptest.NewRecorder()
+
+			handler.ServeHTTP(w, req)
+
+			if got := w.Header().Get("Access-Control-Allow-Origin"); got == "" {
+				t.Errorf("Access-Control-Allow-Origin missing for endpoint %s", endpoint)
+			}
+			if got := w.Header().Get("Access-Control-Allow-Methods"); got == "" {
+				t.Errorf("Access-Control-Allow-Methods missing for endpoint %s", endpoint)
+			}
+			if got := w.Header().Get("Access-Control-Allow-Headers"); got == "" {
+				t.Errorf("Access-Control-Allow-Headers missing for endpoint %s", endpoint)
+			}
+		})
+	}
+}
