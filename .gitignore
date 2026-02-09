@@ -16,7 +16,6 @@ coverage.out
 coverage.lcov
 /coverage-all.lcov
 /build.log
-/directive.txt
 /tmp/
 /.claude/*.local.*
 .idea/

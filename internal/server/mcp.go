@@ -15,10 +15,12 @@ package server
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -1854,7 +1856,7 @@ func (s *MCPServer) handleHTTPMessage(msg *transport.Message) (*transport.Messag
 		return &transport.Message{
 			JSONRPC: "2.0",
 			ID:      msg.ID,
-			Result:  []byte(fmt.Sprintf(`{"protocolVersion":"2025-11-25","capabilities":{"tools":{}},"serverInfo":{"name":"macos-use-sdk","version":"0.1.0"},"displayInfo":%s}`, displayInfo)),
+			Result:  []byte(fmt.Sprintf(`{"protocolVersion":"2025-11-25","capabilities":{"tools":{},"resources":{"subscribe":false,"listChanged":false},"prompts":{}},"serverInfo":{"name":"macos-use-sdk","version":"0.1.0"},"displayInfo":%s}`, displayInfo)),
 		}, nil
 	}
 
@@ -1910,6 +1912,124 @@ func (s *MCPServer) handleHTTPMessage(msg *transport.Message) (*transport.Messag
 				},
 			}, nil
 		}
+		return &transport.Message{
+			JSONRPC: "2.0",
+			ID:      msg.ID,
+			Result:  result,
+		}, nil
+	}
+
+	// Handle resources/list request
+	if msg.Method == "resources/list" {
+		resources := []map[string]interface{}{
+			{
+				"uri":         "screen://main",
+				"name":        "Main Display Screenshot",
+				"description": "Current screenshot of the main display",
+				"mimeType":    "image/png",
+			},
+			{
+				"uri":         "accessibility://",
+				"name":        "Accessibility Tree Template",
+				"description": "Use accessibility://{pid} to get element tree for an application",
+				"mimeType":    "application/json",
+			},
+			{
+				"uri":         "clipboard://current",
+				"name":        "Current Clipboard",
+				"description": "Current clipboard contents as text",
+				"mimeType":    "text/plain",
+			},
+		}
+		result, _ := json.Marshal(map[string]interface{}{"resources": resources})
+		return &transport.Message{
+			JSONRPC: "2.0",
+			ID:      msg.ID,
+			Result:  result,
+		}, nil
+	}
+
+	// Handle resources/read request
+	if msg.Method == "resources/read" {
+		var params struct {
+			URI string `json:"uri"`
+		}
+		if err := json.Unmarshal(msg.Params, &params); err != nil {
+			return &transport.Message{
+				JSONRPC: "2.0",
+				ID:      msg.ID,
+				Error: &transport.ErrorObj{
+					Code:    transport.ErrCodeInvalidParams,
+					Message: fmt.Sprintf("invalid params: %v", err),
+				},
+			}, nil
+		}
+
+		content, mimeType, err := s.readResource(params.URI)
+		if err != nil {
+			return &transport.Message{
+				JSONRPC: "2.0",
+				ID:      msg.ID,
+				Error: &transport.ErrorObj{
+					Code:    transport.ErrCodeInternalError,
+					Message: err.Error(),
+				},
+			}, nil
+		}
+
+		result, _ := json.Marshal(map[string]interface{}{
+			"contents": []map[string]interface{}{
+				{"uri": params.URI, "mimeType": mimeType, "text": content},
+			},
+		})
+		return &transport.Message{
+			JSONRPC: "2.0",
+			ID:      msg.ID,
+			Result:  result,
+		}, nil
+	}
+
+	// Handle prompts/list request
+	if msg.Method == "prompts/list" {
+		prompts := s.listPrompts()
+		result, _ := json.Marshal(map[string]interface{}{"prompts": prompts})
+		return &transport.Message{
+			JSONRPC: "2.0",
+			ID:      msg.ID,
+			Result:  result,
+		}, nil
+	}
+
+	// Handle prompts/get request
+	if msg.Method == "prompts/get" {
+		var params struct {
+			Arguments map[string]interface{} `json:"arguments"`
+			Name      string                 `json:"name"`
+		}
+		if err := json.Unmarshal(msg.Params, &params); err != nil {
+			return &transport.Message{
+				JSONRPC: "2.0",
+				ID:      msg.ID,
+				Error: &transport.ErrorObj{
+					Code:    transport.ErrCodeInvalidParams,
+					Message: fmt.Sprintf("invalid params: %v", err),
+				},
+			}, nil
+		}
+
+		prompt, err := s.getPrompt(params.Name, params.Arguments)
+		if err != nil {
+			return &transport.Message{
+				JSONRPC: "2.0",
+				ID:      msg.ID,
+				Error: &transport.ErrorObj{
+					Code:    transport.ErrCodeInvalidParams, // Unknown prompt name is invalid params per MCP spec
+					Message: err.Error(),
+				},
+			}, nil
+		}
+
+		result, _ := json.Marshal(prompt)
 		return &transport.Message{
 			JSONRPC: "2.0",
 			ID:      msg.ID,
@@ -2033,7 +2153,7 @@ func (s *MCPServer) handleMessage(tr *transport.StdioTransport, msg *transport.M
 		response := &transport.Message{
 			JSONRPC: "2.0",
 			ID:      msg.ID,
-			Result:  []byte(fmt.Sprintf(`{"protocolVersion":"2025-11-25","capabilities":{"tools":{}},"serverInfo":{"name":"macos-use-sdk","version":"0.1.0"},"displayInfo":%s}`, displayInfo)),
+			Result:  []byte(fmt.Sprintf(`{"protocolVersion":"2025-11-25","capabilities":{"tools":{},"resources":{"subscribe":false,"listChanged":false},"prompts":{}},"serverInfo":{"name":"macos-use-sdk","version":"0.1.0"},"displayInfo":%s}`, displayInfo)),
 		}
 		if err := tr.WriteMessage(response); err != nil {
 			log.Printf("Error writing response: %v", err)
@@ -2096,6 +2216,156 @@ func (s *MCPServer) handleMessage(tr *transport.StdioTransport, msg *transport.M
 			}
 			return
 		}
+		response := &transport.Message{
+			JSONRPC: "2.0",
+			ID:      msg.ID,
+			Result:  result,
+		}
+		if err := tr.WriteMessage(response); err != nil {
+			log.Printf("Error writing response: %v", err)
+		}
+		return
+	}
+
+	// Handle resources/list request
+	if msg.Method == "resources/list" {
+		resources := []map[string]interface{}{
+			{
+				"uri":         "screen://main",
+				"name":        "Main Display Screenshot",
+				"description": "Current screenshot of the main display",
+				"mimeType":    "image/png",
+			},
+			{
+				"uri":         "accessibility://",
+				"name":        "Accessibility Tree Template",
+				"description": "Use accessibility://{pid} to get element tree for an application",
+				"mimeType":    "application/json",
+			},
+			{
+				"uri":         "clipboard://current",
+				"name":        "Current Clipboard",
+				"description": "Current clipboard contents as text",
+				"mimeType":    "text/plain",
+			},
+		}
+		result, _ := json.Marshal(map[string]interface{}{"resources": resources})
+		response := &transport.Message{
+			JSONRPC: "2.0",
+			ID:      msg.ID,
+			Result:  result,
+		}
+		if err := tr.WriteMessage(response); err != nil {
+			log.Printf("Error writing response: %v", err)
+		}
+		return
+	}
+
+	// Handle resources/read request
+	if msg.Method == "resources/read" {
+		var params struct {
+			URI string `json:"uri"`
+		}
+		if err := json.Unmarshal(msg.Params, &params); err != nil {
+			response := &transport.Message{
+				JSONRPC: "2.0",
+				ID:      msg.ID,
+				Error: &transport.ErrorObj{
+					Code:    transport.ErrCodeInvalidParams,
+					Message: fmt.Sprintf("invalid params: %v", err),
+				},
+			}
+			if err := tr.WriteMessage(response); err != nil {
+				log.Printf("Error writing response: %v", err)
+			}
+			return
+		}
+
+		content, mimeType, err := s.readResource(params.URI)
+		if err != nil {
+			response := &transport.Message{
+				JSONRPC: "2.0",
+				ID:      msg.ID,
+				Error: &transport.ErrorObj{
+					Code:    transport.ErrCodeInternalError,
+					Message: err.Error(),
+				},
+			}
+			if err := tr.WriteMessage(response); err != nil {
+				log.Printf("Error writing response: %v", err)
+			}
+			return
+		}
+
+		result, _ := json.Marshal(map[string]interface{}{
+			"contents": []map[string]interface{}{
+				{"uri": params.URI, "mimeType": mimeType, "text": content},
+			},
+		})
+		response := &transport.Message{
+			JSONRPC: "2.0",
+			ID:      msg.ID,
+			Result:  result,
+		}
+		if err := tr.WriteMessage(response); err != nil {
+			log.Printf("Error writing response: %v", err)
+		}
+		return
+	}
+
+	// Handle prompts/list request
+	if msg.Method == "prompts/list" {
+		prompts := s.listPrompts()
+		result, _ := json.Marshal(map[string]interface{}{"prompts": prompts})
+		response := &transport.Message{
+			JSONRPC: "2.0",
+			ID:      msg.ID,
+			Result:  result,
+		}
+		if err := tr.WriteMessage(response); err != nil {
+			log.Printf("Error writing response: %v", err)
+		}
+		return
+	}
+
+	// Handle prompts/get request
+	if msg.Method == "prompts/get" {
+		var params struct {
+			Arguments map[string]interface{} `json:"arguments"`
+			Name      string                 `json:"name"`
+		}
+		if err := json.Unmarshal(msg.Params, &params); err != nil {
+			response := &transport.Message{
+				JSONRPC: "2.0",
+				ID:      msg.ID,
+				Error: &transport.ErrorObj{
+					Code:    transport.ErrCodeInvalidParams,
+					Message: fmt.Sprintf("invalid params: %v", err),
+				},
+			}
+			if err := tr.WriteMessage(response); err != nil {
+				log.Printf("Error writing response: %v", err)
+			}
+			return
+		}
+
+		prompt, err := s.getPrompt(params.Name, params.Arguments)
+		if err != nil {
+			response := &transport.Message{
+				JSONRPC: "2.0",
+				ID:      msg.ID,
+				Error: &transport.ErrorObj{
+					Code:    transport.ErrCodeInvalidParams, // Unknown prompt name is invalid params per MCP spec
+					Message: err.Error(),
+				},
+			}
+			if err := tr.WriteMessage(response); err != nil {
+				log.Printf("Error writing response: %v", err)
+			}
+			return
+		}
+
+		result, _ := json.Marshal(prompt)
 		response := &transport.Message{
 			JSONRPC: "2.0",
 			ID:      msg.ID,
@@ -2283,4 +2553,286 @@ func (s *MCPServer) getDisplayGroundingInfo() string {
 		return `{"screens":[]}`
 	}
 	return string(infoBytes)
+}
+
+// readResource reads content for a resource URI.
+// Supported URI schemes:
+//   - screen://main: captures screenshot of main display, returns base64 PNG
+//   - accessibility://{pid}: returns element tree JSON for application with given PID
+//   - clipboard://current: returns current clipboard text content
+func (s *MCPServer) readResource(uri string) (content string, mimeType string, err error) {
+	ctx, cancel := context.WithTimeout(s.ctx, 30*time.Second)
+	defer cancel()
+
+	// Parse URI scheme
+	if strings.HasPrefix(uri, "screen://") {
+		// Handle screen://main - capture screenshot
+		suffix := strings.TrimPrefix(uri, "screen://")
+		if suffix != "main" {
+			return "", "", fmt.Errorf("unsupported screen resource: %s (only 'main' is supported)", suffix)
+		}
+
+		// Capture screenshot of main display
+		resp, err := s.client.CaptureScreenshot(ctx, &pb.CaptureScreenshotRequest{
+			Format: pb.ImageFormat_IMAGE_FORMAT_PNG,
+		})
+		if err != nil {
+			return "", "", fmt.Errorf("failed to capture screenshot: %w", err)
+		}
+
+		// Return base64-encoded image
+		encoded := base64.StdEncoding.EncodeToString(resp.ImageData)
+		return encoded, "image/png", nil
+	}
+
+	if strings.HasPrefix(uri, "accessibility://") {
+		// Handle accessibility://{pid} - return element tree
+		pidStr := strings.TrimPrefix(uri, "accessibility://")
+		if pidStr == "" {
+			return "", "", fmt.Errorf("accessibility:// requires a PID (e.g., accessibility://1234)")
+		}
+
+		pid, err := strconv.ParseInt(pidStr, 10, 32)
+		if err != nil {
+			return "", "", fmt.Errorf("invalid PID in accessibility URI: %s", pidStr)
+		}
+
+		// Build application resource name and traverse accessibility tree
+		appName := fmt.Sprintf("applications/%d", pid)
+		resp, err := s.client.TraverseAccessibility(ctx, &pb.TraverseAccessibilityRequest{
+			Name: appName,
+		})
+		if err != nil {
+			return "", "", fmt.Errorf("failed to traverse accessibility tree: %w", err)
+		}
+
+		// Convert elements to JSON
+		elements := make([]map[string]interface{}, 0, len(resp.Elements))
+		for _, elem := range resp.Elements {
+			elemMap := map[string]interface{}{
+				"id":   elem.GetElementId(),
+				"role": elem.GetRole(),
+				"path": elem.GetPath(),
+			}
+			if text := elem.GetText(); text != "" {
+				elemMap["text"] = text
+			}
+			// Add bounds from individual x/y/width/height fields
+			x, y := elem.GetX(), elem.GetY()
+			w, h := elem.GetWidth(), elem.GetHeight()
+			if w > 0 || h > 0 {
+				elemMap["bounds"] = map[string]interface{}{
+					"x":      x,
+					"y":      y,
+					"width":  w,
+					"height": h,
+				}
+			}
+			if len(elem.GetActions()) > 0 {
+				elemMap["actions"] = elem.GetActions()
+			}
+			elements = append(elements, elemMap)
+		}
+
+		result := map[string]interface{}{
+			"application":  appName,
+			"elementCount": len(elements),
+			"elements":     elements,
+		}
+
+		jsonBytes, err := json.Marshal(result)
+		if err != nil {
+			return "", "", fmt.Errorf("failed to marshal accessibility tree: %w", err)
+		}
+		return string(jsonBytes), "application/json", nil
+	}
+
+	if strings.HasPrefix(uri, "clipboard://") {
+		// Handle clipboard://current - return clipboard text
+		suffix := strings.TrimPrefix(uri, "clipboard://")
+		if suffix != "current" {
+			return "", "", fmt.Errorf("unsupported clipboard resource: %s (only 'current' is supported)", suffix)
+		}
+
+		resp, err := s.client.GetClipboard(ctx, &pb.GetClipboardRequest{})
+		if err != nil {
+			return "", "", fmt.Errorf("failed to get clipboard: %w", err)
+		}
+
+		// Return text content (or indicate if empty/non-text)
+		content := resp.GetContent()
+		if content == nil {
+			return "", "text/plain", nil // Empty clipboard
+		}
+		if text := content.GetText(); text != "" {
+			return text, "text/plain", nil
+		}
+		if html := content.GetHtml(); html != "" {
+			return html, "text/html", nil
+		}
+		if rtf := content.GetRtf(); len(rtf) > 0 {
+			return string(rtf), "text/rtf", nil
+		}
+		if files := content.GetFiles(); files != nil && len(files.GetPaths()) > 0 {
+			filesJSON, _ := json.Marshal(files.GetPaths())
+			return string(filesJSON), "application/json", nil
+		}
+		if url := content.GetUrl(); url != "" {
+			return url, "text/plain", nil
+		}
+		return "", "text/plain", nil // Empty clipboard
+	}
+
+	return "", "", fmt.Errorf("unsupported resource URI scheme: %s", uri)
+}
+
+// listPrompts returns the list of available MCP prompt templates.
+func (s *MCPServer) listPrompts() []map[string]interface{} {
+	return []map[string]interface{}{
+		{
+			"name":        "navigate_to_element",
+			"description": "Navigate to and click an accessibility element",
+			"arguments": []map[string]interface{}{
+				{"name": "selector", "description": "Element selector (role, text, or path)", "required": true},
+				{"name": "action", "description": "Action to perform: click, double_click, right_click", "required": false},
+			},
+		},
+		{
+			"name":        "fill_form",
+			"description": "Find and fill form fields with values",
+			"arguments": []map[string]interface{}{
+				{"name": "fields", "description": "JSON object mapping field names/labels to values", "required": true},
+			},
+		},
+		{
+			"name":        "verify_state",
+			"description": "Verify an element matches expected state",
+			"arguments": []map[string]interface{}{
+				{"name": "selector", "description": "Element selector", "required": true},
+				{"name": "expected_state", "description": "Expected state: visible, enabled, focused, or text value", "required": true},
+			},
+		},
+	}
+}
+
+// getPrompt returns a specific prompt with argument substitution.
+// Prompts return messages with role "user" per MCP specification.
+func (s *MCPServer) getPrompt(name string, args map[string]interface{}) (map[string]interface{}, error) {
+	switch name {
+	case "navigate_to_element":
+		selector := ""
+		if v, ok := args["selector"]; ok {
+			selector = fmt.Sprintf("%v", v)
+		}
+		action := "click"
+		if v, ok := args["action"]; ok && v != nil && fmt.Sprintf("%v", v) != "" {
+			action = fmt.Sprintf("%v", v)
+		}
+
+		content := fmt.Sprintf(`Find and interact with a UI element using the accessibility tree.
+
+1. First, use traverse_accessibility or find_elements to locate the element matching: %s
+2. Once found, perform the "%s" action on the element using click_element or perform_element_action
+3. Verify the action completed successfully by checking for state changes
+
+If the element is not immediately visible, you may need to:
+- Scroll to reveal it
+- Wait for it to appear using wait_element
+- Check if it's in a different window`, selector, action)
+
+		return map[string]interface{}{
+			"description": "Navigate to and click an accessibility element",
+			"messages": []map[string]interface{}{
+				{
+					"role": "user",
+					"content": map[string]interface{}{
+						"type": "text",
+						"text": content,
+					},
+				},
+			},
+		}, nil
+
+	case "fill_form":
+		fieldsStr := "{}"
+		if v, ok := args["fields"]; ok {
+			if fieldBytes, err := json.Marshal(v); err == nil {
+				fieldsStr = string(fieldBytes)
+			}
+		}
+
+		content := fmt.Sprintf(`Fill form fields with the following values:
+
+%s
+
+For each field:
+1. Use find_elements to locate the form field by its label or role (AXTextField, AXTextArea, AXComboBox)
+2. Focus the field by clicking on it
+3. Use write_element_value or type_text to enter the value
+4. Verify the value was entered correctly by reading the element's value
+
+Common field roles:
+- AXTextField: Single-line text input
+- AXTextArea: Multi-line text input
+- AXCheckBox: Checkbox (use perform_element_action with "press" to toggle)
+- AXPopUpButton: Dropdown menu
+- AXComboBox: Combo box with text and dropdown`, fieldsStr)
+
+		return map[string]interface{}{
+			"description": "Find and fill form fields with values",
+			"messages": []map[string]interface{}{
+				{
+					"role": "user",
+					"content": map[string]interface{}{
+						"type": "text",
+						"text": content,
+					},
+				},
+			},
+		}, nil
+
+	case "verify_state":
+		selector := ""
+		if v, ok := args["selector"]; ok {
+			selector = fmt.Sprintf("%v", v)
+		}
+		expectedState := ""
+		if v, ok := args["expected_state"]; ok {
+			expectedState = fmt.Sprintf("%v", v)
+		}
+
+		content := fmt.Sprintf(`Verify that a UI element matches the expected state.
+
+Element to find: %s
+Expected state: %s
+
+Steps:
+1. Use find_elements to locate the element matching the selector
+2. Use get_element to retrieve the element's current properties
+3. Compare the element's state against the expected value:
+   - "visible": Check that the element exists and is not hidden
+   - "enabled": Check AXEnabled attribute is true
+   - "focused": Check AXFocused attribute is true
+   - For text values: Check AXValue or AXTitle matches the expected text
+
+4. Report whether the verification passed or failed with details
+
+If using wait_element_state, you can poll until the condition is met or timeout.`, selector, expectedState)
+
+		return map[string]interface{}{
+			"description": "Verify an element matches expected state",
+			"messages": []map[string]interface{}{
+				{
+					"role": "user",
+					"content": map[string]interface{}{
+						"type": "text",
+						"text": content,
+					},
+				},
+			},
+		}, nil
+
+	default:
+		return nil, fmt.Errorf("unknown prompt: %s", name)
+	}
 }
