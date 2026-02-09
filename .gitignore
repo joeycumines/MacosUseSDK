@@ -19,9 +19,6 @@ coverage.lcov
 /directive.txt
 /tmp/
 /.claude/*.local.*
-/session_start.txt
-/.session_start
-/.session_start_human
 .idea/
 # Generated protobuf descriptor sets for gRPC reflection (optional)
 /Server/Sources/MacosUseServer/DescriptorSets/*.pb
