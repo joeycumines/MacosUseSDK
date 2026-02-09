@@ -147,8 +147,9 @@ extension MacosUseService {
         }
 
         // Get display bounds
+        // CGDisplayBounds returns CGRect.zero for non-existent display IDs
         let bounds = CGDisplayBounds(displayID)
-        if bounds.origin.x.isNaN || bounds.origin.y.isNaN {
+        if bounds.size.width <= 0 || bounds.size.height <= 0 {
             throw RPCError(
                 code: .notFound,
                 message: "Display not found: \(displayID)",
