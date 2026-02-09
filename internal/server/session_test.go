@@ -1628,3 +1628,590 @@ func TestHandleUpdateMacro_GRPCError(t *testing.T) {
 		t.Error("Expected error result for gRPC error")
 	}
 }
+
+// ============================================================================
+// Macro Handler Lifecycle Tests (Task 51)
+// ============================================================================
+
+func TestHandleListMacros_PageTokenFlow(t *testing.T) {
+	callCount := 0
+	mockClient := &mockSessionClient{
+		listMacrosFunc: func(ctx context.Context, req *pb.ListMacrosRequest) (*pb.ListMacrosResponse, error) {
+			callCount++
+			if callCount == 1 {
+				// First call - no page token
+				if req.PageToken != "" {
+					t.Errorf("expected empty page_token on first call, got %q", req.PageToken)
+				}
+				return &pb.ListMacrosResponse{
+					Macros: []*pb.Macro{
+						{Name: "macros/1", DisplayName: "Macro 1"},
+					},
+					NextPageToken: "opaque-token-123",
+				}, nil
+			}
+			// Second call - with page token
+			if req.PageToken != "opaque-token-123" {
+				t.Errorf("expected page_token 'opaque-token-123', got %q", req.PageToken)
+			}
+			return &pb.ListMacrosResponse{
+				Macros: []*pb.Macro{
+					{Name: "macros/2", DisplayName: "Macro 2"},
+				},
+				NextPageToken: "",
+			}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+
+	// First request
+	call := &ToolCall{
+		Name:      "list_macros",
+		Arguments: json.RawMessage(`{"page_size": 1}`),
+	}
+	result, err := server.handleListMacros(call)
+	if err != nil {
+		t.Fatalf("first handleListMacros returned error: %v", err)
+	}
+	if result.IsError {
+		t.Errorf("first call IsError = true, want false: %s", result.Content[0].Text)
+	}
+	if !strings.Contains(result.Content[0].Text, "opaque-token-123") {
+		t.Errorf("first result should contain next_page_token: %s", result.Content[0].Text)
+	}
+
+	// Second request with page_token
+	call = &ToolCall{
+		Name:      "list_macros",
+		Arguments: json.RawMessage(`{"page_token": "opaque-token-123"}`),
+	}
+	result, err = server.handleListMacros(call)
+	if err != nil {
+		t.Fatalf("second handleListMacros returned error: %v", err)
+	}
+	if result.IsError {
+		t.Errorf("second call IsError = true, want false: %s", result.Content[0].Text)
+	}
+
+	if callCount != 2 {
+		t.Errorf("expected 2 calls to ListMacros, got %d", callCount)
+	}
+}
+
+func TestHandleCreateMacro_AllFieldsReturned(t *testing.T) {
+	createTime := timestamppb.Now()
+	mockClient := &mockSessionClient{
+		createMacroFunc: func(ctx context.Context, req *pb.CreateMacroRequest) (*pb.Macro, error) {
+			return &pb.Macro{
+				Name:        "macros/full-test",
+				DisplayName: req.Macro.DisplayName,
+				Description: req.Macro.Description,
+				Tags:        req.Macro.Tags,
+				CreateTime:  createTime,
+			}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "create_macro",
+		Arguments: json.RawMessage(`{"display_name": "Full Test", "description": "A complete macro", "tags": ["tag1", "tag2"]}`),
+	}
+
+	result, err := server.handleCreateMacro(call)
+	if err != nil {
+		t.Fatalf("handleCreateMacro returned error: %v", err)
+	}
+	if result.IsError {
+		t.Fatalf("result.IsError = true: %s", result.Content[0].Text)
+	}
+
+	text := result.Content[0].Text
+	// Verify all fields are present in JSON response
+	requiredFields := []string{"name", "display_name", "description", "tags", "create_time"}
+	for _, field := range requiredFields {
+		if !strings.Contains(text, field) {
+			t.Errorf("result text missing field %q: %s", field, text)
+		}
+	}
+}
+
+func TestHandleGetMacro_AllFieldsReturned(t *testing.T) {
+	mockClient := &mockSessionClient{
+		getMacroFunc: func(ctx context.Context, req *pb.GetMacroRequest) (*pb.Macro, error) {
+			return &pb.Macro{
+				Name:           "macros/complete",
+				DisplayName:    "Complete Macro",
+				Description:    "Full description",
+				Tags:           []string{"a", "b"},
+				ExecutionCount: 99,
+				Actions: []*pb.MacroAction{
+					{Description: "Action 1"},
+					{Description: "Action 2"},
+				},
+			}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "get_macro",
+		Arguments: json.RawMessage(`{"name": "macros/complete"}`),
+	}
+
+	result, err := server.handleGetMacro(call)
+	if err != nil {
+		t.Fatalf("handleGetMacro returned error: %v", err)
+	}
+	if result.IsError {
+		t.Fatalf("result.IsError = true: %s", result.Content[0].Text)
+	}
+
+	text := result.Content[0].Text
+	// Verify all fields are present
+	requiredFields := []string{"name", "display_name", "description", "action_count", "actions", "tags", "execution_count"}
+	for _, field := range requiredFields {
+		if !strings.Contains(text, field) {
+			t.Errorf("result text missing field %q: %s", field, text)
+		}
+	}
+	// Verify action descriptions are included
+	if !strings.Contains(text, "Action 1") || !strings.Contains(text, "Action 2") {
+		t.Errorf("result should contain action descriptions: %s", text)
+	}
+}
+
+func TestHandleUpdateMacro_FieldMaskBuilding(t *testing.T) {
+	tests := []struct {
+		name          string
+		args          string
+		expectedPaths []string
+	}{
+		{
+			name:          "update display_name only",
+			args:          `{"name": "macros/x", "display_name": "New Name"}`,
+			expectedPaths: []string{"display_name"},
+		},
+		{
+			name:          "update description only",
+			args:          `{"name": "macros/x", "description": "New Desc"}`,
+			expectedPaths: []string{"description"},
+		},
+		{
+			name:          "update tags only",
+			args:          `{"name": "macros/x", "tags": ["new"]}`,
+			expectedPaths: []string{"tags"},
+		},
+		{
+			name:          "update all fields",
+			args:          `{"name": "macros/x", "display_name": "N", "description": "D", "tags": ["t"]}`,
+			expectedPaths: []string{"display_name", "description", "tags"},
+		},
+		{
+			name:          "update none (only name)",
+			args:          `{"name": "macros/x"}`,
+			expectedPaths: []string{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedPaths []string
+			mockClient := &mockSessionClient{
+				updateMacroFunc: func(ctx context.Context, req *pb.UpdateMacroRequest) (*pb.Macro, error) {
+					if req.UpdateMask != nil {
+						capturedPaths = req.UpdateMask.Paths
+					}
+					return &pb.Macro{
+						Name:       req.Macro.Name,
+						UpdateTime: timestamppb.Now(),
+					}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+			call := &ToolCall{
+				Name:      "update_macro",
+				Arguments: json.RawMessage(tt.args),
+			}
+
+			result, err := server.handleUpdateMacro(call)
+			if err != nil {
+				t.Fatalf("handleUpdateMacro returned error: %v", err)
+			}
+			if result.IsError {
+				t.Fatalf("result.IsError = true: %s", result.Content[0].Text)
+			}
+
+			// Check paths match (order-independent)
+			if len(capturedPaths) != len(tt.expectedPaths) {
+				t.Errorf("expected %d paths, got %d: %v", len(tt.expectedPaths), len(capturedPaths), capturedPaths)
+				return
+			}
+			pathSet := make(map[string]bool)
+			for _, p := range capturedPaths {
+				pathSet[p] = true
+			}
+			for _, p := range tt.expectedPaths {
+				if !pathSet[p] {
+					t.Errorf("expected path %q not found in %v", p, capturedPaths)
+				}
+			}
+		})
+	}
+}
+
+func TestHandleExecuteMacro_ReturnsLROName(t *testing.T) {
+	mockClient := &mockSessionClient{
+		executeMacroFunc: func(ctx context.Context, req *pb.ExecuteMacroRequest) (*longrunningpb.Operation, error) {
+			return &longrunningpb.Operation{
+				Name: "operations/macro-exec-456",
+				Done: false,
+			}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "execute_macro",
+		Arguments: json.RawMessage(`{"macro": "macros/run-it"}`),
+	}
+
+	result, err := server.handleExecuteMacro(call)
+	if err != nil {
+		t.Fatalf("handleExecuteMacro returned error: %v", err)
+	}
+	if result.IsError {
+		t.Fatalf("result.IsError = true: %s", result.Content[0].Text)
+	}
+
+	text := result.Content[0].Text
+	if !strings.Contains(text, "operations/macro-exec-456") {
+		t.Errorf("result should contain operation name: %s", text)
+	}
+	if !strings.Contains(text, "Done: false") {
+		t.Errorf("result should contain Done status: %s", text)
+	}
+}
+
+func TestMacroHandlers_InvalidJSON(t *testing.T) {
+	tests := []struct {
+		name    string
+		handler string
+		args    string
+	}{
+		{"create_macro invalid json", "create_macro", `{invalid`},
+		{"get_macro invalid json", "get_macro", `not json`},
+		{"list_macros invalid json", "list_macros", `{"page_size": "not a number"}`},
+		{"update_macro invalid json", "update_macro", `{"name":`},
+		{"delete_macro invalid json", "delete_macro", `{]}`},
+		{"execute_macro invalid json", "execute_macro", `{{{`},
+	}
+
+	server := newTestMCPServer(&mockSessionClient{})
+
+	handlers := map[string]func(*ToolCall) (*ToolResult, error){
+		"create_macro":  server.handleCreateMacro,
+		"get_macro":     server.handleGetMacro,
+		"list_macros":   server.handleListMacros,
+		"update_macro":  server.handleUpdateMacro,
+		"delete_macro":  server.handleDeleteMacro,
+		"execute_macro": server.handleExecuteMacro,
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			handler := handlers[tt.handler]
+			call := &ToolCall{
+				Name:      tt.handler,
+				Arguments: json.RawMessage(tt.args),
+			}
+
+			result, err := handler(call)
+			if err != nil {
+				t.Fatalf("handler returned Go error: %v", err)
+			}
+			if !result.IsError {
+				t.Errorf("expected error for invalid JSON, got success: %s", result.Content[0].Text)
+			}
+			if !strings.Contains(result.Content[0].Text, "Invalid parameters") && !strings.Contains(result.Content[0].Text, "parameter is required") {
+				t.Errorf("expected 'Invalid parameters' in error: %s", result.Content[0].Text)
+			}
+		})
+	}
+}
+
+func TestMacroCRUDLifecycle(t *testing.T) {
+	// Simulate a full CRUD lifecycle with an in-memory store
+	macros := make(map[string]*pb.Macro)
+	nextID := 1
+
+	mockClient := &mockSessionClient{
+		createMacroFunc: func(ctx context.Context, req *pb.CreateMacroRequest) (*pb.Macro, error) {
+			id := req.MacroId
+			if id == "" {
+				id = "auto-" + string(rune('0'+nextID))
+				nextID++
+			}
+			name := "macros/" + id
+			macro := &pb.Macro{
+				Name:        name,
+				DisplayName: req.Macro.DisplayName,
+				Description: req.Macro.Description,
+				Tags:        req.Macro.Tags,
+				CreateTime:  timestamppb.Now(),
+			}
+			macros[name] = macro
+			return macro, nil
+		},
+		getMacroFunc: func(ctx context.Context, req *pb.GetMacroRequest) (*pb.Macro, error) {
+			if m, ok := macros[req.Name]; ok {
+				return m, nil
+			}
+			return nil, errors.New("macro not found")
+		},
+		updateMacroFunc: func(ctx context.Context, req *pb.UpdateMacroRequest) (*pb.Macro, error) {
+			m, ok := macros[req.Macro.Name]
+			if !ok {
+				return nil, errors.New("macro not found")
+			}
+			// Apply updates based on field mask
+			if req.UpdateMask != nil {
+				for _, path := range req.UpdateMask.Paths {
+					switch path {
+					case "display_name":
+						m.DisplayName = req.Macro.DisplayName
+					case "description":
+						m.Description = req.Macro.Description
+					case "tags":
+						m.Tags = req.Macro.Tags
+					}
+				}
+			}
+			m.UpdateTime = timestamppb.Now()
+			return m, nil
+		},
+		listMacrosFunc: func(ctx context.Context, req *pb.ListMacrosRequest) (*pb.ListMacrosResponse, error) {
+			var result []*pb.Macro
+			for _, m := range macros {
+				result = append(result, m)
+			}
+			return &pb.ListMacrosResponse{Macros: result}, nil
+		},
+		deleteMacroFunc: func(ctx context.Context, req *pb.DeleteMacroRequest) (*emptypb.Empty, error) {
+			if _, ok := macros[req.Name]; !ok {
+				return nil, errors.New("macro not found")
+			}
+			delete(macros, req.Name)
+			return &emptypb.Empty{}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+
+	// Step 1: Create macro
+	t.Run("Create", func(t *testing.T) {
+		call := &ToolCall{
+			Name:      "create_macro",
+			Arguments: json.RawMessage(`{"macro_id": "lifecycle-test", "display_name": "Lifecycle Test", "description": "Initial"}`),
+		}
+		result, err := server.handleCreateMacro(call)
+		if err != nil {
+			t.Fatalf("Create failed: %v", err)
+		}
+		if result.IsError {
+			t.Fatalf("Create returned error: %s", result.Content[0].Text)
+		}
+		if !strings.Contains(result.Content[0].Text, "macros/lifecycle-test") {
+			t.Errorf("Create result should contain resource name: %s", result.Content[0].Text)
+		}
+	})
+
+	// Step 2: Get macro
+	t.Run("Get", func(t *testing.T) {
+		call := &ToolCall{
+			Name:      "get_macro",
+			Arguments: json.RawMessage(`{"name": "macros/lifecycle-test"}`),
+		}
+		result, err := server.handleGetMacro(call)
+		if err != nil {
+			t.Fatalf("Get failed: %v", err)
+		}
+		if result.IsError {
+			t.Fatalf("Get returned error: %s", result.Content[0].Text)
+		}
+		if !strings.Contains(result.Content[0].Text, "Lifecycle Test") {
+			t.Errorf("Get should return display_name: %s", result.Content[0].Text)
+		}
+	})
+
+	// Step 3: Update macro
+	t.Run("Update", func(t *testing.T) {
+		call := &ToolCall{
+			Name:      "update_macro",
+			Arguments: json.RawMessage(`{"name": "macros/lifecycle-test", "display_name": "Updated Lifecycle"}`),
+		}
+		result, err := server.handleUpdateMacro(call)
+		if err != nil {
+			t.Fatalf("Update failed: %v", err)
+		}
+		if result.IsError {
+			t.Fatalf("Update returned error: %s", result.Content[0].Text)
+		}
+	})
+
+	// Step 4: Verify update via Get
+	t.Run("VerifyUpdate", func(t *testing.T) {
+		call := &ToolCall{
+			Name:      "get_macro",
+			Arguments: json.RawMessage(`{"name": "macros/lifecycle-test"}`),
+		}
+		result, err := server.handleGetMacro(call)
+		if err != nil {
+			t.Fatalf("Get after update failed: %v", err)
+		}
+		if result.IsError {
+			t.Fatalf("Get after update returned error: %s", result.Content[0].Text)
+		}
+		if !strings.Contains(result.Content[0].Text, "Updated Lifecycle") {
+			t.Errorf("Get should reflect updated display_name: %s", result.Content[0].Text)
+		}
+	})
+
+	// Step 5: List macros
+	t.Run("List", func(t *testing.T) {
+		call := &ToolCall{
+			Name:      "list_macros",
+			Arguments: json.RawMessage(`{}`),
+		}
+		result, err := server.handleListMacros(call)
+		if err != nil {
+			t.Fatalf("List failed: %v", err)
+		}
+		if result.IsError {
+			t.Fatalf("List returned error: %s", result.Content[0].Text)
+		}
+		if !strings.Contains(result.Content[0].Text, "macros/lifecycle-test") {
+			t.Errorf("List should contain created macro: %s", result.Content[0].Text)
+		}
+	})
+
+	// Step 6: Delete macro
+	t.Run("Delete", func(t *testing.T) {
+		call := &ToolCall{
+			Name:      "delete_macro",
+			Arguments: json.RawMessage(`{"name": "macros/lifecycle-test"}`),
+		}
+		result, err := server.handleDeleteMacro(call)
+		if err != nil {
+			t.Fatalf("Delete failed: %v", err)
+		}
+		if result.IsError {
+			t.Fatalf("Delete returned error: %s", result.Content[0].Text)
+		}
+	})
+
+	// Step 7: Verify deletion
+	t.Run("VerifyDeletion", func(t *testing.T) {
+		call := &ToolCall{
+			Name:      "get_macro",
+			Arguments: json.RawMessage(`{"name": "macros/lifecycle-test"}`),
+		}
+		result, err := server.handleGetMacro(call)
+		if err != nil {
+			t.Fatalf("Get after delete returned Go error: %v", err)
+		}
+		if !result.IsError {
+			t.Errorf("Get after delete should return error, got: %s", result.Content[0].Text)
+		}
+		if !strings.Contains(result.Content[0].Text, "not found") {
+			t.Errorf("Error should mention 'not found': %s", result.Content[0].Text)
+		}
+	})
+}
+
+func TestMacroHandlers_GetNonExistent(t *testing.T) {
+	mockClient := &mockSessionClient{
+		getMacroFunc: func(ctx context.Context, req *pb.GetMacroRequest) (*pb.Macro, error) {
+			return nil, errors.New("macro not found: " + req.Name)
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "get_macro",
+		Arguments: json.RawMessage(`{"name": "macros/does-not-exist"}`),
+	}
+
+	result, err := server.handleGetMacro(call)
+	if err != nil {
+		t.Fatalf("handleGetMacro returned Go error: %v", err)
+	}
+	if !result.IsError {
+		t.Errorf("expected error for non-existent macro, got success: %s", result.Content[0].Text)
+	}
+	if !strings.Contains(result.Content[0].Text, "not found") {
+		t.Errorf("error should mention 'not found': %s", result.Content[0].Text)
+	}
+}
+
+func TestHandleListMacros_EmptyResult(t *testing.T) {
+	mockClient := &mockSessionClient{
+		listMacrosFunc: func(ctx context.Context, req *pb.ListMacrosRequest) (*pb.ListMacrosResponse, error) {
+			return &pb.ListMacrosResponse{
+				Macros:        []*pb.Macro{},
+				NextPageToken: "",
+			}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "list_macros",
+		Arguments: json.RawMessage(`{}`),
+	}
+
+	result, err := server.handleListMacros(call)
+	if err != nil {
+		t.Fatalf("handleListMacros returned error: %v", err)
+	}
+	if result.IsError {
+		t.Errorf("result.IsError = true, want false: %s", result.Content[0].Text)
+	}
+	// Should return valid JSON with empty macros array
+	if !strings.Contains(result.Content[0].Text, `"macros": []`) {
+		t.Errorf("expected empty macros array in result: %s", result.Content[0].Text)
+	}
+}
+
+func TestHandleCreateMacro_WithMacroID(t *testing.T) {
+	mockClient := &mockSessionClient{
+		createMacroFunc: func(ctx context.Context, req *pb.CreateMacroRequest) (*pb.Macro, error) {
+			if req.MacroId != "custom-id" {
+				t.Errorf("expected macro_id 'custom-id', got %q", req.MacroId)
+			}
+			return &pb.Macro{
+				Name:       "macros/custom-id",
+				CreateTime: timestamppb.Now(),
+			}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "create_macro",
+		Arguments: json.RawMessage(`{"macro_id": "custom-id", "display_name": "Custom"}`),
+	}
+
+	result, err := server.handleCreateMacro(call)
+	if err != nil {
+		t.Fatalf("handleCreateMacro returned error: %v", err)
+	}
+	if result.IsError {
+		t.Errorf("result.IsError = true, want false: %s", result.Content[0].Text)
+	}
+	if !strings.Contains(result.Content[0].Text, "macros/custom-id") {
+		t.Errorf("result should contain custom macro ID: %s", result.Content[0].Text)
+	}
+}
