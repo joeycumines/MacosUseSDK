@@ -1328,6 +1328,375 @@ func TestMCPServer_HandleHTTPMessage_NotificationsInitialized(t *testing.T) {
 }
 
 // ============================================================================
+// Tasks 36-37: MCP Capability Negotiation and Protocol Version Validation
+// ============================================================================
+
+// TestValidateAndProcessInitialize_ProtocolVersions tests protocol version validation.
+func TestValidateAndProcessInitialize_ProtocolVersions(t *testing.T) {
+	// Create minimal MCPServer without full initialization
+	ctx := context.Background()
+	s := &MCPServer{
+		cfg:   &config.Config{},
+		tools: make(map[string]*Tool),
+		ctx:   ctx,
+	}
+
+	tests := []struct {
+		name              string
+		protocolVersion   string
+		wantError         bool
+		wantErrorContains string
+	}{
+		{
+			name:            "current version 2025-11-25",
+			protocolVersion: "2025-11-25",
+			wantError:       false,
+		},
+		{
+			name:            "previous version 2024-11-05",
+			protocolVersion: "2024-11-05",
+			wantError:       false,
+		},
+		{
+			name:            "empty version defaults to current",
+			protocolVersion: "",
+			wantError:       false,
+		},
+		{
+			name:              "unsupported version",
+			protocolVersion:   "2023-01-01",
+			wantError:         true,
+			wantErrorContains: "unsupported protocol version",
+		},
+		{
+			name:              "future version",
+			protocolVersion:   "2099-12-31",
+			wantError:         true,
+			wantErrorContains: "unsupported protocol version: 2099-12-31",
+		},
+		{
+			name:              "garbage version",
+			protocolVersion:   "not-a-version",
+			wantError:         true,
+			wantErrorContains: "unsupported protocol version: not-a-version",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			params := map[string]interface{}{}
+			if tt.protocolVersion != "" {
+				params["protocolVersion"] = tt.protocolVersion
+			}
+			paramsJSON, _ := json.Marshal(params)
+
+			msg := &transport.Message{
+				JSONRPC: "2.0",
+				ID:      json.RawMessage(`1`),
+				Method:  "initialize",
+				Params:  paramsJSON,
+			}
+
+			resp, err := s.validateAndProcessInitialize(msg)
+
+			if err != nil {
+				t.Fatalf("validateAndProcessInitialize returned Go error: %v", err)
+			}
+
+			if resp == nil {
+				t.Fatal("validateAndProcessInitialize returned nil response")
+			}
+
+			if tt.wantError {
+				// Should have error response
+				if resp.Error == nil {
+					t.Fatalf("expected error response, got result: %s", string(resp.Result))
+				}
+				if resp.Error.Code != transport.ErrCodeInvalidRequest {
+					t.Errorf("error code = %d, want %d", resp.Error.Code, transport.ErrCodeInvalidRequest)
+				}
+				if !strings.Contains(resp.Error.Message, tt.wantErrorContains) {
+					t.Errorf("error message = %q, want to contain %q", resp.Error.Message, tt.wantErrorContains)
+				}
+			} else {
+				// Should have success response
+				if resp.Error != nil {
+					t.Fatalf("unexpected error: code=%d message=%s", resp.Error.Code, resp.Error.Message)
+				}
+				if resp.Result == nil {
+					t.Fatal("expected result, got nil")
+				}
+				// Verify response contains protocolVersion
+				var result map[string]interface{}
+				if err := json.Unmarshal(resp.Result, &result); err != nil {
+					t.Fatalf("failed to unmarshal result: %v", err)
+				}
+				if result["protocolVersion"] != "2025-11-25" {
+					t.Errorf("response protocolVersion = %q, want %q", result["protocolVersion"], "2025-11-25")
+				}
+			}
+		})
+	}
+}
+
+// TestValidateAndProcessInitialize_ClientInfo tests client info parsing and logging.
+func TestValidateAndProcessInitialize_ClientInfo(t *testing.T) {
+	ctx := context.Background()
+	s := &MCPServer{
+		cfg:   &config.Config{},
+		tools: make(map[string]*Tool),
+		ctx:   ctx,
+	}
+
+	tests := []struct {
+		name       string
+		params     map[string]interface{}
+		wantResult bool
+	}{
+		{
+			name: "full client info",
+			params: map[string]interface{}{
+				"protocolVersion": "2025-11-25",
+				"clientInfo": map[string]interface{}{
+					"name":    "test-client",
+					"version": "1.0.0",
+				},
+				"capabilities": map[string]interface{}{},
+			},
+			wantResult: true,
+		},
+		{
+			name: "missing client info",
+			params: map[string]interface{}{
+				"protocolVersion": "2025-11-25",
+			},
+			wantResult: true,
+		},
+		{
+			name: "empty client info",
+			params: map[string]interface{}{
+				"protocolVersion": "2025-11-25",
+				"clientInfo":      map[string]interface{}{},
+			},
+			wantResult: true,
+		},
+		{
+			name:       "no params at all",
+			params:     nil,
+			wantResult: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var paramsJSON json.RawMessage
+			if tt.params != nil {
+				var err error
+				paramsJSON, err = json.Marshal(tt.params)
+				if err != nil {
+					t.Fatalf("failed to marshal params: %v", err)
+				}
+			}
+
+			msg := &transport.Message{
+				JSONRPC: "2.0",
+				ID:      json.RawMessage(`1`),
+				Method:  "initialize",
+				Params:  paramsJSON,
+			}
+
+			resp, err := s.validateAndProcessInitialize(msg)
+
+			if err != nil {
+				t.Fatalf("validateAndProcessInitialize returned Go error: %v", err)
+			}
+
+			if tt.wantResult {
+				if resp == nil {
+					t.Fatal("expected response, got nil")
+				}
+				if resp.Error != nil {
+					t.Fatalf("unexpected error: %s", resp.Error.Message)
+				}
+			}
+		})
+	}
+}
+
+// TestValidateAndProcessInitialize_ResponseFormat tests the response format matches MCP spec.
+func TestValidateAndProcessInitialize_ResponseFormat(t *testing.T) {
+	ctx := context.Background()
+	s := &MCPServer{
+		cfg:   &config.Config{},
+		tools: make(map[string]*Tool),
+		ctx:   ctx,
+	}
+
+	params := map[string]interface{}{
+		"protocolVersion": "2025-11-25",
+		"clientInfo": map[string]interface{}{
+			"name":    "test-client",
+			"version": "1.0.0",
+		},
+	}
+	paramsJSON, _ := json.Marshal(params)
+
+	msg := &transport.Message{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage(`1`),
+		Method:  "initialize",
+		Params:  paramsJSON,
+	}
+
+	resp, err := s.validateAndProcessInitialize(msg)
+	if err != nil {
+		t.Fatalf("validateAndProcessInitialize returned Go error: %v", err)
+	}
+
+	if resp == nil {
+		t.Fatal("expected response, got nil")
+	}
+
+	if resp.Error != nil {
+		t.Fatalf("unexpected error: %s", resp.Error.Message)
+	}
+
+	// Verify response format
+	var result map[string]interface{}
+	if err := json.Unmarshal(resp.Result, &result); err != nil {
+		t.Fatalf("failed to unmarshal result: %v", err)
+	}
+
+	// Required fields per MCP spec
+	if result["protocolVersion"] != "2025-11-25" {
+		t.Errorf("protocolVersion = %q, want %q", result["protocolVersion"], "2025-11-25")
+	}
+
+	capabilities, ok := result["capabilities"].(map[string]interface{})
+	if !ok {
+		t.Fatal("capabilities is not an object")
+	}
+
+	// Verify capabilities structure
+	if _, ok := capabilities["tools"]; !ok {
+		t.Error("capabilities.tools is missing")
+	}
+	if _, ok := capabilities["resources"]; !ok {
+		t.Error("capabilities.resources is missing")
+	}
+	if _, ok := capabilities["prompts"]; !ok {
+		t.Error("capabilities.prompts is missing")
+	}
+
+	serverInfo, ok := result["serverInfo"].(map[string]interface{})
+	if !ok {
+		t.Fatal("serverInfo is not an object")
+	}
+	if serverInfo["name"] != "macos-use-sdk" {
+		t.Errorf("serverInfo.name = %q, want %q", serverInfo["name"], "macos-use-sdk")
+	}
+	if serverInfo["version"] == nil || serverInfo["version"] == "" {
+		t.Error("serverInfo.version should not be empty")
+	}
+}
+
+// TestValidateAndProcessInitialize_ErrorResponseFormat tests the error response format.
+func TestValidateAndProcessInitialize_ErrorResponseFormat(t *testing.T) {
+	ctx := context.Background()
+	s := &MCPServer{
+		cfg:   &config.Config{},
+		tools: make(map[string]*Tool),
+		ctx:   ctx,
+	}
+
+	params := map[string]interface{}{
+		"protocolVersion": "invalid-version",
+	}
+	paramsJSON, _ := json.Marshal(params)
+
+	msg := &transport.Message{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage(`1`),
+		Method:  "initialize",
+		Params:  paramsJSON,
+	}
+
+	resp, err := s.validateAndProcessInitialize(msg)
+	if err != nil {
+		t.Fatalf("validateAndProcessInitialize returned Go error: %v", err)
+	}
+
+	if resp == nil {
+		t.Fatal("expected response, got nil")
+	}
+
+	if resp.Error == nil {
+		t.Fatal("expected error response")
+	}
+
+	// Verify error format per JSON-RPC 2.0 spec
+	if resp.Error.Code != transport.ErrCodeInvalidRequest {
+		t.Errorf("error code = %d, want %d (-32600)", resp.Error.Code, transport.ErrCodeInvalidRequest)
+	}
+	if !strings.Contains(resp.Error.Message, "unsupported protocol version") {
+		t.Errorf("error message = %q, want to contain 'unsupported protocol version'", resp.Error.Message)
+	}
+	if !strings.Contains(resp.Error.Message, "2024-11-05") || !strings.Contains(resp.Error.Message, "2025-11-25") {
+		t.Errorf("error message should list supported versions, got: %q", resp.Error.Message)
+	}
+}
+
+// TestHandleHTTPMessage_Initialize_Integration tests that handleHTTPMessage correctly calls
+// validateAndProcessInitialize for initialize requests.
+func TestHandleHTTPMessage_Initialize_Integration(t *testing.T) {
+	ctx := context.Background()
+	s := &MCPServer{
+		cfg:   &config.Config{},
+		tools: make(map[string]*Tool),
+		ctx:   ctx,
+	}
+
+	// Test with valid params
+	params := map[string]interface{}{
+		"protocolVersion": "2025-11-25",
+		"clientInfo": map[string]interface{}{
+			"name":    "test-client",
+			"version": "1.0.0",
+		},
+	}
+	paramsJSON, _ := json.Marshal(params)
+
+	msg := &transport.Message{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage(`1`),
+		Method:  "initialize",
+		Params:  paramsJSON,
+	}
+
+	resp, err := s.handleHTTPMessage(msg)
+	if err != nil {
+		t.Fatalf("handleHTTPMessage returned error: %v", err)
+	}
+
+	if resp == nil {
+		t.Fatal("expected response, got nil")
+	}
+
+	if resp.Error != nil {
+		t.Fatalf("unexpected error: %s", resp.Error.Message)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(resp.Result, &result); err != nil {
+		t.Fatalf("failed to unmarshal result: %v", err)
+	}
+
+	if result["protocolVersion"] != "2025-11-25" {
+		t.Errorf("protocolVersion = %q, want %q", result["protocolVersion"], "2025-11-25")
+	}
+}
+
+// ============================================================================
 // T086: File Dialog Tools Unit Tests
 // ============================================================================
 

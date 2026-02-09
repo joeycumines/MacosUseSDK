@@ -101,6 +101,28 @@ type Content struct {
 	MimeType string `json:"mimeType,omitempty"`
 }
 
+// MCPInitializeParams represents the params of an MCP initialize request.
+// Per MCP spec, clients send protocolVersion, clientInfo, and capabilities.
+type MCPInitializeParams struct {
+	Capabilities    interface{}   `json:"capabilities"`
+	ClientInfo      MCPClientInfo `json:"clientInfo"`
+	ProtocolVersion string        `json:"protocolVersion"`
+}
+
+// MCPClientInfo represents client information in an initialize request.
+type MCPClientInfo struct {
+	Name    string `json:"name"`
+	Version string `json:"version"`
+}
+
+// Supported MCP protocol versions.
+const (
+	// mcpProtocolVersionCurrent is the current MCP specification version.
+	mcpProtocolVersionCurrent = "2025-11-25"
+	// mcpProtocolVersionPrevious is the previous MCP specification version (deprecated).
+	mcpProtocolVersionPrevious = "2024-11-05"
+)
+
 // NewMCPServer creates a new MCP server with the given configuration.
 // It initializes the gRPC connection, audit logger, and registers all tools.
 // Returns an error if gRPC connection or audit logger initialization fails.
@@ -1848,16 +1870,67 @@ func (s *MCPServer) ServeHTTP(tr *transport.HTTPTransport) error {
 	return tr.Serve(s.handleHTTPMessage)
 }
 
+// validateAndProcessInitialize validates initialize params and returns the response or an error.
+// This is shared between HTTP and stdio transports for consistency.
+func (s *MCPServer) validateAndProcessInitialize(msg *transport.Message) (*transport.Message, error) {
+	// Parse the initialize params
+	var params MCPInitializeParams
+	if len(msg.Params) > 0 {
+		if err := json.Unmarshal(msg.Params, &params); err != nil {
+			// Malformed params - treat as empty and use defaults
+			log.Printf("WARN: MCP initialize params parse error (using defaults): %v", err)
+		}
+	}
+
+	// Validate and normalize protocol version
+	protocolVersion := params.ProtocolVersion
+	switch protocolVersion {
+	case mcpProtocolVersionCurrent:
+		// Current version - all good
+	case mcpProtocolVersionPrevious:
+		log.Printf("WARN: MCP client using old protocol version %s, consider upgrading to %s", protocolVersion, mcpProtocolVersionCurrent)
+	case "":
+		log.Printf("WARN: MCP client did not specify protocolVersion, defaulting to %s", mcpProtocolVersionCurrent)
+		protocolVersion = mcpProtocolVersionCurrent
+	default:
+		// Unsupported version - return error
+		return &transport.Message{
+			JSONRPC: "2.0",
+			ID:      msg.ID,
+			Error: &transport.ErrorObj{
+				Code:    transport.ErrCodeInvalidRequest,
+				Message: fmt.Sprintf("unsupported protocol version: %s; supported versions are %s, %s", protocolVersion, mcpProtocolVersionPrevious, mcpProtocolVersionCurrent),
+			},
+		}, nil
+	}
+
+	// Log client info
+	clientName := params.ClientInfo.Name
+	clientVersion := params.ClientInfo.Version
+	if clientName == "" {
+		clientName = "unknown"
+	}
+	if clientVersion == "" {
+		clientVersion = "unknown"
+	}
+	log.Printf("INFO: MCP client connected: %s v%s (protocol: %s)", clientName, clientVersion, protocolVersion)
+
+	// Get display information for grounding
+	displayInfo := s.getDisplayGroundingInfo()
+
+	// Build and return the response
+	return &transport.Message{
+		JSONRPC: "2.0",
+		ID:      msg.ID,
+		Result:  []byte(fmt.Sprintf(`{"protocolVersion":"%s","capabilities":{"tools":{},"resources":{"subscribe":false,"listChanged":false},"prompts":{}},"serverInfo":{"name":"macos-use-sdk","version":"0.1.0"},"displayInfo":%s}`, mcpProtocolVersionCurrent, displayInfo)),
+	}, nil
+}
+
 // handleHTTPMessage handles a single MCP message from HTTP transport
 func (s *MCPServer) handleHTTPMessage(msg *transport.Message) (*transport.Message, error) {
 	// Handle initialize request
 	if msg.Method == "initialize" {
-		displayInfo := s.getDisplayGroundingInfo()
-		return &transport.Message{
-			JSONRPC: "2.0",
-			ID:      msg.ID,
-			Result:  []byte(fmt.Sprintf(`{"protocolVersion":"2025-11-25","capabilities":{"tools":{},"resources":{"subscribe":false,"listChanged":false},"prompts":{}},"serverInfo":{"name":"macos-use-sdk","version":"0.1.0"},"displayInfo":%s}`, displayInfo)),
-		}, nil
+		return s.validateAndProcessInitialize(msg)
 	}
 
 	// Handle notifications/initialized - client acknowledgment of successful initialization
@@ -2147,16 +2220,15 @@ func (s *MCPServer) handleHTTPMessage(msg *transport.Message) (*transport.Messag
 func (s *MCPServer) handleMessage(tr *transport.StdioTransport, msg *transport.Message) {
 	// Handle initialize request
 	if msg.Method == "initialize" {
-		// Get display information for grounding
-		displayInfo := s.getDisplayGroundingInfo()
-
-		response := &transport.Message{
-			JSONRPC: "2.0",
-			ID:      msg.ID,
-			Result:  []byte(fmt.Sprintf(`{"protocolVersion":"2025-11-25","capabilities":{"tools":{},"resources":{"subscribe":false,"listChanged":false},"prompts":{}},"serverInfo":{"name":"macos-use-sdk","version":"0.1.0"},"displayInfo":%s}`, displayInfo)),
+		response, err := s.validateAndProcessInitialize(msg)
+		if err != nil {
+			log.Printf("Error processing initialize: %v", err)
+			return
 		}
-		if err := tr.WriteMessage(response); err != nil {
-			log.Printf("Error writing response: %v", err)
+		if response != nil {
+			if err := tr.WriteMessage(response); err != nil {
+				log.Printf("Error writing response: %v", err)
+			}
 		}
 		return
 	}
@@ -2509,6 +2581,11 @@ func (s *MCPServer) handleMessage(tr *transport.StdioTransport, msg *transport.M
 // getDisplayGroundingInfo returns JSON string with display information for grounding
 // Format follows MCP computer tool specification with screens array
 func (s *MCPServer) getDisplayGroundingInfo() string {
+	// Handle missing client (e.g., in tests)
+	if s.client == nil {
+		return `{"screens":[]}`
+	}
+
 	ctx, cancel := context.WithTimeout(s.ctx, displayInfoTimeout)
 	defer cancel()
 
