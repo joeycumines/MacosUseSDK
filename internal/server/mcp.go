@@ -2142,6 +2142,31 @@ func (s *MCPServer) handleHTTPMessage(msg *transport.Message) (*transport.Messag
 			}, nil
 		}
 
+		// Validate tool input against schema before calling handler
+		var args map[string]interface{}
+		if len(params.Arguments) > 0 {
+			if err := json.Unmarshal(params.Arguments, &args); err != nil {
+				return &transport.Message{
+					JSONRPC: "2.0",
+					ID:      msg.ID,
+					Error: &transport.ErrorObj{
+						Code:    transport.ErrCodeInvalidParams,
+						Message: fmt.Sprintf("Invalid arguments JSON: %v", err),
+					},
+				}, nil
+			}
+		} else {
+			args = make(map[string]interface{})
+		}
+
+		s.mu.RLock()
+		validationErr := validateToolInput(params.Name, args, s.tools)
+		s.mu.RUnlock()
+		if validationErr != nil {
+			validationErr.ID = msg.ID
+			return validationErr, nil
+		}
+
 		call := &ToolCall{
 			Name:      params.Name,
 			Arguments: params.Arguments,
@@ -2484,6 +2509,38 @@ func (s *MCPServer) handleMessage(tr *transport.StdioTransport, msg *transport.M
 				},
 			}
 			if err := tr.WriteMessage(response); err != nil {
+				log.Printf("Error writing response: %v", err)
+			}
+			return
+		}
+
+		// Validate tool input against schema before calling handler
+		var args map[string]interface{}
+		if len(params.Arguments) > 0 {
+			if err := json.Unmarshal(params.Arguments, &args); err != nil {
+				response := &transport.Message{
+					JSONRPC: "2.0",
+					ID:      msg.ID,
+					Error: &transport.ErrorObj{
+						Code:    transport.ErrCodeInvalidParams,
+						Message: fmt.Sprintf("Invalid arguments JSON: %v", err),
+					},
+				}
+				if err := tr.WriteMessage(response); err != nil {
+					log.Printf("Error writing response: %v", err)
+				}
+				return
+			}
+		} else {
+			args = make(map[string]interface{})
+		}
+
+		s.mu.RLock()
+		validationErr := validateToolInput(params.Name, args, s.tools)
+		s.mu.RUnlock()
+		if validationErr != nil {
+			validationErr.ID = msg.ID
+			if err := tr.WriteMessage(validationErr); err != nil {
 				log.Printf("Error writing response: %v", err)
 			}
 			return
