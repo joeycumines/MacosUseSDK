@@ -2,6 +2,7 @@ import AppKit
 import Darwin
 import Foundation
 import GRPCCore
+import GRPCHealthService
 import GRPCNIOTransportHTTP2
 import GRPCReflectionService
 import MacosUseProto
@@ -216,6 +217,13 @@ func main() async throws {
     logger.info("Operation store initialized")
 
     // ═══════════════════════════════════════════════════════════════════════════
+    // STEP 4.5: HealthService
+    // gRPC health check service for load balancer integration
+    // ═══════════════════════════════════════════════════════════════════════════
+    let healthService = HealthService()
+    logger.info("Health service initialized")
+
+    // ═══════════════════════════════════════════════════════════════════════════
     // STEP 5-6: ProductionSystemOperations + WindowRegistry
     // System adapter for AX/CG APIs, and window state tracking
     // WindowRegistry depends on SystemOperations for AX queries
@@ -260,7 +268,7 @@ func main() async throws {
     logger.info("Operations provider created")
 
     // Build services array - all services must conform to GRPCCore.RegistrableRPCService
-    var services: [any GRPCCore.RegistrableRPCService] = [macosUseService, operationsProvider]
+    var services: [any GRPCCore.RegistrableRPCService] = [macosUseService, operationsProvider, healthService]
 
     if !descriptorSetPaths.isEmpty {
         do {
@@ -319,6 +327,11 @@ func main() async throws {
         }
     }
 
+    // Set health status to SERVING for the main service and overall server health
+    healthService.provider.updateStatus(.serving, forService: "macosusesdk.v1.MacosUse")
+    healthService.provider.updateStatus(.serving, forService: "") // Empty string = overall server health
+    logger.info("Health service status set to SERVING")
+
     // Wait for server completion (SIGINT/SIGTERM triggers task cancellation)
     do {
         try await serverTask
@@ -328,6 +341,11 @@ func main() async throws {
     } catch {
         logger.error("gRPC server error: \(error.localizedDescription, privacy: .public)")
     }
+
+    // Set health status to NOT_SERVING during shutdown
+    healthService.provider.updateStatus(.notServing, forService: "macosusesdk.v1.MacosUse")
+    healthService.provider.updateStatus(.notServing, forService: "")
+    logger.info("Health service status set to NOT_SERVING")
 
     // Perform graceful shutdown - cleanup resources in correct order
     await performGracefulShutdown(socketPath: config.unixSocketPath, operationStore: operationStore)

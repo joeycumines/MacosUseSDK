@@ -52,6 +52,7 @@ let package = Package(
                 .product(name: "GRPCCore", package: "grpc-swift-2"),
                 .product(name: "GRPCNIOTransportHTTP2", package: "grpc-swift-nio-transport"),
                 .product(name: "GRPCReflectionService", package: "grpc-swift-extras"),
+                .product(name: "GRPCHealthService", package: "grpc-swift-extras"),
                 "MacosUseSDK",
                 "MacosUseProto", // Add dependency on the generated protos
             ],
