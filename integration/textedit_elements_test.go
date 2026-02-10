@@ -2,7 +2,9 @@ package integration
 
 import (
 	"context"
+	"fmt"
 	"os/exec"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -11,6 +13,185 @@ import (
 	typepb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
 )
+
+// isTextEditTextArea checks if an element role corresponds to TextEdit's main text editing area.
+// TextEdit on different macOS versions uses different accessibility roles:
+// - AXTextArea (plain text editor, older macOS or RTF mode)
+// - AXWebArea (WebKit-based rich text editor, macOS 14+)
+// - AXTextView (legacy compatibility)
+// The role may include a description suffix like "(text entry area)" or "(HTML content)".
+func isTextEditTextArea(role string) bool {
+	roleLower := strings.ToLower(role)
+	// Check for various text editing area indicators
+	return strings.Contains(roleLower, "textarea") ||
+		strings.Contains(roleLower, "textview") ||
+		strings.Contains(roleLower, "webarea") ||
+		strings.Contains(roleLower, "text area") ||
+		strings.Contains(roleLower, "web area") ||
+		strings.Contains(roleLower, "html content") ||
+		// Exact matches for base roles (lowercased)
+		roleLower == "axtextarea" ||
+		roleLower == "axtextview" ||
+		roleLower == "axwebarea"
+}
+
+// logTraversalDiagnostics logs diagnostic information about the accessibility tree traversal.
+// This helps debug issues where expected elements aren't found.
+func logTraversalDiagnostics(t *testing.T, resp *pb.TraverseAccessibilityResponse) {
+	t.Helper()
+
+	t.Logf("Traversal stats: count=%d, visible=%d, excluded=%d (non_interactable=%d, no_text=%d)",
+		resp.Stats.Count,
+		resp.Stats.VisibleElementsCount,
+		resp.Stats.ExcludedCount,
+		resp.Stats.ExcludedNonInteractable,
+		resp.Stats.ExcludedNoText)
+
+	// Log role counts from stats (includes all traversed elements, even filtered ones)
+	if len(resp.Stats.RoleCounts) > 0 {
+		roles := make([]string, 0, len(resp.Stats.RoleCounts))
+		for r := range resp.Stats.RoleCounts {
+			roles = append(roles, r)
+		}
+		sort.Strings(roles)
+		t.Logf("Role counts from stats (%d unique roles):", len(roles))
+		for _, r := range roles {
+			t.Logf("  %s: %d", r, resp.Stats.RoleCounts[r])
+		}
+	}
+
+	// Log unique roles from returned elements
+	elementRoles := make(map[string]int)
+	for _, elem := range resp.Elements {
+		if elem != nil {
+			elementRoles[elem.Role]++
+		}
+	}
+	if len(elementRoles) > 0 {
+		roles := make([]string, 0, len(elementRoles))
+		for r := range elementRoles {
+			roles = append(roles, r)
+		}
+		sort.Strings(roles)
+		t.Logf("Roles in returned elements (%d unique):", len(roles))
+		for _, r := range roles {
+			t.Logf("  %s: %d", r, elementRoles[r])
+		}
+	}
+}
+
+// createTextEditDocument creates a new TextEdit document and ensures the Open Recent
+// dialog is bypassed. On macOS 14+, TextEdit shows an "Open Recent" dialog at startup
+// which must be dismissed before we can work with actual document content.
+func createTextEditDocument(t *testing.T, ctx context.Context, client pb.MacosUseClient, app *pb.Application) error {
+	t.Helper()
+
+	var appleScriptErr, cmdNErr error
+
+	// First, try AppleScript to create a new document
+	_, appleScriptErr = client.ExecuteAppleScript(ctx, &pb.ExecuteAppleScriptRequest{
+		Script: `
+			tell application "TextEdit"
+				activate
+				-- Create new document
+				make new document
+				-- Explicitly set focus to avoid dialog issues
+				set frontmost to true
+			end tell
+		`,
+	})
+	if appleScriptErr != nil {
+		t.Logf("Warning: AppleScript new document failed: %v", appleScriptErr)
+	}
+
+	// Also send Cmd+N to ensure new document is created (bypasses dialog)
+	cmdNInput, err := client.CreateInput(ctx, &pb.CreateInputRequest{
+		Parent: app.Name,
+		Input: &pb.Input{
+			Action: &pb.InputAction{
+				InputType: &pb.InputAction_PressKey{
+					PressKey: &pb.KeyPress{
+						Key:       "n",
+						Modifiers: []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_COMMAND},
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		cmdNErr = err
+		t.Logf("Warning: Failed to send Cmd+N: %v", err)
+	} else {
+		// Wait for Cmd+N to complete
+		_ = PollUntilContext(ctx, 50*time.Millisecond, func() (bool, error) {
+			st, err := client.GetInput(ctx, &pb.GetInputRequest{Name: cmdNInput.Name})
+			if err != nil {
+				return false, nil
+			}
+			return st.State == pb.Input_STATE_COMPLETED || st.State == pb.Input_STATE_FAILED, nil
+		})
+	}
+
+	// If both methods failed, return an error
+	if appleScriptErr != nil && cmdNErr != nil {
+		return fmt.Errorf("failed to create TextEdit document: AppleScript error: %v; Cmd+N error: %v", appleScriptErr, cmdNErr)
+	}
+
+	return nil
+}
+
+// waitForTextEditDocumentWindow waits for a TextEdit document window (not the Open Recent dialog).
+// Document windows have titles like "Untitled" or contain a filename.
+// The Open Recent dialog typically has a "browser" or "outline" element structure.
+func waitForTextEditDocumentWindow(t *testing.T, ctx context.Context, client pb.MacosUseClient, app *pb.Application) error {
+	t.Helper()
+
+	var lastLoggedTitle string
+	attemptCount := 0
+
+	return PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
+		resp, err := client.ListWindows(ctx, &pb.ListWindowsRequest{
+			Parent: app.Name,
+		})
+		if err != nil {
+			return false, err
+		}
+
+		attemptCount++
+
+		// Look for a document window (not the Open Recent dialog)
+		for _, w := range resp.Windows {
+			if w.Bounds == nil || w.Bounds.Width <= 200 || w.Bounds.Height <= 200 {
+				continue
+			}
+
+			title := w.Title
+
+			// Log every 10 attempts for diagnostic
+			if attemptCount%10 == 1 && title != lastLoggedTitle {
+				t.Logf("Checking window: %q (%.0fx%.0f)", title, w.Bounds.Width, w.Bounds.Height)
+				lastLoggedTitle = title
+			}
+
+			// Accept windows with known document patterns
+			if strings.Contains(title, "Untitled") ||
+				strings.Contains(title, ".txt") ||
+				strings.Contains(title, ".rtf") ||
+				strings.Contains(title, "Document") {
+				t.Logf("Found document window (matched pattern): %s (%.0fx%.0f)", title, w.Bounds.Width, w.Bounds.Height)
+				return true, nil
+			}
+
+			// Also accept empty title or title without "Open" - this handles localization and edge cases
+			// The Open Recent dialog typically has "Open" in the title
+			if title == "" || (!strings.Contains(strings.ToLower(title), "open") && !strings.Contains(strings.ToLower(title), "recent")) {
+				t.Logf("Found document window (non-dialog): %q (%.0fx%.0f)", title, w.Bounds.Width, w.Bounds.Height)
+				return true, nil
+			}
+		}
+		return false, nil
+	})
+}
 
 // TestTextEditElements_TraverseAndFindTextArea verifies accessibility tree traversal
 // and finding the text area element in TextEdit.
@@ -40,41 +221,22 @@ func TestTextEditElements_TraverseAndFindTextArea(t *testing.T) {
 	app := OpenApplicationAndWait(t, ctx, client, opsClient, "com.apple.TextEdit")
 	defer cleanupApplication(t, ctx, client, app)
 
-	// Create new document to bypass file picker
+	// Create new document and dismiss any dialogs
 	t.Log("Creating new document...")
-	_, err := client.ExecuteAppleScript(ctx, &pb.ExecuteAppleScriptRequest{
-		Script: `tell application "TextEdit" to make new document`,
-	})
-	if err != nil {
-		t.Logf("Warning: Failed to create new document: %v", err)
-	}
+	_ = createTextEditDocument(t, ctx, client, app) // Errors are logged inside
 
-	// Wait for TextEdit window to appear
-	t.Log("Waiting for TextEdit window...")
-	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
-		resp, err := client.ListWindows(ctx, &pb.ListWindowsRequest{
-			Parent: app.Name,
-		})
-		if err != nil {
-			return false, err
-		}
-
-		// Look for a document window (not too small)
-		for _, w := range resp.Windows {
-			if w.Bounds != nil && w.Bounds.Width > 200 && w.Bounds.Height > 200 {
-				return true, nil
-			}
-		}
-		return false, nil
-	})
+	// Wait for document window
+	t.Log("Waiting for TextEdit document window...")
+	err := waitForTextEditDocumentWindow(t, ctx, client, app)
 	if err != nil {
-		t.Fatalf("TextEdit window never appeared: %v", err)
+		t.Fatalf("TextEdit document window never appeared: %v", err)
 	}
 	t.Log("TextEdit window is ready")
 
 	// Traverse accessibility tree
 	t.Log("Traversing accessibility tree...")
 	var textAreaElement *typepb.Element
+	var lastResp *pb.TraverseAccessibilityResponse
 	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
 		resp, err := client.TraverseAccessibility(ctx, &pb.TraverseAccessibilityRequest{
 			Name: app.Name,
@@ -82,18 +244,16 @@ func TestTextEditElements_TraverseAndFindTextArea(t *testing.T) {
 		if err != nil {
 			return false, err
 		}
+		lastResp = resp
 
 		t.Logf("Found %d elements in accessibility tree", len(resp.Elements))
 
-		// Find text area element (AXTextArea or similar)
+		// Find text area element (AXTextArea, AXWebArea, or similar)
 		for _, elem := range resp.Elements {
 			if elem == nil {
 				continue
 			}
-			role := strings.ToLower(elem.Role)
-			// TextEdit has AXTextArea or AXTextArea role for the main editing area
-			if strings.Contains(role, "textarea") || strings.Contains(role, "text area") ||
-				role == "axtextarea" || role == "axtextview" {
+			if isTextEditTextArea(elem.Role) {
 				textAreaElement = elem
 				return true, nil
 			}
@@ -101,6 +261,10 @@ func TestTextEditElements_TraverseAndFindTextArea(t *testing.T) {
 		return false, nil
 	})
 	if err != nil {
+		if lastResp != nil {
+			t.Log("DIAGNOSTIC: Text area not found. Logging all roles discovered:")
+			logTraversalDiagnostics(t, lastResp)
+		}
 		t.Fatalf("Could not find text area element: %v", err)
 	}
 
@@ -145,38 +309,21 @@ func TestTextEditElements_WriteAndReadValue(t *testing.T) {
 	app := OpenApplicationAndWait(t, ctx, client, opsClient, "com.apple.TextEdit")
 	defer cleanupApplication(t, ctx, client, app)
 
-	// Create new document
+	// Create new document and dismiss any dialogs
 	t.Log("Creating new document...")
-	_, err := client.ExecuteAppleScript(ctx, &pb.ExecuteAppleScriptRequest{
-		Script: `tell application "TextEdit" to make new document`,
-	})
-	if err != nil {
-		t.Logf("Warning: Failed to create new document: %v", err)
-	}
+	_ = createTextEditDocument(t, ctx, client, app) // Errors are logged inside
 
-	// Wait for window
-	t.Log("Waiting for TextEdit window...")
-	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
-		resp, err := client.ListWindows(ctx, &pb.ListWindowsRequest{
-			Parent: app.Name,
-		})
-		if err != nil {
-			return false, err
-		}
-		for _, w := range resp.Windows {
-			if w.Bounds != nil && w.Bounds.Width > 200 && w.Bounds.Height > 200 {
-				return true, nil
-			}
-		}
-		return false, nil
-	})
+	// Wait for document window
+	t.Log("Waiting for TextEdit document window...")
+	err := waitForTextEditDocumentWindow(t, ctx, client, app)
 	if err != nil {
-		t.Fatalf("TextEdit window never appeared: %v", err)
+		t.Fatalf("TextEdit document window never appeared: %v", err)
 	}
 
 	// Find text area element
 	t.Log("Finding text area element...")
 	var textAreaElement *typepb.Element
+	var lastResp *pb.TraverseAccessibilityResponse
 	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
 		resp, err := client.TraverseAccessibility(ctx, &pb.TraverseAccessibilityRequest{
 			Name: app.Name,
@@ -184,14 +331,13 @@ func TestTextEditElements_WriteAndReadValue(t *testing.T) {
 		if err != nil {
 			return false, err
 		}
+		lastResp = resp
 
 		for _, elem := range resp.Elements {
 			if elem == nil {
 				continue
 			}
-			role := strings.ToLower(elem.Role)
-			if strings.Contains(role, "textarea") || strings.Contains(role, "text area") ||
-				role == "axtextarea" || role == "axtextview" {
+			if isTextEditTextArea(elem.Role) {
 				textAreaElement = elem
 				return true, nil
 			}
@@ -199,6 +345,10 @@ func TestTextEditElements_WriteAndReadValue(t *testing.T) {
 		return false, nil
 	})
 	if err != nil {
+		if lastResp != nil {
+			t.Log("DIAGNOSTIC: Text area not found. Logging all roles discovered:")
+			logTraversalDiagnostics(t, lastResp)
+		}
 		t.Fatalf("Could not find text area: %v", err)
 	}
 	t.Logf("Found text area: role=%s", textAreaElement.Role)
@@ -238,9 +388,7 @@ func TestTextEditElements_WriteAndReadValue(t *testing.T) {
 			if elem == nil {
 				continue
 			}
-			role := strings.ToLower(elem.Role)
-			if strings.Contains(role, "textarea") || strings.Contains(role, "text area") ||
-				role == "axtextarea" || role == "axtextview" {
+			if isTextEditTextArea(elem.Role) {
 				readValue = elem.GetText()
 				// Check if text contains our value
 				if strings.Contains(readValue, testValue) {
@@ -286,38 +434,21 @@ func TestTextEditElements_FindElementsBySelector(t *testing.T) {
 	app := OpenApplicationAndWait(t, ctx, client, opsClient, "com.apple.TextEdit")
 	defer cleanupApplication(t, ctx, client, app)
 
-	// Create new document
+	// Create new document and dismiss any dialogs
 	t.Log("Creating new document...")
-	_, err := client.ExecuteAppleScript(ctx, &pb.ExecuteAppleScriptRequest{
-		Script: `tell application "TextEdit" to make new document`,
-	})
-	if err != nil {
-		t.Logf("Warning: Failed to create new document: %v", err)
-	}
+	_ = createTextEditDocument(t, ctx, client, app) // Errors are logged inside
 
-	// Wait for window
-	t.Log("Waiting for TextEdit window...")
-	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
-		resp, err := client.ListWindows(ctx, &pb.ListWindowsRequest{
-			Parent: app.Name,
-		})
-		if err != nil {
-			return false, err
-		}
-		for _, w := range resp.Windows {
-			if w.Bounds != nil && w.Bounds.Width > 200 && w.Bounds.Height > 200 {
-				return true, nil
-			}
-		}
-		return false, nil
-	})
+	// Wait for document window
+	t.Log("Waiting for TextEdit document window...")
+	err := waitForTextEditDocumentWindow(t, ctx, client, app)
 	if err != nil {
-		t.Fatalf("TextEdit window never appeared: %v", err)
+		t.Fatalf("TextEdit document window never appeared: %v", err)
 	}
 
 	// First, traverse to get the actual text area role
 	t.Log("Finding text area role from traversal...")
 	var textAreaRole string
+	var lastResp *pb.TraverseAccessibilityResponse
 	err = PollUntilContext(ctx, 200*time.Millisecond, func() (bool, error) {
 		resp, err := client.TraverseAccessibility(ctx, &pb.TraverseAccessibilityRequest{
 			Name: app.Name,
@@ -325,14 +456,14 @@ func TestTextEditElements_FindElementsBySelector(t *testing.T) {
 		if err != nil {
 			return false, nil
 		}
+		lastResp = resp
 
 		// Find text area element
 		for _, elem := range resp.Elements {
 			if elem == nil {
 				continue
 			}
-			role := strings.ToLower(elem.Role)
-			if strings.Contains(role, "textarea") || strings.Contains(role, "text area") {
+			if isTextEditTextArea(elem.Role) {
 				textAreaRole = elem.Role
 				return true, nil
 			}
@@ -341,6 +472,10 @@ func TestTextEditElements_FindElementsBySelector(t *testing.T) {
 	})
 	if err != nil || textAreaRole == "" {
 		t.Logf("Warning: Could not find text area role: %v", err)
+		if lastResp != nil {
+			t.Log("DIAGNOSTIC: Logging all roles discovered:")
+			logTraversalDiagnostics(t, lastResp)
+		}
 		textAreaRole = "AXTextArea (text entry area)" // fallback
 	} else {
 		t.Logf("Found text area role: %s", textAreaRole)
@@ -408,33 +543,14 @@ func TestTextEditElements_WriteValueBySelector(t *testing.T) {
 	app := OpenApplicationAndWait(t, ctx, client, opsClient, "com.apple.TextEdit")
 	defer cleanupApplication(t, ctx, client, app)
 
-	// Create new document
+	// Create new document and dismiss any dialogs
 	t.Log("Creating new document...")
-	_, err := client.ExecuteAppleScript(ctx, &pb.ExecuteAppleScriptRequest{
-		Script: `tell application "TextEdit" to make new document`,
-	})
-	if err != nil {
-		t.Logf("Warning: Failed to create new document: %v", err)
-	}
+	_ = createTextEditDocument(t, ctx, client, app) // Errors are logged inside
 
-	// Wait for window
-	t.Log("Waiting for TextEdit window...")
-	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
-		resp, err := client.ListWindows(ctx, &pb.ListWindowsRequest{
-			Parent: app.Name,
-		})
-		if err != nil {
-			return false, err
-		}
-		for _, w := range resp.Windows {
-			if w.Bounds != nil && w.Bounds.Width > 200 && w.Bounds.Height > 200 {
-				return true, nil
-			}
-		}
-		return false, nil
-	})
-	if err != nil {
-		t.Fatalf("TextEdit window never appeared: %v", err)
+	// Wait for document window
+	t.Log("Waiting for TextEdit document window...")
+	if err := waitForTextEditDocumentWindow(t, ctx, client, app); err != nil {
+		t.Fatalf("TextEdit document window never appeared: %v", err)
 	}
 
 	// Write value using role selector

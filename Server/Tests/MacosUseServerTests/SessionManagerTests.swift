@@ -147,9 +147,6 @@ final class SessionManagerTests: XCTestCase {
         )
         let initialAccessTime = created.lastAccessTime.date
 
-        // Small delay to ensure time difference
-        try? await Task.sleep(nanoseconds: 10_000_000) // 10ms
-
         let retrievedOptional = await manager.getSession(name: created.name)
         let retrieved = try XCTUnwrap(retrievedOptional)
         XCTAssertGreaterThanOrEqual(retrieved.lastAccessTime.date, initialAccessTime)
@@ -561,5 +558,465 @@ final class SessionManagerTests: XCTestCase {
 
         // Cleanup
         _ = await manager.deleteSession(name: session.name)
+    }
+
+    // MARK: - Task 45: Session Expiration Tests
+
+    func testSessionHasExpireTime() async {
+        let manager = SessionManager.shared
+
+        let session = await manager.createSession(
+            sessionId: "test-expire-time",
+            displayName: "Expire Time Test",
+            metadata: [:],
+        )
+
+        // Verify expire time is set
+        XCTAssertTrue(session.hasExpireTime, "Session should have expire time")
+        XCTAssertGreaterThan(session.expireTime.seconds, session.createTime.seconds, "Expire time should be after create time")
+
+        // Cleanup
+        _ = await manager.deleteSession(name: session.name)
+    }
+
+    func testSessionExpireTimeIs1HourFromCreate() async {
+        let manager = SessionManager.shared
+
+        let beforeCreate = Date()
+        let session = await manager.createSession(
+            sessionId: "test-expire-1h",
+            displayName: "1 Hour Expire Test",
+            metadata: [:],
+        )
+        let afterCreate = Date()
+
+        let createTime = session.createTime.date
+        let expireTime = session.expireTime.date
+        let expectedDuration: TimeInterval = 3600 // 1 hour
+
+        // Verify expire time is approximately 1 hour from create
+        let actualDuration = expireTime.timeIntervalSince(createTime)
+        XCTAssertEqual(actualDuration, expectedDuration, accuracy: 5.0, "Expire time should be ~1 hour from create")
+
+        // Also verify create time is within bounds
+        XCTAssertGreaterThanOrEqual(createTime, beforeCreate)
+        XCTAssertLessThanOrEqual(createTime, afterCreate)
+
+        // Cleanup
+        _ = await manager.deleteSession(name: session.name)
+    }
+
+    // MARK: - Task 45: Concurrent Session Operations Tests
+
+    func testConcurrentSessionCreation() async {
+        let manager = SessionManager.shared
+        var createdNames: [String] = []
+        let count = 20
+
+        // Create sessions concurrently
+        await withTaskGroup(of: Macosusesdk_V1_Session.self) { group in
+            for i in 0 ..< count {
+                group.addTask {
+                    await manager.createSession(
+                        sessionId: "concurrent-create-\(i)",
+                        displayName: "Concurrent \(i)",
+                        metadata: [:],
+                    )
+                }
+            }
+
+            for await session in group {
+                createdNames.append(session.name)
+            }
+        }
+
+        // Verify all sessions were created with unique names
+        XCTAssertEqual(createdNames.count, count, "Should create all sessions")
+        XCTAssertEqual(Set(createdNames).count, count, "All session names should be unique")
+
+        // Cleanup
+        for name in createdNames {
+            _ = await manager.deleteSession(name: name)
+        }
+    }
+
+    func testConcurrentSessionDeletion() async {
+        let manager = SessionManager.shared
+        var createdNames: [String] = []
+
+        // Create sessions first
+        for i in 0 ..< 10 {
+            let session = await manager.createSession(
+                sessionId: "concurrent-delete-\(i)",
+                displayName: "To Delete \(i)",
+                metadata: [:],
+            )
+            createdNames.append(session.name)
+        }
+
+        // Delete all concurrently
+        var deleteResults: [Bool] = []
+        await withTaskGroup(of: Bool.self) { group in
+            for name in createdNames {
+                group.addTask {
+                    await manager.deleteSession(name: name)
+                }
+            }
+
+            for await result in group {
+                deleteResults.append(result)
+            }
+        }
+
+        // All should report success
+        XCTAssertEqual(deleteResults.count(where: { $0 }), createdNames.count, "All deletes should succeed")
+
+        // Verify all are gone
+        for name in createdNames {
+            let session = await manager.getSession(name: name)
+            XCTAssertNil(session, "Session should be deleted")
+        }
+    }
+
+    func testConcurrentSessionAccess() async {
+        let manager = SessionManager.shared
+
+        let session = await manager.createSession(
+            sessionId: "concurrent-access",
+            displayName: "Concurrent Access Test",
+            metadata: [:],
+        )
+
+        // Concurrent reads and application adds
+        await withTaskGroup(of: Void.self) { group in
+            // Readers
+            for _ in 0 ..< 10 {
+                group.addTask {
+                    _ = await manager.getSession(name: session.name)
+                }
+            }
+
+            // Application adders
+            for i in 0 ..< 10 {
+                group.addTask {
+                    await manager.addApplication(sessionName: session.name, applicationName: "applications/app\(i)")
+                }
+            }
+
+            // Observation adders
+            for i in 0 ..< 10 {
+                group.addTask {
+                    await manager.addObservation(sessionName: session.name, observationName: "observations/obs\(i)")
+                }
+            }
+        }
+
+        // Verify session is still valid
+        let finalSession = await manager.getSession(name: session.name)
+        XCTAssertNotNil(finalSession, "Session should still exist")
+
+        // Verify snapshot has data
+        let snapshot = await manager.getSessionSnapshot(sessionName: session.name)
+        XCTAssertNotNil(snapshot, "Snapshot should exist")
+        XCTAssertEqual(snapshot?.applications.count, 10, "Should have 10 applications")
+        XCTAssertEqual(snapshot?.observations.count, 10, "Should have 10 observations")
+
+        // Cleanup
+        _ = await manager.deleteSession(name: session.name)
+    }
+
+    // MARK: - Task 45: Additional Application/Observation Tracking Tests
+
+    func testAddMultipleApplications() async throws {
+        let manager = SessionManager.shared
+
+        let session = await manager.createSession(
+            sessionId: "test-multi-apps",
+            displayName: "Multi Apps Test",
+            metadata: [:],
+        )
+
+        // Add multiple applications
+        for i in 0 ..< 5 {
+            await manager.addApplication(sessionName: session.name, applicationName: "applications/app-\(i)")
+        }
+
+        let snapshotOptional = await manager.getSessionSnapshot(sessionName: session.name)
+        let snapshot = try XCTUnwrap(snapshotOptional)
+        XCTAssertEqual(snapshot.applications.count, 5, "Should have 5 applications")
+
+        // Cleanup
+        _ = await manager.deleteSession(name: session.name)
+    }
+
+    func testRemoveNonExistentApplicationIsNoOp() async throws {
+        let manager = SessionManager.shared
+
+        let session = await manager.createSession(
+            sessionId: "test-remove-nonexist-app",
+            displayName: "Remove Nonexistent App",
+            metadata: [:],
+        )
+
+        await manager.addApplication(sessionName: session.name, applicationName: "applications/real-app")
+        await manager.removeApplication(sessionName: session.name, applicationName: "applications/fake-app")
+
+        let snapshotOptional = await manager.getSessionSnapshot(sessionName: session.name)
+        let snapshot = try XCTUnwrap(snapshotOptional)
+        XCTAssertEqual(snapshot.applications.count, 1, "Should still have the real app")
+        XCTAssertTrue(snapshot.applications.contains("applications/real-app"))
+
+        // Cleanup
+        _ = await manager.deleteSession(name: session.name)
+    }
+
+    func testAddObservationToNonexistentSessionIsNoOp() async {
+        let manager = SessionManager.shared
+
+        // Should not crash
+        await manager.addObservation(sessionName: "sessions/does-not-exist", observationName: "observations/test")
+
+        // Verify it didn't create a session
+        let session = await manager.getSession(name: "sessions/does-not-exist")
+        XCTAssertNil(session)
+    }
+
+    func testRemoveObservationFromNonexistentSessionIsNoOp() async {
+        let manager = SessionManager.shared
+
+        // Should not crash
+        await manager.removeObservation(sessionName: "sessions/does-not-exist", observationName: "observations/test")
+
+        // Verify nothing happened
+        let session = await manager.getSession(name: "sessions/does-not-exist")
+        XCTAssertNil(session)
+    }
+
+    func testAddDuplicateObservationIsIdempotent() async throws {
+        let manager = SessionManager.shared
+
+        let session = await manager.createSession(
+            sessionId: "test-dup-obs",
+            displayName: "Duplicate Observation Test",
+            metadata: [:],
+        )
+
+        await manager.addObservation(sessionName: session.name, observationName: "observations/dup")
+        await manager.addObservation(sessionName: session.name, observationName: "observations/dup")
+        await manager.addObservation(sessionName: session.name, observationName: "observations/dup")
+
+        let snapshotOptional = await manager.getSessionSnapshot(sessionName: session.name)
+        let snapshot = try XCTUnwrap(snapshotOptional)
+        let obsCount = snapshot.observations.count(where: { $0 == "observations/dup" })
+        XCTAssertEqual(obsCount, 1, "Should only have one instance")
+
+        // Cleanup
+        _ = await manager.deleteSession(name: session.name)
+    }
+
+    // MARK: - Task 45: Session Snapshot Comprehensive Tests
+
+    func testGetSessionSnapshotIncludesSessionObject() async throws {
+        let manager = SessionManager.shared
+
+        let session = await manager.createSession(
+            sessionId: "test-snapshot-session",
+            displayName: "Snapshot Session Test",
+            metadata: ["key": "value"],
+        )
+
+        let snapshotOptional = await manager.getSessionSnapshot(sessionName: session.name)
+        let snapshot = try XCTUnwrap(snapshotOptional)
+
+        // Verify session object is complete
+        XCTAssertEqual(snapshot.session.name, session.name)
+        XCTAssertEqual(snapshot.session.displayName, "Snapshot Session Test")
+        XCTAssertEqual(snapshot.session.metadata["key"], "value")
+        XCTAssertEqual(snapshot.session.state, .active)
+
+        // Cleanup
+        _ = await manager.deleteSession(name: session.name)
+    }
+
+    func testGetSessionSnapshotIncludesEmptyCollections() async throws {
+        let manager = SessionManager.shared
+
+        let session = await manager.createSession(
+            sessionId: "test-snapshot-empty",
+            displayName: "Empty Snapshot Test",
+            metadata: [:],
+        )
+
+        let snapshotOptional = await manager.getSessionSnapshot(sessionName: session.name)
+        let snapshot = try XCTUnwrap(snapshotOptional)
+
+        // Empty collections should be present but empty
+        XCTAssertTrue(snapshot.applications.isEmpty, "Applications should be empty")
+        XCTAssertTrue(snapshot.observations.isEmpty, "Observations should be empty")
+        XCTAssertTrue(snapshot.history.isEmpty, "History should be empty")
+
+        // Cleanup
+        _ = await manager.deleteSession(name: session.name)
+    }
+
+    func testGetSessionSnapshotIncludesOperationHistory() async throws {
+        let manager = SessionManager.shared
+
+        let session = await manager.createSession(
+            sessionId: "test-snapshot-history",
+            displayName: "History Snapshot Test",
+            metadata: [:],
+        )
+
+        // Add multiple operations
+        for i in 0 ..< 5 {
+            await manager.recordOperation(
+                sessionName: session.name,
+                operationType: "Operation\(i)",
+                resource: "resource/\(i)",
+                success: i % 2 == 0,
+                error: i % 2 == 0 ? nil : "Error \(i)",
+            )
+        }
+
+        let snapshotOptional = await manager.getSessionSnapshot(sessionName: session.name)
+        let snapshot = try XCTUnwrap(snapshotOptional)
+
+        XCTAssertEqual(snapshot.history.count, 5, "Should have 5 operations")
+
+        // Verify operations are in order (timestamp ordering)
+        for (idx, op) in snapshot.history.enumerated() {
+            XCTAssertEqual(op.operationType, "Operation\(idx)")
+            XCTAssertEqual(op.resource, "resource/\(idx)")
+        }
+
+        // Cleanup
+        _ = await manager.deleteSession(name: session.name)
+    }
+
+    // MARK: - Task 45: Transaction with Rollback Tests
+
+    func testRollbackTransactionWithSerializableIsolation() async throws {
+        let manager = SessionManager.shared
+
+        let session = await manager.createSession(
+            sessionId: "test-rollback-serializable",
+            displayName: "Rollback Test",
+            metadata: [:],
+        )
+
+        // Begin transaction with SERIALIZABLE isolation (creates snapshot)
+        let (txId, _) = try await manager.beginTransaction(
+            sessionName: session.name,
+            isolationLevel: .serializable,
+            timeout: 60,
+        )
+
+        // Record some operations
+        await manager.recordOperation(
+            sessionName: session.name,
+            operationType: "OpInTransaction",
+            resource: "resource/tx",
+            success: true,
+            error: nil,
+        )
+
+        // Rollback - need to find the revision ID
+        // For SERIALIZABLE, a snapshot is created with revisionId = "snapshot-{txId}"
+        let revisionId = "snapshot-\(txId)"
+
+        do {
+            let rolledBack = try await manager.rollbackTransaction(
+                sessionName: session.name,
+                transactionId: txId,
+                revisionId: revisionId,
+            )
+            XCTAssertEqual(rolledBack.state, .rolledBack)
+            XCTAssertEqual(rolledBack.updatedSession.state, .active)
+        } catch {
+            // Rollback failed - may not be a test failure, depends on implementation
+            XCTFail("Rollback should succeed: \(error)")
+        }
+
+        // Cleanup
+        _ = await manager.deleteSession(name: session.name)
+    }
+
+    func testRollbackWithInvalidRevisionThrows() async throws {
+        let manager = SessionManager.shared
+
+        let session = await manager.createSession(
+            sessionId: "test-rollback-invalid",
+            displayName: "Invalid Rollback Test",
+            metadata: [:],
+        )
+
+        let (txId, _) = try await manager.beginTransaction(
+            sessionName: session.name,
+            isolationLevel: .serializable,
+            timeout: 60,
+        )
+
+        do {
+            _ = try await manager.rollbackTransaction(
+                sessionName: session.name,
+                transactionId: txId,
+                revisionId: "invalid-revision-id",
+            )
+            XCTFail("Should throw for invalid revision ID")
+        } catch let error as SessionError {
+            XCTAssertEqual(error.description, SessionError.revisionNotFound.description)
+        }
+
+        // Cleanup - commit the transaction first
+        _ = try await manager.commitTransaction(sessionName: session.name, transactionId: txId)
+        _ = await manager.deleteSession(name: session.name)
+    }
+
+    // MARK: - Task 45: invalidateAllSessions Tests
+
+    func testInvalidateAllSessionsReturnsCount() async {
+        let manager = SessionManager.shared
+
+        // Create a few sessions
+        var createdNames: [String] = []
+        for i in 0 ..< 3 {
+            let s = await manager.createSession(
+                sessionId: "test-invalidate-all-\(i)",
+                displayName: "Invalidate \(i)",
+                metadata: [:],
+            )
+            createdNames.append(s.name)
+        }
+
+        // Invalidate all
+        let count = await manager.invalidateAllSessions()
+
+        // Should have invalidated at least the 3 we created (may be more from other tests)
+        XCTAssertGreaterThanOrEqual(count, 3, "Should invalidate at least our 3 sessions")
+
+        // Sessions should be gone
+        for name in createdNames {
+            let session = await manager.getSession(name: name)
+            XCTAssertNil(session, "Session should be invalidated and removed")
+        }
+    }
+
+    func testInvalidateAllSessionsIsIdempotent() async {
+        let manager = SessionManager.shared
+
+        // Create and invalidate
+        let s = await manager.createSession(sessionId: "test-idempotent-invalidate", displayName: "Test", metadata: [:])
+
+        let firstCount = await manager.invalidateAllSessions()
+        XCTAssertGreaterThanOrEqual(firstCount, 1)
+
+        // Second invalidate should return 0 (nothing left)
+        let secondCount = await manager.invalidateAllSessions()
+        XCTAssertEqual(secondCount, 0, "Second invalidate should find nothing to invalidate")
+
+        // Session should still be gone
+        let session = await manager.getSession(name: s.name)
+        XCTAssertNil(session)
     }
 }

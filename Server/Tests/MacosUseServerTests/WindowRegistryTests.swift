@@ -113,3 +113,312 @@ struct WindowRegistryTests {
         #expect(retrievedWindow?.bundleID == firstWindow.bundleID, "Bundle IDs should match")
     }
 }
+
+// MARK: - WindowRegistry Cache Invalidation Tests (Task 43)
+
+@Suite("WindowRegistry Cache Invalidation")
+struct WindowRegistryCacheInvalidationTests {
+    /// Create a mock that returns controlled window data.
+    func makeMockSystemOps(windows: [[String: Any]]) -> MockSystemOperations {
+        MockSystemOperations(cgWindowList: windows)
+    }
+
+    /// Helper to create a window list entry.
+    func makeWindowEntry(
+        id: CGWindowID,
+        pid: pid_t,
+        bounds: CGRect,
+        title: String = "Test Window",
+        layer: Int32 = 0,
+        isOnScreen: Bool = true,
+    ) -> [String: Any] {
+        [
+            kCGWindowNumber as String: id,
+            kCGWindowOwnerPID as String: pid,
+            kCGWindowBounds as String: [
+                "X": bounds.origin.x,
+                "Y": bounds.origin.y,
+                "Width": bounds.size.width,
+                "Height": bounds.size.height,
+            ],
+            kCGWindowName as String: title,
+            kCGWindowLayer as String: layer,
+            kCGWindowIsOnscreen as String: isOnScreen,
+        ]
+    }
+
+    // MARK: - invalidate(windowID:) Tests
+
+    @Test("invalidate removes cached window")
+    func invalidateRemovesCachedWindow() async throws {
+        let mockOps = makeMockSystemOps(windows: [
+            makeWindowEntry(id: 1001, pid: 100, bounds: CGRect(x: 0, y: 0, width: 800, height: 600)),
+            makeWindowEntry(id: 1002, pid: 100, bounds: CGRect(x: 100, y: 100, width: 400, height: 300)),
+        ])
+        let registry = WindowRegistry(system: mockOps)
+
+        // Refresh to populate cache
+        try await registry.refreshWindows(forPID: 100)
+
+        // Verify window is cached
+        let beforeInvalidate = await registry.getLastKnownWindow(1001)
+        #expect(beforeInvalidate != nil, "Window should be cached before invalidation")
+
+        // Invalidate the window
+        await registry.invalidate(windowID: 1001)
+
+        // Verify window is removed from cache
+        let afterInvalidate = await registry.getLastKnownWindow(1001)
+        #expect(afterInvalidate == nil, "Window should be removed after invalidation")
+
+        // Other window should still be cached
+        let otherWindow = await registry.getLastKnownWindow(1002)
+        #expect(otherWindow != nil, "Other windows should remain cached")
+    }
+
+    @Test("invalidate non-existent window is no-op")
+    func invalidateNonExistentWindowIsNoOp() async throws {
+        let mockOps = makeMockSystemOps(windows: [
+            makeWindowEntry(id: 1001, pid: 100, bounds: CGRect(x: 0, y: 0, width: 800, height: 600)),
+        ])
+        let registry = WindowRegistry(system: mockOps)
+
+        try await registry.refreshWindows(forPID: 100)
+
+        // Invalidate non-existent window - should not crash or affect existing windows
+        await registry.invalidate(windowID: 9999)
+
+        let window = await registry.getLastKnownWindow(1001)
+        #expect(window != nil, "Existing window should remain cached")
+    }
+
+    @Test("invalidate can be called multiple times safely")
+    func invalidateMultipleTimesSafe() async throws {
+        let mockOps = makeMockSystemOps(windows: [
+            makeWindowEntry(id: 1001, pid: 100, bounds: CGRect(x: 0, y: 0, width: 800, height: 600)),
+        ])
+        let registry = WindowRegistry(system: mockOps)
+
+        try await registry.refreshWindows(forPID: 100)
+
+        // Invalidate the same window multiple times
+        await registry.invalidate(windowID: 1001)
+        await registry.invalidate(windowID: 1001)
+        await registry.invalidate(windowID: 1001)
+
+        let window = await registry.getLastKnownWindow(1001)
+        #expect(window == nil, "Window should remain invalidated")
+    }
+
+    // MARK: - findWindowByPosition Tests
+
+    @Test("findWindowByPosition returns correct match within tolerance")
+    func findWindowByPositionWithinTolerance() async throws {
+        let mockOps = makeMockSystemOps(windows: [
+            makeWindowEntry(id: 1001, pid: 100, bounds: CGRect(x: 100.0, y: 200.0, width: 800, height: 600)),
+            makeWindowEntry(id: 1002, pid: 100, bounds: CGRect(x: 500.0, y: 300.0, width: 400, height: 300)),
+        ])
+        let registry = WindowRegistry(system: mockOps)
+
+        try await registry.refreshWindows(forPID: 100)
+
+        // Exact match
+        let exactMatch = await registry.findWindowByPosition(pid: 100, x: 100.0, y: 200.0)
+        #expect(exactMatch?.windowID == 1001, "Should find exact position match")
+
+        // Within tolerance (default 5.0)
+        let withinTolerance = await registry.findWindowByPosition(pid: 100, x: 103.0, y: 198.0)
+        #expect(withinTolerance?.windowID == 1001, "Should find match within tolerance")
+
+        // Just at tolerance boundary
+        let atBoundary = await registry.findWindowByPosition(pid: 100, x: 105.0, y: 205.0)
+        #expect(atBoundary?.windowID == 1001, "Should find match at tolerance boundary")
+    }
+
+    @Test("findWindowByPosition returns nil when outside tolerance")
+    func findWindowByPositionOutsideTolerance() async throws {
+        let mockOps = makeMockSystemOps(windows: [
+            makeWindowEntry(id: 1001, pid: 100, bounds: CGRect(x: 100.0, y: 200.0, width: 800, height: 600)),
+        ])
+        let registry = WindowRegistry(system: mockOps)
+
+        try await registry.refreshWindows(forPID: 100)
+
+        // Just outside tolerance
+        let outsideTolerance = await registry.findWindowByPosition(pid: 100, x: 106.0, y: 200.0)
+        #expect(outsideTolerance == nil, "Should return nil when outside tolerance")
+    }
+
+    @Test("findWindowByPosition returns nil for wrong PID")
+    func findWindowByPositionWrongPID() async throws {
+        let mockOps = makeMockSystemOps(windows: [
+            makeWindowEntry(id: 1001, pid: 100, bounds: CGRect(x: 100.0, y: 200.0, width: 800, height: 600)),
+            makeWindowEntry(id: 2001, pid: 200, bounds: CGRect(x: 100.0, y: 200.0, width: 800, height: 600)),
+        ])
+        let registry = WindowRegistry(system: mockOps)
+
+        try await registry.refreshWindows()
+
+        // Looking for PID 300 which doesn't exist at this position
+        let wrongPID = await registry.findWindowByPosition(pid: 300, x: 100.0, y: 200.0)
+        #expect(wrongPID == nil, "Should return nil for non-matching PID")
+    }
+
+    @Test("findWindowByPosition custom tolerance")
+    func findWindowByPositionCustomTolerance() async throws {
+        let mockOps = makeMockSystemOps(windows: [
+            makeWindowEntry(id: 1001, pid: 100, bounds: CGRect(x: 100.0, y: 200.0, width: 800, height: 600)),
+        ])
+        let registry = WindowRegistry(system: mockOps)
+
+        try await registry.refreshWindows(forPID: 100)
+
+        // With larger tolerance
+        let largeTolerance = await registry.findWindowByPosition(pid: 100, x: 120.0, y: 200.0, tolerance: 25.0)
+        #expect(largeTolerance?.windowID == 1001, "Should find match with larger tolerance")
+
+        // With smaller tolerance
+        let smallTolerance = await registry.findWindowByPosition(pid: 100, x: 104.0, y: 200.0, tolerance: 2.0)
+        #expect(smallTolerance == nil, "Should return nil with smaller tolerance")
+    }
+
+    // MARK: - findWindowByBounds Tests
+
+    @Test("findWindowByBounds returns nil for ambiguous matches")
+    func findWindowByBoundsAmbiguousReturnsNil() async throws {
+        // Two windows with identical bounds
+        let mockOps = makeMockSystemOps(windows: [
+            makeWindowEntry(id: 1001, pid: 100, bounds: CGRect(x: 100.0, y: 200.0, width: 800, height: 600)),
+            makeWindowEntry(id: 1002, pid: 100, bounds: CGRect(x: 100.0, y: 200.0, width: 800, height: 600)),
+        ])
+        let registry = WindowRegistry(system: mockOps)
+
+        try await registry.refreshWindows(forPID: 100)
+
+        // Ambiguous - two windows match
+        let ambiguous = await registry.findWindowByBounds(
+            pid: 100,
+            bounds: CGRect(x: 100.0, y: 200.0, width: 800, height: 600),
+        )
+        #expect(ambiguous == nil, "Should return nil for ambiguous (multiple) matches")
+    }
+
+    @Test("findWindowByBounds returns match when only one window matches")
+    func findWindowByBoundsSingleMatch() async throws {
+        let mockOps = makeMockSystemOps(windows: [
+            makeWindowEntry(id: 1001, pid: 100, bounds: CGRect(x: 100.0, y: 200.0, width: 800, height: 600)),
+            makeWindowEntry(id: 1002, pid: 100, bounds: CGRect(x: 500.0, y: 300.0, width: 400, height: 300)),
+        ])
+        let registry = WindowRegistry(system: mockOps)
+
+        try await registry.refreshWindows(forPID: 100)
+
+        // Single match
+        let match = await registry.findWindowByBounds(
+            pid: 100,
+            bounds: CGRect(x: 100.0, y: 200.0, width: 800, height: 600),
+        )
+        #expect(match?.windowID == 1001, "Should return the single matching window")
+    }
+
+    @Test("findWindowByBounds matches within tolerance on all dimensions")
+    func findWindowByBoundsMatchesAllDimensions() async throws {
+        let mockOps = makeMockSystemOps(windows: [
+            makeWindowEntry(id: 1001, pid: 100, bounds: CGRect(x: 100.0, y: 200.0, width: 800.0, height: 600.0)),
+        ])
+        let registry = WindowRegistry(system: mockOps)
+
+        try await registry.refreshWindows(forPID: 100)
+
+        // All dimensions slightly off but within tolerance
+        let withinTolerance = await registry.findWindowByBounds(
+            pid: 100,
+            bounds: CGRect(x: 103.0, y: 198.0, width: 802.0, height: 597.0),
+        )
+        #expect(withinTolerance?.windowID == 1001, "Should match when all dimensions within tolerance")
+    }
+
+    @Test("findWindowByBounds returns nil when one dimension exceeds tolerance")
+    func findWindowByBoundsOneDimensionExceedsTolerance() async throws {
+        let mockOps = makeMockSystemOps(windows: [
+            makeWindowEntry(id: 1001, pid: 100, bounds: CGRect(x: 100.0, y: 200.0, width: 800.0, height: 600.0)),
+        ])
+        let registry = WindowRegistry(system: mockOps)
+
+        try await registry.refreshWindows(forPID: 100)
+
+        // Width is outside tolerance
+        let widthOutside = await registry.findWindowByBounds(
+            pid: 100,
+            bounds: CGRect(x: 100.0, y: 200.0, width: 820.0, height: 600.0),
+        )
+        #expect(widthOutside == nil, "Should return nil when width exceeds tolerance")
+    }
+
+    // MARK: - listWindows Sorting Tests
+
+    @Test("listWindows returns results sorted by layer")
+    func listWindowsSortedByLayer() async throws {
+        // Windows with different layers (z-order)
+        let mockOps = makeMockSystemOps(windows: [
+            makeWindowEntry(id: 1003, pid: 100, bounds: CGRect(x: 0, y: 0, width: 100, height: 100), layer: 10),
+            makeWindowEntry(id: 1001, pid: 100, bounds: CGRect(x: 0, y: 0, width: 100, height: 100), layer: 0),
+            makeWindowEntry(id: 1002, pid: 100, bounds: CGRect(x: 0, y: 0, width: 100, height: 100), layer: 5),
+        ])
+        let registry = WindowRegistry(system: mockOps)
+
+        try await registry.refreshWindows(forPID: 100)
+        let windows = try await registry.listWindows(forPID: 100)
+
+        #expect(windows.count == 3, "Should have three windows")
+        #expect(windows[0].layer < windows[1].layer, "Windows should be sorted by layer ascending")
+        #expect(windows[1].layer < windows[2].layer, "Windows should be sorted by layer ascending")
+    }
+
+    @Test("listAllWindows returns all windows sorted")
+    func listAllWindowsSorted() async throws {
+        let mockOps = makeMockSystemOps(windows: [
+            makeWindowEntry(id: 1003, pid: 100, bounds: CGRect(x: 0, y: 0, width: 100, height: 100), layer: 10),
+            makeWindowEntry(id: 2001, pid: 200, bounds: CGRect(x: 0, y: 0, width: 100, height: 100), layer: 0),
+            makeWindowEntry(id: 1001, pid: 100, bounds: CGRect(x: 0, y: 0, width: 100, height: 100), layer: 5),
+        ])
+        let registry = WindowRegistry(system: mockOps)
+
+        let windows = try await registry.listAllWindows()
+
+        #expect(windows.count == 3, "Should have three windows from all PIDs")
+        // Verify sorted by layer
+        for i in 0 ..< windows.count - 1 {
+            #expect(windows[i].layer <= windows[i + 1].layer, "Windows should be sorted by layer")
+        }
+    }
+
+    @Test("listWindows with no windows returns empty array")
+    func listWindowsEmptyResult() async throws {
+        let mockOps = makeMockSystemOps(windows: [])
+        let registry = WindowRegistry(system: mockOps)
+
+        let windows = try await registry.listWindows(forPID: 100)
+        #expect(windows.isEmpty, "Should return empty array when no windows")
+    }
+
+    @Test("getLastKnownWindow returns cached data")
+    func getLastKnownWindowReturnsCached() async throws {
+        let mockOps = makeMockSystemOps(windows: [
+            makeWindowEntry(id: 1001, pid: 100, bounds: CGRect(x: 0, y: 0, width: 100, height: 100)),
+        ])
+        let registry = WindowRegistry(system: mockOps)
+
+        // First refresh to populate cache
+        try await registry.refreshWindows(forPID: 100)
+
+        // getLastKnownWindow should return cached data
+        let cached = await registry.getLastKnownWindow(1001)
+        #expect(cached != nil, "Should return cached window")
+        #expect(cached?.windowID == 1001, "Should return correct window ID")
+
+        // Verify non-existent window returns nil
+        let missing = await registry.getLastKnownWindow(9999)
+        #expect(missing == nil, "Should return nil for missing window")
+    }
+}

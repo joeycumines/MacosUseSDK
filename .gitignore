@@ -21,3 +21,4 @@ coverage.lcov
 .idea/
 # Generated protobuf descriptor sets for gRPC reflection (optional)
 /Server/Sources/MacosUseServer/DescriptorSets/*.pb
+/DIRECTIVE.txt
