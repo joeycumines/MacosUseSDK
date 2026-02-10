@@ -13,37 +13,32 @@ jobs:
       - name: Select Latest Stable Xcode
         shell: sh
         run: |-
-          set -eu || exit 1
-          echo "Scanning for valid Xcode installations..."
-          get_valid_xcodes() {
-            for path in /Applications/Xcode_*.app; do
-              [ -e "$path" ] || continue
-              if [ -L "$path" ]; then
-                echo "Skipping symlink: $path" >&2
-                continue
-              fi
-              [ -d "$path" ] || continue
-              base_name="${path##*/}"
-              if echo "$base_name" | grep -qE "^Xcode_[0-9]+(\.[0-9]+)*\.app$"; then
-                echo "$path"
-              else
-                echo "Skipping non-standard naming: $base_name" >&2
-              fi
-            done
-          }
-          LATEST_XCODE="$(get_valid_xcodes)"
-          LATEST_XCODE="$(echo "$LATEST_XCODE" | sort -V)"
-          LATEST_XCODE="$(echo "$LATEST_XCODE" | tail -n 1)"
+          echo "Scanning for valid Xcode installations..." &&
+          LATEST_XCODE="" &&
+          for path in /Applications/Xcode_*.app; do
+            [ -e "$path" ] || continue
+            if [ -L "$path" ]; then
+              echo "Skipping symlink: $path" >&2
+              continue
+            fi
+            [ -d "$path" ] || continue
+            base_name="${path##*/}"
+            if echo "$base_name" | grep -qE "^Xcode_[0-9]+(\.[0-9]+)*\.app$"; then
+              LATEST_XCODE="$path"
+            else
+              echo "Skipping non-standard naming: $base_name" >&2
+            fi
+          done &&
           if [ -z "$LATEST_XCODE" ]; then
             echo "::error::No valid, non-symlink, stable Xcode installation found matching criteria."
             exit 1
-          fi
-          echo "Selected: $LATEST_XCODE"
-          DEV_DIR="$LATEST_XCODE/Contents/Developer"
+          fi &&
+          echo "Selected: $LATEST_XCODE" &&
+          DEV_DIR="$LATEST_XCODE/Contents/Developer" &&
           if [ ! -d "$DEV_DIR" ]; then
              echo "::error::The selected Xcode app appears corrupted (missing Contents/Developer)."
              exit 1
-          fi
+          fi &&
           echo "DEVELOPER_DIR=$DEV_DIR" >>"$GITHUB_ENV"
       - name: Verify Xcode and Swift versions
         run: |-
