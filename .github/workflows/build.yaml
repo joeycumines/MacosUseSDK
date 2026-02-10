@@ -10,6 +10,18 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v5
+      # Cache Swift Package Manager
+      - name: Cache Swift packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.swiftpm
+            ~/Library/Caches/org.swift.swiftpm
+            .build
+            Server/.build
+          key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved', 'Server/Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-
       - name: Select Latest Stable Xcode
         shell: sh
         run: |-
@@ -48,10 +60,23 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version: 'stable'
+          cache: true
+          cache-dependency-path: |
+            go.sum
+            integration/go.sum
+            hack/google-api-linter/go.sum
       - uses: bufbuild/buf-action@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           setup_only: true
+      # Cache buf modules
+      - name: Cache buf modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/buf
+          key: ${{ runner.os }}-buf-${{ hashFiles('buf.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-buf-
       - name: Install homebrew dependencies
         run: |-
           brew install swiftformat swiftlint make

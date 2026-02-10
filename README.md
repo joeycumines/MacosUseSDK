@@ -6,6 +6,10 @@
 >
 > While strict architectural direction was given (particularly around API semantics) and tooling was written by hand, **I am not a native Swift developer.** The code reflects an iterative AI generation process rather than expert-level fluency, though the project served as a surprisingly-successful learning vehicle, and regular human reviews were performed.
 
+[![CI](https://github.com/joeycumines/MacosUseSDK/actions/workflows/ci.yaml/badge.svg)](https://github.com/joeycumines/MacosUseSDK/actions/workflows/ci.yaml)
+[![Go Coverage](https://img.shields.io/badge/Go%20Coverage-70%25+-blue?style=flat)](https://github.com/joeycumines/MacosUseSDK)
+[![Swift Coverage](https://img.shields.io/badge/Swift%20Coverage-see%20CI-blue?style=flat)](https://github.com/joeycumines/MacosUseSDK/actions)
+
 # MacosUseSDK
 
 Library, command-line tools, and MCP/gRPC server to traverse the macOS accessibility tree and simulate user input actions. Allows interaction with UI elements of other applications.
