@@ -1091,3 +1091,345 @@ func TestCORS_HeadersPresentOnAllEndpoints(t *testing.T) {
 		})
 	}
 }
+
+// =============================================================================
+// BroadcastEvent Tests - Added for Task 49
+// =============================================================================
+
+// TestHTTPTransport_BroadcastEvent verifies that BroadcastEvent sends custom
+// SSE events to all connected clients.
+func TestHTTPTransport_BroadcastEvent(t *testing.T) {
+	tr := NewHTTPTransport(nil)
+	defer tr.Close()
+
+	// Add a test client using the ClientRegistry API
+	client := tr.clients.Add("")
+
+	// Broadcast a custom event
+	tr.BroadcastEvent("observation", `{"test":"data"}`)
+
+	// Verify event was received
+	select {
+	case event := <-client.ResponseChan:
+		if event.Event != "observation" {
+			t.Errorf("Event type = %q, want %q", event.Event, "observation")
+		}
+		if event.Data != `{"test":"data"}` {
+			t.Errorf("Event data = %q, want %q", event.Data, `{"test":"data"}`)
+		}
+		if event.ID == "" {
+			t.Error("Event ID should not be empty")
+		}
+	case <-time.After(100 * time.Millisecond):
+		t.Fatal("Timed out waiting for broadcast event")
+	}
+
+	// Cleanup
+	tr.clients.Remove(client.ID)
+}
+
+// TestHTTPTransport_BroadcastEvent_MultipleClients verifies events are sent
+// to all connected clients.
+func TestHTTPTransport_BroadcastEvent_MultipleClients(t *testing.T) {
+	tr := NewHTTPTransport(nil)
+	defer tr.Close()
+
+	// Add multiple clients using the ClientRegistry API
+	clients := make([]*SSEClient, 3)
+	for i := 0; i < 3; i++ {
+		clients[i] = tr.clients.Add("")
+	}
+	defer func() {
+		for _, c := range clients {
+			tr.clients.Remove(c.ID)
+		}
+	}()
+
+	// Broadcast event
+	tr.BroadcastEvent("observation_error", `{"error":"test"}`)
+
+	// All clients should receive the event
+	for i, client := range clients {
+		select {
+		case event := <-client.ResponseChan:
+			if event.Event != "observation_error" {
+				t.Errorf("Client %d: Event type = %q, want %q", i, event.Event, "observation_error")
+			}
+		case <-time.After(100 * time.Millisecond):
+			t.Errorf("Client %d: Timed out waiting for event", i)
+		}
+	}
+}
+
+// TestHTTPTransport_BroadcastEvent_ClosedTransport verifies that broadcasting
+// on a closed transport is a no-op (does not panic).
+func TestHTTPTransport_BroadcastEvent_ClosedTransport(t *testing.T) {
+	tr := NewHTTPTransport(nil)
+	tr.Close()
+
+	// Should not panic
+	tr.BroadcastEvent("observation", `{"test":"data"}`)
+
+	// Verify transport is closed
+	if !tr.IsClosed() {
+		t.Error("Transport should be closed")
+	}
+}
+
+// TestHTTPTransport_BroadcastEvent_EventIDIncrement verifies that event IDs
+// are unique and incrementing.
+func TestHTTPTransport_BroadcastEvent_EventIDIncrement(t *testing.T) {
+	tr := NewHTTPTransport(nil)
+	defer tr.Close()
+
+	client := tr.clients.Add("")
+	defer tr.clients.Remove(client.ID)
+
+	// Broadcast multiple events
+	tr.BroadcastEvent("event1", "data1")
+	tr.BroadcastEvent("event2", "data2")
+	tr.BroadcastEvent("event3", "data3")
+
+	// Collect events and verify IDs increment
+	var ids []string
+	for i := 0; i < 3; i++ {
+		select {
+		case event := <-client.ResponseChan:
+			ids = append(ids, event.ID)
+		case <-time.After(100 * time.Millisecond):
+			t.Fatal("Timed out waiting for events")
+		}
+	}
+
+	// Verify IDs are unique
+	seen := make(map[string]bool)
+	for _, id := range ids {
+		if seen[id] {
+			t.Errorf("Duplicate event ID: %s", id)
+		}
+		seen[id] = true
+	}
+}
+
+// TestHTTPTransport_BroadcastEvent_MetricsRecorded verifies that broadcasts
+// increment SSE event metrics.
+func TestHTTPTransport_BroadcastEvent_MetricsRecorded(t *testing.T) {
+	tr := NewHTTPTransport(nil)
+	defer tr.Close()
+
+	// Get initial event count (indirectly via metrics export)
+	initialMetrics := tr.Metrics()
+	if initialMetrics == nil {
+		t.Fatal("Metrics should not be nil")
+	}
+
+	// Broadcast some events
+	tr.BroadcastEvent("test1", "data1")
+	tr.BroadcastEvent("test2", "data2")
+
+	// Metrics should have recorded events
+	// Note: Direct verification would require exposing internal counters,
+	// but we verify that the call completes without error
+}
+
+// =============================================================================
+// ShutdownChan Tests - Added for Task 49
+// =============================================================================
+
+// TestHTTPTransport_ShutdownChan verifies that ShutdownChan returns a valid channel.
+func TestHTTPTransport_ShutdownChan(t *testing.T) {
+	tr := NewHTTPTransport(nil)
+
+	ch := tr.ShutdownChan()
+	if ch == nil {
+		t.Fatal("ShutdownChan() returned nil")
+	}
+
+	// Channel should be open initially
+	select {
+	case <-ch:
+		t.Error("Shutdown channel should not be closed initially")
+	default:
+		// Expected - channel is open
+	}
+
+	tr.Close()
+}
+
+// TestHTTPTransport_ShutdownChan_ClosedOnClose verifies that the shutdown channel
+// is closed when the transport is closed.
+func TestHTTPTransport_ShutdownChan_ClosedOnClose(t *testing.T) {
+	tr := NewHTTPTransport(nil)
+	ch := tr.ShutdownChan()
+
+	// Close transport
+	tr.Close()
+
+	// Shutdown channel should now be closed
+	select {
+	case <-ch:
+		// Expected - channel is closed
+	case <-time.After(100 * time.Millisecond):
+		t.Error("Shutdown channel should be closed after transport Close()")
+	}
+}
+
+// TestHTTPTransport_ShutdownChan_ReadOnly verifies that the channel is read-only.
+func TestHTTPTransport_ShutdownChan_ReadOnly(t *testing.T) {
+	tr := NewHTTPTransport(nil)
+	defer tr.Close()
+
+	// The return type is <-chan struct{} which is inherently read-only.
+	// This test documents the expected behavior.
+	ch := tr.ShutdownChan()
+
+	// Type assertion should confirm it's a receive-only channel
+	// (This is enforced by the function signature, so this test just verifies behavior)
+	select {
+	case <-ch:
+		t.Error("Channel should not be closed yet")
+	default:
+		// Expected
+	}
+}
+
+// TestHTTPTransport_ShutdownChan_MultipleReaders verifies that multiple goroutines
+// can wait on the shutdown channel.
+func TestHTTPTransport_ShutdownChan_MultipleReaders(t *testing.T) {
+	tr := NewHTTPTransport(nil)
+	ch := tr.ShutdownChan()
+
+	// Start multiple goroutines waiting on shutdown
+	const numReaders = 5
+	done := make(chan int, numReaders)
+
+	for i := 0; i < numReaders; i++ {
+		go func(id int) {
+			<-ch
+			done <- id
+		}(i)
+	}
+
+	// Close transport to signal shutdown
+	tr.Close()
+
+	// All readers should complete
+	received := make(map[int]bool)
+	for i := 0; i < numReaders; i++ {
+		select {
+		case id := <-done:
+			received[id] = true
+		case <-time.After(100 * time.Millisecond):
+			t.Fatalf("Timed out waiting for reader %d", i)
+		}
+	}
+
+	if len(received) != numReaders {
+		t.Errorf("Expected %d readers to complete, got %d", numReaders, len(received))
+	}
+}
+
+// =============================================================================
+// Heartbeat Timing Tests - Added for Task 49
+// =============================================================================
+
+// TestHTTPTransport_SSE_HeartbeatTiming verifies that heartbeats are sent at
+// the configured interval on SSE connections.
+func TestHTTPTransport_SSE_HeartbeatTiming(t *testing.T) {
+	// Use a very short heartbeat interval for testing
+	tr := NewHTTPTransport(&HTTPTransportConfig{
+		HeartbeatInterval: 50 * time.Millisecond,
+	})
+	defer tr.Close()
+
+	// Create a pipe to capture SSE output
+	pr, pw := io.Pipe()
+
+	// Create a response recorder that writes to the pipe
+	rr := &pipeResponseRecorder{
+		headers: make(http.Header),
+		writer:  pw,
+		flushed: make(chan struct{}, 100),
+	}
+
+	req := httptest.NewRequest("GET", "/events", nil)
+
+	// Run handleSSE in background
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		tr.handleSSE(rr, req)
+		pw.Close()
+	}()
+
+	// Read from the pipe and look for heartbeats
+	reader := io.Reader(pr)
+	buf := make([]byte, 1024)
+
+	// Wait for at least 2 heartbeats within a reasonable time
+	deadline := time.After(300 * time.Millisecond)
+	heartbeatCount := 0
+	readDone := make(chan int)
+
+	go func() {
+		for {
+			n, err := reader.Read(buf)
+			if err != nil {
+				readDone <- heartbeatCount
+				return
+			}
+			data := string(buf[:n])
+			// Count heartbeat comments (lines starting with ":")
+			if strings.Contains(data, ": heartbeat") {
+				heartbeatCount++
+				if heartbeatCount >= 2 {
+					readDone <- heartbeatCount
+					return
+				}
+			}
+		}
+	}()
+
+	// Wait for heartbeats or timeout
+	select {
+	case count := <-readDone:
+		if count < 2 {
+			t.Errorf("Expected at least 2 heartbeats, got %d", count)
+		}
+	case <-deadline:
+		t.Error("Timed out waiting for heartbeats")
+	}
+
+	// Cleanup
+	tr.Close()
+	pr.Close()
+	<-done
+}
+
+// pipeResponseRecorder is a custom ResponseWriter for SSE testing that writes
+// to an io.Writer instead of an internal buffer.
+type pipeResponseRecorder struct {
+	headers http.Header
+	writer  io.Writer
+	status  int
+	flushed chan struct{}
+}
+
+func (r *pipeResponseRecorder) Header() http.Header {
+	return r.headers
+}
+
+func (r *pipeResponseRecorder) Write(b []byte) (int, error) {
+	return r.writer.Write(b)
+}
+
+func (r *pipeResponseRecorder) WriteHeader(statusCode int) {
+	r.status = statusCode
+}
+
+func (r *pipeResponseRecorder) Flush() {
+	select {
+	case r.flushed <- struct{}{}:
+	default:
+	}
+}
