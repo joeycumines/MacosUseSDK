@@ -118,6 +118,77 @@ final class ParsingHelpersTests: XCTestCase {
         }
     }
 
+    // MARK: - parseOptionalPID Tests (AIP-159 Wildcard)
+
+    func testParseOptionalPIDValidFormat() throws {
+        let pid = try ParsingHelpers.parseOptionalPID(fromName: "applications/12345")
+        XCTAssertEqual(pid, 12345)
+    }
+
+    func testParseOptionalPIDWithWindowSuffix() throws {
+        let pid = try ParsingHelpers.parseOptionalPID(fromName: "applications/12345/windows/67890")
+        XCTAssertEqual(pid, 12345)
+    }
+
+    func testParseOptionalPIDEmptyStringReturnsNil() throws {
+        let pid = try ParsingHelpers.parseOptionalPID(fromName: "")
+        XCTAssertNil(pid, "Empty string should return nil (desktop-level scope)")
+    }
+
+    func testParseOptionalPIDWildcardReturnsNil() throws {
+        // AIP-159: "applications/-" means "all applications" (wildcard parent)
+        let pid = try ParsingHelpers.parseOptionalPID(fromName: "applications/-")
+        XCTAssertNil(pid, "Wildcard 'applications/-' should return nil")
+    }
+
+    func testParseOptionalPIDWildcardWithSuffix() throws {
+        // "applications/-/inputs/xyz" should still recognize wildcard
+        let pid = try ParsingHelpers.parseOptionalPID(fromName: "applications/-/inputs/xyz")
+        XCTAssertNil(pid, "Wildcard 'applications/-' with suffix should return nil")
+    }
+
+    func testParseOptionalPIDInvalidPrefix() {
+        XCTAssertThrowsError(try ParsingHelpers.parseOptionalPID(fromName: "windows/12345")) { error in
+            guard let rpcError = error as? RPCError else {
+                XCTFail("Expected RPCError")
+                return
+            }
+            XCTAssertEqual(rpcError.code, .invalidArgument)
+        }
+    }
+
+    func testParseOptionalPIDInvalidNotANumber() {
+        XCTAssertThrowsError(try ParsingHelpers.parseOptionalPID(fromName: "applications/notanumber")) { error in
+            guard let rpcError = error as? RPCError else {
+                XCTFail("Expected RPCError")
+                return
+            }
+            XCTAssertEqual(rpcError.code, .invalidArgument)
+        }
+    }
+
+    func testParseOptionalPIDInvalidOnlyPrefix() {
+        // "applications/" with no PID should throw
+        XCTAssertThrowsError(try ParsingHelpers.parseOptionalPID(fromName: "applications/")) { error in
+            guard let rpcError = error as? RPCError else {
+                XCTFail("Expected RPCError")
+                return
+            }
+            XCTAssertEqual(rpcError.code, .invalidArgument)
+        }
+    }
+
+    func testParseOptionalPIDInvalidJustPrefix() {
+        // "applications" with no slash should throw
+        XCTAssertThrowsError(try ParsingHelpers.parseOptionalPID(fromName: "applications")) { error in
+            guard let rpcError = error as? RPCError else {
+                XCTFail("Expected RPCError")
+                return
+            }
+            XCTAssertEqual(rpcError.code, .invalidArgument)
+        }
+    }
+
     // MARK: - Page Token Encoding Tests (AIP-158)
 
     func testEncodePageTokenZero() {

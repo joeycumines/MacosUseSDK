@@ -22,6 +22,10 @@ public enum InputAction: Sendable {
     case mouseDown(point: CGPoint, button: CGMouseButton = .left, modifiers: CGEventFlags = [])
     /// Release mouse button (for stateful drag operations)
     case mouseUp(point: CGPoint, button: CGMouseButton = .left, modifiers: CGEventFlags = [])
+    /// Perform a complete mouse drag from start position to end position.
+    /// Uses `leftMouseDragged` CGEvent type for proper window manager drag recognition.
+    /// Duration controls the speed of the drag (0 = instant, >0 = animated with intermediate steps).
+    case drag(from: CGPoint, to: CGPoint, button: CGMouseButton = .left, duration: Double = 0)
 }
 
 /// Defines the main action to be performed.
@@ -430,5 +434,10 @@ private func executeInputAction(_ action: InputAction, options: ActionOptions) a
             "simulating mouse button up at \(String(describing: point), privacy: .public) button: \(button.rawValue, privacy: .public)",
         )
         try await mouseButtonUp(at: point, button: button, modifiers: modifiers)
+    case let .drag(from, to, button, duration):
+        logger.info(
+            "simulating drag from \(String(describing: from), privacy: .public) to \(String(describing: to), privacy: .public) button: \(button.rawValue, privacy: .public) duration: \(duration, privacy: .public)s",
+        )
+        try await performDrag(from: from, to: to, button: button, duration: duration)
     }
 }

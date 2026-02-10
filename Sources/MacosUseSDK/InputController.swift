@@ -368,6 +368,103 @@ public func moveMouse(to point: CGPoint) async throws {
     logger.info("mouse move simulation complete.")
 }
 
+/// Simulates a mouse drag movement to the specified screen coordinates.
+/// Uses `CGEventType.leftMouseDragged` which is required for the window manager
+/// to recognize title-bar drags and other drag interactions. This differs from
+/// `moveMouse` which uses `.mouseMoved` (not recognized as drag by window manager).
+///
+/// Use this between `mouseButtonDown` and `mouseButtonUp` calls for drag operations
+/// in Global Display Coordinates (top-left origin).
+///
+/// - Parameter point: The `CGPoint` to drag to.
+/// - Throws: `MacosUseSDKError` if the event source cannot be created or the event cannot be posted.
+public func dragMouse(to point: CGPoint) async throws {
+    logger.info("dragging mouse to: (\(point.x, privacy: .public), \(point.y, privacy: .public))")
+    let source = try createEventSource()
+
+    let dragEvent = CGEvent(
+        mouseEventSource: source, mouseType: .leftMouseDragged, mouseCursorPosition: point, mouseButton: .left,
+    )
+    try await postEvent(dragEvent, actionDescription: "mouse drag to (\(point.x), \(point.y))")
+    logger.info("mouse drag simulation complete.")
+}
+
+/// Performs a complete mouse drag operation from start to end position.
+///
+/// Warps the system cursor to the start position first (required for drag recognition),
+/// then executes: buttonDown → incremental `leftMouseDragged` events with cursor warps → buttonUp.
+/// Uses 20 intermediate steps with brief pauses to simulate realistic drag motion that the
+/// macOS window manager recognizes for title-bar drags and other drag interactions.
+///
+/// IMPORTANT: CGEvent's `mouseCursorPosition` alone does NOT physically reposition the system
+/// cursor. The window manager tracks the hardware cursor for drag operations, so we must use
+/// `CGWarpMouseCursorPosition` to synchronise the physical cursor with each drag event.
+/// `CGAssociateMouseAndMouseCursorPosition(false)` is called during the drag to prevent the
+/// physical mouse from fighting the warp, and re-enabled on completion.
+///
+/// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
+///
+/// - Parameters:
+///   - from: Starting position in Global Display Coordinates.
+///   - to: Ending position in Global Display Coordinates.
+///   - button: Mouse button to use for drag (default: left).
+///   - duration: Total duration of drag in seconds (0 = fast drag with minimal delays).
+/// - Throws: `MacosUseSDKError` if any event cannot be created or posted.
+public func performDrag(from: CGPoint, to: CGPoint, button: CGMouseButton = .left, duration: Double = 0) async throws {
+    logger.info(
+        "performing drag from: (\(from.x, privacy: .public), \(from.y, privacy: .public)) to: (\(to.x, privacy: .public), \(to.y, privacy: .public))",
+    )
+
+    // Step 0: Warp the system cursor to start and suppress physical mouse interference.
+    CGWarpMouseCursorPosition(from)
+    CGAssociateMouseAndMouseCursorPosition(boolean_t(0)) // Detach physical mouse during drag
+    defer { CGAssociateMouseAndMouseCursorPosition(boolean_t(1)) } // Re-attach on exit
+
+    // Brief pause for cursor warp to register with window server
+    try await Task.sleep(nanoseconds: 50_000_000) // 50ms
+
+    // Step 1: Mouse button down at start position
+    try await mouseButtonDown(at: from, button: button)
+
+    // Brief pause to let window manager register the grab
+    try await Task.sleep(nanoseconds: 100_000_000) // 100ms
+
+    // Step 2: Incremental drag movements with cursor warps
+    let steps = 20
+    let stepDelayNs: UInt64 = duration > 0 ? UInt64(duration / Double(steps) * 1_000_000_000) : 10_000_000 // 10ms default
+
+    let source = try createEventSource()
+    let dragEventType: CGEventType = button == .left ? .leftMouseDragged : .rightMouseDragged
+
+    for step in 1 ... steps {
+        let fraction = Double(step) / Double(steps)
+        let stepPoint = CGPoint(
+            x: from.x + (to.x - from.x) * fraction,
+            y: from.y + (to.y - from.y) * fraction,
+        )
+
+        // Warp cursor to keep system cursor in sync with drag events
+        CGWarpMouseCursorPosition(stepPoint)
+
+        let dragEvent = CGEvent(
+            mouseEventSource: source, mouseType: dragEventType, mouseCursorPosition: stepPoint, mouseButton: button,
+        )
+        try await postEvent(dragEvent, actionDescription: "drag step \(step)/\(steps)")
+
+        if step < steps {
+            try await Task.sleep(nanoseconds: stepDelayNs)
+        }
+    }
+
+    // Brief pause before releasing
+    try await Task.sleep(nanoseconds: 50_000_000) // 50ms
+
+    // Step 3: Mouse button up at end position
+    try await mouseButtonUp(at: to, button: button)
+
+    logger.info("drag operation complete.")
+}
+
 /// Simulates typing a string of text using AppleScript `keystroke`.
 /// This is generally more reliable for arbitrary text than simulating individual key presses.
 /// - Parameter text: The `String` to type.

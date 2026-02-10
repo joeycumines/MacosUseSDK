@@ -196,6 +196,9 @@ public actor AutomationCoordinator {
         case let .mouseUp(point, button, modifiers):
             // No visualization for stateful mouse events
             try await MacosUseSDK.mouseButtonUp(at: point, button: button, modifiers: modifiers)
+        case let .drag(from, to, button, duration):
+            // Complete drag operation with incremental leftMouseDragged events
+            try await MacosUseSDK.performDrag(from: from, to: to, button: button, duration: duration)
         }
     }
 }
@@ -257,6 +260,14 @@ extension AutomationCoordinator {
             let button = convertButtonType(buttonUp.button)
             let modifiers = try convertModifiers(buttonUp.modifiers)
             return .mouseUp(point: point, button: button, modifiers: modifiers)
+        case let .drag(mouseDrag):
+            guard mouseDrag.hasStartPosition, mouseDrag.hasEndPosition else {
+                throw CoordinatorError.invalidKeyCombo("drag missing start_position or end_position")
+            }
+            let from = CGPoint(x: mouseDrag.startPosition.x, y: mouseDrag.startPosition.y)
+            let to = CGPoint(x: mouseDrag.endPosition.x, y: mouseDrag.endPosition.y)
+            let button = convertButtonType(mouseDrag.button)
+            return .drag(from: from, to: to, button: button, duration: mouseDrag.duration)
         case .none:
             throw CoordinatorError.invalidKeyCombo("empty input type")
         default:

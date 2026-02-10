@@ -28,9 +28,10 @@ extension MacosUseService {
         Self.logger.info("createInput called")
 
         let inputId = req.inputID.isEmpty ? UUID().uuidString : req.inputID
-        let pid: pid_t? = req.parent.isEmpty ? nil : try parsePID(fromName: req.parent)
+        let pid: pid_t? = try parseOptionalPID(fromName: req.parent)
+        let isWildcardOrEmpty = req.parent.isEmpty || req.parent == "applications/-"
         let name =
-            req.parent.isEmpty ? "desktopInputs/\(inputId)" : "\(req.parent)/inputs/\(inputId)"
+            isWildcardOrEmpty ? "desktopInputs/\(inputId)" : "\(req.parent)/inputs/\(inputId)"
 
         let input = Macosusesdk_V1_Input.with {
             $0.name = name

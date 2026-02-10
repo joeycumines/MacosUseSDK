@@ -105,7 +105,7 @@ public actor MacroExecutor {
         }
 
         // Build execution context
-        let pid = try? parsePID(fromName: parent)
+        let pid = try? ParsingHelpers.parseOptionalPID(fromName: parent)
         var context = MacroContext(parameters: parameters, parent: parent, pid: pid)
 
         // Apply default values for missing optional parameters
@@ -586,14 +586,5 @@ private func parseSelectorString(_ str: String) -> Macosusesdk_Type_ElementSelec
         Macosusesdk_Type_ElementSelector.with {
             $0.role = str
         }
-    }
-}
-
-/// Helper function to parse PID from resource name - now uses shared ParsingHelpers
-private func parsePID(fromName name: String) throws -> pid_t {
-    do {
-        return try ParsingHelpers.parsePID(fromName: name)
-    } catch {
-        throw MacroExecutionError.invalidAction("Invalid parent resource name: \(name)")
     }
 }

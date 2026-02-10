@@ -21,6 +21,35 @@ enum ParsingHelpers {
         return pid_t(pidInt)
     }
 
+    /// Parses an optional PID from an application resource name, supporting the AIP-159 wildcard.
+    ///
+    /// Accepts `"applications/{pid}"` (returns the PID) or `"applications/-"` (returns nil,
+    /// meaning "all applications" / desktop-level scope). An empty string also returns nil
+    /// for backward compatibility with CreateInput's optional parent field.
+    ///
+    /// - Parameter name: The application resource name, `"applications/-"`, or empty string.
+    /// - Returns: The extracted PID, or nil for wildcard/empty.
+    /// - Throws: RPCError with .invalidArgument if the name format is invalid.
+    static func parseOptionalPID(fromName name: String) throws -> pid_t? {
+        if name.isEmpty {
+            return nil
+        }
+        let components = name.split(separator: "/").map(String.init)
+        guard components.count >= 2,
+              components[0] == "applications"
+        else {
+            throw RPCError(code: .invalidArgument, message: "Invalid application name: \(name)")
+        }
+        // AIP-159: "-" means "all resources" at this collection level (wildcard).
+        if components[1] == "-" {
+            return nil
+        }
+        guard let pidInt = Int32(components[1]) else {
+            throw RPCError(code: .invalidArgument, message: "Invalid application name: \(name)")
+        }
+        return pid_t(pidInt)
+    }
+
     // MARK: - Page Token Encoding (AIP-158)
 
     /// Encode an offset into an opaque page token per AIP-158.
