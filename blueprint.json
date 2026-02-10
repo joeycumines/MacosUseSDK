@@ -18,7 +18,7 @@
     "parallelExecutionBan": "CRITICAL: Do NOT run multiple subagents in parallel when they execute swift tests. Test execution competes for window focus, causing hangs and race conditions. Execute subagents SEQUENTIALLY."
   },
   "statusSection": {
-    "currentState": "17 tasks completed (Tasks 1-17). 60 tasks remaining. Next: Tasks 18-23 (integration tests).",
+    "currentState": "18 tasks completed (Tasks 1-18). 59 tasks remaining. Next: Tasks 19-23 (integration tests).",
     "focusStealingStatus": {
       "observationActivate": "COMPLETE - activate param on CreateObservation defaults to false, preventing focus theft during polling",
       "traversalActivate": "COMPLETE - activate field on TraverseAccessibilityRequest (field 3) defaults to false",
@@ -48,7 +48,7 @@
     {"id": 15, "title": "Add Swift FileDialogMethods RPC tests", "description": "Write Swift server tests for FileDialogMethods: automateOpenFileDialog, automateSaveFileDialog, selectFile, selectDirectory, dragFiles RPC handlers. Test validation and error paths.", "status": "completed", "completionNotes": "Created FileDialogMethodsTests.swift with 45 tests covering: proto request/response structure (16), validation errors (12), RPC handler responses (17), edge cases (4). NOTE: Some tests may hang without timeouts - needs review."},
     {"id": 16, "title": "Add Swift DisplayMethods RPC tests", "description": "Write Swift server tests for DisplayMethods: listDisplays returns at least one display, getDisplay by name, pagination support. Test invalid display name format.", "status": "completed", "completionNotes": "Expanded DisplayMethodsTests.swift to 40 tests (16 new). Added: captureCursorPosition (6), getDisplay edge cases (6), listDisplays edge cases (2), display ID type edge cases (2)."},
     {"id": 17, "title": "Add Swift ScreenshotCapture OCR tests", "description": "Write Swift tests for ScreenshotCapture.extractText verifying: text recognition from a synthetic image with known text, empty image handling, multi-language support if available.", "status": "completed", "completionNotes": "Created ScreenshotOCRTests.swift with 25 tests. Synthetic image generation using CGContext/CoreText. Covers: basic OCR, blank images, multiline text, unicode, Vision framework direct tests, proto integration, error handling, performance."},
-    {"id": 18, "title": "Add integration test for MCP stdio transport", "description": "Write a Go integration test that spawns the MCP server binary in stdio mode, sends JSON-RPC initialize, tools/list, tools/call (capture_screenshot) messages via stdin, reads responses from stdout, verifies correct JSON-RPC format.", "status": "not-started"},
+    {"id": 18, "title": "Add integration test for MCP stdio transport", "description": "Write a Go integration test that spawns the MCP server binary in stdio mode, sends JSON-RPC initialize, tools/list, tools/call (capture_screenshot) messages via stdin, reads responses from stdout, verifies correct JSON-RPC format.", "status": "completed", "completionNotes": "Created integration/stdio_transport_test.go with 6 tests: TestStdioTransport_Initialize (protocol version 2025-11-25, server info), TestStdioTransport_ToolsList (77 tools), TestStdioTransport_CaptureScreenshot (tool invocation, handles soft errors), TestStdioTransport_FullWorkflow (complete initialize->notifications/initialized->tools/list->tools/call flow), TestStdioTransport_InvalidMethod (-32601 error), TestStdioTransport_InvalidTool (-32601 error). Added go-test-stdio-transport target to config.mk."},
     {"id": 19, "title": "Add integration test for file dialog", "description": "Write a Go integration test using Finder that exercises selectFile and selectDirectory operations, verifying path selection and error handling for non-existent paths.", "status": "not-started"},
     {"id": 20, "title": "Add integration test for wait element", "description": "Write a Go integration test that: opens Calculator, calls wait_element with selector for a button (should succeed quickly), calls wait_element with short timeout and impossible selector (should timeout), verifies LRO lifecycle (pending -> done).", "status": "not-started"},
     {"id": 21, "title": "Add integration test for element actions", "description": "Write a Go integration test using Calculator: find a button element, get available actions (should include AXPress), perform AXPress action, verify Calculator display changes.", "status": "not-started"},
@@ -122,7 +122,7 @@
     }
   ],
   "taskSummary": {
-    "totalRemainingTasks": 66,
+    "totalRemainingTasks": 59,
     "categories": {
       "focusStealing": {
         "count": 0,

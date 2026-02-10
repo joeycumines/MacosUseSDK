@@ -103,6 +103,8 @@ public actor AutomationCoordinator {
                         $0.y = sdkElement.y ?? 0
                         $0.width = sdkElement.width ?? 0
                         $0.height = sdkElement.height ?? 0
+                        // CRITICAL: Copy path for change detection (used as dictionary key in ObservationManager)
+                        $0.path = sdkElement.path
                     }
                 }
 

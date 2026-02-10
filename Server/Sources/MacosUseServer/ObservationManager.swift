@@ -518,8 +518,9 @@ actor ObservationManager {
 
     private nonisolated func detectElementChanges(previous: [Macosusesdk_Type_Element], current: [Macosusesdk_Type_Element]) -> [ElementChange] {
         var changes: [ElementChange] = []
-        let previousMap = Dictionary(uniqueKeysWithValues: previous.map { ($0.path, $0) })
-        let currentMap = Dictionary(uniqueKeysWithValues: current.map { ($0.path, $0) })
+        // Use uniquingKeysWith to handle any duplicate paths gracefully (keep first occurrence)
+        let previousMap = Dictionary(previous.map { ($0.path, $0) }, uniquingKeysWith: { first, _ in first })
+        let currentMap = Dictionary(current.map { ($0.path, $0) }, uniquingKeysWith: { first, _ in first })
 
         for element in current where previousMap[element.path] == nil {
             changes.append(.added(element))
@@ -537,7 +538,8 @@ actor ObservationManager {
 
     private nonisolated func detectAttributeChanges(previous: [Macosusesdk_Type_Element], current: [Macosusesdk_Type_Element], watchedAttributes: [String]) -> [ElementChange] {
         var changes: [ElementChange] = []
-        let previousMap = Dictionary(uniqueKeysWithValues: previous.map { ($0.path, $0) })
+        // Use uniquingKeysWith to handle any duplicate paths gracefully (keep first occurrence)
+        let previousMap = Dictionary(previous.map { ($0.path, $0) }, uniquingKeysWith: { first, _ in first })
         for element in current {
             if let prevElement = previousMap[element.path] {
                 let attributeChanges = findAttributeChanges(old: prevElement, new: element, watched: watchedAttributes)
