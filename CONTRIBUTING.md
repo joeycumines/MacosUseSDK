@@ -126,6 +126,99 @@ cd integration && go test -v -run TestCalculator ./...
 
 **Important**: Integration tests use `PollUntilContext` patterns, never `time.Sleep`. Tests must assert state differences, not just "OK" status.
 
+## Test Guidelines
+
+### Golden Application Constraint
+
+Integration tests MUST target only these applications:
+
+| Application | Use Case |
+|-------------|----------|
+| **Calculator** | Input simulation, element interaction |
+| **TextEdit** | Text input, clipboard, document handling |
+| **Finder** | File dialogs, window management |
+
+Do not introduce new target applications without discussion.
+
+### No `time.Sleep` Rule
+
+**BANNED**: `time.Sleep` in all test code. Use `PollUntilContext` for async verification:
+
+```go
+// ❌ WRONG: Arbitrary sleep
+time.Sleep(2 * time.Second)
+
+// ✅ CORRECT: Poll until condition or timeout
+err := PollUntilContext(ctx, 100*time.Millisecond, func() bool {
+    resp, _ := client.GetWindow(ctx, &pb.GetWindowRequest{Name: windowName})
+    return resp != nil && resp.GetWindow().GetTitle() == expectedTitle
+})
+```
+
+The `PollUntilContext` helper polls at the given interval until the predicate returns `true` or the context expires.
+
+### State-Delta Assertions
+
+Tests MUST verify state changes, not just "OK" status:
+
+```go
+// ❌ WRONG: Only checking status
+resp, err := client.MoveWindow(ctx, &pb.MoveWindowRequest{...})
+require.NoError(t, err) // Only verifies the call succeeded
+
+// ✅ CORRECT: Verify the delta in state
+initialWindow := getWindow(t, client, windowName)
+initialX, initialY := initialWindow.GetBounds().GetX(), initialWindow.GetBounds().GetY()
+
+_, err := client.MoveWindow(ctx, &pb.MoveWindowRequest{
+    Name: windowName,
+    X: 200, Y: 300,
+})
+require.NoError(t, err)
+
+// Assert the state actually changed
+finalWindow := getWindow(t, client, windowName)
+assert.NotEqual(t, initialX, finalWindow.GetBounds().GetX())
+assert.Equal(t, float64(200), finalWindow.GetBounds().GetX())
+```
+
+### Fixture Lifecycle
+
+Every test suite must ensure a clean state:
+
+**Before Tests (Setup)**:
+```go
+func TestMain(m *testing.M) {
+    // SIGKILL target apps to ensure clean state
+    exec.Command("pkill", "-9", "Calculator").Run()
+    exec.Command("pkill", "-9", "TextEdit").Run()
+    
+    // ... start server ...
+    
+    code := m.Run()
+    
+    // ... cleanup ...
+    os.Exit(code)
+}
+```
+
+**After Tests (Cleanup)**:
+```go
+func TestSomething(t *testing.T) {
+    // ... test setup ...
+    
+    t.Cleanup(func() {
+        // DeleteApplication cleans up server-side state
+        _, _ = client.DeleteApplication(ctx, &pb.DeleteApplicationRequest{
+            Name: fmt.Sprintf("applications/%d", pid),
+            Force: true,
+        })
+    })
+    
+    // ... test body ...
+}
+```
+
 ## Code Style
 
 ### Go
