@@ -199,14 +199,31 @@ func TestElementActions_PerformAXPress(t *testing.T) {
 	t.Log("✓ AXPress performed successfully via selector")
 
 	// Verify Calculator display shows "5" (state-delta verification)
+	// Use direct traversal to avoid t.Fatalf in readCalculatorResult
 	t.Log("Verifying Calculator display changed...")
 	var displayValue string
-	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
-		result := readCalculatorResult(t, ctx, client, app)
-		if result != "" {
-			displayValue = result
-			// Check if display contains "5"
-			return strings.Contains(result, "5"), nil
+	err = PollUntilContext(ctx, 200*time.Millisecond, func() (bool, error) {
+		resp, err := client.TraverseAccessibility(ctx, &pb.TraverseAccessibilityRequest{
+			Name: app.Name,
+		})
+		if err != nil {
+			return false, nil // Retry on error, don't propagate
+		}
+
+		// Look for display showing "5"
+		for _, elem := range resp.Elements {
+			if elem == nil {
+				continue
+			}
+			text := strings.TrimSpace(elem.GetText())
+			// Skip buttons, find static text or value display
+			if strings.Contains(strings.ToLower(elem.Role), "button") {
+				continue
+			}
+			if strings.Contains(text, "5") {
+				displayValue = text
+				return true, nil
+			}
 		}
 		return false, nil
 	})
