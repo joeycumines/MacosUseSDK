@@ -153,7 +153,7 @@ public func performAction(
             // REMOVED Delay specific to open
         } catch {
             logger.error(
-                "[Coordinator] Failed to open application '\(identifier, privacy: .private)': \(error.localizedDescription, privacy: .auto)",
+                "[Coordinator] Failed to open application '\(identifier, privacy: .private)': \(error.localizedDescription, privacy: .public)",
             )
             primaryActionError = error
             if effectivePid == nil {
@@ -197,7 +197,7 @@ public func performAction(
                 primaryActionExecuted = true // Mark 'input' as executed
             } catch {
                 logger.error(
-                    "[Coordinator] Failed to execute input action: \(error.localizedDescription, privacy: .auto)",
+                    "[Coordinator] Failed to execute input action: \(error.localizedDescription, privacy: .public)",
                 )
                 primaryActionError = error
             }
@@ -232,7 +232,7 @@ public func performAction(
             )
         } catch {
             logger.error(
-                "[Coordinator] Pre-action traversal failed: \(error.localizedDescription, privacy: .auto)",
+                "[Coordinator] Pre-action traversal failed: \(error.localizedDescription, privacy: .public)",
             )
             result.traversalBeforeError = error.localizedDescription
         }
@@ -246,7 +246,7 @@ public func performAction(
             primaryActionExecuted = true // Mark 'input' as executed
         } catch {
             logger.error(
-                "[Coordinator] Failed to execute input action: \(error.localizedDescription, privacy: .auto)",
+                "[Coordinator] Failed to execute input action: \(error.localizedDescription, privacy: .public)",
             )
             primaryActionError = error
         }
@@ -280,7 +280,7 @@ public func performAction(
             )
         } catch {
             logger.error(
-                "[Coordinator] Post-action traversal failed: \(error.localizedDescription, privacy: .auto)",
+                "[Coordinator] Post-action traversal failed: \(error.localizedDescription, privacy: .public)",
             )
             result.traversalAfterError = error.localizedDescription
         }

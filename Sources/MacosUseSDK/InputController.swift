@@ -404,7 +404,7 @@ public func writeText(_ text: String) async throws {
                 let errorString =
                     String(data: errorData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
                         ?? ""
-                logger.error("osascript failed: \(status, privacy: .public) \(errorString, privacy: .auto)")
+                logger.error("osascript failed: \(status, privacy: .public) \(errorString, privacy: .public)")
                 continuation.resume(
                     throwing: MacosUseSDKError.osascriptExecutionFailed(status: status, message: errorString),
                 )

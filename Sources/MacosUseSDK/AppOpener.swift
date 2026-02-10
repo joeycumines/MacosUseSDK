@@ -269,7 +269,7 @@ private class AppOpenerOperation {
 
         } catch {
             logStepCompletion("opening/activating application (failed)") // Call method
-            logger.error("activation call failed: \(error.localizedDescription, privacy: .auto)")
+            logger.error("activation call failed: \(error.localizedDescription, privacy: .public)")
 
             if let pid = foundPID {
                 logger.warning(

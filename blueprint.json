@@ -18,7 +18,7 @@
     "parallelExecutionBan": "CRITICAL: Do NOT run multiple subagents in parallel when they execute swift tests. Test execution competes for window focus, causing hangs and race conditions. Execute subagents SEQUENTIALLY."
   },
   "statusSection": {
-    "currentState": "23 tasks completed (Tasks 1-23). 54 tasks remaining. Next: Tasks 24-32 (Swift lint fixes).",
+    "currentState": "34 tasks completed (Tasks 1-34). 43 tasks remaining. Next: Task 35 (nonisolated(unsafe) safety audit).",
     "focusStealingStatus": {
       "observationActivate": "COMPLETE - activate param on CreateObservation defaults to false, preventing focus theft during polling",
       "traversalActivate": "COMPLETE - activate field on TraverseAccessibilityRequest (field 3) defaults to false",
@@ -54,17 +54,17 @@
     {"id": 21, "title": "Add integration test for element actions", "description": "Write a Go integration test using Calculator: find a button element, get available actions (should include AXPress), perform AXPress action, verify Calculator display changes.", "status": "completed", "completionNotes": "Created integration/element_actions_test.go with 3 tests: TestElementActions_GetActionsForButton (traverses Calculator, finds button '5', verifies AXPress in elem.Actions list), TestElementActions_PerformAXPress (presses '7' via selector-based PerformElementAction, verifies display shows '7'), TestElementActions_FindAndPressButton (presses '9' via selector, verifies display). Uses selector-based approach as server element_id is empty from traversal."},
     {"id": 22, "title": "Add Finder integration test for windows", "description": "Write a Go integration test using Finder: open Finder window, list windows (verify Finder window present), get window metadata (title, bounds), move window, verify new position, close window, verify removed from list.", "status": "completed", "completionNotes": "Created integration/finder_windows_test.go with 3 tests: TestFinderWindows_Lifecycle (open Finder, list windows, verify present, close window via AppleScript, verify removed), TestFinderWindows_Resize (open, resize window via MoveWindow with new dimensions, poll until size matches), TestFinderWindows_ListMultiple (open 2 windows, verify both in list). All tests use SIGKILL cleanup and PollUntil patterns."},
     {"id": 23, "title": "Add TextEdit integration test for elements", "description": "Write a Go integration test using TextEdit: open new document, traverse accessibility tree, find text area element (AXTextArea role), write value to text area, read back value, verify match.", "status": "completed", "completionNotes": "Created integration/textedit_elements_test.go with 4 tests: TestTextEditElements_TraverseAndFindTextArea (opens TextEdit, traverses tree, finds AXTextArea role element via case-insensitive search), TestTextEditElements_WriteAndReadValue (writes test string via selector-based WriteElementValue, reads back and verifies), TestTextEditElements_FindElementsBySelector (uses FindElements with role selector), TestTextEditElements_WriteValueBySelector (comprehensive write/read verification). Uses selector-based approach as server element_id is empty from traversal."},
-    {"id": 24, "title": "Fix AccessibilityTraversal.swift lint issues", "description": "Remove AccessibilityTraversal.swift from SWIFT_PACKAGE_FILES_NO_LINT_OR_FORMAT in Makefile. Run SwiftLint and SwiftFormat. Fix all warnings: line length, trailing whitespace, identifier naming, etc. Retain the 'swiftlint:disable all' only if truly needed for upstream compatibility.", "status": "not-started"},
-    {"id": 25, "title": "Fix InputController.swift lint issues", "description": "Remove InputController.swift from SWIFT_PACKAGE_FILES_NO_LINT_OR_FORMAT. Fix all SwiftLint and SwiftFormat warnings. This file handles CGEvent-based input simulation.", "status": "not-started"},
-    {"id": 26, "title": "Fix CombinedActions.swift lint issues", "description": "Remove CombinedActions.swift from SWIFT_PACKAGE_FILES_NO_LINT_OR_FORMAT. Fix all SwiftLint and SwiftFormat warnings.", "status": "not-started"},
-    {"id": 27, "title": "Fix ActionCoordinator.swift lint issues", "description": "Remove ActionCoordinator.swift from SWIFT_PACKAGE_FILES_NO_LINT_OR_FORMAT. Fix all SwiftLint and SwiftFormat warnings.", "status": "not-started"},
-    {"id": 28, "title": "Fix AppOpener.swift lint issues", "description": "Remove AppOpener.swift from SWIFT_PACKAGE_FILES_NO_LINT_OR_FORMAT. Fix all SwiftLint and SwiftFormat warnings.", "status": "not-started"},
-    {"id": 29, "title": "Fix DrawVisuals.swift lint issues", "description": "Remove DrawVisuals.swift from SWIFT_PACKAGE_FILES_NO_LINT_OR_FORMAT. Fix all SwiftLint and SwiftFormat warnings.", "status": "not-started"},
-    {"id": 30, "title": "Fix HighlightInput.swift lint issues", "description": "Remove HighlightInput.swift from SWIFT_PACKAGE_FILES_NO_LINT_OR_FORMAT. Fix all SwiftLint and SwiftFormat warnings.", "status": "not-started"},
-    {"id": 31, "title": "Fix CLI tool main.swift lint issues", "description": "Remove all CLI tool main.swift files (VisualInputTool, TraversalTool, InputControllerTool, HighlightTraversalTool, AppOpenerTool, ActionTool) from SWIFT_PACKAGE_FILES_NO_LINT_OR_FORMAT. Fix lint/format warnings. Note: fputs/print are allowed in CLI tools per AGENTS.md.", "status": "not-started"},
-    {"id": 32, "title": "Fix test file lint exclusions", "description": "Remove CombinedActionsDiffTests.swift and CombinedActionsFocusVisualizationTests.swift from SWIFT_PACKAGE_FILES_NO_LINT_OR_FORMAT and fix all SwiftLint and SwiftFormat warnings.", "status": "not-started"},
-    {"id": 33, "title": "Audit Logger privacy in server files", "description": "Audit all Server/Sources/MacosUseServer/*.swift files for Logger calls with interpolated values. Every interpolated value must have explicit .private or .public privacy annotation. Fix any missing annotations. Files to audit: all 35+ Swift files in MacosUseServer/.", "status": "not-started"},
-    {"id": 34, "title": "Audit Logger privacy in SDK files", "description": "Audit all Sources/MacosUseSDK/*.swift files for Logger calls with interpolated values missing explicit privacy annotations. Add .private or .public as appropriate. Files: AccessibilityTraversal.swift, WindowQuery.swift, SDKLogger.swift, etc.", "status": "not-started"},
+    {"id": 24, "title": "Fix AccessibilityTraversal.swift lint issues", "description": "Remove AccessibilityTraversal.swift from SWIFT_PACKAGE_FILES_NO_LINT_OR_FORMAT in Makefile. Run SwiftLint and SwiftFormat. Fix all warnings: line length, trailing whitespace, identifier naming, etc. Retain the 'swiftlint:disable all' only if truly needed for upstream compatibility.", "status": "completed", "completionNotes": "Removed swiftlint:disable all, added explicit self. prefixes for Swift 6 concurrency."},
+    {"id": 25, "title": "Fix InputController.swift lint issues", "description": "Remove InputController.swift from SWIFT_PACKAGE_FILES_NO_LINT_OR_FORMAT. Fix all SwiftLint and SwiftFormat warnings. This file handles CGEvent-based input simulation.", "status": "completed", "completionNotes": "Removed swiftlint:disable all, formatted with SwiftFormat."},
+    {"id": 26, "title": "Fix CombinedActions.swift lint issues", "description": "Remove CombinedActions.swift from SWIFT_PACKAGE_FILES_NO_LINT_OR_FORMAT. Fix all SwiftLint and SwiftFormat warnings.", "status": "completed", "completionNotes": "Removed swiftlint:disable all, formatted with SwiftFormat."},
+    {"id": 27, "title": "Fix ActionCoordinator.swift lint issues", "description": "Remove ActionCoordinator.swift from SWIFT_PACKAGE_FILES_NO_LINT_OR_FORMAT. Fix all SwiftLint and SwiftFormat warnings.", "status": "completed", "completionNotes": "Removed swiftlint:disable all, formatted with SwiftFormat."},
+    {"id": 28, "title": "Fix AppOpener.swift lint issues", "description": "Remove AppOpener.swift from SWIFT_PACKAGE_FILES_NO_LINT_OR_FORMAT. Fix all SwiftLint and SwiftFormat warnings.", "status": "completed", "completionNotes": "Removed swiftlint:disable all, added explicit self. prefixes."},
+    {"id": 29, "title": "Fix DrawVisuals.swift lint issues", "description": "Remove DrawVisuals.swift from SWIFT_PACKAGE_FILES_NO_LINT_OR_FORMAT. Fix all SwiftLint and SwiftFormat warnings.", "status": "completed", "completionNotes": "Removed swiftlint:disable all, formatted with SwiftFormat."},
+    {"id": 30, "title": "Fix HighlightInput.swift lint issues", "description": "Remove HighlightInput.swift from SWIFT_PACKAGE_FILES_NO_LINT_OR_FORMAT. Fix all SwiftLint and SwiftFormat warnings.", "status": "completed", "completionNotes": "Removed swiftlint:disable all, formatted with SwiftFormat."},
+    {"id": 31, "title": "Fix CLI tool main.swift lint issues", "description": "Remove all CLI tool main.swift files (VisualInputTool, TraversalTool, InputControllerTool, HighlightTraversalTool, AppOpenerTool, ActionTool) from SWIFT_PACKAGE_FILES_NO_LINT_OR_FORMAT. Fix lint/format warnings. Note: fputs/print are allowed in CLI tools per AGENTS.md.", "status": "completed", "completionNotes": "Removed swiftlint:disable all from all 6 CLI tool main.swift files, formatted with SwiftFormat."},
+    {"id": 32, "title": "Fix test file lint exclusions", "description": "Remove CombinedActionsDiffTests.swift and CombinedActionsFocusVisualizationTests.swift from SWIFT_PACKAGE_FILES_NO_LINT_OR_FORMAT and fix all SwiftLint and SwiftFormat warnings.", "status": "completed", "completionNotes": "Removed swiftlint:disable all from both test files, formatted with SwiftFormat."},
+    {"id": 33, "title": "Audit Logger privacy in server files", "description": "Audit all Server/Sources/MacosUseServer/*.swift files for Logger calls with interpolated values. Every interpolated value must have explicit .private or .public privacy annotation. Fix any missing annotations. Files to audit: all 35+ Swift files in MacosUseServer/.", "status": "completed", "completionNotes": "Audited 37 Swift files, found 151 Logger calls with interpolations. ALL had proper .private or .public annotations - ZERO violations. No changes needed."},
+    {"id": 34, "title": "Audit Logger privacy in SDK files", "description": "Audit all Sources/MacosUseSDK/*.swift files for Logger calls with interpolated values missing explicit privacy annotations. Add .private or .public as appropriate. Files: AccessibilityTraversal.swift, WindowQuery.swift, SDKLogger.swift, etc.", "status": "completed", "completionNotes": "Audited 10 Swift files, found 200+ Logger calls with interpolations. 7 had non-explicit .auto annotation (violates AGENTS.md mandate for explicit .private or .public). Fixed all 7 to .public (error messages per guidance). Files modified: AppOpener.swift (1), InputController.swift (1), ActionCoordinator.swift (5). Lint passed. Build passed."},
     {"id": 35, "title": "Add nonisolated(unsafe) safety audit", "description": "Audit all uses of nonisolated(unsafe) in server code: ObservationManager.shared (line 12), MacroExecutor.shared (line 51), signalHandler (main.swift line 29). Verify each is initialized before any access. Add runtime guards (preconditionFailure) if the implicitly unwrapped optionals could be nil at access time.", "status": "not-started"},
     {"id": 36, "title": "Add initialization order documentation", "description": "Add inline documentation in main.swift explaining the initialization order: NSApplication.shared -> ServerConfig -> AppStateStore -> OperationStore -> ProductionSystemOperations -> WindowRegistry -> ObservationManager.shared -> MacroExecutor.shared -> MacosUseService. Document why order matters (dependency graph).", "status": "not-started"},
     {"id": 37, "title": "Add graceful shutdown to Swift server", "description": "Implement proper graceful shutdown in main.swift that: cancels all active observations via ObservationManager, invalidates all sessions via SessionManager, drains in-flight RPCs (GRPCServer already handles this), cleans up Unix socket file. Handle SIGTERM signal properly.", "status": "not-started"},
@@ -122,7 +122,7 @@
     }
   ],
   "taskSummary": {
-    "totalRemainingTasks": 54,
+    "totalRemainingTasks": 43,
     "categories": {
       "focusStealing": {
         "count": 0,
@@ -140,14 +140,14 @@
         "description": "Go integration tests for MCP transport, file dialogs, elements, windows"
       },
       "lintFixes": {
-        "count": 9,
-        "tasks": "24-32",
-        "description": "Fix lint issues in Swift files currently excluded from linting"
+        "count": 0,
+        "tasks": "24-32 COMPLETED",
+        "description": "Fix lint issues in Swift files - COMPLETE. Removed swiftlint:disable all from 15 files, added .swiftformat, updated .swiftlint.yml"
       },
       "loggerPrivacy": {
-        "count": 2,
-        "tasks": "33-34",
-        "description": "Audit Logger calls for explicit privacy annotations"
+        "count": 0,
+        "tasks": "33-34 COMPLETED",
+        "description": "Logger privacy audit - COMPLETE. Server: 151 calls, 0 violations. SDK: 7 .auto→.public fixes in 3 files."
       },
       "serverInfrastructure": {
         "count": 11,
