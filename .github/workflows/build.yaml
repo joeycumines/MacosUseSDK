@@ -55,6 +55,46 @@ jobs:
       - name: Install homebrew dependencies
         run: |-
           brew install swiftformat swiftlint make
+      - name: Lint protos (buf lint)
+        run: |-
+          buf lint --error-format=text .
+      - name: Lint protos (google-api-linter)
+        run: |-
+          ./hack/google-api-linter.sh
       - name: Run a full build
         run: |-
           gmake -j "$(sysctl -n hw.ncpu)"
+      - name: Go test coverage
+        run: |-
+          echo "Running Go tests with coverage..." &&
+          go test -coverprofile=coverage.out ./... ./internal/... &&
+          (cd integration && go test -coverprofile=integration_coverage.out ./...) &&
+          echo "::group::Coverage Summary" &&
+          go tool cover -func=coverage.out | tail -1 &&
+          echo "::endgroup::" &&
+          coverage_pct=$(go tool cover -func=coverage.out | tail -1 | awk '{print $NF}' | sed 's/%//') &&
+          echo "Coverage: ${coverage_pct}%" &&
+          threshold=70 &&
+          result=$(echo "$coverage_pct >= $threshold" | bc -l) &&
+          if [ "$result" -eq 0 ]; then
+            echo "::error::Coverage ${coverage_pct}% is below threshold ${threshold}%"
+            exit 1
+          fi &&
+          echo "::notice::Coverage ${coverage_pct}% meets threshold ${threshold}%"
+      - name: Swift test coverage
+        run: |-
+          echo "Running Swift tests with coverage..." &&
+          swift test --enable-code-coverage &&
+          (cd Server && swift test --enable-code-coverage) &&
+          echo "::group::Swift Coverage Summary" &&
+          if [ -f .build/debug/codecov/*.json ]; then
+            jq -r '.data[0].totals.lines.percent | "SDK Coverage: \(.)%"' .build/debug/codecov/*.json || echo "SDK: coverage extraction failed"
+          else
+            echo "SDK: No coverage file found (may not have test targets)"
+          fi &&
+          if [ -f Server/.build/debug/codecov/*.json ]; then
+            jq -r '.data[0].totals.lines.percent | "Server Coverage: \(.)%"' Server/.build/debug/codecov/*.json || echo "Server: coverage extraction failed"
+          else
+            echo "Server: No coverage file found (may not have test targets)"
+          fi &&
+          echo "::endgroup::"
