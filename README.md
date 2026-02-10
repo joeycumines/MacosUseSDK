@@ -107,6 +107,27 @@ macOS uses **two distinct coordinate systems**:
 | `GRPC_PORT` | Swift server port | `50051` |
 | `GRPC_UNIX_SOCKET` | Swift server Unix socket | - |
 
+## MCP Tool Catalog
+
+The server exposes **77 MCP tools** organized into 14 categories. See the [full tool reference](docs/ai-artifacts/06-mcp-tool-design.md) for details.
+
+| Category | Tools | Description |
+|----------|-------|-------------|
+| **Screenshot** | `capture_screenshot`, `capture_window_screenshot`, `capture_region_screenshot`, `capture_element_screenshot` | Screen, window, region, and element capture with OCR support |
+| **Input** | `click`, `type_text`, `press_key`, `hold_key`, `mouse_move`, `scroll`, `drag`, `mouse_button_down`, `mouse_button_up`, `hover`, `gesture` | Keyboard, mouse, and gesture input simulation |
+| **Element** | `find_elements`, `get_element`, `get_element_actions`, `click_element`, `write_element_value`, `perform_element_action` | UI element discovery and interaction |
+| **Window** | `list_windows`, `get_window`, `focus_window`, `move_window`, `resize_window`, `minimize_window`, `restore_window`, `close_window` | Window enumeration and manipulation |
+| **Display** | `list_displays`, `get_display`, `cursor_position` | Multi-monitor support and cursor tracking |
+| **Clipboard** | `get_clipboard`, `write_clipboard`, `clear_clipboard`, `get_clipboard_history` | Clipboard read/write operations |
+| **Application** | `open_application`, `list_applications`, `get_application`, `delete_application` | Application lifecycle management |
+| **Scripting** | `execute_apple_script`, `execute_javascript`, `execute_shell_command`, `validate_script`, `get_scripting_dictionaries` | AppleScript, JXA, and shell execution |
+| **Observation** | `create_observation`, `stream_observations`, `get_observation`, `list_observations`, `cancel_observation` | Real-time UI change monitoring |
+| **Accessibility** | `traverse_accessibility`, `get_window_state`, `find_region_elements`, `wait_element`, `wait_element_state`, `watch_accessibility` | Accessibility tree traversal and queries |
+| **File Dialog** | `automate_open_file_dialog`, `automate_save_file_dialog`, `select_file`, `select_directory`, `drag_files` | File/folder dialog automation |
+| **Session** | `create_session`, `get_session`, `list_sessions`, `delete_session`, `get_session_snapshot`, `begin_transaction`, `commit_transaction`, `rollback_transaction` | Session and transaction management |
+| **Macro** | `create_macro`, `get_macro`, `list_macros`, `delete_macro`, `execute_macro`, `update_macro` | Macro recording and playback |
+| **Input Query** | `get_input`, `list_inputs` | Input history and state queries |
+
 
 https://github.com/user-attachments/assets/d8dc75ba-5b15-492c-bb40-d2bc5b65483e
 
