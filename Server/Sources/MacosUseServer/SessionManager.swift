@@ -128,6 +128,36 @@ actor SessionManager {
         return true
     }
 
+    /// Invalidates all active sessions during graceful shutdown.
+    ///
+    /// This method:
+    /// 1. Marks all sessions as expired
+    /// 2. Removes all sessions from the store
+    /// 3. Clears any active transactions
+    ///
+    /// - Returns: The number of sessions that were invalidated.
+    @discardableResult
+    func invalidateAllSessions() async -> Int {
+        let sessionNames = Array(sessions.keys)
+        let count = sessionNames.count
+
+        for name in sessionNames {
+            if var state = sessions[name] {
+                // Clear any active transaction
+                state.activeTransaction = nil
+                // Mark as expired
+                state.session.state = .expired
+                state.session.transactionID = ""
+            }
+        }
+
+        // Remove all sessions
+        sessions.removeAll()
+
+        logger.info("Invalidated \(count, privacy: .public) session(s) during shutdown")
+        return count
+    }
+
     /// Begin a transaction for a session
     func beginTransaction(
         sessionName: String,

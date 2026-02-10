@@ -148,6 +148,36 @@ public actor OperationStore {
         operations[name] = op
     }
 
+    /// Drains all operations during graceful shutdown.
+    ///
+    /// This method:
+    /// 1. Cancels all pending (not done) operations
+    /// 2. Clears all operations from the store
+    ///
+    /// - Returns: A tuple of (pendingCancelled, totalDrained) counts.
+    @discardableResult
+    public func drainAllOperations() -> (pendingCancelled: Int, totalDrained: Int) {
+        var pendingCancelled = 0
+        let totalCount = operations.count
+
+        // Cancel all pending operations first
+        for (name, op) in operations where !op.done {
+            var cancelledOp = op
+            var status = Google_Rpc_Status()
+            status.code = 1 // CANCELLED
+            status.message = "Operation cancelled during server shutdown"
+            cancelledOp.error = status
+            cancelledOp.done = true
+            operations[name] = cancelledOp
+            pendingCancelled += 1
+        }
+
+        // Clear all operations
+        operations.removeAll()
+
+        return (pendingCancelled, totalCount)
+    }
+
     /// Wait for an operation to complete until optional timeout in nanoseconds.
     /// If timeoutNs is nil, waits until done (but will still poll with sleeps).
     public func waitOperation(name: String, timeoutNs: UInt64?) async -> Google_Longrunning_Operation? {
