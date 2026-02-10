@@ -666,5 +666,27 @@ func (t *HTTPTransport) IsClosed() bool {
 	return t.closed.Load()
 }
 
+// BroadcastEvent sends a custom SSE event to all connected clients.
+// The event type is used for client-side filtering (e.g., "observation", "heartbeat").
+// This is used by observation streaming to broadcast events to all SSE clients.
+func (t *HTTPTransport) BroadcastEvent(eventType string, data string) {
+	if t.closed.Load() {
+		return
+	}
+
+	t.clients.Broadcast(&SSEEvent{
+		ID:    fmt.Sprintf("%d", t.eventID.Add(1)),
+		Event: eventType,
+		Data:  data,
+	})
+	t.metrics.RecordSSEEvent()
+}
+
+// ShutdownChan returns a channel that is closed when the transport is shutting down.
+// This allows handlers to detect shutdown and clean up gracefully.
+func (t *HTTPTransport) ShutdownChan() <-chan struct{} {
+	return t.shutdownCh
+}
+
 // Ensure HTTPTransport implements Transport interface
 var _ Transport = (*HTTPTransport)(nil)

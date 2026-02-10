@@ -8,10 +8,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 // handleCreateObservation handles the create_observation tool
@@ -225,9 +227,9 @@ func (s *MCPServer) handleCancelObservation(call *ToolCall) (*ToolResult, error)
 }
 
 // handleStreamObservations handles the stream_observations tool
-// Note: Over stdio transport, this returns a single response with accumulated events
-// since true streaming requires SSE over HTTP. For practical use, this tool polls
-// and returns all events received within the timeout period.
+// For HTTP/SSE transport: Starts background streaming and broadcasts events via SSE.
+// For stdio transport: Returns current state with polling instructions.
+// Reconnection hints are included in error responses to help clients recover.
 func (s *MCPServer) handleStreamObservations(call *ToolCall) (*ToolResult, error) {
 	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
 	defer cancel()
@@ -240,14 +242,14 @@ func (s *MCPServer) handleStreamObservations(call *ToolCall) (*ToolResult, error
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
 		return &ToolResult{
 			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Invalid parameters: %v", err)}},
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Invalid parameters: %v\nReconnection hint: Verify JSON schema and retry.", err)}},
 		}, nil
 	}
 
 	if params.Name == "" {
 		return &ToolResult{
 			IsError: true,
-			Content: []Content{{Type: "text", Text: "name parameter is required"}},
+			Content: []Content{{Type: "text", Text: "name parameter is required\nReconnection hint: Provide the observation resource name (e.g., observations/{id})."}},
 		}, nil
 	}
 
@@ -258,19 +260,29 @@ func (s *MCPServer) handleStreamObservations(call *ToolCall) (*ToolResult, error
 	if err != nil {
 		return &ToolResult{
 			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to get observation: %v", err)}},
+			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to get observation: %v\nReconnection hint: Check observation name with list_observations, then retry.", err)}},
 		}, nil
 	}
 
-	// Check if observation is in a state that can stream
+	// Check if observation is in a terminal state
 	if obs.State == pb.Observation_STATE_COMPLETED || obs.State == pb.Observation_STATE_CANCELLED || obs.State == pb.Observation_STATE_FAILED {
 		return &ToolResult{
 			Content: []Content{{
 				Type: "text",
-				Text: fmt.Sprintf("Observation %s is already %s - no events to stream",
+				Text: fmt.Sprintf("Observation %s is already %s - no events to stream.\nReconnection hint: Create a new observation with create_observation to continue monitoring.",
 					obs.Name, obs.State.String()),
 			}},
 		}, nil
+	}
+
+	// Check if HTTP transport is available for true SSE streaming
+	s.mu.RLock()
+	httpTransport := s.httpTransport
+	s.mu.RUnlock()
+
+	if httpTransport != nil {
+		// HTTP transport available - start background streaming
+		return s.startObservationStream(params.Name, obs, httpTransport)
 	}
 
 	// For stdio transport, we can't do true streaming
@@ -281,8 +293,116 @@ func (s *MCPServer) handleStreamObservations(call *ToolCall) (*ToolResult, error
 			Text: fmt.Sprintf(`Streaming observation %s:
   Type: %s
   State: %s
-  Note: True streaming requires SSE over HTTP transport. 
-  Over stdio, use list_observations and get_observation to poll for changes.`,
+  Note: True streaming requires SSE over HTTP transport.
+  Over stdio, use list_observations and get_observation to poll for changes.
+  Reconnection hint: Connect to GET /events with Last-Event-ID header for SSE streaming with reconnection support.`,
+				obs.Name, obs.Type.String(), obs.State.String()),
+		}},
+	}, nil
+}
+
+// startObservationStream starts background streaming for an observation over SSE.
+// It spawns a goroutine that calls the gRPC StreamObservations RPC and broadcasts
+// events to SSE clients. The goroutine exits on: observation completion, cancellation,
+// gRPC error, or transport shutdown.
+func (s *MCPServer) startObservationStream(name string, obs *pb.Observation, httpTransport interface {
+	BroadcastEvent(eventType string, data string)
+	ShutdownChan() <-chan struct{}
+	IsClosed() bool
+}) (*ToolResult, error) {
+	// Start background streaming goroutine
+	go func() {
+		// Create a fresh context for the stream (not the request context)
+		streamCtx, streamCancel := context.WithCancel(s.ctx)
+		defer streamCancel()
+
+		stream, err := s.client.StreamObservations(streamCtx, &pb.StreamObservationsRequest{
+			Name: name,
+		})
+		if err != nil {
+			log.Printf("Failed to start observation stream for %s: %v", name, err)
+			// Broadcast error event with reconnection hint
+			errorData := fmt.Sprintf(`{"observation":"%s","error":"%s","reconnection_hint":"Retry stream_observations after verifying observation state"}`, name, err.Error())
+			httpTransport.BroadcastEvent("observation_error", errorData)
+			return
+		}
+
+		log.Printf("Started observation stream for %s", name)
+
+		// Use channels to properly detect shutdown while Recv() is blocking.
+		// The receiver goroutine sends results to recvCh/errCh, allowing the main
+		// loop to select on shutdown signals without being blocked in Recv().
+		type recvResult struct {
+			resp *pb.StreamObservationsResponse
+			err  error
+		}
+		recvCh := make(chan recvResult)
+
+		// Receiver goroutine - reads from stream and sends to channel
+		go func() {
+			for {
+				resp, err := stream.Recv()
+				select {
+				case recvCh <- recvResult{resp, err}:
+					if err != nil {
+						return // Exit receiver on error
+					}
+				case <-streamCtx.Done():
+					return // Context cancelled, exit receiver
+				}
+			}
+		}()
+
+		// Stream events until done
+		for {
+			select {
+			case <-httpTransport.ShutdownChan():
+				log.Printf("Shutting down observation stream for %s (transport shutdown)", name)
+				streamCancel() // Cancel stream context to stop receiver goroutine
+				// Broadcast shutdown event with reconnection hint
+				shutdownData := fmt.Sprintf(`{"observation":"%s","reason":"server_shutdown","reconnection_hint":"Reconnect to /events with Last-Event-ID after server restart"}`, name)
+				httpTransport.BroadcastEvent("observation_shutdown", shutdownData)
+				return
+			case <-streamCtx.Done():
+				log.Printf("Observation stream context cancelled for %s", name)
+				return
+			case result := <-recvCh:
+				if result.err != nil {
+					// Stream ended (EOF) or error
+					log.Printf("Observation stream ended for %s: %v", name, result.err)
+					// Broadcast stream end event
+					endData := fmt.Sprintf(`{"observation":"%s","reason":"stream_ended","error":"%v","reconnection_hint":"Check observation state with get_observation and restart if needed"}`, name, result.err)
+					httpTransport.BroadcastEvent("observation_stream_end", endData)
+					return
+				}
+
+				// Marshal event to JSON for SSE broadcast
+				if result.resp != nil && result.resp.Event != nil {
+					eventJSON, err := protojson.Marshal(result.resp.Event)
+					if err != nil {
+						log.Printf("Failed to marshal observation event: %v", err)
+						continue
+					}
+					// Broadcast the observation event
+					httpTransport.BroadcastEvent("observation", string(eventJSON))
+				}
+			}
+		}
+	}()
+
+	return &ToolResult{
+		Content: []Content{{
+			Type: "text",
+			Text: fmt.Sprintf(`Started streaming observation %s:
+  Type: %s
+  State: %s
+  SSE Event Types:
+    - "observation": Observation events (JSON ObservationEvent)
+    - "observation_error": Stream errors with reconnection hints
+    - "observation_shutdown": Server shutdown notification
+    - "observation_stream_end": Stream completion
+  Reconnection: Connect to GET /events with Last-Event-ID header to resume after disconnect.
+  Note: Heartbeats are sent every 15 seconds to keep the connection alive.`,
 				obs.Name, obs.Type.String(), obs.State.String()),
 		}},
 	}, nil
