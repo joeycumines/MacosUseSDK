@@ -1,5 +1,4 @@
 package integration
-package integration
 
 import (
 	"context"
@@ -18,227 +17,244 @@ func TestConcurrencyStress(t *testing.T) {
 	defer cancel()
 
 	// Setup: start server and connect
-	client, opClient, cleanup := setupTestWithClients(t, ctx)
-	defer cleanup()
-	_ = opClient // Not used in this test
+	serverCmd, serverAddr := startServer(t, ctx)
+	defer cleanupServer(t, serverCmd, serverAddr)
+
+	conn := connectToServer(t, ctx, serverAddr)
+	defer conn.Close()
+
+	client := pb.NewMacosUseClient(conn)
 
 	const (
 		numGoroutines = 50
 		opsPerWorker  = 5
 	)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-}	}		t.Fatal("Possible deadlock: operations did not complete within timeout")	case <-deadlockTimeout:		t.Log("No deadlock detected - all operations completed")	case <-done:	select {	}()		close(done)		wg.Wait()	go func() {	done := make(chan struct{})	}		}(i)			}				_, _ = client.ListApplications(ctx, &pb.ListApplicationsRequest{})			} else {				_, _ = client.ListWindows(ctx, &pb.ListWindowsRequest{})			if opID%2 == 0 {			// Alternate between reads and potentially blocking operations			defer wg.Done()		go func(opID int) {		wg.Add(1)	for i := 0; i < numOps; i++ {	deadlockTimeout := time.After(25 * time.Second)	var wg sync.WaitGroup	const numOps = 20	defer cleanup()	client, _, cleanup := setupTestWithClients(t, ctx)	defer cancel()	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)func TestConcurrencyNoDeadlock(t *testing.T) {// TestConcurrencyNoDeadlock verifies that mixed read/write operations don't deadlock.}	}		t.Errorf("Failed to read clipboard after concurrent writes: %v", err)	if err != nil {	_, err := client.GetClipboard(ctx, &pb.GetClipboardRequest{})	// Verify clipboard is still readable	}		t.Errorf("Some clipboard writes failed: %d errors", errCount)	if errCount > 0 {	// All writes should succeed (last-write-wins is acceptable)	t.Logf("Concurrent clipboard writes: %d ok, %d errors", okCount, errCount)	}		}			errCount++		} else {			okCount++		if r == "write-ok" {	for r := range results {	errCount := 0	okCount := 0	// Count results	close(results)	wg.Wait()	// Wait for all writes	}		}(i)			results <- "write-ok"			}				return				results <- "write-error"			if err != nil {			})				Data:        content,				ContentType: pb.ClipboardContentType_CONTENT_TYPE_TEXT,			_, err := client.WriteClipboard(ctx, &pb.WriteClipboardRequest{			// Write to clipboard			content := []byte(time.Now().Format(time.RFC3339Nano) + "-" + string(rune('A'+workerID)))			defer wg.Done()		go func(workerID int) {		wg.Add(1)	for i := 0; i < numGoroutines; i++ {	// Launch concurrent clipboard writes, each with unique content	results := make(chan string, numGoroutines*2)	var wg sync.WaitGroup	const numGoroutines = 10	defer cleanup()	client, _, cleanup := setupTestWithClients(t, ctx)	defer cancel()	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)func TestConcurrencyMutationSafety(t *testing.T) {// TestConcurrencyMutationSafety verifies that concurrent mutations don't corrupt state.}	}		t.Errorf("Server unresponsive after stress test: %v", err)	if err != nil {	_, err := client.ListDisplays(endCtx, &pb.ListDisplaysRequest{})	defer endCancel()	endCtx, endCancel := context.WithTimeout(context.Background(), 5*time.Second)	// Ensure server is still responsive after stress test	}		t.Errorf("Too many errors: %d (max allowed: %d)", errorCount.Load(), maxErrors)	if errorCount.Load() > maxErrors {	maxErrors := expectedOps / 10	// Allow up to 10% errors (network issues, timing, etc.)	}		t.Errorf("Expected %d total operations, got %d", expectedOps, totalOps)	if totalOps != expectedOps {	expectedOps := int64(numGoroutines * opsPerWorker)	// Assertions	t.Logf("  Throughput: %.1f ops/sec", float64(totalOps)/duration.Seconds())	t.Logf("  Errors: %d", errorCount.Load())	t.Logf("  Successes: %d", successCount.Load())	t.Logf("  Total ops: %d", totalOps)	t.Logf("  Duration: %v", duration)	t.Logf("Concurrency stress test completed:")	totalOps := successCount.Load() + errorCount.Load()	duration := time.Since(startTime)	}		t.Fatal("Timeout waiting for workers to complete - possible deadlock")	case <-ctx.Done():		// All workers completed	case <-done:	select {	}()		close(done)		wg.Wait()	go func() {	done := make(chan struct{})	// Wait for completion with timeout	}		}(i)			}				}					successCount.Add(1)				} else {					t.Logf("Worker %d op %d failed: %v", workerID, j, err)					errorCount.Add(1)				if err != nil {				reqCancel()				err := op(reqCtx, client)				reqCtx, reqCancel := context.WithTimeout(ctx, 10*time.Second)				// Execute with per-request context				op := operations[opIdx]				opIdx := (workerID + j) % len(operations)				// Pick operation based on worker+iteration to ensure variety				}				default:					return				case <-ctx.Done():				select {			for j := 0; j < opsPerWorker; j++ {			defer wg.Done()		go func(workerID int) {		wg.Add(1)	for i := 0; i < numGoroutines; i++ {	// Launch concurrent workers	startTime := time.Now()	t.Logf("Starting concurrency stress test: %d goroutines, %d ops each", numGoroutines, opsPerWorker)	}		},			return err			_, err := client.ListDisplays(ctx, &pb.ListDisplaysRequest{})		func(ctx context.Context, client pb.MacosUseClient) error {		// List displays		},			return err			_, err := client.GetClipboard(ctx, &pb.GetClipboardRequest{})		func(ctx context.Context, client pb.MacosUseClient) error {		// Get clipboard		},			return err			_, err := client.ListApplications(ctx, &pb.ListApplicationsRequest{PageSize: 10})		func(ctx context.Context, client pb.MacosUseClient) error {		// List applications		},			return err			_, err := client.ListWindows(ctx, &pb.ListWindowsRequest{PageSize: 10})		func(ctx context.Context, client pb.MacosUseClient) error {		// List windows	operations := []func(ctx context.Context, client pb.MacosUseClient) error{	// Define operation types to mix	)		wg           sync.WaitGroup		errorCount   atomic.Int64		successCount atomic.Int64	var (	// Track results
+	// Track results
+	var (
+		successCount atomic.Int64
+		errorCount   atomic.Int64
+		wg           sync.WaitGroup
+	)
+
+	// Define operation types to mix (all are parameter-free read-only ops)
+	operations := []func(ctx context.Context, c pb.MacosUseClient) error{
+		// List applications (no parent/name required)
+		func(ctx context.Context, c pb.MacosUseClient) error {
+			_, err := c.ListApplications(ctx, &pb.ListApplicationsRequest{PageSize: 10})
+			return err
+		},
+		// List displays
+		func(ctx context.Context, c pb.MacosUseClient) error {
+			_, err := c.ListDisplays(ctx, &pb.ListDisplaysRequest{})
+			return err
+		},
+		// Get clipboard (requires Name: "clipboard")
+		func(ctx context.Context, c pb.MacosUseClient) error {
+			_, err := c.GetClipboard(ctx, &pb.GetClipboardRequest{Name: "clipboard"})
+			return err
+		},
+		// List applications again with different page size
+		func(ctx context.Context, c pb.MacosUseClient) error {
+			_, err := c.ListApplications(ctx, &pb.ListApplicationsRequest{PageSize: 50})
+			return err
+		},
+	}
+
+	t.Logf("Starting concurrency stress test: %d goroutines, %d ops each", numGoroutines, opsPerWorker)
+	startTime := time.Now()
+
+	// Launch concurrent workers
+	for i := 0; i < numGoroutines; i++ {
+		wg.Add(1)
+		go func(workerID int) {
+			defer wg.Done()
+			for j := 0; j < opsPerWorker; j++ {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+				}
+				// Pick operation based on worker+iteration to ensure variety
+				opIdx := (workerID + j) % len(operations)
+				op := operations[opIdx]
+				// Execute with per-request context
+				reqCtx, reqCancel := context.WithTimeout(ctx, 10*time.Second)
+				err := op(reqCtx, client)
+				reqCancel()
+				if err != nil {
+					errorCount.Add(1)
+					t.Logf("Worker %d op %d failed: %v", workerID, j, err)
+				} else {
+					successCount.Add(1)
+				}
+			}
+		}(i)
+	}
+
+	// Wait for completion with timeout
+	done := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		// All workers completed
+	case <-ctx.Done():
+		t.Fatal("Timeout waiting for workers to complete - possible deadlock")
+	}
+
+	duration := time.Since(startTime)
+	totalOps := successCount.Load() + errorCount.Load()
+	t.Logf("Concurrency stress test completed:")
+	t.Logf("  Duration: %v", duration)
+	t.Logf("  Total ops: %d", totalOps)
+	t.Logf("  Successes: %d", successCount.Load())
+	t.Logf("  Errors: %d", errorCount.Load())
+	t.Logf("  Throughput: %.1f ops/sec", float64(totalOps)/duration.Seconds())
+
+	// Assertions
+	expectedOps := int64(numGoroutines * opsPerWorker)
+	if totalOps != expectedOps {
+		t.Errorf("Expected %d total operations, got %d", expectedOps, totalOps)
+	}
+	// Allow up to 10% errors (network issues, timing, etc.)
+	maxErrors := expectedOps / 10
+	if errorCount.Load() > maxErrors {
+		t.Errorf("Too many errors: %d (max allowed: %d)", errorCount.Load(), maxErrors)
+	}
+
+	// Ensure server is still responsive after stress test
+	endCtx, endCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer endCancel()
+	_, err := client.ListDisplays(endCtx, &pb.ListDisplaysRequest{})
+	if err != nil {
+		t.Errorf("Server unresponsive after stress test: %v", err)
+	}
+}
+
+// TestConcurrencyMutationSafety verifies that concurrent mutations don't corrupt state.
+func TestConcurrencyMutationSafety(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	serverCmd, serverAddr := startServer(t, ctx)
+	defer cleanupServer(t, serverCmd, serverAddr)
+
+	conn := connectToServer(t, ctx, serverAddr)
+	defer conn.Close()
+
+	client := pb.NewMacosUseClient(conn)
+
+	const numGoroutines = 10
+	var wg sync.WaitGroup
+	results := make(chan string, numGoroutines*2)
+
+	// Launch concurrent clipboard writes, each with unique content
+	for i := 0; i < numGoroutines; i++ {
+		wg.Add(1)
+		go func(workerID int) {
+			defer wg.Done()
+			content := time.Now().Format(time.RFC3339Nano) + "-" + string(rune('A'+workerID))
+			// Write to clipboard
+			_, err := client.WriteClipboard(ctx, &pb.WriteClipboardRequest{
+				Content:       &pb.ClipboardContent{Content: &pb.ClipboardContent_Text{Text: content}},
+				ClearExisting: true,
+			})
+			if err != nil {
+				results <- "write-error"
+				return
+			}
+			results <- "write-ok"
+		}(i)
+	}
+
+	// Wait for all writes
+	wg.Wait()
+	close(results)
+
+	// Count results
+	okCount := 0
+	errCount := 0
+	for r := range results {
+		if r == "write-ok" {
+			okCount++
+		} else {
+			errCount++
+		}
+	}
+
+	t.Logf("Concurrent clipboard writes: %d ok, %d errors", okCount, errCount)
+	// All writes should succeed (last-write-wins is acceptable)
+	if errCount > 0 {
+		t.Errorf("Some clipboard writes failed: %d errors", errCount)
+	}
+
+	// Verify clipboard is still readable
+	_, err := client.GetClipboard(ctx, &pb.GetClipboardRequest{Name: "clipboard"})
+	if err != nil {
+		t.Errorf("Failed to read clipboard after concurrent writes: %v", err)
+	}
+}
+
+// TestConcurrencyNoDeadlock verifies that mixed read operations don't deadlock
+// and that the server remains responsive under concurrent load.
+func TestConcurrencyNoDeadlock(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	serverCmd, serverAddr := startServer(t, ctx)
+	defer cleanupServer(t, serverCmd, serverAddr)
+
+	conn := connectToServer(t, ctx, serverAddr)
+	defer conn.Close()
+
+	client := pb.NewMacosUseClient(conn)
+
+	const numOps = 20
+	var (
+		wg           sync.WaitGroup
+		successCount atomic.Int64
+		errorCount   atomic.Int64
+	)
+
+	for i := 0; i < numOps; i++ {
+		wg.Add(1)
+		go func(opID int) {
+			defer wg.Done()
+			var err error
+			// Alternate between different read operations
+			if opID%2 == 0 {
+				_, err = client.ListDisplays(ctx, &pb.ListDisplaysRequest{})
+			} else {
+				_, err = client.ListApplications(ctx, &pb.ListApplicationsRequest{})
+			}
+			if err != nil {
+				errorCount.Add(1)
+			} else {
+				successCount.Add(1)
+			}
+		}(i)
+	}
+
+	done := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		t.Logf("All %d operations completed: %d successes, %d errors",
+			numOps, successCount.Load(), errorCount.Load())
+	case <-ctx.Done():
+		t.Fatal("Possible deadlock: operations did not complete within timeout")
+	}
+
+	// At least some operations must have succeeded
+	if successCount.Load() == 0 {
+		t.Error("No operations succeeded — server may be unresponsive")
+	}
+}

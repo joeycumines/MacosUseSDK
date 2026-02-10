@@ -1,7 +1,6 @@
 import Foundation
-import Testing
-
 @testable import MacosUseServer
+import Testing
 
 /// Tests for observation resource lifecycle and leak detection.
 ///
@@ -9,12 +8,11 @@ import Testing
 /// leak resources (observations, tasks, memory).
 @Suite("Observation Memory Leak Tests")
 struct ObservationMemoryLeakTests {
-
     /// Number of observations to create and cancel
     private let observationCount = 100
 
     @Test("Create and cancel observations leaves no residue")
-    func testCreateCancelObservationsNoResidue() async {
+    func createCancelObservationsNoResidue() async {
         let registry = WindowRegistry()
         let manager = ObservationManager(windowRegistry: registry)
 
@@ -24,7 +22,7 @@ struct ObservationMemoryLeakTests {
 
         // Create many observations
         var names: [String] = []
-        for i in 0..<observationCount {
+        for i in 0 ..< observationCount {
             let name = "observations/test-leak-\(i)"
             names.append(name)
 
@@ -34,14 +32,13 @@ struct ObservationMemoryLeakTests {
                 parent: "applications/1234",
                 filter: nil,
                 pid: 1234,
-                activate: false
+                activate: false,
             )
         }
 
-        // Verify observations were created
-        let createdCount = await manager.getActiveObservationCount()
-        // Note: createObservation sets state to .pending, not .active
-        // So getActiveObservationCount may be 0
+        // Verify observations were created (count them via listObservations)
+        let createdObs = await manager.listObservations(parent: "applications/1234")
+        #expect(createdObs.count == observationCount, "Should have created \(observationCount) observations")
 
         // Cancel all observations
         for name in names {
@@ -60,12 +57,12 @@ struct ObservationMemoryLeakTests {
     }
 
     @Test("Rapid create/cancel cycle doesn't accumulate state")
-    func testRapidCreateCancelCycle() async {
+    func rapidCreateCancelCycle() async {
         let registry = WindowRegistry()
         let manager = ObservationManager(windowRegistry: registry)
 
         // Rapid create/cancel cycles
-        for i in 0..<observationCount {
+        for i in 0 ..< observationCount {
             let name = "observations/rapid-\(i)"
 
             _ = await manager.createObservation(
@@ -74,7 +71,7 @@ struct ObservationMemoryLeakTests {
                 parent: "applications/5678",
                 filter: nil,
                 pid: 5678,
-                activate: false
+                activate: false,
             )
 
             // Immediately cancel
@@ -87,12 +84,12 @@ struct ObservationMemoryLeakTests {
     }
 
     @Test("CancelAllObservations cleans up everything")
-    func testCancelAllObservationsCleanup() async {
+    func cancelAllObservationsCleanup() async {
         let registry = WindowRegistry()
         let manager = ObservationManager(windowRegistry: registry)
 
         // Create multiple observations
-        for i in 0..<20 {
+        for i in 0 ..< 20 {
             let name = "observations/batch-\(i)"
             _ = await manager.createObservation(
                 name: name,
@@ -100,7 +97,7 @@ struct ObservationMemoryLeakTests {
                 parent: "applications/9999",
                 filter: nil,
                 pid: 9999,
-                activate: false
+                activate: false,
             )
         }
 
@@ -114,7 +111,7 @@ struct ObservationMemoryLeakTests {
     }
 
     @Test("Double cancel is safe")
-    func testDoubleCancelSafe() async {
+    func doubleCancelSafe() async {
         let registry = WindowRegistry()
         let manager = ObservationManager(windowRegistry: registry)
 
@@ -125,7 +122,7 @@ struct ObservationMemoryLeakTests {
             parent: "applications/1111",
             filter: nil,
             pid: 1111,
-            activate: false
+            activate: false,
         )
 
         // Cancel twice - should be idempotent
@@ -133,22 +130,22 @@ struct ObservationMemoryLeakTests {
         #expect(result1 != nil, "First cancel should return observation")
 
         let result2 = await manager.cancelObservation(name: name)
-        // Second cancel may return nil or the same observation depending on impl
-        // Either way, it should not crash
+        // Second cancel returns the same observation (still in store, but already cancelled)
+        #expect(result2 != nil, "Second cancel should still find observation in store")
 
         // Verify no active observations
         let activeCount = await manager.getActiveObservationCount()
         #expect(activeCount == 0, "Should have 0 active observations after double cancel")
     }
 
-    @Test("Concurrent create/cancel is thread-safe")
-    func testConcurrentCreateCancel() async {
+    @Test("Concurrent create/cancel from multiple tasks is safe")
+    func concurrentCreateCancel() async {
         let registry = WindowRegistry()
         let manager = ObservationManager(windowRegistry: registry)
 
         // Create observations concurrently
         await withTaskGroup(of: Void.self) { group in
-            for i in 0..<50 {
+            for i in 0 ..< 50 {
                 group.addTask {
                     let name = "observations/concurrent-\(i)"
                     _ = await manager.createObservation(
@@ -157,7 +154,7 @@ struct ObservationMemoryLeakTests {
                         parent: "applications/2222",
                         filter: nil,
                         pid: 2222,
-                        activate: false
+                        activate: false,
                     )
                 }
             }
@@ -165,7 +162,7 @@ struct ObservationMemoryLeakTests {
 
         // Cancel concurrently
         await withTaskGroup(of: Void.self) { group in
-            for i in 0..<50 {
+            for i in 0 ..< 50 {
                 group.addTask {
                     let name = "observations/concurrent-\(i)"
                     _ = await manager.cancelObservation(name: name)

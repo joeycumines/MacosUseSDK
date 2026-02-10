@@ -1,8 +1,26 @@
+import AppKit
+import CoreGraphics
 import Foundation
-import Testing
-
 @testable import MacosUseProto
 @testable import MacosUseServer
+import Testing
+
+/// Checks whether screen capture (Screen Recording) permissions are available.
+/// Used as a condition for `.enabled()` test traits.
+@MainActor
+private func isScreenCaptureAvailable() async -> Bool {
+    do {
+        _ = try await ScreenshotCapture.captureScreen(format: .png, includeOCR: false)
+        return true
+    } catch {
+        let nsError = error as NSError
+        if nsError.domain == "com.apple.ScreenCaptureKit.SCStreamErrorDomain", nsError.code == -3801 {
+            return false
+        }
+        // Other errors - assume available but encountered transient issue
+        return true
+    }
+}
 
 /// Performance benchmarks for screenshot capture operations.
 ///
@@ -10,7 +28,11 @@ import Testing
 /// - Image formats: PNG, JPEG, TIFF
 /// - OCR: with and without text extraction
 /// - Capture types: full screen, window, region
-@Suite("Screenshot Capture Performance Benchmarks")
+///
+/// **Requirements**: Screen Recording permissions must be granted.
+/// Tests are skipped (not failed) when Screen Recording is unavailable.
+@Suite("Screenshot Capture Performance Benchmarks",
+       .enabled("Requires Screen Recording permissions") { await isScreenCaptureAvailable() })
 struct ScreenshotPerformanceTests {
     /// Number of iterations for stable timing
     private let iterations = 5
@@ -20,15 +42,15 @@ struct ScreenshotPerformanceTests {
     /// Benchmark full screen capture with PNG format.
     @Test("Full screen PNG capture latency")
     @MainActor
-    func testFullScreenPNGCapture() async throws {
+    func fullScreenPNGCapture() async throws {
         var durations: [TimeInterval] = []
         var dataSizes: [Int] = []
 
-        for _ in 0..<iterations {
+        for _ in 0 ..< iterations {
             let start = CFAbsoluteTimeGetCurrent()
             let result = try await ScreenshotCapture.captureScreen(
                 format: .png,
-                includeOCR: false
+                includeOCR: false,
             )
             let duration = CFAbsoluteTimeGetCurrent() - start
 
@@ -37,22 +59,23 @@ struct ScreenshotPerformanceTests {
         }
 
         printMetrics(name: "Full Screen PNG", durations: durations, dataSizes: dataSizes)
-        #expect(durations.min()! < 2.0, "PNG capture should complete under 2 seconds")
+        let minDuration = try #require(durations.min())
+        #expect(minDuration < 2.0, "PNG capture should complete under 2 seconds")
     }
 
     /// Benchmark full screen capture with JPEG format.
     @Test("Full screen JPEG capture latency")
     @MainActor
-    func testFullScreenJPEGCapture() async throws {
+    func fullScreenJPEGCapture() async throws {
         var durations: [TimeInterval] = []
         var dataSizes: [Int] = []
 
-        for _ in 0..<iterations {
+        for _ in 0 ..< iterations {
             let start = CFAbsoluteTimeGetCurrent()
             let result = try await ScreenshotCapture.captureScreen(
                 format: .jpeg,
                 quality: 85,
-                includeOCR: false
+                includeOCR: false,
             )
             let duration = CFAbsoluteTimeGetCurrent() - start
 
@@ -61,21 +84,22 @@ struct ScreenshotPerformanceTests {
         }
 
         printMetrics(name: "Full Screen JPEG (q=85)", durations: durations, dataSizes: dataSizes)
-        #expect(durations.min()! < 2.0, "JPEG capture should complete under 2 seconds")
+        let minDuration = try #require(durations.min())
+        #expect(minDuration < 2.0, "JPEG capture should complete under 2 seconds")
     }
 
     /// Benchmark full screen capture with TIFF format.
     @Test("Full screen TIFF capture latency")
     @MainActor
-    func testFullScreenTIFFCapture() async throws {
+    func fullScreenTIFFCapture() async throws {
         var durations: [TimeInterval] = []
         var dataSizes: [Int] = []
 
-        for _ in 0..<iterations {
+        for _ in 0 ..< iterations {
             let start = CFAbsoluteTimeGetCurrent()
             let result = try await ScreenshotCapture.captureScreen(
                 format: .tiff,
-                includeOCR: false
+                includeOCR: false,
             )
             let duration = CFAbsoluteTimeGetCurrent() - start
 
@@ -84,7 +108,8 @@ struct ScreenshotPerformanceTests {
         }
 
         printMetrics(name: "Full Screen TIFF", durations: durations, dataSizes: dataSizes)
-        #expect(durations.min()! < 3.0, "TIFF capture should complete under 3 seconds")
+        let minDuration = try #require(durations.min())
+        #expect(minDuration < 3.0, "TIFF capture should complete under 3 seconds")
     }
 
     // MARK: - OCR Comparison Tests
@@ -92,15 +117,15 @@ struct ScreenshotPerformanceTests {
     /// Benchmark full screen capture with OCR enabled.
     @Test("Full screen with OCR latency")
     @MainActor
-    func testFullScreenWithOCR() async throws {
+    func fullScreenWithOCR() async throws {
         var durations: [TimeInterval] = []
         var ocrLengths: [Int] = []
 
-        for _ in 0..<iterations {
+        for _ in 0 ..< iterations {
             let start = CFAbsoluteTimeGetCurrent()
             let result = try await ScreenshotCapture.captureScreen(
                 format: .png,
-                includeOCR: true
+                includeOCR: true,
             )
             let duration = CFAbsoluteTimeGetCurrent() - start
 
@@ -113,13 +138,14 @@ struct ScreenshotPerformanceTests {
         print("  Avg OCR text length: \(avgOCRLength) chars")
 
         // OCR adds latency but should still be reasonable
-        #expect(durations.min()! < 5.0, "OCR capture should complete under 5 seconds")
+        let minDuration = try #require(durations.min())
+        #expect(minDuration < 5.0, "OCR capture should complete under 5 seconds")
     }
 
     /// Compare OCR vs no-OCR latency
     @Test("OCR overhead comparison")
     @MainActor
-    func testOCROverhead() async throws {
+    func ocrOverhead() async throws {
         // Without OCR
         let noOCRStart = CFAbsoluteTimeGetCurrent()
         _ = try await ScreenshotCapture.captureScreen(format: .png, includeOCR: false)
@@ -148,10 +174,10 @@ struct ScreenshotPerformanceTests {
     /// Uses Finder as it's always available on macOS.
     @Test("Window capture latency (Finder)")
     @MainActor
-    func testWindowCapture() async throws {
+    func windowCapture() async throws {
         // Find a Finder window
         guard let finderApp = NSRunningApplication.runningApplications(
-            withBundleIdentifier: "com.apple.finder"
+            withBundleIdentifier: "com.apple.finder",
         ).first else {
             Issue.record("Finder not running - test cannot proceed")
             return
@@ -162,7 +188,7 @@ struct ScreenshotPerformanceTests {
         let finderWindows = windowList.filter { info in
             guard let ownerPID = info[kCGWindowOwnerPID] as? pid_t,
                   let layer = info[kCGWindowLayer] as? Int32,
-                  layer == 0  // Normal windows
+                  layer == 0 // Normal windows
             else { return false }
             return ownerPID == finderApp.processIdentifier
         }
@@ -177,12 +203,12 @@ struct ScreenshotPerformanceTests {
         var durations: [TimeInterval] = []
         var dataSizes: [Int] = []
 
-        for _ in 0..<iterations {
+        for _ in 0 ..< iterations {
             let start = CFAbsoluteTimeGetCurrent()
             let result = try await ScreenshotCapture.captureWindow(
                 windowID: windowID,
                 format: .png,
-                includeOCR: false
+                includeOCR: false,
             )
             let duration = CFAbsoluteTimeGetCurrent() - start
 
@@ -191,7 +217,8 @@ struct ScreenshotPerformanceTests {
         }
 
         printMetrics(name: "Window Capture (Finder)", durations: durations, dataSizes: dataSizes)
-        #expect(durations.min()! < 2.0, "Window capture should complete under 2 seconds")
+        let minDuration = try #require(durations.min())
+        #expect(minDuration < 2.0, "Window capture should complete under 2 seconds")
     }
 
     // MARK: - Region Capture Tests
@@ -199,44 +226,45 @@ struct ScreenshotPerformanceTests {
     /// Benchmark region capture for a small area.
     @Test("Small region capture latency")
     @MainActor
-    func testSmallRegionCapture() async throws {
+    func smallRegionCapture() async throws {
         var durations: [TimeInterval] = []
 
         // Small 200x200 region
         let region = CGRect(x: 100, y: 100, width: 200, height: 200)
 
-        for _ in 0..<iterations {
+        for _ in 0 ..< iterations {
             let start = CFAbsoluteTimeGetCurrent()
             let result = try await ScreenshotCapture.captureRegion(
                 bounds: region,
                 format: .png,
-                includeOCR: false
+                includeOCR: false,
             )
             let duration = CFAbsoluteTimeGetCurrent() - start
 
             durations.append(duration)
-            _ = result  // Suppress unused warning
+            _ = result // Suppress unused warning
         }
 
         printMetrics(name: "Small Region (200x200)", durations: durations, dataSizes: nil)
-        #expect(durations.min()! < 1.0, "Small region capture should complete under 1 second")
+        let minDuration = try #require(durations.min())
+        #expect(minDuration < 1.0, "Small region capture should complete under 1 second")
     }
 
     /// Benchmark region capture for a larger area.
     @Test("Large region capture latency")
     @MainActor
-    func testLargeRegionCapture() async throws {
+    func largeRegionCapture() async throws {
         var durations: [TimeInterval] = []
 
         // Large 1000x800 region
         let region = CGRect(x: 0, y: 0, width: 1000, height: 800)
 
-        for _ in 0..<iterations {
+        for _ in 0 ..< iterations {
             let start = CFAbsoluteTimeGetCurrent()
             let result = try await ScreenshotCapture.captureRegion(
                 bounds: region,
                 format: .png,
-                includeOCR: false
+                includeOCR: false,
             )
             let duration = CFAbsoluteTimeGetCurrent() - start
 
@@ -245,7 +273,8 @@ struct ScreenshotPerformanceTests {
         }
 
         printMetrics(name: "Large Region (1000x800)", durations: durations, dataSizes: nil)
-        #expect(durations.min()! < 2.0, "Large region capture should complete under 2 seconds")
+        let minDuration = try #require(durations.min())
+        #expect(minDuration < 2.0, "Large region capture should complete under 2 seconds")
     }
 
     // MARK: - JPEG Quality Comparison
@@ -253,7 +282,7 @@ struct ScreenshotPerformanceTests {
     /// Compare JPEG quality settings impact on size and latency.
     @Test("JPEG quality comparison")
     @MainActor
-    func testJPEGQualityComparison() async throws {
+    func jpegQualityComparison() async throws {
         let qualities: [Int32] = [50, 75, 90, 100]
         var results: [(quality: Int32, duration: TimeInterval, size: Int)] = []
 
@@ -262,7 +291,7 @@ struct ScreenshotPerformanceTests {
             let result = try await ScreenshotCapture.captureScreen(
                 format: .jpeg,
                 quality: quality,
-                includeOCR: false
+                includeOCR: false,
             )
             let duration = CFAbsoluteTimeGetCurrent() - start
 

@@ -18,7 +18,7 @@
     "parallelExecutionBan": "CRITICAL: Do NOT run multiple subagents in parallel when they execute swift tests. Test execution competes for window focus, causing hangs and race conditions. Execute subagents SEQUENTIALLY."
   },
   "statusSection": {
-    "currentState": "72 tasks completed (Tasks 1-72). 5 tasks remaining. Next: Task 73 (final verification).",
+    "currentState": "73 tasks completed (Tasks 1-73). 4 tasks remaining. Next: Task 74 (full integration test suite).",
     "focusStealingStatus": {
       "observationActivate": "COMPLETE - activate param on CreateObservation defaults to false, preventing focus theft during polling",
       "traversalActivate": "COMPLETE - activate field on TraverseAccessibilityRequest (field 3) defaults to false",
@@ -103,7 +103,7 @@
     {"id": 70, "title": "Add performance benchmark for screenshot", "description": "Write a Swift benchmark measuring screenshot capture latency for: PNG vs JPEG vs TIFF, with/without OCR, full screen vs window vs region. Establish baseline metrics.", "status": "completed", "completionNotes": "Created Server/Tests/MacosUseServerTests/ScreenshotPerformanceTests.swift with 8 benchmarks: full screen PNG/JPEG/TIFF, OCR enabled/overhead comparison, small/large region capture, JPEG quality comparison. Logs timing and file size metrics."},
     {"id": 71, "title": "Add concurrency stress test for server", "description": "Write a Go test that sends 50 concurrent gRPC requests (mix of list_windows, traverse_accessibility, capture_screenshot, get_clipboard) and verifies: no crashes, no deadlocks, all responses are valid, no data corruption between requests.", "status": "completed", "completionNotes": "Created integration/concurrency_stress_test.go with 3 tests: TestConcurrencyStress (50 goroutines, 5 ops each, mixing ListWindows/ListApplications/GetClipboard/ListDisplays), TestConcurrencyMutationSafety (concurrent clipboard writes), TestConcurrencyNoDeadlock (mixed operations with timeout detection)."},
     {"id": 72, "title": "Add memory leak detection for observations", "description": "Write a Swift test that creates and cancels 100 observations in rapid succession, then verifies: ObservationManager observation count is 0, no leaked Task instances (check for task count if possible), no unbounded memory growth.", "status": "completed", "completionNotes": "Created Server/Tests/MacosUseServerTests/ObservationMemoryLeakTests.swift with 5 tests: create/cancel 100 observations leaves no residue, rapid create/cancel cycles, cancelAllObservations cleanup, double cancel safety, concurrent create/cancel thread-safety."},
-    {"id": 73, "title": "Verify make all clean build", "description": "Run a complete clean -> build -> test cycle: make clean, make all. Verify zero warnings from all linters, all tests pass, build output is clean and reproducible. Log results.", "status": "not-started"},
+    {"id": 73, "title": "Verify make all clean build", "description": "Run a complete clean -> build -> test cycle: make clean, make all. Verify zero warnings from all linters, all tests pass, build output is clean and reproducible. Log results.", "status": "completed", "completionNotes": "Full build clean. Fixed 12+ Swift tests that silently passed as no-ops (guard-print-return): TraversalPerformanceTests (.enabled(if: AXIsProcessTrusted()) + .serialized + Issue.record()), ScreenshotPerformanceTests (suite-level .enabled with async screen capture probe). Fixed Go concurrency tests: TestConcurrencyNoDeadlock (atomic counters, meaningful assertions), TestConcurrencyStress (correct API calls), TestConcurrencyMutationSafety (correct oneof pattern). Fixed ObservationMemoryLeakTests (dead variable replaced with listObservations assertion, result2 asserted). 4 subagent reviews passed (2 rounds of 2 contiguous). All targets green: Swift lint/build/test (141 tests), Go build/vet/staticcheck/betteralign, integration tests (98.865s)."},
     {"id": 74, "title": "Run full integration test suite", "description": "Run the complete integration test suite (make go.test.integration or equivalent) verifying all tests pass, no focus stealing occurs, proper cleanup happens after each test, and no warnings are emitted.", "status": "not-started"},
     {"id": 75, "title": "Add drag operation integration test", "description": "Write a Go integration test using Finder or Calculator: perform a drag operation from one position to another, verify the drag was successful via state change (window moved, file moved, or element position changed).", "status": "not-started"},
     {"id": 76, "title": "Add keyboard modifier combination test", "description": "Write a Go integration test that: opens TextEdit, types text with various modifier combinations (Cmd+A, Cmd+Shift+Arrow, Option+Letter), verifies the expected actions occurred (select all, extend selection, special character).", "status": "not-started"},
@@ -175,8 +175,8 @@
         "description": "Performance benchmarks and stress tests"
       },
       "verification": {
-        "count": 3,
-        "tasks": "73-74, 77",
+        "count": 2,
+        "tasks": "73 COMPLETED, 74, 77",
         "description": "Final verification and blueprint update"
       }
     }

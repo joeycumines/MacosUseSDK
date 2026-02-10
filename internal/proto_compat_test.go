@@ -325,7 +325,7 @@ func TestProtoMessageFieldCounts(t *testing.T) {
 		msg      proto.Message
 		minCount int
 	}{
-		{"Window", &pb.Window{}, 6},      // name, title, bounds, z_index, visible, bundle_id
+		{"Window", &pb.Window{}, 6},           // name, title, bounds, z_index, visible, bundle_id
 		{"Observation", &pb.Observation{}, 8}, // name, type, state, create_time, start_time, end_time, filter, activate
 		{"Application", &pb.Application{}, 3}, // name, pid, display_name
 		{"Session", &pb.Session{}, 8},         // name, display_name, state, create_time, last_access_time, expire_time, transaction_id, metadata
@@ -348,9 +348,9 @@ func TestProtoMessageFieldCounts(t *testing.T) {
 func TestProtoUnknownFieldPreservation(t *testing.T) {
 	// Create a Window with known fields
 	original := &pb.Window{
-		Name:    "windows/123",
-		Title:   "Test Window",
-		ZIndex:  42,
+		Name:   "windows/123",
+		Title:  "Test Window",
+		ZIndex: 42,
 	}
 
 	// Serialize

@@ -1,7 +1,7 @@
+import AppKit
 import Foundation
-import Testing
-
 @testable import MacosUseServer
+import Testing
 
 /// Performance benchmarks for window listing operations.
 ///
@@ -18,14 +18,14 @@ struct WindowListingPerformanceTests {
     ///
     /// Expected: Sub-100ms for typical desktop with <50 windows
     @Test("listAllWindows performance baseline")
-    func testListAllWindowsPerformance() async throws {
+    func listAllWindowsPerformance() async throws {
         let registry = WindowRegistry()
 
         // Perform listing iterations and collect timing
         var durations: [TimeInterval] = []
         var windowCounts: [Int] = []
 
-        for _ in 0..<iterations {
+        for _ in 0 ..< iterations {
             let start = CFAbsoluteTimeGetCurrent()
             let windows = try await registry.listAllWindows()
             let duration = CFAbsoluteTimeGetCurrent() - start
@@ -60,12 +60,12 @@ struct WindowListingPerformanceTests {
     ///
     /// Uses Finder as it's always running on macOS.
     @Test("listWindows for Finder performance")
-    func testListWindowsForFinderPerformance() async throws {
+    func listWindowsForFinderPerformance() async throws {
         let registry = WindowRegistry()
 
         // Find Finder's PID
         guard let finderApp = NSRunningApplication.runningApplications(
-            withBundleIdentifier: "com.apple.finder"
+            withBundleIdentifier: "com.apple.finder",
         ).first else {
             Issue.record("Finder not running - test cannot proceed")
             return
@@ -77,7 +77,7 @@ struct WindowListingPerformanceTests {
         var durations: [TimeInterval] = []
         var windowCounts: [Int] = []
 
-        for _ in 0..<iterations {
+        for _ in 0 ..< iterations {
             let start = CFAbsoluteTimeGetCurrent()
             let windows = try await registry.listWindows(forPID: finderPID)
             let duration = CFAbsoluteTimeGetCurrent() - start
@@ -112,7 +112,7 @@ struct WindowListingPerformanceTests {
     /// Opens Calculator multiple times to test window count scaling.
     @Test("listWindows with multiple Calculator windows", .disabled("Disabled by default - opens multiple Calculator windows"))
     @MainActor
-    func testListWindowsMultipleWindows() async throws {
+    func listWindowsMultipleWindows() async throws {
         let registry = WindowRegistry()
         var pids: [pid_t] = []
 
@@ -121,7 +121,7 @@ struct WindowListingPerformanceTests {
 
         for windowCount in testCases {
             // Open Calculator instances
-            for _ in 0..<windowCount {
+            for _ in 0 ..< windowCount {
                 if let app = NSWorkspace.shared.runningApplications.first(where: {
                     $0.bundleIdentifier == "com.apple.calculator"
                 }) {
@@ -160,7 +160,7 @@ struct WindowListingPerformanceTests {
 
     /// Measure cache effectiveness - second call should be faster.
     @Test("Cache performance comparison")
-    func testCachePerformance() async throws {
+    func cachePerformance() async throws {
         let registry = WindowRegistry()
 
         // First call - cold cache (forces refresh)

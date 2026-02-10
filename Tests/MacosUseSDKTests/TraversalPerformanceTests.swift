@@ -1,7 +1,7 @@
+import AppKit
 import Foundation
-import Testing
-
 @testable import MacosUseSDK
+import Testing
 
 /// Performance benchmarks for traverseAccessibilityTree.
 ///
@@ -11,7 +11,7 @@ import Testing
 ///
 /// **Requirements**: Accessibility permissions must be granted.
 /// Run with: `swift test --filter TraversalPerformanceTests`
-@Suite("Traversal Performance Benchmarks")
+@Suite("Traversal Performance Benchmarks", .serialized)
 struct TraversalPerformanceTests {
     /// Minimum number of iterations for stable timing
     private let iterations = 5
@@ -19,34 +19,41 @@ struct TraversalPerformanceTests {
     /// Opens Calculator and measures traversal time.
     ///
     /// Expected: Small tree, fast traversal (<500ms)
-    @Test("Calculator traversal baseline")
+    @Test("Calculator traversal baseline", .enabled(if: AXIsProcessTrusted(), "Requires Accessibility permissions"))
     @MainActor
-    func testCalculatorTraversalPerformance() async throws {
-        // Open Calculator in background mode
-        let openResult = try await openApplication(identifier: "Calculator", background: true)
+    func calculatorTraversalPerformance() async throws {
+        let openResult = try await openApplication(identifier: "com.apple.calculator", background: true)
         let pid = openResult.pid
         defer {
-            // Cleanup: terminate Calculator
             if let app = NSRunningApplication(processIdentifier: pid) {
                 app.terminate()
             }
         }
 
-        // Wait for Calculator to be ready (has a window)
-        var attempts = 0
-        while attempts < 20 {
+        // Wait for Calculator to be ready with actual UI elements
+        var warmupElements = 0
+        for _ in 0 ..< 50 {
             if let app = NSRunningApplication(processIdentifier: pid), app.isFinishedLaunching {
-                break
+                let warmup = try? traverseAccessibilityTree(pid: pid, onlyVisibleElements: true, shouldActivate: false)
+                warmupElements = warmup?.elements.count ?? 0
+                if warmupElements > 10 {
+                    break
+                }
             }
             try await Task.sleep(for: .milliseconds(100))
-            attempts += 1
+        }
+
+        // If Calculator didn't fully render, record an issue — AX is available so this is unexpected
+        guard warmupElements > 10 else {
+            Issue.record("Calculator UI not fully rendered (\(warmupElements) elements) — cannot benchmark")
+            return
         }
 
         // Perform traversals and collect timing
         var durations: [TimeInterval] = []
         var elementCounts: [Int] = []
 
-        for _ in 0..<iterations {
+        for _ in 0 ..< iterations {
             let start = CFAbsoluteTimeGetCurrent()
             let result = try traverseAccessibilityTree(pid: pid, onlyVisibleElements: true, shouldActivate: false)
             let duration = CFAbsoluteTimeGetCurrent() - start
@@ -55,7 +62,6 @@ struct TraversalPerformanceTests {
             elementCounts.append(result.elements.count)
         }
 
-        // Log results
         let avgDuration = durations.reduce(0, +) / Double(iterations)
         let avgElements = elementCounts.reduce(0, +) / iterations
         let minDuration = durations.min() ?? 0
@@ -71,7 +77,6 @@ struct TraversalPerformanceTests {
         ==========================================
         """)
 
-        // Assertions
         #expect(avgElements > 10, "Calculator should have at least 10 visible elements")
         #expect(avgDuration < 2.0, "Calculator traversal should complete under 2 seconds")
     }
@@ -79,32 +84,37 @@ struct TraversalPerformanceTests {
     /// Opens Finder and measures traversal time for a large tree.
     ///
     /// Expected: Large tree, longer traversal (<3s)
-    @Test("Finder traversal baseline")
+    @Test("Finder traversal baseline", .enabled(if: AXIsProcessTrusted(), "Requires Accessibility permissions"))
     @MainActor
-    func testFinderTraversalPerformance() async throws {
-        // Open Finder (creates new window or uses existing)
-        let openResult = try await openApplication(identifier: "Finder", background: true)
+    func finderTraversalPerformance() async throws {
+        // Use bundle identifier (more reliable than app name)
+        let openResult = try await openApplication(identifier: "com.apple.finder", background: true)
         let pid = openResult.pid
-        // Note: We don't terminate Finder as it's a system app
 
-        // Wait for Finder to be ready
-        var attempts = 0
-        while attempts < 30 {
+        // Wait for Finder to be ready with actual UI elements
+        var warmupElements = 0
+        for _ in 0 ..< 50 {
             if let app = NSRunningApplication(processIdentifier: pid), app.isFinishedLaunching {
-                break
+                let warmup = try? traverseAccessibilityTree(pid: pid, onlyVisibleElements: true, shouldActivate: false)
+                warmupElements = warmup?.elements.count ?? 0
+                if warmupElements > 50 {
+                    break
+                }
             }
             try await Task.sleep(for: .milliseconds(100))
-            attempts += 1
         }
 
-        // Give Finder time to render its UI
-        try await Task.sleep(for: .milliseconds(500))
+        // If Finder didn't fully render, record an issue — AX is available so this is unexpected
+        guard warmupElements > 50 else {
+            Issue.record("Finder UI not fully rendered (\(warmupElements) elements) — cannot benchmark")
+            return
+        }
 
         // Perform traversals and collect timing
         var durations: [TimeInterval] = []
         var elementCounts: [Int] = []
 
-        for _ in 0..<iterations {
+        for _ in 0 ..< iterations {
             let start = CFAbsoluteTimeGetCurrent()
             let result = try traverseAccessibilityTree(pid: pid, onlyVisibleElements: true, shouldActivate: false)
             let duration = CFAbsoluteTimeGetCurrent() - start
@@ -113,7 +123,6 @@ struct TraversalPerformanceTests {
             elementCounts.append(result.elements.count)
         }
 
-        // Log results
         let avgDuration = durations.reduce(0, +) / Double(iterations)
         let avgElements = elementCounts.reduce(0, +) / iterations
         let minDuration = durations.min() ?? 0
@@ -129,16 +138,15 @@ struct TraversalPerformanceTests {
         ======================================
         """)
 
-        // Assertions
         #expect(avgElements > 50, "Finder should have at least 50 visible elements")
         #expect(avgDuration < 10.0, "Finder traversal should complete under 10 seconds")
     }
 
     /// Measures traversal with all elements (not just visible) for comparison.
-    @Test("Calculator traversal all elements")
+    @Test("Calculator traversal all elements", .enabled(if: AXIsProcessTrusted(), "Requires Accessibility permissions"))
     @MainActor
-    func testCalculatorTraversalAllElements() async throws {
-        let openResult = try await openApplication(identifier: "Calculator", background: true)
+    func calculatorTraversalAllElements() async throws {
+        let openResult = try await openApplication(identifier: "com.apple.calculator", background: true)
         let pid = openResult.pid
         defer {
             if let app = NSRunningApplication(processIdentifier: pid) {
@@ -146,10 +154,25 @@ struct TraversalPerformanceTests {
             }
         }
 
-        // Wait for Calculator
-        try await Task.sleep(for: .milliseconds(500))
+        // Wait for Calculator to be fully launched AND have UI elements rendered
+        var warmupElements = 0
+        for _ in 0 ..< 50 {
+            if let app = NSRunningApplication(processIdentifier: pid), app.isFinishedLaunching {
+                let warmup = try? traverseAccessibilityTree(pid: pid, onlyVisibleElements: true, shouldActivate: false)
+                warmupElements = warmup?.elements.count ?? 0
+                if warmupElements > 10 {
+                    break
+                }
+            }
+            try await Task.sleep(for: .milliseconds(100))
+        }
 
-        // Single traversal for all elements
+        // If Calculator didn't fully render, record an issue — AX is available so this is unexpected
+        guard warmupElements > 10 else {
+            Issue.record("Calculator UI not fully rendered (\(warmupElements) elements) — cannot compare")
+            return
+        }
+
         let start = CFAbsoluteTimeGetCurrent()
         let visibleResult = try traverseAccessibilityTree(pid: pid, onlyVisibleElements: true, shouldActivate: false)
         let visibleDuration = CFAbsoluteTimeGetCurrent() - start
@@ -166,6 +189,9 @@ struct TraversalPerformanceTests {
         =========================================
         """)
 
-        #expect(allResult.elements.count >= visibleResult.elements.count, "All elements should include visible elements")
+        #expect(
+            allResult.elements.count >= visibleResult.elements.count,
+            "All elements should include visible elements",
+        )
     }
 }
