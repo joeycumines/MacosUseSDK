@@ -24,10 +24,8 @@ func TestClipboardPasteIntoTextEdit(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
-	// AGGRESSIVE CLEANUP: Kill any existing TextEdit process first.
-	// This prevents inheriting a stale/hung TextEdit from a previous failed test.
-	_ = exec.Command("killall", "-9", "TextEdit").Run()
-	time.Sleep(100 * time.Millisecond) // Brief pause for process termination
+	// Robustly kill TextEdit, clear saved state, and disable modal dialogs
+	killTextEdit(t)
 
 	serverCmd, serverAddr := startServer(t, ctx)
 	defer cleanupServer(t, serverCmd, serverAddr)

@@ -35,7 +35,14 @@ public actor AutomationCoordinator {
         }
     }
 
-    /// Executes an input action globally or on a specific PID
+    /// Executes an input action globally or on a specific PID.
+    ///
+    /// For keyboard-targeted actions (key press, key hold, text typing), the
+    /// target application is activated (brought to the foreground) first when a
+    /// PID is provided. This is necessary because CGEvent keyboard events are
+    /// delivered to whichever application currently has keyboard focus, NOT to a
+    /// specific process. Mouse events (click, drag, etc.) are routed by screen
+    /// coordinates and do not require prior activation.
     @MainActor
     public func handleExecuteInput(
         action: Macosusesdk_V1_InputAction, pid: pid_t?, showAnimation: Bool, animationDuration: Double,
@@ -44,16 +51,26 @@ public actor AutomationCoordinator {
 
         let sdkAction = try convertFromProtoInputAction(action)
 
-        if pid != nil {
-            // Execute on specific app - but since it's input, perhaps move mouse or something, but for now, global
-            try await executeInputAction(
-                sdkAction, showAnimation: showAnimation, animationDuration: animationDuration,
-            )
-        } else {
-            try await executeInputAction(
-                sdkAction, showAnimation: showAnimation, animationDuration: animationDuration,
-            )
+        // Activate the target application for keyboard actions so that CGEvent
+        // key events reach the correct process.
+        if let pid, sdkAction.requiresKeyboardFocus {
+            if let app = NSRunningApplication(processIdentifier: pid) {
+                let activated = app.activate()
+                if activated {
+                    logger.info("Activated application PID \(pid, privacy: .public) for keyboard input")
+                    // Brief pause for activation to propagate through the window server.
+                    try await Task.sleep(nanoseconds: 50_000_000) // 50ms
+                } else {
+                    logger.warning("Failed to activate application PID \(pid, privacy: .public) for keyboard input")
+                }
+            } else {
+                logger.warning("No NSRunningApplication found for PID \(pid, privacy: .public)")
+            }
         }
+
+        try await executeInputAction(
+            sdkAction, showAnimation: showAnimation, animationDuration: animationDuration,
+        )
     }
 
     /// Traverses the accessibility tree for a given PID
@@ -204,6 +221,18 @@ public actor AutomationCoordinator {
 }
 
 extension AutomationCoordinator {
+    /// Validates that a coordinate value is finite (not NaN or ±Infinity).
+    /// CGEvent behavior with non-finite coordinates is undefined and dangerous.
+    private nonisolated func validateCoordinate(
+        _ value: Double, field: String, inputType: String,
+    ) throws {
+        guard value.isFinite else {
+            throw CoordinatorError.invalidCoordinate(
+                "\(inputType) has non-finite \(field) coordinate: \(value)",
+            )
+        }
+    }
+
     private nonisolated func convertFromProtoInputAction(_ action: Macosusesdk_V1_InputAction) throws
         -> MacosUseSDK.InputAction
     {
@@ -212,6 +241,8 @@ extension AutomationCoordinator {
             guard mouseClick.hasPosition else {
                 throw CoordinatorError.invalidKeyCombo("click missing position")
             }
+            try validateCoordinate(mouseClick.position.x, field: "x", inputType: "click")
+            try validateCoordinate(mouseClick.position.y, field: "y", inputType: "click")
             let clickType = mouseClick.clickType
             let clickCount = mouseClick.clickCount
 
@@ -240,6 +271,8 @@ extension AutomationCoordinator {
             guard mouseMove.hasPosition else {
                 throw CoordinatorError.invalidKeyCombo("move missing position")
             }
+            try validateCoordinate(mouseMove.position.x, field: "x", inputType: "move")
+            try validateCoordinate(mouseMove.position.y, field: "y", inputType: "move")
             // CRITICAL: Proto coordinates come from AXUIElement (kAXPositionAttribute) which use
             // the same Global Display Coordinate System as CGEvent (top-left origin).
             // NO conversion needed.
@@ -248,6 +281,8 @@ extension AutomationCoordinator {
             guard buttonDown.hasPosition else {
                 throw CoordinatorError.invalidKeyCombo("buttonDown missing position")
             }
+            try validateCoordinate(buttonDown.position.x, field: "x", inputType: "buttonDown")
+            try validateCoordinate(buttonDown.position.y, field: "y", inputType: "buttonDown")
             let point = CGPoint(x: buttonDown.position.x, y: buttonDown.position.y)
             let button = convertButtonType(buttonDown.button)
             let modifiers = try convertModifiers(buttonDown.modifiers)
@@ -256,6 +291,8 @@ extension AutomationCoordinator {
             guard buttonUp.hasPosition else {
                 throw CoordinatorError.invalidKeyCombo("buttonUp missing position")
             }
+            try validateCoordinate(buttonUp.position.x, field: "x", inputType: "buttonUp")
+            try validateCoordinate(buttonUp.position.y, field: "y", inputType: "buttonUp")
             let point = CGPoint(x: buttonUp.position.x, y: buttonUp.position.y)
             let button = convertButtonType(buttonUp.button)
             let modifiers = try convertModifiers(buttonUp.modifiers)
@@ -264,6 +301,10 @@ extension AutomationCoordinator {
             guard mouseDrag.hasStartPosition, mouseDrag.hasEndPosition else {
                 throw CoordinatorError.invalidKeyCombo("drag missing start_position or end_position")
             }
+            try validateCoordinate(mouseDrag.startPosition.x, field: "start_x", inputType: "drag")
+            try validateCoordinate(mouseDrag.startPosition.y, field: "start_y", inputType: "drag")
+            try validateCoordinate(mouseDrag.endPosition.x, field: "end_x", inputType: "drag")
+            try validateCoordinate(mouseDrag.endPosition.y, field: "end_y", inputType: "drag")
             let from = CGPoint(x: mouseDrag.startPosition.x, y: mouseDrag.startPosition.y)
             let to = CGPoint(x: mouseDrag.endPosition.x, y: mouseDrag.endPosition.y)
             let button = convertButtonType(mouseDrag.button)
@@ -314,6 +355,7 @@ public enum CoordinatorError: Error, LocalizedError {
     case invalidKeyName(String)
     case invalidKeyCombo(String)
     case unknownModifier(String)
+    case invalidCoordinate(String)
 
     public var errorDescription: String? {
         switch self {
@@ -323,6 +365,8 @@ public enum CoordinatorError: Error, LocalizedError {
             "Invalid key combo: \(combo)"
         case let .unknownModifier(modifier):
             "Unknown modifier: \(modifier)"
+        case let .invalidCoordinate(detail):
+            "Invalid coordinate: \(detail)"
         }
     }
 }

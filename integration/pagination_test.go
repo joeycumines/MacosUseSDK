@@ -2,7 +2,6 @@ package integration
 
 import (
 	"context"
-	"os/exec"
 	"testing"
 	"time"
 
@@ -208,12 +207,8 @@ func TestListApplicationsPagination(t *testing.T) {
 // openTextEdit opens TextEdit application with a new empty document for testing.
 // Uses OpenApplication followed by AppleScript to create a new document, avoiding the file picker.
 func openTextEdit(t *testing.T, ctx context.Context, client pb.MacosUseClient, opsClient longrunningpb.OperationsClient) *pb.Application {
-	// AGGRESSIVE CLEANUP: Kill any existing TextEdit process first.
-	// This prevents inheriting a stale/hung TextEdit from a previous failed test.
-	// The per-test cleanup via cleanupApplication may fail if RPCs are timing out,
-	// so we need this belt-and-suspenders approach.
-	_ = exec.Command("killall", "-9", "TextEdit").Run()
-	time.Sleep(100 * time.Millisecond) // Brief pause for process termination
+	// Robustly kill TextEdit, clear saved state, and disable modal dialogs
+	killTextEdit(t)
 
 	// Open TextEdit using OpenApplication
 	op, err := client.OpenApplication(ctx, &pb.OpenApplicationRequest{

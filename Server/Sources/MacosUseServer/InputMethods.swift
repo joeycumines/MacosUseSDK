@@ -60,6 +60,18 @@ extension MacosUseService {
             completedInput.completeTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
             await stateStore.addInput(completedInput)
             return ServerResponse(message: completedInput)
+        } catch let coordError as CoordinatorError {
+            // Validation errors (invalid coordinates, unknown keys) are client errors —
+            // return INVALID_ARGUMENT per Google AIP standards rather than a soft failure.
+            var failedInput = executingInput
+            failedInput.state = .failed
+            failedInput.error = coordError.localizedDescription
+            failedInput.completeTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
+            await stateStore.addInput(failedInput)
+            throw RPCError(
+                code: .invalidArgument,
+                message: coordError.localizedDescription,
+            )
         } catch {
             // Update to failed
             var failedInput = executingInput

@@ -3,7 +3,6 @@ package integration
 import (
 	"context"
 	"fmt"
-	"os/exec"
 	"sort"
 	"strings"
 	"testing"
@@ -199,8 +198,8 @@ func TestTextEditElements_TraverseAndFindTextArea(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
-	// SIGKILL any existing TextEdit before starting
-	_ = exec.Command("killall", "-9", "TextEdit").Run()
+	// Robustly kill TextEdit, clear saved state, and disable modal dialogs
+	killTextEdit(t)
 
 	// Start server
 	serverCmd, serverAddr := startServer(t, ctx)
@@ -287,8 +286,8 @@ func TestTextEditElements_WriteAndReadValue(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
-	// SIGKILL any existing TextEdit before starting
-	_ = exec.Command("killall", "-9", "TextEdit").Run()
+	// Robustly kill TextEdit, clear saved state, and disable modal dialogs
+	killTextEdit(t)
 
 	// Start server
 	serverCmd, serverAddr := startServer(t, ctx)
@@ -412,8 +411,8 @@ func TestTextEditElements_FindElementsBySelector(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
-	// SIGKILL any existing TextEdit before starting
-	_ = exec.Command("killall", "-9", "TextEdit").Run()
+	// Robustly kill TextEdit, clear saved state, and disable modal dialogs
+	killTextEdit(t)
 
 	// Start server
 	serverCmd, serverAddr := startServer(t, ctx)
@@ -521,8 +520,8 @@ func TestTextEditElements_WriteValueBySelector(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
-	// SIGKILL any existing TextEdit before starting
-	_ = exec.Command("killall", "-9", "TextEdit").Run()
+	// Robustly kill TextEdit, clear saved state, and disable modal dialogs
+	killTextEdit(t)
 
 	// Start server
 	serverCmd, serverAddr := startServer(t, ctx)

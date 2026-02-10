@@ -26,6 +26,20 @@ public enum InputAction: Sendable {
     /// Uses `leftMouseDragged` CGEvent type for proper window manager drag recognition.
     /// Duration controls the speed of the drag (0 = instant, >0 = animated with intermediate steps).
     case drag(from: CGPoint, to: CGPoint, button: CGMouseButton = .left, duration: Double = 0)
+
+    /// Returns `true` for actions that deliver keyboard events via CGEvent.
+    /// CGEvent keyboard events are routed to the currently focused application,
+    /// so the target application must be activated (made frontmost) before these
+    /// events are posted. Mouse actions use screen coordinates and do not need
+    /// prior activation.
+    public var requiresKeyboardFocus: Bool {
+        switch self {
+        case .press, .pressHold, .type:
+            true
+        case .click, .doubleClick, .rightClick, .move, .mouseDown, .mouseUp, .drag:
+            false
+        }
+    }
 }
 
 /// Defines the main action to be performed.

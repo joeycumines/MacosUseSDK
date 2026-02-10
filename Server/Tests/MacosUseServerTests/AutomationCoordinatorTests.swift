@@ -24,12 +24,18 @@ final class AutomationCoordinatorTests: XCTestCase {
         XCTAssertEqual(error.errorDescription, "Unknown modifier: meta")
     }
 
+    func testCoordinatorErrorInvalidCoordinateDescription() {
+        let error = CoordinatorError.invalidCoordinate("click has non-finite x coordinate: nan")
+        XCTAssertEqual(error.errorDescription, "Invalid coordinate: click has non-finite x coordinate: nan")
+    }
+
     func testCoordinatorErrorConformsToLocalizedError() throws {
         // Verify all cases conform to LocalizedError properly
         let errors: [CoordinatorError] = [
             .invalidKeyName("test"),
             .invalidKeyCombo("test"),
             .unknownModifier("test"),
+            .invalidCoordinate("test"),
         ]
         for error in errors {
             XCTAssertNotNil(error.errorDescription)
