@@ -31,6 +31,82 @@ Library, command-line tools, and MCP/gRPC server to traverse the macOS accessibi
 | [MCP Integration](docs/ai-artifacts/05-mcp-integration.md) | Protocol compliance, transport specifications, tool design |
 | [MCP Tool Design](docs/ai-artifacts/06-mcp-tool-design.md) | Detailed tool catalog with all 77 tools organized by category |
 
+## Architecture
+
+### Three-Layer Design
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      AI Agents / Clients                     │
+│                  (Claude, GPT, Custom MCP Clients)           │
+└─────────────────────────┬───────────────────────────────────┘
+                          │ JSON-RPC over HTTP/SSE or stdio
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│     Go MCP Server (cmd/macos-use-mcp)                        │
+│     • 77 MCP Tools                                           │
+│     • HTTP/SSE + stdio transports                            │
+│     • Rate limiting, API key auth, audit logging             │
+└─────────────────────────┬───────────────────────────────────┘
+                          │ gRPC (protobuf)
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│     Swift gRPC Server (Server/MacosUseServer)                │
+│     • Resource-oriented API (Google AIPs)                    │
+│     • WindowRegistry, ObservationManager, SessionManager     │
+│     • LRO pattern for async operations                       │
+└─────────────────────────┬───────────────────────────────────┘
+                          │ Native Swift APIs
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│     Swift SDK (Sources/MacosUseSDK)                          │
+│     • Accessibility APIs (AXUIElement)                       │
+│     • CoreGraphics for input simulation                      │
+│     • AppKit for window management                           │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Hybrid Authority Model
+
+Window and element management uses a **dual-API approach** (see [window-state-management.md](docs/window-state-management.md)):
+
+| Authority | API | Use Case |
+|-----------|-----|----------|
+| **Quartz (CG)** | `CGWindowListCopyWindowInfo` | Fast enumeration, global window list, metadata |
+| **Accessibility (AX)** | `AXUIElement` | Precise geometry, mutations, element interaction |
+
+- `ListWindows` uses **Quartz** (fast, may lag 10-100ms)
+- `GetWindow` uses **Accessibility** (fresh geometry for single window)
+- Window mutations (move/resize) use **Accessibility**
+- Bridging via `_AXUIElementGetWindow` with 1000px heuristic fallback
+
+### Coordinate Systems
+
+macOS uses **two distinct coordinate systems**:
+
+| System | Origin | Y Direction | Used By |
+|--------|--------|-------------|---------|
+| **Global Display** | Top-left of main display | Down ↓ | CGWindowList, AX, CGEvent, Input APIs |
+| **AppKit** | Bottom-left of main display | Up ↑ | NSWindow, NSScreen |
+
+**Important**: Window bounds and input coordinates both use **Global Display Coordinates**. No conversion needed between them. Secondary displays may have negative X (left of main) or negative Y (above main).
+
+### Environment Variable Reference
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `MCP_HTTP_ADDR` | HTTP server bind address | `127.0.0.1:8080` |
+| `MCP_UNIX_SOCKET` | Unix socket path (overrides HTTP) | - |
+| `MCP_TLS_CERT_FILE` | TLS certificate for HTTPS | - |
+| `MCP_TLS_KEY_FILE` | TLS private key | - |
+| `MCP_API_KEY` | API key for authentication | - |
+| `MCP_RATE_LIMIT` | Max requests/second | `100` |
+| `MCP_AUDIT_LOG` | Audit log file path | - |
+| `MCP_SERVER_ADDR` | gRPC server address for MCP proxy | `127.0.0.1:50051` |
+| `GRPC_LISTEN_ADDRESS` | Swift server bind address | `127.0.0.1` |
+| `GRPC_PORT` | Swift server port | `50051` |
+| `GRPC_UNIX_SOCKET` | Swift server Unix socket | - |
+
 
 https://github.com/user-attachments/assets/d8dc75ba-5b15-492c-bb40-d2bc5b65483e
 
