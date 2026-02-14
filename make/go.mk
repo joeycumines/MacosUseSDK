@@ -256,6 +256,8 @@ GO_MODULE_SLUGS_NO_PACKAGES ?=
 GO_MODULE_SLUGS_NO_UPDATE ?=
 # used to exclude modules from the betteralign targets
 GO_MODULE_SLUGS_NO_BETTERALIGN ?=
+# used to exclude modules from the fix targets
+GO_MODULE_SLUGS_NO_FIX ?=
 # used to include modules in the deadcode targets
 GO_MODULE_SLUGS_USE_DEADCODE ?=
 
@@ -350,6 +352,9 @@ GO_MODULE_SLUGS_EXCL_NO_UPDATE := $(filter-out $(GO_MODULE_SLUGS_NO_UPDATE),$(GO
 GO_MODULE_SLUGS_EXCL_NO_BETTERALIGN := $(filter-out $(GO_MODULE_SLUGS_NO_BETTERALIGN),$(GO_MODULE_SLUGS_EXCL_NO_PACKAGES))
 # because GO_MODULE_SLUGS_EXCL_NO_BETTERALIGN is composite (with no packages), and we need a target for _all_ modules
 GO_MODULE_SLUGS_INCL_NO_BETTERALIGN := $(filter-out $(GO_MODULE_SLUGS_EXCL_NO_BETTERALIGN),$(GO_MODULE_SLUGS))
+GO_MODULE_SLUGS_EXCL_NO_FIX := $(filter-out $(GO_MODULE_SLUGS_NO_FIX),$(GO_MODULE_SLUGS_EXCL_NO_PACKAGES))
+# because GO_MODULE_SLUGS_EXCL_NO_FIX is composite (with no packages), and we need a target for _all_ modules
+GO_MODULE_SLUGS_INCL_NO_FIX := $(filter-out $(GO_MODULE_SLUGS_EXCL_NO_FIX),$(GO_MODULE_SLUGS))
 GO_MODULE_SLUGS_INCL_USE_DEADCODE := $(filter $(GO_MODULE_SLUGS_USE_DEADCODE),$(GO_MODULE_SLUGS_EXCL_NO_PACKAGES))
 # because GO_MODULE_SLUGS_INCL_USE_DEADCODE is composite (with no packages), and we need a target for _all_ modules
 GO_MODULE_SLUGS_EXCL_USE_DEADCODE := $(filter-out $(GO_MODULE_SLUGS_INCL_USE_DEADCODE),$(GO_MODULE_SLUGS))
@@ -579,9 +584,12 @@ $(eval $(GO_MK_VAR_PREFIX)FIX_TARGETS := $$(addprefix $$(GO_TARGET_PREFIX)fix.,$
 .PHONY: $(GO_TARGET_PREFIX)fix
 $(GO_TARGET_PREFIX)fix: $($(GO_MK_VAR_PREFIX)FIX_TARGETS) ## Runs the go fix command.
 
-.PHONY: $($(GO_MK_VAR_PREFIX)FIX_TARGETS)
-$($(GO_MK_VAR_PREFIX)FIX_TARGETS): $(GO_TARGET_PREFIX)fix.%:
+.PHONY: $(addprefix $(GO_TARGET_PREFIX)fix.,$(GO_MODULE_SLUGS_EXCL_NO_FIX))
+$(addprefix $(GO_TARGET_PREFIX)fix.,$(GO_MODULE_SLUGS_EXCL_NO_FIX)): $(GO_TARGET_PREFIX)fix.%:
 	$(MAKE) -s -C $(call go_module_slug_to_path,$*) -f $(ROOT_MAKEFILE) $(GO_TARGET_PREFIX)_fix
+
+.PHONY: $(addprefix $(GO_TARGET_PREFIX)fix.,$(GO_MODULE_SLUGS_INCL_NO_FIX))
+$(addprefix $(GO_TARGET_PREFIX)fix.,$(GO_MODULE_SLUGS_INCL_NO_FIX)): $(GO_TARGET_PREFIX)fix.%:
 
 .PHONY: $(GO_TARGET_PREFIX)_fix
 $(GO_TARGET_PREFIX)_fix:
