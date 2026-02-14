@@ -55,7 +55,7 @@ func TestRateLimiter_Allow_WithTestClock(t *testing.T) {
 	rl := NewRateLimiterWithClock(2.0, clock) // 2 req/s, burst = 4
 
 	// Initial burst should be allowed (burst = 4)
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		if !rl.Allow() {
 			t.Errorf("Request %d should be allowed (within burst)", i+1)
 		}
@@ -104,18 +104,16 @@ func TestRateLimiter_ConcurrentAccess(t *testing.T) {
 	var rejected atomic.Int64
 
 	var wg sync.WaitGroup
-	for i := 0; i < 100; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for j := 0; j < 10; j++ {
+	for range 100 {
+		wg.Go(func() {
+			for range 10 {
 				if rl.Allow() {
 					allowed.Add(1)
 				} else {
 					rejected.Add(1)
 				}
 			}
-		}()
+		})
 	}
 	wg.Wait()
 
@@ -156,7 +154,7 @@ func TestRateLimitMiddleware_HealthExempt(t *testing.T) {
 	rl := NewRateLimiterWithClock(0.001, clock)
 
 	// Exhaust the tiny bucket
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		rl.Allow()
 	}
 
@@ -184,7 +182,7 @@ func TestRateLimitMiddleware_MetricsExempt(t *testing.T) {
 	rl := NewRateLimiterWithClock(0.001, clock)
 
 	// Exhaust the bucket
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		rl.Allow()
 	}
 
@@ -218,7 +216,7 @@ func TestRateLimitMiddleware_RateLimited(t *testing.T) {
 	middleware := RateLimitMiddleware(rl, handler)
 
 	// First 2 requests should succeed (burst)
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		req := httptest.NewRequest("POST", "/message", nil)
 		w := httptest.NewRecorder()
 		middleware.ServeHTTP(w, req)
@@ -444,14 +442,14 @@ func TestRateLimitMiddleware_RetryAfterHeaderPresent(t *testing.T) {
 	middleware := RateLimitMiddleware(rl, handler)
 
 	// Exhaust the burst
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		req := httptest.NewRequest("GET", "/api/test", nil)
 		w := httptest.NewRecorder()
 		middleware.ServeHTTP(w, req)
 	}
 
 	// Send multiple requests that should all be rate limited
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		req := httptest.NewRequest("GET", "/api/test", nil)
 		w := httptest.NewRecorder()
 		middleware.ServeHTTP(w, req)
@@ -481,7 +479,7 @@ func TestRateLimitMiddleware_RetryAfterValue(t *testing.T) {
 	middleware := RateLimitMiddleware(rl, handler)
 
 	// Exhaust the burst
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		req := httptest.NewRequest("GET", "/api/test", nil)
 		w := httptest.NewRecorder()
 		middleware.ServeHTTP(w, req)
@@ -529,7 +527,7 @@ func TestRateLimiter_ResetAfterWindow(t *testing.T) {
 	rl := NewRateLimiterWithClock(2.0, clock)
 
 	// Exhaust all tokens
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		if !rl.Allow() {
 			t.Fatalf("Request %d should be allowed (within burst)", i+1)
 		}
@@ -544,7 +542,7 @@ func TestRateLimiter_ResetAfterWindow(t *testing.T) {
 	now = now.Add(2 * time.Second)
 
 	// Should now allow 4 more requests (full bucket refilled)
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		if !rl.Allow() {
 			t.Errorf("Request %d after reset should be allowed", i+1)
 		}
@@ -567,7 +565,7 @@ func TestRateLimiter_PartialRefill(t *testing.T) {
 	rl := NewRateLimiterWithClock(10.0, clock)
 
 	// Exhaust all 20 tokens
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		rl.Allow()
 	}
 
@@ -576,7 +574,7 @@ func TestRateLimiter_PartialRefill(t *testing.T) {
 
 	// Should allow exactly 5 requests
 	allowed := 0
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		if rl.Allow() {
 			allowed++
 		}
@@ -604,7 +602,7 @@ func TestRateLimitMiddleware_ResetAfterWindow(t *testing.T) {
 	middleware := RateLimitMiddleware(rl, handler)
 
 	// Exhaust burst
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		req := httptest.NewRequest("GET", "/api/test", nil)
 		w := httptest.NewRecorder()
 		middleware.ServeHTTP(w, req)
@@ -649,19 +647,17 @@ func TestRateLimiter_ConcurrentAccessSafety(t *testing.T) {
 	var wg sync.WaitGroup
 	start := make(chan struct{}) // synchronize start
 
-	for i := 0; i < goroutines; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range goroutines {
+		wg.Go(func() {
 			<-start // wait for signal
-			for j := 0; j < requestsPerGoroutine; j++ {
+			for range requestsPerGoroutine {
 				if rl.Allow() {
 					allowed.Add(1)
 				} else {
 					rejected.Add(1)
 				}
 			}
-		}()
+		})
 	}
 
 	close(start) // release all goroutines
@@ -702,12 +698,10 @@ func TestRateLimitMiddleware_ConcurrentAccessSafety(t *testing.T) {
 	var wg sync.WaitGroup
 	start := make(chan struct{})
 
-	for i := 0; i < goroutines; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range goroutines {
+		wg.Go(func() {
 			<-start
-			for j := 0; j < requestsPerGoroutine; j++ {
+			for range requestsPerGoroutine {
 				req := httptest.NewRequest("GET", "/api/test", nil)
 				w := httptest.NewRecorder()
 				middleware.ServeHTTP(w, req)
@@ -717,7 +711,7 @@ func TestRateLimitMiddleware_ConcurrentAccessSafety(t *testing.T) {
 					status429.Add(1)
 				}
 			}
-		}()
+		})
 	}
 
 	close(start)
@@ -745,7 +739,7 @@ func TestRateLimiter_ExactBurstBoundary(t *testing.T) {
 	rl := NewRateLimiterWithClock(5.0, clock)
 
 	// Allow exactly burst requests
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		if !rl.Allow() {
 			t.Errorf("Request %d should be allowed (within burst of 10)", i+1)
 		}
@@ -778,7 +772,7 @@ func TestRateLimiter_TokensAccuracy(t *testing.T) {
 	}
 
 	// Consume 4 more
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		rl.Allow()
 	}
 	if tokens := rl.Tokens(); tokens != 5 {
@@ -809,7 +803,7 @@ func TestRateLimitMiddleware_ExemptEndpointsWithConcurrentTraffic(t *testing.T) 
 	var healthOK, metricsOK, apiRateLimited atomic.Int64
 	var wg sync.WaitGroup
 
-	for i := 0; i < goroutines; i++ {
+	for range goroutines {
 		wg.Add(3)
 
 		// Health endpoint

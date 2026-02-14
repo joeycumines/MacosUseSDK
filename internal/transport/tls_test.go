@@ -278,7 +278,7 @@ func TestTLSServer_RespondsOverHTTPS(t *testing.T) {
 
 	var resp *http.Response
 	var lastErr error
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		resp, lastErr = client.Get("https://" + addr + "/health")
 		if lastErr == nil {
 			break
@@ -700,7 +700,7 @@ func TestTLSServer_SelfSignedCertAcceptedWithSkipVerify(t *testing.T) {
 	// Wait for server to be ready
 	var resp *http.Response
 	var lastErr error
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		resp, lastErr = client.Get("https://" + addr + "/health")
 		if lastErr == nil {
 			break
@@ -774,7 +774,7 @@ func TestTLSServer_SelfSignedCertAcceptedWithRootCA(t *testing.T) {
 	// Wait for server to be ready
 	var resp *http.Response
 	var lastErr error
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		resp, lastErr = client.Get("https://" + addr + "/health")
 		if lastErr == nil {
 			break
@@ -910,7 +910,7 @@ func TestTLSServer_TLS12Accepted(t *testing.T) {
 	// Wait for server to be ready
 	var resp *http.Response
 	var lastErr error
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		resp, lastErr = client.Get("https://" + addr + "/health")
 		if lastErr == nil {
 			break
@@ -984,7 +984,7 @@ func TestTLSServer_TLS13Accepted(t *testing.T) {
 	// Wait for server to be ready
 	var resp *http.Response
 	var lastErr error
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		resp, lastErr = client.Get("https://" + addr + "/health")
 		if lastErr == nil {
 			break
@@ -1065,7 +1065,7 @@ func TestTLSServer_WithAuthentication(t *testing.T) {
 	// Test 1: Request without auth to protected endpoint
 	t.Run("without auth rejected", func(t *testing.T) {
 		var resp *http.Response
-		for i := 0; i < 20; i++ {
+		for range 20 {
 			resp, err = client.Get("https://" + addr + "/metrics")
 			if err == nil {
 				break

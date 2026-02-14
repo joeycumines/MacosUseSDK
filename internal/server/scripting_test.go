@@ -939,7 +939,7 @@ func TestHandleGetScriptingDictionaries_Success(t *testing.T) {
 	}
 
 	// Verify response contains expected data
-	var response map[string]interface{}
+	var response map[string]any
 	if err := json.Unmarshal([]byte(result.Content[0].Text), &response); err != nil {
 		t.Fatalf("failed to parse response JSON: %v", err)
 	}
@@ -948,7 +948,7 @@ func TestHandleGetScriptingDictionaries_Success(t *testing.T) {
 		t.Errorf("expected total 2, got %v", response["total"])
 	}
 
-	dicts := response["dictionaries"].([]interface{})
+	dicts := response["dictionaries"].([]any)
 	if len(dicts) != 2 {
 		t.Errorf("expected 2 dictionaries, got %d", len(dicts))
 	}
@@ -977,7 +977,7 @@ func TestHandleGetScriptingDictionaries_Empty(t *testing.T) {
 		t.Errorf("expected success, got error: %v", result.Content)
 	}
 
-	var response map[string]interface{}
+	var response map[string]any
 	if err := json.Unmarshal([]byte(result.Content[0].Text), &response); err != nil {
 		t.Fatalf("failed to parse response JSON: %v", err)
 	}

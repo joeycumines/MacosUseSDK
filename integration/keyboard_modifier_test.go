@@ -184,7 +184,7 @@ func setupTextEditWithDocument(
 
 	// Close ALL existing documents (restored from saved state).
 	// This ensures a clean slate.
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		_, err := client.ExecuteAppleScript(ctx, &pb.ExecuteAppleScriptRequest{
 			Script: `tell application "TextEdit"
 	if (count of documents) > 0 then

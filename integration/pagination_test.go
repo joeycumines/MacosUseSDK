@@ -281,7 +281,7 @@ func TestListInputsPagination(t *testing.T) {
 	// 3. Data Seeding
 	// We create exactly 3 inputs to test a page split of 2 and 1.
 	t.Log("Creating 3 test inputs...")
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		performInput(t, ctx, client, app, "1")
 	}
 

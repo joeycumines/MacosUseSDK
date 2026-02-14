@@ -257,19 +257,19 @@ func (s *MCPServer) handlePressKey(call *ToolCall) (*ToolResult, error) {
 	}
 
 	// Build key combo string for display
-	keyCombo := ""
+	var keyCombo strings.Builder
 	for _, mod := range params.Modifiers {
 		// Capitalize first letter
 		if len(mod) > 0 {
-			keyCombo += strings.ToUpper(mod[:1]) + strings.ToLower(mod[1:]) + "+"
+			keyCombo.WriteString(strings.ToUpper(mod[:1]) + strings.ToLower(mod[1:]) + "+")
 		}
 	}
-	keyCombo += params.Key
+	keyCombo.WriteString(params.Key)
 
 	return &ToolResult{
 		Content: []Content{{
 			Type: "text",
-			Text: fmt.Sprintf("Pressed key: %s - Input: %s", keyCombo, resp.Name),
+			Text: fmt.Sprintf("Pressed key: %s - Input: %s", keyCombo.String(), resp.Name),
 		}},
 	}, nil
 }
@@ -722,7 +722,7 @@ func (s *MCPServer) handleGetInput(call *ToolCall) (*ToolResult, error) {
 		return grpcErrorResult(err, "get_input"), nil
 	}
 
-	data, _ := json.MarshalIndent(map[string]interface{}{
+	data, _ := json.MarshalIndent(map[string]any{
 		"name":        resp.Name,
 		"state":       resp.State.String(),
 		"create_time": resp.CreateTime.AsTime().Format(time.RFC3339),
@@ -767,15 +767,15 @@ func (s *MCPServer) handleListInputs(call *ToolCall) (*ToolResult, error) {
 		return grpcErrorResult(err, "list_inputs"), nil
 	}
 
-	inputs := make([]map[string]interface{}, 0, len(resp.Inputs))
+	inputs := make([]map[string]any, 0, len(resp.Inputs))
 	for _, input := range resp.Inputs {
-		inputs = append(inputs, map[string]interface{}{
+		inputs = append(inputs, map[string]any{
 			"name":  input.Name,
 			"state": input.State.String(),
 		})
 	}
 
-	data, _ := json.MarshalIndent(map[string]interface{}{
+	data, _ := json.MarshalIndent(map[string]any{
 		"inputs":          inputs,
 		"next_page_token": resp.NextPageToken,
 	}, "", "  ")

@@ -65,11 +65,11 @@ func TestConcurrencyStress(t *testing.T) {
 	startTime := time.Now()
 
 	// Launch concurrent workers
-	for i := 0; i < numGoroutines; i++ {
+	for i := range numGoroutines {
 		wg.Add(1)
 		go func(workerID int) {
 			defer wg.Done()
-			for j := 0; j < opsPerWorker; j++ {
+			for j := range opsPerWorker {
 				select {
 				case <-ctx.Done():
 					return
@@ -153,7 +153,7 @@ func TestConcurrencyMutationSafety(t *testing.T) {
 	results := make(chan string, numGoroutines*2)
 
 	// Launch concurrent clipboard writes, each with unique content
-	for i := 0; i < numGoroutines; i++ {
+	for i := range numGoroutines {
 		wg.Add(1)
 		go func(workerID int) {
 			defer wg.Done()
@@ -220,7 +220,7 @@ func TestConcurrencyNoDeadlock(t *testing.T) {
 		errorCount   atomic.Int64
 	)
 
-	for i := 0; i < numOps; i++ {
+	for i := range numOps {
 		wg.Add(1)
 		go func(opID int) {
 			defer wg.Done()

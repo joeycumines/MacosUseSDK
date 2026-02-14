@@ -6,6 +6,7 @@ package server
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	_type "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
@@ -155,7 +156,7 @@ func grpcErrorResult(err error, toolName string) *ToolResult {
 // nil if validation passes.
 //
 // Note: Extra properties not defined in the schema are allowed per JSON-RPC conventions.
-func validateToolInput(toolName string, args map[string]interface{}, tools map[string]*Tool) *transport.Message {
+func validateToolInput(toolName string, args map[string]any, tools map[string]*Tool) *transport.Message {
 	tool, ok := tools[toolName]
 	if !ok {
 		// Tool not found - this is handled separately, return nil to let caller handle
@@ -213,7 +214,7 @@ func invalidParamsError(message string) *transport.Message {
 }
 
 // getRequiredFields extracts the "required" array from a JSON schema.
-func getRequiredFields(schema map[string]interface{}) []string {
+func getRequiredFields(schema map[string]any) []string {
 	required, ok := schema["required"]
 	if !ok {
 		return nil
@@ -225,7 +226,7 @@ func getRequiredFields(schema map[string]interface{}) []string {
 	}
 
 	// Handle case where required is []interface{} (from JSON unmarshaling)
-	requiredIface, ok := required.([]interface{})
+	requiredIface, ok := required.([]any)
 	if !ok {
 		return nil
 	}
@@ -240,20 +241,20 @@ func getRequiredFields(schema map[string]interface{}) []string {
 }
 
 // getSchemaProperties extracts the "properties" map from a JSON schema.
-func getSchemaProperties(schema map[string]interface{}) map[string]map[string]interface{} {
+func getSchemaProperties(schema map[string]any) map[string]map[string]any {
 	props, ok := schema["properties"]
 	if !ok {
 		return nil
 	}
 
-	propsMap, ok := props.(map[string]interface{})
+	propsMap, ok := props.(map[string]any)
 	if !ok {
 		return nil
 	}
 
-	result := make(map[string]map[string]interface{}, len(propsMap))
+	result := make(map[string]map[string]any, len(propsMap))
 	for k, v := range propsMap {
-		if propSchema, ok := v.(map[string]interface{}); ok {
+		if propSchema, ok := v.(map[string]any); ok {
 			result[k] = propSchema
 		}
 	}
@@ -262,7 +263,7 @@ func getSchemaProperties(schema map[string]interface{}) map[string]map[string]in
 
 // validateFieldValue validates a single field value against its property schema.
 // Returns an error if validation fails.
-func validateFieldValue(fieldName string, value interface{}, propSchema map[string]interface{}) error {
+func validateFieldValue(fieldName string, value any, propSchema map[string]any) error {
 	// Skip validation for nil/null values (unless required, which is checked above)
 	if value == nil {
 		return nil
@@ -286,7 +287,7 @@ func validateFieldValue(fieldName string, value interface{}, propSchema map[stri
 
 // validateType validates that a value matches the expected JSON Schema type.
 // JSON Schema types: string, number, integer, boolean, array, object
-func validateType(fieldName string, value interface{}, expectedType string) error {
+func validateType(fieldName string, value any, expectedType string) error {
 	switch expectedType {
 	case "string":
 		if _, ok := value.(string); !ok {
@@ -307,11 +308,11 @@ func validateType(fieldName string, value interface{}, expectedType string) erro
 			return fmt.Errorf("field %q must be a boolean, got %T", fieldName, value)
 		}
 	case "array":
-		if _, ok := value.([]interface{}); !ok {
+		if _, ok := value.([]any); !ok {
 			return fmt.Errorf("field %q must be an array, got %T", fieldName, value)
 		}
 	case "object":
-		if _, ok := value.(map[string]interface{}); !ok {
+		if _, ok := value.(map[string]any); !ok {
 			return fmt.Errorf("field %q must be an object, got %T", fieldName, value)
 		}
 	default:
@@ -321,7 +322,7 @@ func validateType(fieldName string, value interface{}, expectedType string) erro
 }
 
 // isNumber returns true if the value is a valid JSON number (float64 or integer).
-func isNumber(value interface{}) bool {
+func isNumber(value any) bool {
 	switch value.(type) {
 	case float64, float32, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
 		return true
@@ -333,7 +334,7 @@ func isNumber(value interface{}) bool {
 // isInteger returns true if the value is an integer (whole number).
 // JSON unmarshaling to interface{} produces float64 for all numbers,
 // so we need to check if the float64 is a whole number.
-func isInteger(value interface{}) bool {
+func isInteger(value any) bool {
 	switch v := value.(type) {
 	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
 		return true
@@ -349,7 +350,7 @@ func isInteger(value interface{}) bool {
 
 // validateEnumValue validates that a value is in the allowed enum set.
 // Returns nil if no enum is defined or if value is in the allowed set.
-func validateEnumValue(fieldName string, value interface{}, propSchema map[string]interface{}) error {
+func validateEnumValue(fieldName string, value any, propSchema map[string]any) error {
 	enumValues, ok := propSchema["enum"]
 	if !ok {
 		return nil
@@ -362,16 +363,14 @@ func validateEnumValue(fieldName string, value interface{}, propSchema map[strin
 			// Enum is defined but value is not a string - type mismatch
 			return fmt.Errorf("field %q must be a string for enum validation, got %T", fieldName, value)
 		}
-		for _, allowed := range enumStrings {
-			if valueStr == allowed {
-				return nil
-			}
+		if slices.Contains(enumStrings, valueStr) {
+			return nil
 		}
 		return fmt.Errorf("field %q must be one of [%s], got %q", fieldName, strings.Join(enumStrings, ", "), valueStr)
 	}
 
 	// Handle enum as []interface{} (from JSON unmarshaling)
-	if enumIface, ok := enumValues.([]interface{}); ok {
+	if enumIface, ok := enumValues.([]any); ok {
 		for _, allowed := range enumIface {
 			if value == allowed {
 				return nil

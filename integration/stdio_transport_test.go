@@ -35,14 +35,14 @@ func TestStdioTransport_Initialize(t *testing.T) {
 	defer cleanup()
 
 	// Send initialize request
-	initReq := map[string]interface{}{
+	initReq := map[string]any{
 		"jsonrpc": "2.0",
 		"id":      1,
 		"method":  "initialize",
-		"params": map[string]interface{}{
+		"params": map[string]any{
 			"protocolVersion": "2025-11-25",
-			"capabilities":    map[string]interface{}{},
-			"clientInfo": map[string]interface{}{
+			"capabilities":    map[string]any{},
+			"clientInfo": map[string]any{
 				"name":    "test-client",
 				"version": "1.0.0",
 			},
@@ -75,7 +75,7 @@ func TestStdioTransport_Initialize(t *testing.T) {
 	var initResult struct {
 		ProtocolVersion string `json:"protocolVersion"`
 		Capabilities    struct {
-			Tools map[string]interface{} `json:"tools"`
+			Tools map[string]any `json:"tools"`
 		} `json:"capabilities"`
 		ServerInfo struct {
 			Name    string `json:"name"`
@@ -114,11 +114,11 @@ func TestStdioTransport_ToolsList(t *testing.T) {
 	defer cleanup()
 
 	// Initialize first
-	initReq := map[string]interface{}{
+	initReq := map[string]any{
 		"jsonrpc": "2.0",
 		"id":      1,
 		"method":  "initialize",
-		"params":  map[string]interface{}{},
+		"params":  map[string]any{},
 	}
 	_, err := sendStdioRequest(ctx, stdin, stdout, initReq)
 	if err != nil {
@@ -126,11 +126,11 @@ func TestStdioTransport_ToolsList(t *testing.T) {
 	}
 
 	// Send tools/list request
-	toolsReq := map[string]interface{}{
+	toolsReq := map[string]any{
 		"jsonrpc": "2.0",
 		"id":      2,
 		"method":  "tools/list",
-		"params":  map[string]interface{}{},
+		"params":  map[string]any{},
 	}
 
 	response, err := sendStdioRequest(ctx, stdin, stdout, toolsReq)
@@ -145,9 +145,9 @@ func TestStdioTransport_ToolsList(t *testing.T) {
 	// Parse result
 	var toolsResult struct {
 		Tools []struct {
-			Name        string                 `json:"name"`
-			Description string                 `json:"description"`
-			InputSchema map[string]interface{} `json:"inputSchema"`
+			Name        string         `json:"name"`
+			Description string         `json:"description"`
+			InputSchema map[string]any `json:"inputSchema"`
 		} `json:"tools"`
 	}
 	if err := json.Unmarshal(response.Result, &toolsResult); err != nil {
@@ -205,11 +205,11 @@ func TestStdioTransport_CaptureScreenshot(t *testing.T) {
 	defer cleanup()
 
 	// Initialize first
-	initReq := map[string]interface{}{
+	initReq := map[string]any{
 		"jsonrpc": "2.0",
 		"id":      1,
 		"method":  "initialize",
-		"params":  map[string]interface{}{},
+		"params":  map[string]any{},
 	}
 	_, err := sendStdioRequest(ctx, stdin, stdout, initReq)
 	if err != nil {
@@ -217,13 +217,13 @@ func TestStdioTransport_CaptureScreenshot(t *testing.T) {
 	}
 
 	// Send tools/call for capture_screenshot
-	callReq := map[string]interface{}{
+	callReq := map[string]any{
 		"jsonrpc": "2.0",
 		"id":      3,
 		"method":  "tools/call",
-		"params": map[string]interface{}{
+		"params": map[string]any{
 			"name": "capture_screenshot",
-			"arguments": map[string]interface{}{
+			"arguments": map[string]any{
 				"format": "png",
 			},
 		},
@@ -316,13 +316,13 @@ func TestStdioTransport_FullWorkflow(t *testing.T) {
 
 	// Step 1: Initialize
 	t.Log("Step 1: Sending initialize...")
-	initReq := map[string]interface{}{
+	initReq := map[string]any{
 		"jsonrpc": "2.0",
 		"id":      1,
 		"method":  "initialize",
-		"params": map[string]interface{}{
+		"params": map[string]any{
 			"protocolVersion": "2025-11-25",
-			"clientInfo": map[string]interface{}{
+			"clientInfo": map[string]any{
 				"name":    "workflow-test",
 				"version": "1.0.0",
 			},
@@ -340,7 +340,7 @@ func TestStdioTransport_FullWorkflow(t *testing.T) {
 	// Step 2: notifications/initialized (no response expected, but server should accept)
 	// Note: For stdio, we can still send this - server may or may not respond
 	t.Log("Step 2: Sending notifications/initialized...")
-	notifyReq := map[string]interface{}{
+	notifyReq := map[string]any{
 		"jsonrpc": "2.0",
 		"method":  "notifications/initialized",
 	}
@@ -352,11 +352,11 @@ func TestStdioTransport_FullWorkflow(t *testing.T) {
 
 	// Step 3: tools/list
 	t.Log("Step 3: Sending tools/list...")
-	toolsReq := map[string]interface{}{
+	toolsReq := map[string]any{
 		"jsonrpc": "2.0",
 		"id":      2,
 		"method":  "tools/list",
-		"params":  map[string]interface{}{},
+		"params":  map[string]any{},
 	}
 	toolsResp, err := sendStdioRequest(ctx, stdin, stdout, toolsReq)
 	if err != nil {
@@ -378,13 +378,13 @@ func TestStdioTransport_FullWorkflow(t *testing.T) {
 
 	// Step 4: tools/call - list_displays (lightweight operation)
 	t.Log("Step 4: Sending tools/call for list_displays...")
-	displayReq := map[string]interface{}{
+	displayReq := map[string]any{
 		"jsonrpc": "2.0",
 		"id":      3,
 		"method":  "tools/call",
-		"params": map[string]interface{}{
+		"params": map[string]any{
 			"name":      "list_displays",
-			"arguments": map[string]interface{}{},
+			"arguments": map[string]any{},
 		},
 	}
 	displayResp, err := sendStdioRequest(ctx, stdin, stdout, displayReq)
@@ -419,13 +419,13 @@ func TestStdioTransport_FullWorkflow(t *testing.T) {
 
 	// Step 5: tools/call - capture_screenshot
 	t.Log("Step 5: Sending tools/call for capture_screenshot...")
-	screenshotReq := map[string]interface{}{
+	screenshotReq := map[string]any{
 		"jsonrpc": "2.0",
 		"id":      4,
 		"method":  "tools/call",
-		"params": map[string]interface{}{
+		"params": map[string]any{
 			"name": "capture_screenshot",
-			"arguments": map[string]interface{}{
+			"arguments": map[string]any{
 				"format": "jpeg",
 			},
 		},
@@ -490,11 +490,11 @@ func TestStdioTransport_InvalidMethod(t *testing.T) {
 	defer cleanup()
 
 	// Initialize first
-	initReq := map[string]interface{}{
+	initReq := map[string]any{
 		"jsonrpc": "2.0",
 		"id":      1,
 		"method":  "initialize",
-		"params":  map[string]interface{}{},
+		"params":  map[string]any{},
 	}
 	_, err := sendStdioRequest(ctx, stdin, stdout, initReq)
 	if err != nil {
@@ -502,11 +502,11 @@ func TestStdioTransport_InvalidMethod(t *testing.T) {
 	}
 
 	// Send unknown method
-	unknownReq := map[string]interface{}{
+	unknownReq := map[string]any{
 		"jsonrpc": "2.0",
 		"id":      2,
 		"method":  "unknown/method",
-		"params":  map[string]interface{}{},
+		"params":  map[string]any{},
 	}
 
 	response, err := sendStdioRequest(ctx, stdin, stdout, unknownReq)
@@ -541,11 +541,11 @@ func TestStdioTransport_InvalidTool(t *testing.T) {
 	defer cleanup()
 
 	// Initialize first
-	initReq := map[string]interface{}{
+	initReq := map[string]any{
 		"jsonrpc": "2.0",
 		"id":      1,
 		"method":  "initialize",
-		"params":  map[string]interface{}{},
+		"params":  map[string]any{},
 	}
 	_, err := sendStdioRequest(ctx, stdin, stdout, initReq)
 	if err != nil {
@@ -553,13 +553,13 @@ func TestStdioTransport_InvalidTool(t *testing.T) {
 	}
 
 	// Call non-existent tool
-	callReq := map[string]interface{}{
+	callReq := map[string]any{
 		"jsonrpc": "2.0",
 		"id":      2,
 		"method":  "tools/call",
-		"params": map[string]interface{}{
+		"params": map[string]any{
 			"name":      "nonexistent_tool",
-			"arguments": map[string]interface{}{},
+			"arguments": map[string]any{},
 		},
 	}
 
@@ -716,7 +716,7 @@ func startMCPStdioProcess(t *testing.T, ctx context.Context, grpcAddr string) (*
 }
 
 // writeStdioMessage writes a JSON-RPC message to stdin
-func writeStdioMessage(stdin io.Writer, msg map[string]interface{}) error {
+func writeStdioMessage(stdin io.Writer, msg map[string]any) error {
 	data, err := json.Marshal(msg)
 	if err != nil {
 		return fmt.Errorf("failed to marshal message: %w", err)
@@ -767,7 +767,7 @@ func readStdioResponse(ctx context.Context, reader *bufio.Reader) (*stdioRespons
 }
 
 // sendStdioRequest sends a JSON-RPC request and waits for the response
-func sendStdioRequest(ctx context.Context, stdin io.Writer, stdout *bufio.Reader, req map[string]interface{}) (*stdioResponse, error) {
+func sendStdioRequest(ctx context.Context, stdin io.Writer, stdout *bufio.Reader, req map[string]any) (*stdioResponse, error) {
 	// Create a timeout context for this request
 	reqCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()

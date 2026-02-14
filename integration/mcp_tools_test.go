@@ -106,11 +106,11 @@ func TestMCPTools_HTTPRoundTrip(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			id := time.Now().UnixNano()
-			request := map[string]interface{}{
+			request := map[string]any{
 				"jsonrpc": "2.0",
 				"id":      id,
 				"method":  "tools/call",
-				"params": map[string]interface{}{
+				"params": map[string]any{
 					"name":      tt.tool,
 					"arguments": json.RawMessage(tt.args),
 				},
@@ -270,13 +270,13 @@ func TestMCPTools_ClickTypeText_Workflow(t *testing.T) {
 	initResp, _ := http.Post(baseURL+"/message", "application/json", bytes.NewBufferString(initReq))
 	initResp.Body.Close()
 
-	clickReq := map[string]interface{}{
+	clickReq := map[string]any{
 		"jsonrpc": "2.0",
 		"id":      2,
 		"method":  "tools/call",
-		"params": map[string]interface{}{
+		"params": map[string]any{
 			"name": "click",
-			"arguments": map[string]interface{}{
+			"arguments": map[string]any{
 				"x": centerX,
 				"y": centerY,
 			},
@@ -289,13 +289,13 @@ func TestMCPTools_ClickTypeText_Workflow(t *testing.T) {
 	}
 	clickResp.Body.Close()
 
-	typeReq := map[string]interface{}{
+	typeReq := map[string]any{
 		"jsonrpc": "2.0",
 		"id":      3,
 		"method":  "tools/call",
-		"params": map[string]interface{}{
+		"params": map[string]any{
 			"name": "type_text",
-			"arguments": map[string]interface{}{
+			"arguments": map[string]any{
 				"text": "5",
 			},
 		},

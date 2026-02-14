@@ -49,7 +49,7 @@ func (s *MCPServer) handleCreateSession(call *ToolCall) (*ToolResult, error) {
 		}, nil
 	}
 
-	data, _ := json.MarshalIndent(map[string]interface{}{
+	data, _ := json.MarshalIndent(map[string]any{
 		"name":         resp.Name,
 		"display_name": resp.DisplayName,
 		"state":        resp.State.String(),
@@ -92,7 +92,7 @@ func (s *MCPServer) handleGetSession(call *ToolCall) (*ToolResult, error) {
 		}, nil
 	}
 
-	data, _ := json.MarshalIndent(map[string]interface{}{
+	data, _ := json.MarshalIndent(map[string]any{
 		"name":             resp.Name,
 		"display_name":     resp.DisplayName,
 		"state":            resp.State.String(),
@@ -135,16 +135,16 @@ func (s *MCPServer) handleListSessions(call *ToolCall) (*ToolResult, error) {
 		}, nil
 	}
 
-	sessions := make([]map[string]interface{}, 0, len(resp.Sessions))
+	sessions := make([]map[string]any, 0, len(resp.Sessions))
 	for _, sess := range resp.Sessions {
-		sessions = append(sessions, map[string]interface{}{
+		sessions = append(sessions, map[string]any{
 			"name":         sess.Name,
 			"display_name": sess.DisplayName,
 			"state":        sess.State.String(),
 		})
 	}
 
-	data, _ := json.MarshalIndent(map[string]interface{}{
+	data, _ := json.MarshalIndent(map[string]any{
 		"sessions":        sessions,
 		"next_page_token": resp.NextPageToken,
 	}, "", "  ")
@@ -225,9 +225,9 @@ func (s *MCPServer) handleGetSessionSnapshot(call *ToolCall) (*ToolResult, error
 		}, nil
 	}
 
-	history := make([]map[string]interface{}, 0, len(resp.History))
+	history := make([]map[string]any, 0, len(resp.History))
 	for _, record := range resp.History {
-		history = append(history, map[string]interface{}{
+		history = append(history, map[string]any{
 			"operation_type": record.OperationType,
 			"resource":       record.Resource,
 			"success":        record.Success,
@@ -235,8 +235,8 @@ func (s *MCPServer) handleGetSessionSnapshot(call *ToolCall) (*ToolResult, error
 		})
 	}
 
-	data, _ := json.MarshalIndent(map[string]interface{}{
-		"session": map[string]interface{}{
+	data, _ := json.MarshalIndent(map[string]any{
+		"session": map[string]any{
 			"name":  resp.Session.GetName(),
 			"state": resp.Session.GetState().String(),
 		},
@@ -422,7 +422,7 @@ func (s *MCPServer) handleCreateMacro(call *ToolCall) (*ToolResult, error) {
 		}, nil
 	}
 
-	data, _ := json.MarshalIndent(map[string]interface{}{
+	data, _ := json.MarshalIndent(map[string]any{
 		"name":         resp.Name,
 		"display_name": resp.DisplayName,
 		"description":  resp.Description,
@@ -471,7 +471,7 @@ func (s *MCPServer) handleGetMacro(call *ToolCall) (*ToolResult, error) {
 		actions = append(actions, action.GetDescription())
 	}
 
-	data, _ := json.MarshalIndent(map[string]interface{}{
+	data, _ := json.MarshalIndent(map[string]any{
 		"name":            resp.Name,
 		"display_name":    resp.DisplayName,
 		"description":     resp.Description,
@@ -514,9 +514,9 @@ func (s *MCPServer) handleListMacros(call *ToolCall) (*ToolResult, error) {
 		}, nil
 	}
 
-	macros := make([]map[string]interface{}, 0, len(resp.Macros))
+	macros := make([]map[string]any, 0, len(resp.Macros))
 	for _, m := range resp.Macros {
-		macros = append(macros, map[string]interface{}{
+		macros = append(macros, map[string]any{
 			"name":            m.Name,
 			"display_name":    m.DisplayName,
 			"action_count":    len(m.Actions),
@@ -524,7 +524,7 @@ func (s *MCPServer) handleListMacros(call *ToolCall) (*ToolResult, error) {
 		})
 	}
 
-	data, _ := json.MarshalIndent(map[string]interface{}{
+	data, _ := json.MarshalIndent(map[string]any{
 		"macros":          macros,
 		"next_page_token": resp.NextPageToken,
 	}, "", "  ")
@@ -632,7 +632,7 @@ func (s *MCPServer) handleUpdateMacro(call *ToolCall) (*ToolResult, error) {
 		}, nil
 	}
 
-	data, _ := json.MarshalIndent(map[string]interface{}{
+	data, _ := json.MarshalIndent(map[string]any{
 		"name":         resp.Name,
 		"display_name": resp.DisplayName,
 		"description":  resp.Description,

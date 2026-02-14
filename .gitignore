@@ -18,7 +18,10 @@ coverage.lcov
 /build.log
 /tmp/
 /.claude/*.local.*
-.idea/
 # Generated protobuf descriptor sets for gRPC reflection (optional)
 /Server/Sources/MacosUseServer/DescriptorSets/*.pb
 /DIRECTIVE.txt
+/.idea
+/.vscode
+/.github/copilot-instructions.md
+/scratch

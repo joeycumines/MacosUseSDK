@@ -1105,11 +1105,11 @@ func (m *mockStreamingClient) Context() context.Context {
 	return context.Background()
 }
 
-func (m *mockStreamingClient) RecvMsg(msg interface{}) error {
+func (m *mockStreamingClient) RecvMsg(msg any) error {
 	return nil
 }
 
-func (m *mockStreamingClient) SendMsg(msg interface{}) error {
+func (m *mockStreamingClient) SendMsg(msg any) error {
 	return nil
 }
 

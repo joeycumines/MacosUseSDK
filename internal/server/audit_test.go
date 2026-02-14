@@ -183,7 +183,7 @@ func TestRedactArguments(t *testing.T) {
 }
 
 func TestRedactMapValues_CaseInsensitive(t *testing.T) {
-	m := map[string]interface{}{
+	m := map[string]any{
 		"PASSWORD":  "secret1",
 		"Password":  "secret2",
 		"pAsSwOrD":  "secret3",
@@ -207,9 +207,9 @@ func TestRedactMapValues_CaseInsensitive(t *testing.T) {
 }
 
 func TestRedactMapValues_ArrayOfMaps(t *testing.T) {
-	m := map[string]interface{}{
-		"items": []interface{}{
-			map[string]interface{}{
+	m := map[string]any{
+		"items": []any{
+			map[string]any{
 				"name":     "item1",
 				"password": "secret",
 			},
@@ -218,8 +218,8 @@ func TestRedactMapValues_ArrayOfMaps(t *testing.T) {
 
 	redactMapValues(m)
 
-	items := m["items"].([]interface{})
-	item := items[0].(map[string]interface{})
+	items := m["items"].([]any)
+	item := items[0].(map[string]any)
 	if item["password"] != "[REDACTED]" {
 		t.Errorf("Nested password in array should be redacted, got: %v", item["password"])
 	}
@@ -245,10 +245,10 @@ func TestAuditLogger_ConcurrentWrites(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(numGoroutines)
 
-	for i := 0; i < numGoroutines; i++ {
+	for i := range numGoroutines {
 		go func(goroutineID int) {
 			defer wg.Done()
-			for j := 0; j < writesPerGoroutine; j++ {
+			for j := range writesPerGoroutine {
 				args := json.RawMessage(`{"goroutine":` + string(rune('0'+goroutineID%10)) + `}`)
 				logger.LogToolCall("concurrent_test", args, "success", time.Duration(j)*time.Millisecond)
 			}
@@ -277,7 +277,7 @@ func TestAuditLogger_ConcurrentWrites(t *testing.T) {
 		}
 		lineCount++
 
-		var entry map[string]interface{}
+		var entry map[string]any
 		if err := json.Unmarshal([]byte(line), &entry); err != nil {
 			t.Errorf("Line %d is not valid JSON: %v\nContent: %s", lineCount, err, line)
 		}
@@ -337,7 +337,7 @@ func TestAuditLogger_JSONFormatValidation(t *testing.T) {
 	}
 
 	for i, line := range lines {
-		var entry map[string]interface{}
+		var entry map[string]any
 		if err := json.Unmarshal([]byte(line), &entry); err != nil {
 			t.Errorf("Line %d is not valid JSON: %v\nContent: %s", i+1, err, line)
 			continue
@@ -432,7 +432,7 @@ func TestAuditLogger_LogEntryFields(t *testing.T) {
 		t.Fatalf("ReadFile error = %v", err)
 	}
 
-	var entry map[string]interface{}
+	var entry map[string]any
 	if err := json.Unmarshal(content, &entry); err != nil {
 		t.Fatalf("JSON unmarshal error = %v", err)
 	}
@@ -574,8 +574,8 @@ func TestAuditLogger_LargeArgumentRedaction(t *testing.T) {
 	defer logger.Close()
 
 	// Create a large argument with a secret somewhere in the middle
-	largeData := make(map[string]interface{})
-	for i := 0; i < 100; i++ {
+	largeData := make(map[string]any)
+	for i := range 100 {
 		largeData[string(rune('a'+i%26))+string(rune('0'+i/26))] = i
 	}
 	largeData["deeply_nested_password"] = "super_secret_value"
@@ -635,7 +635,7 @@ func TestAuditLogger_EmptyToolName(t *testing.T) {
 		t.Fatalf("ReadFile error = %v", err)
 	}
 
-	var entry map[string]interface{}
+	var entry map[string]any
 	if err := json.Unmarshal(content, &entry); err != nil {
 		t.Fatalf("JSON unmarshal error = %v", err)
 	}
@@ -669,7 +669,7 @@ func TestAuditLogger_SpecialCharactersInArguments(t *testing.T) {
 	}
 
 	// Should be valid JSON
-	var entry map[string]interface{}
+	var entry map[string]any
 	if err := json.Unmarshal(content, &entry); err != nil {
 		t.Fatalf("JSON unmarshal error = %v\nContent: %s", err, content)
 	}
@@ -723,7 +723,7 @@ func TestAuditLogger_DurationEdgeCases(t *testing.T) {
 	}
 
 	for i, line := range lines {
-		var entry map[string]interface{}
+		var entry map[string]any
 		if err := json.Unmarshal([]byte(line), &entry); err != nil {
 			t.Errorf("Line %d (%s) is not valid JSON: %v", i+1, testCases[i].name, err)
 			continue
@@ -774,7 +774,7 @@ func TestAuditLogger_StatusValues(t *testing.T) {
 	}
 
 	for i, line := range lines {
-		var entry map[string]interface{}
+		var entry map[string]any
 		if err := json.Unmarshal([]byte(line), &entry); err != nil {
 			t.Errorf("Line %d is not valid JSON: %v", i+1, err)
 			continue

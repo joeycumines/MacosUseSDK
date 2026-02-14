@@ -492,7 +492,7 @@ func writeSSEEvent(w io.Writer, event *SSEEvent) error {
 		return err
 	}
 	// SSE spec: each line of data must be prefixed with "data:"
-	for _, line := range strings.Split(event.Data, "\n") {
+	for line := range strings.SplitSeq(event.Data, "\n") {
 		if _, err := fmt.Fprintf(w, "data: %s\n", line); err != nil {
 			return err
 		}
@@ -510,7 +510,7 @@ func (t *HTTPTransport) handleHealth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]any{
 		"status":      "ok",
 		"clients":     t.clients.Count(),
 		"server_time": time.Now().UTC().Format(time.RFC3339),

@@ -325,16 +325,16 @@ func (s *MCPServer) handleGetScriptingDictionaries(call *ToolCall) (*ToolResult,
 		}, nil
 	}
 
-	dicts := make([]map[string]interface{}, 0, len(resp.Dictionaries))
+	dicts := make([]map[string]any, 0, len(resp.Dictionaries))
 	for _, dict := range resp.Dictionaries {
-		dicts = append(dicts, map[string]interface{}{
+		dicts = append(dicts, map[string]any{
 			"application":   dict.Application,
 			"bundle_id":     dict.BundleId,
 			"command_count": len(dict.Commands),
 		})
 	}
 
-	data, _ := json.MarshalIndent(map[string]interface{}{
+	data, _ := json.MarshalIndent(map[string]any{
 		"dictionaries": dicts,
 		"total":        len(dicts),
 	}, "", "  ")

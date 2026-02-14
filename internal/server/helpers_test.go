@@ -462,30 +462,30 @@ func TestGRPCErrorResult_NonGRPCError(t *testing.T) {
 var testValidationTools = map[string]*Tool{
 	"test_tool_with_required": {
 		Name: "test_tool_with_required",
-		InputSchema: map[string]interface{}{
+		InputSchema: map[string]any{
 			"type": "object",
-			"properties": map[string]interface{}{
-				"name":    map[string]interface{}{"type": "string"},
-				"count":   map[string]interface{}{"type": "integer"},
-				"enabled": map[string]interface{}{"type": "boolean"},
-				"ratio":   map[string]interface{}{"type": "number"},
-				"tags":    map[string]interface{}{"type": "array"},
-				"config":  map[string]interface{}{"type": "object"},
-				"format": map[string]interface{}{
+			"properties": map[string]any{
+				"name":    map[string]any{"type": "string"},
+				"count":   map[string]any{"type": "integer"},
+				"enabled": map[string]any{"type": "boolean"},
+				"ratio":   map[string]any{"type": "number"},
+				"tags":    map[string]any{"type": "array"},
+				"config":  map[string]any{"type": "object"},
+				"format": map[string]any{
 					"type": "string",
 					"enum": []string{"json", "xml", "yaml"},
 				},
 			},
-			"required": []interface{}{"name"},
+			"required": []any{"name"},
 		},
 	},
 	"test_tool_no_required": {
 		Name: "test_tool_no_required",
-		InputSchema: map[string]interface{}{
+		InputSchema: map[string]any{
 			"type": "object",
-			"properties": map[string]interface{}{
-				"limit": map[string]interface{}{"type": "integer"},
-				"mode":  map[string]interface{}{"type": "string", "enum": []interface{}{"fast", "slow"}},
+			"properties": map[string]any{
+				"limit": map[string]any{"type": "integer"},
+				"mode":  map[string]any{"type": "string", "enum": []any{"fast", "slow"}},
 			},
 		},
 	},
@@ -494,16 +494,16 @@ var testValidationTools = map[string]*Tool{
 	},
 	"test_tool_no_properties": {
 		Name: "test_tool_no_properties",
-		InputSchema: map[string]interface{}{
+		InputSchema: map[string]any{
 			"type": "object",
 		},
 	},
 	"test_tool_required_string_array": {
 		Name: "test_tool_required_string_array",
-		InputSchema: map[string]interface{}{
+		InputSchema: map[string]any{
 			"type": "object",
-			"properties": map[string]interface{}{
-				"id": map[string]interface{}{"type": "string"},
+			"properties": map[string]any{
+				"id": map[string]any{"type": "string"},
 			},
 			"required": []string{"id"},
 		},
@@ -513,17 +513,17 @@ var testValidationTools = map[string]*Tool{
 func TestValidateToolInput_MissingRequiredFields(t *testing.T) {
 	tests := []struct {
 		name    string
-		args    map[string]interface{}
+		args    map[string]any
 		wantErr string
 	}{
 		{
 			name:    "missing required name field",
-			args:    map[string]interface{}{"count": 5},
+			args:    map[string]any{"count": 5},
 			wantErr: "missing required field: name",
 		},
 		{
 			name:    "empty args missing required",
-			args:    map[string]interface{}{},
+			args:    map[string]any{},
 			wantErr: "missing required field: name",
 		},
 		{
@@ -555,61 +555,61 @@ func TestValidateToolInput_MissingRequiredFields(t *testing.T) {
 func TestValidateToolInput_WrongTypes(t *testing.T) {
 	tests := []struct {
 		name      string
-		args      map[string]interface{}
+		args      map[string]any
 		wantField string
 		wantType  string
 	}{
 		{
 			name:      "string field gets number",
-			args:      map[string]interface{}{"name": 123},
+			args:      map[string]any{"name": 123},
 			wantField: "name",
 			wantType:  "string",
 		},
 		{
 			name:      "integer field gets string",
-			args:      map[string]interface{}{"name": "test", "count": "five"},
+			args:      map[string]any{"name": "test", "count": "five"},
 			wantField: "count",
 			wantType:  "integer",
 		},
 		{
 			name:      "boolean field gets string",
-			args:      map[string]interface{}{"name": "test", "enabled": "true"},
+			args:      map[string]any{"name": "test", "enabled": "true"},
 			wantField: "enabled",
 			wantType:  "boolean",
 		},
 		{
 			name:      "boolean field gets number",
-			args:      map[string]interface{}{"name": "test", "enabled": 1},
+			args:      map[string]any{"name": "test", "enabled": 1},
 			wantField: "enabled",
 			wantType:  "boolean",
 		},
 		{
 			name:      "number field gets string",
-			args:      map[string]interface{}{"name": "test", "ratio": "3.14"},
+			args:      map[string]any{"name": "test", "ratio": "3.14"},
 			wantField: "ratio",
 			wantType:  "number",
 		},
 		{
 			name:      "array field gets object",
-			args:      map[string]interface{}{"name": "test", "tags": map[string]interface{}{"key": "value"}},
+			args:      map[string]any{"name": "test", "tags": map[string]any{"key": "value"}},
 			wantField: "tags",
 			wantType:  "array",
 		},
 		{
 			name:      "array field gets string",
-			args:      map[string]interface{}{"name": "test", "tags": "tag1,tag2"},
+			args:      map[string]any{"name": "test", "tags": "tag1,tag2"},
 			wantField: "tags",
 			wantType:  "array",
 		},
 		{
 			name:      "object field gets array",
-			args:      map[string]interface{}{"name": "test", "config": []interface{}{"a", "b"}},
+			args:      map[string]any{"name": "test", "config": []any{"a", "b"}},
 			wantField: "config",
 			wantType:  "object",
 		},
 		{
 			name:      "object field gets string",
-			args:      map[string]interface{}{"name": "test", "config": "{}"},
+			args:      map[string]any{"name": "test", "config": "{}"},
 			wantField: "config",
 			wantType:  "object",
 		},
@@ -641,25 +641,25 @@ func TestValidateToolInput_OutOfRangeEnums(t *testing.T) {
 	tests := []struct {
 		name         string
 		toolName     string
-		args         map[string]interface{}
+		args         map[string]any
 		invalidValue string
 	}{
 		{
 			name:         "enum value not in list (string enum)",
 			toolName:     "test_tool_with_required",
-			args:         map[string]interface{}{"name": "test", "format": "csv"},
+			args:         map[string]any{"name": "test", "format": "csv"},
 			invalidValue: "csv",
 		},
 		{
 			name:         "enum value not in list (interface enum)",
 			toolName:     "test_tool_no_required",
-			args:         map[string]interface{}{"mode": "medium"},
+			args:         map[string]any{"mode": "medium"},
 			invalidValue: "medium",
 		},
 		{
 			name:         "empty string not in enum",
 			toolName:     "test_tool_with_required",
-			args:         map[string]interface{}{"name": "test", "format": ""},
+			args:         map[string]any{"name": "test", "format": ""},
 			invalidValue: "\"\"",
 		},
 	}
@@ -687,32 +687,32 @@ func TestValidateToolInput_ValidEnums(t *testing.T) {
 	tests := []struct {
 		name     string
 		toolName string
-		args     map[string]interface{}
+		args     map[string]any
 	}{
 		{
 			name:     "valid enum value json (string enum)",
 			toolName: "test_tool_with_required",
-			args:     map[string]interface{}{"name": "test", "format": "json"},
+			args:     map[string]any{"name": "test", "format": "json"},
 		},
 		{
 			name:     "valid enum value xml (string enum)",
 			toolName: "test_tool_with_required",
-			args:     map[string]interface{}{"name": "test", "format": "xml"},
+			args:     map[string]any{"name": "test", "format": "xml"},
 		},
 		{
 			name:     "valid enum value yaml (string enum)",
 			toolName: "test_tool_with_required",
-			args:     map[string]interface{}{"name": "test", "format": "yaml"},
+			args:     map[string]any{"name": "test", "format": "yaml"},
 		},
 		{
 			name:     "valid enum value fast (interface enum)",
 			toolName: "test_tool_no_required",
-			args:     map[string]interface{}{"mode": "fast"},
+			args:     map[string]any{"mode": "fast"},
 		},
 		{
 			name:     "valid enum value slow (interface enum)",
 			toolName: "test_tool_no_required",
-			args:     map[string]interface{}{"mode": "slow"},
+			args:     map[string]any{"mode": "slow"},
 		},
 	}
 
@@ -729,19 +729,19 @@ func TestValidateToolInput_ValidEnums(t *testing.T) {
 func TestValidateToolInput_ExtraUnknownFields(t *testing.T) {
 	tests := []struct {
 		name string
-		args map[string]interface{}
+		args map[string]any
 	}{
 		{
 			name: "single extra field",
-			args: map[string]interface{}{"name": "test", "unknown_field": "value"},
+			args: map[string]any{"name": "test", "unknown_field": "value"},
 		},
 		{
 			name: "multiple extra fields",
-			args: map[string]interface{}{"name": "test", "extra1": 123, "extra2": true, "extra3": []interface{}{"a"}},
+			args: map[string]any{"name": "test", "extra1": 123, "extra2": true, "extra3": []any{"a"}},
 		},
 		{
 			name: "extra nested object",
-			args: map[string]interface{}{"name": "test", "nested": map[string]interface{}{"deep": "value"}},
+			args: map[string]any{"name": "test", "nested": map[string]any{"deep": "value"}},
 		},
 	}
 
@@ -759,12 +759,12 @@ func TestValidateToolInput_EmptyArgsObject(t *testing.T) {
 	tests := []struct {
 		name     string
 		toolName string
-		args     map[string]interface{}
+		args     map[string]any
 	}{
 		{
 			name:     "empty args with no required fields",
 			toolName: "test_tool_no_required",
-			args:     map[string]interface{}{},
+			args:     map[string]any{},
 		},
 		{
 			name:     "nil args with no required fields",
@@ -774,12 +774,12 @@ func TestValidateToolInput_EmptyArgsObject(t *testing.T) {
 		{
 			name:     "empty args with no schema",
 			toolName: "test_tool_no_schema",
-			args:     map[string]interface{}{},
+			args:     map[string]any{},
 		},
 		{
 			name:     "empty args with no properties",
 			toolName: "test_tool_no_properties",
-			args:     map[string]interface{}{},
+			args:     map[string]any{},
 		},
 	}
 
@@ -796,22 +796,22 @@ func TestValidateToolInput_EmptyArgsObject(t *testing.T) {
 func TestValidateToolInput_NilNullValues(t *testing.T) {
 	tests := []struct {
 		name    string
-		args    map[string]interface{}
+		args    map[string]any
 		wantErr bool
 	}{
 		{
 			name:    "nil value for optional field",
-			args:    map[string]interface{}{"name": "test", "count": nil},
+			args:    map[string]any{"name": "test", "count": nil},
 			wantErr: false,
 		},
 		{
 			name:    "nil value for required field (field exists with null value)",
-			args:    map[string]interface{}{"name": nil, "count": 5},
+			args:    map[string]any{"name": nil, "count": 5},
 			wantErr: false, // Field exists, nil/null values are allowed per JSON Schema
 		},
 		{
 			name:    "multiple nil optional fields",
-			args:    map[string]interface{}{"name": "test", "count": nil, "enabled": nil, "ratio": nil},
+			args:    map[string]any{"name": "test", "count": nil, "enabled": nil, "ratio": nil},
 			wantErr: false,
 		},
 	}
@@ -838,52 +838,52 @@ func TestValidateToolInput_NilNullValues(t *testing.T) {
 func TestValidateToolInput_IntegerVsFloat(t *testing.T) {
 	tests := []struct {
 		name    string
-		args    map[string]interface{}
+		args    map[string]any
 		wantErr bool
 	}{
 		{
 			name:    "whole number float64 is valid integer",
-			args:    map[string]interface{}{"name": "test", "count": float64(5)},
+			args:    map[string]any{"name": "test", "count": float64(5)},
 			wantErr: false,
 		},
 		{
 			name:    "1.0 is valid integer",
-			args:    map[string]interface{}{"name": "test", "count": float64(1.0)},
+			args:    map[string]any{"name": "test", "count": float64(1.0)},
 			wantErr: false,
 		},
 		{
 			name:    "0.0 is valid integer",
-			args:    map[string]interface{}{"name": "test", "count": float64(0.0)},
+			args:    map[string]any{"name": "test", "count": float64(0.0)},
 			wantErr: false,
 		},
 		{
 			name:    "-10.0 is valid integer",
-			args:    map[string]interface{}{"name": "test", "count": float64(-10.0)},
+			args:    map[string]any{"name": "test", "count": float64(-10.0)},
 			wantErr: false,
 		},
 		{
 			name:    "native int is valid integer",
-			args:    map[string]interface{}{"name": "test", "count": 42},
+			args:    map[string]any{"name": "test", "count": 42},
 			wantErr: false,
 		},
 		{
 			name:    "decimal 1.5 is invalid integer",
-			args:    map[string]interface{}{"name": "test", "count": float64(1.5)},
+			args:    map[string]any{"name": "test", "count": float64(1.5)},
 			wantErr: true,
 		},
 		{
 			name:    "decimal 0.1 is invalid integer",
-			args:    map[string]interface{}{"name": "test", "count": float64(0.1)},
+			args:    map[string]any{"name": "test", "count": float64(0.1)},
 			wantErr: true,
 		},
 		{
 			name:    "decimal -3.14 is invalid integer",
-			args:    map[string]interface{}{"name": "test", "count": float64(-3.14)},
+			args:    map[string]any{"name": "test", "count": float64(-3.14)},
 			wantErr: true,
 		},
 		{
 			name:    "very small decimal is invalid integer",
-			args:    map[string]interface{}{"name": "test", "count": float64(0.0001)},
+			args:    map[string]any{"name": "test", "count": float64(0.0001)},
 			wantErr: true,
 		},
 	}
@@ -913,37 +913,37 @@ func TestValidateToolInput_IntegerVsFloat(t *testing.T) {
 func TestValidateToolInput_NumberType(t *testing.T) {
 	tests := []struct {
 		name    string
-		args    map[string]interface{}
+		args    map[string]any
 		wantErr bool
 	}{
 		{
 			name:    "float64 is valid number",
-			args:    map[string]interface{}{"name": "test", "ratio": float64(3.14)},
+			args:    map[string]any{"name": "test", "ratio": float64(3.14)},
 			wantErr: false,
 		},
 		{
 			name:    "integer is valid number",
-			args:    map[string]interface{}{"name": "test", "ratio": 42},
+			args:    map[string]any{"name": "test", "ratio": 42},
 			wantErr: false,
 		},
 		{
 			name:    "zero is valid number",
-			args:    map[string]interface{}{"name": "test", "ratio": float64(0)},
+			args:    map[string]any{"name": "test", "ratio": float64(0)},
 			wantErr: false,
 		},
 		{
 			name:    "negative float is valid number",
-			args:    map[string]interface{}{"name": "test", "ratio": float64(-2.5)},
+			args:    map[string]any{"name": "test", "ratio": float64(-2.5)},
 			wantErr: false,
 		},
 		{
 			name:    "string is invalid number",
-			args:    map[string]interface{}{"name": "test", "ratio": "3.14"},
+			args:    map[string]any{"name": "test", "ratio": "3.14"},
 			wantErr: true,
 		},
 		{
 			name:    "boolean is invalid number",
-			args:    map[string]interface{}{"name": "test", "ratio": true},
+			args:    map[string]any{"name": "test", "ratio": true},
 			wantErr: true,
 		},
 	}
@@ -968,7 +968,7 @@ func TestValidateToolInput_NumberType(t *testing.T) {
 }
 
 func TestValidateToolInput_UnknownTool(t *testing.T) {
-	result := validateToolInput("nonexistent_tool", map[string]interface{}{"field": "value"}, testValidationTools)
+	result := validateToolInput("nonexistent_tool", map[string]any{"field": "value"}, testValidationTools)
 	if result != nil {
 		t.Errorf("expected nil for unknown tool (caller handles this), got error: %v", result.Error)
 	}
@@ -978,17 +978,17 @@ func TestValidateToolInput_NoSchemaNoProperties(t *testing.T) {
 	tests := []struct {
 		name     string
 		toolName string
-		args     map[string]interface{}
+		args     map[string]any
 	}{
 		{
 			name:     "tool with no schema accepts any args",
 			toolName: "test_tool_no_schema",
-			args:     map[string]interface{}{"anything": "goes", "number": 123},
+			args:     map[string]any{"anything": "goes", "number": 123},
 		},
 		{
 			name:     "tool with no properties accepts any args",
 			toolName: "test_tool_no_properties",
-			args:     map[string]interface{}{"anything": "goes"},
+			args:     map[string]any{"anything": "goes"},
 		},
 	}
 
@@ -1004,7 +1004,7 @@ func TestValidateToolInput_NoSchemaNoProperties(t *testing.T) {
 
 func TestValidateToolInput_RequiredFieldsStringArray(t *testing.T) {
 	// Test with required field as []string instead of []interface{}
-	result := validateToolInput("test_tool_required_string_array", map[string]interface{}{}, testValidationTools)
+	result := validateToolInput("test_tool_required_string_array", map[string]any{}, testValidationTools)
 	if result == nil {
 		t.Fatal("expected error for missing required field, got nil")
 	}
@@ -1013,7 +1013,7 @@ func TestValidateToolInput_RequiredFieldsStringArray(t *testing.T) {
 	}
 
 	// Valid case
-	result = validateToolInput("test_tool_required_string_array", map[string]interface{}{"id": "abc"}, testValidationTools)
+	result = validateToolInput("test_tool_required_string_array", map[string]any{"id": "abc"}, testValidationTools)
 	if result != nil {
 		t.Errorf("expected nil for valid args, got error: %v", result.Error)
 	}
@@ -1021,13 +1021,13 @@ func TestValidateToolInput_RequiredFieldsStringArray(t *testing.T) {
 
 func TestValidateToolInput_ValidCompleteArgs(t *testing.T) {
 	// Test with all fields validly provided
-	args := map[string]interface{}{
+	args := map[string]any{
 		"name":    "test-name",
 		"count":   float64(10),
 		"enabled": true,
 		"ratio":   float64(2.5),
-		"tags":    []interface{}{"a", "b", "c"},
-		"config":  map[string]interface{}{"key": "value"},
+		"tags":    []any{"a", "b", "c"},
+		"config":  map[string]any{"key": "value"},
 		"format":  "json",
 	}
 
@@ -1039,7 +1039,7 @@ func TestValidateToolInput_ValidCompleteArgs(t *testing.T) {
 
 func TestValidateToolInput_ErrorResponseFormat(t *testing.T) {
 	// Verify the error response format matches JSON-RPC 2.0 spec
-	result := validateToolInput("test_tool_with_required", map[string]interface{}{}, testValidationTools)
+	result := validateToolInput("test_tool_with_required", map[string]any{}, testValidationTools)
 	if result == nil {
 		t.Fatal("expected error, got nil")
 	}

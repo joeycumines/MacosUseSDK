@@ -16,7 +16,6 @@ import (
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
 	"google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
@@ -132,8 +131,8 @@ func TestHandleFindElements_Success_ByRole(t *testing.T) {
 			}
 			return &pb.FindElementsResponse{
 				Elements: []*_type.Element{
-					{ElementId: "elem1", Role: "AXButton", Text: proto.String("OK")},
-					{ElementId: "elem2", Role: "AXButton", Text: proto.String("Cancel")},
+					{ElementId: "elem1", Role: "AXButton", Text: new("OK")},
+					{ElementId: "elem2", Role: "AXButton", Text: new("Cancel")},
 				},
 			}, nil
 		},
@@ -171,7 +170,7 @@ func TestHandleFindElements_Success_ByText(t *testing.T) {
 			}
 			return &pb.FindElementsResponse{
 				Elements: []*_type.Element{
-					{ElementId: "submit-btn", Role: "AXButton", Text: proto.String("Submit")},
+					{ElementId: "submit-btn", Role: "AXButton", Text: new("Submit")},
 				},
 			}, nil
 		},
@@ -206,8 +205,8 @@ func TestHandleFindElements_Success_ByTextContains(t *testing.T) {
 			}
 			return &pb.FindElementsResponse{
 				Elements: []*_type.Element{
-					{ElementId: "save1", Role: "AXButton", Text: proto.String("Save As...")},
-					{ElementId: "save2", Role: "AXMenuItem", Text: proto.String("Save Document")},
+					{ElementId: "save1", Role: "AXButton", Text: new("Save As...")},
+					{ElementId: "save2", Role: "AXMenuItem", Text: new("Save Document")},
 				},
 			}, nil
 		},
@@ -331,13 +330,13 @@ func TestHandleGetElement_Success(t *testing.T) {
 			return &_type.Element{
 				ElementId: "test-elem",
 				Role:      "AXButton",
-				Text:      proto.String("Click Me"),
+				Text:      new("Click Me"),
 				X:         &x,
 				Y:         &y,
 				Width:     &w,
 				Height:    &h,
-				Enabled:   proto.Bool(true),
-				Focused:   proto.Bool(false),
+				Enabled:   new(true),
+				Focused:   new(false),
 				Actions:   []string{"AXPress", "AXShowMenu"},
 			}, nil
 		},
@@ -825,9 +824,9 @@ func TestHandleTraverseAccessibility_Success(t *testing.T) {
 			return &pb.TraverseAccessibilityResponse{
 				App: "Calculator",
 				Elements: []*_type.Element{
-					{ElementId: "win1", Role: "AXWindow", Text: proto.String("Calculator")},
-					{ElementId: "btn1", Role: "AXButton", Text: proto.String("1")},
-					{ElementId: "btn2", Role: "AXButton", Text: proto.String("2")},
+					{ElementId: "win1", Role: "AXWindow", Text: new("Calculator")},
+					{ElementId: "btn1", Role: "AXButton", Text: new("1")},
+					{ElementId: "btn2", Role: "AXButton", Text: new("2")},
 				},
 				Stats: &_type.TraversalStats{
 					Count:                3,
@@ -917,7 +916,7 @@ func TestHandleTraverseAccessibility_TruncatesLongText(t *testing.T) {
 			return &pb.TraverseAccessibilityResponse{
 				App: "App",
 				Elements: []*_type.Element{
-					{ElementId: "elem", Role: "AXStaticText", Text: proto.String(longText)},
+					{ElementId: "elem", Role: "AXStaticText", Text: new(longText)},
 				},
 			}, nil
 		},
@@ -961,7 +960,7 @@ func TestHandleFindRegionElements_Success(t *testing.T) {
 			}
 			return &pb.FindRegionElementsResponse{
 				Elements: []*_type.Element{
-					{ElementId: "e1", Role: "AXButton", Text: proto.String("OK")},
+					{ElementId: "e1", Role: "AXButton", Text: new("OK")},
 				},
 			}, nil
 		},
@@ -1138,7 +1137,7 @@ func TestHandleWaitElement_Success(t *testing.T) {
 		Element: &_type.Element{
 			ElementId: "found-elem",
 			Role:      "AXButton",
-			Text:      proto.String("Found Button"),
+			Text:      new("Found Button"),
 		},
 	}
 	respAny, err := anypb.New(waitResp)
@@ -1313,7 +1312,7 @@ func TestHandleWaitElementState_Success(t *testing.T) {
 		Element: &_type.Element{
 			ElementId: "elem-1",
 			Role:      "AXButton",
-			Text:      proto.String("Enabled Button"),
+			Text:      new("Enabled Button"),
 		},
 	}
 	respAny, err := anypb.New(waitResp)
@@ -1404,7 +1403,7 @@ func TestHandleWaitElementState_Conditions(t *testing.T) {
 			}
 
 			server := newTestMCPServer(mockClient)
-			args := map[string]interface{}{
+			args := map[string]any{
 				"parent":     "app",
 				"element_id": "e",
 				"condition":  tt.condition,
@@ -1507,7 +1506,7 @@ func TestHandleFindElements_TableDriven(t *testing.T) {
 			name: "single element found",
 			args: `{"selector": {"role": "AXButton"}}`,
 			elements: []*_type.Element{
-				{ElementId: "btn1", Role: "AXButton", Text: proto.String("OK")},
+				{ElementId: "btn1", Role: "AXButton", Text: new("OK")},
 			},
 			wantIsError:  false,
 			wantContains: []string{"Found 1 elements", "btn1", "OK", "AXButton"},
@@ -1545,7 +1544,7 @@ func TestHandleFindElements_TableDriven(t *testing.T) {
 			name: "element with unknown role",
 			args: `{"selector": {"text": "x"}}`,
 			elements: []*_type.Element{
-				{ElementId: "x", Text: proto.String("x")},
+				{ElementId: "x", Text: new("x")},
 			},
 			wantIsError:  false,
 			wantContains: []string{"(unknown)"},
@@ -1602,13 +1601,13 @@ func TestHandleGetElement_TableDriven(t *testing.T) {
 			element: &_type.Element{
 				ElementId: "e1",
 				Role:      "AXButton",
-				Text:      proto.String("Click"),
+				Text:      new("Click"),
 				X:         &x,
 				Y:         &y,
 				Width:     &w,
 				Height:    &h,
-				Enabled:   proto.Bool(true),
-				Focused:   proto.Bool(false),
+				Enabled:   new(true),
+				Focused:   new(false),
 				Actions:   []string{"AXPress"},
 			},
 			wantIsError:  false,

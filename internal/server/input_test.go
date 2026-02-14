@@ -1719,7 +1719,7 @@ func TestModifierKeyMapping_AllModifiers(t *testing.T) {
 			}
 
 			server := newTestMCPServer(mockClient)
-			args, _ := json.Marshal(map[string]interface{}{
+			args, _ := json.Marshal(map[string]any{
 				"key":       "a",
 				"modifiers": []string{tt.modifierName},
 			})
@@ -1786,7 +1786,7 @@ func TestModifierKeyMapping_CaseSensitivity(t *testing.T) {
 			}
 
 			server := newTestMCPServer(mockClient)
-			args, _ := json.Marshal(map[string]interface{}{
+			args, _ := json.Marshal(map[string]any{
 				"key":       "a",
 				"modifiers": []string{tt.modifierName},
 			})
@@ -1878,7 +1878,7 @@ func TestModifierKeyMapping_MultipleModifiers(t *testing.T) {
 			}
 
 			server := newTestMCPServer(mockClient)
-			args, _ := json.Marshal(map[string]interface{}{
+			args, _ := json.Marshal(map[string]any{
 				"key":       "a",
 				"modifiers": tt.modifiers,
 			})
@@ -1933,7 +1933,7 @@ func TestModifierKeyMapping_InvalidModifier(t *testing.T) {
 			}
 
 			server := newTestMCPServer(mockClient)
-			args, _ := json.Marshal(map[string]interface{}{
+			args, _ := json.Marshal(map[string]any{
 				"key":       "a",
 				"modifiers": tt.modifiers,
 			})
@@ -1981,7 +1981,7 @@ func TestModifierKeyMapping_HoldKey(t *testing.T) {
 			}
 
 			server := newTestMCPServer(mockClient)
-			args, _ := json.Marshal(map[string]interface{}{
+			args, _ := json.Marshal(map[string]any{
 				"key":       "a",
 				"duration":  1.0,
 				"modifiers": tt.modifiers,
@@ -2030,7 +2030,7 @@ func TestModifierKeyMapping_MouseButtonDown(t *testing.T) {
 			}
 
 			server := newTestMCPServer(mockClient)
-			args, _ := json.Marshal(map[string]interface{}{
+			args, _ := json.Marshal(map[string]any{
 				"x":         100,
 				"y":         100,
 				"modifiers": tt.modifiers,
@@ -2080,7 +2080,7 @@ func TestModifierKeyMapping_MouseButtonUp(t *testing.T) {
 			}
 
 			server := newTestMCPServer(mockClient)
-			args, _ := json.Marshal(map[string]interface{}{
+			args, _ := json.Marshal(map[string]any{
 				"x":         100,
 				"y":         100,
 				"modifiers": tt.modifiers,
@@ -2143,7 +2143,7 @@ func TestMouseButtonMapping_Click(t *testing.T) {
 			}
 
 			server := newTestMCPServer(mockClient)
-			args, _ := json.Marshal(map[string]interface{}{
+			args, _ := json.Marshal(map[string]any{
 				"x":      100,
 				"y":      100,
 				"button": tt.buttonName,
@@ -2192,7 +2192,7 @@ func TestMouseButtonMapping_Drag(t *testing.T) {
 			}
 
 			server := newTestMCPServer(mockClient)
-			args, _ := json.Marshal(map[string]interface{}{
+			args, _ := json.Marshal(map[string]any{
 				"start_x": 100,
 				"start_y": 100,
 				"end_x":   200,
@@ -2242,7 +2242,7 @@ func TestMouseButtonMapping_MouseButtonDown(t *testing.T) {
 			}
 
 			server := newTestMCPServer(mockClient)
-			args, _ := json.Marshal(map[string]interface{}{
+			args, _ := json.Marshal(map[string]any{
 				"x":      100,
 				"y":      100,
 				"button": tt.buttonName,
@@ -2290,7 +2290,7 @@ func TestMouseButtonMapping_MouseButtonUp(t *testing.T) {
 			}
 
 			server := newTestMCPServer(mockClient)
-			args, _ := json.Marshal(map[string]interface{}{
+			args, _ := json.Marshal(map[string]any{
 				"x":      100,
 				"y":      100,
 				"button": tt.buttonName,
@@ -2348,7 +2348,7 @@ func TestGestureTypeMapping(t *testing.T) {
 			}
 
 			server := newTestMCPServer(mockClient)
-			args, _ := json.Marshal(map[string]interface{}{
+			args, _ := json.Marshal(map[string]any{
 				"gesture_type": tt.gestureTypeName,
 				"center_x":     100,
 				"center_y":     100,
@@ -2409,7 +2409,7 @@ func TestGestureDirectionMapping(t *testing.T) {
 			}
 
 			server := newTestMCPServer(mockClient)
-			args, _ := json.Marshal(map[string]interface{}{
+			args, _ := json.Marshal(map[string]any{
 				"gesture_type": "swipe",
 				"center_x":     100,
 				"center_y":     100,
@@ -2490,7 +2490,7 @@ func TestSpecialKeyNames(t *testing.T) {
 			}
 
 			server := newTestMCPServer(mockClient)
-			args, _ := json.Marshal(map[string]interface{}{
+			args, _ := json.Marshal(map[string]any{
 				"key": tt.keyName,
 			})
 			call := &ToolCall{Name: "press_key", Arguments: args}

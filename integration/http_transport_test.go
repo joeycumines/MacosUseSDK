@@ -107,7 +107,7 @@ func TestHTTPTransport_HealthEndpoint(t *testing.T) {
 		t.Errorf("Content-Type = %s, want application/json", contentType)
 	}
 
-	var health map[string]interface{}
+	var health map[string]any
 	if err := json.NewDecoder(resp.Body).Decode(&health); err != nil {
 		t.Fatalf("Failed to decode health response: %v", err)
 	}
@@ -182,7 +182,7 @@ func TestHTTPTransport_MessageEndpoint(t *testing.T) {
 		t.Error("response.result is nil")
 	}
 
-	var result map[string]interface{}
+	var result map[string]any
 	if err := json.Unmarshal(msg.Result, &result); err != nil {
 		t.Fatalf("Failed to unmarshal result: %v", err)
 	}
@@ -349,7 +349,7 @@ func TestHTTPTransport_SSEBroadcast(t *testing.T) {
 		}
 		defer resp.Body.Close()
 
-		var health map[string]interface{}
+		var health map[string]any
 		if err := json.NewDecoder(resp.Body).Decode(&health); err != nil {
 			return false, nil
 		}
@@ -507,7 +507,7 @@ func TestHTTPTransport_GracefulShutdown(t *testing.T) {
 		}
 		defer resp.Body.Close()
 
-		var health map[string]interface{}
+		var health map[string]any
 		if err := json.NewDecoder(resp.Body).Decode(&health); err != nil {
 			return false, nil
 		}
@@ -545,7 +545,7 @@ func TestHTTPTransport_SSELastEventID(t *testing.T) {
 	defer cleanup()
 
 	// First, broadcast some messages to populate the event store
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		testMsg := &transport.Message{
 			JSONRPC: "2.0",
 			ID:      json.RawMessage(fmt.Sprintf(`%d`, i+1)),

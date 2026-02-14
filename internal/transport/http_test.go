@@ -175,7 +175,7 @@ func TestHTTPTransport_HandleHealth(t *testing.T) {
 	}
 
 	respBody, _ := io.ReadAll(resp.Body)
-	var health map[string]interface{}
+	var health map[string]any
 	if err := json.Unmarshal(respBody, &health); err != nil {
 		t.Fatalf("Failed to unmarshal response: %v", err)
 	}
@@ -1136,7 +1136,7 @@ func TestHTTPTransport_BroadcastEvent_MultipleClients(t *testing.T) {
 
 	// Add multiple clients using the ClientRegistry API
 	clients := make([]*SSEClient, 3)
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		clients[i] = tr.clients.Add("")
 	}
 	defer func() {
@@ -1192,7 +1192,7 @@ func TestHTTPTransport_BroadcastEvent_EventIDIncrement(t *testing.T) {
 
 	// Collect events and verify IDs increment
 	var ids []string
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		select {
 		case event := <-client.ResponseChan:
 			ids = append(ids, event.ID)
@@ -1303,7 +1303,7 @@ func TestHTTPTransport_ShutdownChan_MultipleReaders(t *testing.T) {
 	const numReaders = 5
 	done := make(chan int, numReaders)
 
-	for i := 0; i < numReaders; i++ {
+	for i := range numReaders {
 		go func(id int) {
 			<-ch
 			done <- id
@@ -1315,7 +1315,7 @@ func TestHTTPTransport_ShutdownChan_MultipleReaders(t *testing.T) {
 
 	// All readers should complete
 	received := make(map[int]bool)
-	for i := 0; i < numReaders; i++ {
+	for i := range numReaders {
 		select {
 		case id := <-done:
 			received[id] = true

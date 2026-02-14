@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -257,14 +258,14 @@ func TestScreenshotFormatValues(t *testing.T) {
 
 // TestToolSchema_RequiredFields tests that tool schemas have proper structure
 func TestToolSchema_RequiredFields(t *testing.T) {
-	schema := map[string]interface{}{
+	schema := map[string]any{
 		"type": "object",
-		"properties": map[string]interface{}{
-			"x": map[string]interface{}{
+		"properties": map[string]any{
+			"x": map[string]any{
 				"type":        "integer",
 				"description": "X coordinate",
 			},
-			"y": map[string]interface{}{
+			"y": map[string]any{
 				"type":        "integer",
 				"description": "Y coordinate",
 			},
@@ -277,7 +278,7 @@ func TestToolSchema_RequiredFields(t *testing.T) {
 		t.Fatalf("Failed to marshal schema: %v", err)
 	}
 
-	var parsed map[string]interface{}
+	var parsed map[string]any
 	if err := json.Unmarshal(data, &parsed); err != nil {
 		t.Fatalf("Failed to unmarshal schema: %v", err)
 	}
@@ -286,7 +287,7 @@ func TestToolSchema_RequiredFields(t *testing.T) {
 		t.Errorf("Schema type = %v, want 'object'", parsed["type"])
 	}
 
-	props, ok := parsed["properties"].(map[string]interface{})
+	props, ok := parsed["properties"].(map[string]any)
 	if !ok {
 		t.Fatal("Schema properties not a map")
 	}
@@ -298,7 +299,7 @@ func TestToolSchema_RequiredFields(t *testing.T) {
 		t.Error("Schema missing 'y' property")
 	}
 
-	required, ok := parsed["required"].([]interface{})
+	required, ok := parsed["required"].([]any)
 	if !ok {
 		t.Fatal("Schema required not an array")
 	}
@@ -311,24 +312,24 @@ func TestToolSchema_RequiredFields(t *testing.T) {
 func TestJSONRPCResponse_Structure(t *testing.T) {
 	tests := []struct {
 		name     string
-		response map[string]interface{}
+		response map[string]any
 		wantErr  bool
 	}{
 		{
 			name: "success response",
-			response: map[string]interface{}{
+			response: map[string]any{
 				"jsonrpc": "2.0",
 				"id":      1,
-				"result":  map[string]interface{}{"content": []interface{}{}},
+				"result":  map[string]any{"content": []any{}},
 			},
 			wantErr: false,
 		},
 		{
 			name: "error response",
-			response: map[string]interface{}{
+			response: map[string]any{
 				"jsonrpc": "2.0",
 				"id":      1,
-				"error": map[string]interface{}{
+				"error": map[string]any{
 					"code":    transport.ErrCodeInvalidRequest,
 					"message": "Invalid Request",
 				},
@@ -337,7 +338,7 @@ func TestJSONRPCResponse_Structure(t *testing.T) {
 		},
 		{
 			name: "notification (no id)",
-			response: map[string]interface{}{
+			response: map[string]any{
 				"jsonrpc": "2.0",
 				"method":  "notifications/initialized",
 			},
@@ -353,7 +354,7 @@ func TestJSONRPCResponse_Structure(t *testing.T) {
 			}
 
 			if !tt.wantErr {
-				var parsed map[string]interface{}
+				var parsed map[string]any
 				if err := json.Unmarshal(data, &parsed); err != nil {
 					t.Fatalf("Failed to unmarshal response: %v", err)
 				}
@@ -411,7 +412,7 @@ func TestArgumentParsing(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var parsed map[string]interface{}
+			var parsed map[string]any
 			err := json.Unmarshal([]byte(tt.args), &parsed)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Unmarshal error = %v, wantErr = %v", err, tt.wantErr)
@@ -490,7 +491,7 @@ func TestHoverToolSchema(t *testing.T) {
 		"required": ["x", "y"]
 	}`
 
-	var schema map[string]interface{}
+	var schema map[string]any
 	if err := json.Unmarshal([]byte(schemaJSON), &schema); err != nil {
 		t.Fatalf("Failed to parse hover schema: %v", err)
 	}
@@ -499,7 +500,7 @@ func TestHoverToolSchema(t *testing.T) {
 		t.Errorf("Schema type = %v, want object", schema["type"])
 	}
 
-	props := schema["properties"].(map[string]interface{})
+	props := schema["properties"].(map[string]any)
 	if _, ok := props["x"]; !ok {
 		t.Error("Schema missing 'x' property")
 	}
@@ -510,7 +511,7 @@ func TestHoverToolSchema(t *testing.T) {
 		t.Error("Schema missing 'duration' property")
 	}
 
-	required := schema["required"].([]interface{})
+	required := schema["required"].([]any)
 	if len(required) != 2 {
 		t.Errorf("Required fields count = %d, want 2", len(required))
 	}
@@ -532,7 +533,7 @@ func TestGestureToolSchema(t *testing.T) {
 		"required": ["center_x", "center_y", "gesture_type"]
 	}`
 
-	var schema map[string]interface{}
+	var schema map[string]any
 	if err := json.Unmarshal([]byte(schemaJSON), &schema); err != nil {
 		t.Fatalf("Failed to parse gesture schema: %v", err)
 	}
@@ -541,7 +542,7 @@ func TestGestureToolSchema(t *testing.T) {
 		t.Errorf("Schema type = %v, want object", schema["type"])
 	}
 
-	props := schema["properties"].(map[string]interface{})
+	props := schema["properties"].(map[string]any)
 	requiredProps := []string{"center_x", "center_y", "gesture_type", "scale", "rotation", "finger_count", "direction"}
 	for _, prop := range requiredProps {
 		if _, ok := props[prop]; !ok {
@@ -549,7 +550,7 @@ func TestGestureToolSchema(t *testing.T) {
 		}
 	}
 
-	required := schema["required"].([]interface{})
+	required := schema["required"].([]any)
 	if len(required) != 3 {
 		t.Errorf("Required fields count = %d, want 3", len(required))
 	}
@@ -859,7 +860,7 @@ func TestErrorResponseFormat(t *testing.T) {
 		IsError: true,
 	}
 
-	resultMap := map[string]interface{}{
+	resultMap := map[string]any{
 		"content": result.Content,
 	}
 	if result.IsError {
@@ -872,7 +873,7 @@ func TestErrorResponseFormat(t *testing.T) {
 	}
 
 	// Verify the key is is_error, not isError
-	var parsed map[string]interface{}
+	var parsed map[string]any
 	if err := json.Unmarshal(data, &parsed); err != nil {
 		t.Fatalf("Failed to unmarshal: %v", err)
 	}
@@ -1041,7 +1042,7 @@ func TestDisplayGroundingFormat(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var data map[string]interface{}
+			var data map[string]any
 			err := json.Unmarshal([]byte(tt.response), &data)
 
 			if tt.valid {
@@ -1087,7 +1088,7 @@ func TestPaginationTokenOpaque(t *testing.T) {
 				// Verify token is a valid non-empty string when expected to be opaque
 				if tt.token != "" {
 					// Just verify it's a string - structure is opaque
-					var token interface{} = tt.token
+					var token any = tt.token
 					if _, ok := token.(string); !ok {
 						t.Errorf("Token should be a string, got: %T", token)
 					}
@@ -1129,7 +1130,7 @@ func TestIsErrorFieldFormat(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var result map[string]interface{}
+			var result map[string]any
 			err := json.Unmarshal([]byte(tt.result), &result)
 			if err != nil {
 				t.Fatalf("Failed to unmarshal result: %v", err)
@@ -1184,7 +1185,7 @@ func TestInitializeResponse(t *testing.T) {
 			var response struct {
 				ProtocolVersion string `json:"protocolVersion"`
 				Capabilities    struct {
-					Tools map[string]interface{} `json:"tools"`
+					Tools map[string]any `json:"tools"`
 				} `json:"capabilities"`
 				ServerInfo struct {
 					Name    string `json:"name"`
@@ -1268,10 +1269,10 @@ func TestMCPProtocolVersion(t *testing.T) {
 	const expectedVersion = "2025-11-25"
 
 	// Simulate the initialize response format from mcp.go
-	initResponse := map[string]interface{}{
+	initResponse := map[string]any{
 		"protocolVersion": expectedVersion,
-		"capabilities":    map[string]interface{}{"tools": map[string]interface{}{}},
-		"serverInfo":      map[string]interface{}{"name": "macos-use-sdk", "version": "0.1.0"},
+		"capabilities":    map[string]any{"tools": map[string]any{}},
+		"serverInfo":      map[string]any{"name": "macos-use-sdk", "version": "0.1.0"},
 	}
 
 	data, err := json.Marshal(initResponse)
@@ -1279,7 +1280,7 @@ func TestMCPProtocolVersion(t *testing.T) {
 		t.Fatalf("Failed to marshal initialize response: %v", err)
 	}
 
-	var parsed map[string]interface{}
+	var parsed map[string]any
 	if err := json.Unmarshal(data, &parsed); err != nil {
 		t.Fatalf("Failed to unmarshal: %v", err)
 	}
@@ -1384,7 +1385,7 @@ func TestValidateAndProcessInitialize_ProtocolVersions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			params := map[string]interface{}{}
+			params := map[string]any{}
 			if tt.protocolVersion != "" {
 				params["protocolVersion"] = tt.protocolVersion
 			}
@@ -1427,7 +1428,7 @@ func TestValidateAndProcessInitialize_ProtocolVersions(t *testing.T) {
 					t.Fatal("expected result, got nil")
 				}
 				// Verify response contains protocolVersion
-				var result map[string]interface{}
+				var result map[string]any
 				if err := json.Unmarshal(resp.Result, &result); err != nil {
 					t.Fatalf("failed to unmarshal result: %v", err)
 				}
@@ -1450,33 +1451,33 @@ func TestValidateAndProcessInitialize_ClientInfo(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		params     map[string]interface{}
+		params     map[string]any
 		wantResult bool
 	}{
 		{
 			name: "full client info",
-			params: map[string]interface{}{
+			params: map[string]any{
 				"protocolVersion": "2025-11-25",
-				"clientInfo": map[string]interface{}{
+				"clientInfo": map[string]any{
 					"name":    "test-client",
 					"version": "1.0.0",
 				},
-				"capabilities": map[string]interface{}{},
+				"capabilities": map[string]any{},
 			},
 			wantResult: true,
 		},
 		{
 			name: "missing client info",
-			params: map[string]interface{}{
+			params: map[string]any{
 				"protocolVersion": "2025-11-25",
 			},
 			wantResult: true,
 		},
 		{
 			name: "empty client info",
-			params: map[string]interface{}{
+			params: map[string]any{
 				"protocolVersion": "2025-11-25",
-				"clientInfo":      map[string]interface{}{},
+				"clientInfo":      map[string]any{},
 			},
 			wantResult: true,
 		},
@@ -1532,9 +1533,9 @@ func TestValidateAndProcessInitialize_ResponseFormat(t *testing.T) {
 		ctx:   ctx,
 	}
 
-	params := map[string]interface{}{
+	params := map[string]any{
 		"protocolVersion": "2025-11-25",
-		"clientInfo": map[string]interface{}{
+		"clientInfo": map[string]any{
 			"name":    "test-client",
 			"version": "1.0.0",
 		},
@@ -1562,7 +1563,7 @@ func TestValidateAndProcessInitialize_ResponseFormat(t *testing.T) {
 	}
 
 	// Verify response format
-	var result map[string]interface{}
+	var result map[string]any
 	if err := json.Unmarshal(resp.Result, &result); err != nil {
 		t.Fatalf("failed to unmarshal result: %v", err)
 	}
@@ -1572,7 +1573,7 @@ func TestValidateAndProcessInitialize_ResponseFormat(t *testing.T) {
 		t.Errorf("protocolVersion = %q, want %q", result["protocolVersion"], "2025-11-25")
 	}
 
-	capabilities, ok := result["capabilities"].(map[string]interface{})
+	capabilities, ok := result["capabilities"].(map[string]any)
 	if !ok {
 		t.Fatal("capabilities is not an object")
 	}
@@ -1588,7 +1589,7 @@ func TestValidateAndProcessInitialize_ResponseFormat(t *testing.T) {
 		t.Error("capabilities.prompts is missing")
 	}
 
-	serverInfo, ok := result["serverInfo"].(map[string]interface{})
+	serverInfo, ok := result["serverInfo"].(map[string]any)
 	if !ok {
 		t.Fatal("serverInfo is not an object")
 	}
@@ -1609,7 +1610,7 @@ func TestValidateAndProcessInitialize_ErrorResponseFormat(t *testing.T) {
 		ctx:   ctx,
 	}
 
-	params := map[string]interface{}{
+	params := map[string]any{
 		"protocolVersion": "invalid-version",
 	}
 	paramsJSON, _ := json.Marshal(params)
@@ -1657,9 +1658,9 @@ func TestHandleHTTPMessage_Initialize_Integration(t *testing.T) {
 	}
 
 	// Test with valid params
-	params := map[string]interface{}{
+	params := map[string]any{
 		"protocolVersion": "2025-11-25",
-		"clientInfo": map[string]interface{}{
+		"clientInfo": map[string]any{
 			"name":    "test-client",
 			"version": "1.0.0",
 		},
@@ -1686,7 +1687,7 @@ func TestHandleHTTPMessage_Initialize_Integration(t *testing.T) {
 		t.Fatalf("unexpected error: %s", resp.Error.Message)
 	}
 
-	var result map[string]interface{}
+	var result map[string]any
 	if err := json.Unmarshal(resp.Result, &result); err != nil {
 		t.Fatalf("failed to unmarshal result: %v", err)
 	}
@@ -1746,7 +1747,7 @@ func TestAutomateOpenFileDialogSchema(t *testing.T) {
 		"required": ["application"]
 	}`
 
-	var schema map[string]interface{}
+	var schema map[string]any
 	if err := json.Unmarshal([]byte(schemaJSON), &schema); err != nil {
 		t.Fatalf("Failed to parse schema: %v", err)
 	}
@@ -1755,7 +1756,7 @@ func TestAutomateOpenFileDialogSchema(t *testing.T) {
 		t.Errorf("Schema type = %v, want object", schema["type"])
 	}
 
-	props := schema["properties"].(map[string]interface{})
+	props := schema["properties"].(map[string]any)
 	requiredProps := []string{"application", "file_path", "default_directory", "file_filters", "timeout", "allow_multiple"}
 	for _, prop := range requiredProps {
 		if _, ok := props[prop]; !ok {
@@ -1763,7 +1764,7 @@ func TestAutomateOpenFileDialogSchema(t *testing.T) {
 		}
 	}
 
-	required := schema["required"].([]interface{})
+	required := schema["required"].([]any)
 	if len(required) != 1 || required[0] != "application" {
 		t.Errorf("Required should be ['application'], got: %v", required)
 	}
@@ -1784,7 +1785,7 @@ func TestAutomateSaveFileDialogSchema(t *testing.T) {
 		"required": ["application", "file_path"]
 	}`
 
-	var schema map[string]interface{}
+	var schema map[string]any
 	if err := json.Unmarshal([]byte(schemaJSON), &schema); err != nil {
 		t.Fatalf("Failed to parse schema: %v", err)
 	}
@@ -1793,7 +1794,7 @@ func TestAutomateSaveFileDialogSchema(t *testing.T) {
 		t.Errorf("Schema type = %v, want object", schema["type"])
 	}
 
-	props := schema["properties"].(map[string]interface{})
+	props := schema["properties"].(map[string]any)
 	requiredProps := []string{"application", "file_path", "default_directory", "default_filename", "timeout", "confirm_overwrite"}
 	for _, prop := range requiredProps {
 		if _, ok := props[prop]; !ok {
@@ -1801,7 +1802,7 @@ func TestAutomateSaveFileDialogSchema(t *testing.T) {
 		}
 	}
 
-	required := schema["required"].([]interface{})
+	required := schema["required"].([]any)
 	if len(required) != 2 {
 		t.Errorf("Required fields count = %d, want 2", len(required))
 	}
@@ -1819,7 +1820,7 @@ func TestSelectFileSchema(t *testing.T) {
 		"required": ["application", "file_path"]
 	}`
 
-	var schema map[string]interface{}
+	var schema map[string]any
 	if err := json.Unmarshal([]byte(schemaJSON), &schema); err != nil {
 		t.Fatalf("Failed to parse schema: %v", err)
 	}
@@ -1828,7 +1829,7 @@ func TestSelectFileSchema(t *testing.T) {
 		t.Errorf("Schema type = %v, want object", schema["type"])
 	}
 
-	props := schema["properties"].(map[string]interface{})
+	props := schema["properties"].(map[string]any)
 	requiredProps := []string{"application", "file_path", "reveal_finder"}
 	for _, prop := range requiredProps {
 		if _, ok := props[prop]; !ok {
@@ -1836,7 +1837,7 @@ func TestSelectFileSchema(t *testing.T) {
 		}
 	}
 
-	required := schema["required"].([]interface{})
+	required := schema["required"].([]any)
 	if len(required) != 2 {
 		t.Errorf("Required fields count = %d, want 2", len(required))
 	}
@@ -1854,7 +1855,7 @@ func TestSelectDirectorySchema(t *testing.T) {
 		"required": ["application", "directory_path"]
 	}`
 
-	var schema map[string]interface{}
+	var schema map[string]any
 	if err := json.Unmarshal([]byte(schemaJSON), &schema); err != nil {
 		t.Fatalf("Failed to parse schema: %v", err)
 	}
@@ -1863,7 +1864,7 @@ func TestSelectDirectorySchema(t *testing.T) {
 		t.Errorf("Schema type = %v, want object", schema["type"])
 	}
 
-	props := schema["properties"].(map[string]interface{})
+	props := schema["properties"].(map[string]any)
 	requiredProps := []string{"application", "directory_path", "create_missing"}
 	for _, prop := range requiredProps {
 		if _, ok := props[prop]; !ok {
@@ -1871,7 +1872,7 @@ func TestSelectDirectorySchema(t *testing.T) {
 		}
 	}
 
-	required := schema["required"].([]interface{})
+	required := schema["required"].([]any)
 	if len(required) != 2 {
 		t.Errorf("Required fields count = %d, want 2", len(required))
 	}
@@ -1890,7 +1891,7 @@ func TestDragFilesSchema(t *testing.T) {
 		"required": ["application", "file_paths", "target_element_id"]
 	}`
 
-	var schema map[string]interface{}
+	var schema map[string]any
 	if err := json.Unmarshal([]byte(schemaJSON), &schema); err != nil {
 		t.Fatalf("Failed to parse schema: %v", err)
 	}
@@ -1899,7 +1900,7 @@ func TestDragFilesSchema(t *testing.T) {
 		t.Errorf("Schema type = %v, want object", schema["type"])
 	}
 
-	props := schema["properties"].(map[string]interface{})
+	props := schema["properties"].(map[string]any)
 	requiredProps := []string{"application", "file_paths", "target_element_id", "duration"}
 	for _, prop := range requiredProps {
 		if _, ok := props[prop]; !ok {
@@ -1908,12 +1909,12 @@ func TestDragFilesSchema(t *testing.T) {
 	}
 
 	// Verify file_paths is an array type
-	filePaths := props["file_paths"].(map[string]interface{})
+	filePaths := props["file_paths"].(map[string]any)
 	if filePaths["type"] != "array" {
 		t.Errorf("file_paths type should be array, got: %v", filePaths["type"])
 	}
 
-	required := schema["required"].([]interface{})
+	required := schema["required"].([]any)
 	if len(required) != 3 {
 		t.Errorf("Required fields count = %d, want 3", len(required))
 	}
@@ -1997,7 +1998,7 @@ func TestFileDialogToolParamsParsing(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var params map[string]interface{}
+			var params map[string]any
 			err := json.Unmarshal([]byte(tt.paramsJSON), &params)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Unmarshal error = %v, wantErr = %v", err, tt.wantErr)
@@ -2051,7 +2052,7 @@ func TestWaitElementSchema(t *testing.T) {
 		"required": ["parent", "selector"]
 	}`
 
-	var schema map[string]interface{}
+	var schema map[string]any
 	if err := json.Unmarshal([]byte(schemaJSON), &schema); err != nil {
 		t.Fatalf("Failed to parse schema: %v", err)
 	}
@@ -2060,7 +2061,7 @@ func TestWaitElementSchema(t *testing.T) {
 		t.Errorf("Schema type = %v, want object", schema["type"])
 	}
 
-	props := schema["properties"].(map[string]interface{})
+	props := schema["properties"].(map[string]any)
 	requiredProps := []string{"parent", "selector", "timeout", "poll_interval"}
 	for _, prop := range requiredProps {
 		if _, ok := props[prop]; !ok {
@@ -2069,12 +2070,12 @@ func TestWaitElementSchema(t *testing.T) {
 	}
 
 	// Verify selector is object type
-	selector := props["selector"].(map[string]interface{})
+	selector := props["selector"].(map[string]any)
 	if selector["type"] != "object" {
 		t.Errorf("selector type should be object, got: %v", selector["type"])
 	}
 
-	required := schema["required"].([]interface{})
+	required := schema["required"].([]any)
 	if len(required) != 2 {
 		t.Errorf("Required fields count = %d, want 2", len(required))
 	}
@@ -2095,7 +2096,7 @@ func TestWaitElementStateSchema(t *testing.T) {
 		"required": ["parent", "element_id", "condition"]
 	}`
 
-	var schema map[string]interface{}
+	var schema map[string]any
 	if err := json.Unmarshal([]byte(schemaJSON), &schema); err != nil {
 		t.Fatalf("Failed to parse schema: %v", err)
 	}
@@ -2104,7 +2105,7 @@ func TestWaitElementStateSchema(t *testing.T) {
 		t.Errorf("Schema type = %v, want object", schema["type"])
 	}
 
-	props := schema["properties"].(map[string]interface{})
+	props := schema["properties"].(map[string]any)
 	requiredProps := []string{"parent", "element_id", "condition", "value", "timeout", "poll_interval"}
 	for _, prop := range requiredProps {
 		if _, ok := props[prop]; !ok {
@@ -2113,18 +2114,18 @@ func TestWaitElementStateSchema(t *testing.T) {
 	}
 
 	// Verify condition has enum
-	condition := props["condition"].(map[string]interface{})
+	condition := props["condition"].(map[string]any)
 	enumVal, hasEnum := condition["enum"]
 	if !hasEnum {
 		t.Error("condition should have enum constraint")
 	}
-	enumList := enumVal.([]interface{})
+	enumList := enumVal.([]any)
 	expectedEnums := []string{"enabled", "focused", "text_equals", "text_contains"}
 	if len(enumList) != len(expectedEnums) {
 		t.Errorf("condition enum count = %d, want %d", len(enumList), len(expectedEnums))
 	}
 
-	required := schema["required"].([]interface{})
+	required := schema["required"].([]any)
 	if len(required) != 3 {
 		t.Errorf("Required fields count = %d, want 3", len(required))
 	}
@@ -2202,7 +2203,7 @@ func TestWaitElementToolParamsParsing(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var params map[string]interface{}
+			var params map[string]any
 			err := json.Unmarshal([]byte(tt.paramsJSON), &params)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Unmarshal error = %v, wantErr = %v", err, tt.wantErr)
@@ -2231,13 +2232,7 @@ func TestWaitElementConditionValues(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.condition, func(t *testing.T) {
-			found := false
-			for _, valid := range validConditions {
-				if tt.condition == valid {
-					found = true
-					break
-				}
-			}
+			found := slices.Contains(validConditions, tt.condition)
 			if found != tt.valid {
 				t.Errorf("Condition %q valid = %v, want %v", tt.condition, found, tt.valid)
 			}
@@ -2317,7 +2312,7 @@ func TestWaitElementSelectorTypes(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var selector map[string]interface{}
+			var selector map[string]any
 			err := json.Unmarshal([]byte(tt.selector), &selector)
 			if (err == nil) != tt.valid {
 				t.Errorf("Selector %q parse success = %v, want %v", tt.selector, err == nil, tt.valid)
@@ -2568,7 +2563,7 @@ func TestMCPResourcesList(t *testing.T) {
 	}
 
 	// Simulate the resources list response
-	resources := []map[string]interface{}{
+	resources := []map[string]any{
 		{
 			"uri":         "screen://main",
 			"name":        "Main Display Screenshot",
@@ -2634,17 +2629,17 @@ func TestMCPResourcesList(t *testing.T) {
 	}
 
 	// Verify JSON marshaling produces valid structure
-	result, err := json.Marshal(map[string]interface{}{"resources": resources})
+	result, err := json.Marshal(map[string]any{"resources": resources})
 	if err != nil {
 		t.Fatalf("Failed to marshal resources list: %v", err)
 	}
 
-	var parsed map[string]interface{}
+	var parsed map[string]any
 	if err := json.Unmarshal(result, &parsed); err != nil {
 		t.Fatalf("Failed to unmarshal resources list: %v", err)
 	}
 
-	resourcesArray, ok := parsed["resources"].([]interface{})
+	resourcesArray, ok := parsed["resources"].([]any)
 	if !ok {
 		t.Fatal("Response should contain 'resources' array")
 	}
@@ -2683,7 +2678,7 @@ func TestMCPResourcesListResponseStructure(t *testing.T) {
 		}
 	}`
 
-	var response map[string]interface{}
+	var response map[string]any
 	if err := json.Unmarshal([]byte(responseJSON), &response); err != nil {
 		t.Fatalf("Failed to parse response JSON: %v", err)
 	}
@@ -2693,18 +2688,18 @@ func TestMCPResourcesListResponseStructure(t *testing.T) {
 		t.Errorf("jsonrpc = %v, want '2.0'", response["jsonrpc"])
 	}
 
-	result, ok := response["result"].(map[string]interface{})
+	result, ok := response["result"].(map[string]any)
 	if !ok {
 		t.Fatal("Response should contain 'result' object")
 	}
 
-	resources, ok := result["resources"].([]interface{})
+	resources, ok := result["resources"].([]any)
 	if !ok {
 		t.Fatal("Result should contain 'resources' array")
 	}
 
 	// Verify screen://main resource
-	screenResource := resources[0].(map[string]interface{})
+	screenResource := resources[0].(map[string]any)
 	if screenResource["uri"] != "screen://main" {
 		t.Errorf("Screen resource URI = %v, want 'screen://main'", screenResource["uri"])
 	}
@@ -2713,7 +2708,7 @@ func TestMCPResourcesListResponseStructure(t *testing.T) {
 	}
 
 	// Verify accessibility:// template resource
-	accessibilityResource := resources[1].(map[string]interface{})
+	accessibilityResource := resources[1].(map[string]any)
 	if accessibilityResource["uri"] != "accessibility://" {
 		t.Errorf("Accessibility resource URI = %v, want 'accessibility://'", accessibilityResource["uri"])
 	}
@@ -2722,7 +2717,7 @@ func TestMCPResourcesListResponseStructure(t *testing.T) {
 	}
 
 	// Verify clipboard://current resource
-	clipboardResource := resources[2].(map[string]interface{})
+	clipboardResource := resources[2].(map[string]any)
 	if clipboardResource["uri"] != "clipboard://current" {
 		t.Errorf("Clipboard resource URI = %v, want 'clipboard://current'", clipboardResource["uri"])
 	}
@@ -2755,7 +2750,7 @@ func TestMCPResourcesReadScreenshotFormat(t *testing.T) {
 			// The content should be base64-encoded PNG data
 			mockBase64Data := "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
 
-			responseContent := map[string]interface{}{
+			responseContent := map[string]any{
 				"uri":      tt.uri,
 				"mimeType": tt.wantMimeType,
 				"text":     mockBase64Data, // resource content as text (base64 for binary)
@@ -2821,7 +2816,7 @@ func TestMCPResourcesReadClipboardFormat(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Simulate a resources/read response for clipboard
-			responseContent := map[string]interface{}{
+			responseContent := map[string]any{
 				"uri":      "clipboard://current",
 				"mimeType": tt.wantMimeType,
 				"text":     tt.clipboardText,
@@ -2850,17 +2845,17 @@ func TestMCPResourcesReadClipboardFormat(t *testing.T) {
 // TestMCPResourcesReadAccessibilityTreeFormat verifies resources/read for accessibility://{pid} response format
 func TestMCPResourcesReadAccessibilityTreeFormat(t *testing.T) {
 	// Simulate expected accessibility tree JSON response
-	mockAccessibilityTree := map[string]interface{}{
+	mockAccessibilityTree := map[string]any{
 		"application":  "applications/1234",
 		"elementCount": 5,
-		"elements": []map[string]interface{}{
+		"elements": []map[string]any{
 			{
 				"id":      "elem-1",
 				"role":    "AXWindow",
 				"path":    "/AXApplication/AXWindow",
 				"text":    "Calculator",
 				"actions": []string{"AXRaise", "AXClose"},
-				"bounds": map[string]interface{}{
+				"bounds": map[string]any{
 					"x":      100.0,
 					"y":      200.0,
 					"width":  400.0,
@@ -2882,7 +2877,7 @@ func TestMCPResourcesReadAccessibilityTreeFormat(t *testing.T) {
 	}
 
 	// Simulate response
-	responseContent := map[string]interface{}{
+	responseContent := map[string]any{
 		"uri":      "accessibility://1234",
 		"mimeType": "application/json",
 		"text":     string(jsonBytes),
@@ -2899,7 +2894,7 @@ func TestMCPResourcesReadAccessibilityTreeFormat(t *testing.T) {
 		t.Error("Content should be non-empty JSON string")
 	}
 
-	var parsedTree map[string]interface{}
+	var parsedTree map[string]any
 	if err := json.Unmarshal([]byte(content), &parsedTree); err != nil {
 		t.Errorf("Content is not valid JSON: %v", err)
 	}
@@ -2911,7 +2906,7 @@ func TestMCPResourcesReadAccessibilityTreeFormat(t *testing.T) {
 	if _, ok := parsedTree["elementCount"]; !ok {
 		t.Error("Tree should contain 'elementCount' field")
 	}
-	elements, ok := parsedTree["elements"].([]interface{})
+	elements, ok := parsedTree["elements"].([]any)
 	if !ok {
 		t.Error("Tree should contain 'elements' array")
 	}
@@ -2921,7 +2916,7 @@ func TestMCPResourcesReadAccessibilityTreeFormat(t *testing.T) {
 
 	// Verify element structure
 	if len(elements) > 0 {
-		firstElem, ok := elements[0].(map[string]interface{})
+		firstElem, ok := elements[0].(map[string]any)
 		if !ok {
 			t.Error("Element should be an object")
 		} else {
@@ -3025,13 +3020,13 @@ func TestMCPResourcesReadInvalidURI(t *testing.T) {
 			// Simulate URI validation logic from readResource
 			var err error
 
-			if strings.HasPrefix(tt.uri, "screen://") {
-				suffix := strings.TrimPrefix(tt.uri, "screen://")
+			if after, ok := strings.CutPrefix(tt.uri, "screen://"); ok {
+				suffix := after
 				if suffix != "main" {
 					err = fmt.Errorf("unsupported screen resource: %s (only 'main' is supported)", suffix)
 				}
-			} else if strings.HasPrefix(tt.uri, "accessibility://") {
-				pidStr := strings.TrimPrefix(tt.uri, "accessibility://")
+			} else if after, ok := strings.CutPrefix(tt.uri, "accessibility://"); ok {
+				pidStr := after
 				if pidStr == "" {
 					err = fmt.Errorf("accessibility:// requires a PID (e.g., accessibility://1234)")
 				} else {
@@ -3040,8 +3035,8 @@ func TestMCPResourcesReadInvalidURI(t *testing.T) {
 						err = fmt.Errorf("invalid PID in accessibility URI: %s", pidStr)
 					}
 				}
-			} else if strings.HasPrefix(tt.uri, "clipboard://") {
-				suffix := strings.TrimPrefix(tt.uri, "clipboard://")
+			} else if after, ok := strings.CutPrefix(tt.uri, "clipboard://"); ok {
+				suffix := after
 				if suffix != "current" {
 					err = fmt.Errorf("unsupported clipboard resource: %s (only 'current' is supported)", suffix)
 				}
@@ -3084,15 +3079,15 @@ func TestMCPResourcesReadValidURIs(t *testing.T) {
 			var resourceType string
 			var err error
 
-			if strings.HasPrefix(tt.uri, "screen://") {
-				suffix := strings.TrimPrefix(tt.uri, "screen://")
+			if after, ok := strings.CutPrefix(tt.uri, "screen://"); ok {
+				suffix := after
 				if suffix == "main" {
 					resourceType = "screenshot"
 				} else {
 					err = fmt.Errorf("unsupported screen resource")
 				}
-			} else if strings.HasPrefix(tt.uri, "accessibility://") {
-				pidStr := strings.TrimPrefix(tt.uri, "accessibility://")
+			} else if after, ok := strings.CutPrefix(tt.uri, "accessibility://"); ok {
+				pidStr := after
 				if pidStr != "" {
 					if _, parseErr := strconv.ParseInt(pidStr, 10, 32); parseErr == nil {
 						resourceType = "accessibility_tree"
@@ -3102,8 +3097,8 @@ func TestMCPResourcesReadValidURIs(t *testing.T) {
 				} else {
 					err = fmt.Errorf("missing PID")
 				}
-			} else if strings.HasPrefix(tt.uri, "clipboard://") {
-				suffix := strings.TrimPrefix(tt.uri, "clipboard://")
+			} else if after, ok := strings.CutPrefix(tt.uri, "clipboard://"); ok {
+				suffix := after
 				if suffix == "current" {
 					resourceType = "clipboard"
 				} else {
@@ -3140,7 +3135,7 @@ func TestMCPResourcesReadResponseStructure(t *testing.T) {
 		}
 	}`
 
-	var response map[string]interface{}
+	var response map[string]any
 	if err := json.Unmarshal([]byte(responseJSON), &response); err != nil {
 		t.Fatalf("Failed to parse response JSON: %v", err)
 	}
@@ -3150,12 +3145,12 @@ func TestMCPResourcesReadResponseStructure(t *testing.T) {
 		t.Errorf("jsonrpc = %v, want '2.0'", response["jsonrpc"])
 	}
 
-	result, ok := response["result"].(map[string]interface{})
+	result, ok := response["result"].(map[string]any)
 	if !ok {
 		t.Fatal("Response should contain 'result' object")
 	}
 
-	contents, ok := result["contents"].([]interface{})
+	contents, ok := result["contents"].([]any)
 	if !ok {
 		t.Fatal("Result should contain 'contents' array")
 	}
@@ -3165,7 +3160,7 @@ func TestMCPResourcesReadResponseStructure(t *testing.T) {
 	}
 
 	// Verify content structure
-	content := contents[0].(map[string]interface{})
+	content := contents[0].(map[string]any)
 	if _, ok := content["uri"]; !ok {
 		t.Error("Content should have 'uri' field")
 	}
@@ -3189,7 +3184,7 @@ func TestMCPResourcesReadErrorResponse(t *testing.T) {
 		}
 	}`
 
-	var response map[string]interface{}
+	var response map[string]any
 	if err := json.Unmarshal([]byte(responseJSON), &response); err != nil {
 		t.Fatalf("Failed to parse response JSON: %v", err)
 	}
@@ -3204,7 +3199,7 @@ func TestMCPResourcesReadErrorResponse(t *testing.T) {
 		t.Error("Error response should not contain 'result'")
 	}
 
-	errorObj, ok := response["error"].(map[string]interface{})
+	errorObj, ok := response["error"].(map[string]any)
 	if !ok {
 		t.Fatal("Response should contain 'error' object")
 	}
@@ -3242,18 +3237,18 @@ func TestMCPResourcesCapabilityAnnouncement(t *testing.T) {
 		}
 	}`
 
-	var response map[string]interface{}
+	var response map[string]any
 	if err := json.Unmarshal([]byte(initResponseJSON), &response); err != nil {
 		t.Fatalf("Failed to parse response JSON: %v", err)
 	}
 
-	capabilities, ok := response["capabilities"].(map[string]interface{})
+	capabilities, ok := response["capabilities"].(map[string]any)
 	if !ok {
 		t.Fatal("Response should contain 'capabilities' object")
 	}
 
 	// Verify resources capability is present
-	resources, ok := capabilities["resources"].(map[string]interface{})
+	resources, ok := capabilities["resources"].(map[string]any)
 	if !ok {
 		t.Fatal("Capabilities should contain 'resources' object")
 	}
@@ -3306,30 +3301,30 @@ func TestMCPResourceURISchemeValidation(t *testing.T) {
 // TestMCPResourcesEmptyClipboardHandling tests graceful handling of empty clipboard
 func TestMCPResourcesEmptyClipboardHandling(t *testing.T) {
 	// When clipboard is empty, resources/read should still succeed with empty content
-	responseContent := map[string]interface{}{
+	responseContent := map[string]any{
 		"uri":      "clipboard://current",
 		"mimeType": "text/plain",
 		"text":     "", // empty clipboard
 	}
 
-	result, err := json.Marshal(map[string]interface{}{
-		"contents": []map[string]interface{}{responseContent},
+	result, err := json.Marshal(map[string]any{
+		"contents": []map[string]any{responseContent},
 	})
 	if err != nil {
 		t.Fatalf("Failed to marshal empty clipboard response: %v", err)
 	}
 
-	var parsed map[string]interface{}
+	var parsed map[string]any
 	if err := json.Unmarshal(result, &parsed); err != nil {
 		t.Fatalf("Failed to unmarshal response: %v", err)
 	}
 
-	contents := parsed["contents"].([]interface{})
+	contents := parsed["contents"].([]any)
 	if len(contents) != 1 {
 		t.Errorf("Expected 1 content item, got %d", len(contents))
 	}
 
-	content := contents[0].(map[string]interface{})
+	content := contents[0].(map[string]any)
 	if content["mimeType"] != "text/plain" {
 		t.Errorf("Empty clipboard should still have text/plain mimeType")
 	}
@@ -3346,11 +3341,11 @@ func TestMCPResourcesEmptyClipboardHandling(t *testing.T) {
 // structure including name, description, and arguments fields.
 func TestMCPPromptsList(t *testing.T) {
 	// Simulate listPrompts() response - this matches the implementation
-	prompts := []map[string]interface{}{
+	prompts := []map[string]any{
 		{
 			"name":        "navigate_to_element",
 			"description": "Navigate to and click an accessibility element",
-			"arguments": []map[string]interface{}{
+			"arguments": []map[string]any{
 				{"name": "selector", "description": "Element selector (role, text, or path)", "required": true},
 				{"name": "action", "description": "Action to perform: click, double_click, right_click", "required": false},
 			},
@@ -3358,14 +3353,14 @@ func TestMCPPromptsList(t *testing.T) {
 		{
 			"name":        "fill_form",
 			"description": "Find and fill form fields with values",
-			"arguments": []map[string]interface{}{
+			"arguments": []map[string]any{
 				{"name": "fields", "description": "JSON object mapping field names/labels to values", "required": true},
 			},
 		},
 		{
 			"name":        "verify_state",
 			"description": "Verify an element matches expected state",
-			"arguments": []map[string]interface{}{
+			"arguments": []map[string]any{
 				{"name": "selector", "description": "Element selector", "required": true},
 				{"name": "expected_state", "description": "Expected state: visible, enabled, focused, or text value", "required": true},
 			},
@@ -3403,7 +3398,7 @@ func TestMCPPromptsList(t *testing.T) {
 		}
 
 		// Verify arguments array exists
-		args, ok := p["arguments"].([]map[string]interface{})
+		args, ok := p["arguments"].([]map[string]any)
 		if !ok {
 			t.Errorf("Prompt %s should have 'arguments' array field", name)
 			continue
@@ -3467,7 +3462,7 @@ func TestMCPPromptsListResponseStructure(t *testing.T) {
 		}
 	}`
 
-	var response map[string]interface{}
+	var response map[string]any
 	if err := json.Unmarshal([]byte(responseJSON), &response); err != nil {
 		t.Fatalf("Failed to parse response JSON: %v", err)
 	}
@@ -3483,13 +3478,13 @@ func TestMCPPromptsListResponseStructure(t *testing.T) {
 	}
 
 	// Verify result object exists
-	result, ok := response["result"].(map[string]interface{})
+	result, ok := response["result"].(map[string]any)
 	if !ok {
 		t.Fatal("Response should contain 'result' object")
 	}
 
 	// Verify prompts array exists
-	prompts, ok := result["prompts"].([]interface{})
+	prompts, ok := result["prompts"].([]any)
 	if !ok {
 		t.Fatal("Result should contain 'prompts' array")
 	}
@@ -3500,7 +3495,7 @@ func TestMCPPromptsListResponseStructure(t *testing.T) {
 
 	// Verify each prompt has the required structure
 	for i, p := range prompts {
-		prompt, ok := p.(map[string]interface{})
+		prompt, ok := p.(map[string]any)
 		if !ok {
 			t.Errorf("Prompt %d should be an object", i)
 			continue
@@ -3606,12 +3601,12 @@ If the element is not immediately visible, you may need to:
 func TestMCPPromptsGetFillForm(t *testing.T) {
 	tests := []struct {
 		name         string
-		fields       map[string]interface{}
+		fields       map[string]any
 		wantContains []string
 	}{
 		{
 			name: "simple text fields",
-			fields: map[string]interface{}{
+			fields: map[string]any{
 				"username": "testuser",
 				"email":    "test@example.com",
 			},
@@ -3624,7 +3619,7 @@ func TestMCPPromptsGetFillForm(t *testing.T) {
 		},
 		{
 			name:   "empty fields object",
-			fields: map[string]interface{}{},
+			fields: map[string]any{},
 			wantContains: []string{
 				"{}",
 				"AXTextField",
@@ -3632,7 +3627,7 @@ func TestMCPPromptsGetFillForm(t *testing.T) {
 		},
 		{
 			name: "fields with nested values",
-			fields: map[string]interface{}{
+			fields: map[string]any{
 				"address": map[string]string{
 					"street": "123 Main St",
 					"city":   "Boston",
@@ -3800,54 +3795,54 @@ func TestMCPPromptsGetMissingArguments(t *testing.T) {
 	tests := []struct {
 		name              string
 		promptName        string
-		args              map[string]interface{}
+		args              map[string]any
 		wantDefaultValue  string
 		wantContentSubstr string
 	}{
 		{
 			name:              "navigate_to_element without action uses click",
 			promptName:        "navigate_to_element",
-			args:              map[string]interface{}{"selector": "button:Test"},
+			args:              map[string]any{"selector": "button:Test"},
 			wantDefaultValue:  "click",
 			wantContentSubstr: `"click"`,
 		},
 		{
 			name:              "navigate_to_element with nil action uses click",
 			promptName:        "navigate_to_element",
-			args:              map[string]interface{}{"selector": "button:Test", "action": nil},
+			args:              map[string]any{"selector": "button:Test", "action": nil},
 			wantDefaultValue:  "click",
 			wantContentSubstr: `"click"`,
 		},
 		{
 			name:              "navigate_to_element with empty action uses click",
 			promptName:        "navigate_to_element",
-			args:              map[string]interface{}{"selector": "button:Test", "action": ""},
+			args:              map[string]any{"selector": "button:Test", "action": ""},
 			wantDefaultValue:  "click",
 			wantContentSubstr: `"click"`,
 		},
 		{
 			name:              "navigate_to_element without selector",
 			promptName:        "navigate_to_element",
-			args:              map[string]interface{}{},
+			args:              map[string]any{},
 			wantContentSubstr: "matching: ", // empty selector is allowed
 		},
 		{
 			name:              "fill_form without fields uses empty object",
 			promptName:        "fill_form",
-			args:              map[string]interface{}{},
+			args:              map[string]any{},
 			wantDefaultValue:  "{}",
 			wantContentSubstr: "{}",
 		},
 		{
 			name:              "verify_state without selector",
 			promptName:        "verify_state",
-			args:              map[string]interface{}{"expected_state": "visible"},
+			args:              map[string]any{"expected_state": "visible"},
 			wantContentSubstr: "Element to find: ",
 		},
 		{
 			name:              "verify_state without expected_state",
 			promptName:        "verify_state",
-			args:              map[string]interface{}{"selector": "button:OK"},
+			args:              map[string]any{"selector": "button:OK"},
 			wantContentSubstr: "Expected state: ",
 		},
 	}
@@ -3918,7 +3913,7 @@ func TestMCPPromptsGetResponseStructure(t *testing.T) {
 		}
 	}`
 
-	var response map[string]interface{}
+	var response map[string]any
 	if err := json.Unmarshal([]byte(responseJSON), &response); err != nil {
 		t.Fatalf("Failed to parse response JSON: %v", err)
 	}
@@ -3929,7 +3924,7 @@ func TestMCPPromptsGetResponseStructure(t *testing.T) {
 	}
 
 	// Verify result object
-	result, ok := response["result"].(map[string]interface{})
+	result, ok := response["result"].(map[string]any)
 	if !ok {
 		t.Fatal("Response should contain 'result' object")
 	}
@@ -3940,7 +3935,7 @@ func TestMCPPromptsGetResponseStructure(t *testing.T) {
 	}
 
 	// Verify messages array
-	messages, ok := result["messages"].([]interface{})
+	messages, ok := result["messages"].([]any)
 	if !ok {
 		t.Fatal("Result should contain 'messages' array")
 	}
@@ -3950,7 +3945,7 @@ func TestMCPPromptsGetResponseStructure(t *testing.T) {
 	}
 
 	// Verify message structure
-	message, ok := messages[0].(map[string]interface{})
+	message, ok := messages[0].(map[string]any)
 	if !ok {
 		t.Fatal("Message should be an object")
 	}
@@ -3965,7 +3960,7 @@ func TestMCPPromptsGetResponseStructure(t *testing.T) {
 	}
 
 	// Verify content structure
-	content, ok := message["content"].(map[string]interface{})
+	content, ok := message["content"].(map[string]any)
 	if !ok {
 		t.Fatal("Message should have 'content' object")
 	}
@@ -3989,25 +3984,25 @@ func TestMCPPromptsArgumentSubstitution(t *testing.T) {
 	tests := []struct {
 		name       string
 		promptName string
-		args       map[string]interface{}
+		args       map[string]any
 		mustAppear []string
 	}{
 		{
 			name:       "navigate_to_element substitutes selector",
 			promptName: "navigate_to_element",
-			args:       map[string]interface{}{"selector": "UNIQUE_SELECTOR_12345"},
+			args:       map[string]any{"selector": "UNIQUE_SELECTOR_12345"},
 			mustAppear: []string{"UNIQUE_SELECTOR_12345"},
 		},
 		{
 			name:       "navigate_to_element substitutes action",
 			promptName: "navigate_to_element",
-			args:       map[string]interface{}{"selector": "btn", "action": "UNIQUE_ACTION_67890"},
+			args:       map[string]any{"selector": "btn", "action": "UNIQUE_ACTION_67890"},
 			mustAppear: []string{"UNIQUE_ACTION_67890"},
 		},
 		{
 			name:       "fill_form substitutes fields JSON",
 			promptName: "fill_form",
-			args: map[string]interface{}{
+			args: map[string]any{
 				"fields": map[string]string{"UNIQUE_FIELD": "UNIQUE_VALUE"},
 			},
 			mustAppear: []string{"UNIQUE_FIELD", "UNIQUE_VALUE"},
@@ -4015,19 +4010,19 @@ func TestMCPPromptsArgumentSubstitution(t *testing.T) {
 		{
 			name:       "verify_state substitutes selector",
 			promptName: "verify_state",
-			args:       map[string]interface{}{"selector": "UNIQUE_SELECTOR_VERIFY", "expected_state": "visible"},
+			args:       map[string]any{"selector": "UNIQUE_SELECTOR_VERIFY", "expected_state": "visible"},
 			mustAppear: []string{"UNIQUE_SELECTOR_VERIFY"},
 		},
 		{
 			name:       "verify_state substitutes expected_state",
 			promptName: "verify_state",
-			args:       map[string]interface{}{"selector": "elem", "expected_state": "UNIQUE_STATE_VALUE"},
+			args:       map[string]any{"selector": "elem", "expected_state": "UNIQUE_STATE_VALUE"},
 			mustAppear: []string{"UNIQUE_STATE_VALUE"},
 		},
 		{
 			name:       "special characters in arguments",
 			promptName: "navigate_to_element",
-			args:       map[string]interface{}{"selector": `button:"Click Me" with spaces`},
+			args:       map[string]any{"selector": `button:"Click Me" with spaces`},
 			mustAppear: []string{`button:"Click Me" with spaces`},
 		},
 	}
@@ -4111,7 +4106,7 @@ func TestMCPPromptsCapabilityAnnouncement(t *testing.T) {
 		}
 	}`
 
-	var response map[string]interface{}
+	var response map[string]any
 	if err := json.Unmarshal([]byte(initResponseJSON), &response); err != nil {
 		t.Fatalf("Failed to parse response JSON: %v", err)
 	}
@@ -4122,7 +4117,7 @@ func TestMCPPromptsCapabilityAnnouncement(t *testing.T) {
 	}
 
 	// Get result
-	result, ok := response["result"].(map[string]interface{})
+	result, ok := response["result"].(map[string]any)
 	if !ok {
 		t.Fatal("Response should contain 'result' object")
 	}
@@ -4133,7 +4128,7 @@ func TestMCPPromptsCapabilityAnnouncement(t *testing.T) {
 	}
 
 	// Get capabilities
-	capabilities, ok := result["capabilities"].(map[string]interface{})
+	capabilities, ok := result["capabilities"].(map[string]any)
 	if !ok {
 		t.Fatal("Result should contain 'capabilities' object")
 	}
@@ -4145,7 +4140,7 @@ func TestMCPPromptsCapabilityAnnouncement(t *testing.T) {
 	}
 
 	// Prompts capability should be an object (even if empty)
-	if _, ok := prompts.(map[string]interface{}); !ok {
+	if _, ok := prompts.(map[string]any); !ok {
 		t.Errorf("Prompts capability should be an object, got %T", prompts)
 	}
 
@@ -4180,23 +4175,23 @@ func TestMCPPromptsListArgumentsStructure(t *testing.T) {
 	}
 
 	// Simulate listPrompts() structure
-	prompts := []map[string]interface{}{
+	prompts := []map[string]any{
 		{
 			"name": "navigate_to_element",
-			"arguments": []map[string]interface{}{
+			"arguments": []map[string]any{
 				{"name": "selector", "required": true},
 				{"name": "action", "required": false},
 			},
 		},
 		{
 			"name": "fill_form",
-			"arguments": []map[string]interface{}{
+			"arguments": []map[string]any{
 				{"name": "fields", "required": true},
 			},
 		},
 		{
 			"name": "verify_state",
-			"arguments": []map[string]interface{}{
+			"arguments": []map[string]any{
 				{"name": "selector", "required": true},
 				{"name": "expected_state", "required": true},
 			},
@@ -4205,7 +4200,7 @@ func TestMCPPromptsListArgumentsStructure(t *testing.T) {
 
 	for _, p := range prompts {
 		name := p["name"].(string)
-		args := p["arguments"].([]map[string]interface{})
+		args := p["arguments"].([]map[string]any)
 		expected := expectedArgs[name]
 
 		if len(args) != len(expected) {
@@ -4357,7 +4352,7 @@ func TestMCPServer_HandleHTTPMessage_PromptsGetValidPrompts(t *testing.T) {
 			}
 
 			// Parse result to verify structure
-			var result map[string]interface{}
+			var result map[string]any
 			if err := json.Unmarshal(resp.Result, &result); err != nil {
 				t.Fatalf("Failed to parse result: %v", err)
 			}
@@ -4367,12 +4362,12 @@ func TestMCPServer_HandleHTTPMessage_PromptsGetValidPrompts(t *testing.T) {
 				t.Error("Result should contain 'description' field")
 			}
 
-			messages, ok := result["messages"].([]interface{})
+			messages, ok := result["messages"].([]any)
 			if !ok || len(messages) == 0 {
 				t.Error("Result should contain non-empty 'messages' array")
 			} else {
 				// Verify first message has role:user
-				firstMsg, ok := messages[0].(map[string]interface{})
+				firstMsg, ok := messages[0].(map[string]any)
 				if !ok {
 					t.Error("First message should be an object")
 				} else if firstMsg["role"] != "user" {
@@ -4417,13 +4412,13 @@ func TestMCPServer_HandleHTTPMessage_PromptsList(t *testing.T) {
 	}
 
 	// Parse result
-	var result map[string]interface{}
+	var result map[string]any
 	if err := json.Unmarshal(resp.Result, &result); err != nil {
 		t.Fatalf("Failed to parse result: %v", err)
 	}
 
 	// Verify prompts array
-	prompts, ok := result["prompts"].([]interface{})
+	prompts, ok := result["prompts"].([]any)
 	if !ok {
 		t.Fatal("Result should contain 'prompts' array")
 	}
@@ -4440,7 +4435,7 @@ func TestMCPServer_HandleHTTPMessage_PromptsList(t *testing.T) {
 	}
 
 	for i, p := range prompts {
-		prompt, ok := p.(map[string]interface{})
+		prompt, ok := p.(map[string]any)
 		if !ok {
 			t.Errorf("Prompt %d should be an object", i)
 			continue
@@ -4562,7 +4557,7 @@ func TestToolSchemaPropertyCompleteness(t *testing.T) {
 			continue
 		}
 
-		props, ok := propsRaw.(map[string]interface{})
+		props, ok := propsRaw.(map[string]any)
 		if !ok {
 			issues = append(issues, fmt.Sprintf("%s: properties is not a map", name))
 			continue
@@ -4571,7 +4566,7 @@ func TestToolSchemaPropertyCompleteness(t *testing.T) {
 		for propName, propValRaw := range props {
 			totalProperties++
 
-			propVal, ok := propValRaw.(map[string]interface{})
+			propVal, ok := propValRaw.(map[string]any)
 			if !ok {
 				issues = append(issues, fmt.Sprintf("%s.%s: property value is not a map", name, propName))
 				continue
@@ -4650,7 +4645,7 @@ func TestToolSchemaEnumCompleteness(t *testing.T) {
 			continue
 		}
 
-		props, ok := propsRaw.(map[string]interface{})
+		props, ok := propsRaw.(map[string]any)
 		if !ok {
 			continue
 		}
@@ -4662,7 +4657,7 @@ func TestToolSchemaEnumCompleteness(t *testing.T) {
 				continue
 			}
 
-			propVal, ok := propValRaw.(map[string]interface{})
+			propVal, ok := propValRaw.(map[string]any)
 			if !ok {
 				continue
 			}
@@ -4676,7 +4671,7 @@ func TestToolSchemaEnumCompleteness(t *testing.T) {
 			enum, ok := enumRaw.([]string)
 			if !ok {
 				// Try []interface{}
-				enumIface, ok := enumRaw.([]interface{})
+				enumIface, ok := enumRaw.([]any)
 				if !ok {
 					issues = append(issues, fmt.Sprintf("%s.%s: enum is not an array", toolName, propName))
 					continue
@@ -4725,13 +4720,13 @@ func TestToolSchemaArrayItems(t *testing.T) {
 			continue
 		}
 
-		props, ok := propsRaw.(map[string]interface{})
+		props, ok := propsRaw.(map[string]any)
 		if !ok {
 			continue
 		}
 
 		for propName, propValRaw := range props {
-			propVal, ok := propValRaw.(map[string]interface{})
+			propVal, ok := propValRaw.(map[string]any)
 			if !ok {
 				continue
 			}
@@ -4748,7 +4743,7 @@ func TestToolSchemaArrayItems(t *testing.T) {
 				arraysWithItems++
 
 				// Further validate items has a type
-				itemsMap, ok := items.(map[string]interface{})
+				itemsMap, ok := items.(map[string]any)
 				if ok {
 					if _, hasType := itemsMap["type"]; !hasType {
 						issues = append(issues, fmt.Sprintf("%s.%s.items: missing 'type'", name, propName))
@@ -4789,7 +4784,7 @@ func TestToolSchemaRequiredFieldsExist(t *testing.T) {
 		required, ok := requiredRaw.([]string)
 		if !ok {
 			// Try []interface{}
-			requiredIface, ok := requiredRaw.([]interface{})
+			requiredIface, ok := requiredRaw.([]any)
 			if !ok {
 				issues = append(issues, fmt.Sprintf("%s: 'required' is not an array", name))
 				continue
@@ -4813,7 +4808,7 @@ func TestToolSchemaRequiredFieldsExist(t *testing.T) {
 			continue
 		}
 
-		props, ok := propsRaw.(map[string]interface{})
+		props, ok := propsRaw.(map[string]any)
 		if !ok {
 			continue
 		}
@@ -4860,13 +4855,13 @@ func TestToolSchemaTypeValidity(t *testing.T) {
 			continue
 		}
 
-		props, ok := propsRaw.(map[string]interface{})
+		props, ok := propsRaw.(map[string]any)
 		if !ok {
 			continue
 		}
 
 		for propName, propValRaw := range props {
-			propVal, ok := propValRaw.(map[string]interface{})
+			propVal, ok := propValRaw.(map[string]any)
 			if !ok {
 				continue
 			}
@@ -4918,13 +4913,13 @@ func TestToolSchemaDescriptionQuality(t *testing.T) {
 			continue
 		}
 
-		props, ok := propsRaw.(map[string]interface{})
+		props, ok := propsRaw.(map[string]any)
 		if !ok {
 			continue
 		}
 
 		for propName, propValRaw := range props {
-			propVal, ok := propValRaw.(map[string]interface{})
+			propVal, ok := propValRaw.(map[string]any)
 			if !ok {
 				continue
 			}
@@ -5127,7 +5122,7 @@ func TestToolSchemaSelectorProperty(t *testing.T) {
 			continue
 		}
 
-		props, ok := propsRaw.(map[string]interface{})
+		props, ok := propsRaw.(map[string]any)
 		if !ok {
 			continue
 		}
@@ -5138,7 +5133,7 @@ func TestToolSchemaSelectorProperty(t *testing.T) {
 			continue
 		}
 
-		selector, ok := selectorRaw.(map[string]interface{})
+		selector, ok := selectorRaw.(map[string]any)
 		if !ok {
 			issues = append(issues, fmt.Sprintf("%s.selector: not a map", name))
 			continue

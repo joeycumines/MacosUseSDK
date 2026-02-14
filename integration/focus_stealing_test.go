@@ -152,7 +152,7 @@ func TestNoFocusStealingWithPassiveObservation(t *testing.T) {
 	defer cancelCheck()
 
 pollLoop:
-	for i := 0; i < maxPolls; i++ {
+	for i := range maxPolls {
 		pollCount++
 
 		resp, err := client.ExecuteAppleScript(checkCtx, &pb.ExecuteAppleScriptRequest{
