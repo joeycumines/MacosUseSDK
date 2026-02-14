@@ -7,7 +7,7 @@ replace github.com/joeycumines/MacosUseSDK => ../
 require (
 	cloud.google.com/go/longrunning v0.8.0
 	github.com/joeycumines/MacosUseSDK v0.0.0-20251207071216-f5477f73fb25
-	google.golang.org/grpc v1.78.0
+	google.golang.org/grpc v1.79.1
 )
 
 require (
