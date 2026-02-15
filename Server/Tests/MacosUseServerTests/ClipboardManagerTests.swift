@@ -6,7 +6,7 @@ import XCTest
 
 /// Unit tests for ClipboardManager verifying clearContents is called before every write.
 ///
-/// Per AGENTS.md: "ClipboardManager MUST call pasteboard.clearContents() before EVERY write operation"
+/// Per CLAUDE.md: "ClipboardManager MUST call pasteboard.clearContents() before EVERY write operation"
 /// Apple's NSPasteboard documentation states: "Clearing the pasteboard before writing is recommended."
 ///
 /// These tests use a mock pasteboard to verify the exact call order.

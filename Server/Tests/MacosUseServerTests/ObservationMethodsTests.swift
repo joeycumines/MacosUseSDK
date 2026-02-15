@@ -772,7 +772,7 @@ final class ObservationMethodsTests: XCTestCase {
         // Start the observation
         try await observationManager.startObservation(name: obsName)
 
-        // Poll until active state is reached (avoid time.Sleep per AGENTS.md)
+        // Poll until active state is reached (avoid time.Sleep per CLAUDE.md)
         var obs: Macosusesdk_V1_Observation?
         for _ in 0 ..< 100 {
             if let current = await observationManager.getObservation(name: obsName),
