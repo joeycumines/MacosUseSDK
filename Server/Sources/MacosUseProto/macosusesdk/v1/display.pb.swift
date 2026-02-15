@@ -36,7 +36,8 @@ public struct Macosusesdk_V1_Display: Sendable {
   /// Display ID (CGDirectDisplayID). Treated as opaque by clients.
   public var displayID: Int64 = 0
 
-  /// Display frame in Global Display Coordinates (top-left origin).
+  /// Display frame in Global Display Coordinates (top-left origin, Y increases downward).
+  /// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
   public var frame: Macosusesdk_Type_Region {
     get {_frame ?? Macosusesdk_Type_Region()}
     set {_frame = newValue}
@@ -46,7 +47,8 @@ public struct Macosusesdk_V1_Display: Sendable {
   /// Clears the value of `frame`. Subsequent reads from it will return its default value.
   public mutating func clearFrame() {self._frame = nil}
 
-  /// Visible frame (excluding menu bar and dock) in Global Display Coordinates (top-left origin).
+  /// Visible frame (excluding menu bar and dock) in Global Display Coordinates (top-left origin, Y increases downward).
+  /// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
   public var visibleFrame: Macosusesdk_Type_Region {
     get {_visibleFrame ?? Macosusesdk_Type_Region()}
     set {_visibleFrame = newValue}
@@ -135,15 +137,16 @@ public struct Macosusesdk_V1_CaptureCursorPositionRequest: Sendable {
 }
 
 /// Response with the current cursor position.
+/// Uses Global Display Coordinates (top-left origin, Y increases downward).
 public struct Macosusesdk_V1_CaptureCursorPositionResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Cursor X coordinate in Global Display Coordinates (top-left origin).
+  /// Cursor X coordinate in Global Display Coordinates (top-left origin, Y increases downward).
   public var x: Double = 0
 
-  /// Cursor Y coordinate in Global Display Coordinates (top-left origin).
+  /// Cursor Y coordinate in Global Display Coordinates (top-left origin, Y increases downward).
   public var y: Double = 0
 
   /// Display the cursor is currently on.

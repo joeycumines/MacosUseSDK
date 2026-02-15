@@ -8,12 +8,16 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
 	"google.golang.org/grpc"
+	grpcMetadata "google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -938,5 +942,612 @@ func TestObservationHandlers_ContentTypeIsText(t *testing.T) {
 		if result.Content[0].Type != "text" {
 			t.Errorf("testcase %d content type = %q, want 'text'", i, result.Content[0].Type)
 		}
+	}
+}
+
+// =============================================================================
+// SSE Streaming Tests - Added for Task 49
+// =============================================================================
+
+// mockHTTPTransport implements the minimal interface needed for testing
+// startObservationStream.
+type mockHTTPTransport struct {
+	events        []mockSSEEvent
+	shutdownCh    chan struct{}
+	closed        bool
+	mu            sync.Mutex
+	eventCond     *sync.Cond
+	eventWaiter   chan struct{}
+	streamStarted chan struct{} // Signals when stream goroutine calls BroadcastEvent or ShutdownChan
+}
+
+type mockSSEEvent struct {
+	EventType string
+	Data      string
+}
+
+func newMockHTTPTransport() *mockHTTPTransport {
+	m := &mockHTTPTransport{
+		shutdownCh:    make(chan struct{}),
+		eventWaiter:   make(chan struct{}, 100),
+		streamStarted: make(chan struct{}),
+	}
+	m.eventCond = sync.NewCond(&m.mu)
+	return m
+}
+
+func (m *mockHTTPTransport) BroadcastEvent(eventType string, data string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.events = append(m.events, mockSSEEvent{EventType: eventType, Data: data})
+	m.eventCond.Broadcast()
+	// Signal that an event was added
+	select {
+	case m.eventWaiter <- struct{}{}:
+	default:
+	}
+}
+
+func (m *mockHTTPTransport) ShutdownChan() <-chan struct{} {
+	// Signal that the stream has started reading from shutdown channel
+	select {
+	case m.streamStarted <- struct{}{}:
+	default:
+	}
+	return m.shutdownCh
+}
+
+func (m *mockHTTPTransport) IsClosed() bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.closed
+}
+
+func (m *mockHTTPTransport) Close() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if !m.closed {
+		m.closed = true
+		close(m.shutdownCh)
+	}
+}
+
+func (m *mockHTTPTransport) GetEvents() []mockSSEEvent {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	result := make([]mockSSEEvent, len(m.events))
+	copy(result, m.events)
+	return result
+}
+
+// WaitForEvents waits for at least n events with timeout.
+func (m *mockHTTPTransport) WaitForEvents(n int, timeout time.Duration) bool {
+	deadline := time.Now().Add(timeout)
+	for {
+		m.mu.Lock()
+		if len(m.events) >= n {
+			m.mu.Unlock()
+			return true
+		}
+		m.mu.Unlock()
+
+		if time.Now().After(deadline) {
+			return false
+		}
+
+		select {
+		case <-m.eventWaiter:
+		case <-time.After(10 * time.Millisecond):
+		}
+	}
+}
+
+// WaitForStreamStart waits for the stream goroutine to call ShutdownChan.
+func (m *mockHTTPTransport) WaitForStreamStart(timeout time.Duration) bool {
+	select {
+	case <-m.streamStarted:
+		return true
+	case <-time.After(timeout):
+		return false
+	}
+}
+
+// mockStreamingClient implements grpc.ServerStreamingClient for testing.
+type mockStreamingClient struct {
+	responses []*pb.StreamObservationsResponse
+	index     int
+	err       error
+	mu        sync.Mutex
+	closeCh   chan struct{}
+}
+
+func newMockStreamingClient(responses []*pb.StreamObservationsResponse, err error) *mockStreamingClient {
+	return &mockStreamingClient{
+		responses: responses,
+		err:       err,
+		closeCh:   make(chan struct{}),
+	}
+}
+
+func (m *mockStreamingClient) Recv() (*pb.StreamObservationsResponse, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if m.index < len(m.responses) {
+		resp := m.responses[m.index]
+		m.index++
+		return resp, nil
+	}
+
+	if m.err != nil {
+		return nil, m.err
+	}
+
+	// Block until closed
+	<-m.closeCh
+	return nil, io.EOF
+}
+
+func (m *mockStreamingClient) Header() (grpcMetadata.MD, error) {
+	return nil, nil
+}
+
+func (m *mockStreamingClient) Trailer() grpcMetadata.MD {
+	return nil
+}
+
+func (m *mockStreamingClient) CloseSend() error {
+	close(m.closeCh)
+	return nil
+}
+
+func (m *mockStreamingClient) Context() context.Context {
+	return context.Background()
+}
+
+func (m *mockStreamingClient) RecvMsg(msg any) error {
+	return nil
+}
+
+func (m *mockStreamingClient) SendMsg(msg any) error {
+	return nil
+}
+
+// mockStreamableObservationClient extends mockObservationClient with StreamObservations support.
+type mockStreamableObservationClient struct {
+	mockObservationClient
+	streamObservationsFunc func(ctx context.Context, req *pb.StreamObservationsRequest) (grpc.ServerStreamingClient[pb.StreamObservationsResponse], error)
+}
+
+func (m *mockStreamableObservationClient) StreamObservations(ctx context.Context, req *pb.StreamObservationsRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[pb.StreamObservationsResponse], error) {
+	if m.streamObservationsFunc != nil {
+		return m.streamObservationsFunc(ctx, req)
+	}
+	return nil, errors.New("StreamObservations not implemented")
+}
+
+// TestStartObservationStream_EventDelivery verifies that events from the gRPC
+// stream are broadcast via SSE.
+func TestStartObservationStream_EventDelivery(t *testing.T) {
+	event := &pb.ObservationEvent{
+		Observation: "observations/test",
+		EventTime:   timestamppb.Now(),
+		Sequence:    1,
+	}
+	responses := []*pb.StreamObservationsResponse{
+		{Event: event},
+	}
+	streamClient := newMockStreamingClient(responses, io.EOF)
+
+	mockClient := &mockStreamableObservationClient{
+		mockObservationClient: mockObservationClient{
+			getObservationFunc: func(ctx context.Context, req *pb.GetObservationRequest) (*pb.Observation, error) {
+				return &pb.Observation{
+					Name:  req.Name,
+					Type:  pb.ObservationType_OBSERVATION_TYPE_ELEMENT_CHANGES,
+					State: pb.Observation_STATE_ACTIVE,
+				}, nil
+			},
+		},
+		streamObservationsFunc: func(ctx context.Context, req *pb.StreamObservationsRequest) (grpc.ServerStreamingClient[pb.StreamObservationsResponse], error) {
+			return streamClient, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	httpTransport := newMockHTTPTransport()
+
+	obs := &pb.Observation{
+		Name:  "observations/test",
+		Type:  pb.ObservationType_OBSERVATION_TYPE_ELEMENT_CHANGES,
+		State: pb.Observation_STATE_ACTIVE,
+	}
+
+	result, err := server.startObservationStream("observations/test", obs, httpTransport)
+
+	if err != nil {
+		t.Fatalf("startObservationStream returned error: %v", err)
+	}
+	if result.IsError {
+		t.Errorf("result.IsError = true, want false: %s", result.Content[0].Text)
+	}
+
+	// Wait for events to be broadcast (goroutine-based)
+	if !httpTransport.WaitForEvents(2, 500*time.Millisecond) {
+		t.Fatal("Timed out waiting for events")
+	}
+
+	events := httpTransport.GetEvents()
+	// Check that we receive both an observation event and stream_end
+	var foundObservation, foundStreamEnd bool
+	for _, e := range events {
+		if e.EventType == "observation" {
+			foundObservation = true
+		}
+		if e.EventType == "observation_stream_end" {
+			foundStreamEnd = true
+		}
+	}
+
+	if !foundObservation {
+		t.Error("Expected 'observation' event to be broadcast")
+	}
+	if !foundStreamEnd {
+		t.Error("Expected 'observation_stream_end' event to be broadcast")
+	}
+}
+
+// TestStartObservationStream_GRPCError verifies that gRPC errors are broadcast
+// as observation_error events.
+func TestStartObservationStream_GRPCError(t *testing.T) {
+	mockClient := &mockStreamableObservationClient{
+		mockObservationClient: mockObservationClient{
+			getObservationFunc: func(ctx context.Context, req *pb.GetObservationRequest) (*pb.Observation, error) {
+				return &pb.Observation{
+					Name:  req.Name,
+					Type:  pb.ObservationType_OBSERVATION_TYPE_ELEMENT_CHANGES,
+					State: pb.Observation_STATE_ACTIVE,
+				}, nil
+			},
+		},
+		streamObservationsFunc: func(ctx context.Context, req *pb.StreamObservationsRequest) (grpc.ServerStreamingClient[pb.StreamObservationsResponse], error) {
+			return nil, errors.New("connection refused")
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	httpTransport := newMockHTTPTransport()
+
+	obs := &pb.Observation{
+		Name:  "observations/test",
+		Type:  pb.ObservationType_OBSERVATION_TYPE_ELEMENT_CHANGES,
+		State: pb.Observation_STATE_ACTIVE,
+	}
+
+	result, err := server.startObservationStream("observations/test", obs, httpTransport)
+
+	if err != nil {
+		t.Fatalf("startObservationStream returned error: %v", err)
+	}
+	if result.IsError {
+		t.Errorf("result.IsError = true, want false")
+	}
+
+	// Wait for error event
+	if !httpTransport.WaitForEvents(1, 500*time.Millisecond) {
+		t.Fatal("Timed out waiting for error event")
+	}
+
+	events := httpTransport.GetEvents()
+	found := false
+	for _, e := range events {
+		if e.EventType == "observation_error" {
+			found = true
+			if !strings.Contains(e.Data, "connection refused") {
+				t.Errorf("Error event should contain error message, got: %s", e.Data)
+			}
+			if !strings.Contains(e.Data, "reconnection_hint") {
+				t.Errorf("Error event should contain reconnection hint, got: %s", e.Data)
+			}
+		}
+	}
+	if !found {
+		t.Error("Expected 'observation_error' event")
+	}
+}
+
+// TestStartObservationStream_GracefulShutdown verifies that shutdown during
+// active streaming broadcasts the shutdown event.
+func TestStartObservationStream_GracefulShutdown(t *testing.T) {
+	// Create a stream that blocks until closed
+	streamClient := newMockStreamingClient(nil, nil)
+
+	mockClient := &mockStreamableObservationClient{
+		mockObservationClient: mockObservationClient{
+			getObservationFunc: func(ctx context.Context, req *pb.GetObservationRequest) (*pb.Observation, error) {
+				return &pb.Observation{
+					Name:  req.Name,
+					Type:  pb.ObservationType_OBSERVATION_TYPE_ELEMENT_CHANGES,
+					State: pb.Observation_STATE_ACTIVE,
+				}, nil
+			},
+		},
+		streamObservationsFunc: func(ctx context.Context, req *pb.StreamObservationsRequest) (grpc.ServerStreamingClient[pb.StreamObservationsResponse], error) {
+			return streamClient, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	httpTransport := newMockHTTPTransport()
+
+	obs := &pb.Observation{
+		Name:  "observations/test",
+		Type:  pb.ObservationType_OBSERVATION_TYPE_ELEMENT_CHANGES,
+		State: pb.Observation_STATE_ACTIVE,
+	}
+
+	_, err := server.startObservationStream("observations/test", obs, httpTransport)
+	if err != nil {
+		t.Fatalf("startObservationStream returned error: %v", err)
+	}
+
+	// Wait for the goroutine to start (poll instead of time.Sleep)
+	if !httpTransport.WaitForStreamStart(500 * time.Millisecond) {
+		t.Fatal("Timed out waiting for stream to start")
+	}
+
+	// Trigger shutdown
+	httpTransport.Close()
+
+	// Wait for shutdown event
+	if !httpTransport.WaitForEvents(1, 500*time.Millisecond) {
+		t.Fatal("Timed out waiting for shutdown event")
+	}
+
+	events := httpTransport.GetEvents()
+	found := false
+	for _, e := range events {
+		if e.EventType == "observation_shutdown" {
+			found = true
+			if !strings.Contains(e.Data, "server_shutdown") {
+				t.Errorf("Shutdown event should indicate reason, got: %s", e.Data)
+			}
+			if !strings.Contains(e.Data, "reconnection_hint") {
+				t.Errorf("Shutdown event should contain reconnection hint, got: %s", e.Data)
+			}
+		}
+	}
+	if !found {
+		t.Error("Expected 'observation_shutdown' event")
+	}
+}
+
+// TestStartObservationStream_StreamError verifies that stream Recv errors
+// broadcast the stream_end event.
+func TestStartObservationStream_StreamError(t *testing.T) {
+	// Create a stream that returns an error
+	streamClient := newMockStreamingClient(nil, errors.New("stream terminated"))
+
+	mockClient := &mockStreamableObservationClient{
+		mockObservationClient: mockObservationClient{
+			getObservationFunc: func(ctx context.Context, req *pb.GetObservationRequest) (*pb.Observation, error) {
+				return &pb.Observation{
+					Name:  req.Name,
+					Type:  pb.ObservationType_OBSERVATION_TYPE_ELEMENT_CHANGES,
+					State: pb.Observation_STATE_ACTIVE,
+				}, nil
+			},
+		},
+		streamObservationsFunc: func(ctx context.Context, req *pb.StreamObservationsRequest) (grpc.ServerStreamingClient[pb.StreamObservationsResponse], error) {
+			return streamClient, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	httpTransport := newMockHTTPTransport()
+
+	obs := &pb.Observation{
+		Name:  "observations/test",
+		Type:  pb.ObservationType_OBSERVATION_TYPE_ELEMENT_CHANGES,
+		State: pb.Observation_STATE_ACTIVE,
+	}
+
+	_, err := server.startObservationStream("observations/test", obs, httpTransport)
+	if err != nil {
+		t.Fatalf("startObservationStream returned error: %v", err)
+	}
+
+	// Wait for stream end event
+	if !httpTransport.WaitForEvents(1, 500*time.Millisecond) {
+		t.Fatal("Timed out waiting for stream end event")
+	}
+
+	events := httpTransport.GetEvents()
+	found := false
+	for _, e := range events {
+		if e.EventType == "observation_stream_end" {
+			found = true
+			if !strings.Contains(e.Data, "stream_ended") {
+				t.Errorf("Stream end event should indicate reason, got: %s", e.Data)
+			}
+		}
+	}
+	if !found {
+		t.Error("Expected 'observation_stream_end' event")
+	}
+}
+
+// TestStartObservationStream_MultipleEvents verifies that multiple events
+// are broadcast correctly.
+func TestStartObservationStream_MultipleEvents(t *testing.T) {
+	responses := []*pb.StreamObservationsResponse{
+		{Event: &pb.ObservationEvent{Observation: "observations/test", Sequence: 1}},
+		{Event: &pb.ObservationEvent{Observation: "observations/test", Sequence: 2}},
+		{Event: &pb.ObservationEvent{Observation: "observations/test", Sequence: 3}},
+	}
+	streamClient := newMockStreamingClient(responses, io.EOF)
+
+	mockClient := &mockStreamableObservationClient{
+		mockObservationClient: mockObservationClient{
+			getObservationFunc: func(ctx context.Context, req *pb.GetObservationRequest) (*pb.Observation, error) {
+				return &pb.Observation{
+					Name:  req.Name,
+					Type:  pb.ObservationType_OBSERVATION_TYPE_ELEMENT_CHANGES,
+					State: pb.Observation_STATE_ACTIVE,
+				}, nil
+			},
+		},
+		streamObservationsFunc: func(ctx context.Context, req *pb.StreamObservationsRequest) (grpc.ServerStreamingClient[pb.StreamObservationsResponse], error) {
+			return streamClient, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	httpTransport := newMockHTTPTransport()
+
+	obs := &pb.Observation{
+		Name:  "observations/test",
+		Type:  pb.ObservationType_OBSERVATION_TYPE_ELEMENT_CHANGES,
+		State: pb.Observation_STATE_ACTIVE,
+	}
+
+	_, err := server.startObservationStream("observations/test", obs, httpTransport)
+	if err != nil {
+		t.Fatalf("startObservationStream returned error: %v", err)
+	}
+
+	// Wait for all events (3 observation events + 1 stream_end)
+	if !httpTransport.WaitForEvents(4, 500*time.Millisecond) {
+		t.Fatal("Timed out waiting for events")
+	}
+
+	events := httpTransport.GetEvents()
+	observationCount := 0
+	for _, e := range events {
+		if e.EventType == "observation" {
+			observationCount++
+		}
+	}
+
+	if observationCount != 3 {
+		t.Errorf("Expected 3 observation events, got %d", observationCount)
+	}
+}
+
+// TestStartObservationStream_ResponseText verifies the response text contains
+// expected information.
+func TestStartObservationStream_ResponseText(t *testing.T) {
+	streamClient := newMockStreamingClient(nil, io.EOF)
+
+	mockClient := &mockStreamableObservationClient{
+		mockObservationClient: mockObservationClient{
+			getObservationFunc: func(ctx context.Context, req *pb.GetObservationRequest) (*pb.Observation, error) {
+				return &pb.Observation{
+					Name:  req.Name,
+					Type:  pb.ObservationType_OBSERVATION_TYPE_WINDOW_CHANGES,
+					State: pb.Observation_STATE_ACTIVE,
+				}, nil
+			},
+		},
+		streamObservationsFunc: func(ctx context.Context, req *pb.StreamObservationsRequest) (grpc.ServerStreamingClient[pb.StreamObservationsResponse], error) {
+			return streamClient, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	httpTransport := newMockHTTPTransport()
+
+	obs := &pb.Observation{
+		Name:  "observations/window-test",
+		Type:  pb.ObservationType_OBSERVATION_TYPE_WINDOW_CHANGES,
+		State: pb.Observation_STATE_ACTIVE,
+	}
+
+	result, err := server.startObservationStream("observations/window-test", obs, httpTransport)
+	if err != nil {
+		t.Fatalf("startObservationStream returned error: %v", err)
+	}
+
+	text := result.Content[0].Text
+
+	// Verify response contains expected information
+	expectedContents := []string{
+		"observations/window-test",
+		"OBSERVATION_TYPE_WINDOW_CHANGES",
+		"STATE_ACTIVE",
+		"SSE Event Types",
+		"observation",
+		"Reconnection",
+		"Heartbeats",
+	}
+
+	for _, expected := range expectedContents {
+		if !strings.Contains(text, expected) {
+			t.Errorf("Response should contain %q, got:\n%s", expected, text)
+		}
+	}
+}
+
+// TestStartObservationStream_ConnectionTeardownOnCancel verifies that when
+// the observation is cancelled (stream returns EOF/error), proper cleanup
+// events are broadcast via SSE.
+func TestStartObservationStream_ConnectionTeardownOnCancel(t *testing.T) {
+	// Create a stream that returns EOF (simulating cancel)
+	streamClient := newMockStreamingClient(nil, io.EOF)
+
+	mockClient := &mockStreamableObservationClient{
+		mockObservationClient: mockObservationClient{
+			getObservationFunc: func(ctx context.Context, req *pb.GetObservationRequest) (*pb.Observation, error) {
+				return &pb.Observation{
+					Name:  req.Name,
+					Type:  pb.ObservationType_OBSERVATION_TYPE_ELEMENT_CHANGES,
+					State: pb.Observation_STATE_ACTIVE,
+				}, nil
+			},
+		},
+		streamObservationsFunc: func(ctx context.Context, req *pb.StreamObservationsRequest) (grpc.ServerStreamingClient[pb.StreamObservationsResponse], error) {
+			return streamClient, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	httpTransport := newMockHTTPTransport()
+
+	obs := &pb.Observation{
+		Name:  "observations/cancel-test",
+		Type:  pb.ObservationType_OBSERVATION_TYPE_ELEMENT_CHANGES,
+		State: pb.Observation_STATE_ACTIVE,
+	}
+
+	result, err := server.startObservationStream("observations/cancel-test", obs, httpTransport)
+	if err != nil {
+		t.Fatalf("startObservationStream returned error: %v", err)
+	}
+	if result.IsError {
+		t.Errorf("result.IsError = true, want false")
+	}
+
+	// Wait for teardown event (stream_end when EOF received)
+	if !httpTransport.WaitForEvents(1, 500*time.Millisecond) {
+		t.Fatal("Timed out waiting for teardown event")
+	}
+
+	events := httpTransport.GetEvents()
+	found := false
+	for _, e := range events {
+		if e.EventType == "observation_stream_end" {
+			found = true
+			// Verify the event contains observation name for client reconnection
+			if !strings.Contains(e.Data, "observations/cancel-test") {
+				t.Errorf("Stream end event should contain observation name, got: %s", e.Data)
+			}
+			// Verify reconnection hint is present
+			if !strings.Contains(e.Data, "reconnection_hint") {
+				t.Errorf("Stream end event should contain reconnection hint, got: %s", e.Data)
+			}
+		}
+	}
+	if !found {
+		t.Error("Expected 'observation_stream_end' event when stream terminates (connection teardown)")
 	}
 }

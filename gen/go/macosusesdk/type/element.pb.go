@@ -11,6 +11,7 @@
 package _type
 
 import (
+	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -284,24 +285,24 @@ var File_macosusesdk_type_element_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_type_element_proto_rawDesc = "" +
 	"\n" +
-	"\x1emacosusesdk/type/element.proto\x12\x10macosusesdk.type\"\xeb\x03\n" +
-	"\aElement\x12\x12\n" +
-	"\x04role\x18\x01 \x01(\tR\x04role\x12\x17\n" +
-	"\x04text\x18\x02 \x01(\tH\x00R\x04text\x88\x01\x01\x12\x11\n" +
-	"\x01x\x18\x03 \x01(\x01H\x01R\x01x\x88\x01\x01\x12\x11\n" +
-	"\x01y\x18\x04 \x01(\x01H\x02R\x01y\x88\x01\x01\x12\x19\n" +
-	"\x05width\x18\x05 \x01(\x01H\x03R\x05width\x88\x01\x01\x12\x1b\n" +
-	"\x06height\x18\x06 \x01(\x01H\x04R\x06height\x88\x01\x01\x12\x1d\n" +
+	"\x1emacosusesdk/type/element.proto\x12\x10macosusesdk.type\x1a\x1fgoogle/api/field_behavior.proto\"\xa7\x04\n" +
+	"\aElement\x12\x17\n" +
+	"\x04role\x18\x01 \x01(\tB\x03\xe0A\x03R\x04role\x12\x1c\n" +
+	"\x04text\x18\x02 \x01(\tB\x03\xe0A\x03H\x00R\x04text\x88\x01\x01\x12\x16\n" +
+	"\x01x\x18\x03 \x01(\x01B\x03\xe0A\x03H\x01R\x01x\x88\x01\x01\x12\x16\n" +
+	"\x01y\x18\x04 \x01(\x01B\x03\xe0A\x03H\x02R\x01y\x88\x01\x01\x12\x1e\n" +
+	"\x05width\x18\x05 \x01(\x01B\x03\xe0A\x03H\x03R\x05width\x88\x01\x01\x12 \n" +
+	"\x06height\x18\x06 \x01(\x01B\x03\xe0A\x03H\x04R\x06height\x88\x01\x01\x12\"\n" +
 	"\n" +
-	"element_id\x18\a \x01(\tR\telementId\x12\x1d\n" +
-	"\aenabled\x18\b \x01(\bH\x05R\aenabled\x88\x01\x01\x12\x1d\n" +
-	"\afocused\x18\t \x01(\bH\x06R\afocused\x88\x01\x01\x12\x12\n" +
+	"element_id\x18\a \x01(\tB\x03\xe0A\x03R\telementId\x12\"\n" +
+	"\aenabled\x18\b \x01(\bB\x03\xe0A\x03H\x05R\aenabled\x88\x01\x01\x12\"\n" +
+	"\afocused\x18\t \x01(\bB\x03\xe0A\x03H\x06R\afocused\x88\x01\x01\x12\x17\n" +
 	"\x04path\x18\n" +
-	" \x03(\x05R\x04path\x12I\n" +
+	" \x03(\x05B\x03\xe0A\x03R\x04path\x12N\n" +
 	"\n" +
-	"attributes\x18\v \x03(\v2).macosusesdk.type.Element.AttributesEntryR\n" +
-	"attributes\x12\x18\n" +
-	"\aactions\x18\f \x03(\tR\aactions\x1a=\n" +
+	"attributes\x18\v \x03(\v2).macosusesdk.type.Element.AttributesEntryB\x03\xe0A\x03R\n" +
+	"attributes\x12\x1d\n" +
+	"\aactions\x18\f \x03(\tB\x03\xe0A\x03R\aactions\x1a=\n" +
 	"\x0fAttributesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\a\n" +
@@ -313,16 +314,16 @@ const file_macosusesdk_type_element_proto_rawDesc = "" +
 	"\n" +
 	"\b_enabledB\n" +
 	"\n" +
-	"\b_focused\"\xe2\x03\n" +
-	"\x0eTraversalStats\x12\x14\n" +
-	"\x05count\x18\x01 \x01(\x05R\x05count\x12%\n" +
-	"\x0eexcluded_count\x18\x02 \x01(\x05R\rexcludedCount\x12:\n" +
-	"\x19excluded_non_interactable\x18\x03 \x01(\x05R\x17excludedNonInteractable\x12(\n" +
-	"\x10excluded_no_text\x18\x04 \x01(\x05R\x0eexcludedNoText\x12.\n" +
-	"\x13text_elements_count\x18\x05 \x01(\x05R\x11textElementsCount\x125\n" +
-	"\x17non_text_elements_count\x18\x06 \x01(\x05R\x14nonTextElementsCount\x124\n" +
-	"\x16visible_elements_count\x18\a \x01(\x05R\x14visibleElementsCount\x12Q\n" +
-	"\vrole_counts\x18\b \x03(\v20.macosusesdk.type.TraversalStats.RoleCountsEntryR\n" +
+	"\b_focused\"\x8a\x04\n" +
+	"\x0eTraversalStats\x12\x19\n" +
+	"\x05count\x18\x01 \x01(\x05B\x03\xe0A\x03R\x05count\x12*\n" +
+	"\x0eexcluded_count\x18\x02 \x01(\x05B\x03\xe0A\x03R\rexcludedCount\x12?\n" +
+	"\x19excluded_non_interactable\x18\x03 \x01(\x05B\x03\xe0A\x03R\x17excludedNonInteractable\x12-\n" +
+	"\x10excluded_no_text\x18\x04 \x01(\x05B\x03\xe0A\x03R\x0eexcludedNoText\x123\n" +
+	"\x13text_elements_count\x18\x05 \x01(\x05B\x03\xe0A\x03R\x11textElementsCount\x12:\n" +
+	"\x17non_text_elements_count\x18\x06 \x01(\x05B\x03\xe0A\x03R\x14nonTextElementsCount\x129\n" +
+	"\x16visible_elements_count\x18\a \x01(\x05B\x03\xe0A\x03R\x14visibleElementsCount\x12V\n" +
+	"\vrole_counts\x18\b \x03(\v20.macosusesdk.type.TraversalStats.RoleCountsEntryB\x03\xe0A\x03R\n" +
 	"roleCounts\x1a=\n" +
 	"\x0fRoleCountsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +

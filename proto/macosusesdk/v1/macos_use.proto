@@ -15,6 +15,7 @@ import "google/protobuf/duration.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
+import "google/rpc/error_details.proto";
 import "macosusesdk/type/element.proto";
 import "macosusesdk/type/geometry.proto";
 import "macosusesdk/type/selector.proto";
@@ -614,18 +615,23 @@ message OpenApplicationRequest {
   // The identifier (name, bundle ID, or path) of the application to open.
   // Examples: "Calculator", "com.apple.calculator", "/Applications/Calculator.app"
   string id = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // If true, the application is opened without being activated (brought to foreground).
+  // The user's current focus is preserved. Defaults to false (activates app).
+  // Uses NSWorkspace.OpenConfiguration.activates = false internally.
+  bool background = 2 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from opening an application.
 message OpenApplicationResponse {
   // The application resource that was opened.
-  Application application = 1;
+  Application application = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Metadata for OpenApplication long-running operation.
 message OpenApplicationMetadata {
   // The identifier being opened.
-  string id = 1;
+  string id = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to get an application.
@@ -635,6 +641,11 @@ message GetApplicationRequest {
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {type: "macosusesdk.com/Application"}
   ];
+
+  // Optional. Field mask specifying which fields to return.
+  // If not specified or empty, all fields are returned.
+  // Supported fields: name, pid, display_name, bundle_id.
+  google.protobuf.FieldMask read_mask = 2 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Request to list applications.
@@ -646,17 +657,27 @@ message ListApplicationsRequest {
   // This token is opaque and its structure must not be relied upon by clients.
   // Only its presence or absence should be used to determine pagination state.
   string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. Ordering specification for results.
+  // Supported values: "name" (default), "pid", "display_name"
+  // Append " desc" for descending order (e.g., "name desc").
+  string order_by = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. Filter expression for results.
+  // Supported filters: name="..." (filters by display_name)
+  // Multiple conditions can be combined with spaces (AND semantics).
+  string filter = 4 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from listing applications.
 message ListApplicationsResponse {
   // The applications.
-  repeated Application applications = 1;
+  repeated Application applications = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Token to retrieve the next page of results.
   // This token is opaque and its structure must not be relied upon by clients.
   // An empty value indicates no more results are available.
-  string next_page_token = 2;
+  string next_page_token = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to delete an application.
@@ -718,12 +739,12 @@ message ListInputsRequest {
 // Response from listing inputs.
 message ListInputsResponse {
   // The inputs.
-  repeated Input inputs = 1;
+  repeated Input inputs = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Token to retrieve the next page of results.
   // This token is opaque and its structure must not be relied upon by clients.
   // An empty value indicates no more results are available.
-  string next_page_token = 2;
+  string next_page_token = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to traverse accessibility tree.
@@ -736,21 +757,26 @@ message TraverseAccessibilityRequest {
 
   // Whether to return only visible elements.
   bool visible_only = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to activate (bring to foreground) the target application before
+  // traversal. When false (the default), traversal is performed passively
+  // without disturbing window ordering.
+  bool activate = 3 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from traversing accessibility tree.
 message TraverseAccessibilityResponse {
   // Name of the application.
-  string app = 1;
+  string app = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Elements found in the traversal.
-  repeated macosusesdk.type.Element elements = 2;
+  repeated macosusesdk.type.Element elements = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Statistics about the traversal.
-  macosusesdk.type.TraversalStats stats = 3;
+  macosusesdk.type.TraversalStats stats = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Processing time.
-  google.protobuf.Timestamp processing_time = 4;
+  google.protobuf.Timestamp processing_time = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to watch accessibility changes.
@@ -771,25 +797,25 @@ message WatchAccessibilityRequest {
 // Response streamed from watching accessibility.
 message WatchAccessibilityResponse {
   // Elements added since last update.
-  repeated macosusesdk.type.Element added = 1;
+  repeated macosusesdk.type.Element added = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Elements removed since last update.
-  repeated macosusesdk.type.Element removed = 2;
+  repeated macosusesdk.type.Element removed = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Elements modified since last update.
-  repeated ModifiedElement modified = 3;
+  repeated ModifiedElement modified = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // An element that was modified.
 message ModifiedElement {
   // The element before modification.
-  macosusesdk.type.Element old_element = 1;
+  macosusesdk.type.Element old_element = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // The element after modification.
-  macosusesdk.type.Element new_element = 2;
+  macosusesdk.type.Element new_element = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // List of changed attributes (uses AttributeChange from observation.proto).
-  repeated AttributeChange changes = 3;
+  repeated AttributeChange changes = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to find elements matching a selector.
@@ -820,12 +846,12 @@ message FindElementsRequest {
 // Response from finding elements.
 message FindElementsResponse {
   // Elements matching the selector.
-  repeated macosusesdk.type.Element elements = 1;
+  repeated macosusesdk.type.Element elements = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Token to retrieve the next page of results.
   // This token is opaque and its structure must not be relied upon by clients.
   // An empty value indicates no more results are available.
-  string next_page_token = 2;
+  string next_page_token = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to find elements within a screen region.
@@ -856,12 +882,12 @@ message FindRegionElementsRequest {
 // Response from finding elements in a region.
 message FindRegionElementsResponse {
   // Elements within the region.
-  repeated macosusesdk.type.Element elements = 1;
+  repeated macosusesdk.type.Element elements = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Token to retrieve the next page of results.
   // This token is opaque and its structure must not be relied upon by clients.
   // An empty value indicates no more results are available.
-  string next_page_token = 2;
+  string next_page_token = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to get a specific element by its resource name.
@@ -913,10 +939,10 @@ message ClickElementRequest {
 // Response from clicking an element.
 message ClickElementResponse {
   // Whether the click was successful.
-  bool success = 1;
+  bool success = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // The element that was clicked.
-  macosusesdk.type.Element element = 2;
+  macosusesdk.type.Element element = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to write an element's value.
@@ -943,10 +969,10 @@ message WriteElementValueRequest {
 // Response from writing an element's value.
 message WriteElementValueResponse {
   // Whether the operation was successful.
-  bool success = 1;
+  bool success = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // The element that was modified.
-  macosusesdk.type.Element element = 2;
+  macosusesdk.type.Element element = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to get available actions for an element.
@@ -962,7 +988,7 @@ message GetElementActionsRequest {
 // Available actions for an element.
 message ElementActions {
   // Available action names.
-  repeated string actions = 1;
+  repeated string actions = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to perform an accessibility action on an element.
@@ -989,10 +1015,10 @@ message PerformElementActionRequest {
 // Response from performing an element action.
 message PerformElementActionResponse {
   // Whether the action was successful.
-  bool success = 1;
+  bool success = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // The element.
-  macosusesdk.type.Element element = 2;
+  macosusesdk.type.Element element = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to wait for an element to appear (long-running operation).
@@ -1016,16 +1042,16 @@ message WaitElementRequest {
 // Response from waiting for an element.
 message WaitElementResponse {
   // The element that appeared.
-  macosusesdk.type.Element element = 1;
+  macosusesdk.type.Element element = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Metadata for WaitElement long-running operation.
 message WaitElementMetadata {
   // The selector being waited for.
-  macosusesdk.type.ElementSelector selector = 1;
+  macosusesdk.type.ElementSelector selector = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Number of poll attempts so far.
-  int32 attempts = 2;
+  int32 attempts = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to wait for an element to reach a specific state.
@@ -1079,16 +1105,16 @@ message StateCondition {
 // Response from waiting for element state.
 message WaitElementStateResponse {
   // The element in the expected state.
-  macosusesdk.type.Element element = 1;
+  macosusesdk.type.Element element = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Metadata for WaitElementState operation.
 message WaitElementStateMetadata {
   // The condition being waited for.
-  StateCondition condition = 1;
+  StateCondition condition = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Number of poll attempts so far.
-  int32 attempts = 2;
+  int32 attempts = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to get a window.
@@ -1098,6 +1124,11 @@ message GetWindowRequest {
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {type: "macosusesdk.com/Window"}
   ];
+
+  // Optional. Field mask specifying which fields to return.
+  // If not specified or empty, all fields are returned.
+  // Supported fields: name, title, bounds, visible, z_index, minimized, bundle_id, state.
+  google.protobuf.FieldMask read_mask = 2 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Request to list windows.
@@ -1115,6 +1146,16 @@ message ListWindowsRequest {
   // This token is opaque and its structure must not be relied upon by clients.
   // Only its presence or absence should be used to determine pagination state.
   string page_token = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. Ordering specification for results.
+  // Supported values: "window_id" (default), "title", "z_order"
+  // Append " desc" for descending order (e.g., "title desc").
+  string order_by = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Optional. Filter expression for results.
+  // Supported filters: title="...", visible=true/false, minimized=true/false
+  // Multiple conditions can be combined with spaces (AND semantics).
+  string filter = 5 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Request to get the state of a window.
@@ -1130,12 +1171,12 @@ message GetWindowStateRequest {
 // Response from listing windows.
 message ListWindowsResponse {
   // The windows.
-  repeated Window windows = 1;
+  repeated Window windows = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Token to retrieve the next page of results.
   // This token is opaque and its structure must not be relied upon by clients.
   // An empty value indicates no more results are available.
-  string next_page_token = 2;
+  string next_page_token = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to focus a window.
@@ -1210,7 +1251,7 @@ message CloseWindowRequest {
 // Response from closing a window.
 message CloseWindowResponse {
   // Whether the operation succeeded.
-  bool success = 1;
+  bool success = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to create an observation.
@@ -1231,10 +1272,13 @@ message CreateObservationRequest {
 // Metadata for CreateObservation operation.
 message CreateObservationMetadata {
   // The observation being created.
-  string observation = 1 [(google.api.resource_reference) = {type: "macosusesdk.com/Observation"}];
+  string observation = 1 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.resource_reference) = {type: "macosusesdk.com/Observation"}
+  ];
 
   // Observation type.
-  ObservationType type = 2;
+  ObservationType type = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to get an observation.
@@ -1266,12 +1310,12 @@ message ListObservationsRequest {
 // Response from listing observations.
 message ListObservationsResponse {
   // The observations.
-  repeated Observation observations = 1;
+  repeated Observation observations = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Token to retrieve the next page of results.
   // This token is opaque and its structure must not be relied upon by clients.
   // An empty value indicates no more results are available.
-  string next_page_token = 2;
+  string next_page_token = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to cancel an observation.
@@ -1295,7 +1339,7 @@ message StreamObservationsRequest {
 // Response from streaming observations.
 message StreamObservationsResponse {
   // The observation event.
-  ObservationEvent event = 1;
+  ObservationEvent event = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to create a session.
@@ -1330,12 +1374,12 @@ message ListSessionsRequest {
 // Response from listing sessions.
 message ListSessionsResponse {
   // The sessions.
-  repeated Session sessions = 1;
+  repeated Session sessions = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Token to retrieve the next page of results.
   // This token is opaque and its structure must not be relied upon by clients.
   // Only its presence or absence should be used to determine pagination state.
-  string next_page_token = 2;
+  string next_page_token = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to delete a session.
@@ -1382,12 +1426,12 @@ message ListMacrosRequest {
 // Response from listing macros.
 message ListMacrosResponse {
   // The macros.
-  repeated Macro macros = 1;
+  repeated Macro macros = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Token to retrieve the next page of results.
   // This token is opaque and its structure must not be relied upon by clients.
   // Only its presence or absence should be used to determine pagination state.
-  string next_page_token = 2;
+  string next_page_token = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to update a macro.
@@ -1450,34 +1494,37 @@ message ExecutionOptions {
 // Response from executing a macro.
 message ExecuteMacroResponse {
   // Whether execution succeeded.
-  bool success = 1;
+  bool success = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Number of actions executed.
-  int32 actions_executed = 2;
+  int32 actions_executed = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Execution duration.
-  google.protobuf.Duration execution_duration = 3;
+  google.protobuf.Duration execution_duration = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Error message if failed.
-  string error = 4;
+  string error = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Execution log (if recording was enabled).
-  repeated ExecutionLogEntry log = 5;
+  repeated ExecutionLogEntry log = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Metadata for ExecuteMacro operation.
 message ExecuteMacroMetadata {
   // Macro being executed.
-  string macro = 1 [(google.api.resource_reference) = {type: "macosusesdk.com/Macro"}];
+  string macro = 1 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.resource_reference) = {type: "macosusesdk.com/Macro"}
+  ];
 
   // Current action index.
-  int32 current_action = 2;
+  int32 current_action = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Total actions in macro.
-  int32 total_actions = 3;
+  int32 total_actions = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Elapsed duration.
-  google.protobuf.Duration elapsed_duration = 4;
+  google.protobuf.Duration elapsed_duration = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to begin a transaction within a session.
@@ -1510,10 +1557,10 @@ message BeginTransactionRequest {
 // Response from beginning a transaction.
 message BeginTransactionResponse {
   // Transaction ID for subsequent operations.
-  string transaction_id = 1;
+  string transaction_id = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Session with updated state.
-  Session session = 2;
+  Session session = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to commit a transaction.
@@ -1573,19 +1620,19 @@ message CaptureScreenshotRequest {
 // Response from capturing a screenshot.
 message CaptureScreenshotResponse {
   // Image data (encoded according to format).
-  bytes image_data = 1;
+  bytes image_data = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Image format used.
-  ImageFormat format = 2;
+  ImageFormat format = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Image width in pixels.
-  int32 width = 3;
+  int32 width = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Image height in pixels.
-  int32 height = 4;
+  int32 height = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // OCR-extracted text (if requested).
-  string ocr_text = 5;
+  string ocr_text = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to capture a screenshot of a specific window.
@@ -1612,22 +1659,25 @@ message CaptureWindowScreenshotRequest {
 // Response from capturing a window screenshot.
 message CaptureWindowScreenshotResponse {
   // Image data (encoded according to format).
-  bytes image_data = 1;
+  bytes image_data = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Image format used.
-  ImageFormat format = 2;
+  ImageFormat format = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Image width in pixels.
-  int32 width = 3;
+  int32 width = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Image height in pixels.
-  int32 height = 4;
+  int32 height = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Window that was captured.
-  string window = 5 [(google.api.resource_reference) = {type: "macosusesdk.com/Window"}];
+  string window = 5 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.resource_reference) = {type: "macosusesdk.com/Window"}
+  ];
 
   // OCR-extracted text (if requested).
-  string ocr_text = 6;
+  string ocr_text = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to capture a screenshot of a specific element.
@@ -1657,22 +1707,22 @@ message CaptureElementScreenshotRequest {
 // Response from capturing an element screenshot.
 message CaptureElementScreenshotResponse {
   // Image data (encoded according to format).
-  bytes image_data = 1;
+  bytes image_data = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Image format used.
-  ImageFormat format = 2;
+  ImageFormat format = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Image width in pixels.
-  int32 width = 3;
+  int32 width = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Image height in pixels.
-  int32 height = 4;
+  int32 height = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Element ID that was captured.
-  string element_id = 5;
+  string element_id = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // OCR-extracted text (if requested).
-  string ocr_text = 6;
+  string ocr_text = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to capture a screenshot of a screen region.
@@ -1698,22 +1748,22 @@ message CaptureRegionScreenshotRequest {
 // Response from capturing a region screenshot.
 message CaptureRegionScreenshotResponse {
   // Image data (encoded according to format).
-  bytes image_data = 1;
+  bytes image_data = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Image format used.
-  ImageFormat format = 2;
+  ImageFormat format = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Image width in pixels.
-  int32 width = 3;
+  int32 width = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Image height in pixels.
-  int32 height = 4;
+  int32 height = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Region that was captured.
-  macosusesdk.type.Region region = 5;
+  macosusesdk.type.Region region = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // OCR-extracted text (if requested).
-  string ocr_text = 6;
+  string ocr_text = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to get clipboard contents.
@@ -1738,10 +1788,10 @@ message WriteClipboardRequest {
 // Response from writing clipboard contents.
 message WriteClipboardResponse {
   // Whether the operation succeeded.
-  bool success = 1;
+  bool success = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Content type that was written.
-  ContentType type = 2;
+  ContentType type = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to clear clipboard contents.
@@ -1750,7 +1800,7 @@ message ClearClipboardRequest {}
 // Response from clearing clipboard.
 message ClearClipboardResponse {
   // Whether the operation succeeded.
-  bool success = 1;
+  bool success = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to get clipboard history (if available).
@@ -1790,13 +1840,13 @@ message AutomateOpenFileDialogRequest {
 // Response from automating an open file dialog.
 message AutomateOpenFileDialogResponse {
   // Whether the operation succeeded.
-  bool success = 1;
+  bool success = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Selected file path(s).
-  repeated string selected_paths = 2;
+  repeated string selected_paths = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Error message if failed.
-  string error = 3;
+  string error = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to automate a save file dialog.
@@ -1826,13 +1876,13 @@ message AutomateSaveFileDialogRequest {
 // Response from automating a save file dialog.
 message AutomateSaveFileDialogResponse {
   // Whether the operation succeeded.
-  bool success = 1;
+  bool success = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Final save path.
-  string saved_path = 2;
+  string saved_path = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Error message if failed.
-  string error = 3;
+  string error = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to select a file programmatically.
@@ -1853,13 +1903,13 @@ message SelectFileRequest {
 // Response from selecting a file.
 message SelectFileResponse {
   // Whether the operation succeeded.
-  bool success = 1;
+  bool success = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Selected file path.
-  string selected_path = 2;
+  string selected_path = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Error message if failed.
-  string error = 3;
+  string error = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to select a directory.
@@ -1880,16 +1930,16 @@ message SelectDirectoryRequest {
 // Response from selecting a directory.
 message SelectDirectoryResponse {
   // Whether the operation succeeded.
-  bool success = 1;
+  bool success = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Selected directory path.
-  string selected_path = 2;
+  string selected_path = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Whether the directory was created.
-  bool created = 3;
+  bool created = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Error message if failed.
-  string error = 4;
+  string error = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to drag and drop files.
@@ -1913,13 +1963,13 @@ message DragFilesRequest {
 // Response from dragging files.
 message DragFilesResponse {
   // Whether the operation succeeded.
-  bool success = 1;
+  bool success = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Number of files dropped.
-  int32 files_dropped = 2;
+  int32 files_dropped = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Error message if failed.
-  string error = 3;
+  string error = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to execute an AppleScript.
@@ -1937,13 +1987,13 @@ message ExecuteAppleScriptRequest {
 // Response from executing an AppleScript.
 message ExecuteAppleScriptResponse {
   // Whether execution succeeded.
-  bool success = 1;
+  bool success = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Script output (return value).
-  string output = 2;
+  string output = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Error message if failed.
-  string error = 3;
+  string error = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Execution duration.
   google.protobuf.Duration execution_duration = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
@@ -1964,13 +2014,13 @@ message ExecuteJavaScriptRequest {
 // Response from executing JXA.
 message ExecuteJavaScriptResponse {
   // Whether execution succeeded.
-  bool success = 1;
+  bool success = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Script output (return value, JSON-encoded).
-  string output = 2;
+  string output = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Error message if failed.
-  string error = 3;
+  string error = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Execution duration.
   google.protobuf.Duration execution_duration = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
@@ -2003,16 +2053,16 @@ message ExecuteShellCommandRequest {
 // Response from executing a shell command.
 message ExecuteShellCommandResponse {
   // Whether execution succeeded.
-  bool success = 1;
+  bool success = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Standard output from command.
-  string stdout = 2;
+  string stdout = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Standard error from command.
-  string stderr = 3;
+  string stderr = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Exit code from command.
-  int32 exit_code = 4;
+  int32 exit_code = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Execution duration.
   google.protobuf.Duration execution_duration = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
@@ -2033,13 +2083,13 @@ message ValidateScriptRequest {
 // Response from validating a script.
 message ValidateScriptResponse {
   // Whether the script is valid.
-  bool valid = 1;
+  bool valid = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Validation error messages (if any).
-  repeated string errors = 2;
+  repeated string errors = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Validation warnings (if any).
-  repeated string warnings = 3;
+  repeated string warnings = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to get available scripting dictionaries.

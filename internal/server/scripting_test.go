@@ -8,6 +8,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"strings"
 	"testing"
 
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
@@ -937,7 +939,7 @@ func TestHandleGetScriptingDictionaries_Success(t *testing.T) {
 	}
 
 	// Verify response contains expected data
-	var response map[string]interface{}
+	var response map[string]any
 	if err := json.Unmarshal([]byte(result.Content[0].Text), &response); err != nil {
 		t.Fatalf("failed to parse response JSON: %v", err)
 	}
@@ -946,7 +948,7 @@ func TestHandleGetScriptingDictionaries_Success(t *testing.T) {
 		t.Errorf("expected total 2, got %v", response["total"])
 	}
 
-	dicts := response["dictionaries"].([]interface{})
+	dicts := response["dictionaries"].([]any)
 	if len(dicts) != 2 {
 		t.Errorf("expected 2 dictionaries, got %d", len(dicts))
 	}
@@ -975,7 +977,7 @@ func TestHandleGetScriptingDictionaries_Empty(t *testing.T) {
 		t.Errorf("expected success, got error: %v", result.Content)
 	}
 
-	var response map[string]interface{}
+	var response map[string]any
 	if err := json.Unmarshal([]byte(result.Content[0].Text), &response); err != nil {
 		t.Fatalf("failed to parse response JSON: %v", err)
 	}
@@ -1174,5 +1176,721 @@ func TestDurationpb_Usage(t *testing.T) {
 	d := durationpb.New(30 * 1e9) // 30 seconds in nanoseconds
 	if d.Seconds != 30 {
 		t.Errorf("durationpb.New(30s) = %v, want 30 seconds", d.Seconds)
+	}
+}
+
+// ============================================================================
+// Security-Focused Tests (Task 49)
+// ============================================================================
+
+// TestShellCommand_SecurityToggle verifies shell commands are correctly
+// blocked or allowed based on the ShellCommandsEnabled config flag.
+func TestShellCommand_SecurityToggle(t *testing.T) {
+	tests := []struct {
+		name                 string
+		shellCommandsEnabled bool
+		wantError            bool
+		wantErrorMsg         string
+	}{
+		{
+			name:                 "shell_commands_disabled_blocks_execution",
+			shellCommandsEnabled: false,
+			wantError:            true,
+			wantErrorMsg:         "Shell command execution is disabled. Set MCP_SHELL_COMMANDS_ENABLED=true to enable.",
+		},
+		{
+			name:                 "shell_commands_enabled_allows_execution",
+			shellCommandsEnabled: true,
+			wantError:            false,
+			wantErrorMsg:         "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := &mockScriptingClient{
+				executeShellCommandFn: func(ctx context.Context, req *pb.ExecuteShellCommandRequest) (*pb.ExecuteShellCommandResponse, error) {
+					return &pb.ExecuteShellCommandResponse{
+						Stdout:   "success\n",
+						ExitCode: 0,
+					}, nil
+				},
+			}
+
+			s := createTestScriptingServer(mock)
+			s.cfg.ShellCommandsEnabled = tt.shellCommandsEnabled
+
+			call := &ToolCall{
+				Name:      "execute_shell_command",
+				Arguments: json.RawMessage(`{"command": "echo", "args": ["test"]}`),
+			}
+
+			result, err := s.handleExecuteShellCommand(call)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if result.IsError != tt.wantError {
+				t.Errorf("IsError = %v, want %v", result.IsError, tt.wantError)
+			}
+
+			if tt.wantError && result.Content[0].Text != tt.wantErrorMsg {
+				t.Errorf("error message = %q, want %q", result.Content[0].Text, tt.wantErrorMsg)
+			}
+		})
+	}
+}
+
+// TestShellCommand_ExitCodePropagation verifies that exit codes are correctly
+// propagated in the response for various exit code values.
+func TestShellCommand_ExitCodePropagation(t *testing.T) {
+	tests := []struct {
+		name         string
+		exitCode     int32
+		stdout       string
+		stderr       string
+		wantIsError  bool
+		wantContains string
+	}{
+		{
+			name:         "exit_code_0_success",
+			exitCode:     0,
+			stdout:       "output",
+			stderr:       "",
+			wantIsError:  false,
+			wantContains: "output",
+		},
+		{
+			name:         "exit_code_1_failure",
+			exitCode:     1,
+			stdout:       "",
+			stderr:       "error occurred",
+			wantIsError:  true,
+			wantContains: "Command exited with code 1",
+		},
+		{
+			name:         "exit_code_2_misuse",
+			exitCode:     2,
+			stdout:       "",
+			stderr:       "misuse of shell command",
+			wantIsError:  true,
+			wantContains: "Command exited with code 2",
+		},
+		{
+			name:         "exit_code_126_not_executable",
+			exitCode:     126,
+			stdout:       "",
+			stderr:       "permission denied",
+			wantIsError:  true,
+			wantContains: "Command exited with code 126",
+		},
+		{
+			name:         "exit_code_127_not_found",
+			exitCode:     127,
+			stdout:       "",
+			stderr:       "command not found",
+			wantIsError:  true,
+			wantContains: "Command exited with code 127",
+		},
+		{
+			name:         "exit_code_128_invalid_exit_arg",
+			exitCode:     128,
+			stdout:       "",
+			stderr:       "",
+			wantIsError:  true,
+			wantContains: "Command exited with code 128",
+		},
+		{
+			name:         "exit_code_130_terminated_by_ctrl_c",
+			exitCode:     130,
+			stdout:       "",
+			stderr:       "interrupted",
+			wantIsError:  true,
+			wantContains: "Command exited with code 130",
+		},
+		{
+			name:         "exit_code_137_killed_sigkill",
+			exitCode:     137,
+			stdout:       "partial output",
+			stderr:       "killed",
+			wantIsError:  true,
+			wantContains: "Command exited with code 137",
+		},
+		{
+			name:         "exit_code_143_term_signal",
+			exitCode:     143,
+			stdout:       "",
+			stderr:       "terminated",
+			wantIsError:  true,
+			wantContains: "Command exited with code 143",
+		},
+		{
+			name:         "exit_code_255_out_of_range",
+			exitCode:     255,
+			stdout:       "",
+			stderr:       "invalid",
+			wantIsError:  true,
+			wantContains: "Command exited with code 255",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := &mockScriptingClient{
+				executeShellCommandFn: func(ctx context.Context, req *pb.ExecuteShellCommandRequest) (*pb.ExecuteShellCommandResponse, error) {
+					return &pb.ExecuteShellCommandResponse{
+						Stdout:   tt.stdout,
+						Stderr:   tt.stderr,
+						ExitCode: tt.exitCode,
+					}, nil
+				},
+			}
+
+			s := createTestScriptingServer(mock)
+			call := &ToolCall{
+				Name:      "execute_shell_command",
+				Arguments: json.RawMessage(`{"command": "test-cmd"}`),
+			}
+
+			result, err := s.handleExecuteShellCommand(call)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if result.IsError != tt.wantIsError {
+				t.Errorf("IsError = %v, want %v", result.IsError, tt.wantIsError)
+			}
+
+			if len(result.Content) == 0 {
+				t.Fatal("expected content in result")
+			}
+
+			if !strings.Contains(result.Content[0].Text, tt.wantContains) {
+				t.Errorf("result text = %q, want to contain %q", result.Content[0].Text, tt.wantContains)
+			}
+		})
+	}
+}
+
+// TestValidateScript_TypeMapping verifies that all script type strings are
+// correctly mapped to their proto enum values.
+func TestValidateScript_TypeMapping(t *testing.T) {
+	tests := []struct {
+		name             string
+		typeStr          string
+		wantProtoType    pb.ScriptType
+		wantError        bool
+		wantErrorContain string
+	}{
+		{
+			name:          "applescript_maps_correctly",
+			typeStr:       "applescript",
+			wantProtoType: pb.ScriptType_SCRIPT_TYPE_APPLESCRIPT,
+			wantError:     false,
+		},
+		{
+			name:          "javascript_maps_to_jxa",
+			typeStr:       "javascript",
+			wantProtoType: pb.ScriptType_SCRIPT_TYPE_JXA,
+			wantError:     false,
+		},
+		{
+			name:          "shell_maps_correctly",
+			typeStr:       "shell",
+			wantProtoType: pb.ScriptType_SCRIPT_TYPE_SHELL,
+			wantError:     false,
+		},
+		{
+			name:             "python_invalid_type",
+			typeStr:          "python",
+			wantError:        true,
+			wantErrorContain: "Unknown script type: python",
+		},
+		{
+			name:             "bash_invalid_type",
+			typeStr:          "bash",
+			wantError:        true,
+			wantErrorContain: "Unknown script type: bash",
+		},
+		{
+			name:             "js_invalid_abbreviated",
+			typeStr:          "js",
+			wantError:        true,
+			wantErrorContain: "Unknown script type: js",
+		},
+		{
+			name:             "osascript_invalid",
+			typeStr:          "osascript",
+			wantError:        true,
+			wantErrorContain: "Unknown script type: osascript",
+		},
+		{
+			name:             "empty_type_requires_type_param",
+			typeStr:          "",
+			wantError:        true,
+			wantErrorContain: "type and script parameters are required",
+		},
+		{
+			name:             "AppleScript_case_sensitive",
+			typeStr:          "AppleScript",
+			wantError:        true,
+			wantErrorContain: "Unknown script type: AppleScript",
+		},
+		{
+			name:             "SHELL_case_sensitive",
+			typeStr:          "SHELL",
+			wantError:        true,
+			wantErrorContain: "Unknown script type: SHELL",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedType pb.ScriptType
+			mock := &mockScriptingClient{
+				validateScriptFn: func(ctx context.Context, req *pb.ValidateScriptRequest) (*pb.ValidateScriptResponse, error) {
+					capturedType = req.Type
+					return &pb.ValidateScriptResponse{Valid: true}, nil
+				},
+			}
+
+			s := createTestScriptingServer(mock)
+			call := &ToolCall{
+				Name:      "validate_script",
+				Arguments: json.RawMessage(fmt.Sprintf(`{"type": "%s", "script": "test script"}`, tt.typeStr)),
+			}
+
+			result, err := s.handleValidateScript(call)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if result.IsError != tt.wantError {
+				t.Errorf("IsError = %v, want %v (content: %v)", result.IsError, tt.wantError, result.Content)
+			}
+
+			if tt.wantError {
+				if !strings.Contains(result.Content[0].Text, tt.wantErrorContain) {
+					t.Errorf("error text = %q, want to contain %q", result.Content[0].Text, tt.wantErrorContain)
+				}
+			} else {
+				if capturedType != tt.wantProtoType {
+					t.Errorf("captured type = %v, want %v", capturedType, tt.wantProtoType)
+				}
+			}
+		})
+	}
+}
+
+// TestScript_TimeoutForwarding verifies that timeout parameters are correctly
+// forwarded to the gRPC request for all script types.
+func TestScript_TimeoutForwarding(t *testing.T) {
+	tests := []struct {
+		name         string
+		handler      string
+		inputTimeout int32
+		wantTimeout  int32
+		setupMock    func(*mockScriptingClient, *int32)
+		callFunc     func(*MCPServer, *ToolCall) (*ToolResult, error)
+	}{
+		{
+			name:         "applescript_custom_timeout",
+			handler:      "applescript",
+			inputTimeout: 120,
+			wantTimeout:  120,
+			setupMock: func(m *mockScriptingClient, captured *int32) {
+				m.executeAppleScriptFn = func(ctx context.Context, req *pb.ExecuteAppleScriptRequest) (*pb.ExecuteAppleScriptResponse, error) {
+					if req.Timeout != nil {
+						*captured = int32(req.Timeout.Seconds)
+					}
+					return &pb.ExecuteAppleScriptResponse{Success: true, Output: "OK"}, nil
+				}
+			},
+			callFunc: func(s *MCPServer, call *ToolCall) (*ToolResult, error) {
+				return s.handleExecuteAppleScript(call)
+			},
+		},
+		{
+			name:         "applescript_default_timeout",
+			handler:      "applescript",
+			inputTimeout: 0,
+			wantTimeout:  30, // default
+			setupMock: func(m *mockScriptingClient, captured *int32) {
+				m.executeAppleScriptFn = func(ctx context.Context, req *pb.ExecuteAppleScriptRequest) (*pb.ExecuteAppleScriptResponse, error) {
+					if req.Timeout != nil {
+						*captured = int32(req.Timeout.Seconds)
+					}
+					return &pb.ExecuteAppleScriptResponse{Success: true, Output: "OK"}, nil
+				}
+			},
+			callFunc: func(s *MCPServer, call *ToolCall) (*ToolResult, error) {
+				return s.handleExecuteAppleScript(call)
+			},
+		},
+		{
+			name:         "applescript_negative_timeout_uses_default",
+			handler:      "applescript",
+			inputTimeout: -5,
+			wantTimeout:  30, // default
+			setupMock: func(m *mockScriptingClient, captured *int32) {
+				m.executeAppleScriptFn = func(ctx context.Context, req *pb.ExecuteAppleScriptRequest) (*pb.ExecuteAppleScriptResponse, error) {
+					if req.Timeout != nil {
+						*captured = int32(req.Timeout.Seconds)
+					}
+					return &pb.ExecuteAppleScriptResponse{Success: true, Output: "OK"}, nil
+				}
+			},
+			callFunc: func(s *MCPServer, call *ToolCall) (*ToolResult, error) {
+				return s.handleExecuteAppleScript(call)
+			},
+		},
+		{
+			name:         "javascript_custom_timeout",
+			handler:      "javascript",
+			inputTimeout: 90,
+			wantTimeout:  90,
+			setupMock: func(m *mockScriptingClient, captured *int32) {
+				m.executeJavaScriptFn = func(ctx context.Context, req *pb.ExecuteJavaScriptRequest) (*pb.ExecuteJavaScriptResponse, error) {
+					if req.Timeout != nil {
+						*captured = int32(req.Timeout.Seconds)
+					}
+					return &pb.ExecuteJavaScriptResponse{Success: true, Output: "OK"}, nil
+				}
+			},
+			callFunc: func(s *MCPServer, call *ToolCall) (*ToolResult, error) {
+				return s.handleExecuteJavaScript(call)
+			},
+		},
+		{
+			name:         "javascript_default_timeout",
+			handler:      "javascript",
+			inputTimeout: 0,
+			wantTimeout:  30, // default
+			setupMock: func(m *mockScriptingClient, captured *int32) {
+				m.executeJavaScriptFn = func(ctx context.Context, req *pb.ExecuteJavaScriptRequest) (*pb.ExecuteJavaScriptResponse, error) {
+					if req.Timeout != nil {
+						*captured = int32(req.Timeout.Seconds)
+					}
+					return &pb.ExecuteJavaScriptResponse{Success: true, Output: "OK"}, nil
+				}
+			},
+			callFunc: func(s *MCPServer, call *ToolCall) (*ToolResult, error) {
+				return s.handleExecuteJavaScript(call)
+			},
+		},
+		{
+			name:         "shell_custom_timeout",
+			handler:      "shell",
+			inputTimeout: 180,
+			wantTimeout:  180,
+			setupMock: func(m *mockScriptingClient, captured *int32) {
+				m.executeShellCommandFn = func(ctx context.Context, req *pb.ExecuteShellCommandRequest) (*pb.ExecuteShellCommandResponse, error) {
+					if req.Timeout != nil {
+						*captured = int32(req.Timeout.Seconds)
+					}
+					return &pb.ExecuteShellCommandResponse{Stdout: "OK", ExitCode: 0}, nil
+				}
+			},
+			callFunc: func(s *MCPServer, call *ToolCall) (*ToolResult, error) {
+				return s.handleExecuteShellCommand(call)
+			},
+		},
+		{
+			name:         "shell_default_timeout",
+			handler:      "shell",
+			inputTimeout: 0,
+			wantTimeout:  30, // default
+			setupMock: func(m *mockScriptingClient, captured *int32) {
+				m.executeShellCommandFn = func(ctx context.Context, req *pb.ExecuteShellCommandRequest) (*pb.ExecuteShellCommandResponse, error) {
+					if req.Timeout != nil {
+						*captured = int32(req.Timeout.Seconds)
+					}
+					return &pb.ExecuteShellCommandResponse{Stdout: "OK", ExitCode: 0}, nil
+				}
+			},
+			callFunc: func(s *MCPServer, call *ToolCall) (*ToolResult, error) {
+				return s.handleExecuteShellCommand(call)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedTimeout int32
+			mock := &mockScriptingClient{}
+			tt.setupMock(mock, &capturedTimeout)
+
+			s := createTestScriptingServer(mock)
+
+			var argsJSON string
+			switch tt.handler {
+			case "applescript":
+				argsJSON = fmt.Sprintf(`{"script": "return 1", "timeout": %d}`, tt.inputTimeout)
+			case "javascript":
+				argsJSON = fmt.Sprintf(`{"script": "1 + 1", "timeout": %d}`, tt.inputTimeout)
+			case "shell":
+				argsJSON = fmt.Sprintf(`{"command": "echo", "timeout": %d}`, tt.inputTimeout)
+			}
+
+			call := &ToolCall{
+				Name:      tt.handler,
+				Arguments: json.RawMessage(argsJSON),
+			}
+
+			result, err := tt.callFunc(s, call)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if result.IsError {
+				t.Errorf("unexpected error result: %v", result.Content)
+			}
+
+			if capturedTimeout != tt.wantTimeout {
+				t.Errorf("captured timeout = %d, want %d", capturedTimeout, tt.wantTimeout)
+			}
+		})
+	}
+}
+
+// TestShellCommand_SecurityDisabledDoesNotCallGRPC verifies that when shell
+// commands are disabled, no gRPC call is made to the backend.
+func TestShellCommand_SecurityDisabledDoesNotCallGRPC(t *testing.T) {
+	grpcCalled := false
+	mock := &mockScriptingClient{
+		executeShellCommandFn: func(ctx context.Context, req *pb.ExecuteShellCommandRequest) (*pb.ExecuteShellCommandResponse, error) {
+			grpcCalled = true
+			return &pb.ExecuteShellCommandResponse{Stdout: "success", ExitCode: 0}, nil
+		},
+	}
+
+	s := createTestScriptingServer(mock)
+	s.cfg.ShellCommandsEnabled = false
+
+	call := &ToolCall{
+		Name:      "execute_shell_command",
+		Arguments: json.RawMessage(`{"command": "echo", "args": ["test"]}`),
+	}
+
+	result, err := s.handleExecuteShellCommand(call)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !result.IsError {
+		t.Error("expected error when shell commands disabled")
+	}
+
+	if grpcCalled {
+		t.Error("gRPC should not be called when shell commands are disabled")
+	}
+}
+
+// TestValidateScript_AllTypesValidScripts verifies script validation works
+// for all valid script types end-to-end.
+func TestValidateScript_AllTypesValidScripts(t *testing.T) {
+	tests := []struct {
+		name       string
+		typeStr    string
+		script     string
+		wantResult string
+	}{
+		{
+			name:       "applescript_valid",
+			typeStr:    "applescript",
+			script:     `tell application "Finder" to get name`,
+			wantResult: "Script validation successful (applescript)",
+		},
+		{
+			name:       "javascript_valid",
+			typeStr:    "javascript",
+			script:     `Application("System Events").name()`,
+			wantResult: "Script validation successful (javascript)",
+		},
+		{
+			name:       "shell_valid",
+			typeStr:    "shell",
+			script:     "#!/bin/bash\necho hello",
+			wantResult: "Script validation successful (shell)",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := &mockScriptingClient{
+				validateScriptFn: func(ctx context.Context, req *pb.ValidateScriptRequest) (*pb.ValidateScriptResponse, error) {
+					return &pb.ValidateScriptResponse{Valid: true}, nil
+				},
+			}
+
+			s := createTestScriptingServer(mock)
+
+			// Use proper JSON encoding for arguments to handle special characters
+			argsMap := map[string]string{"type": tt.typeStr, "script": tt.script}
+			argsJSON, _ := json.Marshal(argsMap)
+			call := &ToolCall{
+				Name:      "validate_script",
+				Arguments: json.RawMessage(argsJSON),
+			}
+
+			result, err := s.handleValidateScript(call)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if result.IsError {
+				t.Errorf("expected success, got error: %v", result.Content)
+			}
+
+			if result.Content[0].Text != tt.wantResult {
+				t.Errorf("result = %q, want %q", result.Content[0].Text, tt.wantResult)
+			}
+		})
+	}
+}
+
+// TestValidateScript_InvalidScriptContent verifies that invalid scripts
+// return proper error information from the validation response.
+func TestValidateScript_InvalidScriptContent(t *testing.T) {
+	tests := []struct {
+		name       string
+		typeStr    string
+		script     string
+		errors     []string
+		wantJoined string
+	}{
+		{
+			name:       "single_error",
+			typeStr:    "applescript",
+			script:     "tell application",
+			errors:     []string{"expected end of line"},
+			wantJoined: "expected end of line",
+		},
+		{
+			name:       "multiple_errors",
+			typeStr:    "javascript",
+			script:     "function( {",
+			errors:     []string{"unexpected token", "missing closing brace"},
+			wantJoined: "unexpected token; missing closing brace",
+		},
+		{
+			name:       "shell_syntax_error",
+			typeStr:    "shell",
+			script:     "if [ then",
+			errors:     []string{"syntax error near unexpected token"},
+			wantJoined: "syntax error near unexpected token",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := &mockScriptingClient{
+				validateScriptFn: func(ctx context.Context, req *pb.ValidateScriptRequest) (*pb.ValidateScriptResponse, error) {
+					return &pb.ValidateScriptResponse{
+						Valid:  false,
+						Errors: tt.errors,
+					}, nil
+				},
+			}
+
+			s := createTestScriptingServer(mock)
+			call := &ToolCall{
+				Name:      "validate_script",
+				Arguments: json.RawMessage(fmt.Sprintf(`{"type": "%s", "script": "%s"}`, tt.typeStr, tt.script)),
+			}
+
+			result, err := s.handleValidateScript(call)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if !result.IsError {
+				t.Error("expected error for invalid script")
+			}
+
+			if !strings.Contains(result.Content[0].Text, tt.wantJoined) {
+				t.Errorf("error = %q, want to contain %q", result.Content[0].Text, tt.wantJoined)
+			}
+		})
+	}
+}
+
+// TestShellCommand_ArgsForwarding verifies that command arguments are correctly
+// forwarded to the gRPC request.
+func TestShellCommand_ArgsForwarding(t *testing.T) {
+	tests := []struct {
+		name     string
+		args     []string
+		wantArgs []string
+	}{
+		{
+			name:     "single_arg",
+			args:     []string{"test"},
+			wantArgs: []string{"test"},
+		},
+		{
+			name:     "multiple_args",
+			args:     []string{"-l", "-a", "/tmp"},
+			wantArgs: []string{"-l", "-a", "/tmp"},
+		},
+		{
+			name:     "no_args",
+			args:     nil,
+			wantArgs: nil,
+		},
+		{
+			name:     "empty_args_array",
+			args:     []string{},
+			wantArgs: []string{},
+		},
+		{
+			name:     "args_with_spaces",
+			args:     []string{"hello world", "foo bar"},
+			wantArgs: []string{"hello world", "foo bar"},
+		},
+		{
+			name:     "args_with_special_chars",
+			args:     []string{"--flag=value", "$HOME", "|grep"},
+			wantArgs: []string{"--flag=value", "$HOME", "|grep"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedArgs []string
+			mock := &mockScriptingClient{
+				executeShellCommandFn: func(ctx context.Context, req *pb.ExecuteShellCommandRequest) (*pb.ExecuteShellCommandResponse, error) {
+					capturedArgs = req.Args
+					return &pb.ExecuteShellCommandResponse{Stdout: "OK", ExitCode: 0}, nil
+				},
+			}
+
+			s := createTestScriptingServer(mock)
+
+			argsJSON, _ := json.Marshal(tt.args)
+			call := &ToolCall{
+				Name:      "execute_shell_command",
+				Arguments: json.RawMessage(fmt.Sprintf(`{"command": "test", "args": %s}`, argsJSON)),
+			}
+
+			result, err := s.handleExecuteShellCommand(call)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if result.IsError {
+				t.Errorf("unexpected error: %v", result.Content)
+			}
+
+			if len(capturedArgs) != len(tt.wantArgs) {
+				t.Errorf("args length = %d, want %d", len(capturedArgs), len(tt.wantArgs))
+				return
+			}
+
+			for i := range tt.wantArgs {
+				if capturedArgs[i] != tt.wantArgs[i] {
+					t.Errorf("args[%d] = %q, want %q", i, capturedArgs[i], tt.wantArgs[i])
+				}
+			}
+		})
 	}
 }

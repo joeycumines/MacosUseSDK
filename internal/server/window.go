@@ -45,10 +45,7 @@ func (s *MCPServer) handleListWindows(call *ToolCall) (*ToolResult, error) {
 		PageToken: params.PageToken,
 	})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to list windows: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "list_windows"), nil
 	}
 
 	if len(resp.Windows) == 0 {
@@ -102,10 +99,7 @@ func (s *MCPServer) handleGetWindow(call *ToolCall) (*ToolResult, error) {
 
 	w, err := s.client.GetWindow(ctx, &pb.GetWindowRequest{Name: params.Name})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to get window: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "get_window"), nil
 	}
 
 	return &ToolResult{
@@ -149,10 +143,7 @@ func (s *MCPServer) handleFocusWindow(call *ToolCall) (*ToolResult, error) {
 
 	w, err := s.client.FocusWindow(ctx, &pb.FocusWindowRequest{Name: params.Name})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to focus window: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "focus_window"), nil
 	}
 
 	return &ToolResult{
@@ -191,10 +182,7 @@ func (s *MCPServer) handleMoveWindow(call *ToolCall) (*ToolResult, error) {
 		Y:    params.Y,
 	})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to move window: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "move_window"), nil
 	}
 
 	return &ToolResult{
@@ -243,10 +231,7 @@ func (s *MCPServer) handleResizeWindow(call *ToolCall) (*ToolResult, error) {
 		Height: params.Height,
 	})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to resize window: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "resize_window"), nil
 	}
 
 	return &ToolResult{
@@ -282,10 +267,7 @@ func (s *MCPServer) handleMinimizeWindow(call *ToolCall) (*ToolResult, error) {
 
 	w, err := s.client.MinimizeWindow(ctx, &pb.MinimizeWindowRequest{Name: params.Name})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to minimize window: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "minimize_window"), nil
 	}
 
 	return &ToolResult{
@@ -318,10 +300,7 @@ func (s *MCPServer) handleRestoreWindow(call *ToolCall) (*ToolResult, error) {
 
 	w, err := s.client.RestoreWindow(ctx, &pb.RestoreWindowRequest{Name: params.Name})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to restore window: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "restore_window"), nil
 	}
 
 	return &ToolResult{
@@ -358,16 +337,13 @@ func (s *MCPServer) handleCloseWindow(call *ToolCall) (*ToolResult, error) {
 		Force: params.Force,
 	})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to close window: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "close_window"), nil
 	}
 
 	if !resp.Success {
 		return &ToolResult{
 			IsError: true,
-			Content: []Content{{Type: "text", Text: "failed to close window: operation was not successful"}},
+			Content: []Content{{Type: "text", Text: "Error in close_window: operation was not successful"}},
 		}, nil
 	}
 
@@ -407,10 +383,7 @@ func (s *MCPServer) handleGetWindowState(call *ToolCall) (*ToolResult, error) {
 
 	state, err := s.client.GetWindowState(ctx, &pb.GetWindowStateRequest{Name: stateName})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to get window state: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "get_window_state"), nil
 	}
 
 	// Format state information

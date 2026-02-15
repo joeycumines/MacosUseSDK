@@ -47,8 +47,39 @@ public enum MacroExecutionError: Error, CustomStringConvertible {
 }
 
 /// Actor for executing macros with support for all action types
+///
+/// ## Thread Safety (nonisolated(unsafe))
+///
+/// `MacroExecutor.shared` uses `nonisolated(unsafe)` to allow access from any
+/// isolation domain. This is safe because:
+/// 1. The singleton is initialized ONCE in main.swift BEFORE the gRPC server starts
+/// 2. All subsequent accesses are reads-only (no reassignment)
+/// 3. The actor itself handles all internal state synchronization
+///
+/// **INVARIANT**: `shared` MUST be set before any gRPC RPC handler executes.
 public actor MacroExecutor {
-    public nonisolated(unsafe) static var shared: MacroExecutor!
+    /// Private storage for the shared singleton.
+    ///
+    /// - Precondition: Must be initialized in main.swift before use.
+    /// - Warning: Accessing before initialization will trigger preconditionFailure.
+    private nonisolated(unsafe) static var _shared: MacroExecutor?
+
+    /// Access the shared MacroExecutor instance.
+    /// Triggers preconditionFailure if accessed before initialization.
+    public nonisolated static var shared: MacroExecutor {
+        get {
+            guard let instance = _shared else {
+                preconditionFailure(
+                    "MacroExecutor.shared accessed before initialization. " +
+                        "Ensure main.swift initializes MacroExecutor.shared before starting gRPC server.",
+                )
+            }
+            return instance
+        }
+        set {
+            _shared = newValue
+        }
+    }
 
     /// Shared window registry for consistent window tracking
     private let windowRegistry: WindowRegistry
@@ -74,7 +105,7 @@ public actor MacroExecutor {
         }
 
         // Build execution context
-        let pid = try? parsePID(fromName: parent)
+        let pid = try? ParsingHelpers.parseOptionalPID(fromName: parent)
         var context = MacroContext(parameters: parameters, parent: parent, pid: pid)
 
         // Apply default values for missing optional parameters
@@ -555,14 +586,5 @@ private func parseSelectorString(_ str: String) -> Macosusesdk_Type_ElementSelec
         Macosusesdk_Type_ElementSelector.with {
             $0.role = str
         }
-    }
-}
-
-/// Helper function to parse PID from resource name - now uses shared ParsingHelpers
-private func parsePID(fromName name: String) throws -> pid_t {
-    do {
-        return try ParsingHelpers.parsePID(fromName: name)
-    } catch {
-        throw MacroExecutionError.invalidAction("Invalid parent resource name: \(name)")
     }
 }

@@ -281,7 +281,7 @@ func connectToServer(t *testing.T, ctx context.Context, addr string) *grpc.Clien
 	var err error
 
 	// CRITICAL FIX: Increased retry count from 10 to 20 with exponential backoff for CI environment
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		conn, err = grpc.NewClient(
 			addr,
 			grpc.WithTransportCredentials(insecure.NewCredentials()),

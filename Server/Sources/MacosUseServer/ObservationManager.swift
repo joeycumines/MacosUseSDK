@@ -8,8 +8,40 @@ import SwiftProtobuf
 private let logger = MacosUseSDK.sdkLogger(category: "ObservationManager")
 
 /// Manages active observations and coordinates streaming of observation events.
+///
+/// ## Thread Safety (nonisolated(unsafe))
+///
+/// `ObservationManager.shared` uses `nonisolated(unsafe)` to allow access from any
+/// isolation domain. This is safe because:
+/// 1. The singleton is initialized ONCE in main.swift BEFORE the gRPC server starts
+/// 2. All subsequent accesses are reads-only (no reassignment)
+/// 3. The actor itself handles all internal state synchronization
+///
+/// **INVARIANT**: `shared` MUST be set before any gRPC RPC handler executes.
 actor ObservationManager {
-    nonisolated(unsafe) static var shared: ObservationManager!
+    /// Shared singleton instance.
+    ///
+    /// - Precondition: Must be initialized in main.swift before use.
+    /// - Warning: Accessing before initialization will trigger preconditionFailure.
+    private nonisolated(unsafe) static var _shared: ObservationManager?
+
+    /// Access the shared ObservationManager instance.
+    /// Triggers preconditionFailure if accessed before initialization.
+    nonisolated static var shared: ObservationManager {
+        get {
+            guard let instance = _shared else {
+                preconditionFailure(
+                    "ObservationManager.shared accessed before initialization. " +
+                        "Ensure main.swift initializes ObservationManager.shared before starting gRPC server.",
+                )
+            }
+            return instance
+        }
+        set {
+            _shared = newValue
+        }
+    }
+
     private let windowRegistry: WindowRegistry
     private let system: SystemOperations
     private var observations: [String: ObservationState] = [:]
@@ -28,6 +60,7 @@ actor ObservationManager {
         parent: String,
         filter: Macosusesdk_V1_ObservationFilter?,
         pid: pid_t,
+        activate: Bool = false,
     ) -> Macosusesdk_V1_Observation {
         let now = Date()
         let observation = Macosusesdk_V1_Observation.with {
@@ -35,12 +68,13 @@ actor ObservationManager {
             $0.type = type
             $0.state = .pending
             $0.createTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: now)
+            $0.activate = activate
             if let filter {
                 $0.filter = filter
             }
         }
 
-        let state = ObservationState(observation: observation, parent: parent, pid: pid)
+        let state = ObservationState(observation: observation, parent: parent, pid: pid, activate: activate)
         observations[name] = state
         sequenceCounters[name] = 0
         eventStreams[name] = [:]
@@ -88,6 +122,50 @@ actor ObservationManager {
         eventStreams.removeValue(forKey: name)
         sequenceCounters.removeValue(forKey: name)
         return state.observation
+    }
+
+    /// Cancels all active observations during graceful shutdown.
+    ///
+    /// This method:
+    /// 1. Cancels all polling tasks
+    /// 2. Finishes all event stream continuations
+    /// 3. Marks all observations as cancelled
+    /// 4. Clears all internal state
+    ///
+    /// - Returns: The number of observations that were cancelled.
+    @discardableResult
+    func cancelAllObservations() async -> Int {
+        let observationNames = Array(observations.keys)
+        var cancelledCount = 0
+
+        for name in observationNames {
+            // Cancel the polling task
+            tasks[name]?.cancel()
+            tasks.removeValue(forKey: name)
+
+            // Mark observation as cancelled
+            if var state = observations[name] {
+                state.observation.state = .cancelled
+                state.observation.endTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
+                observations[name] = state
+                cancelledCount += 1
+            }
+
+            // Finish all event stream continuations
+            if let continuations = eventStreams[name] {
+                for continuation in continuations.values {
+                    continuation.finish()
+                }
+            }
+            eventStreams.removeValue(forKey: name)
+            sequenceCounters.removeValue(forKey: name)
+        }
+
+        // Clear all observations (they're all cancelled now)
+        observations.removeAll()
+
+        logger.info("Cancelled \(cancelledCount, privacy: .public) observation(s) during shutdown")
+        return cancelledCount
     }
 
     func completeObservation(name: String) async {
@@ -158,6 +236,7 @@ actor ObservationManager {
         let type = initialState.observation.type
         let filter = initialState.observation.filter
         let pid = initialState.pid
+        let shouldActivate = initialState.activate
         let pollInterval = (filter.pollInterval > 0) ? filter.pollInterval : 1.0
 
         var previousElements: [Macosusesdk_Type_Element] = []
@@ -169,7 +248,7 @@ actor ObservationManager {
             do {
                 switch type {
                 case .elementChanges, .treeChanges:
-                    let traverseResult = try await AutomationCoordinator.shared.handleTraverse(pid: pid, visibleOnly: filter.visibleOnly)
+                    let traverseResult = try await AutomationCoordinator.shared.handleTraverse(pid: pid, visibleOnly: filter.visibleOnly, shouldActivate: shouldActivate)
                     let currentElements = traverseResult.elements
                     let changes = detectElementChanges(previous: previousElements, current: currentElements)
                     for change in changes {
@@ -220,7 +299,7 @@ actor ObservationManager {
                 case .applicationChanges: break
 
                 case .attributeChanges:
-                    let traverseResult = try await AutomationCoordinator.shared.handleTraverse(pid: pid, visibleOnly: filter.visibleOnly)
+                    let traverseResult = try await AutomationCoordinator.shared.handleTraverse(pid: pid, visibleOnly: filter.visibleOnly, shouldActivate: shouldActivate)
                     let currentElements = traverseResult.elements
                     let changes = detectAttributeChanges(previous: previousElements, current: currentElements, watchedAttributes: filter.attributes)
                     for change in changes {
@@ -515,8 +594,9 @@ actor ObservationManager {
 
     private nonisolated func detectElementChanges(previous: [Macosusesdk_Type_Element], current: [Macosusesdk_Type_Element]) -> [ElementChange] {
         var changes: [ElementChange] = []
-        let previousMap = Dictionary(uniqueKeysWithValues: previous.map { ($0.path, $0) })
-        let currentMap = Dictionary(uniqueKeysWithValues: current.map { ($0.path, $0) })
+        // Use uniquingKeysWith to handle any duplicate paths gracefully (keep first occurrence)
+        let previousMap = Dictionary(previous.map { ($0.path, $0) }, uniquingKeysWith: { first, _ in first })
+        let currentMap = Dictionary(current.map { ($0.path, $0) }, uniquingKeysWith: { first, _ in first })
 
         for element in current where previousMap[element.path] == nil {
             changes.append(.added(element))
@@ -534,7 +614,8 @@ actor ObservationManager {
 
     private nonisolated func detectAttributeChanges(previous: [Macosusesdk_Type_Element], current: [Macosusesdk_Type_Element], watchedAttributes: [String]) -> [ElementChange] {
         var changes: [ElementChange] = []
-        let previousMap = Dictionary(uniqueKeysWithValues: previous.map { ($0.path, $0) })
+        // Use uniquingKeysWith to handle any duplicate paths gracefully (keep first occurrence)
+        let previousMap = Dictionary(previous.map { ($0.path, $0) }, uniquingKeysWith: { first, _ in first })
         for element in current {
             if let prevElement = previousMap[element.path] {
                 let attributeChanges = findAttributeChanges(old: prevElement, new: element, watched: watchedAttributes)
@@ -635,6 +716,7 @@ private struct ObservationState {
     var observation: Macosusesdk_V1_Observation
     let parent: String
     let pid: pid_t
+    let activate: Bool
 }
 
 private enum ElementChange {

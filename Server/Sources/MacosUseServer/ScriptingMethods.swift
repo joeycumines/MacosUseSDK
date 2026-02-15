@@ -15,6 +15,15 @@ extension MacosUseService {
         Self.logger.info("executeAppleScript called")
         let req = request.message
 
+        // Validate script is not empty
+        guard !req.script.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "script is required",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "script",
+            )
+        }
+
         // Parse timeout from Duration
         let timeout: TimeInterval = if req.hasTimeout {
             Double(req.timeout.seconds) + (Double(req.timeout.nanos) / 1_000_000_000)
@@ -68,6 +77,15 @@ extension MacosUseService {
         Self.logger.info("executeJavaScript called")
         let req = request.message
 
+        // Validate script is not empty
+        guard !req.script.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "script is required",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "script",
+            )
+        }
+
         // Parse timeout from Duration
         let timeout: TimeInterval = if req.hasTimeout {
             Double(req.timeout.seconds) + (Double(req.timeout.nanos) / 1_000_000_000)
@@ -119,6 +137,15 @@ extension MacosUseService {
     ) async throws -> ServerResponse<Macosusesdk_V1_ExecuteShellCommandResponse> {
         Self.logger.info("executeShellCommand called")
         let req = request.message
+
+        // Validate command is not empty
+        guard !req.command.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "command is required",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "command",
+            )
+        }
 
         // Parse timeout from Duration
         let timeout: TimeInterval = if req.hasTimeout {
@@ -195,6 +222,15 @@ extension MacosUseService {
     ) async throws -> ServerResponse<Macosusesdk_V1_ValidateScriptResponse> {
         Self.logger.info("validateScript called")
         let req = request.message
+
+        // Validate script is not empty
+        guard !req.script.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "script is required",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "script",
+            )
+        }
 
         // Convert proto ScriptType to internal ScriptType
         let scriptType: ScriptType

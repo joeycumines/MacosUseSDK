@@ -29,7 +29,11 @@ extension MacosUseService {
         // This ensures GetWindow returns fresh geometry immediately after mutations (MoveWindow, ResizeWindow).
         // Hybrid data authority: AX is authoritative for geometry/state, Registry provides metadata.
         let axWindow = try await findWindowElement(pid: pid, windowId: windowId)
-        return try await buildWindowResponseFromAX(name: req.name, pid: pid, windowId: windowId, window: axWindow, registryInfo: nil)
+        let fullResponse = try await buildWindowResponseFromAX(name: req.name, pid: pid, windowId: windowId, window: axWindow, registryInfo: nil)
+
+        // Apply read_mask per AIP-157
+        let filteredWindow = try ParsingHelpers.applyFieldMask(to: fullResponse.message, readMask: req.readMask)
+        return ServerResponse(message: filteredWindow)
     }
 
     func listWindows(
@@ -42,10 +46,33 @@ extension MacosUseService {
         let pid = try parsePID(fromName: req.parent)
 
         try await windowRegistry.refreshWindows(forPID: pid)
-        let windowInfos = try await windowRegistry.listWindows(forPID: pid)
+        var windowInfos = try await windowRegistry.listWindows(forPID: pid)
 
-        // Sort by window ID for deterministic ordering
-        let sortedWindowInfos = windowInfos.sorted { $0.windowID < $1.windowID }
+        // Apply filter if specified (AIP-160)
+        if !req.filter.isEmpty {
+            windowInfos = applyWindowFilter(windowInfos, filter: req.filter)
+        }
+
+        // Parse order_by (AIP-132)
+        let orderBy = req.orderBy.isEmpty ? "window_id" : req.orderBy.lowercased()
+        let descending = orderBy.contains(" desc")
+        let field = orderBy.replacingOccurrences(of: " desc", with: "").trimmingCharacters(in: .whitespaces)
+
+        // Sort based on field
+        let sortedWindowInfos: [WindowRegistry.WindowInfo] = switch field {
+        case "window_id":
+            windowInfos.sorted { $0.windowID < $1.windowID }
+        case "title":
+            windowInfos.sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+        case "z_order":
+            windowInfos.sorted { $0.layer < $1.layer }
+        default:
+            // Unknown field, use default window_id ordering
+            windowInfos.sorted { $0.windowID < $1.windowID }
+        }
+
+        // Apply descending order if requested
+        let orderedWindowInfos = descending ? sortedWindowInfos.reversed() : Array(sortedWindowInfos)
 
         // Decode page_token to get offset
         let offset: Int = if req.pageToken.isEmpty {
@@ -56,12 +83,12 @@ extension MacosUseService {
 
         // Determine page size (default 100 if not specified or <= 0)
         let pageSize = req.pageSize > 0 ? Int(req.pageSize) : 100
-        let totalCount = sortedWindowInfos.count
+        let totalCount = orderedWindowInfos.count
 
         // Calculate slice bounds
         let startIndex = min(offset, totalCount)
         let endIndex = min(startIndex + pageSize, totalCount)
-        let pageWindowInfos = Array(sortedWindowInfos[startIndex ..< endIndex])
+        let pageWindowInfos = Array(orderedWindowInfos[startIndex ..< endIndex])
 
         // Generate next_page_token if more results exist
         let nextPageToken = if endIndex < totalCount {
@@ -171,6 +198,24 @@ extension MacosUseService {
         let req = request.message
         Self.logger.info("moveWindow called")
 
+        // Validate coordinates are finite
+        guard req.x.isFinite else {
+            throw RPCErrorHelpers.validationError(
+                message: "x coordinate must be a finite number",
+                reason: "INVALID_COORDINATE",
+                field: "x",
+                value: String(req.x),
+            )
+        }
+        guard req.y.isFinite else {
+            throw RPCErrorHelpers.validationError(
+                message: "y coordinate must be a finite number",
+                reason: "INVALID_COORDINATE",
+                field: "y",
+                value: String(req.y),
+            )
+        }
+
         // Parse "applications/{pid}/windows/{windowId}"
         let components = req.name.split(separator: "/").map(String.init)
         guard components.count == 4,
@@ -238,6 +283,24 @@ extension MacosUseService {
     ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
         let req = request.message
         Self.logger.info("resizeWindow called")
+
+        // Validate dimensions are finite and positive
+        guard req.width.isFinite, req.width > 0 else {
+            throw RPCErrorHelpers.validationError(
+                message: "width must be a finite positive number",
+                reason: "INVALID_DIMENSION",
+                field: "width",
+                value: String(req.width),
+            )
+        }
+        guard req.height.isFinite, req.height > 0 else {
+            throw RPCErrorHelpers.validationError(
+                message: "height must be a finite positive number",
+                reason: "INVALID_DIMENSION",
+                field: "height",
+                value: String(req.height),
+            )
+        }
 
         // Parse "applications/{pid}/windows/{windowId}"
         let components = req.name.split(separator: "/").map(String.init)
@@ -566,5 +629,56 @@ extension MacosUseService {
 
         Self.logger.info("[captureWindowScreenshot] Captured \(result.width, privacy: .public)x\(result.height, privacy: .public) window screenshot")
         return ServerResponse(message: response)
+    }
+
+    // MARK: - Filter Helpers
+
+    /// Applies filter expression to window list per AIP-160.
+    /// Supported filters: title="...", visible=true/false, minimized=true/false
+    /// Multiple conditions can be combined with spaces (AND semantics).
+    /// Note: Internal visibility for unit testing.
+    func applyWindowFilter(_ windows: [WindowRegistry.WindowInfo], filter: String) -> [WindowRegistry.WindowInfo] {
+        let filterLower = filter.lowercased()
+        var result = windows
+
+        // Filter by visible state
+        if filterLower.contains("visible=true") {
+            result = result.filter(\.isOnScreen)
+        } else if filterLower.contains("visible=false") {
+            result = result.filter { !$0.isOnScreen }
+        }
+
+        // Filter by minimized state (inverted - not on screen often means minimized)
+        // Note: WindowRegistry doesn't track minimized directly, but isOnScreen is false for minimized windows
+        if filterLower.contains("minimized=true") {
+            result = result.filter { !$0.isOnScreen }
+        } else if filterLower.contains("minimized=false") {
+            result = result.filter(\.isOnScreen)
+        }
+
+        // Filter by title (supports title="..." or title contains)
+        if let titleMatch = extractQuotedValue(from: filter, key: "title") {
+            result = result.filter { $0.title.localizedCaseInsensitiveContains(titleMatch) }
+        }
+
+        return result
+    }
+
+    /// Extracts a quoted value from a filter expression like key="value"
+    /// Note: Internal visibility for unit testing.
+    func extractQuotedValue(from filter: String, key: String) -> String? {
+        // Pattern: key="value" or key = "value"
+        let pattern = "\(key)\\s*=\\s*\"([^\"]*)\""
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) else {
+            return nil
+        }
+        let range = NSRange(filter.startIndex ..< filter.endIndex, in: filter)
+        guard let match = regex.firstMatch(in: filter, options: [], range: range) else {
+            return nil
+        }
+        guard let valueRange = Range(match.range(at: 1), in: filter) else {
+            return nil
+        }
+        return String(filter[valueRange])
     }
 }

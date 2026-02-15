@@ -6,6 +6,10 @@
 >
 > While strict architectural direction was given (particularly around API semantics) and tooling was written by hand, **I am not a native Swift developer.** The code reflects an iterative AI generation process rather than expert-level fluency, though the project served as a surprisingly-successful learning vehicle, and regular human reviews were performed.
 
+[![CI](https://github.com/joeycumines/MacosUseSDK/actions/workflows/ci.yaml/badge.svg)](https://github.com/joeycumines/MacosUseSDK/actions/workflows/ci.yaml)
+[![Go Coverage](https://img.shields.io/badge/Go%20Coverage-70%25+-blue?style=flat)](https://github.com/joeycumines/MacosUseSDK)
+[![Swift Coverage](https://img.shields.io/badge/Swift%20Coverage-see%20CI-blue?style=flat)](https://github.com/joeycumines/MacosUseSDK/actions)
+
 # MacosUseSDK
 
 Library, command-line tools, and MCP/gRPC server to traverse the macOS accessibility tree and simulate user input actions. Allows interaction with UI elements of other applications.
@@ -26,6 +30,103 @@ Library, command-line tools, and MCP/gRPC server to traverse the macOS accessibi
 | [Security Hardening](docs/ai-artifacts/09-security-hardening.md) | Security best practices, shell command risks, authentication options |
 | [MCP Integration](docs/ai-artifacts/05-mcp-integration.md) | Protocol compliance, transport specifications, tool design |
 | [MCP Tool Design](docs/ai-artifacts/06-mcp-tool-design.md) | Detailed tool catalog with all 77 tools organized by category |
+
+## Architecture
+
+### Three-Layer Design
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      AI Agents / Clients                     │
+│                  (Claude, GPT, Custom MCP Clients)           │
+└─────────────────────────┬───────────────────────────────────┘
+                          │ JSON-RPC over HTTP/SSE or stdio
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│     Go MCP Server (cmd/macos-use-mcp)                        │
+│     • 77 MCP Tools                                           │
+│     • HTTP/SSE + stdio transports                            │
+│     • Rate limiting, API key auth, audit logging             │
+└─────────────────────────┬───────────────────────────────────┘
+                          │ gRPC (protobuf)
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│     Swift gRPC Server (Server/MacosUseServer)                │
+│     • Resource-oriented API (Google AIPs)                    │
+│     • WindowRegistry, ObservationManager, SessionManager     │
+│     • LRO pattern for async operations                       │
+└─────────────────────────┬───────────────────────────────────┘
+                          │ Native Swift APIs
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│     Swift SDK (Sources/MacosUseSDK)                          │
+│     • Accessibility APIs (AXUIElement)                       │
+│     • CoreGraphics for input simulation                      │
+│     • AppKit for window management                           │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Hybrid Authority Model
+
+Window and element management uses a **dual-API approach** (see [window-state-management.md](docs/window-state-management.md)):
+
+| Authority | API | Use Case |
+|-----------|-----|----------|
+| **Quartz (CG)** | `CGWindowListCopyWindowInfo` | Fast enumeration, global window list, metadata |
+| **Accessibility (AX)** | `AXUIElement` | Precise geometry, mutations, element interaction |
+
+- `ListWindows` uses **Quartz** (fast, may lag 10-100ms)
+- `GetWindow` uses **Accessibility** (fresh geometry for single window)
+- Window mutations (move/resize) use **Accessibility**
+- Bridging via `_AXUIElementGetWindow` with 1000px heuristic fallback
+
+### Coordinate Systems
+
+macOS uses **two distinct coordinate systems**:
+
+| System | Origin | Y Direction | Used By |
+|--------|--------|-------------|---------|
+| **Global Display** | Top-left of main display | Down ↓ | CGWindowList, AX, CGEvent, Input APIs |
+| **AppKit** | Bottom-left of main display | Up ↑ | NSWindow, NSScreen |
+
+**Important**: Window bounds and input coordinates both use **Global Display Coordinates**. No conversion needed between them. Secondary displays may have negative X (left of main) or negative Y (above main).
+
+### Environment Variable Reference
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `MCP_HTTP_ADDR` | HTTP server bind address | `127.0.0.1:8080` |
+| `MCP_UNIX_SOCKET` | Unix socket path (overrides HTTP) | - |
+| `MCP_TLS_CERT_FILE` | TLS certificate for HTTPS | - |
+| `MCP_TLS_KEY_FILE` | TLS private key | - |
+| `MCP_API_KEY` | API key for authentication | - |
+| `MCP_RATE_LIMIT` | Max requests/second | `100` |
+| `MCP_AUDIT_LOG` | Audit log file path | - |
+| `MCP_SERVER_ADDR` | gRPC server address for MCP proxy | `127.0.0.1:50051` |
+| `GRPC_LISTEN_ADDRESS` | Swift server bind address | `127.0.0.1` |
+| `GRPC_PORT` | Swift server port | `50051` |
+| `GRPC_UNIX_SOCKET` | Swift server Unix socket | - |
+
+## MCP Tool Catalog
+
+The server exposes **77 MCP tools** organized into 14 categories. See the [full tool reference](docs/ai-artifacts/06-mcp-tool-design.md) for details.
+
+| Category | Tools | Description |
+|----------|-------|-------------|
+| **Screenshot** | `capture_screenshot`, `capture_window_screenshot`, `capture_region_screenshot`, `capture_element_screenshot` | Screen, window, region, and element capture with OCR support |
+| **Input** | `click`, `type_text`, `press_key`, `hold_key`, `mouse_move`, `scroll`, `drag`, `mouse_button_down`, `mouse_button_up`, `hover`, `gesture` | Keyboard, mouse, and gesture input simulation |
+| **Element** | `find_elements`, `get_element`, `get_element_actions`, `click_element`, `write_element_value`, `perform_element_action` | UI element discovery and interaction |
+| **Window** | `list_windows`, `get_window`, `focus_window`, `move_window`, `resize_window`, `minimize_window`, `restore_window`, `close_window` | Window enumeration and manipulation |
+| **Display** | `list_displays`, `get_display`, `cursor_position` | Multi-monitor support and cursor tracking |
+| **Clipboard** | `get_clipboard`, `write_clipboard`, `clear_clipboard`, `get_clipboard_history` | Clipboard read/write operations |
+| **Application** | `open_application`, `list_applications`, `get_application`, `delete_application` | Application lifecycle management |
+| **Scripting** | `execute_apple_script`, `execute_javascript`, `execute_shell_command`, `validate_script`, `get_scripting_dictionaries` | AppleScript, JXA, and shell execution |
+| **Observation** | `create_observation`, `stream_observations`, `get_observation`, `list_observations`, `cancel_observation` | Real-time UI change monitoring |
+| **Accessibility** | `traverse_accessibility`, `get_window_state`, `find_region_elements`, `wait_element`, `wait_element_state`, `watch_accessibility` | Accessibility tree traversal and queries |
+| **File Dialog** | `automate_open_file_dialog`, `automate_save_file_dialog`, `select_file`, `select_directory`, `drag_files` | File/folder dialog automation |
+| **Session** | `create_session`, `get_session`, `list_sessions`, `delete_session`, `get_session_snapshot`, `begin_transaction`, `commit_transaction`, `rollback_transaction` | Session and transaction management |
+| **Macro** | `create_macro`, `get_macro`, `list_macros`, `delete_macro`, `execute_macro`, `update_macro` | Macro recording and playback |
+| **Input Query** | `get_input`, `list_inputs` | Input history and state queries |
 
 
 https://github.com/user-attachments/assets/d8dc75ba-5b15-492c-bb40-d2bc5b65483e

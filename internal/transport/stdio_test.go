@@ -151,7 +151,7 @@ func TestWriteMessage(t *testing.T) {
 			}
 
 			jsonStr := strings.TrimSpace(output)
-			var parsed map[string]interface{}
+			var parsed map[string]any
 			if err := json.Unmarshal([]byte(jsonStr), &parsed); err != nil {
 				t.Errorf("Output is not valid JSON: %v", err)
 			}
@@ -347,7 +347,7 @@ func TestConcurrentAccess(t *testing.T) {
 
 	done := make(chan bool)
 
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		go func(id int) {
 			msg := &Message{
 				JSONRPC: "2.0",
@@ -359,7 +359,7 @@ func TestConcurrentAccess(t *testing.T) {
 		}(i)
 	}
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		<-done
 	}
 

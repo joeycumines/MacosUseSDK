@@ -20,11 +20,13 @@ public actor AutomationCoordinator {
     }
 
     /// Opens or activates an application and returns target info
+    /// - Parameter identifier: The application name, bundle ID, or path
+    /// - Parameter background: If true, opens without activating (stealing focus)
     @MainActor
-    public func handleOpenApplication(identifier: String) async throws -> Macosusesdk_V1_Application {
-        logger.info("Opening application: \(identifier, privacy: .private)")
+    public func handleOpenApplication(identifier: String, background: Bool = false) async throws -> Macosusesdk_V1_Application {
+        logger.info("Opening application: \(identifier, privacy: .private) background=\(background, privacy: .public)")
 
-        let result = try await MacosUseSDK.openApplication(identifier: identifier)
+        let result = try await MacosUseSDK.openApplication(identifier: identifier, background: background)
 
         return Macosusesdk_V1_Application.with {
             $0.name = "applications/\(result.pid)"
@@ -33,39 +35,14 @@ public actor AutomationCoordinator {
         }
     }
 
-    /// Executes a global input action (not tied to a specific PID)
-    @MainActor
-    public func handleGlobalInput(
-        action: InputActionInfo, showAnimation: Bool, animationDuration: Double,
-    ) async throws {
-        logger.info("Executing global input action")
-
-        let sdkAction = try convertToSDKInputAction(action)
-
-        // Execute the action with or without visualization
-        try await executeInputAction(
-            sdkAction, showAnimation: showAnimation, animationDuration: animationDuration,
-        )
-    }
-
-    /// Performs an action on a specific target application
-    @MainActor
-    public func handlePerformAction(
-        pid: pid_t,
-        action: PrimaryActionInfo,
-        options: ActionOptionsInfo,
-    ) async throws -> ActionResultInfo {
-        logger.info("Performing action on PID \(pid, privacy: .public)")
-
-        let sdkAction = try convertToSDKPrimaryAction(action)
-        let sdkOptions = convertToSDKActionOptions(pid: pid, options: options)
-
-        let sdkResult = await MacosUseSDK.performAction(action: sdkAction, optionsInput: sdkOptions)
-
-        return try convertFromSDKActionResult(sdkResult)
-    }
-
-    /// Executes an input action globally or on a specific PID
+    /// Executes an input action globally or on a specific PID.
+    ///
+    /// For keyboard-targeted actions (key press, key hold, text typing), the
+    /// target application is activated (brought to the foreground) first when a
+    /// PID is provided. This is necessary because CGEvent keyboard events are
+    /// delivered to whichever application currently has keyboard focus, NOT to a
+    /// specific process. Mouse events (click, drag, etc.) are routed by screen
+    /// coordinates and do not require prior activation.
     @MainActor
     public func handleExecuteInput(
         action: Macosusesdk_V1_InputAction, pid: pid_t?, showAnimation: Bool, animationDuration: Double,
@@ -74,23 +51,52 @@ public actor AutomationCoordinator {
 
         let sdkAction = try convertFromProtoInputAction(action)
 
-        if pid != nil {
-            // Execute on specific app - but since it's input, perhaps move mouse or something, but for now, global
-            try await executeInputAction(
-                sdkAction, showAnimation: showAnimation, animationDuration: animationDuration,
-            )
-        } else {
-            try await executeInputAction(
-                sdkAction, showAnimation: showAnimation, animationDuration: animationDuration,
-            )
+        // Activate the target application for keyboard actions so that CGEvent
+        // key events reach the correct process.
+        if let pid, sdkAction.requiresKeyboardFocus {
+            if let app = NSRunningApplication(processIdentifier: pid) {
+                let activated = app.activate()
+                if activated {
+                    logger.info("Activated application PID \(pid, privacy: .public) for keyboard input")
+                    // Brief pause for activation to propagate through the window server.
+                    try await Task.sleep(nanoseconds: 50_000_000) // 50ms
+                } else {
+                    logger.warning("Failed to activate application PID \(pid, privacy: .public) for keyboard input")
+                }
+            } else {
+                logger.warning("No NSRunningApplication found for PID \(pid, privacy: .public)")
+            }
         }
+
+        try await executeInputAction(
+            sdkAction, showAnimation: showAnimation, animationDuration: animationDuration,
+        )
     }
 
     /// Traverses the accessibility tree for a given PID
-    public func handleTraverse(pid: pid_t, visibleOnly: Bool) async throws
+    /// - Parameters:
+    ///   - pid: The process identifier to traverse.
+    ///   - visibleOnly: When true, only geometrically visible elements are collected.
+    ///   - shouldActivate: When true, the target app is activated (brought to foreground) before
+    ///     traversal. Defaults to false so background polling (ObservationManager) never steals focus.
+    public func handleTraverse(pid: pid_t, visibleOnly: Bool, shouldActivate: Bool = false) async throws
         -> Macosusesdk_V1_TraverseAccessibilityResponse
     {
-        logger.info("Traversing accessibility tree for PID \(pid, privacy: .public)")
+        logger.info("Traversing accessibility tree for PID \(pid, privacy: .public) (shouldActivate=\(shouldActivate, privacy: .public))")
+
+        // When shouldActivate is true, mark the PID on the ChangeDetector *before*
+        // the activation so that the resulting NSWorkspace notification is suppressed
+        // and not echoed back as a user-initiated event.
+        //
+        // Accepted edge case: if the app is already active, activate() won't fire but
+        // sdkActivatedPIDs is still populated, causing a ≤500ms window of false
+        // deactivation suppression for this PID. This is rare (requesting activation
+        // for an already-active app) and the window is short.
+        if shouldActivate {
+            await MainActor.run {
+                ChangeDetector.shared.markSDKActivation(pid: pid)
+            }
+        }
 
         do {
             // CRITICAL FIX: Run traversal on background thread to prevent main thread blocking
@@ -99,6 +105,7 @@ public actor AutomationCoordinator {
                 try MacosUseSDK.traverseAccessibilityTree(
                     pid: pid,
                     onlyVisibleElements: visibleOnly,
+                    shouldActivate: shouldActivate,
                 )
             }.value
 
@@ -113,6 +120,8 @@ public actor AutomationCoordinator {
                         $0.y = sdkElement.y ?? 0
                         $0.width = sdkElement.width ?? 0
                         $0.height = sdkElement.height ?? 0
+                        // CRITICAL: Copy path for change detection (used as dictionary key in ObservationManager)
+                        $0.path = sdkElement.path
                     }
                 }
 
@@ -204,71 +213,24 @@ public actor AutomationCoordinator {
         case let .mouseUp(point, button, modifiers):
             // No visualization for stateful mouse events
             try await MacosUseSDK.mouseButtonUp(at: point, button: button, modifiers: modifiers)
+        case let .drag(from, to, button, duration):
+            // Complete drag operation with incremental leftMouseDragged events
+            try await MacosUseSDK.performDrag(from: from, to: to, button: button, duration: duration)
         }
     }
 }
 
-// These functions convert between proto-like info structs and SDK types
-// They will be updated to use actual proto types once generated
-
 extension AutomationCoordinator {
-    private nonisolated func convertToSDKInputAction(_ action: InputActionInfo) throws
-        -> MacosUseSDK.InputAction
-    {
-        switch action.type {
-        case let .click(x, y):
-            return .click(point: CGPoint(x: x, y: y))
-        case let .doubleClick(x, y):
-            return .doubleClick(point: CGPoint(x: x, y: y))
-        case let .rightClick(x, y):
-            return .rightClick(point: CGPoint(x: x, y: y))
-        case let .typeText(text):
-            return .type(text: text)
-        case let .pressKey(keyCombo):
-            let (keyName, flags) = try parseKeyCombo(keyCombo)
-            return .press(keyName: keyName, flags: flags)
-        case let .moveTo(x, y):
-            return .move(to: CGPoint(x: x, y: y))
+    /// Validates that a coordinate value is finite (not NaN or ±Infinity).
+    /// CGEvent behavior with non-finite coordinates is undefined and dangerous.
+    private nonisolated func validateCoordinate(
+        _ value: Double, field: String, inputType: String,
+    ) throws {
+        guard value.isFinite else {
+            throw CoordinatorError.invalidCoordinate(
+                "\(inputType) has non-finite \(field) coordinate: \(value)",
+            )
         }
-    }
-
-    private nonisolated func convertToSDKPrimaryAction(_ action: PrimaryActionInfo) throws
-        -> MacosUseSDK.PrimaryAction
-    {
-        switch action {
-        case let .input(inputAction):
-            try .input(action: convertToSDKInputAction(inputAction))
-        case .traverseOnly:
-            .traverseOnly
-        }
-    }
-
-    private nonisolated func convertToSDKActionOptions(pid: pid_t, options: ActionOptionsInfo)
-        -> MacosUseSDK.ActionOptions
-    {
-        MacosUseSDK.ActionOptions(
-            traverseBefore: options.traverseBefore,
-            traverseAfter: options.traverseAfter,
-            showDiff: options.showDiff,
-            onlyVisibleElements: options.onlyVisibleElements,
-            showAnimation: options.showAnimation,
-            animationDuration: options.animationDuration,
-            pidForTraversal: pid,
-            delayAfterAction: options.delayAfterAction,
-        )
-    }
-
-    private nonisolated func convertFromSDKActionResult(_ result: MacosUseSDK.ActionResult) throws
-        -> ActionResultInfo
-    {
-        ActionResultInfo(
-            pid: result.openResult?.pid ?? 0,
-            appName: result.openResult?.appName ?? "",
-            traversalPid: result.traversalPid ?? 0,
-            primaryActionError: result.primaryActionError,
-            traversalBeforeError: result.traversalBeforeError,
-            traversalAfterError: result.traversalAfterError,
-        )
     }
 
     private nonisolated func convertFromProtoInputAction(_ action: Macosusesdk_V1_InputAction) throws
@@ -279,6 +241,8 @@ extension AutomationCoordinator {
             guard mouseClick.hasPosition else {
                 throw CoordinatorError.invalidKeyCombo("click missing position")
             }
+            try validateCoordinate(mouseClick.position.x, field: "x", inputType: "click")
+            try validateCoordinate(mouseClick.position.y, field: "y", inputType: "click")
             let clickType = mouseClick.clickType
             let clickCount = mouseClick.clickCount
 
@@ -307,6 +271,8 @@ extension AutomationCoordinator {
             guard mouseMove.hasPosition else {
                 throw CoordinatorError.invalidKeyCombo("move missing position")
             }
+            try validateCoordinate(mouseMove.position.x, field: "x", inputType: "move")
+            try validateCoordinate(mouseMove.position.y, field: "y", inputType: "move")
             // CRITICAL: Proto coordinates come from AXUIElement (kAXPositionAttribute) which use
             // the same Global Display Coordinate System as CGEvent (top-left origin).
             // NO conversion needed.
@@ -315,6 +281,8 @@ extension AutomationCoordinator {
             guard buttonDown.hasPosition else {
                 throw CoordinatorError.invalidKeyCombo("buttonDown missing position")
             }
+            try validateCoordinate(buttonDown.position.x, field: "x", inputType: "buttonDown")
+            try validateCoordinate(buttonDown.position.y, field: "y", inputType: "buttonDown")
             let point = CGPoint(x: buttonDown.position.x, y: buttonDown.position.y)
             let button = convertButtonType(buttonDown.button)
             let modifiers = try convertModifiers(buttonDown.modifiers)
@@ -323,10 +291,24 @@ extension AutomationCoordinator {
             guard buttonUp.hasPosition else {
                 throw CoordinatorError.invalidKeyCombo("buttonUp missing position")
             }
+            try validateCoordinate(buttonUp.position.x, field: "x", inputType: "buttonUp")
+            try validateCoordinate(buttonUp.position.y, field: "y", inputType: "buttonUp")
             let point = CGPoint(x: buttonUp.position.x, y: buttonUp.position.y)
             let button = convertButtonType(buttonUp.button)
             let modifiers = try convertModifiers(buttonUp.modifiers)
             return .mouseUp(point: point, button: button, modifiers: modifiers)
+        case let .drag(mouseDrag):
+            guard mouseDrag.hasStartPosition, mouseDrag.hasEndPosition else {
+                throw CoordinatorError.invalidKeyCombo("drag missing start_position or end_position")
+            }
+            try validateCoordinate(mouseDrag.startPosition.x, field: "start_x", inputType: "drag")
+            try validateCoordinate(mouseDrag.startPosition.y, field: "start_y", inputType: "drag")
+            try validateCoordinate(mouseDrag.endPosition.x, field: "end_x", inputType: "drag")
+            try validateCoordinate(mouseDrag.endPosition.y, field: "end_y", inputType: "drag")
+            let from = CGPoint(x: mouseDrag.startPosition.x, y: mouseDrag.startPosition.y)
+            let to = CGPoint(x: mouseDrag.endPosition.x, y: mouseDrag.endPosition.y)
+            let button = convertButtonType(mouseDrag.button)
+            return .drag(from: from, to: to, button: button, duration: mouseDrag.duration)
         case .none:
             throw CoordinatorError.invalidKeyCombo("empty input type")
         default:
@@ -367,103 +349,13 @@ extension AutomationCoordinator {
         }
         return flags
     }
-
-    private nonisolated func parseKeyCombo(_ combo: String) throws -> (
-        keyName: String, flags: CGEventFlags,
-    ) {
-        var flags: CGEventFlags = []
-        let parts = combo.split(separator: "+").map(String.init)
-
-        guard let keyName = parts.last else {
-            throw CoordinatorError.invalidKeyCombo(combo)
-        }
-
-        for modifier in parts.dropLast() {
-            switch modifier.lowercased() {
-            case "cmd", "command":
-                flags.insert(.maskCommand)
-            case "shift":
-                flags.insert(.maskShift)
-            case "alt", "option":
-                flags.insert(.maskAlternate)
-            case "ctrl", "control":
-                flags.insert(.maskControl)
-            default:
-                throw CoordinatorError.unknownModifier(modifier)
-            }
-        }
-
-        return (keyName, flags)
-    }
-}
-
-// These will be replaced with generated proto types
-
-public enum InputActionInfo {
-    case click(x: Double, y: Double)
-    case doubleClick(x: Double, y: Double)
-    case rightClick(x: Double, y: Double)
-    case typeText(String)
-    case pressKey(String)
-    case moveTo(x: Double, y: Double)
-
-    var type: InputActionInfo {
-        self
-    }
-}
-
-public enum PrimaryActionInfo {
-    case input(InputActionInfo)
-    case traverseOnly
-}
-
-public struct ActionOptionsInfo {
-    public let traverseBefore: Bool
-    public let traverseAfter: Bool
-    public let showDiff: Bool
-    public let onlyVisibleElements: Bool
-    public let showAnimation: Bool
-    public let animationDuration: Double
-    public let delayAfterAction: Double
-
-    public init(
-        traverseBefore: Bool = false,
-        traverseAfter: Bool = false,
-        showDiff: Bool = false,
-        onlyVisibleElements: Bool = false,
-        showAnimation: Bool = true,
-        animationDuration: Double = 0.8,
-        delayAfterAction: Double = 0.2,
-    ) {
-        self.traverseBefore = traverseBefore
-        self.traverseAfter = traverseAfter
-        self.showDiff = showDiff
-        self.onlyVisibleElements = onlyVisibleElements
-        self.showAnimation = showAnimation
-        self.animationDuration = animationDuration
-        self.delayAfterAction = delayAfterAction
-    }
-}
-
-public struct ActionResultInfo: Sendable {
-    public let pid: pid_t
-    public let appName: String
-    public let traversalPid: pid_t
-    public let primaryActionError: String?
-    public let traversalBeforeError: String?
-    public let traversalAfterError: String?
-}
-
-public struct ResponseDataInfo {
-    public let appName: String
-    public let elementCount: Int
-    public let processingTime: String
 }
 
 public enum CoordinatorError: Error, LocalizedError {
     case invalidKeyName(String)
     case invalidKeyCombo(String)
     case unknownModifier(String)
+    case invalidCoordinate(String)
 
     public var errorDescription: String? {
         switch self {
@@ -473,6 +365,8 @@ public enum CoordinatorError: Error, LocalizedError {
             "Invalid key combo: \(combo)"
         case let .unknownModifier(modifier):
             "Unknown modifier: \(modifier)"
+        case let .invalidCoordinate(detail):
+            "Invalid coordinate: \(detail)"
         }
     }
 }

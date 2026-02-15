@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides critical guidance when working with code in this repository.
 
 ## Project Overview
 
@@ -81,79 +81,6 @@ cd Server && swift build -c release
 MCP_HTTP_ADDR=0.0.0.0:8080 MCP_API_KEY=secret ./Server/.build/release/MacosUseServer
 ```
 
-## Critical Constraints (from AGENTS.md)
-
-### Execution Protocol
-
-- **NO DIRECT SHELL COMMANDS**: Use `config.mk` to define custom targets, then run via Make
-- **CRITICAL**: Never specify the `file` option when invoking gmake - rely on repository's default Makefile discovery
-- All `config.mk` recipes producing significant output MUST pipe to `tail` to avoid context window flooding
-- Use `| tee $(PROJECT_ROOT)/build.log | tail -n 15` pattern for logging
-
-### Testing Requirements
-
-- **DO NOT BREAK THE BUILD**: Run `gmake make-all-with-log` after every file change
-- **NO time.Sleep in tests**: Use `PollUntil` pattern for async verification
-- Integration tests must ensure proper cleanup of observations and connections
-- All new behavior MUST include automated tests in the same change set
-
-### Logging Privacy
-
-- **AVOID `fputs` or unannotated `print`** in Swift server components (`Server/Sources/MacosUseServer/`) and SDK (`Sources/MacosUseSDK/`)
-- Use `Logger` with explicit `privacy` annotations for all interpolated values
-- `print` is only allowed for static help text outside server/SDK directories
-
-### API Design Standards
-
-- Follow **Google's AIPs** (2025 standards) - when in doubt, Google's AIPs take precedence over `buf lint`
-- Implement pagination (AIP-158) for ALL List/Find RPCs with opaque page tokens
-- Tests MUST verify state deltas (accessor RPC after mutator RPC)
-- Document coordinate systems explicitly: "Global Display Coordinates (top-left origin)" or "AppKit Coordinates (bottom-left origin)"
-
-## High-Level Architecture
-
-### Language Distribution
-
-- **Swift**: Core library, gRPC server, command-line tools, AppKit integration
-- **Go**: MCP server, config management, protobuf handling
-- **Protocol Buffers**: gRPC API definitions
-
-### State Management Architecture
-
-The server uses a CQRS-style state management pattern:
-
-- **AppStateStore**: Copy-on-write views for queries
-- **WindowRegistry**: Window state tracking via Quartz/CGWindowListCopyWindowInfo
-- **ObservationManager**: Real-time UI change monitoring
-- **SessionManager**: Client session handling
-
-### Hybrid Authority Model (Window State)
-
-macOS provides two non-interoperable window APIs:
-
-- **Quartz (CoreGraphics)**: Global, high-performance, read-only - authoritative for enumeration, metadata, window IDs
-- **Accessibility (AX)**: Process-specific, synchronous - authoritative for geometry, visibility, mutations
-
-Key architectural decisions:
-
-- `ListWindows` uses Quartz only (fast, may lag 10-100ms)
-- `GetWindow`/mutations use AX for correctness (fresh geometry)
-- Bridging via private API `_AXUIElementGetWindow` with 1000px heuristic fallback
-
-### Coordinate Systems (CRITICAL)
-
-- **Global Display Coordinates**: Top-left origin, used by CGWindowList, AX, CGEvent, input APIs
-- **AppKit Coordinates**: Bottom-left origin, used by NSWindow, NSScreen
-- Window bounds and input positions BOTH use Global Display Coordinates (no conversion needed between them)
-- Secondary displays can have negative coordinates (left/above main display)
-
-### MCP Integration
-
-- **77 MCP tools** exposed via HTTP/SSE or stdio transport
-- Resource-oriented API following Google's AIPs
-- Supports TLS, API key authentication, rate limiting, audit logging
-- See `docs/ai-artifacts/05-mcp-integration.md` for protocol details
-
 ## Key Directories
 
 - `Server/` - Swift gRPC server with Accessibility API integration
@@ -166,7 +93,7 @@ Key architectural decisions:
 
 ## Important Files
 
-- `AGENTS.md` - Implementation constraints and directives (READ THIS FIRST)
+- `CLAUDE.md` - Implementation constraints and directives (READ THIS FIRST)
 - `blueprint.json` - Master planning document (single source of truth for status)
 - `CONTRIBUTING.md` - Development guidelines
 - `Makefile` - Build orchestration
@@ -189,9 +116,139 @@ Key architectural decisions:
 - Naming follows Google AIPs 121, 190, 191
 - Use `buf` for generation, `api-linter` for design validation
 
-## CI/CD
+## Implementation Constraints
 
-- Entry point: `.github/workflows/ci.yaml`
-- Uses reusable workflow patterns (`workflow_call`)
-- Scripts must use explicit chaining (`&&`), not `set -e`
-- Runs: lint, build, test, integration tests
+### Critical Ways of Working (STRICT MANDATES)
+
+**1. EXECUTION PROTOCOL (NON-NEGOTIABLE):**
+
+- **NO DIRECT SHELL COMMANDS:** You are FORBIDDEN from running complex multi-argument shell commands directly.
+- **MANDATORY `config.mk` PATTERN:** For ALL build steps, test runs, linting, or execution commands:
+    1. Define a **custom temporary target** in `config.mk`.
+    2. Execute it using the `gmake` tool.
+- **FORBIDDEN ARGUMENT:** You MUST NOT specify the `file` option (e.g., `file=config.mk`) when invoking `gmake`. The invocation must rely strictly on the repository's default Makefile discovery (which includes `config.mk`).
+- **LOGGING REQUIREMENT:** All `config.mk` recipes producing significant output MUST use `| tee $(or $(PROJECT_ROOT),$(error If you are reading this you specified the `file` option when calling `gmake`. DONT DO THAT.))/build.log | tail -n 15` (or similar) to prevent context window flooding.
+  For example (add if missing to `config.mk` within `ifndef CUSTOM_TARGETS_DEFINED ... endif` per `example.config.mk`):
+  ```makefile
+  .PHONY: make-all-with-log
+  make-all-with-log: ## Run all targets with logging to build.log
+  make-all-with-log: SHELL := /bin/bash
+  make-all-with-log:
+  	@echo "Output limited to avoid context explosion. See $(or $(PROJECT_ROOT),$(error If you are reading this you specified the `file` option when calling `gmake`. DONT DO THAT.))/build.log for full content."; \
+  	set -o pipefail; \
+  	$(MAKE) all 2>&1 | tee $(or $(PROJECT_ROOT),$(error If you are reading this you specified the `file` option when calling `gmake`. DONT DO THAT.))/build.log | tail -n 15; \
+  	exit $${PIPESTATUS[0]}
+  ```
+
+**2. CONTINUOUS VALIDATION:**
+
+- **DO NOT BREAK THE BUILD:** You must run the core `all` target constantly. Use `gmake make-all-with-log` after every file change.
+- **Resource Leak Check:** Integration tests must ensure proper cleanup of observations and connections at teardown.
+- **CI PRE-MERGE BLOCKER:** Before any merge to main, ALL critical issues documented in `pre-merge-blueprint.json` MUST be resolved and CI MUST pass. See `PRE_MERGE_STATUS.md` for current blocking issues.
+
+**3. LOG OUTPUT PRIVACY:**
+
+- AVOID and REPLACE ad-hoc `fputs` or unannotated `print` with `Logger` and `OSLogPrivacy` for any message emitted from Swift server components or SDK helpers in `Server/Sources/MacosUseServer` and `Sources/MacosUseSDK`.
+- `fputs` is forbidden in these server/SDK directories for diagnostic logs — it bypasses OS unified logging and cannot mark privacy. Use `Logger` with explicit `privacy` annotations for every interpolated value. For user-facing CLI help text (static strings) `print` is allowed only outside `Server/Sources/MacosUseServer` and `Sources/MacosUseSDK`.
+
+### Core Directives
+
+Constraints in this section describe *requirements*, not current status.
+
+The gRPC server MUST:
+
+- Strictly follow **Google's AIPs** (2025 standards). When in doubt between `buf lint` and Google's AIPs, Google's AIPs take precedence.
+- Support configuration via environment variables (socket paths, addresses).
+- Maintain the **State Store** architecture: `AppStateStore` (copy-on-write view for queries), `WindowRegistry`, `ObservationManager`, and `SessionManager`.
+
+Previous sins (now corrected, not to be repeated):
+
+- **Pagination (AIP-158):** You MUST implement `page_size`, `page_token`, and `next_page_token` for ALL List/Find RPCs, and `page_token`/`next_page_token` MUST be treated as opaque by clients (no reliance on internal structure such as `"offset:N"`).
+- **State-Difference Assertions:** Tests MUST NOT rely on "Happy Path" OK statuses. Every mutator RPC (Click, Move, Resize) MUST be followed by an accessor RPC to verify the *delta* in state.
+- **Wait-For-Convergence:** Tests MUST use a `PollUntil` pattern. `time.Sleep` is FORBIDDEN in tests.
+- **NSPasteboard Correctness (2025-11-30):** ClipboardManager MUST call `pasteboard.clearContents()` before EVERY write operation. Apple documentation states: "Clearing the pasteboard before writing is recommended." The previous implementation conditionally cleared based on a parameter, which violated this requirement and caused unreliable clipboard behavior.
+
+**API Scope:**
+
+- Expose ALL functionality via the `MacosUse` service (consolidated service).
+- Include all resources: Window, Element, Observation, Session, Macro, Screenshot, Clipboard, File, Script, **Display**.
+- Support advanced inputs: Modifiers, Special Keys, Mouse Operations (drag, right-click).
+- Support VS Code integration patterns (multi-window, advanced targeting).
+- **Display API (NEW 2025-11-30):** Must expose display/screen enumeration via `ListDisplays` RPC. Each Display resource must include:
+    - Display ID (CGDirectDisplayID)
+    - Frame (position and size in global coordinate space)
+    - Visible frame (excluding menu bar and dock)
+    - Whether it is the main display
+    - Scale factor (Retina)
+      This is critical for multi-monitor setups where window coordinates are in global coordinate space.
+
+**Coordinate System Documentation (CRITICAL 2025-11-30):**
+
+- macOS uses **multiple coordinate systems** that clients MUST understand:
+    - **Global Display Coordinates** (used by CGWindowList, AX, CGEvent): Origin at **top-left of the main display**. Y increases downward. Secondary displays can have negative X (left of main) or negative Y (above main).
+    - **AppKit Coordinates** (used by NSWindow, NSScreen.frame): Origin at **bottom-left of the main display**. Y increases upward.
+- Window bounds returned by `ListWindows` and `GetWindow` use **Global Display Coordinates** (top-left origin).
+- Input coordinates (clicks, mouse moves) sent via `CreateInput` are interpreted as **Global Display Coordinates** (top-left origin).
+- The proto API documentation MUST clearly specify which coordinate system is used for each field.
+- NO coordinate conversion is needed between Window bounds and Input positions (both use the same coordinate system).
+
+**Authoring Guidance:** When writing code comments or documentation, always state explicitly which coordinate system is referenced. Use the phrases "Global Display Coordinates (top-left origin)" for AX/CGEvent/CGWindowList and "AppKit Coordinates (bottom-left origin)" for NSWindow/NSScreen. Avoid ambiguous shorthand such as "CGEvent coordinates" without the origin direction — this has led to prior incorrect comments.
+
+**Core Graphics/Cocoa/Accessibility Race Condition Mitigation:** Do not rely on `NSRunningApplication(processIdentifier:)` or `CGWindowListCopyWindowInfo` (and related `CGWindow*` APIs) for process/window liveness or existence checks when performing AX actions. These APIs can lag behind the real-time state of the Accessibility server. Always attempt AX actions (e.g., `AXUIElementCreateApplication(pid)`, `AXUIElementCopyAttributeValue`) directly, then handle invalid process/element errors if they occur. Using CG/NS APIs as a "guard" or "pre-check" introduces a race condition where valid AX targets are rejected because the slower API hasn't updated yet.
+
+### Testing and Tooling
+
+- **Atomic Testing:** ALL new behavior and ALL modifications MUST be accompanied by automated tests in the SAME change set.
+- **Golden Applications:** Integration tests must strictly target `TextEdit`, `Calculator`, or `Finder` as defined in the plan.
+- **CI Integrity:** Tests and CI checks MUST be kept green. Disabling tests is forbidden without a documented fix plan.
+- **Test Fixture Lifecycle:** Every test suite must ensure a clean state (SIGKILL target apps) before running and perform aggressive cleanup (DeleteApplication) after running.
+
+### Documentation and Planning
+
+- **Single Source of Truth:** ALL updates to the plan MUST be represented in `./blueprint.json`.
+- **No Status Files:** Do NOT create `IMPLEMENTATION_COMPLETE.md` or similar. Do NOT use `CLAUDE.md` to track status, progress logs, or completion markers of any kind.
+- **Plan-Local Status Only:** The **STATUS SECTION (ACTION-FOCUSED)** at the top of `blueprint.json` is the only allowed place for high-level status, and it MUST list only remaining work, unresolved discrepancies, and critical patterns that must not be forgotten. Do not accumulate historical "done" items or emojis there.
+- **Verification Before Completion Claims:** Before treating any item as complete, you MUST verify the implementation and its tests. If there is any doubt, treat the item as not done and keep (or re-add) a corresponding action in the plan.
+- **Living Document:** Keep `./blueprint.json` strictly aligned with this constraints document and the *actual* code reality. Update it as part of every change set, trimming completed/verified items from the status section rather than appending new ones.
+
+### Master (LIVING) Documents
+
+**MUST BE KEPT UP TO DATE.** Must be analytical, terse, and precise.
+
+- [docs/window-state-management.md](docs/window-state-management.md)
+
+### MCP Specification References
+
+MCP compliance requirements are documented in docs/ai-artifacts/05-mcp-integration.md. Refer to that document for:
+
+- Protocol version requirements (2025-11-25)
+- Transport specifications and compliance status
+- Security and tooling details
+
+### Proto API Structure
+
+- **Path:** Proto files MUST be located at `proto/macosusesdk/v1/` and mirror package structure.
+- **Common Types:** Use `proto/macosusesdk/type` for shared definitions.
+- **Separation:** Resource definitions MUST be in separate files from service definitions.
+- **Naming:** Follow https://google.aip.dev/121, 190, and 191.
+- **Linting:** Use `buf` for generation but `api-linter` (Google's linter) for design validation.
+
+### Google API Linter Configuration
+
+- `api-linter` MUST be run via a dedicated Go module in `hack/google-api-linter/`.
+- Logic MUST be encapsulated in `./hack/google-api-linter.sh` (executable via `gmake`).
+- Configuration MUST be in `./google-api-linter.yaml` with:
+  ```yaml
+  ---
+  - included_paths:
+      - 'google/**/*.proto'
+    disabled_rules:
+      - 'all'
+  ```
+- You MUST NOT ignore linting for anything except `googleapis` protos.
+
+### CI/CD Workflows
+
+- MUST use reusable workflow patterns (`workflow_call`).
+- `ci.yaml` is the entry point; individual workflows must not have independent triggers.
+- Scripts MUST NOT use `set -e`; use explicit chaining (`&&`) or condition checks.

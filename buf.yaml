@@ -11,6 +11,9 @@ lint:
     - RPC_RESPONSE_STANDARD_NAME
     - RPC_REQUEST_RESPONSE_UNIQUE
     - SERVICE_SUFFIX
+    # Allow unused import of error_details.proto - it's needed to generate
+    # Swift code for RPCErrorHelpers.swift (AIP-193 ErrorInfo support)
+    - IMPORT_USED
 breaking:
   use:
     - FILE

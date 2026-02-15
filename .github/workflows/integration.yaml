@@ -1,0 +1,71 @@
+# Integration tests workflow
+# Runs integration tests that require macOS accessibility permissions.
+# Must run on a self-hosted runner with accessibility permissions granted.
+name: Integration Tests
+on:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  integration:
+    runs-on: self-hosted
+    # Labels for self-hosted macOS runner with accessibility permissions
+    # Runner must have:
+    # - macOS 14+ (Sonoma or later)
+    # - Screen Recording & Accessibility permissions for Terminal/runner process
+    # - Xcode 16+ installed
+    permissions:
+      contents: read
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - name: Select Latest Stable Xcode
+        shell: sh
+        run: |-
+          echo "Scanning for valid Xcode installations..." &&
+          LATEST_XCODE="" &&
+          for path in /Applications/Xcode_*.app; do
+            [ -e "$path" ] || continue
+            [ -L "$path" ] && echo "Skipping symlink: $path" && continue
+            [ -d "$path" ] || continue
+            base_name="${path##*/}"
+            if echo "$base_name" | grep -qE "^Xcode_[0-9]+(\.[0-9]+)*\.app$"; then
+              LATEST_XCODE="$path"
+            else
+              echo "Skipping non-standard naming: $base_name"
+            fi
+          done &&
+          if [ -z "$LATEST_XCODE" ]; then
+            echo "::warning::No Xcode_*.app found, using default Xcode"
+            LATEST_XCODE="$(xcode-select -p | sed 's|/Contents/Developer||')"
+          fi &&
+          echo "Selected: $LATEST_XCODE" &&
+          DEV_DIR="$LATEST_XCODE/Contents/Developer" &&
+          if [ ! -d "$DEV_DIR" ]; then
+             echo "::error::The selected Xcode app appears corrupted (missing Contents/Developer)."
+             exit 1
+          fi &&
+          echo "DEVELOPER_DIR=$DEV_DIR" >>"$GITHUB_ENV"
+      - name: Verify Xcode and Swift versions
+        run: |-
+          xcode_select_output="$(xcode-select -p)" &&
+          swift_version_output="$(swift --version)" &&
+          echo "::notice::Using Xcode path: $xcode_select_output; Swift version: $swift_version_output"
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 'stable'
+      - name: Verify accessibility permissions
+        run: |-
+          # Check if we can query accessibility, this will fail if permissions not granted
+          echo "Checking accessibility permissions..." &&
+          osascript -e 'tell application "System Events" to get name of first process' &&
+          echo "::notice::Accessibility permissions verified"
+      - name: Build Swift server
+        run: |-
+          cd Server && swift build -c release
+      - name: Run integration tests
+        run: |-
+          gmake go.test.integration GO_TEST_FLAGS="-v -timeout=15m -count=1"
+        env:
+          # Integration tests may need longer timeouts
+          GRPC_GO_LOG_SEVERITY_LEVEL: "warning"

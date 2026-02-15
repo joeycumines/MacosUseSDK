@@ -366,6 +366,148 @@ func TestHandleOpenApplication_OperationError(t *testing.T) {
 	}
 }
 
+func TestHandleOpenApplication_BackgroundTrue_ForwardedToProto(t *testing.T) {
+	openResp := &pb.OpenApplicationResponse{
+		Application: &pb.Application{
+			Name:        "applications/12345",
+			DisplayName: "Calculator",
+			Pid:         12345,
+		},
+	}
+	respAny, err := anypb.New(openResp)
+	if err != nil {
+		t.Fatalf("failed to create Any: %v", err)
+	}
+
+	var capturedBackground bool
+	mockClient := &mockApplicationClient{
+		openApplicationFunc: func(ctx context.Context, req *pb.OpenApplicationRequest) (*longrunningpb.Operation, error) {
+			capturedBackground = req.Background
+			return &longrunningpb.Operation{
+				Name:   "operations/open-bg",
+				Done:   true,
+				Result: &longrunningpb.Operation_Response{Response: respAny},
+			}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "open_application",
+		Arguments: json.RawMessage(`{"id": "Calculator", "background": true}`),
+	}
+
+	result, err := server.handleOpenApplication(call)
+
+	if err != nil {
+		t.Fatalf("handleOpenApplication returned Go error: %v", err)
+	}
+	if result.IsError {
+		t.Errorf("result.IsError = true, want false: %s", result.Content[0].Text)
+	}
+	if !capturedBackground {
+		t.Error("expected background=true to be forwarded to proto request, got false")
+	}
+}
+
+func TestHandleOpenApplication_BackgroundFalse_ForwardedToProto(t *testing.T) {
+	openResp := &pb.OpenApplicationResponse{
+		Application: &pb.Application{
+			Name:        "applications/12345",
+			DisplayName: "Calculator",
+			Pid:         12345,
+		},
+	}
+	respAny, err := anypb.New(openResp)
+	if err != nil {
+		t.Fatalf("failed to create Any: %v", err)
+	}
+
+	var capturedBackground bool
+	var backgroundWasSet bool
+	mockClient := &mockApplicationClient{
+		openApplicationFunc: func(ctx context.Context, req *pb.OpenApplicationRequest) (*longrunningpb.Operation, error) {
+			capturedBackground = req.Background
+			backgroundWasSet = true
+			return &longrunningpb.Operation{
+				Name:   "operations/open-fg",
+				Done:   true,
+				Result: &longrunningpb.Operation_Response{Response: respAny},
+			}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "open_application",
+		Arguments: json.RawMessage(`{"id": "Calculator", "background": false}`),
+	}
+
+	result, err := server.handleOpenApplication(call)
+
+	if err != nil {
+		t.Fatalf("handleOpenApplication returned Go error: %v", err)
+	}
+	if result.IsError {
+		t.Errorf("result.IsError = true, want false: %s", result.Content[0].Text)
+	}
+	if !backgroundWasSet {
+		t.Fatal("mock was not called")
+	}
+	if capturedBackground {
+		t.Error("expected background=false to be forwarded to proto request, got true")
+	}
+}
+
+func TestHandleOpenApplication_BackgroundMissing_DefaultsToFalse(t *testing.T) {
+	openResp := &pb.OpenApplicationResponse{
+		Application: &pb.Application{
+			Name:        "applications/12345",
+			DisplayName: "Calculator",
+			Pid:         12345,
+		},
+	}
+	respAny, err := anypb.New(openResp)
+	if err != nil {
+		t.Fatalf("failed to create Any: %v", err)
+	}
+
+	var capturedBackground bool
+	var backgroundWasSet bool
+	mockClient := &mockApplicationClient{
+		openApplicationFunc: func(ctx context.Context, req *pb.OpenApplicationRequest) (*longrunningpb.Operation, error) {
+			capturedBackground = req.Background
+			backgroundWasSet = true
+			return &longrunningpb.Operation{
+				Name:   "operations/open-default",
+				Done:   true,
+				Result: &longrunningpb.Operation_Response{Response: respAny},
+			}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "open_application",
+		Arguments: json.RawMessage(`{"id": "Calculator"}`), // No background field
+	}
+
+	result, err := server.handleOpenApplication(call)
+
+	if err != nil {
+		t.Fatalf("handleOpenApplication returned Go error: %v", err)
+	}
+	if result.IsError {
+		t.Errorf("result.IsError = true, want false: %s", result.Content[0].Text)
+	}
+	if !backgroundWasSet {
+		t.Fatal("mock was not called")
+	}
+	if capturedBackground {
+		t.Error("expected background to default to false when not specified, got true")
+	}
+}
+
 // ============================================================================
 // handleListApplications Tests
 // ============================================================================

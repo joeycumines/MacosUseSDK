@@ -11,6 +11,7 @@
 package _type
 
 import (
+	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -490,7 +491,7 @@ var File_macosusesdk_type_selector_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_type_selector_proto_rawDesc = "" +
 	"\n" +
-	"\x1fmacosusesdk/type/selector.proto\x12\x10macosusesdk.type\"\xdc\x02\n" +
+	"\x1fmacosusesdk/type/selector.proto\x12\x10macosusesdk.type\x1a\x1fgoogle/api/field_behavior.proto\"\xdc\x02\n" +
 	"\x0fElementSelector\x12\x14\n" +
 	"\x04role\x18\x01 \x01(\tH\x00R\x04role\x12\x14\n" +
 	"\x04text\x18\x02 \x01(\tH\x00R\x04text\x12%\n" +
@@ -503,21 +504,21 @@ const file_macosusesdk_type_selector_proto_rawDesc = "" +
 	"attributes\x12@\n" +
 	"\bcompound\x18\a \x01(\v2\".macosusesdk.type.CompoundSelectorH\x00R\bcompoundB\n" +
 	"\n" +
-	"\bcriteria\"L\n" +
-	"\x10PositionSelector\x12\f\n" +
-	"\x01x\x18\x01 \x01(\x01R\x01x\x12\f\n" +
-	"\x01y\x18\x02 \x01(\x01R\x01y\x12\x1c\n" +
-	"\ttolerance\x18\x03 \x01(\x01R\ttolerance\"\xa7\x01\n" +
-	"\x11AttributeSelector\x12S\n" +
+	"\bcriteria\"[\n" +
+	"\x10PositionSelector\x12\x11\n" +
+	"\x01x\x18\x01 \x01(\x01B\x03\xe0A\x02R\x01x\x12\x11\n" +
+	"\x01y\x18\x02 \x01(\x01B\x03\xe0A\x02R\x01y\x12!\n" +
+	"\ttolerance\x18\x03 \x01(\x01B\x03\xe0A\x01R\ttolerance\"\xac\x01\n" +
+	"\x11AttributeSelector\x12X\n" +
 	"\n" +
-	"attributes\x18\x01 \x03(\v23.macosusesdk.type.AttributeSelector.AttributesEntryR\n" +
+	"attributes\x18\x01 \x03(\v23.macosusesdk.type.AttributeSelector.AttributesEntryB\x03\xe0A\x02R\n" +
 	"attributes\x1a=\n" +
 	"\x0fAttributesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xf7\x01\n" +
-	"\x10CompoundSelector\x12G\n" +
-	"\boperator\x18\x01 \x01(\x0e2+.macosusesdk.type.CompoundSelector.OperatorR\boperator\x12?\n" +
-	"\tselectors\x18\x02 \x03(\v2!.macosusesdk.type.ElementSelectorR\tselectors\"Y\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x81\x02\n" +
+	"\x10CompoundSelector\x12L\n" +
+	"\boperator\x18\x01 \x01(\x0e2+.macosusesdk.type.CompoundSelector.OperatorB\x03\xe0A\x02R\boperator\x12D\n" +
+	"\tselectors\x18\x02 \x03(\v2!.macosusesdk.type.ElementSelectorB\x03\xe0A\x02R\tselectors\"Y\n" +
 	"\bOperator\x12\x18\n" +
 	"\x14OPERATOR_UNSPECIFIED\x10\x00\x12\x10\n" +
 	"\fOPERATOR_AND\x10\x01\x12\x0f\n" +

@@ -478,7 +478,7 @@ func TestErrorScenarios_InvalidInput(t *testing.T) {
 	// Test cases for invalid input
 	testCases := []struct {
 		name        string
-		request     interface{}
+		request     any
 		description string
 		expectError bool
 	}{

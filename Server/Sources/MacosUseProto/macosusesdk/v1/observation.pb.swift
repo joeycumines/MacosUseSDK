@@ -142,6 +142,11 @@ public struct Macosusesdk_V1_Observation: Sendable {
   /// Clears the value of `filter`. Subsequent reads from it will return its default value.
   public mutating func clearFilter() {self._filter = nil}
 
+  /// Whether observation polling should activate (bring to foreground) the
+  /// target application on each poll cycle. When false (the default), polling
+  /// is performed passively without disturbing window ordering.
+  public var activate: Bool = false
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// State of an observation.
@@ -600,7 +605,7 @@ extension Macosusesdk_V1_ObservationType: SwiftProtobuf._ProtoNameProviding {
 
 extension Macosusesdk_V1_Observation: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Observation"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}type\0\u{1}state\0\u{3}create_time\0\u{3}start_time\0\u{3}end_time\0\u{1}filter\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}type\0\u{1}state\0\u{3}create_time\0\u{3}start_time\0\u{3}end_time\0\u{1}filter\0\u{1}activate\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -615,6 +620,7 @@ extension Macosusesdk_V1_Observation: SwiftProtobuf.Message, SwiftProtobuf._Mess
       case 5: try { try decoder.decodeSingularMessageField(value: &self._startTime) }()
       case 6: try { try decoder.decodeSingularMessageField(value: &self._endTime) }()
       case 7: try { try decoder.decodeSingularMessageField(value: &self._filter) }()
+      case 8: try { try decoder.decodeSingularBoolField(value: &self.activate) }()
       default: break
       }
     }
@@ -646,6 +652,9 @@ extension Macosusesdk_V1_Observation: SwiftProtobuf.Message, SwiftProtobuf._Mess
     try { if let v = self._filter {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
     } }()
+    if self.activate != false {
+      try visitor.visitSingularBoolField(value: self.activate, fieldNumber: 8)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -657,6 +666,7 @@ extension Macosusesdk_V1_Observation: SwiftProtobuf.Message, SwiftProtobuf._Mess
     if lhs._startTime != rhs._startTime {return false}
     if lhs._endTime != rhs._endTime {return false}
     if lhs._filter != rhs._filter {return false}
+    if lhs.activate != rhs.activate {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
