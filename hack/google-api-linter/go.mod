@@ -1,6 +1,6 @@
 module google-api-linter
 
-go 1.26
+go 1.26.0
 
 tool github.com/googleapis/api-linter/cmd/api-linter
 
