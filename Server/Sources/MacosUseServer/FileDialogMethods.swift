@@ -49,6 +49,15 @@ extension MacosUseService {
         let req = request.message
         Self.logger.info("automateSaveFileDialog called")
 
+        // Validate filePath is not empty
+        guard !req.filePath.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "file_path is required",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "file_path",
+            )
+        }
+
         do {
             let savedPath = try await FileDialogAutomation.shared.automateSaveFileDialog(
                 filePath: req.filePath,
@@ -83,6 +92,15 @@ extension MacosUseService {
         let req = request.message
         Self.logger.info("selectFile called")
 
+        // Validate filePath is not empty
+        guard !req.filePath.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "file_path is required",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "file_path",
+            )
+        }
+
         do {
             let selectedPath = try await FileDialogAutomation.shared.selectFile(
                 filePath: req.filePath,
@@ -114,6 +132,15 @@ extension MacosUseService {
     ) async throws -> ServerResponse<Macosusesdk_V1_SelectDirectoryResponse> {
         let req = request.message
         Self.logger.info("selectDirectory called")
+
+        // Validate directoryPath is not empty
+        guard !req.directoryPath.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "directory_path is required",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "directory_path",
+            )
+        }
 
         do {
             let (selectedPath, wasCreated) = try await FileDialogAutomation.shared.selectDirectory(
@@ -150,19 +177,29 @@ extension MacosUseService {
 
         // Validate inputs
         guard !req.filePaths.isEmpty else {
-            let response = Macosusesdk_V1_DragFilesResponse.with {
-                $0.success = false
-                $0.error = "At least one file path is required"
-            }
-            return ServerResponse(message: response)
+            throw RPCErrorHelpers.validationError(
+                message: "file_paths is required (at least one file path)",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "file_paths",
+            )
         }
 
         guard !req.targetElementID.isEmpty else {
-            let response = Macosusesdk_V1_DragFilesResponse.with {
-                $0.success = false
-                $0.error = "Target element ID is required"
-            }
-            return ServerResponse(message: response)
+            throw RPCErrorHelpers.validationError(
+                message: "target_element_id is required",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "target_element_id",
+            )
+        }
+
+        // Validate duration is finite and non-negative
+        guard req.duration.isFinite, req.duration >= 0 else {
+            throw RPCErrorHelpers.validationError(
+                message: "duration must be a finite non-negative number",
+                reason: "INVALID_DIMENSION",
+                field: "duration",
+                value: String(req.duration),
+            )
         }
 
         // Get target element from registry

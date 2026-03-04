@@ -231,7 +231,8 @@ struct ScreenshotCapture {
     }
 
     /// Extract text from a CGImage using Vision framework.
-    private static func extractText(from cgImage: CGImage) throws -> String {
+    /// Note: Internal visibility to allow unit testing of OCR functionality.
+    static func extractText(from cgImage: CGImage) throws -> String {
         let requestHandler = VNImageRequestHandler(cgImage: cgImage, options: [:])
         let request = VNRecognizeTextRequest()
 
