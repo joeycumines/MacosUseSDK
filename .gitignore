@@ -27,9 +27,7 @@ coverage.lcov
 /.github/copilot-instructions.md
 /.claude/agents
 /.github/agents
-/.claude/skills
-!/.claude/skills/blueprint-json
-!/.claude/skills/changelog-md
-!/.claude/skills/git-commit
-!/.claude/skills/solution-analysis-master
-!/.claude/skills/strict-review-gate
+/.claude/skills/mcp-builder
+/.claude/skills/skill-database-go
+/.claude/skills/slopless-researcher
+/.claude/skills/takumi-prompting
