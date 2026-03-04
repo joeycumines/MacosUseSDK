@@ -4,6 +4,9 @@ disabled_rules:
   - opening_brace
   # conflict w/ generated code
   - type_name
+  # force_cast is used intentionally in low-level accessibility API code
+  - force_cast
+  - force_try
   # the bin of shame - if you consider these worthwhile consider yourself judged
   - todo
   - file_length

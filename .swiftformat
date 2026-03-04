@@ -1,0 +1,6 @@
+# SwiftFormat Configuration
+
+# Disable redundantSelf rule because Swift 6's strict concurrency checking
+# requires explicit self in closures when referencing instance properties
+# in OSLog interpolation (privacy: annotations create implicit closures).
+--disable redundantSelf
