@@ -131,7 +131,7 @@ The MCP server supports two transport modes:
 ### Application Operations (4 tools)
 | Tool | Description | Key Parameters |
 |------|-------------|----------------|
-| `open_application` | Open an application | `id` |
+| `open_application` | Open an application | `id`, `background` |
 | `list_applications` | List tracked applications | `page_size`, `page_token` |
 | `get_application` | Get application details | `name` |
 | `delete_application` | Stop tracking application | `name` |

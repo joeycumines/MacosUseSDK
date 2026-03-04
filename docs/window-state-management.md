@@ -325,6 +325,76 @@ A more mathematically rigorous mapping between CG and AX windows via a **Hungari
 
 -----
 
+## 8\. Passive Observation and the Activation Cycle
+
+### 8.1 The Activation Cycle Problem
+
+macOS sends `NSWorkspace.didActivateApplicationNotification` and `didDeactivateApplicationNotification` whenever an application gains or loses focus. Prior to the passive-observation fix, `traverseAccessibilityTree` unconditionally called `NSRunningApplication.activate()` before every traversal. This created a destructive feedback loop:
+
+1.  The `ObservationManager` polls `traverseAccessibilityTree` on a timer.
+2.  Each poll calls `app.activate()`, bringing the target app to the foreground.
+3.  macOS fires `didActivateApplication` for the target, `didDeactivateApplication` for the previously active app.
+4.  The `ChangeDetector` receives these notifications and may forward them as change events.
+5.  The observation loop re-fires, starting another poll → another `activate()` call → more notifications.
+
+This cycle causes **focus stealing** (the user's foreground app keeps losing focus) and **notification storms** (hundreds of activation events per second).
+
+### 8.2 Passive Observation Mode (Default)
+
+The `traverseAccessibilityTree` function accepts a `shouldActivate` parameter that defaults to `false`:
+
+```swift
+public func traverseAccessibilityTree(
+    pid: Int32,
+    onlyVisibleElements: Bool = false,
+    shouldActivate: Bool = false
+) throws -> ResponseData
+```
+
+When `shouldActivate` is `false` (the default), **no `app.activate()` call is made**. AX APIs return fresh data without requiring the target app to be in the foreground. This is the mode used by `ObservationManager` for all polling:
+
+```swift
+// ObservationManager.swift — explicit shouldActivate: false
+let result = try await AutomationCoordinator.shared.handleTraverse(
+    pid: pid, visibleOnly: filter.visibleOnly, shouldActivate: false
+)
+```
+
+### 8.3 When `shouldActivate: true` Is Needed
+
+Set `shouldActivate: true` only when the caller explicitly intends to bring the app to the foreground — i.e., the activation is a deliberate user action, not an internal polling side-effect. Examples:
+
+| Scenario | `shouldActivate` |
+| :--- | :--- |
+| Observation polling (background) | `false` |
+| Accessibility tree traversal (background tool call) | `false` |
+| Interactive element action requiring foreground | `true` (via caller) |
+
+> **Note:** Currently no production code path passes `shouldActivate: true` through `handleTraverse`. The parameter exists to allow future RPCs (e.g., a "FocusWindow" RPC) to opt-in to activation when the user explicitly requests it.
+
+### 8.4 Circuit Breaker in ChangeDetector
+
+Even with passive observation, external events or edge cases could trigger rapid activation storms. The `ChangeDetector` implements a per-PID circuit breaker to cap activation event throughput:
+
+- **Threshold:** 5 activation events per PID within a 1-second rolling window.
+- **Behavior:** When the threshold is exceeded, further activation/deactivation events for that PID are silently suppressed until the window expires.
+- **Reset:** The rolling window resets on the next event after the window has elapsed.
+
+The circuit breaker operates in `shouldCircuitBreak(pid:)` and is checked in both `handleAppActivated` and `handleAppDeactivated`.
+
+### 8.5 Self-Activation Tracking
+
+When the SDK does activate an app (because the caller passed `shouldActivate: true`), the resulting workspace notifications must not be treated as user-initiated events. The `AutomationCoordinator.handleTraverse()` calls `ChangeDetector.shared.markSDKActivation(pid:)` *before* the activation occurs, and the `ChangeDetector` uses this state to suppress the resulting notifications:
+
+- **`markSDKActivation(pid:)`**: Records a timestamp for the PID before activation. Called from `AutomationCoordinator.handleTraverse()` when `shouldActivate: true`.
+- **`isSDKActivation(pid:)`**: Returns `true` if the *specific PID* was activated by the SDK within the last 500ms. Used by the activation handler.
+- **`hasRecentSDKActivation()`**: Returns `true` if *any* PID was SDK-activated within the last 500ms. Used by the deactivation handler, because when the SDK activates app B, the *previously active* app A receives the deactivation—and its PID is A, not B.
+- **Suppression:** `handleAppActivated` checks `isSDKActivation(pid:)` for direct match. `handleAppDeactivated` checks `hasRecentSDKActivation()` to catch the other side of an SDK-triggered focus change.
+
+This prevents SDK-initiated focus changes from being echoed back as change events to observation subscribers.
+
+-----
+
 ## 9\. Conclusion
 
 This implementation accepts the reality of macOS's fractured windowing APIs. By using Quartz for the broad view and AX for the detailed view—and bridging them with rigorous heuristics and private APIs—we achieve a system that is performant for enumeration yet correct for manipulation. Any deviation from the "Hybrid Authority" model described here risks re-introducing the split-brain state inconsistencies this architecture was designed to solve.
