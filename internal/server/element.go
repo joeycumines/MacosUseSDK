@@ -22,8 +22,8 @@ func (s *MCPServer) handleFindElements(call *ToolCall) (*ToolResult, error) {
 	defer cancel()
 
 	var params struct {
-		Selector map[string]interface{} `json:"selector"`
-		Parent   string                 `json:"parent"`
+		Selector map[string]any `json:"selector"`
+		Parent   string         `json:"parent"`
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
@@ -52,10 +52,7 @@ func (s *MCPServer) handleFindElements(call *ToolCall) (*ToolResult, error) {
 		Selector: selector,
 	})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to find elements: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "find_elements"), nil
 	}
 
 	if len(resp.Elements) == 0 {
@@ -110,10 +107,7 @@ func (s *MCPServer) handleGetElement(call *ToolCall) (*ToolResult, error) {
 
 	elem, err := s.client.GetElement(ctx, &pb.GetElementRequest{Name: params.Name})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to get element: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "get_element"), nil
 	}
 
 	// Format element properties - Element has x,y,width,height directly, not Bounds
@@ -173,16 +167,13 @@ func (s *MCPServer) handleClickElement(call *ToolCall) (*ToolResult, error) {
 		Target: &pb.ClickElementRequest_ElementId{ElementId: params.ElementID},
 	})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to click element: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "click_element"), nil
 	}
 
 	if !resp.Success {
 		return &ToolResult{
 			IsError: true,
-			Content: []Content{{Type: "text", Text: "failed to click: operation was not successful"}},
+			Content: []Content{{Type: "text", Text: "Error in click_element: operation was not successful"}},
 		}, nil
 	}
 
@@ -230,16 +221,13 @@ func (s *MCPServer) handleWriteElementValue(call *ToolCall) (*ToolResult, error)
 		Value:  params.Value,
 	})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to write element value: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "write_element_value"), nil
 	}
 
 	if !resp.Success {
 		return &ToolResult{
 			IsError: true,
-			Content: []Content{{Type: "text", Text: "failed to write value: operation was not successful"}},
+			Content: []Content{{Type: "text", Text: "Error in write_element_value: operation was not successful"}},
 		}, nil
 	}
 
@@ -289,10 +277,7 @@ func (s *MCPServer) handlePerformElementAction(call *ToolCall) (*ToolResult, err
 		Action: params.Action,
 	})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to perform action: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "perform_element_action"), nil
 	}
 
 	if !resp.Success {
@@ -318,6 +303,7 @@ func (s *MCPServer) handleTraverseAccessibility(call *ToolCall) (*ToolResult, er
 	var params struct {
 		Name        string `json:"name"`
 		VisibleOnly bool   `json:"visible_only"`
+		Activate    bool   `json:"activate"`
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
@@ -337,12 +323,10 @@ func (s *MCPServer) handleTraverseAccessibility(call *ToolCall) (*ToolResult, er
 	resp, err := s.client.TraverseAccessibility(ctx, &pb.TraverseAccessibilityRequest{
 		Name:        params.Name,
 		VisibleOnly: params.VisibleOnly,
+		Activate:    params.Activate,
 	})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to traverse accessibility tree: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "traverse_accessibility"), nil
 	}
 
 	if len(resp.Elements) == 0 {
@@ -387,12 +371,12 @@ func (s *MCPServer) handleFindRegionElements(call *ToolCall) (*ToolResult, error
 	defer cancel()
 
 	var params struct {
-		Selector map[string]interface{} `json:"selector"`
-		Parent   string                 `json:"parent"`
-		X        float64                `json:"x"`
-		Y        float64                `json:"y"`
-		Width    float64                `json:"width"`
-		Height   float64                `json:"height"`
+		Selector map[string]any `json:"selector"`
+		Parent   string         `json:"parent"`
+		X        float64        `json:"x"`
+		Y        float64        `json:"y"`
+		Width    float64        `json:"width"`
+		Height   float64        `json:"height"`
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
@@ -434,10 +418,7 @@ func (s *MCPServer) handleFindRegionElements(call *ToolCall) (*ToolResult, error
 		Selector: selector,
 	})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to find elements in region: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "find_region_elements"), nil
 	}
 
 	if len(resp.Elements) == 0 {
@@ -476,10 +457,10 @@ func (s *MCPServer) handleWaitElement(call *ToolCall) (*ToolResult, error) {
 	defer cancel()
 
 	var params struct {
-		Selector     map[string]interface{} `json:"selector"`
-		Parent       string                 `json:"parent"`
-		Timeout      float64                `json:"timeout"`
-		PollInterval float64                `json:"poll_interval"`
+		Selector     map[string]any `json:"selector"`
+		Parent       string         `json:"parent"`
+		Timeout      float64        `json:"timeout"`
+		PollInterval float64        `json:"poll_interval"`
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
@@ -534,10 +515,7 @@ func (s *MCPServer) handleWaitElement(call *ToolCall) (*ToolResult, error) {
 		PollInterval: pollInterval,
 	})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to start wait operation: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "wait_element"), nil
 	}
 
 	// Poll operation until complete or context expires
@@ -662,10 +640,7 @@ func (s *MCPServer) handleWaitElementState(call *ToolCall) (*ToolResult, error) 
 		PollInterval: pollInterval,
 	})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to start wait operation: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "wait_element_state"), nil
 	}
 
 	// Poll operation until complete
@@ -746,10 +721,7 @@ func (s *MCPServer) handleGetElementActions(call *ToolCall) (*ToolResult, error)
 		Name: params.Name,
 	})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to get element actions: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "get_element_actions"), nil
 	}
 
 	if len(resp.Actions) == 0 {
@@ -803,10 +775,7 @@ func (s *MCPServer) handleWatchAccessibility(call *ToolCall) (*ToolResult, error
 		VisibleOnly:  params.VisibleOnly,
 	})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to start accessibility watch: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "watch_accessibility"), nil
 	}
 
 	// Receive first message to confirm stream is active

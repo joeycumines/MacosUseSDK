@@ -125,7 +125,7 @@ func redactArguments(args json.RawMessage) string {
 		return "{}"
 	}
 
-	var parsed map[string]interface{}
+	var parsed map[string]any
 	if err := json.Unmarshal(args, &parsed); err != nil {
 		// Can't parse, return placeholder
 		return "[unparseable]"
@@ -141,7 +141,7 @@ func redactArguments(args json.RawMessage) string {
 }
 
 // redactMapValues recursively redacts sensitive values in a map.
-func redactMapValues(m map[string]interface{}) {
+func redactMapValues(m map[string]any) {
 	for key, value := range m {
 		lowerKey := strings.ToLower(key)
 
@@ -160,14 +160,14 @@ func redactMapValues(m map[string]interface{}) {
 		}
 
 		// Recurse into nested maps
-		if nested, ok := value.(map[string]interface{}); ok {
+		if nested, ok := value.(map[string]any); ok {
 			redactMapValues(nested)
 		}
 
 		// Handle arrays
-		if arr, ok := value.([]interface{}); ok {
+		if arr, ok := value.([]any); ok {
 			for _, item := range arr {
-				if nestedMap, ok := item.(map[string]interface{}); ok {
+				if nestedMap, ok := item.(map[string]any); ok {
 					redactMapValues(nestedMap)
 				}
 			}
