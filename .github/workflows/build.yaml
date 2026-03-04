@@ -10,40 +10,47 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v6
+      # Cache Swift Package Manager
+      - name: Cache Swift packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.swiftpm
+            ~/Library/Caches/org.swift.swiftpm
+            .build
+            Server/.build
+          key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved', 'Server/Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-
       - name: Select Latest Stable Xcode
         shell: sh
         run: |-
-          set -eu || exit 1
-          echo "Scanning for valid Xcode installations..."
-          get_valid_xcodes() {
-            for path in /Applications/Xcode_*.app; do
-              [ -e "$path" ] || continue
-              if [ -L "$path" ]; then
-                echo "Skipping symlink: $path" >&2
-                continue
-              fi
-              [ -d "$path" ] || continue
-              base_name="${path##*/}"
-              if echo "$base_name" | grep -qE "^Xcode_[0-9]+(\.[0-9]+)*\.app$"; then
-                echo "$path"
-              else
-                echo "Skipping non-standard naming: $base_name" >&2
-              fi
-            done
-          }
-          LATEST_XCODE="$(get_valid_xcodes)"
-          LATEST_XCODE="$(echo "$LATEST_XCODE" | sort -V)"
-          LATEST_XCODE="$(echo "$LATEST_XCODE" | tail -n 1)"
+          echo "Scanning for valid Xcode installations..." &&
+          LATEST_XCODE="" &&
+          for path in /Applications/Xcode_*.app; do
+            [ -e "$path" ] || continue
+            if [ -L "$path" ]; then
+              echo "Skipping symlink: $path" >&2
+              continue
+            fi
+            [ -d "$path" ] || continue
+            base_name="${path##*/}"
+            if echo "$base_name" | grep -qE "^Xcode_[0-9]+(\.[0-9]+)*\.app$"; then
+              LATEST_XCODE="$path"
+            else
+              echo "Skipping non-standard naming: $base_name" >&2
+            fi
+          done &&
           if [ -z "$LATEST_XCODE" ]; then
             echo "::error::No valid, non-symlink, stable Xcode installation found matching criteria."
             exit 1
-          fi
-          echo "Selected: $LATEST_XCODE"
-          DEV_DIR="$LATEST_XCODE/Contents/Developer"
+          fi &&
+          echo "Selected: $LATEST_XCODE" &&
+          DEV_DIR="$LATEST_XCODE/Contents/Developer" &&
           if [ ! -d "$DEV_DIR" ]; then
              echo "::error::The selected Xcode app appears corrupted (missing Contents/Developer)."
              exit 1
-          fi
+          fi &&
           echo "DEVELOPER_DIR=$DEV_DIR" >>"$GITHUB_ENV"
       - name: Verify Xcode and Swift versions
         run: |-
@@ -53,13 +60,66 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version: 'stable'
+          cache: true
+          cache-dependency-path: |
+            go.sum
+            integration/go.sum
+            hack/google-api-linter/go.sum
       - uses: bufbuild/buf-action@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           setup_only: true
+      # Cache buf modules
+      - name: Cache buf modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/buf
+          key: ${{ runner.os }}-buf-${{ hashFiles('buf.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-buf-
       - name: Install homebrew dependencies
         run: |-
           brew install swiftformat swiftlint make
+      - name: Lint protos (buf lint)
+        run: |-
+          buf lint --error-format=text .
+      - name: Lint protos (google-api-linter)
+        run: |-
+          ./hack/google-api-linter.sh
       - name: Run a full build
         run: |-
           gmake -j "$(sysctl -n hw.ncpu)"
+      - name: Go test coverage
+        run: |-
+          echo "Running Go tests with coverage..." &&
+          go test -coverprofile=coverage.out ./... ./internal/... &&
+          (cd integration && go test -coverprofile=integration_coverage.out ./...) &&
+          echo "::group::Coverage Summary" &&
+          go tool cover -func=coverage.out | tail -1 &&
+          echo "::endgroup::" &&
+          coverage_pct=$(go tool cover -func=coverage.out | tail -1 | awk '{print $NF}' | sed 's/%//') &&
+          echo "Coverage: ${coverage_pct}%" &&
+          threshold=70 &&
+          result=$(echo "$coverage_pct >= $threshold" | bc -l) &&
+          if [ "$result" -eq 0 ]; then
+            echo "::error::Coverage ${coverage_pct}% is below threshold ${threshold}%"
+            exit 1
+          fi &&
+          echo "::notice::Coverage ${coverage_pct}% meets threshold ${threshold}%"
+      - name: Swift test coverage
+        run: |-
+          echo "Running Swift tests with coverage..." &&
+          swift test --enable-code-coverage &&
+          (cd Server && swift test --enable-code-coverage) &&
+          echo "::group::Swift Coverage Summary" &&
+          if [ -f .build/debug/codecov/*.json ]; then
+            jq -r '.data[0].totals.lines.percent | "SDK Coverage: \(.)%"' .build/debug/codecov/*.json || echo "SDK: coverage extraction failed"
+          else
+            echo "SDK: No coverage file found (may not have test targets)"
+          fi &&
+          if [ -f Server/.build/debug/codecov/*.json ]; then
+            jq -r '.data[0].totals.lines.percent | "Server Coverage: \(.)%"' Server/.build/debug/codecov/*.json || echo "Server: coverage extraction failed"
+          else
+            echo "Server: No coverage file found (may not have test targets)"
+          fi &&
+          echo "::endgroup::"
