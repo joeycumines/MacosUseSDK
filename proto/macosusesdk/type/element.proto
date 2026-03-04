@@ -6,6 +6,8 @@ syntax = "proto3";
 
 package macosusesdk.type;
 
+import "google/api/field_behavior.proto";
+
 option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type;macosusesdktype";
 option java_multiple_files = true;
 option java_outer_classname = "ElementProto";
@@ -14,66 +16,66 @@ option java_package = "com.macosusesdk.type";
 // Represents a UI element from accessibility tree traversal.
 message Element {
   // The accessibility role of the element (e.g., "button", "text field").
-  string role = 1;
+  string role = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Text content of the element, if any.
-  optional string text = 2;
+  optional string text = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // X coordinate of the element's position in Global Display Coordinates (top-left origin, Y increases downward).
-  optional double x = 3;
+  optional double x = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Y coordinate of the element's position in Global Display Coordinates (top-left origin, Y increases downward).
-  optional double y = 4;
+  optional double y = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Width of the element.
-  optional double width = 5;
+  optional double width = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Height of the element.
-  optional double height = 6;
+  optional double height = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Unique identifier for this element within its window/app context.
   // This is a server-generated ephemeral ID that may change between traversals.
-  string element_id = 7;
+  string element_id = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Whether the element is enabled for interaction.
-  optional bool enabled = 8;
+  optional bool enabled = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Whether the element has keyboard focus.
-  optional bool focused = 9;
+  optional bool focused = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Hierarchy path from root to this element (indices at each level).
-  repeated int32 path = 10;
+  repeated int32 path = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Additional accessibility attributes as key-value pairs.
-  map<string, string> attributes = 11;
+  map<string, string> attributes = 11 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Available accessibility actions for this element.
-  repeated string actions = 12;
+  repeated string actions = 12 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Statistics about a traversal operation.
 message TraversalStats {
   // Total number of elements found.
-  int32 count = 1;
+  int32 count = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Number of elements excluded from results.
-  int32 excluded_count = 2;
+  int32 excluded_count = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Number excluded due to not being interactable.
-  int32 excluded_non_interactable = 3;
+  int32 excluded_non_interactable = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Number excluded due to having no text.
-  int32 excluded_no_text = 4;
+  int32 excluded_no_text = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Number of elements with text.
-  int32 text_elements_count = 5;
+  int32 text_elements_count = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Number of elements without text.
-  int32 non_text_elements_count = 6;
+  int32 non_text_elements_count = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Number of visible elements.
-  int32 visible_elements_count = 7;
+  int32 visible_elements_count = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Count of elements by role type.
-  map<string, int32> role_counts = 8;
+  map<string, int32> role_counts = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
