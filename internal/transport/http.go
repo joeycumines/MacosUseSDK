@@ -492,7 +492,7 @@ func writeSSEEvent(w io.Writer, event *SSEEvent) error {
 		return err
 	}
 	// SSE spec: each line of data must be prefixed with "data:"
-	for _, line := range strings.Split(event.Data, "\n") {
+	for line := range strings.SplitSeq(event.Data, "\n") {
 		if _, err := fmt.Fprintf(w, "data: %s\n", line); err != nil {
 			return err
 		}
@@ -510,7 +510,7 @@ func (t *HTTPTransport) handleHealth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]any{
 		"status":      "ok",
 		"clients":     t.clients.Count(),
 		"server_time": time.Now().UTC().Format(time.RFC3339),
@@ -664,6 +664,28 @@ func (t *HTTPTransport) Close() error {
 // IsClosed returns true if the transport has been closed.
 func (t *HTTPTransport) IsClosed() bool {
 	return t.closed.Load()
+}
+
+// BroadcastEvent sends a custom SSE event to all connected clients.
+// The event type is used for client-side filtering (e.g., "observation", "heartbeat").
+// This is used by observation streaming to broadcast events to all SSE clients.
+func (t *HTTPTransport) BroadcastEvent(eventType string, data string) {
+	if t.closed.Load() {
+		return
+	}
+
+	t.clients.Broadcast(&SSEEvent{
+		ID:    fmt.Sprintf("%d", t.eventID.Add(1)),
+		Event: eventType,
+		Data:  data,
+	})
+	t.metrics.RecordSSEEvent()
+}
+
+// ShutdownChan returns a channel that is closed when the transport is shutting down.
+// This allows handlers to detect shutdown and clean up gracefully.
+func (t *HTTPTransport) ShutdownChan() <-chan struct{} {
+	return t.shutdownCh
 }
 
 // Ensure HTTPTransport implements Transport interface
