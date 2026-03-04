@@ -103,11 +103,9 @@ func TestCmdHHiddenStateBehavior(t *testing.T) {
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		checker.run()
-	}()
+	})
 
 	// Sanity checker starts monitoring immediately in background
 
@@ -213,11 +211,9 @@ func TestCmdHHiddenStateBehavior(t *testing.T) {
 		t:       t,
 	}
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		postChecker.run()
-	}()
+	})
 
 	// Post-activation sanity checker monitors in background
 	// Cancel immediately as main test logic has completed

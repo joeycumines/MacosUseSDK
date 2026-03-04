@@ -67,7 +67,7 @@ func TestMCPPaginationTokenOpacity_ListApplications(t *testing.T) {
 	}
 
 	// 3. Token should NOT be JSON
-	var jsonTest interface{}
+	var jsonTest any
 	if json.Unmarshal([]byte(token), &jsonTest) == nil {
 		t.Error("Token appears to be valid JSON - not opaque enough")
 	}
@@ -266,11 +266,4 @@ func TestMCPPaginationTokenOpacity_FabricatedToken(t *testing.T) {
 			}
 		})
 	}
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }

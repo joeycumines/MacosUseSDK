@@ -69,7 +69,7 @@ func TestMCPInitialize_ProtocolVersion(t *testing.T) {
 	var initResult struct {
 		ProtocolVersion string `json:"protocolVersion"`
 		Capabilities    struct {
-			Tools map[string]interface{} `json:"tools"`
+			Tools map[string]any `json:"tools"`
 		} `json:"capabilities"`
 		ServerInfo struct {
 			Name    string `json:"name"`
@@ -142,7 +142,7 @@ func TestMCPNotificationsInitialized_HandledSilently(t *testing.T) {
 	}
 
 	if len(body) > 0 {
-		var response map[string]interface{}
+		var response map[string]any
 		if err := json.Unmarshal(body, &response); err != nil {
 			t.Logf("Server returned non-JSON response (acceptable for notification): %s", string(body))
 		} else {
@@ -283,9 +283,9 @@ func TestMCPToolsList_ReturnsAllTools(t *testing.T) {
 	var response struct {
 		Result struct {
 			Tools []struct {
-				Name        string                 `json:"name"`
-				Description string                 `json:"description"`
-				InputSchema map[string]interface{} `json:"inputSchema"`
+				Name        string         `json:"name"`
+				Description string         `json:"description"`
+				InputSchema map[string]any `json:"inputSchema"`
 			} `json:"tools"`
 		} `json:"result"`
 		Error *struct {
@@ -377,7 +377,7 @@ func createMCPTestHandler(t *testing.T, client pb.MacosUseClient, opsClient long
 			defer cancel()
 			displayInfo := `{"screens":[]}`
 			if resp, err := client.ListDisplays(ctx, &pb.ListDisplaysRequest{}); err == nil && len(resp.Displays) > 0 {
-				screens := make([]map[string]interface{}, 0, len(resp.Displays))
+				screens := make([]map[string]any, 0, len(resp.Displays))
 				for i, d := range resp.Displays {
 					id := "main"
 					if !d.IsMain {
@@ -386,7 +386,7 @@ func createMCPTestHandler(t *testing.T, client pb.MacosUseClient, opsClient long
 							id = "display-" + string(rune('0'+i))
 						}
 					}
-					screens = append(screens, map[string]interface{}{
+					screens = append(screens, map[string]any{
 						"id":            id,
 						"width":         d.Frame.Width,
 						"height":        d.Frame.Height,
@@ -395,7 +395,7 @@ func createMCPTestHandler(t *testing.T, client pb.MacosUseClient, opsClient long
 						"origin_y":      d.Frame.Y,
 					})
 				}
-				if infoBytes, err := json.Marshal(map[string]interface{}{"screens": screens}); err == nil {
+				if infoBytes, err := json.Marshal(map[string]any{"screens": screens}); err == nil {
 					displayInfo = string(infoBytes)
 				}
 			}
@@ -409,7 +409,7 @@ func createMCPTestHandler(t *testing.T, client pb.MacosUseClient, opsClient long
 			return nil, nil
 		case "tools/list":
 			tools := getMCPToolDefinitions()
-			result, _ := json.Marshal(map[string]interface{}{"tools": tools})
+			result, _ := json.Marshal(map[string]any{"tools": tools})
 			return &transport.Message{
 				JSONRPC: "2.0",
 				ID:      msg.ID,
@@ -442,8 +442,8 @@ func createMCPTestHandler(t *testing.T, client pb.MacosUseClient, opsClient long
 				}, nil
 			}
 			result, isError := executeMCPToolCall(client, opsClient, params.Name, params.Arguments)
-			resultMap := map[string]interface{}{
-				"content": []map[string]interface{}{
+			resultMap := map[string]any{
+				"content": []map[string]any{
 					{"type": "text", "text": result},
 				},
 			}
@@ -470,20 +470,20 @@ func createMCPTestHandler(t *testing.T, client pb.MacosUseClient, opsClient long
 }
 
 // getMCPToolDefinitions returns tool definitions for testing
-func getMCPToolDefinitions() []map[string]interface{} {
-	tools := []map[string]interface{}{
-		{"name": "capture_screenshot", "description": "Capture a full screen screenshot", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{}}},
-		{"name": "click", "description": "Click at screen coordinates", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{}, "required": []string{"x", "y"}}},
-		{"name": "type_text", "description": "Type text", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{}, "required": []string{"text"}}},
-		{"name": "press_key", "description": "Press a key", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{}, "required": []string{"key"}}},
-		{"name": "list_windows", "description": "List windows", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{}}},
-		{"name": "list_displays", "description": "List displays", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{}}},
-		{"name": "list_applications", "description": "List applications", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{}}},
-		{"name": "get_clipboard", "description": "Get clipboard", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{}}},
-		{"name": "cursor_position", "description": "Get cursor position", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{}}},
-		{"name": "mouse_move", "description": "Move mouse", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{}, "required": []string{"x", "y"}}},
-		{"name": "scroll", "description": "Scroll", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{}}},
-		{"name": "drag", "description": "Drag", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{}, "required": []string{"start_x", "start_y", "end_x", "end_y"}}},
+func getMCPToolDefinitions() []map[string]any {
+	tools := []map[string]any{
+		{"name": "capture_screenshot", "description": "Capture a full screen screenshot", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
+		{"name": "click", "description": "Click at screen coordinates", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}, "required": []string{"x", "y"}}},
+		{"name": "type_text", "description": "Type text", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}, "required": []string{"text"}}},
+		{"name": "press_key", "description": "Press a key", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}, "required": []string{"key"}}},
+		{"name": "list_windows", "description": "List windows", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
+		{"name": "list_displays", "description": "List displays", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
+		{"name": "list_applications", "description": "List applications", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
+		{"name": "get_clipboard", "description": "Get clipboard", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
+		{"name": "cursor_position", "description": "Get cursor position", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
+		{"name": "mouse_move", "description": "Move mouse", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}, "required": []string{"x", "y"}}},
+		{"name": "scroll", "description": "Scroll", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
+		{"name": "drag", "description": "Drag", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}, "required": []string{"start_x", "start_y", "end_x", "end_y"}}},
 	}
 	// Add remaining tools to reach 77
 	additionalTools := []string{
@@ -505,10 +505,10 @@ func getMCPToolDefinitions() []map[string]interface{} {
 		"capture_window_screenshot", "capture_region_screenshot", "capture_element_screenshot",
 	}
 	for _, name := range additionalTools {
-		tools = append(tools, map[string]interface{}{
+		tools = append(tools, map[string]any{
 			"name":        name,
 			"description": name,
-			"inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{}},
+			"inputSchema": map[string]any{"type": "object", "properties": map[string]any{}},
 		})
 	}
 	return tools
