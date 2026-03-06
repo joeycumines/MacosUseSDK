@@ -74,7 +74,7 @@ export SWIFT_MK_VAR_PREFIX
 
 # determines the output of the debug-vars target
 # N.B. only _defined_ variables will be present in the output
-$(eval $(SWIFT_MK_VAR_PREFIX)DEBUG_VARS ?= ROOT_MAKEFILE PROJECT_ROOT PROJECT_NAME IS_WINDOWS SWIFT_PACKAGE_PATHS SWIFT_PACKAGE_SLUGS SWIFT_PACKAGE_SLUGS_NO_TESTS SWIFT_PACKAGE_SLUGS_EXCL_NO_TESTS SWIFT_PACKAGE_SLUGS_NO_LINT SWIFT_PACKAGE_SLUGS_EXCL_NO_LINT SWIFT_PACKAGE_SLUGS_NO_FORMAT SWIFT_PACKAGE_SLUGS_EXCL_NO_FORMAT SWIFT_PACKAGE_SLUGS_INCL_NO_FORMAT SWIFT_PACKAGE_SLUGS_NO_UPDATE SWIFT_PACKAGE_SLUGS_EXCL_NO_UPDATE SWIFT_TARGET_PREFIX MAKEFILE_TARGET_PREFIXES $$(MAKEFILE_TARGET_PREFIXES) $$(foreach v,CLEAN_PATHS ALL_TARGETS BUILD_TARGETS LINT_TARGETS LINT_FORMAT_TARGETS LINT_STYLE_TARGETS TEST_TARGETS COVER_TARGETS FORMAT_TARGETS FIX_TARGETS UPDATE_TARGETS RESOLVE_TARGETS,$$(SWIFT_MK_VAR_PREFIX)$$v))
+$(eval $(SWIFT_MK_VAR_PREFIX)DEBUG_VARS ?= ROOT_MAKEFILE PROJECT_ROOT PROJECT_NAME IS_WINDOWS SWIFT_PACKAGE_PATHS_EXCLUDE_PATTERNS_DEFAULT SWIFT_PACKAGE_PATHS_EXCLUDE_PATTERNS SWIFT_PACKAGE_PATHS SWIFT_PACKAGE_SLUGS SWIFT_PACKAGE_SLUGS_NO_TESTS SWIFT_PACKAGE_SLUGS_EXCL_NO_TESTS SWIFT_PACKAGE_SLUGS_NO_LINT SWIFT_PACKAGE_SLUGS_EXCL_NO_LINT SWIFT_PACKAGE_SLUGS_NO_FORMAT SWIFT_PACKAGE_SLUGS_EXCL_NO_FORMAT SWIFT_PACKAGE_SLUGS_INCL_NO_FORMAT SWIFT_PACKAGE_SLUGS_NO_UPDATE SWIFT_PACKAGE_SLUGS_EXCL_NO_UPDATE SWIFT_TARGET_PREFIX MAKEFILE_TARGET_PREFIXES $$(MAKEFILE_TARGET_PREFIXES) $$(foreach v,CLEAN_PATHS ALL_TARGETS BUILD_TARGETS LINT_TARGETS LINT_FORMAT_TARGETS LINT_STYLE_TARGETS TEST_TARGETS COVER_TARGETS FORMAT_TARGETS FIX_TARGETS UPDATE_TARGETS RESOLVE_TARGETS,$$(SWIFT_MK_VAR_PREFIX)$$v))
 
 # ---
 
@@ -115,9 +115,10 @@ SWIFTDOC_FLAGS ?= $(_SWIFTDOC_FLAGS)
 # for the tools target
 SWIFT_TOOLS ?= $(SWIFT_TOOLS_DEFAULT)
 # Used to prune _paths_ when searching for packages. Single wildcard (%) supported.
-# May match intermediate directories. The pattern `%/.build` is always applied.
+# May match intermediate directories.
 # Example: %/vendor %/node_modules ./managed-separately
-SWIFT_PACKAGE_PATHS_EXCLUDE_PATTERNS ?=
+SWIFT_PACKAGE_PATHS_EXCLUDE_PATTERNS_DEFAULT ?= %/.build
+SWIFT_PACKAGE_PATHS_EXCLUDE_PATTERNS ?= $(SWIFT_PACKAGE_PATHS_EXCLUDE_PATTERNS_DEFAULT)
 # used to special-case packages for tools which fail if they find no tests
 SWIFT_PACKAGE_SLUGS_NO_TESTS ?=
 # used to exclude packages from the update* targets
@@ -198,7 +199,7 @@ swift_package_path_to_slug = $(call map_value_by_key,$(_SWIFT_PACKAGE_MAP),$1)
 swift_package_slug_to_path = $(call map_key_by_value,$(_SWIFT_PACKAGE_MAP),$1)
 
 # paths formatted like ". ./Sources/MyLib ./Tests/MyLibTests"
-SWIFT_PACKAGE_PATHS := $(patsubst %/Package.swift,%,$(call rwildcard,./,Package.swift,%/.build $(SWIFT_PACKAGE_PATHS_EXCLUDE_PATTERNS)))
+SWIFT_PACKAGE_PATHS := $(patsubst %/Package.swift,%,$(call rwildcard,./,Package.swift,$(SWIFT_PACKAGE_PATHS_EXCLUDE_PATTERNS)))
 # used by swift_package_path_to_slug and swift_package_slug_to_path to lookup an associated path/slug
 _SWIFT_PACKAGE_MAP := $(call map_transform_keys,$(SWIFT_PACKAGE_PATHS),slug_transform)
 # example: root Sources.MyLib Tests.MyLibTests
@@ -227,8 +228,8 @@ _swift_subpackages = $(if $(filter .,$1),$(filter-out .,$(SWIFT_PACKAGE_PATHS)),
 # 3. Return the difference
 swift_package_files = $(strip \
   $(filter-out \
-	$(foreach p,$(call _swift_subpackages,$1),$(call rwildcard,$p/,*.swift,%/.build $(SWIFT_PACKAGE_PATHS_EXCLUDE_PATTERNS))),\
-	$(call rwildcard,$1/,*.swift,%/.build $(SWIFT_PACKAGE_PATHS_EXCLUDE_PATTERNS))\
+	$(foreach p,$(call _swift_subpackages,$1),$(call rwildcard,$p/,*.swift,$(SWIFT_PACKAGE_PATHS_EXCLUDE_PATTERNS))),\
+	$(call rwildcard,$1/,*.swift,$(SWIFT_PACKAGE_PATHS_EXCLUDE_PATTERNS))\
   ))
 
 # ---
