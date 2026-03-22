@@ -25,11 +25,10 @@ extension AXWindowSnapshot {
 }
 
 /// Unit tests for ObservationManager focusing on window change detection.
-@Suite("ObservationManager Tests")
 struct ObservationManagerTests {
     /// Tests that detectWindowChanges correctly identifies when a window is added.
-    @Test("Detects window creation")
-    func detectsWindowCreation() {
+    @Test
+    func `Detects window creation`() {
         let manager = ObservationManager(windowRegistry: WindowRegistry())
         let previous: [AXWindowSnapshot] = []
         let current: [AXWindowSnapshot] = [.testWindow(title: "New Window")]
@@ -45,8 +44,8 @@ struct ObservationManagerTests {
     }
 
     /// Tests that detectWindowChanges correctly identifies when a window is removed.
-    @Test("Detects window destruction")
-    func detectsWindowDestruction() {
+    @Test
+    func `Detects window destruction`() {
         let manager = ObservationManager(windowRegistry: WindowRegistry())
         let previous: [AXWindowSnapshot] = [.testWindow(title: "Old Window")]
         let current: [AXWindowSnapshot] = []
@@ -61,8 +60,8 @@ struct ObservationManagerTests {
         }
     }
 
-    @Test("Detects window minimization")
-    func detectsWindowMinimization() {
+    @Test
+    func `Detects window minimization`() {
         let manager = ObservationManager(windowRegistry: WindowRegistry())
         let previous: [AXWindowSnapshot] = [.testWindow(minimized: false)]
         let current: [AXWindowSnapshot] = [.testWindow(minimized: true)]
@@ -77,8 +76,8 @@ struct ObservationManagerTests {
         }
     }
 
-    @Test("Detects window restoration")
-    func detectsWindowRestoration() {
+    @Test
+    func `Detects window restoration`() {
         let manager = ObservationManager(windowRegistry: WindowRegistry())
         let previous: [AXWindowSnapshot] = [.testWindow(minimized: true)]
         let current: [AXWindowSnapshot] = [.testWindow(minimized: false)]
@@ -93,8 +92,8 @@ struct ObservationManagerTests {
         }
     }
 
-    @Test("Detects window movement")
-    func detectsWindowMovement() {
+    @Test
+    func `Detects window movement`() {
         let manager = ObservationManager(windowRegistry: WindowRegistry())
         let previous: [AXWindowSnapshot] = [.testWindow()]
         let current: [AXWindowSnapshot] = [.testWindow(bounds: CGRect(x: 100, y: 100, width: 800, height: 600))]
@@ -109,8 +108,8 @@ struct ObservationManagerTests {
         }
     }
 
-    @Test("Detects window resizing")
-    func detectsWindowResizing() {
+    @Test
+    func `Detects window resizing`() {
         let manager = ObservationManager(windowRegistry: WindowRegistry())
         let previous: [AXWindowSnapshot] = [.testWindow()]
         let current: [AXWindowSnapshot] = [.testWindow(bounds: CGRect(x: 0, y: 0, width: 1024, height: 768))]
@@ -125,8 +124,8 @@ struct ObservationManagerTests {
         }
     }
 
-    @Test("No changes when windows unchanged")
-    func noChangesWhenUnchanged() {
+    @Test
+    func `No changes when windows unchanged`() {
         let manager = ObservationManager(windowRegistry: WindowRegistry())
         let previous: [AXWindowSnapshot] = [.testWindow()]
         let current: [AXWindowSnapshot] = [.testWindow()]
@@ -136,8 +135,8 @@ struct ObservationManagerTests {
         #expect(changes.isEmpty, "Should detect no changes when windows are identical")
     }
 
-    @Test("Detects hidden window (not minimized)")
-    func detectsHiddenWindow() {
+    @Test
+    func `Detects hidden window (not minimized)`() {
         let manager = ObservationManager(windowRegistry: WindowRegistry())
         // Start visible, not minimized
         let previous: [AXWindowSnapshot] = [.testWindow(minimized: false, visible: true)]
@@ -158,8 +157,8 @@ struct ObservationManagerTests {
         #expect(hasMinimizedEvent == false, "MUST NOT emit .minimized when window is hidden (kAXHiddenAttribute)")
     }
 
-    @Test("Distinguishes minimized from hidden")
-    func distinguishesMinimizedFromHidden() {
+    @Test
+    func `Distinguishes minimized from hidden`() {
         let manager = ObservationManager(windowRegistry: WindowRegistry())
 
         // Scenario 1: Window becomes minimized (minimized=true, visible=false)

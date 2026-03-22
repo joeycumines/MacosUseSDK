@@ -5,12 +5,11 @@ import Testing
 
 /// Unit tests for graceful shutdown behavior.
 /// These tests verify that server components properly clean up during shutdown.
-@Suite("Graceful Shutdown Tests")
 struct GracefulShutdownTests {
     // MARK: - ObservationManager.cancelAllObservations Tests
 
-    @Test("cancelAllObservations cancels active observations")
-    func cancelAllObservationsCancelsActive() async {
+    @Test
+    func `cancelAllObservations cancels active observations`() async {
         // Create a fresh ObservationManager (not the shared singleton)
         let manager = ObservationManager(windowRegistry: WindowRegistry())
 
@@ -52,16 +51,16 @@ struct GracefulShutdownTests {
         #expect(await manager.getObservation(name: "observations/test2") == nil)
     }
 
-    @Test("cancelAllObservations returns zero for empty manager")
-    func cancelAllObservationsEmptyManager() async {
+    @Test
+    func `cancelAllObservations returns zero for empty manager`() async {
         let manager = ObservationManager(windowRegistry: WindowRegistry())
 
         let cancelled = await manager.cancelAllObservations()
         #expect(cancelled == 0, "Should return 0 for empty manager")
     }
 
-    @Test("cancelAllObservations is idempotent")
-    func cancelAllObservationsIdempotent() async {
+    @Test
+    func `cancelAllObservations is idempotent`() async {
         let manager = ObservationManager(windowRegistry: WindowRegistry())
 
         _ = await manager.createObservation(
@@ -82,8 +81,8 @@ struct GracefulShutdownTests {
         #expect(second == 0)
     }
 
-    @Test("cancelAllObservations handles pending observations")
-    func cancelAllObservationsHandlesPending() async {
+    @Test
+    func `cancelAllObservations handles pending observations`() async {
         let manager = ObservationManager(windowRegistry: WindowRegistry())
 
         // Create observation but don't start it (remains pending)
@@ -102,8 +101,8 @@ struct GracefulShutdownTests {
 
     // MARK: - OperationStore.drainAllOperations Tests
 
-    @Test("drainAllOperations cancels pending operations")
-    func drainAllOperationsCancelsPending() async {
+    @Test
+    func `drainAllOperations cancels pending operations`() async {
         let store = OperationStore()
 
         // Create some operations
@@ -128,8 +127,8 @@ struct GracefulShutdownTests {
         #expect(op2 == nil)
     }
 
-    @Test("drainAllOperations returns zero for empty store")
-    func drainAllOperationsEmptyStore() async {
+    @Test
+    func `drainAllOperations returns zero for empty store`() async {
         let store = OperationStore()
 
         let (pendingCancelled, totalDrained) = await store.drainAllOperations()
@@ -137,8 +136,8 @@ struct GracefulShutdownTests {
         #expect(totalDrained == 0)
     }
 
-    @Test("drainAllOperations marks cancelled operations as done with error")
-    func drainAllOperationsMarksError() async {
+    @Test
+    func `drainAllOperations marks cancelled operations as done with error`() async {
         let store = OperationStore()
 
         // Create pending operation
@@ -153,8 +152,8 @@ struct GracefulShutdownTests {
         #expect(op == nil, "Operation should be removed after drain")
     }
 
-    @Test("drainAllOperations is idempotent")
-    func drainAllOperationsIdempotent() async {
+    @Test
+    func `drainAllOperations is idempotent`() async {
         let store = OperationStore()
 
         _ = await store.createOperation(name: "operations/test")
@@ -171,8 +170,8 @@ struct GracefulShutdownTests {
 
     // MARK: - Singleton Safety Tests
 
-    @Test("ObservationManager.shared precondition guard is documented")
-    func observationManagerPreconditionDocumented() {
+    @Test
+    func `ObservationManager.shared precondition guard is documented`() {
         // This test verifies the documentation exists - we can't actually test
         // the preconditionFailure without crashing the test runner.
         // The implementation uses a computed property with guard/preconditionFailure.
@@ -191,8 +190,8 @@ struct GracefulShutdownTests {
         _ = localManager
     }
 
-    @Test("MacroExecutor.shared precondition guard is documented")
-    func macroExecutorPreconditionDocumented() {
+    @Test
+    func `MacroExecutor.shared precondition guard is documented`() {
         // Same as above - we verify documentation and that the pattern is implemented.
         // The actual preconditionFailure cannot be tested without crashing.
 
@@ -204,8 +203,8 @@ struct GracefulShutdownTests {
 
     // MARK: - Concurrent Shutdown Safety Tests
 
-    @Test("cancelAllObservations handles concurrent access")
-    func cancelAllObservationsConcurrent() async {
+    @Test
+    func `cancelAllObservations handles concurrent access`() async {
         let manager = ObservationManager(windowRegistry: WindowRegistry())
 
         // Create multiple observations (must be within actor context)
@@ -230,8 +229,8 @@ struct GracefulShutdownTests {
         #expect(count1 + count2 == 10, "Total cancelled should be 10")
     }
 
-    @Test("drainAllOperations handles concurrent access")
-    func drainAllOperationsConcurrent() async {
+    @Test
+    func `drainAllOperations handles concurrent access`() async {
         let store = OperationStore()
 
         // Create multiple operations
@@ -254,10 +253,10 @@ struct GracefulShutdownTests {
 
     /// SessionManager tests are serialized because they share the SessionManager.shared
     /// singleton, and parallel execution would cause race conditions.
-    @Suite("SessionManager Shutdown Tests", .serialized)
+    @Suite(.serialized)
     struct SessionManagerShutdownTests {
-        @Test("invalidateAllSessions clears all sessions")
-        func invalidateAllSessionsClearsAll() async {
+        @Test
+        func `invalidateAllSessions clears all sessions`() async {
             let manager = SessionManager.shared
 
             // Create test sessions
@@ -285,8 +284,8 @@ struct GracefulShutdownTests {
             #expect(await manager.getSession(name: session2.name) == nil)
         }
 
-        @Test("invalidateAllSessions returns zero when called twice")
-        func invalidateAllSessionsReturnsTwice() async {
+        @Test
+        func `invalidateAllSessions returns zero when called twice`() async {
             let manager = SessionManager.shared
 
             // Create a session
@@ -305,8 +304,8 @@ struct GracefulShutdownTests {
             #expect(second == 0, "Second call should return 0")
         }
 
-        @Test("invalidateAllSessions clears active transactions")
-        func invalidateAllSessionsClearsTransactions() async throws {
+        @Test
+        func `invalidateAllSessions clears active transactions`() async throws {
             let manager = SessionManager.shared
 
             // Create session with active transaction

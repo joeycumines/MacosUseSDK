@@ -6,7 +6,6 @@ import Testing
 
 /// Unit tests for ObservationManager cleanup behavior.
 /// Tests verify proper cleanup of polling tasks, stream continuations, and state transitions.
-@Suite("ObservationManager Cleanup Tests")
 struct ObservationCleanupTests {
     /// Helper to create an ObservationManager with injected dependencies.
     func makeObservationManager() -> ObservationManager {
@@ -16,8 +15,8 @@ struct ObservationCleanupTests {
 
     // MARK: - cancelObservation Cleanup Tests
 
-    @Test("cancelObservation returns cancelled observation")
-    func cancelObservationReturnsObservation() async {
+    @Test
+    func `cancelObservation returns cancelled observation`() async {
         let manager = makeObservationManager()
 
         // Create an observation
@@ -39,8 +38,8 @@ struct ObservationCleanupTests {
         #expect(cancelled?.hasEndTime == true, "Should have end time set")
     }
 
-    @Test("cancelObservation removes observation from active list")
-    func cancelObservationRemovesFromList() async {
+    @Test
+    func `cancelObservation removes observation from active list`() async {
         let manager = makeObservationManager()
 
         // Create observations
@@ -74,8 +73,8 @@ struct ObservationCleanupTests {
         #expect(getOther?.state == .pending, "Other observation should still be pending")
     }
 
-    @Test("cancelObservation is idempotent")
-    func cancelObservationIdempotent() async {
+    @Test
+    func `cancelObservation is idempotent`() async {
         let manager = makeObservationManager()
 
         _ = await manager.createObservation(
@@ -98,16 +97,16 @@ struct ObservationCleanupTests {
         }
     }
 
-    @Test("cancelObservation returns nil for non-existent observation")
-    func cancelObservationNonExistentReturnsNil() async {
+    @Test
+    func `cancelObservation returns nil for non-existent observation`() async {
         let manager = makeObservationManager()
 
         let result = await manager.cancelObservation(name: "observations/does-not-exist")
         #expect(result == nil, "Should return nil for non-existent observation")
     }
 
-    @Test("cancelObservation sets end time")
-    func cancelObservationSetsEndTime() async throws {
+    @Test
+    func `cancelObservation sets end time`() async throws {
         let manager = makeObservationManager()
 
         let created = await manager.createObservation(
@@ -127,8 +126,8 @@ struct ObservationCleanupTests {
 
     // MARK: - failObservation Cleanup Tests
 
-    @Test("failObservation changes state to failed")
-    func failObservationChangesState() async {
+    @Test
+    func `failObservation changes state to failed`() async {
         let manager = makeObservationManager()
 
         _ = await manager.createObservation(
@@ -147,8 +146,8 @@ struct ObservationCleanupTests {
         #expect(failed?.hasEndTime == true, "Should have end time set")
     }
 
-    @Test("failObservation removes polling task")
-    func failObservationRemovesPollingTask() async {
+    @Test
+    func `failObservation removes polling task`() async {
         let manager = makeObservationManager()
 
         let created = await manager.createObservation(
@@ -171,8 +170,8 @@ struct ObservationCleanupTests {
         #expect(failed?.state == .failed, "Should be in failed state")
     }
 
-    @Test("failObservation is safe for non-existent observation")
-    func failObservationNonExistentIsSafe() async {
+    @Test
+    func `failObservation is safe for non-existent observation`() async {
         let manager = makeObservationManager()
 
         // Should not crash
@@ -191,8 +190,8 @@ struct ObservationCleanupTests {
 
     // MARK: - Stream Continuation Tests
 
-    @Test("createEventStream returns stream for valid observation")
-    func createEventStreamReturnsStream() async {
+    @Test
+    func `createEventStream returns stream for valid observation`() async {
         let manager = makeObservationManager()
 
         _ = await manager.createObservation(
@@ -207,16 +206,16 @@ struct ObservationCleanupTests {
         #expect(stream != nil, "Should return stream for valid observation")
     }
 
-    @Test("createEventStream returns nil for non-existent observation")
-    func createEventStreamNonExistentReturnsNil() async {
+    @Test
+    func `createEventStream returns nil for non-existent observation`() async {
         let manager = makeObservationManager()
 
         let stream = await manager.createEventStream(name: "observations/does-not-exist")
         #expect(stream == nil, "Should return nil for non-existent observation")
     }
 
-    @Test("Multiple independent event streams can be created")
-    func multipleIndependentEventStreams() async {
+    @Test
+    func `Multiple independent event streams can be created`() async {
         let manager = makeObservationManager()
 
         _ = await manager.createObservation(
@@ -237,8 +236,8 @@ struct ObservationCleanupTests {
 
     // MARK: - completeObservation Tests
 
-    @Test("completeObservation changes state to completed")
-    func completeObservationChangesState() async {
+    @Test
+    func `completeObservation changes state to completed`() async {
         let manager = makeObservationManager()
 
         _ = await manager.createObservation(
@@ -256,8 +255,8 @@ struct ObservationCleanupTests {
         #expect(completed?.hasEndTime == true, "Should have end time set")
     }
 
-    @Test("completeObservation cleans up resources")
-    func completeObservationCleansUpResources() async {
+    @Test
+    func `completeObservation cleans up resources`() async {
         let manager = makeObservationManager()
 
         _ = await manager.createObservation(
@@ -281,8 +280,8 @@ struct ObservationCleanupTests {
 
     // MARK: - State Transition Tests
 
-    @Test("Observation state transitions: pending -> active -> cancelled")
-    func stateTransitionPendingActiveCancelled() async {
+    @Test
+    func `Observation state transitions: pending -> active -> cancelled`() async {
         let manager = makeObservationManager()
 
         let created = await manager.createObservation(
@@ -305,8 +304,8 @@ struct ObservationCleanupTests {
         #expect(cancelled?.state == .cancelled, "After cancel, state should be cancelled")
     }
 
-    @Test("Observation state transitions: pending -> active -> completed")
-    func stateTransitionPendingActiveCompleted() async {
+    @Test
+    func `Observation state transitions: pending -> active -> completed`() async {
         let manager = makeObservationManager()
 
         _ = await manager.createObservation(
@@ -324,8 +323,8 @@ struct ObservationCleanupTests {
         #expect(completed?.state == .completed, "Final state should be completed")
     }
 
-    @Test("Observation state transitions: pending -> active -> failed")
-    func stateTransitionPendingActiveFailed() async {
+    @Test
+    func `Observation state transitions: pending -> active -> failed`() async {
         let manager = makeObservationManager()
 
         _ = await manager.createObservation(
@@ -345,8 +344,8 @@ struct ObservationCleanupTests {
 
     // MARK: - Active Observation Count Tests
 
-    @Test("getActiveObservationCount reflects actual active observations")
-    func getActiveObservationCountReflectsState() async {
+    @Test
+    func `getActiveObservationCount reflects actual active observations`() async {
         let manager = makeObservationManager()
 
         // Initially empty
@@ -391,8 +390,8 @@ struct ObservationCleanupTests {
 
     // MARK: - Concurrent Cleanup Tests
 
-    @Test("Concurrent cancel operations are safe")
-    func concurrentCancelOperationsSafe() async {
+    @Test
+    func `Concurrent cancel operations are safe`() async {
         let manager = makeObservationManager()
 
         // Create multiple observations
@@ -420,8 +419,8 @@ struct ObservationCleanupTests {
         #expect(activeCount == 0, "No active observations should remain after concurrent cancellation")
     }
 
-    @Test("Cancel and create operations are safe concurrently")
-    func cancelAndCreateConcurrentlySafe() async {
+    @Test
+    func `Cancel and create operations are safe concurrently`() async {
         let manager = makeObservationManager()
 
         // Pre-create some observations

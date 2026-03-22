@@ -7,7 +7,7 @@ import Testing
 ///
 /// These tests verify save/load operations, error handling for corrupted files,
 /// missing files, and concurrent persistence safety.
-@Suite("MacroRegistry Persistence Tests", .serialized)
+@Suite(.serialized)
 struct MacroRegistryPersistenceTests {
     // MARK: - Test Fixture
 
@@ -26,8 +26,8 @@ struct MacroRegistryPersistenceTests {
 
     // MARK: - Save Tests
 
-    @Test("save writes macros to file")
-    func saveWritesToFile() async throws {
+    @Test
+    func `save writes macros to file`() async throws {
         let tempDir = try createTempDirectory()
         defer { cleanupTempDirectory(tempDir) }
 
@@ -65,8 +65,8 @@ struct MacroRegistryPersistenceTests {
         #expect(decoded.macros.count == 2)
     }
 
-    @Test("save with empty registry creates empty store")
-    func saveEmptyRegistry() async throws {
+    @Test
+    func `save with empty registry creates empty store`() async throws {
         let tempDir = try createTempDirectory()
         defer { cleanupTempDirectory(tempDir) }
 
@@ -83,8 +83,8 @@ struct MacroRegistryPersistenceTests {
         #expect(decoded.macros.isEmpty)
     }
 
-    @Test("save creates parent directories if missing")
-    func saveCreatesDirectories() async throws {
+    @Test
+    func `save creates parent directories if missing`() async throws {
         let tempDir = try createTempDirectory()
         defer { cleanupTempDirectory(tempDir) }
 
@@ -106,8 +106,8 @@ struct MacroRegistryPersistenceTests {
         #expect(FileManager.default.fileExists(atPath: persistenceURL.path))
     }
 
-    @Test("save throws when no storage location")
-    func saveThrowsNoStorageLocation() async throws {
+    @Test
+    func `save throws when no storage location`() async throws {
         let registry = MacroRegistry(persistenceURL: nil)
 
         _ = await registry.createMacro(
@@ -129,8 +129,8 @@ struct MacroRegistryPersistenceTests {
 
     // MARK: - Load Tests
 
-    @Test("load restores macros from file")
-    func loadRestoresFromFile() async throws {
+    @Test
+    func `load restores macros from file`() async throws {
         let tempDir = try createTempDirectory()
         defer { cleanupTempDirectory(tempDir) }
 
@@ -160,8 +160,8 @@ struct MacroRegistryPersistenceTests {
         #expect(retrieved?.tags == ["persisted"])
     }
 
-    @Test("load with missing file starts empty")
-    func loadMissingFileStartsEmpty() async throws {
+    @Test
+    func `load with missing file starts empty`() async throws {
         let tempDir = try createTempDirectory()
         defer { cleanupTempDirectory(tempDir) }
 
@@ -176,8 +176,8 @@ struct MacroRegistryPersistenceTests {
         #expect(count == 0)
     }
 
-    @Test("load clears existing macros by default")
-    func loadClearsExisting() async throws {
+    @Test
+    func `load clears existing macros by default`() async throws {
         let tempDir = try createTempDirectory()
         defer { cleanupTempDirectory(tempDir) }
 
@@ -206,8 +206,8 @@ struct MacroRegistryPersistenceTests {
         #expect(retrieved == nil)
     }
 
-    @Test("load with clearExisting false preserves memory")
-    func loadPreservesMemory() async throws {
+    @Test
+    func `load with clearExisting false preserves memory`() async throws {
         let tempDir = try createTempDirectory()
         defer { cleanupTempDirectory(tempDir) }
 
@@ -246,8 +246,8 @@ struct MacroRegistryPersistenceTests {
         #expect(memory != nil)
     }
 
-    @Test("load throws when no storage location")
-    func loadThrowsNoStorageLocation() async throws {
+    @Test
+    func `load throws when no storage location`() async throws {
         let registry = MacroRegistry(persistenceURL: nil)
 
         do {
@@ -260,8 +260,8 @@ struct MacroRegistryPersistenceTests {
 
     // MARK: - Corrupted File Tests
 
-    @Test("load throws on corrupted JSON structure")
-    func loadThrowsOnCorruptedJSON() async throws {
+    @Test
+    func `load throws on corrupted JSON structure`() async throws {
         let tempDir = try createTempDirectory()
         defer { cleanupTempDirectory(tempDir) }
 
@@ -280,8 +280,8 @@ struct MacroRegistryPersistenceTests {
         }
     }
 
-    @Test("load throws on invalid store version")
-    func loadThrowsOnInvalidVersion() async throws {
+    @Test
+    func `load throws on invalid store version`() async throws {
         let tempDir = try createTempDirectory()
         defer { cleanupTempDirectory(tempDir) }
 
@@ -302,8 +302,8 @@ struct MacroRegistryPersistenceTests {
         }
     }
 
-    @Test("load throws on invalid proto JSON in macros array")
-    func loadThrowsOnInvalidProtoJSON() async throws {
+    @Test
+    func `load throws on invalid proto JSON in macros array`() async throws {
         let tempDir = try createTempDirectory()
         defer { cleanupTempDirectory(tempDir) }
 
@@ -324,8 +324,8 @@ struct MacroRegistryPersistenceTests {
         }
     }
 
-    @Test("load throws on empty string in macros array")
-    func loadThrowsOnEmptyMacroString() async throws {
+    @Test
+    func `load throws on empty string in macros array`() async throws {
         let tempDir = try createTempDirectory()
         defer { cleanupTempDirectory(tempDir) }
 
@@ -348,8 +348,8 @@ struct MacroRegistryPersistenceTests {
 
     // MARK: - Concurrent Safety Tests
 
-    @Test("concurrent save operations complete without data loss")
-    func concurrentSaveOperations() async throws {
+    @Test
+    func `concurrent save operations complete without data loss`() async throws {
         let tempDir = try createTempDirectory()
         defer { cleanupTempDirectory(tempDir) }
 
@@ -384,8 +384,8 @@ struct MacroRegistryPersistenceTests {
         #expect(count == 10)
     }
 
-    @Test("save and load roundtrip preserves all macro fields")
-    func roundtripPreservesAllFields() async throws {
+    @Test
+    func `save and load roundtrip preserves all macro fields`() async throws {
         let tempDir = try createTempDirectory()
         defer { cleanupTempDirectory(tempDir) }
 

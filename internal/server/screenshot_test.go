@@ -1126,16 +1126,16 @@ func TestHandleCaptureScreenshot_TableDriven(t *testing.T) {
 			}
 
 			// Check content
-			var foundText string
+			var foundText strings.Builder
 			for _, c := range result.Content {
-				foundText += c.Text + "\n"
+				foundText.WriteString(c.Text + "\n")
 				if c.MimeType != "" {
-					foundText += c.MimeType + "\n"
+					foundText.WriteString(c.MimeType + "\n")
 				}
 			}
 			for _, want := range tt.wantContains {
-				if !strings.Contains(foundText, want) {
-					t.Errorf("result does not contain %q: %s", want, foundText)
+				if !strings.Contains(foundText.String(), want) {
+					t.Errorf("result does not contain %q: %s", want, foundText.String())
 				}
 			}
 		})
@@ -1214,13 +1214,13 @@ func TestHandleCaptureWindowScreenshot_TableDriven(t *testing.T) {
 				t.Errorf("result.IsError = %v, want %v", result.IsError, tt.wantIsError)
 			}
 
-			var foundText string
+			var foundText strings.Builder
 			for _, c := range result.Content {
-				foundText += c.Text + "\n"
+				foundText.WriteString(c.Text + "\n")
 			}
 			for _, want := range tt.wantContains {
-				if !strings.Contains(foundText, want) {
-					t.Errorf("result does not contain %q: %s", want, foundText)
+				if !strings.Contains(foundText.String(), want) {
+					t.Errorf("result does not contain %q: %s", want, foundText.String())
 				}
 			}
 		})
@@ -1311,13 +1311,13 @@ func TestHandleCaptureElementScreenshot_TableDriven(t *testing.T) {
 				t.Errorf("result.IsError = %v, want %v", result.IsError, tt.wantIsError)
 			}
 
-			var foundText string
+			var foundText strings.Builder
 			for _, c := range result.Content {
-				foundText += c.Text + "\n"
+				foundText.WriteString(c.Text + "\n")
 			}
 			for _, want := range tt.wantContains {
-				if !strings.Contains(foundText, want) {
-					t.Errorf("result does not contain %q: %s", want, foundText)
+				if !strings.Contains(foundText.String(), want) {
+					t.Errorf("result does not contain %q: %s", want, foundText.String())
 				}
 			}
 		})
@@ -1407,13 +1407,13 @@ func TestHandleCaptureRegionScreenshot_TableDriven(t *testing.T) {
 				t.Errorf("result.IsError = %v, want %v", result.IsError, tt.wantIsError)
 			}
 
-			var foundText string
+			var foundText strings.Builder
 			for _, c := range result.Content {
-				foundText += c.Text + "\n"
+				foundText.WriteString(c.Text + "\n")
 			}
 			for _, want := range tt.wantContains {
-				if !strings.Contains(foundText, want) {
-					t.Errorf("result does not contain %q: %s", want, foundText)
+				if !strings.Contains(foundText.String(), want) {
+					t.Errorf("result does not contain %q: %s", want, foundText.String())
 				}
 			}
 		})

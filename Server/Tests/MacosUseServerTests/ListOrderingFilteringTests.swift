@@ -10,7 +10,6 @@ import Testing
 
 /// Tests for ListWindows and ListApplications ordering and filtering.
 /// These tests verify the sorting logic and filter parsing functions directly.
-@Suite("List Ordering and Filtering Tests")
 struct ListOrderingFilteringTests {
     // MARK: - Test Helpers
 
@@ -70,8 +69,8 @@ struct ListOrderingFilteringTests {
 
     // MARK: - ExtractQuotedValue Tests
 
-    @Test("extractQuotedValue finds simple key=value")
-    func extractQuotedValueSimple() {
+    @Test
+    func `extractQuotedValue finds simple key=value`() {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -85,8 +84,8 @@ struct ListOrderingFilteringTests {
         #expect(result == "Hello World", "Should extract quoted value correctly")
     }
 
-    @Test("extractQuotedValue handles spaces around equals sign")
-    func extractQuotedValueWithSpaces() {
+    @Test
+    func `extractQuotedValue handles spaces around equals sign`() {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -100,8 +99,8 @@ struct ListOrderingFilteringTests {
         #expect(result == "Hello World", "Should handle spaces around equals sign")
     }
 
-    @Test("extractQuotedValue is case insensitive for key")
-    func extractQuotedValueCaseInsensitive() {
+    @Test
+    func `extractQuotedValue is case insensitive for key`() {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -115,8 +114,8 @@ struct ListOrderingFilteringTests {
         #expect(result == "Hello", "Should match key case-insensitively")
     }
 
-    @Test("extractQuotedValue returns nil for non-matching key")
-    func extractQuotedValueNonMatching() {
+    @Test
+    func `extractQuotedValue returns nil for non-matching key`() {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -130,8 +129,8 @@ struct ListOrderingFilteringTests {
         #expect(result == nil, "Should return nil for non-matching key")
     }
 
-    @Test("extractQuotedValue handles empty value")
-    func extractQuotedValueEmpty() {
+    @Test
+    func `extractQuotedValue handles empty value`() {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -145,8 +144,8 @@ struct ListOrderingFilteringTests {
         #expect(result == "", "Should handle empty quoted value")
     }
 
-    @Test("extractQuotedValue extracts first occurrence")
-    func extractQuotedValueFirstOccurrence() {
+    @Test
+    func `extractQuotedValue extracts first occurrence`() {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -162,8 +161,8 @@ struct ListOrderingFilteringTests {
 
     // MARK: - ListWindows Ordering Tests
 
-    @Test("applyWindowFilter and sort - default order by window_id")
-    func listWindowsDefaultOrder() {
+    @Test
+    func `applyWindowFilter and sort - default order by window_id`() {
         let windows = [
             makeWindowInfo(windowID: 300, title: "C"),
             makeWindowInfo(windowID: 100, title: "A"),
@@ -177,8 +176,8 @@ struct ListOrderingFilteringTests {
         #expect(sorted[2].windowID == 300, "Third should be windowID 300")
     }
 
-    @Test("applyWindowFilter and sort - order by title ascending")
-    func listWindowsOrderByTitle() {
+    @Test
+    func `applyWindowFilter and sort - order by title ascending`() {
         let windows = [
             makeWindowInfo(windowID: 1, title: "Charlie"),
             makeWindowInfo(windowID: 2, title: "Alpha"),
@@ -193,8 +192,8 @@ struct ListOrderingFilteringTests {
         #expect(sorted[2].title == "Charlie", "Third should be Charlie")
     }
 
-    @Test("applyWindowFilter and sort - order by title descending")
-    func listWindowsOrderByTitleDesc() {
+    @Test
+    func `applyWindowFilter and sort - order by title descending`() {
         let windows = [
             makeWindowInfo(windowID: 1, title: "Charlie"),
             makeWindowInfo(windowID: 2, title: "Alpha"),
@@ -210,8 +209,8 @@ struct ListOrderingFilteringTests {
         #expect(sortedArray[2].title == "Alpha", "Third should be Alpha")
     }
 
-    @Test("applyWindowFilter and sort - order by z_order")
-    func listWindowsOrderByZOrder() {
+    @Test
+    func `applyWindowFilter and sort - order by z_order`() {
         let windows = [
             makeWindowInfo(windowID: 1, title: "A", layer: 10),
             makeWindowInfo(windowID: 2, title: "B", layer: 0),
@@ -224,8 +223,8 @@ struct ListOrderingFilteringTests {
         #expect(sorted[2].title == "A", "Third should be layer 10")
     }
 
-    @Test("applyWindowFilter and sort - invalid orderBy falls back to default")
-    func listWindowsInvalidOrderByFallback() {
+    @Test
+    func `applyWindowFilter and sort - invalid orderBy falls back to default`() {
         let windows = [
             makeWindowInfo(windowID: 300, title: "C"),
             makeWindowInfo(windowID: 100, title: "A"),
@@ -239,8 +238,8 @@ struct ListOrderingFilteringTests {
 
     // MARK: - ListWindows Filtering Tests
 
-    @Test("applyWindowFilter - visible=true filters to visible windows")
-    func listWindowsFilterByVisible() {
+    @Test
+    func `applyWindowFilter - visible=true filters to visible windows`() {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -262,8 +261,8 @@ struct ListOrderingFilteringTests {
         #expect(allOnScreen, "All should be on screen")
     }
 
-    @Test("applyWindowFilter - visible=false filters to hidden windows")
-    func listWindowsFilterByNotVisible() {
+    @Test
+    func `applyWindowFilter - visible=false filters to hidden windows`() {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -283,8 +282,8 @@ struct ListOrderingFilteringTests {
         #expect(filtered[0].title == "Hidden", "Hidden window should remain")
     }
 
-    @Test("applyWindowFilter - minimized=true filters to minimized windows")
-    func listWindowsFilterByMinimized() {
+    @Test
+    func `applyWindowFilter - minimized=true filters to minimized windows`() {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -305,8 +304,8 @@ struct ListOrderingFilteringTests {
         #expect(filtered[0].title == "Minimized", "Minimized window should remain")
     }
 
-    @Test("applyWindowFilter - minimized=false filters to non-minimized windows")
-    func listWindowsFilterByNotMinimized() {
+    @Test
+    func `applyWindowFilter - minimized=false filters to non-minimized windows`() {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -326,8 +325,8 @@ struct ListOrderingFilteringTests {
         #expect(filtered[0].title == "Normal", "Normal window should remain")
     }
 
-    @Test("applyWindowFilter - title=\"...\" filters by title content")
-    func listWindowsFilterByTitle() {
+    @Test
+    func `applyWindowFilter - title=\"...\" filters by title content`() {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -348,8 +347,8 @@ struct ListOrderingFilteringTests {
         #expect(filtered.allSatisfy { $0.title.contains("Document") }, "All should contain Document")
     }
 
-    @Test("applyWindowFilter - title filter is case insensitive")
-    func listWindowsFilterByTitleCaseInsensitive() {
+    @Test
+    func `applyWindowFilter - title filter is case insensitive`() {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -369,8 +368,8 @@ struct ListOrderingFilteringTests {
         #expect(filtered.count == 2, "Should match case-insensitively")
     }
 
-    @Test("applyWindowFilter - combined ordering and filtering")
-    func listWindowsOrderAndFilter() {
+    @Test
+    func `applyWindowFilter - combined ordering and filtering`() {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -399,8 +398,8 @@ struct ListOrderingFilteringTests {
         #expect(sorted[2].title == "Other", "Third sorted visible window")
     }
 
-    @Test("applyWindowFilter - combined filters with title and visible")
-    func listWindowsCombinedTitleAndVisible() {
+    @Test
+    func `applyWindowFilter - combined filters with title and visible`() {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -421,8 +420,8 @@ struct ListOrderingFilteringTests {
         #expect(filtered[0].windowID == 1, "Should be the visible TextEdit")
     }
 
-    @Test("applyWindowFilter - empty filter returns all windows")
-    func listWindowsEmptyFilter() {
+    @Test
+    func `applyWindowFilter - empty filter returns all windows`() {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -443,8 +442,8 @@ struct ListOrderingFilteringTests {
 
     // MARK: - ListApplications Ordering Tests
 
-    @Test("ListApplications - default order by name")
-    func listApplicationsDefaultOrder() {
+    @Test
+    func `ListApplications - default order by name`() {
         let apps = [
             makeApplication(pid: 300, displayName: "Zulu"),
             makeApplication(pid: 100, displayName: "Alpha"),
@@ -457,8 +456,8 @@ struct ListOrderingFilteringTests {
         #expect(sorted[0].displayName == "Alpha", "Default ordering should be by name (Alpha first)")
     }
 
-    @Test("ListApplications - order by pid")
-    func listApplicationsOrderByPid() {
+    @Test
+    func `ListApplications - order by pid`() {
         let apps = [
             makeApplication(pid: 300, displayName: "C"),
             makeApplication(pid: 100, displayName: "A"),
@@ -471,8 +470,8 @@ struct ListOrderingFilteringTests {
         #expect(sorted[2].pid == 300, "Third should be pid 300")
     }
 
-    @Test("ListApplications - order by display_name")
-    func listApplicationsOrderByDisplayName() {
+    @Test
+    func `ListApplications - order by display_name`() {
         let apps = [
             makeApplication(pid: 1, displayName: "Zulu"),
             makeApplication(pid: 2, displayName: "Alpha"),
@@ -487,8 +486,8 @@ struct ListOrderingFilteringTests {
         #expect(sorted[2].displayName == "Zulu", "Third should be Zulu")
     }
 
-    @Test("ListApplications - order by display_name descending")
-    func listApplicationsOrderByDisplayNameDesc() {
+    @Test
+    func `ListApplications - order by display_name descending`() {
         let apps = [
             makeApplication(pid: 1, displayName: "Zulu"),
             makeApplication(pid: 2, displayName: "Alpha"),
@@ -506,8 +505,8 @@ struct ListOrderingFilteringTests {
 
     // MARK: - ListApplications Filtering Tests
 
-    @Test("applyApplicationFilter - name=\"...\" filters by display name")
-    func listApplicationsFilterByName() {
+    @Test
+    func `applyApplicationFilter - name=\"...\" filters by display name`() {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -528,8 +527,8 @@ struct ListOrderingFilteringTests {
         #expect(filtered.allSatisfy { $0.displayName.contains("Text") }, "All should contain Text")
     }
 
-    @Test("applyApplicationFilter - name filter is case insensitive")
-    func listApplicationsFilterByNameCaseInsensitive() {
+    @Test
+    func `applyApplicationFilter - name filter is case insensitive`() {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -549,8 +548,8 @@ struct ListOrderingFilteringTests {
         #expect(filtered.count == 2, "Should match case-insensitively")
     }
 
-    @Test("applyApplicationFilter - combined ordering and filtering")
-    func listApplicationsOrderAndFilter() {
+    @Test
+    func `applyApplicationFilter - combined ordering and filtering`() {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -577,8 +576,8 @@ struct ListOrderingFilteringTests {
         #expect(sorted[2].pid == 200, "Third should be pid 200 (Text Editor)")
     }
 
-    @Test("applyApplicationFilter - empty filter returns all apps")
-    func listApplicationsEmptyFilter() {
+    @Test
+    func `applyApplicationFilter - empty filter returns all apps`() {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -599,15 +598,15 @@ struct ListOrderingFilteringTests {
 
     // MARK: - Edge Cases
 
-    @Test("Empty window list handles ordering gracefully")
-    func listWindowsEmptyList() {
+    @Test
+    func `Empty window list handles ordering gracefully`() {
         let windows: [WindowRegistry.WindowInfo] = []
         let sorted = windows.sorted { $0.windowID < $1.windowID }
         #expect(sorted.isEmpty, "Empty list should remain empty after sort")
     }
 
-    @Test("Empty application list handles filtering gracefully")
-    func listApplicationsEmptyList() {
+    @Test
+    func `Empty application list handles filtering gracefully`() {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -622,8 +621,8 @@ struct ListOrderingFilteringTests {
         #expect(filtered.isEmpty, "Empty list should remain empty after filter")
     }
 
-    @Test("Filter with special characters in value")
-    func filterWithSpecialCharacters() {
+    @Test
+    func `Filter with special characters in value`() {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -643,8 +642,8 @@ struct ListOrderingFilteringTests {
         #expect(filtered[0].windowID == 1, "Should be the correct window")
     }
 
-    @Test("Multiple sort stability")
-    func sortStabilityTest() {
+    @Test
+    func `Multiple sort stability`() {
         let windows = [
             makeWindowInfo(windowID: 1, title: "Same"),
             makeWindowInfo(windowID: 2, title: "Same"),
@@ -664,8 +663,8 @@ struct ListOrderingFilteringTests {
         #expect(sorted2.count == 3, "Sort should maintain all elements")
     }
 
-    @Test("Unicode title filter handling")
-    func unicodeTitleFilter() {
+    @Test
+    func `Unicode title filter handling`() {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(

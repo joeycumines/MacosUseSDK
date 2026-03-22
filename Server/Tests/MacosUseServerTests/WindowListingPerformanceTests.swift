@@ -9,7 +9,6 @@ import Testing
 /// to establish baseline performance metrics.
 ///
 /// **Requirements**: Tests depend on actual macOS windows being present.
-@Suite("Window Listing Performance Benchmarks")
 struct WindowListingPerformanceTests {
     /// Number of iterations for stable timing
     private let iterations = 10
@@ -17,8 +16,8 @@ struct WindowListingPerformanceTests {
     /// Test listAllWindows performance across all system windows.
     ///
     /// Expected: Sub-100ms for typical desktop with <50 windows
-    @Test("listAllWindows performance baseline")
-    func listAllWindowsPerformance() async throws {
+    @Test
+    func `listAllWindows performance baseline`() async throws {
         let registry = WindowRegistry()
 
         // Perform listing iterations and collect timing
@@ -59,8 +58,8 @@ struct WindowListingPerformanceTests {
     /// Test listWindows(forPID:) performance for a specific application.
     ///
     /// Uses Finder as it's always running on macOS.
-    @Test("listWindows for Finder performance")
-    func listWindowsForFinderPerformance() async throws {
+    @Test
+    func `listWindows for Finder performance`() async throws {
         let registry = WindowRegistry()
 
         // Find Finder's PID
@@ -110,9 +109,9 @@ struct WindowListingPerformanceTests {
     /// Measure performance with multiple Calculator windows.
     ///
     /// Opens Calculator multiple times to test window count scaling.
-    @Test("listWindows with multiple Calculator windows", .disabled("Disabled by default - opens multiple Calculator windows"))
+    @Test(.disabled("Disabled by default - opens multiple Calculator windows"))
     @MainActor
-    func listWindowsMultipleWindows() async throws {
+    func `listWindows with multiple Calculator windows`() async throws {
         let registry = WindowRegistry()
         var pids: [pid_t] = []
 
@@ -159,8 +158,8 @@ struct WindowListingPerformanceTests {
     }
 
     /// Measure cache effectiveness - second call should be faster.
-    @Test("Cache performance comparison")
-    func cachePerformance() async throws {
+    @Test
+    func `Cache performance comparison`() async throws {
         let registry = WindowRegistry()
 
         // First call - cold cache (forces refresh)

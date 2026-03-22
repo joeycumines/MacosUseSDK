@@ -3,7 +3,6 @@ import Foundation
 @testable import MacosUseServer
 import Testing
 
-@Suite("WindowRegistry DI Tests")
 struct WindowRegistryDITests {
     final class MockSystemOperations: SystemOperations {
         let windowList: [[String: Any]]
@@ -60,8 +59,8 @@ struct WindowRegistryDITests {
         ]
     }
 
-    @Test("refreshWindows and listAllWindows uses injected system data")
-    func refreshAndListAll() async throws {
+    @Test
+    func `refreshWindows and listAllWindows uses injected system data`() async throws {
         let dict = WindowRegistryDITests.makeWindowDict(windowID: 100, ownerPID: 42, x: 0, y: 0, w: 100, h: 100, title: "MockWindow", layer: 0, isOnScreen: true)
         let mock = MockSystemOperations(windowList: [dict])
 
@@ -79,8 +78,8 @@ struct WindowRegistryDITests {
         }
     }
 
-    @Test("listWindows filters by PID")
-    func listByPID() async throws {
+    @Test
+    func `listWindows filters by PID`() async throws {
         let dictA = WindowRegistryDITests.makeWindowDict(windowID: 1, ownerPID: 10, x: 0, y: 0, w: 10, h: 10, title: "A", layer: 1, isOnScreen: true)
         let dictB = WindowRegistryDITests.makeWindowDict(windowID: 2, ownerPID: 20, x: 0, y: 0, w: 10, h: 10, title: "B", layer: 2, isOnScreen: false)
         let mock = MockSystemOperations(windowList: [dictA, dictB])
@@ -96,8 +95,8 @@ struct WindowRegistryDITests {
         #expect(pid20Wins.count == 1, "Expected one window for PID 20")
     }
 
-    @Test("getWindow returns the expected info")
-    func getWindowInfo() async throws {
+    @Test
+    func `getWindow returns the expected info`() async throws {
         let dict = WindowRegistryDITests.makeWindowDict(windowID: 99, ownerPID: 7, x: 1, y: 2, w: 3, h: 4, title: "Z", layer: 5, isOnScreen: false)
         let mock = MockSystemOperations(windowList: [dict])
 

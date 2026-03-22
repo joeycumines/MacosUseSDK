@@ -11,7 +11,7 @@ import Testing
 ///
 /// **Requirements**: Accessibility permissions must be granted.
 /// Run with: `swift test --filter TraversalPerformanceTests`
-@Suite("Traversal Performance Benchmarks", .serialized)
+@Suite(.serialized)
 struct TraversalPerformanceTests {
     /// Minimum number of iterations for stable timing
     private let iterations = 5
@@ -19,9 +19,9 @@ struct TraversalPerformanceTests {
     /// Opens Calculator and measures traversal time.
     ///
     /// Expected: Small tree, fast traversal (<500ms)
-    @Test("Calculator traversal baseline", .enabled(if: AXIsProcessTrusted(), "Requires Accessibility permissions"))
+    @Test(.enabled(if: AXIsProcessTrusted(), "Requires Accessibility permissions"))
     @MainActor
-    func calculatorTraversalPerformance() async throws {
+    func `Calculator traversal baseline`() async throws {
         let openResult = try await openApplication(identifier: "com.apple.calculator", background: true)
         let pid = openResult.pid
         defer {
@@ -84,9 +84,9 @@ struct TraversalPerformanceTests {
     /// Opens Finder and measures traversal time for a large tree.
     ///
     /// Expected: Large tree, longer traversal (<3s)
-    @Test("Finder traversal baseline", .enabled(if: AXIsProcessTrusted(), "Requires Accessibility permissions"))
+    @Test(.enabled(if: AXIsProcessTrusted(), "Requires Accessibility permissions"))
     @MainActor
-    func finderTraversalPerformance() async throws {
+    func `Finder traversal baseline`() async throws {
         // Use bundle identifier (more reliable than app name)
         let openResult = try await openApplication(identifier: "com.apple.finder", background: true)
         let pid = openResult.pid
@@ -143,9 +143,9 @@ struct TraversalPerformanceTests {
     }
 
     /// Measures traversal with all elements (not just visible) for comparison.
-    @Test("Calculator traversal all elements", .enabled(if: AXIsProcessTrusted(), "Requires Accessibility permissions"))
+    @Test(.enabled(if: AXIsProcessTrusted(), "Requires Accessibility permissions"))
     @MainActor
-    func calculatorTraversalAllElements() async throws {
+    func `Calculator traversal all elements`() async throws {
         let openResult = try await openApplication(identifier: "com.apple.calculator", background: true)
         let pid = openResult.pid
         defer {

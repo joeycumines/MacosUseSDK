@@ -6,13 +6,12 @@ import Testing
 ///
 /// These tests verify that creating and cancelling observations doesn't
 /// leak resources (observations, tasks, memory).
-@Suite("Observation Memory Leak Tests")
 struct ObservationMemoryLeakTests {
     /// Number of observations to create and cancel
     private let observationCount = 100
 
-    @Test("Create and cancel observations leaves no residue")
-    func createCancelObservationsNoResidue() async {
+    @Test
+    func `Create and cancel observations leaves no residue`() async {
         let registry = WindowRegistry()
         let manager = ObservationManager(windowRegistry: registry)
 
@@ -56,8 +55,8 @@ struct ObservationMemoryLeakTests {
         #expect(activeRemaining.isEmpty, "Should have no active/pending observations")
     }
 
-    @Test("Rapid create/cancel cycle doesn't accumulate state")
-    func rapidCreateCancelCycle() async {
+    @Test
+    func `Rapid create/cancel cycle doesn't accumulate state`() async {
         let registry = WindowRegistry()
         let manager = ObservationManager(windowRegistry: registry)
 
@@ -83,8 +82,8 @@ struct ObservationMemoryLeakTests {
         #expect(finalActiveCount == 0, "Rapid create/cancel should leave no active observations")
     }
 
-    @Test("CancelAllObservations cleans up everything")
-    func cancelAllObservationsCleanup() async {
+    @Test
+    func `CancelAllObservations cleans up everything`() async {
         let registry = WindowRegistry()
         let manager = ObservationManager(windowRegistry: registry)
 
@@ -110,8 +109,8 @@ struct ObservationMemoryLeakTests {
         #expect(remaining == 0, "Should have 0 active observations after cancelAll")
     }
 
-    @Test("Double cancel is safe")
-    func doubleCancelSafe() async {
+    @Test
+    func `Double cancel is safe`() async {
         let registry = WindowRegistry()
         let manager = ObservationManager(windowRegistry: registry)
 
@@ -138,8 +137,8 @@ struct ObservationMemoryLeakTests {
         #expect(activeCount == 0, "Should have 0 active observations after double cancel")
     }
 
-    @Test("Concurrent create/cancel from multiple tasks is safe")
-    func concurrentCreateCancel() async {
+    @Test
+    func `Concurrent create/cancel from multiple tasks is safe`() async {
         let registry = WindowRegistry()
         let manager = ObservationManager(windowRegistry: registry)
 

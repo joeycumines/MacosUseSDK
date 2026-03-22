@@ -6,7 +6,6 @@ import GRPCCore
 @testable import MacosUseServer
 import Testing
 
-@Suite("Window Methods Tests")
 struct WindowMethodsTests {
     func makeCGDict(windowID: CGWindowID, pid: pid_t, x: CGFloat, y: CGFloat, w: CGFloat, h: CGFloat, title: String) -> [String: Any] {
         [
@@ -19,8 +18,8 @@ struct WindowMethodsTests {
         ]
     }
 
-    @Test("listWindows returns registry data")
-    func listWindowsReturnsRegistry() async throws {
+    @Test
+    func `listWindows returns registry data`() async throws {
         let pid: pid_t = 123
         let cg = makeCGDict(windowID: 42, pid: pid, x: 1, y: 2, w: 100, h: 50, title: "CGWindow")
         let mock = MockSystemOperations(cgWindowList: [cg])
@@ -34,8 +33,8 @@ struct WindowMethodsTests {
         #expect(wins.first?.title == "CGWindow", "Title should come from registry data")
     }
 
-    @Test("getWindow uses AX fetch to get authoritative data")
-    func getWindowUsesAXFetch() async throws {
+    @Test
+    func `getWindow uses AX fetch to get authoritative data`() async throws {
         let pid: pid_t = 555
         let winID: CGWindowID = 777
 
@@ -59,8 +58,8 @@ struct WindowMethodsTests {
         #expect(msg.visible == true, "Window visible should be derived from AX data")
     }
 
-    @Test("Hybrid Authority: GetWindow AX-authoritative for minimized state")
-    func hybridAuthorityGetWindowMinimized() async throws {
+    @Test
+    func `Hybrid Authority: GetWindow AX-authoritative for minimized state`() async throws {
         let pid: pid_t = 888
         let winID: CGWindowID = 999
 
@@ -88,8 +87,8 @@ struct WindowMethodsTests {
         #expect(msg.visible == false, "GetWindow MUST return visible=false when AX says minimized=true (AX trumps Registry)")
     }
 
-    @Test("Hybrid Authority: GetWindow AX-authoritative for hidden state")
-    func hybridAuthorityGetWindowHidden() async throws {
+    @Test
+    func `Hybrid Authority: GetWindow AX-authoritative for hidden state`() async throws {
         let pid: pid_t = 111
         let winID: CGWindowID = 222
 
@@ -117,8 +116,8 @@ struct WindowMethodsTests {
         #expect(msg.visible == false, "GetWindow MUST return visible=false when AX says hidden=true (AX trumps Registry)")
     }
 
-    @Test("Race condition handling: fetchAXWindowInfo returns nil")
-    func raceConditionNotFound() async throws {
+    @Test
+    func `Race condition handling: fetchAXWindowInfo returns nil`() async throws {
         let pid: pid_t = 333
         let winID: CGWindowID = 444
 

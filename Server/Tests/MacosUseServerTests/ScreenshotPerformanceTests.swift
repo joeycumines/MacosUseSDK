@@ -31,8 +31,9 @@ private func isScreenCaptureAvailable() async -> Bool {
 ///
 /// **Requirements**: Screen Recording permissions must be granted.
 /// Tests are skipped (not failed) when Screen Recording is unavailable.
-@Suite("Screenshot Capture Performance Benchmarks",
-       .enabled("Requires Screen Recording permissions") { await isScreenCaptureAvailable() })
+@Suite(
+    .enabled("Requires Screen Recording permissions") { await isScreenCaptureAvailable() },
+)
 struct ScreenshotPerformanceTests {
     /// Number of iterations for stable timing
     private let iterations = 5
@@ -40,9 +41,9 @@ struct ScreenshotPerformanceTests {
     // MARK: - Format Comparison Tests
 
     /// Benchmark full screen capture with PNG format.
-    @Test("Full screen PNG capture latency")
+    @Test
     @MainActor
-    func fullScreenPNGCapture() async throws {
+    func `Full screen PNG capture latency`() async throws {
         var durations: [TimeInterval] = []
         var dataSizes: [Int] = []
 
@@ -64,9 +65,9 @@ struct ScreenshotPerformanceTests {
     }
 
     /// Benchmark full screen capture with JPEG format.
-    @Test("Full screen JPEG capture latency")
+    @Test
     @MainActor
-    func fullScreenJPEGCapture() async throws {
+    func `Full screen JPEG capture latency`() async throws {
         var durations: [TimeInterval] = []
         var dataSizes: [Int] = []
 
@@ -89,9 +90,9 @@ struct ScreenshotPerformanceTests {
     }
 
     /// Benchmark full screen capture with TIFF format.
-    @Test("Full screen TIFF capture latency")
+    @Test
     @MainActor
-    func fullScreenTIFFCapture() async throws {
+    func `Full screen TIFF capture latency`() async throws {
         var durations: [TimeInterval] = []
         var dataSizes: [Int] = []
 
@@ -115,9 +116,9 @@ struct ScreenshotPerformanceTests {
     // MARK: - OCR Comparison Tests
 
     /// Benchmark full screen capture with OCR enabled.
-    @Test("Full screen with OCR latency")
+    @Test
     @MainActor
-    func fullScreenWithOCR() async throws {
+    func `Full screen with OCR latency`() async throws {
         var durations: [TimeInterval] = []
         var ocrLengths: [Int] = []
 
@@ -143,9 +144,9 @@ struct ScreenshotPerformanceTests {
     }
 
     /// Compare OCR vs no-OCR latency
-    @Test("OCR overhead comparison")
+    @Test
     @MainActor
-    func ocrOverhead() async throws {
+    func `OCR overhead comparison`() async throws {
         // Without OCR
         let noOCRStart = CFAbsoluteTimeGetCurrent()
         _ = try await ScreenshotCapture.captureScreen(format: .png, includeOCR: false)
@@ -172,9 +173,9 @@ struct ScreenshotPerformanceTests {
     /// Benchmark window capture for Finder.
     ///
     /// Uses Finder as it's always available on macOS.
-    @Test("Window capture latency (Finder)")
+    @Test
     @MainActor
-    func windowCapture() async throws {
+    func `Window capture latency (Finder)`() async throws {
         // Find a Finder window
         guard let finderApp = NSRunningApplication.runningApplications(
             withBundleIdentifier: "com.apple.finder",
@@ -224,9 +225,9 @@ struct ScreenshotPerformanceTests {
     // MARK: - Region Capture Tests
 
     /// Benchmark region capture for a small area.
-    @Test("Small region capture latency")
+    @Test
     @MainActor
-    func smallRegionCapture() async throws {
+    func `Small region capture latency`() async throws {
         var durations: [TimeInterval] = []
 
         // Small 200x200 region
@@ -251,9 +252,9 @@ struct ScreenshotPerformanceTests {
     }
 
     /// Benchmark region capture for a larger area.
-    @Test("Large region capture latency")
+    @Test
     @MainActor
-    func largeRegionCapture() async throws {
+    func `Large region capture latency`() async throws {
         var durations: [TimeInterval] = []
 
         // Large 1000x800 region
@@ -280,9 +281,9 @@ struct ScreenshotPerformanceTests {
     // MARK: - JPEG Quality Comparison
 
     /// Compare JPEG quality settings impact on size and latency.
-    @Test("JPEG quality comparison")
+    @Test
     @MainActor
-    func jpegQualityComparison() async throws {
+    func `JPEG quality comparison`() async throws {
         let qualities: [Int32] = [50, 75, 90, 100]
         var results: [(quality: Int32, duration: TimeInterval, size: Int)] = []
 
