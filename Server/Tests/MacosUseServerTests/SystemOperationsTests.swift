@@ -6,7 +6,6 @@ import Foundation
 @testable import MacosUseServer
 import Testing
 
-@Suite("SystemOperations Interface Tests")
 struct SystemOperationsTests {
     struct MockSystemOperations: SystemOperations {
         func cgWindowListCopyWindowInfo(options _: CGWindowListOption, relativeToWindow _: CGWindowID) -> [[String: Any]] {
@@ -47,8 +46,8 @@ struct SystemOperationsTests {
         }
     }
 
-    @Test("Mock conforms to SystemOperations and methods compile")
-    func mockConforms() {
+    @Test
+    func `Mock conforms to SystemOperations and methods compile`() {
         let sys: SystemOperations = MockSystemOperations()
 
         _ = sys.cgWindowListCopyWindowInfo(options: .optionOnScreenOnly, relativeToWindow: kCGNullWindowID)

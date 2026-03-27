@@ -5,13 +5,12 @@ import Foundation
 import Testing
 
 /// Unit tests for WindowRegistry focusing on window detection and filtering behavior.
-@Suite("WindowRegistry Tests")
 struct WindowRegistryTests {
     /// Tests that refreshWindows with .optionAll correctly detects windows including those
     /// that are off-screen (minimized). This validates the fix where .optionAll was added
     /// to detect minimized windows that .optionOnScreenOnly would miss.
-    @Test("Detects windows with .optionAll including off-screen state")
-    func detectsWindowsWithOptionAll() async throws {
+    @Test
+    func `Detects windows with .optionAll including off-screen state`() async throws {
         let registry = WindowRegistry()
 
         // Use any running regular application - we don't care which one
@@ -48,8 +47,8 @@ struct WindowRegistryTests {
     }
 
     /// Tests that the registry filters windows correctly by PID.
-    @Test("Filters windows by PID")
-    func filtersWindowsByPID() async throws {
+    @Test
+    func `Filters windows by PID`() async throws {
         let registry = WindowRegistry()
 
         // Get two different apps
@@ -83,8 +82,8 @@ struct WindowRegistryTests {
     }
 
     /// Tests that getWindow returns correct window information after refresh.
-    @Test("getWindow returns correct information")
-    func getWindowReturnsCorrectInfo() async throws {
+    @Test
+    func `getWindow returns correct information`() async throws {
         let registry = WindowRegistry()
 
         let workspace = NSWorkspace.shared

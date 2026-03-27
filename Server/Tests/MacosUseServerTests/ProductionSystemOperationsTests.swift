@@ -4,10 +4,9 @@ import Foundation
 @testable import MacosUseServer
 import Testing
 
-@Suite("ProductionSystemOperations Tests")
 struct ProductionSystemOperationsTests {
-    @Test("ProductionSystemOperations conforms and returns CG window list")
-    func returnsCGWindowList() {
+    @Test
+    func `ProductionSystemOperations conforms and returns CG window list`() {
         let sys: SystemOperations = ProductionSystemOperations.shared
 
         let windows = sys.cgWindowListCopyWindowInfo(options: [.optionAll, .excludeDesktopElements], relativeToWindow: kCGNullWindowID)
@@ -15,8 +14,8 @@ struct ProductionSystemOperationsTests {
         #expect(windows is [[String: Any]], "Expected window list to be an array of dictionaries")
     }
 
-    @Test("fetchAXWindowInfo returns nil for obviously-missing pid/window")
-    func fetchAXWindowInfoMissing() {
+    @Test
+    func `fetchAXWindowInfo returns nil for obviously-missing pid/window`() {
         let sys: SystemOperations = ProductionSystemOperations.shared
 
         // Try with pid 0 + window 0 — should be absent and thus return nil.
