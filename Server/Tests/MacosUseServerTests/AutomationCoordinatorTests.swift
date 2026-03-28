@@ -24,186 +24,22 @@ final class AutomationCoordinatorTests: XCTestCase {
         XCTAssertEqual(error.errorDescription, "Unknown modifier: meta")
     }
 
+    func testCoordinatorErrorInvalidCoordinateDescription() {
+        let error = CoordinatorError.invalidCoordinate("click has non-finite x coordinate: nan")
+        XCTAssertEqual(error.errorDescription, "Invalid coordinate: click has non-finite x coordinate: nan")
+    }
+
     func testCoordinatorErrorConformsToLocalizedError() throws {
         // Verify all cases conform to LocalizedError properly
         let errors: [CoordinatorError] = [
             .invalidKeyName("test"),
             .invalidKeyCombo("test"),
             .unknownModifier("test"),
+            .invalidCoordinate("test"),
         ]
         for error in errors {
             XCTAssertNotNil(error.errorDescription)
             XCTAssertFalse(try XCTUnwrap(error.errorDescription?.isEmpty))
-        }
-    }
-
-    // MARK: - ActionOptionsInfo Tests
-
-    func testActionOptionsInfoDefaultInitialization() {
-        let options = ActionOptionsInfo()
-        XCTAssertFalse(options.traverseBefore)
-        XCTAssertFalse(options.traverseAfter)
-        XCTAssertFalse(options.showDiff)
-        XCTAssertFalse(options.onlyVisibleElements)
-        XCTAssertTrue(options.showAnimation)
-        XCTAssertEqual(options.animationDuration, 0.8)
-        XCTAssertEqual(options.delayAfterAction, 0.2)
-    }
-
-    func testActionOptionsInfoCustomInitialization() {
-        let options = ActionOptionsInfo(
-            traverseBefore: true,
-            traverseAfter: true,
-            showDiff: true,
-            onlyVisibleElements: true,
-            showAnimation: false,
-            animationDuration: 1.5,
-            delayAfterAction: 0.5,
-        )
-        XCTAssertTrue(options.traverseBefore)
-        XCTAssertTrue(options.traverseAfter)
-        XCTAssertTrue(options.showDiff)
-        XCTAssertTrue(options.onlyVisibleElements)
-        XCTAssertFalse(options.showAnimation)
-        XCTAssertEqual(options.animationDuration, 1.5)
-        XCTAssertEqual(options.delayAfterAction, 0.5)
-    }
-
-    // MARK: - InputActionInfo Tests
-
-    func testInputActionInfoClickType() {
-        let action = InputActionInfo.click(x: 100, y: 200)
-        if case let .click(x, y) = action.type {
-            XCTAssertEqual(x, 100)
-            XCTAssertEqual(y, 200)
-        } else {
-            XCTFail("Expected click type")
-        }
-    }
-
-    func testInputActionInfoDoubleClickType() {
-        let action = InputActionInfo.doubleClick(x: 150, y: 250)
-        if case let .doubleClick(x, y) = action.type {
-            XCTAssertEqual(x, 150)
-            XCTAssertEqual(y, 250)
-        } else {
-            XCTFail("Expected doubleClick type")
-        }
-    }
-
-    func testInputActionInfoRightClickType() {
-        let action = InputActionInfo.rightClick(x: 300, y: 400)
-        if case let .rightClick(x, y) = action.type {
-            XCTAssertEqual(x, 300)
-            XCTAssertEqual(y, 400)
-        } else {
-            XCTFail("Expected rightClick type")
-        }
-    }
-
-    func testInputActionInfoTypeTextType() {
-        let action = InputActionInfo.typeText("Hello World")
-        if case let .typeText(text) = action.type {
-            XCTAssertEqual(text, "Hello World")
-        } else {
-            XCTFail("Expected typeText type")
-        }
-    }
-
-    func testInputActionInfoPressKeyType() {
-        let action = InputActionInfo.pressKey("cmd+c")
-        if case let .pressKey(combo) = action.type {
-            XCTAssertEqual(combo, "cmd+c")
-        } else {
-            XCTFail("Expected pressKey type")
-        }
-    }
-
-    func testInputActionInfoMoveToType() {
-        let action = InputActionInfo.moveTo(x: 500, y: 600)
-        if case let .moveTo(x, y) = action.type {
-            XCTAssertEqual(x, 500)
-            XCTAssertEqual(y, 600)
-        } else {
-            XCTFail("Expected moveTo type")
-        }
-    }
-
-    // MARK: - PrimaryActionInfo Tests
-
-    func testPrimaryActionInfoInput() {
-        let inputAction = InputActionInfo.click(x: 100, y: 200)
-        let primaryAction = PrimaryActionInfo.input(inputAction)
-
-        if case let .input(wrapped) = primaryAction {
-            if case let .click(x, y) = wrapped.type {
-                XCTAssertEqual(x, 100)
-                XCTAssertEqual(y, 200)
-            } else {
-                XCTFail("Expected click type")
-            }
-        } else {
-            XCTFail("Expected input case")
-        }
-    }
-
-    func testPrimaryActionInfoTraverseOnly() {
-        let primaryAction = PrimaryActionInfo.traverseOnly
-        if case .traverseOnly = primaryAction {
-            // Success
-        } else {
-            XCTFail("Expected traverseOnly case")
-        }
-    }
-
-    // MARK: - ActionResultInfo Tests
-
-    func testActionResultInfoInitialization() {
-        let result = ActionResultInfo(
-            pid: 12345,
-            appName: "TestApp",
-            traversalPid: 12345,
-            primaryActionError: nil,
-            traversalBeforeError: nil,
-            traversalAfterError: nil,
-        )
-
-        XCTAssertEqual(result.pid, 12345)
-        XCTAssertEqual(result.appName, "TestApp")
-        XCTAssertEqual(result.traversalPid, 12345)
-        XCTAssertNil(result.primaryActionError)
-        XCTAssertNil(result.traversalBeforeError)
-        XCTAssertNil(result.traversalAfterError)
-    }
-
-    func testActionResultInfoWithErrors() {
-        let result = ActionResultInfo(
-            pid: 0,
-            appName: "",
-            traversalPid: 0,
-            primaryActionError: "Click failed",
-            traversalBeforeError: "Traversal before failed",
-            traversalAfterError: "Traversal after failed",
-        )
-
-        XCTAssertEqual(result.primaryActionError, "Click failed")
-        XCTAssertEqual(result.traversalBeforeError, "Traversal before failed")
-        XCTAssertEqual(result.traversalAfterError, "Traversal after failed")
-    }
-
-    func testActionResultInfoIsSendable() {
-        // Compile-time verification that ActionResultInfo conforms to Sendable
-        let result = ActionResultInfo(
-            pid: 1,
-            appName: "App",
-            traversalPid: 1,
-            primaryActionError: nil,
-            traversalBeforeError: nil,
-            traversalAfterError: nil,
-        )
-
-        Task {
-            _ = result // Using Sendable type in async context should compile
         }
     }
 

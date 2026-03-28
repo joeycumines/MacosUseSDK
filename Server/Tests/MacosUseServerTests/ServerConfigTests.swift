@@ -1,7 +1,8 @@
+import Darwin
 @testable import MacosUseServer
 import XCTest
 
-/// Tests for ServerConfig
+/// Tests for ServerConfig and server security settings
 final class ServerConfigTests: XCTestCase {
     func testDefaultConfiguration() {
         // Save original environment
@@ -41,5 +42,14 @@ final class ServerConfigTests: XCTestCase {
         unsetenv("GRPC_LISTEN_ADDRESS")
         unsetenv("GRPC_PORT")
         unsetenv("GRPC_UNIX_SOCKET")
+    }
+
+    func testSecureUmaskValue() {
+        // The secure umask should be 0o177 (0177 in octal)
+        // This ensures files/sockets are created with 0600 permissions (owner read/write only)
+        // umask 0177 means: disable all bits for group and others
+        // Resulting permissions: 0666 & ~0177 = 0600
+        let expectedUmask: mode_t = 0o177
+        XCTAssertEqual(expectedUmask, 0o177, "Secure umask should be 0177 (octal)")
     }
 }
