@@ -4,23 +4,6 @@ import CoreGraphics
 import Foundation
 import MacosUseSDK
 
-/// Function pointer type for the private _AXUIElementGetWindow API.
-/// Resolved dynamically via dlsym to avoid hard-linking a private symbol
-/// that could be removed in future macOS releases.
-///
-/// NOTE: This pattern is duplicated in Sources/MacosUseSDK/WindowQuery.swift
-/// because the SDK and Server are separate modules. Changes here must be mirrored there.
-private typealias AXUIElementGetWindowFn = @convention(c) (AXUIElement, UnsafeMutablePointer<CGWindowID>) -> AXError
-
-/// Lazily resolved function pointer for _AXUIElementGetWindow.
-/// Returns nil if the symbol is not available (removed in a future macOS).
-private let _axUIElementGetWindowFn: AXUIElementGetWindowFn? = {
-    guard let sym = dlsym(dlopen(nil, RTLD_LAZY), "_AXUIElementGetWindow") else {
-        return nil
-    }
-    return unsafeBitCast(sym, to: AXUIElementGetWindowFn.self)
-}()
-
 public final class ProductionSystemOperations: SystemOperations {
     public static let shared = ProductionSystemOperations()
 
@@ -74,16 +57,10 @@ public final class ProductionSystemOperations: SystemOperations {
 
     public func getAXWindowID(element: AnyObject) -> CGWindowID? {
         let ax = unsafeDowncast(element, to: AXUIElement.self)
-        var id: CGWindowID = 0
-        // Try to call the private symbol via dlsym-resolved function pointer
-        guard let getWindowFn = _axUIElementGetWindowFn else {
-            return nil
-        }
-        let result = getWindowFn(ax, &id)
+        let (result, id) = MacosUseSDK.resolveAXWindowID(for: ax)
         if result == .success {
             return id
         }
-
         return nil
     }
 

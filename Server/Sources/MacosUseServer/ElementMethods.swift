@@ -16,7 +16,7 @@ extension MacosUseService {
         Self.logger.info("traverseAccessibility called")
         let pid = try parsePID(fromName: req.name)
         let response = try await AutomationCoordinator.shared.handleTraverse(
-            pid: pid, visibleOnly: req.visibleOnly,
+            pid: pid, visibleOnly: req.visibleOnly, shouldActivate: req.activate,
         )
         return ServerResponse(message: response)
     }
@@ -29,10 +29,12 @@ extension MacosUseService {
         Self.logger.info("watchAccessibility called")
 
         let pid = try parsePID(fromName: req.name)
-        let pollInterval = req.pollInterval > 0 ? req.pollInterval : 1.0
+        // Clamp poll interval: min 0.1s, max 60s to prevent UInt64 overflow (UInt64.max / 1e9 ≈ 18s)
+        let rawInterval = req.pollInterval > 0 ? req.pollInterval : 1.0
+        let pollInterval = min(max(rawInterval, 0.1), 60.0)
 
         return StreamingServerResponse { writer in
-            var previous: [Macosusesdk_Type_Element] = []
+            var previousByPath: [String: Macosusesdk_Type_Element] = [:]
 
             while !Task.isCancelled {
                 do {
@@ -40,22 +42,58 @@ extension MacosUseService {
                         pid: pid, visibleOnly: req.visibleOnly,
                     )
 
-                    // Naive diff: if previous empty, send all as added; otherwise send elements as modified
-                    let resp = Macosusesdk_V1_WatchAccessibilityResponse.with {
-                        if previous.isEmpty {
-                            $0.added = trav.elements
-                        } else {
-                            $0.modified = trav.elements.map { element in
-                                Macosusesdk_V1_ModifiedElement.with {
-                                    $0.oldElement = Macosusesdk_Type_Element()
-                                    $0.newElement = element
-                                }
+                    // Build current element map keyed by path
+                    var currentByPath: [String: Macosusesdk_Type_Element] = [:]
+                    for element in trav.elements {
+                        let pathKey = Self.elementPathKey(element)
+                        currentByPath[pathKey] = element
+                    }
+
+                    // Compute diff
+                    var added: [Macosusesdk_Type_Element] = []
+                    var removed: [Macosusesdk_Type_Element] = []
+                    var modified: [Macosusesdk_V1_ModifiedElement] = []
+
+                    // Find added and modified elements
+                    for (pathKey, currentElement) in currentByPath {
+                        if let previousElement = previousByPath[pathKey] {
+                            // Element existed before - check if modified
+                            let changes = self.computeElementChanges(
+                                old: previousElement, new: currentElement,
+                            )
+                            if !changes.isEmpty {
+                                modified.append(Macosusesdk_V1_ModifiedElement.with {
+                                    $0.oldElement = previousElement
+                                    $0.newElement = currentElement
+                                    $0.changes = changes
+                                })
                             }
+                            // If no changes, element is unchanged - don't include in response
+                        } else {
+                            // Element is new
+                            added.append(currentElement)
                         }
                     }
 
-                    try await writer.write(resp)
-                    previous = trav.elements
+                    // Find removed elements
+                    for (pathKey, previousElement) in previousByPath {
+                        if currentByPath[pathKey] == nil {
+                            removed.append(previousElement)
+                        }
+                    }
+
+                    // Only send response if there are changes (or first poll - all added)
+                    let hasChanges = !added.isEmpty || !removed.isEmpty || !modified.isEmpty
+                    if hasChanges {
+                        let resp = Macosusesdk_V1_WatchAccessibilityResponse.with {
+                            $0.added = added
+                            $0.removed = removed
+                            $0.modified = modified
+                        }
+                        try await writer.write(resp)
+                    }
+
+                    previousByPath = currentByPath
                 } catch {
                     // send an empty heartbeat to keep client alive
                     _ = try? await writer.write(Macosusesdk_V1_WatchAccessibilityResponse())
@@ -68,6 +106,137 @@ extension MacosUseService {
             // Return trailing metadata
             return [:]
         }
+    }
+
+    /// Computes attribute changes between two elements.
+    /// Returns an empty array if elements are identical.
+    /// - Note: Internal for testing with @testable import.
+    func computeElementChanges(
+        old: Macosusesdk_Type_Element,
+        new: Macosusesdk_Type_Element,
+    ) -> [Macosusesdk_V1_AttributeChange] {
+        var changes: [Macosusesdk_V1_AttributeChange] = []
+
+        // Compare role
+        if old.role != new.role {
+            changes.append(Macosusesdk_V1_AttributeChange.with {
+                $0.attribute = "role"
+                $0.oldValue = old.role
+                $0.newValue = new.role
+            })
+        }
+
+        // Compare text (handle optionals)
+        let oldText = old.hasText ? old.text : ""
+        let newText = new.hasText ? new.text : ""
+        if oldText != newText {
+            changes.append(Macosusesdk_V1_AttributeChange.with {
+                $0.attribute = "text"
+                $0.oldValue = oldText
+                $0.newValue = newText
+            })
+        }
+
+        // Compare position x (with epsilon for floating-point noise)
+        let oldX = old.hasX ? old.x : 0
+        let newX = new.hasX ? new.x : 0
+        if !Self.doubleApproxEqual(oldX, newX) {
+            changes.append(Macosusesdk_V1_AttributeChange.with {
+                $0.attribute = "x"
+                $0.oldValue = String(oldX)
+                $0.newValue = String(newX)
+            })
+        }
+
+        // Compare position y (with epsilon for floating-point noise)
+        let oldY = old.hasY ? old.y : 0
+        let newY = new.hasY ? new.y : 0
+        if !Self.doubleApproxEqual(oldY, newY) {
+            changes.append(Macosusesdk_V1_AttributeChange.with {
+                $0.attribute = "y"
+                $0.oldValue = String(oldY)
+                $0.newValue = String(newY)
+            })
+        }
+
+        // Compare width (with epsilon for floating-point noise)
+        let oldWidth = old.hasWidth ? old.width : 0
+        let newWidth = new.hasWidth ? new.width : 0
+        if !Self.doubleApproxEqual(oldWidth, newWidth) {
+            changes.append(Macosusesdk_V1_AttributeChange.with {
+                $0.attribute = "width"
+                $0.oldValue = String(oldWidth)
+                $0.newValue = String(newWidth)
+            })
+        }
+
+        // Compare height (with epsilon for floating-point noise)
+        let oldHeight = old.hasHeight ? old.height : 0
+        let newHeight = new.hasHeight ? new.height : 0
+        if !Self.doubleApproxEqual(oldHeight, newHeight) {
+            changes.append(Macosusesdk_V1_AttributeChange.with {
+                $0.attribute = "height"
+                $0.oldValue = String(oldHeight)
+                $0.newValue = String(newHeight)
+            })
+        }
+
+        // Compare enabled
+        let oldEnabled = old.hasEnabled ? old.enabled : true
+        let newEnabled = new.hasEnabled ? new.enabled : true
+        if oldEnabled != newEnabled {
+            changes.append(Macosusesdk_V1_AttributeChange.with {
+                $0.attribute = "enabled"
+                $0.oldValue = String(oldEnabled)
+                $0.newValue = String(newEnabled)
+            })
+        }
+
+        // Compare focused
+        let oldFocused = old.hasFocused ? old.focused : false
+        let newFocused = new.hasFocused ? new.focused : false
+        if oldFocused != newFocused {
+            changes.append(Macosusesdk_V1_AttributeChange.with {
+                $0.attribute = "focused"
+                $0.oldValue = String(oldFocused)
+                $0.newValue = String(newFocused)
+            })
+        }
+
+        return changes
+    }
+
+    /// Generates a unique path key for an element.
+    /// Handles empty paths by using role + position + size as fallback to avoid collisions.
+    /// - Note: Static for testing with @testable import.
+    static func elementPathKey(_ element: Macosusesdk_Type_Element) -> String {
+        if element.path.isEmpty {
+            // Fallback: use role + position + size to distinguish root-level elements
+            // This handles edge cases where path is empty (e.g., root application element)
+            // Use safeInt() to guard against NaN/Infinity which would crash Int()
+            let x = safeInt(element.hasX ? element.x : 0)
+            let y = safeInt(element.hasY ? element.y : 0)
+            let w = safeInt(element.hasWidth ? element.width : 0)
+            let h = safeInt(element.hasHeight ? element.height : 0)
+            return "root:\(element.role)@\(x),\(y)/\(w)x\(h)"
+        }
+        return element.path.map(String.init).joined(separator: "/")
+    }
+
+    /// Safely converts a Double to Int, returning 0 for NaN, Infinity, or values outside Int range.
+    private static func safeInt(_ value: Double) -> Int {
+        guard value.isFinite else { return 0 }
+        // Guard against values outside Int range (extremely unlikely for UI coordinates)
+        guard value >= Double(Int.min), value <= Double(Int.max) else { return 0 }
+        return Int(value)
+    }
+
+    /// Epsilon for floating-point comparisons (1 pixel tolerance for AX coordinate noise).
+    private static let coordinateEpsilon: Double = 1.0
+
+    /// Returns true if two doubles are approximately equal within epsilon.
+    private static func doubleApproxEqual(_ lhs: Double, _ rhs: Double, epsilon: Double = coordinateEpsilon) -> Bool {
+        abs(lhs - rhs) < epsilon
     }
 
     func findElements(
@@ -133,6 +302,40 @@ extension MacosUseService {
         let req = request.message
         Self.logger.info("findRegionElements called")
 
+        // Validate region coordinates are finite
+        guard req.region.x.isFinite else {
+            throw RPCErrorHelpers.validationError(
+                message: "region.x must be a finite number",
+                reason: "INVALID_COORDINATE",
+                field: "region.x",
+                value: String(req.region.x),
+            )
+        }
+        guard req.region.y.isFinite else {
+            throw RPCErrorHelpers.validationError(
+                message: "region.y must be a finite number",
+                reason: "INVALID_COORDINATE",
+                field: "region.y",
+                value: String(req.region.y),
+            )
+        }
+        guard req.region.width.isFinite, req.region.width > 0 else {
+            throw RPCErrorHelpers.validationError(
+                message: "region.width must be a finite positive number",
+                reason: "INVALID_DIMENSION",
+                field: "region.width",
+                value: String(req.region.width),
+            )
+        }
+        guard req.region.height.isFinite, req.region.height > 0 else {
+            throw RPCErrorHelpers.validationError(
+                message: "region.height must be a finite positive number",
+                reason: "INVALID_DIMENSION",
+                field: "region.height",
+                value: String(req.region.height),
+            )
+        }
+
         // Validate selector if provided
         let selector =
             req.hasSelector ? try SelectorParser.shared.parseSelector(req.selector) : nil
@@ -191,6 +394,15 @@ extension MacosUseService {
     ) async throws -> ServerResponse<Macosusesdk_Type_Element> {
         let req = request.message
         Self.logger.info("getElement called")
+
+        // Validate name is not empty
+        guard !req.name.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "name is required",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "name",
+            )
+        }
 
         let response = try await ElementLocator.shared.getElement(name: req.name)
         return ServerResponse(message: response)
@@ -459,6 +671,15 @@ extension MacosUseService {
     ) async throws -> ServerResponse<Macosusesdk_V1_PerformElementActionResponse> {
         let req = request.message
         Self.logger.info("performElementAction called")
+
+        // Validate action is not empty
+        guard !req.action.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "action is required",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "action",
+            )
+        }
 
         let element: Macosusesdk_Type_Element
         let elementID: String

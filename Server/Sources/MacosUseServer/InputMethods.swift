@@ -28,9 +28,10 @@ extension MacosUseService {
         Self.logger.info("createInput called")
 
         let inputId = req.inputID.isEmpty ? UUID().uuidString : req.inputID
-        let pid: pid_t? = req.parent.isEmpty ? nil : try parsePID(fromName: req.parent)
+        let pid: pid_t? = try parseOptionalPID(fromName: req.parent)
+        let isWildcardOrEmpty = req.parent.isEmpty || req.parent == "applications/-"
         let name =
-            req.parent.isEmpty ? "desktopInputs/\(inputId)" : "\(req.parent)/inputs/\(inputId)"
+            isWildcardOrEmpty ? "desktopInputs/\(inputId)" : "\(req.parent)/inputs/\(inputId)"
 
         let input = Macosusesdk_V1_Input.with {
             $0.name = name
@@ -59,6 +60,18 @@ extension MacosUseService {
             completedInput.completeTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
             await stateStore.addInput(completedInput)
             return ServerResponse(message: completedInput)
+        } catch let coordError as CoordinatorError {
+            // Validation errors (invalid coordinates, unknown keys) are client errors —
+            // return INVALID_ARGUMENT per Google AIP standards rather than a soft failure.
+            var failedInput = executingInput
+            failedInput.state = .failed
+            failedInput.error = coordError.localizedDescription
+            failedInput.completeTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
+            await stateStore.addInput(failedInput)
+            throw RPCError(
+                code: .invalidArgument,
+                message: coordError.localizedDescription,
+            )
         } catch {
             // Update to failed
             var failedInput = executingInput
