@@ -6,6 +6,8 @@ syntax = "proto3";
 
 package macosusesdk.v1;
 
+import "google/api/field_behavior.proto";
+
 option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
 option java_multiple_files = true;
 option java_outer_classname = "ScriptProto";
@@ -14,28 +16,28 @@ option java_package = "com.macosusesdk.v1";
 // Scripting dictionaries.
 message ScriptingDictionaries {
   // Available scripting dictionaries.
-  repeated ScriptingDictionary dictionaries = 1;
+  repeated ScriptingDictionary dictionaries = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Scripting dictionary for an application.
 message ScriptingDictionary {
   // Application.
-  string application = 1;
+  string application = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Application bundle identifier.
-  string bundle_id = 2;
+  string bundle_id = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Whether the application supports AppleScript.
-  bool supports_applescript = 3;
+  bool supports_applescript = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Whether the application supports JXA.
-  bool supports_jxa = 4;
+  bool supports_jxa = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Available scripting commands.
-  repeated string commands = 5;
+  repeated string commands = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Available scripting classes.
-  repeated string classes = 6;
+  repeated string classes = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Script type enumeration.
