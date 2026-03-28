@@ -267,7 +267,7 @@ func TestListObservationsPagination(t *testing.T) {
 	// Create 3 observations
 	t.Log("Creating 3 observations...")
 	var observations []*pb.Observation
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		createReq := &pb.CreateObservationRequest{
 			Parent: app.Name,
 			Observation: &pb.Observation{

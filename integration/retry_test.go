@@ -51,7 +51,7 @@ func TestRetryBehavior(t *testing.T) {
 
 	// Test that the server handles rapid sequential connections correctly
 	t.Log("Testing rapid sequential connections...")
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		conn := connectToServer(t, ctx, serverAddr)
 		client := pb.NewMacosUseClient(conn)
 		_, err := client.ListApplications(ctx, &pb.ListApplicationsRequest{})

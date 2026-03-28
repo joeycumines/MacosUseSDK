@@ -203,23 +203,30 @@ func TestWindowChangeObservation(t *testing.T) {
 	eventsChan := make(chan *pb.ObservationEvent, 10)
 	errChan := make(chan error, 1)
 
-	// CRITICAL FIX: Ensure channels are closed to prevent goroutine leaks
-	defer func() {
-		close(eventsChan)
-		close(errChan)
-	}()
-
-	// Start goroutine to receive events
+	// Start goroutine to receive events. The goroutine will exit when:
+	// 1. stream.Recv() returns an error (context cancelled, stream closed)
+	// 2. The stream context is cancelled via defer streamCancel()
+	// We do NOT close eventsChan/errChan here - the goroutine sends to them,
+	// so closing would cause "send on closed channel" panic.
 	go func() {
 		for {
 			resp, err := stream.Recv()
 			if err != nil {
-				errChan <- err
+				// Non-blocking send to avoid blocking if test already exited
+				select {
+				case errChan <- err:
+				default:
+				}
 				return
 			}
 			if resp.Event != nil {
 				t.Logf("Received observation event: sequence=%d", resp.Event.Sequence)
-				eventsChan <- resp.Event
+				// Non-blocking send to avoid blocking if test already exited
+				select {
+				case eventsChan <- resp.Event:
+				default:
+					t.Log("Warning: event channel full, discarding event")
+				}
 			}
 		}
 	}()

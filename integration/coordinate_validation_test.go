@@ -214,13 +214,13 @@ func TestCoordinateValidation_MCPViaHTTP(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			request := map[string]interface{}{
+			request := map[string]any{
 				"jsonrpc": "2.0",
 				"id":      time.Now().UnixNano(),
 				"method":  "tools/call",
-				"params": map[string]interface{}{
+				"params": map[string]any{
 					"name": "click",
-					"arguments": map[string]interface{}{
+					"arguments": map[string]any{
 						"x": tc.x,
 						"y": tc.y,
 					},

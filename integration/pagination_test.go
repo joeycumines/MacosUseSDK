@@ -207,6 +207,9 @@ func TestListApplicationsPagination(t *testing.T) {
 // openTextEdit opens TextEdit application with a new empty document for testing.
 // Uses OpenApplication followed by AppleScript to create a new document, avoiding the file picker.
 func openTextEdit(t *testing.T, ctx context.Context, client pb.MacosUseClient, opsClient longrunningpb.OperationsClient) *pb.Application {
+	// Robustly kill TextEdit, clear saved state, and disable modal dialogs
+	killTextEdit(t)
+
 	// Open TextEdit using OpenApplication
 	op, err := client.OpenApplication(ctx, &pb.OpenApplicationRequest{
 		Id: "com.apple.TextEdit",
@@ -278,7 +281,7 @@ func TestListInputsPagination(t *testing.T) {
 	// 3. Data Seeding
 	// We create exactly 3 inputs to test a page split of 2 and 1.
 	t.Log("Creating 3 test inputs...")
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		performInput(t, ctx, client, app, "1")
 	}
 

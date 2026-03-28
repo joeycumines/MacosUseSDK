@@ -24,6 +24,9 @@ func TestClipboardPasteIntoTextEdit(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
+	// Robustly kill TextEdit, clear saved state, and disable modal dialogs
+	killTextEdit(t)
+
 	serverCmd, serverAddr := startServer(t, ctx)
 	defer cleanupServer(t, serverCmd, serverAddr)
 
