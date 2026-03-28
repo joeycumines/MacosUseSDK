@@ -644,12 +644,21 @@ Open an application by name, bundle ID, or path.
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `id` | string | **Yes** | App identifier: name (`Calculator`), bundle ID (`com.apple.calculator`), or path (`/Applications/Calculator.app`) |
+| `background` | boolean | No | If true, open the app without stealing focus. Default: false (activates the app). |
 
 **Example:**
 ```json
 {
   "name": "open_application",
   "arguments": {"id": "TextEdit"}
+}
+```
+
+**Example (background mode - no focus stealing):**
+```json
+{
+  "name": "open_application",
+  "arguments": {"id": "Calculator", "background": true}
 }
 ```
 
