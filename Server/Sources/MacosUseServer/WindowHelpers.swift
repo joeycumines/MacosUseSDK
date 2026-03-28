@@ -13,6 +13,12 @@ extension MacosUseService {
         try ParsingHelpers.parsePID(fromName: name)
     }
 
+    /// Parse an optional PID supporting the AIP-159 wildcard (`applications/-`).
+    /// Returns nil for empty parent or wildcard, a valid PID otherwise.
+    func parseOptionalPID(fromName name: String) throws -> pid_t? {
+        try ParsingHelpers.parseOptionalPID(fromName: name)
+    }
+
     /// Build a Window response directly from an AXUIElement using hybrid data authority.
     /// AX data is authoritative for geometry and state; Registry provides metadata (z-index, bundle ID).
     ///

@@ -37,6 +37,15 @@ extension MacosUseService {
         let req = request.message
         Self.logger.info("getSession called")
 
+        // Validate name is not empty
+        guard !req.name.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "name is required",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "name",
+            )
+        }
+
         // Get session from SessionManager
         guard let session = await SessionManager.shared.getSession(name: req.name) else {
             throw RPCError(code: .notFound, message: "Session not found: \(req.name)")
@@ -73,6 +82,15 @@ extension MacosUseService {
         let req = request.message
         Self.logger.info("deleteSession called")
 
+        // Validate name is not empty
+        guard !req.name.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "name is required",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "name",
+            )
+        }
+
         // Delete session from SessionManager
         let deleted = await SessionManager.shared.deleteSession(name: req.name)
 
@@ -88,6 +106,15 @@ extension MacosUseService {
     ) async throws -> ServerResponse<Macosusesdk_V1_BeginTransactionResponse> {
         let req = request.message
         Self.logger.info("beginTransaction called")
+
+        // Validate session name is not empty
+        guard !req.session.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "session is required",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "session",
+            )
+        }
 
         do {
             // Begin transaction in SessionManager
@@ -119,6 +146,22 @@ extension MacosUseService {
         let req = request.message
         Self.logger.info("commitTransaction called")
 
+        // Validate required fields are not empty
+        guard !req.name.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "name is required",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "name",
+            )
+        }
+        guard !req.transactionID.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "transaction_id is required",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "transaction_id",
+            )
+        }
+
         do {
             // Commit transaction in SessionManager
             let transaction = try await SessionManager.shared
@@ -140,6 +183,22 @@ extension MacosUseService {
     ) async throws -> ServerResponse<Macosusesdk_V1_Transaction> {
         let req = request.message
         Self.logger.info("rollbackTransaction called")
+
+        // Validate required fields are not empty
+        guard !req.name.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "name is required",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "name",
+            )
+        }
+        guard !req.transactionID.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "transaction_id is required",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "transaction_id",
+            )
+        }
 
         do {
             // Rollback transaction in SessionManager
@@ -163,6 +222,15 @@ extension MacosUseService {
     ) async throws -> ServerResponse<Macosusesdk_V1_SessionSnapshot> {
         let req = request.message
         Self.logger.info("getSessionSnapshot called")
+
+        // Validate name is not empty
+        guard !req.name.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "name is required",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "name",
+            )
+        }
 
         // Get session snapshot from SessionManager
         guard let snapshot = await SessionManager.shared.getSessionSnapshot(sessionName: req.name)

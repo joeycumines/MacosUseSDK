@@ -46,6 +46,15 @@ extension MacosUseService {
         Self.logger.info("getMacro called")
         let req = request.message
 
+        // Validate name is not empty
+        guard !req.name.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "name is required",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "name",
+            )
+        }
+
         guard let macro = await MacroRegistry.shared.getMacro(name: req.name) else {
             throw RPCError(
                 code: .notFound,
@@ -83,6 +92,15 @@ extension MacosUseService {
     ) async throws -> ServerResponse<Macosusesdk_V1_Macro> {
         Self.logger.info("updateMacro called")
         let req = request.message
+
+        // Validate macro.name is not empty
+        guard !req.macro.name.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "macro.name is required",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "macro.name",
+            )
+        }
 
         // Parse field mask to determine what to update
         let updateMask = req.updateMask
@@ -147,6 +165,15 @@ extension MacosUseService {
         Self.logger.info("deleteMacro called")
         let req = request.message
 
+        // Validate name is not empty
+        guard !req.name.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "name is required",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "name",
+            )
+        }
+
         // Delete macro from registry
         let deleted = await MacroRegistry.shared.deleteMacro(name: req.name)
 
@@ -163,6 +190,15 @@ extension MacosUseService {
     ) async throws -> ServerResponse<Google_Longrunning_Operation> {
         Self.logger.info("executeMacro called (LRO)")
         let req = request.message
+
+        // Validate macro name is not empty
+        guard !req.macro.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "macro is required",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "macro",
+            )
+        }
 
         // Get macro from registry
         guard let macro = await MacroRegistry.shared.getMacro(name: req.macro) else {
