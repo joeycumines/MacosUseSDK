@@ -331,8 +331,8 @@ func TestHandleListWindows_GRPCError(t *testing.T) {
 	}
 
 	text := result.Content[0].Text
-	if !strings.Contains(text, "Failed to list windows") {
-		t.Errorf("error text does not contain 'Failed to list windows': %s", text)
+	if !strings.Contains(text, "Error in list_windows") {
+		t.Errorf("error text does not contain 'Error in list_windows': %s", text)
 	}
 }
 
@@ -463,8 +463,8 @@ func TestHandleGetWindow_GRPCError(t *testing.T) {
 	}
 
 	text := result.Content[0].Text
-	if !strings.Contains(text, "Failed to get window") {
-		t.Errorf("error text does not contain 'Failed to get window': %s", text)
+	if !strings.Contains(text, "Error in get_window") {
+		t.Errorf("error text does not contain 'Error in get_window': %s", text)
 	}
 }
 
@@ -610,8 +610,8 @@ func TestHandleMoveWindow_GRPCError(t *testing.T) {
 	}
 
 	text := result.Content[0].Text
-	if !strings.Contains(text, "Failed to move window") {
-		t.Errorf("error text does not contain 'Failed to move window': %s", text)
+	if !strings.Contains(text, "Error in move_window") {
+		t.Errorf("error text does not contain 'Error in move_window': %s", text)
 	}
 }
 
@@ -760,8 +760,8 @@ func TestHandleResizeWindow_GRPCError(t *testing.T) {
 	}
 
 	text := result.Content[0].Text
-	if !strings.Contains(text, "Failed to resize window") {
-		t.Errorf("error text does not contain 'Failed to resize window': %s", text)
+	if !strings.Contains(text, "Error in resize_window") {
+		t.Errorf("error text does not contain 'Error in resize_window': %s", text)
 	}
 }
 
@@ -861,8 +861,8 @@ func TestHandleMinimizeWindow_GRPCError(t *testing.T) {
 	}
 
 	text := result.Content[0].Text
-	if !strings.Contains(text, "Failed to minimize window") {
-		t.Errorf("error text does not contain 'Failed to minimize window': %s", text)
+	if !strings.Contains(text, "Error in minimize_window") {
+		t.Errorf("error text does not contain 'Error in minimize_window': %s", text)
 	}
 }
 
@@ -957,8 +957,8 @@ func TestHandleRestoreWindow_GRPCError(t *testing.T) {
 	}
 
 	text := result.Content[0].Text
-	if !strings.Contains(text, "Failed to restore window") {
-		t.Errorf("error text does not contain 'Failed to restore window': %s", text)
+	if !strings.Contains(text, "Error in restore_window") {
+		t.Errorf("error text does not contain 'Error in restore_window': %s", text)
 	}
 }
 
@@ -1046,8 +1046,8 @@ func TestHandleCloseWindow_SuccessFalse(t *testing.T) {
 	}
 
 	text := result.Content[0].Text
-	if !strings.Contains(text, "failed to close window") {
-		t.Errorf("error text does not contain 'failed to close window': %s", text)
+	if !strings.Contains(text, "Error in close_window") {
+		t.Errorf("error text does not contain 'Error in close_window': %s", text)
 	}
 }
 
@@ -1104,8 +1104,8 @@ func TestHandleCloseWindow_GRPCError(t *testing.T) {
 	}
 
 	text := result.Content[0].Text
-	if !strings.Contains(text, "Failed to close window") {
-		t.Errorf("error text does not contain 'Failed to close window': %s", text)
+	if !strings.Contains(text, "Error in close_window") {
+		t.Errorf("error text does not contain 'Error in close_window': %s", text)
 	}
 }
 
@@ -1203,8 +1203,8 @@ func TestHandleFocusWindow_GRPCError(t *testing.T) {
 	}
 
 	text := result.Content[0].Text
-	if !strings.Contains(text, "Failed to focus window") {
-		t.Errorf("error text does not contain 'Failed to focus window': %s", text)
+	if !strings.Contains(text, "Error in focus_window") {
+		t.Errorf("error text does not contain 'Error in focus_window': %s", text)
 	}
 }
 
@@ -1380,8 +1380,8 @@ func TestHandleGetWindowState_GRPCError(t *testing.T) {
 	}
 
 	text := result.Content[0].Text
-	if !strings.Contains(text, "Failed to get window state") {
-		t.Errorf("error text does not contain 'Failed to get window state': %s", text)
+	if !strings.Contains(text, "Error in get_window_state") {
+		t.Errorf("error text does not contain 'Error in get_window_state': %s", text)
 	}
 }
 
@@ -1457,7 +1457,7 @@ func TestHandleListWindows_TableDriven(t *testing.T) {
 			args:         `{}`,
 			grpcErr:      errors.New("server unavailable"),
 			wantIsError:  true,
-			wantContains: []string{"Failed to list windows", "server unavailable"},
+			wantContains: []string{"Error in list_windows", "server unavailable"},
 		},
 	}
 
@@ -1540,7 +1540,7 @@ func TestHandleGetWindow_TableDriven(t *testing.T) {
 			args:         `{"name": "applications/1/windows/1"}`,
 			grpcErr:      errors.New("not found"),
 			wantIsError:  true,
-			wantContains: []string{"Failed to get window", "not found"},
+			wantContains: []string{"Error in get_window", "not found"},
 		},
 	}
 
@@ -1620,7 +1620,7 @@ func TestHandleMoveWindow_TableDriven(t *testing.T) {
 			args:         `{"name": "w1", "x": 0, "y": 0}`,
 			grpcErr:      errors.New("permission denied"),
 			wantIsError:  true,
-			wantContains: []string{"Failed to move window", "permission denied"},
+			wantContains: []string{"Error in move_window", "permission denied"},
 		},
 	}
 
@@ -1718,7 +1718,7 @@ func TestHandleResizeWindow_TableDriven(t *testing.T) {
 			args:         `{"name": "w1", "width": 800, "height": 600}`,
 			grpcErr:      errors.New("window not resizable"),
 			wantIsError:  true,
-			wantContains: []string{"Failed to resize window", "window not resizable"},
+			wantContains: []string{"Error in resize_window", "window not resizable"},
 		},
 	}
 
