@@ -11,6 +11,7 @@
 package macosusesdkv1
 
 import (
+	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -223,16 +224,16 @@ var File_macosusesdk_v1_script_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_script_proto_rawDesc = "" +
 	"\n" +
-	"\x1bmacosusesdk/v1/script.proto\x12\x0emacosusesdk.v1\"`\n" +
-	"\x15ScriptingDictionaries\x12G\n" +
-	"\fdictionaries\x18\x01 \x03(\v2#.macosusesdk.v1.ScriptingDictionaryR\fdictionaries\"\xe0\x01\n" +
-	"\x13ScriptingDictionary\x12 \n" +
-	"\vapplication\x18\x01 \x01(\tR\vapplication\x12\x1b\n" +
-	"\tbundle_id\x18\x02 \x01(\tR\bbundleId\x121\n" +
-	"\x14supports_applescript\x18\x03 \x01(\bR\x13supportsApplescript\x12!\n" +
-	"\fsupports_jxa\x18\x04 \x01(\bR\vsupportsJxa\x12\x1a\n" +
-	"\bcommands\x18\x05 \x03(\tR\bcommands\x12\x18\n" +
-	"\aclasses\x18\x06 \x03(\tR\aclasses*r\n" +
+	"\x1bmacosusesdk/v1/script.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\"e\n" +
+	"\x15ScriptingDictionaries\x12L\n" +
+	"\fdictionaries\x18\x01 \x03(\v2#.macosusesdk.v1.ScriptingDictionaryB\x03\xe0A\x03R\fdictionaries\"\xfe\x01\n" +
+	"\x13ScriptingDictionary\x12%\n" +
+	"\vapplication\x18\x01 \x01(\tB\x03\xe0A\x03R\vapplication\x12 \n" +
+	"\tbundle_id\x18\x02 \x01(\tB\x03\xe0A\x03R\bbundleId\x126\n" +
+	"\x14supports_applescript\x18\x03 \x01(\bB\x03\xe0A\x03R\x13supportsApplescript\x12&\n" +
+	"\fsupports_jxa\x18\x04 \x01(\bB\x03\xe0A\x03R\vsupportsJxa\x12\x1f\n" +
+	"\bcommands\x18\x05 \x03(\tB\x03\xe0A\x03R\bcommands\x12\x1d\n" +
+	"\aclasses\x18\x06 \x03(\tB\x03\xe0A\x03R\aclasses*r\n" +
 	"\n" +
 	"ScriptType\x12\x1b\n" +
 	"\x17SCRIPT_TYPE_UNSPECIFIED\x10\x00\x12\x1b\n" +

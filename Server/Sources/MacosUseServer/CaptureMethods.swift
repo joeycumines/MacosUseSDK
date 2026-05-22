@@ -52,6 +52,25 @@ extension MacosUseService {
         let req = request.message
         Self.logger.info("[captureElementScreenshot] Capturing element screenshot")
 
+        // Validate element ID is not empty
+        guard !req.elementID.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "element_id is required",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "element_id",
+            )
+        }
+
+        // Validate padding is non-negative
+        guard req.padding >= 0 else {
+            throw RPCErrorHelpers.validationError(
+                message: "padding must be a non-negative number",
+                reason: "INVALID_DIMENSION",
+                field: "padding",
+                value: String(req.padding),
+            )
+        }
+
         // Get element from registry
         guard let element = await ElementRegistry.shared.getElement(req.elementID) else {
             throw RPCError(
@@ -114,6 +133,40 @@ extension MacosUseService {
             throw RPCError(
                 code: .invalidArgument,
                 message: "Region is required",
+            )
+        }
+
+        // Validate region coordinates are finite
+        guard req.region.x.isFinite else {
+            throw RPCErrorHelpers.validationError(
+                message: "region.x must be a finite number",
+                reason: "INVALID_COORDINATE",
+                field: "region.x",
+                value: String(req.region.x),
+            )
+        }
+        guard req.region.y.isFinite else {
+            throw RPCErrorHelpers.validationError(
+                message: "region.y must be a finite number",
+                reason: "INVALID_COORDINATE",
+                field: "region.y",
+                value: String(req.region.y),
+            )
+        }
+        guard req.region.width.isFinite, req.region.width > 0 else {
+            throw RPCErrorHelpers.validationError(
+                message: "region.width must be a finite positive number",
+                reason: "INVALID_DIMENSION",
+                field: "region.width",
+                value: String(req.region.width),
+            )
+        }
+        guard req.region.height.isFinite, req.region.height > 0 else {
+            throw RPCErrorHelpers.validationError(
+                message: "region.height must be a finite positive number",
+                reason: "INVALID_DIMENSION",
+                field: "region.height",
+                value: String(req.region.height),
             )
         }
 

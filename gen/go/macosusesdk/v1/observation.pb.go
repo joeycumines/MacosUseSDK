@@ -316,7 +316,11 @@ type Observation struct {
 	// When the observation ended (if completed or cancelled).
 	EndTime *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
 	// Filter configuration for the observation.
-	Filter        *ObservationFilter `protobuf:"bytes,7,opt,name=filter,proto3" json:"filter,omitempty"`
+	Filter *ObservationFilter `protobuf:"bytes,7,opt,name=filter,proto3" json:"filter,omitempty"`
+	// Whether observation polling should activate (bring to foreground) the
+	// target application on each poll cycle. When false (the default), polling
+	// is performed passively without disturbing window ordering.
+	Activate      bool `protobuf:"varint,8,opt,name=activate,proto3" json:"activate,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -398,6 +402,13 @@ func (x *Observation) GetFilter() *ObservationFilter {
 		return x.Filter
 	}
 	return nil
+}
+
+func (x *Observation) GetActivate() bool {
+	if x != nil {
+		return x.Activate
+	}
+	return false
 }
 
 // Filter for observations.
@@ -926,7 +937,7 @@ var File_macosusesdk_v1_observation_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_observation_proto_rawDesc = "" +
 	"\n" +
-	" macosusesdk/v1/observation.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1emacosusesdk/type/element.proto\"\x91\x05\n" +
+	" macosusesdk/v1/observation.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1emacosusesdk/type/element.proto\"\xb2\x05\n" +
 	"\vObservation\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x128\n" +
 	"\x04type\x18\x02 \x01(\x0e2\x1f.macosusesdk.v1.ObservationTypeB\x03\xe0A\x02R\x04type\x12<\n" +
@@ -936,7 +947,8 @@ const file_macosusesdk_v1_observation_proto_rawDesc = "" +
 	"\n" +
 	"start_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\tstartTime\x12:\n" +
 	"\bend_time\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\aendTime\x12>\n" +
-	"\x06filter\x18\a \x01(\v2!.macosusesdk.v1.ObservationFilterB\x03\xe0A\x01R\x06filter\"\x7f\n" +
+	"\x06filter\x18\a \x01(\v2!.macosusesdk.v1.ObservationFilterB\x03\xe0A\x01R\x06filter\x12\x1f\n" +
+	"\bactivate\x18\b \x01(\bB\x03\xe0A\x01R\bactivate\"\x7f\n" +
 	"\x05State\x12\x15\n" +
 	"\x11STATE_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rSTATE_PENDING\x10\x01\x12\x10\n" +
@@ -951,13 +963,13 @@ const file_macosusesdk_v1_observation_proto_rawDesc = "" +
 	"\x05roles\x18\x03 \x03(\tB\x03\xe0A\x01R\x05roles\x12#\n" +
 	"\n" +
 	"attributes\x18\x04 \x03(\tB\x03\xe0A\x01R\n" +
-	"attributes\"\xaa\x04\n" +
-	"\x10ObservationEvent\x12B\n" +
-	"\vobservation\x18\x01 \x01(\tB \xfaA\x1d\n" +
-	"\x1bmacosusesdk.com/ObservationR\vobservation\x129\n" +
+	"attributes\"\xb7\x04\n" +
+	"\x10ObservationEvent\x12E\n" +
+	"\vobservation\x18\x01 \x01(\tB#\xe0A\x03\xfaA\x1d\n" +
+	"\x1bmacosusesdk.com/ObservationR\vobservation\x12>\n" +
 	"\n" +
-	"event_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\teventTime\x12\x1a\n" +
-	"\bsequence\x18\x03 \x01(\x03R\bsequence\x12C\n" +
+	"event_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\teventTime\x12\x1f\n" +
+	"\bsequence\x18\x03 \x01(\x03B\x03\xe0A\x03R\bsequence\x12C\n" +
 	"\relement_added\x18\n" +
 	" \x01(\v2\x1c.macosusesdk.v1.ElementEventH\x00R\felementAdded\x12G\n" +
 	"\x0felement_removed\x18\v \x01(\v2\x1c.macosusesdk.v1.ElementEventH\x00R\x0eelementRemoved\x12L\n" +
@@ -965,24 +977,24 @@ const file_macosusesdk_v1_observation_proto_rawDesc = "" +
 	"\fwindow_event\x18\r \x01(\v2\x1b.macosusesdk.v1.WindowEventH\x00R\vwindowEvent\x12O\n" +
 	"\x11application_event\x18\x0e \x01(\v2 .macosusesdk.v1.ApplicationEventH\x00R\x10applicationEventB\f\n" +
 	"\n" +
-	"event_type\"C\n" +
-	"\fElementEvent\x123\n" +
-	"\aelement\x18\x01 \x01(\v2\x19.macosusesdk.type.ElementR\aelement\"\xc4\x01\n" +
-	"\x0fElementModified\x12:\n" +
-	"\vold_element\x18\x01 \x01(\v2\x19.macosusesdk.type.ElementR\n" +
-	"oldElement\x12:\n" +
-	"\vnew_element\x18\x02 \x01(\v2\x19.macosusesdk.type.ElementR\n" +
-	"newElement\x129\n" +
-	"\achanges\x18\x03 \x03(\v2\x1f.macosusesdk.v1.AttributeChangeR\achanges\"i\n" +
-	"\x0fAttributeChange\x12\x1c\n" +
-	"\tattribute\x18\x01 \x01(\tR\tattribute\x12\x1b\n" +
-	"\told_value\x18\x02 \x01(\tR\boldValue\x12\x1b\n" +
-	"\tnew_value\x18\x03 \x01(\tR\bnewValue\"\xda\x03\n" +
-	"\vWindowEvent\x12J\n" +
+	"event_type\"H\n" +
+	"\fElementEvent\x128\n" +
+	"\aelement\x18\x01 \x01(\v2\x19.macosusesdk.type.ElementB\x03\xe0A\x03R\aelement\"\xd3\x01\n" +
+	"\x0fElementModified\x12?\n" +
+	"\vold_element\x18\x01 \x01(\v2\x19.macosusesdk.type.ElementB\x03\xe0A\x03R\n" +
+	"oldElement\x12?\n" +
+	"\vnew_element\x18\x02 \x01(\v2\x19.macosusesdk.type.ElementB\x03\xe0A\x03R\n" +
+	"newElement\x12>\n" +
+	"\achanges\x18\x03 \x03(\v2\x1f.macosusesdk.v1.AttributeChangeB\x03\xe0A\x03R\achanges\"x\n" +
+	"\x0fAttributeChange\x12!\n" +
+	"\tattribute\x18\x01 \x01(\tB\x03\xe0A\x03R\tattribute\x12 \n" +
+	"\told_value\x18\x02 \x01(\tB\x03\xe0A\x03R\boldValue\x12 \n" +
+	"\tnew_value\x18\x03 \x01(\tB\x03\xe0A\x03R\bnewValue\"\xe9\x03\n" +
+	"\vWindowEvent\x12O\n" +
 	"\n" +
-	"event_type\x18\x01 \x01(\x0e2+.macosusesdk.v1.WindowEvent.WindowEventTypeR\teventType\x12\x1b\n" +
-	"\twindow_id\x18\x02 \x01(\tR\bwindowId\x12\x14\n" +
-	"\x05title\x18\x03 \x01(\tR\x05title\"\xcb\x02\n" +
+	"event_type\x18\x01 \x01(\x0e2+.macosusesdk.v1.WindowEvent.WindowEventTypeB\x03\xe0A\x03R\teventType\x12 \n" +
+	"\twindow_id\x18\x02 \x01(\tB\x03\xe0A\x03R\bwindowId\x12\x19\n" +
+	"\x05title\x18\x03 \x01(\tB\x03\xe0A\x03R\x05title\"\xcb\x02\n" +
 	"\x0fWindowEventType\x12!\n" +
 	"\x1dWINDOW_EVENT_TYPE_UNSPECIFIED\x10\x00\x12\x1d\n" +
 	"\x19WINDOW_EVENT_TYPE_CREATED\x10\x01\x12\x1f\n" +
@@ -993,10 +1005,10 @@ const file_macosusesdk_v1_observation_proto_rawDesc = "" +
 	"\x1aWINDOW_EVENT_TYPE_RESTORED\x10\x06\x12\x1d\n" +
 	"\x19WINDOW_EVENT_TYPE_FOCUSED\x10\a\x12\x1c\n" +
 	"\x18WINDOW_EVENT_TYPE_HIDDEN\x10\b\x12\x1b\n" +
-	"\x17WINDOW_EVENT_TYPE_SHOWN\x10\t\"\xc3\x02\n" +
-	"\x10ApplicationEvent\x12T\n" +
+	"\x17WINDOW_EVENT_TYPE_SHOWN\x10\t\"\xc8\x02\n" +
+	"\x10ApplicationEvent\x12Y\n" +
 	"\n" +
-	"event_type\x18\x01 \x01(\x0e25.macosusesdk.v1.ApplicationEvent.ApplicationEventTypeR\teventType\"\xd8\x01\n" +
+	"event_type\x18\x01 \x01(\x0e25.macosusesdk.v1.ApplicationEvent.ApplicationEventTypeB\x03\xe0A\x03R\teventType\"\xd8\x01\n" +
 	"\x14ApplicationEventType\x12&\n" +
 	"\"APPLICATION_EVENT_TYPE_UNSPECIFIED\x10\x00\x12$\n" +
 	" APPLICATION_EVENT_TYPE_ACTIVATED\x10\x01\x12&\n" +

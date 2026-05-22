@@ -84,10 +84,7 @@ func (s *MCPServer) handleCaptureScreenshot(call *ToolCall) (*ToolResult, error)
 		IncludeOcrText: params.IncludeOCR,
 	})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to capture screenshot: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "capture_screenshot"), nil
 	}
 
 	imageData := base64.StdEncoding.EncodeToString(resp.ImageData)
@@ -162,10 +159,7 @@ func (s *MCPServer) handleCaptureRegionScreenshot(call *ToolCall) (*ToolResult, 
 		IncludeOcrText: params.IncludeOCR,
 	})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to capture region screenshot: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "capture_region_screenshot"), nil
 	}
 
 	imageData := base64.StdEncoding.EncodeToString(resp.ImageData)
@@ -233,10 +227,7 @@ func (s *MCPServer) handleCaptureWindowScreenshot(call *ToolCall) (*ToolResult, 
 		IncludeOcrText: params.IncludeOCR,
 	})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to capture window screenshot: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "capture_window_screenshot"), nil
 	}
 
 	imageData := base64.StdEncoding.EncodeToString(resp.ImageData)
@@ -313,10 +304,7 @@ func (s *MCPServer) handleCaptureElementScreenshot(call *ToolCall) (*ToolResult,
 		IncludeOcrText: params.IncludeOCR,
 	})
 	if err != nil {
-		return &ToolResult{
-			IsError: true,
-			Content: []Content{{Type: "text", Text: fmt.Sprintf("Failed to capture element screenshot: %v", err)}},
-		}, nil
+		return grpcErrorResult(err, "capture_element_screenshot"), nil
 	}
 
 	imageData := base64.StdEncoding.EncodeToString(resp.ImageData)

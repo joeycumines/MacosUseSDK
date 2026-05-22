@@ -25,6 +25,8 @@ func (s *MCPServer) handleOpenApplication(call *ToolCall) (*ToolResult, error) {
 		// ID is the application identifier (name, bundle ID, or path)
 		// Examples: "Calculator", "com.apple.calculator", "/Applications/Calculator.app"
 		ID string `json:"id"`
+		// Background opens app without stealing focus when true
+		Background bool `json:"background"`
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
@@ -42,7 +44,10 @@ func (s *MCPServer) handleOpenApplication(call *ToolCall) (*ToolResult, error) {
 	}
 
 	// Start the long-running operation
-	op, err := s.client.OpenApplication(ctx, &pb.OpenApplicationRequest{Id: params.ID})
+	op, err := s.client.OpenApplication(ctx, &pb.OpenApplicationRequest{
+		Id:         params.ID,
+		Background: params.Background,
+	})
 	if err != nil {
 		return &ToolResult{
 			IsError: true,

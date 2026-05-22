@@ -1,30 +1,147 @@
-# Implementation Constraints
+# AGENTS.md / CLAUDE.md
 
-## Critical Ways of Working (STRICT MANDATES)
+This file provides guidance to AI agents.
+
+## Project Overview
+
+MacosUseSDK is a macOS accessibility automation framework consisting of:
+
+- **Swift library**: Core SDK using Accessibility APIs for UI traversal and input simulation
+- **Command-line tools**: Standalone executables for common automation tasks
+- **Swift gRPC server**: Production server with 77 MCP tools for AI agent integration
+- **Go MCP server**: MCP proxy layer exposing functionality via Model Context Protocol
+
+## Common Commands
+
+N.B. Always use `gmake` (GNU Make installed via Homebrew, on macOS) for building and testing to ensure compliance with execution protocol constraints.
+
+### Building
+
+```bash
+# Full build (Swift + Go + Proto)
+gmake all
+
+# Via custom target (preferred - limits output)
+gmake make-all-with-log # Output logged to build.log, last 15 lines shown
+```
+
+### Testing
+
+```bash
+# All tests
+gmake test
+
+# Swift unit tests only
+swift test
+swift test --filter TestClassName/testMethodName
+
+# Go unit tests only
+gmake go.test
+
+# Integration tests (requires macOS accessibility permissions)
+gmake go.test.integration
+```
+
+### Code Generation
+
+```bash
+# Generate protobuf code
+gmake generate
+# or
+gmake buf.generate
+
+# Generate descriptor sets for reflection
+gmake proto-generate-descriptors
+```
+
+### Linting and Formatting
+
+```bash
+# Format all
+gmake fmt
+
+# Lint all
+gmake lint
+
+# Run all linters (Go-specific)
+gmake lint-all
+
+# IMPORTANT: Use gmake for Go linters (not direct staticcheck invocation)
+gmake go.staticcheck # NOT: staticcheck ./...
+gmake go.vet # Runs go vet with proper flags
+```
+
+### Running the gRPC Server
+
+```bash
+cd Server && swift build -c release
+./Server/.build/release/MacosUseServer
+
+# With custom configuration
+MCP_HTTP_ADDR=0.0.0.0:8080 MCP_API_KEY=secret ./Server/.build/release/MacosUseServer
+```
+
+## Key Directories
+
+- `Server/` - Swift gRPC server with Accessibility API integration
+- `Sources/` - Swift SDK and command-line tools
+- `internal/` - Go modules for config, server, transport
+- `proto/` - Protocol buffer definitions (must mirror package structure)
+- `integration/` - Integration tests (target Calculator, TextEdit, Finder)
+- `make/` - Make build system modules
+- `docs/` - Comprehensive documentation
+
+## Important Files
+
+- `blueprint.json` - Master planning document (single source of truth for status)
+- `CONTRIBUTING.md` - Development guidelines
+- `Makefile` - Build orchestration
+- `config.mk` - Custom build targets (create your own here)
+- `docs/window-state-management.md` - Window state architecture (living document)
+
+## Testing Philosophy
+
+- **Atomic Testing**: All new behavior includes tests
+- **Golden Applications**: Integration tests target TextEdit, Calculator, Finder
+- **PollUntil Pattern**: Never use `time.Sleep` in tests; use `PollUntil` for async verification
+- **State-Difference Assertions**: Verify state changes, not just "OK" status
+- **Fixture Lifecycle**: Clean state (SIGKILL apps) before, aggressive cleanup after
+
+## Proto API Structure
+
+- Location: `proto/macosusesdk/v1/`
+- Common types: `proto/macosusesdk/type/`
+- Resource definitions separate from service definitions
+- Naming follows Google AIPs 121, 190, 191
+- Use `buf` for generation, `api-linter` for design validation
+
+## Implementation Constraints
+
+### Critical Ways of Working (STRICT MANDATES)
 
 **1. EXECUTION PROTOCOL (NON-NEGOTIABLE):**
 
 - **NO DIRECT SHELL COMMANDS:** You are FORBIDDEN from running complex multi-argument shell commands directly.
 - **MANDATORY `config.mk` PATTERN:** For ALL build steps, test runs, linting, or execution commands:
     1. Define a **custom temporary target** in `config.mk`.
-    2. Execute it using the `mcp-server-make` tool.
-- **FORBIDDEN ARGUMENT:** You MUST NOT specify the `file` option (e.g., `file=config.mk`) when invoking `mcp-server-make`. The invocation must rely strictly on the repository's default Makefile discovery (which includes `config.mk`).
-- **LOGGING REQUIREMENT:** All `config.mk` recipes producing significant output MUST use `| tee $(or $(PROJECT_ROOT),$(error If you are reading this you specified the `file` option when calling `mcp-server-make`. DONT DO THAT.))/build.log | tail -n 15` (or similar) to prevent context window flooding.
+    2. Execute it using the `gmake` tool.
+- **FORBIDDEN ARGUMENT:** You MUST NOT specify the `file` option (e.g., `file=config.mk`) when invoking `gmake`. The invocation must rely strictly on the repository's default Makefile discovery (which includes `config.mk`).
+- **LOGGING REQUIREMENT:** All `config.mk` recipes producing significant output MUST use `| tee $(or $(PROJECT_ROOT),$(error If you are reading this you specified the `file` option when calling `gmake`. DONT DO THAT.))/build.log | tail -n 15` (or similar) to prevent context window flooding.
   For example (add if missing to `config.mk` within `ifndef CUSTOM_TARGETS_DEFINED ... endif` per `example.config.mk`):
   ```makefile
   .PHONY: make-all-with-log
   make-all-with-log: ## Run all targets with logging to build.log
   make-all-with-log: SHELL := /bin/bash
   make-all-with-log:
-  	@echo "Output limited to avoid context explosion. See $(or $(PROJECT_ROOT),$(error If you are reading this you specified the `file` option when calling `mcp-server-make`. DONT DO THAT.))/build.log for full content."; \
+  	@echo "Output limited to avoid context explosion. See $(or $(PROJECT_ROOT),$(error If you are reading this you specified the `file` option when calling `gmake`. DONT DO THAT.))/build.log for full content."; \
   	set -o pipefail; \
-  	$(MAKE) all 2>&1 | tee $(or $(PROJECT_ROOT),$(error If you are reading this you specified the `file` option when calling `mcp-server-make`. DONT DO THAT.))/build.log | tail -n 15; \
+  	$(MAKE) all 2>&1 | tee $(or $(PROJECT_ROOT),$(error If you are reading this you specified the `file` option when calling `gmake`. DONT DO THAT.))/build.log | tail -n 15; \
   	exit $${PIPESTATUS[0]}
   ```
 
 **2. CONTINUOUS VALIDATION:**
 
-- **DO NOT BREAK THE BUILD:** You must run the core `all` target constantly. Use `mcp-server-make make-all-with-log` after every file change.
+- **DO NOT BREAK THE BUILD:** You must run the core `all` target constantly. Use `gmake make-all-with-log` after every file change.
 - **Resource Leak Check:** Integration tests must ensure proper cleanup of observations and connections at teardown.
 - **CI PRE-MERGE BLOCKER:** Before any merge to main, ALL critical issues documented in `pre-merge-blueprint.json` MUST be resolved and CI MUST pass. See `PRE_MERGE_STATUS.md` for current blocking issues.
 
@@ -33,7 +150,7 @@
 - AVOID and REPLACE ad-hoc `fputs` or unannotated `print` with `Logger` and `OSLogPrivacy` for any message emitted from Swift server components or SDK helpers in `Server/Sources/MacosUseServer` and `Sources/MacosUseSDK`.
 - `fputs` is forbidden in these server/SDK directories for diagnostic logs — it bypasses OS unified logging and cannot mark privacy. Use `Logger` with explicit `privacy` annotations for every interpolated value. For user-facing CLI help text (static strings) `print` is allowed only outside `Server/Sources/MacosUseServer` and `Sources/MacosUseSDK`.
 
-## Core Directives
+### Core Directives
 
 Constraints in this section describe *requirements*, not current status.
 
@@ -78,35 +195,35 @@ Previous sins (now corrected, not to be repeated):
 
 **Core Graphics/Cocoa/Accessibility Race Condition Mitigation:** Do not rely on `NSRunningApplication(processIdentifier:)` or `CGWindowListCopyWindowInfo` (and related `CGWindow*` APIs) for process/window liveness or existence checks when performing AX actions. These APIs can lag behind the real-time state of the Accessibility server. Always attempt AX actions (e.g., `AXUIElementCreateApplication(pid)`, `AXUIElementCopyAttributeValue`) directly, then handle invalid process/element errors if they occur. Using CG/NS APIs as a "guard" or "pre-check" introduces a race condition where valid AX targets are rejected because the slower API hasn't updated yet.
 
-## Testing and Tooling
+### Testing and Tooling
 
 - **Atomic Testing:** ALL new behavior and ALL modifications MUST be accompanied by automated tests in the SAME change set.
 - **Golden Applications:** Integration tests must strictly target `TextEdit`, `Calculator`, or `Finder` as defined in the plan.
 - **CI Integrity:** Tests and CI checks MUST be kept green. Disabling tests is forbidden without a documented fix plan.
 - **Test Fixture Lifecycle:** Every test suite must ensure a clean state (SIGKILL target apps) before running and perform aggressive cleanup (DeleteApplication) after running.
 
-## Documentation and Planning
+### Documentation and Planning
 
 - **Single Source of Truth:** ALL updates to the plan MUST be represented in `./blueprint.json`.
-- **No Status Files:** Do NOT create `IMPLEMENTATION_COMPLETE.md` or similar. Do NOT use `AGENTS.md` to track status, progress logs, or completion markers of any kind.
 - **Plan-Local Status Only:** The **STATUS SECTION (ACTION-FOCUSED)** at the top of `blueprint.json` is the only allowed place for high-level status, and it MUST list only remaining work, unresolved discrepancies, and critical patterns that must not be forgotten. Do not accumulate historical "done" items or emojis there.
 - **Verification Before Completion Claims:** Before treating any item as complete, you MUST verify the implementation and its tests. If there is any doubt, treat the item as not done and keep (or re-add) a corresponding action in the plan.
 - **Living Document:** Keep `./blueprint.json` strictly aligned with this constraints document and the *actual* code reality. Update it as part of every change set, trimming completed/verified items from the status section rather than appending new ones.
 
-## Master (LIVING) Documents
+### Master (LIVING) Documents
 
 **MUST BE KEPT UP TO DATE.** Must be analytical, terse, and precise.
 
 - [docs/window-state-management.md](docs/window-state-management.md)
 
-## MCP Specification References
+### MCP Specification References
 
 MCP compliance requirements are documented in docs/ai-artifacts/05-mcp-integration.md. Refer to that document for:
+
 - Protocol version requirements (2025-11-25)
 - Transport specifications and compliance status
 - Security and tooling details
 
-## Proto API Structure
+### Proto API Structure
 
 - **Path:** Proto files MUST be located at `proto/macosusesdk/v1/` and mirror package structure.
 - **Common Types:** Use `proto/macosusesdk/type` for shared definitions.
@@ -114,10 +231,10 @@ MCP compliance requirements are documented in docs/ai-artifacts/05-mcp-integrati
 - **Naming:** Follow https://google.aip.dev/121, 190, and 191.
 - **Linting:** Use `buf` for generation but `api-linter` (Google's linter) for design validation.
 
-## Google API Linter Configuration
+### Google API Linter Configuration
 
 - `api-linter` MUST be run via a dedicated Go module in `hack/google-api-linter/`.
-- Logic MUST be encapsulated in `./hack/google-api-linter.sh` (executable via `mcp-server-make`).
+- Logic MUST be encapsulated in `./hack/google-api-linter.sh` (executable via `gmake`).
 - Configuration MUST be in `./google-api-linter.yaml` with:
   ```yaml
   ---
@@ -128,7 +245,7 @@ MCP compliance requirements are documented in docs/ai-artifacts/05-mcp-integrati
   ```
 - You MUST NOT ignore linting for anything except `googleapis` protos.
 
-## CI/CD Workflows
+### CI/CD Workflows
 
 - MUST use reusable workflow patterns (`workflow_call`).
 - `ci.yaml` is the entry point; individual workflows must not have independent triggers.

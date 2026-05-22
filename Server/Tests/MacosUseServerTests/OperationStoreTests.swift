@@ -56,8 +56,8 @@ final class OperationStoreTests: XCTestCase {
         _ = await store.createOperation(name: "operations/op-2")
         _ = await store.createOperation(name: "operations/op-3")
 
-        let ops = await store.listOperations()
-        XCTAssertEqual(ops.count, 3)
+        let result = await store.listOperations()
+        XCTAssertEqual(result.operations.count, 3)
     }
 
     // MARK: - getOperation Tests
@@ -203,9 +203,10 @@ final class OperationStoreTests: XCTestCase {
     func testListOperations_emptyStore_returnsEmptyArray() async {
         let store = OperationStore()
 
-        let ops = await store.listOperations()
+        let result = await store.listOperations()
 
-        XCTAssertTrue(ops.isEmpty)
+        XCTAssertTrue(result.operations.isEmpty)
+        XCTAssertTrue(result.nextPageToken.isEmpty)
     }
 
     func testListOperations_withOperations_returnsAll() async {
@@ -214,10 +215,10 @@ final class OperationStoreTests: XCTestCase {
         _ = await store.createOperation(name: "operations/list-2")
         _ = await store.createOperation(name: "operations/list-3")
 
-        let ops = await store.listOperations()
+        let result = await store.listOperations()
 
-        XCTAssertEqual(ops.count, 3)
-        let names = Set(ops.map(\.name))
+        XCTAssertEqual(result.operations.count, 3)
+        let names = Set(result.operations.map(\.name))
         XCTAssertTrue(names.contains("operations/list-1"))
         XCTAssertTrue(names.contains("operations/list-2"))
         XCTAssertTrue(names.contains("operations/list-3"))
@@ -229,10 +230,10 @@ final class OperationStoreTests: XCTestCase {
         _ = await store.createOperation(name: "operations/delete")
         await store.deleteOperation(name: "operations/delete")
 
-        let ops = await store.listOperations()
+        let result = await store.listOperations()
 
-        XCTAssertEqual(ops.count, 1)
-        XCTAssertEqual(ops.first?.name, "operations/keep")
+        XCTAssertEqual(result.operations.count, 1)
+        XCTAssertEqual(result.operations.first?.name, "operations/keep")
     }
 
     // MARK: - deleteOperation Tests
@@ -253,8 +254,8 @@ final class OperationStoreTests: XCTestCase {
         // Should not throw or crash
         await store.deleteOperation(name: "operations/nonexistent")
 
-        let ops = await store.listOperations()
-        XCTAssertTrue(ops.isEmpty)
+        let result = await store.listOperations()
+        XCTAssertTrue(result.operations.isEmpty)
     }
 
     func testDeleteOperation_multipleTimes_noError() async {
@@ -391,8 +392,8 @@ final class OperationStoreTests: XCTestCase {
             }
         }
 
-        let ops = await store.listOperations()
-        XCTAssertEqual(ops.count, 100)
+        let result = await store.listOperations()
+        XCTAssertEqual(result.operations.count, 100)
     }
 
     func testConcurrentAccess_mixedOperations_noDataCorruption() async {
@@ -425,9 +426,9 @@ final class OperationStoreTests: XCTestCase {
         }
 
         // All operations should still exist and be cancelled
-        let ops = await store.listOperations()
-        XCTAssertEqual(ops.count, 10)
-        for op in ops {
+        let result = await store.listOperations()
+        XCTAssertEqual(result.operations.count, 10)
+        for op in result.operations {
             XCTAssertTrue(op.done)
         }
     }
@@ -487,11 +488,239 @@ final class OperationStoreTests: XCTestCase {
         XCTAssertEqual(retrieved?.metadata.typeURL, "type.googleapis.com/second")
 
         // Only one operation with this name
-        let ops = await store.listOperations()
-        XCTAssertEqual(ops.count(where: { $0.name == "operations/duplicate" }), 1)
+        let result = await store.listOperations()
+        XCTAssertEqual(result.operations.count(where: { $0.name == "operations/duplicate" }), 1)
 
         // Suppress warnings about unused values
         _ = first
         _ = second
+    }
+
+    // MARK: - Pagination Tests
+
+    func testListOperations_pagination_respectsPageSize() async {
+        let store = OperationStore()
+        for i in 0 ..< 10 {
+            _ = await store.createOperation(name: "operations/page-\(i)")
+        }
+
+        let result = await store.listOperations(pageSize: 3)
+
+        XCTAssertEqual(result.operations.count, 3)
+        XCTAssertFalse(result.nextPageToken.isEmpty, "Should have next page token")
+    }
+
+    func testListOperations_pagination_returnsNextPage() async {
+        let store = OperationStore()
+        for i in 0 ..< 10 {
+            _ = await store.createOperation(name: "operations/page-\(String(format: "%02d", i))")
+        }
+
+        // Get first page
+        let firstPage = await store.listOperations(pageSize: 3)
+        XCTAssertEqual(firstPage.operations.count, 3)
+
+        // Get second page using token
+        let secondPage = await store.listOperations(pageSize: 3, pageToken: firstPage.nextPageToken)
+        XCTAssertEqual(secondPage.operations.count, 3)
+
+        // Names should be different
+        let firstNames = Set(firstPage.operations.map(\.name))
+        let secondNames = Set(secondPage.operations.map(\.name))
+        XCTAssertTrue(firstNames.isDisjoint(with: secondNames), "Pages should not overlap")
+    }
+
+    func testListOperations_pagination_lastPageHasEmptyToken() async {
+        let store = OperationStore()
+        for i in 0 ..< 5 {
+            _ = await store.createOperation(name: "operations/last-\(i)")
+        }
+
+        // First page
+        let firstPage = await store.listOperations(pageSize: 3)
+        XCTAssertFalse(firstPage.nextPageToken.isEmpty)
+
+        // Second page (last page)
+        let lastPage = await store.listOperations(pageSize: 3, pageToken: firstPage.nextPageToken)
+        XCTAssertEqual(lastPage.operations.count, 2)
+        XCTAssertTrue(lastPage.nextPageToken.isEmpty, "Last page should have empty next token")
+    }
+
+    func testListOperations_pagination_exactBoundary() async {
+        let store = OperationStore()
+        for i in 0 ..< 6 {
+            _ = await store.createOperation(name: "operations/exact-\(i)")
+        }
+
+        // Page size exactly matches total
+        let firstPage = await store.listOperations(pageSize: 6)
+        XCTAssertEqual(firstPage.operations.count, 6)
+        XCTAssertTrue(firstPage.nextPageToken.isEmpty, "Should have empty token when exactly at boundary")
+    }
+
+    func testListOperations_pagination_defaultPageSize() async {
+        let store = OperationStore()
+        // Create more than 100 items
+        for i in 0 ..< 150 {
+            _ = await store.createOperation(name: "operations/default-\(String(format: "%03d", i))")
+        }
+
+        // pageSize=0 should default to 100
+        let result = await store.listOperations(pageSize: 0)
+
+        XCTAssertEqual(result.operations.count, 100)
+        XCTAssertFalse(result.nextPageToken.isEmpty)
+    }
+
+    func testListOperations_pagination_invalidTokenStartsFromBeginning() async {
+        let store = OperationStore()
+        for i in 0 ..< 5 {
+            _ = await store.createOperation(name: "operations/invalid-\(i)")
+        }
+
+        // Invalid token should be ignored (fail-open)
+        let result = await store.listOperations(pageSize: 3, pageToken: "invalid-garbage-token")
+
+        XCTAssertEqual(result.operations.count, 3, "Should start from beginning on invalid token")
+    }
+
+    func testListOperations_pagination_negativeOffsetToken_startsFromBeginning() async throws {
+        let store = OperationStore()
+        for i in 0 ..< 5 {
+            _ = await store.createOperation(name: "operations/neg-\(i)")
+        }
+
+        // Craft a token with negative offset
+        let maliciousPayload = try JSONEncoder().encode(["offset": -5])
+        let maliciousToken = maliciousPayload.base64EncodedString()
+
+        // Should fail-open (treat as invalid), not crash
+        let result = await store.listOperations(pageSize: 3, pageToken: maliciousToken)
+
+        XCTAssertEqual(result.operations.count, 3, "Should start from beginning on negative offset")
+    }
+
+    func testListOperations_pagination_deterministicOrder() async {
+        let store = OperationStore()
+        // Create in random order
+        _ = await store.createOperation(name: "operations/z-last")
+        _ = await store.createOperation(name: "operations/a-first")
+        _ = await store.createOperation(name: "operations/m-middle")
+
+        let result = await store.listOperations()
+
+        // Should be sorted by name
+        XCTAssertEqual(result.operations[0].name, "operations/a-first")
+        XCTAssertEqual(result.operations[1].name, "operations/m-middle")
+        XCTAssertEqual(result.operations[2].name, "operations/z-last")
+    }
+
+    // MARK: - Filter Tests
+
+    func testListOperations_filterByDoneTrue_onlyReturnsDone() async {
+        let store = OperationStore()
+        _ = await store.createOperation(name: "operations/pending")
+        _ = await store.createOperation(name: "operations/done")
+        await store.cancelOperation(name: "operations/done") // marks done
+
+        let result = await store.listOperations(showOnlyDone: true)
+
+        XCTAssertEqual(result.operations.count, 1)
+        XCTAssertEqual(result.operations.first?.name, "operations/done")
+        XCTAssertTrue(result.operations.first?.done ?? false)
+    }
+
+    func testListOperations_filterByDoneFalse_onlyReturnsPending() async {
+        let store = OperationStore()
+        _ = await store.createOperation(name: "operations/pending")
+        _ = await store.createOperation(name: "operations/done")
+        await store.cancelOperation(name: "operations/done")
+
+        let result = await store.listOperations(showOnlyDone: false)
+
+        XCTAssertEqual(result.operations.count, 1)
+        XCTAssertEqual(result.operations.first?.name, "operations/pending")
+        XCTAssertFalse(result.operations.first?.done ?? true)
+    }
+
+    func testListOperations_filterByNamePrefix_matchingOperations() async {
+        let store = OperationStore()
+        _ = await store.createOperation(name: "operations/macro/execute-1")
+        _ = await store.createOperation(name: "operations/macro/execute-2")
+        _ = await store.createOperation(name: "operations/script/run-1")
+
+        let result = await store.listOperations(namePrefix: "operations/macro/")
+
+        XCTAssertEqual(result.operations.count, 2)
+        XCTAssertTrue(result.operations.allSatisfy { $0.name.hasPrefix("operations/macro/") })
+    }
+
+    func testListOperations_filterByNamePrefix_noMatches() async {
+        let store = OperationStore()
+        _ = await store.createOperation(name: "operations/macro/execute")
+
+        let result = await store.listOperations(namePrefix: "operations/nonexistent/")
+
+        XCTAssertTrue(result.operations.isEmpty)
+    }
+
+    func testListOperations_combinedFilters_prefixAndDone() async {
+        let store = OperationStore()
+        _ = await store.createOperation(name: "operations/macro/pending")
+        _ = await store.createOperation(name: "operations/macro/done")
+        await store.cancelOperation(name: "operations/macro/done")
+        _ = await store.createOperation(name: "operations/script/done")
+        await store.cancelOperation(name: "operations/script/done")
+
+        let result = await store.listOperations(namePrefix: "operations/macro/", showOnlyDone: true)
+
+        XCTAssertEqual(result.operations.count, 1)
+        XCTAssertEqual(result.operations.first?.name, "operations/macro/done")
+    }
+
+    func testListOperations_combinedFiltersAndPagination() async {
+        let store = OperationStore()
+        // Create 10 done macro operations
+        for i in 0 ..< 10 {
+            _ = await store.createOperation(name: "operations/macro/done-\(String(format: "%02d", i))")
+            await store.cancelOperation(name: "operations/macro/done-\(String(format: "%02d", i))")
+        }
+        // Create 5 pending macro operations
+        for i in 0 ..< 5 {
+            _ = await store.createOperation(name: "operations/macro/pending-\(i)")
+        }
+        // Create 5 done script operations
+        for i in 0 ..< 5 {
+            _ = await store.createOperation(name: "operations/script/done-\(i)")
+            await store.cancelOperation(name: "operations/script/done-\(i)")
+        }
+
+        // Filter by macro prefix AND done=true, paginated
+        let firstPage = await store.listOperations(
+            namePrefix: "operations/macro/",
+            showOnlyDone: true,
+            pageSize: 3,
+        )
+
+        XCTAssertEqual(firstPage.operations.count, 3)
+        XCTAssertTrue(firstPage.operations.allSatisfy { $0.name.hasPrefix("operations/macro/") })
+        XCTAssertTrue(firstPage.operations.allSatisfy(\.done))
+        XCTAssertFalse(firstPage.nextPageToken.isEmpty)
+
+        // Get remaining pages
+        var allFiltered: [Google_Longrunning_Operation] = firstPage.operations
+        var token = firstPage.nextPageToken
+        while !token.isEmpty {
+            let nextPage = await store.listOperations(
+                namePrefix: "operations/macro/",
+                showOnlyDone: true,
+                pageSize: 3,
+                pageToken: token,
+            )
+            allFiltered.append(contentsOf: nextPage.operations)
+            token = nextPage.nextPageToken
+        }
+
+        XCTAssertEqual(allFiltered.count, 10, "Should have all 10 done macro operations")
     }
 }

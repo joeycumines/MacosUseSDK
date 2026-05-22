@@ -10,10 +10,6 @@ public struct ServerState: Sendable {
     public var inputs: [String: Macosusesdk_V1_Input] = [:]
 }
 
-/// Temporary struct to represent target application info
-/// Will be replaced with generated proto message
-public typealias TargetApplicationInfo = Macosusesdk_V1_Application
-
 /// Thread-safe actor for managing the server's state.
 /// All state mutations go through this actor, ensuring serial access.
 public actor AppStateStore {

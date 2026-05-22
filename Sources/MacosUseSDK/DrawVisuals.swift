@@ -1,15 +1,15 @@
 import AppKit
 import Foundation
-import QuartzCore
 import OSLog
+import QuartzCore
 
 private let logger = sdkLogger(category: "DrawVisuals")
 
 /// Define types of visual feedback.
 public enum FeedbackType: Sendable {
-    case box(text: String)  // Existing box with optional text
-    case circle  // New simple circle
-    case caption(text: String)  // New type for large screen-center text
+    case box(text: String) // Existing box with optional text
+    case circle // New simple circle
+    case caption(text: String) // New type for large screen-center text
 }
 
 /// Configuration for visual feedback sessions.
@@ -19,7 +19,7 @@ public struct VisualsConfig: Sendable {
 
     public enum AnimationStyle: Sendable {
         case none
-        case pulseAndFade  // For circles
+        case pulseAndFade // For circles
         case scaleInFadeOut // For captions
     }
 
@@ -49,7 +49,8 @@ public extension OverlayDescriptor {
     init?(element: ElementData, screenHeight: CGFloat) {
         guard let x = element.x, let y = element.y,
               let w = element.width, w > 0,
-              let h = element.height, h > 0 else {
+              let h = element.height, h > 0
+        else {
             return nil
         }
 
@@ -58,54 +59,54 @@ public extension OverlayDescriptor {
         let frame = CGRect(x: CGFloat(x), y: convertedY, width: CGFloat(w), height: CGFloat(h))
 
         // Use text if non-empty, otherwise fall back to role
-        let text: String
-        if let elementText = element.text, !elementText.isEmpty {
-            text = elementText
+        let text: String = if let elementText = element.text, !elementText.isEmpty {
+            elementText
         } else {
-            text = element.role
+            element.role
         }
         self.init(frame: frame, type: .box(text: text))
     }
 }
 
-// Define a custom view that draws the rectangle and text with truncation
-internal class OverlayView: NSView {
-    var feedbackType: FeedbackType = .box(text: "")  // Property to hold the type and data
+/// Define a custom view that draws the rectangle and text with truncation
+class OverlayView: NSView {
+    var feedbackType: FeedbackType = .box(text: "") // Property to hold the type and data
 
     // Constants for drawing
-    let padding: CGFloat = 10  // Increased padding for caption
+    let padding: CGFloat = 10 // Increased padding for caption
     let frameLineWidth: CGFloat = 2
-    let circleRadius: CGFloat = 15  // Radius for the circle feedback
-    let captionFontSize: CGFloat = 36  // Font size for caption
-    let captionBackgroundColor = NSColor.black.withAlphaComponent(0.6)  // Semi-transparent black background
+    let circleRadius: CGFloat = 15 // Radius for the circle feedback
+    let captionFontSize: CGFloat = 36 // Font size for caption
+    let captionBackgroundColor = NSColor.black.withAlphaComponent(0.6) // Semi-transparent black background
     let captionTextColor = NSColor.white
 
     override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
 
         switch feedbackType {
-        case .box(let displayText):
+        case let .box(displayText):
             drawBox(with: displayText)
         case .circle:
             drawCircle()
-        case .caption(let captionText):
-            drawCaption(with: captionText)  // Call the new drawing method
+        case let .caption(captionText):
+            drawCaption(with: captionText) // Call the new drawing method
         }
     }
 
     private func drawCircle() {
-        NSColor.green.setFill()  // Set fill color instead of stroke
+        NSColor.green.setFill() // Set fill color instead of stroke
 
         let center = NSPoint(x: bounds.midX, y: bounds.midY)
         // Ensure the circle fits within the bounds if bounds are smaller than diameter
         let effectiveRadius = min(circleRadius, bounds.width / 2.0, bounds.height / 2.0)
-        guard effectiveRadius > 0 else { return }  // Don't draw if too small
+        guard effectiveRadius > 0 else { return } // Don't draw if too small
 
         let circleRect = NSRect(
             x: center.x - effectiveRadius, y: center.y - effectiveRadius,
-            width: effectiveRadius * 2, height: effectiveRadius * 2)
+            width: effectiveRadius * 2, height: effectiveRadius * 2,
+        )
         let path = NSBezierPath(ovalIn: circleRect)
-        path.fill()  // Fill the path instead of stroking it
+        path.fill() // Fill the path instead of stroking it
     }
 
     private func drawBox(with displayText: String) {
@@ -125,7 +126,7 @@ internal class OverlayView: NSView {
             let textFont = NSFont.systemFont(ofSize: 10.0)
             let textAttributes: [NSAttributedString.Key: Any] = [
                 .font: textFont,
-                .foregroundColor: textColor
+                .foregroundColor: textColor,
             ]
 
             // Calculate available width for text (bounds - frame lines - padding on both sides)
@@ -134,18 +135,19 @@ internal class OverlayView: NSView {
             var textSize = stringToDraw.size(withAttributes: textAttributes)
 
             // Check if truncation is needed
-            if textSize.width > availableWidth && availableWidth > 0 {
-                let ellipsis = "…"  // Use ellipsis character
+            if textSize.width > availableWidth, availableWidth > 0 {
+                let ellipsis = "…" // Use ellipsis character
                 let ellipsisSize = ellipsis.size(withAttributes: textAttributes)
 
                 // Keep removing characters until text + ellipsis fits
-                while !stringToDraw.isEmpty
-                    && (stringToDraw.size(withAttributes: textAttributes).width + ellipsisSize.width
-                        > availableWidth) {
+                while !stringToDraw.isEmpty,
+                      stringToDraw.size(withAttributes: textAttributes).width + ellipsisSize.width
+                      > availableWidth
+                {
                     stringToDraw.removeLast()
                 }
                 stringToDraw += ellipsis
-                textSize = stringToDraw.size(withAttributes: textAttributes)  // Recalculate size
+                textSize = stringToDraw.size(withAttributes: textAttributes) // Recalculate size
             }
 
             // Ensure text doesn't exceed available height (though less likely for small font)
@@ -158,7 +160,7 @@ internal class OverlayView: NSView {
             // X: Add frame line width + padding
             // Y: Center vertically within the available height area
             let textX = frameLineWidth + padding
-            let textY = frameLineWidth + padding + (availableHeight - textSize.height)  // Top align
+            let textY = frameLineWidth + padding + (availableHeight - textSize.height) // Top align
             let textPoint = NSPoint(x: textX, y: textY)
 
             // Draw the text string
@@ -166,14 +168,14 @@ internal class OverlayView: NSView {
         }
     }
 
-    // New method to draw the caption
+    /// New method to draw the caption
     private func drawCaption(with text: String) {
         logger.debug("OverlayView drawing caption: '\(text, privacy: .private)'")
 
         // Draw background
         captionBackgroundColor.setFill()
-        let backgroundRect = bounds.insetBy(dx: frameLineWidth / 2.0, dy: frameLineWidth / 2.0)  // Adjust for potential border line width if we add one later
-        let backgroundPath = NSBezierPath(roundedRect: backgroundRect, xRadius: 8, yRadius: 8)  // Rounded corners
+        let backgroundRect = bounds.insetBy(dx: frameLineWidth / 2.0, dy: frameLineWidth / 2.0) // Adjust for potential border line width if we add one later
+        let backgroundPath = NSBezierPath(roundedRect: backgroundRect, xRadius: 8, yRadius: 8) // Rounded corners
         backgroundPath.fill()
 
         // --- Text Drawing ---
@@ -181,12 +183,12 @@ internal class OverlayView: NSView {
             // Define text attributes
             let textFont = NSFont.systemFont(ofSize: captionFontSize, weight: .medium)
             let paragraphStyle = NSMutableParagraphStyle()
-            paragraphStyle.alignment = .center  // Center align text
+            paragraphStyle.alignment = .center // Center align text
 
             let textAttributes: [NSAttributedString.Key: Any] = [
                 .font: textFont,
                 .foregroundColor: captionTextColor,
-                .paragraphStyle: paragraphStyle
+                .paragraphStyle: paragraphStyle,
             ]
 
             // Calculate available area for text (bounds - padding)
@@ -195,52 +197,56 @@ internal class OverlayView: NSView {
             let textSize = stringToDraw.size(withAttributes: textAttributes)
 
             // Basic truncation if text wider than available space (though less likely for centered captions)
-            if textSize.width > availableRect.width && availableRect.width > 0 {
+            if textSize.width > availableRect.width, availableRect.width > 0 {
                 logger.warning(
-                    "Caption text '\(stringToDraw, privacy: .private)' (\(textSize.width, privacy: .public)) wider than available \(availableRect.width, privacy: .public), may clip.")
+                    "Caption text '\(stringToDraw, privacy: .private)' (\(textSize.width, privacy: .public)) wider than available \(availableRect.width, privacy: .public), may clip.",
+                )
                 // Simple clipping will occur, could implement more complex truncation if needed
             }
             if textSize.height > availableRect.height {
                 logger.warning(
-                    "Caption text '\(stringToDraw, privacy: .private)' (\(textSize.height, privacy: .public)) taller than available \(availableRect.height, privacy: .public), may clip.")
+                    "Caption text '\(stringToDraw, privacy: .private)' (\(textSize.height, privacy: .public)) taller than available \(availableRect.height, privacy: .public), may clip.",
+                )
             }
 
             // Calculate position to center the text vertically and horizontally within the available rect
             let textX = availableRect.origin.x
-            let textY = availableRect.origin.y + (availableRect.height - textSize.height) / 2.0  // Center vertically
+            let textY = availableRect.origin.y + (availableRect.height - textSize.height) / 2.0 // Center vertically
             let textRect = NSRect(x: textX, y: textY, width: availableRect.width, height: textSize.height)
 
             // Draw the text string centered
             let rectString = String(describing: textRect)
             logger.debug(
-                "OverlayView drawing caption text '\(stringToDraw, privacy: .private)' in rect \(rectString, privacy: .public)")
+                "OverlayView drawing caption text '\(stringToDraw, privacy: .private)' in rect \(rectString, privacy: .public)",
+            )
             (stringToDraw as NSString).draw(in: textRect, withAttributes: textAttributes)
         } else {
             logger.debug("OverlayView no caption text to draw.")
         }
     }
 
-    // Update initializer to accept FeedbackType
+    /// Update initializer to accept FeedbackType
     init(frame frameRect: NSRect, type: FeedbackType) {
-        self.feedbackType = type
+        feedbackType = type
         super.init(frame: frameRect)
     }
 
-    required init?(coder: NSCoder) {
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 }
 
-// Creates a configured, borderless overlay window but does not show it.
+/// Creates a configured, borderless overlay window but does not show it.
 @MainActor
-internal func createOverlayWindow(frame: NSRect, type: FeedbackType) -> NSWindow {
+func createOverlayWindow(frame: NSRect, type: FeedbackType) -> NSWindow {
     logger.debug("Creating overlay window with frame: \(String(describing: frame), privacy: .public), type: \(String(describing: type), privacy: .public)")
     // Now safe to call NSWindow initializer and set properties from here
     let window = NSWindow(
         contentRect: frame,
         styleMask: [.borderless],
         backing: .buffered,
-        defer: false
+        defer: false,
     )
     // Ensure window is not automatically released when closed, allowing us to manage lifecycle safely
     window.isReleasedWhenClosed = false
@@ -249,14 +255,14 @@ internal func createOverlayWindow(frame: NSRect, type: FeedbackType) -> NSWindow
     window.isOpaque = false
     // Make background clear ONLY if not a caption (caption view draws its own background)
     if case .caption = type {
-        window.backgroundColor = .clear  // View draws background
+        window.backgroundColor = .clear // View draws background
     } else {
-        window.backgroundColor = .clear  // Original behavior
+        window.backgroundColor = .clear // Original behavior
     }
-    window.hasShadow = false  // No window shadow
-    window.level = .floating  // Keep above normal windows
-    window.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]  // Visible on all spaces
-    window.isMovableByWindowBackground = false  // Prevent accidental dragging
+    window.hasShadow = false // No window shadow
+    window.level = .floating // Keep above normal windows
+    window.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle] // Visible on all spaces
+    window.isMovableByWindowBackground = false // Prevent accidental dragging
     window.ignoresMouseEvents = true // CRITICAL: Allow clicks to pass through to the app below
 
     // Create and set the custom view
@@ -279,8 +285,7 @@ public func getMainScreenCenter() -> CGPoint? {
     // AppKit coordinates (bottom-left origin) are used by NSWindow positioning.
     // screenRect.midY correctly gives the vertical center in this coordinate system.
     let centerY = screenRect.midY
-    let centerPoint = CGPoint(x: centerX, y: centerY)
-    return centerPoint
+    return CGPoint(x: centerX, y: centerY)
 }
 
 /// Robustly manages a session of visual feedback overlays.
@@ -289,7 +294,7 @@ public func getMainScreenCenter() -> CGPoint? {
 @MainActor
 public func presentVisuals(
     overlays: [OverlayDescriptor],
-    configuration: VisualsConfig
+    configuration: VisualsConfig,
 ) async {
     logger.debug("presentVisuals called with \(overlays.count, privacy: .public) overlays")
 
@@ -355,7 +360,7 @@ private func applyAnimation(to view: NSView, style: VisualsConfig.AnimationStyle
     }
 
     // Ensure layer is properly configured for animations
-    layer.removeAllAnimations()  // Clear any existing animations
+    layer.removeAllAnimations() // Clear any existing animations
 
     switch style {
     case .pulseAndFade:
@@ -450,7 +455,7 @@ private func applyAnimation(to view: NSView, style: VisualsConfig.AnimationStyle
 @MainActor
 public func showVisualFeedback(
     at point: CGPoint, type: FeedbackType, size: CGSize = CGSize(width: 30, height: 30),
-    duration: Double = 0.5
+    duration: Double = 0.5,
 ) {
     // Adapter logic to map legacy parameters to the new OverlayDescriptor and Configuration system
 
@@ -464,7 +469,8 @@ public func showVisualFeedback(
         let paddedSize = ceil(maxDiameter + 100.0)
         effectiveSize = CGSize(width: paddedSize, height: paddedSize)
         logger.info(
-            "showVisualFeedback using calculated size \(String(describing: effectiveSize), privacy: .public) for .circle type.")
+            "showVisualFeedback using calculated size \(String(describing: effectiveSize), privacy: .public) for .circle type.",
+        )
     } else {
         effectiveSize = size
     }
@@ -475,8 +481,7 @@ public func showVisualFeedback(
     let frame = NSRect(origin: CGPoint(x: originX, y: originY), size: effectiveSize)
 
     var animStyle: VisualsConfig.AnimationStyle = .none
-    if case .circle = type { animStyle = .pulseAndFade }
-    else if case .caption = type { animStyle = .scaleInFadeOut }
+    if case .circle = type { animStyle = .pulseAndFade } else if case .caption = type { animStyle = .scaleInFadeOut }
 
     let config = VisualsConfig(duration: duration, animationStyle: animStyle)
     let descriptor = OverlayDescriptor(frame: frame, type: type)
@@ -519,7 +524,8 @@ public func showVisualFeedback(
 @MainActor
 public func drawHighlightBoxes(for elementsToHighlightInput: [ElementData], duration: Double = 3.0) {
     logger.info(
-        "drawHighlightBoxes called for \(elementsToHighlightInput.count, privacy: .public) elements, duration \(duration, privacy: .public)s.")
+        "drawHighlightBoxes called for \(elementsToHighlightInput.count, privacy: .public) elements, duration \(duration, privacy: .public)s.",
+    )
 
     let screenHeight = NSScreen.main?.frame.height ?? 0
 
@@ -536,11 +542,10 @@ public func drawHighlightBoxes(for elementsToHighlightInput: [ElementData], dura
         let frame = NSRect(x: originalX, y: convertedY, width: elementWidth, height: elementHeight)
 
         // Use text if non-empty, otherwise fall back to role
-        let textToShow: String
-        if let text = element.text, !text.isEmpty {
-            textToShow = text
+        let textToShow: String = if let text = element.text, !text.isEmpty {
+            text
         } else {
-            textToShow = element.role
+            element.role
         }
         return OverlayDescriptor(frame: frame, type: .box(text: textToShow))
     }
@@ -554,7 +559,7 @@ public func drawHighlightBoxes(for elementsToHighlightInput: [ElementData], dura
     Task {
         await presentVisuals(
             overlays: descriptors,
-            configuration: VisualsConfig(duration: duration, animationStyle: .none)
+            configuration: VisualsConfig(duration: duration, animationStyle: .none),
         )
     }
 }

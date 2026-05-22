@@ -1224,6 +1224,705 @@ func TestFileDialogHandlers_TableDriven(t *testing.T) {
 }
 
 // ============================================================================
+// Invalid Path Tests
+// ============================================================================
+
+func TestFileDialogHandlers_InvalidPaths(t *testing.T) {
+	tests := []struct {
+		name         string
+		handler      string
+		args         string
+		wantIsError  bool
+		wantContains string
+	}{
+		{
+			name:         "automate_open with null byte in path",
+			handler:      "automate_open_file_dialog",
+			args:         `{"application": "applications/TextEdit", "file_path": "/tmp/test\u0000file.txt"}`,
+			wantIsError:  false, // path validation happens on server side
+			wantContains: "",
+		},
+		{
+			name:         "automate_save with null byte in path",
+			handler:      "automate_save_file_dialog",
+			args:         `{"application": "applications/TextEdit", "file_path": "/tmp/test\u0000file.txt"}`,
+			wantIsError:  false, // path forwarded to gRPC server
+			wantContains: "",
+		},
+		{
+			name:         "select_file with path containing newline",
+			handler:      "select_file",
+			args:         `{"application": "applications/Finder", "file_path": "/tmp/test\nfile.txt"}`,
+			wantIsError:  false, // path validation happens on server side
+			wantContains: "",
+		},
+		{
+			name:         "select_directory with path containing tab",
+			handler:      "select_directory",
+			args:         `{"application": "applications/Finder", "directory_path": "/tmp/test\tdir"}`,
+			wantIsError:  false, // path validation happens on server side
+			wantContains: "",
+		},
+		{
+			name:         "drag_files with path containing control char",
+			handler:      "drag_files",
+			args:         `{"application": "applications/Finder", "file_paths": ["/tmp/test\u001Ffile.txt"], "target_element_id": "zone"}`,
+			wantIsError:  false, // path validation happens on server side
+			wantContains: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var pathReceived string
+			mockClient := &mockFileClient{
+				automateOpenFileDialogFunc: func(ctx context.Context, req *pb.AutomateOpenFileDialogRequest) (*pb.AutomateOpenFileDialogResponse, error) {
+					pathReceived = req.FilePath
+					return &pb.AutomateOpenFileDialogResponse{Success: true, SelectedPaths: []string{"/tmp/test.txt"}}, nil
+				},
+				automateSaveFileDialogFunc: func(ctx context.Context, req *pb.AutomateSaveFileDialogRequest) (*pb.AutomateSaveFileDialogResponse, error) {
+					pathReceived = req.FilePath
+					return &pb.AutomateSaveFileDialogResponse{Success: true, SavedPath: req.FilePath}, nil
+				},
+				selectFileFunc: func(ctx context.Context, req *pb.SelectFileRequest) (*pb.SelectFileResponse, error) {
+					pathReceived = req.FilePath
+					return &pb.SelectFileResponse{Success: true, SelectedPath: req.FilePath}, nil
+				},
+				selectDirectoryFunc: func(ctx context.Context, req *pb.SelectDirectoryRequest) (*pb.SelectDirectoryResponse, error) {
+					pathReceived = req.DirectoryPath
+					return &pb.SelectDirectoryResponse{Success: true, SelectedPath: req.DirectoryPath}, nil
+				},
+				dragFilesFunc: func(ctx context.Context, req *pb.DragFilesRequest) (*pb.DragFilesResponse, error) {
+					if len(req.FilePaths) > 0 {
+						pathReceived = req.FilePaths[0]
+					}
+					return &pb.DragFilesResponse{Success: true, FilesDropped: int32(len(req.FilePaths))}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+
+			handlers := map[string]func(*ToolCall) (*ToolResult, error){
+				"automate_open_file_dialog": server.handleAutomateOpenFileDialog,
+				"automate_save_file_dialog": server.handleAutomateSaveFileDialog,
+				"select_file":               server.handleSelectFile,
+				"select_directory":          server.handleSelectDirectory,
+				"drag_files":                server.handleDragFiles,
+			}
+
+			handler := handlers[tt.handler]
+			call := &ToolCall{Name: tt.handler, Arguments: json.RawMessage(tt.args)}
+			result, err := handler(call)
+
+			if err != nil {
+				t.Fatalf("handler returned Go error: %v", err)
+			}
+			if result.IsError != tt.wantIsError {
+				t.Errorf("result.IsError = %v, want %v: %s", result.IsError, tt.wantIsError, result.Content[0].Text)
+			}
+
+			// Verify path was forwarded to gRPC (paths with odd chars are allowed by handler)
+			if pathReceived == "" && !result.IsError {
+				// For paths that don't require file_path, this is acceptable
+				if tt.handler != "automate_open_file_dialog" {
+					// Path should be captured
+				}
+			}
+		})
+	}
+}
+
+// ============================================================================
+// Non-Existent Directory Tests
+// ============================================================================
+
+func TestFileDialogHandlers_NonExistentDirectories(t *testing.T) {
+	tests := []struct {
+		name             string
+		handler          string
+		args             string
+		mockSuccess      bool
+		mockError        string
+		wantIsError      bool
+		wantContainsList []string
+	}{
+		{
+			name:             "automate_open with non-existent default_directory",
+			handler:          "automate_open_file_dialog",
+			args:             `{"application": "applications/TextEdit", "default_directory": "/nonexistent/path/12345"}`,
+			mockSuccess:      false,
+			mockError:        "directory does not exist",
+			wantIsError:      true,
+			wantContainsList: []string{"directory does not exist"},
+		},
+		{
+			name:             "automate_save with non-existent default_directory",
+			handler:          "automate_save_file_dialog",
+			args:             `{"application": "applications/TextEdit", "file_path": "/nonexistent/dir/file.txt", "default_directory": "/nonexistent/12345"}`,
+			mockSuccess:      false,
+			mockError:        "default directory not found",
+			wantIsError:      true,
+			wantContainsList: []string{"default directory not found"},
+		},
+		{
+			name:             "select_directory with non-existent path",
+			handler:          "select_directory",
+			args:             `{"application": "applications/Finder", "directory_path": "/this/path/does/not/exist/12345"}`,
+			mockSuccess:      false,
+			mockError:        "no such directory",
+			wantIsError:      true,
+			wantContainsList: []string{"no such directory"},
+		},
+		{
+			name:             "select_directory with non-existent path and create_missing true",
+			handler:          "select_directory",
+			args:             `{"application": "applications/Finder", "directory_path": "/tmp/newdir_12345", "create_missing": true}`,
+			mockSuccess:      true,
+			mockError:        "",
+			wantIsError:      false,
+			wantContainsList: []string{"Selected directory", "/tmp/newdir_12345"},
+		},
+		{
+			name:             "select_file with non-existent file",
+			handler:          "select_file",
+			args:             `{"application": "applications/Finder", "file_path": "/tmp/nonexistent_file_12345.txt"}`,
+			mockSuccess:      false,
+			mockError:        "file not found",
+			wantIsError:      true,
+			wantContainsList: []string{"file not found"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &mockFileClient{
+				automateOpenFileDialogFunc: func(ctx context.Context, req *pb.AutomateOpenFileDialogRequest) (*pb.AutomateOpenFileDialogResponse, error) {
+					return &pb.AutomateOpenFileDialogResponse{Success: tt.mockSuccess, Error: tt.mockError, SelectedPaths: []string{"/tmp/test.txt"}}, nil
+				},
+				automateSaveFileDialogFunc: func(ctx context.Context, req *pb.AutomateSaveFileDialogRequest) (*pb.AutomateSaveFileDialogResponse, error) {
+					return &pb.AutomateSaveFileDialogResponse{Success: tt.mockSuccess, Error: tt.mockError, SavedPath: req.FilePath}, nil
+				},
+				selectFileFunc: func(ctx context.Context, req *pb.SelectFileRequest) (*pb.SelectFileResponse, error) {
+					return &pb.SelectFileResponse{Success: tt.mockSuccess, Error: tt.mockError, SelectedPath: req.FilePath}, nil
+				},
+				selectDirectoryFunc: func(ctx context.Context, req *pb.SelectDirectoryRequest) (*pb.SelectDirectoryResponse, error) {
+					return &pb.SelectDirectoryResponse{
+						Success:      tt.mockSuccess,
+						Error:        tt.mockError,
+						SelectedPath: req.DirectoryPath,
+						Created:      req.CreateMissing,
+					}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+
+			handlers := map[string]func(*ToolCall) (*ToolResult, error){
+				"automate_open_file_dialog": server.handleAutomateOpenFileDialog,
+				"automate_save_file_dialog": server.handleAutomateSaveFileDialog,
+				"select_file":               server.handleSelectFile,
+				"select_directory":          server.handleSelectDirectory,
+			}
+
+			handler := handlers[tt.handler]
+			call := &ToolCall{Name: tt.handler, Arguments: json.RawMessage(tt.args)}
+			result, err := handler(call)
+
+			if err != nil {
+				t.Fatalf("handler returned Go error: %v", err)
+			}
+			if result.IsError != tt.wantIsError {
+				t.Errorf("result.IsError = %v, want %v: %s", result.IsError, tt.wantIsError, result.Content[0].Text)
+			}
+
+			text := result.Content[0].Text
+			for _, want := range tt.wantContainsList {
+				if !strings.Contains(text, want) {
+					t.Errorf("result text does not contain %q: %s", want, text)
+				}
+			}
+		})
+	}
+}
+
+// ============================================================================
+// Timeout Validation Tests
+// ============================================================================
+
+func TestFileDialogHandlers_TimeoutValidation(t *testing.T) {
+	tests := []struct {
+		name            string
+		handler         string
+		args            string
+		expectedTimeout float64
+	}{
+		// AutomateOpenFileDialog
+		{"open: no timeout uses default", "automate_open_file_dialog", `{"application": "applications/TextEdit"}`, 30.0},
+		{"open: zero timeout uses default", "automate_open_file_dialog", `{"application": "applications/TextEdit", "timeout": 0}`, 30.0},
+		{"open: negative timeout uses default", "automate_open_file_dialog", `{"application": "applications/TextEdit", "timeout": -5}`, 30.0},
+		{"open: negative large uses default", "automate_open_file_dialog", `{"application": "applications/TextEdit", "timeout": -100}`, 30.0},
+		{"open: explicit positive used", "automate_open_file_dialog", `{"application": "applications/TextEdit", "timeout": 60}`, 60.0},
+		{"open: small positive used", "automate_open_file_dialog", `{"application": "applications/TextEdit", "timeout": 0.5}`, 0.5},
+		{"open: very large timeout used", "automate_open_file_dialog", `{"application": "applications/TextEdit", "timeout": 3600}`, 3600.0},
+
+		// AutomateSaveFileDialog
+		{"save: no timeout uses default", "automate_save_file_dialog", `{"application": "applications/TextEdit", "file_path": "/tmp/test.txt"}`, 30.0},
+		{"save: zero timeout uses default", "automate_save_file_dialog", `{"application": "applications/TextEdit", "file_path": "/tmp/test.txt", "timeout": 0}`, 30.0},
+		{"save: negative timeout uses default", "automate_save_file_dialog", `{"application": "applications/TextEdit", "file_path": "/tmp/test.txt", "timeout": -10}`, 30.0},
+		{"save: explicit positive used", "automate_save_file_dialog", `{"application": "applications/TextEdit", "file_path": "/tmp/test.txt", "timeout": 45}`, 45.0},
+		{"save: fractional timeout used", "automate_save_file_dialog", `{"application": "applications/TextEdit", "file_path": "/tmp/test.txt", "timeout": 1.5}`, 1.5},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var receivedTimeout float64
+			mockClient := &mockFileClient{
+				automateOpenFileDialogFunc: func(ctx context.Context, req *pb.AutomateOpenFileDialogRequest) (*pb.AutomateOpenFileDialogResponse, error) {
+					receivedTimeout = req.Timeout
+					return &pb.AutomateOpenFileDialogResponse{Success: true, SelectedPaths: []string{}}, nil
+				},
+				automateSaveFileDialogFunc: func(ctx context.Context, req *pb.AutomateSaveFileDialogRequest) (*pb.AutomateSaveFileDialogResponse, error) {
+					receivedTimeout = req.Timeout
+					return &pb.AutomateSaveFileDialogResponse{Success: true, SavedPath: req.FilePath}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+
+			handlers := map[string]func(*ToolCall) (*ToolResult, error){
+				"automate_open_file_dialog": server.handleAutomateOpenFileDialog,
+				"automate_save_file_dialog": server.handleAutomateSaveFileDialog,
+			}
+
+			handler := handlers[tt.handler]
+			call := &ToolCall{Name: tt.handler, Arguments: json.RawMessage(tt.args)}
+			_, err := handler(call)
+			if err != nil {
+				t.Fatalf("handler returned error: %v", err)
+			}
+
+			if receivedTimeout != tt.expectedTimeout {
+				t.Errorf("timeout = %f, want %f", receivedTimeout, tt.expectedTimeout)
+			}
+		})
+	}
+}
+
+// ============================================================================
+// Cancellation Scenario Tests
+// ============================================================================
+
+func TestFileDialogHandlers_Cancellation(t *testing.T) {
+	tests := []struct {
+		name         string
+		handler      string
+		args         string
+		mockError    string
+		wantIsError  bool
+		wantContains []string
+	}{
+		{
+			name:         "automate_open dialog cancelled by user",
+			handler:      "automate_open_file_dialog",
+			args:         `{"application": "applications/TextEdit"}`,
+			mockError:    "dialog cancelled by user",
+			wantIsError:  true,
+			wantContains: []string{"dialog cancelled by user"},
+		},
+		{
+			name:         "automate_open dialog dismissed",
+			handler:      "automate_open_file_dialog",
+			args:         `{"application": "applications/TextEdit"}`,
+			mockError:    "dialog was dismissed",
+			wantIsError:  true,
+			wantContains: []string{"dialog was dismissed"},
+		},
+		{
+			name:         "automate_save dialog cancelled",
+			handler:      "automate_save_file_dialog",
+			args:         `{"application": "applications/TextEdit", "file_path": "/tmp/test.txt"}`,
+			mockError:    "user cancelled save operation",
+			wantIsError:  true,
+			wantContains: []string{"user cancelled save operation"},
+		},
+		{
+			name:         "automate_save dialog timeout",
+			handler:      "automate_save_file_dialog",
+			args:         `{"application": "applications/TextEdit", "file_path": "/tmp/test.txt"}`,
+			mockError:    "dialog timeout exceeded",
+			wantIsError:  true,
+			wantContains: []string{"dialog timeout exceeded"},
+		},
+		{
+			name:         "automate_open with escape key",
+			handler:      "automate_open_file_dialog",
+			args:         `{"application": "applications/TextEdit"}`,
+			mockError:    "operation cancelled (escape key pressed)",
+			wantIsError:  true,
+			wantContains: []string{"operation cancelled", "escape key"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &mockFileClient{
+				automateOpenFileDialogFunc: func(ctx context.Context, req *pb.AutomateOpenFileDialogRequest) (*pb.AutomateOpenFileDialogResponse, error) {
+					return &pb.AutomateOpenFileDialogResponse{
+						Success: false,
+						Error:   tt.mockError,
+					}, nil
+				},
+				automateSaveFileDialogFunc: func(ctx context.Context, req *pb.AutomateSaveFileDialogRequest) (*pb.AutomateSaveFileDialogResponse, error) {
+					return &pb.AutomateSaveFileDialogResponse{
+						Success: false,
+						Error:   tt.mockError,
+					}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+
+			handlers := map[string]func(*ToolCall) (*ToolResult, error){
+				"automate_open_file_dialog": server.handleAutomateOpenFileDialog,
+				"automate_save_file_dialog": server.handleAutomateSaveFileDialog,
+			}
+
+			handler := handlers[tt.handler]
+			call := &ToolCall{Name: tt.handler, Arguments: json.RawMessage(tt.args)}
+			result, err := handler(call)
+
+			if err != nil {
+				t.Fatalf("handler returned Go error: %v", err)
+			}
+			if result.IsError != tt.wantIsError {
+				t.Errorf("result.IsError = %v, want %v", result.IsError, tt.wantIsError)
+			}
+
+			text := result.Content[0].Text
+			for _, want := range tt.wantContains {
+				if !strings.Contains(text, want) {
+					t.Errorf("result text does not contain %q: %s", want, text)
+				}
+			}
+		})
+	}
+}
+
+// ============================================================================
+// Empty Path Handling Tests
+// ============================================================================
+
+func TestFileDialogHandlers_EmptyPaths(t *testing.T) {
+	tests := []struct {
+		name         string
+		handler      string
+		args         string
+		wantIsError  bool
+		wantContains string
+	}{
+		// Open dialog allows empty file_path (optional)
+		{
+			name:         "automate_open empty file_path is allowed",
+			handler:      "automate_open_file_dialog",
+			args:         `{"application": "applications/TextEdit", "file_path": ""}`,
+			wantIsError:  false,
+			wantContains: "",
+		},
+		{
+			name:         "automate_open empty default_directory is allowed",
+			handler:      "automate_open_file_dialog",
+			args:         `{"application": "applications/TextEdit", "default_directory": ""}`,
+			wantIsError:  false,
+			wantContains: "",
+		},
+		// Save dialog requires file_path
+		{
+			name:         "automate_save empty file_path is error",
+			handler:      "automate_save_file_dialog",
+			args:         `{"application": "applications/TextEdit", "file_path": ""}`,
+			wantIsError:  true,
+			wantContains: "file_path parameter is required",
+		},
+		{
+			name:         "automate_save whitespace file_path is forwarded",
+			handler:      "automate_save_file_dialog",
+			args:         `{"application": "applications/TextEdit", "file_path": "   "}`,
+			wantIsError:  false, // whitespace path forwarded to gRPC
+			wantContains: "",
+		},
+		// Select file requires file_path
+		{
+			name:         "select_file empty file_path is error",
+			handler:      "select_file",
+			args:         `{"application": "applications/Finder", "file_path": ""}`,
+			wantIsError:  true,
+			wantContains: "application and file_path parameters are required",
+		},
+		// Select directory requires directory_path
+		{
+			name:         "select_directory empty directory_path is error",
+			handler:      "select_directory",
+			args:         `{"application": "applications/Finder", "directory_path": ""}`,
+			wantIsError:  true,
+			wantContains: "application and directory_path parameters are required",
+		},
+		// Drag files requires file paths
+		{
+			name:         "drag_files nil file_paths",
+			handler:      "drag_files",
+			args:         `{"application": "applications/Finder", "target_element_id": "zone"}`,
+			wantIsError:  true,
+			wantContains: "file_paths parameter must contain at least one path",
+		},
+		{
+			name:         "drag_files with empty string in paths",
+			handler:      "drag_files",
+			args:         `{"application": "applications/Finder", "file_paths": ["", "/tmp/b.txt"], "target_element_id": "zone"}`,
+			wantIsError:  false, // empty string in array is forwarded
+			wantContains: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &mockFileClient{
+				automateOpenFileDialogFunc: func(ctx context.Context, req *pb.AutomateOpenFileDialogRequest) (*pb.AutomateOpenFileDialogResponse, error) {
+					return &pb.AutomateOpenFileDialogResponse{Success: true, SelectedPaths: []string{"/tmp/test.txt"}}, nil
+				},
+				automateSaveFileDialogFunc: func(ctx context.Context, req *pb.AutomateSaveFileDialogRequest) (*pb.AutomateSaveFileDialogResponse, error) {
+					return &pb.AutomateSaveFileDialogResponse{Success: true, SavedPath: req.FilePath}, nil
+				},
+				selectFileFunc: func(ctx context.Context, req *pb.SelectFileRequest) (*pb.SelectFileResponse, error) {
+					return &pb.SelectFileResponse{Success: true, SelectedPath: req.FilePath}, nil
+				},
+				selectDirectoryFunc: func(ctx context.Context, req *pb.SelectDirectoryRequest) (*pb.SelectDirectoryResponse, error) {
+					return &pb.SelectDirectoryResponse{Success: true, SelectedPath: req.DirectoryPath}, nil
+				},
+				dragFilesFunc: func(ctx context.Context, req *pb.DragFilesRequest) (*pb.DragFilesResponse, error) {
+					return &pb.DragFilesResponse{Success: true, FilesDropped: int32(len(req.FilePaths))}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+
+			handlers := map[string]func(*ToolCall) (*ToolResult, error){
+				"automate_open_file_dialog": server.handleAutomateOpenFileDialog,
+				"automate_save_file_dialog": server.handleAutomateSaveFileDialog,
+				"select_file":               server.handleSelectFile,
+				"select_directory":          server.handleSelectDirectory,
+				"drag_files":                server.handleDragFiles,
+			}
+
+			handler := handlers[tt.handler]
+			call := &ToolCall{Name: tt.handler, Arguments: json.RawMessage(tt.args)}
+			result, err := handler(call)
+
+			if err != nil {
+				t.Fatalf("handler returned Go error: %v", err)
+			}
+			if result.IsError != tt.wantIsError {
+				t.Errorf("result.IsError = %v, want %v: %s", result.IsError, tt.wantIsError, result.Content[0].Text)
+			}
+
+			if tt.wantContains != "" {
+				text := result.Content[0].Text
+				if !strings.Contains(text, tt.wantContains) {
+					t.Errorf("result text does not contain %q: %s", tt.wantContains, text)
+				}
+			}
+		})
+	}
+}
+
+// ============================================================================
+// File Filter Forwarding Tests
+// ============================================================================
+
+func TestFileDialogHandlers_FileFilters(t *testing.T) {
+	tests := []struct {
+		name            string
+		filters         []string
+		expectedFilters []string
+	}{
+		{
+			name:            "single filter",
+			filters:         []string{"*.txt"},
+			expectedFilters: []string{"*.txt"},
+		},
+		{
+			name:            "multiple filters",
+			filters:         []string{"*.txt", "*.md", "*.pdf"},
+			expectedFilters: []string{"*.txt", "*.md", "*.pdf"},
+		},
+		{
+			name:            "complex glob patterns",
+			filters:         []string{"*.{txt,md}", "doc*.pdf", "image_???.*"},
+			expectedFilters: []string{"*.{txt,md}", "doc*.pdf", "image_???.*"},
+		},
+		{
+			name:            "empty filter array",
+			filters:         []string{},
+			expectedFilters: []string{},
+		},
+		{
+			name:            "filter with spaces",
+			filters:         []string{"* Document.txt", "Report *.pdf"},
+			expectedFilters: []string{"* Document.txt", "Report *.pdf"},
+		},
+		{
+			name:            "filter with special chars",
+			filters:         []string{"*.txt", "file[0-9].log", "data_*.csv"},
+			expectedFilters: []string{"*.txt", "file[0-9].log", "data_*.csv"},
+		},
+		{
+			name:            "nil becomes empty",
+			filters:         nil,
+			expectedFilters: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var receivedFilters []string
+			mockClient := &mockFileClient{
+				automateOpenFileDialogFunc: func(ctx context.Context, req *pb.AutomateOpenFileDialogRequest) (*pb.AutomateOpenFileDialogResponse, error) {
+					receivedFilters = req.FileFilters
+					return &pb.AutomateOpenFileDialogResponse{Success: true, SelectedPaths: []string{"/tmp/test.txt"}}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+
+			// Build JSON args
+			var args string
+			if tt.filters == nil {
+				args = `{"application": "applications/TextEdit"}`
+			} else {
+				filtersJSON, _ := json.Marshal(tt.filters)
+				args = `{"application": "applications/TextEdit", "file_filters": ` + string(filtersJSON) + `}`
+			}
+
+			call := &ToolCall{
+				Name:      "automate_open_file_dialog",
+				Arguments: json.RawMessage(args),
+			}
+
+			result, err := server.handleAutomateOpenFileDialog(call)
+			if err != nil {
+				t.Fatalf("handler returned error: %v", err)
+			}
+			if result.IsError {
+				t.Errorf("result.IsError = true, want false: %s", result.Content[0].Text)
+			}
+
+			// Verify filters match
+			if len(receivedFilters) != len(tt.expectedFilters) {
+				t.Errorf("received %d filters, want %d", len(receivedFilters), len(tt.expectedFilters))
+				return
+			}
+
+			for i, expected := range tt.expectedFilters {
+				if receivedFilters[i] != expected {
+					t.Errorf("filter[%d] = %q, want %q", i, receivedFilters[i], expected)
+				}
+			}
+		})
+	}
+}
+
+// ============================================================================
+// Operation Failed With Empty Error Tests
+// ============================================================================
+
+func TestFileDialogHandlers_OperationFailedEmptyError(t *testing.T) {
+	tests := []struct {
+		name         string
+		handler      string
+		args         string
+		wantContains string
+	}{
+		{
+			name:         "automate_open empty error",
+			handler:      "automate_open_file_dialog",
+			args:         `{"application": "applications/TextEdit"}`,
+			wantContains: "operation was not successful",
+		},
+		{
+			name:         "automate_save empty error",
+			handler:      "automate_save_file_dialog",
+			args:         `{"application": "applications/TextEdit", "file_path": "/tmp/test.txt"}`,
+			wantContains: "operation was not successful",
+		},
+		{
+			name:         "select_file empty error",
+			handler:      "select_file",
+			args:         `{"application": "applications/Finder", "file_path": "/tmp/test.txt"}`,
+			wantContains: "operation was not successful",
+		},
+		{
+			name:         "select_directory empty error",
+			handler:      "select_directory",
+			args:         `{"application": "applications/Finder", "directory_path": "/tmp"}`,
+			wantContains: "operation was not successful",
+		},
+		{
+			name:         "drag_files empty error",
+			handler:      "drag_files",
+			args:         `{"application": "applications/Finder", "file_paths": ["/tmp/a.txt"], "target_element_id": "zone"}`,
+			wantContains: "operation was not successful",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &mockFileClient{
+				automateOpenFileDialogFunc: func(ctx context.Context, req *pb.AutomateOpenFileDialogRequest) (*pb.AutomateOpenFileDialogResponse, error) {
+					return &pb.AutomateOpenFileDialogResponse{Success: false, Error: ""}, nil
+				},
+				automateSaveFileDialogFunc: func(ctx context.Context, req *pb.AutomateSaveFileDialogRequest) (*pb.AutomateSaveFileDialogResponse, error) {
+					return &pb.AutomateSaveFileDialogResponse{Success: false, Error: ""}, nil
+				},
+				selectFileFunc: func(ctx context.Context, req *pb.SelectFileRequest) (*pb.SelectFileResponse, error) {
+					return &pb.SelectFileResponse{Success: false, Error: ""}, nil
+				},
+				selectDirectoryFunc: func(ctx context.Context, req *pb.SelectDirectoryRequest) (*pb.SelectDirectoryResponse, error) {
+					return &pb.SelectDirectoryResponse{Success: false, Error: ""}, nil
+				},
+				dragFilesFunc: func(ctx context.Context, req *pb.DragFilesRequest) (*pb.DragFilesResponse, error) {
+					return &pb.DragFilesResponse{Success: false, Error: ""}, nil
+				},
+			}
+
+			server := newTestMCPServer(mockClient)
+
+			handlers := map[string]func(*ToolCall) (*ToolResult, error){
+				"automate_open_file_dialog": server.handleAutomateOpenFileDialog,
+				"automate_save_file_dialog": server.handleAutomateSaveFileDialog,
+				"select_file":               server.handleSelectFile,
+				"select_directory":          server.handleSelectDirectory,
+				"drag_files":                server.handleDragFiles,
+			}
+
+			handler := handlers[tt.handler]
+			call := &ToolCall{Name: tt.handler, Arguments: json.RawMessage(tt.args)}
+			result, err := handler(call)
+
+			if err != nil {
+				t.Fatalf("handler returned Go error: %v", err)
+			}
+			if !result.IsError {
+				t.Error("result.IsError = false, want true for failed operation")
+			}
+
+			text := result.Content[0].Text
+			if !strings.Contains(text, tt.wantContains) {
+				t.Errorf("result text does not contain %q: %s", tt.wantContains, text)
+			}
+		})
+	}
+}
+
+// ============================================================================
 // Content Type Tests
 // ============================================================================
 

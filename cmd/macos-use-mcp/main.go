@@ -37,9 +37,7 @@ func main() {
 	errChan := make(chan error, 1)
 
 	// Start serving based on transport type
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		var serveErr error
 		switch cfg.Transport {
 		case config.TransportHTTP:
@@ -50,7 +48,7 @@ func main() {
 		if serveErr != nil {
 			errChan <- serveErr
 		}
-	}()
+	})
 
 	// Wait for shutdown signal or error
 	select {

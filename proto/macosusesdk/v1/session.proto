@@ -118,35 +118,35 @@ message Transaction {
 // Session state snapshot.
 message SessionSnapshot {
   // Session state.
-  Session session = 1;
+  Session session = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Active applications in session context.
-  repeated string applications = 2;
+  repeated string applications = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Active observations in session context.
-  repeated string observations = 3;
+  repeated string observations = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Operation history.
-  repeated OperationRecord history = 4;
+  repeated OperationRecord history = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Record of an operation within a session.
 message OperationRecord {
   // When the operation occurred.
-  google.protobuf.Timestamp operation_time = 1;
+  google.protobuf.Timestamp operation_time = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Operation type (method name).
-  string operation_type = 2;
+  string operation_type = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Resource affected (resource name).
-  string resource = 3;
+  string resource = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Whether the operation succeeded.
-  bool success = 4;
+  bool success = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Error message (if failed).
-  string error = 5;
+  string error = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Transaction ID (if in transaction).
-  string transaction_id = 6;
+  string transaction_id = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
 }

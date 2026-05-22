@@ -62,7 +62,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-No unreleased changes.
+### Added
+
+- **Background Application Open Mode**: `open_application` tool supports `background` parameter to launch apps without stealing focus
+- **MCP Resources Support**: `resources/list` and `resources/read` methods for `screen://`, `accessibility://`, `clipboard://` URIs
+- **MCP Prompts Support**: `prompts/list` and `prompts/get` methods for predefined automation prompts
+
+### Changed
+
+- **Passive Observation Mode (Default)**: `activate` parameter defaults to `false` on `create_observation` and `traverse_accessibility`, preventing focus theft during polling
+- **Circuit Breaker in ChangeDetector**: Per-PID throttling (5 events/second) prevents activation storms from external events
+- **SDK Activation Filtering**: `markSDKActivation(pid:)` suppresses workspace notifications from SDK-triggered activations
+
+### Fixed
+
+- **Activation Cycle Fix**: Eliminated destructive feedback loop where observation polling caused continuous app activation/deactivation cycles
+- **Proto Annotation Improvements**: Added `google.api.field_behavior` annotations (REQUIRED, OPTIONAL, OUTPUT_ONLY) to all proto fields
+- **Lint Cleanup**: Removed all `swiftlint:disable all` directives, fixed explicit `self.` prefixes for Swift 6 concurrency
+
+### Testing
+
+- **35+ New Integration Tests**: Calculator, TextEdit, Finder covering elements, windows, clipboard, observations
+- **Proto Backward Compatibility Tests**: 15 tests verifying field numbers, enum values, unknown field preservation
+- **CI Improvements**: Proto lint steps, Go/Swift coverage reporting, dependency caching
 
 ---
 

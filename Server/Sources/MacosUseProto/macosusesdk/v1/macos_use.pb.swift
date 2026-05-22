@@ -35,6 +35,11 @@ public struct Macosusesdk_V1_OpenApplicationRequest: Sendable {
   /// Examples: "Calculator", "com.apple.calculator", "/Applications/Calculator.app"
   public var id: String = String()
 
+  /// If true, the application is opened without being activated (brought to foreground).
+  /// The user's current focus is preserved. Defaults to false (activates app).
+  /// Uses NSWorkspace.OpenConfiguration.activates = false internally.
+  public var background: Bool = false
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
@@ -86,9 +91,23 @@ public struct Macosusesdk_V1_GetApplicationRequest: Sendable {
   /// Resource name of the application.
   public var name: String = String()
 
+  /// Optional. Field mask specifying which fields to return.
+  /// If not specified or empty, all fields are returned.
+  /// Supported fields: name, pid, display_name, bundle_id.
+  public var readMask: SwiftProtobuf.Google_Protobuf_FieldMask {
+    get {_readMask ?? SwiftProtobuf.Google_Protobuf_FieldMask()}
+    set {_readMask = newValue}
+  }
+  /// Returns true if `readMask` has been explicitly set.
+  public var hasReadMask: Bool {self._readMask != nil}
+  /// Clears the value of `readMask`. Subsequent reads from it will return its default value.
+  public mutating func clearReadMask() {self._readMask = nil}
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
+
+  fileprivate var _readMask: SwiftProtobuf.Google_Protobuf_FieldMask? = nil
 }
 
 /// Request to list applications.
@@ -104,6 +123,16 @@ public struct Macosusesdk_V1_ListApplicationsRequest: Sendable {
   /// This token is opaque and its structure must not be relied upon by clients.
   /// Only its presence or absence should be used to determine pagination state.
   public var pageToken: String = String()
+
+  /// Optional. Ordering specification for results.
+  /// Supported values: "name" (default), "pid", "display_name"
+  /// Append " desc" for descending order (e.g., "name desc").
+  public var orderBy: String = String()
+
+  /// Optional. Filter expression for results.
+  /// Supported filters: name="..." (filters by display_name)
+  /// Multiple conditions can be combined with spaces (AND semantics).
+  public var filter: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -250,6 +279,11 @@ public struct Macosusesdk_V1_TraverseAccessibilityRequest: Sendable {
 
   /// Whether to return only visible elements.
   public var visibleOnly: Bool = false
+
+  /// Whether to activate (bring to foreground) the target application before
+  /// traversal. When false (the default), traversal is performed passively
+  /// without disturbing window ordering.
+  public var activate: Bool = false
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -1088,9 +1122,23 @@ public struct Macosusesdk_V1_GetWindowRequest: Sendable {
   /// Resource name of the window.
   public var name: String = String()
 
+  /// Optional. Field mask specifying which fields to return.
+  /// If not specified or empty, all fields are returned.
+  /// Supported fields: name, title, bounds, visible, z_index, minimized, bundle_id, state.
+  public var readMask: SwiftProtobuf.Google_Protobuf_FieldMask {
+    get {_readMask ?? SwiftProtobuf.Google_Protobuf_FieldMask()}
+    set {_readMask = newValue}
+  }
+  /// Returns true if `readMask` has been explicitly set.
+  public var hasReadMask: Bool {self._readMask != nil}
+  /// Clears the value of `readMask`. Subsequent reads from it will return its default value.
+  public mutating func clearReadMask() {self._readMask = nil}
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
+
+  fileprivate var _readMask: SwiftProtobuf.Google_Protobuf_FieldMask? = nil
 }
 
 /// Request to list windows.
@@ -1109,6 +1157,16 @@ public struct Macosusesdk_V1_ListWindowsRequest: Sendable {
   /// This token is opaque and its structure must not be relied upon by clients.
   /// Only its presence or absence should be used to determine pagination state.
   public var pageToken: String = String()
+
+  /// Optional. Ordering specification for results.
+  /// Supported values: "window_id" (default), "title", "z_order"
+  /// Append " desc" for descending order (e.g., "title desc").
+  public var orderBy: String = String()
+
+  /// Optional. Filter expression for results.
+  /// Supported filters: title="...", visible=true/false, minimized=true/false
+  /// Multiple conditions can be combined with spaces (AND semantics).
+  public var filter: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -2723,7 +2781,7 @@ fileprivate let _protobuf_package = "macosusesdk.v1"
 
 extension Macosusesdk_V1_OpenApplicationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".OpenApplicationRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}id\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}id\0\u{1}background\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -2732,6 +2790,7 @@ extension Macosusesdk_V1_OpenApplicationRequest: SwiftProtobuf.Message, SwiftPro
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularStringField(value: &self.id) }()
+      case 2: try { try decoder.decodeSingularBoolField(value: &self.background) }()
       default: break
       }
     }
@@ -2741,11 +2800,15 @@ extension Macosusesdk_V1_OpenApplicationRequest: SwiftProtobuf.Message, SwiftPro
     if !self.id.isEmpty {
       try visitor.visitSingularStringField(value: self.id, fieldNumber: 1)
     }
+    if self.background != false {
+      try visitor.visitSingularBoolField(value: self.background, fieldNumber: 2)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_OpenApplicationRequest, rhs: Macosusesdk_V1_OpenApplicationRequest) -> Bool {
     if lhs.id != rhs.id {return false}
+    if lhs.background != rhs.background {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -2817,7 +2880,7 @@ extension Macosusesdk_V1_OpenApplicationMetadata: SwiftProtobuf.Message, SwiftPr
 
 extension Macosusesdk_V1_GetApplicationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".GetApplicationRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}read_mask\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -2826,20 +2889,29 @@ extension Macosusesdk_V1_GetApplicationRequest: SwiftProtobuf.Message, SwiftProt
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._readMask) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
     if !self.name.isEmpty {
       try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
     }
+    try { if let v = self._readMask {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_GetApplicationRequest, rhs: Macosusesdk_V1_GetApplicationRequest) -> Bool {
     if lhs.name != rhs.name {return false}
+    if lhs._readMask != rhs._readMask {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -2847,7 +2919,7 @@ extension Macosusesdk_V1_GetApplicationRequest: SwiftProtobuf.Message, SwiftProt
 
 extension Macosusesdk_V1_ListApplicationsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListApplicationsRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}page_size\0\u{3}page_token\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}page_size\0\u{3}page_token\0\u{3}order_by\0\u{1}filter\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -2857,6 +2929,8 @@ extension Macosusesdk_V1_ListApplicationsRequest: SwiftProtobuf.Message, SwiftPr
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularInt32Field(value: &self.pageSize) }()
       case 2: try { try decoder.decodeSingularStringField(value: &self.pageToken) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.orderBy) }()
+      case 4: try { try decoder.decodeSingularStringField(value: &self.filter) }()
       default: break
       }
     }
@@ -2869,12 +2943,20 @@ extension Macosusesdk_V1_ListApplicationsRequest: SwiftProtobuf.Message, SwiftPr
     if !self.pageToken.isEmpty {
       try visitor.visitSingularStringField(value: self.pageToken, fieldNumber: 2)
     }
+    if !self.orderBy.isEmpty {
+      try visitor.visitSingularStringField(value: self.orderBy, fieldNumber: 3)
+    }
+    if !self.filter.isEmpty {
+      try visitor.visitSingularStringField(value: self.filter, fieldNumber: 4)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_ListApplicationsRequest, rhs: Macosusesdk_V1_ListApplicationsRequest) -> Bool {
     if lhs.pageSize != rhs.pageSize {return false}
     if lhs.pageToken != rhs.pageToken {return false}
+    if lhs.orderBy != rhs.orderBy {return false}
+    if lhs.filter != rhs.filter {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -3146,7 +3228,7 @@ extension Macosusesdk_V1_ListInputsResponse: SwiftProtobuf.Message, SwiftProtobu
 
 extension Macosusesdk_V1_TraverseAccessibilityRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".TraverseAccessibilityRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}visible_only\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}visible_only\0\u{1}activate\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -3156,6 +3238,7 @@ extension Macosusesdk_V1_TraverseAccessibilityRequest: SwiftProtobuf.Message, Sw
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
       case 2: try { try decoder.decodeSingularBoolField(value: &self.visibleOnly) }()
+      case 3: try { try decoder.decodeSingularBoolField(value: &self.activate) }()
       default: break
       }
     }
@@ -3168,12 +3251,16 @@ extension Macosusesdk_V1_TraverseAccessibilityRequest: SwiftProtobuf.Message, Sw
     if self.visibleOnly != false {
       try visitor.visitSingularBoolField(value: self.visibleOnly, fieldNumber: 2)
     }
+    if self.activate != false {
+      try visitor.visitSingularBoolField(value: self.activate, fieldNumber: 3)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_TraverseAccessibilityRequest, rhs: Macosusesdk_V1_TraverseAccessibilityRequest) -> Bool {
     if lhs.name != rhs.name {return false}
     if lhs.visibleOnly != rhs.visibleOnly {return false}
+    if lhs.activate != rhs.activate {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -4374,7 +4461,7 @@ extension Macosusesdk_V1_WaitElementStateMetadata: SwiftProtobuf.Message, SwiftP
 
 extension Macosusesdk_V1_GetWindowRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".GetWindowRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}read_mask\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -4383,20 +4470,29 @@ extension Macosusesdk_V1_GetWindowRequest: SwiftProtobuf.Message, SwiftProtobuf.
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._readMask) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
     if !self.name.isEmpty {
       try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
     }
+    try { if let v = self._readMask {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_GetWindowRequest, rhs: Macosusesdk_V1_GetWindowRequest) -> Bool {
     if lhs.name != rhs.name {return false}
+    if lhs._readMask != rhs._readMask {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -4404,7 +4500,7 @@ extension Macosusesdk_V1_GetWindowRequest: SwiftProtobuf.Message, SwiftProtobuf.
 
 extension Macosusesdk_V1_ListWindowsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListWindowsRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}page_size\0\u{3}page_token\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}page_size\0\u{3}page_token\0\u{3}order_by\0\u{1}filter\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -4415,6 +4511,8 @@ extension Macosusesdk_V1_ListWindowsRequest: SwiftProtobuf.Message, SwiftProtobu
       case 1: try { try decoder.decodeSingularStringField(value: &self.parent) }()
       case 2: try { try decoder.decodeSingularInt32Field(value: &self.pageSize) }()
       case 3: try { try decoder.decodeSingularStringField(value: &self.pageToken) }()
+      case 4: try { try decoder.decodeSingularStringField(value: &self.orderBy) }()
+      case 5: try { try decoder.decodeSingularStringField(value: &self.filter) }()
       default: break
       }
     }
@@ -4430,6 +4528,12 @@ extension Macosusesdk_V1_ListWindowsRequest: SwiftProtobuf.Message, SwiftProtobu
     if !self.pageToken.isEmpty {
       try visitor.visitSingularStringField(value: self.pageToken, fieldNumber: 3)
     }
+    if !self.orderBy.isEmpty {
+      try visitor.visitSingularStringField(value: self.orderBy, fieldNumber: 4)
+    }
+    if !self.filter.isEmpty {
+      try visitor.visitSingularStringField(value: self.filter, fieldNumber: 5)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -4437,6 +4541,8 @@ extension Macosusesdk_V1_ListWindowsRequest: SwiftProtobuf.Message, SwiftProtobu
     if lhs.parent != rhs.parent {return false}
     if lhs.pageSize != rhs.pageSize {return false}
     if lhs.pageToken != rhs.pageToken {return false}
+    if lhs.orderBy != rhs.orderBy {return false}
+    if lhs.filter != rhs.filter {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

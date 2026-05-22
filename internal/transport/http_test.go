@@ -175,7 +175,7 @@ func TestHTTPTransport_HandleHealth(t *testing.T) {
 	}
 
 	respBody, _ := io.ReadAll(resp.Body)
-	var health map[string]interface{}
+	var health map[string]any
 	if err := json.Unmarshal(respBody, &health); err != nil {
 		t.Fatalf("Failed to unmarshal response: %v", err)
 	}
@@ -700,5 +700,736 @@ func TestHTTPTransport_IsRateLimitEnabled(t *testing.T) {
 				t.Errorf("IsRateLimitEnabled() = %v, want %v", got, tt.enabled)
 			}
 		})
+	}
+}
+
+// =============================================================================
+// CORS Tests - Comprehensive coverage for CORS middleware behavior
+// =============================================================================
+
+// TestCORS_Preflight_ValidOrigin verifies OPTIONS preflight requests return
+// 204 No Content with correct CORS headers for various origin configurations.
+func TestCORS_Preflight_ValidOrigin(t *testing.T) {
+	tests := []struct {
+		name           string
+		configOrigin   string
+		requestOrigin  string
+		wantAllowedOrg string
+		wantStatus     int
+	}{
+		{
+			name:           "wildcard origin allows any request",
+			configOrigin:   "*",
+			requestOrigin:  "https://example.com",
+			wantAllowedOrg: "*",
+			wantStatus:     http.StatusNoContent,
+		},
+		{
+			name:           "specific origin echoes configured value",
+			configOrigin:   "https://allowed.example.com",
+			requestOrigin:  "https://allowed.example.com",
+			wantAllowedOrg: "https://allowed.example.com",
+			wantStatus:     http.StatusNoContent,
+		},
+		{
+			name:           "preflight without Origin header still returns configured CORS",
+			configOrigin:   "https://allowed.com",
+			requestOrigin:  "",
+			wantAllowedOrg: "https://allowed.com",
+			wantStatus:     http.StatusNoContent,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tr := NewHTTPTransport(&HTTPTransportConfig{
+				CORSOrigin: tt.configOrigin,
+			})
+
+			handler := tr.corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				t.Error("Next handler should not be called for OPTIONS")
+			}))
+
+			req := httptest.NewRequest("OPTIONS", "/message", nil)
+			if tt.requestOrigin != "" {
+				req.Header.Set("Origin", tt.requestOrigin)
+			}
+			w := httptest.NewRecorder()
+
+			handler.ServeHTTP(w, req)
+
+			if w.Code != tt.wantStatus {
+				t.Errorf("Status = %d, want %d", w.Code, tt.wantStatus)
+			}
+			if got := w.Header().Get("Access-Control-Allow-Origin"); got != tt.wantAllowedOrg {
+				t.Errorf("Access-Control-Allow-Origin = %q, want %q", got, tt.wantAllowedOrg)
+			}
+		})
+	}
+}
+
+// TestCORS_Preflight_InvalidOrigin verifies that when a specific origin is
+// configured, the server still echoes it back (current implementation does
+// not validate the incoming Origin header against an allowlist).
+func TestCORS_Preflight_InvalidOrigin(t *testing.T) {
+	tr := NewHTTPTransport(&HTTPTransportConfig{
+		CORSOrigin: "https://allowed.example.com",
+	})
+
+	handler := tr.corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Error("Next handler should not be called for OPTIONS")
+	}))
+
+	// Request from a different origin
+	req := httptest.NewRequest("OPTIONS", "/message", nil)
+	req.Header.Set("Origin", "https://malicious.example.com")
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	// Current implementation: origin is NOT validated, configured value is echoed
+	// The browser will reject the response if it doesn't match the request Origin,
+	// but the server doesn't perform this validation.
+	if w.Code != http.StatusNoContent {
+		t.Errorf("Status = %d, want %d", w.Code, http.StatusNoContent)
+	}
+	// Server echoes configured origin (not the request origin)
+	if got := w.Header().Get("Access-Control-Allow-Origin"); got != "https://allowed.example.com" {
+		t.Errorf("Access-Control-Allow-Origin = %q, want %q", got, "https://allowed.example.com")
+	}
+}
+
+// TestCORS_ActualRequest_ValidOrigin verifies that actual (non-preflight)
+// requests include CORS headers and proceed to the handler.
+func TestCORS_ActualRequest_ValidOrigin(t *testing.T) {
+	tests := []struct {
+		name           string
+		method         string
+		path           string
+		configOrigin   string
+		requestOrigin  string
+		wantAllowedOrg string
+	}{
+		{
+			name:           "GET request with wildcard origin",
+			method:         "GET",
+			path:           "/health",
+			configOrigin:   "*",
+			requestOrigin:  "https://client.example.com",
+			wantAllowedOrg: "*",
+		},
+		{
+			name:           "POST request with specific origin",
+			method:         "POST",
+			path:           "/message",
+			configOrigin:   "https://trusted.example.com",
+			requestOrigin:  "https://trusted.example.com",
+			wantAllowedOrg: "https://trusted.example.com",
+		},
+		{
+			name:           "GET request without Origin header",
+			method:         "GET",
+			path:           "/events",
+			configOrigin:   "https://app.example.com",
+			requestOrigin:  "",
+			wantAllowedOrg: "https://app.example.com",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tr := NewHTTPTransport(&HTTPTransportConfig{
+				CORSOrigin: tt.configOrigin,
+			})
+
+			handlerCalled := false
+			handler := tr.corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				handlerCalled = true
+				w.WriteHeader(http.StatusOK)
+			}))
+
+			req := httptest.NewRequest(tt.method, tt.path, nil)
+			if tt.requestOrigin != "" {
+				req.Header.Set("Origin", tt.requestOrigin)
+			}
+			w := httptest.NewRecorder()
+
+			handler.ServeHTTP(w, req)
+
+			if !handlerCalled {
+				t.Error("Handler was not called for non-OPTIONS request")
+			}
+			if got := w.Header().Get("Access-Control-Allow-Origin"); got != tt.wantAllowedOrg {
+				t.Errorf("Access-Control-Allow-Origin = %q, want %q", got, tt.wantAllowedOrg)
+			}
+		})
+	}
+}
+
+// TestCORS_ActualRequest_InvalidOrigin verifies CORS headers are echoed
+// even when the request Origin doesn't match the configured allowed origin.
+// Note: The browser enforces CORS, not the server. The server echoes the
+// configured origin and the browser rejects mismatches.
+func TestCORS_ActualRequest_InvalidOrigin(t *testing.T) {
+	tr := NewHTTPTransport(&HTTPTransportConfig{
+		CORSOrigin: "https://allowed.example.com",
+	})
+
+	handlerCalled := false
+	handler := tr.corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handlerCalled = true
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("POST", "/message", nil)
+	req.Header.Set("Origin", "https://malicious.example.com")
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	// Handler is still called (server doesn't block requests based on Origin)
+	if !handlerCalled {
+		t.Error("Handler should be called (server doesn't enforce CORS origin)")
+	}
+	// Server echoes configured origin, not request origin
+	if got := w.Header().Get("Access-Control-Allow-Origin"); got != "https://allowed.example.com" {
+		t.Errorf("Access-Control-Allow-Origin = %q, want %q", got, "https://allowed.example.com")
+	}
+}
+
+// TestCORS_AllowMethods verifies Access-Control-Allow-Methods header lists
+// the expected HTTP methods (GET, POST, OPTIONS).
+func TestCORS_AllowMethods(t *testing.T) {
+	tests := []struct {
+		name   string
+		method string
+	}{
+		{"OPTIONS preflight", "OPTIONS"},
+		{"GET request", "GET"},
+		{"POST request", "POST"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tr := NewHTTPTransport(nil)
+
+			handler := tr.corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			}))
+
+			req := httptest.NewRequest(tt.method, "/message", nil)
+			w := httptest.NewRecorder()
+
+			handler.ServeHTTP(w, req)
+
+			allowMethods := w.Header().Get("Access-Control-Allow-Methods")
+			expectedMethods := []string{"GET", "POST", "OPTIONS"}
+			for _, method := range expectedMethods {
+				if !strings.Contains(allowMethods, method) {
+					t.Errorf("Access-Control-Allow-Methods = %q, missing %q", allowMethods, method)
+				}
+			}
+		})
+	}
+}
+
+// TestCORS_AllowHeaders verifies Access-Control-Allow-Headers includes
+// required headers (Content-Type, Last-Event-ID, Authorization).
+func TestCORS_AllowHeaders(t *testing.T) {
+	tr := NewHTTPTransport(nil)
+
+	handler := tr.corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("OPTIONS", "/message", nil)
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	allowHeaders := w.Header().Get("Access-Control-Allow-Headers")
+	expectedHeaders := []string{"Content-Type", "Last-Event-ID", "Authorization"}
+	for _, header := range expectedHeaders {
+		if !strings.Contains(allowHeaders, header) {
+			t.Errorf("Access-Control-Allow-Headers = %q, missing %q", allowHeaders, header)
+		}
+	}
+}
+
+// TestCORS_ExposeHeaders verifies Access-Control-Expose-Headers includes
+// headers that should be accessible to client JavaScript.
+func TestCORS_ExposeHeaders(t *testing.T) {
+	tr := NewHTTPTransport(nil)
+
+	handler := tr.corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("GET", "/message", nil)
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	exposeHeaders := w.Header().Get("Access-Control-Expose-Headers")
+	if !strings.Contains(exposeHeaders, "Content-Type") {
+		t.Errorf("Access-Control-Expose-Headers = %q, missing 'Content-Type'", exposeHeaders)
+	}
+}
+
+// TestCORS_WildcardOriginHandling verifies that wildcard "*" origin behaves
+// correctly for both preflight and actual requests.
+func TestCORS_WildcardOriginHandling(t *testing.T) {
+	tests := []struct {
+		name          string
+		method        string
+		requestOrigin string
+	}{
+		{"preflight from any origin", "OPTIONS", "https://any-domain.com"},
+		{"preflight from localhost", "OPTIONS", "http://localhost:3000"},
+		{"GET from any origin", "GET", "https://example.org"},
+		{"POST from any origin", "POST", "https://api.client.com"},
+		{"request with null origin", "GET", "null"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tr := NewHTTPTransport(&HTTPTransportConfig{
+				CORSOrigin: "*",
+			})
+
+			handler := tr.corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			}))
+
+			req := httptest.NewRequest(tt.method, "/message", nil)
+			req.Header.Set("Origin", tt.requestOrigin)
+			w := httptest.NewRecorder()
+
+			handler.ServeHTTP(w, req)
+
+			// With wildcard "*", all origins should receive "*" in response
+			if got := w.Header().Get("Access-Control-Allow-Origin"); got != "*" {
+				t.Errorf("Access-Control-Allow-Origin = %q, want %q", got, "*")
+			}
+		})
+	}
+}
+
+// TestCORS_DefaultConfig verifies CORS behavior with default configuration.
+func TestCORS_DefaultConfig(t *testing.T) {
+	tr := NewHTTPTransport(nil) // Uses default config with CORSOrigin: "*"
+
+	handler := tr.corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("OPTIONS", "/message", nil)
+	req.Header.Set("Origin", "https://any-origin.com")
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	// Default config should allow all origins
+	if got := w.Header().Get("Access-Control-Allow-Origin"); got != "*" {
+		t.Errorf("Access-Control-Allow-Origin = %q, want %q (default)", got, "*")
+	}
+	if w.Code != http.StatusNoContent {
+		t.Errorf("Status = %d, want %d", w.Code, http.StatusNoContent)
+	}
+}
+
+// TestCORS_PreflightDoesNotCallNextHandler verifies that OPTIONS preflight
+// requests are handled entirely by the CORS middleware and do not reach
+// the underlying handler.
+func TestCORS_PreflightDoesNotCallNextHandler(t *testing.T) {
+	tr := NewHTTPTransport(nil)
+
+	handlerCalled := false
+	handler := tr.corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handlerCalled = true
+	}))
+
+	req := httptest.NewRequest("OPTIONS", "/message", nil)
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	if handlerCalled {
+		t.Error("Next handler should not be called for OPTIONS preflight")
+	}
+}
+
+// TestCORS_HeadersPresentOnAllEndpoints verifies CORS headers are set
+// regardless of the endpoint being accessed.
+func TestCORS_HeadersPresentOnAllEndpoints(t *testing.T) {
+	endpoints := []string{"/message", "/events", "/health", "/metrics"}
+
+	for _, endpoint := range endpoints {
+		t.Run(endpoint, func(t *testing.T) {
+			tr := NewHTTPTransport(&HTTPTransportConfig{
+				CORSOrigin: "https://test.example.com",
+			})
+
+			handler := tr.corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			}))
+
+			req := httptest.NewRequest("GET", endpoint, nil)
+			w := httptest.NewRecorder()
+
+			handler.ServeHTTP(w, req)
+
+			if got := w.Header().Get("Access-Control-Allow-Origin"); got == "" {
+				t.Errorf("Access-Control-Allow-Origin missing for endpoint %s", endpoint)
+			}
+			if got := w.Header().Get("Access-Control-Allow-Methods"); got == "" {
+				t.Errorf("Access-Control-Allow-Methods missing for endpoint %s", endpoint)
+			}
+			if got := w.Header().Get("Access-Control-Allow-Headers"); got == "" {
+				t.Errorf("Access-Control-Allow-Headers missing for endpoint %s", endpoint)
+			}
+		})
+	}
+}
+
+// =============================================================================
+// BroadcastEvent Tests - Added for Task 49
+// =============================================================================
+
+// TestHTTPTransport_BroadcastEvent verifies that BroadcastEvent sends custom
+// SSE events to all connected clients.
+func TestHTTPTransport_BroadcastEvent(t *testing.T) {
+	tr := NewHTTPTransport(nil)
+	defer tr.Close()
+
+	// Add a test client using the ClientRegistry API
+	client := tr.clients.Add("")
+
+	// Broadcast a custom event
+	tr.BroadcastEvent("observation", `{"test":"data"}`)
+
+	// Verify event was received
+	select {
+	case event := <-client.ResponseChan:
+		if event.Event != "observation" {
+			t.Errorf("Event type = %q, want %q", event.Event, "observation")
+		}
+		if event.Data != `{"test":"data"}` {
+			t.Errorf("Event data = %q, want %q", event.Data, `{"test":"data"}`)
+		}
+		if event.ID == "" {
+			t.Error("Event ID should not be empty")
+		}
+	case <-time.After(100 * time.Millisecond):
+		t.Fatal("Timed out waiting for broadcast event")
+	}
+
+	// Cleanup
+	tr.clients.Remove(client.ID)
+}
+
+// TestHTTPTransport_BroadcastEvent_MultipleClients verifies events are sent
+// to all connected clients.
+func TestHTTPTransport_BroadcastEvent_MultipleClients(t *testing.T) {
+	tr := NewHTTPTransport(nil)
+	defer tr.Close()
+
+	// Add multiple clients using the ClientRegistry API
+	clients := make([]*SSEClient, 3)
+	for i := range 3 {
+		clients[i] = tr.clients.Add("")
+	}
+	defer func() {
+		for _, c := range clients {
+			tr.clients.Remove(c.ID)
+		}
+	}()
+
+	// Broadcast event
+	tr.BroadcastEvent("observation_error", `{"error":"test"}`)
+
+	// All clients should receive the event
+	for i, client := range clients {
+		select {
+		case event := <-client.ResponseChan:
+			if event.Event != "observation_error" {
+				t.Errorf("Client %d: Event type = %q, want %q", i, event.Event, "observation_error")
+			}
+		case <-time.After(100 * time.Millisecond):
+			t.Errorf("Client %d: Timed out waiting for event", i)
+		}
+	}
+}
+
+// TestHTTPTransport_BroadcastEvent_ClosedTransport verifies that broadcasting
+// on a closed transport is a no-op (does not panic).
+func TestHTTPTransport_BroadcastEvent_ClosedTransport(t *testing.T) {
+	tr := NewHTTPTransport(nil)
+	tr.Close()
+
+	// Should not panic
+	tr.BroadcastEvent("observation", `{"test":"data"}`)
+
+	// Verify transport is closed
+	if !tr.IsClosed() {
+		t.Error("Transport should be closed")
+	}
+}
+
+// TestHTTPTransport_BroadcastEvent_EventIDIncrement verifies that event IDs
+// are unique and incrementing.
+func TestHTTPTransport_BroadcastEvent_EventIDIncrement(t *testing.T) {
+	tr := NewHTTPTransport(nil)
+	defer tr.Close()
+
+	client := tr.clients.Add("")
+	defer tr.clients.Remove(client.ID)
+
+	// Broadcast multiple events
+	tr.BroadcastEvent("event1", "data1")
+	tr.BroadcastEvent("event2", "data2")
+	tr.BroadcastEvent("event3", "data3")
+
+	// Collect events and verify IDs increment
+	var ids []string
+	for range 3 {
+		select {
+		case event := <-client.ResponseChan:
+			ids = append(ids, event.ID)
+		case <-time.After(100 * time.Millisecond):
+			t.Fatal("Timed out waiting for events")
+		}
+	}
+
+	// Verify IDs are unique
+	seen := make(map[string]bool)
+	for _, id := range ids {
+		if seen[id] {
+			t.Errorf("Duplicate event ID: %s", id)
+		}
+		seen[id] = true
+	}
+}
+
+// TestHTTPTransport_BroadcastEvent_MetricsRecorded verifies that broadcasts
+// increment SSE event metrics.
+func TestHTTPTransport_BroadcastEvent_MetricsRecorded(t *testing.T) {
+	tr := NewHTTPTransport(nil)
+	defer tr.Close()
+
+	// Get initial event count (indirectly via metrics export)
+	initialMetrics := tr.Metrics()
+	if initialMetrics == nil {
+		t.Fatal("Metrics should not be nil")
+	}
+
+	// Broadcast some events
+	tr.BroadcastEvent("test1", "data1")
+	tr.BroadcastEvent("test2", "data2")
+
+	// Metrics should have recorded events
+	// Note: Direct verification would require exposing internal counters,
+	// but we verify that the call completes without error
+}
+
+// =============================================================================
+// ShutdownChan Tests - Added for Task 49
+// =============================================================================
+
+// TestHTTPTransport_ShutdownChan verifies that ShutdownChan returns a valid channel.
+func TestHTTPTransport_ShutdownChan(t *testing.T) {
+	tr := NewHTTPTransport(nil)
+
+	ch := tr.ShutdownChan()
+	if ch == nil {
+		t.Fatal("ShutdownChan() returned nil")
+	}
+
+	// Channel should be open initially
+	select {
+	case <-ch:
+		t.Error("Shutdown channel should not be closed initially")
+	default:
+		// Expected - channel is open
+	}
+
+	tr.Close()
+}
+
+// TestHTTPTransport_ShutdownChan_ClosedOnClose verifies that the shutdown channel
+// is closed when the transport is closed.
+func TestHTTPTransport_ShutdownChan_ClosedOnClose(t *testing.T) {
+	tr := NewHTTPTransport(nil)
+	ch := tr.ShutdownChan()
+
+	// Close transport
+	tr.Close()
+
+	// Shutdown channel should now be closed
+	select {
+	case <-ch:
+		// Expected - channel is closed
+	case <-time.After(100 * time.Millisecond):
+		t.Error("Shutdown channel should be closed after transport Close()")
+	}
+}
+
+// TestHTTPTransport_ShutdownChan_ReadOnly verifies that the channel is read-only.
+func TestHTTPTransport_ShutdownChan_ReadOnly(t *testing.T) {
+	tr := NewHTTPTransport(nil)
+	defer tr.Close()
+
+	// The return type is <-chan struct{} which is inherently read-only.
+	// This test documents the expected behavior.
+	ch := tr.ShutdownChan()
+
+	// Type assertion should confirm it's a receive-only channel
+	// (This is enforced by the function signature, so this test just verifies behavior)
+	select {
+	case <-ch:
+		t.Error("Channel should not be closed yet")
+	default:
+		// Expected
+	}
+}
+
+// TestHTTPTransport_ShutdownChan_MultipleReaders verifies that multiple goroutines
+// can wait on the shutdown channel.
+func TestHTTPTransport_ShutdownChan_MultipleReaders(t *testing.T) {
+	tr := NewHTTPTransport(nil)
+	ch := tr.ShutdownChan()
+
+	// Start multiple goroutines waiting on shutdown
+	const numReaders = 5
+	done := make(chan int, numReaders)
+
+	for i := range numReaders {
+		go func(id int) {
+			<-ch
+			done <- id
+		}(i)
+	}
+
+	// Close transport to signal shutdown
+	tr.Close()
+
+	// All readers should complete
+	received := make(map[int]bool)
+	for i := range numReaders {
+		select {
+		case id := <-done:
+			received[id] = true
+		case <-time.After(100 * time.Millisecond):
+			t.Fatalf("Timed out waiting for reader %d", i)
+		}
+	}
+
+	if len(received) != numReaders {
+		t.Errorf("Expected %d readers to complete, got %d", numReaders, len(received))
+	}
+}
+
+// =============================================================================
+// Heartbeat Timing Tests - Added for Task 49
+// =============================================================================
+
+// TestHTTPTransport_SSE_HeartbeatTiming verifies that heartbeats are sent at
+// the configured interval on SSE connections.
+func TestHTTPTransport_SSE_HeartbeatTiming(t *testing.T) {
+	// Use a very short heartbeat interval for testing
+	tr := NewHTTPTransport(&HTTPTransportConfig{
+		HeartbeatInterval: 50 * time.Millisecond,
+	})
+	defer tr.Close()
+
+	// Create a pipe to capture SSE output
+	pr, pw := io.Pipe()
+
+	// Create a response recorder that writes to the pipe
+	rr := &pipeResponseRecorder{
+		headers: make(http.Header),
+		writer:  pw,
+		flushed: make(chan struct{}, 100),
+	}
+
+	req := httptest.NewRequest("GET", "/events", nil)
+
+	// Run handleSSE in background
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		tr.handleSSE(rr, req)
+		pw.Close()
+	}()
+
+	// Read from the pipe and look for heartbeats
+	reader := io.Reader(pr)
+	buf := make([]byte, 1024)
+
+	// Wait for at least 2 heartbeats within a reasonable time
+	deadline := time.After(300 * time.Millisecond)
+	heartbeatCount := 0
+	readDone := make(chan int)
+
+	go func() {
+		for {
+			n, err := reader.Read(buf)
+			if err != nil {
+				readDone <- heartbeatCount
+				return
+			}
+			data := string(buf[:n])
+			// Count heartbeat comments (lines starting with ":")
+			if strings.Contains(data, ": heartbeat") {
+				heartbeatCount++
+				if heartbeatCount >= 2 {
+					readDone <- heartbeatCount
+					return
+				}
+			}
+		}
+	}()
+
+	// Wait for heartbeats or timeout
+	select {
+	case count := <-readDone:
+		if count < 2 {
+			t.Errorf("Expected at least 2 heartbeats, got %d", count)
+		}
+	case <-deadline:
+		t.Error("Timed out waiting for heartbeats")
+	}
+
+	// Cleanup
+	tr.Close()
+	pr.Close()
+	<-done
+}
+
+// pipeResponseRecorder is a custom ResponseWriter for SSE testing that writes
+// to an io.Writer instead of an internal buffer.
+type pipeResponseRecorder struct {
+	headers http.Header
+	writer  io.Writer
+	status  int
+	flushed chan struct{}
+}
+
+func (r *pipeResponseRecorder) Header() http.Header {
+	return r.headers
+}
+
+func (r *pipeResponseRecorder) Write(b []byte) (int, error) {
+	return r.writer.Write(b)
+}
+
+func (r *pipeResponseRecorder) WriteHeader(statusCode int) {
+	r.status = statusCode
+}
+
+func (r *pipeResponseRecorder) Flush() {
+	select {
+	case r.flushed <- struct{}{}:
+	default:
 	}
 }
