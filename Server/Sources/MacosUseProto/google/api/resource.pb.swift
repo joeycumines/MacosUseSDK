@@ -8,7 +8,7 @@
 // For information on using the generated types, please see the documentation:
 //   https://github.com/apple/swift-protobuf/
 
-// Copyright 2025 Google LLC
+// Copyright 2026 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+fileprivate nonisolated struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
   struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
   typealias Version = _2
 }
@@ -81,7 +81,7 @@ fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAP
 ///       pattern: "folders/{folder}/logs/{log}"
 ///       pattern: "organizations/{organization}/logs/{log}"
 ///       pattern: "billingAccounts/{billing_account}/logs/{log}"
-public struct Google_Api_ResourceDescriptor: Sendable {
+public nonisolated struct Google_Api_ResourceDescriptor: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -169,7 +169,7 @@ public struct Google_Api_ResourceDescriptor: Sendable {
 
   /// A description of the historical or future-looking state of the
   /// resource pattern.
-  public enum History: SwiftProtobuf.Enum, Swift.CaseIterable {
+  public nonisolated enum History: SwiftProtobuf.Enum, Swift.CaseIterable {
     public typealias RawValue = Int
 
     /// The "unset" value.
@@ -217,7 +217,7 @@ public struct Google_Api_ResourceDescriptor: Sendable {
   }
 
   /// A flag representing a specific style that a resource claims to conform to.
-  public enum Style: SwiftProtobuf.Enum, Swift.CaseIterable {
+  public nonisolated enum Style: SwiftProtobuf.Enum, Swift.CaseIterable {
     public typealias RawValue = Int
 
     /// The unspecified value. Do not use.
@@ -267,7 +267,7 @@ public struct Google_Api_ResourceDescriptor: Sendable {
 
 /// Defines a proto annotation that describes a string field that refers to
 /// an API resource.
-public struct Google_Api_ResourceReference: Sendable {
+public nonisolated struct Google_Api_ResourceReference: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -321,7 +321,7 @@ public struct Google_Api_ResourceReference: Sendable {
 // declaration. To avoid naming collisions, the names are prefixed with the name of
 // the scope where the extend directive occurs.
 
-extension SwiftProtobuf.Google_Protobuf_FieldOptions {
+nonisolated extension SwiftProtobuf.Google_Protobuf_FieldOptions {
 
   /// An annotation that describes a resource reference, see
   /// [ResourceReference][].
@@ -341,7 +341,7 @@ extension SwiftProtobuf.Google_Protobuf_FieldOptions {
   }
 }
 
-extension SwiftProtobuf.Google_Protobuf_FileOptions {
+nonisolated extension SwiftProtobuf.Google_Protobuf_FileOptions {
 
   /// An annotation that describes a resource definition without a corresponding
   /// message; see [ResourceDescriptor][].
@@ -351,7 +351,7 @@ extension SwiftProtobuf.Google_Protobuf_FileOptions {
   }
 }
 
-extension SwiftProtobuf.Google_Protobuf_MessageOptions {
+nonisolated extension SwiftProtobuf.Google_Protobuf_MessageOptions {
 
   /// An annotation that describes a resource definition, see
   /// [ResourceDescriptor][].
@@ -378,7 +378,7 @@ extension SwiftProtobuf.Google_Protobuf_MessageOptions {
 /// this .proto file. It can be used any place an `SwiftProtobuf.ExtensionMap` is needed
 /// in parsing, or it can be combined with other `SwiftProtobuf.SimpleExtensionMap`s to create
 /// a larger `SwiftProtobuf.SimpleExtensionMap`.
-public let Google_Api_Resource_Extensions: SwiftProtobuf.SimpleExtensionMap = [
+public nonisolated let Google_Api_Resource_Extensions: SwiftProtobuf.SimpleExtensionMap = [
   Google_Api_Extensions_resource_reference,
   Google_Api_Extensions_resource_definition,
   Google_Api_Extensions_resource
@@ -390,30 +390,30 @@ public let Google_Api_Resource_Extensions: SwiftProtobuf.SimpleExtensionMap = [
 
 /// An annotation that describes a resource reference, see
 /// [ResourceReference][].
-public let Google_Api_Extensions_resource_reference = SwiftProtobuf.MessageExtension<SwiftProtobuf.OptionalMessageExtensionField<Google_Api_ResourceReference>, SwiftProtobuf.Google_Protobuf_FieldOptions>(
+public nonisolated let Google_Api_Extensions_resource_reference = SwiftProtobuf.MessageExtension<SwiftProtobuf.OptionalMessageExtensionField<Google_Api_ResourceReference>, SwiftProtobuf.Google_Protobuf_FieldOptions>(
   _protobuf_fieldNumber: 1055,
   fieldName: "google.api.resource_reference"
 )
 
 /// An annotation that describes a resource definition without a corresponding
 /// message; see [ResourceDescriptor][].
-public let Google_Api_Extensions_resource_definition = SwiftProtobuf.MessageExtension<SwiftProtobuf.RepeatedMessageExtensionField<Google_Api_ResourceDescriptor>, SwiftProtobuf.Google_Protobuf_FileOptions>(
+public nonisolated let Google_Api_Extensions_resource_definition = SwiftProtobuf.MessageExtension<SwiftProtobuf.RepeatedMessageExtensionField<Google_Api_ResourceDescriptor>, SwiftProtobuf.Google_Protobuf_FileOptions>(
   _protobuf_fieldNumber: 1053,
   fieldName: "google.api.resource_definition"
 )
 
 /// An annotation that describes a resource definition, see
 /// [ResourceDescriptor][].
-public let Google_Api_Extensions_resource = SwiftProtobuf.MessageExtension<SwiftProtobuf.OptionalMessageExtensionField<Google_Api_ResourceDescriptor>, SwiftProtobuf.Google_Protobuf_MessageOptions>(
+public nonisolated let Google_Api_Extensions_resource = SwiftProtobuf.MessageExtension<SwiftProtobuf.OptionalMessageExtensionField<Google_Api_ResourceDescriptor>, SwiftProtobuf.Google_Protobuf_MessageOptions>(
   _protobuf_fieldNumber: 1053,
   fieldName: "google.api.resource"
 )
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
-fileprivate let _protobuf_package = "google.api"
+fileprivate nonisolated let _protobuf_package = "google.api"
 
-extension Google_Api_ResourceDescriptor: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Api_ResourceDescriptor: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ResourceDescriptor"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}type\0\u{1}pattern\0\u{3}name_field\0\u{1}history\0\u{1}plural\0\u{1}singular\0\u{2}\u{4}style\0")
 
@@ -473,15 +473,15 @@ extension Google_Api_ResourceDescriptor: SwiftProtobuf.Message, SwiftProtobuf._M
   }
 }
 
-extension Google_Api_ResourceDescriptor.History: SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Api_ResourceDescriptor.History: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0HISTORY_UNSPECIFIED\0\u{1}ORIGINALLY_SINGLE_PATTERN\0\u{1}FUTURE_MULTI_PATTERN\0")
 }
 
-extension Google_Api_ResourceDescriptor.Style: SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Api_ResourceDescriptor.Style: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0STYLE_UNSPECIFIED\0\u{1}DECLARATIVE_FRIENDLY\0")
 }
 
-extension Google_Api_ResourceReference: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Api_ResourceReference: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ResourceReference"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}type\0\u{3}child_type\0")
 

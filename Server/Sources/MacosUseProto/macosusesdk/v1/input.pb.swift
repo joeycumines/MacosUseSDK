@@ -19,14 +19,14 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+fileprivate nonisolated struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
   struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
   typealias Version = _2
 }
 
 /// A resource representing an input action that was or will be executed.
 /// Inputs form a timeline for each application.
-public struct Macosusesdk_V1_Input: Sendable {
+public nonisolated struct Macosusesdk_V1_Input: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -73,7 +73,7 @@ public struct Macosusesdk_V1_Input: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// State of an input action.
-  public enum State: SwiftProtobuf.Enum, Swift.CaseIterable {
+  public nonisolated enum State: SwiftProtobuf.Enum, Swift.CaseIterable {
     public typealias RawValue = Int
 
     /// Default unspecified state.
@@ -137,7 +137,7 @@ public struct Macosusesdk_V1_Input: Sendable {
 }
 
 /// Specification of an input action.
-public struct Macosusesdk_V1_InputAction: Sendable {
+public nonisolated struct Macosusesdk_V1_InputAction: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -244,7 +244,7 @@ public struct Macosusesdk_V1_InputAction: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// The specific input type and parameters.
-  public enum OneOf_InputType: Equatable, Sendable {
+  public nonisolated enum OneOf_InputType: Equatable, Sendable {
     /// Click at a specific point.
     case click(Macosusesdk_V1_MouseClick)
     /// Type the specified text.
@@ -275,7 +275,7 @@ public struct Macosusesdk_V1_InputAction: Sendable {
 ///
 /// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
 /// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
-public struct Macosusesdk_V1_MouseClick: Sendable {
+public nonisolated struct Macosusesdk_V1_MouseClick: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -301,7 +301,7 @@ public struct Macosusesdk_V1_MouseClick: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// Click type enumeration.
-  public enum ClickType: SwiftProtobuf.Enum, Swift.CaseIterable {
+  public nonisolated enum ClickType: SwiftProtobuf.Enum, Swift.CaseIterable {
     public typealias RawValue = Int
 
     /// Default left click.
@@ -357,7 +357,7 @@ public struct Macosusesdk_V1_MouseClick: Sendable {
 }
 
 /// Text input action.
-public struct Macosusesdk_V1_TextInput: Sendable {
+public nonisolated struct Macosusesdk_V1_TextInput: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -377,7 +377,7 @@ public struct Macosusesdk_V1_TextInput: Sendable {
 }
 
 /// Key press with optional modifiers.
-public struct Macosusesdk_V1_KeyPress: Sendable {
+public nonisolated struct Macosusesdk_V1_KeyPress: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -394,7 +394,7 @@ public struct Macosusesdk_V1_KeyPress: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// Modifier key enumeration.
-  public enum Modifier: SwiftProtobuf.Enum, Swift.CaseIterable {
+  public nonisolated enum Modifier: SwiftProtobuf.Enum, Swift.CaseIterable {
     public typealias RawValue = Int
 
     /// Default unspecified modifier.
@@ -469,7 +469,7 @@ public struct Macosusesdk_V1_KeyPress: Sendable {
 ///
 /// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
 /// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
-public struct Macosusesdk_V1_MouseMove: Sendable {
+public nonisolated struct Macosusesdk_V1_MouseMove: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -498,7 +498,7 @@ public struct Macosusesdk_V1_MouseMove: Sendable {
 ///
 /// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
 /// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
-public struct Macosusesdk_V1_MouseDrag: Sendable {
+public nonisolated struct Macosusesdk_V1_MouseDrag: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -541,7 +541,7 @@ public struct Macosusesdk_V1_MouseDrag: Sendable {
 ///
 /// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
 /// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
-public struct Macosusesdk_V1_Scroll: Sendable {
+public nonisolated struct Macosusesdk_V1_Scroll: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -577,7 +577,7 @@ public struct Macosusesdk_V1_Scroll: Sendable {
 ///
 /// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
 /// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
-public struct Macosusesdk_V1_Hover: Sendable {
+public nonisolated struct Macosusesdk_V1_Hover: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -606,7 +606,7 @@ public struct Macosusesdk_V1_Hover: Sendable {
 ///
 /// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
 /// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
-public struct Macosusesdk_V1_Gesture: Sendable {
+public nonisolated struct Macosusesdk_V1_Gesture: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -639,7 +639,7 @@ public struct Macosusesdk_V1_Gesture: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// Gesture type enumeration.
-  public enum GestureType: SwiftProtobuf.Enum, Swift.CaseIterable {
+  public nonisolated enum GestureType: SwiftProtobuf.Enum, Swift.CaseIterable {
     public typealias RawValue = Int
 
     /// Default unspecified gesture.
@@ -702,7 +702,7 @@ public struct Macosusesdk_V1_Gesture: Sendable {
   }
 
   /// Direction enumeration for swipes.
-  public enum Direction: SwiftProtobuf.Enum, Swift.CaseIterable {
+  public nonisolated enum Direction: SwiftProtobuf.Enum, Swift.CaseIterable {
     public typealias RawValue = Int
 
     /// Default unspecified direction.
@@ -767,7 +767,7 @@ public struct Macosusesdk_V1_Gesture: Sendable {
 /// Used for stateful drag operations where button down and up are separate events.
 ///
 /// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
-public struct Macosusesdk_V1_MouseButtonDown: Sendable {
+public nonisolated struct Macosusesdk_V1_MouseButtonDown: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -799,7 +799,7 @@ public struct Macosusesdk_V1_MouseButtonDown: Sendable {
 /// Used for stateful drag operations where button down and up are separate events.
 ///
 /// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
-public struct Macosusesdk_V1_MouseButtonUp: Sendable {
+public nonisolated struct Macosusesdk_V1_MouseButtonUp: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -829,9 +829,9 @@ public struct Macosusesdk_V1_MouseButtonUp: Sendable {
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
-fileprivate let _protobuf_package = "macosusesdk.v1"
+fileprivate nonisolated let _protobuf_package = "macosusesdk.v1"
 
-extension Macosusesdk_V1_Input: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_Input: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Input"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}action\0\u{1}state\0\u{3}create_time\0\u{3}complete_time\0\u{1}error\0")
 
@@ -890,11 +890,11 @@ extension Macosusesdk_V1_Input: SwiftProtobuf.Message, SwiftProtobuf._MessageImp
   }
 }
 
-extension Macosusesdk_V1_Input.State: SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_Input.State: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0STATE_UNSPECIFIED\0\u{1}STATE_PENDING\0\u{1}STATE_EXECUTING\0\u{1}STATE_COMPLETED\0\u{1}STATE_FAILED\0")
 }
 
-extension Macosusesdk_V1_InputAction: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_InputAction: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".InputAction"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}show_animation\0\u{3}animation_duration\0\u{2}\u{8}click\0\u{3}type_text\0\u{3}press_key\0\u{3}move_mouse\0\u{1}drag\0\u{1}scroll\0\u{1}hover\0\u{1}gesture\0\u{3}button_down\0\u{3}button_up\0")
 
@@ -1107,7 +1107,7 @@ extension Macosusesdk_V1_InputAction: SwiftProtobuf.Message, SwiftProtobuf._Mess
   }
 }
 
-extension Macosusesdk_V1_MouseClick: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_MouseClick: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".MouseClick"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}position\0\u{3}click_type\0\u{3}click_count\0")
 
@@ -1151,11 +1151,11 @@ extension Macosusesdk_V1_MouseClick: SwiftProtobuf.Message, SwiftProtobuf._Messa
   }
 }
 
-extension Macosusesdk_V1_MouseClick.ClickType: SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_MouseClick.ClickType: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0CLICK_TYPE_UNSPECIFIED\0\u{1}CLICK_TYPE_LEFT\0\u{1}CLICK_TYPE_RIGHT\0\u{1}CLICK_TYPE_MIDDLE\0")
 }
 
-extension Macosusesdk_V1_TextInput: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_TextInput: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".TextInput"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}text\0\u{3}use_ime\0\u{3}char_delay\0")
 
@@ -1195,7 +1195,7 @@ extension Macosusesdk_V1_TextInput: SwiftProtobuf.Message, SwiftProtobuf._Messag
   }
 }
 
-extension Macosusesdk_V1_KeyPress: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_KeyPress: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".KeyPress"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}key\0\u{1}modifiers\0\u{3}hold_duration\0")
 
@@ -1235,11 +1235,11 @@ extension Macosusesdk_V1_KeyPress: SwiftProtobuf.Message, SwiftProtobuf._Message
   }
 }
 
-extension Macosusesdk_V1_KeyPress.Modifier: SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_KeyPress.Modifier: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0MODIFIER_UNSPECIFIED\0\u{1}MODIFIER_COMMAND\0\u{1}MODIFIER_OPTION\0\u{1}MODIFIER_CONTROL\0\u{1}MODIFIER_SHIFT\0\u{1}MODIFIER_FUNCTION\0\u{1}MODIFIER_CAPS_LOCK\0")
 }
 
-extension Macosusesdk_V1_MouseMove: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_MouseMove: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".MouseMove"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}position\0\u{1}duration\0")
 
@@ -1278,7 +1278,7 @@ extension Macosusesdk_V1_MouseMove: SwiftProtobuf.Message, SwiftProtobuf._Messag
   }
 }
 
-extension Macosusesdk_V1_MouseDrag: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_MouseDrag: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".MouseDrag"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}start_position\0\u{3}end_position\0\u{1}duration\0\u{1}button\0")
 
@@ -1327,7 +1327,7 @@ extension Macosusesdk_V1_MouseDrag: SwiftProtobuf.Message, SwiftProtobuf._Messag
   }
 }
 
-extension Macosusesdk_V1_Scroll: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_Scroll: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Scroll"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}position\0\u{1}horizontal\0\u{1}vertical\0\u{1}duration\0")
 
@@ -1376,7 +1376,7 @@ extension Macosusesdk_V1_Scroll: SwiftProtobuf.Message, SwiftProtobuf._MessageIm
   }
 }
 
-extension Macosusesdk_V1_Hover: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_Hover: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Hover"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}position\0\u{1}duration\0")
 
@@ -1415,7 +1415,7 @@ extension Macosusesdk_V1_Hover: SwiftProtobuf.Message, SwiftProtobuf._MessageImp
   }
 }
 
-extension Macosusesdk_V1_Gesture: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_Gesture: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Gesture"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}center\0\u{3}gesture_type\0\u{1}scale\0\u{1}rotation\0\u{3}finger_count\0\u{1}direction\0")
 
@@ -1474,15 +1474,15 @@ extension Macosusesdk_V1_Gesture: SwiftProtobuf.Message, SwiftProtobuf._MessageI
   }
 }
 
-extension Macosusesdk_V1_Gesture.GestureType: SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_Gesture.GestureType: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0GESTURE_TYPE_UNSPECIFIED\0\u{1}GESTURE_TYPE_PINCH\0\u{1}GESTURE_TYPE_ZOOM\0\u{1}GESTURE_TYPE_ROTATE\0\u{1}GESTURE_TYPE_SWIPE\0\u{1}GESTURE_TYPE_FORCE_TOUCH\0")
 }
 
-extension Macosusesdk_V1_Gesture.Direction: SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_Gesture.Direction: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0DIRECTION_UNSPECIFIED\0\u{1}DIRECTION_UP\0\u{1}DIRECTION_DOWN\0\u{1}DIRECTION_LEFT\0\u{1}DIRECTION_RIGHT\0")
 }
 
-extension Macosusesdk_V1_MouseButtonDown: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_MouseButtonDown: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".MouseButtonDown"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}position\0\u{1}button\0\u{1}modifiers\0")
 
@@ -1526,7 +1526,7 @@ extension Macosusesdk_V1_MouseButtonDown: SwiftProtobuf.Message, SwiftProtobuf._
   }
 }
 
-extension Macosusesdk_V1_MouseButtonUp: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_MouseButtonUp: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".MouseButtonUp"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}position\0\u{1}button\0\u{1}modifiers\0")
 

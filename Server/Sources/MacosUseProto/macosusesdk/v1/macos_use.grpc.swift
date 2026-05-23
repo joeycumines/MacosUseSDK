@@ -34,7 +34,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "OpenApplication".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "OpenApplication"
+                method: "OpenApplication",
+                type: .unary
             )
         }
         /// Namespace for "GetApplication" metadata.
@@ -46,7 +47,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "GetApplication".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "GetApplication"
+                method: "GetApplication",
+                type: .unary
             )
         }
         /// Namespace for "ListApplications" metadata.
@@ -58,7 +60,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "ListApplications".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "ListApplications"
+                method: "ListApplications",
+                type: .unary
             )
         }
         /// Namespace for "DeleteApplication" metadata.
@@ -70,7 +73,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "DeleteApplication".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "DeleteApplication"
+                method: "DeleteApplication",
+                type: .unary
             )
         }
         /// Namespace for "CreateInput" metadata.
@@ -82,7 +86,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "CreateInput".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "CreateInput"
+                method: "CreateInput",
+                type: .unary
             )
         }
         /// Namespace for "GetInput" metadata.
@@ -94,7 +99,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "GetInput".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "GetInput"
+                method: "GetInput",
+                type: .unary
             )
         }
         /// Namespace for "ListInputs" metadata.
@@ -106,7 +112,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "ListInputs".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "ListInputs"
+                method: "ListInputs",
+                type: .unary
             )
         }
         /// Namespace for "TraverseAccessibility" metadata.
@@ -118,7 +125,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "TraverseAccessibility".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "TraverseAccessibility"
+                method: "TraverseAccessibility",
+                type: .unary
             )
         }
         /// Namespace for "WatchAccessibility" metadata.
@@ -130,7 +138,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "WatchAccessibility".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "WatchAccessibility"
+                method: "WatchAccessibility",
+                type: .serverStreaming
             )
         }
         /// Namespace for "GetWindow" metadata.
@@ -142,7 +151,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "GetWindow".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "GetWindow"
+                method: "GetWindow",
+                type: .unary
             )
         }
         /// Namespace for "ListWindows" metadata.
@@ -154,7 +164,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "ListWindows".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "ListWindows"
+                method: "ListWindows",
+                type: .unary
             )
         }
         /// Namespace for "GetWindowState" metadata.
@@ -166,7 +177,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "GetWindowState".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "GetWindowState"
+                method: "GetWindowState",
+                type: .unary
             )
         }
         /// Namespace for "FocusWindow" metadata.
@@ -178,7 +190,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "FocusWindow".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "FocusWindow"
+                method: "FocusWindow",
+                type: .unary
             )
         }
         /// Namespace for "MoveWindow" metadata.
@@ -190,7 +203,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "MoveWindow".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "MoveWindow"
+                method: "MoveWindow",
+                type: .unary
             )
         }
         /// Namespace for "ResizeWindow" metadata.
@@ -202,7 +216,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "ResizeWindow".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "ResizeWindow"
+                method: "ResizeWindow",
+                type: .unary
             )
         }
         /// Namespace for "MinimizeWindow" metadata.
@@ -214,7 +229,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "MinimizeWindow".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "MinimizeWindow"
+                method: "MinimizeWindow",
+                type: .unary
             )
         }
         /// Namespace for "RestoreWindow" metadata.
@@ -226,7 +242,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "RestoreWindow".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "RestoreWindow"
+                method: "RestoreWindow",
+                type: .unary
             )
         }
         /// Namespace for "CloseWindow" metadata.
@@ -238,7 +255,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "CloseWindow".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "CloseWindow"
+                method: "CloseWindow",
+                type: .unary
             )
         }
         /// Namespace for "FindElements" metadata.
@@ -250,7 +268,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "FindElements".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "FindElements"
+                method: "FindElements",
+                type: .unary
             )
         }
         /// Namespace for "FindRegionElements" metadata.
@@ -262,7 +281,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "FindRegionElements".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "FindRegionElements"
+                method: "FindRegionElements",
+                type: .unary
             )
         }
         /// Namespace for "GetElement" metadata.
@@ -274,7 +294,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "GetElement".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "GetElement"
+                method: "GetElement",
+                type: .unary
             )
         }
         /// Namespace for "ClickElement" metadata.
@@ -286,7 +307,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "ClickElement".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "ClickElement"
+                method: "ClickElement",
+                type: .unary
             )
         }
         /// Namespace for "WriteElementValue" metadata.
@@ -298,7 +320,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "WriteElementValue".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "WriteElementValue"
+                method: "WriteElementValue",
+                type: .unary
             )
         }
         /// Namespace for "GetElementActions" metadata.
@@ -310,7 +333,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "GetElementActions".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "GetElementActions"
+                method: "GetElementActions",
+                type: .unary
             )
         }
         /// Namespace for "PerformElementAction" metadata.
@@ -322,7 +346,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "PerformElementAction".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "PerformElementAction"
+                method: "PerformElementAction",
+                type: .unary
             )
         }
         /// Namespace for "WaitElement" metadata.
@@ -334,7 +359,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "WaitElement".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "WaitElement"
+                method: "WaitElement",
+                type: .unary
             )
         }
         /// Namespace for "WaitElementState" metadata.
@@ -346,7 +372,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "WaitElementState".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "WaitElementState"
+                method: "WaitElementState",
+                type: .unary
             )
         }
         /// Namespace for "CreateObservation" metadata.
@@ -358,7 +385,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "CreateObservation".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "CreateObservation"
+                method: "CreateObservation",
+                type: .unary
             )
         }
         /// Namespace for "GetObservation" metadata.
@@ -370,7 +398,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "GetObservation".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "GetObservation"
+                method: "GetObservation",
+                type: .unary
             )
         }
         /// Namespace for "ListObservations" metadata.
@@ -382,7 +411,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "ListObservations".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "ListObservations"
+                method: "ListObservations",
+                type: .unary
             )
         }
         /// Namespace for "CancelObservation" metadata.
@@ -394,7 +424,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "CancelObservation".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "CancelObservation"
+                method: "CancelObservation",
+                type: .unary
             )
         }
         /// Namespace for "StreamObservations" metadata.
@@ -406,7 +437,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "StreamObservations".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "StreamObservations"
+                method: "StreamObservations",
+                type: .serverStreaming
             )
         }
         /// Namespace for "CreateSession" metadata.
@@ -418,7 +450,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "CreateSession".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "CreateSession"
+                method: "CreateSession",
+                type: .unary
             )
         }
         /// Namespace for "GetSession" metadata.
@@ -430,7 +463,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "GetSession".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "GetSession"
+                method: "GetSession",
+                type: .unary
             )
         }
         /// Namespace for "ListSessions" metadata.
@@ -442,7 +476,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "ListSessions".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "ListSessions"
+                method: "ListSessions",
+                type: .unary
             )
         }
         /// Namespace for "DeleteSession" metadata.
@@ -454,7 +489,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "DeleteSession".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "DeleteSession"
+                method: "DeleteSession",
+                type: .unary
             )
         }
         /// Namespace for "BeginTransaction" metadata.
@@ -466,7 +502,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "BeginTransaction".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "BeginTransaction"
+                method: "BeginTransaction",
+                type: .unary
             )
         }
         /// Namespace for "CommitTransaction" metadata.
@@ -478,7 +515,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "CommitTransaction".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "CommitTransaction"
+                method: "CommitTransaction",
+                type: .unary
             )
         }
         /// Namespace for "RollbackTransaction" metadata.
@@ -490,7 +528,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "RollbackTransaction".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "RollbackTransaction"
+                method: "RollbackTransaction",
+                type: .unary
             )
         }
         /// Namespace for "GetSessionSnapshot" metadata.
@@ -502,7 +541,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "GetSessionSnapshot".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "GetSessionSnapshot"
+                method: "GetSessionSnapshot",
+                type: .unary
             )
         }
         /// Namespace for "CaptureScreenshot" metadata.
@@ -514,7 +554,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "CaptureScreenshot".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "CaptureScreenshot"
+                method: "CaptureScreenshot",
+                type: .unary
             )
         }
         /// Namespace for "CaptureWindowScreenshot" metadata.
@@ -526,7 +567,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "CaptureWindowScreenshot".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "CaptureWindowScreenshot"
+                method: "CaptureWindowScreenshot",
+                type: .unary
             )
         }
         /// Namespace for "CaptureElementScreenshot" metadata.
@@ -538,7 +580,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "CaptureElementScreenshot".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "CaptureElementScreenshot"
+                method: "CaptureElementScreenshot",
+                type: .unary
             )
         }
         /// Namespace for "CaptureRegionScreenshot" metadata.
@@ -550,7 +593,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "CaptureRegionScreenshot".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "CaptureRegionScreenshot"
+                method: "CaptureRegionScreenshot",
+                type: .unary
             )
         }
         /// Namespace for "ListDisplays" metadata.
@@ -562,7 +606,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "ListDisplays".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "ListDisplays"
+                method: "ListDisplays",
+                type: .unary
             )
         }
         /// Namespace for "GetDisplay" metadata.
@@ -574,7 +619,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "GetDisplay".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "GetDisplay"
+                method: "GetDisplay",
+                type: .unary
             )
         }
         /// Namespace for "CaptureCursorPosition" metadata.
@@ -586,7 +632,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "CaptureCursorPosition".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "CaptureCursorPosition"
+                method: "CaptureCursorPosition",
+                type: .unary
             )
         }
         /// Namespace for "GetClipboard" metadata.
@@ -598,7 +645,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "GetClipboard".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "GetClipboard"
+                method: "GetClipboard",
+                type: .unary
             )
         }
         /// Namespace for "WriteClipboard" metadata.
@@ -610,7 +658,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "WriteClipboard".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "WriteClipboard"
+                method: "WriteClipboard",
+                type: .unary
             )
         }
         /// Namespace for "ClearClipboard" metadata.
@@ -622,7 +671,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "ClearClipboard".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "ClearClipboard"
+                method: "ClearClipboard",
+                type: .unary
             )
         }
         /// Namespace for "GetClipboardHistory" metadata.
@@ -634,7 +684,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "GetClipboardHistory".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "GetClipboardHistory"
+                method: "GetClipboardHistory",
+                type: .unary
             )
         }
         /// Namespace for "AutomateOpenFileDialog" metadata.
@@ -646,7 +697,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "AutomateOpenFileDialog".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "AutomateOpenFileDialog"
+                method: "AutomateOpenFileDialog",
+                type: .unary
             )
         }
         /// Namespace for "AutomateSaveFileDialog" metadata.
@@ -658,7 +710,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "AutomateSaveFileDialog".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "AutomateSaveFileDialog"
+                method: "AutomateSaveFileDialog",
+                type: .unary
             )
         }
         /// Namespace for "SelectFile" metadata.
@@ -670,7 +723,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "SelectFile".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "SelectFile"
+                method: "SelectFile",
+                type: .unary
             )
         }
         /// Namespace for "SelectDirectory" metadata.
@@ -682,7 +736,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "SelectDirectory".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "SelectDirectory"
+                method: "SelectDirectory",
+                type: .unary
             )
         }
         /// Namespace for "DragFiles" metadata.
@@ -694,7 +749,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "DragFiles".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "DragFiles"
+                method: "DragFiles",
+                type: .unary
             )
         }
         /// Namespace for "CreateMacro" metadata.
@@ -706,7 +762,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "CreateMacro".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "CreateMacro"
+                method: "CreateMacro",
+                type: .unary
             )
         }
         /// Namespace for "GetMacro" metadata.
@@ -718,7 +775,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "GetMacro".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "GetMacro"
+                method: "GetMacro",
+                type: .unary
             )
         }
         /// Namespace for "ListMacros" metadata.
@@ -730,7 +788,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "ListMacros".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "ListMacros"
+                method: "ListMacros",
+                type: .unary
             )
         }
         /// Namespace for "UpdateMacro" metadata.
@@ -742,7 +801,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "UpdateMacro".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "UpdateMacro"
+                method: "UpdateMacro",
+                type: .unary
             )
         }
         /// Namespace for "DeleteMacro" metadata.
@@ -754,7 +814,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "DeleteMacro".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "DeleteMacro"
+                method: "DeleteMacro",
+                type: .unary
             )
         }
         /// Namespace for "ExecuteMacro" metadata.
@@ -766,7 +827,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "ExecuteMacro".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "ExecuteMacro"
+                method: "ExecuteMacro",
+                type: .unary
             )
         }
         /// Namespace for "ExecuteAppleScript" metadata.
@@ -778,7 +840,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "ExecuteAppleScript".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "ExecuteAppleScript"
+                method: "ExecuteAppleScript",
+                type: .unary
             )
         }
         /// Namespace for "ExecuteJavaScript" metadata.
@@ -790,7 +853,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "ExecuteJavaScript".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "ExecuteJavaScript"
+                method: "ExecuteJavaScript",
+                type: .unary
             )
         }
         /// Namespace for "ExecuteShellCommand" metadata.
@@ -802,7 +866,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "ExecuteShellCommand".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "ExecuteShellCommand"
+                method: "ExecuteShellCommand",
+                type: .unary
             )
         }
         /// Namespace for "ValidateScript" metadata.
@@ -814,7 +879,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "ValidateScript".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "ValidateScript"
+                method: "ValidateScript",
+                type: .unary
             )
         }
         /// Namespace for "GetScriptingDictionaries" metadata.
@@ -826,7 +892,8 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Descriptor for "GetScriptingDictionaries".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "GetScriptingDictionaries"
+                method: "GetScriptingDictionaries",
+                type: .unary
             )
         }
         /// Descriptors for all methods in the "macosusesdk.v1.MacosUse" service.

@@ -19,7 +19,7 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+fileprivate nonisolated struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
   struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
   typealias Version = _2
 }
@@ -38,7 +38,7 @@ fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAP
 ///   - Input positions (MouseClick.position, MouseMove.position, etc.)
 ///   - Element positions (Element.bounds)
 ///   - Screenshot regions (CaptureRegionScreenshotRequest.region)
-public struct Macosusesdk_Type_Point: Sendable {
+public nonisolated struct Macosusesdk_Type_Point: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -58,7 +58,7 @@ public struct Macosusesdk_Type_Point: Sendable {
 ///
 /// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
 /// See Point message documentation for detailed coordinate system explanation.
-public struct Macosusesdk_Type_Region: Sendable {
+public nonisolated struct Macosusesdk_Type_Region: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -82,9 +82,9 @@ public struct Macosusesdk_Type_Region: Sendable {
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
-fileprivate let _protobuf_package = "macosusesdk.type"
+fileprivate nonisolated let _protobuf_package = "macosusesdk.type"
 
-extension Macosusesdk_Type_Point: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_Type_Point: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Point"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}x\0\u{1}y\0")
 
@@ -119,7 +119,7 @@ extension Macosusesdk_Type_Point: SwiftProtobuf.Message, SwiftProtobuf._MessageI
   }
 }
 
-extension Macosusesdk_Type_Region: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_Type_Region: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Region"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}x\0\u{1}y\0\u{1}width\0\u{1}height\0")
 

@@ -8,7 +8,7 @@
 // For information on using the generated types, please see the documentation:
 //   https://github.com/apple/swift-protobuf/
 
-// Copyright 2025 Google LLC
+// Copyright 2026 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+fileprivate nonisolated struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
   struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
   typealias Version = _2
 }
@@ -40,7 +40,7 @@ fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAP
 /// denotes the behavior and may affect how API tooling handles the field.
 ///
 /// Note: This enum **may** receive new values in the future.
-public enum Google_Api_FieldBehavior: SwiftProtobuf.Enum, Swift.CaseIterable {
+public nonisolated enum Google_Api_FieldBehavior: SwiftProtobuf.Enum, Swift.CaseIterable {
   public typealias RawValue = Int
 
   /// Conventional default for enums. Do not use this.
@@ -157,7 +157,7 @@ public enum Google_Api_FieldBehavior: SwiftProtobuf.Enum, Swift.CaseIterable {
 // declaration. To avoid naming collisions, the names are prefixed with the name of
 // the scope where the extend directive occurs.
 
-extension SwiftProtobuf.Google_Protobuf_FieldOptions {
+nonisolated extension SwiftProtobuf.Google_Protobuf_FieldOptions {
 
   /// A designation of a specific field behavior (required, output only, etc.)
   /// in protobuf messages.
@@ -184,7 +184,7 @@ extension SwiftProtobuf.Google_Protobuf_FieldOptions {
 /// this .proto file. It can be used any place an `SwiftProtobuf.ExtensionMap` is needed
 /// in parsing, or it can be combined with other `SwiftProtobuf.SimpleExtensionMap`s to create
 /// a larger `SwiftProtobuf.SimpleExtensionMap`.
-public let Google_Api_FieldBehavior_Extensions: SwiftProtobuf.SimpleExtensionMap = [
+public nonisolated let Google_Api_FieldBehavior_Extensions: SwiftProtobuf.SimpleExtensionMap = [
   Google_Api_Extensions_field_behavior
 ]
 
@@ -204,13 +204,13 @@ public let Google_Api_FieldBehavior_Extensions: SwiftProtobuf.SimpleExtensionMap
 ///   google.protobuf.Timestamp expire_time = 1
 ///     [(google.api.field_behavior) = OUTPUT_ONLY,
 ///      (google.api.field_behavior) = IMMUTABLE];
-public let Google_Api_Extensions_field_behavior = SwiftProtobuf.MessageExtension<SwiftProtobuf.RepeatedEnumExtensionField<Google_Api_FieldBehavior>, SwiftProtobuf.Google_Protobuf_FieldOptions>(
+public nonisolated let Google_Api_Extensions_field_behavior = SwiftProtobuf.MessageExtension<SwiftProtobuf.RepeatedEnumExtensionField<Google_Api_FieldBehavior>, SwiftProtobuf.Google_Protobuf_FieldOptions>(
   _protobuf_fieldNumber: 1052,
   fieldName: "google.api.field_behavior"
 )
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
-extension Google_Api_FieldBehavior: SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Api_FieldBehavior: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0FIELD_BEHAVIOR_UNSPECIFIED\0\u{1}OPTIONAL\0\u{1}REQUIRED\0\u{1}OUTPUT_ONLY\0\u{1}INPUT_ONLY\0\u{1}IMMUTABLE\0\u{1}UNORDERED_LIST\0\u{1}NON_EMPTY_DEFAULT\0\u{1}IDENTIFIER\0")
 }

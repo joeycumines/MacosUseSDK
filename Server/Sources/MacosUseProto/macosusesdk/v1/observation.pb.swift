@@ -19,13 +19,13 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+fileprivate nonisolated struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
   struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
   typealias Version = _2
 }
 
 /// Type of observation to perform.
-public enum Macosusesdk_V1_ObservationType: SwiftProtobuf.Enum, Swift.CaseIterable {
+public nonisolated enum Macosusesdk_V1_ObservationType: SwiftProtobuf.Enum, Swift.CaseIterable {
   public typealias RawValue = Int
 
   /// Default unspecified type.
@@ -88,7 +88,7 @@ public enum Macosusesdk_V1_ObservationType: SwiftProtobuf.Enum, Swift.CaseIterab
 }
 
 /// An observation monitors UI changes and streams events.
-public struct Macosusesdk_V1_Observation: Sendable {
+public nonisolated struct Macosusesdk_V1_Observation: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -150,7 +150,7 @@ public struct Macosusesdk_V1_Observation: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// State of an observation.
-  public enum State: SwiftProtobuf.Enum, Swift.CaseIterable {
+  public nonisolated enum State: SwiftProtobuf.Enum, Swift.CaseIterable {
     public typealias RawValue = Int
 
     /// Default unspecified state.
@@ -221,7 +221,7 @@ public struct Macosusesdk_V1_Observation: Sendable {
 }
 
 /// Filter for observations.
-public struct Macosusesdk_V1_ObservationFilter: Sendable {
+public nonisolated struct Macosusesdk_V1_ObservationFilter: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -244,7 +244,7 @@ public struct Macosusesdk_V1_ObservationFilter: Sendable {
 }
 
 /// An event from an observation.
-public struct Macosusesdk_V1_ObservationEvent: Sendable {
+public nonisolated struct Macosusesdk_V1_ObservationEvent: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -316,7 +316,7 @@ public struct Macosusesdk_V1_ObservationEvent: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// The specific event type and data.
-  public enum OneOf_EventType: Equatable, Sendable {
+  public nonisolated enum OneOf_EventType: Equatable, Sendable {
     /// Element was added.
     case elementAdded(Macosusesdk_V1_ElementEvent)
     /// Element was removed.
@@ -336,7 +336,7 @@ public struct Macosusesdk_V1_ObservationEvent: Sendable {
 }
 
 /// Event related to an element.
-public struct Macosusesdk_V1_ElementEvent: Sendable {
+public nonisolated struct Macosusesdk_V1_ElementEvent: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -359,7 +359,7 @@ public struct Macosusesdk_V1_ElementEvent: Sendable {
 }
 
 /// Event for an element modification.
-public struct Macosusesdk_V1_ElementModified: @unchecked Sendable {
+public nonisolated struct Macosusesdk_V1_ElementModified: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -398,7 +398,7 @@ public struct Macosusesdk_V1_ElementModified: @unchecked Sendable {
 }
 
 /// A change to an element attribute.
-public struct Macosusesdk_V1_AttributeChange: Sendable {
+public nonisolated struct Macosusesdk_V1_AttributeChange: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -418,7 +418,7 @@ public struct Macosusesdk_V1_AttributeChange: Sendable {
 }
 
 /// Event related to a window.
-public struct Macosusesdk_V1_WindowEvent: Sendable {
+public nonisolated struct Macosusesdk_V1_WindowEvent: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -435,7 +435,7 @@ public struct Macosusesdk_V1_WindowEvent: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// Window event type.
-  public enum WindowEventType: SwiftProtobuf.Enum, Swift.CaseIterable {
+  public nonisolated enum WindowEventType: SwiftProtobuf.Enum, Swift.CaseIterable {
     public typealias RawValue = Int
 
     /// Default unspecified.
@@ -525,7 +525,7 @@ public struct Macosusesdk_V1_WindowEvent: Sendable {
 }
 
 /// Event related to an application.
-public struct Macosusesdk_V1_ApplicationEvent: Sendable {
+public nonisolated struct Macosusesdk_V1_ApplicationEvent: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -536,7 +536,7 @@ public struct Macosusesdk_V1_ApplicationEvent: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// Application event type.
-  public enum ApplicationEventType: SwiftProtobuf.Enum, Swift.CaseIterable {
+  public nonisolated enum ApplicationEventType: SwiftProtobuf.Enum, Swift.CaseIterable {
     public typealias RawValue = Int
 
     /// Default unspecified.
@@ -597,13 +597,13 @@ public struct Macosusesdk_V1_ApplicationEvent: Sendable {
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
-fileprivate let _protobuf_package = "macosusesdk.v1"
+fileprivate nonisolated let _protobuf_package = "macosusesdk.v1"
 
-extension Macosusesdk_V1_ObservationType: SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ObservationType: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0OBSERVATION_TYPE_UNSPECIFIED\0\u{1}OBSERVATION_TYPE_ELEMENT_CHANGES\0\u{1}OBSERVATION_TYPE_WINDOW_CHANGES\0\u{1}OBSERVATION_TYPE_APPLICATION_CHANGES\0\u{1}OBSERVATION_TYPE_ATTRIBUTE_CHANGES\0\u{1}OBSERVATION_TYPE_TREE_CHANGES\0")
 }
 
-extension Macosusesdk_V1_Observation: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_Observation: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Observation"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}type\0\u{1}state\0\u{3}create_time\0\u{3}start_time\0\u{3}end_time\0\u{1}filter\0\u{1}activate\0")
 
@@ -672,11 +672,11 @@ extension Macosusesdk_V1_Observation: SwiftProtobuf.Message, SwiftProtobuf._Mess
   }
 }
 
-extension Macosusesdk_V1_Observation.State: SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_Observation.State: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0STATE_UNSPECIFIED\0\u{1}STATE_PENDING\0\u{1}STATE_ACTIVE\0\u{1}STATE_COMPLETED\0\u{1}STATE_CANCELLED\0\u{1}STATE_FAILED\0")
 }
 
-extension Macosusesdk_V1_ObservationFilter: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ObservationFilter: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ObservationFilter"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}poll_interval\0\u{3}visible_only\0\u{1}roles\0\u{1}attributes\0")
 
@@ -721,7 +721,7 @@ extension Macosusesdk_V1_ObservationFilter: SwiftProtobuf.Message, SwiftProtobuf
   }
 }
 
-extension Macosusesdk_V1_ObservationEvent: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ObservationEvent: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ObservationEvent"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}observation\0\u{3}event_time\0\u{1}sequence\0\u{4}\u{7}element_added\0\u{3}element_removed\0\u{3}element_modified\0\u{3}window_event\0\u{3}application_event\0")
 
@@ -854,7 +854,7 @@ extension Macosusesdk_V1_ObservationEvent: SwiftProtobuf.Message, SwiftProtobuf.
   }
 }
 
-extension Macosusesdk_V1_ElementEvent: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ElementEvent: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ElementEvent"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}element\0")
 
@@ -888,7 +888,7 @@ extension Macosusesdk_V1_ElementEvent: SwiftProtobuf.Message, SwiftProtobuf._Mes
   }
 }
 
-extension Macosusesdk_V1_ElementModified: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ElementModified: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ElementModified"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}old_element\0\u{3}new_element\0\u{1}changes\0")
 
@@ -972,7 +972,7 @@ extension Macosusesdk_V1_ElementModified: SwiftProtobuf.Message, SwiftProtobuf._
   }
 }
 
-extension Macosusesdk_V1_AttributeChange: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_AttributeChange: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".AttributeChange"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}attribute\0\u{3}old_value\0\u{3}new_value\0")
 
@@ -1012,7 +1012,7 @@ extension Macosusesdk_V1_AttributeChange: SwiftProtobuf.Message, SwiftProtobuf._
   }
 }
 
-extension Macosusesdk_V1_WindowEvent: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_WindowEvent: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".WindowEvent"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}event_type\0\u{3}window_id\0\u{1}title\0")
 
@@ -1052,11 +1052,11 @@ extension Macosusesdk_V1_WindowEvent: SwiftProtobuf.Message, SwiftProtobuf._Mess
   }
 }
 
-extension Macosusesdk_V1_WindowEvent.WindowEventType: SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_WindowEvent.WindowEventType: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0WINDOW_EVENT_TYPE_UNSPECIFIED\0\u{1}WINDOW_EVENT_TYPE_CREATED\0\u{1}WINDOW_EVENT_TYPE_DESTROYED\0\u{1}WINDOW_EVENT_TYPE_MOVED\0\u{1}WINDOW_EVENT_TYPE_RESIZED\0\u{1}WINDOW_EVENT_TYPE_MINIMIZED\0\u{1}WINDOW_EVENT_TYPE_RESTORED\0\u{1}WINDOW_EVENT_TYPE_FOCUSED\0\u{1}WINDOW_EVENT_TYPE_HIDDEN\0\u{1}WINDOW_EVENT_TYPE_SHOWN\0")
 }
 
-extension Macosusesdk_V1_ApplicationEvent: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ApplicationEvent: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ApplicationEvent"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}event_type\0")
 
@@ -1086,6 +1086,6 @@ extension Macosusesdk_V1_ApplicationEvent: SwiftProtobuf.Message, SwiftProtobuf.
   }
 }
 
-extension Macosusesdk_V1_ApplicationEvent.ApplicationEventType: SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ApplicationEvent.ApplicationEventType: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0APPLICATION_EVENT_TYPE_UNSPECIFIED\0\u{1}APPLICATION_EVENT_TYPE_ACTIVATED\0\u{1}APPLICATION_EVENT_TYPE_DEACTIVATED\0\u{1}APPLICATION_EVENT_TYPE_LAUNCHED\0\u{1}APPLICATION_EVENT_TYPE_TERMINATED\0")
 }

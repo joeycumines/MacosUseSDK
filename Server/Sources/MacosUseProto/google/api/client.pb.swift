@@ -8,7 +8,7 @@
 // For information on using the generated types, please see the documentation:
 //   https://github.com/apple/swift-protobuf/
 
-// Copyright 2025 Google LLC
+// Copyright 2026 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,14 +29,14 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+fileprivate nonisolated struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
   struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
   typealias Version = _2
 }
 
 /// The organization for which the client libraries are being published.
 /// Affects the url where generated docs are published, etc.
-public enum Google_Api_ClientLibraryOrganization: SwiftProtobuf.Enum, Swift.CaseIterable {
+public nonisolated enum Google_Api_ClientLibraryOrganization: SwiftProtobuf.Enum, Swift.CaseIterable {
   public typealias RawValue = Int
 
   /// Not useful.
@@ -111,7 +111,7 @@ public enum Google_Api_ClientLibraryOrganization: SwiftProtobuf.Enum, Swift.Case
 }
 
 /// To where should client libraries be published?
-public enum Google_Api_ClientLibraryDestination: SwiftProtobuf.Enum, Swift.CaseIterable {
+public nonisolated enum Google_Api_ClientLibraryDestination: SwiftProtobuf.Enum, Swift.CaseIterable {
   public typealias RawValue = Int
 
   /// Client libraries will neither be generated nor published to package
@@ -157,8 +157,59 @@ public enum Google_Api_ClientLibraryDestination: SwiftProtobuf.Enum, Swift.CaseI
 
 }
 
+/// The behavior to take when the flow control limit is exceeded.
+public nonisolated enum Google_Api_FlowControlLimitExceededBehaviorProto: SwiftProtobuf.Enum, Swift.CaseIterable {
+  public typealias RawValue = Int
+
+  /// Default behavior, system-defined.
+  case unsetBehavior // = 0
+
+  /// Stop operation, raise error.
+  case throwException // = 1
+
+  /// Pause operation until limit clears.
+  case block // = 2
+
+  /// Continue operation, disregard limit.
+  case ignore // = 3
+  case UNRECOGNIZED(Int)
+
+  public init() {
+    self = .unsetBehavior
+  }
+
+  public init?(rawValue: Int) {
+    switch rawValue {
+    case 0: self = .unsetBehavior
+    case 1: self = .throwException
+    case 2: self = .block
+    case 3: self = .ignore
+    default: self = .UNRECOGNIZED(rawValue)
+    }
+  }
+
+  public var rawValue: Int {
+    switch self {
+    case .unsetBehavior: return 0
+    case .throwException: return 1
+    case .block: return 2
+    case .ignore: return 3
+    case .UNRECOGNIZED(let i): return i
+    }
+  }
+
+  // The compiler won't synthesize support with the UNRECOGNIZED case.
+  public static let allCases: [Google_Api_FlowControlLimitExceededBehaviorProto] = [
+    .unsetBehavior,
+    .throwException,
+    .block,
+    .ignore,
+  ]
+
+}
+
 /// Required information for every language.
-public struct Google_Api_CommonLanguageSettings: Sendable {
+public nonisolated struct Google_Api_CommonLanguageSettings: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -173,6 +224,8 @@ public struct Google_Api_CommonLanguageSettings: Sendable {
   public var destinations: [Google_Api_ClientLibraryDestination] = []
 
   /// Configuration for which RPCs should be generated in the GAPIC client.
+  ///
+  /// Note: This field should not be used in most cases.
   public var selectiveGapicGeneration: Google_Api_SelectiveGapicGeneration {
     get {_selectiveGapicGeneration ?? Google_Api_SelectiveGapicGeneration()}
     set {_selectiveGapicGeneration = newValue}
@@ -190,7 +243,7 @@ public struct Google_Api_CommonLanguageSettings: Sendable {
 }
 
 /// Details about how and where to publish client libraries.
-public struct Google_Api_ClientLibrarySettings: @unchecked Sendable {
+public nonisolated struct Google_Api_ClientLibrarySettings: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -306,7 +359,7 @@ public struct Google_Api_ClientLibrarySettings: @unchecked Sendable {
 /// This message configures the settings for publishing [Google Cloud Client
 /// libraries](https://cloud.google.com/apis/docs/cloud-client-libraries)
 /// generated from the service config.
-public struct Google_Api_Publishing: Sendable {
+public nonisolated struct Google_Api_Publishing: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -361,7 +414,7 @@ public struct Google_Api_Publishing: Sendable {
 }
 
 /// Settings for Java client libraries.
-public struct Google_Api_JavaSettings: Sendable {
+public nonisolated struct Google_Api_JavaSettings: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -374,9 +427,10 @@ public struct Google_Api_JavaSettings: Sendable {
   ///
   /// Example of a YAML configuration::
   ///
-  ///  publishing:
-  ///    java_settings:
-  ///      library_package: com.google.cloud.pubsub.v1
+  ///     publishing:
+  ///       library_settings:
+  ///         java_settings:
+  ///           library_package: com.google.cloud.pubsub.v1
   public var libraryPackage: String = String()
 
   /// Configure the Java class name to use instead of the service's for its
@@ -388,11 +442,11 @@ public struct Google_Api_JavaSettings: Sendable {
   ///
   /// Example of a YAML configuration::
   ///
-  ///  publishing:
-  ///    java_settings:
-  ///      service_class_names:
-  ///        - google.pubsub.v1.Publisher: TopicAdmin
-  ///        - google.pubsub.v1.Subscriber: SubscriptionAdmin
+  ///     publishing:
+  ///       java_settings:
+  ///         service_class_names:
+  ///           - google.pubsub.v1.Publisher: TopicAdmin
+  ///           - google.pubsub.v1.Subscriber: SubscriptionAdmin
   public var serviceClassNames: Dictionary<String,String> = [:]
 
   /// Some settings.
@@ -413,7 +467,7 @@ public struct Google_Api_JavaSettings: Sendable {
 }
 
 /// Settings for C++ client libraries.
-public struct Google_Api_CppSettings: Sendable {
+public nonisolated struct Google_Api_CppSettings: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -436,7 +490,7 @@ public struct Google_Api_CppSettings: Sendable {
 }
 
 /// Settings for Php client libraries.
-public struct Google_Api_PhpSettings: Sendable {
+public nonisolated struct Google_Api_PhpSettings: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -451,6 +505,20 @@ public struct Google_Api_PhpSettings: Sendable {
   /// Clears the value of `common`. Subsequent reads from it will return its default value.
   public mutating func clearCommon() {self._common = nil}
 
+  /// The package name to use in Php. Clobbers the php_namespace option
+  /// set in the protobuf. This should be used **only** by APIs
+  /// who have already set the language_settings.php.package_name" field
+  /// in gapic.yaml. API teams should use the protobuf php_namespace option
+  /// where possible.
+  ///
+  /// Example of a YAML configuration::
+  ///
+  ///     publishing:
+  ///       library_settings:
+  ///         php_settings:
+  ///           library_package: Google\Cloud\PubSub\V1
+  public var libraryPackage: String = String()
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
@@ -459,7 +527,7 @@ public struct Google_Api_PhpSettings: Sendable {
 }
 
 /// Settings for Python client libraries.
-public struct Google_Api_PythonSettings: Sendable {
+public nonisolated struct Google_Api_PythonSettings: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -489,7 +557,7 @@ public struct Google_Api_PythonSettings: Sendable {
   /// Experimental features to be included during client library generation.
   /// These fields will be deprecated once the feature graduates and is enabled
   /// by default.
-  public struct ExperimentalFeatures: Sendable {
+  public nonisolated struct ExperimentalFeatures: Sendable {
     // SwiftProtobuf.Message conformance is added in an extension below. See the
     // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
     // methods supported on all messages.
@@ -524,7 +592,7 @@ public struct Google_Api_PythonSettings: Sendable {
 }
 
 /// Settings for Node client libraries.
-public struct Google_Api_NodeSettings: Sendable {
+public nonisolated struct Google_Api_NodeSettings: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -547,7 +615,7 @@ public struct Google_Api_NodeSettings: Sendable {
 }
 
 /// Settings for Dotnet client libraries.
-public struct Google_Api_DotnetSettings: Sendable {
+public nonisolated struct Google_Api_DotnetSettings: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -600,7 +668,7 @@ public struct Google_Api_DotnetSettings: Sendable {
 }
 
 /// Settings for Ruby client libraries.
-public struct Google_Api_RubySettings: Sendable {
+public nonisolated struct Google_Api_RubySettings: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -623,7 +691,7 @@ public struct Google_Api_RubySettings: Sendable {
 }
 
 /// Settings for Go client libraries.
-public struct Google_Api_GoSettings: Sendable {
+public nonisolated struct Google_Api_GoSettings: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -642,10 +710,12 @@ public struct Google_Api_GoSettings: Sendable {
   /// service names and values are the name to be used for the service client
   /// and call options.
   ///
-  /// publishing:
-  ///   go_settings:
-  ///     renamed_services:
-  ///       Publisher: TopicAdmin
+  /// Example:
+  ///
+  ///     publishing:
+  ///       go_settings:
+  ///         renamed_services:
+  ///           Publisher: TopicAdmin
   public var renamedServices: Dictionary<String,String> = [:]
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -656,7 +726,7 @@ public struct Google_Api_GoSettings: Sendable {
 }
 
 /// Describes the generator configuration for a method.
-public struct Google_Api_MethodSettings: Sendable {
+public nonisolated struct Google_Api_MethodSettings: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -666,11 +736,14 @@ public struct Google_Api_MethodSettings: Sendable {
   ///
   /// Example:
   ///
-  ///    publishing:
-  ///      method_settings:
-  ///      - selector: google.storage.control.v2.StorageControl.CreateFolder
-  ///        # method settings for CreateFolder...
-  public var selector: String = String()
+  ///     publishing:
+  ///       method_settings:
+  ///       - selector: google.storage.control.v2.StorageControl.CreateFolder
+  ///         # method settings for CreateFolder...
+  public var selector: String {
+    get {_storage._selector}
+    set {_uniqueStorage()._selector = newValue}
+  }
 
   /// Describes settings to use for long-running operations when generating
   /// API methods for RPCs. Complements RPCs that use the annotations in
@@ -678,22 +751,22 @@ public struct Google_Api_MethodSettings: Sendable {
   ///
   /// Example of a YAML configuration::
   ///
-  ///    publishing:
-  ///      method_settings:
-  ///      - selector: google.cloud.speech.v2.Speech.BatchRecognize
-  ///        long_running:
-  ///          initial_poll_delay: 60s # 1 minute
-  ///          poll_delay_multiplier: 1.5
-  ///          max_poll_delay: 360s # 6 minutes
-  ///          total_poll_timeout: 54000s # 90 minutes
+  ///     publishing:
+  ///       method_settings:
+  ///       - selector: google.cloud.speech.v2.Speech.BatchRecognize
+  ///         long_running:
+  ///           initial_poll_delay: 60s # 1 minute
+  ///           poll_delay_multiplier: 1.5
+  ///           max_poll_delay: 360s # 6 minutes
+  ///           total_poll_timeout: 54000s # 90 minutes
   public var longRunning: Google_Api_MethodSettings.LongRunning {
-    get {_longRunning ?? Google_Api_MethodSettings.LongRunning()}
-    set {_longRunning = newValue}
+    get {_storage._longRunning ?? Google_Api_MethodSettings.LongRunning()}
+    set {_uniqueStorage()._longRunning = newValue}
   }
   /// Returns true if `longRunning` has been explicitly set.
-  public var hasLongRunning: Bool {self._longRunning != nil}
+  public var hasLongRunning: Bool {_storage._longRunning != nil}
   /// Clears the value of `longRunning`. Subsequent reads from it will return its default value.
-  public mutating func clearLongRunning() {self._longRunning = nil}
+  public mutating func clearLongRunning() {_uniqueStorage()._longRunning = nil}
 
   /// List of top-level fields of the request message, that should be
   /// automatically populated by the client libraries based on their
@@ -701,12 +774,35 @@ public struct Google_Api_MethodSettings: Sendable {
   ///
   /// Example of a YAML configuration:
   ///
-  ///    publishing:
-  ///      method_settings:
-  ///      - selector: google.example.v1.ExampleService.CreateExample
-  ///        auto_populated_fields:
-  ///        - request_id
-  public var autoPopulatedFields: [String] = []
+  ///     publishing:
+  ///       method_settings:
+  ///       - selector: google.example.v1.ExampleService.CreateExample
+  ///         auto_populated_fields:
+  ///         - request_id
+  public var autoPopulatedFields: [String] {
+    get {_storage._autoPopulatedFields}
+    set {_uniqueStorage()._autoPopulatedFields = newValue}
+  }
+
+  /// Batching configuration for an API method in client libraries.
+  ///
+  /// Example of a YAML configuration:
+  ///
+  ///     publishing:
+  ///       method_settings:
+  ///       - selector: google.example.v1.ExampleService.BatchCreateExample
+  ///         batching:
+  ///           element_count_threshold: 1000
+  ///           request_byte_threshold: 100000000
+  ///           delay_threshold_millis: 10
+  public var batching: Google_Api_BatchingConfigProto {
+    get {_storage._batching ?? Google_Api_BatchingConfigProto()}
+    set {_uniqueStorage()._batching = newValue}
+  }
+  /// Returns true if `batching` has been explicitly set.
+  public var hasBatching: Bool {_storage._batching != nil}
+  /// Clears the value of `batching`. Subsequent reads from it will return its default value.
+  public mutating func clearBatching() {_uniqueStorage()._batching = nil}
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -715,7 +811,7 @@ public struct Google_Api_MethodSettings: Sendable {
   /// All default values below are from those used in the client library
   /// generators (e.g.
   /// [Java](https://github.com/googleapis/gapic-generator-java/blob/04c2faa191a9b5a10b92392fe8482279c4404803/src/main/java/com/google/api/generator/gapic/composer/common/RetrySettingsComposer.java)).
-  public struct LongRunning: Sendable {
+  public nonisolated struct LongRunning: Sendable {
     // SwiftProtobuf.Message conformance is added in an extension below. See the
     // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
     // methods supported on all messages.
@@ -769,12 +865,14 @@ public struct Google_Api_MethodSettings: Sendable {
 
   public init() {}
 
-  fileprivate var _longRunning: Google_Api_MethodSettings.LongRunning? = nil
+  fileprivate var _storage = _StorageClass.defaultInstance
 }
 
 /// This message is used to configure the generation of a subset of the RPCs in
 /// a service for client libraries.
-public struct Google_Api_SelectiveGapicGeneration: Sendable {
+///
+/// Note: This feature should not be used in most cases.
+public nonisolated struct Google_Api_SelectiveGapicGeneration: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -796,6 +894,118 @@ public struct Google_Api_SelectiveGapicGeneration: Sendable {
   public init() {}
 }
 
+/// `BatchingConfigProto` defines the batching configuration for an API method.
+public nonisolated struct Google_Api_BatchingConfigProto: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// The thresholds which trigger a batched request to be sent.
+  public var thresholds: Google_Api_BatchingSettingsProto {
+    get {_thresholds ?? Google_Api_BatchingSettingsProto()}
+    set {_thresholds = newValue}
+  }
+  /// Returns true if `thresholds` has been explicitly set.
+  public var hasThresholds: Bool {self._thresholds != nil}
+  /// Clears the value of `thresholds`. Subsequent reads from it will return its default value.
+  public mutating func clearThresholds() {self._thresholds = nil}
+
+  /// The request and response fields used in batching.
+  public var batchDescriptor: Google_Api_BatchingDescriptorProto {
+    get {_batchDescriptor ?? Google_Api_BatchingDescriptorProto()}
+    set {_batchDescriptor = newValue}
+  }
+  /// Returns true if `batchDescriptor` has been explicitly set.
+  public var hasBatchDescriptor: Bool {self._batchDescriptor != nil}
+  /// Clears the value of `batchDescriptor`. Subsequent reads from it will return its default value.
+  public mutating func clearBatchDescriptor() {self._batchDescriptor = nil}
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _thresholds: Google_Api_BatchingSettingsProto? = nil
+  fileprivate var _batchDescriptor: Google_Api_BatchingDescriptorProto? = nil
+}
+
+/// `BatchingSettingsProto` specifies a set of batching thresholds, each of
+/// which acts as a trigger to send a batch of messages as a request. At least
+/// one threshold must be positive nonzero.
+public nonisolated struct Google_Api_BatchingSettingsProto: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// The number of elements of a field collected into a batch which, if
+  /// exceeded, causes the batch to be sent.
+  public var elementCountThreshold: Int32 = 0
+
+  /// The aggregated size of the batched field which, if exceeded, causes the
+  /// batch to be sent. This size is computed by aggregating the sizes of the
+  /// request field to be batched, not of the entire request message.
+  public var requestByteThreshold: Int64 = 0
+
+  /// The duration after which a batch should be sent, starting from the addition
+  /// of the first message to that batch.
+  public var delayThreshold: SwiftProtobuf.Google_Protobuf_Duration {
+    get {_delayThreshold ?? SwiftProtobuf.Google_Protobuf_Duration()}
+    set {_delayThreshold = newValue}
+  }
+  /// Returns true if `delayThreshold` has been explicitly set.
+  public var hasDelayThreshold: Bool {self._delayThreshold != nil}
+  /// Clears the value of `delayThreshold`. Subsequent reads from it will return its default value.
+  public mutating func clearDelayThreshold() {self._delayThreshold = nil}
+
+  /// The maximum number of elements collected in a batch that could be accepted
+  /// by server.
+  public var elementCountLimit: Int32 = 0
+
+  /// The maximum size of the request that could be accepted by server.
+  public var requestByteLimit: Int32 = 0
+
+  /// The maximum number of elements allowed by flow control.
+  public var flowControlElementLimit: Int32 = 0
+
+  /// The maximum size of data allowed by flow control.
+  public var flowControlByteLimit: Int32 = 0
+
+  /// The behavior to take when the flow control limit is exceeded.
+  public var flowControlLimitExceededBehavior: Google_Api_FlowControlLimitExceededBehaviorProto = .unsetBehavior
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _delayThreshold: SwiftProtobuf.Google_Protobuf_Duration? = nil
+}
+
+/// `BatchingDescriptorProto` specifies the fields of the request message to be
+/// used for batching, and, optionally, the fields of the response message to be
+/// used for demultiplexing.
+public nonisolated struct Google_Api_BatchingDescriptorProto: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// The repeated field in the request message to be aggregated by batching.
+  public var batchedField: String = String()
+
+  /// A list of the fields in the request message. Two requests will be batched
+  /// together only if the values of every field specified in
+  /// `request_discriminator_fields` is equal between the two requests.
+  public var discriminatorFields: [String] = []
+
+  /// Optional. When present, indicates the field in the response message to be
+  /// used to demultiplex the response into multiple response messages, in
+  /// correspondence with the multiple request messages originally batched
+  /// together.
+  public var subresponseField: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
 // MARK: - Extension support defined in client.proto.
 
 // MARK: - Extension Properties
@@ -805,7 +1015,7 @@ public struct Google_Api_SelectiveGapicGeneration: Sendable {
 // declaration. To avoid naming collisions, the names are prefixed with the name of
 // the scope where the extend directive occurs.
 
-extension SwiftProtobuf.Google_Protobuf_MethodOptions {
+nonisolated extension SwiftProtobuf.Google_Protobuf_MethodOptions {
 
   /// A definition of a client library method signature.
   ///
@@ -821,15 +1031,15 @@ extension SwiftProtobuf.Google_Protobuf_MethodOptions {
   ///
   /// For example, the proto RPC and annotation:
   ///
-  ///   rpc CreateSubscription(CreateSubscriptionRequest)
-  ///       returns (Subscription) {
-  ///     option (google.api.method_signature) = "name,topic";
-  ///   }
+  ///     rpc CreateSubscription(CreateSubscriptionRequest)
+  ///         returns (Subscription) {
+  ///       option (google.api.method_signature) = "name,topic";
+  ///     }
   ///
   /// Would add the following Java overload (in addition to the method accepting
   /// the request object):
   ///
-  ///   public final Subscription createSubscription(String name, String topic)
+  ///     public final Subscription createSubscription(String name, String topic)
   ///
   /// The following backwards-compatibility guidelines apply:
   ///
@@ -848,17 +1058,17 @@ extension SwiftProtobuf.Google_Protobuf_MethodOptions {
   }
 }
 
-extension SwiftProtobuf.Google_Protobuf_ServiceOptions {
+nonisolated extension SwiftProtobuf.Google_Protobuf_ServiceOptions {
 
   /// The hostname for this service.
   /// This should be specified with no prefix or protocol.
   ///
   /// Example:
   ///
-  ///   service Foo {
-  ///     option (google.api.default_host) = "foo.googleapi.com";
-  ///     ...
-  ///   }
+  ///     service Foo {
+  ///       option (google.api.default_host) = "foo.googleapi.com";
+  ///       ...
+  ///     }
   public var Google_Api_defaultHost: String {
     get {return getExtensionValue(ext: Google_Api_Extensions_default_host) ?? String()}
     set {setExtensionValue(ext: Google_Api_Extensions_default_host, value: newValue)}
@@ -878,22 +1088,22 @@ extension SwiftProtobuf.Google_Protobuf_ServiceOptions {
   ///
   /// Example:
   ///
-  ///   service Foo {
-  ///     option (google.api.oauth_scopes) = \
-  ///       "https://www.googleapis.com/auth/cloud-platform";
-  ///     ...
-  ///   }
+  ///     service Foo {
+  ///       option (google.api.oauth_scopes) = \
+  ///         "https://www.googleapis.com/auth/cloud-platform";
+  ///       ...
+  ///     }
   ///
   /// If there is more than one scope, use a comma-separated string:
   ///
   /// Example:
   ///
-  ///   service Foo {
-  ///     option (google.api.oauth_scopes) = \
-  ///       "https://www.googleapis.com/auth/cloud-platform,"
-  ///       "https://www.googleapis.com/auth/monitoring";
-  ///     ...
-  ///   }
+  ///     service Foo {
+  ///       option (google.api.oauth_scopes) = \
+  ///         "https://www.googleapis.com/auth/cloud-platform,"
+  ///         "https://www.googleapis.com/auth/monitoring";
+  ///       ...
+  ///     }
   public var Google_Api_oauthScopes: String {
     get {return getExtensionValue(ext: Google_Api_Extensions_oauth_scopes) ?? String()}
     set {setExtensionValue(ext: Google_Api_Extensions_oauth_scopes, value: newValue)}
@@ -920,9 +1130,9 @@ extension SwiftProtobuf.Google_Protobuf_ServiceOptions {
   ///
   /// Example:
   ///
-  ///   service Foo {
-  ///     option (google.api.api_version) = "v1_20230821_preview";
-  ///   }
+  ///     service Foo {
+  ///       option (google.api.api_version) = "v1_20230821_preview";
+  ///     }
   public var Google_Api_apiVersion: String {
     get {return getExtensionValue(ext: Google_Api_Extensions_api_version) ?? String()}
     set {setExtensionValue(ext: Google_Api_Extensions_api_version, value: newValue)}
@@ -946,7 +1156,7 @@ extension SwiftProtobuf.Google_Protobuf_ServiceOptions {
 /// this .proto file. It can be used any place an `SwiftProtobuf.ExtensionMap` is needed
 /// in parsing, or it can be combined with other `SwiftProtobuf.SimpleExtensionMap`s to create
 /// a larger `SwiftProtobuf.SimpleExtensionMap`.
-public let Google_Api_Client_Extensions: SwiftProtobuf.SimpleExtensionMap = [
+public nonisolated let Google_Api_Client_Extensions: SwiftProtobuf.SimpleExtensionMap = [
   Google_Api_Extensions_method_signature,
   Google_Api_Extensions_default_host,
   Google_Api_Extensions_oauth_scopes,
@@ -971,15 +1181,15 @@ public let Google_Api_Client_Extensions: SwiftProtobuf.SimpleExtensionMap = [
 ///
 /// For example, the proto RPC and annotation:
 ///
-///   rpc CreateSubscription(CreateSubscriptionRequest)
-///       returns (Subscription) {
-///     option (google.api.method_signature) = "name,topic";
-///   }
+///     rpc CreateSubscription(CreateSubscriptionRequest)
+///         returns (Subscription) {
+///       option (google.api.method_signature) = "name,topic";
+///     }
 ///
 /// Would add the following Java overload (in addition to the method accepting
 /// the request object):
 ///
-///   public final Subscription createSubscription(String name, String topic)
+///     public final Subscription createSubscription(String name, String topic)
 ///
 /// The following backwards-compatibility guidelines apply:
 ///
@@ -992,7 +1202,7 @@ public let Google_Api_Client_Extensions: SwiftProtobuf.SimpleExtensionMap = [
 ///     a breaking change.
 ///   * Re-ordering existing method signature annotations is a breaking
 ///     change.
-public let Google_Api_Extensions_method_signature = SwiftProtobuf.MessageExtension<SwiftProtobuf.RepeatedExtensionField<SwiftProtobuf.ProtobufString>, SwiftProtobuf.Google_Protobuf_MethodOptions>(
+public nonisolated let Google_Api_Extensions_method_signature = SwiftProtobuf.MessageExtension<SwiftProtobuf.RepeatedExtensionField<SwiftProtobuf.ProtobufString>, SwiftProtobuf.Google_Protobuf_MethodOptions>(
   _protobuf_fieldNumber: 1051,
   fieldName: "google.api.method_signature"
 )
@@ -1002,11 +1212,11 @@ public let Google_Api_Extensions_method_signature = SwiftProtobuf.MessageExtensi
 ///
 /// Example:
 ///
-///   service Foo {
-///     option (google.api.default_host) = "foo.googleapi.com";
-///     ...
-///   }
-public let Google_Api_Extensions_default_host = SwiftProtobuf.MessageExtension<SwiftProtobuf.OptionalExtensionField<SwiftProtobuf.ProtobufString>, SwiftProtobuf.Google_Protobuf_ServiceOptions>(
+///     service Foo {
+///       option (google.api.default_host) = "foo.googleapi.com";
+///       ...
+///     }
+public nonisolated let Google_Api_Extensions_default_host = SwiftProtobuf.MessageExtension<SwiftProtobuf.OptionalExtensionField<SwiftProtobuf.ProtobufString>, SwiftProtobuf.Google_Protobuf_ServiceOptions>(
   _protobuf_fieldNumber: 1049,
   fieldName: "google.api.default_host"
 )
@@ -1015,23 +1225,23 @@ public let Google_Api_Extensions_default_host = SwiftProtobuf.MessageExtension<S
 ///
 /// Example:
 ///
-///   service Foo {
-///     option (google.api.oauth_scopes) = \
-///       "https://www.googleapis.com/auth/cloud-platform";
-///     ...
-///   }
+///     service Foo {
+///       option (google.api.oauth_scopes) = \
+///         "https://www.googleapis.com/auth/cloud-platform";
+///       ...
+///     }
 ///
 /// If there is more than one scope, use a comma-separated string:
 ///
 /// Example:
 ///
-///   service Foo {
-///     option (google.api.oauth_scopes) = \
-///       "https://www.googleapis.com/auth/cloud-platform,"
-///       "https://www.googleapis.com/auth/monitoring";
-///     ...
-///   }
-public let Google_Api_Extensions_oauth_scopes = SwiftProtobuf.MessageExtension<SwiftProtobuf.OptionalExtensionField<SwiftProtobuf.ProtobufString>, SwiftProtobuf.Google_Protobuf_ServiceOptions>(
+///     service Foo {
+///       option (google.api.oauth_scopes) = \
+///         "https://www.googleapis.com/auth/cloud-platform,"
+///         "https://www.googleapis.com/auth/monitoring";
+///       ...
+///     }
+public nonisolated let Google_Api_Extensions_oauth_scopes = SwiftProtobuf.MessageExtension<SwiftProtobuf.OptionalExtensionField<SwiftProtobuf.ProtobufString>, SwiftProtobuf.Google_Protobuf_ServiceOptions>(
   _protobuf_fieldNumber: 1050,
   fieldName: "google.api.oauth_scopes"
 )
@@ -1047,27 +1257,31 @@ public let Google_Api_Extensions_oauth_scopes = SwiftProtobuf.MessageExtension<S
 ///
 /// Example:
 ///
-///   service Foo {
-///     option (google.api.api_version) = "v1_20230821_preview";
-///   }
-public let Google_Api_Extensions_api_version = SwiftProtobuf.MessageExtension<SwiftProtobuf.OptionalExtensionField<SwiftProtobuf.ProtobufString>, SwiftProtobuf.Google_Protobuf_ServiceOptions>(
+///     service Foo {
+///       option (google.api.api_version) = "v1_20230821_preview";
+///     }
+public nonisolated let Google_Api_Extensions_api_version = SwiftProtobuf.MessageExtension<SwiftProtobuf.OptionalExtensionField<SwiftProtobuf.ProtobufString>, SwiftProtobuf.Google_Protobuf_ServiceOptions>(
   _protobuf_fieldNumber: 525000001,
   fieldName: "google.api.api_version"
 )
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
-fileprivate let _protobuf_package = "google.api"
+fileprivate nonisolated let _protobuf_package = "google.api"
 
-extension Google_Api_ClientLibraryOrganization: SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Api_ClientLibraryOrganization: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0CLIENT_LIBRARY_ORGANIZATION_UNSPECIFIED\0\u{1}CLOUD\0\u{1}ADS\0\u{1}PHOTOS\0\u{1}STREET_VIEW\0\u{1}SHOPPING\0\u{1}GEO\0\u{1}GENERATIVE_AI\0")
 }
 
-extension Google_Api_ClientLibraryDestination: SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Api_ClientLibraryDestination: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0CLIENT_LIBRARY_DESTINATION_UNSPECIFIED\0\u{2}\u{a}GITHUB\0\u{2}\u{a}PACKAGE_MANAGER\0")
 }
 
-extension Google_Api_CommonLanguageSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Api_FlowControlLimitExceededBehaviorProto: SwiftProtobuf._ProtoNameProviding {
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0UNSET_BEHAVIOR\0\u{1}THROW_EXCEPTION\0\u{1}BLOCK\0\u{1}IGNORE\0")
+}
+
+nonisolated extension Google_Api_CommonLanguageSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CommonLanguageSettings"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}reference_docs_uri\0\u{1}destinations\0\u{3}selective_gapic_generation\0")
 
@@ -1111,7 +1325,7 @@ extension Google_Api_CommonLanguageSettings: SwiftProtobuf.Message, SwiftProtobu
   }
 }
 
-extension Google_Api_ClientLibrarySettings: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Api_ClientLibrarySettings: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ClientLibrarySettings"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}version\0\u{3}launch_stage\0\u{3}rest_numeric_enums\0\u{4}\u{12}java_settings\0\u{3}cpp_settings\0\u{3}php_settings\0\u{3}python_settings\0\u{3}node_settings\0\u{3}dotnet_settings\0\u{3}ruby_settings\0\u{3}go_settings\0")
 
@@ -1251,7 +1465,7 @@ extension Google_Api_ClientLibrarySettings: SwiftProtobuf.Message, SwiftProtobuf
   }
 }
 
-extension Google_Api_Publishing: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Api_Publishing: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Publishing"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{4}\u{2}method_settings\0\u{4}c\u{1}new_issue_uri\0\u{3}documentation_uri\0\u{3}api_short_name\0\u{3}github_label\0\u{3}codeowner_github_teams\0\u{3}doc_tag_prefix\0\u{1}organization\0\u{4}\u{2}library_settings\0\u{3}proto_reference_documentation_uri\0\u{3}rest_reference_documentation_uri\0")
 
@@ -1331,7 +1545,7 @@ extension Google_Api_Publishing: SwiftProtobuf.Message, SwiftProtobuf._MessageIm
   }
 }
 
-extension Google_Api_JavaSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Api_JavaSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".JavaSettings"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}library_package\0\u{3}service_class_names\0\u{1}common\0")
 
@@ -1375,7 +1589,7 @@ extension Google_Api_JavaSettings: SwiftProtobuf.Message, SwiftProtobuf._Message
   }
 }
 
-extension Google_Api_CppSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Api_CppSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CppSettings"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}common\0")
 
@@ -1409,9 +1623,9 @@ extension Google_Api_CppSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageI
   }
 }
 
-extension Google_Api_PhpSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Api_PhpSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".PhpSettings"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}common\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}common\0\u{3}library_package\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1420,6 +1634,7 @@ extension Google_Api_PhpSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageI
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularMessageField(value: &self._common) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.libraryPackage) }()
       default: break
       }
     }
@@ -1433,17 +1648,21 @@ extension Google_Api_PhpSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     try { if let v = self._common {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
     } }()
+    if !self.libraryPackage.isEmpty {
+      try visitor.visitSingularStringField(value: self.libraryPackage, fieldNumber: 2)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Google_Api_PhpSettings, rhs: Google_Api_PhpSettings) -> Bool {
     if lhs._common != rhs._common {return false}
+    if lhs.libraryPackage != rhs.libraryPackage {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
-extension Google_Api_PythonSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Api_PythonSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".PythonSettings"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}common\0\u{3}experimental_features\0")
 
@@ -1482,7 +1701,7 @@ extension Google_Api_PythonSettings: SwiftProtobuf.Message, SwiftProtobuf._Messa
   }
 }
 
-extension Google_Api_PythonSettings.ExperimentalFeatures: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Api_PythonSettings.ExperimentalFeatures: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = Google_Api_PythonSettings.protoMessageName + ".ExperimentalFeatures"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}rest_async_io_enabled\0\u{3}protobuf_pythonic_types_enabled\0\u{3}unversioned_package_disabled\0")
 
@@ -1522,7 +1741,7 @@ extension Google_Api_PythonSettings.ExperimentalFeatures: SwiftProtobuf.Message,
   }
 }
 
-extension Google_Api_NodeSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Api_NodeSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".NodeSettings"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}common\0")
 
@@ -1556,7 +1775,7 @@ extension Google_Api_NodeSettings: SwiftProtobuf.Message, SwiftProtobuf._Message
   }
 }
 
-extension Google_Api_DotnetSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Api_DotnetSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".DotnetSettings"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}common\0\u{3}renamed_services\0\u{3}renamed_resources\0\u{3}ignored_resources\0\u{3}forced_namespace_aliases\0\u{3}handwritten_signatures\0")
 
@@ -1615,7 +1834,7 @@ extension Google_Api_DotnetSettings: SwiftProtobuf.Message, SwiftProtobuf._Messa
   }
 }
 
-extension Google_Api_RubySettings: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Api_RubySettings: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".RubySettings"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}common\0")
 
@@ -1649,7 +1868,7 @@ extension Google_Api_RubySettings: SwiftProtobuf.Message, SwiftProtobuf._Message
   }
 }
 
-extension Google_Api_GoSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Api_GoSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".GoSettings"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}common\0\u{3}renamed_services\0")
 
@@ -1688,51 +1907,98 @@ extension Google_Api_GoSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageIm
   }
 }
 
-extension Google_Api_MethodSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Api_MethodSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".MethodSettings"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}selector\0\u{3}long_running\0\u{3}auto_populated_fields\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}selector\0\u{3}long_running\0\u{3}auto_populated_fields\0\u{1}batching\0")
+
+  fileprivate class _StorageClass {
+    var _selector: String = String()
+    var _longRunning: Google_Api_MethodSettings.LongRunning? = nil
+    var _autoPopulatedFields: [String] = []
+    var _batching: Google_Api_BatchingConfigProto? = nil
+
+      // This property is used as the initial default value for new instances of the type.
+      // The type itself is protecting the reference to its storage via CoW semantics.
+      // This will force a copy to be made of this reference when the first mutation occurs;
+      // hence, it is safe to mark this as `nonisolated(unsafe)`.
+      static nonisolated(unsafe) let defaultInstance = _StorageClass()
+
+    private init() {}
+
+    init(copying source: _StorageClass) {
+      _selector = source._selector
+      _longRunning = source._longRunning
+      _autoPopulatedFields = source._autoPopulatedFields
+      _batching = source._batching
+    }
+  }
+
+  fileprivate mutating func _uniqueStorage() -> _StorageClass {
+    if !isKnownUniquelyReferenced(&_storage) {
+      _storage = _StorageClass(copying: _storage)
+    }
+    return _storage
+  }
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.selector) }()
-      case 2: try { try decoder.decodeSingularMessageField(value: &self._longRunning) }()
-      case 3: try { try decoder.decodeRepeatedStringField(value: &self.autoPopulatedFields) }()
-      default: break
+    _ = _uniqueStorage()
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      while let fieldNumber = try decoder.nextFieldNumber() {
+        // The use of inline closures is to circumvent an issue where the compiler
+        // allocates stack space for every case branch when no optimizations are
+        // enabled. https://github.com/apple/swift-protobuf/issues/1034
+        switch fieldNumber {
+        case 1: try { try decoder.decodeSingularStringField(value: &_storage._selector) }()
+        case 2: try { try decoder.decodeSingularMessageField(value: &_storage._longRunning) }()
+        case 3: try { try decoder.decodeRepeatedStringField(value: &_storage._autoPopulatedFields) }()
+        case 4: try { try decoder.decodeSingularMessageField(value: &_storage._batching) }()
+        default: break
+        }
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    if !self.selector.isEmpty {
-      try visitor.visitSingularStringField(value: self.selector, fieldNumber: 1)
-    }
-    try { if let v = self._longRunning {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
-    } }()
-    if !self.autoPopulatedFields.isEmpty {
-      try visitor.visitRepeatedStringField(value: self.autoPopulatedFields, fieldNumber: 3)
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every if/case branch local when no optimizations
+      // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+      // https://github.com/apple/swift-protobuf/issues/1182
+      if !_storage._selector.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._selector, fieldNumber: 1)
+      }
+      try { if let v = _storage._longRunning {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+      } }()
+      if !_storage._autoPopulatedFields.isEmpty {
+        try visitor.visitRepeatedStringField(value: _storage._autoPopulatedFields, fieldNumber: 3)
+      }
+      try { if let v = _storage._batching {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
+      } }()
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Google_Api_MethodSettings, rhs: Google_Api_MethodSettings) -> Bool {
-    if lhs.selector != rhs.selector {return false}
-    if lhs._longRunning != rhs._longRunning {return false}
-    if lhs.autoPopulatedFields != rhs.autoPopulatedFields {return false}
+    if lhs._storage !== rhs._storage {
+      let storagesAreEqual: Bool = withExtendedLifetime((lhs._storage, rhs._storage)) { (_args: (_StorageClass, _StorageClass)) in
+        let _storage = _args.0
+        let rhs_storage = _args.1
+        if _storage._selector != rhs_storage._selector {return false}
+        if _storage._longRunning != rhs_storage._longRunning {return false}
+        if _storage._autoPopulatedFields != rhs_storage._autoPopulatedFields {return false}
+        if _storage._batching != rhs_storage._batching {return false}
+        return true
+      }
+      if !storagesAreEqual {return false}
+    }
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
-extension Google_Api_MethodSettings.LongRunning: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Api_MethodSettings.LongRunning: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = Google_Api_MethodSettings.protoMessageName + ".LongRunning"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}initial_poll_delay\0\u{3}poll_delay_multiplier\0\u{3}max_poll_delay\0\u{3}total_poll_timeout\0")
 
@@ -1781,7 +2047,7 @@ extension Google_Api_MethodSettings.LongRunning: SwiftProtobuf.Message, SwiftPro
   }
 }
 
-extension Google_Api_SelectiveGapicGeneration: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Api_SelectiveGapicGeneration: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".SelectiveGapicGeneration"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}methods\0\u{3}generate_omitted_as_internal\0")
 
@@ -1811,6 +2077,154 @@ extension Google_Api_SelectiveGapicGeneration: SwiftProtobuf.Message, SwiftProto
   public static func ==(lhs: Google_Api_SelectiveGapicGeneration, rhs: Google_Api_SelectiveGapicGeneration) -> Bool {
     if lhs.methods != rhs.methods {return false}
     if lhs.generateOmittedAsInternal != rhs.generateOmittedAsInternal {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Google_Api_BatchingConfigProto: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".BatchingConfigProto"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}thresholds\0\u{3}batch_descriptor\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._thresholds) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._batchDescriptor) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._thresholds {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
+    try { if let v = self._batchDescriptor {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Google_Api_BatchingConfigProto, rhs: Google_Api_BatchingConfigProto) -> Bool {
+    if lhs._thresholds != rhs._thresholds {return false}
+    if lhs._batchDescriptor != rhs._batchDescriptor {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Google_Api_BatchingSettingsProto: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".BatchingSettingsProto"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}element_count_threshold\0\u{3}request_byte_threshold\0\u{3}delay_threshold\0\u{3}element_count_limit\0\u{3}request_byte_limit\0\u{3}flow_control_element_limit\0\u{3}flow_control_byte_limit\0\u{3}flow_control_limit_exceeded_behavior\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularInt32Field(value: &self.elementCountThreshold) }()
+      case 2: try { try decoder.decodeSingularInt64Field(value: &self.requestByteThreshold) }()
+      case 3: try { try decoder.decodeSingularMessageField(value: &self._delayThreshold) }()
+      case 4: try { try decoder.decodeSingularInt32Field(value: &self.elementCountLimit) }()
+      case 5: try { try decoder.decodeSingularInt32Field(value: &self.requestByteLimit) }()
+      case 6: try { try decoder.decodeSingularInt32Field(value: &self.flowControlElementLimit) }()
+      case 7: try { try decoder.decodeSingularInt32Field(value: &self.flowControlByteLimit) }()
+      case 8: try { try decoder.decodeSingularEnumField(value: &self.flowControlLimitExceededBehavior) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if self.elementCountThreshold != 0 {
+      try visitor.visitSingularInt32Field(value: self.elementCountThreshold, fieldNumber: 1)
+    }
+    if self.requestByteThreshold != 0 {
+      try visitor.visitSingularInt64Field(value: self.requestByteThreshold, fieldNumber: 2)
+    }
+    try { if let v = self._delayThreshold {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
+    } }()
+    if self.elementCountLimit != 0 {
+      try visitor.visitSingularInt32Field(value: self.elementCountLimit, fieldNumber: 4)
+    }
+    if self.requestByteLimit != 0 {
+      try visitor.visitSingularInt32Field(value: self.requestByteLimit, fieldNumber: 5)
+    }
+    if self.flowControlElementLimit != 0 {
+      try visitor.visitSingularInt32Field(value: self.flowControlElementLimit, fieldNumber: 6)
+    }
+    if self.flowControlByteLimit != 0 {
+      try visitor.visitSingularInt32Field(value: self.flowControlByteLimit, fieldNumber: 7)
+    }
+    if self.flowControlLimitExceededBehavior != .unsetBehavior {
+      try visitor.visitSingularEnumField(value: self.flowControlLimitExceededBehavior, fieldNumber: 8)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Google_Api_BatchingSettingsProto, rhs: Google_Api_BatchingSettingsProto) -> Bool {
+    if lhs.elementCountThreshold != rhs.elementCountThreshold {return false}
+    if lhs.requestByteThreshold != rhs.requestByteThreshold {return false}
+    if lhs._delayThreshold != rhs._delayThreshold {return false}
+    if lhs.elementCountLimit != rhs.elementCountLimit {return false}
+    if lhs.requestByteLimit != rhs.requestByteLimit {return false}
+    if lhs.flowControlElementLimit != rhs.flowControlElementLimit {return false}
+    if lhs.flowControlByteLimit != rhs.flowControlByteLimit {return false}
+    if lhs.flowControlLimitExceededBehavior != rhs.flowControlLimitExceededBehavior {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Google_Api_BatchingDescriptorProto: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".BatchingDescriptorProto"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}batched_field\0\u{3}discriminator_fields\0\u{3}subresponse_field\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.batchedField) }()
+      case 2: try { try decoder.decodeRepeatedStringField(value: &self.discriminatorFields) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.subresponseField) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.batchedField.isEmpty {
+      try visitor.visitSingularStringField(value: self.batchedField, fieldNumber: 1)
+    }
+    if !self.discriminatorFields.isEmpty {
+      try visitor.visitRepeatedStringField(value: self.discriminatorFields, fieldNumber: 2)
+    }
+    if !self.subresponseField.isEmpty {
+      try visitor.visitSingularStringField(value: self.subresponseField, fieldNumber: 3)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Google_Api_BatchingDescriptorProto, rhs: Google_Api_BatchingDescriptorProto) -> Bool {
+    if lhs.batchedField != rhs.batchedField {return false}
+    if lhs.discriminatorFields != rhs.discriminatorFields {return false}
+    if lhs.subresponseField != rhs.subresponseField {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

@@ -29,7 +29,7 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+fileprivate nonisolated struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
   struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
   typealias Version = _2
 }
@@ -43,7 +43,7 @@ fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAP
 // declaration. To avoid naming collisions, the names are prefixed with the name of
 // the scope where the extend directive occurs.
 
-extension SwiftProtobuf.Google_Protobuf_MethodOptions {
+nonisolated extension SwiftProtobuf.Google_Protobuf_MethodOptions {
 
   /// See `HttpRule`.
   public var Google_Api_http: Google_Api_HttpRule {
@@ -69,7 +69,7 @@ extension SwiftProtobuf.Google_Protobuf_MethodOptions {
 /// this .proto file. It can be used any place an `SwiftProtobuf.ExtensionMap` is needed
 /// in parsing, or it can be combined with other `SwiftProtobuf.SimpleExtensionMap`s to create
 /// a larger `SwiftProtobuf.SimpleExtensionMap`.
-public let Google_Api_Annotations_Extensions: SwiftProtobuf.SimpleExtensionMap = [
+public nonisolated let Google_Api_Annotations_Extensions: SwiftProtobuf.SimpleExtensionMap = [
   Google_Api_Extensions_http
 ]
 
@@ -78,7 +78,7 @@ public let Google_Api_Annotations_Extensions: SwiftProtobuf.SimpleExtensionMap =
 // accessors for the extension fields on the messages directly.
 
 /// See `HttpRule`.
-public let Google_Api_Extensions_http = SwiftProtobuf.MessageExtension<SwiftProtobuf.OptionalMessageExtensionField<Google_Api_HttpRule>, SwiftProtobuf.Google_Protobuf_MethodOptions>(
+public nonisolated let Google_Api_Extensions_http = SwiftProtobuf.MessageExtension<SwiftProtobuf.OptionalMessageExtensionField<Google_Api_HttpRule>, SwiftProtobuf.Google_Protobuf_MethodOptions>(
   _protobuf_fieldNumber: 72295728,
   fieldName: "google.api.http"
 )

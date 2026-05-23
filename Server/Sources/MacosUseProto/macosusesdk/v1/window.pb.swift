@@ -19,7 +19,7 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+fileprivate nonisolated struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
   struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
   typealias Version = _2
 }
@@ -27,7 +27,7 @@ fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAP
 /// A resource representing an individual window within an application.
 /// Contains only cheap CoreGraphics data. For expensive AX state queries,
 /// use GetWindowState to fetch the WindowState singleton sub-resource.
-public struct Macosusesdk_V1_Window: Sendable {
+public nonisolated struct Macosusesdk_V1_Window: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -109,7 +109,7 @@ public struct Macosusesdk_V1_Window: Sendable {
 ///
 /// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
 /// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
-public struct Macosusesdk_V1_Bounds: Sendable {
+public nonisolated struct Macosusesdk_V1_Bounds: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -134,7 +134,7 @@ public struct Macosusesdk_V1_Bounds: Sendable {
 /// Detailed state information about a window, fetched via expensive AX queries.
 /// This is a singleton sub-resource that clients must explicitly request.
 /// Use GetWindowState to fetch this data on-demand.
-public struct Macosusesdk_V1_WindowState: Sendable {
+public nonisolated struct Macosusesdk_V1_WindowState: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -227,9 +227,9 @@ public struct Macosusesdk_V1_WindowState: Sendable {
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
-fileprivate let _protobuf_package = "macosusesdk.v1"
+fileprivate nonisolated let _protobuf_package = "macosusesdk.v1"
 
-extension Macosusesdk_V1_Window: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_Window: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Window"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}title\0\u{1}bounds\0\u{3}z_index\0\u{1}visible\0\u{4}\u{5}bundle_id\0")
 
@@ -288,7 +288,7 @@ extension Macosusesdk_V1_Window: SwiftProtobuf.Message, SwiftProtobuf._MessageIm
   }
 }
 
-extension Macosusesdk_V1_Bounds: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_Bounds: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Bounds"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}x\0\u{1}y\0\u{1}width\0\u{1}height\0")
 
@@ -333,7 +333,7 @@ extension Macosusesdk_V1_Bounds: SwiftProtobuf.Message, SwiftProtobuf._MessageIm
   }
 }
 
-extension Macosusesdk_V1_WindowState: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_WindowState: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".WindowState"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}resizable\0\u{1}minimizable\0\u{1}closable\0\u{1}modal\0\u{1}floating\0\u{3}ax_hidden\0\u{1}minimized\0\u{1}focused\0\u{1}fullscreen\0")
 

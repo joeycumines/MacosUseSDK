@@ -44,7 +44,8 @@ public enum Google_Longrunning_Operations: Sendable {
             /// Descriptor for "ListOperations".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "google.longrunning.Operations"),
-                method: "ListOperations"
+                method: "ListOperations",
+                type: .unary
             )
         }
         /// Namespace for "GetOperation" metadata.
@@ -56,7 +57,8 @@ public enum Google_Longrunning_Operations: Sendable {
             /// Descriptor for "GetOperation".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "google.longrunning.Operations"),
-                method: "GetOperation"
+                method: "GetOperation",
+                type: .unary
             )
         }
         /// Namespace for "DeleteOperation" metadata.
@@ -68,7 +70,8 @@ public enum Google_Longrunning_Operations: Sendable {
             /// Descriptor for "DeleteOperation".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "google.longrunning.Operations"),
-                method: "DeleteOperation"
+                method: "DeleteOperation",
+                type: .unary
             )
         }
         /// Namespace for "CancelOperation" metadata.
@@ -80,7 +83,8 @@ public enum Google_Longrunning_Operations: Sendable {
             /// Descriptor for "CancelOperation".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "google.longrunning.Operations"),
-                method: "CancelOperation"
+                method: "CancelOperation",
+                type: .unary
             )
         }
         /// Namespace for "WaitOperation" metadata.
@@ -92,7 +96,8 @@ public enum Google_Longrunning_Operations: Sendable {
             /// Descriptor for "WaitOperation".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "google.longrunning.Operations"),
-                method: "WaitOperation"
+                method: "WaitOperation",
+                type: .unary
             )
         }
         /// Descriptors for all methods in the "google.longrunning.Operations" service.

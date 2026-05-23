@@ -19,13 +19,13 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+fileprivate nonisolated struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
   struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
   typealias Version = _2
 }
 
 /// Image format for screenshots.
-public enum Macosusesdk_V1_ImageFormat: SwiftProtobuf.Enum, Swift.CaseIterable {
+public nonisolated enum Macosusesdk_V1_ImageFormat: SwiftProtobuf.Enum, Swift.CaseIterable {
   public typealias RawValue = Int
 
   /// Default format (PNG).
@@ -77,6 +77,6 @@ public enum Macosusesdk_V1_ImageFormat: SwiftProtobuf.Enum, Swift.CaseIterable {
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
-extension Macosusesdk_V1_ImageFormat: SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ImageFormat: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0IMAGE_FORMAT_UNSPECIFIED\0\u{1}IMAGE_FORMAT_PNG\0\u{1}IMAGE_FORMAT_JPEG\0\u{1}IMAGE_FORMAT_TIFF\0")
 }

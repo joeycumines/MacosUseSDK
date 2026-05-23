@@ -19,14 +19,14 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+fileprivate nonisolated struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
   struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
   typealias Version = _2
 }
 
 /// A resource representing a recorded sequence of actions.
 /// Macros can be replayed to automate repetitive tasks.
-public struct Macosusesdk_V1_Macro: Sendable {
+public nonisolated struct Macosusesdk_V1_Macro: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -82,7 +82,7 @@ public struct Macosusesdk_V1_Macro: Sendable {
 }
 
 /// Log entry for macro execution.
-public struct Macosusesdk_V1_ExecutionLogEntry: Sendable {
+public nonisolated struct Macosusesdk_V1_ExecutionLogEntry: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -123,7 +123,7 @@ public struct Macosusesdk_V1_ExecutionLogEntry: Sendable {
 }
 
 /// A single action within a macro.
-public struct Macosusesdk_V1_MacroAction: Sendable {
+public nonisolated struct Macosusesdk_V1_MacroAction: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -191,7 +191,7 @@ public struct Macosusesdk_V1_MacroAction: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// Action type.
-  public enum OneOf_Action: Equatable, Sendable {
+  public nonisolated enum OneOf_Action: Equatable, Sendable {
     /// Input action (click, type, etc.).
     case input(Macosusesdk_V1_InputAction)
     /// Wait/delay action.
@@ -211,7 +211,7 @@ public struct Macosusesdk_V1_MacroAction: Sendable {
 }
 
 /// Wait/delay action.
-public struct Macosusesdk_V1_WaitAction: Sendable {
+public nonisolated struct Macosusesdk_V1_WaitAction: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -237,7 +237,7 @@ public struct Macosusesdk_V1_WaitAction: Sendable {
 }
 
 /// Condition to wait for.
-public struct Macosusesdk_V1_WaitCondition: Sendable {
+public nonisolated struct Macosusesdk_V1_WaitCondition: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -278,7 +278,7 @@ public struct Macosusesdk_V1_WaitCondition: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// Condition type.
-  public enum OneOf_Condition: Equatable, Sendable {
+  public nonisolated enum OneOf_Condition: Equatable, Sendable {
     /// Wait for element to appear.
     case elementSelector(String)
     /// Wait for window to appear.
@@ -292,7 +292,7 @@ public struct Macosusesdk_V1_WaitCondition: Sendable {
 }
 
 /// Conditional action (if-then-else).
-public struct Macosusesdk_V1_ConditionalAction: Sendable {
+public nonisolated struct Macosusesdk_V1_ConditionalAction: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -321,7 +321,7 @@ public struct Macosusesdk_V1_ConditionalAction: Sendable {
 }
 
 /// Condition for conditional actions.
-public struct Macosusesdk_V1_MacroCondition: Sendable {
+public nonisolated struct Macosusesdk_V1_MacroCondition: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -377,7 +377,7 @@ public struct Macosusesdk_V1_MacroCondition: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// Condition type.
-  public enum OneOf_Condition: Equatable, Sendable {
+  public nonisolated enum OneOf_Condition: Equatable, Sendable {
     /// Element exists.
     case elementExists(String)
     /// Window exists.
@@ -395,7 +395,7 @@ public struct Macosusesdk_V1_MacroCondition: Sendable {
 }
 
 /// Variable equality condition.
-public struct Macosusesdk_V1_VariableCondition: Sendable {
+public nonisolated struct Macosusesdk_V1_VariableCondition: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -412,7 +412,7 @@ public struct Macosusesdk_V1_VariableCondition: Sendable {
 }
 
 /// Compound condition (AND/OR/NOT).
-public struct Macosusesdk_V1_CompoundCondition: Sendable {
+public nonisolated struct Macosusesdk_V1_CompoundCondition: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -426,7 +426,7 @@ public struct Macosusesdk_V1_CompoundCondition: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// Logical operator.
-  public enum Operator: SwiftProtobuf.Enum, Swift.CaseIterable {
+  public nonisolated enum Operator: SwiftProtobuf.Enum, Swift.CaseIterable {
     public typealias RawValue = Int
 
     /// Default unspecified.
@@ -480,7 +480,7 @@ public struct Macosusesdk_V1_CompoundCondition: Sendable {
 }
 
 /// Loop action (repeat).
-public struct Macosusesdk_V1_LoopAction: Sendable {
+public nonisolated struct Macosusesdk_V1_LoopAction: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -521,7 +521,7 @@ public struct Macosusesdk_V1_LoopAction: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// Loop type.
-  public enum OneOf_LoopType: Equatable, Sendable {
+  public nonisolated enum OneOf_LoopType: Equatable, Sendable {
     /// Fixed iteration count.
     case count(Int32)
     /// Loop while condition is true.
@@ -535,7 +535,7 @@ public struct Macosusesdk_V1_LoopAction: Sendable {
 }
 
 /// For-each loop over collection.
-public struct Macosusesdk_V1_ForEachLoop: Sendable {
+public nonisolated struct Macosusesdk_V1_ForEachLoop: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -576,7 +576,7 @@ public struct Macosusesdk_V1_ForEachLoop: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// Collection to iterate over.
-  public enum OneOf_Collection: Equatable, Sendable {
+  public nonisolated enum OneOf_Collection: Equatable, Sendable {
     /// List of elements.
     case elementSelector(String)
     /// List of windows.
@@ -590,7 +590,7 @@ public struct Macosusesdk_V1_ForEachLoop: Sendable {
 }
 
 /// Variable assignment action.
-public struct Macosusesdk_V1_AssignAction: Sendable {
+public nonisolated struct Macosusesdk_V1_AssignAction: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -640,7 +640,7 @@ public struct Macosusesdk_V1_AssignAction: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// Value source.
-  public enum OneOf_Value: Equatable, Sendable {
+  public nonisolated enum OneOf_Value: Equatable, Sendable {
     /// Literal string value.
     case literal(String)
     /// Value from element attribute.
@@ -656,7 +656,7 @@ public struct Macosusesdk_V1_AssignAction: Sendable {
 }
 
 /// Value from element attribute.
-public struct Macosusesdk_V1_ElementAttributeValue: Sendable {
+public nonisolated struct Macosusesdk_V1_ElementAttributeValue: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -673,7 +673,7 @@ public struct Macosusesdk_V1_ElementAttributeValue: Sendable {
 }
 
 /// Custom method call action.
-public struct Macosusesdk_V1_MethodCall: Sendable {
+public nonisolated struct Macosusesdk_V1_MethodCall: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -690,7 +690,7 @@ public struct Macosusesdk_V1_MethodCall: Sendable {
 }
 
 /// Macro parameter definition.
-public struct Macosusesdk_V1_MacroParameter: Sendable {
+public nonisolated struct Macosusesdk_V1_MacroParameter: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -713,7 +713,7 @@ public struct Macosusesdk_V1_MacroParameter: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// Parameter type enumeration.
-  public enum ParameterType: SwiftProtobuf.Enum, Swift.CaseIterable {
+  public nonisolated enum ParameterType: SwiftProtobuf.Enum, Swift.CaseIterable {
     public typealias RawValue = Int
 
     /// Default unspecified type.
@@ -780,9 +780,9 @@ public struct Macosusesdk_V1_MacroParameter: Sendable {
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
-fileprivate let _protobuf_package = "macosusesdk.v1"
+fileprivate nonisolated let _protobuf_package = "macosusesdk.v1"
 
-extension Macosusesdk_V1_Macro: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_Macro: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Macro"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}display_name\0\u{1}description\0\u{1}actions\0\u{1}parameters\0\u{3}create_time\0\u{3}update_time\0\u{3}execution_count\0\u{1}tags\0")
 
@@ -856,7 +856,7 @@ extension Macosusesdk_V1_Macro: SwiftProtobuf.Message, SwiftProtobuf._MessageImp
   }
 }
 
-extension Macosusesdk_V1_ExecutionLogEntry: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ExecutionLogEntry: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ExecutionLogEntry"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}execution_time\0\u{3}action_index\0\u{1}description\0\u{1}success\0\u{1}error\0\u{1}duration\0")
 
@@ -920,7 +920,7 @@ extension Macosusesdk_V1_ExecutionLogEntry: SwiftProtobuf.Message, SwiftProtobuf
   }
 }
 
-extension Macosusesdk_V1_MacroAction: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_MacroAction: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".MacroAction"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}input\0\u{1}wait\0\u{1}conditional\0\u{1}loop\0\u{1}assign\0\u{3}method_call\0\u{2}\u{4}description\0")
 
@@ -1060,7 +1060,7 @@ extension Macosusesdk_V1_MacroAction: SwiftProtobuf.Message, SwiftProtobuf._Mess
   }
 }
 
-extension Macosusesdk_V1_WaitAction: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_WaitAction: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".WaitAction"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}duration\0\u{1}condition\0")
 
@@ -1099,7 +1099,7 @@ extension Macosusesdk_V1_WaitAction: SwiftProtobuf.Message, SwiftProtobuf._Messa
   }
 }
 
-extension Macosusesdk_V1_WaitCondition: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_WaitCondition: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".WaitCondition"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}element_selector\0\u{3}window_title\0\u{1}application\0\u{2}\u{7}timeout\0")
 
@@ -1173,7 +1173,7 @@ extension Macosusesdk_V1_WaitCondition: SwiftProtobuf.Message, SwiftProtobuf._Me
   }
 }
 
-extension Macosusesdk_V1_ConditionalAction: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ConditionalAction: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ConditionalAction"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}condition\0\u{3}then_actions\0\u{3}else_actions\0")
 
@@ -1217,7 +1217,7 @@ extension Macosusesdk_V1_ConditionalAction: SwiftProtobuf.Message, SwiftProtobuf
   }
 }
 
-extension Macosusesdk_V1_MacroCondition: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_MacroCondition: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".MacroCondition"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}element_exists\0\u{3}window_exists\0\u{3}application_running\0\u{3}variable_equals\0\u{1}compound\0")
 
@@ -1320,7 +1320,7 @@ extension Macosusesdk_V1_MacroCondition: SwiftProtobuf.Message, SwiftProtobuf._M
   }
 }
 
-extension Macosusesdk_V1_VariableCondition: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_VariableCondition: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".VariableCondition"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}variable\0\u{1}value\0")
 
@@ -1355,7 +1355,7 @@ extension Macosusesdk_V1_VariableCondition: SwiftProtobuf.Message, SwiftProtobuf
   }
 }
 
-extension Macosusesdk_V1_CompoundCondition: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_CompoundCondition: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CompoundCondition"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}operator\0\u{1}conditions\0")
 
@@ -1390,11 +1390,11 @@ extension Macosusesdk_V1_CompoundCondition: SwiftProtobuf.Message, SwiftProtobuf
   }
 }
 
-extension Macosusesdk_V1_CompoundCondition.Operator: SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_CompoundCondition.Operator: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0OPERATOR_UNSPECIFIED\0\u{1}OPERATOR_AND\0\u{1}OPERATOR_OR\0\u{1}OPERATOR_NOT\0")
 }
 
-extension Macosusesdk_V1_LoopAction: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_LoopAction: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".LoopAction"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}count\0\u{3}while_condition\0\u{1}foreach\0\u{2}\u{7}actions\0")
 
@@ -1478,7 +1478,7 @@ extension Macosusesdk_V1_LoopAction: SwiftProtobuf.Message, SwiftProtobuf._Messa
   }
 }
 
-extension Macosusesdk_V1_ForEachLoop: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ForEachLoop: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ForEachLoop"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}element_selector\0\u{3}window_pattern\0\u{1}values\0\u{4}\u{7}item_variable\0")
 
@@ -1552,7 +1552,7 @@ extension Macosusesdk_V1_ForEachLoop: SwiftProtobuf.Message, SwiftProtobuf._Mess
   }
 }
 
-extension Macosusesdk_V1_AssignAction: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_AssignAction: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".AssignAction"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}variable\0\u{1}literal\0\u{3}element_attribute\0\u{1}parameter\0\u{1}expression\0")
 
@@ -1643,7 +1643,7 @@ extension Macosusesdk_V1_AssignAction: SwiftProtobuf.Message, SwiftProtobuf._Mes
   }
 }
 
-extension Macosusesdk_V1_ElementAttributeValue: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ElementAttributeValue: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ElementAttributeValue"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}element_selector\0\u{1}attribute\0")
 
@@ -1678,7 +1678,7 @@ extension Macosusesdk_V1_ElementAttributeValue: SwiftProtobuf.Message, SwiftProt
   }
 }
 
-extension Macosusesdk_V1_MethodCall: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_MethodCall: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".MethodCall"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}method\0\u{1}args\0")
 
@@ -1713,7 +1713,7 @@ extension Macosusesdk_V1_MethodCall: SwiftProtobuf.Message, SwiftProtobuf._Messa
   }
 }
 
-extension Macosusesdk_V1_MacroParameter: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_MacroParameter: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".MacroParameter"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}key\0\u{1}type\0\u{3}default_value\0\u{1}description\0\u{1}required\0")
 
@@ -1763,6 +1763,6 @@ extension Macosusesdk_V1_MacroParameter: SwiftProtobuf.Message, SwiftProtobuf._M
   }
 }
 
-extension Macosusesdk_V1_MacroParameter.ParameterType: SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_MacroParameter.ParameterType: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0PARAMETER_TYPE_UNSPECIFIED\0\u{1}PARAMETER_TYPE_STRING\0\u{1}PARAMETER_TYPE_INTEGER\0\u{1}PARAMETER_TYPE_BOOLEAN\0\u{1}PARAMETER_TYPE_SELECTOR\0\u{1}PARAMETER_TYPE_PATH\0")
 }

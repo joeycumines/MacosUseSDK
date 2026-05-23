@@ -19,7 +19,7 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+fileprivate nonisolated struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
   struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
   typealias Version = _2
 }
@@ -89,7 +89,7 @@ fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAP
 /// FILES:
 ///   - Implementation: Server/Sources/MacosUseServer/SelectorParser.swift
 ///   - Matching logic: Server/Sources/MacosUseServer/ElementLocator.swift
-public struct Macosusesdk_Type_ElementSelector: Sendable {
+public nonisolated struct Macosusesdk_Type_ElementSelector: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -163,7 +163,7 @@ public struct Macosusesdk_Type_ElementSelector: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// Selector criteria (at least one must be specified).
-  public enum OneOf_Criteria: Equatable, Sendable {
+  public nonisolated enum OneOf_Criteria: Equatable, Sendable {
     /// Select by role (e.g., "button", "textField").
     case role(String)
     /// Select by text content (exact match).
@@ -188,7 +188,7 @@ public struct Macosusesdk_Type_ElementSelector: Sendable {
 ///
 /// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
 /// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
-public struct Macosusesdk_Type_PositionSelector: Sendable {
+public nonisolated struct Macosusesdk_Type_PositionSelector: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -208,7 +208,7 @@ public struct Macosusesdk_Type_PositionSelector: Sendable {
 }
 
 /// Select element by accessibility attributes.
-public struct Macosusesdk_Type_AttributeSelector: Sendable {
+public nonisolated struct Macosusesdk_Type_AttributeSelector: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -222,7 +222,7 @@ public struct Macosusesdk_Type_AttributeSelector: Sendable {
 }
 
 /// Compound selector combining multiple criteria.
-public struct Macosusesdk_Type_CompoundSelector: Sendable {
+public nonisolated struct Macosusesdk_Type_CompoundSelector: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -236,7 +236,7 @@ public struct Macosusesdk_Type_CompoundSelector: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// Operator for combining selectors.
-  public enum Operator: SwiftProtobuf.Enum, Swift.CaseIterable {
+  public nonisolated enum Operator: SwiftProtobuf.Enum, Swift.CaseIterable {
     public typealias RawValue = Int
 
     /// Default unspecified operator.
@@ -291,9 +291,9 @@ public struct Macosusesdk_Type_CompoundSelector: Sendable {
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
-fileprivate let _protobuf_package = "macosusesdk.type"
+fileprivate nonisolated let _protobuf_package = "macosusesdk.type"
 
-extension Macosusesdk_Type_ElementSelector: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_Type_ElementSelector: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ElementSelector"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}role\0\u{1}text\0\u{3}text_contains\0\u{3}text_regex\0\u{1}position\0\u{1}attributes\0\u{1}compound\0")
 
@@ -425,7 +425,7 @@ extension Macosusesdk_Type_ElementSelector: SwiftProtobuf.Message, SwiftProtobuf
   }
 }
 
-extension Macosusesdk_Type_PositionSelector: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_Type_PositionSelector: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".PositionSelector"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}x\0\u{1}y\0\u{1}tolerance\0")
 
@@ -465,7 +465,7 @@ extension Macosusesdk_Type_PositionSelector: SwiftProtobuf.Message, SwiftProtobu
   }
 }
 
-extension Macosusesdk_Type_AttributeSelector: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_Type_AttributeSelector: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".AttributeSelector"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}attributes\0")
 
@@ -495,7 +495,7 @@ extension Macosusesdk_Type_AttributeSelector: SwiftProtobuf.Message, SwiftProtob
   }
 }
 
-extension Macosusesdk_Type_CompoundSelector: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_Type_CompoundSelector: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CompoundSelector"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}operator\0\u{1}selectors\0")
 
@@ -530,6 +530,6 @@ extension Macosusesdk_Type_CompoundSelector: SwiftProtobuf.Message, SwiftProtobu
   }
 }
 
-extension Macosusesdk_Type_CompoundSelector.Operator: SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_Type_CompoundSelector.Operator: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0OPERATOR_UNSPECIFIED\0\u{1}OPERATOR_AND\0\u{1}OPERATOR_OR\0\u{1}OPERATOR_NOT\0")
 }

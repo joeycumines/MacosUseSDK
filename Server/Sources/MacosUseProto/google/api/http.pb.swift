@@ -8,7 +8,7 @@
 // For information on using the generated types, please see the documentation:
 //   https://github.com/apple/swift-protobuf/
 
-// Copyright 2025 Google LLC
+// Copyright 2026 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+fileprivate nonisolated struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
   struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
   typealias Version = _2
 }
@@ -37,7 +37,7 @@ fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAP
 /// Defines the HTTP configuration for an API service. It contains a list of
 /// [HttpRule][google.api.HttpRule], each specifying the mapping of an RPC method
 /// to one or more HTTP REST API methods.
-public struct Google_Api_Http: Sendable {
+public nonisolated struct Google_Api_Http: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -324,7 +324,7 @@ public struct Google_Api_Http: Sendable {
 /// If an API needs to use a JSON array for request or response body, it can map
 /// the request or response body to a repeated field. However, some gRPC
 /// Transcoding implementations may not support this feature.
-public struct Google_Api_HttpRule: Sendable {
+public nonisolated struct Google_Api_HttpRule: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -424,7 +424,7 @@ public struct Google_Api_HttpRule: Sendable {
   /// Determines the URL pattern is matched by this rules. This pattern can be
   /// used with any of the {get|put|post|delete|patch} methods. A custom method
   /// can be defined using the 'custom' field.
-  public enum OneOf_Pattern: Equatable, Sendable {
+  public nonisolated enum OneOf_Pattern: Equatable, Sendable {
     /// Maps to HTTP GET. Used for listing and getting information about
     /// resources.
     case get(String)
@@ -448,7 +448,7 @@ public struct Google_Api_HttpRule: Sendable {
 }
 
 /// A custom pattern is used for defining custom HTTP verb.
-public struct Google_Api_CustomHttpPattern: Sendable {
+public nonisolated struct Google_Api_CustomHttpPattern: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -466,9 +466,9 @@ public struct Google_Api_CustomHttpPattern: Sendable {
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
-fileprivate let _protobuf_package = "google.api"
+fileprivate nonisolated let _protobuf_package = "google.api"
 
-extension Google_Api_Http: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Api_Http: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Http"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}rules\0\u{3}fully_decode_reserved_expansion\0")
 
@@ -503,7 +503,7 @@ extension Google_Api_Http: SwiftProtobuf.Message, SwiftProtobuf._MessageImplemen
   }
 }
 
-extension Google_Api_HttpRule: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Api_HttpRule: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".HttpRule"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}selector\0\u{1}get\0\u{1}put\0\u{1}post\0\u{1}delete\0\u{1}patch\0\u{1}body\0\u{1}custom\0\u{4}\u{3}additional_bindings\0\u{3}response_body\0")
 
@@ -632,7 +632,7 @@ extension Google_Api_HttpRule: SwiftProtobuf.Message, SwiftProtobuf._MessageImpl
   }
 }
 
-extension Google_Api_CustomHttpPattern: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Api_CustomHttpPattern: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CustomHttpPattern"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}kind\0\u{1}path\0")
 

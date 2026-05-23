@@ -18,10 +18,10 @@ let package = Package(
     ],
     dependencies: [
         // gRPC Swift 2 core, transport, and Protobuf integration
-        .package(url: "https://github.com/grpc/grpc-swift-2.git", from: "2.0.0"),
-        .package(url: "https://github.com/grpc/grpc-swift-protobuf.git", from: "2.0.0"),
-        .package(url: "https://github.com/grpc/grpc-swift-nio-transport.git", from: "2.0.0"),
-        .package(url: "https://github.com/grpc/grpc-swift-extras.git", from: "2.0.0"),
+        .package(url: "https://github.com/grpc/grpc-swift-2.git", from: "2.4.1"),
+        .package(url: "https://github.com/grpc/grpc-swift-protobuf.git", from: "2.4.0"),
+        .package(url: "https://github.com/grpc/grpc-swift-nio-transport.git", from: "2.7.0"),
+        .package(url: "https://github.com/grpc/grpc-swift-extras.git", from: "2.2.0"),
         .package(name: "MacosUseSDK", path: "../"),
     ],
     targets: [

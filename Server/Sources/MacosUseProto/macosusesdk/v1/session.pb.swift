@@ -19,7 +19,7 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+fileprivate nonisolated struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
   struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
   typealias Version = _2
 }
@@ -27,7 +27,7 @@ fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAP
 /// A resource representing a session for coordinating complex workflows.
 /// Sessions maintain context across multiple operations and support
 /// transaction-like semantics for atomic operation groups.
-public struct Macosusesdk_V1_Session: Sendable {
+public nonisolated struct Macosusesdk_V1_Session: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -81,7 +81,7 @@ public struct Macosusesdk_V1_Session: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// State of a session.
-  public enum State: SwiftProtobuf.Enum, Swift.CaseIterable {
+  public nonisolated enum State: SwiftProtobuf.Enum, Swift.CaseIterable {
     public typealias RawValue = Int
 
     /// Default unspecified state.
@@ -151,7 +151,7 @@ public struct Macosusesdk_V1_Session: Sendable {
 }
 
 /// A transaction within a session.
-public struct Macosusesdk_V1_Transaction: @unchecked Sendable {
+public nonisolated struct Macosusesdk_V1_Transaction: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -203,7 +203,7 @@ public struct Macosusesdk_V1_Transaction: @unchecked Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// Transaction state.
-  public enum State: SwiftProtobuf.Enum, Swift.CaseIterable {
+  public nonisolated enum State: SwiftProtobuf.Enum, Swift.CaseIterable {
     public typealias RawValue = Int
 
     /// Default unspecified.
@@ -265,7 +265,7 @@ public struct Macosusesdk_V1_Transaction: @unchecked Sendable {
 }
 
 /// Session state snapshot.
-public struct Macosusesdk_V1_SessionSnapshot: Sendable {
+public nonisolated struct Macosusesdk_V1_SessionSnapshot: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -297,7 +297,7 @@ public struct Macosusesdk_V1_SessionSnapshot: Sendable {
 }
 
 /// Record of an operation within a session.
-public struct Macosusesdk_V1_OperationRecord: Sendable {
+public nonisolated struct Macosusesdk_V1_OperationRecord: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -336,9 +336,9 @@ public struct Macosusesdk_V1_OperationRecord: Sendable {
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
-fileprivate let _protobuf_package = "macosusesdk.v1"
+fileprivate nonisolated let _protobuf_package = "macosusesdk.v1"
 
-extension Macosusesdk_V1_Session: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_Session: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Session"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}display_name\0\u{1}state\0\u{3}create_time\0\u{3}last_access_time\0\u{4}\u{2}expire_time\0\u{3}transaction_id\0\u{1}metadata\0")
 
@@ -407,11 +407,11 @@ extension Macosusesdk_V1_Session: SwiftProtobuf.Message, SwiftProtobuf._MessageI
   }
 }
 
-extension Macosusesdk_V1_Session.State: SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_Session.State: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0STATE_UNSPECIFIED\0\u{1}STATE_ACTIVE\0\u{1}STATE_IN_TRANSACTION\0\u{1}STATE_TERMINATED\0\u{1}STATE_EXPIRED\0\u{1}STATE_FAILED\0")
 }
 
-extension Macosusesdk_V1_Transaction: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_Transaction: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Transaction"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}transaction_id\0\u{1}session\0\u{1}state\0\u{3}start_time\0\u{3}operations_count\0\u{3}updated_session\0")
 
@@ -516,11 +516,11 @@ extension Macosusesdk_V1_Transaction: SwiftProtobuf.Message, SwiftProtobuf._Mess
   }
 }
 
-extension Macosusesdk_V1_Transaction.State: SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_Transaction.State: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0STATE_UNSPECIFIED\0\u{1}STATE_ACTIVE\0\u{1}STATE_COMMITTED\0\u{1}STATE_ROLLED_BACK\0\u{1}STATE_FAILED\0")
 }
 
-extension Macosusesdk_V1_SessionSnapshot: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_SessionSnapshot: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".SessionSnapshot"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}session\0\u{1}applications\0\u{1}observations\0\u{1}history\0")
 
@@ -569,7 +569,7 @@ extension Macosusesdk_V1_SessionSnapshot: SwiftProtobuf.Message, SwiftProtobuf._
   }
 }
 
-extension Macosusesdk_V1_OperationRecord: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_OperationRecord: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".OperationRecord"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}operation_time\0\u{3}operation_type\0\u{1}resource\0\u{1}success\0\u{1}error\0\u{3}transaction_id\0")
 

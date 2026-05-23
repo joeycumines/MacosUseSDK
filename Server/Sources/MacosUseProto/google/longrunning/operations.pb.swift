@@ -29,14 +29,14 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+fileprivate nonisolated struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
   struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
   typealias Version = _2
 }
 
 /// This resource represents a long-running operation that is the result of a
 /// network API call.
-public struct Google_Longrunning_Operation: Sendable {
+public nonisolated struct Google_Longrunning_Operation: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -101,7 +101,7 @@ public struct Google_Longrunning_Operation: Sendable {
   /// If `done` == `false`, neither `error` nor `response` is set.
   /// If `done` == `true`, exactly one of `error` or `response` can be set.
   /// Some services might not provide the result.
-  public enum OneOf_Result: Equatable, Sendable {
+  public nonisolated enum OneOf_Result: Equatable, Sendable {
     /// The error result of the operation in case of failure or cancellation.
     case error(Google_Rpc_Status)
     /// The normal, successful response of the operation.  If the original
@@ -123,7 +123,7 @@ public struct Google_Longrunning_Operation: Sendable {
 
 /// The request message for
 /// [Operations.GetOperation][google.longrunning.Operations.GetOperation].
-public struct Google_Longrunning_GetOperationRequest: Sendable {
+public nonisolated struct Google_Longrunning_GetOperationRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -138,7 +138,7 @@ public struct Google_Longrunning_GetOperationRequest: Sendable {
 
 /// The request message for
 /// [Operations.ListOperations][google.longrunning.Operations.ListOperations].
-public struct Google_Longrunning_ListOperationsRequest: Sendable {
+public nonisolated struct Google_Longrunning_ListOperationsRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -174,7 +174,7 @@ public struct Google_Longrunning_ListOperationsRequest: Sendable {
 
 /// The response message for
 /// [Operations.ListOperations][google.longrunning.Operations.ListOperations].
-public struct Google_Longrunning_ListOperationsResponse: Sendable {
+public nonisolated struct Google_Longrunning_ListOperationsResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -198,7 +198,7 @@ public struct Google_Longrunning_ListOperationsResponse: Sendable {
 
 /// The request message for
 /// [Operations.CancelOperation][google.longrunning.Operations.CancelOperation].
-public struct Google_Longrunning_CancelOperationRequest: Sendable {
+public nonisolated struct Google_Longrunning_CancelOperationRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -213,7 +213,7 @@ public struct Google_Longrunning_CancelOperationRequest: Sendable {
 
 /// The request message for
 /// [Operations.DeleteOperation][google.longrunning.Operations.DeleteOperation].
-public struct Google_Longrunning_DeleteOperationRequest: Sendable {
+public nonisolated struct Google_Longrunning_DeleteOperationRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -228,7 +228,7 @@ public struct Google_Longrunning_DeleteOperationRequest: Sendable {
 
 /// The request message for
 /// [Operations.WaitOperation][google.longrunning.Operations.WaitOperation].
-public struct Google_Longrunning_WaitOperationRequest: Sendable {
+public nonisolated struct Google_Longrunning_WaitOperationRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -265,7 +265,7 @@ public struct Google_Longrunning_WaitOperationRequest: Sendable {
 ///         metadata_type: "ExportMetadata"
 ///       };
 ///     }
-public struct Google_Longrunning_OperationInfo: Sendable {
+public nonisolated struct Google_Longrunning_OperationInfo: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -303,7 +303,7 @@ public struct Google_Longrunning_OperationInfo: Sendable {
 // declaration. To avoid naming collisions, the names are prefixed with the name of
 // the scope where the extend directive occurs.
 
-extension SwiftProtobuf.Google_Protobuf_MethodOptions {
+nonisolated extension SwiftProtobuf.Google_Protobuf_MethodOptions {
 
   /// Additional information regarding long-running operations.
   /// In particular, this specifies the types that are returned from
@@ -334,7 +334,7 @@ extension SwiftProtobuf.Google_Protobuf_MethodOptions {
 /// this .proto file. It can be used any place an `SwiftProtobuf.ExtensionMap` is needed
 /// in parsing, or it can be combined with other `SwiftProtobuf.SimpleExtensionMap`s to create
 /// a larger `SwiftProtobuf.SimpleExtensionMap`.
-public let Google_Longrunning_Operations_Extensions: SwiftProtobuf.SimpleExtensionMap = [
+public nonisolated let Google_Longrunning_Operations_Extensions: SwiftProtobuf.SimpleExtensionMap = [
   Google_Longrunning_Extensions_operation_info
 ]
 
@@ -348,16 +348,16 @@ public let Google_Longrunning_Operations_Extensions: SwiftProtobuf.SimpleExtensi
 ///
 /// Required for methods that return `google.longrunning.Operation`; invalid
 /// otherwise.
-public let Google_Longrunning_Extensions_operation_info = SwiftProtobuf.MessageExtension<SwiftProtobuf.OptionalMessageExtensionField<Google_Longrunning_OperationInfo>, SwiftProtobuf.Google_Protobuf_MethodOptions>(
+public nonisolated let Google_Longrunning_Extensions_operation_info = SwiftProtobuf.MessageExtension<SwiftProtobuf.OptionalMessageExtensionField<Google_Longrunning_OperationInfo>, SwiftProtobuf.Google_Protobuf_MethodOptions>(
   _protobuf_fieldNumber: 1049,
   fieldName: "google.longrunning.operation_info"
 )
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
-fileprivate let _protobuf_package = "google.longrunning"
+fileprivate nonisolated let _protobuf_package = "google.longrunning"
 
-extension Google_Longrunning_Operation: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Longrunning_Operation: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Operation"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}metadata\0\u{1}done\0\u{1}error\0\u{1}response\0")
 
@@ -439,7 +439,7 @@ extension Google_Longrunning_Operation: SwiftProtobuf.Message, SwiftProtobuf._Me
   }
 }
 
-extension Google_Longrunning_GetOperationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Longrunning_GetOperationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".GetOperationRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
 
@@ -469,7 +469,7 @@ extension Google_Longrunning_GetOperationRequest: SwiftProtobuf.Message, SwiftPr
   }
 }
 
-extension Google_Longrunning_ListOperationsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Longrunning_ListOperationsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListOperationsRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}filter\0\u{3}page_size\0\u{3}page_token\0\u{1}name\0\u{3}return_partial_success\0")
 
@@ -519,7 +519,7 @@ extension Google_Longrunning_ListOperationsRequest: SwiftProtobuf.Message, Swift
   }
 }
 
-extension Google_Longrunning_ListOperationsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Longrunning_ListOperationsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListOperationsResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}operations\0\u{3}next_page_token\0\u{1}unreachable\0")
 
@@ -559,7 +559,7 @@ extension Google_Longrunning_ListOperationsResponse: SwiftProtobuf.Message, Swif
   }
 }
 
-extension Google_Longrunning_CancelOperationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Longrunning_CancelOperationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CancelOperationRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
 
@@ -589,7 +589,7 @@ extension Google_Longrunning_CancelOperationRequest: SwiftProtobuf.Message, Swif
   }
 }
 
-extension Google_Longrunning_DeleteOperationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Longrunning_DeleteOperationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".DeleteOperationRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
 
@@ -619,7 +619,7 @@ extension Google_Longrunning_DeleteOperationRequest: SwiftProtobuf.Message, Swif
   }
 }
 
-extension Google_Longrunning_WaitOperationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Longrunning_WaitOperationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".WaitOperationRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}timeout\0")
 
@@ -658,7 +658,7 @@ extension Google_Longrunning_WaitOperationRequest: SwiftProtobuf.Message, SwiftP
   }
 }
 
-extension Google_Longrunning_OperationInfo: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Longrunning_OperationInfo: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".OperationInfo"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}response_type\0\u{3}metadata_type\0")
 

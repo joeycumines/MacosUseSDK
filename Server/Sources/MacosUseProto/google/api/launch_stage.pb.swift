@@ -8,7 +8,7 @@
 // For information on using the generated types, please see the documentation:
 //   https://github.com/apple/swift-protobuf/
 
-// Copyright 2025 Google LLC
+// Copyright 2026 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,14 +29,14 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+fileprivate nonisolated struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
   struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
   typealias Version = _2
 }
 
 /// The launch stage as defined by [Google Cloud Platform
 /// Launch Stages](https://cloud.google.com/terms/launch-stages).
-public enum Google_Api_LaunchStage: SwiftProtobuf.Enum, Swift.CaseIterable {
+public nonisolated enum Google_Api_LaunchStage: SwiftProtobuf.Enum, Swift.CaseIterable {
   public typealias RawValue = Int
 
   /// Do not use this default value.
@@ -133,6 +133,6 @@ public enum Google_Api_LaunchStage: SwiftProtobuf.Enum, Swift.CaseIterable {
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
-extension Google_Api_LaunchStage: SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Google_Api_LaunchStage: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0LAUNCH_STAGE_UNSPECIFIED\0\u{1}EARLY_ACCESS\0\u{1}ALPHA\0\u{1}BETA\0\u{1}GA\0\u{1}DEPRECATED\0\u{1}UNIMPLEMENTED\0\u{1}PRELAUNCH\0")
 }

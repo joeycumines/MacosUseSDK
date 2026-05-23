@@ -12,7 +12,11 @@
 //
 // Clipboard resources and types
 
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
 import Foundation
+#endif
 import SwiftProtobuf
 
 // If the compiler emits an error on this type, it is because this file
@@ -20,13 +24,13 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+fileprivate nonisolated struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
   struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
   typealias Version = _2
 }
 
 /// Content type for clipboard operations.
-public enum Macosusesdk_V1_ContentType: SwiftProtobuf.Enum, Swift.CaseIterable {
+public nonisolated enum Macosusesdk_V1_ContentType: SwiftProtobuf.Enum, Swift.CaseIterable {
   public typealias RawValue = Int
 
   /// Default unspecified type (auto-detect).
@@ -95,7 +99,7 @@ public enum Macosusesdk_V1_ContentType: SwiftProtobuf.Enum, Swift.CaseIterable {
 }
 
 /// Clipboard contents.
-public struct Macosusesdk_V1_Clipboard: Sendable {
+public nonisolated struct Macosusesdk_V1_Clipboard: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -124,7 +128,7 @@ public struct Macosusesdk_V1_Clipboard: Sendable {
 }
 
 /// Clipboard content (one of the supported types).
-public struct Macosusesdk_V1_ClipboardContent: Sendable {
+public nonisolated struct Macosusesdk_V1_ClipboardContent: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -192,7 +196,7 @@ public struct Macosusesdk_V1_ClipboardContent: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// The actual content (type-specific).
-  public enum OneOf_Content: Equatable, Sendable {
+  public nonisolated enum OneOf_Content: Equatable, Sendable {
     /// Plain text content.
     case text(String)
     /// Rich Text Format (RTF) content.
@@ -212,7 +216,7 @@ public struct Macosusesdk_V1_ClipboardContent: Sendable {
 }
 
 /// File paths for clipboard file content.
-public struct Macosusesdk_V1_FilePaths: Sendable {
+public nonisolated struct Macosusesdk_V1_FilePaths: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -226,7 +230,7 @@ public struct Macosusesdk_V1_FilePaths: Sendable {
 }
 
 /// Clipboard history.
-public struct Macosusesdk_V1_ClipboardHistory: Sendable {
+public nonisolated struct Macosusesdk_V1_ClipboardHistory: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -240,7 +244,7 @@ public struct Macosusesdk_V1_ClipboardHistory: Sendable {
 }
 
 /// A clipboard history entry.
-public struct Macosusesdk_V1_ClipboardHistoryEntry: Sendable {
+public nonisolated struct Macosusesdk_V1_ClipboardHistoryEntry: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -278,13 +282,13 @@ public struct Macosusesdk_V1_ClipboardHistoryEntry: Sendable {
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
-fileprivate let _protobuf_package = "macosusesdk.v1"
+fileprivate nonisolated let _protobuf_package = "macosusesdk.v1"
 
-extension Macosusesdk_V1_ContentType: SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ContentType: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0CONTENT_TYPE_UNSPECIFIED\0\u{1}CONTENT_TYPE_TEXT\0\u{1}CONTENT_TYPE_RTF\0\u{1}CONTENT_TYPE_HTML\0\u{1}CONTENT_TYPE_IMAGE\0\u{1}CONTENT_TYPE_FILES\0\u{1}CONTENT_TYPE_URL\0")
 }
 
-extension Macosusesdk_V1_Clipboard: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_Clipboard: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Clipboard"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}content\0\u{3}available_types\0")
 
@@ -328,7 +332,7 @@ extension Macosusesdk_V1_Clipboard: SwiftProtobuf.Message, SwiftProtobuf._Messag
   }
 }
 
-extension Macosusesdk_V1_ClipboardContent: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ClipboardContent: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ClipboardContent"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}type\0\u{2}\u{9}text\0\u{1}rtf\0\u{1}html\0\u{1}image\0\u{1}files\0\u{1}url\0")
 
@@ -443,7 +447,7 @@ extension Macosusesdk_V1_ClipboardContent: SwiftProtobuf.Message, SwiftProtobuf.
   }
 }
 
-extension Macosusesdk_V1_FilePaths: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_FilePaths: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".FilePaths"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}paths\0")
 
@@ -473,7 +477,7 @@ extension Macosusesdk_V1_FilePaths: SwiftProtobuf.Message, SwiftProtobuf._Messag
   }
 }
 
-extension Macosusesdk_V1_ClipboardHistory: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ClipboardHistory: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ClipboardHistory"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}entries\0")
 
@@ -503,7 +507,7 @@ extension Macosusesdk_V1_ClipboardHistory: SwiftProtobuf.Message, SwiftProtobuf.
   }
 }
 
-extension Macosusesdk_V1_ClipboardHistoryEntry: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ClipboardHistoryEntry: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ClipboardHistoryEntry"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}copied_time\0\u{1}content\0\u{3}source_application\0")
 

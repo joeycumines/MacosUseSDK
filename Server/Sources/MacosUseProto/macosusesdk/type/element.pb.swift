@@ -19,13 +19,13 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+fileprivate nonisolated struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
   struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
   typealias Version = _2
 }
 
 /// Represents a UI element from accessibility tree traversal.
-public struct Macosusesdk_Type_Element: Sendable {
+public nonisolated struct Macosusesdk_Type_Element: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -130,7 +130,7 @@ public struct Macosusesdk_Type_Element: Sendable {
 }
 
 /// Statistics about a traversal operation.
-public struct Macosusesdk_Type_TraversalStats: Sendable {
+public nonisolated struct Macosusesdk_Type_TraversalStats: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -166,9 +166,9 @@ public struct Macosusesdk_Type_TraversalStats: Sendable {
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
-fileprivate let _protobuf_package = "macosusesdk.type"
+fileprivate nonisolated let _protobuf_package = "macosusesdk.type"
 
-extension Macosusesdk_Type_Element: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_Type_Element: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Element"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}role\0\u{1}text\0\u{1}x\0\u{1}y\0\u{1}width\0\u{1}height\0\u{3}element_id\0\u{1}enabled\0\u{1}focused\0\u{1}path\0\u{1}attributes\0\u{1}actions\0")
 
@@ -257,7 +257,7 @@ extension Macosusesdk_Type_Element: SwiftProtobuf.Message, SwiftProtobuf._Messag
   }
 }
 
-extension Macosusesdk_Type_TraversalStats: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_Type_TraversalStats: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".TraversalStats"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}count\0\u{3}excluded_count\0\u{3}excluded_non_interactable\0\u{3}excluded_no_text\0\u{3}text_elements_count\0\u{3}non_text_elements_count\0\u{3}visible_elements_count\0\u{3}role_counts\0")
 

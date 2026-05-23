@@ -19,13 +19,13 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+fileprivate nonisolated struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
   struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
   typealias Version = _2
 }
 
 /// A resource representing a physical display/screen attached to the system.
-public struct Macosusesdk_V1_Display: Sendable {
+public nonisolated struct Macosusesdk_V1_Display: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -73,7 +73,7 @@ public struct Macosusesdk_V1_Display: Sendable {
 }
 
 /// Request to list displays.
-public struct Macosusesdk_V1_ListDisplaysRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_ListDisplaysRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -92,7 +92,7 @@ public struct Macosusesdk_V1_ListDisplaysRequest: Sendable {
 }
 
 /// Request to get a specific display.
-public struct Macosusesdk_V1_GetDisplayRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_GetDisplayRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -106,7 +106,7 @@ public struct Macosusesdk_V1_GetDisplayRequest: Sendable {
 }
 
 /// Response from listing displays.
-public struct Macosusesdk_V1_ListDisplaysResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_ListDisplaysResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -126,7 +126,7 @@ public struct Macosusesdk_V1_ListDisplaysResponse: Sendable {
 
 /// Request to capture the current cursor position.
 /// Reserved for future expansion (e.g., coordinate space options).
-public struct Macosusesdk_V1_CaptureCursorPositionRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_CaptureCursorPositionRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -138,7 +138,7 @@ public struct Macosusesdk_V1_CaptureCursorPositionRequest: Sendable {
 
 /// Response with the current cursor position.
 /// Uses Global Display Coordinates (top-left origin, Y increases downward).
-public struct Macosusesdk_V1_CaptureCursorPositionResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_CaptureCursorPositionResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -159,9 +159,9 @@ public struct Macosusesdk_V1_CaptureCursorPositionResponse: Sendable {
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
-fileprivate let _protobuf_package = "macosusesdk.v1"
+fileprivate nonisolated let _protobuf_package = "macosusesdk.v1"
 
-extension Macosusesdk_V1_Display: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_Display: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Display"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}display_id\0\u{1}frame\0\u{3}visible_frame\0\u{3}is_main\0\u{1}scale\0")
 
@@ -220,7 +220,7 @@ extension Macosusesdk_V1_Display: SwiftProtobuf.Message, SwiftProtobuf._MessageI
   }
 }
 
-extension Macosusesdk_V1_ListDisplaysRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ListDisplaysRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListDisplaysRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}page_size\0\u{3}page_token\0")
 
@@ -255,7 +255,7 @@ extension Macosusesdk_V1_ListDisplaysRequest: SwiftProtobuf.Message, SwiftProtob
   }
 }
 
-extension Macosusesdk_V1_GetDisplayRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_GetDisplayRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".GetDisplayRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
 
@@ -285,7 +285,7 @@ extension Macosusesdk_V1_GetDisplayRequest: SwiftProtobuf.Message, SwiftProtobuf
   }
 }
 
-extension Macosusesdk_V1_ListDisplaysResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ListDisplaysResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListDisplaysResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}displays\0\u{3}next_page_token\0")
 
@@ -320,7 +320,7 @@ extension Macosusesdk_V1_ListDisplaysResponse: SwiftProtobuf.Message, SwiftProto
   }
 }
 
-extension Macosusesdk_V1_CaptureCursorPositionRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_CaptureCursorPositionRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CaptureCursorPositionRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap()
 
@@ -339,7 +339,7 @@ extension Macosusesdk_V1_CaptureCursorPositionRequest: SwiftProtobuf.Message, Sw
   }
 }
 
-extension Macosusesdk_V1_CaptureCursorPositionResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_CaptureCursorPositionResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CaptureCursorPositionResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}x\0\u{1}y\0\u{1}display\0")
 

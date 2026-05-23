@@ -326,7 +326,7 @@ struct ListOrderingFilteringTests {
     }
 
     @Test
-    func `applyWindowFilter - title=\"...\" filters by title content`() {
+    func `applyWindowFilter - title=... filters by title content`() {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -506,7 +506,7 @@ struct ListOrderingFilteringTests {
     // MARK: - ListApplications Filtering Tests
 
     @Test
-    func `applyApplicationFilter - name=\"...\" filters by display name`() {
+    func `applyApplicationFilter - name="..." filters by display name`() {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(

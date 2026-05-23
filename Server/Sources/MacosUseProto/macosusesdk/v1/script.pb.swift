@@ -19,13 +19,13 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+fileprivate nonisolated struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
   struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
   typealias Version = _2
 }
 
 /// Script type enumeration.
-public enum Macosusesdk_V1_ScriptType: SwiftProtobuf.Enum, Swift.CaseIterable {
+public nonisolated enum Macosusesdk_V1_ScriptType: SwiftProtobuf.Enum, Swift.CaseIterable {
   public typealias RawValue = Int
 
   /// Default unspecified type.
@@ -76,7 +76,7 @@ public enum Macosusesdk_V1_ScriptType: SwiftProtobuf.Enum, Swift.CaseIterable {
 }
 
 /// Scripting dictionaries.
-public struct Macosusesdk_V1_ScriptingDictionaries: Sendable {
+public nonisolated struct Macosusesdk_V1_ScriptingDictionaries: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -90,7 +90,7 @@ public struct Macosusesdk_V1_ScriptingDictionaries: Sendable {
 }
 
 /// Scripting dictionary for an application.
-public struct Macosusesdk_V1_ScriptingDictionary: Sendable {
+public nonisolated struct Macosusesdk_V1_ScriptingDictionary: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -120,13 +120,13 @@ public struct Macosusesdk_V1_ScriptingDictionary: Sendable {
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
-fileprivate let _protobuf_package = "macosusesdk.v1"
+fileprivate nonisolated let _protobuf_package = "macosusesdk.v1"
 
-extension Macosusesdk_V1_ScriptType: SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ScriptType: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0SCRIPT_TYPE_UNSPECIFIED\0\u{1}SCRIPT_TYPE_APPLESCRIPT\0\u{1}SCRIPT_TYPE_JXA\0\u{1}SCRIPT_TYPE_SHELL\0")
 }
 
-extension Macosusesdk_V1_ScriptingDictionaries: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ScriptingDictionaries: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ScriptingDictionaries"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}dictionaries\0")
 
@@ -156,7 +156,7 @@ extension Macosusesdk_V1_ScriptingDictionaries: SwiftProtobuf.Message, SwiftProt
   }
 }
 
-extension Macosusesdk_V1_ScriptingDictionary: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ScriptingDictionary: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ScriptingDictionary"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0\u{3}bundle_id\0\u{3}supports_applescript\0\u{3}supports_jxa\0\u{1}commands\0\u{1}classes\0")
 

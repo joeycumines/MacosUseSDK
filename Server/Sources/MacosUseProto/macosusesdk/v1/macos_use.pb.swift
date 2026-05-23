@@ -12,7 +12,11 @@
 //
 // MacosUse service definition
 
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
 import Foundation
+#endif
 import SwiftProtobuf
 
 // If the compiler emits an error on this type, it is because this file
@@ -20,13 +24,13 @@ import SwiftProtobuf
 // incompatible with the version of SwiftProtobuf to which you are linking.
 // Please ensure that you are building against the same version of the API
 // that was used to generate this file.
-fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
+fileprivate nonisolated struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAPIVersionCheck {
   struct _2: SwiftProtobuf.ProtobufAPIVersion_2 {}
   typealias Version = _2
 }
 
 /// Request to open an application.
-public struct Macosusesdk_V1_OpenApplicationRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_OpenApplicationRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -46,7 +50,7 @@ public struct Macosusesdk_V1_OpenApplicationRequest: Sendable {
 }
 
 /// Response from opening an application.
-public struct Macosusesdk_V1_OpenApplicationResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_OpenApplicationResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -69,7 +73,7 @@ public struct Macosusesdk_V1_OpenApplicationResponse: Sendable {
 }
 
 /// Metadata for OpenApplication long-running operation.
-public struct Macosusesdk_V1_OpenApplicationMetadata: Sendable {
+public nonisolated struct Macosusesdk_V1_OpenApplicationMetadata: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -83,7 +87,7 @@ public struct Macosusesdk_V1_OpenApplicationMetadata: Sendable {
 }
 
 /// Request to get an application.
-public struct Macosusesdk_V1_GetApplicationRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_GetApplicationRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -111,7 +115,7 @@ public struct Macosusesdk_V1_GetApplicationRequest: Sendable {
 }
 
 /// Request to list applications.
-public struct Macosusesdk_V1_ListApplicationsRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_ListApplicationsRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -140,7 +144,7 @@ public struct Macosusesdk_V1_ListApplicationsRequest: Sendable {
 }
 
 /// Response from listing applications.
-public struct Macosusesdk_V1_ListApplicationsResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_ListApplicationsResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -159,7 +163,7 @@ public struct Macosusesdk_V1_ListApplicationsResponse: Sendable {
 }
 
 /// Request to delete an application.
-public struct Macosusesdk_V1_DeleteApplicationRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_DeleteApplicationRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -176,7 +180,7 @@ public struct Macosusesdk_V1_DeleteApplicationRequest: Sendable {
 }
 
 /// Request to create an input.
-public struct Macosusesdk_V1_CreateInputRequest: @unchecked Sendable {
+public nonisolated struct Macosusesdk_V1_CreateInputRequest: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -211,7 +215,7 @@ public struct Macosusesdk_V1_CreateInputRequest: @unchecked Sendable {
 }
 
 /// Request to get an input.
-public struct Macosusesdk_V1_GetInputRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_GetInputRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -225,7 +229,7 @@ public struct Macosusesdk_V1_GetInputRequest: Sendable {
 }
 
 /// Request to list inputs.
-public struct Macosusesdk_V1_ListInputsRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_ListInputsRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -250,7 +254,7 @@ public struct Macosusesdk_V1_ListInputsRequest: Sendable {
 }
 
 /// Response from listing inputs.
-public struct Macosusesdk_V1_ListInputsResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_ListInputsResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -269,7 +273,7 @@ public struct Macosusesdk_V1_ListInputsResponse: Sendable {
 }
 
 /// Request to traverse accessibility tree.
-public struct Macosusesdk_V1_TraverseAccessibilityRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_TraverseAccessibilityRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -291,7 +295,7 @@ public struct Macosusesdk_V1_TraverseAccessibilityRequest: Sendable {
 }
 
 /// Response from traversing accessibility tree.
-public struct Macosusesdk_V1_TraverseAccessibilityResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_TraverseAccessibilityResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -331,7 +335,7 @@ public struct Macosusesdk_V1_TraverseAccessibilityResponse: Sendable {
 }
 
 /// Request to watch accessibility changes.
-public struct Macosusesdk_V1_WatchAccessibilityRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_WatchAccessibilityRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -351,7 +355,7 @@ public struct Macosusesdk_V1_WatchAccessibilityRequest: Sendable {
 }
 
 /// Response streamed from watching accessibility.
-public struct Macosusesdk_V1_WatchAccessibilityResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_WatchAccessibilityResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -371,7 +375,7 @@ public struct Macosusesdk_V1_WatchAccessibilityResponse: Sendable {
 }
 
 /// An element that was modified.
-public struct Macosusesdk_V1_ModifiedElement: @unchecked Sendable {
+public nonisolated struct Macosusesdk_V1_ModifiedElement: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -410,7 +414,7 @@ public struct Macosusesdk_V1_ModifiedElement: @unchecked Sendable {
 }
 
 /// Request to find elements matching a selector.
-public struct Macosusesdk_V1_FindElementsRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_FindElementsRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -449,7 +453,7 @@ public struct Macosusesdk_V1_FindElementsRequest: Sendable {
 }
 
 /// Response from finding elements.
-public struct Macosusesdk_V1_FindElementsResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_FindElementsResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -468,7 +472,7 @@ public struct Macosusesdk_V1_FindElementsResponse: Sendable {
 }
 
 /// Request to find elements within a screen region.
-public struct Macosusesdk_V1_FindRegionElementsRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_FindRegionElementsRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -515,7 +519,7 @@ public struct Macosusesdk_V1_FindRegionElementsRequest: Sendable {
 }
 
 /// Response from finding elements in a region.
-public struct Macosusesdk_V1_FindRegionElementsResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_FindRegionElementsResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -534,7 +538,7 @@ public struct Macosusesdk_V1_FindRegionElementsResponse: Sendable {
 }
 
 /// Request to get a specific element by its resource name.
-public struct Macosusesdk_V1_GetElementRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_GetElementRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -549,7 +553,7 @@ public struct Macosusesdk_V1_GetElementRequest: Sendable {
 }
 
 /// Request to click an element.
-public struct Macosusesdk_V1_ClickElementRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_ClickElementRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -584,7 +588,7 @@ public struct Macosusesdk_V1_ClickElementRequest: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// Element ID or selector.
-  public enum OneOf_Target: Equatable, Sendable {
+  public nonisolated enum OneOf_Target: Equatable, Sendable {
     /// Element ID to click.
     case elementID(String)
     /// Selector to find element to click.
@@ -593,7 +597,7 @@ public struct Macosusesdk_V1_ClickElementRequest: Sendable {
   }
 
   /// Click type enumeration.
-  public enum ClickType: SwiftProtobuf.Enum, Swift.CaseIterable {
+  public nonisolated enum ClickType: SwiftProtobuf.Enum, Swift.CaseIterable {
     public typealias RawValue = Int
 
     /// Default single click.
@@ -647,7 +651,7 @@ public struct Macosusesdk_V1_ClickElementRequest: Sendable {
 }
 
 /// Response from clicking an element.
-public struct Macosusesdk_V1_ClickElementResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_ClickElementResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -673,7 +677,7 @@ public struct Macosusesdk_V1_ClickElementResponse: Sendable {
 }
 
 /// Request to write an element's value.
-public struct Macosusesdk_V1_WriteElementValueRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_WriteElementValueRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -708,7 +712,7 @@ public struct Macosusesdk_V1_WriteElementValueRequest: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// Element ID or selector.
-  public enum OneOf_Target: Equatable, Sendable {
+  public nonisolated enum OneOf_Target: Equatable, Sendable {
     /// Element ID to modify.
     case elementID(String)
     /// Selector to find element to modify.
@@ -720,7 +724,7 @@ public struct Macosusesdk_V1_WriteElementValueRequest: Sendable {
 }
 
 /// Response from writing an element's value.
-public struct Macosusesdk_V1_WriteElementValueResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_WriteElementValueResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -746,7 +750,7 @@ public struct Macosusesdk_V1_WriteElementValueResponse: Sendable {
 }
 
 /// Request to get available actions for an element.
-public struct Macosusesdk_V1_GetElementActionsRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_GetElementActionsRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -761,7 +765,7 @@ public struct Macosusesdk_V1_GetElementActionsRequest: Sendable {
 }
 
 /// Available actions for an element.
-public struct Macosusesdk_V1_ElementActions: Sendable {
+public nonisolated struct Macosusesdk_V1_ElementActions: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -775,7 +779,7 @@ public struct Macosusesdk_V1_ElementActions: Sendable {
 }
 
 /// Request to perform an accessibility action on an element.
-public struct Macosusesdk_V1_PerformElementActionRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_PerformElementActionRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -810,7 +814,7 @@ public struct Macosusesdk_V1_PerformElementActionRequest: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// Element ID or selector.
-  public enum OneOf_Target: Equatable, Sendable {
+  public nonisolated enum OneOf_Target: Equatable, Sendable {
     /// Element ID.
     case elementID(String)
     /// Selector to find element.
@@ -822,7 +826,7 @@ public struct Macosusesdk_V1_PerformElementActionRequest: Sendable {
 }
 
 /// Response from performing an element action.
-public struct Macosusesdk_V1_PerformElementActionResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_PerformElementActionResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -848,7 +852,7 @@ public struct Macosusesdk_V1_PerformElementActionResponse: Sendable {
 }
 
 /// Request to wait for an element to appear (long-running operation).
-public struct Macosusesdk_V1_WaitElementRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_WaitElementRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -880,7 +884,7 @@ public struct Macosusesdk_V1_WaitElementRequest: Sendable {
 }
 
 /// Response from waiting for an element.
-public struct Macosusesdk_V1_WaitElementResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_WaitElementResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -903,7 +907,7 @@ public struct Macosusesdk_V1_WaitElementResponse: Sendable {
 }
 
 /// Metadata for WaitElement long-running operation.
-public struct Macosusesdk_V1_WaitElementMetadata: Sendable {
+public nonisolated struct Macosusesdk_V1_WaitElementMetadata: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -929,7 +933,7 @@ public struct Macosusesdk_V1_WaitElementMetadata: Sendable {
 }
 
 /// Request to wait for an element to reach a specific state.
-public struct Macosusesdk_V1_WaitElementStateRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_WaitElementStateRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -977,7 +981,7 @@ public struct Macosusesdk_V1_WaitElementStateRequest: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// Element ID or selector.
-  public enum OneOf_Target: Equatable, Sendable {
+  public nonisolated enum OneOf_Target: Equatable, Sendable {
     /// Element ID.
     case elementID(String)
     /// Selector to find element.
@@ -991,7 +995,7 @@ public struct Macosusesdk_V1_WaitElementStateRequest: Sendable {
 }
 
 /// State condition for waiting.
-public struct Macosusesdk_V1_StateCondition: Sendable {
+public nonisolated struct Macosusesdk_V1_StateCondition: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1047,7 +1051,7 @@ public struct Macosusesdk_V1_StateCondition: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// Condition type.
-  public enum OneOf_Condition: Equatable, Sendable {
+  public nonisolated enum OneOf_Condition: Equatable, Sendable {
     /// Wait for element to be enabled.
     case enabled(Bool)
     /// Wait for element to be focused.
@@ -1065,7 +1069,7 @@ public struct Macosusesdk_V1_StateCondition: Sendable {
 }
 
 /// Response from waiting for element state.
-public struct Macosusesdk_V1_WaitElementStateResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_WaitElementStateResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1088,7 +1092,7 @@ public struct Macosusesdk_V1_WaitElementStateResponse: Sendable {
 }
 
 /// Metadata for WaitElementState operation.
-public struct Macosusesdk_V1_WaitElementStateMetadata: Sendable {
+public nonisolated struct Macosusesdk_V1_WaitElementStateMetadata: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1114,7 +1118,7 @@ public struct Macosusesdk_V1_WaitElementStateMetadata: Sendable {
 }
 
 /// Request to get a window.
-public struct Macosusesdk_V1_GetWindowRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_GetWindowRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1142,7 +1146,7 @@ public struct Macosusesdk_V1_GetWindowRequest: Sendable {
 }
 
 /// Request to list windows.
-public struct Macosusesdk_V1_ListWindowsRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_ListWindowsRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1174,7 +1178,7 @@ public struct Macosusesdk_V1_ListWindowsRequest: Sendable {
 }
 
 /// Request to get the state of a window.
-public struct Macosusesdk_V1_GetWindowStateRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_GetWindowStateRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1189,7 +1193,7 @@ public struct Macosusesdk_V1_GetWindowStateRequest: Sendable {
 }
 
 /// Response from listing windows.
-public struct Macosusesdk_V1_ListWindowsResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_ListWindowsResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1208,7 +1212,7 @@ public struct Macosusesdk_V1_ListWindowsResponse: Sendable {
 }
 
 /// Request to focus a window.
-public struct Macosusesdk_V1_FocusWindowRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_FocusWindowRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1222,7 +1226,7 @@ public struct Macosusesdk_V1_FocusWindowRequest: Sendable {
 }
 
 /// Request to move a window.
-public struct Macosusesdk_V1_MoveWindowRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_MoveWindowRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1242,7 +1246,7 @@ public struct Macosusesdk_V1_MoveWindowRequest: Sendable {
 }
 
 /// Request to resize a window.
-public struct Macosusesdk_V1_ResizeWindowRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_ResizeWindowRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1262,7 +1266,7 @@ public struct Macosusesdk_V1_ResizeWindowRequest: Sendable {
 }
 
 /// Request to minimize a window.
-public struct Macosusesdk_V1_MinimizeWindowRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_MinimizeWindowRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1276,7 +1280,7 @@ public struct Macosusesdk_V1_MinimizeWindowRequest: Sendable {
 }
 
 /// Request to restore a window.
-public struct Macosusesdk_V1_RestoreWindowRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_RestoreWindowRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1290,7 +1294,7 @@ public struct Macosusesdk_V1_RestoreWindowRequest: Sendable {
 }
 
 /// Request to close a window.
-public struct Macosusesdk_V1_CloseWindowRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_CloseWindowRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1307,7 +1311,7 @@ public struct Macosusesdk_V1_CloseWindowRequest: Sendable {
 }
 
 /// Response from closing a window.
-public struct Macosusesdk_V1_CloseWindowResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_CloseWindowResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1321,7 +1325,7 @@ public struct Macosusesdk_V1_CloseWindowResponse: Sendable {
 }
 
 /// Request to create an observation.
-public struct Macosusesdk_V1_CreateObservationRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_CreateObservationRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1350,7 +1354,7 @@ public struct Macosusesdk_V1_CreateObservationRequest: Sendable {
 }
 
 /// Metadata for CreateObservation operation.
-public struct Macosusesdk_V1_CreateObservationMetadata: Sendable {
+public nonisolated struct Macosusesdk_V1_CreateObservationMetadata: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1367,7 +1371,7 @@ public struct Macosusesdk_V1_CreateObservationMetadata: Sendable {
 }
 
 /// Request to get an observation.
-public struct Macosusesdk_V1_GetObservationRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_GetObservationRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1381,7 +1385,7 @@ public struct Macosusesdk_V1_GetObservationRequest: Sendable {
 }
 
 /// Request to list observations.
-public struct Macosusesdk_V1_ListObservationsRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_ListObservationsRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1403,7 +1407,7 @@ public struct Macosusesdk_V1_ListObservationsRequest: Sendable {
 }
 
 /// Response from listing observations.
-public struct Macosusesdk_V1_ListObservationsResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_ListObservationsResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1422,7 +1426,7 @@ public struct Macosusesdk_V1_ListObservationsResponse: Sendable {
 }
 
 /// Request to cancel an observation.
-public struct Macosusesdk_V1_CancelObservationRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_CancelObservationRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1436,7 +1440,7 @@ public struct Macosusesdk_V1_CancelObservationRequest: Sendable {
 }
 
 /// Request to stream observation events.
-public struct Macosusesdk_V1_StreamObservationsRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_StreamObservationsRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1450,7 +1454,7 @@ public struct Macosusesdk_V1_StreamObservationsRequest: Sendable {
 }
 
 /// Response from streaming observations.
-public struct Macosusesdk_V1_StreamObservationsResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_StreamObservationsResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1473,7 +1477,7 @@ public struct Macosusesdk_V1_StreamObservationsResponse: Sendable {
 }
 
 /// Request to create a session.
-public struct Macosusesdk_V1_CreateSessionRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_CreateSessionRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1499,7 +1503,7 @@ public struct Macosusesdk_V1_CreateSessionRequest: Sendable {
 }
 
 /// Request to get a session.
-public struct Macosusesdk_V1_GetSessionRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_GetSessionRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1513,7 +1517,7 @@ public struct Macosusesdk_V1_GetSessionRequest: Sendable {
 }
 
 /// Request to list sessions.
-public struct Macosusesdk_V1_ListSessionsRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_ListSessionsRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1532,7 +1536,7 @@ public struct Macosusesdk_V1_ListSessionsRequest: Sendable {
 }
 
 /// Response from listing sessions.
-public struct Macosusesdk_V1_ListSessionsResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_ListSessionsResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1551,7 +1555,7 @@ public struct Macosusesdk_V1_ListSessionsResponse: Sendable {
 }
 
 /// Request to delete a session.
-public struct Macosusesdk_V1_DeleteSessionRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_DeleteSessionRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1568,7 +1572,7 @@ public struct Macosusesdk_V1_DeleteSessionRequest: Sendable {
 }
 
 /// Request to create a macro.
-public struct Macosusesdk_V1_CreateMacroRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_CreateMacroRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1594,7 +1598,7 @@ public struct Macosusesdk_V1_CreateMacroRequest: Sendable {
 }
 
 /// Request to get a macro.
-public struct Macosusesdk_V1_GetMacroRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_GetMacroRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1608,7 +1612,7 @@ public struct Macosusesdk_V1_GetMacroRequest: Sendable {
 }
 
 /// Request to list macros.
-public struct Macosusesdk_V1_ListMacrosRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_ListMacrosRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1627,7 +1631,7 @@ public struct Macosusesdk_V1_ListMacrosRequest: Sendable {
 }
 
 /// Response from listing macros.
-public struct Macosusesdk_V1_ListMacrosResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_ListMacrosResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1646,7 +1650,7 @@ public struct Macosusesdk_V1_ListMacrosResponse: Sendable {
 }
 
 /// Request to update a macro.
-public struct Macosusesdk_V1_UpdateMacroRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_UpdateMacroRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1680,7 +1684,7 @@ public struct Macosusesdk_V1_UpdateMacroRequest: Sendable {
 }
 
 /// Request to delete a macro.
-public struct Macosusesdk_V1_DeleteMacroRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_DeleteMacroRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1697,7 +1701,7 @@ public struct Macosusesdk_V1_DeleteMacroRequest: Sendable {
 }
 
 /// Request to execute a macro (long-running operation).
-public struct Macosusesdk_V1_ExecuteMacroRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_ExecuteMacroRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1729,7 +1733,7 @@ public struct Macosusesdk_V1_ExecuteMacroRequest: Sendable {
 }
 
 /// Options for macro execution.
-public struct Macosusesdk_V1_ExecutionOptions: Sendable {
+public nonisolated struct Macosusesdk_V1_ExecutionOptions: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1752,7 +1756,7 @@ public struct Macosusesdk_V1_ExecutionOptions: Sendable {
 }
 
 /// Response from executing a macro.
-public struct Macosusesdk_V1_ExecuteMacroResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_ExecuteMacroResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1787,7 +1791,7 @@ public struct Macosusesdk_V1_ExecuteMacroResponse: Sendable {
 }
 
 /// Metadata for ExecuteMacro operation.
-public struct Macosusesdk_V1_ExecuteMacroMetadata: Sendable {
+public nonisolated struct Macosusesdk_V1_ExecuteMacroMetadata: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1819,7 +1823,7 @@ public struct Macosusesdk_V1_ExecuteMacroMetadata: Sendable {
 }
 
 /// Request to begin a transaction within a session.
-public struct Macosusesdk_V1_BeginTransactionRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_BeginTransactionRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1836,7 +1840,7 @@ public struct Macosusesdk_V1_BeginTransactionRequest: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// Isolation level for transactions.
-  public enum IsolationLevel: SwiftProtobuf.Enum, Swift.CaseIterable {
+  public nonisolated enum IsolationLevel: SwiftProtobuf.Enum, Swift.CaseIterable {
     public typealias RawValue = Int
 
     /// Default isolation level (SERIALIZABLE).
@@ -1884,7 +1888,7 @@ public struct Macosusesdk_V1_BeginTransactionRequest: Sendable {
 }
 
 /// Response from beginning a transaction.
-public struct Macosusesdk_V1_BeginTransactionResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_BeginTransactionResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1910,7 +1914,7 @@ public struct Macosusesdk_V1_BeginTransactionResponse: Sendable {
 }
 
 /// Request to commit a transaction.
-public struct Macosusesdk_V1_CommitTransactionRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_CommitTransactionRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1928,7 +1932,7 @@ public struct Macosusesdk_V1_CommitTransactionRequest: Sendable {
 }
 
 /// Request to rollback a transaction.
-public struct Macosusesdk_V1_RollbackTransactionRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_RollbackTransactionRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1949,7 +1953,7 @@ public struct Macosusesdk_V1_RollbackTransactionRequest: Sendable {
 }
 
 /// Request to get a session state snapshot.
-public struct Macosusesdk_V1_GetSessionSnapshotRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_GetSessionSnapshotRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1964,7 +1968,7 @@ public struct Macosusesdk_V1_GetSessionSnapshotRequest: Sendable {
 }
 
 /// Request to capture a screenshot of the entire screen.
-public struct Macosusesdk_V1_CaptureScreenshotRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_CaptureScreenshotRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -1987,7 +1991,7 @@ public struct Macosusesdk_V1_CaptureScreenshotRequest: Sendable {
 }
 
 /// Response from capturing a screenshot.
-public struct Macosusesdk_V1_CaptureScreenshotResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_CaptureScreenshotResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2013,7 +2017,7 @@ public struct Macosusesdk_V1_CaptureScreenshotResponse: Sendable {
 }
 
 /// Request to capture a screenshot of a specific window.
-public struct Macosusesdk_V1_CaptureWindowScreenshotRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_CaptureWindowScreenshotRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2039,7 +2043,7 @@ public struct Macosusesdk_V1_CaptureWindowScreenshotRequest: Sendable {
 }
 
 /// Response from capturing a window screenshot.
-public struct Macosusesdk_V1_CaptureWindowScreenshotResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_CaptureWindowScreenshotResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2068,7 +2072,7 @@ public struct Macosusesdk_V1_CaptureWindowScreenshotResponse: Sendable {
 }
 
 /// Request to capture a screenshot of a specific element.
-public struct Macosusesdk_V1_CaptureElementScreenshotRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_CaptureElementScreenshotRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2097,7 +2101,7 @@ public struct Macosusesdk_V1_CaptureElementScreenshotRequest: Sendable {
 }
 
 /// Response from capturing an element screenshot.
-public struct Macosusesdk_V1_CaptureElementScreenshotResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_CaptureElementScreenshotResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2126,7 +2130,7 @@ public struct Macosusesdk_V1_CaptureElementScreenshotResponse: Sendable {
 }
 
 /// Request to capture a screenshot of a screen region.
-public struct Macosusesdk_V1_CaptureRegionScreenshotRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_CaptureRegionScreenshotRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2163,7 +2167,7 @@ public struct Macosusesdk_V1_CaptureRegionScreenshotRequest: Sendable {
 }
 
 /// Response from capturing a region screenshot.
-public struct Macosusesdk_V1_CaptureRegionScreenshotResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_CaptureRegionScreenshotResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2201,7 +2205,7 @@ public struct Macosusesdk_V1_CaptureRegionScreenshotResponse: Sendable {
 }
 
 /// Request to get clipboard contents.
-public struct Macosusesdk_V1_GetClipboardRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_GetClipboardRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2216,7 +2220,7 @@ public struct Macosusesdk_V1_GetClipboardRequest: Sendable {
 }
 
 /// Request to write clipboard contents.
-public struct Macosusesdk_V1_WriteClipboardRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_WriteClipboardRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2242,7 +2246,7 @@ public struct Macosusesdk_V1_WriteClipboardRequest: Sendable {
 }
 
 /// Response from writing clipboard contents.
-public struct Macosusesdk_V1_WriteClipboardResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_WriteClipboardResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2259,7 +2263,7 @@ public struct Macosusesdk_V1_WriteClipboardResponse: Sendable {
 }
 
 /// Request to clear clipboard contents.
-public struct Macosusesdk_V1_ClearClipboardRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_ClearClipboardRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2270,7 +2274,7 @@ public struct Macosusesdk_V1_ClearClipboardRequest: Sendable {
 }
 
 /// Response from clearing clipboard.
-public struct Macosusesdk_V1_ClearClipboardResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_ClearClipboardResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2284,7 +2288,7 @@ public struct Macosusesdk_V1_ClearClipboardResponse: Sendable {
 }
 
 /// Request to get clipboard history (if available).
-public struct Macosusesdk_V1_GetClipboardHistoryRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_GetClipboardHistoryRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2299,7 +2303,7 @@ public struct Macosusesdk_V1_GetClipboardHistoryRequest: Sendable {
 }
 
 /// Request to automate an open file dialog.
-public struct Macosusesdk_V1_AutomateOpenFileDialogRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_AutomateOpenFileDialogRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2328,7 +2332,7 @@ public struct Macosusesdk_V1_AutomateOpenFileDialogRequest: Sendable {
 }
 
 /// Response from automating an open file dialog.
-public struct Macosusesdk_V1_AutomateOpenFileDialogResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_AutomateOpenFileDialogResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2348,7 +2352,7 @@ public struct Macosusesdk_V1_AutomateOpenFileDialogResponse: Sendable {
 }
 
 /// Request to automate a save file dialog.
-public struct Macosusesdk_V1_AutomateSaveFileDialogRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_AutomateSaveFileDialogRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2377,7 +2381,7 @@ public struct Macosusesdk_V1_AutomateSaveFileDialogRequest: Sendable {
 }
 
 /// Response from automating a save file dialog.
-public struct Macosusesdk_V1_AutomateSaveFileDialogResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_AutomateSaveFileDialogResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2397,7 +2401,7 @@ public struct Macosusesdk_V1_AutomateSaveFileDialogResponse: Sendable {
 }
 
 /// Request to select a file programmatically.
-public struct Macosusesdk_V1_SelectFileRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_SelectFileRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2417,7 +2421,7 @@ public struct Macosusesdk_V1_SelectFileRequest: Sendable {
 }
 
 /// Response from selecting a file.
-public struct Macosusesdk_V1_SelectFileResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_SelectFileResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2437,7 +2441,7 @@ public struct Macosusesdk_V1_SelectFileResponse: Sendable {
 }
 
 /// Request to select a directory.
-public struct Macosusesdk_V1_SelectDirectoryRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_SelectDirectoryRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2457,7 +2461,7 @@ public struct Macosusesdk_V1_SelectDirectoryRequest: Sendable {
 }
 
 /// Response from selecting a directory.
-public struct Macosusesdk_V1_SelectDirectoryResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_SelectDirectoryResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2480,7 +2484,7 @@ public struct Macosusesdk_V1_SelectDirectoryResponse: Sendable {
 }
 
 /// Request to drag and drop files.
-public struct Macosusesdk_V1_DragFilesRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_DragFilesRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2503,7 +2507,7 @@ public struct Macosusesdk_V1_DragFilesRequest: Sendable {
 }
 
 /// Response from dragging files.
-public struct Macosusesdk_V1_DragFilesResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_DragFilesResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2523,7 +2527,7 @@ public struct Macosusesdk_V1_DragFilesResponse: Sendable {
 }
 
 /// Request to execute an AppleScript.
-public struct Macosusesdk_V1_ExecuteAppleScriptRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_ExecuteAppleScriptRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2552,7 +2556,7 @@ public struct Macosusesdk_V1_ExecuteAppleScriptRequest: Sendable {
 }
 
 /// Response from executing an AppleScript.
-public struct Macosusesdk_V1_ExecuteAppleScriptResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_ExecuteAppleScriptResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2584,7 +2588,7 @@ public struct Macosusesdk_V1_ExecuteAppleScriptResponse: Sendable {
 }
 
 /// Request to execute JavaScript for Automation (JXA).
-public struct Macosusesdk_V1_ExecuteJavaScriptRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_ExecuteJavaScriptRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2613,7 +2617,7 @@ public struct Macosusesdk_V1_ExecuteJavaScriptRequest: Sendable {
 }
 
 /// Response from executing JXA.
-public struct Macosusesdk_V1_ExecuteJavaScriptResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_ExecuteJavaScriptResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2645,7 +2649,7 @@ public struct Macosusesdk_V1_ExecuteJavaScriptResponse: Sendable {
 }
 
 /// Request to execute a shell command.
-public struct Macosusesdk_V1_ExecuteShellCommandRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_ExecuteShellCommandRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2686,7 +2690,7 @@ public struct Macosusesdk_V1_ExecuteShellCommandRequest: Sendable {
 }
 
 /// Response from executing a shell command.
-public struct Macosusesdk_V1_ExecuteShellCommandResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_ExecuteShellCommandResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2724,7 +2728,7 @@ public struct Macosusesdk_V1_ExecuteShellCommandResponse: Sendable {
 }
 
 /// Request to validate a script without executing.
-public struct Macosusesdk_V1_ValidateScriptRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_ValidateScriptRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2741,7 +2745,7 @@ public struct Macosusesdk_V1_ValidateScriptRequest: Sendable {
 }
 
 /// Response from validating a script.
-public struct Macosusesdk_V1_ValidateScriptResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_ValidateScriptResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2761,7 +2765,7 @@ public struct Macosusesdk_V1_ValidateScriptResponse: Sendable {
 }
 
 /// Request to get available scripting dictionaries.
-public struct Macosusesdk_V1_GetScriptingDictionariesRequest: Sendable {
+public nonisolated struct Macosusesdk_V1_GetScriptingDictionariesRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -2777,9 +2781,9 @@ public struct Macosusesdk_V1_GetScriptingDictionariesRequest: Sendable {
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
-fileprivate let _protobuf_package = "macosusesdk.v1"
+fileprivate nonisolated let _protobuf_package = "macosusesdk.v1"
 
-extension Macosusesdk_V1_OpenApplicationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_OpenApplicationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".OpenApplicationRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}id\0\u{1}background\0")
 
@@ -2814,7 +2818,7 @@ extension Macosusesdk_V1_OpenApplicationRequest: SwiftProtobuf.Message, SwiftPro
   }
 }
 
-extension Macosusesdk_V1_OpenApplicationResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_OpenApplicationResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".OpenApplicationResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0")
 
@@ -2848,7 +2852,7 @@ extension Macosusesdk_V1_OpenApplicationResponse: SwiftProtobuf.Message, SwiftPr
   }
 }
 
-extension Macosusesdk_V1_OpenApplicationMetadata: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_OpenApplicationMetadata: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".OpenApplicationMetadata"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}id\0")
 
@@ -2878,7 +2882,7 @@ extension Macosusesdk_V1_OpenApplicationMetadata: SwiftProtobuf.Message, SwiftPr
   }
 }
 
-extension Macosusesdk_V1_GetApplicationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_GetApplicationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".GetApplicationRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}read_mask\0")
 
@@ -2917,7 +2921,7 @@ extension Macosusesdk_V1_GetApplicationRequest: SwiftProtobuf.Message, SwiftProt
   }
 }
 
-extension Macosusesdk_V1_ListApplicationsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ListApplicationsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListApplicationsRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}page_size\0\u{3}page_token\0\u{3}order_by\0\u{1}filter\0")
 
@@ -2962,7 +2966,7 @@ extension Macosusesdk_V1_ListApplicationsRequest: SwiftProtobuf.Message, SwiftPr
   }
 }
 
-extension Macosusesdk_V1_ListApplicationsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ListApplicationsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListApplicationsResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}applications\0\u{3}next_page_token\0")
 
@@ -2997,7 +3001,7 @@ extension Macosusesdk_V1_ListApplicationsResponse: SwiftProtobuf.Message, SwiftP
   }
 }
 
-extension Macosusesdk_V1_DeleteApplicationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_DeleteApplicationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".DeleteApplicationRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}force\0")
 
@@ -3032,7 +3036,7 @@ extension Macosusesdk_V1_DeleteApplicationRequest: SwiftProtobuf.Message, SwiftP
   }
 }
 
-extension Macosusesdk_V1_CreateInputRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_CreateInputRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CreateInputRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{1}input\0\u{3}input_id\0")
 
@@ -3116,7 +3120,7 @@ extension Macosusesdk_V1_CreateInputRequest: SwiftProtobuf.Message, SwiftProtobu
   }
 }
 
-extension Macosusesdk_V1_GetInputRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_GetInputRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".GetInputRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
 
@@ -3146,7 +3150,7 @@ extension Macosusesdk_V1_GetInputRequest: SwiftProtobuf.Message, SwiftProtobuf._
   }
 }
 
-extension Macosusesdk_V1_ListInputsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ListInputsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListInputsRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}page_size\0\u{3}page_token\0\u{1}filter\0")
 
@@ -3191,7 +3195,7 @@ extension Macosusesdk_V1_ListInputsRequest: SwiftProtobuf.Message, SwiftProtobuf
   }
 }
 
-extension Macosusesdk_V1_ListInputsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ListInputsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListInputsResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}inputs\0\u{3}next_page_token\0")
 
@@ -3226,7 +3230,7 @@ extension Macosusesdk_V1_ListInputsResponse: SwiftProtobuf.Message, SwiftProtobu
   }
 }
 
-extension Macosusesdk_V1_TraverseAccessibilityRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_TraverseAccessibilityRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".TraverseAccessibilityRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}visible_only\0\u{1}activate\0")
 
@@ -3266,7 +3270,7 @@ extension Macosusesdk_V1_TraverseAccessibilityRequest: SwiftProtobuf.Message, Sw
   }
 }
 
-extension Macosusesdk_V1_TraverseAccessibilityResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_TraverseAccessibilityResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".TraverseAccessibilityResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}app\0\u{1}elements\0\u{1}stats\0\u{3}processing_time\0")
 
@@ -3315,7 +3319,7 @@ extension Macosusesdk_V1_TraverseAccessibilityResponse: SwiftProtobuf.Message, S
   }
 }
 
-extension Macosusesdk_V1_WatchAccessibilityRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_WatchAccessibilityRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".WatchAccessibilityRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}poll_interval\0\u{3}visible_only\0")
 
@@ -3355,7 +3359,7 @@ extension Macosusesdk_V1_WatchAccessibilityRequest: SwiftProtobuf.Message, Swift
   }
 }
 
-extension Macosusesdk_V1_WatchAccessibilityResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_WatchAccessibilityResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".WatchAccessibilityResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}added\0\u{1}removed\0\u{1}modified\0")
 
@@ -3395,7 +3399,7 @@ extension Macosusesdk_V1_WatchAccessibilityResponse: SwiftProtobuf.Message, Swif
   }
 }
 
-extension Macosusesdk_V1_ModifiedElement: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ModifiedElement: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ModifiedElement"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}old_element\0\u{3}new_element\0\u{1}changes\0")
 
@@ -3479,7 +3483,7 @@ extension Macosusesdk_V1_ModifiedElement: SwiftProtobuf.Message, SwiftProtobuf._
   }
 }
 
-extension Macosusesdk_V1_FindElementsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_FindElementsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".FindElementsRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{1}selector\0\u{3}page_size\0\u{3}page_token\0\u{3}visible_only\0")
 
@@ -3533,7 +3537,7 @@ extension Macosusesdk_V1_FindElementsRequest: SwiftProtobuf.Message, SwiftProtob
   }
 }
 
-extension Macosusesdk_V1_FindElementsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_FindElementsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".FindElementsResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}elements\0\u{3}next_page_token\0")
 
@@ -3568,7 +3572,7 @@ extension Macosusesdk_V1_FindElementsResponse: SwiftProtobuf.Message, SwiftProto
   }
 }
 
-extension Macosusesdk_V1_FindRegionElementsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_FindRegionElementsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".FindRegionElementsRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{1}region\0\u{1}selector\0\u{3}page_size\0\u{3}page_token\0")
 
@@ -3622,7 +3626,7 @@ extension Macosusesdk_V1_FindRegionElementsRequest: SwiftProtobuf.Message, Swift
   }
 }
 
-extension Macosusesdk_V1_FindRegionElementsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_FindRegionElementsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".FindRegionElementsResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}elements\0\u{3}next_page_token\0")
 
@@ -3657,7 +3661,7 @@ extension Macosusesdk_V1_FindRegionElementsResponse: SwiftProtobuf.Message, Swif
   }
 }
 
-extension Macosusesdk_V1_GetElementRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_GetElementRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".GetElementRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
 
@@ -3687,7 +3691,7 @@ extension Macosusesdk_V1_GetElementRequest: SwiftProtobuf.Message, SwiftProtobuf
   }
 }
 
-extension Macosusesdk_V1_ClickElementRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ClickElementRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ClickElementRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}element_id\0\u{1}selector\0\u{3}click_type\0")
 
@@ -3759,11 +3763,11 @@ extension Macosusesdk_V1_ClickElementRequest: SwiftProtobuf.Message, SwiftProtob
   }
 }
 
-extension Macosusesdk_V1_ClickElementRequest.ClickType: SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ClickElementRequest.ClickType: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0CLICK_TYPE_UNSPECIFIED\0\u{1}CLICK_TYPE_SINGLE\0\u{1}CLICK_TYPE_DOUBLE\0\u{1}CLICK_TYPE_RIGHT\0")
 }
 
-extension Macosusesdk_V1_ClickElementResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ClickElementResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ClickElementResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}element\0")
 
@@ -3802,7 +3806,7 @@ extension Macosusesdk_V1_ClickElementResponse: SwiftProtobuf.Message, SwiftProto
   }
 }
 
-extension Macosusesdk_V1_WriteElementValueRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_WriteElementValueRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".WriteElementValueRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}element_id\0\u{1}selector\0\u{1}value\0")
 
@@ -3874,7 +3878,7 @@ extension Macosusesdk_V1_WriteElementValueRequest: SwiftProtobuf.Message, SwiftP
   }
 }
 
-extension Macosusesdk_V1_WriteElementValueResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_WriteElementValueResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".WriteElementValueResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}element\0")
 
@@ -3913,7 +3917,7 @@ extension Macosusesdk_V1_WriteElementValueResponse: SwiftProtobuf.Message, Swift
   }
 }
 
-extension Macosusesdk_V1_GetElementActionsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_GetElementActionsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".GetElementActionsRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
 
@@ -3943,7 +3947,7 @@ extension Macosusesdk_V1_GetElementActionsRequest: SwiftProtobuf.Message, SwiftP
   }
 }
 
-extension Macosusesdk_V1_ElementActions: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ElementActions: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ElementActions"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}actions\0")
 
@@ -3973,7 +3977,7 @@ extension Macosusesdk_V1_ElementActions: SwiftProtobuf.Message, SwiftProtobuf._M
   }
 }
 
-extension Macosusesdk_V1_PerformElementActionRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_PerformElementActionRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".PerformElementActionRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}element_id\0\u{1}selector\0\u{1}action\0")
 
@@ -4045,7 +4049,7 @@ extension Macosusesdk_V1_PerformElementActionRequest: SwiftProtobuf.Message, Swi
   }
 }
 
-extension Macosusesdk_V1_PerformElementActionResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_PerformElementActionResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".PerformElementActionResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}element\0")
 
@@ -4084,7 +4088,7 @@ extension Macosusesdk_V1_PerformElementActionResponse: SwiftProtobuf.Message, Sw
   }
 }
 
-extension Macosusesdk_V1_WaitElementRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_WaitElementRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".WaitElementRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{1}selector\0\u{1}timeout\0\u{3}poll_interval\0")
 
@@ -4133,7 +4137,7 @@ extension Macosusesdk_V1_WaitElementRequest: SwiftProtobuf.Message, SwiftProtobu
   }
 }
 
-extension Macosusesdk_V1_WaitElementResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_WaitElementResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".WaitElementResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}element\0")
 
@@ -4167,7 +4171,7 @@ extension Macosusesdk_V1_WaitElementResponse: SwiftProtobuf.Message, SwiftProtob
   }
 }
 
-extension Macosusesdk_V1_WaitElementMetadata: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_WaitElementMetadata: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".WaitElementMetadata"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}selector\0\u{1}attempts\0")
 
@@ -4206,7 +4210,7 @@ extension Macosusesdk_V1_WaitElementMetadata: SwiftProtobuf.Message, SwiftProtob
   }
 }
 
-extension Macosusesdk_V1_WaitElementStateRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_WaitElementStateRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".WaitElementStateRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}element_id\0\u{1}selector\0\u{1}condition\0\u{1}timeout\0\u{3}poll_interval\0")
 
@@ -4288,7 +4292,7 @@ extension Macosusesdk_V1_WaitElementStateRequest: SwiftProtobuf.Message, SwiftPr
   }
 }
 
-extension Macosusesdk_V1_StateCondition: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_StateCondition: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".StateCondition"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}enabled\0\u{1}focused\0\u{3}text_equals\0\u{3}text_contains\0\u{1}attribute\0")
 
@@ -4386,7 +4390,7 @@ extension Macosusesdk_V1_StateCondition: SwiftProtobuf.Message, SwiftProtobuf._M
   }
 }
 
-extension Macosusesdk_V1_WaitElementStateResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_WaitElementStateResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".WaitElementStateResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}element\0")
 
@@ -4420,7 +4424,7 @@ extension Macosusesdk_V1_WaitElementStateResponse: SwiftProtobuf.Message, SwiftP
   }
 }
 
-extension Macosusesdk_V1_WaitElementStateMetadata: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_WaitElementStateMetadata: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".WaitElementStateMetadata"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}condition\0\u{1}attempts\0")
 
@@ -4459,7 +4463,7 @@ extension Macosusesdk_V1_WaitElementStateMetadata: SwiftProtobuf.Message, SwiftP
   }
 }
 
-extension Macosusesdk_V1_GetWindowRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_GetWindowRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".GetWindowRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}read_mask\0")
 
@@ -4498,7 +4502,7 @@ extension Macosusesdk_V1_GetWindowRequest: SwiftProtobuf.Message, SwiftProtobuf.
   }
 }
 
-extension Macosusesdk_V1_ListWindowsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ListWindowsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListWindowsRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}page_size\0\u{3}page_token\0\u{3}order_by\0\u{1}filter\0")
 
@@ -4548,7 +4552,7 @@ extension Macosusesdk_V1_ListWindowsRequest: SwiftProtobuf.Message, SwiftProtobu
   }
 }
 
-extension Macosusesdk_V1_GetWindowStateRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_GetWindowStateRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".GetWindowStateRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
 
@@ -4578,7 +4582,7 @@ extension Macosusesdk_V1_GetWindowStateRequest: SwiftProtobuf.Message, SwiftProt
   }
 }
 
-extension Macosusesdk_V1_ListWindowsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ListWindowsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListWindowsResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}windows\0\u{3}next_page_token\0")
 
@@ -4613,7 +4617,7 @@ extension Macosusesdk_V1_ListWindowsResponse: SwiftProtobuf.Message, SwiftProtob
   }
 }
 
-extension Macosusesdk_V1_FocusWindowRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_FocusWindowRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".FocusWindowRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
 
@@ -4643,7 +4647,7 @@ extension Macosusesdk_V1_FocusWindowRequest: SwiftProtobuf.Message, SwiftProtobu
   }
 }
 
-extension Macosusesdk_V1_MoveWindowRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_MoveWindowRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".MoveWindowRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}x\0\u{1}y\0")
 
@@ -4683,7 +4687,7 @@ extension Macosusesdk_V1_MoveWindowRequest: SwiftProtobuf.Message, SwiftProtobuf
   }
 }
 
-extension Macosusesdk_V1_ResizeWindowRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ResizeWindowRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ResizeWindowRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}width\0\u{1}height\0")
 
@@ -4723,7 +4727,7 @@ extension Macosusesdk_V1_ResizeWindowRequest: SwiftProtobuf.Message, SwiftProtob
   }
 }
 
-extension Macosusesdk_V1_MinimizeWindowRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_MinimizeWindowRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".MinimizeWindowRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
 
@@ -4753,7 +4757,7 @@ extension Macosusesdk_V1_MinimizeWindowRequest: SwiftProtobuf.Message, SwiftProt
   }
 }
 
-extension Macosusesdk_V1_RestoreWindowRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_RestoreWindowRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".RestoreWindowRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
 
@@ -4783,7 +4787,7 @@ extension Macosusesdk_V1_RestoreWindowRequest: SwiftProtobuf.Message, SwiftProto
   }
 }
 
-extension Macosusesdk_V1_CloseWindowRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_CloseWindowRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CloseWindowRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}force\0")
 
@@ -4818,7 +4822,7 @@ extension Macosusesdk_V1_CloseWindowRequest: SwiftProtobuf.Message, SwiftProtobu
   }
 }
 
-extension Macosusesdk_V1_CloseWindowResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_CloseWindowResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CloseWindowResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0")
 
@@ -4848,7 +4852,7 @@ extension Macosusesdk_V1_CloseWindowResponse: SwiftProtobuf.Message, SwiftProtob
   }
 }
 
-extension Macosusesdk_V1_CreateObservationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_CreateObservationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CreateObservationRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{1}observation\0\u{3}observation_id\0")
 
@@ -4892,7 +4896,7 @@ extension Macosusesdk_V1_CreateObservationRequest: SwiftProtobuf.Message, SwiftP
   }
 }
 
-extension Macosusesdk_V1_CreateObservationMetadata: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_CreateObservationMetadata: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CreateObservationMetadata"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}observation\0\u{1}type\0")
 
@@ -4927,7 +4931,7 @@ extension Macosusesdk_V1_CreateObservationMetadata: SwiftProtobuf.Message, Swift
   }
 }
 
-extension Macosusesdk_V1_GetObservationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_GetObservationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".GetObservationRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
 
@@ -4957,7 +4961,7 @@ extension Macosusesdk_V1_GetObservationRequest: SwiftProtobuf.Message, SwiftProt
   }
 }
 
-extension Macosusesdk_V1_ListObservationsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ListObservationsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListObservationsRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}page_size\0\u{3}page_token\0")
 
@@ -4997,7 +5001,7 @@ extension Macosusesdk_V1_ListObservationsRequest: SwiftProtobuf.Message, SwiftPr
   }
 }
 
-extension Macosusesdk_V1_ListObservationsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ListObservationsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListObservationsResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}observations\0\u{3}next_page_token\0")
 
@@ -5032,7 +5036,7 @@ extension Macosusesdk_V1_ListObservationsResponse: SwiftProtobuf.Message, SwiftP
   }
 }
 
-extension Macosusesdk_V1_CancelObservationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_CancelObservationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CancelObservationRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
 
@@ -5062,7 +5066,7 @@ extension Macosusesdk_V1_CancelObservationRequest: SwiftProtobuf.Message, SwiftP
   }
 }
 
-extension Macosusesdk_V1_StreamObservationsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_StreamObservationsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".StreamObservationsRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
 
@@ -5092,7 +5096,7 @@ extension Macosusesdk_V1_StreamObservationsRequest: SwiftProtobuf.Message, Swift
   }
 }
 
-extension Macosusesdk_V1_StreamObservationsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_StreamObservationsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".StreamObservationsResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}event\0")
 
@@ -5126,7 +5130,7 @@ extension Macosusesdk_V1_StreamObservationsResponse: SwiftProtobuf.Message, Swif
   }
 }
 
-extension Macosusesdk_V1_CreateSessionRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_CreateSessionRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CreateSessionRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}session\0\u{3}session_id\0")
 
@@ -5165,7 +5169,7 @@ extension Macosusesdk_V1_CreateSessionRequest: SwiftProtobuf.Message, SwiftProto
   }
 }
 
-extension Macosusesdk_V1_GetSessionRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_GetSessionRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".GetSessionRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
 
@@ -5195,7 +5199,7 @@ extension Macosusesdk_V1_GetSessionRequest: SwiftProtobuf.Message, SwiftProtobuf
   }
 }
 
-extension Macosusesdk_V1_ListSessionsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ListSessionsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListSessionsRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}page_size\0\u{3}page_token\0")
 
@@ -5230,7 +5234,7 @@ extension Macosusesdk_V1_ListSessionsRequest: SwiftProtobuf.Message, SwiftProtob
   }
 }
 
-extension Macosusesdk_V1_ListSessionsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ListSessionsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListSessionsResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}sessions\0\u{3}next_page_token\0")
 
@@ -5265,7 +5269,7 @@ extension Macosusesdk_V1_ListSessionsResponse: SwiftProtobuf.Message, SwiftProto
   }
 }
 
-extension Macosusesdk_V1_DeleteSessionRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_DeleteSessionRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".DeleteSessionRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}force\0")
 
@@ -5300,7 +5304,7 @@ extension Macosusesdk_V1_DeleteSessionRequest: SwiftProtobuf.Message, SwiftProto
   }
 }
 
-extension Macosusesdk_V1_CreateMacroRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_CreateMacroRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CreateMacroRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}macro\0\u{3}macro_id\0")
 
@@ -5339,7 +5343,7 @@ extension Macosusesdk_V1_CreateMacroRequest: SwiftProtobuf.Message, SwiftProtobu
   }
 }
 
-extension Macosusesdk_V1_GetMacroRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_GetMacroRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".GetMacroRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
 
@@ -5369,7 +5373,7 @@ extension Macosusesdk_V1_GetMacroRequest: SwiftProtobuf.Message, SwiftProtobuf._
   }
 }
 
-extension Macosusesdk_V1_ListMacrosRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ListMacrosRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListMacrosRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}page_size\0\u{3}page_token\0")
 
@@ -5404,7 +5408,7 @@ extension Macosusesdk_V1_ListMacrosRequest: SwiftProtobuf.Message, SwiftProtobuf
   }
 }
 
-extension Macosusesdk_V1_ListMacrosResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ListMacrosResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ListMacrosResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}macros\0\u{3}next_page_token\0")
 
@@ -5439,7 +5443,7 @@ extension Macosusesdk_V1_ListMacrosResponse: SwiftProtobuf.Message, SwiftProtobu
   }
 }
 
-extension Macosusesdk_V1_UpdateMacroRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_UpdateMacroRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".UpdateMacroRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}macro\0\u{3}update_mask\0")
 
@@ -5478,7 +5482,7 @@ extension Macosusesdk_V1_UpdateMacroRequest: SwiftProtobuf.Message, SwiftProtobu
   }
 }
 
-extension Macosusesdk_V1_DeleteMacroRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_DeleteMacroRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".DeleteMacroRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}force\0")
 
@@ -5513,7 +5517,7 @@ extension Macosusesdk_V1_DeleteMacroRequest: SwiftProtobuf.Message, SwiftProtobu
   }
 }
 
-extension Macosusesdk_V1_ExecuteMacroRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ExecuteMacroRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ExecuteMacroRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}macro\0\u{3}parameter_values\0\u{1}application\0\u{1}options\0")
 
@@ -5562,7 +5566,7 @@ extension Macosusesdk_V1_ExecuteMacroRequest: SwiftProtobuf.Message, SwiftProtob
   }
 }
 
-extension Macosusesdk_V1_ExecutionOptions: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ExecutionOptions: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ExecutionOptions"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}speed\0\u{3}continue_on_error\0\u{1}timeout\0\u{3}record_execution\0")
 
@@ -5607,7 +5611,7 @@ extension Macosusesdk_V1_ExecutionOptions: SwiftProtobuf.Message, SwiftProtobuf.
   }
 }
 
-extension Macosusesdk_V1_ExecuteMacroResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ExecuteMacroResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ExecuteMacroResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{3}actions_executed\0\u{3}execution_duration\0\u{1}error\0\u{1}log\0")
 
@@ -5661,7 +5665,7 @@ extension Macosusesdk_V1_ExecuteMacroResponse: SwiftProtobuf.Message, SwiftProto
   }
 }
 
-extension Macosusesdk_V1_ExecuteMacroMetadata: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ExecuteMacroMetadata: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ExecuteMacroMetadata"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}macro\0\u{3}current_action\0\u{3}total_actions\0\u{3}elapsed_duration\0")
 
@@ -5710,7 +5714,7 @@ extension Macosusesdk_V1_ExecuteMacroMetadata: SwiftProtobuf.Message, SwiftProto
   }
 }
 
-extension Macosusesdk_V1_BeginTransactionRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_BeginTransactionRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".BeginTransactionRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}session\0\u{3}isolation_level\0\u{1}timeout\0")
 
@@ -5750,11 +5754,11 @@ extension Macosusesdk_V1_BeginTransactionRequest: SwiftProtobuf.Message, SwiftPr
   }
 }
 
-extension Macosusesdk_V1_BeginTransactionRequest.IsolationLevel: SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_BeginTransactionRequest.IsolationLevel: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0ISOLATION_LEVEL_UNSPECIFIED\0\u{1}ISOLATION_LEVEL_SERIALIZABLE\0\u{1}ISOLATION_LEVEL_READ_COMMITTED\0")
 }
 
-extension Macosusesdk_V1_BeginTransactionResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_BeginTransactionResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".BeginTransactionResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}transaction_id\0\u{1}session\0")
 
@@ -5793,7 +5797,7 @@ extension Macosusesdk_V1_BeginTransactionResponse: SwiftProtobuf.Message, SwiftP
   }
 }
 
-extension Macosusesdk_V1_CommitTransactionRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_CommitTransactionRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CommitTransactionRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}transaction_id\0")
 
@@ -5828,7 +5832,7 @@ extension Macosusesdk_V1_CommitTransactionRequest: SwiftProtobuf.Message, SwiftP
   }
 }
 
-extension Macosusesdk_V1_RollbackTransactionRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_RollbackTransactionRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".RollbackTransactionRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}revision_id\0\u{3}transaction_id\0")
 
@@ -5868,7 +5872,7 @@ extension Macosusesdk_V1_RollbackTransactionRequest: SwiftProtobuf.Message, Swif
   }
 }
 
-extension Macosusesdk_V1_GetSessionSnapshotRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_GetSessionSnapshotRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".GetSessionSnapshotRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
 
@@ -5898,7 +5902,7 @@ extension Macosusesdk_V1_GetSessionSnapshotRequest: SwiftProtobuf.Message, Swift
   }
 }
 
-extension Macosusesdk_V1_CaptureScreenshotRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_CaptureScreenshotRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CaptureScreenshotRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}format\0\u{1}quality\0\u{1}display\0\u{3}include_ocr_text\0")
 
@@ -5943,7 +5947,7 @@ extension Macosusesdk_V1_CaptureScreenshotRequest: SwiftProtobuf.Message, SwiftP
   }
 }
 
-extension Macosusesdk_V1_CaptureScreenshotResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_CaptureScreenshotResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CaptureScreenshotResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}image_data\0\u{1}format\0\u{1}width\0\u{1}height\0\u{3}ocr_text\0")
 
@@ -5993,7 +5997,7 @@ extension Macosusesdk_V1_CaptureScreenshotResponse: SwiftProtobuf.Message, Swift
   }
 }
 
-extension Macosusesdk_V1_CaptureWindowScreenshotRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_CaptureWindowScreenshotRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CaptureWindowScreenshotRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}window\0\u{1}format\0\u{1}quality\0\u{3}include_shadow\0\u{3}include_ocr_text\0")
 
@@ -6043,7 +6047,7 @@ extension Macosusesdk_V1_CaptureWindowScreenshotRequest: SwiftProtobuf.Message, 
   }
 }
 
-extension Macosusesdk_V1_CaptureWindowScreenshotResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_CaptureWindowScreenshotResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CaptureWindowScreenshotResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}image_data\0\u{1}format\0\u{1}width\0\u{1}height\0\u{1}window\0\u{3}ocr_text\0")
 
@@ -6098,7 +6102,7 @@ extension Macosusesdk_V1_CaptureWindowScreenshotResponse: SwiftProtobuf.Message,
   }
 }
 
-extension Macosusesdk_V1_CaptureElementScreenshotRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_CaptureElementScreenshotRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CaptureElementScreenshotRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}element_id\0\u{1}format\0\u{1}quality\0\u{1}padding\0\u{3}include_ocr_text\0")
 
@@ -6153,7 +6157,7 @@ extension Macosusesdk_V1_CaptureElementScreenshotRequest: SwiftProtobuf.Message,
   }
 }
 
-extension Macosusesdk_V1_CaptureElementScreenshotResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_CaptureElementScreenshotResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CaptureElementScreenshotResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}image_data\0\u{1}format\0\u{1}width\0\u{1}height\0\u{3}element_id\0\u{3}ocr_text\0")
 
@@ -6208,7 +6212,7 @@ extension Macosusesdk_V1_CaptureElementScreenshotResponse: SwiftProtobuf.Message
   }
 }
 
-extension Macosusesdk_V1_CaptureRegionScreenshotRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_CaptureRegionScreenshotRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CaptureRegionScreenshotRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}region\0\u{1}format\0\u{1}quality\0\u{1}display\0\u{3}include_ocr_text\0")
 
@@ -6262,7 +6266,7 @@ extension Macosusesdk_V1_CaptureRegionScreenshotRequest: SwiftProtobuf.Message, 
   }
 }
 
-extension Macosusesdk_V1_CaptureRegionScreenshotResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_CaptureRegionScreenshotResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CaptureRegionScreenshotResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}image_data\0\u{1}format\0\u{1}width\0\u{1}height\0\u{1}region\0\u{3}ocr_text\0")
 
@@ -6321,7 +6325,7 @@ extension Macosusesdk_V1_CaptureRegionScreenshotResponse: SwiftProtobuf.Message,
   }
 }
 
-extension Macosusesdk_V1_GetClipboardRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_GetClipboardRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".GetClipboardRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
 
@@ -6351,7 +6355,7 @@ extension Macosusesdk_V1_GetClipboardRequest: SwiftProtobuf.Message, SwiftProtob
   }
 }
 
-extension Macosusesdk_V1_WriteClipboardRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_WriteClipboardRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".WriteClipboardRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}content\0\u{3}clear_existing\0")
 
@@ -6390,7 +6394,7 @@ extension Macosusesdk_V1_WriteClipboardRequest: SwiftProtobuf.Message, SwiftProt
   }
 }
 
-extension Macosusesdk_V1_WriteClipboardResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_WriteClipboardResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".WriteClipboardResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}type\0")
 
@@ -6425,7 +6429,7 @@ extension Macosusesdk_V1_WriteClipboardResponse: SwiftProtobuf.Message, SwiftPro
   }
 }
 
-extension Macosusesdk_V1_ClearClipboardRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ClearClipboardRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ClearClipboardRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap()
 
@@ -6444,7 +6448,7 @@ extension Macosusesdk_V1_ClearClipboardRequest: SwiftProtobuf.Message, SwiftProt
   }
 }
 
-extension Macosusesdk_V1_ClearClipboardResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ClearClipboardResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ClearClipboardResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0")
 
@@ -6474,7 +6478,7 @@ extension Macosusesdk_V1_ClearClipboardResponse: SwiftProtobuf.Message, SwiftPro
   }
 }
 
-extension Macosusesdk_V1_GetClipboardHistoryRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_GetClipboardHistoryRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".GetClipboardHistoryRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
 
@@ -6504,7 +6508,7 @@ extension Macosusesdk_V1_GetClipboardHistoryRequest: SwiftProtobuf.Message, Swif
   }
 }
 
-extension Macosusesdk_V1_AutomateOpenFileDialogRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_AutomateOpenFileDialogRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".AutomateOpenFileDialogRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0\u{3}file_path\0\u{3}default_directory\0\u{3}file_filters\0\u{1}timeout\0\u{3}allow_multiple\0")
 
@@ -6559,7 +6563,7 @@ extension Macosusesdk_V1_AutomateOpenFileDialogRequest: SwiftProtobuf.Message, S
   }
 }
 
-extension Macosusesdk_V1_AutomateOpenFileDialogResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_AutomateOpenFileDialogResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".AutomateOpenFileDialogResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{3}selected_paths\0\u{1}error\0")
 
@@ -6599,7 +6603,7 @@ extension Macosusesdk_V1_AutomateOpenFileDialogResponse: SwiftProtobuf.Message, 
   }
 }
 
-extension Macosusesdk_V1_AutomateSaveFileDialogRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_AutomateSaveFileDialogRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".AutomateSaveFileDialogRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0\u{3}file_path\0\u{3}default_directory\0\u{3}default_filename\0\u{1}timeout\0\u{3}confirm_overwrite\0")
 
@@ -6654,7 +6658,7 @@ extension Macosusesdk_V1_AutomateSaveFileDialogRequest: SwiftProtobuf.Message, S
   }
 }
 
-extension Macosusesdk_V1_AutomateSaveFileDialogResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_AutomateSaveFileDialogResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".AutomateSaveFileDialogResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{3}saved_path\0\u{1}error\0")
 
@@ -6694,7 +6698,7 @@ extension Macosusesdk_V1_AutomateSaveFileDialogResponse: SwiftProtobuf.Message, 
   }
 }
 
-extension Macosusesdk_V1_SelectFileRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_SelectFileRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".SelectFileRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0\u{3}file_path\0\u{3}reveal_finder\0")
 
@@ -6734,7 +6738,7 @@ extension Macosusesdk_V1_SelectFileRequest: SwiftProtobuf.Message, SwiftProtobuf
   }
 }
 
-extension Macosusesdk_V1_SelectFileResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_SelectFileResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".SelectFileResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{3}selected_path\0\u{1}error\0")
 
@@ -6774,7 +6778,7 @@ extension Macosusesdk_V1_SelectFileResponse: SwiftProtobuf.Message, SwiftProtobu
   }
 }
 
-extension Macosusesdk_V1_SelectDirectoryRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_SelectDirectoryRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".SelectDirectoryRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0\u{3}directory_path\0\u{3}create_missing\0")
 
@@ -6814,7 +6818,7 @@ extension Macosusesdk_V1_SelectDirectoryRequest: SwiftProtobuf.Message, SwiftPro
   }
 }
 
-extension Macosusesdk_V1_SelectDirectoryResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_SelectDirectoryResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".SelectDirectoryResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{3}selected_path\0\u{1}created\0\u{1}error\0")
 
@@ -6859,7 +6863,7 @@ extension Macosusesdk_V1_SelectDirectoryResponse: SwiftProtobuf.Message, SwiftPr
   }
 }
 
-extension Macosusesdk_V1_DragFilesRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_DragFilesRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".DragFilesRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0\u{3}file_paths\0\u{3}target_element_id\0\u{1}duration\0")
 
@@ -6904,7 +6908,7 @@ extension Macosusesdk_V1_DragFilesRequest: SwiftProtobuf.Message, SwiftProtobuf.
   }
 }
 
-extension Macosusesdk_V1_DragFilesResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_DragFilesResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".DragFilesResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{3}files_dropped\0\u{1}error\0")
 
@@ -6944,7 +6948,7 @@ extension Macosusesdk_V1_DragFilesResponse: SwiftProtobuf.Message, SwiftProtobuf
   }
 }
 
-extension Macosusesdk_V1_ExecuteAppleScriptRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ExecuteAppleScriptRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ExecuteAppleScriptRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}script\0\u{1}timeout\0\u{3}compile_only\0")
 
@@ -6988,7 +6992,7 @@ extension Macosusesdk_V1_ExecuteAppleScriptRequest: SwiftProtobuf.Message, Swift
   }
 }
 
-extension Macosusesdk_V1_ExecuteAppleScriptResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ExecuteAppleScriptResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ExecuteAppleScriptResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}output\0\u{1}error\0\u{3}execution_duration\0")
 
@@ -7037,7 +7041,7 @@ extension Macosusesdk_V1_ExecuteAppleScriptResponse: SwiftProtobuf.Message, Swif
   }
 }
 
-extension Macosusesdk_V1_ExecuteJavaScriptRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ExecuteJavaScriptRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ExecuteJavaScriptRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}script\0\u{1}timeout\0\u{3}compile_only\0")
 
@@ -7081,7 +7085,7 @@ extension Macosusesdk_V1_ExecuteJavaScriptRequest: SwiftProtobuf.Message, SwiftP
   }
 }
 
-extension Macosusesdk_V1_ExecuteJavaScriptResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ExecuteJavaScriptResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ExecuteJavaScriptResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}output\0\u{1}error\0\u{3}execution_duration\0")
 
@@ -7130,7 +7134,7 @@ extension Macosusesdk_V1_ExecuteJavaScriptResponse: SwiftProtobuf.Message, Swift
   }
 }
 
-extension Macosusesdk_V1_ExecuteShellCommandRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ExecuteShellCommandRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ExecuteShellCommandRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}command\0\u{1}args\0\u{3}working_directory\0\u{1}environment\0\u{1}timeout\0\u{1}stdin\0\u{1}shell\0")
 
@@ -7194,7 +7198,7 @@ extension Macosusesdk_V1_ExecuteShellCommandRequest: SwiftProtobuf.Message, Swif
   }
 }
 
-extension Macosusesdk_V1_ExecuteShellCommandResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ExecuteShellCommandResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ExecuteShellCommandResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}stdout\0\u{1}stderr\0\u{3}exit_code\0\u{3}execution_duration\0\u{1}error\0")
 
@@ -7253,7 +7257,7 @@ extension Macosusesdk_V1_ExecuteShellCommandResponse: SwiftProtobuf.Message, Swi
   }
 }
 
-extension Macosusesdk_V1_ValidateScriptRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ValidateScriptRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ValidateScriptRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}type\0\u{1}script\0")
 
@@ -7288,7 +7292,7 @@ extension Macosusesdk_V1_ValidateScriptRequest: SwiftProtobuf.Message, SwiftProt
   }
 }
 
-extension Macosusesdk_V1_ValidateScriptResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_ValidateScriptResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ValidateScriptResponse"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}valid\0\u{1}errors\0\u{1}warnings\0")
 
@@ -7328,7 +7332,7 @@ extension Macosusesdk_V1_ValidateScriptResponse: SwiftProtobuf.Message, SwiftPro
   }
 }
 
-extension Macosusesdk_V1_GetScriptingDictionariesRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+nonisolated extension Macosusesdk_V1_GetScriptingDictionariesRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".GetScriptingDictionariesRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
 
