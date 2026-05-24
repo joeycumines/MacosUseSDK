@@ -1,535 +1,447 @@
 # Deployment Guide
 
-This guide covers deploying the **MacosUseServer** (gRPC Swift server) in various environments.
+This guide covers deploying the **MacosUseServer** (gRPC Swift server) locally
+with macOS TCC permissions (Accessibility + Screen Recording) and connecting an
+MCP client (opencode) to it.
 
 ## Prerequisites
 
-- macOS 15+ (required to build/run the gRPC Swift server - Swift 6 concurrency features).
-- Swift 6.0+ (toolchain matching `// swift-tools-version: 6.0` in `Server/Package.swift`).
-- **GNU Make 4.x+** (required by the project's Makefile):
-  ```sh
-  brew install make
-  ```
-  The Makefile uses `gmake` as the command name. On macOS, install GNU make via Homebrew and ensure `gmake` is in your PATH.
+- **macOS 15+** (Sequoia — required for Swift 6 concurrency features)
+- **Swift 6.0+** (matching `// swift-tools-version: 6.0` in `Server/Package.swift`)
+- **Go 1.22+** (for the MCP proxy `cmd/macos-use-mcp`)
+- **GNU Make 4.x+** (`brew install make`; invoked as `gmake`)
+- **grpcurl** (`brew install grpcurl`; for manual testing)
 
-## Build Commands Quick Reference
+## Architecture
 
-```sh
-# View available Make targets (this is `gmake help`)
-gmake help
-
-# Build the release binary (default configuration: release)
-gmake swift.build
-
-# The binary will be at:
-Server/.build/release/MacosUseServer
+```
+┌───────────┐     stdio/SSE     ┌──────────────────┐     gRPC      ┌──────────────────┐
+│  opencode │◄─────────────────►│  macos-use-mcp   │◄─────────────►│  MacosUseServer  │
+│  (AI)     │                   │  (Go binary)     │  unix socket  │  (Swift binary)  │
+└───────────┘                   └──────────────────┘               └──────────────────┘
 ```
 
-## Local Development
+Two separate processes:
+1. **MacosUseServer** — Swift gRPC server that talks to macOS Accessibility,
+   ScreenCaptureKit, and CGEvent APIs. Must run inside an `.app` bundle for
+   TCC to track its bundle identifier.
+2. **macos-use-mcp** — Go MCP proxy that translates MCP tool calls into gRPC
+   requests to the Swift server. No macOS permissions needed.
 
-### 1. Generate Proto Stubs
+## Step-by-Step Local Deployment
 
-Preferred (explicit):
-
-```sh
-buf generate
-```
-
-Alternative (project Makefile wrapper):
-
-```sh
-gmake generate # or: gmake regenerate-proto
-```
-
-This will update buf dependencies and generate Swift server stubs and Go client stubs.
-
-### 2. Build and Run (Local development)
-
-Build the release binary:
+### Step 1: Build the Swift Server
 
 ```sh
 gmake swift.build
 ```
 
-The default build configuration is `release` (defined in `make/swift.mk` as `SWIFT_CONFIGURATION ?= release`).
+Binary location: `Server/.build/release/MacosUseServer`
 
-You can run the server directly (default: loopback + port 8080):
-
-```sh
-./Server/.build/release/MacosUseServer
-```
-
-### 3. Test with grpcurl
+### Step 2: Build the Go MCP Proxy
 
 ```sh
-# Install grpcurl
-brew install grpcurl
-
-# Test with TCP (default server)
-grpcurl -plaintext -d '{}' \
-  localhost:8080 macosusesdk.v1.MacosUse/ListApplications
-
-# Test with Unix socket
-grpcurl -plaintext -d '{}' \
-  "unix://$HOME/Library/Caches/macosuse.sock" \
-  macosusesdk.v1.MacosUse/ListApplications
-
-# List all available services
-grpcurl -plaintext "unix://$HOME/Library/Caches/macosuse.sock" list
-
-# Get service reflection info (if enabled)
-grpcurl -plaintext "unix://$HOME/Library/Caches/macosuse.sock" grpc.reflection.v1alpha.ServerReflection/ServerReflectionInfo
+go build -o /Users/YOU/go/bin/macos-use-mcp ./cmd/macos-use-mcp
 ```
 
-## Production Deployment
+### Step 3: Create the .app Bundle
 
-### Configuration Options
+The Swift server **must** run inside a proper `.app` bundle so that macOS TCC
+(Transparency, Consent, and Control) can identify it by bundle identifier.
+Without the `.app` wrapper, TCC has no stable identity to grant permissions to.
 
-The server is configured via environment variables:
+```sh
+# Create the minimal .app bundle structure
+mkdir -p ~/Applications/MacosUseServer.app/Contents/MacOS
+mkdir -p ~/Applications/MacosUseServer.app/Contents/Resources
+
+# Copy the release binary
+cp Server/.build/release/MacosUseServer \
+   ~/Applications/MacosUseServer.app/Contents/MacOS/MacosUseServer
+
+# Create Info.plist with a stable bundle identifier
+cat > ~/Applications/MacosUseServer.app/Contents/Info.plist << 'PLIST'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleExecutable</key>
+    <string>MacosUseServer</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.macosusesdk.server</string>
+    <key>CFBundleName</key>
+    <string>MacosUseServer</string>
+    <key>CFBundleVersion</key>
+    <string>1.0</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>LSUIElement</key>
+    <true/>
+</dict>
+</plist>
+PLIST
+
+# Register the bundle identifier with LaunchServices
+# This is REQUIRED for TCC to recognize the bundle identifier
+/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
+  -f ~/Applications/MacosUseServer.app
+```
+
+**Why `LSUIElement` is `true`:** The server has no GUI. Setting this prevents
+it from appearing in the Dock or Cmd+Tab switcher.
+
+### Step 4: Ad-Hoc Code Sign the .app
+
+```sh
+codesign --force --deep --sign - ~/Applications/MacosUseServer.app
+```
+
+### Step 5: Grant macOS Permissions
+
+The server needs two TCC permissions. After starting the server (Step 6),
+macOS will prompt for each on first use:
+
+| Permission       | Triggered By              | Purpose                                    |
+|------------------|---------------------------|-------------------------------------------|
+| Accessibility    | `TraverseAccessibility`  | Reading and controlling UI elements via AX |
+| Screen Recording | `CaptureScreenshot`       | Capturing screen/window/region screenshots |
+
+**To grant manually (or if the prompt was dismissed):**
+
+1. Open **System Settings** → **Privacy & Security** → **Accessibility**
+2. Click **+**, navigate to `~/Applications/MacosUseServer.app`, add it
+3. Toggle the switch **ON**
+4. Repeat for **Screen Recording**
+
+**To reset a previously-denied permission:**
+
+```sh
+# Reset Accessibility permission (requires re-granting)
+tccutil reset Accessibility com.macosusesdk.server
+
+# Reset Screen Recording permission
+tccutil reset ScreenCapture com.macosusesdk.server
+```
+
+**NOTE:** `tccutil reset` only works after `lsregister -f` has registered the
+bundle identifier. If you get "No matching bundle identifier found", re-run
+the `lsregister` command from Step 3.
+
+### Step 6: Create the launchd Service
+
+Create `~/Library/LaunchAgents/com.macosusesdk.server.plist`:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.macosusesdk.server</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/YOU/Applications/MacosUseServer.app/Contents/MacOS/MacosUseServer</string>
+    </array>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>GRPC_UNIX_SOCKET</key>
+        <string>/Users/YOU/Library/Caches/macosuse.sock</string>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/Users/YOU/Library/Logs/macosuse.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/YOU/Library/Logs/macosuse.error.log</string>
+</dict>
+</plist>
+```
+
+**Socket permissions (0600) are enforced by the server code** — the launchd
+`Umask` key is unreliable for socket permissions and is intentionally omitted.
+
+```sh
+# Load the service (modern API)
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.macosusesdk.server.plist
+
+# Verify it's running
+launchctl print gui/$(id -u) | grep com.macosusesdk.server
+
+# Verify the socket exists with correct permissions
+ls -la "$HOME/Library/Caches/macosuse.sock"
+# Expected: srw------- (0600 — owner read/write only, no execute)
+```
+
+### Step 7: Verify the Server is Running
+
+Use the MCP tools (Step 9) to verify. The gRPC server does not support
+reflection from the `.app` bundle (the `Bundle.module` resource accessor
+cannot find the descriptor sets), so `grpcurl` cannot be used for
+discovery or listing.
+
+If the MCP tools return data, the server is working. If you get connection
+errors, check the logs:
+
+```sh
+cat ~/Library/Logs/macosuse.error.log
+```
+
+### Step 8: Configure the MCP Client (opencode)
+
+Create a project-level `opencode.jsonc` in the repo root:
+
+```jsonc
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "macos-use": {
+      "type": "local",
+      "command": ["/Users/YOU/go/bin/macos-use-mcp"],
+      "enabled": true,
+      "environment": {
+        "MACOS_USE_SERVER_SOCKET_PATH": "/Users/YOU/Library/Caches/macosuse.sock"
+      },
+      "timeout": 10000
+    }
+  }
+}
+```
+
+**Why project-level?** This keeps MCP tools scoped to this repo only. The
+global `~/.config/opencode/opencode.jsonc` should NOT contain the `macos-use`
+entry — otherwise the tools activate in every project.
+
+**Key env vars for `macos-use-mcp`:**
+
+| Variable                        | Default             | Description                                    |
+|---------------------------------|---------------------|------------------------------------------------|
+| `MACOS_USE_SERVER_SOCKET_PATH`  | (none)              | Unix socket path to the Swift gRPC server       |
+| `MACOS_USE_SERVER_ADDR`         | `localhost:50051`   | TCP address (used if socket path is empty)       |
+| `MCP_TRANSPORT`                 | `stdio`             | MCP transport: `stdio` or `sse`                 |
+| `MCP_HTTP_ADDRESS`              | `:8080`             | HTTP listen address (SSE transport only)        |
+| `MCP_API_KEY`                   | (none)              | Bearer token auth (if set, all requests need it)|
+| `MCP_RATE_LIMIT`                | `0` (disabled)      | Rate limit in requests/second                   |
+
+When `MACOS_USE_SERVER_SOCKET_PATH` is set, `MACOS_USE_SERVER_ADDR` is ignored.
+
+### Step 9: Verify End-to-End
+
+Open an opencode session in this repo and test the MCP tools:
+
+1. **No-permission test** (uses Quartz/CGWindowList, no TCC needed):
+   ```
+   macos-use_list_applications
+   macos-use_list_windows
+   macos-use_list_displays
+   ```
+
+2. **Accessibility test** (triggers AX permission prompt on first use):
+   ```
+   macos-use_open_application  (id: "Calculator")
+   macos-use_traverse_accessibility  (name: "applications/{pid}")
+   ```
+
+3. **Screen Recording test** (triggers Screen Recording prompt on first use):
+   ```
+   macos-use_capture_screenshot
+   ```
+
+## Swift Server Configuration
+
+The Swift server (`MacosUseServer`) is configured via environment variables:
 
 | Variable              | Default     | Description                                 |
 |-----------------------|-------------|---------------------------------------------|
 | `GRPC_LISTEN_ADDRESS` | `127.0.0.1` | IP address to bind to (loopback by default) |
 | `GRPC_PORT`           | `8080`      | TCP port number                             |
-| `GRPC_UNIX_SOCKET`    | (none)      | Unix socket path (overrides TCP)            |
+| `GRPC_UNIX_SOCKET`    | (none)      | Unix socket path (overrides TCP if set)      |
 
-**Loopback Listening (Default)**:
-By default, the server binds to `127.0.0.1` (loopback), accepting only local connections:
+When `GRPC_UNIX_SOCKET` is set, the server ignores `GRPC_LISTEN_ADDRESS` and
+`GRPC_PORT` and listens only on the Unix socket.
 
-```sh
-# Default: listens on loopback interface only
-./Server/.build/release/MacosUseServer
-```
+## Updating After a Rebuild
 
-### Deployment Methods
-
-#### Option 1: Direct Execution
-
-Build a release binary:
+After rebuilding the Swift server:
 
 ```sh
-gmake swift.build
+# 1. Stop the service
+launchctl bootout gui/$(id -u)/com.macosusesdk.server
+
+# 2. Copy the new binary into the .app
+cp Server/.build/release/MacosUseServer \
+   ~/Applications/MacosUseServer.app/Contents/MacOS/MacosUseServer
+
+# 3. Re-sign
+codesign --force --deep --sign - ~/Applications/MacosUseServer.app
+
+# 4. Start the service
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.macosusesdk.server.plist
 ```
 
-Run with custom configuration:
+## Uninstallation
 
 ```sh
-# Explicitly set loopback address (redundant, but clear)
-export GRPC_LISTEN_ADDRESS="127.0.0.1"
-export GRPC_PORT="9090"
-./Server/.build/release/MacosUseServer
-```
+# Stop the service
+launchctl bootout gui/$(id -u)/com.macosusesdk.server
 
-#### Option 2: Unix Socket (Recommended for Local Access)
+# Remove files
+rm -rf ~/Applications/MacosUseServer.app
+rm -f  ~/Library/LaunchAgents/com.macosusesdk.server.plist
+rm -f  "$HOME/Library/Caches/macosuse.sock"
+rm -f  ~/Library/Logs/macosuse.log
+rm -f  ~/Library/Logs/macosuse.error.log
 
-Using a Unix socket provides better security for local-only access:
-
-```sh
-# Use a user-writable location (recommended)
-export GRPC_UNIX_SOCKET="$HOME/Library/Caches/macosuse.sock"
-./Server/.build/release/MacosUseServer
-```
-
-**Socket Location Considerations:**
-
-| Location                             | Notes                                                    |
-|--------------------------------------|----------------------------------------------------------|
-| `$HOME/Library/Caches/`              | User-writable, persists across reboots, easy permissions |
-| `$HOME/Library/Application Support/` | User-writable, persists                                  |
-| `/tmp/`                              | World-writable, ephemeral (deleted on reboot)            |
-| `/var/run/`                          | Typically root-only, requires special handling           |
-
-**Socket Permissions:**
-
-The server automatically sets restrictive permissions (0600 - owner read/write only) on Unix domain sockets for security. This is enforced in code and does not rely on external umask settings.
-
-Verify permissions after creation:
-
-```sh
-ls -la "$HOME/Library/Caches/macosuse.sock"
-# Expected: srwx------  (600) for owner-only access
-```
-
-Test the Unix socket with grpcurl:
-
-```sh
-# List available RPCs
-grpcurl -plaintext "unix://$HOME/Library/Caches/macosuse.sock" list
-
-# Call a simple RPC
-grpcurl -plaintext -d '{}' \
-  "unix://$HOME/Library/Caches/macosuse.sock" \
-  macosusesdk.v1.MacosUse/ListDisplays
-
-# Get a specific display
-grpcurl -plaintext -d '{"name": "displays/1"}' \
-  "unix://$HOME/Library/Caches/macosuse.sock" \
-  macosusesdk.v1.MacosUse/GetDisplay
-
-# List windows for an application
-grpcurl -plaintext -d '{"parent": "applications/1234"}' \
-  "unix://$HOME/Library/Caches/macosuse.sock" \
-  macosusesdk.v1.MacosUse/ListWindows
-```
-
-Client connection (Go example using grpc-go):
-
-```go
-conn, err := grpc.Dial("unix://$HOME/Library/Caches/macosuse.sock", grpc.WithTransportCredentials(insecure.NewCredentials()))
-if err != nil {
-// handle error
-}
-defer conn.Close()
-client := macosusesdkv1.NewMacosUseClient(conn)
-```
-
-#### Option 3: launchd Service (macOS System Service~/Library/Launch)
-
-Create `Agents/com.macosusesdk.server.plist` (user agent, not system):
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-    <dict>
-        <key>Label</key>
-        <string>com.macosusesdk.server</string>
-
-        <key>ProgramArguments</key>
-        <array>
-            <string>/Users/YOU/.local/bin/MacosUseServer</string>
-        </array>
-
-        <key>EnvironmentVariables</key>
-        <dict>
-            <key>GRPC_UNIX_SOCKET</key>
-            <string>/Users/YOU/Library/Caches/macosuse.sock</string>
-        </dict>
-
-        <key>RunAtLoad</key>
-        <true/>
-
-        <key>KeepAlive</key>
-        <true/>
-
-        <key>StandardOutPath</key>
-        <string>/Users/YOU/Library/Logs/macosuse.log</string>
-
-        <key>StandardErrorPath</key>
-        <string>/Users/YOU/Library/Logs/macosuse.error.log</string>
-    </dict>
-</plist>
-```
-
-**Note:** Socket permissions (0600 - owner read/write only) are enforced by the server code. The launchd `Umask` key is unreliable for socket permissions and is intentionally omitted.
-
-Install and start:
-
-```sh
-# Copy binary to user bin
-mkdir -p ~/.local/bin
-cp Server/.build/release/MacosUseServer ~/.local/bin/
-
-# Place the plist in user's LaunchAgents
-cp com.macosusesdk.server.plist ~/Library/LaunchAgents/
-chmod 600 ~/Library/LaunchAgents/com.macosusesdk.server.plist
-
-# Load service
-launchctl load ~/Library/LaunchAgents/com.macosusesdk.server.plist
-
-# Check status
-launchctl list | grep -i macosusesdk
-
-# Verify socket permissions (should be srwx------)
-ls -la "$HOME/Library/Caches/macosuse.sock"
+# Revoke TCC permissions (optional)
+tccutil reset Accessibility com.macosusesdk.server
+tccutil reset ScreenCapture com.macosusesdk.server
 ```
 
 ## Security Considerations
 
-### 1. Network Access
+### Network Access
 
-**Localhost Only (Recommended - Default)**:
+The server defaults to **loopback only** (`127.0.0.1`). For local MCP use,
+Unix sockets are recommended — they bypass the network stack entirely and
+enforce filesystem permissions.
 
-```sh
-# Already the default - no configuration needed
-./Server/.build/release/MacosUseServer
-```
+### macOS Permissions
 
-**All Interfaces (Use with Caution)**:
+Both Accessibility and Screen Recording are **powerful** permissions. Only
+grant them to the `MacosUseServer.app` bundle you built yourself. Do not grant
+them to arbitrary Terminal applications — the `.app` bundle approach isolates
+the permission to a single, auditable binary.
 
-```sh
-export GRPC_LISTEN_ADDRESS="0.0.0.0"
-export GRPC_PORT="8080"
-./Server/.build/release/MacosUseServer
-```
+### Socket Permissions
 
-### 2. TLS/SSL
-
-For remote access, TLS should be enabled. The server is configured with plaintext by default for local development; production deployments should enable TLS using the gRPC Swift transport security options.
-
-Example (conceptual):
-
-```swift
-// Configure transportSecurity with certificates (gRPC Swift transport options vary by version)
-// See gRPC Swift docs for exact APIs when enabling TLS.
-```
-
-### 3. Authentication
-
-Authentication is not implemented in this example server. For production, add server-side interceptors (API keys, JWT/OAuth, mTLS) using gRPC Swift interceptor APIs.
-
-### 4. macOS Permissions
-
-The server requires:
-
-1. **Accessibility Permissions**: System Settings > Privacy & Security > Accessibility
-2. **Screen Recording** (for visual feedback): System Settings > Privacy & Security > Screen Recording
-
-Grant these permissions to the terminal or application running the server.
+The server enforces `0600` (owner read/write only) on the Unix socket. Only
+the user running the server can connect.
 
 ## Monitoring
 
 ### Health Checks
 
-Use `grpcurl` for simple health checks and listing services:
+Use the MCP tools to verify the server is responsive:
+
+```
+macos-use_list_displays
+```
+
+Or check the launchd status:
 
 ```sh
-# TCP health check
-grpcurl -plaintext localhost:8080 list
-
-# Unix socket health check
-grpcurl -plaintext "unix://$HOME/Library/Caches/macosuse.sock" list
-
-# Quick connectivity test with ListDisplays
-grpcurl -plaintext -d '{}' \
-  "unix://$HOME/Library/Caches/macosuse.sock" \
-  macosusesdk.v1.MacosUse/ListDisplays
-```
-
-Expected output (example):
-
-```
-macosusesdk.v1.MacosUse
+launchctl print gui/$(id -u) | grep com.macosusesdk.server
 ```
 
 ### Logging
 
-The server logs to stderr. Redirect for persistent logs:
+When running via launchd, logs go to:
 
-```sh
-./Server/.build/release/MacosUseServer 2>&1 | tee /var/log/macosuse.log
+```
+~/Library/Logs/macosuse.log        (stdout)
+~/Library/Logs/macosuse.error.log  (stderr)
 ```
 
-### Metrics (Future)
+When running manually, the server logs to stderr. Redirect as needed:
 
-Integration with OpenTelemetry or Prometheus for metrics collection.
-
-## Scaling
-
-### Horizontal Scaling
-
-Each server instance can:
-
-- Track multiple applications independently
-- Serve multiple clients concurrently
-- Handle streaming connections efficiently
-
-For distributed setups:
-
-- Run multiple server instances on different machines
-- Use a load balancer for client connections
-- Coordinate via shared state (future: Redis, etcd, etc.)
-
-### Resource Limits
-
-Each target application adds minimal overhead:
-
-- ~KB of memory for state tracking
-- All SDK calls serialized on main thread (macOS requirement)
-- Watch streams poll at configurable intervals
-
-Typical limits:
-
-- 100s of concurrent clients: No problem
-- 10s of target applications: No problem
-- Combining both: Monitor main thread saturation
+```sh
+Server/.build/release/MacosUseServer 2>&1 | tee ~/macosuse.log
+```
 
 ## Troubleshooting
 
-### Server Won't Start
+### Server Crashes on Startup (Resource Bundle Error)
 
-1. Check permissions:
+**Symptom:** `Fatal error: could not load resource bundle: from .../MacosUseServer_MacosUseServer.bundle`
+
+**Cause:** SPM's generated `resource_bundle_accessor.swift` calls `fatalError`
+when the resource bundle (containing protobuf descriptor sets for gRPC
+reflection) cannot be found. This only affects gRPC reflection — the
+server's core functionality (AX, screenshots, input) does not require it.
+
+**Fix:** Ensure the build directory still exists at the hardcoded fallback
+path inside `resource_bundle_accessor.swift`. For local deployment where the
+source tree is present, this works automatically.
+
+**Note:** Do NOT place the `.bundle` at the `.app` root — it breaks codesign
+("unsealed contents"). A future code change should replace `Bundle.module`
+with `Bundle.main.paths(forResourcesOfType:inDirectory:)` to make
+reflection work from `.app` bundles without the build directory.
+
+### `tccutil reset` Says "No Matching Bundle Identifier"
+
+**Cause:** The bundle identifier hasn't been registered with LaunchServices.
+
+**Fix:** Re-run `lsregister -f ~/Applications/MacosUseServer.app`, then retry.
+
+### AX Permission Prompt Doesn't Appear
+
+**Cause:** TCC doesn't know about the `.app` bundle.
+
+**Fix:** Ensure `lsregister -f` has been run (Step 3) and the server is
+actually running from inside the `.app` bundle (not a bare binary). Check
+System Settings → Privacy & Security → Accessibility for
+`com.macosusesdk.server` and add it manually if needed.
+
+### Screen Recording Permission Denied
+
+**Symptom:** `CaptureScreenshot` returns an error, or `SCShareableContent` hangs.
+
+**Fix:** Grant Screen Recording permission in System Settings → Privacy &
+Security → Screen Recording. Add `MacosUseServer.app` and toggle it ON.
+Restart the server after toggling (launchd needs a fresh process for TCC
+to pick up the change).
+
+**Note:** Every time the `.app` binary is replaced (e.g. after a rebuild),
+the code signature changes and TCC invalidates the permission. You must
+re-grant Screen Recording (and Accessibility) after each binary update.
+
+### Screenshot Returns "invalid width 0 and height 0"
+
+**Symptom:** `CaptureScreenshot` fails with OSLog error:
+`-[SCStream serializeStreamProperties]: invalid width 0 and height 0`
+
+**Cause:** ScreenCaptureKit's `SCStreamConfiguration` does not accept
+`width=0`/`height=0` (the "use source dimension" sentinel). This was a
+bug in `ScreenshotCapture.swift` where `config.width = 0` and
+`config.height = 0` were set. The fix computes pixel dimensions from the
+target display/window and the `NSScreen.backingScaleFactor`, then sets
+explicit `config.width` and `config.height` values in pixels.
+
+### Client Connection Refused
+
+1. Verify the server process is running:
    ```sh
-   xattr -d com.apple.quarantine MacosUseServer
+   pgrep -fl MacosUseServer
    ```
 
-2. Check accessibility:
-    - System Settings > Privacy & Security > Accessibility
-    - Add Terminal or your application
-
-3. Check port availability:
+2. Verify the socket exists:
    ```sh
-   lsof -i :8080
-   ```
-
-### Client Connection Errors
-
-1. Verify server is running:
-   ```sh
-   # TCP
-   grpcurl -plaintext localhost:8080 list
-
-   # Unix socket
-   grpcurl -plaintext "unix://$HOME/Library/Caches/macosuse.sock" list
-   ```
-
-2. Check socket file exists and permissions:
-   ```sh
-   ls -la "$SOCKET"
-   # Expected format: srwx------ (0600 - owner read/write only)
-   # The server enforces these permissions automatically
-   ```
-
-3. Socket permission denied:
-   ```sh
-   # If socket permissions are incorrect, the server will fix them on restart
-   # Stop the server and verify permissions are corrected after restart
-   launchctl unload ~/Library/LaunchAgents/com.macosusesdk.server.plist
-   launchctl load ~/Library/LaunchAgents/com.macosusesdk.server.plist
    ls -la "$HOME/Library/Caches/macosuse.sock"
-   # Should show srwx------
+   # Expected: srw------- (0600 — owner read/write only, no execute)
    ```
 
-4. Check firewall settings (TCP only):
+3. Check launchd status:
    ```sh
-   sudo pfctl -s rules | grep 8080
+   launchctl print gui/$(id -u) | grep com.macosusesdk.server
    ```
 
-5. Verify network configuration (TCP only):
+4. Check the error log:
    ```sh
-   netstat -an | grep 8080
+   cat ~/Library/Logs/macosuse.error.log
    ```
 
-### Performance Issues
-
-1. Disable animations for throughput:
-   ```protobuf
-   options {
-     show_animation: false
-   }
-   ```
-
-2. Reduce watch polling frequency:
-   ```protobuf
-   watch_request {
-     poll_interval_seconds: 2.0  // Increase from 1.0
-   }
-   ```
-
-3. Filter to visible elements only:
-   ```protobuf
-   options {
-     only_visible_elements: true
-   }
-   ```
-
-## Backup and Recovery
-
-### State Persistence
-
-Currently, state is in-memory only. Tracked applications are:
-
-- Lost on server restart
-- Not shared between server instances
-
-Future improvements:
-
-- Persistent state storage
-- State synchronization between instances
-- Automatic reconnection to previously tracked apps
-
-### Recovery Procedures
-
-1. Server crash: Clients should reconnect automatically
-2. App crash: Target becomes invalid, client gets error
-3. Network partition: Clients should implement retry logic
-
-## Updates and Rollbacks
-
-### Updating the Server
-
-1. Build new version:
-   ```sh
-   gmake swift.build
-   ```
-
-2. Test in staging:
-   ```sh
-   GRPC_PORT=9090 ./Server/.build/release/MacosUseServer
-   ```
-
-3. Graceful shutdown:
-   ```sh
-   kill -TERM $(pgrep MacosUseServer)
-   ```
-
-4. Deploy new version
-
-### Rolling Back
-
-Keep previous binary:
+### Quarantine Attribute Blocking Execution
 
 ```sh
-cp Server/.build/release/MacosUseServer MacosUseServer.backup
-# After update, if needed:
-cp MacosUseServer.backup Server/.build/release/MacosUseServer
+xattr -d com.apple.quarantine ~/Applications/MacosUseServer.app
 ```
-
-## Uninstallation
-
-### Stop the Server
-
-If running via launchd:
-
-```sh
-# User agent
-launchctl unload ~/Library/LaunchAgents/com.macosusesdk.server.plist
-```
-
-If running manually:
-
-```sh
-kill $(pgrep MacosUseServer)
-```
-
-### Remove Files
-
-```sh
-# Remove binary
-rm -f ~/.local/bin/MacosUseServer # User binary
-
-# Remove launchd plist
-rm -f ~/Library/LaunchAgents/com.macosusesdk.server.plist
-
-# Remove socket (may still exist if server didn't clean up)
-rm -f "$HOME/Library/Caches/macosuse.sock"
-
-# Remove logs
-rm -f "$HOME/Library/Logs/macosuse.log"
-rm -f "$HOME/Library/Logs/macosuse.error.log"
-
-# Remove build artifacts (optional - source remains in repo)
-rm -rf Server/.build/
-```
-
-### Remove Accessibility Permissions
-
-If you want to revoke the server's accessibility access:
-
-1. Open **System Settings** > **Privacy & Security** > **Accessibility**
-2. Remove **Terminal** or **iTerm2** (or whichever app you used to run the server)
-
-### Remove Screen Recording Permission
-
-1. Open **System Settings** > **Privacy & Security** > **Screen Recording**
-2. Remove the application you used to run the server
