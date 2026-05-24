@@ -1,6 +1,6 @@
 module github.com/joeycumines/MacosUseSDK/integration
 
-go 1.26.0
+go 1.26.3
 
 replace github.com/joeycumines/MacosUseSDK => ../
 
