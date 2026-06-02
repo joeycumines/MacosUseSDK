@@ -403,9 +403,30 @@ final class ElementRegistryTests: XCTestCase {
         XCTAssertEqual(count, 1)
 
         // Clear a PID with no elements - should not affect anything
-        await registry.clearElements(forPid: 999)
+        let removed = await registry.clearElements(forPid: 999)
+        XCTAssertEqual(removed, 0, "Should report zero entries removed for unknown PID")
         count = await registry.getCachedElementCount()
         XCTAssertEqual(count, 1)
+    }
+
+    func testClearElementsForPidReturnValueReflectsRemovalCount() async {
+        // The return value of clearElements(forPid:) is consumed by the
+        // findElements/findRegionElements forceRefresh path to log how many
+        // stale entries were evicted; pin the contract here.
+        let timeMock = CurrentTimeMock()
+        let idMock = IDSequenceMock(ids: ["p1_a", "p1_b", "p1_c", "p2_a"])
+        let registry = makeTestRegistry(currentTime: timeMock, idSequence: idMock)
+
+        _ = await registry.registerElement(makeElement(), pid: 100)
+        _ = await registry.registerElement(makeElement(), pid: 100)
+        _ = await registry.registerElement(makeElement(), pid: 100)
+        _ = await registry.registerElement(makeElement(), pid: 200)
+
+        let removed = await registry.clearElements(forPid: 100)
+        XCTAssertEqual(removed, 3, "Should report exactly the count of entries removed for the target PID")
+
+        let count = await registry.getCachedElementCount()
+        XCTAssertEqual(count, 1, "Other PIDs' entries must remain after a targeted clear")
     }
 
     // MARK: - Cache Statistics Tests

@@ -4,6 +4,13 @@ import MacosUseProto
 @testable import MacosUseServer
 import XCTest
 
+// NOTE: Tests for `MacosUseSDK.InputAction.requiresAppActivation` live in
+// `Tests/MacosUseSDKTests/InputActionAppActivationTests.swift`. `InputAction`
+// is a core SDK type; its behavior must be covered in the SDK test target
+// (not the Server test target) so the SDK's own contract is verified in
+// isolation. If you add a new `InputAction` case, update that test file
+// to keep the activation contract exhaustive.
+
 /// Unit tests for AutomationCoordinator pure functions and conversions.
 /// These tests focus on testable logic without external dependencies.
 final class AutomationCoordinatorTests: XCTestCase {

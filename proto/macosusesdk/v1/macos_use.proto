@@ -842,6 +842,18 @@ message FindElementsRequest {
 
   // Whether to search only visible elements.
   bool visible_only = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // If true, the server discards any cached element data for the target
+  // application's PID before traversing the accessibility tree, so the
+  // returned element IDs and metadata reflect the *current* UI state rather
+  // than possibly-stale cached data. Defaults to false for backward
+  // compatibility and performance. Set to true after interactions that may
+  // mutate the app's UI (e.g. typing into a text field, dismissing a
+  // sheet) when the next find_elements call must observe the new state.
+  // Element IDs returned by this call are guaranteed fresh; any callers
+  // holding previously-issued element IDs must re-resolve them with
+  // get_element or a subsequent find_elements.
+  bool force_refresh = 6 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from finding elements.
@@ -878,6 +890,18 @@ message FindRegionElementsRequest {
   // This token is opaque and its structure must not be relied upon by clients.
   // Only its presence or absence should be used to determine pagination state.
   string page_token = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // If true, the server discards any cached element data for the target
+  // application's PID before traversing the accessibility tree, so the
+  // returned element IDs and metadata reflect the *current* UI state rather
+  // than possibly-stale cached data. Defaults to false for backward
+  // compatibility and performance. Set to true after interactions that may
+  // mutate the app's UI (e.g. typing into a text field, dismissing a
+  // sheet) when the next find_region_elements call must observe the new
+  // state. Element IDs returned by this call are guaranteed fresh; any
+  // callers holding previously-issued element IDs must re-resolve them
+  // with get_element or a subsequent find_region_elements.
+  bool force_refresh = 6 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from finding elements in a region.

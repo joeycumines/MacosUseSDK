@@ -566,6 +566,11 @@ func (s *MCPServer) registerTools() {
 							"title": map[string]any{"type": "string", "description": "Element title"},
 						},
 					},
+					"force_refresh": map[string]any{
+						"type":        "boolean",
+						"description": "If true, the server discards any cached element data for the target application before traversal so the returned elements reflect the *current* UI state. Use after interactions that may mutate the app's UI (e.g. typing, dismissing a sheet) when stale cached entries are suspected. Defaults to false.",
+						"default":     false,
+					},
 				},
 				"required": []string{"parent"},
 			},
@@ -1205,6 +1210,11 @@ func (s *MCPServer) registerTools() {
 					"selector": map[string]any{
 						"type":        "object",
 						"description": "Optional selector for additional filtering",
+					},
+					"force_refresh": map[string]any{
+						"type":        "boolean",
+						"description": "If true, the server discards any cached element data for the target application before traversal so the returned elements reflect the *current* UI state. Use after interactions that may mutate the app's UI (e.g. typing, dismissing a sheet) when stale cached entries are suspected. Defaults to false.",
+						"default":     false,
 					},
 				},
 				"required": []string{"parent", "x", "y", "width", "height"},

@@ -243,7 +243,7 @@ extension MacosUseService {
         request: ServerRequest<Macosusesdk_V1_FindElementsRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_FindElementsResponse> {
         let req = request.message
-        Self.logger.info("findElements called")
+        Self.logger.info("findElements called (forceRefresh=\(req.forceRefresh, privacy: .public))")
 
         // Validate and parse the selector
         let selector = try SelectorParser.shared.parseSelector(req.selector)
@@ -257,6 +257,20 @@ extension MacosUseService {
 
         // Determine page size (default 100 if not specified or <= 0)
         let pageSize = req.pageSize > 0 ? Int(req.pageSize) : 100
+
+        // If force_refresh was requested, clear cached element data for the
+        // target PID before traversal so the response reflects the current
+        // UI state rather than possibly-stale cached entries. We resolve the
+        // PID from the parent resource name. If the parent uses the
+        // AIP-159 wildcard ("applications/-") or is malformed there is no
+        // single PID to clear, so we silently skip the cache flush and let
+        // the ElementLocator call below surface any real error.
+        if req.forceRefresh, let pid = try? ParsingHelpers.parseOptionalPID(fromName: req.parent) {
+            let cleared = await ElementRegistry.shared.clearElements(forPid: pid)
+            if cleared > 0 {
+                Self.logger.info("forceRefresh: cleared \(cleared, privacy: .public) cached elements for PID \(pid, privacy: .public)")
+            }
+        }
 
         // Find elements using ElementLocator (request more than needed to check if there's a next page)
         let maxResults = offset + pageSize + 1 // Request one extra to detect next page
@@ -300,7 +314,7 @@ extension MacosUseService {
         request: ServerRequest<Macosusesdk_V1_FindRegionElementsRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_FindRegionElementsResponse> {
         let req = request.message
-        Self.logger.info("findRegionElements called")
+        Self.logger.info("findRegionElements called (forceRefresh=\(req.forceRefresh, privacy: .public))")
 
         // Validate region coordinates are finite
         guard req.region.x.isFinite else {
@@ -349,6 +363,17 @@ extension MacosUseService {
 
         // Determine page size (default 100 if not specified or <= 0)
         let pageSize = req.pageSize > 0 ? Int(req.pageSize) : 100
+
+        // If force_refresh was requested, clear cached element data for the
+        // target PID before traversal so the response reflects the current
+        // UI state rather than possibly-stale cached entries. Mirrors the
+        // findElements forceRefresh handling above.
+        if req.forceRefresh, let pid = try? ParsingHelpers.parseOptionalPID(fromName: req.parent) {
+            let cleared = await ElementRegistry.shared.clearElements(forPid: pid)
+            if cleared > 0 {
+                Self.logger.info("forceRefresh: cleared \(cleared, privacy: .public) cached elements for PID \(pid, privacy: .public)")
+            }
+        }
 
         // Find elements in region using ElementLocator (request more than needed to check if there's a next page)
         let maxResults = offset + pageSize + 1 // Request one extra to detect next page
@@ -451,11 +476,15 @@ extension MacosUseService {
         }
 
         // Get element position for clicking
-        guard element.hasX, element.hasY else {
-            throw RPCError(code: .failedPrecondition, message: "Element has no position information")
-        }
-        let x = element.x
-        let y = element.y
+
+        // Calculate geometric center of element bounds.
+        // The AX frame (kAXPositionAttribute + kAXSizeAttribute) provides
+        // the top-left corner and dimensions. Clicking the top-left of an
+        // element frequently misses the hit area (padding, edge, border).
+        // Always click the geometric center for maximum hit reliability.
+        let clickPoint = try Self.elementClickPoint(element)
+        let centerX = clickPoint.x
+        let centerY = clickPoint.y
 
         // Determine click type
         let clickType = req.clickType
@@ -468,8 +497,8 @@ extension MacosUseService {
                     $0.inputType = .click(
                         Macosusesdk_V1_MouseClick.with {
                             $0.position = Macosusesdk_Type_Point.with {
-                                $0.x = x
-                                $0.y = y
+                                $0.x = centerX
+                                $0.y = centerY
                             }
                             $0.clickType = .left
                             $0.clickCount = 1
@@ -487,8 +516,8 @@ extension MacosUseService {
                     $0.inputType = .click(
                         Macosusesdk_V1_MouseClick.with {
                             $0.position = Macosusesdk_Type_Point.with {
-                                $0.x = x
-                                $0.y = y
+                                $0.x = centerX
+                                $0.y = centerY
                             }
                             $0.clickType = .left
                             $0.clickCount = 2
@@ -506,8 +535,8 @@ extension MacosUseService {
                     $0.inputType = .click(
                         Macosusesdk_V1_MouseClick.with {
                             $0.position = Macosusesdk_Type_Point.with {
-                                $0.x = x
-                                $0.y = y
+                                $0.x = centerX
+                                $0.y = centerY
                             }
                             $0.clickType = .right
                             $0.clickCount = 1
@@ -568,11 +597,10 @@ extension MacosUseService {
         }
 
         // Get element position for typing
-        guard element.hasX, element.hasY else {
-            throw RPCError(code: .failedPrecondition, message: "Element has no position information")
-        }
-        let x = element.x
-        let y = element.y
+        // Use geometric center for reliable focus click.
+        let clickPoint = try Self.elementClickPoint(element)
+        let centerX = clickPoint.x
+        let centerY = clickPoint.y
 
         // Click on the element first to focus it
         try await AutomationCoordinator.shared.handleExecuteInput(
@@ -580,8 +608,8 @@ extension MacosUseService {
                 $0.inputType = .click(
                     Macosusesdk_V1_MouseClick.with {
                         $0.position = Macosusesdk_Type_Point.with {
-                            $0.x = x
-                            $0.y = y
+                            $0.x = centerX
+                            $0.y = centerY
                         }
                         $0.clickType = .left
                         $0.clickCount = 1
@@ -751,14 +779,10 @@ extension MacosUseService {
         }
 
         // Fallback to coordinate-based simulation if AXUIElement is nil or action failed
-        guard element.hasX, element.hasY else {
-            throw RPCError(
-                code: .failedPrecondition, message: "Element has no AXUIElement and no position for action",
-            )
-        }
-
-        let x = element.x
-        let y = element.y
+        // Use geometric center of element bounds for maximum hit area reliability.
+        let clickPoint = try Self.elementClickPoint(element)
+        let centerX = clickPoint.x
+        let centerY = clickPoint.y
 
         switch req.action.lowercased() {
         case "press", "click":
@@ -767,8 +791,8 @@ extension MacosUseService {
                     $0.inputType = .click(
                         Macosusesdk_V1_MouseClick.with {
                             $0.position = Macosusesdk_Type_Point.with {
-                                $0.x = x
-                                $0.y = y
+                                $0.x = centerX
+                                $0.y = centerY
                             }
                             $0.clickType = .left
                             $0.clickCount = 1
@@ -786,8 +810,8 @@ extension MacosUseService {
                     $0.inputType = .click(
                         Macosusesdk_V1_MouseClick.with {
                             $0.position = Macosusesdk_Type_Point.with {
-                                $0.x = x
-                                $0.y = y
+                                $0.x = centerX
+                                $0.y = centerY
                             }
                             $0.clickType = .right
                             $0.clickCount = 1
@@ -1064,5 +1088,29 @@ extension MacosUseService {
         }
 
         return ServerResponse(message: op)
+    }
+
+    // MARK: - Element Click Coordinate Helpers
+
+    /// Calculates the geometric center point of an element's bounds for clicking.
+    /// The AX frame (kAXPositionAttribute + kAXSizeAttribute) provides top-left corner
+    /// and dimensions. Clicking the geometric center maximizes hit area reliability.
+    ///
+    /// - Parameter element: The element to calculate the click point for.
+    /// - Returns: A CGPoint at the geometric center of the element's bounds.
+    /// - Throws: `RPCError` with `.failedPrecondition` if element has no position, zero size, or missing dimensions.
+    static func elementClickPoint(_ element: Macosusesdk_Type_Element) throws -> CGPoint {
+        guard element.hasX, element.hasY else {
+            throw RPCError(code: .failedPrecondition, message: "Element has no position information")
+        }
+        guard element.hasWidth, element.hasHeight, element.width > 0, element.height > 0 else {
+            throw RPCError(
+                code: .failedPrecondition,
+                message: "Element has zero size (w=\(element.width), h=\(element.height)), cannot determine click position",
+            )
+        }
+        let centerX = element.x + (element.width / 2)
+        let centerY = element.y + (element.height / 2)
+        return CGPoint(x: centerX, y: centerY)
     }
 }

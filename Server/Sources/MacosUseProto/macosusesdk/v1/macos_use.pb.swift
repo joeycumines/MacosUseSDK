@@ -445,6 +445,18 @@ public nonisolated struct Macosusesdk_V1_FindElementsRequest: Sendable {
   /// Whether to search only visible elements.
   public var visibleOnly: Bool = false
 
+  /// If true, the server discards any cached element data for the target
+  /// application's PID before traversing the accessibility tree, so the
+  /// returned element IDs and metadata reflect the *current* UI state rather
+  /// than possibly-stale cached data. Defaults to false for backward
+  /// compatibility and performance. Set to true after interactions that may
+  /// mutate the app's UI (e.g. typing into a text field, dismissing a
+  /// sheet) when the next find_elements call must observe the new state.
+  /// Element IDs returned by this call are guaranteed fresh; any callers
+  /// holding previously-issued element IDs must re-resolve them with
+  /// get_element or a subsequent find_elements.
+  public var forceRefresh: Bool = false
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
@@ -509,6 +521,18 @@ public nonisolated struct Macosusesdk_V1_FindRegionElementsRequest: Sendable {
   /// This token is opaque and its structure must not be relied upon by clients.
   /// Only its presence or absence should be used to determine pagination state.
   public var pageToken: String = String()
+
+  /// If true, the server discards any cached element data for the target
+  /// application's PID before traversing the accessibility tree, so the
+  /// returned element IDs and metadata reflect the *current* UI state rather
+  /// than possibly-stale cached data. Defaults to false for backward
+  /// compatibility and performance. Set to true after interactions that may
+  /// mutate the app's UI (e.g. typing into a text field, dismissing a
+  /// sheet) when the next find_region_elements call must observe the new
+  /// state. Element IDs returned by this call are guaranteed fresh; any
+  /// callers holding previously-issued element IDs must re-resolve them
+  /// with get_element or a subsequent find_region_elements.
+  public var forceRefresh: Bool = false
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -3485,7 +3509,7 @@ nonisolated extension Macosusesdk_V1_ModifiedElement: SwiftProtobuf.Message, Swi
 
 nonisolated extension Macosusesdk_V1_FindElementsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".FindElementsRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{1}selector\0\u{3}page_size\0\u{3}page_token\0\u{3}visible_only\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{1}selector\0\u{3}page_size\0\u{3}page_token\0\u{3}visible_only\0\u{3}force_refresh\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -3498,6 +3522,7 @@ nonisolated extension Macosusesdk_V1_FindElementsRequest: SwiftProtobuf.Message,
       case 3: try { try decoder.decodeSingularInt32Field(value: &self.pageSize) }()
       case 4: try { try decoder.decodeSingularStringField(value: &self.pageToken) }()
       case 5: try { try decoder.decodeSingularBoolField(value: &self.visibleOnly) }()
+      case 6: try { try decoder.decodeSingularBoolField(value: &self.forceRefresh) }()
       default: break
       }
     }
@@ -3523,6 +3548,9 @@ nonisolated extension Macosusesdk_V1_FindElementsRequest: SwiftProtobuf.Message,
     if self.visibleOnly != false {
       try visitor.visitSingularBoolField(value: self.visibleOnly, fieldNumber: 5)
     }
+    if self.forceRefresh != false {
+      try visitor.visitSingularBoolField(value: self.forceRefresh, fieldNumber: 6)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -3532,6 +3560,7 @@ nonisolated extension Macosusesdk_V1_FindElementsRequest: SwiftProtobuf.Message,
     if lhs.pageSize != rhs.pageSize {return false}
     if lhs.pageToken != rhs.pageToken {return false}
     if lhs.visibleOnly != rhs.visibleOnly {return false}
+    if lhs.forceRefresh != rhs.forceRefresh {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -3574,7 +3603,7 @@ nonisolated extension Macosusesdk_V1_FindElementsResponse: SwiftProtobuf.Message
 
 nonisolated extension Macosusesdk_V1_FindRegionElementsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".FindRegionElementsRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{1}region\0\u{1}selector\0\u{3}page_size\0\u{3}page_token\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{1}region\0\u{1}selector\0\u{3}page_size\0\u{3}page_token\0\u{3}force_refresh\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -3587,6 +3616,7 @@ nonisolated extension Macosusesdk_V1_FindRegionElementsRequest: SwiftProtobuf.Me
       case 3: try { try decoder.decodeSingularMessageField(value: &self._selector) }()
       case 4: try { try decoder.decodeSingularInt32Field(value: &self.pageSize) }()
       case 5: try { try decoder.decodeSingularStringField(value: &self.pageToken) }()
+      case 6: try { try decoder.decodeSingularBoolField(value: &self.forceRefresh) }()
       default: break
       }
     }
@@ -3612,6 +3642,9 @@ nonisolated extension Macosusesdk_V1_FindRegionElementsRequest: SwiftProtobuf.Me
     if !self.pageToken.isEmpty {
       try visitor.visitSingularStringField(value: self.pageToken, fieldNumber: 5)
     }
+    if self.forceRefresh != false {
+      try visitor.visitSingularBoolField(value: self.forceRefresh, fieldNumber: 6)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -3621,6 +3654,7 @@ nonisolated extension Macosusesdk_V1_FindRegionElementsRequest: SwiftProtobuf.Me
     if lhs._selector != rhs._selector {return false}
     if lhs.pageSize != rhs.pageSize {return false}
     if lhs.pageToken != rhs.pageToken {return false}
+    if lhs.forceRefresh != rhs.forceRefresh {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

@@ -2636,3 +2636,156 @@ func TestBuildSelector_SpecialCharacters(t *testing.T) {
 		})
 	}
 }
+
+// TestHandleFindElements_ForceRefreshTrueForwardsToProto verifies that
+// when a client supplies "force_refresh": true in the JSON arguments the
+// handler forwards that flag on the generated FindElementsRequest, so the
+// server can clear its in-memory element cache for the target PID before
+// the traversal.
+func TestHandleFindElements_ForceRefreshTrueForwardsToProto(t *testing.T) {
+	var capturedReq *pb.FindElementsRequest
+
+	mockClient := &mockElementClient{
+		findElementsFunc: func(ctx context.Context, req *pb.FindElementsRequest) (*pb.FindElementsResponse, error) {
+			capturedReq = req
+			return &pb.FindElementsResponse{Elements: []*_type.Element{}}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "find_elements",
+		Arguments: json.RawMessage(`{"parent": "applications/42", "force_refresh": true}`),
+	}
+
+	if _, err := server.handleFindElements(call); err != nil {
+		t.Fatalf("handleFindElements returned error: %v", err)
+	}
+	if capturedReq == nil {
+		t.Fatal("request was not captured")
+	}
+	if !capturedReq.GetForceRefresh() {
+		t.Errorf("ForceRefresh = false, want true; force_refresh must be forwarded to the gRPC request")
+	}
+}
+
+// TestHandleFindElements_ForceRefreshOmittedDefaultsFalse verifies that
+// when the client omits the force_refresh parameter the proto field is
+// left at its zero value (false) so the existing cache-warming behavior
+// is preserved by default.
+func TestHandleFindElements_ForceRefreshOmittedDefaultsFalse(t *testing.T) {
+	var capturedReq *pb.FindElementsRequest
+
+	mockClient := &mockElementClient{
+		findElementsFunc: func(ctx context.Context, req *pb.FindElementsRequest) (*pb.FindElementsResponse, error) {
+			capturedReq = req
+			return &pb.FindElementsResponse{Elements: []*_type.Element{}}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "find_elements",
+		Arguments: json.RawMessage(`{"parent": "applications/42"}`),
+	}
+
+	if _, err := server.handleFindElements(call); err != nil {
+		t.Fatalf("handleFindElements returned error: %v", err)
+	}
+	if capturedReq == nil {
+		t.Fatal("request was not captured")
+	}
+	if capturedReq.GetForceRefresh() {
+		t.Errorf("ForceRefresh = true, want false; omitted force_refresh must default to false")
+	}
+}
+
+// TestHandleFindElements_ForceRefreshExplicitFalseForwardsToProto verifies
+// that an explicit "force_refresh": false is preserved (not silently
+// dropped or coerced), which is important for clients that always set the
+// flag and rely on the exact value being transmitted.
+func TestHandleFindElements_ForceRefreshExplicitFalseForwardsToProto(t *testing.T) {
+	var capturedReq *pb.FindElementsRequest
+
+	mockClient := &mockElementClient{
+		findElementsFunc: func(ctx context.Context, req *pb.FindElementsRequest) (*pb.FindElementsResponse, error) {
+			capturedReq = req
+			return &pb.FindElementsResponse{Elements: []*_type.Element{}}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "find_elements",
+		Arguments: json.RawMessage(`{"parent": "applications/42", "force_refresh": false}`),
+	}
+
+	if _, err := server.handleFindElements(call); err != nil {
+		t.Fatalf("handleFindElements returned error: %v", err)
+	}
+	if capturedReq == nil {
+		t.Fatal("request was not captured")
+	}
+	if capturedReq.GetForceRefresh() {
+		t.Errorf("ForceRefresh = true, want false; explicit false must be honored")
+	}
+}
+
+// TestHandleFindRegionElements_ForceRefreshTrueForwardsToProto mirrors
+// the find_elements coverage for the find_region_elements handler so both
+// code paths are pinned to forward the cache-busting flag.
+func TestHandleFindRegionElements_ForceRefreshTrueForwardsToProto(t *testing.T) {
+	var capturedReq *pb.FindRegionElementsRequest
+
+	mockClient := &mockElementClient{
+		findRegionElementsFunc: func(ctx context.Context, req *pb.FindRegionElementsRequest) (*pb.FindRegionElementsResponse, error) {
+			capturedReq = req
+			return &pb.FindRegionElementsResponse{Elements: []*_type.Element{}}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "find_region_elements",
+		Arguments: json.RawMessage(`{"parent": "applications/42", "x": 0, "y": 0, "width": 100, "height": 100, "force_refresh": true}`),
+	}
+
+	if _, err := server.handleFindRegionElements(call); err != nil {
+		t.Fatalf("handleFindRegionElements returned error: %v", err)
+	}
+	if capturedReq == nil {
+		t.Fatal("request was not captured")
+	}
+	if !capturedReq.GetForceRefresh() {
+		t.Errorf("ForceRefresh = false, want true; force_refresh must be forwarded to the gRPC request")
+	}
+}
+
+// TestHandleFindRegionElements_ForceRefreshOmittedDefaultsFalse mirrors
+// the omitted-default coverage for the region variant.
+func TestHandleFindRegionElements_ForceRefreshOmittedDefaultsFalse(t *testing.T) {
+	var capturedReq *pb.FindRegionElementsRequest
+
+	mockClient := &mockElementClient{
+		findRegionElementsFunc: func(ctx context.Context, req *pb.FindRegionElementsRequest) (*pb.FindRegionElementsResponse, error) {
+			capturedReq = req
+			return &pb.FindRegionElementsResponse{Elements: []*_type.Element{}}, nil
+		},
+	}
+
+	server := newTestMCPServer(mockClient)
+	call := &ToolCall{
+		Name:      "find_region_elements",
+		Arguments: json.RawMessage(`{"parent": "applications/42", "x": 0, "y": 0, "width": 100, "height": 100}`),
+	}
+
+	if _, err := server.handleFindRegionElements(call); err != nil {
+		t.Fatalf("handleFindRegionElements returned error: %v", err)
+	}
+	if capturedReq == nil {
+		t.Fatal("request was not captured")
+	}
+	if capturedReq.GetForceRefresh() {
+		t.Errorf("ForceRefresh = true, want false; omitted force_refresh must default to false")
+	}
+}

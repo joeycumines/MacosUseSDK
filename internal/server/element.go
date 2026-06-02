@@ -22,8 +22,9 @@ func (s *MCPServer) handleFindElements(call *ToolCall) (*ToolResult, error) {
 	defer cancel()
 
 	var params struct {
-		Selector map[string]any `json:"selector"`
-		Parent   string         `json:"parent"`
+		Selector     map[string]any `json:"selector"`
+		Parent       string         `json:"parent"`
+		ForceRefresh bool           `json:"force_refresh"`
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
@@ -48,8 +49,9 @@ func (s *MCPServer) handleFindElements(call *ToolCall) (*ToolResult, error) {
 	}
 
 	resp, err := s.client.FindElements(ctx, &pb.FindElementsRequest{
-		Parent:   params.Parent,
-		Selector: selector,
+		Parent:       params.Parent,
+		Selector:     selector,
+		ForceRefresh: params.ForceRefresh,
 	})
 	if err != nil {
 		return grpcErrorResult(err, "find_elements"), nil
@@ -371,12 +373,13 @@ func (s *MCPServer) handleFindRegionElements(call *ToolCall) (*ToolResult, error
 	defer cancel()
 
 	var params struct {
-		Selector map[string]any `json:"selector"`
-		Parent   string         `json:"parent"`
-		X        float64        `json:"x"`
-		Y        float64        `json:"y"`
-		Width    float64        `json:"width"`
-		Height   float64        `json:"height"`
+		Selector     map[string]any `json:"selector"`
+		Parent       string         `json:"parent"`
+		X            float64        `json:"x"`
+		Y            float64        `json:"y"`
+		Width        float64        `json:"width"`
+		Height       float64        `json:"height"`
+		ForceRefresh bool           `json:"force_refresh"`
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
@@ -413,9 +416,10 @@ func (s *MCPServer) handleFindRegionElements(call *ToolCall) (*ToolResult, error
 	}
 
 	resp, err := s.client.FindRegionElements(ctx, &pb.FindRegionElementsRequest{
-		Parent:   params.Parent,
-		Region:   region,
-		Selector: selector,
+		Parent:       params.Parent,
+		Region:       region,
+		Selector:     selector,
+		ForceRefresh: params.ForceRefresh,
 	})
 	if err != nil {
 		return grpcErrorResult(err, "find_region_elements"), nil

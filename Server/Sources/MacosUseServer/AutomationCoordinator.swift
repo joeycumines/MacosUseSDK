@@ -37,12 +37,20 @@ public actor AutomationCoordinator {
 
     /// Executes an input action globally or on a specific PID.
     ///
-    /// For keyboard-targeted actions (key press, key hold, text typing), the
-    /// target application is activated (brought to the foreground) first when a
-    /// PID is provided. This is necessary because CGEvent keyboard events are
-    /// delivered to whichever application currently has keyboard focus, NOT to a
-    /// specific process. Mouse events (click, drag, etc.) are routed by screen
-    /// coordinates and do not require prior activation.
+    /// For actions that require the target app to be frontmost (key press,
+    /// key hold, text typing, mouse click/double-click/right-click), the
+    /// target application is activated (brought to the foreground) first
+    /// when a PID is provided. This is necessary because:
+    ///
+    /// - CGEvent keyboard events are delivered to whichever application
+    ///   currently has keyboard focus, NOT to a specific process.
+    /// - Mouse click events are dispatched at a screen coordinate; if the
+    ///   intended target window belongs to a background app, the click is
+    ///   routed to whichever app happens to be frontmost instead.
+    ///
+    /// Mouse moves, drags, and stateful button events (mouseDown/mouseUp)
+    /// intentionally skip the activation step — callers may compose those
+    /// primitives with their own activation sequence (e.g. drag-and-drop).
     @MainActor
     public func handleExecuteInput(
         action: Macosusesdk_V1_InputAction, pid: pid_t?, showAnimation: Bool, animationDuration: Double,
@@ -51,17 +59,18 @@ public actor AutomationCoordinator {
 
         let sdkAction = try convertFromProtoInputAction(action)
 
-        // Activate the target application for keyboard actions so that CGEvent
-        // key events reach the correct process.
-        if let pid, sdkAction.requiresKeyboardFocus {
+        // Activate the target application when the action requires it so
+        // that CGEvent keyboard events and mouse click events reach the
+        // correct process/window.
+        if let pid, sdkAction.requiresAppActivation {
             if let app = NSRunningApplication(processIdentifier: pid) {
                 let activated = app.activate()
                 if activated {
-                    logger.info("Activated application PID \(pid, privacy: .public) for keyboard input")
+                    logger.info("Activated application PID \(pid, privacy: .public) for input action")
                     // Brief pause for activation to propagate through the window server.
                     try await Task.sleep(nanoseconds: 50_000_000) // 50ms
                 } else {
-                    logger.warning("Failed to activate application PID \(pid, privacy: .public) for keyboard input")
+                    logger.warning("Failed to activate application PID \(pid, privacy: .public) for input action")
                 }
             } else {
                 logger.warning("No NSRunningApplication found for PID \(pid, privacy: .public)")

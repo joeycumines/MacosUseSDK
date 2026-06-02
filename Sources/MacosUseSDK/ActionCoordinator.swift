@@ -27,16 +27,29 @@ public enum InputAction: Sendable {
     /// Duration controls the speed of the drag (0 = instant, >0 = animated with intermediate steps).
     case drag(from: CGPoint, to: CGPoint, button: CGMouseButton = .left, duration: Double = 0)
 
-    /// Returns `true` for actions that deliver keyboard events via CGEvent.
-    /// CGEvent keyboard events are routed to the currently focused application,
-    /// so the target application must be activated (made frontmost) before these
-    /// events are posted. Mouse actions use screen coordinates and do not need
-    /// prior activation.
-    public var requiresKeyboardFocus: Bool {
+    /// Returns `true` for actions that require the target app to be the
+    /// frontmost application before the event is posted.
+    ///
+    /// Keyboard events (`.press`, `.pressHold`, `.type`) MUST be routed to
+    /// the focused application, so app activation is required.
+    ///
+    /// Mouse click events (`.click`, `.doubleClick`, `.rightClick`) also
+    /// benefit from pre-activation: clicking an element that belongs to a
+    /// background window frequently fails because the click lands at the
+    /// correct screen coordinate but the event is consumed by whichever
+    /// app happens to be frontmost. Activating the target app first
+    /// guarantees the click reaches the intended window.
+    ///
+    /// Mouse moves (`.move`), drags (`.drag`), and stateful button events
+    /// (`.mouseDown`, `.mouseUp`) intentionally do NOT require prior
+    /// activation — callers may need to compose them with explicit
+    /// activation (e.g. drag-and-drop sequences) without disturbing the
+    /// current focus.
+    public var requiresAppActivation: Bool {
         switch self {
-        case .press, .pressHold, .type:
+        case .press, .pressHold, .type, .click, .doubleClick, .rightClick:
             true
-        case .click, .doubleClick, .rightClick, .move, .mouseDown, .mouseUp, .drag:
+        case .move, .mouseDown, .mouseUp, .drag:
             false
         }
     }

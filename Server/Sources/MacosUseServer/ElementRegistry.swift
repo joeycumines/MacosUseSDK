@@ -177,12 +177,15 @@ public actor ElementRegistry {
 
     /// Clear all elements for a specific process (e.g., when app quits).
     /// - Parameter pid: The process ID
-    public func clearElements(forPid pid: pid_t) {
+    /// - Returns: The number of cached element entries that were removed.
+    public func clearElements(forPid pid: pid_t) -> Int {
         let keysToRemove = elementCache.filter { $0.value.pid == pid }.keys
+        let count = keysToRemove.count
         for key in keysToRemove {
             elementCache.removeValue(forKey: key)
         }
-        logger.info("Cleared \(keysToRemove.count, privacy: .public) elements for PID \(pid, privacy: .public)")
+        logger.info("Cleared \(count, privacy: .public) elements for PID \(pid, privacy: .public)")
+        return count
     }
 
     /// Get cache statistics.

@@ -1130,7 +1130,18 @@ type FindElementsRequest struct {
 	// Only its presence or absence should be used to determine pagination state.
 	PageToken string `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	// Whether to search only visible elements.
-	VisibleOnly   bool `protobuf:"varint,5,opt,name=visible_only,json=visibleOnly,proto3" json:"visible_only,omitempty"`
+	VisibleOnly bool `protobuf:"varint,5,opt,name=visible_only,json=visibleOnly,proto3" json:"visible_only,omitempty"`
+	// If true, the server discards any cached element data for the target
+	// application's PID before traversing the accessibility tree, so the
+	// returned element IDs and metadata reflect the *current* UI state rather
+	// than possibly-stale cached data. Defaults to false for backward
+	// compatibility and performance. Set to true after interactions that may
+	// mutate the app's UI (e.g. typing into a text field, dismissing a
+	// sheet) when the next find_elements call must observe the new state.
+	// Element IDs returned by this call are guaranteed fresh; any callers
+	// holding previously-issued element IDs must re-resolve them with
+	// get_element or a subsequent find_elements.
+	ForceRefresh  bool `protobuf:"varint,6,opt,name=force_refresh,json=forceRefresh,proto3" json:"force_refresh,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1196,6 +1207,13 @@ func (x *FindElementsRequest) GetPageToken() string {
 func (x *FindElementsRequest) GetVisibleOnly() bool {
 	if x != nil {
 		return x.VisibleOnly
+	}
+	return false
+}
+
+func (x *FindElementsRequest) GetForceRefresh() bool {
+	if x != nil {
+		return x.ForceRefresh
 	}
 	return false
 }
@@ -1273,7 +1291,18 @@ type FindRegionElementsRequest struct {
 	// Page token from a previous call.
 	// This token is opaque and its structure must not be relied upon by clients.
 	// Only its presence or absence should be used to determine pagination state.
-	PageToken     string `protobuf:"bytes,5,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	PageToken string `protobuf:"bytes,5,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	// If true, the server discards any cached element data for the target
+	// application's PID before traversing the accessibility tree, so the
+	// returned element IDs and metadata reflect the *current* UI state rather
+	// than possibly-stale cached data. Defaults to false for backward
+	// compatibility and performance. Set to true after interactions that may
+	// mutate the app's UI (e.g. typing into a text field, dismissing a
+	// sheet) when the next find_region_elements call must observe the new
+	// state. Element IDs returned by this call are guaranteed fresh; any
+	// callers holding previously-issued element IDs must re-resolve them
+	// with get_element or a subsequent find_region_elements.
+	ForceRefresh  bool `protobuf:"varint,6,opt,name=force_refresh,json=forceRefresh,proto3" json:"force_refresh,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1341,6 +1370,13 @@ func (x *FindRegionElementsRequest) GetPageToken() string {
 		return x.PageToken
 	}
 	return ""
+}
+
+func (x *FindRegionElementsRequest) GetForceRefresh() bool {
+	if x != nil {
+		return x.ForceRefresh
+	}
+	return false
 }
 
 // Response from finding elements in a region.
@@ -7167,7 +7203,7 @@ const file_macosusesdk_v1_macos_use_proto_rawDesc = "" +
 	"oldElement\x12?\n" +
 	"\vnew_element\x18\x02 \x01(\v2\x19.macosusesdk.type.ElementB\x03\xe0A\x03R\n" +
 	"newElement\x12>\n" +
-	"\achanges\x18\x03 \x03(\v2\x1f.macosusesdk.v1.AttributeChangeB\x03\xe0A\x03R\achanges\"\xea\x01\n" +
+	"\achanges\x18\x03 \x03(\v2\x1f.macosusesdk.v1.AttributeChangeB\x03\xe0A\x03R\achanges\"\x94\x02\n" +
 	"\x13FindElementsRequest\x12!\n" +
 	"\x06parent\x18\x01 \x01(\tB\t\xe0A\x02\xfaA\x03\n" +
 	"\x01*R\x06parent\x12B\n" +
@@ -7175,10 +7211,11 @@ const file_macosusesdk_v1_macos_use_proto_rawDesc = "" +
 	"\tpage_size\x18\x03 \x01(\x05B\x03\xe0A\x01R\bpageSize\x12\"\n" +
 	"\n" +
 	"page_token\x18\x04 \x01(\tB\x03\xe0A\x01R\tpageToken\x12&\n" +
-	"\fvisible_only\x18\x05 \x01(\bB\x03\xe0A\x01R\vvisibleOnly\"\x7f\n" +
+	"\fvisible_only\x18\x05 \x01(\bB\x03\xe0A\x01R\vvisibleOnly\x12(\n" +
+	"\rforce_refresh\x18\x06 \x01(\bB\x03\xe0A\x01R\fforceRefresh\"\x7f\n" +
 	"\x14FindElementsResponse\x12:\n" +
 	"\belements\x18\x01 \x03(\v2\x19.macosusesdk.type.ElementB\x03\xe0A\x03R\belements\x12+\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tB\x03\xe0A\x03R\rnextPageToken\"\xff\x01\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tB\x03\xe0A\x03R\rnextPageToken\"\xa9\x02\n" +
 	"\x19FindRegionElementsRequest\x12!\n" +
 	"\x06parent\x18\x01 \x01(\tB\t\xe0A\x02\xfaA\x03\n" +
 	"\x01*R\x06parent\x125\n" +
@@ -7186,7 +7223,8 @@ const file_macosusesdk_v1_macos_use_proto_rawDesc = "" +
 	"\bselector\x18\x03 \x01(\v2!.macosusesdk.type.ElementSelectorB\x03\xe0A\x01R\bselector\x12 \n" +
 	"\tpage_size\x18\x04 \x01(\x05B\x03\xe0A\x01R\bpageSize\x12\"\n" +
 	"\n" +
-	"page_token\x18\x05 \x01(\tB\x03\xe0A\x01R\tpageToken\"\x85\x01\n" +
+	"page_token\x18\x05 \x01(\tB\x03\xe0A\x01R\tpageToken\x12(\n" +
+	"\rforce_refresh\x18\x06 \x01(\bB\x03\xe0A\x01R\fforceRefresh\"\x85\x01\n" +
 	"\x1aFindRegionElementsResponse\x12:\n" +
 	"\belements\x18\x01 \x03(\v2\x19.macosusesdk.type.ElementB\x03\xe0A\x03R\belements\x12+\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tB\x03\xe0A\x03R\rnextPageToken\"S\n" +
