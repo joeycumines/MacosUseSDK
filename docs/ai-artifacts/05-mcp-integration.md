@@ -65,7 +65,19 @@ For cloud-based agents or "Cloud Computer" scenarios, MCP utilizes SSE for serve
 
 ## **1A. MacosUseSDK HTTP/SSE Transport Extension (Non-Standard)**
 
-> **⚠️ IMPORTANT:** The HTTP/SSE transport described in this section is a **project-specific extension** that is **not part of the official MCP specification** (version 2025-11-25). The canonical MCP protocol defines only stdio as the standard transport layer. This HTTP transport is provided as a convenience for scenarios where stdio is not practical (e.g., web-based clients, remote access, multi-client scenarios). Clients should not expect interoperability with other MCP servers/clients using this transport pattern.
+> **⚠️ IMPORTANT:** The HTTP/SSE transport described in this section is a **project-specific extension** that is **not part of the official MCP specification** (version 2025-11-25). The canonical MCP 2025-11-25 protocol defines stdio and Streamable HTTP transports; this project implements stdio and an earlier custom HTTP/SSE extension. This custom HTTP transport is provided as a convenience for scenarios where stdio is not practical (e.g., web-based clients, remote access, multi-client scenarios). Clients should not expect interoperability with other MCP servers/clients using this transport pattern.
+
+### **1B. MCP 2025-11-25 Message-Level Compliance**
+
+The stdio MCP server in `internal/server/mcp.go` targets the **MCP 2025-11-25** specification:
+
+* **Protocol version:** The server advertises `2025-11-25` in the `initialize` response. If a client requests an unknown or unsupported version, the server responds with `2025-11-25` and lets the client decide whether to disconnect (per the lifecycle version-negotiation rules).
+* **Capabilities:** Server capabilities are declared for `tools`, `resources`, and `prompts` with appropriate feature flags.
+* **Tool results:** Soft errors are reported using the spec-compliant `isError` field, not `is_error`.
+* **Binary resources:** Resource reads that return binary data (e.g., `screen://main`) use the spec `blob` field with base64-encoded bytes.
+* **No-argument tools:** Tools such as `list_apps` and `get_display` declare `additionalProperties: false` in their input schemas.
+* **Ping support:** The server responds to `ping` requests with an empty result.
+* **Lifecycle methods:** `notifications/initialized` is accepted silently; non-spec `shutdown` and `exit` JSON-RPC methods are not handled.
 
 ### **1A.1 Transport Architecture**
 

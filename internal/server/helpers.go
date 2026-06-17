@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"time"
 
 	_type "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
@@ -19,6 +20,27 @@ import (
 // maxDisplayTextLen is the maximum length for text shown in result summaries.
 // Longer text is truncated with "..." suffix.
 const maxDisplayTextLen = 50
+
+// maxInputTextLen is the maximum allowed length for text/script input parameters.
+// Prevents memory exhaustion from unbounded user input.
+const maxInputTextLen = 1 << 20 // 1 MiB
+
+// maxPathLen is the maximum allowed length for file path parameters.
+const maxPathLen = 4096
+
+// defaultApplicationParent is the parent pattern for inputs targeting any/active application.
+const defaultApplicationParent = "applications/-"
+
+// defaultScriptTimeout is the default timeout for script execution in seconds.
+const defaultScriptTimeout = 30
+
+// validateInputLen returns an error result if the input exceeds maxLen.
+func validateInputLen(input string, maxLen int, paramName string) *ToolResult {
+	if len(input) > maxLen {
+		return errorResultf("%s exceeds maximum length of %d bytes (got %d)", paramName, maxLen, len(input))
+	}
+	return nil
+}
 
 // truncateText truncates text to maxDisplayTextLen characters with "..." suffix if needed.
 func truncateText(s string) string {
@@ -146,16 +168,28 @@ func grpcErrorResult(err error, toolName string) *ToolResult {
 	return errorResult(formatGRPCError(err, toolName))
 }
 
+// grpcErrorResultWithTimeout creates a ToolResult with IsError=true and a formatted
+// gRPC error message, adding timeout context when a deadline was exceeded.
+// This is used by the scripting handlers to distinguish script vs request timeouts (M6).
+func grpcErrorResultWithTimeout(err error, toolName string, effectiveTimeout time.Duration) *ToolResult {
+	msg := formatGRPCError(err, toolName)
+	if effectiveTimeout > 0 && err != nil {
+		if strings.Contains(strings.ToLower(err.Error()), "deadline") || strings.Contains(strings.ToLower(err.Error()), "context") {
+			msg = fmt.Sprintf("%s (timed out after %v — script-level timeout enforcement)", msg, effectiveTimeout)
+		}
+	}
+	return errorResult(msg)
+}
+
 // validateToolInput validates JSON arguments against a tool's InputSchema.
 // It checks:
 //   - All required fields are present
 //   - Field types match the schema (string, number, boolean, integer, array, object)
 //   - Enum values are in the allowed set (if enum is specified)
+//   - Extra properties are rejected when the schema sets additionalProperties: false
 //
 // Returns a JSON-RPC error response with ErrCodeInvalidParams (-32602) if validation fails,
 // nil if validation passes.
-//
-// Note: Extra properties not defined in the schema are allowed per JSON-RPC conventions.
 func validateToolInput(toolName string, args map[string]any, tools map[string]*Tool) *transport.Message {
 	tool, ok := tools[toolName]
 	if !ok {
@@ -181,16 +215,27 @@ func validateToolInput(toolName string, args map[string]any, tools map[string]*T
 
 	// Get properties from schema for type/enum validation
 	properties := getSchemaProperties(schema)
-	if properties == nil {
-		// No properties defined - skip type validation
+	if properties == nil && len(args) == 0 {
+		// No properties defined and no arguments - nothing to validate
 		return nil
+	}
+
+	// Determine whether additional properties are allowed.
+	additionalPropsAllowed := true
+	if ap, ok := schema["additionalProperties"]; ok {
+		if b, ok := ap.(bool); ok && !b {
+			additionalPropsAllowed = false
+		}
 	}
 
 	// Validate each provided argument against its schema
 	for fieldName, value := range args {
 		propSchema, exists := properties[fieldName]
 		if !exists {
-			// Extra property not in schema - allowed per JSON-RPC conventions
+			if !additionalPropsAllowed {
+				return invalidParamsError(fmt.Sprintf("additional property not allowed: %s", fieldName))
+			}
+			// Extra property not in schema - allowed when additionalProperties is not false
 			continue
 		}
 

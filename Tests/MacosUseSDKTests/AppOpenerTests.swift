@@ -193,6 +193,8 @@ final class AppOpenerTests: XCTestCase {
             pid: 12345,
             appName: "TestApp",
             processingTimeSeconds: "0.123",
+            actionTaken: .launchedNew,
+            newProcessCreated: true,
         )
 
         let encoder = JSONEncoder()

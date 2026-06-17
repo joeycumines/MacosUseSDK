@@ -240,20 +240,20 @@ Open an opencode session in this repo and test the MCP tools:
 
 1. **No-permission test** (uses Quartz/CGWindowList, no TCC needed):
    ```
-   macos-use_list_applications
+   macos-use_list_apps
    macos-use_list_windows
-   macos-use_list_displays
+   macos-use_get_display
    ```
 
 2. **Accessibility test** (triggers AX permission prompt on first use):
    ```
-   macos-use_open_application  (id: "Calculator")
-   macos-use_traverse_accessibility  (name: "applications/{pid}")
+   macos-use_open_app  (id: "Calculator")
+   macos-use_find_elements  (parent: "applications/{pid}")
    ```
 
 3. **Screen Recording test** (triggers Screen Recording prompt on first use):
    ```
-   macos-use_capture_screenshot
+   macos-use_screenshot
    ```
 
 ## Swift Server Configuration
@@ -333,7 +333,7 @@ the user running the server can connect.
 Use the MCP tools to verify the server is responsive:
 
 ```
-macos-use_list_displays
+macos-use_get_display
 ```
 
 Or check the launchd status:

@@ -29,7 +29,7 @@ extension MacosUseService {
         Self.logger.info("watchAccessibility called")
 
         let pid = try parsePID(fromName: req.name)
-        // Clamp poll interval: min 0.1s, max 60s to prevent UInt64 overflow (UInt64.max / 1e9 ≈ 18s)
+        // Clamp poll interval: min 0.1s, max 60s (UX cap; UInt64.max / 1e9 ≈ 1.84e10s)
         let rawInterval = req.pollInterval > 0 ? req.pollInterval : 1.0
         let pollInterval = min(max(rawInterval, 0.1), 60.0)
 
@@ -95,8 +95,10 @@ extension MacosUseService {
 
                     previousByPath = currentByPath
                 } catch {
-                    // send an empty heartbeat to keep client alive
-                    _ = try? await writer.write(Macosusesdk_V1_WatchAccessibilityResponse())
+                    Self.logger.warning("watchAccessibility traversal error: \(error, privacy: .public)")
+                    // Don't send empty heartbeat on error — no proto error field exists.
+                    // Silence means "no changes OR temporary error"; persistent errors
+                    // will cause the stream to end naturally.
                 }
 
                 // Sleep for interval, but allow task cancellation to stop
@@ -211,13 +213,16 @@ extension MacosUseService {
     /// - Note: Static for testing with @testable import.
     static func elementPathKey(_ element: Macosusesdk_Type_Element) -> String {
         if element.path.isEmpty {
-            // Fallback: use role + position + size to distinguish root-level elements
-            // This handles edge cases where path is empty (e.g., root application element)
-            // Use safeInt() to guard against NaN/Infinity which would crash Int()
+            // Fallback: use elementId + role + position + size to distinguish elements
+            // without path info. Including elementId avoids collisions for same-role
+            // siblings at identical coordinates (e.g., two identical buttons stacked).
             let x = safeInt(element.hasX ? element.x : 0)
             let y = safeInt(element.hasY ? element.y : 0)
             let w = safeInt(element.hasWidth ? element.width : 0)
             let h = safeInt(element.hasHeight ? element.height : 0)
+            if !element.elementID.isEmpty {
+                return "id:\(element.elementID)"
+            }
             return "root:\(element.role)@\(x),\(y)/\(w)x\(h)"
         }
         return element.path.map(String.init).joined(separator: "/")
@@ -441,19 +446,19 @@ extension MacosUseService {
 
         let element: Macosusesdk_Type_Element
         let pid: pid_t
+        var elementID: String?
 
         // Find the element to click
         switch req.target {
         case let .elementID(elementId):
-            // Get element by ID
             guard let foundElement = await ElementRegistry.shared.getElement(elementId) else {
                 throw RPCError(code: .notFound, message: "Element not found")
             }
             element = foundElement
+            elementID = elementId
             pid = try parsePID(fromName: req.parent)
 
         case let .selector(selector):
-            // Find element by selector
             let validatedSelector = try SelectorParser.shared.parseSelector(selector)
             let elementsWithPaths = try await ElementLocator.shared.findElements(
                 selector: validatedSelector,
@@ -467,6 +472,7 @@ extension MacosUseService {
             }
 
             element = firstElement.element
+            elementID = firstElement.element.elementID
             pid = try parsePID(fromName: req.parent)
 
         case .none:
@@ -475,7 +481,12 @@ extension MacosUseService {
             )
         }
 
-        // Get element position for clicking
+        // Acquire focus on the element's window before clicking (best-effort).
+        // This is the #1 reliability fix: ensures the target window is frontmost
+        // so the click reaches the correct element.
+        if let eid = elementID {
+            await AutomationCoordinator.shared.acquireFocusForElement(elementID: eid, pid: pid)
+        }
 
         // Calculate geometric center of element bounds.
         // The AX frame (kAXPositionAttribute + kAXSizeAttribute) provides
@@ -564,6 +575,7 @@ extension MacosUseService {
 
         let element: Macosusesdk_Type_Element
         let pid: pid_t
+        var elementID: String?
 
         // Find the element to modify
         switch req.target {
@@ -572,6 +584,7 @@ extension MacosUseService {
                 throw RPCError(code: .notFound, message: "Element not found")
             }
             element = foundElement
+            elementID = elementId
             pid = try parsePID(fromName: req.parent)
 
         case let .selector(selector):
@@ -588,6 +601,7 @@ extension MacosUseService {
             }
 
             element = firstElement.element
+            elementID = firstElement.element.elementID
             pid = try parsePID(fromName: req.parent)
 
         case .none:
@@ -596,7 +610,11 @@ extension MacosUseService {
             )
         }
 
-        // Get element position for typing
+        // Acquire focus on the element's window before typing (best-effort).
+        if let eid = elementID {
+            await AutomationCoordinator.shared.acquireFocusForElement(elementID: eid, pid: pid)
+        }
+
         // Use geometric center for reliable focus click.
         let clickPoint = try Self.elementClickPoint(element)
         let centerX = clickPoint.x
@@ -748,6 +766,9 @@ extension MacosUseService {
 
         // Try to get the AXUIElement and perform semantic action (MUST run on MainActor)
         if let axElement = await ElementRegistry.shared.getAXElement(elementID) {
+            // Acquire focus before performing AX action (best-effort)
+            await AutomationCoordinator.shared.acquireFocusForElement(elementID: elementID, pid: pid)
+
             let performResult = await MainActor.run { () -> AXError in
                 let actionName: String = switch req.action.lowercased() {
                 case "press", "click":
@@ -861,7 +882,8 @@ extension MacosUseService {
         Task { [operationStore] in
             do {
                 let timeout = req.timeout > 0 ? req.timeout : 30.0
-                let pollInterval = req.pollInterval > 0 ? req.pollInterval : 0.5
+                let rawInterval = req.pollInterval > 0 ? req.pollInterval : 0.5
+                let pollInterval = min(max(rawInterval, 0.1), 60.0)
                 let endTime = Date().timeIntervalSince1970 + timeout
                 var attempts = 0
 
@@ -1013,7 +1035,8 @@ extension MacosUseService {
         Task { [operationStore] in
             do {
                 let timeout = req.timeout > 0 ? req.timeout : 30.0
-                let pollInterval = req.pollInterval > 0 ? req.pollInterval : 0.5
+                let rawInterval = req.pollInterval > 0 ? req.pollInterval : 0.5
+                let pollInterval = min(max(rawInterval, 0.1), 60.0)
                 let endTime = Date().timeIntervalSince1970 + timeout
                 var attempts = 0
 

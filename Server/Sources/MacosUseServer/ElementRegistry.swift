@@ -16,7 +16,7 @@ public actor ElementRegistry {
     private struct CachedElement {
         let element: Macosusesdk_Type_Element
         let axElement: AXUIElement?
-        let timestamp: Date
+        var timestamp: Date
         let pid: pid_t
     }
 
@@ -98,6 +98,11 @@ public actor ElementRegistry {
     /// Get an element by its ID.
     /// - Parameter elementId: The element ID
     /// - Returns: The element data if found and not expired
+    /// - Note: This method does NOT refresh the access timestamp. If the element
+    ///   expires between this call and its subsequent use (e.g., a click), the AX
+    ///   call will fail. Call `touchElement(_:)` after a successful `getElement` to
+    ///   extend the element's lifetime if it will be used after a delay. This is a
+    ///   best-effort cache — AX elements are inherently ephemeral.
     public func getElement(_ elementId: String) -> Macosusesdk_Type_Element? {
         guard let cached = elementCache[elementId] else {
             logger.warning("Element \(elementId, privacy: .private) not found in cache")
@@ -112,6 +117,26 @@ public actor ElementRegistry {
         }
 
         return cached.element
+    }
+
+    /// Refresh the access timestamp for a cached element, extending its lifetime.
+    /// Call this after a successful `getElement` if the element will be used
+    /// after a non-trivial delay, to avoid a TOCTOU race where the element
+    /// expires between retrieval and use.
+    /// - Parameter elementId: The element ID
+    /// - Returns: True if the element was found and its timestamp refreshed
+    public func touchElement(_ elementId: String) -> Bool {
+        guard let cached = elementCache[elementId] else { return false }
+
+        if clock().timeIntervalSince(cached.timestamp) > cacheExpiration {
+            elementCache.removeValue(forKey: elementId)
+            return false
+        }
+
+        var updated = cached
+        updated.timestamp = clock()
+        elementCache[elementId] = updated
+        return true
     }
 
     /// Get the AXUIElement reference for an element ID.

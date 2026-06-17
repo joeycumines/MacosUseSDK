@@ -298,7 +298,7 @@ func TestFormatGRPCError_GRPCStatusCodes(t *testing.T) {
 			name:           "Unavailable",
 			code:           codes.Unavailable,
 			message:        "connection refused",
-			toolName:       "capture_screenshot",
+			toolName:       "screenshot",
 			wantCode:       "Unavailable",
 			wantSuggestion: "The gRPC server may be down",
 		},
@@ -411,7 +411,7 @@ func TestFormatGRPCError_OutputFormat(t *testing.T) {
 
 func TestGRPCErrorResult(t *testing.T) {
 	err := status.Error(codes.PermissionDenied, "screen capture denied")
-	result := grpcErrorResult(err, "capture_screenshot")
+	result := grpcErrorResult(err, "screenshot")
 
 	// Verify it returns a ToolResult with IsError=true
 	if !result.IsError {
@@ -430,7 +430,7 @@ func TestGRPCErrorResult(t *testing.T) {
 
 	// Verify the text contains expected parts
 	text := result.Content[0].Text
-	if !strings.Contains(text, "capture_screenshot") {
+	if !strings.Contains(text, "screenshot") {
 		t.Errorf("result should contain tool name: %s", text)
 	}
 	if !strings.Contains(text, "PermissionDenied") {
@@ -506,6 +506,24 @@ var testValidationTools = map[string]*Tool{
 				"id": map[string]any{"type": "string"},
 			},
 			"required": []string{"id"},
+		},
+	},
+	"test_tool_no_additional_props": {
+		Name: "test_tool_no_additional_props",
+		InputSchema: map[string]any{
+			"type":                 "object",
+			"additionalProperties": false,
+		},
+	},
+	"test_tool_props_no_additional_props": {
+		Name: "test_tool_props_no_additional_props",
+		InputSchema: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"name": map[string]any{"type": "string"},
+			},
+			"required":             []string{"name"},
+			"additionalProperties": false,
 		},
 	},
 }
@@ -750,6 +768,55 @@ func TestValidateToolInput_ExtraUnknownFields(t *testing.T) {
 			result := validateToolInput("test_tool_with_required", tt.args, testValidationTools)
 			if result != nil {
 				t.Errorf("expected nil (extra fields should be allowed), got error: %v", result.Error)
+			}
+		})
+	}
+}
+
+func TestValidateToolInput_AdditionalPropertiesFalse(t *testing.T) {
+	tests := []struct {
+		name    string
+		tool    string
+		args    map[string]any
+		wantErr string
+	}{
+		{
+			name:    "no args allowed when additionalProperties false",
+			tool:    "test_tool_no_additional_props",
+			args:    map[string]any{"name": "test"},
+			wantErr: "additional property not allowed: name",
+		},
+		{
+			name:    "extra property rejected",
+			tool:    "test_tool_props_no_additional_props",
+			args:    map[string]any{"name": "test", "extra": "value"},
+			wantErr: "additional property not allowed: extra",
+		},
+		{
+			name:    "valid args pass",
+			tool:    "test_tool_props_no_additional_props",
+			args:    map[string]any{"name": "test"},
+			wantErr: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := validateToolInput(tt.tool, tt.args, testValidationTools)
+			if tt.wantErr == "" {
+				if result != nil {
+					t.Errorf("expected nil, got error: %v", result.Error)
+				}
+				return
+			}
+			if result == nil {
+				t.Fatalf("expected error containing %q, got nil", tt.wantErr)
+			}
+			if result.Error == nil {
+				t.Fatalf("expected error containing %q, got result", result.Result)
+			}
+			if !strings.Contains(result.Error.Message, tt.wantErr) {
+				t.Errorf("error message = %q, want to contain %q", result.Error.Message, tt.wantErr)
 			}
 		})
 	}

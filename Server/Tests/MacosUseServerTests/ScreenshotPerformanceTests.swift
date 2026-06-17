@@ -14,7 +14,9 @@ private func isScreenCaptureAvailable() async -> Bool {
         return true
     } catch {
         let nsError = error as NSError
-        if nsError.domain == "com.apple.ScreenCaptureKit.SCStreamErrorDomain", nsError.code == -3801 {
+        if nsError.domain == "com.apple.ScreenCaptureKit.SCStreamErrorDomain",
+           nsError.code == -3801 || nsError.code == -3812
+        {
             return false
         }
         // Other errors - assume available but encountered transient issue
@@ -177,12 +179,10 @@ struct ScreenshotPerformanceTests {
     @MainActor
     func `Window capture latency (Finder)`() async throws {
         // Find a Finder window
-        guard let finderApp = NSRunningApplication.runningApplications(
-            withBundleIdentifier: "com.apple.finder",
-        ).first else {
-            Issue.record("Finder not running - test cannot proceed")
-            return
-        }
+        let finderApp = try #require(
+            NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.finder").first,
+            "Finder not running - test cannot proceed",
+        )
 
         // Get window list from CGWindowList for Finder
         let windowList = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[CFString: Any]] ?? []
@@ -194,12 +194,8 @@ struct ScreenshotPerformanceTests {
             return ownerPID == finderApp.processIdentifier
         }
 
-        guard let windowInfo = finderWindows.first,
-              let windowID = windowInfo[kCGWindowNumber] as? CGWindowID
-        else {
-            Issue.record("No Finder window found - test cannot proceed")
-            return
-        }
+        let windowInfo = try #require(finderWindows.first, "No Finder window found - test cannot proceed")
+        let windowID = try #require(windowInfo[kCGWindowNumber] as? CGWindowID)
 
         var durations: [TimeInterval] = []
         var dataSizes: [Int] = []

@@ -1,7 +1,7 @@
 // Copyright 2025 Joseph Cumines
 //
 // MCP error response format integration tests.
-// Verifies is_error field format and various error conditions.
+// Verifies isError field format and various error conditions.
 // Task: T071
 
 package integration
@@ -17,9 +17,10 @@ import (
 )
 
 // TestMCPErrorFormat_IsErrorField verifies that error responses use the
-// correct is_error field format (snake_case, not camelCase).
-// This is critical for Anthropic Claude Desktop compatibility.
+// correct isError field format (camelCase) per MCP 2025-11-25.
 func TestMCPErrorFormat_IsErrorField(t *testing.T) {
+	// Per MCP 2025-11-25, tool results use the camelCase isError field.
+
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
@@ -36,7 +37,7 @@ func TestMCPErrorFormat_IsErrorField(t *testing.T) {
 	initResp, _ := http.Post(baseURL+"/message", "application/json", bytes.NewBufferString(initReq))
 	initResp.Body.Close()
 
-	request := `{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"get_window","arguments":{"name":"applications/invalid/windows/invalid"}}}`
+	request := `{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"read_element","arguments":{"element":"applications/invalid/elements/invalid"}}}`
 	resp, err := http.Post(baseURL+"/message", "application/json", bytes.NewBufferString(request))
 	if err != nil {
 		t.Fatalf("Request failed: %v", err)
@@ -60,15 +61,15 @@ func TestMCPErrorFormat_IsErrorField(t *testing.T) {
 
 	if len(response.Result) > 0 {
 		var toolResult struct {
-			IsError bool              `json:"is_error"`
+			IsError bool              `json:"isError"`
 			Content []json.RawMessage `json:"content"`
 		}
 		if err := json.Unmarshal(response.Result, &toolResult); err == nil {
-			if bytes.Contains(response.Result, []byte(`"isError"`)) {
-				t.Error("Result uses 'isError' (camelCase) instead of 'is_error' (snake_case)")
+			if bytes.Contains(response.Result, []byte(`"is_error"`)) {
+				t.Error("Result uses legacy 'is_error' (snake_case) instead of spec 'isError' (camelCase)")
 			}
 			if toolResult.IsError {
-				t.Log("Soft error correctly uses is_error field")
+				t.Log("Soft error correctly uses isError field")
 			}
 		}
 	}
@@ -256,7 +257,7 @@ func TestMCPErrorFormat_MalformedJSON(t *testing.T) {
 	t.Logf("Malformed JSON correctly returned HTTP %d", resp.StatusCode)
 }
 
-// TestMCPErrorFormat_SoftError verifies the is_error field in tool results.
+// TestMCPErrorFormat_SoftError verifies the isError field in tool results.
 func TestMCPErrorFormat_SoftError(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
@@ -274,7 +275,7 @@ func TestMCPErrorFormat_SoftError(t *testing.T) {
 	initResp, _ := http.Post(baseURL+"/message", "application/json", bytes.NewBufferString(initReq))
 	initResp.Body.Close()
 
-	request := `{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"get_application","arguments":{"name":"applications/999999999"}}}`
+	request := `{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"read_element","arguments":{"element":"applications/999999999/elements/missing"}}}`
 	resp, err := http.Post(baseURL+"/message", "application/json", bytes.NewBufferString(request))
 	if err != nil {
 		t.Fatalf("Request failed: %v", err)
@@ -285,8 +286,8 @@ func TestMCPErrorFormat_SoftError(t *testing.T) {
 	rawBody.ReadFrom(resp.Body)
 	bodyBytes := rawBody.Bytes()
 
-	if bytes.Contains(bodyBytes, []byte(`"isError"`)) && !bytes.Contains(bodyBytes, []byte(`"is_error"`)) {
-		t.Error("Response uses 'isError' (camelCase) instead of 'is_error' (snake_case)")
+	if bytes.Contains(bodyBytes, []byte(`"is_error"`)) && !bytes.Contains(bodyBytes, []byte(`"isError"`)) {
+		t.Error("Response uses legacy 'is_error' (snake_case) instead of spec 'isError' (camelCase)")
 	}
 
 	var response struct {
@@ -295,7 +296,7 @@ func TestMCPErrorFormat_SoftError(t *testing.T) {
 				Type string `json:"type"`
 				Text string `json:"text"`
 			} `json:"content"`
-			IsError bool `json:"is_error"`
+			IsError bool `json:"isError"`
 		} `json:"result"`
 		Error *struct {
 			Code    int    `json:"code"`
@@ -312,13 +313,13 @@ func TestMCPErrorFormat_SoftError(t *testing.T) {
 	}
 
 	if response.Result.IsError {
-		t.Log("Soft error correctly marked with is_error: true")
+		t.Log("Soft error correctly marked with isError: true")
 		if len(response.Result.Content) > 0 {
 			t.Logf("Error content: %s", response.Result.Content[0].Text)
 		}
 	}
 
-	t.Logf("Raw response for is_error verification: %s", string(bodyBytes[:minInt(200, len(bodyBytes))]))
+	t.Logf("Raw response for isError verification: %s", string(bodyBytes[:minInt(200, len(bodyBytes))]))
 }
 
 func minInt(a, b int) int {

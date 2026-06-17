@@ -35,11 +35,41 @@ public extension MacosUseSDKError {
     }
 }
 
+/// Controls how an application is opened or activated.
+///
+/// | Mode | App NOT running | App IS running |
+/// |------|----------------|----------------|
+/// | `launchOrActivate` | Launch new process + activate | Activate existing + bring to front |
+/// | `forceNewInstance` | Launch new process + activate | Launch NEW process (separate PID) |
+/// | `activateOnly` | **Error** — app not running | Activate existing + bring to front |
+public enum AppLaunchMode: String, Codable, Sendable {
+    /// Default: launch if not running, activate if running. Equivalent to `open -a App`.
+    case launchOrActivate
+    /// Always launch a new process, even if already running. Equivalent to `open -n -a App`.
+    case forceNewInstance
+    /// Only activate an existing instance; error if app is not running.
+    case activateOnly
+}
+
+/// Describes what action was taken when opening/activating an application.
+public enum AppOpenAction: String, Codable, Sendable {
+    /// A new process was launched (app was not running).
+    case launchedNew
+    /// An existing process was activated (app was already running).
+    case activatedExisting
+    /// The app was already active; no state change needed.
+    case alreadyActive
+}
+
 /// Define the structure for the successful result
 public struct AppOpenerResult: Codable, Sendable {
     public let pid: pid_t
     public let appName: String
     public let processingTimeSeconds: String
+    /// What action was taken (launched new, activated existing, or already active).
+    public let actionTaken: AppOpenAction
+    /// Whether a new process was created (true for launchedNew and forceNewInstance).
+    public let newProcessCreated: Bool
 }
 
 /// --- Private Helper Class for State Management ---
@@ -48,14 +78,16 @@ public struct AppOpenerResult: Codable, Sendable {
 private class AppOpenerOperation {
     let appIdentifier: String
     let background: Bool
+    let mode: AppLaunchMode
     let overallStartTime: Date = .init()
     var stepStartTime: Date
 
-    init(identifier: String, background: Bool) {
+    init(identifier: String, background: Bool, mode: AppLaunchMode) {
         appIdentifier = identifier
         self.background = background
-        stepStartTime = overallStartTime // Initialize step timer
-        logger.info("starting AppOpenerOperation for: \(identifier, privacy: .private(mask: .hash)) background=\(background, privacy: .public)")
+        self.mode = mode
+        stepStartTime = overallStartTime
+        logger.info("starting AppOpenerOperation for: \(identifier, privacy: .private(mask: .hash)) background=\(background, privacy: .public) mode=\(mode.rawValue, privacy: .public)")
     }
 
     /// Helper to log step completion times (Method definition)
@@ -163,25 +195,22 @@ private class AppOpenerOperation {
         }
 
         // --- 2. Pre-find PID if running ---
-        // (PID finding logic...)
+        var preExistingRunningApp: NSRunningApplication?
         if let bID = bundleIdentifier {
             logger.info("checking running applications for bundle id: \(bID, privacy: .public)")
             let candidates = NSRunningApplication.runningApplications(withBundleIdentifier: bID)
-            // Deterministic selection: prefer .regular activation policy, then active, then most recent launch
             let bestCandidate = candidates.sorted { a, b in
-                // Primary: prefer .regular (foreground apps) over .accessory/.prohibited
                 let aPol = a.activationPolicy.rawValue
                 let bPol = b.activationPolicy.rawValue
                 if aPol != bPol { return aPol < bPol }
-                // Secondary: prefer currently active
                 if a.isActive != b.isActive { return a.isActive }
-                // Tertiary: prefer most recently launched
                 let aDate = a.launchDate ?? .distantPast
                 let bDate = b.launchDate ?? .distantPast
                 return aDate > bDate
             }.first
             if let runningApp = bestCandidate {
                 foundPID = runningApp.processIdentifier
+                preExistingRunningApp = runningApp
                 logger.info("found running instance with pid \(foundPID!, privacy: .public) for bundle id \(bID, privacy: .public) (policy: \(runningApp.activationPolicy.rawValue, privacy: .public), active: \(runningApp.isActive, privacy: .public)).")
             } else {
                 logger.info(
@@ -197,6 +226,7 @@ private class AppOpenerOperation {
                     || app.executableURL?.standardizedFileURL == finalAppURL.standardizedFileURL
                 {
                     foundPID = app.processIdentifier
+                    preExistingRunningApp = app
                     logger.info("found running instance with pid \(foundPID!, privacy: .public) matching URL.")
                     break
                 }
@@ -207,49 +237,104 @@ private class AppOpenerOperation {
         }
         logStepCompletion(
             "pre-finding existing process (pid: \(foundPID.map(String.init) ?? "none found"))",
-        ) // Call method
-
-        // --- 3. Open/Activate Application ---
-        // (Activation logic...)
-        logger.info(
-            "attempting to open/activate application: \(finalAppName ?? self.appIdentifier, privacy: .private) (background=\(self.background, privacy: .public))",
         )
-        let configuration = NSWorkspace.OpenConfiguration() // Define configuration locally
-        configuration.activates = !self.background // If background=true, don't activate (steal focus)
+
+        // --- 3. Mode-based Open/Activate ---
+
+        // activateOnly: app must already be running
+        if self.mode == .activateOnly {
+            guard let runningApp = preExistingRunningApp else {
+                logStepCompletion("activateOnly mode - app not running (failed)")
+                throw MacosUseSDKError.AppOpenerError.activationFailed(
+                    identifier: self.appIdentifier,
+                    underlyingError: nil,
+                )
+            }
+
+            if runningApp.isActive {
+                logStepCompletion("activateOnly mode - app already active")
+                let endTime = Date()
+                let processingTime = endTime.timeIntervalSince(overallStartTime)
+                let formattedTime = String(format: "%.3f", processingTime)
+                return AppOpenerResult(
+                    pid: runningApp.processIdentifier,
+                    appName: finalAppName ?? self.appIdentifier,
+                    processingTimeSeconds: formattedTime,
+                    actionTaken: .alreadyActive,
+                    newProcessCreated: false,
+                )
+            }
+
+            let activated = runningApp.activate()
+            logStepCompletion("activateOnly mode - activate call (success=\(activated))")
+
+            guard activated else {
+                throw MacosUseSDKError.AppOpenerError.activationFailed(
+                    identifier: self.appIdentifier,
+                    underlyingError: nil,
+                )
+            }
+
+            let endTime = Date()
+            let processingTime = endTime.timeIntervalSince(overallStartTime)
+            let formattedTime = String(format: "%.3f", processingTime)
+            return AppOpenerResult(
+                pid: runningApp.processIdentifier,
+                appName: finalAppName ?? self.appIdentifier,
+                processingTimeSeconds: formattedTime,
+                actionTaken: .activatedExisting,
+                newProcessCreated: false,
+            )
+        }
+
+        // forceNewInstance or launchOrActivate: use NSWorkspace.openApplication
+        logger.info(
+            "attempting to open/activate application: \(finalAppName ?? self.appIdentifier, privacy: .private) (background=\(self.background, privacy: .public), mode=\(self.mode.rawValue, privacy: .public))",
+        )
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.activates = !self.background
+
+        if self.mode == .forceNewInstance {
+            configuration.createsNewApplicationInstance = true
+        }
 
         do {
-            // Await the async call AND extract the PID within an explicit MainActor Task
-            // This replaces MainActor.run which caused issues in Swift 6.1 with async closures
             let pidAfterOpen = try await Task { @MainActor in
                 logger.info("[Task @MainActor] executing workspace.openApplication...")
-                // The await happens *inside* the MainActor Task block
                 let runningApp = try await workspace.openApplication(
                     at: finalAppURL, configuration: configuration,
                 )
-                // Access the non-Sendable property *inside* the MainActor Task block
                 let pid = runningApp.processIdentifier
                 logger.info("[Task @MainActor] got pid \(pid, privacy: .public) from NSRunningApplication.")
-                // Return the Sendable pid_t
                 return pid
-            }.value // Await the result of the Task
+            }.value
 
             logStepCompletion("opening/activating application async call completed")
 
-            // --- 4. Determine Final PID ---
-            var finalPID: pid_t?
+            // --- 4. Determine Final PID and Action ---
+            var finalPID: pid_t
+            var actionTaken: AppOpenAction
+            var newProcessCreated: Bool
 
-            if let pid = foundPID {
-                finalPID = pid
-                logger.info("using pre-found pid \(pid, privacy: .public).")
-            } else {
-                // Use the PID extracted immediately after the await
+            if self.mode == .forceNewInstance {
                 finalPID = pidAfterOpen
+                newProcessCreated = true
+                actionTaken = .launchedNew
+                logger.info("forceNewInstance: using pid \(finalPID, privacy: .public) from newly launched instance.")
+            } else if let pid = foundPID {
+                finalPID = pid
+                newProcessCreated = false
+                actionTaken = .activatedExisting
+                logger.info("launchOrActivate: using pre-found pid \(pid, privacy: .public) (activated existing).")
+            } else {
+                finalPID = pidAfterOpen
+                newProcessCreated = true
+                actionTaken = .launchedNew
                 logger.info(
-                    "using pid \(finalPID!, privacy: .public) from newly launched/activated application instance.",
+                    "launchOrActivate: using pid \(finalPID, privacy: .public) from newly launched application instance.",
                 )
-                foundPID = finalPID // Update foundPID if it was initially nil
             }
-            logStepCompletion("determining final pid (using \(finalPID!))") // Call method
+            logStepCompletion("determining final pid (using \(finalPID))")
 
             // --- 5. Prepare Result ---
             let endTime = Date()
@@ -257,18 +342,20 @@ private class AppOpenerOperation {
             let formattedTime = String(format: "%.3f", processingTime)
 
             logger.info(
-                "success: application '\(finalAppName ?? self.appIdentifier, privacy: .private)' active (pid: \(finalPID!, privacy: .public)).",
+                "success: application '\(finalAppName ?? self.appIdentifier, privacy: .private)' active (pid: \(finalPID, privacy: .public), action: \(actionTaken.rawValue, privacy: .public)).",
             )
             logger.info("total processing time: \(formattedTime, privacy: .public) seconds")
 
             return AppOpenerResult(
-                pid: finalPID!,
+                pid: finalPID,
                 appName: finalAppName ?? self.appIdentifier,
                 processingTimeSeconds: formattedTime,
+                actionTaken: actionTaken,
+                newProcessCreated: newProcessCreated,
             )
 
         } catch {
-            logStepCompletion("opening/activating application (failed)") // Call method
+            logStepCompletion("opening/activating application (failed)")
             logger.error("activation call failed: \(error.localizedDescription, privacy: .public)")
 
             if let pid = foundPID {
@@ -283,6 +370,8 @@ private class AppOpenerOperation {
                     pid: pid,
                     appName: finalAppName ?? self.appIdentifier,
                     processingTimeSeconds: formattedTime,
+                    actionTaken: .activatedExisting,
+                    newProcessCreated: false,
                 )
             } else {
                 logger.error("PID could not be determined after activation failure.")
@@ -295,8 +384,7 @@ private class AppOpenerOperation {
                 )
             }
         }
-        // --- End of logic inside execute method ---
-    } // End of execute() method
+    }
 } // End of AppOpenerOperation class
 
 /// Opens or activates a macOS application identified by its name, bundle ID, or full path.
@@ -307,16 +395,13 @@ private class AppOpenerOperation {
 /// - Returns: An `AppOpenerResult` containing the PID, application name, and processing time on success.
 /// - Throws: `MacosUseSDKError.AppOpenerError` if the application cannot be found, activated, or its PID determined.
 @MainActor
-public func openApplication(identifier: String, background: Bool = false) async throws -> AppOpenerResult {
-    // Input validation
+public func openApplication(
+    identifier: String, background: Bool = false, mode: AppLaunchMode = .launchOrActivate,
+) async throws -> AppOpenerResult {
     guard !identifier.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
         throw MacosUseSDKError.AppOpenerError.appNotFound(identifier: "(empty)")
     }
 
-    // Create an instance of the helper class and execute its logic
-    let operation = AppOpenerOperation(identifier: identifier, background: background)
+    let operation = AppOpenerOperation(identifier: identifier, background: background, mode: mode)
     return try await operation.execute()
 }
-
-// --- IMPORTANT: Ensure no other executable code (like the old script lines) exists below this line in the file ---
-// --- Remove any leftover 'if', 'guard', 'logStepCompletion', 'workspace.openApplication', 'RunLoop.main.run' calls from the top level ---

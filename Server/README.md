@@ -90,7 +90,7 @@ swift run MacosUseServer
 
 See [docs/10-api-reference.md](../docs/ai-artifacts/10-api-reference.md) for the complete API documentation including:
 
-- 77 MCP tools across 14 categories
+- 23 redesigned CUA-aligned MCP tools
 - Coordinate system reference
 - Environment variable details
 - Error code reference

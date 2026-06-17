@@ -250,7 +250,7 @@ func TestSomething(t *testing.T) {
 
 Key components:
 - **Swift gRPC Server** (`Server/`): macOS Accessibility API integration
-- **Go MCP Server** (`internal/`): MCP proxy with 77 tools
+- **Go MCP Server** (`internal/`): MCP proxy exposing agentic tools
 - **Proto Definitions** (`proto/`): API contracts following Google AIPs
 
 ## License

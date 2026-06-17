@@ -22,16 +22,87 @@ public actor AutomationCoordinator {
     /// Opens or activates an application and returns target info
     /// - Parameter identifier: The application name, bundle ID, or path
     /// - Parameter background: If true, opens without activating (stealing focus)
+    /// - Parameter mode: Controls how the application is launched (launchOrActivate, forceNewInstance, activateOnly)
     @MainActor
-    public func handleOpenApplication(identifier: String, background: Bool = false) async throws -> Macosusesdk_V1_Application {
-        logger.info("Opening application: \(identifier, privacy: .private) background=\(background, privacy: .public)")
+    public func handleOpenApplication(
+        identifier: String, background: Bool = false, mode: MacosUseSDK.AppLaunchMode = .launchOrActivate,
+    ) async throws -> Macosusesdk_V1_Application {
+        logger.info("Opening application: \(identifier, privacy: .private) background=\(background, privacy: .public) mode=\(mode.rawValue, privacy: .public)")
 
-        let result = try await MacosUseSDK.openApplication(identifier: identifier, background: background)
+        let result = try await MacosUseSDK.openApplication(identifier: identifier, background: background, mode: mode)
 
         return Macosusesdk_V1_Application.with {
             $0.name = "applications/\(result.pid)"
             $0.pid = Int32(result.pid)
             $0.displayName = result.appName
+        }
+    }
+
+    /// Acquires focus on the element's parent window before interaction.
+    /// Best-effort: if focus fails, the interaction still proceeds.
+    /// - Parameter elementID: The element ID whose window should be focused
+    /// - Parameter pid: The process ID of the application
+    @MainActor
+    public func acquireFocusForElement(elementID: String, pid _: pid_t) async {
+        guard let axElement = await ElementRegistry.shared.getAXElement(elementID) else {
+            logger.info("acquireFocus: no AXUIElement for elementID \(elementID, privacy: .private), skipping focus")
+            return
+        }
+
+        // Traverse AX parent chain to find the window element
+        var currentElement = axElement
+        var windowElement: AXUIElement?
+        for _ in 0 ..< 20 { // Max depth to prevent infinite loops
+            var parentValue: CFTypeRef?
+            let parentResult = AXUIElementCopyAttributeValue(
+                currentElement, kAXParentAttribute as CFString, &parentValue,
+            )
+            guard parentResult == .success, let parent = parentValue else { break }
+
+            let parentTypeID = CFGetTypeID(parent)
+            let axUIElementTypeID = AXUIElementGetTypeID()
+            guard parentTypeID == axUIElementTypeID else {
+                logger.warning("acquireFocus: parent is not AXUIElement for elementID \(elementID, privacy: .private)")
+                break
+            }
+            // Safe: type ID check above guarantees this cast succeeds
+            let parentElement = unsafeDowncast(parent, to: AXUIElement.self)
+            var roleValue: CFTypeRef?
+            let roleResult = AXUIElementCopyAttributeValue(
+                parentElement, kAXRoleAttribute as CFString, &roleValue,
+            )
+            if roleResult == .success, let role = roleValue as? String, role == "AXWindow" {
+                windowElement = parentElement
+                break
+            }
+            currentElement = parentElement
+        }
+
+        guard let window = windowElement else {
+            logger.info("acquireFocus: no AXWindow found in parent chain for elementID \(elementID, privacy: .private)")
+            return
+        }
+
+        // Check if window is already focused
+        var focusedValue: CFTypeRef?
+        let focusedResult = AXUIElementCopyAttributeValue(
+            window, kAXFocusedAttribute as CFString, &focusedValue,
+        )
+        if focusedResult == .success, let focused = focusedValue as? Bool, focused {
+            logger.info("acquireFocus: window already focused for elementID \(elementID, privacy: .private)")
+            return
+        }
+
+        // Set AXFocused on the window
+        let focusResult = AXUIElementSetAttributeValue(
+            window, kAXFocusedAttribute as CFString, true as CFTypeRef,
+        )
+        if focusResult == .success {
+            logger.info("acquireFocus: set AXFocused=true on window for elementID \(elementID, privacy: .private)")
+            // Brief delay for macOS to process the focus change
+            try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
+        } else {
+            logger.warning("acquireFocus: failed to set AXFocused on window (error \(focusResult.rawValue, privacy: .public)) for elementID \(elementID, privacy: .private), proceeding anyway")
         }
     }
 

@@ -311,7 +311,7 @@ func TestAuditLogger_JSONFormatValidation(t *testing.T) {
 		status string
 	}{
 		{"click", `{"x": 100, "y": 200}`, "success"},
-		{"type_text", `{"text": "hello world"}`, "success"},
+		{"type", `{"text": "hello world"}`, "success"},
 		{"screenshot", `{}`, "error"},
 		{"move_window", `{"window_id": 123, "x": 0, "y": 0}`, "success"},
 		{"complex_args", `{"nested": {"a": 1, "b": [1,2,3]}, "array": ["x","y"]}`, "success"},

@@ -10,6 +10,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -20,7 +21,7 @@ import (
 )
 
 // TestMCPPaginationTokenOpacity_ListApplications verifies that page_token values
-// returned by list_applications are opaque and cannot be parsed by clients.
+// returned by ListApplications are opaque and cannot be parsed by clients.
 // Per AIP-158, clients must treat page tokens as opaque strings.
 func TestMCPPaginationTokenOpacity_ListApplications(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
@@ -193,7 +194,8 @@ func TestMCPPaginationTokenOpacity_ViaHTTP(t *testing.T) {
 	initResp, _ := http.Post(baseURL+"/message", "application/json", bytes.NewBufferString(initReq))
 	initResp.Body.Close()
 
-	request := `{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"list_applications","arguments":{"page_size":1}}}`
+	// list_windows accepts page_size/page_token and returns the signed page token in text.
+	request := fmt.Sprintf(`{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"list_windows","arguments":{"app":%q,"page_size":1}}}`, app2.Name)
 	resp, err := http.Post(baseURL+"/message", "application/json", bytes.NewBufferString(request))
 	if err != nil {
 		t.Fatalf("Request failed: %v", err)
@@ -226,8 +228,34 @@ func TestMCPPaginationTokenOpacity_ViaHTTP(t *testing.T) {
 	if len(toolResult.Content) == 0 {
 		t.Fatal("Empty content")
 	}
+	text := toolResult.Content[0].Text
+	if strings.HasPrefix(text, "offset:") {
+		t.Fatal("Token is NOT opaque - has recognizable 'offset:' prefix")
+	}
+	const marker = "Use page_token: "
+	_, after, ok := strings.Cut(text, marker)
+	if !ok {
+		t.Fatalf("Expected page token in list_windows result, got: %s", text)
+	}
+	token := strings.TrimSpace(after)
+	if token == "" {
+		t.Fatalf("Empty page token in result: %s", text)
+	}
 
-	t.Log("Pagination opacity test via HTTP transport completed")
+	secondRequest := fmt.Sprintf(`{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"list_windows","arguments":{"app":%q,"page_size":1,"page_token":%q}}}`, app2.Name, token)
+	secondResp, err := http.Post(baseURL+"/message", "application/json", bytes.NewBufferString(secondRequest))
+	if err != nil {
+		t.Fatalf("Second request failed: %v", err)
+	}
+	defer secondResp.Body.Close()
+	if err := json.NewDecoder(secondResp.Body).Decode(&response); err != nil {
+		t.Fatalf("Failed to decode second response: %v", err)
+	}
+	if response.Error != nil {
+		t.Fatalf("Second request failed with page token: %s", response.Error.Message)
+	}
+
+	t.Logf("Pagination opacity test via HTTP transport completed. Token format: %d chars, first 10=%q", len(token), token[:min(10, len(token))])
 }
 
 // TestMCPPaginationTokenOpacity_FabricatedToken tests that fabricated tokens are rejected.

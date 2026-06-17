@@ -48,21 +48,15 @@ func TestMCPTools_HTTPRoundTrip(t *testing.T) {
 		validateField string
 	}{
 		{
-			name:      "list_displays returns displays",
-			tool:      "list_displays",
+			name:      "get_display returns displays",
+			tool:      "get_display",
 			args:      `{}`,
 			wantError: false,
 		},
 		{
-			name:      "cursor_position returns coordinates",
-			tool:      "cursor_position",
-			args:      `{}`,
-			wantError: false,
-		},
-		{
-			name:      "capture_screenshot returns image data",
-			tool:      "capture_screenshot",
-			args:      `{"max_width": 320, "max_height": 240}`,
+			name:      "screenshot returns image data",
+			tool:      "screenshot",
+			args:      `{"format": "png", "quality": 85, "ocr": false}`,
 			wantError: false,
 		},
 		{
@@ -72,33 +66,15 @@ func TestMCPTools_HTTPRoundTrip(t *testing.T) {
 			wantError: false,
 		},
 		{
-			name:      "type_text with text",
-			tool:      "type_text",
+			name:      "type with text",
+			tool:      "type",
 			args:      `{"text": "test"}`,
 			wantError: false,
 		},
 		{
-			name:      "press_key with key",
-			tool:      "press_key",
-			args:      `{"key": "escape"}`,
-			wantError: false,
-		},
-		{
-			name:      "get_clipboard returns content",
-			tool:      "get_clipboard",
-			args:      `{}`,
-			wantError: false,
-		},
-		{
-			name:      "list_applications returns apps",
-			tool:      "list_applications",
-			args:      `{}`,
-			wantError: false,
-		},
-		{
-			name:      "list_windows returns windows",
-			tool:      "list_windows",
-			args:      `{}`,
+			name:      "keypress with keys",
+			tool:      "keypress",
+			args:      `{"keys": ["escape"]}`,
 			wantError: false,
 		},
 	}
@@ -158,7 +134,7 @@ func TestMCPTools_HTTPRoundTrip(t *testing.T) {
 					Type string `json:"type"`
 					Text string `json:"text"`
 				} `json:"content"`
-				IsError bool `json:"is_error"`
+				IsError bool `json:"isError"`
 			}
 			if err := json.Unmarshal(response.Result, &toolResult); err != nil {
 				t.Fatalf("Failed to parse tool result: %v", err)
@@ -193,7 +169,7 @@ func TestMCPTools_Screenshot_HTTPRoundTrip(t *testing.T) {
 	initResp, _ := http.Post(baseURL+"/message", "application/json", bytes.NewBufferString(initReq))
 	initResp.Body.Close()
 
-	request := `{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"capture_screenshot","arguments":{"max_width":640,"max_height":480}}}`
+	request := `{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"screenshot","arguments":{"format":"png","quality":85,"ocr":false}}}`
 	resp, err := http.Post(baseURL+"/message", "application/json", bytes.NewBufferString(request))
 	if err != nil {
 		t.Fatalf("Screenshot request failed: %v", err)
@@ -222,7 +198,7 @@ func TestMCPTools_Screenshot_HTTPRoundTrip(t *testing.T) {
 	t.Log("Screenshot capture via HTTP transport successful")
 }
 
-// TestMCPTools_ClickTypeText_Workflow tests a click + type_text workflow
+// TestMCPTools_ClickType_Workflow tests a click + type workflow
 func TestMCPTools_ClickTypeText_Workflow(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
@@ -294,7 +270,7 @@ func TestMCPTools_ClickTypeText_Workflow(t *testing.T) {
 		"id":      3,
 		"method":  "tools/call",
 		"params": map[string]any{
-			"name": "type_text",
+			"name": "type",
 			"arguments": map[string]any{
 				"text": "5",
 			},
@@ -317,7 +293,7 @@ func TestMCPTools_ClickTypeText_Workflow(t *testing.T) {
 		t.Logf("Type text warning: %s", response.Error.Message)
 	}
 
-	t.Log("Click + type_text workflow completed via HTTP transport")
+	t.Log("Click + type workflow completed via HTTP transport")
 }
 
 // TestMCPTools_InvalidTool_ReturnsError verifies that calling a non-existent tool
@@ -409,24 +385,25 @@ func TestMCPTools_MissingRequiredParams_ReturnsError(t *testing.T) {
 	}
 
 	if response.Error != nil {
-		t.Logf("Got JSON-RPC error: %s (code %d)", response.Error.Message, response.Error.Code)
+		if response.Error.Code == 0 || response.Error.Message == "" {
+			t.Fatalf("Expected non-empty JSON-RPC error code/message, got code=%d message=%q", response.Error.Code, response.Error.Message)
+		}
 		return
 	}
 
-	if len(response.Result) > 0 {
-		var toolResult struct {
-			IsError bool `json:"is_error"`
-			Content []struct {
-				Text string `json:"text"`
-			} `json:"content"`
-		}
-		if err := json.Unmarshal(response.Result, &toolResult); err == nil {
-			if toolResult.IsError {
-				t.Logf("Got soft error: %s", toolResult.Content[0].Text)
-				return
-			}
-		}
+	var toolResult struct {
+		IsError bool `json:"isError"`
+		Content []struct {
+			Text string `json:"text"`
+		} `json:"content"`
 	}
-
-	t.Log("Click with missing params either succeeded with defaults or returned error as expected")
+	if err := json.Unmarshal(response.Result, &toolResult); err != nil {
+		t.Fatalf("Failed to parse soft-error result: %v", err)
+	}
+	if !toolResult.IsError {
+		t.Fatal("Expected JSON-RPC error or MCP soft error for click with missing x/y, got success")
+	}
+	if len(toolResult.Content) == 0 || toolResult.Content[0].Text == "" {
+		t.Fatal("Expected MCP soft error to include non-empty error text")
+	}
 }

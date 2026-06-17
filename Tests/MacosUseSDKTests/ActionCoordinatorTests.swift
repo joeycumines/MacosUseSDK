@@ -115,6 +115,8 @@ final class ActionResultTests: XCTestCase {
             pid: 12345,
             appName: "TestApp",
             processingTimeSeconds: "0.100",
+            actionTaken: .launchedNew,
+            newProcessCreated: true,
         )
 
         let result = ActionResult(
@@ -161,6 +163,8 @@ final class ActionResultTests: XCTestCase {
                 pid: 12345,
                 appName: "TestApp",
                 processingTimeSeconds: "0.100",
+                actionTaken: .launchedNew,
+                newProcessCreated: true,
             ),
             traversalPid: 12345,
             primaryActionError: nil,

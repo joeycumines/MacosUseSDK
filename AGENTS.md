@@ -8,7 +8,7 @@ MacosUseSDK is a macOS accessibility automation framework consisting of:
 
 - **Swift library**: Core SDK using Accessibility APIs for UI traversal and input simulation
 - **Command-line tools**: Standalone executables for common automation tasks
-- **Swift gRPC server**: Production server with 77 MCP tools for AI agent integration
+- **Swift gRPC server**: Production server backing the CUA-aligned MCP tools for AI agent integration
 - **Go MCP server**: MCP proxy layer exposing functionality via Model Context Protocol
 
 ## Common Commands

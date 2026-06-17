@@ -1,6 +1,8 @@
+import CryptoKit
 import Foundation
 import GRPCCore
 import MacosUseProto
+import Security
 import SwiftProtobuf
 
 /// Shared parsing utilities for resource names and identifiers.
@@ -50,34 +52,78 @@ enum ParsingHelpers {
         return pid_t(pidInt)
     }
 
+    /// Constant-time string comparison to prevent timing side-channel attacks on HMAC verification.
+    /// Returns true only if both strings have identical length and every character matches.
+    private static func constantTimeEquals(_ a: String, _ b: String) -> Bool {
+        let aBytes = Array(a.utf8)
+        let bBytes = Array(b.utf8)
+        guard aBytes.count == bBytes.count else { return false }
+
+        var result: UInt8 = 0
+        for index in aBytes.indices {
+            result |= aBytes[index] ^ bBytes[index]
+        }
+        return result == 0
+    }
+
     // MARK: - Page Token Encoding (AIP-158)
 
+    /// Random 16-byte server secret used to HMAC-sign page tokens.
+    /// Generated once at startup; ensures tokens are opaque to clients.
+    private static let tokenSecret: [UInt8] = {
+        var bytes = [UInt8](repeating: 0, count: 16)
+        _ = SecRandomCopyBytes(kSecRandomDefault, 16, &bytes)
+        return bytes
+    }()
+
     /// Encode an offset into an opaque page token per AIP-158.
-    /// The token is base64-encoded to prevent clients from relying on its structure.
+    /// The token is HMAC-SHA256-signed and base64-encoded so clients cannot
+    /// reverse-engineer the offset or tamper with the token.
+    ///
+    /// Format: base64("hmac_hex:offset:N") where hmac_hex is the first 8 bytes
+    /// of the HMAC-SHA256 over "offset:N" using the server secret.
     ///
     /// - Parameter offset: The offset value to encode.
     /// - Returns: An opaque base64-encoded page token string.
     static func encodePageToken(offset: Int) -> String {
-        let tokenString = "offset:\(offset)"
+        let payload = "offset:\(offset)"
+        let hmac = CryptoKit.HMAC<SHA256>.authenticationCode(
+            for: Data(payload.utf8),
+            using: SymmetricKey(data: Data(tokenSecret)),
+        )
+        let hmacHex = Data(hmac).prefix(8).map { String(format: "%02x", $0) }.joined()
+        let tokenString = "\(hmacHex):\(payload)"
         return Data(tokenString.utf8).base64EncodedString()
     }
 
     /// Decode an opaque page token to retrieve the offset per AIP-158.
+    /// Verifies the HMAC signature before extracting the offset.
     ///
     /// - Parameter token: The opaque page token string.
     /// - Returns: The decoded offset value.
-    /// - Throws: RPCError with .invalidArgument if the token is malformed.
+    /// - Throws: RPCError with .invalidArgument if the token is malformed or HMAC verification fails.
     static func decodePageToken(_ token: String) throws -> Int {
         guard let data = Data(base64Encoded: token),
               let tokenString = String(data: data, encoding: .utf8)
         else {
             throw RPCError(code: .invalidArgument, message: "Invalid page_token format")
         }
-
-        let components = tokenString.split(separator: ":")
-        guard components.count == 2, components[0] == "offset",
-              let parsedOffset = Int(components[1]), parsedOffset >= 0
-        else {
+        let parts = tokenString.split(separator: ":", omittingEmptySubsequences: false)
+        guard parts.count == 3 else {
+            throw RPCError(code: .invalidArgument, message: "Invalid page_token format")
+        }
+        let providedHMAC = String(parts[0])
+        let payload = "\(parts[1]):\(parts[2])"
+        // Verify HMAC
+        let expectedHMAC = CryptoKit.HMAC<SHA256>.authenticationCode(
+            for: Data(payload.utf8),
+            using: SymmetricKey(data: Data(tokenSecret)),
+        )
+        let expectedHex = Data(expectedHMAC).prefix(8).map { String(format: "%02x", $0) }.joined()
+        guard constantTimeEquals(providedHMAC, expectedHex) else {
+            throw RPCError(code: .invalidArgument, message: "Invalid page_token format")
+        }
+        guard parts[1] == "offset", let parsedOffset = Int(parts[2]), parsedOffset >= 0 else {
             throw RPCError(code: .invalidArgument, message: "Invalid page_token format")
         }
         return parsedOffset

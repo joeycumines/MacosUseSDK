@@ -213,10 +213,20 @@ final class ParsingHelpersTests: XCTestCase {
     }
 
     func testDecodePageTokenValidToken() throws {
-        // Manually construct a valid token: "offset:50" -> base64
-        let validToken = Data("offset:50".utf8).base64EncodedString()
+        let validToken = ParsingHelpers.encodePageToken(offset: 50)
         let decoded = try ParsingHelpers.decodePageToken(validToken)
         XCTAssertEqual(decoded, 50)
+    }
+
+    func testDecodePageTokenUnsignedLegacyTokenRejected() {
+        let legacyToken = Data("offset:50".utf8).base64EncodedString()
+        XCTAssertThrowsError(try ParsingHelpers.decodePageToken(legacyToken)) { error in
+            guard let rpcError = error as? RPCError else {
+                XCTFail("Expected RPCError")
+                return
+            }
+            XCTAssertEqual(rpcError.code, .invalidArgument)
+        }
     }
 
     func testDecodePageTokenInvalidBase64() {

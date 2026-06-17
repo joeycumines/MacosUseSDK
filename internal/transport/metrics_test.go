@@ -33,7 +33,7 @@ func TestMetricsRegistry_IncrementCounter(t *testing.T) {
 
 	m.IncrementCounter("mcp_requests_total", `tool="click",status="ok"`)
 	m.IncrementCounter("mcp_requests_total", `tool="click",status="ok"`)
-	m.IncrementCounter("mcp_requests_total", `tool="type_text",status="ok"`)
+	m.IncrementCounter("mcp_requests_total", `tool="type",status="ok"`)
 
 	var buf bytes.Buffer
 	if err := m.WritePrometheus(&buf); err != nil {
@@ -44,8 +44,8 @@ func TestMetricsRegistry_IncrementCounter(t *testing.T) {
 	if !strings.Contains(output, `mcp_requests_total{tool="click",status="ok"} 2`) {
 		t.Errorf("Expected click counter = 2, got:\n%s", output)
 	}
-	if !strings.Contains(output, `mcp_requests_total{tool="type_text",status="ok"} 1`) {
-		t.Errorf("Expected type_text counter = 1, got:\n%s", output)
+	if !strings.Contains(output, `mcp_requests_total{tool="type",status="ok"} 1`) {
+		t.Errorf("Expected type counter = 1, got:\n%s", output)
 	}
 }
 
@@ -180,7 +180,7 @@ func TestMetricsRegistry_RecordRequest(t *testing.T) {
 
 	m.RecordRequest("click", "ok", 50*time.Millisecond)
 	m.RecordRequest("click", "error", 100*time.Millisecond)
-	m.RecordRequest("type_text", "ok", 25*time.Millisecond)
+	m.RecordRequest("type", "ok", 25*time.Millisecond)
 
 	var buf bytes.Buffer
 	if err := m.WritePrometheus(&buf); err != nil {

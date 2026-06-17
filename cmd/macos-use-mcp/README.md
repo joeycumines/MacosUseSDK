@@ -1,6 +1,6 @@
 # MCP Tool
 
-The `macos-use-mcp` binary is a Model Context Protocol (MCP) server that proxies 77 macOS automation tools to AI assistants like Claude Desktop.
+The `macos-use-mcp` binary is a Model Context Protocol (MCP) server that proxies the current 23 redesigned CUA-aligned macOS automation tools to AI assistants like Claude Desktop.
 
 ## Building
 
@@ -37,18 +37,19 @@ All configuration is via environment variables. See [docs/ai-artifacts/10-api-re
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `GRPC_SERVER_ADDR` | `localhost:50051` | gRPC backend address |
-| `MCP_TRANSPORT` | `stdio` | Transport type: `stdio` or `http` |
-| `MCP_LOG_LEVEL` | `info` | Log level: `debug`, `info`, `warn`, `error` |
-| `MCP_REQUEST_TIMEOUT` | `30` | Default request timeout (seconds) |
+| `MACOS_USE_SERVER_ADDR` | `localhost:50051` | gRPC backend address |
+| `MACOS_USE_REQUEST_TIMEOUT` | `30` | Default gRPC request timeout (seconds) |
+| `MCP_TRANSPORT` | `stdio` | Transport type: `stdio` or `sse` |
 
 ### HTTP Transport Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MCP_HTTP_ADDRESS` | `:8080` | HTTP server listen address |
+| `MCP_HTTP_ADDRESS` | `:8080` | HTTP/SSE server listen address |
+| `MCP_HTTP_SOCKET` | (none) | Unix socket path for HTTP/SSE transport |
+| `MCP_HTTP_READ_TIMEOUT` | `30s` | HTTP read timeout |
+| `MCP_HTTP_WRITE_TIMEOUT` | `30s` | HTTP write timeout |
 | `MCP_CORS_ORIGIN` | `*` | CORS allowed origin |
-| `MCP_SSE_HEARTBEAT` | `15s` | SSE keepalive interval |
 
 ### Security Variables (Production)
 
@@ -68,8 +69,8 @@ Add to `~/.config/claude/mcp_settings.json`:
     "macos-use": {
       "command": "/path/to/macos-use-mcp",
       "env": {
-        "GRPC_SERVER_ADDR": "localhost:50051",
-        "MCP_LOG_LEVEL": "warn"
+        "MACOS_USE_SERVER_ADDR": "localhost:50051",
+        "MCP_TRANSPORT": "stdio"
       }
     }
   }
@@ -78,7 +79,7 @@ Add to `~/.config/claude/mcp_settings.json`:
 
 ## Related Documentation
 
-- [API Reference](../../docs/ai-artifacts/10-api-reference.md) - 77 tools documented with examples
+- [API Reference](../../docs/ai-artifacts/10-api-reference.md) - 23 current MCP tools documented with examples
 - [MCP Integration](../../docs/ai-artifacts/05-mcp-integration.md) - Protocol compliance details
 - [Production Deployment](../../docs/ai-artifacts/08-production-deployment.md) - Deployment guide
 - [Security Hardening](../../docs/ai-artifacts/09-security-hardening.md) - Security best practices

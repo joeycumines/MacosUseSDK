@@ -606,7 +606,7 @@ func TestHTTPTransport_HandleMetrics(t *testing.T) {
 
 	// Record some metrics
 	tr.metrics.RecordRequest("click", "ok", 50*time.Millisecond)
-	tr.metrics.RecordRequest("type_text", "error", 100*time.Millisecond)
+	tr.metrics.RecordRequest("type", "error", 100*time.Millisecond)
 	tr.metrics.SetSSEConnections(3)
 	tr.metrics.RecordSSEEvent()
 

@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -301,18 +302,18 @@ func TestMCPToolsList_ReturnsAllTools(t *testing.T) {
 		t.Fatalf("tools/list returned error: %v", response.Error)
 	}
 
-	expectedToolCount := 77
+	expectedToolCount := 23
 	if len(response.Result.Tools) != expectedToolCount {
 		t.Errorf("Expected %d tools, got %d", expectedToolCount, len(response.Result.Tools))
 	}
 
 	criticalTools := []string{
-		"capture_screenshot",
+		"screenshot",
 		"click",
-		"type_text",
-		"press_key",
+		"type",
+		"keypress",
 		"list_windows",
-		"list_displays",
+		"get_display",
 	}
 
 	toolMap := make(map[string]bool)
@@ -448,7 +449,7 @@ func createMCPTestHandler(t *testing.T, client pb.MacosUseClient, opsClient long
 				},
 			}
 			if isError {
-				resultMap["is_error"] = true
+				resultMap["isError"] = true
 			}
 			resultBytes, _ := json.Marshal(resultMap)
 			return &transport.Message{
@@ -469,52 +470,36 @@ func createMCPTestHandler(t *testing.T, client pb.MacosUseClient, opsClient long
 	}
 }
 
-// getMCPToolDefinitions returns tool definitions for testing
+// getMCPToolDefinitions returns the redesigned MCP tool definitions used by tests.
 func getMCPToolDefinitions() []map[string]any {
-	tools := []map[string]any{
-		{"name": "capture_screenshot", "description": "Capture a full screen screenshot", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
+	return []map[string]any{
+		{"name": "screenshot", "description": "Capture screen and return base64-encoded image", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
 		{"name": "click", "description": "Click at screen coordinates", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}, "required": []string{"x", "y"}}},
-		{"name": "type_text", "description": "Type text", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}, "required": []string{"text"}}},
-		{"name": "press_key", "description": "Press a key", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}, "required": []string{"key"}}},
+		{"name": "double_click", "description": "Double-click at screen coordinates", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}, "required": []string{"x", "y"}}},
+		{"name": "type", "description": "Type text", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}, "required": []string{"text"}}},
+		{"name": "keypress", "description": "Press a key", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}, "required": []string{"keys"}}},
+		{"name": "scroll", "description": "Scroll content", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
+		{"name": "drag", "description": "Drag", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}, "required": []string{"path"}}},
+		{"name": "move", "description": "Move mouse", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}, "required": []string{"x", "y"}}},
+		{"name": "wait", "description": "Wait for duration", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
+		{"name": "open_app", "description": "Open an application", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
+		{"name": "list_apps", "description": "List applications", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
+		{"name": "close_app", "description": "Close an application", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
+		{"name": "find_elements", "description": "Find accessibility elements", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
+		{"name": "click_element", "description": "Click an accessibility element", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
+		{"name": "type_element", "description": "Type text into an accessibility element", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
+		{"name": "read_element", "description": "Read an accessibility element", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
+		{"name": "focus_window", "description": "Focus a window", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
+		{"name": "move_window", "description": "Move a window", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
+		{"name": "resize_window", "description": "Resize a window", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
 		{"name": "list_windows", "description": "List windows", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
-		{"name": "list_displays", "description": "List displays", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
-		{"name": "list_applications", "description": "List applications", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
-		{"name": "get_clipboard", "description": "Get clipboard", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
-		{"name": "cursor_position", "description": "Get cursor position", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
-		{"name": "mouse_move", "description": "Move mouse", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}, "required": []string{"x", "y"}}},
-		{"name": "scroll", "description": "Scroll", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
-		{"name": "drag", "description": "Drag", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}, "required": []string{"start_x", "start_y", "end_x", "end_y"}}},
+		{"name": "clipboard", "description": "Clipboard operations", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
+		{"name": "run", "description": "Run commands", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
+		{"name": "get_display", "description": "Get display information", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
 	}
-	// Add remaining tools to reach 77
-	additionalTools := []string{
-		"hold_key", "mouse_button_down", "mouse_button_up", "hover", "gesture",
-		"find_elements", "get_element", "get_element_actions", "click_element",
-		"write_element_value", "perform_element_action", "traverse_accessibility",
-		"find_region_elements", "wait_element", "wait_element_state",
-		"get_window", "get_window_state", "focus_window", "move_window", "resize_window",
-		"minimize_window", "restore_window", "close_window", "get_display",
-		"write_clipboard", "clear_clipboard", "get_clipboard_history",
-		"open_application", "get_application", "delete_application",
-		"execute_apple_script", "execute_javascript", "execute_shell_command", "validate_script",
-		"create_observation", "stream_observations", "get_observation", "list_observations", "cancel_observation",
-		"automate_open_file_dialog", "automate_save_file_dialog", "select_file", "select_directory", "drag_files",
-		"create_session", "get_session", "list_sessions", "delete_session", "get_session_snapshot",
-		"begin_transaction", "commit_transaction", "rollback_transaction",
-		"create_macro", "get_macro", "list_macros", "delete_macro", "execute_macro", "update_macro",
-		"get_input", "list_inputs", "get_scripting_dictionaries", "watch_accessibility",
-		"capture_window_screenshot", "capture_region_screenshot", "capture_element_screenshot",
-	}
-	for _, name := range additionalTools {
-		tools = append(tools, map[string]any{
-			"name":        name,
-			"description": name,
-			"inputSchema": map[string]any{"type": "object", "properties": map[string]any{}},
-		})
-	}
-	return tools
 }
 
-// isKnownTool checks if a tool name is in the registered 77-tool list.
+// isKnownTool checks if a tool name is in the redesigned tool list.
 func isKnownTool(name string) bool {
 	for _, tool := range getMCPToolDefinitions() {
 		if tool["name"] == name {
@@ -529,20 +514,43 @@ func executeMCPToolCall(client pb.MacosUseClient, _ longrunningpb.OperationsClie
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	switch toolName {
-	case "list_displays":
+	case "get_display":
 		resp, err := client.ListDisplays(ctx, &pb.ListDisplaysRequest{})
 		if err != nil {
 			return "Error: " + err.Error(), true
 		}
 		result, _ := json.Marshal(resp.Displays)
 		return string(result), false
-	case "cursor_position":
-		resp, err := client.CaptureCursorPosition(ctx, &pb.CaptureCursorPositionRequest{})
+	case "list_windows":
+		var params struct {
+			App       string `json:"app"`
+			PageSize  int32  `json:"page_size"`
+			PageToken string `json:"page_token"`
+		}
+		if err := json.Unmarshal(args, &params); err != nil {
+			return "Invalid params: " + err.Error(), true
+		}
+		resp, err := client.ListWindows(ctx, &pb.ListWindowsRequest{
+			Parent:    params.App,
+			PageSize:  params.PageSize,
+			PageToken: params.PageToken,
+		})
 		if err != nil {
 			return "Error: " + err.Error(), true
 		}
-		return resp.String(), false
-	case "capture_screenshot":
+		if len(resp.Windows) == 0 {
+			return "No windows found", true
+		}
+		lines := make([]string, 0, len(resp.Windows))
+		for _, w := range resp.Windows {
+			lines = append(lines, fmt.Sprintf("- %s (%s)", w.Title, w.Name))
+		}
+		result := fmt.Sprintf("Found %d windows:\n%s", len(resp.Windows), strings.Join(lines, "\n"))
+		if resp.NextPageToken != "" {
+			result += fmt.Sprintf("\n\nMore results available. Use page_token: %s", resp.NextPageToken)
+		}
+		return result, false
+	case "screenshot":
 		resp, err := client.CaptureScreenshot(ctx, &pb.CaptureScreenshotRequest{})
 		if err != nil {
 			return "Error: " + err.Error(), true
@@ -552,7 +560,7 @@ func executeMCPToolCall(client pb.MacosUseClient, _ longrunningpb.OperationsClie
 			data += string(rune(len(resp.ImageData)/1024)) + "KB"
 		}
 		return data, false
-	case "type_text":
+	case "type":
 		var params struct {
 			Text string `json:"text"`
 		}
@@ -575,13 +583,61 @@ func executeMCPToolCall(client pb.MacosUseClient, _ longrunningpb.OperationsClie
 			return "Error: " + err.Error(), true
 		}
 		return "Text typed: " + params.Text, false
-	case "click":
+	case "keypress":
 		var params struct {
-			X float64 `json:"x"`
-			Y float64 `json:"y"`
+			Keys []string `json:"keys"`
 		}
 		if err := json.Unmarshal(args, &params); err != nil {
 			return "Invalid params: " + err.Error(), true
+		}
+		if len(params.Keys) == 0 {
+			return "Invalid params: keys is required", true
+		}
+		primaryKey := params.Keys[len(params.Keys)-1]
+		var modifiers []pb.KeyPress_Modifier
+		for _, mod := range params.Keys[:len(params.Keys)-1] {
+			switch strings.ToLower(mod) {
+			case "command", "cmd":
+				modifiers = append(modifiers, pb.KeyPress_MODIFIER_COMMAND)
+			case "option", "alt":
+				modifiers = append(modifiers, pb.KeyPress_MODIFIER_OPTION)
+			case "control", "ctrl":
+				modifiers = append(modifiers, pb.KeyPress_MODIFIER_CONTROL)
+			case "shift":
+				modifiers = append(modifiers, pb.KeyPress_MODIFIER_SHIFT)
+			case "function", "fn":
+				modifiers = append(modifiers, pb.KeyPress_MODIFIER_FUNCTION)
+			case "capslock":
+				modifiers = append(modifiers, pb.KeyPress_MODIFIER_CAPS_LOCK)
+			}
+		}
+		_, err := client.CreateInput(ctx, &pb.CreateInputRequest{
+			Parent: "applications/-",
+			Input: &pb.Input{
+				Action: &pb.InputAction{
+					InputType: &pb.InputAction_PressKey{
+						PressKey: &pb.KeyPress{
+							Key:       primaryKey,
+							Modifiers: modifiers,
+						},
+					},
+				},
+			},
+		})
+		if err != nil {
+			return "Error: " + err.Error(), true
+		}
+		return "Key pressed: " + primaryKey, false
+	case "click":
+		var params struct {
+			X *float64 `json:"x"`
+			Y *float64 `json:"y"`
+		}
+		if err := json.Unmarshal(args, &params); err != nil {
+			return "Invalid params: " + err.Error(), true
+		}
+		if params.X == nil || params.Y == nil {
+			return "Invalid params: x and y are required", true
 		}
 		_, err := client.CreateInput(ctx, &pb.CreateInputRequest{
 			Parent: "applications/-",
@@ -589,7 +645,7 @@ func executeMCPToolCall(client pb.MacosUseClient, _ longrunningpb.OperationsClie
 				Action: &pb.InputAction{
 					InputType: &pb.InputAction_Click{
 						Click: &pb.MouseClick{
-							Position:  &pbtype.Point{X: params.X, Y: params.Y},
+							Position:  &pbtype.Point{X: *params.X, Y: *params.Y},
 							ClickType: pb.MouseClick_CLICK_TYPE_LEFT,
 						},
 					},

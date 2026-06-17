@@ -5,11 +5,11 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -45,8 +45,8 @@ func TestToolCall_JSON(t *testing.T) {
 	}{
 		{
 			name:     "simple tool call",
-			input:    `{"name":"list_displays","arguments":{}}`,
-			wantName: "list_displays",
+			input:    `{"name":"get_display","arguments":{}}`,
+			wantName: "get_display",
 			wantArgs: "{}",
 		},
 		{
@@ -57,8 +57,8 @@ func TestToolCall_JSON(t *testing.T) {
 		},
 		{
 			name:     "tool call with string args",
-			input:    `{"name":"type_text","arguments":{"text":"hello world"}}`,
-			wantName: "type_text",
+			input:    `{"name":"type","arguments":{"text":"hello world"}}`,
+			wantName: "type",
 			wantArgs: `{"text":"hello world"}`,
 		},
 	}
@@ -106,7 +106,7 @@ func TestToolResult_JSON(t *testing.T) {
 				},
 				IsError: true,
 			},
-			want: `{"content":[{"type":"text","text":"Something went wrong"}],"is_error":true}`,
+			want: `{"content":[{"type":"text","text":"Something went wrong"}],"isError":true}`,
 		},
 		{
 			name: "empty content",
@@ -478,193 +478,61 @@ func TestGestureDirectionValues(t *testing.T) {
 	}
 }
 
-// TestHoverToolSchema tests the hover tool has correct schema structure
-func TestHoverToolSchema(t *testing.T) {
-	schemaJSON := `{
-		"type": "object",
-		"properties": {
-			"x": {"type": "number", "description": "X coordinate in Global Display Coordinates"},
-			"y": {"type": "number", "description": "Y coordinate in Global Display Coordinates"},
-			"duration": {"type": "number", "description": "Duration to hover in seconds (default: 1.0)"},
-			"application": {"type": "string", "description": "Application resource name (optional)"}
-		},
-		"required": ["x", "y"]
-	}`
-
-	var schema map[string]any
-	if err := json.Unmarshal([]byte(schemaJSON), &schema); err != nil {
-		t.Fatalf("Failed to parse hover schema: %v", err)
-	}
-
-	if schema["type"] != "object" {
-		t.Errorf("Schema type = %v, want object", schema["type"])
-	}
-
-	props := schema["properties"].(map[string]any)
-	if _, ok := props["x"]; !ok {
-		t.Error("Schema missing 'x' property")
-	}
-	if _, ok := props["y"]; !ok {
-		t.Error("Schema missing 'y' property")
-	}
-	if _, ok := props["duration"]; !ok {
-		t.Error("Schema missing 'duration' property")
-	}
-
-	required := schema["required"].([]any)
-	if len(required) != 2 {
-		t.Errorf("Required fields count = %d, want 2", len(required))
-	}
-}
-
-// TestGestureToolSchema tests the gesture tool has correct schema structure
-func TestGestureToolSchema(t *testing.T) {
-	schemaJSON := `{
-		"type": "object",
-		"properties": {
-			"center_x": {"type": "number", "description": "Center X coordinate of gesture"},
-			"center_y": {"type": "number", "description": "Center Y coordinate of gesture"},
-			"gesture_type": {"type": "string", "description": "Gesture type: pinch, zoom, rotate, swipe, force_touch"},
-			"scale": {"type": "number", "description": "Scale factor for pinch/zoom"},
-			"rotation": {"type": "number", "description": "Rotation angle in degrees"},
-			"finger_count": {"type": "integer", "description": "Number of fingers for swipe"},
-			"direction": {"type": "string", "description": "Direction for swipe: up, down, left, right"}
-		},
-		"required": ["center_x", "center_y", "gesture_type"]
-	}`
-
-	var schema map[string]any
-	if err := json.Unmarshal([]byte(schemaJSON), &schema); err != nil {
-		t.Fatalf("Failed to parse gesture schema: %v", err)
-	}
-
-	if schema["type"] != "object" {
-		t.Errorf("Schema type = %v, want object", schema["type"])
-	}
-
-	props := schema["properties"].(map[string]any)
-	requiredProps := []string{"center_x", "center_y", "gesture_type", "scale", "rotation", "finger_count", "direction"}
-	for _, prop := range requiredProps {
-		if _, ok := props[prop]; !ok {
-			t.Errorf("Schema missing '%s' property", prop)
-		}
-	}
-
-	required := schema["required"].([]any)
-	if len(required) != 3 {
-		t.Errorf("Required fields count = %d, want 3", len(required))
-	}
-}
-
 // TestAllToolsExist validates all expected MCP tools are defined
 func TestAllToolsExist(t *testing.T) {
 	expectedTools := []string{
-		// Screenshot tools (4)
-		"capture_screenshot",
-		"capture_window_screenshot",
-		"capture_region_screenshot",
-		"capture_element_screenshot",
-		// Input tools (11)
+		// CUA Core: Input (9)
+		"screenshot",
 		"click",
-		"type_text",
-		"press_key",
-		"hold_key",
-		"mouse_move",
+		"double_click",
+		"type",
+		"keypress",
 		"scroll",
 		"drag",
-		"mouse_button_down",
-		"mouse_button_up",
-		"hover",
-		"gesture",
-		// Element tools (10)
+		"move",
+		"wait",
+		// Application Management (3)
+		"open_app",
+		"list_apps",
+		"close_app",
+		// Element Interaction (4)
 		"find_elements",
-		"get_element",
-		"get_element_actions",
 		"click_element",
-		"write_element_value",
-		"perform_element_action",
-		"traverse_accessibility",
-		"find_region_elements",
-		"wait_element",
-		"wait_element_state",
-		// Window tools (9)
-		"list_windows",
-		"get_window",
-		"get_window_state",
+		"type_element",
+		"read_element",
+		// Window Management (4)
 		"focus_window",
 		"move_window",
 		"resize_window",
-		"minimize_window",
-		"restore_window",
-		"close_window",
-		// Display tools (3)
-		"list_displays",
+		"list_windows",
+		// Utility (3)
+		"clipboard",
+		"run",
 		"get_display",
-		"cursor_position",
-		// Clipboard tools (4)
-		"get_clipboard",
-		"write_clipboard",
-		"clear_clipboard",
-		"get_clipboard_history",
-		// Application tools (4)
-		"open_application",
-		"list_applications",
-		"get_application",
-		"delete_application",
-		// Scripting tools (4)
-		"execute_apple_script",
-		"execute_javascript",
-		"execute_shell_command",
-		"validate_script",
-		// Observation tools (5)
-		"create_observation",
-		"stream_observations",
-		"get_observation",
-		"list_observations",
-		"cancel_observation",
-		// File dialog tools (5)
-		"automate_open_file_dialog",
-		"automate_save_file_dialog",
-		"select_file",
-		"select_directory",
-		"drag_files",
-		// Session tools (5)
-		"create_session",
-		"get_session",
-		"list_sessions",
-		"delete_session",
-		"get_session_snapshot",
-		// Transaction tools (3)
-		"begin_transaction",
-		"commit_transaction",
-		"rollback_transaction",
-		// Macro tools (6)
-		"create_macro",
-		"get_macro",
-		"list_macros",
-		"delete_macro",
-		"execute_macro",
-		"update_macro",
-		// Input query tools (2)
-		"get_input",
-		"list_inputs",
-		// Scripting dictionary tool (1)
-		"get_scripting_dictionaries",
-		// Accessibility watch tool (1)
-		"watch_accessibility",
 	}
 
-	if len(expectedTools) != 77 {
-		t.Errorf("Expected 77 tools but defined %d in test", len(expectedTools))
+	if len(expectedTools) != 23 {
+		t.Errorf("Expected 23 tools but defined %d in test", len(expectedTools))
 	}
 
-	// Verify all tool names are unique
+	server := &MCPServer{tools: make(map[string]*Tool)}
+	server.registerTools()
+
 	seen := make(map[string]bool)
 	for _, tool := range expectedTools {
 		if seen[tool] {
-			t.Errorf("Duplicate tool name: %s", tool)
+			t.Errorf("Duplicate expected tool name: %s", tool)
 		}
 		seen[tool] = true
+		if server.tools[tool] == nil {
+			t.Errorf("Expected MCP tool %q to be registered", tool)
+		}
+	}
+
+	for name := range server.tools {
+		if !seen[name] {
+			t.Errorf("Registered unexpected MCP tool %q", name)
+		}
 	}
 }
 
@@ -672,50 +540,29 @@ func TestAllToolsExist(t *testing.T) {
 func TestToolNaming(t *testing.T) {
 	// All tool names should be snake_case
 	tools := []string{
-		"capture_screenshot",
-		"capture_window_screenshot",
-		"capture_region_screenshot",
+		"screenshot",
 		"click",
-		"type_text",
-		"press_key",
-		"mouse_move",
+		"double_click",
+		"type",
+		"keypress",
 		"scroll",
 		"drag",
-		"hover",
-		"gesture",
+		"move",
+		"wait",
+		"open_app",
+		"list_apps",
+		"close_app",
 		"find_elements",
-		"get_element",
-		"get_element_actions",
 		"click_element",
-		"write_element_value",
-		"perform_element_action",
-		"list_windows",
-		"get_window",
+		"type_element",
+		"read_element",
 		"focus_window",
 		"move_window",
 		"resize_window",
-		"minimize_window",
-		"restore_window",
-		"close_window",
-		"list_displays",
+		"list_windows",
+		"clipboard",
+		"run",
 		"get_display",
-		"get_clipboard",
-		"write_clipboard",
-		"clear_clipboard",
-		"get_clipboard_history",
-		"open_application",
-		"list_applications",
-		"get_application",
-		"delete_application",
-		"execute_apple_script",
-		"execute_javascript",
-		"execute_shell_command",
-		"validate_script",
-		"create_observation",
-		"stream_observations",
-		"get_observation",
-		"list_observations",
-		"cancel_observation",
 	}
 
 	for _, toolName := range tools {
@@ -850,8 +697,8 @@ func TestClickCountValidation(t *testing.T) {
 	}
 }
 
-// TestErrorResponseFormat tests that error responses use is_error (snake_case)
-// This is critical for Anthropic Claude Desktop compatibility
+// TestErrorResponseFormat tests that error responses use isError (camelCase)
+// Per MCP 2025-11-25 CallToolResult schema.
 func TestErrorResponseFormat(t *testing.T) {
 	result := &ToolResult{
 		Content: []Content{
@@ -864,7 +711,7 @@ func TestErrorResponseFormat(t *testing.T) {
 		"content": result.Content,
 	}
 	if result.IsError {
-		resultMap["is_error"] = true
+		resultMap["isError"] = true
 	}
 
 	data, err := json.Marshal(resultMap)
@@ -872,22 +719,22 @@ func TestErrorResponseFormat(t *testing.T) {
 		t.Fatalf("Failed to marshal: %v", err)
 	}
 
-	// Verify the key is is_error, not isError
+	// Verify the key is isError, not is_error
 	var parsed map[string]any
 	if err := json.Unmarshal(data, &parsed); err != nil {
 		t.Fatalf("Failed to unmarshal: %v", err)
 	}
 
-	if _, ok := parsed["is_error"]; !ok {
-		t.Errorf("Response should contain 'is_error' key, got: %s", string(data))
+	if _, ok := parsed["isError"]; !ok {
+		t.Errorf("Response should contain 'isError' key, got: %s", string(data))
 	}
 
-	if _, ok := parsed["isError"]; ok {
-		t.Errorf("Response should NOT contain 'isError' key (camelCase), got: %s", string(data))
+	if _, ok := parsed["is_error"]; ok {
+		t.Errorf("Response should NOT contain 'is_error' key (snake_case), got: %s", string(data))
 	}
 
-	if parsed["is_error"] != true {
-		t.Errorf("is_error should be true, got: %v", parsed["is_error"])
+	if parsed["isError"] != true {
+		t.Errorf("isError should be true, got: %v", parsed["isError"])
 	}
 }
 
@@ -1098,8 +945,8 @@ func TestPaginationTokenOpaque(t *testing.T) {
 	}
 }
 
-// TestIsErrorFieldFormat validates the is_error field in tool responses
-// Per MCP conventions, is_error indicates a soft failure that the client can handle
+// TestIsErrorFieldFormat validates the isError field in tool responses
+// Per MCP 2025-11-25 CallToolResult schema, isError indicates a soft failure.
 func TestIsErrorFieldFormat(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -1112,17 +959,17 @@ func TestIsErrorFieldFormat(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:    "error response with is_error true",
-			result:  `{"is_error":true,"content":[{"type":"text","text":"element not found"}]}`,
+			name:    "error response with isError true",
+			result:  `{"isError":true,"content":[{"type":"text","text":"element not found"}]}`,
 			wantErr: true,
 		},
 		{
-			name:    "error response with is_error false",
-			result:  `{"is_error":false,"content":[]}`,
+			name:    "error response with isError false",
+			result:  `{"isError":false,"content":[]}`,
 			wantErr: false,
 		},
 		{
-			name:    "error text without is_error flag",
+			name:    "error text without isError flag",
 			result:  `{"content":[{"type":"text","text":"warning: partial failure"}]}`,
 			wantErr: false,
 		},
@@ -1136,12 +983,12 @@ func TestIsErrorFieldFormat(t *testing.T) {
 				t.Fatalf("Failed to unmarshal result: %v", err)
 			}
 
-			isError, hasError := result["is_error"]
+			isError, hasError := result["isError"]
 			if tt.wantErr {
 				if !hasError {
-					t.Error("Expected is_error field to be present for error response")
+					t.Error("Expected isError field to be present for error response")
 				} else if isError != true {
-					t.Errorf("is_error should be true, got: %v", isError)
+					t.Errorf("isError should be true, got: %v", isError)
 				}
 			}
 		})
@@ -1167,11 +1014,6 @@ func TestInitializeResponse(t *testing.T) {
 			name:     "with displayInfo",
 			response: `{"protocolVersion":"2025-11-25","capabilities":{"tools":{}},"serverInfo":{"name":"macos-use-sdk","version":"0.1.0"},"displayInfo":{"screens":[]}}`,
 			wantErr:  false,
-		},
-		{
-			name:     "wrong protocol version",
-			response: `{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"serverInfo":{"name":"macos-use-sdk","version":"0.1.0"}}`,
-			wantErr:  true,
 		},
 		{
 			name:     "missing serverInfo",
@@ -1328,6 +1170,83 @@ func TestMCPServer_HandleHTTPMessage_NotificationsInitialized(t *testing.T) {
 	}
 }
 
+// TestMCPServer_HandleHTTPMessage_Ping verifies the HTTP handler responds to
+// ping with an empty result per MCP 2025-11-25.
+func TestMCPServer_HandleHTTPMessage_Ping(t *testing.T) {
+	ctx := context.Background()
+	s := &MCPServer{
+		cfg:   &config.Config{},
+		tools: make(map[string]*Tool),
+		ctx:   ctx,
+	}
+
+	msg := &transport.Message{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage(`42`),
+		Method:  "ping",
+	}
+
+	resp, err := s.handleHTTPMessage(msg)
+	if err != nil {
+		t.Fatalf("handleHTTPMessage returned error: %v", err)
+	}
+	if resp == nil {
+		t.Fatal("handleHTTPMessage returned nil response")
+	}
+	if string(resp.ID) != "42" {
+		t.Errorf("response id = %q, want %q", string(resp.ID), "42")
+	}
+	if string(resp.Result) != "{}" {
+		t.Errorf("response result = %q, want %q", string(resp.Result), "{}")
+	}
+	if resp.Error != nil {
+		t.Fatalf("unexpected error response: %+v", resp.Error)
+	}
+}
+
+// TestMCPServer_HandleStdioMessage_Ping verifies the stdio handler responds to
+// ping with an empty result per MCP 2025-11-25.
+func TestMCPServer_HandleStdioMessage_Ping(t *testing.T) {
+	s := &MCPServer{
+		cfg:   &config.Config{},
+		tools: make(map[string]*Tool),
+		ctx:   context.Background(),
+	}
+
+	var buf bytes.Buffer
+	tr := transport.NewStdioTransport(strings.NewReader(""), &buf)
+
+	msg := &transport.Message{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage(`"ping-id"`),
+		Method:  "ping",
+	}
+
+	s.handleMessage(tr, msg)
+
+	line := strings.TrimSpace(buf.String())
+	if line == "" {
+		t.Fatal("expected a response written to stdio transport")
+	}
+
+	var resp transport.Message
+	if err := json.Unmarshal([]byte(line), &resp); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
+	}
+	if string(resp.ID) != `"ping-id"` {
+		t.Errorf("response id = %q, want %q", string(resp.ID), `"ping-id"`)
+	}
+	if string(resp.Result) != "{}" {
+		t.Errorf("response result = %q, want %q", string(resp.Result), "{}")
+	}
+	if resp.Error != nil {
+		t.Fatalf("unexpected error response: %+v", resp.Error)
+	}
+	if resp.Method != "" {
+		t.Errorf("response method = %q, want empty", resp.Method)
+	}
+}
+
 // ============================================================================
 // Tasks 36-37: MCP Capability Negotiation and Protocol Version Validation
 // ============================================================================
@@ -1364,22 +1283,19 @@ func TestValidateAndProcessInitialize_ProtocolVersions(t *testing.T) {
 			wantError:       false,
 		},
 		{
-			name:              "unsupported version",
-			protocolVersion:   "2023-01-01",
-			wantError:         true,
-			wantErrorContains: "unsupported protocol version",
+			name:            "unsupported version negotiates to current",
+			protocolVersion: "2023-01-01",
+			wantError:       false,
 		},
 		{
-			name:              "future version",
-			protocolVersion:   "2099-12-31",
-			wantError:         true,
-			wantErrorContains: "unsupported protocol version: 2099-12-31",
+			name:            "future version negotiates to current",
+			protocolVersion: "2099-12-31",
+			wantError:       false,
 		},
 		{
-			name:              "garbage version",
-			protocolVersion:   "not-a-version",
-			wantError:         true,
-			wantErrorContains: "unsupported protocol version: not-a-version",
+			name:            "garbage version negotiates to current",
+			protocolVersion: "not-a-version",
+			wantError:       false,
 		},
 	}
 
@@ -1601,8 +1517,11 @@ func TestValidateAndProcessInitialize_ResponseFormat(t *testing.T) {
 	}
 }
 
-// TestValidateAndProcessInitialize_ErrorResponseFormat tests the error response format.
-func TestValidateAndProcessInitialize_ErrorResponseFormat(t *testing.T) {
+// TestValidateAndProcessInitialize_UnsupportedVersionNegotiation verifies that an
+// unsupported protocol version is negotiated to the server's latest supported
+// version (2025-11-25) per the MCP 2025-11-25 lifecycle, rather than returning
+// a JSON-RPC error.
+func TestValidateAndProcessInitialize_UnsupportedVersionNegotiation(t *testing.T) {
 	ctx := context.Background()
 	s := &MCPServer{
 		cfg:   &config.Config{},
@@ -1631,19 +1550,16 @@ func TestValidateAndProcessInitialize_ErrorResponseFormat(t *testing.T) {
 		t.Fatal("expected response, got nil")
 	}
 
-	if resp.Error == nil {
-		t.Fatal("expected error response")
+	if resp.Error != nil {
+		t.Fatalf("expected negotiated success response, got error: code=%d message=%s", resp.Error.Code, resp.Error.Message)
 	}
 
-	// Verify error format per JSON-RPC 2.0 spec
-	if resp.Error.Code != transport.ErrCodeInvalidRequest {
-		t.Errorf("error code = %d, want %d (-32600)", resp.Error.Code, transport.ErrCodeInvalidRequest)
+	var result map[string]any
+	if err := json.Unmarshal(resp.Result, &result); err != nil {
+		t.Fatalf("failed to unmarshal result: %v", err)
 	}
-	if !strings.Contains(resp.Error.Message, "unsupported protocol version") {
-		t.Errorf("error message = %q, want to contain 'unsupported protocol version'", resp.Error.Message)
-	}
-	if !strings.Contains(resp.Error.Message, "2024-11-05") || !strings.Contains(resp.Error.Message, "2025-11-25") {
-		t.Errorf("error message should list supported versions, got: %q", resp.Error.Message)
+	if got := result["protocolVersion"]; got != "2025-11-25" {
+		t.Errorf("protocolVersion = %q, want %q", got, "2025-11-25")
 	}
 }
 
@@ -1694,630 +1610,6 @@ func TestHandleHTTPMessage_Initialize_Integration(t *testing.T) {
 
 	if result["protocolVersion"] != "2025-11-25" {
 		t.Errorf("protocolVersion = %q, want %q", result["protocolVersion"], "2025-11-25")
-	}
-}
-
-// ============================================================================
-// T086: File Dialog Tools Unit Tests
-// ============================================================================
-
-// TestFileDialogToolsExist validates that all file dialog tools are registered
-func TestFileDialogToolsExist(t *testing.T) {
-	fileDialogTools := []string{
-		"automate_open_file_dialog",
-		"automate_save_file_dialog",
-		"select_file",
-		"select_directory",
-		"drag_files",
-	}
-
-	// Verify all names are unique and valid snake_case
-	seen := make(map[string]bool)
-	for _, toolName := range fileDialogTools {
-		if seen[toolName] {
-			t.Errorf("Duplicate tool name: %s", toolName)
-		}
-		seen[toolName] = true
-
-		// Verify snake_case (no uppercase, no hyphens)
-		for _, r := range toolName {
-			if r >= 'A' && r <= 'Z' {
-				t.Errorf("Tool name %q contains uppercase letter, should be snake_case", toolName)
-				break
-			}
-		}
-		if strings.Contains(toolName, "-") {
-			t.Errorf("Tool name %q contains hyphen, should use underscore", toolName)
-		}
-	}
-}
-
-// TestAutomateOpenFileDialogSchema tests the automate_open_file_dialog tool schema
-func TestAutomateOpenFileDialogSchema(t *testing.T) {
-	schemaJSON := `{
-		"type": "object",
-		"properties": {
-			"application": {"type": "string", "description": "Application resource name (e.g., applications/TextEdit)"},
-			"file_path": {"type": "string", "description": "File path to select (if known)"},
-			"default_directory": {"type": "string", "description": "Default directory to navigate to"},
-			"file_filters": {"type": "array", "items": {"type": "string"}, "description": "File type filters (e.g., ['*.txt', '*.pdf'])"},
-			"timeout": {"type": "number", "description": "Timeout for dialog to appear in seconds"},
-			"allow_multiple": {"type": "boolean", "description": "Whether to allow multiple file selection"}
-		},
-		"required": ["application"]
-	}`
-
-	var schema map[string]any
-	if err := json.Unmarshal([]byte(schemaJSON), &schema); err != nil {
-		t.Fatalf("Failed to parse schema: %v", err)
-	}
-
-	if schema["type"] != "object" {
-		t.Errorf("Schema type = %v, want object", schema["type"])
-	}
-
-	props := schema["properties"].(map[string]any)
-	requiredProps := []string{"application", "file_path", "default_directory", "file_filters", "timeout", "allow_multiple"}
-	for _, prop := range requiredProps {
-		if _, ok := props[prop]; !ok {
-			t.Errorf("Schema missing '%s' property", prop)
-		}
-	}
-
-	required := schema["required"].([]any)
-	if len(required) != 1 || required[0] != "application" {
-		t.Errorf("Required should be ['application'], got: %v", required)
-	}
-}
-
-// TestAutomateSaveFileDialogSchema tests the automate_save_file_dialog tool schema
-func TestAutomateSaveFileDialogSchema(t *testing.T) {
-	schemaJSON := `{
-		"type": "object",
-		"properties": {
-			"application": {"type": "string", "description": "Application resource name"},
-			"file_path": {"type": "string", "description": "Full file path to save to"},
-			"default_directory": {"type": "string", "description": "Default directory to navigate to"},
-			"default_filename": {"type": "string", "description": "Default filename"},
-			"timeout": {"type": "number", "description": "Timeout for dialog to appear in seconds"},
-			"confirm_overwrite": {"type": "boolean", "description": "Whether to confirm overwrite if file exists"}
-		},
-		"required": ["application", "file_path"]
-	}`
-
-	var schema map[string]any
-	if err := json.Unmarshal([]byte(schemaJSON), &schema); err != nil {
-		t.Fatalf("Failed to parse schema: %v", err)
-	}
-
-	if schema["type"] != "object" {
-		t.Errorf("Schema type = %v, want object", schema["type"])
-	}
-
-	props := schema["properties"].(map[string]any)
-	requiredProps := []string{"application", "file_path", "default_directory", "default_filename", "timeout", "confirm_overwrite"}
-	for _, prop := range requiredProps {
-		if _, ok := props[prop]; !ok {
-			t.Errorf("Schema missing '%s' property", prop)
-		}
-	}
-
-	required := schema["required"].([]any)
-	if len(required) != 2 {
-		t.Errorf("Required fields count = %d, want 2", len(required))
-	}
-}
-
-// TestSelectFileSchema tests the select_file tool schema
-func TestSelectFileSchema(t *testing.T) {
-	schemaJSON := `{
-		"type": "object",
-		"properties": {
-			"application": {"type": "string", "description": "Application resource name"},
-			"file_path": {"type": "string", "description": "File path to select"},
-			"reveal_finder": {"type": "boolean", "description": "Whether to reveal file in Finder after selection"}
-		},
-		"required": ["application", "file_path"]
-	}`
-
-	var schema map[string]any
-	if err := json.Unmarshal([]byte(schemaJSON), &schema); err != nil {
-		t.Fatalf("Failed to parse schema: %v", err)
-	}
-
-	if schema["type"] != "object" {
-		t.Errorf("Schema type = %v, want object", schema["type"])
-	}
-
-	props := schema["properties"].(map[string]any)
-	requiredProps := []string{"application", "file_path", "reveal_finder"}
-	for _, prop := range requiredProps {
-		if _, ok := props[prop]; !ok {
-			t.Errorf("Schema missing '%s' property", prop)
-		}
-	}
-
-	required := schema["required"].([]any)
-	if len(required) != 2 {
-		t.Errorf("Required fields count = %d, want 2", len(required))
-	}
-}
-
-// TestSelectDirectorySchema tests the select_directory tool schema
-func TestSelectDirectorySchema(t *testing.T) {
-	schemaJSON := `{
-		"type": "object",
-		"properties": {
-			"application": {"type": "string", "description": "Application resource name"},
-			"directory_path": {"type": "string", "description": "Directory path to select"},
-			"create_missing": {"type": "boolean", "description": "Whether to create directory if it doesn't exist"}
-		},
-		"required": ["application", "directory_path"]
-	}`
-
-	var schema map[string]any
-	if err := json.Unmarshal([]byte(schemaJSON), &schema); err != nil {
-		t.Fatalf("Failed to parse schema: %v", err)
-	}
-
-	if schema["type"] != "object" {
-		t.Errorf("Schema type = %v, want object", schema["type"])
-	}
-
-	props := schema["properties"].(map[string]any)
-	requiredProps := []string{"application", "directory_path", "create_missing"}
-	for _, prop := range requiredProps {
-		if _, ok := props[prop]; !ok {
-			t.Errorf("Schema missing '%s' property", prop)
-		}
-	}
-
-	required := schema["required"].([]any)
-	if len(required) != 2 {
-		t.Errorf("Required fields count = %d, want 2", len(required))
-	}
-}
-
-// TestDragFilesSchema tests the drag_files tool schema
-func TestDragFilesSchema(t *testing.T) {
-	schemaJSON := `{
-		"type": "object",
-		"properties": {
-			"application": {"type": "string", "description": "Application resource name"},
-			"file_paths": {"type": "array", "items": {"type": "string"}, "description": "File paths to drag"},
-			"target_element_id": {"type": "string", "description": "Target element ID to drop files onto"},
-			"duration": {"type": "number", "description": "Drag duration in seconds"}
-		},
-		"required": ["application", "file_paths", "target_element_id"]
-	}`
-
-	var schema map[string]any
-	if err := json.Unmarshal([]byte(schemaJSON), &schema); err != nil {
-		t.Fatalf("Failed to parse schema: %v", err)
-	}
-
-	if schema["type"] != "object" {
-		t.Errorf("Schema type = %v, want object", schema["type"])
-	}
-
-	props := schema["properties"].(map[string]any)
-	requiredProps := []string{"application", "file_paths", "target_element_id", "duration"}
-	for _, prop := range requiredProps {
-		if _, ok := props[prop]; !ok {
-			t.Errorf("Schema missing '%s' property", prop)
-		}
-	}
-
-	// Verify file_paths is an array type
-	filePaths := props["file_paths"].(map[string]any)
-	if filePaths["type"] != "array" {
-		t.Errorf("file_paths type should be array, got: %v", filePaths["type"])
-	}
-
-	required := schema["required"].([]any)
-	if len(required) != 3 {
-		t.Errorf("Required fields count = %d, want 3", len(required))
-	}
-}
-
-// TestFileDialogToolParamsParsing tests argument parsing for file dialog tools
-func TestFileDialogToolParamsParsing(t *testing.T) {
-	tests := []struct {
-		name       string
-		tool       string
-		paramsJSON string
-		wantErr    bool
-	}{
-		{
-			name:       "automate_open_file_dialog basic",
-			tool:       "automate_open_file_dialog",
-			paramsJSON: `{"application": "applications/123"}`,
-			wantErr:    false,
-		},
-		{
-			name:       "automate_open_file_dialog full",
-			tool:       "automate_open_file_dialog",
-			paramsJSON: `{"application": "applications/TextEdit", "file_path": "/tmp/test.txt", "default_directory": "/tmp", "file_filters": ["*.txt", "*.md"], "timeout": 30, "allow_multiple": true}`,
-			wantErr:    false,
-		},
-		{
-			name:       "automate_save_file_dialog basic",
-			tool:       "automate_save_file_dialog",
-			paramsJSON: `{"application": "applications/123", "file_path": "/tmp/output.txt"}`,
-			wantErr:    false,
-		},
-		{
-			name:       "automate_save_file_dialog full",
-			tool:       "automate_save_file_dialog",
-			paramsJSON: `{"application": "applications/TextEdit", "file_path": "/tmp/output.txt", "default_directory": "/tmp", "default_filename": "output.txt", "timeout": 30, "confirm_overwrite": true}`,
-			wantErr:    false,
-		},
-		{
-			name:       "select_file basic",
-			tool:       "select_file",
-			paramsJSON: `{"application": "applications/Finder", "file_path": "/tmp/test.txt"}`,
-			wantErr:    false,
-		},
-		{
-			name:       "select_file with reveal",
-			tool:       "select_file",
-			paramsJSON: `{"application": "applications/Finder", "file_path": "/tmp/test.txt", "reveal_finder": true}`,
-			wantErr:    false,
-		},
-		{
-			name:       "select_directory basic",
-			tool:       "select_directory",
-			paramsJSON: `{"application": "applications/Finder", "directory_path": "/tmp"}`,
-			wantErr:    false,
-		},
-		{
-			name:       "select_directory with create",
-			tool:       "select_directory",
-			paramsJSON: `{"application": "applications/Finder", "directory_path": "/tmp/new_dir", "create_missing": true}`,
-			wantErr:    false,
-		},
-		{
-			name:       "drag_files basic",
-			tool:       "drag_files",
-			paramsJSON: `{"application": "applications/123", "file_paths": ["/tmp/a.txt", "/tmp/b.txt"], "target_element_id": "element-456"}`,
-			wantErr:    false,
-		},
-		{
-			name:       "drag_files with duration",
-			tool:       "drag_files",
-			paramsJSON: `{"application": "applications/123", "file_paths": ["/tmp/a.txt"], "target_element_id": "drop-zone", "duration": 0.5}`,
-			wantErr:    false,
-		},
-		{
-			name:       "invalid json",
-			tool:       "automate_open_file_dialog",
-			paramsJSON: `{not valid json}`,
-			wantErr:    true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var params map[string]any
-			err := json.Unmarshal([]byte(tt.paramsJSON), &params)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Unmarshal error = %v, wantErr = %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-// ============================================================================
-// T087: Wait Element Tools Unit Tests
-// ============================================================================
-
-// TestWaitElementToolsExist validates that wait element tools are registered
-func TestWaitElementToolsExist(t *testing.T) {
-	waitElementTools := []string{
-		"wait_element",
-		"wait_element_state",
-	}
-
-	// Verify all names are unique and valid snake_case
-	seen := make(map[string]bool)
-	for _, toolName := range waitElementTools {
-		if seen[toolName] {
-			t.Errorf("Duplicate tool name: %s", toolName)
-		}
-		seen[toolName] = true
-
-		// Verify snake_case (no uppercase, no hyphens)
-		for _, r := range toolName {
-			if r >= 'A' && r <= 'Z' {
-				t.Errorf("Tool name %q contains uppercase letter, should be snake_case", toolName)
-				break
-			}
-		}
-		if strings.Contains(toolName, "-") {
-			t.Errorf("Tool name %q contains hyphen, should use underscore", toolName)
-		}
-	}
-}
-
-// TestWaitElementSchema tests the wait_element tool schema
-func TestWaitElementSchema(t *testing.T) {
-	schemaJSON := `{
-		"type": "object",
-		"properties": {
-			"parent": {"type": "string", "description": "Application or window resource name"},
-			"selector": {"type": "object", "description": "Element selector: {role, text, or text_contains}"},
-			"timeout": {"type": "number", "description": "Maximum wait time in seconds (default: 30)"},
-			"poll_interval": {"type": "number", "description": "Poll interval in seconds (default: 0.5)"}
-		},
-		"required": ["parent", "selector"]
-	}`
-
-	var schema map[string]any
-	if err := json.Unmarshal([]byte(schemaJSON), &schema); err != nil {
-		t.Fatalf("Failed to parse schema: %v", err)
-	}
-
-	if schema["type"] != "object" {
-		t.Errorf("Schema type = %v, want object", schema["type"])
-	}
-
-	props := schema["properties"].(map[string]any)
-	requiredProps := []string{"parent", "selector", "timeout", "poll_interval"}
-	for _, prop := range requiredProps {
-		if _, ok := props[prop]; !ok {
-			t.Errorf("Schema missing '%s' property", prop)
-		}
-	}
-
-	// Verify selector is object type
-	selector := props["selector"].(map[string]any)
-	if selector["type"] != "object" {
-		t.Errorf("selector type should be object, got: %v", selector["type"])
-	}
-
-	required := schema["required"].([]any)
-	if len(required) != 2 {
-		t.Errorf("Required fields count = %d, want 2", len(required))
-	}
-}
-
-// TestWaitElementStateSchema tests the wait_element_state tool schema
-func TestWaitElementStateSchema(t *testing.T) {
-	schemaJSON := `{
-		"type": "object",
-		"properties": {
-			"parent": {"type": "string", "description": "Application or window resource name"},
-			"element_id": {"type": "string", "description": "Element ID to wait on"},
-			"condition": {"type": "string", "description": "State condition: enabled, focused, text_equals, text_contains", "enum": ["enabled", "focused", "text_equals", "text_contains"]},
-			"value": {"type": "string", "description": "Value for text_equals or text_contains conditions"},
-			"timeout": {"type": "number", "description": "Maximum wait time in seconds (default: 30)"},
-			"poll_interval": {"type": "number", "description": "Poll interval in seconds (default: 0.5)"}
-		},
-		"required": ["parent", "element_id", "condition"]
-	}`
-
-	var schema map[string]any
-	if err := json.Unmarshal([]byte(schemaJSON), &schema); err != nil {
-		t.Fatalf("Failed to parse schema: %v", err)
-	}
-
-	if schema["type"] != "object" {
-		t.Errorf("Schema type = %v, want object", schema["type"])
-	}
-
-	props := schema["properties"].(map[string]any)
-	requiredProps := []string{"parent", "element_id", "condition", "value", "timeout", "poll_interval"}
-	for _, prop := range requiredProps {
-		if _, ok := props[prop]; !ok {
-			t.Errorf("Schema missing '%s' property", prop)
-		}
-	}
-
-	// Verify condition has enum
-	condition := props["condition"].(map[string]any)
-	enumVal, hasEnum := condition["enum"]
-	if !hasEnum {
-		t.Error("condition should have enum constraint")
-	}
-	enumList := enumVal.([]any)
-	expectedEnums := []string{"enabled", "focused", "text_equals", "text_contains"}
-	if len(enumList) != len(expectedEnums) {
-		t.Errorf("condition enum count = %d, want %d", len(enumList), len(expectedEnums))
-	}
-
-	required := schema["required"].([]any)
-	if len(required) != 3 {
-		t.Errorf("Required fields count = %d, want 3", len(required))
-	}
-}
-
-// TestWaitElementToolParamsParsing tests argument parsing for wait element tools
-func TestWaitElementToolParamsParsing(t *testing.T) {
-	tests := []struct {
-		name       string
-		tool       string
-		paramsJSON string
-		wantErr    bool
-	}{
-		{
-			name:       "wait_element basic",
-			tool:       "wait_element",
-			paramsJSON: `{"parent": "applications/123", "selector": {"role": "button"}}`,
-			wantErr:    false,
-		},
-		{
-			name:       "wait_element with text selector",
-			tool:       "wait_element",
-			paramsJSON: `{"parent": "applications/123/windows/456", "selector": {"text": "Save"}}`,
-			wantErr:    false,
-		},
-		{
-			name:       "wait_element with timeout",
-			tool:       "wait_element",
-			paramsJSON: `{"parent": "applications/123", "selector": {"role": "button", "text": "OK"}, "timeout": 60}`,
-			wantErr:    false,
-		},
-		{
-			name:       "wait_element with poll_interval",
-			tool:       "wait_element",
-			paramsJSON: `{"parent": "applications/123", "selector": {"role": "textField"}, "timeout": 30, "poll_interval": 0.25}`,
-			wantErr:    false,
-		},
-		{
-			name:       "wait_element_state enabled",
-			tool:       "wait_element_state",
-			paramsJSON: `{"parent": "applications/123", "element_id": "elem-456", "condition": "enabled"}`,
-			wantErr:    false,
-		},
-		{
-			name:       "wait_element_state focused",
-			tool:       "wait_element_state",
-			paramsJSON: `{"parent": "applications/123/windows/789", "element_id": "input-field", "condition": "focused"}`,
-			wantErr:    false,
-		},
-		{
-			name:       "wait_element_state text_equals",
-			tool:       "wait_element_state",
-			paramsJSON: `{"parent": "applications/123", "element_id": "status-label", "condition": "text_equals", "value": "Complete"}`,
-			wantErr:    false,
-		},
-		{
-			name:       "wait_element_state text_contains",
-			tool:       "wait_element_state",
-			paramsJSON: `{"parent": "applications/123", "element_id": "log-output", "condition": "text_contains", "value": "Success"}`,
-			wantErr:    false,
-		},
-		{
-			name:       "wait_element_state with timeout and poll_interval",
-			tool:       "wait_element_state",
-			paramsJSON: `{"parent": "applications/123", "element_id": "elem-789", "condition": "enabled", "timeout": 120, "poll_interval": 1.0}`,
-			wantErr:    false,
-		},
-		{
-			name:       "invalid json",
-			tool:       "wait_element",
-			paramsJSON: `{not valid}`,
-			wantErr:    true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var params map[string]any
-			err := json.Unmarshal([]byte(tt.paramsJSON), &params)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Unmarshal error = %v, wantErr = %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-// TestWaitElementConditionValues tests condition value validity
-func TestWaitElementConditionValues(t *testing.T) {
-	validConditions := []string{"enabled", "focused", "text_equals", "text_contains"}
-
-	tests := []struct {
-		condition string
-		valid     bool
-	}{
-		{"enabled", true},
-		{"focused", true},
-		{"text_equals", true},
-		{"text_contains", true},
-		{"disabled", false},
-		{"visible", false},
-		{"hidden", false},
-		{"", false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.condition, func(t *testing.T) {
-			found := slices.Contains(validConditions, tt.condition)
-			if found != tt.valid {
-				t.Errorf("Condition %q valid = %v, want %v", tt.condition, found, tt.valid)
-			}
-		})
-	}
-}
-
-// TestWaitElementTimeoutDefaults tests timeout default behavior
-func TestWaitElementTimeoutDefaults(t *testing.T) {
-	tests := []struct {
-		name            string
-		givenTimeout    float64
-		expectedTimeout float64
-	}{
-		{"zero uses default", 0, 30.0},
-		{"negative uses default", -1, 30.0},
-		{"explicit value used", 60.0, 60.0},
-		{"small value used", 0.5, 0.5},
-		{"large value used", 300.0, 300.0},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			timeout := tt.givenTimeout
-			if timeout <= 0 {
-				timeout = 30.0 // default
-			}
-			if timeout != tt.expectedTimeout {
-				t.Errorf("Timeout = %v, want %v", timeout, tt.expectedTimeout)
-			}
-		})
-	}
-}
-
-// TestWaitElementPollIntervalDefaults tests poll_interval default behavior
-func TestWaitElementPollIntervalDefaults(t *testing.T) {
-	tests := []struct {
-		name                 string
-		givenPollInterval    float64
-		expectedPollInterval float64
-	}{
-		{"zero uses default", 0, 0.5},
-		{"negative uses default", -1, 0.5},
-		{"explicit value used", 0.25, 0.25},
-		{"small value used", 0.1, 0.1},
-		{"large value used", 2.0, 2.0},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			pollInterval := tt.givenPollInterval
-			if pollInterval <= 0 {
-				pollInterval = 0.5 // default
-			}
-			if pollInterval != tt.expectedPollInterval {
-				t.Errorf("PollInterval = %v, want %v", pollInterval, tt.expectedPollInterval)
-			}
-		})
-	}
-}
-
-// TestWaitElementSelectorTypes tests that selector supports various criteria
-func TestWaitElementSelectorTypes(t *testing.T) {
-	tests := []struct {
-		name     string
-		selector string
-		valid    bool
-	}{
-		{"role only", `{"role": "button"}`, true},
-		{"text only", `{"text": "Submit"}`, true},
-		{"title only", `{"title": "Save Dialog"}`, true},
-		{"role and text", `{"role": "button", "text": "OK"}`, true},
-		{"text_contains", `{"text_contains": "error"}`, true},
-		{"empty selector", `{}`, true},
-		{"invalid json", `{invalid}`, false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var selector map[string]any
-			err := json.Unmarshal([]byte(tt.selector), &selector)
-			if (err == nil) != tt.valid {
-				t.Errorf("Selector %q parse success = %v, want %v", tt.selector, err == nil, tt.valid)
-			}
-		})
 	}
 }
 
@@ -2753,7 +2045,7 @@ func TestMCPResourcesReadScreenshotFormat(t *testing.T) {
 			responseContent := map[string]any{
 				"uri":      tt.uri,
 				"mimeType": tt.wantMimeType,
-				"text":     mockBase64Data, // resource content as text (base64 for binary)
+				"blob":     mockBase64Data, // binary resource content is base64-encoded in blob
 			}
 
 			// Verify mimeType
@@ -2762,7 +2054,7 @@ func TestMCPResourcesReadScreenshotFormat(t *testing.T) {
 			}
 
 			// Verify content is non-empty
-			content, ok := responseContent["text"].(string)
+			content, ok := responseContent["blob"].(string)
 			if !ok || content == "" {
 				t.Error("Content should be non-empty base64 string")
 			}
@@ -3346,8 +2638,7 @@ func TestMCPPromptsList(t *testing.T) {
 			"name":        "navigate_to_element",
 			"description": "Navigate to and click an accessibility element",
 			"arguments": []map[string]any{
-				{"name": "selector", "description": "Element selector (role, text, or path)", "required": true},
-				{"name": "action", "description": "Action to perform: click, double_click, right_click", "required": false},
+				{"name": "selector", "description": "Element selector criteria: role, text, or text_contains", "required": true},
 			},
 		},
 		{
@@ -3439,8 +2730,7 @@ func TestMCPPromptsListResponseStructure(t *testing.T) {
 					"name": "navigate_to_element",
 					"description": "Navigate to and click an accessibility element",
 					"arguments": [
-						{"name": "selector", "description": "Element selector (role, text, or path)", "required": true},
-						{"name": "action", "description": "Action to perform: click, double_click, right_click", "required": false}
+						{"name": "selector", "description": "Element selector criteria: role, text, or text_contains", "required": true}
 					]
 				},
 				{
@@ -3519,68 +2809,59 @@ func TestMCPPromptsGetNavigateToElement(t *testing.T) {
 	tests := []struct {
 		name           string
 		selector       string
-		action         string
 		wantContains   []string
 		wantNotContain []string
 	}{
 		{
-			name:     "with click action",
+			name:     "with button selector",
 			selector: "button:Submit",
-			action:   "click",
 			wantContains: []string{
 				"button:Submit",
-				"click",
+				"click_element",
 				"find_elements",
 			},
 		},
 		{
-			name:     "with double_click action",
+			name:     "with cell selector",
 			selector: "cell:Document.txt",
-			action:   "double_click",
 			wantContains: []string{
 				"cell:Document.txt",
-				"double_click",
+				"click_element",
 			},
 		},
 		{
-			name:     "with right_click action",
+			name:     "with icon selector",
 			selector: "icon:Finder",
-			action:   "right_click",
 			wantContains: []string{
 				"icon:Finder",
-				"right_click",
+				"click_element",
 			},
 		},
 		{
-			name:     "default action when empty",
+			name:     "with menu selector",
 			selector: "menu:File",
-			action:   "",
 			wantContains: []string{
 				"menu:File",
-				"click", // default action
+				"click_element",
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Simulate getPrompt for navigate_to_element
 			selector := tt.selector
-			action := tt.action
-			if action == "" {
-				action = "click" // default action per implementation
-			}
 
 			content := fmt.Sprintf(`Find and interact with a UI element using the accessibility tree.
 
-1. First, use traverse_accessibility or find_elements to locate the element matching: %s
-2. Once found, perform the "%s" action on the element using click_element or perform_element_action
+1. First, call find_elements with parent set to the target application/window. Use exactly one of the flat top-level fields role, text, or text_contains to match the element. Match value for this step: %s
+   Example: {"parent": "applications/123/windows/456", "role": "button"}
+2. Once found, use click_element with the same parent and element ID
 3. Verify the action completed successfully by checking for state changes
 
 If the element is not immediately visible, you may need to:
 - Scroll to reveal it
-- Wait for it to appear using wait_element
-- Check if it's in a different window`, selector, action)
+- Poll with find_elements and use wait between attempts
+- Check if it's in a different window`, selector)
 
 			for _, want := range tt.wantContains {
 				if !strings.Contains(content, want) {
@@ -3655,13 +2936,13 @@ func TestMCPPromptsGetFillForm(t *testing.T) {
 For each field:
 1. Use find_elements to locate the form field by its label or role (AXTextField, AXTextArea, AXComboBox)
 2. Focus the field by clicking on it
-3. Use write_element_value or type_text to enter the value
+3. Use type_element to enter the value
 4. Verify the value was entered correctly by reading the element's value
 
 Common field roles:
 - AXTextField: Single-line text input
 - AXTextArea: Multi-line text input
-- AXCheckBox: Checkbox (use perform_element_action with "press" to toggle)
+- AXCheckBox: Checkbox (use click_element to toggle)
 - AXPopUpButton: Dropdown menu
 - AXComboBox: Combo box with text and dropdown`, fieldsStr)
 
@@ -3691,7 +2972,7 @@ func TestMCPPromptsGetVerifyState(t *testing.T) {
 				"button:OK",
 				"visible",
 				"find_elements",
-				"get_element",
+				"read_element",
 			},
 		},
 		{
@@ -3736,7 +3017,7 @@ Expected state: %s
 
 Steps:
 1. Use find_elements to locate the element matching the selector
-2. Use get_element to retrieve the element's current properties
+2. Use read_element to retrieve the element's current properties
 3. Compare the element's state against the expected value:
    - "visible": Check that the element exists and is not hidden
    - "enabled": Check AXEnabled attribute is true
@@ -3745,7 +3026,7 @@ Steps:
 
 4. Report whether the verification passed or failed with details
 
-If using wait_element_state, you can poll until the condition is met or timeout.`, tt.selector, tt.expectedState)
+If the state may change asynchronously, poll with find_elements/read_element and use wait between attempts until timeout.`, tt.selector, tt.expectedState)
 
 			for _, want := range tt.wantContains {
 				if !strings.Contains(content, want) {
@@ -3800,31 +3081,16 @@ func TestMCPPromptsGetMissingArguments(t *testing.T) {
 		wantContentSubstr string
 	}{
 		{
-			name:              "navigate_to_element without action uses click",
+			name:              "navigate_to_element without action still uses click prompt",
 			promptName:        "navigate_to_element",
 			args:              map[string]any{"selector": "button:Test"},
-			wantDefaultValue:  "click",
-			wantContentSubstr: `"click"`,
-		},
-		{
-			name:              "navigate_to_element with nil action uses click",
-			promptName:        "navigate_to_element",
-			args:              map[string]any{"selector": "button:Test", "action": nil},
-			wantDefaultValue:  "click",
-			wantContentSubstr: `"click"`,
-		},
-		{
-			name:              "navigate_to_element with empty action uses click",
-			promptName:        "navigate_to_element",
-			args:              map[string]any{"selector": "button:Test", "action": ""},
-			wantDefaultValue:  "click",
-			wantContentSubstr: `"click"`,
+			wantContentSubstr: "click_element",
 		},
 		{
 			name:              "navigate_to_element without selector",
 			promptName:        "navigate_to_element",
 			args:              map[string]any{},
-			wantContentSubstr: "matching: ", // empty selector is allowed
+			wantContentSubstr: "Match value for this step:", // empty selector is allowed
 		},
 		{
 			name:              "fill_form without fields uses empty object",
@@ -3858,11 +3124,11 @@ func TestMCPPromptsGetMissingArguments(t *testing.T) {
 				if v, ok := tt.args["selector"]; ok {
 					selector = fmt.Sprintf("%v", v)
 				}
-				action := "click"
-				if v, ok := tt.args["action"]; ok && v != nil && fmt.Sprintf("%v", v) != "" {
-					action = fmt.Sprintf("%v", v)
-				}
-				content = fmt.Sprintf("matching: %s\n\"%s\"", selector, action)
+				content = fmt.Sprintf(`Find and interact with a UI element using the accessibility tree.
+
+1. First, call find_elements with parent set to the target application/window. Use exactly one of the flat top-level fields role, text, or text_contains to match the element. Match value for this step: %s
+   Example: {"parent": "applications/123/windows/456", "role": "button"}
+2. Once found, use click_element with the same parent and element ID`, selector)
 
 			case "fill_form":
 				fieldsStr := "{}"
@@ -3994,12 +3260,6 @@ func TestMCPPromptsArgumentSubstitution(t *testing.T) {
 			mustAppear: []string{"UNIQUE_SELECTOR_12345"},
 		},
 		{
-			name:       "navigate_to_element substitutes action",
-			promptName: "navigate_to_element",
-			args:       map[string]any{"selector": "btn", "action": "UNIQUE_ACTION_67890"},
-			mustAppear: []string{"UNIQUE_ACTION_67890"},
-		},
-		{
 			name:       "fill_form substitutes fields JSON",
 			promptName: "fill_form",
 			args: map[string]any{
@@ -4038,14 +3298,11 @@ func TestMCPPromptsArgumentSubstitution(t *testing.T) {
 				if v, ok := tt.args["selector"]; ok {
 					selector = fmt.Sprintf("%v", v)
 				}
-				action := "click"
-				if v, ok := tt.args["action"]; ok && v != nil && fmt.Sprintf("%v", v) != "" {
-					action = fmt.Sprintf("%v", v)
-				}
 				content = fmt.Sprintf(`Find and interact with a UI element using the accessibility tree.
 
-1. First, use traverse_accessibility or find_elements to locate the element matching: %s
-2. Once found, perform the "%s" action on the element`, selector, action)
+1. First, call find_elements with parent set to the target application/window. Use exactly one of the flat top-level fields role, text, or text_contains to match the element. Match value for this step: %s
+   Example: {"parent": "applications/123/windows/456", "role": "button"}
+2. Once found, use click_element with the same parent and element ID`, selector)
 
 			case "fill_form":
 				fieldsStr := "{}"
@@ -4163,7 +3420,6 @@ func TestMCPPromptsListArgumentsStructure(t *testing.T) {
 	}{
 		"navigate_to_element": {
 			{name: "selector", required: true},
-			{name: "action", required: false},
 		},
 		"fill_form": {
 			{name: "fields", required: true},
@@ -4180,7 +3436,6 @@ func TestMCPPromptsListArgumentsStructure(t *testing.T) {
 			"name": "navigate_to_element",
 			"arguments": []map[string]any{
 				{"name": "selector", "required": true},
-				{"name": "action", "required": false},
 			},
 		},
 		{
@@ -4467,7 +3722,7 @@ func TestMCPServer_HandleHTTPMessage_PromptsList(t *testing.T) {
 // ============================================================================
 
 // getTestToolRegistry creates a minimal MCPServer and returns its tools map for testing.
-// This allows us to programmatically validate all 77 registered tool schemas.
+// This allows us to programmatically validate all 23 registered tool schemas.
 func getTestToolRegistry(t *testing.T) map[string]*Tool {
 	t.Helper()
 	ctx := context.Background()
@@ -4488,9 +3743,9 @@ func getTestToolRegistry(t *testing.T) map[string]*Tool {
 func TestToolSchemaCompleteness(t *testing.T) {
 	tools := getTestToolRegistry(t)
 
-	// Verify we have exactly 77 tools
-	if len(tools) != 77 {
-		t.Errorf("Expected 77 tools, got %d", len(tools))
+	// Verify we have exactly 23 tools
+	if len(tools) != 23 {
+		t.Errorf("Expected 23 tools, got %d", len(tools))
 	}
 
 	var issues []string
@@ -4603,30 +3858,23 @@ func TestToolSchemaEnumCompleteness(t *testing.T) {
 
 	// Expected enums and their minimum required values
 	expectedEnums := map[string]map[string][]string{
-		"capture_screenshot": {
-			"format": {"png", "jpeg", "tiff"},
-		},
-		"capture_window_screenshot": {
-			"format": {"png", "jpeg", "tiff"},
-		},
-		"capture_element_screenshot": {
+		"screenshot": {
 			"format": {"png", "jpeg", "tiff"},
 		},
 		"click": {
 			"button": {"left", "right", "middle"},
 		},
-		"gesture": {
-			"gesture_type": {"pinch", "zoom", "rotate", "swipe", "force_touch"},
-			"direction":    {"up", "down", "left", "right"},
+		"double_click": {
+			"button": {"left", "right", "middle"},
 		},
-		"validate_script": {
-			"type": {"applescript", "javascript", "shell"},
+		"open_app": {
+			"mode": {"launch_or_activate", "force_new_instance", "activate_only"},
 		},
-		"create_observation": {
-			"type": {"element_changes", "window_changes", "application_changes", "attribute_changes", "tree_changes"},
+		"clipboard": {
+			"action": {"get", "set", "clear"},
 		},
-		"wait_element_state": {
-			"condition": {"enabled", "focused", "text_equals", "text_contains"},
+		"run": {
+			"type": {"shell", "applescript", "javascript"},
 		},
 	}
 
@@ -4938,18 +4186,18 @@ func TestToolSchemaDescriptionQuality(t *testing.T) {
 	}
 }
 
-// TestToolSchemaToolCount validates that exactly 77 tools are registered.
+// TestToolSchemaToolCount validates that exactly 23 tools are registered.
 // This ensures no tools are accidentally removed or duplicated.
 func TestToolSchemaToolCount(t *testing.T) {
 	tools := getTestToolRegistry(t)
 
-	if len(tools) != 77 {
+	if len(tools) != 23 {
 		// List all tool names for debugging
 		var names []string
 		for name := range tools {
 			names = append(names, name)
 		}
-		t.Errorf("Expected 77 tools, got %d. Tools: %v", len(tools), names)
+		t.Errorf("Expected 23 tools, got %d. Tools: %v", len(tools), names)
 	}
 }
 
@@ -4958,114 +4206,38 @@ func TestToolSchemaToolCount(t *testing.T) {
 func TestToolSchemaToolCategories(t *testing.T) {
 	// Define expected tool counts per category
 	categories := map[string][]string{
-		"Screenshot": {
-			"capture_screenshot",
-			"capture_window_screenshot",
-			"capture_region_screenshot",
-			"capture_element_screenshot",
-		},
-		"Input": {
+		"CUACore": {
+			"screenshot",
 			"click",
-			"type_text",
-			"press_key",
-			"hold_key",
-			"mouse_move",
+			"double_click",
+			"type",
+			"keypress",
 			"scroll",
 			"drag",
-			"mouse_button_down",
-			"mouse_button_up",
-			"hover",
-			"gesture",
+			"move",
+			"wait",
+		},
+		"Application": {
+			"open_app",
+			"list_apps",
+			"close_app",
 		},
 		"Element": {
 			"find_elements",
-			"get_element",
-			"get_element_actions",
 			"click_element",
-			"write_element_value",
-			"perform_element_action",
+			"type_element",
+			"read_element",
 		},
 		"Window": {
-			"list_windows",
-			"get_window",
 			"focus_window",
 			"move_window",
 			"resize_window",
-			"minimize_window",
-			"restore_window",
-			"close_window",
+			"list_windows",
 		},
-		"Display": {
-			"list_displays",
+		"Utility": {
+			"clipboard",
+			"run",
 			"get_display",
-			"cursor_position",
-		},
-		"Clipboard": {
-			"get_clipboard",
-			"write_clipboard",
-			"clear_clipboard",
-			"get_clipboard_history",
-		},
-		"Application": {
-			"open_application",
-			"list_applications",
-			"get_application",
-			"delete_application",
-		},
-		"Scripting": {
-			"execute_apple_script",
-			"execute_javascript",
-			"execute_shell_command",
-			"validate_script",
-		},
-		"Observation": {
-			"create_observation",
-			"stream_observations",
-			"get_observation",
-			"list_observations",
-			"cancel_observation",
-		},
-		"Accessibility": {
-			"traverse_accessibility",
-			"get_window_state",
-			"find_region_elements",
-			"wait_element",
-			"wait_element_state",
-			"watch_accessibility",
-		},
-		"FileDialog": {
-			"automate_open_file_dialog",
-			"automate_save_file_dialog",
-			"select_file",
-			"select_directory",
-			"drag_files",
-		},
-		"Session": {
-			"create_session",
-			"get_session",
-			"list_sessions",
-			"delete_session",
-			"get_session_snapshot",
-		},
-		"Transaction": {
-			"begin_transaction",
-			"commit_transaction",
-			"rollback_transaction",
-		},
-		"Macro": {
-			"create_macro",
-			"get_macro",
-			"list_macros",
-			"delete_macro",
-			"execute_macro",
-			"update_macro",
-		},
-		"InputQuery": {
-			"get_input",
-			"list_inputs",
-		},
-		"ScriptingDictionary": {
-			"get_scripting_dictionaries",
 		},
 	}
 
@@ -5101,11 +4273,7 @@ func TestToolSchemaSelectorProperty(t *testing.T) {
 	tools := getTestToolRegistry(t)
 
 	// Tools that should have selector properties
-	toolsWithSelector := []string{
-		"find_elements",
-		"wait_element",
-		"find_region_elements",
-	}
+	toolsWithSelector := []string{}
 
 	var issues []string
 

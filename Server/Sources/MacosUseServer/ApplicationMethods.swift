@@ -14,7 +14,6 @@ extension MacosUseService {
     ) async throws -> ServerResponse<Google_Longrunning_Operation> {
         let req = request.message
 
-        // Validate id is not empty
         guard !req.id.isEmpty else {
             throw RPCErrorHelpers.validationError(
                 message: "id is required (bundle identifier or application name)",
@@ -23,12 +22,10 @@ extension MacosUseService {
             )
         }
 
-        // Create an operation and return immediately
         let opName = "operations/open/\(UUID().uuidString)"
 
         Self.logger.info("openApplication called for id:\(req.id, privacy: .public) operation:\(opName, privacy: .public)")
 
-        // optional metadata could include the requested id
         let metadata = try SwiftProtobuf.Google_Protobuf_Any.with {
             $0.typeURL = "type.googleapis.com/macosusesdk.v1.OpenApplicationMetadata"
             $0.value = try Macosusesdk_V1_OpenApplicationMetadata.with { $0.id = req.id }
@@ -37,12 +34,22 @@ extension MacosUseService {
 
         let op = await operationStore.createOperation(name: opName, metadata: metadata)
 
-        // Schedule actual open on background task (coordinator runs on @MainActor internally)
+        // TODO: When proto is updated with `mode` and `creates_new_application_instance` fields,
+        // read them from the request here:
+        //   let mode: MacosUseSDK.AppLaunchMode = switch req.mode {
+        //     case .launchOrActivate, .unspecified: .launchOrActivate
+        //     case .forceNewInstance: .forceNewInstance
+        //     case .activateOnly: .activateOnly
+        //   }
+        // For now, default to launchOrActivate (preserves current behavior).
+        let mode: MacosUseSDK.AppLaunchMode = .launchOrActivate
+
         Task { [operationStore, stateStore] in
             do {
                 let app = try await AutomationCoordinator.shared.handleOpenApplication(
                     identifier: req.id,
                     background: req.background,
+                    mode: mode,
                 )
                 await stateStore.addTarget(app)
 
@@ -52,7 +59,6 @@ extension MacosUseService {
 
                 try await operationStore.finishOperation(name: opName, responseMessage: response)
             } catch {
-                // mark operation as done with an error in the response's metadata
                 var errOp = await operationStore.getOperation(name: opName) ?? op
                 errOp.done = true
                 errOp.error = Google_Rpc_Status.with {
@@ -185,6 +191,61 @@ extension MacosUseService {
         let req = request.message
         Self.logger.info("deleteApplication called")
         let pid = try parsePID(fromName: req.name)
+
+        // Attempt to terminate the actual process before untracking.
+        // TODO: When proto is updated with a `force` field, use forceTerminate when true.
+        if let runningApp = NSRunningApplication(processIdentifier: pid) {
+            let terminated: Bool
+            // TODO: Read force flag from request when proto field is added:
+            //   terminated = req.force ? runningApp.forceTerminate() : runningApp.terminate()
+            terminated = runningApp.terminate()
+
+            if terminated {
+                Self.logger.info("Sent terminate signal to PID \(pid, privacy: .public)")
+                // Wait briefly for termination to propagate (up to 2 seconds)
+                let deadline = Date().addingTimeInterval(2.0)
+                while Date() < deadline {
+                    if !runningApp.isTerminated {
+                        try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
+                    } else {
+                        break
+                    }
+                }
+                if !runningApp.isTerminated {
+                    Self.logger.warning("PID \(pid, privacy: .public) did not terminate gracefully within timeout, force-terminating")
+                    _ = runningApp.forceTerminate()
+                }
+            } else {
+                Self.logger.warning("terminate() returned false for PID \(pid, privacy: .public), attempting force-terminate")
+                _ = runningApp.forceTerminate()
+            }
+        } else {
+            Self.logger.info("No NSRunningApplication found for PID \(pid, privacy: .public), untracking only")
+        }
+
+        // Verify termination after force-terminate (M5 follow-up)
+        // Best-effort: poll up to 3 times at 100ms intervals to confirm the process is gone
+        // before untracking. Do not block the caller — proceed with untracking regardless.
+        if let runningApp = NSRunningApplication(processIdentifier: pid) {
+            var verified = false
+            for _ in 0 ..< 3 {
+                if runningApp.isTerminated {
+                    verified = true
+                    break
+                }
+                try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
+            }
+            if !verified {
+                Self.logger.warning("PID \(pid, privacy: .public) may still be alive after force-terminate (best-effort untracking)")
+            }
+        }
+
+        // Clear cached elements for this PID
+        let cleared = await ElementRegistry.shared.clearElements(forPid: pid)
+        if cleared > 0 {
+            Self.logger.info("Cleared \(cleared, privacy: .public) cached elements for PID \(pid, privacy: .public)")
+        }
+
         _ = await stateStore.removeTarget(pid: pid)
         return ServerResponse(message: SwiftProtobuf.Google_Protobuf_Empty())
     }

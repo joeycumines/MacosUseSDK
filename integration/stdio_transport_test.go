@@ -100,7 +100,7 @@ func TestStdioTransport_Initialize(t *testing.T) {
 }
 
 // TestStdioTransport_ToolsList verifies that tools/list returns the expected
-// tools including capture_screenshot.
+// redesigned MCP tools including screenshot.
 func TestStdioTransport_ToolsList(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
@@ -158,40 +158,40 @@ func TestStdioTransport_ToolsList(t *testing.T) {
 		t.Fatal("tools/list returned empty tools list")
 	}
 
-	// Verify capture_screenshot is present
+	// Verify screenshot is present
 	foundScreenshot := false
 	foundClick := false
-	foundTypeText := false
+	foundType := false
 	for _, tool := range toolsResult.Tools {
 		switch tool.Name {
-		case "capture_screenshot":
+		case "screenshot":
 			foundScreenshot = true
 			if tool.Description == "" {
-				t.Error("capture_screenshot has empty description")
+				t.Error("screenshot has empty description")
 			}
 		case "click":
 			foundClick = true
-		case "type_text":
-			foundTypeText = true
+		case "type":
+			foundType = true
 		}
 	}
 
 	if !foundScreenshot {
-		t.Error("capture_screenshot tool not found in tools/list")
+		t.Error("screenshot tool not found in tools/list")
 	}
 	if !foundClick {
 		t.Error("click tool not found in tools/list")
 	}
-	if !foundTypeText {
-		t.Error("type_text tool not found in tools/list")
+	if !foundType {
+		t.Error("type tool not found in tools/list")
 	}
 
 	t.Logf("tools/list returned %d tools", len(toolsResult.Tools))
 }
 
-// TestStdioTransport_CaptureScreenshot verifies that capture_screenshot tool
+// TestStdioTransport_CaptureScreenshot verifies that screenshot tool
 // can be invoked via stdio transport and returns either image data or a
-// structured soft error (is_error=true) when permissions are not available.
+// structured soft error (isError=true) when permissions are not available.
 func TestStdioTransport_CaptureScreenshot(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 	defer cancel()
@@ -216,13 +216,13 @@ func TestStdioTransport_CaptureScreenshot(t *testing.T) {
 		t.Fatalf("Initialize failed: %v", err)
 	}
 
-	// Send tools/call for capture_screenshot
+	// Send tools/call for screenshot
 	callReq := map[string]any{
 		"jsonrpc": "2.0",
 		"id":      3,
 		"method":  "tools/call",
 		"params": map[string]any{
-			"name": "capture_screenshot",
+			"name": "screenshot",
 			"arguments": map[string]any{
 				"format": "png",
 			},
@@ -252,7 +252,7 @@ func TestStdioTransport_CaptureScreenshot(t *testing.T) {
 			Data     string `json:"data,omitempty"`
 			MimeType string `json:"mimeType,omitempty"`
 		} `json:"content"`
-		IsError bool `json:"is_error,omitempty"`
+		IsError bool `json:"isError,omitempty"`
 	}
 	if err := json.Unmarshal(response.Result, &toolResult); err != nil {
 		t.Fatalf("Failed to unmarshal tool result: %v", err)
@@ -295,7 +295,7 @@ func TestStdioTransport_CaptureScreenshot(t *testing.T) {
 	}
 
 	if !foundImage {
-		t.Error("No image content in capture_screenshot response")
+		t.Error("No image content in screenshot response")
 		t.Logf("Content: %+v", toolResult.Content)
 	}
 }
@@ -376,23 +376,23 @@ func TestStdioTransport_FullWorkflow(t *testing.T) {
 	}
 	t.Logf("Step 3: Got %d tools", len(toolsResult.Tools))
 
-	// Step 4: tools/call - list_displays (lightweight operation)
-	t.Log("Step 4: Sending tools/call for list_displays...")
+	// Step 4: tools/call - get_display (lightweight operation)
+	t.Log("Step 4: Sending tools/call for get_display...")
 	displayReq := map[string]any{
 		"jsonrpc": "2.0",
 		"id":      3,
 		"method":  "tools/call",
 		"params": map[string]any{
-			"name":      "list_displays",
+			"name":      "get_display",
 			"arguments": map[string]any{},
 		},
 	}
 	displayResp, err := sendStdioRequest(ctx, stdin, stdout, displayReq)
 	if err != nil {
-		t.Fatalf("list_displays failed: %v", err)
+		t.Fatalf("get_display failed: %v", err)
 	}
 	if displayResp.Error != nil {
-		t.Fatalf("list_displays error: %s", displayResp.Error.Message)
+		t.Fatalf("get_display error: %s", displayResp.Error.Message)
 	}
 
 	var displayResult struct {
@@ -406,7 +406,7 @@ func TestStdioTransport_FullWorkflow(t *testing.T) {
 	}
 
 	if len(displayResult.Content) == 0 {
-		t.Error("list_displays returned empty content")
+		t.Error("get_display returned empty content")
 	} else {
 		// The first content item should contain display info as text
 		for _, c := range displayResult.Content {
@@ -417,14 +417,14 @@ func TestStdioTransport_FullWorkflow(t *testing.T) {
 		}
 	}
 
-	// Step 5: tools/call - capture_screenshot
-	t.Log("Step 5: Sending tools/call for capture_screenshot...")
+	// Step 5: tools/call - screenshot
+	t.Log("Step 5: Sending tools/call for screenshot...")
 	screenshotReq := map[string]any{
 		"jsonrpc": "2.0",
 		"id":      4,
 		"method":  "tools/call",
 		"params": map[string]any{
-			"name": "capture_screenshot",
+			"name": "screenshot",
 			"arguments": map[string]any{
 				"format": "jpeg",
 			},
@@ -432,10 +432,10 @@ func TestStdioTransport_FullWorkflow(t *testing.T) {
 	}
 	screenshotResp, err := sendStdioRequest(ctx, stdin, stdout, screenshotReq)
 	if err != nil {
-		t.Fatalf("capture_screenshot failed: %v", err)
+		t.Fatalf("screenshot failed: %v", err)
 	}
 	if screenshotResp.Error != nil {
-		t.Fatalf("capture_screenshot JSON-RPC error: %s", screenshotResp.Error.Message)
+		t.Fatalf("screenshot JSON-RPC error: %s", screenshotResp.Error.Message)
 	}
 
 	var screenshotResult struct {
@@ -445,7 +445,7 @@ func TestStdioTransport_FullWorkflow(t *testing.T) {
 			Data     string `json:"data,omitempty"`
 			MimeType string `json:"mimeType,omitempty"`
 		} `json:"content"`
-		IsError bool `json:"is_error,omitempty"`
+		IsError bool `json:"isError,omitempty"`
 	}
 	if err := json.Unmarshal(screenshotResp.Result, &screenshotResult); err != nil {
 		t.Fatalf("Failed to parse screenshot result: %v", err)

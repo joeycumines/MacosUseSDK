@@ -1,7 +1,7 @@
 # MCP Tool Design Review: Comprehensive Analysis
 
 > **⚠️ HISTORICAL DOCUMENT**  
-> This review was conducted on 2026-02-03 when the implementation had 39 tools. The project now has **77 MCP tools** and many of the gaps identified below have been addressed. See [docs/10-api-reference.md](10-api-reference.md) for the current state.
+> This review was conducted on 2026-02-03 when the implementation had 39 tools. The current PR intentionally consolidates the MCP proxy to **23 redesigned CUA-aligned tools**. See [docs/ai-artifacts/10-api-reference.md](10-api-reference.md) for the current state.
 
 **Review Date:** 2026-02-03  
 **Reviewer:** Takumi (匠)  
@@ -24,7 +24,7 @@ The MCP tool implementation (39 tools) is fundamentally sound and aligns with th
 2. **Missing Tools vs. Proto:** Proto exposes `capture_window_screenshot` but MCP tool is absent
 3. **Observation Pattern Mismatch:** Research specifies streaming `StreamObservations` RPC, but MCP only supports polling via `create_observation`
 4. **Gesture Tool Incomplete:** Research documents multi-touch gestures with 2D scrolling, but implementation lacks `pinch` and `zoom` gesture variants
-5. **Error Handling Inconsistency:** Research specifies structured `is_error` semantics, but implementation doesn't follow Anthropic's expected format
+5. **Error Handling Compliance:** Tool soft errors use the spec-compliant `isError` flag (MCP 2025-11-25 `CallToolResult`).
 6. **Transport Mode Limitation:** Current implementation only supports stdio transport; SSE/HTTP endpoint mode is required for streaming capabilities
 
 ---
@@ -282,19 +282,18 @@ ADD `stream_observations` tool that:
 
 ## 6. Error Handling Compliance
 
-### 6.1 Research Specification
+### 6.1 MCP 2025-11-25 Specification
 
-Research (Section 2.3.2) specifies:
-> "The harness does not crash. Instead, it returns a tool_result with the is_error: true flag."
+The official MCP 2025-11-25 `CallToolResult` schema defines:
 
 ```json
 {
-  "type": "tool_result",
-  "tool_use_id": "toolu_01...",
   "content": [{"type": "text", "text": "Coordinate out of bounds"}],
-  "is_error": true
+  "isError": true
 }
 ```
+
+The error flag is `isError` (camelCase).
 
 ### 6.2 Current Implementation
 
@@ -308,11 +307,11 @@ if result.IsError {
 }
 ```
 
-**Issue:** The key is `isError` (camelCase) but research specifies `is_error` (snake_case). Both are technically valid, but for consistency with Anthropic's expected format, we should match the research specification.
+**Status:** The implementation is compliant with the MCP 2025-11-25 specification.
 
 ### 6.3 Required Action
 
-Change `isError` to `is_error` in tool response marshaling.
+None. The `isError` field matches the MCP 2025-11-25 `CallToolResult` schema.
 
 ---
 
@@ -429,7 +428,7 @@ All List/Find RPCs MUST implement:
 
 **Missing tests for:**
 - Pagination token round-trip
-- Error response format (`is_error` key)
+- Error response format (`isError` key)
 - Display grounding response format
 - Streaming observation (not implemented)
 - Coordinate scaling (not implemented)
@@ -438,7 +437,7 @@ All List/Find RPCs MUST implement:
 
 ADD tests:
 1. `TestPaginationTokenOpaque` - verify page tokens are opaque
-2. `TestErrorResponseFormat` - verify `is_error` field
+2. `TestErrorResponseFormat` - verify `isError` field
 3. `TestDisplayGroundingFormat` - verify init response structure
 
 ---
@@ -612,7 +611,7 @@ The following tasks are **MANDATORY** for maximum alignment with cutting-edge MC
 
 | ID | Description | Category | File(s) |
 |----|-------------|----------|---------|
-| T6 | Fix `isError` → `is_error` | Bug | `internal/server/mcp.go` |
+| T6 | Use spec-compliant `isError` for tool soft errors | Spec Compliance | `internal/server/mcp.go` |
 | T7 | Align display grounding format | Spec Compliance | `internal/server/mcp.go` |
 | T8 | Implement coordinate scaling support | Feature | `internal/server/input.go`, `docs/06-mcp-tool-design.md` |
 
@@ -670,7 +669,7 @@ Before PR approval, verify all mandatory items:
 - [ ] **Schema Validation:** Tool schemas are valid JSON Schema
 - [ ] **Enum Alignment:** All proto enums have corresponding string mappings
 - [ ] **Pagination Compliance:** All list tools have page_size/page_token
-- [ ] **Error Format:** Response uses `is_error` (not `isError`)
+- [ ] **Error Format:** Response uses `isError` (MCP 2025-11-25 `CallToolResult`)
 - [ ] **Display Grounding:** Initialize response matches expected format
 - [ ] **Documentation Updated:** `docs/06-mcp-tool-design.md` reflects actual implementation
 - [ ] **Transport Modes:** Both stdio and SSE/HTTP modes functional

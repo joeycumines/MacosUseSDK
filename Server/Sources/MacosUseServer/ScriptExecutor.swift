@@ -79,7 +79,7 @@ actor ScriptExecutor {
     /// - Returns: Script execution result
     func executeAppleScript(
         _ script: String,
-        timeout _: TimeInterval = 30.0,
+        timeout: TimeInterval = 30.0,
         compileOnly: Bool = false,
     ) async throws -> ScriptExecutionResult {
         let startTime = Date()
@@ -116,28 +116,36 @@ actor ScriptExecutor {
             )
         }
 
-        // Execute (must be nonisolated to avoid Sendable capture issues)
-        var executeError: NSDictionary?
-        let descriptor = appleScript.executeAndReturnError(&executeError)
+        // Execute via osascript as a direct child process. We pass each non-empty
+        // line as its own `-e` argument so multi-line scripts compile correctly,
+        // and we avoid wrapping the binary in /bin/bash so termination is sent to
+        // the real process.
+        let scriptArgs = script
+            .split(separator: "\n", omittingEmptySubsequences: true)
+            .flatMap { ["-e", String($0)] }
 
+        let shellResult = try await executeProcess(
+            executable: "/usr/bin/osascript",
+            args: scriptArgs,
+            timeout: timeout,
+        )
         let duration = Date().timeIntervalSince(startTime)
 
-        if let error = executeError {
-            let errorMsg = error[NSAppleScript.errorMessage] as? String ?? "Unknown execution error"
+        let stdout = shellResult.stdout.trimmingCharacters(in: CharacterSet(charactersIn: "\r\n"))
+        let stderr = shellResult.stderr.trimmingCharacters(in: CharacterSet(charactersIn: "\r\n"))
+
+        if shellResult.exitCode != 0 {
             return ScriptExecutionResult(
                 success: false,
-                output: "",
-                error: errorMsg,
+                output: stdout,
+                error: stderr.isEmpty ? shellResult.error : stderr,
                 duration: duration,
             )
         }
 
-        // Get output as string
-        let output = descriptor.stringValue ?? ""
-
         return ScriptExecutionResult(
             success: true,
-            output: output,
+            output: stdout,
             error: nil,
             duration: duration,
         )
@@ -221,6 +229,107 @@ actor ScriptExecutor {
         }
     }
 
+    /// Executes an external process directly (without a shell wrapper) and returns
+    /// the result. Timed-out processes are inferred from elapsed duration, not exit
+    /// status, and the timeout task terminates the real child process.
+    ///
+    /// - Parameters:
+    ///   - executable: Absolute path to the executable
+    ///   - args: Command arguments
+    ///   - workingDirectory: Working directory for execution
+    ///   - environment: Environment variables
+    ///   - timeout: Maximum execution time in seconds (default: 30)
+    ///   - stdin: Input to provide via stdin
+    /// - Returns: Shell command execution result
+    private func executeProcess(
+        executable: String,
+        args: [String] = [],
+        workingDirectory: String? = nil,
+        environment: [String: String]? = nil,
+        timeout: TimeInterval = 30.0,
+        stdin: String? = nil,
+    ) async throws -> ShellCommandResult {
+        let startTime = Date()
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: executable)
+        process.arguments = args
+
+        if let workingDir = workingDirectory {
+            process.currentDirectoryURL = URL(fileURLWithPath: workingDir)
+        }
+
+        if let env = environment {
+            var processEnv = ProcessInfo.processInfo.environment
+            for (key, value) in env {
+                processEnv[key] = value
+            }
+            process.environment = processEnv
+        }
+
+        let stdoutPipe = Pipe()
+        let stderrPipe = Pipe()
+        let stdinPipe = Pipe()
+
+        process.standardOutput = stdoutPipe
+        process.standardError = stderrPipe
+        process.standardInput = stdinPipe
+
+        do {
+            try process.run()
+        } catch {
+            throw ScriptExecutionError.processError(
+                "Failed to launch process: \(error.localizedDescription)",
+            )
+        }
+
+        if let stdinData = stdin?.data(using: .utf8) {
+            try? stdinPipe.fileHandleForWriting.write(contentsOf: stdinData)
+            try? stdinPipe.fileHandleForWriting.close()
+        }
+
+        let timeoutTask = Task {
+            try await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
+            if process.isRunning {
+                process.terminate()
+            }
+        }
+
+        // Start draining stdout/stderr concurrently before waitUntilExit() so a
+        // child that fills the pipe buffer cannot deadlock before exiting.
+        let stdoutTask = Task {
+            try? stdoutPipe.fileHandleForReading.readToEnd()
+        }
+        let stderrTask = Task {
+            try? stderrPipe.fileHandleForReading.readToEnd()
+        }
+
+        process.waitUntilExit()
+        timeoutTask.cancel()
+
+        let duration = Date().timeIntervalSince(startTime)
+
+        let stdoutData = await stdoutTask.value ?? Data()
+        let stderrData = await stderrTask.value ?? Data()
+
+        if duration >= timeout {
+            throw ScriptExecutionError.timeout
+        }
+
+        let stdout = String(data: stdoutData, encoding: .utf8) ?? ""
+        let stderr = String(data: stderrData, encoding: .utf8) ?? ""
+        let exitCode = process.terminationStatus
+
+        return ShellCommandResult(
+            success: exitCode == 0,
+            stdout: stdout,
+            stderr: stderr,
+            exitCode: exitCode,
+            duration: duration,
+            error: exitCode != 0 ? "Command exited with code \(exitCode)" : nil,
+        )
+    }
+
     /// Executes a shell command and returns the result.
     ///
     /// - Parameters:
@@ -258,7 +367,7 @@ actor ScriptExecutor {
         // Build command with args
         var commandWithArgs = command
         if !args.isEmpty {
-            commandWithArgs += " " + args.map { "\"\($0)\"" }.joined(separator: " ")
+            commandWithArgs += " " + args.map { shellEscape($0) }.joined(separator: " ")
         }
 
         process.arguments = ["-c", commandWithArgs]
@@ -309,19 +418,31 @@ actor ScriptExecutor {
             }
         }
 
+        // Drain stdout/stderr concurrently while waiting so the child cannot block
+        // on a full pipe buffer before exit.
+        let stdoutTask = Task {
+            try? stdoutPipe.fileHandleForReading.readToEnd()
+        }
+        let stderrTask = Task {
+            try? stderrPipe.fileHandleForReading.readToEnd()
+        }
+
         process.waitUntilExit()
         timeoutTask.cancel()
 
         let duration = Date().timeIntervalSince(startTime)
 
-        // Check if timed out
-        if duration >= timeout, process.terminationStatus == SIGTERM {
+        // Read stdout and stderr before checking timeout so callers still see any
+        // output produced before the process was terminated.
+        let stdoutData = await stdoutTask.value ?? Data()
+        let stderrData = await stderrTask.value ?? Data()
+
+        // Check if timed out. We infer timeout from the elapsed duration rather than
+        // the exit status because terminationStatus is unreliable for signal-killed
+        // processes and can collide with legitimate exit code 15.
+        if duration >= timeout {
             throw ScriptExecutionError.timeout
         }
-
-        // Read stdout and stderr
-        let stdoutData = try stdoutPipe.fileHandleForReading.readToEnd() ?? Data()
-        let stderrData = try stderrPipe.fileHandleForReading.readToEnd() ?? Data()
 
         let stdout = String(data: stdoutData, encoding: .utf8) ?? ""
         let stderr = String(data: stderrData, encoding: .utf8) ?? ""
@@ -503,6 +624,13 @@ actor ScriptExecutor {
             return result
         }
     }
+}
+
+/// shellEscape wraps a string in single quotes, escaping any embedded single quotes.
+/// This is the safest form of shell argument escaping — single quotes in POSIX shell
+/// have no special characters inside them except the closing single quote itself.
+private func shellEscape(_ arg: String) -> String {
+    "'" + arg.replacingOccurrences(of: "'", with: "'\\''") + "'"
 }
 
 enum ScriptType {
