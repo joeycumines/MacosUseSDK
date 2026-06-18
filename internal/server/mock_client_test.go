@@ -33,6 +33,18 @@ type mockMacosUseClient struct {
 	executeShellCommandFunc func(ctx context.Context, req *pb.ExecuteShellCommandRequest) (*pb.ExecuteShellCommandResponse, error)
 	// FindElements mock
 	findElementsFunc func(ctx context.Context, req *pb.FindElementsRequest) (*pb.FindElementsResponse, error)
+	// FocusWindow mock
+	focusWindowFunc func(ctx context.Context, req *pb.FocusWindowRequest) (*pb.Window, error)
+	// CreateInput mock
+	createInputFunc func(ctx context.Context, req *pb.CreateInputRequest) (*pb.Input, error)
+	// GetElement mock
+	getElementFunc func(ctx context.Context, req *pb.GetElementRequest) (*_type.Element, error)
+	// GetElementActions mock
+	getElementActionsFunc func(ctx context.Context, req *pb.GetElementActionsRequest, opts ...grpc.CallOption) (*pb.ElementActions, error)
+	// WriteElementValue mock
+	writeElementValueFunc func(ctx context.Context, req *pb.WriteElementValueRequest, opts ...grpc.CallOption) (*pb.WriteElementValueResponse, error)
+	// ClickElement mock
+	clickElementFunc func(ctx context.Context, req *pb.ClickElementRequest, opts ...grpc.CallOption) (*pb.ClickElementResponse, error)
 }
 
 func (m *mockMacosUseClient) ListDisplays(ctx context.Context, req *pb.ListDisplaysRequest, opts ...grpc.CallOption) (*pb.ListDisplaysResponse, error) {
@@ -76,6 +88,9 @@ func (m *mockMacosUseClient) DeleteApplication(ctx context.Context, in *pb.Delet
 }
 
 func (m *mockMacosUseClient) CreateInput(ctx context.Context, in *pb.CreateInputRequest, opts ...grpc.CallOption) (*pb.Input, error) {
+	if m.createInputFunc != nil {
+		return m.createInputFunc(ctx, in)
+	}
 	panic("CreateInput not expected to be called in display tests")
 }
 
@@ -108,6 +123,9 @@ func (m *mockMacosUseClient) GetWindowState(ctx context.Context, in *pb.GetWindo
 }
 
 func (m *mockMacosUseClient) FocusWindow(ctx context.Context, in *pb.FocusWindowRequest, opts ...grpc.CallOption) (*pb.Window, error) {
+	if m.focusWindowFunc != nil {
+		return m.focusWindowFunc(ctx, in)
+	}
 	panic("FocusWindow not expected to be called in display tests")
 }
 
@@ -143,18 +161,30 @@ func (m *mockMacosUseClient) FindRegionElements(ctx context.Context, in *pb.Find
 }
 
 func (m *mockMacosUseClient) GetElement(ctx context.Context, in *pb.GetElementRequest, opts ...grpc.CallOption) (*_type.Element, error) {
+	if m.getElementFunc != nil {
+		return m.getElementFunc(ctx, in)
+	}
 	panic("GetElement not expected to be called in display tests")
 }
 
 func (m *mockMacosUseClient) ClickElement(ctx context.Context, in *pb.ClickElementRequest, opts ...grpc.CallOption) (*pb.ClickElementResponse, error) {
+	if m.clickElementFunc != nil {
+		return m.clickElementFunc(ctx, in)
+	}
 	panic("ClickElement not expected to be called in display tests")
 }
 
 func (m *mockMacosUseClient) WriteElementValue(ctx context.Context, in *pb.WriteElementValueRequest, opts ...grpc.CallOption) (*pb.WriteElementValueResponse, error) {
+	if m.writeElementValueFunc != nil {
+		return m.writeElementValueFunc(ctx, in)
+	}
 	panic("WriteElementValue not expected to be called in display tests")
 }
 
 func (m *mockMacosUseClient) GetElementActions(ctx context.Context, in *pb.GetElementActionsRequest, opts ...grpc.CallOption) (*pb.ElementActions, error) {
+	if m.getElementActionsFunc != nil {
+		return m.getElementActionsFunc(ctx, in)
+	}
 	panic("GetElementActions not expected to be called in display tests")
 }
 

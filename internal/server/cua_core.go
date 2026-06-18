@@ -512,6 +512,7 @@ func (s *MCPServer) handleDoubleClick(call *ToolCall) (*ToolResult, error) {
 }
 
 // handleType handles the type tool — type text as keyboard input.
+// If no parent is supplied, keystrokes are delivered to the current frontmost application.
 func (s *MCPServer) handleType(call *ToolCall) (*ToolResult, error) {
 	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
 	defer cancel()
@@ -519,6 +520,7 @@ func (s *MCPServer) handleType(call *ToolCall) (*ToolResult, error) {
 	var params struct {
 		Text      string  `json:"text"`
 		CharDelay float64 `json:"char_delay"`
+		Parent    string  `json:"parent"`
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
@@ -536,6 +538,16 @@ func (s *MCPServer) handleType(call *ToolCall) (*ToolResult, error) {
 		return errResult, nil
 	}
 
+	parent := strings.TrimSpace(params.Parent)
+	if pid := parseParentPID(parent); pid != 0 {
+		// CreateInput expects an application parent, not a window-scoped parent.
+		// Keystrokes are delivered to the target application and rely on the OS
+		// input focus; the schema still allows callers to pass a window path.
+		parent = fmt.Sprintf("applications/%d", pid)
+	} else if parent == "" {
+		parent = defaultApplicationParent
+	}
+
 	input := &pb.Input{
 		Action: &pb.InputAction{
 			InputType: &pb.InputAction_TypeText{
@@ -548,11 +560,19 @@ func (s *MCPServer) handleType(call *ToolCall) (*ToolResult, error) {
 	}
 
 	resp, err := s.client.CreateInput(ctx, &pb.CreateInputRequest{
-		Parent: defaultApplicationParent,
+		Parent: parent,
 		Input:  input,
 	})
 	if err != nil {
 		return grpcErrorResult(err, "type"), nil
+	}
+
+	if resp.State == pb.Input_STATE_FAILED {
+		errText := resp.GetError()
+		if errText == "" {
+			errText = "server reported typing failed but provided no error message"
+		}
+		return errorResultf("type failed: %s", errText), nil
 	}
 
 	displayText := truncateText(params.Text)

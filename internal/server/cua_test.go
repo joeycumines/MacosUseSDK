@@ -1284,6 +1284,69 @@ func TestCUAHandleType_InvalidParams(t *testing.T) {
 	}
 }
 
+func TestCUAHandleType_ParentRouting(t *testing.T) {
+	tests := []struct {
+		name       string
+		parent     string
+		wantParent string
+	}{
+		{
+			name:       "application parent passed through",
+			parent:     "applications/123",
+			wantParent: "applications/123",
+		},
+		{
+			name:       "window parent canonicalized to application",
+			parent:     "applications/123/windows/456",
+			wantParent: "applications/123",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var captured *pb.CreateInputRequest
+			mock := &mockMacosUseClient{
+				createInputFunc: func(_ context.Context, req *pb.CreateInputRequest) (*pb.Input, error) {
+					captured = req
+					return &pb.Input{State: pb.Input_STATE_COMPLETED}, nil
+				},
+			}
+
+			s := newTestMCPServer(mock)
+			args := fmt.Sprintf(`{"parent":%q,"text":"hello"}`, tt.parent)
+			call := &ToolCall{
+				Name:      "type",
+				Arguments: json.RawMessage(args),
+			}
+
+			result, err := s.handleType(call)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if resultIsError(result) {
+				t.Fatalf("unexpected error result: %v", resultText(result))
+			}
+
+			if captured == nil {
+				t.Fatal("CreateInput was not called")
+			}
+			if captured.Parent != tt.wantParent {
+				t.Errorf("Parent = %q, want %q", captured.Parent, tt.wantParent)
+			}
+			if captured.GetInput() == nil {
+				t.Fatal("expected Input to be set")
+			}
+			act := captured.GetInput().GetAction()
+			if act.GetTypeText() == nil {
+				t.Fatalf("expected type_text action, got %T", act)
+			}
+			if act.GetTypeText().Text != "hello" {
+				t.Errorf("text = %q, want hello", act.GetTypeText().Text)
+			}
+		})
+	}
+}
+
 // --- handleDoubleClick — parameter validation ---
 
 func TestCUAHandleDoubleClick_InvalidParams(t *testing.T) {
@@ -1516,28 +1579,34 @@ func TestCUAHandleClickElement_InvalidParams(t *testing.T) {
 		wantSubstr string
 	}{
 		{
-			name:       "missing both parent and element",
+			name:       "missing both parent and target",
 			args:       `{}`,
 			wantError:  true,
-			wantSubstr: "parent and element parameters are required",
+			wantSubstr: "parent parameter is required",
 		},
 		{
-			name:       "missing element only",
+			name:       "missing target",
 			args:       `{"parent":"applications/1/windows/1"}`,
 			wantError:  true,
-			wantSubstr: "parent and element parameters are required",
+			wantSubstr: "element or selector parameter is required",
 		},
 		{
 			name:       "missing parent only",
 			args:       `{"element":"btn1"}`,
 			wantError:  true,
-			wantSubstr: "parent and element parameters are required",
+			wantSubstr: "parent parameter is required",
 		},
 		{
-			name:       "empty parent and element",
+			name:       "empty parent",
 			args:       `{"parent":"","element":""}`,
 			wantError:  true,
-			wantSubstr: "parent and element parameters are required",
+			wantSubstr: "parent parameter is required",
+		},
+		{
+			name:       "both element and selector",
+			args:       `{"parent":"applications/1/windows/1","element":"btn1","selector":"role:AXButton"}`,
+			wantError:  true,
+			wantSubstr: "provide either element or selector, not both",
 		},
 		{
 			name:       "invalid JSON",
@@ -1579,7 +1648,7 @@ func TestCUAHandleTypeElement_InvalidParams(t *testing.T) {
 			name:       "missing all required params",
 			args:       `{}`,
 			wantError:  true,
-			wantSubstr: "parent and element parameters are required",
+			wantSubstr: "parent parameter is required",
 		},
 		{
 			name:       "missing text",
@@ -1592,6 +1661,12 @@ func TestCUAHandleTypeElement_InvalidParams(t *testing.T) {
 			args:       `{"parent":"app/1","element":"btn1","text":""}`,
 			wantError:  true,
 			wantSubstr: "text parameter is required",
+		},
+		{
+			name:       "invalid input_method",
+			args:       `{"parent":"app/1","element":"btn1","text":"x","input_method":"invalid"}`,
+			wantError:  true,
+			wantSubstr: "input_method must be 'ax' or 'keystrokes'",
 		},
 		{
 			name:       "invalid JSON",
@@ -1615,6 +1690,178 @@ func TestCUAHandleTypeElement_InvalidParams(t *testing.T) {
 				t.Errorf("expected result to contain %q, got: %q", tt.wantSubstr, resultText(result))
 			}
 		})
+	}
+}
+
+func TestParseElementSelector(t *testing.T) {
+	// Use string/pointer fields instead of struct values because ElementSelector
+	// contains a sync.Mutex (protoimpl.MessageState) and go vet rejects copying it.
+	tests := []struct {
+		name             string
+		input            string
+		wantRole         string
+		wantText         string
+		wantTextContains string
+		wantErr          string
+		wantEmptyRole    bool
+	}{
+		{
+			name:     "role",
+			input:    "role:AXTextArea",
+			wantRole: "AXTextArea",
+		},
+		{
+			name:     "text",
+			input:    "text:hello world",
+			wantText: "hello world",
+		},
+		{
+			name:             "text_contains",
+			input:            "text_contains:world",
+			wantTextContains: "world",
+		},
+		{
+			name:             "textcontains alias",
+			input:            "textcontains:world",
+			wantTextContains: "world",
+		},
+		{
+			name:    "missing colon",
+			input:   "AXTextArea",
+			wantErr: "selector must be in the form key:value",
+		},
+		{
+			name:          "empty value is allowed",
+			input:         "role:",
+			wantEmptyRole: true,
+		},
+		{
+			name:    "unsupported key",
+			input:   "foo:bar",
+			wantErr: "unsupported selector key",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseElementSelector(tt.input)
+			if tt.wantErr != "" {
+				if err == nil {
+					t.Fatalf("expected error containing %q, got nil", tt.wantErr)
+				}
+				if !strings.Contains(err.Error(), tt.wantErr) {
+					t.Fatalf("expected error containing %q, got %q", tt.wantErr, err.Error())
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if tt.wantEmptyRole {
+				if got.GetRole() != "" {
+					t.Errorf("role = %q, want empty", got.GetRole())
+				}
+				return
+			}
+			switch {
+			case tt.wantRole != "":
+				if got.GetRole() != tt.wantRole {
+					t.Errorf("role = %q, want %q", got.GetRole(), tt.wantRole)
+				}
+			case tt.wantText != "":
+				if got.GetText() != tt.wantText {
+					t.Errorf("text = %q, want %q", got.GetText(), tt.wantText)
+				}
+			case tt.wantTextContains != "":
+				if got.GetTextContains() != tt.wantTextContains {
+					t.Errorf("textContains = %q, want %q", got.GetTextContains(), tt.wantTextContains)
+				}
+			default:
+				t.Fatalf("no expected criterion set for test case")
+			}
+		})
+	}
+}
+
+func TestCUAHandleTypeElement_SelectorBuildsRequest(t *testing.T) {
+	var captured *pb.WriteElementValueRequest
+	mock := &mockMacosUseClient{
+		focusWindowFunc: func(context.Context, *pb.FocusWindowRequest) (*pb.Window, error) {
+			return &pb.Window{Name: "applications/1/windows/1"}, nil
+		},
+		writeElementValueFunc: func(_ context.Context, req *pb.WriteElementValueRequest, _ ...grpc.CallOption) (*pb.WriteElementValueResponse, error) {
+			captured = req
+			return &pb.WriteElementValueResponse{Success: true}, nil
+		},
+	}
+
+	s := newTestMCPServer(mock)
+	call := &ToolCall{
+		Name:      "type_element",
+		Arguments: json.RawMessage(`{"parent":"applications/1/windows/1","selector":"role:AXTextArea","text":"hello"}`),
+	}
+
+	result, err := s.handleTypeElement(call)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resultIsError(result) {
+		t.Fatalf("unexpected error result: %v", resultText(result))
+	}
+
+	if captured == nil {
+		t.Fatal("WriteElementValue was not called")
+	}
+	if captured.Parent != "applications/1/windows/1" {
+		t.Errorf("Parent = %q, want applications/1/windows/1", captured.Parent)
+	}
+	sel, ok := captured.Target.(*pb.WriteElementValueRequest_Selector)
+	if !ok {
+		t.Fatalf("Target is not a selector, got %T", captured.Target)
+	}
+	if sel.Selector.GetRole() != "AXTextArea" {
+		t.Errorf("Selector role = %q, want AXTextArea", sel.Selector.GetRole())
+	}
+	if captured.Value != "hello" {
+		t.Errorf("Value = %q, want hello", captured.Value)
+	}
+}
+
+func TestCUAHandleTypeElement_ElementBuildsRequest(t *testing.T) {
+	var captured *pb.WriteElementValueRequest
+	mock := &mockMacosUseClient{
+		focusWindowFunc: func(context.Context, *pb.FocusWindowRequest) (*pb.Window, error) {
+			return &pb.Window{Name: "applications/1/windows/1"}, nil
+		},
+		writeElementValueFunc: func(_ context.Context, req *pb.WriteElementValueRequest, _ ...grpc.CallOption) (*pb.WriteElementValueResponse, error) {
+			captured = req
+			return &pb.WriteElementValueResponse{Success: true}, nil
+		},
+	}
+
+	s := newTestMCPServer(mock)
+	call := &ToolCall{
+		Name:      "type_element",
+		Arguments: json.RawMessage(`{"parent":"applications/1/windows/1","element":"elem_1","text":"hello"}`),
+	}
+
+	result, err := s.handleTypeElement(call)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resultIsError(result) {
+		t.Fatalf("unexpected error result: %v", resultText(result))
+	}
+
+	if captured == nil {
+		t.Fatal("WriteElementValue was not called")
+	}
+	sel, ok := captured.Target.(*pb.WriteElementValueRequest_ElementId)
+	if !ok {
+		t.Fatalf("Target is not element_id, got %T", captured.Target)
+	}
+	if sel.ElementId != "elem_1" {
+		t.Errorf("ElementId = %q, want elem_1", sel.ElementId)
 	}
 }
 
@@ -1663,6 +1910,38 @@ func TestCUAHandleReadElement_InvalidParams(t *testing.T) {
 				t.Errorf("expected result to contain %q, got: %q", tt.wantSubstr, resultText(result))
 			}
 		})
+	}
+}
+
+func TestCUAHandleReadElement_BareIDCanonicalization(t *testing.T) {
+	var capturedName string
+	mock := &mockMacosUseClient{
+		getElementFunc: func(_ context.Context, req *pb.GetElementRequest) (*typepb.Element, error) {
+			capturedName = req.Name
+			return &typepb.Element{ElementId: req.Name, Role: "AXTextArea"}, nil
+		},
+		getElementActionsFunc: func(_ context.Context, _ *pb.GetElementActionsRequest, _ ...grpc.CallOption) (*pb.ElementActions, error) {
+			return &pb.ElementActions{}, nil
+		},
+	}
+
+	s := newTestMCPServer(mock)
+	call := &ToolCall{
+		Name:      "read_element",
+		Arguments: json.RawMessage(`{"parent":"applications/123","element":"elem_456"}`),
+	}
+
+	result, err := s.handleReadElement(call)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resultIsError(result) {
+		t.Fatalf("unexpected error result: %v", resultText(result))
+	}
+
+	want := "applications/123/elements/elem_456"
+	if capturedName != want {
+		t.Errorf("GetElement name = %q, want %q", capturedName, want)
 	}
 }
 
@@ -1937,46 +2216,6 @@ func TestElementResourceName(t *testing.T) {
 	}
 }
 
-// --- elementCenter — bounds center calculation ---
-
-func TestElementCenter(t *testing.T) {
-	tests := []struct {
-		name   string
-		x      float64
-		y      float64
-		w      float64
-		h      float64
-		wantX  float64
-		wantY  float64
-		wantOK bool
-	}{
-		{"normal bounds", 100, 200, 50, 30, 125, 215, true},
-		{"zero width", 100, 200, 0, 30, 0, 0, false},
-		{"zero height", 100, 200, 50, 0, 0, 0, false},
-		{"negative width", 100, 200, -10, 30, 0, 0, false},
-		{"negative height", 100, 200, 50, -10, 0, 0, false},
-		{"origin bounds", 0, 0, 800, 600, 400, 300, true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			elem := &typepb.Element{}
-			elem.X = &tt.x
-			elem.Y = &tt.y
-			elem.Width = &tt.w
-			elem.Height = &tt.h
-
-			gotX, gotY, gotOK := elementCenter(elem)
-			if gotOK != tt.wantOK {
-				t.Errorf("elementCenter ok = %v, want %v", gotOK, tt.wantOK)
-			}
-			if gotOK && (gotX != tt.wantX || gotY != tt.wantY) {
-				t.Errorf("elementCenter = (%.0f, %.0f), want (%.0f, %.0f)", gotX, gotY, tt.wantX, tt.wantY)
-			}
-		})
-	}
-}
-
 // --- handleListApps — no parameter validation (goes straight to gRPC) ---
 // handleListApps has no parameter parsing, so validation tests are not applicable.
 // It will be tested via integration tests with a live gRPC server.
@@ -2162,5 +2401,466 @@ func TestDetectBareBinary(t *testing.T) {
 				t.Errorf("detectBareBinary() warning = %q, want to contain %q", gotWarning, tt.wantContains)
 			}
 		})
+	}
+}
+
+// --- handleReadElement canonicalization ---
+
+func TestCUAHandleReadElement_WindowParentCanonicalizesToAppElements(t *testing.T) {
+	var capturedName string
+	mock := &mockMacosUseClient{
+		getElementFunc: func(_ context.Context, req *pb.GetElementRequest) (*typepb.Element, error) {
+			capturedName = req.Name
+			return &typepb.Element{ElementId: req.Name, Role: "AXTextArea"}, nil
+		},
+		getElementActionsFunc: func(_ context.Context, _ *pb.GetElementActionsRequest, _ ...grpc.CallOption) (*pb.ElementActions, error) {
+			return &pb.ElementActions{}, nil
+		},
+	}
+
+	s := newTestMCPServer(mock)
+	call := &ToolCall{
+		Name:      "read_element",
+		Arguments: json.RawMessage(`{"parent":"applications/123/windows/456","element":"elem_789"}`),
+	}
+
+	result, err := s.handleReadElement(call)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resultIsError(result) {
+		t.Fatalf("unexpected error result: %v", resultText(result))
+	}
+
+	want := "applications/123/elements/elem_789"
+	if capturedName != want {
+		t.Errorf("GetElement name = %q, want %q", capturedName, want)
+	}
+}
+
+// --- handleTypeElement error handling ---
+
+func TestCUAHandleTypeElement_NotEditableErrorMessage(t *testing.T) {
+	mock := &mockMacosUseClient{
+		focusWindowFunc: func(context.Context, *pb.FocusWindowRequest) (*pb.Window, error) {
+			return &pb.Window{Name: "applications/1/windows/1"}, nil
+		},
+		writeElementValueFunc: func(_ context.Context, _ *pb.WriteElementValueRequest, _ ...grpc.CallOption) (*pb.WriteElementValueResponse, error) {
+			return nil, fmt.Errorf("rpc error: code = FailedPrecondition desc = Element role 'AXStaticText' is not editable")
+		},
+	}
+
+	s := newTestMCPServer(mock)
+	call := &ToolCall{
+		Name:      "type_element",
+		Arguments: json.RawMessage(`{"parent":"applications/1/windows/1","selector":"text:hello","text":"world"}`),
+	}
+
+	result, err := s.handleTypeElement(call)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resultIsError(result) {
+		t.Fatalf("expected error result, got: %v", resultText(result))
+	}
+	if !strings.Contains(resultText(result), "Element is not editable") {
+		t.Errorf("expected 'Element is not editable' in result, got: %q", resultText(result))
+	}
+}
+
+func TestCUAHandleTypeElement_AXValueErrorMessage(t *testing.T) {
+	mock := &mockMacosUseClient{
+		focusWindowFunc: func(context.Context, *pb.FocusWindowRequest) (*pb.Window, error) {
+			return &pb.Window{Name: "applications/1/windows/1"}, nil
+		},
+		getElementFunc: func(_ context.Context, req *pb.GetElementRequest) (*typepb.Element, error) {
+			return &typepb.Element{ElementId: req.Name, Role: "AXTextArea"}, nil
+		},
+		writeElementValueFunc: func(_ context.Context, _ *pb.WriteElementValueRequest, _ ...grpc.CallOption) (*pb.WriteElementValueResponse, error) {
+			return nil, fmt.Errorf("rpc error: code = Internal desc = AXValue set failed for element elem_123 (AXError -25200)")
+		},
+	}
+
+	s := newTestMCPServer(mock)
+	call := &ToolCall{
+		Name:      "type_element",
+		Arguments: json.RawMessage(`{"parent":"applications/1/windows/1","element":"elem_123","text":"world"}`),
+	}
+
+	result, err := s.handleTypeElement(call)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resultIsError(result) {
+		t.Fatalf("expected error result, got: %v", resultText(result))
+	}
+	if !strings.Contains(resultText(result), "Element is not editable") {
+		t.Errorf("expected error message mentioning editability, got: %q", resultText(result))
+	}
+}
+
+func TestCUAHandleClickElement_SelectorBuildsRequest(t *testing.T) {
+	var captured *pb.ClickElementRequest
+	mock := &mockMacosUseClient{
+		clickElementFunc: func(_ context.Context, req *pb.ClickElementRequest, _ ...grpc.CallOption) (*pb.ClickElementResponse, error) {
+			captured = req
+			return &pb.ClickElementResponse{Success: true}, nil
+		},
+	}
+
+	s := newTestMCPServer(mock)
+	call := &ToolCall{
+		Name:      "click_element",
+		Arguments: json.RawMessage(`{"parent":"applications/1/windows/1","selector":"role:AXButton"}`),
+	}
+
+	result, err := s.cuaHandleClickElement(call)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resultIsError(result) {
+		t.Fatalf("unexpected error result: %v", resultText(result))
+	}
+
+	if captured == nil {
+		t.Fatal("ClickElement was not called")
+	}
+	if captured.Parent != "applications/1/windows/1" {
+		t.Errorf("Parent = %q, want applications/1/windows/1", captured.Parent)
+	}
+	sel, ok := captured.Target.(*pb.ClickElementRequest_Selector)
+	if !ok {
+		t.Fatalf("Target is not a selector, got %T", captured.Target)
+	}
+	if sel.Selector.GetRole() != "AXButton" {
+		t.Errorf("Selector role = %q, want AXButton", sel.Selector.GetRole())
+	}
+}
+
+func TestCUAHandleClickElement_SelectorReportsFailure(t *testing.T) {
+	mock := &mockMacosUseClient{
+		clickElementFunc: func(_ context.Context, req *pb.ClickElementRequest, _ ...grpc.CallOption) (*pb.ClickElementResponse, error) {
+			return &pb.ClickElementResponse{
+				Success: false,
+				Element: &typepb.Element{Role: "AXButton"},
+			}, nil
+		},
+	}
+
+	s := newTestMCPServer(mock)
+	call := &ToolCall{
+		Name:      "click_element",
+		Arguments: json.RawMessage(`{"parent":"applications/1/windows/1","selector":"role:AXButton"}`),
+	}
+
+	result, err := s.cuaHandleClickElement(call)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resultIsError(result) {
+		t.Fatalf("expected error result, got: %v", resultText(result))
+	}
+	if !strings.Contains(resultText(result), "operation was not successful") {
+		t.Errorf("expected failure message, got: %q", resultText(result))
+	}
+	if !strings.Contains(resultText(result), "AXButton") {
+		t.Errorf("expected role in failure message, got: %q", resultText(result))
+	}
+}
+
+func TestClickElementError_MapsServerErrorStrings(t *testing.T) {
+	cases := []struct {
+		name          string
+		err           error
+		wantSubstring string
+		notWant       string // optional substring that must NOT appear
+	}{
+		{
+			name:          "selector not visible",
+			err:           fmt.Errorf("rpc error: code = FailedPrecondition desc = element matching selector is not visible after focusing; bring it into view"),
+			wantSubstring: "is not visible",
+		},
+		{
+			name:          "element id not visible",
+			err:           fmt.Errorf("rpc error: code = FailedPrecondition desc = element 'elem_1' is not visible on screen; bring it into view"),
+			wantSubstring: "is not visible",
+		},
+		{
+			name:          "no element found matching selector",
+			err:           fmt.Errorf("rpc error: code = NotFound desc = No element found matching selector"),
+			wantSubstring: "No element found matching selector",
+			notWant:       "does not support clicking",
+		},
+		{
+			name:          "element reference not available",
+			err:           fmt.Errorf("rpc error: code = NotFound desc = Element reference not available"),
+			wantSubstring: "is no longer available",
+			notWant:       "does not support clicking",
+		},
+		{
+			name:          "element not found",
+			err:           fmt.Errorf("rpc error: code = NotFound desc = Element not found"),
+			wantSubstring: "is no longer available",
+			notWant:       "does not support clicking",
+		},
+		{
+			name:          "no position information",
+			err:           fmt.Errorf("rpc error: code = FailedPrecondition desc = Element has no position information"),
+			wantSubstring: "has no usable position information",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := clickElementError(tc.err, "target")
+			if !resultIsError(result) {
+				t.Fatalf("expected error result, got: %v", resultText(result))
+			}
+			text := resultText(result)
+			if !strings.Contains(text, tc.wantSubstring) {
+				t.Errorf("result missing %q, got: %q", tc.wantSubstring, text)
+			}
+			if tc.notWant != "" && strings.Contains(text, tc.notWant) {
+				t.Errorf("result unexpectedly contains %q, got: %q", tc.notWant, text)
+			}
+		})
+	}
+}
+
+func TestCUAHandleClickElement_SelectorNotVisible(t *testing.T) {
+	mock := &mockMacosUseClient{
+		clickElementFunc: func(_ context.Context, req *pb.ClickElementRequest, _ ...grpc.CallOption) (*pb.ClickElementResponse, error) {
+			return nil, fmt.Errorf("rpc error: code = FailedPrecondition desc = element matching selector is not visible after focusing; bring it into view")
+		},
+	}
+
+	s := newTestMCPServer(mock)
+	call := &ToolCall{
+		Name:      "click_element",
+		Arguments: json.RawMessage(`{"parent":"applications/1/windows/1","selector":"role:AXButton"}`),
+	}
+
+	result, err := s.cuaHandleClickElement(call)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resultIsError(result) {
+		t.Fatalf("expected error result, got: %v", resultText(result))
+	}
+	if !strings.Contains(resultText(result), "is not visible") {
+		t.Errorf("expected visibility message, got: %q", resultText(result))
+	}
+}
+
+func TestCUAHandleClickElement_ElementIDReferenceUnavailable(t *testing.T) {
+	mock := &mockMacosUseClient{
+		clickElementFunc: func(_ context.Context, req *pb.ClickElementRequest, _ ...grpc.CallOption) (*pb.ClickElementResponse, error) {
+			return nil, fmt.Errorf("rpc error: code = NotFound desc = Element reference not available")
+		},
+	}
+
+	s := newTestMCPServer(mock)
+	call := &ToolCall{
+		Name:      "click_element",
+		Arguments: json.RawMessage(`{"parent":"applications/1","element":"elem_1"}`),
+	}
+
+	result, err := s.cuaHandleClickElement(call)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resultIsError(result) {
+		t.Fatalf("expected error result, got: %v", resultText(result))
+	}
+	if !strings.Contains(resultText(result), "is no longer available") {
+		t.Errorf("expected stale-reference message, got: %q", resultText(result))
+	}
+	if strings.Contains(resultText(result), "does not support clicking") {
+		t.Errorf("result incorrectly claims non-clickable role: %q", resultText(result))
+	}
+}
+
+func TestCUAHandleTypeElement_KeystrokesBuildsRequest(t *testing.T) {
+	var captured *pb.CreateInputRequest
+	var capturedClick *pb.ClickElementRequest
+	mock := &mockMacosUseClient{
+		focusWindowFunc: func(context.Context, *pb.FocusWindowRequest) (*pb.Window, error) {
+			return &pb.Window{Name: "applications/1/windows/1"}, nil
+		},
+		clickElementFunc: func(_ context.Context, req *pb.ClickElementRequest, _ ...grpc.CallOption) (*pb.ClickElementResponse, error) {
+			capturedClick = req
+			return &pb.ClickElementResponse{Success: true}, nil
+		},
+		createInputFunc: func(_ context.Context, req *pb.CreateInputRequest) (*pb.Input, error) {
+			captured = req
+			return &pb.Input{Name: "inputs/type-test", State: pb.Input_STATE_COMPLETED}, nil
+		},
+	}
+
+	s := newTestMCPServer(mock)
+	call := &ToolCall{
+		Name:      "type_element",
+		Arguments: json.RawMessage(`{"parent":"applications/1/windows/1","selector":"role:AXTextArea","text":"hello","input_method":"keystrokes"}`),
+	}
+
+	result, err := s.handleTypeElement(call)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resultIsError(result) {
+		t.Fatalf("unexpected error result: %v", resultText(result))
+	}
+
+	if capturedClick == nil {
+		t.Fatal("ClickElement was not called")
+	}
+	if capturedClick.Parent != "applications/1/windows/1" {
+		t.Errorf("ClickElement Parent = %q, want applications/1/windows/1", capturedClick.Parent)
+	}
+	clickSel, ok := capturedClick.Target.(*pb.ClickElementRequest_Selector)
+	if !ok {
+		t.Fatalf("ClickElement Target is not a selector, got %T", capturedClick.Target)
+	}
+	if clickSel.Selector.GetRole() != "AXTextArea" {
+		t.Errorf("ClickElement Selector role = %q, want AXTextArea", clickSel.Selector.GetRole())
+	}
+
+	if captured == nil {
+		t.Fatal("CreateInput was not called")
+	}
+	if captured.Parent != "applications/1" {
+		t.Errorf("Parent = %q, want applications/1", captured.Parent)
+	}
+	act := captured.GetInput().GetAction()
+	if act.GetTypeText() == nil {
+		t.Fatalf("expected type_text action, got %T", act)
+	}
+	if act.GetTypeText().Text != "hello" {
+		t.Errorf("text = %q, want hello", act.GetTypeText().Text)
+	}
+}
+
+func TestCUAHandleTypeElement_KeystrokesFailure(t *testing.T) {
+	mock := &mockMacosUseClient{
+		focusWindowFunc: func(context.Context, *pb.FocusWindowRequest) (*pb.Window, error) {
+			return &pb.Window{Name: "applications/1/windows/1"}, nil
+		},
+		clickElementFunc: func(_ context.Context, req *pb.ClickElementRequest, _ ...grpc.CallOption) (*pb.ClickElementResponse, error) {
+			_ = req
+			return &pb.ClickElementResponse{Success: true}, nil
+		},
+		createInputFunc: func(_ context.Context, req *pb.CreateInputRequest) (*pb.Input, error) {
+			_ = req
+			return &pb.Input{
+				Name:  "inputs/type-test",
+				State: pb.Input_STATE_FAILED,
+				Error: "keystroke failure",
+			}, nil
+		},
+	}
+
+	s := newTestMCPServer(mock)
+	call := &ToolCall{
+		Name:      "type_element",
+		Arguments: json.RawMessage(`{"parent":"applications/1/windows/1","element":"elem_1","text":"hello","input_method":"keystrokes"}`),
+	}
+
+	result, err := s.handleTypeElement(call)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resultIsError(result) {
+		t.Fatalf("expected error result, got: %v", resultText(result))
+	}
+	if !strings.Contains(resultText(result), "keystroke typing failed") {
+		t.Errorf("expected keystroke failure message, got: %q", resultText(result))
+	}
+}
+
+func TestCUAHandleTypeElement_KeystrokesElementBuildsRequest(t *testing.T) {
+	var captured *pb.CreateInputRequest
+	var capturedClick *pb.ClickElementRequest
+	mock := &mockMacosUseClient{
+		focusWindowFunc: func(context.Context, *pb.FocusWindowRequest) (*pb.Window, error) {
+			return &pb.Window{Name: "applications/1/windows/1"}, nil
+		},
+		clickElementFunc: func(_ context.Context, req *pb.ClickElementRequest, _ ...grpc.CallOption) (*pb.ClickElementResponse, error) {
+			capturedClick = req
+			return &pb.ClickElementResponse{Success: true}, nil
+		},
+		createInputFunc: func(_ context.Context, req *pb.CreateInputRequest) (*pb.Input, error) {
+			captured = req
+			return &pb.Input{Name: "inputs/type-test", State: pb.Input_STATE_COMPLETED}, nil
+		},
+	}
+
+	s := newTestMCPServer(mock)
+	call := &ToolCall{
+		Name:      "type_element",
+		Arguments: json.RawMessage(`{"parent":"applications/1/windows/1","element":"elem_1","text":"hello","input_method":"keystrokes"}`),
+	}
+
+	result, err := s.handleTypeElement(call)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resultIsError(result) {
+		t.Fatalf("unexpected error result: %v", resultText(result))
+	}
+
+	if capturedClick == nil {
+		t.Fatal("ClickElement was not called")
+	}
+	if capturedClick.Parent != "applications/1/windows/1" {
+		t.Errorf("ClickElement Parent = %q, want applications/1/windows/1", capturedClick.Parent)
+	}
+	clickElem, ok := capturedClick.Target.(*pb.ClickElementRequest_ElementId)
+	if !ok {
+		t.Fatalf("ClickElement Target is not element_id, got %T", capturedClick.Target)
+	}
+	if clickElem.ElementId != "elem_1" {
+		t.Errorf("ClickElement ElementId = %q, want elem_1", clickElem.ElementId)
+	}
+
+	if captured == nil {
+		t.Fatal("CreateInput was not called")
+	}
+	if captured.Parent != "applications/1" {
+		t.Errorf("CreateInput Parent = %q, want applications/1", captured.Parent)
+	}
+}
+
+func TestCUAHandleTypeElement_KeystrokesClickFailure(t *testing.T) {
+	var createInputCalled bool
+	mock := &mockMacosUseClient{
+		focusWindowFunc: func(context.Context, *pb.FocusWindowRequest) (*pb.Window, error) {
+			return &pb.Window{Name: "applications/1/windows/1"}, nil
+		},
+		clickElementFunc: func(_ context.Context, req *pb.ClickElementRequest, _ ...grpc.CallOption) (*pb.ClickElementResponse, error) {
+			_ = req
+			return nil, fmt.Errorf("rpc error: code = FailedPrecondition desc = element not visible")
+		},
+		createInputFunc: func(_ context.Context, req *pb.CreateInputRequest) (*pb.Input, error) {
+			createInputCalled = true
+			_ = req
+			return &pb.Input{Name: "inputs/type-test", State: pb.Input_STATE_COMPLETED}, nil
+		},
+	}
+
+	s := newTestMCPServer(mock)
+	call := &ToolCall{
+		Name:      "type_element",
+		Arguments: json.RawMessage(`{"parent":"applications/1/windows/1","selector":"role:AXTextArea","text":"hello","input_method":"keystrokes"}`),
+	}
+
+	result, err := s.handleTypeElement(call)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resultIsError(result) {
+		t.Fatalf("expected error result, got: %v", resultText(result))
+	}
+	if createInputCalled {
+		t.Error("CreateInput was called despite ClickElement failure")
 	}
 }

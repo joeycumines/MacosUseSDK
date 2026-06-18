@@ -444,11 +444,19 @@ extension MacosUseService {
         let req = request.message
         Self.logger.info("clickElement called")
 
-        let element: Macosusesdk_Type_Element
+        var element: Macosusesdk_Type_Element
         let pid: pid_t
         var elementID: String?
 
-        // Find the element to click
+        // Parse the selector once so we can re-query visibility after focusing.
+        var validatedSelector: Macosusesdk_Type_ElementSelector?
+        if case let .selector(selector) = req.target {
+            validatedSelector = try SelectorParser.shared.parseSelector(selector)
+        }
+
+        // Find the element to click. For selectors this uses visibleOnly:false so
+        // a background window can still be located; visibility is verified AFTER
+        // the window is focused so we never click hidden/off-screen coordinates.
         switch req.target {
         case let .elementID(elementId):
             guard let foundElement = await ElementRegistry.shared.getElement(elementId) else {
@@ -458,12 +466,14 @@ extension MacosUseService {
             elementID = elementId
             pid = try parsePID(fromName: req.parent)
 
-        case let .selector(selector):
-            let validatedSelector = try SelectorParser.shared.parseSelector(selector)
+        case .selector:
+            guard let selector = validatedSelector else {
+                throw RPCError(code: .invalidArgument, message: "Selector could not be parsed")
+            }
             let elementsWithPaths = try await ElementLocator.shared.findElements(
-                selector: validatedSelector,
+                selector: selector,
                 parent: req.parent,
-                visibleOnly: true,
+                visibleOnly: false,
                 maxResults: 1,
             )
 
@@ -486,6 +496,45 @@ extension MacosUseService {
         // so the click reaches the correct element.
         if let eid = elementID {
             await AutomationCoordinator.shared.acquireFocusForElement(elementID: eid, pid: pid)
+        }
+
+        // Re-verify visibility now that the window has been brought forward.
+        // The initial selector lookup may have matched a hidden element, so we
+        // must confirm it is actually on-screen before using its coordinates.
+        switch req.target {
+        case .selector:
+            guard let selector = validatedSelector else {
+                throw RPCError(code: .invalidArgument, message: "Selector could not be parsed")
+            }
+            let visibleElements = try await ElementLocator.shared.findElements(
+                selector: selector,
+                parent: req.parent,
+                visibleOnly: true,
+                maxResults: 1,
+            )
+            guard let visible = visibleElements.first else {
+                throw RPCError(
+                    code: .failedPrecondition,
+                    message: "element matching selector is not visible after focusing; bring it into view",
+                )
+            }
+            element = visible.element
+            elementID = visible.element.elementID
+
+        case let .elementID(elementId):
+            guard let axElement = await ElementRegistry.shared.getAXElement(elementId) else {
+                throw RPCError(code: .notFound, message: "Element reference not available")
+            }
+            element = Self.refreshBoundsIfPossible(element: element, axElement: axElement)
+            guard Self.elementClickPointIsOnScreen(element) else {
+                throw RPCError(
+                    code: .failedPrecondition,
+                    message: "element '\(elementId)' is not visible on screen; bring it into view",
+                )
+            }
+
+        case .none:
+            break
         }
 
         // Calculate geometric center of element bounds.
@@ -573,9 +622,16 @@ extension MacosUseService {
         let req = request.message
         Self.logger.info("writeElementValue called")
 
-        let element: Macosusesdk_Type_Element
+        var element: Macosusesdk_Type_Element
         let pid: pid_t
         var elementID: String?
+
+        // Parse a selector string up front so we can use it again for the
+        // visible-only re-query after the window has been focused.
+        var validatedSelector: Macosusesdk_Type_ElementSelector?
+        if case let .selector(selector) = req.target {
+            validatedSelector = try SelectorParser.shared.parseSelector(selector)
+        }
 
         // Find the element to modify
         switch req.target {
@@ -587,12 +643,17 @@ extension MacosUseService {
             elementID = elementId
             pid = try parsePID(fromName: req.parent)
 
-        case let .selector(selector):
-            let validatedSelector = try SelectorParser.shared.parseSelector(selector)
+        case .selector:
+            guard let selector = validatedSelector else {
+                throw RPCError(code: .invalidArgument, message: "Selector could not be parsed")
+            }
+            // Find the target element. Use visibleOnly: false because the selector is
+            // being used as a stable handle across calls; the caller may have not yet
+            // brought the window forward. Focus acquisition happens next.
             let elementsWithPaths = try await ElementLocator.shared.findElements(
-                selector: validatedSelector,
+                selector: selector,
                 parent: req.parent,
-                visibleOnly: true,
+                visibleOnly: false,
                 maxResults: 1,
             )
 
@@ -615,49 +676,162 @@ extension MacosUseService {
             await AutomationCoordinator.shared.acquireFocusForElement(elementID: eid, pid: pid)
         }
 
-        // Use geometric center for reliable focus click.
-        let clickPoint = try Self.elementClickPoint(element)
-        let centerX = clickPoint.x
-        let centerY = clickPoint.y
-
-        // Click on the element first to focus it
-        try await AutomationCoordinator.shared.handleExecuteInput(
-            action: Macosusesdk_V1_InputAction.with {
-                $0.inputType = .click(
-                    Macosusesdk_V1_MouseClick.with {
-                        $0.position = Macosusesdk_Type_Point.with {
-                            $0.x = centerX
-                            $0.y = centerY
-                        }
-                        $0.clickType = .left
-                        $0.clickCount = 1
-                    },
+        // Re-verify that the target is actually visible now that the window has
+        // been brought forward. The selector branch may have matched a hidden or
+        // scrolled-out element, and writing AXValue into a background DOM node
+        // silently fails the caller's intent.
+        switch req.target {
+        case .selector:
+            guard let selector = validatedSelector else {
+                throw RPCError(code: .invalidArgument, message: "Selector could not be re-parsed")
+            }
+            let visibleElements = try await ElementLocator.shared.findElements(
+                selector: selector,
+                parent: req.parent,
+                visibleOnly: true,
+                maxResults: 1,
+            )
+            guard let visible = visibleElements.first else {
+                throw RPCError(
+                    code: .failedPrecondition,
+                    message: "element matching selector is not visible after focusing; bring it into view",
                 )
-            },
-            pid: pid,
-            showAnimation: false,
-            animationDuration: 0,
-        )
+            }
+            element = visible.element
+            elementID = visible.element.elementID
 
-        // Type the value
-        try await AutomationCoordinator.shared.handleExecuteInput(
-            action: Macosusesdk_V1_InputAction.with {
-                $0.inputType = .typeText(
-                    Macosusesdk_V1_TextInput.with {
-                        $0.text = req.value
-                    },
+        case let .elementID(elementId):
+            guard let axElement = await ElementRegistry.shared.getAXElement(elementId)
+            else {
+                throw RPCError(code: .notFound, message: "Element reference not available")
+            }
+            element = Self.refreshBoundsIfPossible(element: element, axElement: axElement)
+            guard Self.elementClickPointIsOnScreen(element) else {
+                throw RPCError(
+                    code: .failedPrecondition,
+                    message: "element '\(elementId)' is not visible on screen; bring it into view",
                 )
-            },
-            pid: pid,
-            showAnimation: false,
-            animationDuration: 0,
+            }
+
+        case .none:
+            break
+        }
+
+        // Refuse to write values into elements that are not known text-editable roles.
+        // This guard is placed AFTER the visible-target re-query so the role is checked
+        // on the actual visible/resolved element, not a hidden, non-editable earlier match.
+        let canonicalRole = ElementLocator.canonicalRole(element.role)
+        guard Self.roleIsTextEditable(canonicalRole) else {
+            throw RPCError(code: .failedPrecondition, message: "Element role '\(element.role)' is not editable")
+        }
+
+        guard let eid = elementID,
+              let axElement = await ElementRegistry.shared.getAXElement(eid)
+        else {
+            throw RPCError(code: .notFound, message: "Element reference not available")
+        }
+
+        // Focus the editable element programmatically via AX rather than a
+        // physical mouse click. Some applications report spurious focus errors
+        // even though the element is able to receive text, so we log the error
+        // and continue rather than aborting.
+        let focusErr = AXUIElementSetAttributeValue(
+            axElement, kAXFocusedAttribute as CFString, kCFBooleanTrue as CFTypeRef,
         )
+        if focusErr != .success {
+            Self.logger.warning(
+                "type_element could not focus element \(eid, privacy: .public) via AX (AXError \(focusErr.rawValue, privacy: .public)); continuing with AXValue attempt",
+            )
+        }
+
+        let axErr = AXUIElementSetAttributeValue(axElement, kAXValueAttribute as CFString, req.value as CFString)
+        if axErr != .success {
+            throw RPCError(
+                code: .internalError,
+                message: "AXValue set failed for element \(eid) (AXError \(axErr.rawValue))",
+            )
+        }
 
         let response = Macosusesdk_V1_WriteElementValueResponse.with {
             $0.success = true
             $0.element = element
         }
         return ServerResponse(message: response)
+    }
+
+    /// Returns true if the canonical accessibility role indicates the element
+    /// supports direct AXValue text mutation. Role strings may include a human-
+    /// readable description in parentheses (e.g. "AXTextArea (text entry area)");
+    /// callers should strip that suffix before passing the role here.
+    /// - Note: Internal for testing with @testable import.
+    static func roleIsTextEditable(_ role: String) -> Bool {
+        let canonical = role.lowercased()
+        let editableRoles = [
+            "axtextfield",
+            "axtextarea",
+            "axcombobox",
+            "axsearchfield",
+            "axsecuretextfield",
+        ]
+        return editableRoles.contains(canonical)
+    }
+
+    /// Refreshes an element's bounds from the live AXUIElement when possible.
+    /// This prevents elementID-based visibility checks from rejecting an element
+    /// that moved on-screen after focus acquisition due to stale cached
+    /// coordinates, while still keeping off-screen elements rejected.
+    /// - Note: Internal for testing with @testable import.
+    static func refreshBoundsIfPossible(
+        element: Macosusesdk_Type_Element, axElement: AXUIElement,
+    ) -> Macosusesdk_Type_Element {
+        var positionValue: CFTypeRef?
+        var sizeValue: CFTypeRef?
+        let positionErr = AXUIElementCopyAttributeValue(axElement, kAXPositionAttribute as CFString, &positionValue)
+        let sizeErr = AXUIElementCopyAttributeValue(axElement, kAXSizeAttribute as CFString, &sizeValue)
+
+        // AXUIElementCopyAttributeValue follows Core Foundation create/copy
+        // rules and returns a +1 retained CFTypeRef. Swift bridges CFTypeRef to
+        // a strong ARC-managed reference, so the Swift idiom is to clear the
+        // optional references on every exit path; manual CFRelease is unsafe.
+        // Guard-let bindings that continue to use an object keep it alive via
+        // their own strong references.
+        defer {
+            positionValue = nil
+            sizeValue = nil
+        }
+
+        guard positionErr == .success, sizeErr == .success,
+              let positionAXValue = positionValue,
+              let sizeAXValue = sizeValue
+        else {
+            // Fall back to the cached bounds if AX query fails.
+            return element
+        }
+
+        var point = CGPoint.zero
+        var size = CGSize.zero
+        guard CFGetTypeID(positionAXValue) == AXValueGetTypeID(),
+              CFGetTypeID(sizeAXValue) == AXValueGetTypeID()
+        else {
+            return element
+        }
+        let gotPoint = AXValueGetValue(
+            unsafeDowncast(positionAXValue, to: AXValue.self), .cgPoint, &point,
+        )
+        let gotSize = AXValueGetValue(
+            unsafeDowncast(sizeAXValue, to: AXValue.self), .cgSize, &size,
+        )
+
+        guard gotPoint, gotSize else {
+            return element
+        }
+
+        var mutable = element
+        mutable.x = Double(point.x)
+        mutable.y = Double(point.y)
+        mutable.width = Double(size.width)
+        mutable.height = Double(size.height)
+        return mutable
     }
 
     @MainActor
@@ -727,9 +901,15 @@ extension MacosUseService {
             )
         }
 
-        let element: Macosusesdk_Type_Element
-        let elementID: String
+        var element: Macosusesdk_Type_Element
+        var elementID: String
         let pid: pid_t
+
+        // Parse the selector once so we can re-query visibility for the fallback.
+        var validatedSelector: Macosusesdk_Type_ElementSelector?
+        if case let .selector(selector) = req.target {
+            validatedSelector = try SelectorParser.shared.parseSelector(selector)
+        }
 
         // Find the element
         switch req.target {
@@ -741,12 +921,14 @@ extension MacosUseService {
             elementID = id
             pid = try parsePID(fromName: req.parent)
 
-        case let .selector(selector):
-            let validatedSelector = try SelectorParser.shared.parseSelector(selector)
+        case .selector:
+            guard let selector = validatedSelector else {
+                throw RPCError(code: .invalidArgument, message: "Selector could not be parsed")
+            }
             let elementsWithPaths = try await ElementLocator.shared.findElements(
-                selector: validatedSelector,
+                selector: selector,
                 parent: req.parent,
-                visibleOnly: true,
+                visibleOnly: false,
                 maxResults: 1,
             )
 
@@ -755,7 +937,7 @@ extension MacosUseService {
             }
 
             element = firstElement.element
-            elementID = element.elementID
+            elementID = firstElement.element.elementID
             pid = try parsePID(fromName: req.parent)
 
         case .none:
@@ -799,8 +981,49 @@ extension MacosUseService {
             }
         }
 
-        // Fallback to coordinate-based simulation if AXUIElement is nil or action failed
-        // Use geometric center of element bounds for maximum hit area reliability.
+        // Fallback to coordinate-based simulation if AXUIElement is nil or action failed.
+        // We must not trust coordinates from a hidden/off-screen element, so recheck
+        // visibility after the window has been focused.
+        switch req.target {
+        case .selector:
+            guard let selector = validatedSelector else {
+                throw RPCError(
+                    code: .internalError,
+                    message: "AX action failed and selector could not be re-parsed for fallback",
+                )
+            }
+            let visibleElements = try await ElementLocator.shared.findElements(
+                selector: selector,
+                parent: req.parent,
+                visibleOnly: true,
+                maxResults: 1,
+            )
+            guard let visible = visibleElements.first else {
+                throw RPCError(
+                    code: .failedPrecondition,
+                    message: "AX action failed and element matching selector is not visible; bring it into view",
+                )
+            }
+            element = visible.element
+            elementID = visible.element.elementID
+
+        case let .elementID(id):
+            guard let axElement = await ElementRegistry.shared.getAXElement(id) else {
+                throw RPCError(code: .notFound, message: "Element reference not available")
+            }
+            element = Self.refreshBoundsIfPossible(element: element, axElement: axElement)
+            guard Self.elementClickPointIsOnScreen(element) else {
+                throw RPCError(
+                    code: .failedPrecondition,
+                    message: "AX action failed and element '\(id)' is not visible on screen; bring it into view",
+                )
+            }
+
+        case .none:
+            break
+        }
+
+        // Use the now-verified visible element's geometric center for the fallback click.
         let clickPoint = try Self.elementClickPoint(element)
         let centerX = clickPoint.x
         let centerY = clickPoint.y
@@ -1114,6 +1337,21 @@ extension MacosUseService {
     }
 
     // MARK: - Element Click Coordinate Helpers
+
+    /// Returns true if the element's geometric center lies on a connected
+    /// display. This prevents physical mouse clicks at coordinates that are
+    /// entirely off-screen in Global Display Coordinates.
+    /// - Note: Internal for testing with @testable import.
+    static func elementClickPointIsOnScreen(_ element: Macosusesdk_Type_Element) -> Bool {
+        guard let center = try? elementClickPoint(element) else { return false }
+        var displayID: CGDirectDisplayID = 0
+        var count: UInt32 = 0
+        // A display containing the point means it is reachable. We intentionally
+        // do not check the visible (menu/dock-excluded) rectangle here; that
+        // is covered by the visibleOnly:true re-query used for selector-based
+        // targets.
+        return CGGetDisplaysWithPoint(center, 1, &displayID, &count) == .success && count > 0
+    }
 
     /// Calculates the geometric center point of an element's bounds for clicking.
     /// The AX frame (kAXPositionAttribute + kAXSizeAttribute) provides top-left corner

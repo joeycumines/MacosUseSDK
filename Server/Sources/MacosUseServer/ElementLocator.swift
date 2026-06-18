@@ -187,7 +187,13 @@ public actor ElementLocator {
     ) -> Bool {
         switch selector.criteria {
         case let .role(role):
-            return element.role.lowercased() == role.lowercased()
+            // SDK roles may include a human-readable description in parentheses
+            // (e.g. "AXTextArea (text entry area)"). Match against the canonical
+            // role name before any whitespace or "(" on BOTH sides so that a
+            // selector copied from verbose find_elements output still matches.
+            let elementRole = Self.canonicalRole(element.role)
+            let selectorRole = Self.canonicalRole(role)
+            return elementRole.lowercased() == selectorRole.lowercased()
 
         case let .text(text):
             return element.text == text
@@ -252,6 +258,22 @@ public actor ElementLocator {
         case .none:
             return true // Match all elements if no criteria specified
         }
+    }
+
+    /// Strips a human-readable accessibility description suffix (everything from
+    /// the first '(' onward) and trims whitespace from a role string. This
+    /// makes selectors symmetric: both the element role and the user-supplied
+    /// role can safely include verbose SDK descriptions.
+    ///
+    /// Uses `range(of:)` rather than `split(separator:)` because `split`
+    /// omits empty subsequences by default, causing a role that begins with
+    /// '(' (e.g. "(text entry area)") to incorrectly return the suffix.
+    /// - Note: Internal visibility for unit testing with @testable import.
+    static func canonicalRole(_ role: String) -> String {
+        if let range = role.range(of: "(") {
+            return String(role[..<range.lowerBound]).trimmingCharacters(in: .whitespaces)
+        }
+        return role.trimmingCharacters(in: .whitespaces)
     }
 
     private func isElementInRegion(

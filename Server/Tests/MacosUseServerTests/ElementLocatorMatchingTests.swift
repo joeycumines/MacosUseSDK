@@ -178,6 +178,78 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
         XCTAssertFalse(matches, "Element without position should not match position selector")
     }
 
+    // MARK: - Role Selector Tests
+
+    func testRoleSelectorMatchesCanonicalRole() async {
+        let element = Macosusesdk_Type_Element.with {
+            $0.role = "AXTextArea"
+        }
+        let selector = Macosusesdk_Type_ElementSelector.with { $0.role = "AXTextArea" }
+        let matches = await locator.matchesSelector(element, selector: selector)
+        XCTAssertTrue(matches, "Role selector should match the canonical role name")
+    }
+
+    func testRoleSelectorMatchesRoleWithDescription() async {
+        // SDK roles often append a human-readable description in parentheses,
+        // e.g. "AXTextArea (text entry area)".
+        let element = Macosusesdk_Type_Element.with {
+            $0.role = "AXTextArea (text entry area)"
+        }
+        let selector = Macosusesdk_Type_ElementSelector.with { $0.role = "AXTextArea" }
+        let matches = await locator.matchesSelector(element, selector: selector)
+        XCTAssertTrue(matches, "Role selector should match the canonical role prefix before the description")
+    }
+
+    func testRoleSelectorWithDescriptionMatchesCanonicalElement() async {
+        // LLMs copy-paste the verbose role they see in find_elements output.
+        // A selector containing the suffix must still match a canonical element.
+        let element = Macosusesdk_Type_Element.with {
+            $0.role = "AXTextArea"
+        }
+        let selector = Macosusesdk_Type_ElementSelector.with { $0.role = "AXTextArea (text entry area)" }
+        let matches = await locator.matchesSelector(element, selector: selector)
+        XCTAssertTrue(matches, "Verbose selector role should match canonical element role")
+    }
+
+    func testRoleSelectorWithDescriptionsOnBothSides() async {
+        let element = Macosusesdk_Type_Element.with {
+            $0.role = "AXTextArea (text entry area)"
+        }
+        let selector = Macosusesdk_Type_ElementSelector.with { $0.role = "AXTextArea (text entry area)" }
+        let matches = await locator.matchesSelector(element, selector: selector)
+        XCTAssertTrue(matches, "Matching should be symmetric when both sides include descriptions")
+    }
+
+    func testRoleSelectorMismatchesDifferentRole() async {
+        let element = Macosusesdk_Type_Element.with {
+            $0.role = "AXButton (push button)"
+        }
+        let selector = Macosusesdk_Type_ElementSelector.with { $0.role = "AXTextArea" }
+        let matches = await locator.matchesSelector(element, selector: selector)
+        XCTAssertFalse(matches, "Role selector should not match a different role")
+    }
+
+    func testRoleSelectorIsCaseInsensitive() async {
+        let element = Macosusesdk_Type_Element.with {
+            $0.role = "axtextarea (text entry area)"
+        }
+        let selector = Macosusesdk_Type_ElementSelector.with { $0.role = "AXTextArea" }
+        let matches = await locator.matchesSelector(element, selector: selector)
+        XCTAssertTrue(matches, "Role selector matching should be case-insensitive")
+    }
+
+    func testCanonicalRoleLeadingParenthesisReturnsEmpty() {
+        // `split(separator: "(")` omits the empty prefix and would incorrectly
+        // return "text entry area)". The range-based implementation must return "".
+        XCTAssertEqual(ElementLocator.canonicalRole("(text entry area)"), "")
+    }
+
+    func testCanonicalRoleStripsDescriptionSuffixAndTrimsWhitespace() {
+        XCTAssertEqual(ElementLocator.canonicalRole("AXTextArea (text entry area)"), "AXTextArea")
+        XCTAssertEqual(ElementLocator.canonicalRole("  AXButton (push button) "), "AXButton")
+        XCTAssertEqual(ElementLocator.canonicalRole("AXStaticText"), "AXStaticText")
+    }
+
     // MARK: - NOT Operator Tests
 
     func testNOTOperatorInvertsMatch() async {

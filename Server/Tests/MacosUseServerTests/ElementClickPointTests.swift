@@ -201,3 +201,41 @@ final class ElementClickPointTests: XCTestCase {
         }
     }
 }
+
+/// Tests for the screen-reachability check that guards physical mouse clicks.
+final class ElementClickPointScreenTests: XCTestCase {
+    func testClickPointOnScreen_centerWithinMainDisplay_isTrue() {
+        // Use the main display bounds (Global Display Coordinates) to place the
+        // element center well inside it. This element would be clickable.
+        let mainBounds = CGDisplayBounds(CGMainDisplayID())
+        let centerX = mainBounds.origin.x + mainBounds.width / 2.0
+        let centerY = mainBounds.origin.y + mainBounds.height / 2.0
+        let element = Macosusesdk_Type_Element.with {
+            $0.x = centerX - 25
+            $0.y = centerY - 25
+            $0.width = 50
+            $0.height = 50
+        }
+        XCTAssertTrue(MacosUseService.elementClickPointIsOnScreen(element))
+    }
+
+    func testClickPointOnScreen_farOffScreen_isFalse() {
+        let element = Macosusesdk_Type_Element.with {
+            $0.x = -100_000
+            $0.y = -100_000
+            $0.width = 10
+            $0.height = 10
+        }
+        XCTAssertFalse(MacosUseService.elementClickPointIsOnScreen(element))
+    }
+
+    func testClickPointOnScreen_zeroSizeElement_isFalse() {
+        let element = Macosusesdk_Type_Element.with {
+            $0.x = 100
+            $0.y = 100
+            $0.width = 0
+            $0.height = 0
+        }
+        XCTAssertFalse(MacosUseService.elementClickPointIsOnScreen(element))
+    }
+}

@@ -281,12 +281,13 @@ func (s *MCPServer) registerTools() {
 		},
 		"type": {
 			Name:        "type",
-			Description: "Type text as keyboard input into the currently focused element.",
+			Description: "Type text as keyboard input into the active application (or the specified parent application/window).",
 			InputSchema: map[string]any{
 				"type": "object",
 				"properties": map[string]any{
 					"text":       map[string]any{"type": "string", "description": "Text to type"},
 					"char_delay": map[string]any{"type": "number", "description": "Delay between characters in seconds"},
+					"parent":     map[string]any{"type": "string", "description": "Optional application or window resource to target (e.g. applications/123). Defaults to the current frontmost application."},
 				},
 				"required": []string{"text"},
 			},
@@ -427,28 +428,31 @@ func (s *MCPServer) registerTools() {
 		},
 		"click_element": {
 			Name:        "click_element",
-			Description: "Click a UI element via accessibility APIs. Automatically clicks element center and acquires focus for reliability.",
+			Description: "Click a UI element via accessibility APIs. Automatically clicks element center and acquires focus for reliability. Use either element ID or selector; selector is preferred because element IDs from find_elements are ephemeral.",
 			InputSchema: map[string]any{
 				"type": "object",
 				"properties": map[string]any{
-					"parent":  map[string]any{"type": "string", "description": "Parent context"},
-					"element": map[string]any{"type": "string", "description": "Element ID from find_elements"},
+					"parent":   map[string]any{"type": "string", "description": "Parent context"},
+					"element":  map[string]any{"type": "string", "description": "Element ID from find_elements (ephemeral, prefer selector)"},
+					"selector": map[string]any{"type": "string", "description": "Stable selector in key:value form, e.g. role:AXButton, text:Save, text_contains:submit"},
 				},
-				"required": []string{"parent", "element"},
+				"required": []string{"parent"},
 			},
 			Handler: s.cuaHandleClickElement,
 		},
 		"type_element": {
 			Name:        "type_element",
-			Description: "Set the value of a UI element (text field, etc.). Auto-focuses the element before typing.",
+			Description: "Set the value of a UI element (text field, etc.). Auto-focuses the element before typing. Use either element ID or selector; selector is preferred because element IDs from find_elements are ephemeral. Defaults to direct AX value mutation; use input_method 'keystrokes' for web/Electron apps that require DOM keyboard events.",
 			InputSchema: map[string]any{
 				"type": "object",
 				"properties": map[string]any{
-					"parent":  map[string]any{"type": "string", "description": "Parent context"},
-					"element": map[string]any{"type": "string", "description": "Element ID"},
-					"text":    map[string]any{"type": "string", "description": "Text to enter"},
+					"parent":       map[string]any{"type": "string", "description": "Parent context"},
+					"element":      map[string]any{"type": "string", "description": "Element ID from find_elements (ephemeral, prefer selector)"},
+					"selector":     map[string]any{"type": "string", "description": "Stable selector in key:value form, e.g. role:AXTextArea, text:hello, text_contains:world"},
+					"text":         map[string]any{"type": "string", "description": "Text to enter"},
+					"input_method": map[string]any{"type": "string", "description": "Input delivery method: 'ax' (default) uses direct AX value mutation; 'keystrokes' sends physical keyboard events for web/Electron DOM-event compatibility", "enum": []string{"ax", "keystrokes"}},
 				},
-				"required": []string{"parent", "element", "text"},
+				"required": []string{"parent", "text"},
 			},
 			Handler: s.handleTypeElement,
 		},
@@ -458,7 +462,8 @@ func (s *MCPServer) registerTools() {
 			InputSchema: map[string]any{
 				"type": "object",
 				"properties": map[string]any{
-					"element": map[string]any{"type": "string", "description": "Element resource name"},
+					"parent":  map[string]any{"type": "string", "description": "Parent context (e.g. applications/123 or applications/123/windows/456). Required when element is a bare ID from find_elements."},
+					"element": map[string]any{"type": "string", "description": "Element resource name or bare element ID from find_elements"},
 				},
 				"required": []string{"element"},
 			},

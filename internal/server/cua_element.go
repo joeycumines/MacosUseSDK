@@ -119,94 +119,104 @@ func (s *MCPServer) cuaHandleFindElements(call *ToolCall) (*ToolResult, error) {
 }
 
 // handleClickElement handles the click_element tool — click a UI element via accessibility APIs.
-// Reliability improvements built into handler (NOT parameters):
-//  1. Center-click: Always clicks geometric center of element bounds
-//  2. Auto focus acquisition: Brings element's window forward before clicking
+// Targeting can be done by either element ID or selector (e.g., "role:AXButton", "text:Save").
+// Selector is preferred because element IDs from find_elements are ephemeral.
 func (s *MCPServer) cuaHandleClickElement(call *ToolCall) (*ToolResult, error) {
 	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
 	defer cancel()
 
 	var params struct {
-		Parent  string `json:"parent"`
-		Element string `json:"element"`
+		Parent   string `json:"parent"`
+		Element  string `json:"element"`
+		Selector string `json:"selector"`
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
 		return errorResultf("Invalid parameters: %v", err), nil
 	}
 
-	if params.Parent == "" || params.Element == "" {
-		return errorResult("parent and element parameters are required"), nil
+	if params.Parent == "" {
+		return errorResult("parent parameter is required"), nil
+	}
+	if params.Element == "" && params.Selector == "" {
+		return errorResult("element or selector parameter is required"), nil
+	}
+	if params.Element != "" && params.Selector != "" {
+		return errorResult("provide either element or selector, not both"), nil
 	}
 
-	// Step 1: Get element details to find bounds for center-click.
-	// Element resource names are canonical (applications/{pid}/elements/{id}),
-	// even if the parent is a window path.
-	elemName := elementResourceName(params.Parent, params.Element)
-	elem, err := s.client.GetElement(ctx, &pb.GetElementRequest{Name: elemName})
-	if err != nil {
-		// Fall back to AX click if we can't get bounds
-		return s.clickElementFallback(ctx, params.Parent, params.Element)
+	if params.Selector != "" {
+		// Resolve stable selector server-side, which also handles focus acquisition
+		// and post-focus visibility verification.
+		selector, err := parseElementSelector(params.Selector)
+		if err != nil {
+			return errorResultf("Invalid selector: %v", err), nil
+		}
+		resp, err := s.client.ClickElement(ctx, &pb.ClickElementRequest{
+			Parent: params.Parent,
+			Target: &pb.ClickElementRequest_Selector{Selector: selector},
+		})
+		if err != nil {
+			return s.clickElementFallbackError(ctx, params.Parent, params.Selector, err), nil
+		}
+		if !resp.Success {
+			role := "(unknown)"
+			if resp.Element != nil && resp.Element.Role != "" {
+				role = resp.Element.Role
+			}
+			return errorResultf("click_element: operation was not successful. Element role: %s. Use find_elements to discover clickable elements.", role), nil
+		}
+		targetDesc := params.Selector
+		if resp.Element != nil {
+			targetDesc = fmt.Sprintf("%s (%s)", params.Selector, resp.Element.Role)
+		}
+		return textResultf("Clicked element via selector: %s", targetDesc), nil
 	}
 
-	// Step 2: Calculate center point from element bounds
-	centerX, centerY, hasBounds := elementCenter(elem)
-	if !hasBounds {
-		// No bounds available — fall back to AX click
-		return s.clickElementFallback(ctx, params.Parent, params.Element)
-	}
-
-	// Step 3: Focus acquisition — bring the element's window forward
-	// Extract window name from parent (e.g., "applications/123/windows/456")
-	if windowName := extractWindowFromParent(params.Parent); windowName != "" {
-		_, _ = s.client.FocusWindow(ctx, &pb.FocusWindowRequest{Name: windowName})
-		// Ignore focus errors — best-effort focus acquisition
-	}
-
-	// Step 4: Click at element center using coordinate-based click
-	_, clickErr := s.client.CreateInput(ctx, &pb.CreateInputRequest{
-		Parent: defaultApplicationParent,
-		Input: &pb.Input{
-			Action: &pb.InputAction{
-				InputType: &pb.InputAction_Click{
-					Click: &pb.MouseClick{
-						Position:   &typepb.Point{X: centerX, Y: centerY},
-						ClickType:  pb.MouseClick_CLICK_TYPE_LEFT,
-						ClickCount: 1,
-					},
-				},
-			},
-		},
-	})
-	if clickErr != nil {
-		// Coordinate click failed — fall back to AX click
-		return s.clickElementFallback(ctx, params.Parent, params.Element)
-	}
-
-	elemInfo := params.Element
-	if elem.Role != "" {
-		elemInfo = fmt.Sprintf("%s (%s)", params.Element, elem.Role)
-	}
-
-	return textResultf("Clicked element at center (%.0f, %.0f): %s", centerX, centerY, elemInfo), nil
+	// Element ID path: let the server handle center-coordinate calculation,
+	// visibility verification, and semantic fallback in one RPC. The local
+	// manual coordinate path duplicated Swift-side logic and was redundant.
+	return s.clickElementFallback(ctx, params.Parent, params.Element)
 }
 
-// clickElementFallback falls back to AX-based ClickElement RPC with structured error messages.
+// clickElementError categorizes a ClickElement RPC error into a structured,
+// actionable ToolResult. It intentionally mirrors only the strings emitted by
+// the Swift clickElement method so the Go-side heuristics stay in sync.
+func clickElementError(err error, targetDesc string) *ToolResult {
+	// gRPC status messages are mixed-case; normalize once for reliable matching.
+	msg := strings.ToLower(err.Error())
+
+	// Visibility failures are reported as failed-precondition by the server.
+	if strings.Contains(msg, "not visible") {
+		return errorResultf("Element %s is not visible. Bring it into view and retry.", targetDesc)
+	}
+
+	// No selector match.
+	if strings.Contains(msg, "no element found matching selector") {
+		return errorResultf("No element found matching selector %s. Use find_elements to discover available elements.", targetDesc)
+	}
+
+	// Stale element reference (element was destroyed, its window closed, or the ID is unregistered).
+	if strings.Contains(msg, "element reference not available") || strings.Contains(msg, "element not found") {
+		return errorResultf("Element %s is no longer available. The UI may have changed; use find_elements to refresh the reference.", targetDesc)
+	}
+
+	// Element exists but lacks on-screen bounds (off-screen, hidden, or empty).
+	if strings.Contains(msg, "has no position information") {
+		return errorResultf("Element %s has no usable position information. It may be hidden or off-screen.", targetDesc)
+	}
+
+	return grpcErrorResult(err, "click_element")
+}
+
+// clickElementFallback handles the element-ID path for click_element.
 func (s *MCPServer) clickElementFallback(ctx context.Context, parent, elementID string) (*ToolResult, error) {
 	resp, err := s.client.ClickElement(ctx, &pb.ClickElementRequest{
 		Parent: parent,
 		Target: &pb.ClickElementRequest_ElementId{ElementId: elementID},
 	})
 	if err != nil {
-		errMsg := err.Error()
-		if strings.Contains(errMsg, "AXPress") || strings.Contains(errMsg, "not available") {
-			role := getElementRole(ctx, s, parent, elementID)
-			return errorResultf("Element does not support clicking. Role: %s. Use find_elements to discover clickable elements.", role), nil
-		}
-		if strings.Contains(errMsg, "AX error") || strings.Contains(errMsg, "cannot complete") {
-			return errorResultf("Element belongs to unfocused application. Try focus_window first, then retry. Error: %s", errMsg), nil
-		}
-		return grpcErrorResult(err, "click_element"), nil
+		return clickElementError(err, fmt.Sprintf("%s/%s", parent, elementID)), nil
 	}
 
 	if !resp.Success {
@@ -222,21 +232,13 @@ func (s *MCPServer) clickElementFallback(ctx context.Context, parent, elementID 
 		elemInfo = fmt.Sprintf("%s (%s)", resp.Element.ElementId, resp.Element.Role)
 	}
 
-	return textResultf("Clicked element (AX fallback): %s", elemInfo), nil
+	return textResultf("Clicked element: %s", elemInfo), nil
 }
 
-// elementCenter calculates the geometric center of an element from its bounds.
-func elementCenter(elem *typepb.Element) (x, y float64, ok bool) {
-	ex := elem.GetX()
-	ey := elem.GetY()
-	ew := elem.GetWidth()
-	eh := elem.GetHeight()
-
-	if ew <= 0 || eh <= 0 {
-		return 0, 0, false
-	}
-
-	return ex + ew/2, ey + eh/2, true
+// clickElementFallbackError converts a ClickElement RPC error into a structured
+// ToolResult for selector-based requests.
+func (s *MCPServer) clickElementFallbackError(ctx context.Context, parent, selector string, err error) *ToolResult {
+	return clickElementError(err, fmt.Sprintf("matching selector %q", selector))
 }
 
 // getElementRole attempts to fetch an element's role for error context.
@@ -284,23 +286,58 @@ func elementResourceName(parent, elementID string) string {
 	return fmt.Sprintf("%s/elements/%s", parent, elementID)
 }
 
+// parseElementSelector converts a simple "key:value" selector string into a proto
+// ElementSelector. Supported keys: role, text, text_contains (and textcontains).
+// Example: "role:AXTextArea", "text:hello", "text_contains:world".
+func parseElementSelector(selector string) (*typepb.ElementSelector, error) {
+	before, after, ok := strings.Cut(selector, ":")
+	if !ok {
+		return nil, fmt.Errorf("selector must be in the form key:value (e.g. role:AXTextArea)")
+	}
+	key := strings.TrimSpace(strings.ToLower(before))
+	value := strings.TrimSpace(after)
+	// Empty values are intentionally allowed: locating an AXTextField whose
+	// current value is empty is a valid UI state, and role:"" will simply
+	// fail to match against real role strings.
+	switch key {
+	case "role":
+		return &typepb.ElementSelector{Criteria: &typepb.ElementSelector_Role{Role: value}}, nil
+	case "text":
+		return &typepb.ElementSelector{Criteria: &typepb.ElementSelector_Text{Text: value}}, nil
+	case "textcontains", "text_contains":
+		return &typepb.ElementSelector{Criteria: &typepb.ElementSelector_TextContains{TextContains: value}}, nil
+	default:
+		return nil, fmt.Errorf("unsupported selector key %q; use role, text, or text_contains", key)
+	}
+}
+
 // handleTypeElement handles the type_element tool — set value of a UI element with auto-focus.
+// Targeting can be done by either element ID or selector (e.g., "role:AXTextArea", "text:Save").
+// Selector is preferred because element IDs from find_elements are ephemeral.
 func (s *MCPServer) handleTypeElement(call *ToolCall) (*ToolResult, error) {
 	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
 	defer cancel()
 
 	var params struct {
-		Parent  string `json:"parent"`
-		Element string `json:"element"`
-		Text    string `json:"text"`
+		Parent      string `json:"parent"`
+		Element     string `json:"element"`
+		Selector    string `json:"selector"`
+		Text        string `json:"text"`
+		InputMethod string `json:"input_method"`
 	}
 
 	if err := json.Unmarshal(call.Arguments, &params); err != nil {
 		return errorResultf("Invalid parameters: %v", err), nil
 	}
 
-	if params.Parent == "" || params.Element == "" {
-		return errorResult("parent and element parameters are required"), nil
+	if params.Parent == "" {
+		return errorResult("parent parameter is required"), nil
+	}
+	if params.Element == "" && params.Selector == "" {
+		return errorResult("element or selector parameter is required"), nil
+	}
+	if params.Element != "" && params.Selector != "" {
+		return errorResult("provide either element or selector, not both"), nil
 	}
 
 	if params.Text == "" {
@@ -311,41 +348,122 @@ func (s *MCPServer) handleTypeElement(call *ToolCall) (*ToolResult, error) {
 		return errResult, nil
 	}
 
-	// Auto-focus: bring the element's window forward before typing
+	inputMethod := strings.ToLower(strings.TrimSpace(params.InputMethod))
+	if inputMethod == "" {
+		inputMethod = "ax"
+	}
+	if inputMethod != "ax" && inputMethod != "keystrokes" {
+		return errorResult("input_method must be 'ax' or 'keystrokes'"), nil
+	}
+
+	// Auto-focus: bring the element's window forward before typing.
 	if windowName := extractWindowFromParent(params.Parent); windowName != "" {
 		_, _ = s.client.FocusWindow(ctx, &pb.FocusWindowRequest{Name: windowName})
 		// Best-effort focus acquisition
 	}
 
-	resp, err := s.client.WriteElementValue(ctx, &pb.WriteElementValueRequest{
+	// Keystroke mode bypasses WriteElementValue and sends physical keyboard events
+	// to the target application. This is required for web/Electron apps whose
+	// controlled components rely on DOM keyboard events rather than AXValue mutation.
+	// Before emitting keystrokes we must focus the specific target element (not just
+	// the window), otherwise the events go to the application's current first responder.
+	if inputMethod == "keystrokes" {
+		clickReq := &pb.ClickElementRequest{Parent: params.Parent}
+		if params.Element != "" {
+			clickReq.Target = &pb.ClickElementRequest_ElementId{ElementId: params.Element}
+		} else {
+			selector, err := parseElementSelector(params.Selector)
+			if err != nil {
+				return errorResultf("Invalid selector: %v", err), nil
+			}
+			clickReq.Target = &pb.ClickElementRequest_Selector{Selector: selector}
+		}
+		if _, err := s.client.ClickElement(ctx, clickReq); err != nil {
+			return grpcErrorResult(err, "type_element"), nil
+		}
+
+		appParent := fmt.Sprintf("applications/%d", parseParentPID(params.Parent))
+		if parseParentPID(params.Parent) == 0 || appParent == "applications/0" {
+			appParent = defaultApplicationParent
+		}
+		resp, err := s.client.CreateInput(ctx, &pb.CreateInputRequest{
+			Parent: appParent,
+			Input: &pb.Input{
+				Action: &pb.InputAction{
+					InputType: &pb.InputAction_TypeText{
+						TypeText: &pb.TextInput{
+							Text:      params.Text,
+							CharDelay: 0,
+						},
+					},
+				},
+			},
+		})
+		if err != nil {
+			return grpcErrorResult(err, "type_element"), nil
+		}
+		if resp.State == pb.Input_STATE_FAILED {
+			errText := resp.GetError()
+			if errText == "" {
+				errText = "server reported keystroke typing failed"
+			}
+			return errorResultf("keystroke typing failed: %s", errText), nil
+		}
+		return textResultf("Typed %d characters via keystrokes into application %s", len(params.Text), appParent), nil
+	}
+
+	// Resolve target: element ID takes precedence, otherwise parse selector string.
+	writeReq := &pb.WriteElementValueRequest{
 		Parent: params.Parent,
-		Target: &pb.WriteElementValueRequest_ElementId{ElementId: params.Element},
 		Value:  params.Text,
-	})
+	}
+	if params.Element != "" {
+		writeReq.Target = &pb.WriteElementValueRequest_ElementId{ElementId: params.Element}
+	} else {
+		selector, err := parseElementSelector(params.Selector)
+		if err != nil {
+			return errorResultf("Invalid selector: %v", err), nil
+		}
+		writeReq.Target = &pb.WriteElementValueRequest_Selector{Selector: selector}
+	}
+
+	resp, err := s.client.WriteElementValue(ctx, writeReq)
 	if err != nil {
 		errMsg := err.Error()
 		if strings.Contains(errMsg, "not editable") || strings.Contains(errMsg, "AXValue") {
-			role := getElementRole(ctx, s, params.Parent, params.Element)
+			role := "(unknown)"
+			if params.Element != "" {
+				role = getElementRole(ctx, s, params.Parent, params.Element)
+			}
 			return errorResultf("Element is not editable. Role: %s. Find an AXTextField or AXTextArea element instead.", role), nil
 		}
 		return grpcErrorResult(err, "type_element"), nil
 	}
 
 	if !resp.Success {
-		role := getElementRole(ctx, s, params.Parent, params.Element)
+		role := "(unknown)"
+		if params.Element != "" {
+			role = getElementRole(ctx, s, params.Parent, params.Element)
+		}
 		return errorResultf("type_element: operation was not successful. Element may not be editable. Role: %s. Find an AXTextField or AXTextArea element instead.", role), nil
 	}
 
-	return textResultf("Typed into element %s: %d characters", params.Element, len(params.Text)), nil
+	targetDesc := params.Selector
+	if params.Element != "" {
+		targetDesc = params.Element
+	}
+	return textResultf("Typed into element %s: %d characters", targetDesc, len(params.Text)), nil
 }
 
 // handleReadElement handles the read_element tool — get detailed element info.
 // Combines GetElement + GetElementActions into a single response.
+// Accepts either a full element resource name or an element ID returned by find_elements.
 func (s *MCPServer) handleReadElement(call *ToolCall) (*ToolResult, error) {
 	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
 	defer cancel()
 
 	var params struct {
+		Parent  string `json:"parent"`
 		Element string `json:"element"`
 	}
 
@@ -357,15 +475,27 @@ func (s *MCPServer) handleReadElement(call *ToolCall) (*ToolResult, error) {
 		return errorResult("element parameter is required"), nil
 	}
 
+	// find_elements returns bare IDs like "elem_..." but GetElement expects
+	// "applications/{pid}/elements/{id}". Build the canonical name if parent is supplied.
+	elementName := params.Element
+	if !strings.Contains(params.Element, "/elements/") {
+		if params.Parent == "" {
+			return errorResult("read_element: element ID from find_elements requires a parent (the application/window used during traversal)"), nil
+		}
+		// Reuse the shared canonicalization helper so window- and app-scoped parents
+		// both produce "applications/{pid}/elements/{id}".
+		elementName = elementResourceName(params.Parent, params.Element)
+	}
+
 	// Get element details
-	elem, err := s.client.GetElement(ctx, &pb.GetElementRequest{Name: params.Element})
+	elem, err := s.client.GetElement(ctx, &pb.GetElementRequest{Name: elementName})
 	if err != nil {
 		return grpcErrorResult(err, "read_element"), nil
 	}
 
 	// Get element actions
 	actionsResp, actionsErr := s.client.GetElementActions(ctx, &pb.GetElementActionsRequest{
-		Name: params.Element,
+		Name: elementName,
 	})
 
 	// Build result
