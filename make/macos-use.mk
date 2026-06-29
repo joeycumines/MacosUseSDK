@@ -129,13 +129,18 @@ export MACOS_USE_LAUNCHD_PLIST_E  := $(MACOS_USE_LAUNCHD_PLIST)
 # This avoids make's per-line recipe splitting which breaks single-quoted
 # multi-line strings.
 
+# Pattern-specific variable: every target whose name begins with `macos-use`
+# runs under /bin/bash.  Needed for bash-isms (set -o pipefail, ${PIPESTATUS[0]})
+# used by the build targets.  Scoped via the pattern so it does NOT alter the
+# shell used by the go/swift/buf modules or the root Makefile (which keep /bin/sh).
+macos-use%: SHELL := /bin/bash
+
 ##@ [MacosUse] Build
 
 # Build the Swift server in release configuration.
 # Depends on buf.descriptor-sets (generated proto descriptors for gRPC reflection).
 .PHONY: macos-use.build-server
 macos-use.build-server: ## Build the MacosUseServer release binary.
-macos-use.build-server: SHELL := /bin/bash
 macos-use.build-server:
 	@echo "Building MacosUseServer (release)..."; \
 	set -o pipefail; \
@@ -149,7 +154,6 @@ macos-use.build-server:
 # The binary lands at $GOPATH/bin/macos-use-mcp (default: ~/go/bin/macos-use-mcp).
 .PHONY: macos-use.build-mcp
 macos-use.build-mcp: ## Build and install the macos-use-mcp Go binary.
-macos-use.build-mcp: SHELL := /bin/bash
 macos-use.build-mcp:
 	@echo "Installing macos-use-mcp Go binary..."; \
 	set -o pipefail; \
@@ -169,8 +173,7 @@ macos-use.build: macos-use.build-server macos-use.build-mcp
 # Copies the release binary and writes Info.plist.
 .PHONY: macos-use.bundle
 macos-use.bundle: ## Create the MacosUseServer.app bundle (clean, from scratch).
-macos-use.bundle: SHELL := /bin/bash
-macos-use.bundle:
+macos-use.bundle: macos-use.build
 	@if [ ! -f "$(MACOS_USE_SERVER_BIN)" ]; then \
 		echo "ERROR: Server binary not found at $(MACOS_USE_SERVER_BIN)" >&2; \
 		echo "       Run 'gmake macos-use.build-server' first." >&2; \
@@ -192,8 +195,7 @@ macos-use.bundle:
 # Ref: https://www.unix.com/man-page/osx/1/codesign/
 .PHONY: macos-use.sign
 macos-use.sign: ## Ad-hoc codesign (--force --deep --sign -) + xattr clear + verify.
-macos-use.sign: SHELL := /bin/bash
-macos-use.sign:
+macos-use.sign: macos-use.bundle
 	@if [ ! -d "$(MACOS_USE_APP_DIR)" ]; then \
 		echo "ERROR: .app bundle not found. Run 'gmake macos-use.bundle' first." >&2; \
 		exit 1; \
@@ -211,8 +213,7 @@ macos-use.sign:
 # the signed version.
 .PHONY: macos-use.register
 macos-use.register: ## Register the .app with LaunchServices (lsregister).
-macos-use.register: SHELL := /bin/bash
-macos-use.register:
+macos-use.register: macos-use.sign
 	@echo "=== Registering with LaunchServices ==="; \
 	"$(MACOS_USE_LSREGISTER)" -f "$(MACOS_USE_APP_DIR)"; \
 	if [ $$? -ne 0 ]; then \
@@ -225,9 +226,9 @@ macos-use.register:
 # Create the launchd plist and bootstrap the service.
 .PHONY: macos-use.launchd
 macos-use.launchd: ## Create and load the launchd service.
-macos-use.launchd: SHELL := /bin/bash
-macos-use.launchd:
+macos-use.launchd: macos-use.register
 	@echo "=== Creating launchd service ==="
+	@mkdir -p "$(dir $(MACOS_USE_PLIST))"
 	@printf '%s\n' "$$MACOS_USE_LAUNCHD_PLIST_E" > "$(MACOS_USE_PLIST)"
 	@chmod 644 "$(MACOS_USE_PLIST)"
 	@launchctl bootout gui/$$(id -u)/$(MACOS_USE_BUNDLE_ID) 2>/dev/null || true
@@ -249,6 +250,9 @@ macos-use.launchd:
 ##@ [MacosUse] Full Install
 
 # Full install pipeline: build → bundle → sign → register → launchd.
+# Each phase declares an explicit prerequisite on its predecessor (e.g.
+# macos-use.bundle: macos-use.build) so that `gmake macos-use.install -j`
+# constructs a valid topological execution graph instead of racing.
 # This is the main entry point.
 .PHONY: macos-use.install
 macos-use.install: ## Full install: build + bundle + sign + register + launchd.
@@ -273,7 +277,6 @@ macos-use.install: macos-use.build macos-use.bundle macos-use.sign macos-use.reg
 # Verify the full deployment: signature, plist, socket, process.
 .PHONY: macos-use.verify
 macos-use.verify: ## Verify the deployment (signature, plist, socket, process).
-macos-use.verify: SHELL := /bin/bash
 macos-use.verify:
 	@set -e; \
 	echo "=== 1. Bundle structure ==="; \
@@ -303,7 +306,6 @@ macos-use.verify:
 
 .PHONY: macos-use.status
 macos-use.status: ## Show launchd status, socket, and process.
-macos-use.status: SHELL := /bin/bash
 macos-use.status:
 	@echo "=== launchd ==="; \
 	launchctl print gui/$$(id -u) 2>/dev/null | grep "$(MACOS_USE_BUNDLE_ID)" || echo "  not loaded"; \
@@ -316,7 +318,6 @@ macos-use.status:
 
 .PHONY: macos-use.restart
 macos-use.restart: ## Restart the launchd service (no rebuild/codesign).
-macos-use.restart: SHELL := /bin/bash
 macos-use.restart:
 	@echo "Restarting MacosUseServer launchd service..."; \
 	set -e; \
@@ -337,7 +338,6 @@ macos-use.restart:
 
 .PHONY: macos-use.tcc-reset
 macos-use.tcc-reset: ## Reset TCC permissions (Accessibility + Screen Recording).
-macos-use.tcc-reset: SHELL := /bin/bash
 macos-use.tcc-reset:
 	@echo "Resetting TCC permissions for $(MACOS_USE_BUNDLE_ID)..."; \
 	tccutil reset Accessibility $(MACOS_USE_BUNDLE_ID) 2>/dev/null || true; \
@@ -346,7 +346,6 @@ macos-use.tcc-reset:
 
 .PHONY: macos-use.uninstall
 macos-use.uninstall: ## Completely uninstall MacosUseServer.app, launchd service, and TCC entries.
-macos-use.uninstall: SHELL := /bin/bash
 macos-use.uninstall:
 	@echo "=== Uninstalling MacosUseServer ==="; \
 	set +e; \
@@ -363,7 +362,6 @@ macos-use.uninstall:
 
 .PHONY: macos-use.logs
 macos-use.logs: ## Show recent MacosUseServer log entries (error log + OSLog).
-macos-use.logs: SHELL := /bin/bash
 macos-use.logs:
 	@echo "=== Error log (last 30 lines) ==="; \
 	tail -n 30 "$(MACOS_USE_STDERR_LOG)" 2>/dev/null || echo "(empty)"; \
@@ -374,7 +372,6 @@ macos-use.logs:
 
 .PHONY: macos-use.stop
 macos-use.stop: ## Stop the launchd service (no rebuild/codesign/uninstall).
-macos-use.stop: SHELL := /bin/bash
 macos-use.stop:
 	@echo "Stopping MacosUseServer launchd service..."; \
 	launchctl bootout gui/$$(id -u)/$(MACOS_USE_BUNDLE_ID) 2>/dev/null || true; \
@@ -390,7 +387,6 @@ macos-use.start: macos-use.restart
 # Convenience: open a TextEdit document for testing (not a deployment target).
 .PHONY: macos-use-open-textedit-doc
 macos-use-open-textedit-doc: ## Open a target TextEdit document deterministically.
-macos-use-open-textedit-doc: SHELL := /bin/bash
 macos-use-open-textedit-doc:
 	mkdir -p "$(HOME)/dev/MacosUseSDK" && \
 	printf '' > "$(HOME)/dev/MacosUseSDK/tmp_hello.txt" && \
