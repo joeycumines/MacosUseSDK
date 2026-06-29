@@ -125,16 +125,25 @@ struct ScreenshotCapture {
             throw ScreenshotError.captureFailedRegion(bounds)
         }
 
-        // Capture the entire display containing the region
+        // Capture the entire display containing the region.
+        // The captured image is in PIXELS (e.g. 3024×1964 on a 1512×982
+        // Retina display), but bounds and display.frame are in screen POINTS.
+        // We must scale the crop rect from points to pixels to match the image.
         let fullImage = try await capture(filter: .init(display: display, excludingWindows: []))
 
-        // The bounds are in screen coordinates, so we need to convert them to image coordinates.
-        // The display's frame is also in screen coordinates.
+        let (scaleX, scaleY) = Self.pixelScaleFactors(
+            imageWidth: fullImage.width,
+            imageHeight: fullImage.height,
+            frame: display.frame,
+        )
+
+        // Convert the requested bounds (screen points, Global Display
+        // Coordinates with top-left origin) to image pixel coordinates.
         let cropRect = CGRect(
-            x: bounds.origin.x - display.frame.origin.x,
-            y: bounds.origin.y - display.frame.origin.y,
-            width: bounds.width,
-            height: bounds.height,
+            x: (bounds.origin.x - display.frame.origin.x) * scaleX,
+            y: (bounds.origin.y - display.frame.origin.y) * scaleY,
+            width: bounds.width * scaleX,
+            height: bounds.height * scaleY,
         )
 
         // Crop the image to the requested bounds
@@ -152,6 +161,25 @@ struct ScreenshotCapture {
         }
 
         return (imageData, Int32(width), Int32(height), ocrText)
+    }
+
+    /// Computes pixel-to-point scale factors for converting a screen-point
+    /// CGRect to image-pixel coordinates. Used by `captureRegion` to crop
+    /// the correct sub-rect on Retina displays where the captured image is
+    /// in pixels but the requested bounds are in screen points.
+    ///
+    /// Returns (1.0, 1.0) when the frame has zero dimensions to avoid
+    /// division by zero — the caller's `CGImage.cropping(to:)` will return
+    /// nil and the error path handles it.
+    nonisolated static func pixelScaleFactors(
+        imageWidth: Int,
+        imageHeight: Int,
+        frame: CGRect,
+    ) -> (scaleX: CGFloat, scaleY: CGFloat) {
+        guard frame.width > 0, frame.height > 0 else {
+            return (1.0, 1.0)
+        }
+        return (CGFloat(imageWidth) / frame.width, CGFloat(imageHeight) / frame.height)
     }
 
     private static func capture(
