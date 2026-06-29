@@ -25,6 +25,7 @@ SUBDIR_MAKEFILE_PATHS_EXCLUDE_PATTERNS ?= %/.build
 include $(PROJECT_ROOT)/make/go.mk
 include $(PROJECT_ROOT)/make/swift.mk
 include $(PROJECT_ROOT)/make/buf.mk
+include $(PROJECT_ROOT)/make/macos-use.mk
 
 ##@ Core Targets
 

@@ -13,8 +13,6 @@ import Vision
 /// Utility for capturing screenshots with various options.
 @MainActor
 struct ScreenshotCapture {
-    fileprivate nonisolated static let ciContext = CIContext()
-
     /// Capture the entire screen or a specific display.
     /// - Parameters:
     ///   - displayID: Optional display ID (0 for main display, nil for all displays)
@@ -77,8 +75,12 @@ struct ScreenshotCapture {
         let filter = SCContentFilter(desktopIndependentWindow: window)
         let config = SCStreamConfiguration()
 
-        // Configure to capture only the window, excluding the frame.
-        config.capturesShadowsOnly = includeShadow
+        // shouldBeOpaque controls the alpha channel:
+        //   includeShadow == true  → alpha channel (shadow blends with background)
+        //   includeShadow == false → fully opaque (no transparency)
+        // Note: capturesShadowsOnly was incorrectly set to includeShadow,
+        // which would capture ONLY the shadow (not the window content).
+        // It is now left at the default (false) to always capture the window.
         config.shouldBeOpaque = !includeShadow
 
         let cgImage = try await capture(filter: filter, config: config)
@@ -156,28 +158,26 @@ struct ScreenshotCapture {
         filter: SCContentFilter,
         config: SCStreamConfiguration = .init(),
     ) async throws -> CGImage {
-        // Default configuration for a single frame.
-        config.minimumFrameInterval = CMTime(value: 1, timescale: 60)
-        config.width = 0 // Use source dimension
-        config.height = 0 // Use source dimension
-        config.queueDepth = 1
+        // macOS 15 rejects width=0/height=0 (the old "use source dimension"
+        // sentinel). Derive native pixel dimensions from the filter itself —
+        // contentRect gives the source rect in screen points, and
+        // pointPixelScale gives the pixel-per-point ratio (2.0 on Retina,
+        // 1.0 on non-Retina, respects user-selected scaled display modes).
+        // This is the canonical pattern from Apple's sample code.
+        // Ref: https://developer.apple.com/documentation/screencapturekit/sccontentfilter/contentrect
+        // Ref: https://developer.apple.com/documentation/screencapturekit/sccontentfilter/pointpixelscale
+        let scale = CGFloat(filter.pointPixelScale)
+        config.width = Int(filter.contentRect.width * scale)
+        config.height = Int(filter.contentRect.height * scale)
 
-        let delegate = CaptureDelegate()
-        let stream = SCStream(filter: filter, configuration: config, delegate: delegate)
-        try stream.addStreamOutput(delegate, type: .screen, sampleHandlerQueue: .main)
-
-        return try await withCheckedThrowingContinuation { continuation in
-            delegate.continuation = continuation
-            stream.startCapture { error in
-                if let error {
-                    // CRITICAL FIX: Hop to MainActor to avoid race with delegate methods
-                    Task { @MainActor in
-                        continuation.resume(throwing: error)
-                        delegate.continuation = nil
-                    }
-                }
-            }
-        }
+        // Use SCScreenshotManager for single-frame captures (macOS 14+).
+        // This replaces the SCStream + CaptureDelegate + continuation pattern,
+        // eliminating the startCapture completion-handler race entirely.
+        // Ref: https://developer.apple.com/documentation/screencapturekit/scscreenshotmanager
+        return try await SCScreenshotManager.captureImage(
+            contentFilter: filter,
+            configuration: config,
+        )
     }
 
     /// Encode a CGImage to the requested format.
@@ -252,52 +252,6 @@ struct ScreenshotCapture {
         }
 
         return recognizedStrings.joined(separator: "\n")
-    }
-}
-
-private final class CaptureDelegate: NSObject, SCStreamDelegate, SCStreamOutput, @unchecked Sendable {
-    typealias Continuation = CheckedContinuation<CGImage, Error>
-    var continuation: Continuation?
-
-    func stream(
-        _ stream: SCStream,
-        didOutputSampleBuffer sampleBuffer: CMSampleBuffer,
-        of type: SCStreamOutputType,
-    ) {
-        // We only need the first frame.
-        stream.stopCapture()
-
-        guard let continuation else { return }
-        self.continuation = nil
-
-        guard sampleBuffer.isValid, type == .screen else {
-            continuation.resume(throwing: ScreenshotError.captureFailedGeneric)
-            return
-        }
-
-        guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
-            continuation.resume(throwing: ScreenshotError.captureFailedGeneric)
-            return
-        }
-
-        // Create a CIImage from the image buffer.
-        let ciImage = CIImage(cvImageBuffer: imageBuffer)
-
-        // Create a CGImage from the CIImage.
-        let context = ScreenshotCapture.ciContext
-        guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else {
-            continuation.resume(throwing: ScreenshotError.captureFailedGeneric)
-            return
-        }
-
-        continuation.resume(returning: cgImage)
-    }
-
-    func stream(_: SCStream, didStopWithError error: Error) {
-        if let continuation {
-            self.continuation = nil
-            continuation.resume(throwing: error)
-        }
     }
 }
 
