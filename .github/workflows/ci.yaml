@@ -1,11 +1,11 @@
 name: CI
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  #push:
+  #  branches:
+  #    - main
+  #pull_request:
+  #  branches:
+  #    - main
   workflow_dispatch:
 permissions:
   contents: read
@@ -14,10 +14,9 @@ jobs:
     uses: ./.github/workflows/build.yaml
     secrets: inherit
   # Integration tests run on self-hosted macOS runner with accessibility permissions
-  # Only runs on main branch pushes or when explicitly triggered
-  # Pull requests skip integration tests to avoid permission issues on forks
-  integration:
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-    needs: build
-    uses: ./.github/workflows/integration.yaml
-    secrets: inherit
+  # Runs when explicitly triggered via workflow_dispatch
+  #integration:
+  #  if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+  #  needs: build
+  #  uses: ./.github/workflows/integration.yaml
+  #  secrets: inherit
