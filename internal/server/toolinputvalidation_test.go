@@ -866,6 +866,11 @@ func TestToolCallNumberAdmissionIsLosslessAndOuterParamsAreClosed(t *testing.T) 
 	assertCall(`{"name":"exact_integer","arguments":{"value":9007199254740992}}`, transport.ErrCodeInvalidParams, 1)
 	assertCall(`{"name":"exact_integer","arguments":null}`, transport.ErrCodeInvalidParams, 1)
 	assertCall(`{"name":"exact_integer","arguments":{"value":9007199254740993},"unexpected":true}`, transport.ErrCodeInvalidParams, 1)
+	// The MCP specification defines _meta on CallToolRequest.params; a client
+	// (e.g. OpenCode) may send it with a progress token, and it must be
+	// admitted without opening the outer params object to arbitrary fields.
+	assertCall(`{"name":"exact_integer","arguments":{"value":9007199254740993},"_meta":{"progressToken":"abc"}}`, 0, 2)
+	assertCall(`{"name":"exact_integer","arguments":{"value":9007199254740993},"unexpected":true}`, transport.ErrCodeInvalidParams, 2)
 }
 
 func assertObjectSchemasClosed(t *testing.T, path string, schema map[string]any) {

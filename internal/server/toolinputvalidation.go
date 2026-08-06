@@ -25,16 +25,22 @@ var jsonNumberPattern = regexp.MustCompile(`^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:
 type toolCallParams struct {
 	Name      string          `json:"name"`
 	Arguments json.RawMessage `json:"arguments"`
+	// Meta carries the standard MCP request metadata field (_meta). It is
+	// defined by the protocol on every request params object and commonly
+	// populated by clients (e.g. OpenCode) with a progress token, so it MUST
+	// be admitted even though the rest of the outer params object is closed.
+	Meta json.RawMessage `json:"_meta"`
 }
 
 func decodeToolCallParams(raw json.RawMessage) (toolCallParams, error) {
 	var params toolCallParams
 	decoder := json.NewDecoder(bytes.NewReader(raw))
-	// The tools/call outer params (name, arguments, context) MUST be closed:
+	// The tools/call outer params (name, arguments, _meta) MUST be closed:
 	// an unexpected top-level field is rejected as invalid params rather than
 	// silently ignored. This preserves the OuterParamsAreClosed contract and
 	// stops clients from typos like {"name":"x","arguments":{},"unexpcted":1}
-	// from being admitted as a valid call.
+	// from being admitted as a valid call. _meta is exempt because the MCP
+	// specification itself defines it on CallToolRequest.params.
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&params); err != nil {
 		return toolCallParams{}, fmt.Errorf("decode tool call params: %w", err)
