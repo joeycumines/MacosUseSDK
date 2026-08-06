@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Window Tools (9)**: `list_windows`, `get_window`, `get_window_state`, `focus_window`, `move_window`, `resize_window`, `minimize_window`, `restore_window`, `close_window`
 - **Display Tools (3)**: `list_displays`, `get_display`, `cursor_position`
 - **Clipboard Tools (4)**: `get_clipboard`, `write_clipboard`, `clear_clipboard`, `get_clipboard_history`
-- **Application Tools (4)**: `open_application`, `list_applications`, `get_application`, `delete_application`
+- **Application Tools (3)**: `open_app`, `list_apps`, `close_app`
 - **Scripting Tools (4)**: `execute_apple_script`, `execute_javascript`, `execute_shell_command`, `validate_script`
 - **Observation Tools (5)**: `create_observation`, `stream_observations`, `get_observation`, `list_observations`, `cancel_observation`
 - **Session Tools (8)**: `create_session`, `get_session`, `list_sessions`, `delete_session`, `get_session_snapshot`, `begin_transaction`, `commit_transaction`, `rollback_transaction`
@@ -70,6 +70,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Owned Physical Input Transactions**: `CreateInput` now requires one exact application, window, display, or explicit desktop target; preserves caller IDs and immutable intent; reports `PENDING`, `EXECUTING`, `COMPLETED`, `FAILED`, or `CANCELLED`; and returns explicit delivery commitment, post count, and routed-observation evidence.
+- **Strict MCP Input Boundary**: All seven physical MCP tools require exact targets, generate opaque per-call input IDs, forward complete timing/modifier/path intent, and reject malformed or non-settled backend responses.
+- **Root Product Topology**: Removed the unsupported `ActionTool`, `AppOpenerTool`, `HighlightTraversalTool`, `InputControllerTool`, `TraversalTool`, and `VisualInputTool` executable products instead of preserving unowned bypass paths.
 - **Passive Observation Mode (Default)**: `activate` parameter defaults to `false` on `create_observation` and `traverse_accessibility`, preventing focus theft during polling
 - **Circuit Breaker in ChangeDetector**: Per-PID throttling (5 events/second) prevents activation storms from external events
 - **SDK Activation Filtering**: `markSDKActivation(pid:)` suppresses workspace notifications from SDK-triggered activations

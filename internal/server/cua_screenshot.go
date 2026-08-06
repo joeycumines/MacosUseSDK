@@ -1,7 +1,6 @@
 // Copyright 2025 Joseph Cumines
 //
-// Screenshot helpers — shared between cua_core.go and readResource.
-// All screenshot constants and helper functions are defined in screenshot.go (shared with legacy handlers).
-// All screenshot handler methods have been moved to cua_core.go.
+// Screenshot helpers shared by the screenshot tool and resource reads.
+// Constants and format helpers live in screenshot.go; handlers live in cuascreenshot.go.
 
 package server

@@ -20,14 +20,13 @@ final class ObservationMethodsTests: XCTestCase {
             windowRegistry: registry,
             system: ProductionSystemOperations.shared,
         )
-        // Set the shared instance for the tests
-        ObservationManager.shared = observationManager
-
         service = MacosUseService(
             stateStore: AppStateStore(),
             operationStore: operationStore,
             windowRegistry: registry,
+            legacyPIDResourceNamesForTests: true,
             system: ProductionSystemOperations.shared,
+            observationManager: observationManager,
         )
     }
 
@@ -43,6 +42,17 @@ final class ObservationMethodsTests: XCTestCase {
         _ msg: Macosusesdk_V1_CreateObservationRequest,
     ) -> GRPCCore.ServerRequest<Macosusesdk_V1_CreateObservationRequest> {
         GRPCCore.ServerRequest(metadata: GRPCCore.Metadata(), message: msg)
+    }
+
+    private func observationMetadata(
+        from operation: Google_Longrunning_Operation,
+    ) throws -> Macosusesdk_V1_Observation {
+        _ = try ParsingHelpers.parseOperationName(operation.name)
+        XCTAssertEqual(
+            operation.metadata.typeURL,
+            "type.googleapis.com/macosusesdk.v1.Observation",
+        )
+        return try Macosusesdk_V1_Observation(serializedBytes: operation.metadata.value)
     }
 
     private func makeGetObservationRequest(
@@ -121,14 +131,19 @@ final class ObservationMethodsTests: XCTestCase {
         type: Macosusesdk_V1_ObservationType = .windowChanges,
         pid: pid_t = 12345,
     ) async -> Macosusesdk_V1_Observation {
-        await observationManager.createObservation(
-            name: name,
-            type: type,
-            parent: parent,
-            filter: nil,
-            pid: pid,
-            activate: false,
-        )
+        do {
+            return try await observationManager.createObservation(
+                name: name,
+                type: type,
+                parent: parent,
+                filter: nil,
+                pid: pid,
+                activate: false,
+            )
+        } catch {
+            XCTFail("Failed to create test observation: \(error)")
+            return Macosusesdk_V1_Observation()
+        }
     }
 
     // MARK: - CreateObservation Tests
@@ -150,8 +165,8 @@ final class ObservationMethodsTests: XCTestCase {
         let op = try response.message
 
         // Verify LRO structure
-        XCTAssertTrue(op.name.hasPrefix("operations/observation/"))
-        XCTAssertTrue(op.name.contains("test-obs-1"))
+        let metadata = try observationMetadata(from: op)
+        XCTAssertEqual(metadata.name, "applications/1/observations/test-obs-1")
         XCTAssertFalse(op.done, "LRO should initially be not done (background task)")
     }
 
@@ -170,10 +185,9 @@ final class ObservationMethodsTests: XCTestCase {
         )
         let op = try response.message
 
-        XCTAssertTrue(op.name.hasPrefix("operations/observation/"))
-        XCTAssertFalse(op.name.isEmpty)
-        // The generated ID is a UUID so it should have reasonable length
-        XCTAssertGreaterThan(op.name.count, 20)
+        let metadata = try observationMetadata(from: op)
+        XCTAssertTrue(metadata.name.hasPrefix("applications/1/observations/"))
+        XCTAssertGreaterThan(metadata.name.count, "applications/1/observations/".count)
     }
 
     func testCreateObservationWithWindowChangesType() async throws {
@@ -210,7 +224,10 @@ final class ObservationMethodsTests: XCTestCase {
         )
         let op = try response.message
 
-        XCTAssertTrue(op.name.contains("element-obs"))
+        XCTAssertEqual(
+            try observationMetadata(from: op).name,
+            "applications/1/observations/element-obs",
+        )
     }
 
     func testCreateObservationWithAttributeChangesType() async throws {
@@ -231,7 +248,10 @@ final class ObservationMethodsTests: XCTestCase {
         )
         let op = try response.message
 
-        XCTAssertTrue(op.name.contains("attr-obs"))
+        XCTAssertEqual(
+            try observationMetadata(from: op).name,
+            "applications/1/observations/attr-obs",
+        )
     }
 
     func testCreateObservationWithTreeChangesType() async throws {
@@ -249,7 +269,10 @@ final class ObservationMethodsTests: XCTestCase {
         )
         let op = try response.message
 
-        XCTAssertTrue(op.name.contains("tree-obs"))
+        XCTAssertEqual(
+            try observationMetadata(from: op).name,
+            "applications/1/observations/tree-obs",
+        )
     }
 
     func testCreateObservationWithFilter() async throws {
@@ -272,7 +295,10 @@ final class ObservationMethodsTests: XCTestCase {
         )
         let op = try response.message
 
-        XCTAssertTrue(op.name.contains("filtered-obs"))
+        XCTAssertEqual(
+            try observationMetadata(from: op).name,
+            "applications/1/observations/filtered-obs",
+        )
     }
 
     func testCreateObservationWithActivateOption() async throws {
@@ -291,7 +317,10 @@ final class ObservationMethodsTests: XCTestCase {
         )
         let op = try response.message
 
-        XCTAssertTrue(op.name.contains("activate-obs"))
+        XCTAssertEqual(
+            try observationMetadata(from: op).name,
+            "applications/1/observations/activate-obs",
+        )
     }
 
     func testCreateObservationInvalidParentFormat() async throws {
@@ -330,6 +359,34 @@ final class ObservationMethodsTests: XCTestCase {
         } catch let error as RPCError {
             XCTAssertEqual(error.code, .invalidArgument)
         }
+    }
+
+    func testCreateObservationAfterOperationDrainPublishesNoObservation() async throws {
+        _ = await operationStore.drainAllOperations()
+
+        var observation = Macosusesdk_V1_Observation()
+        observation.type = .windowChanges
+
+        var request = Macosusesdk_V1_CreateObservationRequest()
+        request.parent = "applications/1"
+        request.observation = observation
+        request.observationID = "after-operation-drain"
+
+        do {
+            _ = try await service.createObservation(
+                request: makeCreateObservationRequest(request),
+                context: makeCreateObservationContext(),
+            )
+            XCTFail("Expected operation admission to remain closed after drain")
+        } catch let error as OperationStoreError {
+            XCTAssertEqual(error, .admissionClosed)
+        }
+
+        let name = "applications/1/observations/after-operation-drain"
+        let publishedObservation = await observationManager.getObservation(name: name)
+        let monitorTaskCount = await observationManager.monitorTaskCount()
+        XCTAssertNil(publishedObservation)
+        XCTAssertEqual(monitorTaskCount, 0)
     }
 
     // MARK: - GetObservation Tests
@@ -754,6 +811,28 @@ final class ObservationMethodsTests: XCTestCase {
     }
 
     // MARK: - LRO Lifecycle Tests
+
+    func testObservationPublicationReconciliationDistinguishesDeletionFromTerminalLoss() async {
+        let discardedName = "applications/12345/observations/deleted-operation-result"
+        _ = await createTestObservation(name: discardedName)
+        await MacosUseService.reconcileObservationPublication(
+            .discarded,
+            observationName: discardedName,
+            observationManager: observationManager,
+        )
+        let retained = await observationManager.getObservation(name: discardedName)
+        XCTAssertEqual(retained?.state, .pending)
+
+        let terminalName = "applications/12345/observations/terminal-operation-result"
+        _ = await createTestObservation(name: terminalName)
+        await MacosUseService.reconcileObservationPublication(
+            .alreadyTerminal,
+            observationName: terminalName,
+            observationManager: observationManager,
+        )
+        let cancelled = await observationManager.getObservation(name: terminalName)
+        XCTAssertEqual(cancelled?.state, .cancelled)
+    }
 
     func testObservationLifecyclePendingState() async {
         let obsName = "applications/12345/observations/lifecycle-pending"

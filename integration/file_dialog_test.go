@@ -2,223 +2,125 @@ package integration
 
 import (
 	"context"
+	"errors"
+	"math"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
-	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
-// TestFileDialog_SelectFile verifies SelectFile operation with valid and invalid paths.
-// Uses Finder as the application context per golden app rules.
-func TestFileDialog_SelectFile(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-	defer cancel()
-
-	// Start server
-	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd, serverAddr)
-
-	// Connect to server
-	conn := connectToServer(t, ctx, serverAddr)
-	defer conn.Close()
-
-	client := pb.NewMacosUseClient(conn)
-	opsClient := longrunningpb.NewOperationsClient(conn)
-
-	// Open Finder
-	t.Log("Opening Finder...")
-	app := OpenApplicationAndWait(t, ctx, client, opsClient, "com.apple.finder")
-	defer CleanupApplication(t, ctx, client, app.Name)
-
-	// Wait for Finder to be ready
-	t.Log("Waiting for Finder to be ready...")
-	err := PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
-		resp, err := client.ListWindows(ctx, &pb.ListWindowsRequest{
-			Parent: app.Name,
-		})
-		if err != nil {
-			return false, nil
-		}
-		return len(resp.Windows) >= 0, nil // Finder is ready when we can query windows
-	})
-	if err != nil {
-		t.Fatalf("Finder did not become ready: %v", err)
+func requireFileDialogCode(t *testing.T, err error, want codes.Code) {
+	t.Helper()
+	if got := status.Code(err); got != want {
+		t.Fatalf("RPC code = %s, want %s (error: %v)", got, want, err)
 	}
-
-	// Create a temporary file for testing
-	tmpDir := t.TempDir()
-	tmpFile := filepath.Join(tmpDir, "test_select_file.txt")
-	if err := os.WriteFile(tmpFile, []byte("test content"), 0600); err != nil {
-		t.Fatalf("Failed to create temp file: %v", err)
-	}
-	t.Logf("Created temp file: %s", tmpFile)
-
-	// Test 1: SelectFile with valid path
-	t.Log("Test 1: SelectFile with valid path...")
-	selectResp, err := client.SelectFile(ctx, &pb.SelectFileRequest{
-		Application:  app.Name,
-		FilePath:     tmpFile,
-		RevealFinder: false,
-	})
-	if err != nil {
-		t.Errorf("SelectFile failed for valid path: %v", err)
-	} else {
-		t.Logf("SelectFile response: success=%v, path=%s", selectResp.Success, selectResp.SelectedPath)
-		if !selectResp.Success {
-			t.Errorf("SelectFile should succeed for valid path, got error: %s", selectResp.Error)
-		}
-	}
-
-	// Test 2: SelectFile with non-existent path (should fail gracefully)
-	t.Log("Test 2: SelectFile with non-existent path...")
-	nonExistentPath := filepath.Join(tmpDir, "does_not_exist_12345.txt")
-	selectResp2, err := client.SelectFile(ctx, &pb.SelectFileRequest{
-		Application:  app.Name,
-		FilePath:     nonExistentPath,
-		RevealFinder: false,
-	})
-	if err != nil {
-		t.Logf("SelectFile returned RPC error for non-existent path (expected): %v", err)
-		// RPC error is acceptable for non-existent file
-	} else if selectResp2.Success {
-		t.Errorf("SelectFile should NOT succeed for non-existent path")
-	} else {
-		t.Logf("SelectFile correctly reported failure: %s", selectResp2.Error)
-	}
-
-	// Test 3: SelectFile with empty path (should fail)
-	t.Log("Test 3: SelectFile with empty path...")
-	selectResp3, err := client.SelectFile(ctx, &pb.SelectFileRequest{
-		Application:  app.Name,
-		FilePath:     "",
-		RevealFinder: false,
-	})
-	if err != nil {
-		t.Logf("SelectFile returned RPC error for empty path (expected): %v", err)
-		// RPC error is expected for validation failure
-	} else if selectResp3.Success {
-		t.Errorf("SelectFile should NOT succeed for empty path")
-	} else {
-		t.Logf("SelectFile correctly reported failure for empty path: %s", selectResp3.Error)
-	}
-
-	t.Log("SelectFile tests completed ✓")
 }
 
-// TestFileDialog_SelectDirectory verifies SelectDirectory operation.
-func TestFileDialog_SelectDirectory(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+// TestFileDialog_FailsClosed proves the application-bound file-dialog surface
+// cannot claim success or mutate filesystem state until target-owned automation exists.
+//
+// The granular SelectFile/SelectDirectory/DragFiles RPCs were removed in favor of
+// the consolidated AutomateOpenFileDialog/AutomateSaveFileDialog custom methods
+// (AIP-136). This test exercises only the two live RPCs.
+func TestFileDialog_FailsClosed(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	// Start server
 	serverCmd, serverAddr := startServer(t, ctx)
 	defer cleanupServer(t, serverCmd, serverAddr)
 
-	// Connect to server
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
 	client := pb.NewMacosUseClient(conn)
-	opsClient := longrunningpb.NewOperationsClient(conn)
+	const application = "applications/424242"
+	missingDirectory := filepath.Join(t.TempDir(), "must-not-be-created")
 
-	// Open Finder
-	t.Log("Opening Finder...")
-	app := OpenApplicationAndWait(t, ctx, client, opsClient, "com.apple.finder")
-	defer CleanupApplication(t, ctx, client, app.Name)
+	calls := []struct {
+		name string
+		call func() error
+	}{
+		{
+			name: "AutomateOpenFileDialog",
+			call: func() error {
+				_, err := client.AutomateOpenFileDialog(
+					ctx,
+					&pb.AutomateOpenFileDialogRequest{Application: application},
+				)
+				return err
+			},
+		},
+		{
+			name: "AutomateSaveFileDialog",
+			call: func() error {
+				_, err := client.AutomateSaveFileDialog(
+					ctx,
+					&pb.AutomateSaveFileDialogRequest{
+						Application: application,
+						FilePath:    filepath.Join(missingDirectory, "output.txt"),
+					},
+				)
+				return err
+			},
+		},
+	}
 
-	// Wait for Finder to be ready
-	t.Log("Waiting for Finder to be ready...")
-	err := PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
-		resp, err := client.ListWindows(ctx, &pb.ListWindowsRequest{
-			Parent: app.Name,
+	for _, test := range calls {
+		t.Run(test.name, func(t *testing.T) {
+			requireFileDialogCode(t, test.call(), codes.Unimplemented)
 		})
-		if err != nil {
-			return false, nil
-		}
-		return len(resp.Windows) >= 0, nil
-	})
-	if err != nil {
-		t.Fatalf("Finder did not become ready: %v", err)
 	}
 
-	// Create a temporary directory for testing
-	tmpDir := t.TempDir()
-	testDir := filepath.Join(tmpDir, "test_select_dir")
-	if err := os.Mkdir(testDir, 0755); err != nil {
-		t.Fatalf("Failed to create test directory: %v", err)
+	// The capability is unimplemented: it must not have created the save target's
+	// parent directory or any file before reporting failure.
+	if _, err := os.Stat(missingDirectory); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("AutomateSaveFileDialog mutated filesystem before failing closed: %v", err)
 	}
-	t.Logf("Created test directory: %s", testDir)
+}
 
-	// Test 1: SelectDirectory with valid path
-	t.Log("Test 1: SelectDirectory with valid directory...")
-	selectResp, err := client.SelectDirectory(ctx, &pb.SelectDirectoryRequest{
-		Application:   app.Name,
-		DirectoryPath: testDir,
-		CreateMissing: false,
-	})
-	if err != nil {
-		t.Errorf("SelectDirectory failed for valid directory: %v", err)
-	} else {
-		t.Logf("SelectDirectory response: success=%v, path=%s", selectResp.Success, selectResp.SelectedPath)
-		if !selectResp.Success {
-			t.Errorf("SelectDirectory should succeed for valid directory, got error: %s", selectResp.Error)
-		}
-	}
+// TestFileDialog_ValidatesMalformedRequestsBeforeCapabilityError proves malformed
+// requests are rejected with InvalidArgument before the Unimplemented capability
+// error is reached.
+func TestFileDialog_ValidatesMalformedRequestsBeforeCapabilityError(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
-	// Test 2: SelectDirectory with non-existent path (without CreateMissing)
-	t.Log("Test 2: SelectDirectory with non-existent path (no CreateMissing)...")
-	nonExistentDir := filepath.Join(tmpDir, "does_not_exist_dir_12345")
-	selectResp2, err := client.SelectDirectory(ctx, &pb.SelectDirectoryRequest{
-		Application:   app.Name,
-		DirectoryPath: nonExistentDir,
-		CreateMissing: false,
-	})
-	if err != nil {
-		t.Logf("SelectDirectory returned RPC error for non-existent path (expected): %v", err)
-		// RPC error is acceptable for non-existent directory
-	} else if selectResp2.Success {
-		t.Errorf("SelectDirectory should NOT succeed for non-existent path without CreateMissing")
-	} else {
-		t.Logf("SelectDirectory correctly reported failure: %s", selectResp2.Error)
-	}
+	serverCmd, serverAddr := startServer(t, ctx)
+	defer cleanupServer(t, serverCmd, serverAddr)
 
-	// Test 3: SelectDirectory with empty path (should fail)
-	t.Log("Test 3: SelectDirectory with empty path...")
-	selectResp3, err := client.SelectDirectory(ctx, &pb.SelectDirectoryRequest{
-		Application:   app.Name,
-		DirectoryPath: "",
-		CreateMissing: false,
-	})
-	if err != nil {
-		t.Logf("SelectDirectory returned RPC error for empty path (expected): %v", err)
-		// RPC error is expected for validation failure
-	} else if selectResp3.Success {
-		t.Errorf("SelectDirectory should NOT succeed for empty path")
-	} else {
-		t.Logf("SelectDirectory correctly reported failure for empty path: %s", selectResp3.Error)
-	}
+	conn := connectToServer(t, ctx, serverAddr)
+	defer conn.Close()
 
-	// Test 4: SelectDirectory pointing to a file (should fail)
-	t.Log("Test 4: SelectDirectory with file path instead of directory...")
-	tmpFile := filepath.Join(tmpDir, "not_a_dir.txt")
-	if err := os.WriteFile(tmpFile, []byte("test"), 0600); err != nil {
-		t.Fatalf("Failed to create temp file: %v", err)
-	}
-	selectResp4, err := client.SelectDirectory(ctx, &pb.SelectDirectoryRequest{
-		Application:   app.Name,
-		DirectoryPath: tmpFile,
-		CreateMissing: false,
-	})
-	if err != nil {
-		t.Logf("SelectDirectory returned RPC error for file path (expected): %v", err)
-	} else if selectResp4.Success {
-		t.Errorf("SelectDirectory should NOT succeed when given a file path")
-	} else {
-		t.Logf("SelectDirectory correctly reported failure for file path: %s", selectResp4.Error)
-	}
+	client := pb.NewMacosUseClient(conn)
+	const application = "applications/424242"
 
-	t.Log("SelectDirectory tests completed ✓")
+	// Missing required application resource reference.
+	_, err := client.AutomateOpenFileDialog(
+		ctx,
+		&pb.AutomateOpenFileDialogRequest{},
+	)
+	requireFileDialogCode(t, err, codes.InvalidArgument)
+
+	// Missing required application resource reference.
+	_, err = client.AutomateSaveFileDialog(
+		ctx,
+		&pb.AutomateSaveFileDialogRequest{FilePath: "/tmp/output.txt"},
+	)
+	requireFileDialogCode(t, err, codes.InvalidArgument)
+
+	// NaN timeout is not a finite, usable duration and must be rejected.
+	_, err = client.AutomateSaveFileDialog(
+		ctx,
+		&pb.AutomateSaveFileDialogRequest{
+			Application: application,
+			FilePath:    "/tmp/output.txt",
+			Timeout:     math.NaN(),
+		},
+	)
+	requireFileDialogCode(t, err, codes.InvalidArgument)
 }

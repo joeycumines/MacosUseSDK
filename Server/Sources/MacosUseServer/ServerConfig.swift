@@ -19,11 +19,12 @@ public struct ServerConfig {
         let portValue = portStr.flatMap { $0.isEmpty ? nil : Int($0) }
         let port = portValue ?? 8080
         let socket = ProcessInfo.processInfo.environment["GRPC_UNIX_SOCKET"]
+        let socketValue = socket?.isEmpty == false ? socket : nil
 
         return ServerConfig(
             listenAddress: hostValue,
             port: port,
-            unixSocketPath: socket,
+            unixSocketPath: socketValue,
         )
     }
 

@@ -41,9 +41,9 @@ const (
 //   - Screenshot regions (CaptureRegionScreenshotRequest.region)
 type Point struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// X coordinate in Global Display Coordinates (pixels from left edge of main display).
+	// X coordinate in Global Display Coordinates (logical points from the main display origin).
 	X float64 `protobuf:"fixed64,1,opt,name=x,proto3" json:"x,omitempty"`
-	// Y coordinate in Global Display Coordinates (pixels from top edge of main display).
+	// Y coordinate in Global Display Coordinates (logical points from the main display origin).
 	Y             float64 `protobuf:"fixed64,2,opt,name=y,proto3" json:"y,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -103,9 +103,9 @@ type Region struct {
 	X float64 `protobuf:"fixed64,1,opt,name=x,proto3" json:"x,omitempty"`
 	// Y coordinate of the region's origin in Global Display Coordinates.
 	Y float64 `protobuf:"fixed64,2,opt,name=y,proto3" json:"y,omitempty"`
-	// Width of the region in pixels.
+	// Width of the region in logical display points.
 	Width float64 `protobuf:"fixed64,3,opt,name=width,proto3" json:"width,omitempty"`
-	// Height of the region in pixels.
+	// Height of the region in logical display points.
 	Height        float64 `protobuf:"fixed64,4,opt,name=height,proto3" json:"height,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

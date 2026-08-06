@@ -29,51 +29,72 @@ final class AppOpenerTests: XCTestCase {
         }
     }
 
-    func testInvalidPath_rejected() {
-        // Test various invalid path patterns
-        let invalidPaths = [
-            "/nonexistent/path/app.app",
-            "/System/Applications/NotAnApp.txt",
-            "relative/path.app",
-        ]
+    func testExactBundleValidationRejectsMissingAndMalformedPackages() throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("AppOpenerTests-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let emptyPackage = root.appendingPathComponent("Empty.app", isDirectory: true)
+        try FileManager.default.createDirectory(at: emptyPackage, withIntermediateDirectories: true)
 
-        for path in invalidPaths {
-            // Verify these paths are indeed invalid
-            let exists = FileManager.default.fileExists(atPath: path)
-            XCTAssertFalse(exists, "\(path) should not exist")
+        for url in [
+            root.appendingPathComponent("Missing.app", isDirectory: true),
+            emptyPackage,
+            root.appendingPathComponent("NotAnApp.txt"),
+        ] {
+            XCTAssertThrowsError(try validatedApplicationBundleURL(url)) { error in
+                guard case MacosUseSDKError.AppOpenerError.invalidPath = error else {
+                    return XCTFail("Unexpected error: \(error)")
+                }
+            }
         }
     }
 
-    func testPath_withAppExtensionExtraction() {
-        // Verify the SDK properly identifies .app bundles
-        let testPath = "/System/Applications/Calculator.app"
+    func testExactBundleValidationCanonicalizesSymlink() throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("AppOpenerTests-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let bundle = root.appendingPathComponent("Exact.app", isDirectory: true)
+        try makeBundle(at: bundle)
+        let alias = root.appendingPathComponent("Alias.app")
+        try FileManager.default.createSymbolicLink(at: alias, withDestinationURL: bundle)
 
-        // The path should end with .app
-        XCTAssertTrue(testPath.hasSuffix(".app"))
-        XCTAssertTrue(testPath.contains("/"))
+        XCTAssertEqual(
+            try validatedApplicationBundleURL(alias),
+            canonicalApplicationBundleURL(bundle),
+        )
+    }
+
+    func testExactBundleValidationAcceptsFinderPackageType() throws {
+        let finderURL = URL(
+            fileURLWithPath: "/System/Library/CoreServices/Finder.app",
+            isDirectory: true,
+        )
+
+        XCTAssertEqual(
+            try validatedApplicationBundleURL(finderURL),
+            canonicalApplicationBundleURL(finderURL),
+        )
     }
 
     // MARK: - Bundle ID Extraction
 
-    func testBundleID_extractionFromPath() {
+    func testBundleID_extractionFromPath() throws {
         // Test that we can extract bundle ID from a known app
         let calculatorPath = "/System/Applications/Calculator.app"
         guard let bundle = Bundle(url: URL(fileURLWithPath: calculatorPath)) else {
-            XCTSkip("Calculator app not found on this system")
-            return
+            throw XCTSkip("Calculator app not found on this system")
         }
 
         let bundleID = bundle.bundleIdentifier
         XCTAssertEqual(bundleID, "com.apple.calculator")
     }
 
-    func testBundleID_fallbackToName() {
+    func testBundleID_fallbackToName() throws {
         // If bundle identifier is nil, should fall back to CFBundleName
         // Calculator has a bundle ID, but we can verify the fallback logic
         let calculatorPath = "/System/Applications/Calculator.app"
         guard let bundle = Bundle(url: URL(fileURLWithPath: calculatorPath)) else {
-            XCTSkip("Calculator app not found on this system")
-            return
+            throw XCTSkip("Calculator app not found on this system")
         }
 
         let bundleName = (bundle.localizedInfoDictionary?["CFBundleName"] as? String)
@@ -83,24 +104,134 @@ final class AppOpenerTests: XCTestCase {
 
     // MARK: - Name Resolution
 
-    func testNameResolution_withDisplayName() {
-        // Test that application names resolve correctly
-        let nameToPath: [(String, String)] = [
-            ("Calculator", "/System/Applications/Calculator.app"),
-            ("TextEdit", "/System/Applications/TextEdit.app"),
-        ]
+    func testDisplayNameResolution_prefersLocalizedBundleMetadata() {
+        let resolved = resolveApplicationDisplayName(
+            localizedInfoDictionary: [
+                "CFBundleDisplayName": " Localized Display ",
+                "CFBundleName": "Localized Name",
+            ],
+            infoDictionary: [
+                "CFBundleDisplayName": "Unlocalized Display",
+                "CFBundleName": "Unlocalized Name",
+            ],
+            applicationURL: URL(fileURLWithPath: "/Applications/Filename.app"),
+            fallbackIdentifier: "com.example.fallback",
+        )
 
-        for (name, expectedPath) in nameToPath {
-            let resolvedURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: name)
-                ?? NSWorkspace.shared.urlForApplication(toOpen: URL(fileURLWithPath: "/Applications/\(name).app"))
-                ?? NSWorkspace.shared.urlForApplication(toOpen: URL(fileURLWithPath: "/System/Applications/\(name).app"))
+        XCTAssertEqual(resolved, "Localized Display")
+    }
 
-            if let resolved = resolvedURL {
-                XCTAssertEqual(resolved.path, expectedPath, "Name '\(name)' should resolve to \(expectedPath)")
-            } else {
-                XCTAssertTrue(true, "Name '\(name)' not resolvable on this system")
+    func testDisplayNameResolution_usesNonlocalizedNameWhenLocalizedMetadataIsAbsent() {
+        let resolved = resolveApplicationDisplayName(
+            localizedInfoDictionary: nil,
+            infoDictionary: ["CFBundleName": "Calculator"],
+            applicationURL: URL(fileURLWithPath: "/System/Applications/Calculator.app"),
+            fallbackIdentifier: "com.apple.calculator",
+        )
+
+        XCTAssertEqual(resolved, "Calculator")
+    }
+
+    func testDisplayNameResolution_usesBundleFilenameBeforeIdentifier() {
+        let resolved = resolveApplicationDisplayName(
+            localizedInfoDictionary: ["CFBundleDisplayName": "  "],
+            infoDictionary: ["CFBundleName": "\n"],
+            applicationURL: URL(fileURLWithPath: "/System/Applications/Calculator.app"),
+            fallbackIdentifier: "com.apple.calculator",
+        )
+
+        XCTAssertEqual(resolved, "Calculator")
+    }
+
+    // MARK: - Observed Disposition
+
+    func testForceNewClassification_rejectsReturnedPreExistingPID() {
+        XCTAssertThrowsError(
+            try classifyApplicationOpen(
+                mode: .forceNewInstance,
+                background: false,
+                returnedPID: 42,
+                preExistingPIDs: [42, 84],
+                preExistingActivePIDs: [42],
+                identifier: "Calculator",
+            ),
+        ) { error in
+            guard case let MacosUseSDKError.AppOpenerError.newInstanceNotCreated(identifier, returnedPID) = error else {
+                return XCTFail("Unexpected error: \(error)")
             }
+            XCTAssertEqual(identifier, "Calculator")
+            XCTAssertEqual(returnedPID, 42)
         }
+    }
+
+    func testForceNewClassification_acceptsOnlyDistinctPositivePID() throws {
+        let result = try classifyApplicationOpen(
+            mode: .forceNewInstance,
+            background: false,
+            returnedPID: 126,
+            preExistingPIDs: [42, 84],
+            preExistingActivePIDs: [42],
+            identifier: "Calculator",
+        )
+
+        XCTAssertEqual(result.action.rawValue, AppOpenAction.launchedNew.rawValue)
+        XCTAssertTrue(result.newProcessCreated)
+    }
+
+    func testOpenClassification_rejectsNonpositiveReturnedPID() {
+        XCTAssertThrowsError(
+            try classifyApplicationOpen(
+                mode: .launchOrActivate,
+                background: false,
+                returnedPID: 0,
+                preExistingPIDs: [],
+                preExistingActivePIDs: [],
+                identifier: "Calculator",
+            ),
+        ) { error in
+            guard case let MacosUseSDKError.AppOpenerError.pidLookupFailed(identifier) = error else {
+                return XCTFail("Unexpected error: \(error)")
+            }
+            XCTAssertEqual(identifier, "Calculator")
+        }
+    }
+
+    func testLaunchOrActivateClassification_usesReturnedPIDIdentity() throws {
+        let activeResult = try classifyApplicationOpen(
+            mode: .launchOrActivate,
+            background: false,
+            returnedPID: 84,
+            preExistingPIDs: [42, 84],
+            preExistingActivePIDs: [84],
+            identifier: "Calculator",
+        )
+        XCTAssertEqual(activeResult.action.rawValue, AppOpenAction.alreadyActive.rawValue)
+        XCTAssertFalse(activeResult.newProcessCreated)
+
+        let newResult = try classifyApplicationOpen(
+            mode: .launchOrActivate,
+            background: false,
+            returnedPID: 126,
+            preExistingPIDs: [42, 84],
+            preExistingActivePIDs: [84],
+            identifier: "Calculator",
+        )
+        XCTAssertEqual(newResult.action.rawValue, AppOpenAction.launchedNew.rawValue)
+        XCTAssertTrue(newResult.newProcessCreated)
+    }
+
+    func testLaunchOrActivateClassification_backgroundReuseIsObserved() throws {
+        let result = try classifyApplicationOpen(
+            mode: .launchOrActivate,
+            background: true,
+            returnedPID: 42,
+            preExistingPIDs: [42],
+            preExistingActivePIDs: [],
+            identifier: "Calculator",
+        )
+
+        XCTAssertEqual(result.action.rawValue, AppOpenAction.reusedExisting.rawValue)
+        XCTAssertFalse(result.newProcessCreated)
     }
 
     // MARK: - Activation Edge Cases
@@ -121,7 +252,9 @@ final class AppOpenerTests: XCTestCase {
         // Cleanup — poll until process is terminated (no Task.sleep).
         app.terminate()
         for _ in 0 ..< 20 {
-            if app.isTerminated { break }
+            if app.isTerminated {
+                break
+            }
             try await Task.sleep(nanoseconds: 50_000_000)
         }
     }
@@ -149,7 +282,9 @@ final class AppOpenerTests: XCTestCase {
         // Cleanup — poll until process is terminated (no Task.sleep).
         app1.terminate()
         for _ in 0 ..< 20 {
-            if app1.isTerminated { break }
+            if app1.isTerminated {
+                break
+            }
             try await Task.sleep(nanoseconds: 50_000_000)
         }
     }
@@ -208,38 +343,19 @@ final class AppOpenerTests: XCTestCase {
         XCTAssertEqual(result.processingTimeSeconds, decoded.processingTimeSeconds)
     }
 
-    // MARK: - NSWorkspace Navigation
-
-    func testWorkspace_urlForBundleIdentifier() {
-        // Test NSWorkspace URL resolution methods
-        let bundleIDs = [
-            "com.apple.calculator",
-            "com.apple.textedit",
+    private func makeBundle(at url: URL) throws {
+        let contents = url.appendingPathComponent("Contents", isDirectory: true)
+        try FileManager.default.createDirectory(at: contents, withIntermediateDirectories: true)
+        let info: [String: Any] = [
+            "CFBundleName": "Exact",
+            "CFBundlePackageType": "APPL",
+            "CFBundleExecutable": "Exact",
         ]
-
-        for bundleID in bundleIDs {
-            let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)
-            if let url {
-                XCTAssertTrue(url.path.hasSuffix(".app"), "Should resolve to .app bundle")
-            } else {
-                XCTAssertTrue(true, "Bundle ID '\(bundleID)' not found on this system")
-            }
-        }
-    }
-
-    func testWorkspace_urlForApplicationByName() {
-        // Test URL resolution by application name
-        let names = ["Calculator", "TextEdit"]
-
-        for name in names {
-            let url = NSWorkspace.shared.urlForApplication(toOpen: URL(fileURLWithPath: "/Applications/\(name).app"))
-                ?? NSWorkspace.shared.urlForApplication(toOpen: URL(fileURLWithPath: "/System/Applications/\(name).app"))
-
-            if let url {
-                XCTAssertTrue(url.path.hasSuffix(".app"), "Should resolve to .app bundle")
-            } else {
-                XCTAssertTrue(true, "App '\(name)' not found in /Applications or /System/Applications")
-            }
-        }
+        let data = try PropertyListSerialization.data(
+            fromPropertyList: info,
+            format: .xml,
+            options: 0,
+        )
+        try data.write(to: contents.appendingPathComponent("Info.plist"), options: .atomic)
     }
 }

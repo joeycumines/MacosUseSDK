@@ -33,12 +33,12 @@ func TestMCPErrorFormat_IsErrorField(t *testing.T) {
 	_, baseURL, cleanup := startMCPTestServer(t, ctx, serverAddr)
 	defer cleanup()
 
-	initReq := `{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}`
-	initResp, _ := http.Post(baseURL+"/message", "application/json", bytes.NewBufferString(initReq))
+	initReq := validMCPInitializePayload(1)
+	initResp, _ := postProductionMCP(ctx, baseURL, bytes.NewBufferString(initReq))
 	initResp.Body.Close()
 
 	request := `{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"read_element","arguments":{"element":"applications/invalid/elements/invalid"}}}`
-	resp, err := http.Post(baseURL+"/message", "application/json", bytes.NewBufferString(request))
+	resp, err := postProductionMCP(ctx, baseURL, bytes.NewBufferString(request))
 	if err != nil {
 		t.Fatalf("Request failed: %v", err)
 	}
@@ -96,12 +96,12 @@ func TestMCPErrorFormat_InvalidToolName(t *testing.T) {
 	_, baseURL, cleanup := startMCPTestServer(t, ctx, serverAddr)
 	defer cleanup()
 
-	initReq := `{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}`
-	initResp, _ := http.Post(baseURL+"/message", "application/json", bytes.NewBufferString(initReq))
+	initReq := validMCPInitializePayload(1)
+	initResp, _ := postProductionMCP(ctx, baseURL, bytes.NewBufferString(initReq))
 	initResp.Body.Close()
 
 	request := `{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"this_tool_does_not_exist_12345","arguments":{}}}`
-	resp, err := http.Post(baseURL+"/message", "application/json", bytes.NewBufferString(request))
+	resp, err := postProductionMCP(ctx, baseURL, bytes.NewBufferString(request))
 	if err != nil {
 		t.Fatalf("Request failed: %v", err)
 	}
@@ -153,12 +153,12 @@ func TestMCPErrorFormat_InvalidParams(t *testing.T) {
 	_, baseURL, cleanup := startMCPTestServer(t, ctx, serverAddr)
 	defer cleanup()
 
-	initReq := `{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}`
-	initResp, _ := http.Post(baseURL+"/message", "application/json", bytes.NewBufferString(initReq))
+	initReq := validMCPInitializePayload(1)
+	initResp, _ := postProductionMCP(ctx, baseURL, bytes.NewBufferString(initReq))
 	initResp.Body.Close()
 
 	request := `{"jsonrpc":"2.0","id":2,"method":"tools/call","params":"not an object"}`
-	resp, err := http.Post(baseURL+"/message", "application/json", bytes.NewBufferString(request))
+	resp, err := postProductionMCP(ctx, baseURL, bytes.NewBufferString(request))
 	if err != nil {
 		t.Fatalf("Request failed: %v", err)
 	}
@@ -199,9 +199,20 @@ func TestMCPErrorFormat_UnknownMethod(t *testing.T) {
 
 	_, baseURL, cleanup := startMCPTestServer(t, ctx, serverAddr)
 	defer cleanup()
+	initialize, err := postProductionMCP(ctx, baseURL, bytes.NewBufferString(validMCPInitializePayload(0)))
+	if err != nil {
+		t.Fatalf("Initialize failed: %v", err)
+	}
+	_, _ = io.Copy(io.Discard, initialize.Body)
+	if err := initialize.Body.Close(); err != nil {
+		t.Fatalf("Close initialize response: %v", err)
+	}
+	if initialize.StatusCode != http.StatusOK {
+		t.Fatalf("Initialize status=%d, want 200", initialize.StatusCode)
+	}
 
 	request := `{"jsonrpc":"2.0","id":1,"method":"unknown/method","params":{}}`
-	resp, err := http.Post(baseURL+"/message", "application/json", bytes.NewBufferString(request))
+	resp, err := postProductionMCP(ctx, baseURL, bytes.NewBufferString(request))
 	if err != nil {
 		t.Fatalf("Request failed: %v", err)
 	}
@@ -244,7 +255,7 @@ func TestMCPErrorFormat_MalformedJSON(t *testing.T) {
 	defer cleanup()
 
 	request := `{not valid json}`
-	resp, err := http.Post(baseURL+"/message", "application/json", bytes.NewBufferString(request))
+	resp, err := postProductionMCP(ctx, baseURL, bytes.NewBufferString(request))
 	if err != nil {
 		t.Fatalf("Request failed: %v", err)
 	}
@@ -271,12 +282,12 @@ func TestMCPErrorFormat_SoftError(t *testing.T) {
 	_, baseURL, cleanup := startMCPTestServer(t, ctx, serverAddr)
 	defer cleanup()
 
-	initReq := `{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}`
-	initResp, _ := http.Post(baseURL+"/message", "application/json", bytes.NewBufferString(initReq))
+	initReq := validMCPInitializePayload(1)
+	initResp, _ := postProductionMCP(ctx, baseURL, bytes.NewBufferString(initReq))
 	initResp.Body.Close()
 
 	request := `{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"read_element","arguments":{"element":"applications/999999999/elements/missing"}}}`
-	resp, err := http.Post(baseURL+"/message", "application/json", bytes.NewBufferString(request))
+	resp, err := postProductionMCP(ctx, baseURL, bytes.NewBufferString(request))
 	if err != nil {
 		t.Fatalf("Request failed: %v", err)
 	}

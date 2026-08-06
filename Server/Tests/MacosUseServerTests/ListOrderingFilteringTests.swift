@@ -4,6 +4,7 @@
 
 import CoreGraphics
 import Foundation
+import GRPCCore
 @testable import MacosUseProto
 @testable import MacosUseServer
 import Testing
@@ -159,87 +160,10 @@ struct ListOrderingFilteringTests {
         #expect(result == "First", "Should extract first occurrence")
     }
 
-    // MARK: - ListWindows Ordering Tests
-
-    @Test
-    func `applyWindowFilter and sort - default order by window_id`() {
-        let windows = [
-            makeWindowInfo(windowID: 300, title: "C"),
-            makeWindowInfo(windowID: 100, title: "A"),
-            makeWindowInfo(windowID: 200, title: "B"),
-        ]
-
-        // Default ordering should be by window_id
-        let sorted = windows.sorted { $0.windowID < $1.windowID }
-        #expect(sorted[0].windowID == 100, "First should be windowID 100")
-        #expect(sorted[1].windowID == 200, "Second should be windowID 200")
-        #expect(sorted[2].windowID == 300, "Third should be windowID 300")
-    }
-
-    @Test
-    func `applyWindowFilter and sort - order by title ascending`() {
-        let windows = [
-            makeWindowInfo(windowID: 1, title: "Charlie"),
-            makeWindowInfo(windowID: 2, title: "Alpha"),
-            makeWindowInfo(windowID: 3, title: "Bravo"),
-        ]
-
-        let sorted = windows.sorted {
-            $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
-        }
-        #expect(sorted[0].title == "Alpha", "First should be Alpha")
-        #expect(sorted[1].title == "Bravo", "Second should be Bravo")
-        #expect(sorted[2].title == "Charlie", "Third should be Charlie")
-    }
-
-    @Test
-    func `applyWindowFilter and sort - order by title descending`() {
-        let windows = [
-            makeWindowInfo(windowID: 1, title: "Charlie"),
-            makeWindowInfo(windowID: 2, title: "Alpha"),
-            makeWindowInfo(windowID: 3, title: "Bravo"),
-        ]
-
-        let sorted = windows.sorted {
-            $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
-        }.reversed()
-        let sortedArray = Array(sorted)
-        #expect(sortedArray[0].title == "Charlie", "First should be Charlie")
-        #expect(sortedArray[1].title == "Bravo", "Second should be Bravo")
-        #expect(sortedArray[2].title == "Alpha", "Third should be Alpha")
-    }
-
-    @Test
-    func `applyWindowFilter and sort - order by z_order`() {
-        let windows = [
-            makeWindowInfo(windowID: 1, title: "A", layer: 10),
-            makeWindowInfo(windowID: 2, title: "B", layer: 0),
-            makeWindowInfo(windowID: 3, title: "C", layer: 5),
-        ]
-
-        let sorted = windows.sorted { $0.layer < $1.layer }
-        #expect(sorted[0].title == "B", "First should be layer 0")
-        #expect(sorted[1].title == "C", "Second should be layer 5")
-        #expect(sorted[2].title == "A", "Third should be layer 10")
-    }
-
-    @Test
-    func `applyWindowFilter and sort - invalid orderBy falls back to default`() {
-        let windows = [
-            makeWindowInfo(windowID: 300, title: "C"),
-            makeWindowInfo(windowID: 100, title: "A"),
-            makeWindowInfo(windowID: 200, title: "B"),
-        ]
-
-        // Unknown field, should fall back to window_id ordering
-        let sorted = windows.sorted { $0.windowID < $1.windowID }
-        #expect(sorted[0].windowID == 100, "Invalid orderBy should fall back to windowID sort")
-    }
-
     // MARK: - ListWindows Filtering Tests
 
     @Test
-    func `applyWindowFilter - visible=true filters to visible windows`() {
+    func `applyWindowFilter - visible=true filters to visible windows`() throws {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -255,14 +179,14 @@ struct ListOrderingFilteringTests {
             makeWindowInfo(windowID: 3, title: "AlsoVisible", isOnScreen: true),
         ]
 
-        let filtered = service.applyWindowFilter(windows, filter: "visible=true")
+        let filtered = try service.applyWindowFilter(windows, filter: "visible=true")
         #expect(filtered.count == 2, "Should filter to 2 visible windows")
         let allOnScreen = filtered.allSatisfy(\.isOnScreen)
         #expect(allOnScreen, "All should be on screen")
     }
 
     @Test
-    func `applyWindowFilter - visible=false filters to hidden windows`() {
+    func `applyWindowFilter - visible=false filters to hidden windows`() throws {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -277,13 +201,38 @@ struct ListOrderingFilteringTests {
             makeWindowInfo(windowID: 2, title: "Hidden", isOnScreen: false),
         ]
 
-        let filtered = service.applyWindowFilter(windows, filter: "visible=false")
+        let filtered = try service.applyWindowFilter(windows, filter: "visible=false")
         #expect(filtered.count == 1, "Should filter to 1 hidden window")
         #expect(filtered[0].title == "Hidden", "Hidden window should remain")
     }
 
     @Test
-    func `applyWindowFilter - minimized=true filters to minimized windows`() {
+    func `applyWindowFilter rejects unsupported minimized=true intent`() {
+        let mock = MockSystemOperations(cgWindowList: [])
+        let registry = WindowRegistry(system: mock)
+        let service = MacosUseService(
+            stateStore: AppStateStore(),
+            operationStore: OperationStore(),
+            windowRegistry: registry,
+            system: mock,
+        )
+
+        let windows = [
+            makeWindowInfo(windowID: 1, title: "Normal", isOnScreen: true),
+            makeWindowInfo(windowID: 2, title: "Minimized", isOnScreen: false),
+        ]
+        do {
+            _ = try service.applyWindowFilter(windows, filter: "minimized=true")
+            Issue.record("minimized=true was silently approximated from visibility")
+        } catch let error as RPCError {
+            #expect(error.code == .invalidArgument)
+        } catch {
+            Issue.record("minimized=true returned a non-RPC error: \(error)")
+        }
+    }
+
+    @Test
+    func `applyWindowFilter rejects unsupported minimized=false intent`() {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -298,35 +247,18 @@ struct ListOrderingFilteringTests {
             makeWindowInfo(windowID: 2, title: "Minimized", isOnScreen: false),
         ]
 
-        // minimized=true means isOnScreen=false (since WindowRegistry tracks isOnScreen)
-        let filtered = service.applyWindowFilter(windows, filter: "minimized=true")
-        #expect(filtered.count == 1, "Should filter to 1 minimized window")
-        #expect(filtered[0].title == "Minimized", "Minimized window should remain")
+        do {
+            _ = try service.applyWindowFilter(windows, filter: "minimized=false")
+            Issue.record("minimized=false was silently approximated from visibility")
+        } catch let error as RPCError {
+            #expect(error.code == .invalidArgument)
+        } catch {
+            Issue.record("minimized=false returned a non-RPC error: \(error)")
+        }
     }
 
     @Test
-    func `applyWindowFilter - minimized=false filters to non-minimized windows`() {
-        let mock = MockSystemOperations(cgWindowList: [])
-        let registry = WindowRegistry(system: mock)
-        let service = MacosUseService(
-            stateStore: AppStateStore(),
-            operationStore: OperationStore(),
-            windowRegistry: registry,
-            system: mock,
-        )
-
-        let windows = [
-            makeWindowInfo(windowID: 1, title: "Normal", isOnScreen: true),
-            makeWindowInfo(windowID: 2, title: "Minimized", isOnScreen: false),
-        ]
-
-        let filtered = service.applyWindowFilter(windows, filter: "minimized=false")
-        #expect(filtered.count == 1, "Should filter to 1 not-minimized window")
-        #expect(filtered[0].title == "Normal", "Normal window should remain")
-    }
-
-    @Test
-    func `applyWindowFilter - title=... filters by title content`() {
+    func `applyWindowFilter - title equality does not silently become substring matching`() throws {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -342,13 +274,34 @@ struct ListOrderingFilteringTests {
             makeWindowInfo(windowID: 3, title: "My Document.txt"),
         ]
 
-        let filtered = service.applyWindowFilter(windows, filter: "title=\"Document\"")
-        #expect(filtered.count == 2, "Should filter to 2 windows containing 'Document'")
-        #expect(filtered.allSatisfy { $0.title.contains("Document") }, "All should contain Document")
+        let filtered = try service.applyWindowFilter(windows, filter: "title=\"Document\"")
+        #expect(filtered.isEmpty, "Exact equality must not silently become substring matching")
     }
 
     @Test
-    func `applyWindowFilter - title filter is case insensitive`() {
+    func `applyWindowFilter - title wildcard explicitly requests substring matching`() throws {
+        let mock = MockSystemOperations(cgWindowList: [])
+        let registry = WindowRegistry(system: mock)
+        let service = MacosUseService(
+            stateStore: AppStateStore(),
+            operationStore: OperationStore(),
+            windowRegistry: registry,
+            system: mock,
+        )
+
+        let windows = [
+            makeWindowInfo(windowID: 1, title: "Document - Editor"),
+            makeWindowInfo(windowID: 2, title: "Calculator"),
+            makeWindowInfo(windowID: 3, title: "My Document.txt"),
+        ]
+
+        let filtered = try service.applyWindowFilter(windows, filter: "title=\"*Document*\"")
+        #expect(filtered.count == 2)
+        #expect(filtered.allSatisfy { $0.title.contains("Document") })
+    }
+
+    @Test
+    func `applyWindowFilter - title equality is case sensitive`() throws {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -364,12 +317,12 @@ struct ListOrderingFilteringTests {
             makeWindowInfo(windowID: 3, title: "Calculator"),
         ]
 
-        let filtered = service.applyWindowFilter(windows, filter: "title=\"document\"")
-        #expect(filtered.count == 2, "Should match case-insensitively")
+        let filtered = try service.applyWindowFilter(windows, filter: "title=\"document\"")
+        #expect(filtered.map(\.title) == ["document"])
     }
 
     @Test
-    func `applyWindowFilter - combined ordering and filtering`() {
+    func `applyWindowFilter - combined ordering and filtering`() throws {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -387,7 +340,7 @@ struct ListOrderingFilteringTests {
         ]
 
         // Filter visible, then sort by title
-        let filtered = service.applyWindowFilter(windows, filter: "visible=true")
+        let filtered = try service.applyWindowFilter(windows, filter: "visible=true")
         let sorted = filtered.sorted {
             $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
         }
@@ -399,7 +352,7 @@ struct ListOrderingFilteringTests {
     }
 
     @Test
-    func `applyWindowFilter - combined filters with title and visible`() {
+    func `applyWindowFilter - combined filters with title and visible`() throws {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -415,13 +368,13 @@ struct ListOrderingFilteringTests {
             makeWindowInfo(windowID: 3, title: "Calculator", isOnScreen: true),
         ]
 
-        let filtered = service.applyWindowFilter(windows, filter: "title=\"TextEdit\" visible=true")
+        let filtered = try service.applyWindowFilter(windows, filter: "title=\"TextEdit\" visible=true")
         #expect(filtered.count == 1, "Should match only visible TextEdit window")
         #expect(filtered[0].windowID == 1, "Should be the visible TextEdit")
     }
 
     @Test
-    func `applyWindowFilter - empty filter returns all windows`() {
+    func `applyWindowFilter - empty filter returns all windows`() throws {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -436,7 +389,7 @@ struct ListOrderingFilteringTests {
             makeWindowInfo(windowID: 2, title: "B", isOnScreen: false),
         ]
 
-        let filtered = service.applyWindowFilter(windows, filter: "")
+        let filtered = try service.applyWindowFilter(windows, filter: "")
         #expect(filtered.count == 2, "Empty filter should return all windows")
     }
 
@@ -622,7 +575,7 @@ struct ListOrderingFilteringTests {
     }
 
     @Test
-    func `Filter with special characters in value`() {
+    func `Filter with special characters in value`() throws {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -637,7 +590,7 @@ struct ListOrderingFilteringTests {
             makeWindowInfo(windowID: 2, title: "Other Window"),
         ]
 
-        let filtered = service.applyWindowFilter(windows, filter: "title=\"My Doc.txt\"")
+        let filtered = try service.applyWindowFilter(windows, filter: "title=\"*My Doc.txt\"")
         #expect(filtered.count == 1, "Should match title with special characters")
         #expect(filtered[0].windowID == 1, "Should be the correct window")
     }
@@ -664,7 +617,7 @@ struct ListOrderingFilteringTests {
     }
 
     @Test
-    func `Unicode title filter handling`() {
+    func `Unicode title filter handling`() throws {
         let mock = MockSystemOperations(cgWindowList: [])
         let registry = WindowRegistry(system: mock)
         let service = MacosUseService(
@@ -680,7 +633,7 @@ struct ListOrderingFilteringTests {
             makeWindowInfo(windowID: 3, title: "Documento Español"),
         ]
 
-        let filtered = service.applyWindowFilter(windows, filter: "title=\"日本語\"")
+        let filtered = try service.applyWindowFilter(windows, filter: "title=\"日本語*\"")
         #expect(filtered.count == 1, "Should match Japanese characters")
         #expect(filtered[0].windowID == 1, "Should be the Japanese document")
     }

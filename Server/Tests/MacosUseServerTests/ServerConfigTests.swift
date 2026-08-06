@@ -22,9 +22,15 @@ final class ServerConfigTests: XCTestCase {
         XCTAssertNil(config.unixSocketPath)
 
         // Restore environment
-        if let addr = originalAddress { setenv("GRPC_LISTEN_ADDRESS", addr, 1) }
-        if let port = originalPort { setenv("GRPC_PORT", port, 1) }
-        if let sock = originalSocket { setenv("GRPC_UNIX_SOCKET", sock, 1) }
+        if let addr = originalAddress {
+            setenv("GRPC_LISTEN_ADDRESS", addr, 1)
+        }
+        if let port = originalPort {
+            setenv("GRPC_PORT", port, 1)
+        }
+        if let sock = originalSocket {
+            setenv("GRPC_UNIX_SOCKET", sock, 1)
+        }
     }
 
     func testCustomConfiguration() {
@@ -42,6 +48,15 @@ final class ServerConfigTests: XCTestCase {
         unsetenv("GRPC_LISTEN_ADDRESS")
         unsetenv("GRPC_PORT")
         unsetenv("GRPC_UNIX_SOCKET")
+    }
+
+    func testEmptyUnixSocketUsesTCPConfiguration() {
+        setenv("GRPC_UNIX_SOCKET", "", 1)
+        defer { unsetenv("GRPC_UNIX_SOCKET") }
+
+        let config = ServerConfig.fromEnvironment()
+
+        XCTAssertNil(config.unixSocketPath)
     }
 
     func testSecureUmaskValue() {

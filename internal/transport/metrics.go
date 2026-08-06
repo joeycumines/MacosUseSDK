@@ -49,8 +49,8 @@ var defaultLatencyBuckets = []float64{
 }
 
 // NewMetricsRegistry creates a new metrics registry with standard MCP metrics.
-// Pre-registered metrics include request counters, latency histograms,
-// SSE event counters, and active connection gauges.
+// Pre-registered metrics include request counters, latency histograms, and
+// the live Go goroutine gauge.
 func NewMetricsRegistry() *MetricsRegistry {
 	m := &MetricsRegistry{
 		counters:   make(map[string]*counter),
@@ -60,9 +60,8 @@ func NewMetricsRegistry() *MetricsRegistry {
 
 	// Pre-register standard metrics
 	m.registerCounter("mcp_requests_total")
-	m.registerCounter("mcp_sse_events_sent_total")
 	m.registerHistogram("mcp_request_duration_seconds", defaultLatencyBuckets)
-	m.registerGauge("mcp_sse_connections_active")
+	m.registerGauge("go_goroutines")
 
 	return m
 }
@@ -333,16 +332,6 @@ func (m *MetricsRegistry) RecordRequest(tool string, status string, duration tim
 
 	toolLabels := fmt.Sprintf(`tool="%s"`, tool)
 	m.ObserveHistogram("mcp_request_duration_seconds", toolLabels, duration.Seconds())
-}
-
-// RecordSSEEvent records an SSE event transmission.
-func (m *MetricsRegistry) RecordSSEEvent() {
-	m.IncrementCounter("mcp_sse_events_sent_total", "")
-}
-
-// SetSSEConnections sets the current number of active SSE connections.
-func (m *MetricsRegistry) SetSSEConnections(count int) {
-	m.SetGauge("mcp_sse_connections_active", "", float64(count))
 }
 
 // Global metrics registry instance

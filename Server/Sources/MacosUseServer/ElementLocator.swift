@@ -7,20 +7,59 @@ import OSLog
 
 private let logger = MacosUseSDK.sdkLogger(category: "ElementLocator")
 
+typealias ElementDiscoveryExecutor = @Sendable (
+    pid_t,
+    AXUIElement?,
+    Bool,
+) async throws -> AccessibilityTraversalSnapshot
+
 /// Actor responsible for locating UI elements using selectors.
 /// Integrates with the accessibility tree traversal to find elements
 /// matching various criteria (role, text, position, attributes, etc.).
 public actor ElementLocator {
-    public static let shared = ElementLocator()
+    nonisolated let elementRegistry: ElementRegistry
+    private let stateStore: AppStateStore?
+    private let windowRegistry: WindowRegistry?
+    private let legacyPIDResourceNamesForTests: Bool
+    private let system: SystemOperations
+    private let automationCoordinator: AutomationCoordinator
+    private let discoveryExecutor: ElementDiscoveryExecutor?
 
-    private init() {
+    private struct DiscoveryScope: Sendable {
+        let parent: String
+        let applicationName: String
+        let pid: pid_t
+        let processIdentity: ApplicationProcessIdentity?
+        let windowResourceID: String?
+        let windowID: CGWindowID?
+    }
+
+    init(
+        elementRegistry: ElementRegistry,
+        stateStore: AppStateStore? = nil,
+        windowRegistry: WindowRegistry? = nil,
+        legacyPIDResourceNamesForTests: Bool = true,
+        system: SystemOperations = ProductionSystemOperations.shared,
+        automationCoordinator: AutomationCoordinator? = nil,
+        discoveryExecutor: ElementDiscoveryExecutor? = nil,
+    ) {
+        self.elementRegistry = elementRegistry
+        self.stateStore = stateStore
+        self.windowRegistry = windowRegistry
+        self.legacyPIDResourceNamesForTests = legacyPIDResourceNamesForTests
+        self.system = system
+        self.automationCoordinator = automationCoordinator ?? AutomationCoordinator(
+            elementRegistry: elementRegistry,
+            activationSystem: system,
+        )
+        self.discoveryExecutor = discoveryExecutor
         logger.info("Initialized")
     }
 
     /// Find elements matching a selector within an application or window context.
     /// - Parameters:
     ///   - selector: The element selector to match against
-    ///   - parent: Resource name indicating search scope ("applications/{pid}" or "applications/{pid}/windows/{windowId}")
+    ///   - parent: Exact application or window resource name indicating search scope
     ///   - visibleOnly: Whether to only consider visible elements
     ///   - maxResults: Maximum number of elements to return (0 for unlimited)
     /// - Returns: Array of matching elements with their hierarchy paths
@@ -30,14 +69,16 @@ public actor ElementLocator {
         parent: String,
         visibleOnly: Bool = false,
         maxResults: Int = 0,
-    ) async throws -> [(element: Macosusesdk_Type_Element, path: [Int32])] {
+    ) async throws -> [(element: Macosusesdk_V1_Element, path: [Int32])] {
         logger.info("Finding elements with selector in parent: \(parent, privacy: .private)")
 
-        // Parse parent to get PID and optional window ID
-        let (pid, _) = try parseParent(parent)
+        let scope = try await parseParent(parent)
 
         // Get elements with paths
-        let elementsWithPaths = try await traverseWithPaths(pid: pid, visibleOnly: visibleOnly)
+        let elementsWithPaths = try await traverseWithPaths(
+            scope: scope,
+            visibleOnly: visibleOnly,
+        )
 
         // Filter elements based on selector
         let matchingElements = elementsWithPaths.filter { element, _ in
@@ -67,14 +108,16 @@ public actor ElementLocator {
         parent: String,
         visibleOnly: Bool = false,
         maxResults: Int = 0,
-    ) async throws -> [(element: Macosusesdk_Type_Element, path: [Int32])] {
+    ) async throws -> [(element: Macosusesdk_V1_Element, path: [Int32])] {
         logger.info("Finding elements in region for parent: \(parent, privacy: .private)")
 
-        // Parse parent to get PID and optional window ID
-        let (pid, _) = try parseParent(parent)
+        let scope = try await parseParent(parent)
 
         // Get elements with paths
-        let elementsWithPaths = try await traverseWithPaths(pid: pid, visibleOnly: visibleOnly)
+        let elementsWithPaths = try await traverseWithPaths(
+            scope: scope,
+            visibleOnly: visibleOnly,
+        )
 
         // Filter by region
         var regionElements = elementsWithPaths.filter { element, _ in
@@ -95,85 +138,280 @@ public actor ElementLocator {
         return limitedResults
     }
 
+    /// Refreshes one exact application/window scope without applying a
+    /// selector. Stable registry identities let callers continue tracking the
+    /// same AX object even when its mutable attributes stop matching.
+    func refreshElements(
+        parent: String,
+        visibleOnly: Bool = false,
+    ) async throws -> [(element: Macosusesdk_V1_Element, path: [Int32])] {
+        let scope = try await parseParent(parent)
+        return try await traverseWithPaths(
+            scope: scope,
+            visibleOnly: visibleOnly,
+        )
+    }
+
     /// Get a specific element by its resource name.
-    /// - Parameter name: Resource name like "applications/{pid}/elements/{elementId}"
+    /// - Parameter name: Exact application-owned element resource name
     /// - Returns: The element if found
-    public func getElement(name: String) async throws -> Macosusesdk_Type_Element {
+    public func getElement(name: String) async throws -> Macosusesdk_V1_Element {
         logger.info("Getting element: \(name, privacy: .public)")
 
-        // Parse the resource name
-        let components = name.split(separator: "/").map(String.init)
-        guard components.count == 4,
-              components[0] == "applications",
-              components[2] == "elements",
-              pid_t(components[1]) != nil
-        else {
-            throw RPCError(code: .invalidArgument, message: "Invalid element name format")
-        }
+        let resource = try parseElementResourceName(name)
+        let pid = try await resolveApplicationPID(applicationName: resource.applicationName)
 
-        let elementId = components[3]
-
-        // Get element from registry
-        guard let element = await ElementRegistry.shared.getElement(elementId) else {
+        // Resolve both the ephemeral element ID and its application owner.
+        guard let element = await elementRegistry.getElement(
+            resource.elementID,
+            expectedPID: pid,
+        ) else {
             throw RPCError(code: .notFound, message: "Element not found")
         }
 
         return element
     }
 
-    private func parseParent(_ parent: String) throws -> (pid: pid_t, windowId: CGWindowID?) {
-        let components = parent.split(separator: "/").map(String.init)
-
-        if components.count == 2, components[0] == "applications" {
-            // "applications/{pid}" - search entire application
-            guard let pid = pid_t(components[1]) else {
-                throw RPCError(code: .invalidArgument, message: "Invalid application PID")
-            }
-            return (pid, nil)
-        } else if components.count == 4, components[0] == "applications", components[2] == "windows" {
-            // "applications/{pid}/windows/{windowId}" - search within specific window
-            guard let pid = pid_t(components[1]), let windowId = CGWindowID(components[3]) else {
-                throw RPCError(code: .invalidArgument, message: "Invalid window resource name")
-            }
-            return (pid, windowId)
-        } else {
+    private func parseParent(_ parent: String) async throws -> DiscoveryScope {
+        let components = parent.split(separator: "/", omittingEmptySubsequences: false)
+        guard components.count == 2 || components.count == 4,
+              components[0] == "applications"
+        else {
             throw RPCError(code: .invalidArgument, message: "Invalid parent format")
+        }
+
+        let applicationName = components[0 ... 1].joined(separator: "/")
+        let application = try await resolveApplication(applicationName: applicationName)
+        if components.count == 2 {
+            return DiscoveryScope(
+                parent: parent,
+                applicationName: applicationName,
+                pid: application.pid,
+                processIdentity: application.processIdentity,
+                windowResourceID: nil,
+                windowID: nil,
+            )
+        }
+        guard components[2] == "windows" else {
+            throw RPCError(code: .invalidArgument, message: "Invalid window resource name")
+        }
+        let resourceID = try ParsingHelpers.validateResourceID(
+            String(components[3]),
+            field: "parent",
+        )
+        guard let windowRegistry else {
+            throw RPCError(code: .failedPrecondition, message: "Window resource resolver is unavailable")
+        }
+        guard let binding = await windowRegistry.resolveWindowBinding(
+            resourceID: resourceID,
+            applicationName: applicationName,
+            pid: application.pid,
+            processIdentity: application.processIdentity,
+        ) else {
+            throw RPCError(code: .notFound, message: "Window not found or binding is stale")
+        }
+        return DiscoveryScope(
+            parent: parent,
+            applicationName: applicationName,
+            pid: application.pid,
+            processIdentity: application.processIdentity,
+            windowResourceID: resourceID,
+            windowID: binding.windowID,
+        )
+    }
+
+    private func resolveApplicationPID(applicationName: String) async throws -> pid_t {
+        try await resolveApplication(applicationName: applicationName).pid
+    }
+
+    private func resolveApplication(
+        applicationName: String,
+    ) async throws -> (pid: pid_t, processIdentity: ApplicationProcessIdentity?) {
+        if legacyPIDResourceNamesForTests {
+            let pid = try ParsingHelpers.parsePID(fromName: applicationName)
+            await elementRegistry.bindApplication(name: applicationName, pid: pid)
+            return (pid, nil)
+        }
+
+        _ = try ParsingHelpers.parseOpaqueApplicationName(applicationName)
+        guard let stateStore else {
+            throw RPCError(code: .failedPrecondition, message: "Application state resolver is unavailable")
+        }
+        guard let application = await stateStore.getTarget(name: applicationName),
+              let identity = await stateStore.getApplicationProcessIdentity(name: applicationName),
+              system.isApplicationProcessRunning(identity)
+        else {
+            throw RPCError(code: .notFound, message: "Application not found or process identity is stale")
+        }
+        await elementRegistry.bindApplication(name: applicationName, pid: application.pid)
+        return (application.pid, identity)
+    }
+
+    private func parseElementResourceName(
+        _ name: String,
+    ) throws -> (applicationName: String, elementID: String) {
+        let components = name.split(separator: "/", omittingEmptySubsequences: false)
+        guard components.count == 4,
+              components[0] == "applications",
+              components[2] == "elements",
+              !components[3].isEmpty
+        else {
+            throw RPCError(code: .invalidArgument, message: "Invalid element resource name")
+        }
+        return (
+            components[0 ... 1].joined(separator: "/"),
+            String(components[3]),
+        )
+    }
+
+    private func traverseWithPaths(scope: DiscoveryScope, visibleOnly: Bool) async throws -> [(
+        Macosusesdk_V1_Element, [Int32],
+    )] {
+        let coordinator = automationCoordinator
+        let executor = discoveryExecutor
+        let registry = elementRegistry
+        let stateStore = stateStore
+        let windowRegistry = windowRegistry
+        let system = system
+        return try await coordinator.withOwnedTraversal {
+            let root = try Self.resolveExactRoot(scope: scope, system: system)
+            let snapshot: AccessibilityTraversalSnapshot = if let executor {
+                try await executor(scope.pid, root, visibleOnly)
+            } else {
+                try await Self.executeSDKTraversal(
+                    pid: scope.pid,
+                    root: root,
+                    visibleOnly: visibleOnly,
+                )
+            }
+            try Task.checkCancellation()
+            try await Self.revalidate(
+                scope: scope,
+                stateStore: stateStore,
+                windowRegistry: windowRegistry,
+                system: system,
+            )
+            let registeredElements = try await registry.registerTraversalElements(
+                snapshot.elements,
+                pid: scope.pid,
+                scope: scope.parent,
+                applicationName: scope.applicationName,
+            )
+            try Task.checkCancellation()
+            return registeredElements.map { ($0, $0.path) }
         }
     }
 
-    private func traverseWithPaths(pid: pid_t, visibleOnly: Bool) async throws -> [(
-        Macosusesdk_Type_Element, [Int32],
-    )] {
-        // AXUIElement operations are thread-safe (CFTypeRef), so no MainActor.run needed.
-        // This allows traversal to run on background threads without blocking the main thread.
-        let sdkResponse = try MacosUseSDK.traverseAccessibilityTree(pid: pid, onlyVisibleElements: visibleOnly)
-
-        var elementsWithPaths: [(Macosusesdk_Type_Element, [Int32])] = []
-
-        for elementData in sdkResponse.elements {
-            let protoElement = Macosusesdk_Type_Element.with {
-                $0.role = elementData.role
-                if let text = elementData.text { $0.text = text }
-                if let x = elementData.x { $0.x = x }
-                if let y = elementData.y { $0.y = y }
-                if let width = elementData.width { $0.width = width }
-                if let height = elementData.height { $0.height = height }
-                if let enabled = elementData.enabled { $0.enabled = enabled }
-                if let focused = elementData.focused { $0.focused = focused }
-                $0.attributes = elementData.attributes
+    private nonisolated static func executeSDKTraversal(
+        pid: pid_t,
+        root: AXUIElement?,
+        visibleOnly: Bool,
+    ) async throws -> AccessibilityTraversalSnapshot {
+        let task = Task.detached(priority: .userInitiated) {
+            let response = if let root {
+                try MacosUseSDK.traverseAccessibilitySubtree(
+                    pid: pid,
+                    rootElement: root,
+                    onlyVisibleElements: visibleOnly,
+                )
+            } else {
+                try MacosUseSDK.traverseAccessibilityTree(
+                    pid: pid,
+                    onlyVisibleElements: visibleOnly,
+                    shouldActivate: false,
+                )
             }
-
-            let elementId = await ElementRegistry.shared.registerElement(
-                protoElement, axElement: elementData.axElement?.element, pid: pid,
-            )
-            var elementWithId = protoElement
-            elementWithId.elementID = elementId
-
-            // Use the hierarchical path from SDK traversal
-            elementsWithPaths.append((elementWithId, elementData.path))
+            return AccessibilityTraversalSnapshot(response)
         }
+        return try await withTaskCancellationHandler {
+            try await task.value
+        } onCancel: {
+            task.cancel()
+        }
+    }
 
-        return elementsWithPaths
+    private nonisolated static func resolveExactRoot(
+        scope: DiscoveryScope,
+        system: SystemOperations,
+    ) throws -> AXUIElement? {
+        guard let windowID = scope.windowID else {
+            return nil
+        }
+        try Task.checkCancellation()
+        guard let applicationObject = system.createAXApplication(pid: scope.pid),
+              CFGetTypeID(applicationObject) == AXUIElementGetTypeID()
+        else {
+            throw RPCError(code: .notFound, message: "Window owner is unavailable")
+        }
+        let application = unsafeDowncast(applicationObject, to: AXUIElement.self)
+        try Task.checkCancellation()
+        var candidates = system.copyAXAttribute(
+            element: application,
+            attribute: kAXWindowsAttribute as String,
+        ) as? [AXUIElement]
+        if candidates?.isEmpty != false {
+            try Task.checkCancellation()
+            let children = system.copyAXAttribute(
+                element: application,
+                attribute: kAXChildrenAttribute as String,
+            ) as? [AXUIElement]
+            var windowChildren: [AXUIElement] = []
+            for child in children ?? [] {
+                try Task.checkCancellation()
+                if system.copyAXAttribute(
+                    element: child,
+                    attribute: kAXRoleAttribute as String,
+                ) as? String == kAXWindowRole as String {
+                    windowChildren.append(child)
+                }
+            }
+            candidates = windowChildren
+        }
+        for candidate in candidates ?? [] {
+            try Task.checkCancellation()
+            if system.getAXWindowID(element: candidate) == windowID {
+                return candidate
+            }
+        }
+        throw RPCError(code: .notFound, message: "Exact AX window not found")
+    }
+
+    private nonisolated static func revalidate(
+        scope: DiscoveryScope,
+        stateStore: AppStateStore?,
+        windowRegistry: WindowRegistry?,
+        system: SystemOperations,
+    ) async throws {
+        try Task.checkCancellation()
+        if let identity = scope.processIdentity {
+            guard let stateStore,
+                  await stateStore.getTarget(name: scope.applicationName)?.pid == scope.pid,
+                  await stateStore.getApplicationProcessIdentity(name: scope.applicationName) == identity,
+                  system.isApplicationProcessRunning(identity)
+            else {
+                throw RPCError(
+                    code: .notFound,
+                    message: "Application process identity became stale during traversal",
+                )
+            }
+        }
+        if let resourceID = scope.windowResourceID, let windowID = scope.windowID {
+            guard let windowRegistry,
+                  let binding = await windowRegistry.resolveWindowBinding(
+                      resourceID: resourceID,
+                      applicationName: scope.applicationName,
+                      pid: scope.pid,
+                      processIdentity: scope.processIdentity,
+                  ),
+                  binding.windowID == windowID
+            else {
+                throw RPCError(
+                    code: .notFound,
+                    message: "Window binding became stale during traversal",
+                )
+            }
+        }
+        try Task.checkCancellation()
     }
 
     /// Check if an element matches a selector.
@@ -183,7 +421,7 @@ public actor ElementLocator {
     /// - Returns: True if the element matches the selector
     /// - Note: Internal visibility for unit testing with @testable import.
     func matchesSelector(
-        _ element: Macosusesdk_Type_Element, selector: Macosusesdk_Type_ElementSelector,
+        _ element: Macosusesdk_V1_Element, selector: Macosusesdk_Type_ElementSelector,
     ) -> Bool {
         switch selector.criteria {
         case let .role(role):
@@ -233,7 +471,9 @@ public actor ElementLocator {
         case let .attributes(attributeSelector):
             for (key, expectedValue) in attributeSelector.attributes {
                 guard let actualValue = element.attributes[key] else { return false }
-                if actualValue != expectedValue { return false }
+                if actualValue != expectedValue {
+                    return false
+                }
             }
             return true
 
@@ -277,7 +517,7 @@ public actor ElementLocator {
     }
 
     private func isElementInRegion(
-        _ element: Macosusesdk_Type_Element, region: Macosusesdk_Type_Region,
+        _ element: Macosusesdk_V1_Element, region: Macosusesdk_Type_Region,
     )
         -> Bool
     {

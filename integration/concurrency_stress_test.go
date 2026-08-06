@@ -120,10 +120,10 @@ func TestConcurrencyStress(t *testing.T) {
 	if totalOps != expectedOps {
 		t.Errorf("Expected %d total operations, got %d", expectedOps, totalOps)
 	}
-	// Allow up to 10% errors (network issues, timing, etc.)
-	maxErrors := expectedOps / 10
-	if errorCount.Load() > maxErrors {
-		t.Errorf("Too many errors: %d (max allowed: %d)", errorCount.Load(), maxErrors)
+	// Every operation is a supported read-only RPC against one healthy local
+	// server. Any transport or backend error is a product failure.
+	if errorCount.Load() != 0 {
+		t.Errorf("Concurrent read operations returned %d errors; expected zero", errorCount.Load())
 	}
 
 	// Ensure server is still responsive after stress test
@@ -160,8 +160,10 @@ func TestConcurrencyMutationSafety(t *testing.T) {
 			content := time.Now().Format(time.RFC3339Nano) + "-" + string(rune('A'+workerID))
 			// Write to clipboard
 			_, err := client.WriteClipboard(ctx, &pb.WriteClipboardRequest{
-				Content:       &pb.ClipboardContent{Content: &pb.ClipboardContent_Text{Text: content}},
-				ClearExisting: true,
+				Content: &pb.ClipboardContent{
+					Type:    pb.ContentType_CONTENT_TYPE_TEXT.Enum(),
+					Content: &pb.ClipboardContent_Text{Text: content},
+				},
 			})
 			if err != nil {
 				results <- "write-error"

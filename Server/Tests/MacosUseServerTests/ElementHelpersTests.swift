@@ -29,13 +29,23 @@ final class ElementHelpersTests: XCTestCase {
         enabled: Bool = false,
         focused: Bool = false,
         attributes: [String: String] = [:],
-    ) -> Macosusesdk_Type_Element {
-        var element = Macosusesdk_Type_Element()
-        if let x { element.x = x }
-        if let y { element.y = y }
-        if let width { element.width = width }
-        if let height { element.height = height }
-        if let text { element.text = text }
+    ) -> Macosusesdk_V1_Element {
+        var element = Macosusesdk_V1_Element()
+        if let x {
+            element.x = x
+        }
+        if let y {
+            element.y = y
+        }
+        if let width {
+            element.width = width
+        }
+        if let height {
+            element.height = height
+        }
+        if let text {
+            element.text = text
+        }
         element.enabled = enabled
         element.focused = focused
         element.attributes = attributes

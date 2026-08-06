@@ -326,9 +326,9 @@ func (*ElementSelector_Compound) isElementSelector_Criteria() {}
 type PositionSelector struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// X coordinate in Global Display Coordinates.
-	X float64 `protobuf:"fixed64,1,opt,name=x,proto3" json:"x,omitempty"`
+	X *float64 `protobuf:"fixed64,1,opt,name=x,proto3,oneof" json:"x,omitempty"`
 	// Y coordinate in Global Display Coordinates.
-	Y float64 `protobuf:"fixed64,2,opt,name=y,proto3" json:"y,omitempty"`
+	Y *float64 `protobuf:"fixed64,2,opt,name=y,proto3,oneof" json:"y,omitempty"`
 	// Tolerance for matching position (in pixels).
 	Tolerance     float64 `protobuf:"fixed64,3,opt,name=tolerance,proto3" json:"tolerance,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -366,15 +366,15 @@ func (*PositionSelector) Descriptor() ([]byte, []int) {
 }
 
 func (x *PositionSelector) GetX() float64 {
-	if x != nil {
-		return x.X
+	if x != nil && x.X != nil {
+		return *x.X
 	}
 	return 0
 }
 
 func (x *PositionSelector) GetY() float64 {
-	if x != nil {
-		return x.Y
+	if x != nil && x.Y != nil {
+		return *x.Y
 	}
 	return 0
 }
@@ -504,11 +504,13 @@ const file_macosusesdk_type_selector_proto_rawDesc = "" +
 	"attributes\x12@\n" +
 	"\bcompound\x18\a \x01(\v2\".macosusesdk.type.CompoundSelectorH\x00R\bcompoundB\n" +
 	"\n" +
-	"\bcriteria\"[\n" +
-	"\x10PositionSelector\x12\x11\n" +
-	"\x01x\x18\x01 \x01(\x01B\x03\xe0A\x02R\x01x\x12\x11\n" +
-	"\x01y\x18\x02 \x01(\x01B\x03\xe0A\x02R\x01y\x12!\n" +
-	"\ttolerance\x18\x03 \x01(\x01B\x03\xe0A\x01R\ttolerance\"\xac\x01\n" +
+	"\bcriteria\"q\n" +
+	"\x10PositionSelector\x12\x16\n" +
+	"\x01x\x18\x01 \x01(\x01B\x03\xe0A\x02H\x00R\x01x\x88\x01\x01\x12\x16\n" +
+	"\x01y\x18\x02 \x01(\x01B\x03\xe0A\x02H\x01R\x01y\x88\x01\x01\x12!\n" +
+	"\ttolerance\x18\x03 \x01(\x01B\x03\xe0A\x01R\ttoleranceB\x04\n" +
+	"\x02_xB\x04\n" +
+	"\x02_y\"\xac\x01\n" +
 	"\x11AttributeSelector\x12X\n" +
 	"\n" +
 	"attributes\x18\x01 \x03(\v23.macosusesdk.type.AttributeSelector.AttributesEntryB\x03\xe0A\x02R\n" +
@@ -576,6 +578,7 @@ func file_macosusesdk_type_selector_proto_init() {
 		(*ElementSelector_Attributes)(nil),
 		(*ElementSelector_Compound)(nil),
 	}
+	file_macosusesdk_type_selector_proto_msgTypes[1].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

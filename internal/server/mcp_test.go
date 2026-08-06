@@ -433,51 +433,6 @@ func TestConfigDefaults(t *testing.T) {
 	}
 }
 
-// TestGestureTypeValues tests that gesture type enum values are accessible
-func TestGestureTypeValues(t *testing.T) {
-	gestures := map[string]pb.Gesture_GestureType{
-		"pinch":       pb.Gesture_GESTURE_TYPE_PINCH,
-		"zoom":        pb.Gesture_GESTURE_TYPE_ZOOM,
-		"rotate":      pb.Gesture_GESTURE_TYPE_ROTATE,
-		"swipe":       pb.Gesture_GESTURE_TYPE_SWIPE,
-		"force_touch": pb.Gesture_GESTURE_TYPE_FORCE_TOUCH,
-	}
-
-	for name, val := range gestures {
-		if val == pb.Gesture_GESTURE_TYPE_UNSPECIFIED {
-			t.Errorf("Gesture type %s should not be UNSPECIFIED", name)
-		}
-		// Check the values are distinct
-		for name2, val2 := range gestures {
-			if name != name2 && val == val2 {
-				t.Errorf("Gesture types %s and %s have same value", name, name2)
-			}
-		}
-	}
-}
-
-// TestGestureDirectionValues tests that gesture direction enum values are accessible
-func TestGestureDirectionValues(t *testing.T) {
-	directions := map[string]pb.Gesture_Direction{
-		"up":    pb.Gesture_DIRECTION_UP,
-		"down":  pb.Gesture_DIRECTION_DOWN,
-		"left":  pb.Gesture_DIRECTION_LEFT,
-		"right": pb.Gesture_DIRECTION_RIGHT,
-	}
-
-	for name, val := range directions {
-		if val == pb.Gesture_DIRECTION_UNSPECIFIED {
-			t.Errorf("Direction %s should not be UNSPECIFIED", name)
-		}
-		// Check the values are distinct
-		for name2, val2 := range directions {
-			if name != name2 && val == val2 {
-				t.Errorf("Directions %s and %s have same value", name, name2)
-			}
-		}
-	}
-}
-
 // TestAllToolsExist validates all expected MCP tools are defined
 func TestAllToolsExist(t *testing.T) {
 	expectedTools := []string{
@@ -509,10 +464,16 @@ func TestAllToolsExist(t *testing.T) {
 		"clipboard",
 		"run",
 		"get_display",
+		"create_macro",
+		"get_macro",
+		"list_macros",
+		"update_macro",
+		"delete_macro",
+		"execute_macro",
 	}
 
-	if len(expectedTools) != 23 {
-		t.Errorf("Expected 23 tools but defined %d in test", len(expectedTools))
+	if len(expectedTools) != 29 {
+		t.Errorf("Expected 29 tools but defined %d in test", len(expectedTools))
 	}
 
 	server := &MCPServer{tools: make(map[string]*Tool)}
@@ -585,38 +546,6 @@ func TestToolNaming(t *testing.T) {
 	}
 }
 
-// TestClickButtonMapping tests the button string to enum mapping
-func TestClickButtonMapping(t *testing.T) {
-	tests := []struct {
-		button   string
-		expected pb.MouseClick_ClickType
-	}{
-		{"left", pb.MouseClick_CLICK_TYPE_LEFT},
-		{"right", pb.MouseClick_CLICK_TYPE_RIGHT},
-		{"middle", pb.MouseClick_CLICK_TYPE_MIDDLE},
-		{"LEFT", pb.MouseClick_CLICK_TYPE_LEFT}, // case insensitive
-		{"Right", pb.MouseClick_CLICK_TYPE_RIGHT},
-		{"", pb.MouseClick_CLICK_TYPE_LEFT},        // default
-		{"unknown", pb.MouseClick_CLICK_TYPE_LEFT}, // default for unknown
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.button, func(t *testing.T) {
-			clickType := pb.MouseClick_CLICK_TYPE_LEFT // default
-			switch strings.ToLower(tt.button) {
-			case "right":
-				clickType = pb.MouseClick_CLICK_TYPE_RIGHT
-			case "middle":
-				clickType = pb.MouseClick_CLICK_TYPE_MIDDLE
-			}
-
-			if clickType != tt.expected {
-				t.Errorf("Button %q mapped to %v, want %v", tt.button, clickType, tt.expected)
-			}
-		})
-	}
-}
-
 // TestModifierStringMapping tests modifier key string to enum mapping
 func TestModifierStringMapping(t *testing.T) {
 	modifierMap := map[string]pb.KeyPress_Modifier{
@@ -670,30 +599,6 @@ func TestCoordinateValidation(t *testing.T) {
 				t.Errorf("Coordinate (%f, %f) should be valid", tt.x, tt.y)
 			}
 		})
-	}
-}
-
-// TestClickCountValidation tests click count defaulting
-func TestClickCountValidation(t *testing.T) {
-	tests := []struct {
-		input    int32
-		expected int32
-	}{
-		{0, 1},  // default to 1
-		{1, 1},  // single click
-		{2, 2},  // double click
-		{3, 3},  // triple click
-		{-1, 1}, // negative defaults to 1
-	}
-
-	for _, tt := range tests {
-		clickCount := tt.input
-		if clickCount <= 0 {
-			clickCount = 1
-		}
-		if clickCount != tt.expected {
-			t.Errorf("Click count %d normalized to %d, want %d", tt.input, clickCount, tt.expected)
-		}
 	}
 }
 
@@ -760,45 +665,6 @@ func TestPaginationTokenHandling(t *testing.T) {
 				if len(tt.pageToken) > 0 && len(tt.pageToken) < 3 {
 					t.Errorf("Page token too short to be valid opaque token: %s", tt.pageToken)
 				}
-			}
-		})
-	}
-}
-
-// TestListWindowsPaginationParams tests that list_windows accepts pagination parameters
-func TestListWindowsPaginationParams(t *testing.T) {
-	tests := []struct {
-		name       string
-		paramsJSON string
-		wantErr    bool
-	}{
-		{
-			name:       "no params",
-			paramsJSON: `{}`,
-			wantErr:    false,
-		},
-		{
-			name:       "with pagination",
-			paramsJSON: `{"page_size": 50, "page_token": "abc123"}`,
-			wantErr:    false,
-		},
-		{
-			name:       "with parent and pagination",
-			paramsJSON: `{"parent": "applications/123", "page_size": 25, "page_token": "xyz789"}`,
-			wantErr:    false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var params struct {
-				Parent    string `json:"parent"`
-				PageSize  int32  `json:"page_size"`
-				PageToken string `json:"page_token"`
-			}
-			err := json.Unmarshal([]byte(tt.paramsJSON), &params)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Unmarshal error = %v, wantErr = %v", err, tt.wantErr)
 			}
 		})
 	}
@@ -1278,9 +1144,10 @@ func TestValidateAndProcessInitialize_ProtocolVersions(t *testing.T) {
 			wantError:       false,
 		},
 		{
-			name:            "empty version defaults to current",
-			protocolVersion: "",
-			wantError:       false,
+			name:              "empty version is invalid",
+			protocolVersion:   "",
+			wantError:         true,
+			wantErrorContains: "protocolVersion",
 		},
 		{
 			name:            "unsupported version negotiates to current",
@@ -1301,7 +1168,13 @@ func TestValidateAndProcessInitialize_ProtocolVersions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			params := map[string]any{}
+			params := map[string]any{
+				"capabilities": map[string]any{},
+				"clientInfo": map[string]any{
+					"name":    "test-client",
+					"version": "1.0.0",
+				},
+			}
 			if tt.protocolVersion != "" {
 				params["protocolVersion"] = tt.protocolVersion
 			}
@@ -1329,8 +1202,8 @@ func TestValidateAndProcessInitialize_ProtocolVersions(t *testing.T) {
 				if resp.Error == nil {
 					t.Fatalf("expected error response, got result: %s", string(resp.Result))
 				}
-				if resp.Error.Code != transport.ErrCodeInvalidRequest {
-					t.Errorf("error code = %d, want %d", resp.Error.Code, transport.ErrCodeInvalidRequest)
+				if resp.Error.Code != transport.ErrCodeInvalidParams {
+					t.Errorf("error code = %d, want %d", resp.Error.Code, transport.ErrCodeInvalidParams)
 				}
 				if !strings.Contains(resp.Error.Message, tt.wantErrorContains) {
 					t.Errorf("error message = %q, want to contain %q", resp.Error.Message, tt.wantErrorContains)
@@ -1386,21 +1259,23 @@ func TestValidateAndProcessInitialize_ClientInfo(t *testing.T) {
 			name: "missing client info",
 			params: map[string]any{
 				"protocolVersion": "2025-11-25",
+				"capabilities":    map[string]any{},
 			},
-			wantResult: true,
+			wantResult: false,
 		},
 		{
 			name: "empty client info",
 			params: map[string]any{
 				"protocolVersion": "2025-11-25",
 				"clientInfo":      map[string]any{},
+				"capabilities":    map[string]any{},
 			},
-			wantResult: true,
+			wantResult: false,
 		},
 		{
 			name:       "no params at all",
 			params:     nil,
-			wantResult: true,
+			wantResult: false,
 		},
 	}
 
@@ -1435,6 +1310,8 @@ func TestValidateAndProcessInitialize_ClientInfo(t *testing.T) {
 				if resp.Error != nil {
 					t.Fatalf("unexpected error: %s", resp.Error.Message)
 				}
+			} else if resp == nil || resp.Error == nil || resp.Error.Code != transport.ErrCodeInvalidParams {
+				t.Fatalf("expected invalid params response, got %+v", resp)
 			}
 		})
 	}
@@ -1451,6 +1328,7 @@ func TestValidateAndProcessInitialize_ResponseFormat(t *testing.T) {
 
 	params := map[string]any{
 		"protocolVersion": "2025-11-25",
+		"capabilities":    map[string]any{},
 		"clientInfo": map[string]any{
 			"name":    "test-client",
 			"version": "1.0.0",
@@ -1531,6 +1409,11 @@ func TestValidateAndProcessInitialize_UnsupportedVersionNegotiation(t *testing.T
 
 	params := map[string]any{
 		"protocolVersion": "invalid-version",
+		"capabilities":    map[string]any{},
+		"clientInfo": map[string]any{
+			"name":    "test-client",
+			"version": "1.0.0",
+		},
 	}
 	paramsJSON, _ := json.Marshal(params)
 
@@ -1576,6 +1459,7 @@ func TestHandleHTTPMessage_Initialize_Integration(t *testing.T) {
 	// Test with valid params
 	params := map[string]any{
 		"protocolVersion": "2025-11-25",
+		"capabilities":    map[string]any{},
 		"clientInfo": map[string]any{
 			"name":    "test-client",
 			"version": "1.0.0",
@@ -2638,7 +2522,7 @@ func TestMCPPromptsList(t *testing.T) {
 			"name":        "navigate_to_element",
 			"description": "Navigate to and click an accessibility element",
 			"arguments": []map[string]any{
-				{"name": "selector", "description": "Element selector criteria: role, text, or text_contains", "required": true},
+				{"name": "selector", "description": "One key:value selector, such as role:AXButton, text:Save, or text_contains:submit", "required": true},
 			},
 		},
 		{
@@ -2730,7 +2614,7 @@ func TestMCPPromptsListResponseStructure(t *testing.T) {
 					"name": "navigate_to_element",
 					"description": "Navigate to and click an accessibility element",
 					"arguments": [
-						{"name": "selector", "description": "Element selector criteria: role, text, or text_contains", "required": true}
+						{"name": "selector", "description": "One key:value selector, such as role:AXButton, text:Save, or text_contains:submit", "required": true}
 					]
 				},
 				{
@@ -2853,9 +2737,9 @@ func TestMCPPromptsGetNavigateToElement(t *testing.T) {
 
 			content := fmt.Sprintf(`Find and interact with a UI element using the accessibility tree.
 
-1. First, call find_elements with parent set to the target application/window. Use exactly one of the flat top-level fields role, text, or text_contains to match the element. Match value for this step: %s
-   Example: {"parent": "applications/123/windows/456", "role": "button"}
-2. Once found, use click_element with the same parent and element ID
+1. First, call find_elements with parent set to the exact application/window resource and selector set to one key:value expression. Selector for this step: %s
+   Example: {"parent": "applications/<application>/windows/<window>", "selector": "role:AXButton"}
+2. Once found, use click_element with the same parent and element ID. The handle remains bound to that exact parent and AX identity; rediscover it if the UI or owner changes.
 3. Verify the action completed successfully by checking for state changes
 
 If the element is not immediately visible, you may need to:
@@ -3090,7 +2974,7 @@ func TestMCPPromptsGetMissingArguments(t *testing.T) {
 			name:              "navigate_to_element without selector",
 			promptName:        "navigate_to_element",
 			args:              map[string]any{},
-			wantContentSubstr: "Match value for this step:", // empty selector is allowed
+			wantContentSubstr: "Selector for this step:", // empty selector is allowed
 		},
 		{
 			name:              "fill_form without fields uses empty object",
@@ -3126,9 +3010,9 @@ func TestMCPPromptsGetMissingArguments(t *testing.T) {
 				}
 				content = fmt.Sprintf(`Find and interact with a UI element using the accessibility tree.
 
-1. First, call find_elements with parent set to the target application/window. Use exactly one of the flat top-level fields role, text, or text_contains to match the element. Match value for this step: %s
-   Example: {"parent": "applications/123/windows/456", "role": "button"}
-2. Once found, use click_element with the same parent and element ID`, selector)
+1. First, call find_elements with parent set to the exact application/window resource and selector set to one key:value expression. Selector for this step: %s
+   Example: {"parent": "applications/<application>/windows/<window>", "selector": "role:AXButton"}
+2. Once found, use click_element with the same parent and element ID. The handle remains bound to that exact parent and AX identity; rediscover it if the UI or owner changes.`, selector)
 
 			case "fill_form":
 				fieldsStr := "{}"
@@ -3300,9 +3184,9 @@ func TestMCPPromptsArgumentSubstitution(t *testing.T) {
 				}
 				content = fmt.Sprintf(`Find and interact with a UI element using the accessibility tree.
 
-1. First, call find_elements with parent set to the target application/window. Use exactly one of the flat top-level fields role, text, or text_contains to match the element. Match value for this step: %s
-   Example: {"parent": "applications/123/windows/456", "role": "button"}
-2. Once found, use click_element with the same parent and element ID`, selector)
+1. First, call find_elements with parent set to the exact application/window resource and selector set to one key:value expression. Selector for this step: %s
+   Example: {"parent": "applications/<application>/windows/<window>", "selector": "role:AXButton"}
+2. Once found, use click_element with the same parent and element ID. The handle remains bound to that exact parent and AX identity; rediscover it if the UI or owner changes.`, selector)
 
 			case "fill_form":
 				fieldsStr := "{}"
@@ -3743,9 +3627,9 @@ func getTestToolRegistry(t *testing.T) map[string]*Tool {
 func TestToolSchemaCompleteness(t *testing.T) {
 	tools := getTestToolRegistry(t)
 
-	// Verify we have exactly 23 tools
-	if len(tools) != 23 {
-		t.Errorf("Expected 23 tools, got %d", len(tools))
+	// Verify we have exactly 29 tools
+	if len(tools) != 29 {
+		t.Errorf("Expected 29 tools, got %d", len(tools))
 	}
 
 	var issues []string
@@ -3868,7 +3752,7 @@ func TestToolSchemaEnumCompleteness(t *testing.T) {
 			"button": {"left", "right", "middle"},
 		},
 		"open_app": {
-			"mode": {"launch_or_activate", "force_new_instance", "activate_only"},
+			"mode": {"launch_or_activate", "force_new_instance"},
 		},
 		"clipboard": {
 			"action": {"get", "set", "clear"},
@@ -4186,18 +4070,18 @@ func TestToolSchemaDescriptionQuality(t *testing.T) {
 	}
 }
 
-// TestToolSchemaToolCount validates that exactly 23 tools are registered.
+// TestToolSchemaToolCount validates that exactly 29 tools are registered.
 // This ensures no tools are accidentally removed or duplicated.
 func TestToolSchemaToolCount(t *testing.T) {
 	tools := getTestToolRegistry(t)
 
-	if len(tools) != 23 {
+	if len(tools) != 29 {
 		// List all tool names for debugging
 		var names []string
 		for name := range tools {
 			names = append(names, name)
 		}
-		t.Errorf("Expected 23 tools, got %d. Tools: %v", len(tools), names)
+		t.Errorf("Expected 29 tools, got %d. Tools: %v", len(tools), names)
 	}
 }
 
@@ -4238,6 +4122,14 @@ func TestToolSchemaToolCategories(t *testing.T) {
 			"clipboard",
 			"run",
 			"get_display",
+		},
+		"Macro": {
+			"create_macro",
+			"get_macro",
+			"list_macros",
+			"update_macro",
+			"delete_macro",
+			"execute_macro",
 		},
 	}
 

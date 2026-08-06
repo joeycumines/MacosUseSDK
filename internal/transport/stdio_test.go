@@ -7,8 +7,10 @@ package transport
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -37,6 +39,7 @@ func TestReadMessage(t *testing.T) {
 		name     string
 		input    string
 		wantErr  bool
+		wantCode int
 		wantMeth string
 	}{
 		{
@@ -52,14 +55,16 @@ func TestReadMessage(t *testing.T) {
 			wantMeth: "notify",
 		},
 		{
-			name:    "invalid json",
-			input:   `{not valid json}` + "\n",
-			wantErr: true,
+			name:     "invalid json",
+			input:    `{not valid json}` + "\n",
+			wantErr:  true,
+			wantCode: ErrCodeParseError,
 		},
 		{
-			name:    "empty line",
-			input:   "\n",
-			wantErr: true,
+			name:     "empty line",
+			input:    "\n",
+			wantErr:  true,
+			wantCode: ErrCodeParseError,
 		},
 	}
 
@@ -76,6 +81,13 @@ func TestReadMessage(t *testing.T) {
 			}
 
 			if tt.wantErr {
+				var readErr *MessageReadError
+				if !errors.As(err, &readErr) {
+					t.Fatalf("ReadMessage() error type = %T, want *MessageReadError", err)
+				}
+				if readErr.Code != tt.wantCode || readErr.Message != "Parse error" {
+					t.Fatalf("ReadMessage() protocol error = %+v, want code=%d message=Parse error", readErr, tt.wantCode)
+				}
 				return
 			}
 
@@ -95,8 +107,8 @@ func TestReadMessage_EOF(t *testing.T) {
 	if err == nil {
 		t.Error("Expected error for EOF, got nil")
 	}
-	if !strings.Contains(err.Error(), "stdin closed") {
-		t.Errorf("Error should mention stdin closed, got: %v", err)
+	if !errors.Is(err, io.EOF) {
+		t.Errorf("ReadMessage() error = %v, want io.EOF", err)
 	}
 }
 
@@ -178,6 +190,51 @@ func TestClose(t *testing.T) {
 
 	if err := transport.Close(); err != nil {
 		t.Errorf("Close() again error = %v", err)
+	}
+}
+
+func TestStdioTransportClose_UnblocksOwnedReader(t *testing.T) {
+	input := newBlockingReadCloser(nil)
+	var stdout bytes.Buffer
+	transport := NewStdioTransport(input, &stdout)
+
+	readResult := make(chan error, 1)
+	go func() {
+		_, err := transport.ReadMessage()
+		readResult <- err
+	}()
+	<-input.entered
+
+	if err := transport.Close(); err != nil {
+		t.Fatalf("Close() error = %v", err)
+	}
+	select {
+	case err := <-readResult:
+		if err == nil || !strings.Contains(err.Error(), "closed") {
+			t.Fatalf("ReadMessage() error = %v, want closed transport failure", err)
+		}
+	case <-time.After(250 * time.Millisecond):
+		// Release the deficient implementation's read before failing so the test
+		// itself never leaves a blocked goroutine behind.
+		_ = input.Close()
+		<-readResult
+		t.Fatal("Close did not unblock the transport-owned reader")
+	}
+}
+
+func TestStdioTransportClose_PreservesOwnedReaderFailure(t *testing.T) {
+	closeFailure := errors.New("injected stdin close failure")
+	input := newBlockingReadCloser(closeFailure)
+	var stdout bytes.Buffer
+	transport := NewStdioTransport(input, &stdout)
+
+	firstErr := transport.Close()
+	if !errors.Is(firstErr, closeFailure) {
+		t.Fatalf("first Close() error = %v, want owned reader failure", firstErr)
+	}
+	secondErr := transport.Close()
+	if !errors.Is(secondErr, closeFailure) || secondErr.Error() != firstErr.Error() {
+		t.Fatalf("second Close() error = %v, want preserved %q", secondErr, firstErr)
 	}
 }
 
@@ -324,10 +381,75 @@ func TestServe(t *testing.T) {
 	}
 }
 
+func TestServe_RecoversAfterMalformedFrame(t *testing.T) {
+	input := "{malformed-json\n" + `{"jsonrpc":"2.0","id":7,"method":"test"}` + "\n"
+	stdin := strings.NewReader(input)
+	var stdout bytes.Buffer
+	transport := NewStdioTransport(stdin, &stdout)
+
+	callCount := 0
+	err := transport.Serve(func(msg *Message) (*Message, error) {
+		callCount++
+		return &Message{JSONRPC: "2.0", ID: msg.ID, Result: json.RawMessage(`{"ok":true}`)}, nil
+	})
+	if err != nil {
+		t.Fatalf("Serve() error = %v", err)
+	}
+	if callCount != 1 {
+		t.Fatalf("handler call count = %d, want 1", callCount)
+	}
+
+	lines := strings.Split(strings.TrimSpace(stdout.String()), "\n")
+	if len(lines) != 2 {
+		t.Fatalf("response line count = %d, want 2: %q", len(lines), stdout.String())
+	}
+	var parseResponse Message
+	if err := json.Unmarshal([]byte(lines[0]), &parseResponse); err != nil {
+		t.Fatalf("decode parse response: %v", err)
+	}
+	if parseResponse.Error == nil || parseResponse.Error.Code != ErrCodeParseError || string(parseResponse.ID) != "null" {
+		t.Fatalf("parse response = %+v, want code=%d id=null", parseResponse, ErrCodeParseError)
+	}
+	var validResponse Message
+	if err := json.Unmarshal([]byte(lines[1]), &validResponse); err != nil {
+		t.Fatalf("decode valid response: %v", err)
+	}
+	if string(validResponse.ID) != "7" || string(validResponse.Result) != `{"ok":true}` {
+		t.Fatalf("valid response after malformed frame = %+v", validResponse)
+	}
+}
+
 type failWriter struct{}
 
 func (f *failWriter) Write(p []byte) (n int, err error) {
 	return 0, io.ErrUnexpectedEOF
+}
+
+type blockingReadCloser struct {
+	closeErr error
+	entered  chan struct{}
+	closed   chan struct{}
+	enter    sync.Once
+	close    sync.Once
+}
+
+func newBlockingReadCloser(closeErr error) *blockingReadCloser {
+	return &blockingReadCloser{
+		closeErr: closeErr,
+		entered:  make(chan struct{}),
+		closed:   make(chan struct{}),
+	}
+}
+
+func (r *blockingReadCloser) Read([]byte) (int, error) {
+	r.enter.Do(func() { close(r.entered) })
+	<-r.closed
+	return 0, io.ErrClosedPipe
+}
+
+func (r *blockingReadCloser) Close() error {
+	r.close.Do(func() { close(r.closed) })
+	return r.closeErr
 }
 
 func TestWriteMessage_WriterError(t *testing.T) {

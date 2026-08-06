@@ -9,7 +9,7 @@ final class ScriptExecutorSecurityTests: XCTestCase {
     // MARK: - AppleScript Security Tests
 
     func testAppleScriptBlocksRmRfRoot() async throws {
-        let executor = ScriptExecutor.shared
+        let executor = ScriptExecutor(mutationGate: PhysicalDesktopMutationGate())
 
         do {
             _ = try await executor.executeAppleScript(
@@ -38,7 +38,7 @@ final class ScriptExecutorSecurityTests: XCTestCase {
     }
 
     func testAppleScriptBlocksSudo() async throws {
-        let executor = ScriptExecutor.shared
+        let executor = ScriptExecutor(mutationGate: PhysicalDesktopMutationGate())
 
         do {
             _ = try await executor.executeAppleScript(
@@ -67,7 +67,7 @@ final class ScriptExecutorSecurityTests: XCTestCase {
     }
 
     func testAppleScriptAllowsSafeCommands() async throws {
-        let executor = ScriptExecutor.shared
+        let executor = ScriptExecutor(mutationGate: PhysicalDesktopMutationGate())
 
         // This should not throw a security error (although it may fail compilation)
         do {
@@ -87,7 +87,7 @@ final class ScriptExecutorSecurityTests: XCTestCase {
     // MARK: - JXA Security Tests
 
     func testJXABlocksRmRfRoot() async throws {
-        let executor = ScriptExecutor.shared
+        let executor = ScriptExecutor(mutationGate: PhysicalDesktopMutationGate())
 
         do {
             _ = try await executor.executeJavaScript(
@@ -106,7 +106,7 @@ final class ScriptExecutorSecurityTests: XCTestCase {
     }
 
     func testJXABlocksSudo() async throws {
-        let executor = ScriptExecutor.shared
+        let executor = ScriptExecutor(mutationGate: PhysicalDesktopMutationGate())
 
         do {
             _ = try await executor.executeJavaScript(
@@ -128,7 +128,7 @@ final class ScriptExecutorSecurityTests: XCTestCase {
     // MARK: - Shell Command Security Tests
 
     func testShellBlocksRmRfRoot() async throws {
-        let executor = ScriptExecutor.shared
+        let executor = ScriptExecutor(mutationGate: PhysicalDesktopMutationGate())
 
         do {
             _ = try await executor.executeShellCommand("rm -rf /")
@@ -145,7 +145,7 @@ final class ScriptExecutorSecurityTests: XCTestCase {
     }
 
     func testShellBlocksSudoPrefix() async throws {
-        let executor = ScriptExecutor.shared
+        let executor = ScriptExecutor(mutationGate: PhysicalDesktopMutationGate())
 
         do {
             _ = try await executor.executeShellCommand("sudo ls /")
@@ -161,7 +161,7 @@ final class ScriptExecutorSecurityTests: XCTestCase {
     }
 
     func testShellBlocksSudoInArgs() async throws {
-        let executor = ScriptExecutor.shared
+        let executor = ScriptExecutor(mutationGate: PhysicalDesktopMutationGate())
 
         do {
             _ = try await executor.executeShellCommand("ls", args: ["sudo", "/"])
@@ -176,7 +176,7 @@ final class ScriptExecutorSecurityTests: XCTestCase {
     }
 
     func testShellBlocksSudoInCommandChain() async throws {
-        let executor = ScriptExecutor.shared
+        let executor = ScriptExecutor(mutationGate: PhysicalDesktopMutationGate())
 
         // Command chains like "echo test && sudo rm foo" should be blocked
         do {
@@ -193,7 +193,7 @@ final class ScriptExecutorSecurityTests: XCTestCase {
     }
 
     func testShellAllowsSafeCommands() async throws {
-        let executor = ScriptExecutor.shared
+        let executor = ScriptExecutor(mutationGate: PhysicalDesktopMutationGate())
 
         // This should work without security violation
         let result = try await executor.executeShellCommand("echo 'hello world'")
@@ -202,7 +202,7 @@ final class ScriptExecutorSecurityTests: XCTestCase {
     }
 
     func testShellAllowsSafeRm() async throws {
-        let executor = ScriptExecutor.shared
+        let executor = ScriptExecutor(mutationGate: PhysicalDesktopMutationGate())
 
         // rm without -rf / should be allowed (even if the file doesn't exist)
         do {

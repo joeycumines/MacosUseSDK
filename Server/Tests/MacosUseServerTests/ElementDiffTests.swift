@@ -29,7 +29,7 @@ final class ElementDiffTests: XCTestCase {
 
     /// Test that identical elements produce no changes.
     func testIdenticalElementsProduceNoChanges() {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.role = "button"
             $0.text = "Click me"
             $0.x = 100
@@ -46,8 +46,8 @@ final class ElementDiffTests: XCTestCase {
 
     /// Test that role changes are detected.
     func testRoleChangeDetected() {
-        let old = Macosusesdk_Type_Element.with { $0.role = "button" }
-        let new = Macosusesdk_Type_Element.with { $0.role = "checkbox" }
+        let old = Macosusesdk_V1_Element.with { $0.role = "button" }
+        let new = Macosusesdk_V1_Element.with { $0.role = "checkbox" }
 
         let changes = service.computeElementChanges(old: old, new: new)
         XCTAssertEqual(changes.count, 1)
@@ -58,11 +58,11 @@ final class ElementDiffTests: XCTestCase {
 
     /// Test that text changes are detected.
     func testTextChangeDetected() {
-        let old = Macosusesdk_Type_Element.with {
+        let old = Macosusesdk_V1_Element.with {
             $0.role = "staticText"
             $0.text = "Hello"
         }
-        let new = Macosusesdk_Type_Element.with {
+        let new = Macosusesdk_V1_Element.with {
             $0.role = "staticText"
             $0.text = "World"
         }
@@ -76,12 +76,12 @@ final class ElementDiffTests: XCTestCase {
 
     /// Test that position changes are detected.
     func testPositionChangeDetected() {
-        let old = Macosusesdk_Type_Element.with {
+        let old = Macosusesdk_V1_Element.with {
             $0.role = "button"
             $0.x = 100
             $0.y = 200
         }
-        let new = Macosusesdk_Type_Element.with {
+        let new = Macosusesdk_V1_Element.with {
             $0.role = "button"
             $0.x = 150
             $0.y = 250
@@ -103,12 +103,12 @@ final class ElementDiffTests: XCTestCase {
 
     /// Test that size changes are detected.
     func testSizeChangeDetected() {
-        let old = Macosusesdk_Type_Element.with {
+        let old = Macosusesdk_V1_Element.with {
             $0.role = "window"
             $0.width = 800
             $0.height = 600
         }
-        let new = Macosusesdk_Type_Element.with {
+        let new = Macosusesdk_V1_Element.with {
             $0.role = "window"
             $0.width = 1024
             $0.height = 768
@@ -130,11 +130,11 @@ final class ElementDiffTests: XCTestCase {
 
     /// Test that enabled state changes are detected.
     func testEnabledChangeDetected() {
-        let old = Macosusesdk_Type_Element.with {
+        let old = Macosusesdk_V1_Element.with {
             $0.role = "button"
             $0.enabled = true
         }
-        let new = Macosusesdk_Type_Element.with {
+        let new = Macosusesdk_V1_Element.with {
             $0.role = "button"
             $0.enabled = false
         }
@@ -148,11 +148,11 @@ final class ElementDiffTests: XCTestCase {
 
     /// Test that focused state changes are detected.
     func testFocusedChangeDetected() {
-        let old = Macosusesdk_Type_Element.with {
+        let old = Macosusesdk_V1_Element.with {
             $0.role = "textField"
             $0.focused = false
         }
-        let new = Macosusesdk_Type_Element.with {
+        let new = Macosusesdk_V1_Element.with {
             $0.role = "textField"
             $0.focused = true
         }
@@ -166,14 +166,14 @@ final class ElementDiffTests: XCTestCase {
 
     /// Test that multiple changes are detected simultaneously.
     func testMultipleChangesDetected() {
-        let old = Macosusesdk_Type_Element.with {
+        let old = Macosusesdk_V1_Element.with {
             $0.role = "button"
             $0.text = "Submit"
             $0.x = 100
             $0.y = 200
             $0.enabled = true
         }
-        let new = Macosusesdk_Type_Element.with {
+        let new = Macosusesdk_V1_Element.with {
             $0.role = "button"
             $0.text = "Cancel"
             $0.x = 200
@@ -192,11 +192,11 @@ final class ElementDiffTests: XCTestCase {
 
     /// Test handling of missing optional fields in old element.
     func testMissingOptionalInOld() {
-        let old = Macosusesdk_Type_Element.with {
+        let old = Macosusesdk_V1_Element.with {
             $0.role = "button"
             // text, x, y not set
         }
-        let new = Macosusesdk_Type_Element.with {
+        let new = Macosusesdk_V1_Element.with {
             $0.role = "button"
             $0.text = "New text"
             $0.x = 100
@@ -212,12 +212,12 @@ final class ElementDiffTests: XCTestCase {
 
     /// Test handling of missing optional fields in new element.
     func testMissingOptionalInNew() {
-        let old = Macosusesdk_Type_Element.with {
+        let old = Macosusesdk_V1_Element.with {
             $0.role = "button"
             $0.text = "Old text"
             $0.x = 100
         }
-        let new = Macosusesdk_Type_Element.with {
+        let new = Macosusesdk_V1_Element.with {
             $0.role = "button"
             // text, x not set
         }
@@ -232,11 +232,11 @@ final class ElementDiffTests: XCTestCase {
 
     /// Test that element_id changes are NOT tracked (ephemeral).
     func testElementIdNotTracked() {
-        let old = Macosusesdk_Type_Element.with {
+        let old = Macosusesdk_V1_Element.with {
             $0.role = "button"
             $0.elementID = "old-id-123"
         }
-        let new = Macosusesdk_Type_Element.with {
+        let new = Macosusesdk_V1_Element.with {
             $0.role = "button"
             $0.elementID = "new-id-456"
         }
@@ -247,11 +247,11 @@ final class ElementDiffTests: XCTestCase {
 
     /// Test that path changes are NOT tracked (used as key).
     func testPathNotTracked() {
-        let old = Macosusesdk_Type_Element.with {
+        let old = Macosusesdk_V1_Element.with {
             $0.role = "button"
             $0.path = [0, 1, 2]
         }
-        let new = Macosusesdk_Type_Element.with {
+        let new = Macosusesdk_V1_Element.with {
             $0.role = "button"
             $0.path = [0, 1, 3]
         }
@@ -264,7 +264,7 @@ final class ElementDiffTests: XCTestCase {
 
     /// Test that non-empty paths generate proper keys.
     func testElementPathKeyWithNonEmptyPath() {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.role = "button"
             $0.path = [0, 1, 2]
         }
@@ -275,7 +275,7 @@ final class ElementDiffTests: XCTestCase {
 
     /// Test that empty paths generate fallback keys using role and position.
     func testElementPathKeyWithEmptyPath() {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.role = "AXApplication"
             $0.path = []
             $0.x = 0
@@ -290,13 +290,13 @@ final class ElementDiffTests: XCTestCase {
 
     /// Test that two elements with empty paths but different positions get different keys.
     func testElementPathKeyEmptyPathsWithDifferentPositions() {
-        let element1 = Macosusesdk_Type_Element.with {
+        let element1 = Macosusesdk_V1_Element.with {
             $0.role = "AXButton"
             $0.path = []
             $0.x = 100
             $0.y = 200
         }
-        let element2 = Macosusesdk_Type_Element.with {
+        let element2 = Macosusesdk_V1_Element.with {
             $0.role = "AXButton"
             $0.path = []
             $0.x = 300
@@ -310,13 +310,13 @@ final class ElementDiffTests: XCTestCase {
 
     /// Test that two elements with empty paths but different roles get different keys.
     func testElementPathKeyEmptyPathsWithDifferentRoles() {
-        let element1 = Macosusesdk_Type_Element.with {
+        let element1 = Macosusesdk_V1_Element.with {
             $0.role = "AXButton"
             $0.path = []
             $0.x = 100
             $0.y = 200
         }
-        let element2 = Macosusesdk_Type_Element.with {
+        let element2 = Macosusesdk_V1_Element.with {
             $0.role = "AXStaticText"
             $0.path = []
             $0.x = 100
@@ -332,12 +332,12 @@ final class ElementDiffTests: XCTestCase {
 
     /// Test that small floating-point differences (less than 1 pixel) are ignored.
     func testSmallPositionDifferenceIgnored() {
-        let old = Macosusesdk_Type_Element.with {
+        let old = Macosusesdk_V1_Element.with {
             $0.role = "button"
             $0.x = 100.0
             $0.y = 200.0
         }
-        let new = Macosusesdk_Type_Element.with {
+        let new = Macosusesdk_V1_Element.with {
             $0.role = "button"
             $0.x = 100.5 // Less than 1 pixel difference
             $0.y = 200.3 // Less than 1 pixel difference
@@ -349,12 +349,12 @@ final class ElementDiffTests: XCTestCase {
 
     /// Test that significant position differences are detected.
     func testSignificantPositionDifferenceDetected() {
-        let old = Macosusesdk_Type_Element.with {
+        let old = Macosusesdk_V1_Element.with {
             $0.role = "button"
             $0.x = 100.0
             $0.y = 200.0
         }
-        let new = Macosusesdk_Type_Element.with {
+        let new = Macosusesdk_V1_Element.with {
             $0.role = "button"
             $0.x = 102.0 // More than 1 pixel difference
             $0.y = 200.0
@@ -367,12 +367,12 @@ final class ElementDiffTests: XCTestCase {
 
     /// Test that small size differences are ignored.
     func testSmallSizeDifferenceIgnored() {
-        let old = Macosusesdk_Type_Element.with {
+        let old = Macosusesdk_V1_Element.with {
             $0.role = "window"
             $0.width = 800.0
             $0.height = 600.0
         }
-        let new = Macosusesdk_Type_Element.with {
+        let new = Macosusesdk_V1_Element.with {
             $0.role = "window"
             $0.width = 800.4 // Less than 1 pixel
             $0.height = 599.7 // Less than 1 pixel
@@ -386,7 +386,7 @@ final class ElementDiffTests: XCTestCase {
 
     /// Test that two elements with empty paths, same position, but different sizes get different keys.
     func testElementPathKeyEmptyPathsWithDifferentSizes() {
-        let element1 = Macosusesdk_Type_Element.with {
+        let element1 = Macosusesdk_V1_Element.with {
             $0.role = "AXButton"
             $0.path = []
             $0.x = 100
@@ -394,7 +394,7 @@ final class ElementDiffTests: XCTestCase {
             $0.width = 80
             $0.height = 30
         }
-        let element2 = Macosusesdk_Type_Element.with {
+        let element2 = Macosusesdk_V1_Element.with {
             $0.role = "AXButton"
             $0.path = []
             $0.x = 100
@@ -410,7 +410,7 @@ final class ElementDiffTests: XCTestCase {
 
     /// Test that NaN coordinates don't crash and produce safe keys.
     func testElementPathKeyWithNaNCoordinates() {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.role = "AXButton"
             $0.path = []
             $0.x = Double.nan
@@ -429,11 +429,11 @@ final class ElementDiffTests: XCTestCase {
 
     /// Test that exact 1-pixel boundary is detected as a change.
     func testExactEpsilonBoundary() {
-        let old = Macosusesdk_Type_Element.with {
+        let old = Macosusesdk_V1_Element.with {
             $0.role = "button"
             $0.x = 100.0
         }
-        let new = Macosusesdk_Type_Element.with {
+        let new = Macosusesdk_V1_Element.with {
             $0.role = "button"
             $0.x = 101.0 // Exactly 1 pixel difference (at boundary)
         }

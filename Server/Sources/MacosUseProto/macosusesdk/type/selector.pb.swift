@@ -194,10 +194,24 @@ public nonisolated struct Macosusesdk_Type_PositionSelector: Sendable {
   // methods supported on all messages.
 
   /// X coordinate in Global Display Coordinates.
-  public var x: Double = 0
+  public var x: Double {
+    get {_x ?? 0}
+    set {_x = newValue}
+  }
+  /// Returns true if `x` has been explicitly set.
+  public var hasX: Bool {self._x != nil}
+  /// Clears the value of `x`. Subsequent reads from it will return its default value.
+  public mutating func clearX() {self._x = nil}
 
   /// Y coordinate in Global Display Coordinates.
-  public var y: Double = 0
+  public var y: Double {
+    get {_y ?? 0}
+    set {_y = newValue}
+  }
+  /// Returns true if `y` has been explicitly set.
+  public var hasY: Bool {self._y != nil}
+  /// Clears the value of `y`. Subsequent reads from it will return its default value.
+  public mutating func clearY() {self._y = nil}
 
   /// Tolerance for matching position (in pixels).
   public var tolerance: Double = 0
@@ -205,6 +219,9 @@ public nonisolated struct Macosusesdk_Type_PositionSelector: Sendable {
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
+
+  fileprivate var _x: Double? = nil
+  fileprivate var _y: Double? = nil
 }
 
 /// Select element by accessibility attributes.
@@ -435,8 +452,8 @@ nonisolated extension Macosusesdk_Type_PositionSelector: SwiftProtobuf.Message, 
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularDoubleField(value: &self.x) }()
-      case 2: try { try decoder.decodeSingularDoubleField(value: &self.y) }()
+      case 1: try { try decoder.decodeSingularDoubleField(value: &self._x) }()
+      case 2: try { try decoder.decodeSingularDoubleField(value: &self._y) }()
       case 3: try { try decoder.decodeSingularDoubleField(value: &self.tolerance) }()
       default: break
       }
@@ -444,12 +461,16 @@ nonisolated extension Macosusesdk_Type_PositionSelector: SwiftProtobuf.Message, 
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.x.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.x, fieldNumber: 1)
-    }
-    if self.y.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.y, fieldNumber: 2)
-    }
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._x {
+      try visitor.visitSingularDoubleField(value: v, fieldNumber: 1)
+    } }()
+    try { if let v = self._y {
+      try visitor.visitSingularDoubleField(value: v, fieldNumber: 2)
+    } }()
     if self.tolerance.bitPattern != 0 {
       try visitor.visitSingularDoubleField(value: self.tolerance, fieldNumber: 3)
     }
@@ -457,8 +478,8 @@ nonisolated extension Macosusesdk_Type_PositionSelector: SwiftProtobuf.Message, 
   }
 
   public static func ==(lhs: Macosusesdk_Type_PositionSelector, rhs: Macosusesdk_Type_PositionSelector) -> Bool {
-    if lhs.x != rhs.x {return false}
-    if lhs.y != rhs.y {return false}
+    if lhs._x != rhs._x {return false}
+    if lhs._y != rhs._y {return false}
     if lhs.tolerance != rhs.tolerance {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true

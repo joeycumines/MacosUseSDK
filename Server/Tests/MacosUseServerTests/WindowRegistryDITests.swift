@@ -1,11 +1,12 @@
 import CoreGraphics
 import Foundation
+import GRPCCore
 @testable import MacosUseServer
 import Testing
 
 struct WindowRegistryDITests {
     final class MockSystemOperations: SystemOperations {
-        let windowList: [[String: Any]]
+        var windowList: [[String: Any]]
 
         init(windowList: [[String: Any]] = []) {
             self.windowList = windowList
@@ -40,10 +41,6 @@ struct WindowRegistryDITests {
         }
 
         func getAXWindowID(element _: AnyObject) -> CGWindowID? {
-            nil
-        }
-
-        func fetchAXWindowInfo(pid _: Int32, windowId _: CGWindowID, expectedBounds _: CGRect) -> WindowInfoResult? {
             nil
         }
     }
@@ -108,6 +105,109 @@ struct WindowRegistryDITests {
         #expect(info != nil, "getWindow should return an entry")
         #expect(info?.windowID == 99, "WindowID should match the mocked value")
         #expect(info?.ownerPID == 7, "Owner PID should match the mocked value")
+    }
+
+    @Test
+    func `malformed owner geometry fails without replacing the last valid snapshot`() async throws {
+        let initial = WindowRegistryDITests.makeWindowDict(
+            windowID: 99,
+            ownerPID: 7,
+            x: 1,
+            y: 2,
+            w: 300,
+            h: 200,
+            title: "Stable",
+            layer: 5,
+            isOnScreen: true,
+        )
+        let mock = MockSystemOperations(windowList: [initial])
+        let registry = WindowRegistry(system: mock)
+        try await registry.refreshWindows(forPID: 7)
+
+        let malformedBounds: [[String: Any]] = [
+            ["X": 1.0, "Y": 2.0, "Height": 200.0],
+            ["X": Double.infinity, "Y": 2.0, "Width": 300.0, "Height": 200.0],
+            ["X": 1.0, "Y": 2.0, "Width": -1.0, "Height": 200.0],
+            [
+                "X": Double.greatestFiniteMagnitude,
+                "Y": 2.0,
+                "Width": Double.greatestFiniteMagnitude,
+                "Height": 200.0,
+            ],
+        ]
+
+        for bounds in malformedBounds {
+            var malformed = initial
+            malformed[kCGWindowBounds as String] = bounds
+            mock.windowList = [malformed]
+            do {
+                try await registry.refreshWindows(forPID: 7)
+                Issue.record("Malformed owner bounds were published: \(bounds)")
+            } catch let error as RPCError {
+                #expect(error.code == .unavailable)
+            } catch {
+                Issue.record("Malformed owner bounds returned a non-RPC error: \(error)")
+            }
+
+            let retained = await registry.getLastKnownWindow(99, ownerPID: 7)
+            #expect(retained?.bounds == CGRect(x: 1, y: 2, width: 300, height: 200))
+        }
+    }
+
+    @Test
+    func `duplicate owner window IDs fail the complete snapshot`() async throws {
+        let first = WindowRegistryDITests.makeWindowDict(
+            windowID: 99,
+            ownerPID: 7,
+            x: 1,
+            y: 2,
+            w: 300,
+            h: 200,
+            title: "First",
+            layer: 5,
+            isOnScreen: true,
+        )
+        let second = WindowRegistryDITests.makeWindowDict(
+            windowID: 99,
+            ownerPID: 7,
+            x: 50,
+            y: 60,
+            w: 700,
+            h: 500,
+            title: "Second",
+            layer: 6,
+            isOnScreen: true,
+        )
+        let registry = WindowRegistry(system: MockSystemOperations(windowList: [first, second]))
+
+        do {
+            try await registry.refreshWindows(forPID: 7)
+            Issue.record("Duplicate owner window IDs were collapsed into one arbitrary row")
+        } catch let error as RPCError {
+            #expect(error.code == .unavailable)
+        } catch {
+            Issue.record("Duplicate owner window IDs returned a non-RPC error: \(error)")
+        }
+        #expect(await registry.getLastKnownWindow(99, ownerPID: 7) == nil)
+    }
+
+    @Test
+    func `zero-sized finite window geometry remains representable`() async throws {
+        let zeroSized = WindowRegistryDITests.makeWindowDict(
+            windowID: 99,
+            ownerPID: 7,
+            x: -100,
+            y: -200,
+            w: 0,
+            h: 0,
+            title: "Zero",
+            layer: 5,
+            isOnScreen: false,
+        )
+        let registry = WindowRegistry(system: MockSystemOperations(windowList: [zeroSized]))
+
+        try await registry.refreshWindows(forPID: 7)
+        #expect(await registry.getLastKnownWindow(99, ownerPID: 7)?.bounds == CGRect(x: -100, y: -200, width: 0, height: 0))
     }
 }
 

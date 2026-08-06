@@ -13,7 +13,7 @@ final class ElementClickPointTests: XCTestCase {
     // MARK: - Center Calculation
 
     func testClickPoint_standardElement_returnsCenter() throws {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.x = 100
             $0.y = 100
             $0.width = 50
@@ -25,7 +25,7 @@ final class ElementClickPointTests: XCTestCase {
     }
 
     func testClickPoint_largeElement_returnsCenter() throws {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.x = 0
             $0.y = 0
             $0.width = 1920
@@ -37,7 +37,7 @@ final class ElementClickPointTests: XCTestCase {
     }
 
     func testClickPoint_oddDimensions_returnsFractionalCenter() throws {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.x = 10
             $0.y = 20
             $0.width = 31
@@ -50,7 +50,7 @@ final class ElementClickPointTests: XCTestCase {
 
     func testClickPoint_negativeCoordinates_returnsCorrectCenter() throws {
         // Multi-monitor setups can have negative coordinates
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.x = -1920
             $0.y = -100
             $0.width = 800
@@ -63,7 +63,7 @@ final class ElementClickPointTests: XCTestCase {
 
     func testClickPoint_zeroWidthAndHeight_throwsFailedPrecondition() throws {
         // Zero-size elements have no determinable click point and are rejected
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.x = 500
             $0.y = 500
             $0.width = 0
@@ -78,7 +78,7 @@ final class ElementClickPointTests: XCTestCase {
     // MARK: - Zero-Size Rejection
 
     func testClickPoint_zeroWidth_throwsFailedPrecondition() {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.x = 100
             $0.y = 100
             $0.width = 0
@@ -93,7 +93,7 @@ final class ElementClickPointTests: XCTestCase {
     }
 
     func testClickPoint_zeroHeight_throwsFailedPrecondition() {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.x = 100
             $0.y = 100
             $0.width = 50
@@ -106,7 +106,7 @@ final class ElementClickPointTests: XCTestCase {
     }
 
     func testClickPoint_missingWidth_throwsFailedPrecondition() {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.x = 100
             $0.y = 100
             // width not set
@@ -119,7 +119,7 @@ final class ElementClickPointTests: XCTestCase {
     }
 
     func testClickPoint_missingHeight_throwsFailedPrecondition() {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.x = 100
             $0.y = 100
             $0.width = 50
@@ -132,7 +132,7 @@ final class ElementClickPointTests: XCTestCase {
     }
 
     func testClickPoint_missingX_throwsFailedPrecondition() {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             // x not set
             $0.y = 100
             $0.width = 50
@@ -145,7 +145,7 @@ final class ElementClickPointTests: XCTestCase {
     }
 
     func testClickPoint_missingY_throwsFailedPrecondition() {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.x = 100
             // y not set
             $0.width = 50
@@ -161,7 +161,7 @@ final class ElementClickPointTests: XCTestCase {
 
     func testClickPoint_precisionMaintained() throws {
         // Ensure floating point precision is maintained in center calculation
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.x = 100.25
             $0.y = 200.75
             $0.width = 50.5
@@ -176,7 +176,7 @@ final class ElementClickPointTests: XCTestCase {
 
     func testClickPoint_negativeWidth_throwsFailedPrecondition() {
         // Negative width is invalid for click targeting
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.x = 100
             $0.y = 100
             $0.width = -50
@@ -189,7 +189,7 @@ final class ElementClickPointTests: XCTestCase {
     }
 
     func testClickPoint_negativeHeight_throwsFailedPrecondition() {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.x = 100
             $0.y = 100
             $0.width = 50
@@ -210,7 +210,7 @@ final class ElementClickPointScreenTests: XCTestCase {
         let mainBounds = CGDisplayBounds(CGMainDisplayID())
         let centerX = mainBounds.origin.x + mainBounds.width / 2.0
         let centerY = mainBounds.origin.y + mainBounds.height / 2.0
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.x = centerX - 25
             $0.y = centerY - 25
             $0.width = 50
@@ -220,7 +220,7 @@ final class ElementClickPointScreenTests: XCTestCase {
     }
 
     func testClickPointOnScreen_farOffScreen_isFalse() {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.x = -100_000
             $0.y = -100_000
             $0.width = 10
@@ -230,7 +230,7 @@ final class ElementClickPointScreenTests: XCTestCase {
     }
 
     func testClickPointOnScreen_zeroSizeElement_isFalse() {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.x = 100
             $0.y = 100
             $0.width = 0

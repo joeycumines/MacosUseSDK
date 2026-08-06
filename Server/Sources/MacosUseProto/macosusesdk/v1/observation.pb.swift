@@ -88,64 +88,76 @@ public nonisolated enum Macosusesdk_V1_ObservationType: SwiftProtobuf.Enum, Swif
 }
 
 /// An observation monitors UI changes and streams events.
-public nonisolated struct Macosusesdk_V1_Observation: Sendable {
+public nonisolated struct Macosusesdk_V1_Observation: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
   /// Resource name in the format "applications/{application}/observations/{observation}".
-  public var name: String = String()
+  public var name: String {
+    get {_storage._name}
+    set {_uniqueStorage()._name = newValue}
+  }
 
   /// Type of observation.
-  public var type: Macosusesdk_V1_ObservationType = .unspecified
+  public var type: Macosusesdk_V1_ObservationType {
+    get {_storage._type}
+    set {_uniqueStorage()._type = newValue}
+  }
 
   /// Current state of the observation.
-  public var state: Macosusesdk_V1_Observation.State = .unspecified
+  public var state: Macosusesdk_V1_Observation.State {
+    get {_storage._state}
+    set {_uniqueStorage()._state = newValue}
+  }
 
   /// When the observation was created.
   public var createTime: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {_createTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
-    set {_createTime = newValue}
+    get {_storage._createTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_uniqueStorage()._createTime = newValue}
   }
   /// Returns true if `createTime` has been explicitly set.
-  public var hasCreateTime: Bool {self._createTime != nil}
+  public var hasCreateTime: Bool {_storage._createTime != nil}
   /// Clears the value of `createTime`. Subsequent reads from it will return its default value.
-  public mutating func clearCreateTime() {self._createTime = nil}
+  public mutating func clearCreateTime() {_uniqueStorage()._createTime = nil}
 
   /// When the observation started.
   public var startTime: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {_startTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
-    set {_startTime = newValue}
+    get {_storage._startTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_uniqueStorage()._startTime = newValue}
   }
   /// Returns true if `startTime` has been explicitly set.
-  public var hasStartTime: Bool {self._startTime != nil}
+  public var hasStartTime: Bool {_storage._startTime != nil}
   /// Clears the value of `startTime`. Subsequent reads from it will return its default value.
-  public mutating func clearStartTime() {self._startTime = nil}
+  public mutating func clearStartTime() {_uniqueStorage()._startTime = nil}
 
   /// When the observation ended (if completed or cancelled).
   public var endTime: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {_endTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
-    set {_endTime = newValue}
+    get {_storage._endTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_uniqueStorage()._endTime = newValue}
   }
   /// Returns true if `endTime` has been explicitly set.
-  public var hasEndTime: Bool {self._endTime != nil}
+  public var hasEndTime: Bool {_storage._endTime != nil}
   /// Clears the value of `endTime`. Subsequent reads from it will return its default value.
-  public mutating func clearEndTime() {self._endTime = nil}
+  public mutating func clearEndTime() {_uniqueStorage()._endTime = nil}
 
   /// Filter configuration for the observation.
   public var filter: Macosusesdk_V1_ObservationFilter {
-    get {_filter ?? Macosusesdk_V1_ObservationFilter()}
-    set {_filter = newValue}
+    get {_storage._filter ?? Macosusesdk_V1_ObservationFilter()}
+    set {_uniqueStorage()._filter = newValue}
   }
   /// Returns true if `filter` has been explicitly set.
-  public var hasFilter: Bool {self._filter != nil}
+  public var hasFilter: Bool {_storage._filter != nil}
   /// Clears the value of `filter`. Subsequent reads from it will return its default value.
-  public mutating func clearFilter() {self._filter = nil}
+  public mutating func clearFilter() {_uniqueStorage()._filter = nil}
 
   /// Whether observation polling should activate (bring to foreground) the
   /// target application on each poll cycle. When false (the default), polling
   /// is performed passively without disturbing window ordering.
-  public var activate: Bool = false
+  public var activate: Bool {
+    get {_storage._activate}
+    set {_uniqueStorage()._activate = newValue}
+  }
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -214,10 +226,7 @@ public nonisolated struct Macosusesdk_V1_Observation: Sendable {
 
   public init() {}
 
-  fileprivate var _createTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
-  fileprivate var _startTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
-  fileprivate var _endTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
-  fileprivate var _filter: Macosusesdk_V1_ObservationFilter? = nil
+  fileprivate var _storage = _StorageClass.defaultInstance
 }
 
 /// Filter for observations.
@@ -238,79 +247,98 @@ public nonisolated struct Macosusesdk_V1_ObservationFilter: Sendable {
   /// Specific attributes to observe (for attribute change observations).
   public var attributes: [String] = []
 
+  /// Whether to restrict observation to the focused element only.
+  public var focusOnly: Bool = false
+
+  /// Whether to include element geometry in change detection.
+  public var geometry: Bool = false
+
+  /// Whether to observe application activation state changes.
+  /// Reserved for FUNC-012; silently ignored during FUNC-004.
+  public var activation: Bool = false
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
 }
 
 /// An event from an observation.
-public nonisolated struct Macosusesdk_V1_ObservationEvent: Sendable {
+public nonisolated struct Macosusesdk_V1_ObservationEvent: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
   /// Observation that generated this event.
-  public var observation: String = String()
+  public var observation: String {
+    get {_storage._observation}
+    set {_uniqueStorage()._observation = newValue}
+  }
 
   /// When the event occurred.
   public var eventTime: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {_eventTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
-    set {_eventTime = newValue}
+    get {_storage._eventTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_uniqueStorage()._eventTime = newValue}
   }
   /// Returns true if `eventTime` has been explicitly set.
-  public var hasEventTime: Bool {self._eventTime != nil}
+  public var hasEventTime: Bool {_storage._eventTime != nil}
   /// Clears the value of `eventTime`. Subsequent reads from it will return its default value.
-  public mutating func clearEventTime() {self._eventTime = nil}
+  public mutating func clearEventTime() {_uniqueStorage()._eventTime = nil}
 
   /// Event sequence number (monotonically increasing per observation).
-  public var sequence: Int64 = 0
+  public var sequence: Int64 {
+    get {_storage._sequence}
+    set {_uniqueStorage()._sequence = newValue}
+  }
 
   /// The specific event type and data.
-  public var eventType: Macosusesdk_V1_ObservationEvent.OneOf_EventType? = nil
+  public var eventType: OneOf_EventType? {
+    get {return _storage._eventType}
+    set {_uniqueStorage()._eventType = newValue}
+  }
 
   /// Element was added.
   public var elementAdded: Macosusesdk_V1_ElementEvent {
     get {
-      if case .elementAdded(let v)? = eventType {return v}
+      if case .elementAdded(let v)? = _storage._eventType {return v}
       return Macosusesdk_V1_ElementEvent()
     }
-    set {eventType = .elementAdded(newValue)}
+    set {_uniqueStorage()._eventType = .elementAdded(newValue)}
   }
 
   /// Element was removed.
   public var elementRemoved: Macosusesdk_V1_ElementEvent {
     get {
-      if case .elementRemoved(let v)? = eventType {return v}
+      if case .elementRemoved(let v)? = _storage._eventType {return v}
       return Macosusesdk_V1_ElementEvent()
     }
-    set {eventType = .elementRemoved(newValue)}
+    set {_uniqueStorage()._eventType = .elementRemoved(newValue)}
   }
 
   /// Element was modified.
   public var elementModified: Macosusesdk_V1_ElementModified {
     get {
-      if case .elementModified(let v)? = eventType {return v}
+      if case .elementModified(let v)? = _storage._eventType {return v}
       return Macosusesdk_V1_ElementModified()
     }
-    set {eventType = .elementModified(newValue)}
+    set {_uniqueStorage()._eventType = .elementModified(newValue)}
   }
 
   /// Window event occurred.
   public var windowEvent: Macosusesdk_V1_WindowEvent {
     get {
-      if case .windowEvent(let v)? = eventType {return v}
+      if case .windowEvent(let v)? = _storage._eventType {return v}
       return Macosusesdk_V1_WindowEvent()
     }
-    set {eventType = .windowEvent(newValue)}
+    set {_uniqueStorage()._eventType = .windowEvent(newValue)}
   }
 
   /// Application event occurred.
   public var applicationEvent: Macosusesdk_V1_ApplicationEvent {
     get {
-      if case .applicationEvent(let v)? = eventType {return v}
+      if case .applicationEvent(let v)? = _storage._eventType {return v}
       return Macosusesdk_V1_ApplicationEvent()
     }
-    set {eventType = .applicationEvent(newValue)}
+    set {_uniqueStorage()._eventType = .applicationEvent(newValue)}
   }
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -332,7 +360,7 @@ public nonisolated struct Macosusesdk_V1_ObservationEvent: Sendable {
 
   public init() {}
 
-  fileprivate var _eventTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+  fileprivate var _storage = _StorageClass.defaultInstance
 }
 
 /// Event related to an element.
@@ -342,8 +370,8 @@ public nonisolated struct Macosusesdk_V1_ElementEvent: Sendable {
   // methods supported on all messages.
 
   /// The element.
-  public var element: Macosusesdk_Type_Element {
-    get {_element ?? Macosusesdk_Type_Element()}
+  public var element: Macosusesdk_V1_Element {
+    get {_element ?? Macosusesdk_V1_Element()}
     set {_element = newValue}
   }
   /// Returns true if `element` has been explicitly set.
@@ -355,7 +383,7 @@ public nonisolated struct Macosusesdk_V1_ElementEvent: Sendable {
 
   public init() {}
 
-  fileprivate var _element: Macosusesdk_Type_Element? = nil
+  fileprivate var _element: Macosusesdk_V1_Element? = nil
 }
 
 /// Event for an element modification.
@@ -365,8 +393,8 @@ public nonisolated struct Macosusesdk_V1_ElementModified: @unchecked Sendable {
   // methods supported on all messages.
 
   /// The element before modification.
-  public var oldElement: Macosusesdk_Type_Element {
-    get {_storage._oldElement ?? Macosusesdk_Type_Element()}
+  public var oldElement: Macosusesdk_V1_Element {
+    get {_storage._oldElement ?? Macosusesdk_V1_Element()}
     set {_uniqueStorage()._oldElement = newValue}
   }
   /// Returns true if `oldElement` has been explicitly set.
@@ -375,8 +403,8 @@ public nonisolated struct Macosusesdk_V1_ElementModified: @unchecked Sendable {
   public mutating func clearOldElement() {_uniqueStorage()._oldElement = nil}
 
   /// The element after modification.
-  public var newElement: Macosusesdk_Type_Element {
-    get {_storage._newElement ?? Macosusesdk_Type_Element()}
+  public var newElement: Macosusesdk_V1_Element {
+    get {_storage._newElement ?? Macosusesdk_V1_Element()}
     set {_uniqueStorage()._newElement = newValue}
   }
   /// Returns true if `newElement` has been explicitly set.
@@ -607,66 +635,116 @@ nonisolated extension Macosusesdk_V1_Observation: SwiftProtobuf.Message, SwiftPr
   public static let protoMessageName: String = _protobuf_package + ".Observation"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}type\0\u{1}state\0\u{3}create_time\0\u{3}start_time\0\u{3}end_time\0\u{1}filter\0\u{1}activate\0")
 
+  fileprivate class _StorageClass {
+    var _name: String = String()
+    var _type: Macosusesdk_V1_ObservationType = .unspecified
+    var _state: Macosusesdk_V1_Observation.State = .unspecified
+    var _createTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+    var _startTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+    var _endTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+    var _filter: Macosusesdk_V1_ObservationFilter? = nil
+    var _activate: Bool = false
+
+      // This property is used as the initial default value for new instances of the type.
+      // The type itself is protecting the reference to its storage via CoW semantics.
+      // This will force a copy to be made of this reference when the first mutation occurs;
+      // hence, it is safe to mark this as `nonisolated(unsafe)`.
+      static nonisolated(unsafe) let defaultInstance = _StorageClass()
+
+    private init() {}
+
+    init(copying source: _StorageClass) {
+      _name = source._name
+      _type = source._type
+      _state = source._state
+      _createTime = source._createTime
+      _startTime = source._startTime
+      _endTime = source._endTime
+      _filter = source._filter
+      _activate = source._activate
+    }
+  }
+
+  fileprivate mutating func _uniqueStorage() -> _StorageClass {
+    if !isKnownUniquelyReferenced(&_storage) {
+      _storage = _StorageClass(copying: _storage)
+    }
+    return _storage
+  }
+
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
-      case 2: try { try decoder.decodeSingularEnumField(value: &self.type) }()
-      case 3: try { try decoder.decodeSingularEnumField(value: &self.state) }()
-      case 4: try { try decoder.decodeSingularMessageField(value: &self._createTime) }()
-      case 5: try { try decoder.decodeSingularMessageField(value: &self._startTime) }()
-      case 6: try { try decoder.decodeSingularMessageField(value: &self._endTime) }()
-      case 7: try { try decoder.decodeSingularMessageField(value: &self._filter) }()
-      case 8: try { try decoder.decodeSingularBoolField(value: &self.activate) }()
-      default: break
+    _ = _uniqueStorage()
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      while let fieldNumber = try decoder.nextFieldNumber() {
+        // The use of inline closures is to circumvent an issue where the compiler
+        // allocates stack space for every case branch when no optimizations are
+        // enabled. https://github.com/apple/swift-protobuf/issues/1034
+        switch fieldNumber {
+        case 1: try { try decoder.decodeSingularStringField(value: &_storage._name) }()
+        case 2: try { try decoder.decodeSingularEnumField(value: &_storage._type) }()
+        case 3: try { try decoder.decodeSingularEnumField(value: &_storage._state) }()
+        case 4: try { try decoder.decodeSingularMessageField(value: &_storage._createTime) }()
+        case 5: try { try decoder.decodeSingularMessageField(value: &_storage._startTime) }()
+        case 6: try { try decoder.decodeSingularMessageField(value: &_storage._endTime) }()
+        case 7: try { try decoder.decodeSingularMessageField(value: &_storage._filter) }()
+        case 8: try { try decoder.decodeSingularBoolField(value: &_storage._activate) }()
+        default: break
+        }
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    if !self.name.isEmpty {
-      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
-    }
-    if self.type != .unspecified {
-      try visitor.visitSingularEnumField(value: self.type, fieldNumber: 2)
-    }
-    if self.state != .unspecified {
-      try visitor.visitSingularEnumField(value: self.state, fieldNumber: 3)
-    }
-    try { if let v = self._createTime {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
-    } }()
-    try { if let v = self._startTime {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
-    } }()
-    try { if let v = self._endTime {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
-    } }()
-    try { if let v = self._filter {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
-    } }()
-    if self.activate != false {
-      try visitor.visitSingularBoolField(value: self.activate, fieldNumber: 8)
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every if/case branch local when no optimizations
+      // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+      // https://github.com/apple/swift-protobuf/issues/1182
+      if !_storage._name.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._name, fieldNumber: 1)
+      }
+      if _storage._type != .unspecified {
+        try visitor.visitSingularEnumField(value: _storage._type, fieldNumber: 2)
+      }
+      if _storage._state != .unspecified {
+        try visitor.visitSingularEnumField(value: _storage._state, fieldNumber: 3)
+      }
+      try { if let v = _storage._createTime {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
+      } }()
+      try { if let v = _storage._startTime {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
+      } }()
+      try { if let v = _storage._endTime {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
+      } }()
+      try { if let v = _storage._filter {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
+      } }()
+      if _storage._activate != false {
+        try visitor.visitSingularBoolField(value: _storage._activate, fieldNumber: 8)
+      }
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_Observation, rhs: Macosusesdk_V1_Observation) -> Bool {
-    if lhs.name != rhs.name {return false}
-    if lhs.type != rhs.type {return false}
-    if lhs.state != rhs.state {return false}
-    if lhs._createTime != rhs._createTime {return false}
-    if lhs._startTime != rhs._startTime {return false}
-    if lhs._endTime != rhs._endTime {return false}
-    if lhs._filter != rhs._filter {return false}
-    if lhs.activate != rhs.activate {return false}
+    if lhs._storage !== rhs._storage {
+      let storagesAreEqual: Bool = withExtendedLifetime((lhs._storage, rhs._storage)) { (_args: (_StorageClass, _StorageClass)) in
+        let _storage = _args.0
+        let rhs_storage = _args.1
+        if _storage._name != rhs_storage._name {return false}
+        if _storage._type != rhs_storage._type {return false}
+        if _storage._state != rhs_storage._state {return false}
+        if _storage._createTime != rhs_storage._createTime {return false}
+        if _storage._startTime != rhs_storage._startTime {return false}
+        if _storage._endTime != rhs_storage._endTime {return false}
+        if _storage._filter != rhs_storage._filter {return false}
+        if _storage._activate != rhs_storage._activate {return false}
+        return true
+      }
+      if !storagesAreEqual {return false}
+    }
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -678,7 +756,7 @@ nonisolated extension Macosusesdk_V1_Observation.State: SwiftProtobuf._ProtoName
 
 nonisolated extension Macosusesdk_V1_ObservationFilter: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ObservationFilter"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}poll_interval\0\u{3}visible_only\0\u{1}roles\0\u{1}attributes\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}poll_interval\0\u{3}visible_only\0\u{1}roles\0\u{1}attributes\0\u{3}focus_only\0\u{1}geometry\0\u{1}activation\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -690,6 +768,9 @@ nonisolated extension Macosusesdk_V1_ObservationFilter: SwiftProtobuf.Message, S
       case 2: try { try decoder.decodeSingularBoolField(value: &self.visibleOnly) }()
       case 3: try { try decoder.decodeRepeatedStringField(value: &self.roles) }()
       case 4: try { try decoder.decodeRepeatedStringField(value: &self.attributes) }()
+      case 5: try { try decoder.decodeSingularBoolField(value: &self.focusOnly) }()
+      case 6: try { try decoder.decodeSingularBoolField(value: &self.geometry) }()
+      case 7: try { try decoder.decodeSingularBoolField(value: &self.activation) }()
       default: break
       }
     }
@@ -708,6 +789,15 @@ nonisolated extension Macosusesdk_V1_ObservationFilter: SwiftProtobuf.Message, S
     if !self.attributes.isEmpty {
       try visitor.visitRepeatedStringField(value: self.attributes, fieldNumber: 4)
     }
+    if self.focusOnly != false {
+      try visitor.visitSingularBoolField(value: self.focusOnly, fieldNumber: 5)
+    }
+    if self.geometry != false {
+      try visitor.visitSingularBoolField(value: self.geometry, fieldNumber: 6)
+    }
+    if self.activation != false {
+      try visitor.visitSingularBoolField(value: self.activation, fieldNumber: 7)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -716,6 +806,9 @@ nonisolated extension Macosusesdk_V1_ObservationFilter: SwiftProtobuf.Message, S
     if lhs.visibleOnly != rhs.visibleOnly {return false}
     if lhs.roles != rhs.roles {return false}
     if lhs.attributes != rhs.attributes {return false}
+    if lhs.focusOnly != rhs.focusOnly {return false}
+    if lhs.geometry != rhs.geometry {return false}
+    if lhs.activation != rhs.activation {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -725,130 +818,172 @@ nonisolated extension Macosusesdk_V1_ObservationEvent: SwiftProtobuf.Message, Sw
   public static let protoMessageName: String = _protobuf_package + ".ObservationEvent"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}observation\0\u{3}event_time\0\u{1}sequence\0\u{4}\u{7}element_added\0\u{3}element_removed\0\u{3}element_modified\0\u{3}window_event\0\u{3}application_event\0")
 
+  fileprivate class _StorageClass {
+    var _observation: String = String()
+    var _eventTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+    var _sequence: Int64 = 0
+    var _eventType: Macosusesdk_V1_ObservationEvent.OneOf_EventType?
+
+      // This property is used as the initial default value for new instances of the type.
+      // The type itself is protecting the reference to its storage via CoW semantics.
+      // This will force a copy to be made of this reference when the first mutation occurs;
+      // hence, it is safe to mark this as `nonisolated(unsafe)`.
+      static nonisolated(unsafe) let defaultInstance = _StorageClass()
+
+    private init() {}
+
+    init(copying source: _StorageClass) {
+      _observation = source._observation
+      _eventTime = source._eventTime
+      _sequence = source._sequence
+      _eventType = source._eventType
+    }
+  }
+
+  fileprivate mutating func _uniqueStorage() -> _StorageClass {
+    if !isKnownUniquelyReferenced(&_storage) {
+      _storage = _StorageClass(copying: _storage)
+    }
+    return _storage
+  }
+
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.observation) }()
-      case 2: try { try decoder.decodeSingularMessageField(value: &self._eventTime) }()
-      case 3: try { try decoder.decodeSingularInt64Field(value: &self.sequence) }()
-      case 10: try {
-        var v: Macosusesdk_V1_ElementEvent?
-        var hadOneofValue = false
-        if let current = self.eventType {
-          hadOneofValue = true
-          if case .elementAdded(let m) = current {v = m}
+    _ = _uniqueStorage()
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      while let fieldNumber = try decoder.nextFieldNumber() {
+        // The use of inline closures is to circumvent an issue where the compiler
+        // allocates stack space for every case branch when no optimizations are
+        // enabled. https://github.com/apple/swift-protobuf/issues/1034
+        switch fieldNumber {
+        case 1: try { try decoder.decodeSingularStringField(value: &_storage._observation) }()
+        case 2: try { try decoder.decodeSingularMessageField(value: &_storage._eventTime) }()
+        case 3: try { try decoder.decodeSingularInt64Field(value: &_storage._sequence) }()
+        case 10: try {
+          var v: Macosusesdk_V1_ElementEvent?
+          var hadOneofValue = false
+          if let current = _storage._eventType {
+            hadOneofValue = true
+            if case .elementAdded(let m) = current {v = m}
+          }
+          try decoder.decodeSingularMessageField(value: &v)
+          if let v = v {
+            if hadOneofValue {try decoder.handleConflictingOneOf()}
+            _storage._eventType = .elementAdded(v)
+          }
+        }()
+        case 11: try {
+          var v: Macosusesdk_V1_ElementEvent?
+          var hadOneofValue = false
+          if let current = _storage._eventType {
+            hadOneofValue = true
+            if case .elementRemoved(let m) = current {v = m}
+          }
+          try decoder.decodeSingularMessageField(value: &v)
+          if let v = v {
+            if hadOneofValue {try decoder.handleConflictingOneOf()}
+            _storage._eventType = .elementRemoved(v)
+          }
+        }()
+        case 12: try {
+          var v: Macosusesdk_V1_ElementModified?
+          var hadOneofValue = false
+          if let current = _storage._eventType {
+            hadOneofValue = true
+            if case .elementModified(let m) = current {v = m}
+          }
+          try decoder.decodeSingularMessageField(value: &v)
+          if let v = v {
+            if hadOneofValue {try decoder.handleConflictingOneOf()}
+            _storage._eventType = .elementModified(v)
+          }
+        }()
+        case 13: try {
+          var v: Macosusesdk_V1_WindowEvent?
+          var hadOneofValue = false
+          if let current = _storage._eventType {
+            hadOneofValue = true
+            if case .windowEvent(let m) = current {v = m}
+          }
+          try decoder.decodeSingularMessageField(value: &v)
+          if let v = v {
+            if hadOneofValue {try decoder.handleConflictingOneOf()}
+            _storage._eventType = .windowEvent(v)
+          }
+        }()
+        case 14: try {
+          var v: Macosusesdk_V1_ApplicationEvent?
+          var hadOneofValue = false
+          if let current = _storage._eventType {
+            hadOneofValue = true
+            if case .applicationEvent(let m) = current {v = m}
+          }
+          try decoder.decodeSingularMessageField(value: &v)
+          if let v = v {
+            if hadOneofValue {try decoder.handleConflictingOneOf()}
+            _storage._eventType = .applicationEvent(v)
+          }
+        }()
+        default: break
         }
-        try decoder.decodeSingularMessageField(value: &v)
-        if let v = v {
-          if hadOneofValue {try decoder.handleConflictingOneOf()}
-          self.eventType = .elementAdded(v)
-        }
-      }()
-      case 11: try {
-        var v: Macosusesdk_V1_ElementEvent?
-        var hadOneofValue = false
-        if let current = self.eventType {
-          hadOneofValue = true
-          if case .elementRemoved(let m) = current {v = m}
-        }
-        try decoder.decodeSingularMessageField(value: &v)
-        if let v = v {
-          if hadOneofValue {try decoder.handleConflictingOneOf()}
-          self.eventType = .elementRemoved(v)
-        }
-      }()
-      case 12: try {
-        var v: Macosusesdk_V1_ElementModified?
-        var hadOneofValue = false
-        if let current = self.eventType {
-          hadOneofValue = true
-          if case .elementModified(let m) = current {v = m}
-        }
-        try decoder.decodeSingularMessageField(value: &v)
-        if let v = v {
-          if hadOneofValue {try decoder.handleConflictingOneOf()}
-          self.eventType = .elementModified(v)
-        }
-      }()
-      case 13: try {
-        var v: Macosusesdk_V1_WindowEvent?
-        var hadOneofValue = false
-        if let current = self.eventType {
-          hadOneofValue = true
-          if case .windowEvent(let m) = current {v = m}
-        }
-        try decoder.decodeSingularMessageField(value: &v)
-        if let v = v {
-          if hadOneofValue {try decoder.handleConflictingOneOf()}
-          self.eventType = .windowEvent(v)
-        }
-      }()
-      case 14: try {
-        var v: Macosusesdk_V1_ApplicationEvent?
-        var hadOneofValue = false
-        if let current = self.eventType {
-          hadOneofValue = true
-          if case .applicationEvent(let m) = current {v = m}
-        }
-        try decoder.decodeSingularMessageField(value: &v)
-        if let v = v {
-          if hadOneofValue {try decoder.handleConflictingOneOf()}
-          self.eventType = .applicationEvent(v)
-        }
-      }()
-      default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    if !self.observation.isEmpty {
-      try visitor.visitSingularStringField(value: self.observation, fieldNumber: 1)
-    }
-    try { if let v = self._eventTime {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
-    } }()
-    if self.sequence != 0 {
-      try visitor.visitSingularInt64Field(value: self.sequence, fieldNumber: 3)
-    }
-    switch self.eventType {
-    case .elementAdded?: try {
-      guard case .elementAdded(let v)? = self.eventType else { preconditionFailure() }
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 10)
-    }()
-    case .elementRemoved?: try {
-      guard case .elementRemoved(let v)? = self.eventType else { preconditionFailure() }
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 11)
-    }()
-    case .elementModified?: try {
-      guard case .elementModified(let v)? = self.eventType else { preconditionFailure() }
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 12)
-    }()
-    case .windowEvent?: try {
-      guard case .windowEvent(let v)? = self.eventType else { preconditionFailure() }
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 13)
-    }()
-    case .applicationEvent?: try {
-      guard case .applicationEvent(let v)? = self.eventType else { preconditionFailure() }
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 14)
-    }()
-    case nil: break
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every if/case branch local when no optimizations
+      // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+      // https://github.com/apple/swift-protobuf/issues/1182
+      if !_storage._observation.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._observation, fieldNumber: 1)
+      }
+      try { if let v = _storage._eventTime {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+      } }()
+      if _storage._sequence != 0 {
+        try visitor.visitSingularInt64Field(value: _storage._sequence, fieldNumber: 3)
+      }
+      switch _storage._eventType {
+      case .elementAdded?: try {
+        guard case .elementAdded(let v)? = _storage._eventType else { preconditionFailure() }
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 10)
+      }()
+      case .elementRemoved?: try {
+        guard case .elementRemoved(let v)? = _storage._eventType else { preconditionFailure() }
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 11)
+      }()
+      case .elementModified?: try {
+        guard case .elementModified(let v)? = _storage._eventType else { preconditionFailure() }
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 12)
+      }()
+      case .windowEvent?: try {
+        guard case .windowEvent(let v)? = _storage._eventType else { preconditionFailure() }
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 13)
+      }()
+      case .applicationEvent?: try {
+        guard case .applicationEvent(let v)? = _storage._eventType else { preconditionFailure() }
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 14)
+      }()
+      case nil: break
+      }
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_ObservationEvent, rhs: Macosusesdk_V1_ObservationEvent) -> Bool {
-    if lhs.observation != rhs.observation {return false}
-    if lhs._eventTime != rhs._eventTime {return false}
-    if lhs.sequence != rhs.sequence {return false}
-    if lhs.eventType != rhs.eventType {return false}
+    if lhs._storage !== rhs._storage {
+      let storagesAreEqual: Bool = withExtendedLifetime((lhs._storage, rhs._storage)) { (_args: (_StorageClass, _StorageClass)) in
+        let _storage = _args.0
+        let rhs_storage = _args.1
+        if _storage._observation != rhs_storage._observation {return false}
+        if _storage._eventTime != rhs_storage._eventTime {return false}
+        if _storage._sequence != rhs_storage._sequence {return false}
+        if _storage._eventType != rhs_storage._eventType {return false}
+        return true
+      }
+      if !storagesAreEqual {return false}
+    }
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -893,8 +1028,8 @@ nonisolated extension Macosusesdk_V1_ElementModified: SwiftProtobuf.Message, Swi
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}old_element\0\u{3}new_element\0\u{1}changes\0")
 
   fileprivate class _StorageClass {
-    var _oldElement: Macosusesdk_Type_Element? = nil
-    var _newElement: Macosusesdk_Type_Element? = nil
+    var _oldElement: Macosusesdk_V1_Element? = nil
+    var _newElement: Macosusesdk_V1_Element? = nil
     var _changes: [Macosusesdk_V1_AttributeChange] = []
 
       // This property is used as the initial default value for new instances of the type.

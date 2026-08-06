@@ -37,7 +37,7 @@ message Clipboard {
 // Clipboard content (one of the supported types).
 message ClipboardContent {
   // Content type.
-  ContentType type = 1 [(google.api.field_behavior) = REQUIRED];
+  optional ContentType type = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The actual content (type-specific).
   oneof content {

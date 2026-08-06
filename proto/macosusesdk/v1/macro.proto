@@ -296,7 +296,7 @@ message MacroParameter {
   string description = 4 [(google.api.field_behavior) = OPTIONAL];
 
   // Whether parameter is required.
-  bool required = 5 [(google.api.field_behavior) = REQUIRED];
+  optional bool required = 5 [(google.api.field_behavior) = REQUIRED];
 
   // Parameter type enumeration.
   enum ParameterType {

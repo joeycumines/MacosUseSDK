@@ -32,7 +32,9 @@ const (
 type Window struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Resource name in the format "applications/{application}/windows/{window}"
-	// where {application} is the process ID and {window} is the window ID.
+	// where {application} identifies one exact kernel process instance and
+	// {window} is a server-generated opaque ID for one live window generation.
+	// Clients must not parse either ID or substitute a Core Graphics window ID.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The title of the window.
 	//
@@ -46,28 +48,22 @@ type Window struct {
 	// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
 	//
 	// Data Source (AX Authority): Fresh Accessibility API queries (kAXPositionAttribute, kAXSizeAttribute).
-	// These fields are queried from AX on every request and reflect the immediate state after mutations.
-	// They are NOT cached from CGWindowList (which can lag by 10-100ms), ensuring mutation responses
-	// (MoveWindow, ResizeWindow) return the exact requested values without polling delays.
+	// These fields are queried from AX on every request. Mutation RPCs return
+	// only after observed AX readback reaches its documented steady state.
 	Bounds *Bounds `protobuf:"bytes,3,opt,name=bounds,proto3" json:"bounds,omitempty"`
-	// Z-order index (higher values are in front).
-	//
-	// Data Source (Registry Authority): Cached value from CGWindowList via WindowRegistry.
-	// This is a stable metadata field that does not change during window mutations (move/resize).
-	// Defaults to 0 if registry data is unavailable.
-	ZIndex int32 `protobuf:"varint,4,opt,name=z_index,json=zIndex,proto3" json:"z_index,omitempty"`
 	// Whether the window is currently visible on screen.
 	//
 	// Data Source (Hybrid Authority - Differs by RPC):
 	//
 	// GetWindow (AX-First Visibility):
 	//
-	//	Computes visible using fresh AX queries with optimistic assumption:
-	//	  visible = (!axMinimized && !axHidden) ? true : (registry.isOnScreen ?? false)
+	//	Computes visible using fresh, error-preserving AX queries:
+	//	  visible = (!axMinimized && !ownerApplicationHidden) ? true : (registry.isOnScreen ?? false)
 	//
-	//	This AX-first approach ensures mutation responses (MoveWindow/ResizeWindow) immediately
-	//	report visible=true without waiting for stale CGWindowList to update. Fresh AX state
-	//	(minimized, hidden) is authoritative; registry is only consulted as fallback.
+	//	Visibility is true only when the admitted Core Graphics snapshot reports
+	//	the window on-screen and fresh AX state reports neither the window
+	//	minimized nor its owner hidden. Missing or malformed AX values fail the
+	//	request; the server never fabricates visible=true.
 	//
 	// ListWindows (Registry-Only Performance):
 	//
@@ -85,7 +81,12 @@ type Window struct {
 	// Data Source (Registry Authority): Resolved via NSRunningApplication from cached CGWindowList metadata.
 	// This is a stable metadata field that does not change during window mutations.
 	// Empty string if NSRunningApplication resolution fails or registry data is unavailable.
-	BundleId      string `protobuf:"bytes,10,opt,name=bundle_id,json=bundleId,proto3" json:"bundle_id,omitempty"`
+	BundleId string `protobuf:"bytes,10,opt,name=bundle_id,json=bundleId,proto3" json:"bundle_id,omitempty"`
+	// Core Graphics window layer from kCGWindowLayer.
+	//
+	// This is a compositing layer, not a z-order index. Multiple windows may
+	// share the same layer; clients must not infer front-to-back order from it.
+	Layer         int32 `protobuf:"varint,11,opt,name=layer,proto3" json:"layer,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -141,13 +142,6 @@ func (x *Window) GetBounds() *Bounds {
 	return nil
 }
 
-func (x *Window) GetZIndex() int32 {
-	if x != nil {
-		return x.ZIndex
-	}
-	return 0
-}
-
 func (x *Window) GetVisible() bool {
 	if x != nil {
 		return x.Visible
@@ -162,6 +156,13 @@ func (x *Window) GetBundleId() string {
 	return ""
 }
 
+func (x *Window) GetLayer() int32 {
+	if x != nil {
+		return x.Layer
+	}
+	return 0
+}
+
 // Bounding rectangle for window positioning.
 //
 // COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
@@ -172,9 +173,9 @@ type Bounds struct {
 	X float64 `protobuf:"fixed64,1,opt,name=x,proto3" json:"x,omitempty"`
 	// Y coordinate of the window's origin in Global Display Coordinates.
 	Y float64 `protobuf:"fixed64,2,opt,name=y,proto3" json:"y,omitempty"`
-	// Width of the window in pixels.
+	// Width of the window in logical display points.
 	Width float64 `protobuf:"fixed64,3,opt,name=width,proto3" json:"width,omitempty"`
-	// Height of the window in pixels.
+	// Height of the window in logical display points.
 	Height        float64 `protobuf:"fixed64,4,opt,name=height,proto3" json:"height,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -247,7 +248,7 @@ type WindowState struct {
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// Whether the window can be resized.
 	//
-	// Data Source: AX query of AXSizeSettable attribute.
+	// Data Source: AXUIElementIsAttributeSettable for kAXSizeAttribute.
 	// This is an expensive query that should only be fetched on-demand via GetWindowState.
 	Resizable bool `protobuf:"varint,2,opt,name=resizable,proto3" json:"resizable,omitempty"`
 	// Whether the window can be minimized.
@@ -263,19 +264,19 @@ type WindowState struct {
 	// Whether the window is a modal dialog.
 	//
 	// Data Source: AX queries of kAXModalAttribute and kAXSubroleAttribute.
-	// True if explicitly marked modal or subrole contains "Dialog" or "Sheet".
+	// True if explicitly marked modal or the exact subrole is AXDialog or AXSystemDialog.
 	// This is an expensive query that should only be fetched on-demand via GetWindowState.
 	Modal bool `protobuf:"varint,5,opt,name=modal,proto3" json:"modal,omitempty"`
 	// Whether the window is a floating window.
 	//
 	// Data Source: AX query of kAXSubroleAttribute.
-	// True if subrole contains "Floating".
+	// True if the exact subrole is AXFloatingWindow or AXSystemFloatingWindow.
 	// This is an expensive query that should only be fetched on-demand via GetWindowState.
 	Floating bool `protobuf:"varint,6,opt,name=floating,proto3" json:"floating,omitempty"`
-	// Whether the window is explicitly hidden according to AX attributes.
+	// Whether the window's owner application is explicitly hidden according to AX.
 	//
-	// Data Source: Fresh AX query of kAXHiddenAttribute.
-	// True means the window is explicitly hidden by the application (NOT minimized to dock).
+	// Data Source: Fresh kAXHiddenAttribute query on the owner application element.
+	// True means the owner application is hidden (NOT that this window is minimized to dock).
 	// This field is distinct from:
 	//   - Window.visible (hybrid formula combining registry + AX state)
 	//   - minimized (window is in dock, not explicitly hidden)
@@ -298,13 +299,7 @@ type WindowState struct {
 	// Data Source: Fresh AX query of kAXMainAttribute.
 	// True if this window is the application's main (focused) window.
 	// This is an expensive query that should only be fetched on-demand via GetWindowState.
-	Focused bool `protobuf:"varint,9,opt,name=focused,proto3" json:"focused,omitempty"`
-	// Whether the window is in full-screen mode.
-	//
-	// Data Source: Currently UNIMPLEMENTED (kAXFullscreenAttribute is not standard).
-	// Optional: unset (nil) if the AX API does not provide a definitive answer.
-	// Clients should check HasFullscreen() before accessing this field.
-	Fullscreen    *bool `protobuf:"varint,10,opt,name=fullscreen,proto3,oneof" json:"fullscreen,omitempty"`
+	Focused       bool `protobuf:"varint,9,opt,name=focused,proto3" json:"focused,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -402,32 +397,25 @@ func (x *WindowState) GetFocused() bool {
 	return false
 }
 
-func (x *WindowState) GetFullscreen() bool {
-	if x != nil && x.Fullscreen != nil {
-		return *x.Fullscreen
-	}
-	return false
-}
-
 var File_macosusesdk_v1_window_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_window_proto_rawDesc = "" +
 	"\n" +
-	"\x1bmacosusesdk/v1/window.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\"\xab\x02\n" +
+	"\x1bmacosusesdk/v1/window.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\"\xb7\x02\n" +
 	"\x06Window\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12\x19\n" +
 	"\x05title\x18\x02 \x01(\tB\x03\xe0A\x03R\x05title\x123\n" +
-	"\x06bounds\x18\x03 \x01(\v2\x16.macosusesdk.v1.BoundsB\x03\xe0A\x03R\x06bounds\x12\x1c\n" +
-	"\az_index\x18\x04 \x01(\x05B\x03\xe0A\x03R\x06zIndex\x12\x1d\n" +
+	"\x06bounds\x18\x03 \x01(\v2\x16.macosusesdk.v1.BoundsB\x03\xe0A\x03R\x06bounds\x12\x1d\n" +
 	"\avisible\x18\x05 \x01(\bB\x03\xe0A\x03R\avisible\x12 \n" +
 	"\tbundle_id\x18\n" +
-	" \x01(\tB\x03\xe0A\x03R\bbundleId:Y\xeaAV\n" +
-	"\x16macosusesdk.com/Window\x12+applications/{application}/windows/{window}*\awindows2\x06window\"R\n" +
+	" \x01(\tB\x03\xe0A\x03R\bbundleId\x12\x19\n" +
+	"\x05layer\x18\v \x01(\x05B\x03\xe0A\x03R\x05layer:Y\xeaAV\n" +
+	"\x16macosusesdk.com/Window\x12+applications/{application}/windows/{window}*\awindows2\x06windowJ\x04\b\x04\x10\x05R\az_index\"R\n" +
 	"\x06Bounds\x12\f\n" +
 	"\x01x\x18\x01 \x01(\x01R\x01x\x12\f\n" +
 	"\x01y\x18\x02 \x01(\x01R\x01y\x12\x14\n" +
 	"\x05width\x18\x03 \x01(\x01R\x05width\x12\x16\n" +
-	"\x06height\x18\x04 \x01(\x01R\x06height\"\xda\x03\n" +
+	"\x06height\x18\x04 \x01(\x01R\x06height\"\xb3\x03\n" +
 	"\vWindowState\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12!\n" +
 	"\tresizable\x18\x02 \x01(\bB\x03\xe0A\x03R\tresizable\x12%\n" +
@@ -437,13 +425,10 @@ const file_macosusesdk_v1_window_proto_rawDesc = "" +
 	"\bfloating\x18\x06 \x01(\bB\x03\xe0A\x03R\bfloating\x12 \n" +
 	"\tax_hidden\x18\a \x01(\bB\x03\xe0A\x03R\baxHidden\x12!\n" +
 	"\tminimized\x18\b \x01(\bB\x03\xe0A\x03R\tminimized\x12\x1d\n" +
-	"\afocused\x18\t \x01(\bB\x03\xe0A\x03R\afocused\x12(\n" +
-	"\n" +
-	"fullscreen\x18\n" +
-	" \x01(\bB\x03\xe0A\x03H\x00R\n" +
-	"fullscreen\x88\x01\x01:n\xeaAk\n" +
-	"\x1bmacosusesdk.com/WindowState\x121applications/{application}/windows/{window}/state*\fwindowStates2\vwindowStateB\r\n" +
-	"\v_fullscreenB\xc2\x01\n" +
+	"\afocused\x18\t \x01(\bB\x03\xe0A\x03R\afocused:n\xeaAk\n" +
+	"\x1bmacosusesdk.com/WindowState\x121applications/{application}/windows/{window}/state*\fwindowStates2\vwindowStateJ\x04\b\n" +
+	"\x10\vR\n" +
+	"fullscreenB\xc2\x01\n" +
 	"\x12com.macosusesdk.v1B\vWindowProtoP\x01ZFgithub.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1\xa2\x02\x03MXX\xaa\x02\x0eMacosusesdk.V1\xca\x02\x0eMacosusesdk\\V1\xe2\x02\x1aMacosusesdk\\V1\\GPBMetadata\xea\x02\x0fMacosusesdk::V1b\x06proto3"
 
 var (
@@ -478,7 +463,6 @@ func file_macosusesdk_v1_window_proto_init() {
 	if File_macosusesdk_v1_window_proto != nil {
 		return
 	}
-	file_macosusesdk_v1_window_proto_msgTypes[2].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

@@ -23,13 +23,12 @@ final class ElementRegistryTests: XCTestCase {
             cacheExpiration: ttl,
             clock: { currentTime.now },
             idGenerator: { idSequence.next() },
-            startCleanup: false,
         )
     }
 
     /// Creates a minimal test element with the given role and optional text.
-    private func makeElement(role: String = "button", text: String? = nil) -> Macosusesdk_Type_Element {
-        var element = Macosusesdk_Type_Element()
+    private func makeElement(role: String = "button", text: String? = nil) -> Macosusesdk_V1_Element {
+        var element = Macosusesdk_V1_Element()
         element.role = role
         if let text {
             element.text = text
@@ -39,18 +38,36 @@ final class ElementRegistryTests: XCTestCase {
 
     // MARK: - Registration Tests
 
-    func testRegisterElementReturnsGeneratedId() async {
+    func testRegisterElementReturnsGeneratedId() async throws {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["elem_test_001"])
         let registry = makeTestRegistry(currentTime: timeMock, idSequence: idMock)
 
         let element = makeElement(role: "button", text: "OK")
-        let elementId = await registry.registerElement(element, pid: 1234)
+        let elementId = try await registry.registerElement(element, pid: 1234)
 
         XCTAssertEqual(elementId, "elem_test_001")
     }
 
-    func testRegisterElementIncrementsCount() async {
+    func testRegisterElementCachesGeneratedIdentity() async throws {
+        let timeMock = CurrentTimeMock()
+        let idMock = IDSequenceMock(ids: ["elem_server_001"])
+        let registry = makeTestRegistry(currentTime: timeMock, idSequence: idMock)
+
+        var element = makeElement(role: "button", text: "OK")
+        element.elementID = "untrusted-caller-id"
+        element.name = "applications/9999/elements/untrusted-caller-id"
+        let elementId = try await registry.registerElement(element, pid: 1234)
+
+        let retrieved = await registry.getElement(elementId)
+        XCTAssertEqual(elementId, "elem_server_001")
+        XCTAssertEqual(retrieved?.elementID, elementId)
+        XCTAssertEqual(retrieved?.name, "applications/1234/elements/elem_server_001")
+        XCTAssertNotEqual(retrieved?.elementID, "untrusted-caller-id")
+        XCTAssertNotEqual(retrieved?.name, element.name)
+    }
+
+    func testRegisterElementIncrementsCount() async throws {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["id1", "id2", "id3"])
         let registry = makeTestRegistry(currentTime: timeMock, idSequence: idMock)
@@ -58,20 +75,20 @@ final class ElementRegistryTests: XCTestCase {
         var count = await registry.getCachedElementCount()
         XCTAssertEqual(count, 0)
 
-        _ = await registry.registerElement(makeElement(), pid: 100)
+        _ = try await registry.registerElement(makeElement(), pid: 100)
         count = await registry.getCachedElementCount()
         XCTAssertEqual(count, 1)
 
-        _ = await registry.registerElement(makeElement(), pid: 100)
+        _ = try await registry.registerElement(makeElement(), pid: 100)
         count = await registry.getCachedElementCount()
         XCTAssertEqual(count, 2)
 
-        _ = await registry.registerElement(makeElement(), pid: 200)
+        _ = try await registry.registerElement(makeElement(), pid: 200)
         count = await registry.getCachedElementCount()
         XCTAssertEqual(count, 3)
     }
 
-    func testRegisterElementWithAxElement() async {
+    func testRegisterElementWithAxElement() async throws {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["ax_elem_001"])
         let registry = makeTestRegistry(currentTime: timeMock, idSequence: idMock)
@@ -80,19 +97,19 @@ final class ElementRegistryTests: XCTestCase {
         let axElement = AXUIElementCreateSystemWide()
         let element = makeElement(role: "group")
 
-        let elementId = await registry.registerElement(element, axElement: axElement, pid: 9999)
+        let elementId = try await registry.registerElement(element, axElement: axElement, pid: 9999)
 
         let storedAx = await registry.getAXElement(elementId)
         XCTAssertNotNil(storedAx)
     }
 
-    func testRegisterElementWithNilAxElement() async {
+    func testRegisterElementWithNilAxElement() async throws {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["no_ax_001"])
         let registry = makeTestRegistry(currentTime: timeMock, idSequence: idMock)
 
         let element = makeElement(role: "text")
-        let elementId = await registry.registerElement(element, axElement: nil, pid: 100)
+        let elementId = try await registry.registerElement(element, axElement: nil, pid: 100)
 
         let storedAx = await registry.getAXElement(elementId)
         XCTAssertNil(storedAx)
@@ -100,13 +117,13 @@ final class ElementRegistryTests: XCTestCase {
 
     // MARK: - Retrieval Tests
 
-    func testGetElementReturnsRegisteredElement() async {
+    func testGetElementReturnsRegisteredElement() async throws {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["get_test_001"])
         let registry = makeTestRegistry(currentTime: timeMock, idSequence: idMock)
 
         let element = makeElement(role: "checkbox", text: "Enable feature")
-        let elementId = await registry.registerElement(element, pid: 500)
+        let elementId = try await registry.registerElement(element, pid: 500)
 
         let retrieved = await registry.getElement(elementId)
         XCTAssertNotNil(retrieved)
@@ -123,6 +140,50 @@ final class ElementRegistryTests: XCTestCase {
         XCTAssertNil(retrieved)
     }
 
+    func testGetElementAndAXRejectResourceOwnerMismatch() async throws {
+        let timeMock = CurrentTimeMock()
+        let idMock = IDSequenceMock(ids: ["owned_query_001"])
+        let registry = makeTestRegistry(currentTime: timeMock, idSequence: idMock)
+        let axElement = AXUIElementCreateSystemWide()
+        let elementId = try await registry.registerElement(
+            makeElement(role: "button"),
+            axElement: axElement,
+            pid: 1234,
+        )
+
+        let ownedElement = await registry.getElement(elementId, expectedPID: 1234)
+        let foreignElement = await registry.getElement(elementId, expectedPID: 5678)
+        let ownedAX = await registry.getAXElement(elementId, expectedPID: 1234)
+        let foreignAX = await registry.getAXElement(elementId, expectedPID: 5678)
+
+        XCTAssertEqual(ownedElement?.name, "applications/1234/elements/owned_query_001")
+        XCTAssertNotNil(ownedAX)
+        XCTAssertNil(foreignElement)
+        XCTAssertNil(foreignAX)
+    }
+
+    func testListElementsReturnsOnlyNonexpiredOwnerResourcesInCanonicalOrder() async throws {
+        let timeMock = CurrentTimeMock()
+        let idMock = IDSequenceMock(ids: ["expired", "z-last", "a-first", "foreign"])
+        let registry = makeTestRegistry(ttl: 10, currentTime: timeMock, idSequence: idMock)
+
+        _ = try await registry.registerElement(makeElement(role: "expired"), pid: 1234)
+        timeMock.advance(by: 11)
+        _ = try await registry.registerElement(makeElement(role: "last"), pid: 1234)
+        _ = try await registry.registerElement(makeElement(role: "first"), pid: 1234)
+        _ = try await registry.registerElement(makeElement(role: "foreign"), pid: 5678)
+
+        let elements = await registry.listElements(forPID: 1234)
+        let cachedCount = await registry.getCachedElementCount()
+
+        XCTAssertEqual(elements.map(\.name), [
+            "applications/1234/elements/a-first",
+            "applications/1234/elements/z-last",
+        ])
+        XCTAssertEqual(elements.map(\.role), ["first", "last"])
+        XCTAssertEqual(cachedCount, 3)
+    }
+
     func testGetAXElementReturnsNilForUnknownId() async {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: [])
@@ -132,15 +193,72 @@ final class ElementRegistryTests: XCTestCase {
         XCTAssertNil(axElement)
     }
 
+    func testMutationResolutionReturnsExactOwnedSnapshotAndRefreshesTimestamp() async throws {
+        let timeMock = CurrentTimeMock()
+        let idMock = IDSequenceMock(ids: ["owned_mutation_001"])
+        let registry = makeTestRegistry(ttl: 10, currentTime: timeMock, idSequence: idMock)
+        let axElement = AXUIElementCreateSystemWide()
+        let elementId = try await registry.registerElement(
+            makeElement(role: "AXTextField", text: "before"),
+            axElement: axElement,
+            pid: 1234,
+        )
+        timeMock.advance(by: 9)
+
+        let target = try await registry.resolveElementForMutation(
+            elementId,
+            expectedPID: 1234,
+        )
+        timeMock.advance(by: 9)
+
+        XCTAssertEqual(target.elementID, elementId)
+        XCTAssertEqual(target.pid, 1234)
+        XCTAssertEqual(target.element.text, "before")
+        XCTAssertNotNil(target.axElement)
+        let refreshedElement = await registry.getElement(elementId)
+        XCTAssertNotNil(refreshedElement)
+    }
+
+    func testMutationResolutionRejectsOwnerMismatchExpiredAndClosedAdmission() async throws {
+        let timeMock = CurrentTimeMock()
+        let idMock = IDSequenceMock(ids: ["owned_mutation_002", "owned_mutation_003"])
+        let registry = makeTestRegistry(ttl: 10, currentTime: timeMock, idSequence: idMock)
+        let elementId = try await registry.registerElement(makeElement(), pid: 111)
+
+        do {
+            _ = try await registry.resolveElementForMutation(elementId, expectedPID: 222)
+            XCTFail("Expected cross-owner element resolution to fail")
+        } catch let error as ElementMutationResolutionError {
+            XCTAssertEqual(error, .ownerMismatch(expectedPID: 222, actualPID: 111))
+        }
+
+        timeMock.advance(by: 11)
+        do {
+            _ = try await registry.resolveElementForMutation(elementId, expectedPID: 111)
+            XCTFail("Expected expired element resolution to fail")
+        } catch let error as ElementMutationResolutionError {
+            XCTAssertEqual(error, .notFound)
+        }
+
+        let closedId = try await registry.registerElement(makeElement(), pid: 111)
+        await registry.shutdown()
+        do {
+            _ = try await registry.resolveElementForMutation(closedId, expectedPID: 111)
+            XCTFail("Expected closed registry admission to fail")
+        } catch let error as ElementMutationResolutionError {
+            XCTAssertEqual(error, .admissionClosed)
+        }
+    }
+
     // MARK: - Update Tests
 
-    func testUpdateElementModifiesStoredData() async {
+    func testUpdateElementModifiesStoredData() async throws {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["update_test_001"])
         let registry = makeTestRegistry(currentTime: timeMock, idSequence: idMock)
 
         let original = makeElement(role: "button", text: "Submit")
-        let elementId = await registry.registerElement(original, pid: 100)
+        let elementId = try await registry.registerElement(original, pid: 100)
 
         var updated = makeElement(role: "button", text: "Cancel")
         updated.enabled = true
@@ -153,6 +271,26 @@ final class ElementRegistryTests: XCTestCase {
         XCTAssertEqual(retrieved?.enabled, true)
     }
 
+    func testUpdateElementPreservesRegistryIdentity() async throws {
+        let timeMock = CurrentTimeMock()
+        let idMock = IDSequenceMock(ids: ["update_identity_001"])
+        let registry = makeTestRegistry(currentTime: timeMock, idSequence: idMock)
+
+        let elementId = try await registry.registerElement(makeElement(role: "button"), pid: 100)
+        var updated = makeElement(role: "button", text: "Updated")
+        updated.elementID = "wrong-replacement-id"
+        updated.name = "applications/999/elements/wrong-replacement-id"
+
+        let success = await registry.updateElement(elementId, element: updated)
+        let retrieved = await registry.getElement(elementId)
+
+        XCTAssertTrue(success)
+        XCTAssertEqual(retrieved?.elementID, elementId)
+        XCTAssertEqual(retrieved?.name, "applications/100/elements/update_identity_001")
+        XCTAssertNotEqual(retrieved?.elementID, "wrong-replacement-id")
+        XCTAssertNotEqual(retrieved?.name, updated.name)
+    }
+
     func testUpdateElementReturnsFalseForUnknownId() async {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: [])
@@ -163,14 +301,14 @@ final class ElementRegistryTests: XCTestCase {
         XCTAssertFalse(success)
     }
 
-    func testUpdateElementPreservesAxElementWhenNotProvided() async {
+    func testUpdateElementPreservesAxElementWhenNotProvided() async throws {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["ax_preserve_001"])
         let registry = makeTestRegistry(currentTime: timeMock, idSequence: idMock)
 
         let axElement = AXUIElementCreateSystemWide()
         let original = makeElement(role: "group")
-        let elementId = await registry.registerElement(original, axElement: axElement, pid: 100)
+        let elementId = try await registry.registerElement(original, axElement: axElement, pid: 100)
 
         let updated = makeElement(role: "toolbar")
         _ = await registry.updateElement(elementId, element: updated, axElement: nil)
@@ -179,13 +317,13 @@ final class ElementRegistryTests: XCTestCase {
         XCTAssertNotNil(storedAx, "AXUIElement should be preserved when update doesn't provide a new one")
     }
 
-    func testUpdateElementReplacesAxElementWhenProvided() async {
+    func testUpdateElementReplacesAxElementWhenProvided() async throws {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["ax_replace_001"])
         let registry = makeTestRegistry(currentTime: timeMock, idSequence: idMock)
 
         let original = makeElement(role: "group")
-        let elementId = await registry.registerElement(original, axElement: nil, pid: 100)
+        let elementId = try await registry.registerElement(original, axElement: nil, pid: 100)
 
         let newAxElement = AXUIElementCreateSystemWide()
         let updated = makeElement(role: "toolbar")
@@ -195,13 +333,13 @@ final class ElementRegistryTests: XCTestCase {
         XCTAssertNotNil(storedAx, "AXUIElement should be set when provided in update")
     }
 
-    func testUpdateElementRefreshesTimestamp() async {
+    func testUpdateElementRefreshesTimestamp() async throws {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["timestamp_refresh_001"])
         let registry = makeTestRegistry(ttl: 10.0, currentTime: timeMock, idSequence: idMock)
 
         let element = makeElement()
-        let elementId = await registry.registerElement(element, pid: 100)
+        let elementId = try await registry.registerElement(element, pid: 100)
 
         // Advance time to just before expiration
         timeMock.advance(by: 9.0)
@@ -220,13 +358,13 @@ final class ElementRegistryTests: XCTestCase {
 
     // MARK: - Expiration / TTL Tests
 
-    func testGetElementReturnsNilWhenExpired() async {
+    func testGetElementReturnsNilWhenExpired() async throws {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["expire_test_001"])
         let registry = makeTestRegistry(ttl: 30.0, currentTime: timeMock, idSequence: idMock)
 
         let element = makeElement()
-        let elementId = await registry.registerElement(element, pid: 100)
+        let elementId = try await registry.registerElement(element, pid: 100)
 
         // Advance time past expiration
         timeMock.advance(by: 31.0)
@@ -235,14 +373,14 @@ final class ElementRegistryTests: XCTestCase {
         XCTAssertNil(retrieved, "Element should be nil when expired")
     }
 
-    func testGetAXElementReturnsNilWhenExpired() async {
+    func testGetAXElementReturnsNilWhenExpired() async throws {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["ax_expire_001"])
         let registry = makeTestRegistry(ttl: 30.0, currentTime: timeMock, idSequence: idMock)
 
         let axElement = AXUIElementCreateSystemWide()
         let element = makeElement()
-        let elementId = await registry.registerElement(element, axElement: axElement, pid: 100)
+        let elementId = try await registry.registerElement(element, axElement: axElement, pid: 100)
 
         // Advance time past expiration
         timeMock.advance(by: 31.0)
@@ -251,13 +389,13 @@ final class ElementRegistryTests: XCTestCase {
         XCTAssertNil(storedAx, "AXUIElement should be nil when expired")
     }
 
-    func testElementNotExpiredJustBeforeTTL() async {
+    func testElementNotExpiredJustBeforeTTL() async throws {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["just_before_ttl_001"])
         let registry = makeTestRegistry(ttl: 30.0, currentTime: timeMock, idSequence: idMock)
 
         let element = makeElement()
-        let elementId = await registry.registerElement(element, pid: 100)
+        let elementId = try await registry.registerElement(element, pid: 100)
 
         // Advance time to just before expiration (29.9 seconds)
         timeMock.advance(by: 29.9)
@@ -266,13 +404,13 @@ final class ElementRegistryTests: XCTestCase {
         XCTAssertNotNil(retrieved, "Element should still be valid just before TTL")
     }
 
-    func testExpiredElementIsRemovedFromCache() async {
+    func testExpiredElementIsRemovedFromCache() async throws {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["remove_on_expire_001"])
         let registry = makeTestRegistry(ttl: 10.0, currentTime: timeMock, idSequence: idMock)
 
         let element = makeElement()
-        let elementId = await registry.registerElement(element, pid: 100)
+        let elementId = try await registry.registerElement(element, pid: 100)
         var count = await registry.getCachedElementCount()
         XCTAssertEqual(count, 1)
 
@@ -289,13 +427,13 @@ final class ElementRegistryTests: XCTestCase {
 
     // MARK: - Removal Tests
 
-    func testRemoveElementDecreasesCount() async {
+    func testRemoveElementDecreasesCount() async throws {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["remove_001", "remove_002"])
         let registry = makeTestRegistry(currentTime: timeMock, idSequence: idMock)
 
-        let id1 = await registry.registerElement(makeElement(), pid: 100)
-        let id2 = await registry.registerElement(makeElement(), pid: 100)
+        let id1 = try await registry.registerElement(makeElement(), pid: 100)
+        let id2 = try await registry.registerElement(makeElement(), pid: 100)
         var count = await registry.getCachedElementCount()
         XCTAssertEqual(count, 2)
 
@@ -308,13 +446,13 @@ final class ElementRegistryTests: XCTestCase {
         XCTAssertEqual(count, 0)
     }
 
-    func testRemoveElementMakesItUnretrievable() async {
+    func testRemoveElementMakesItUnretrievable() async throws {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["remove_retrieve_001"])
         let registry = makeTestRegistry(currentTime: timeMock, idSequence: idMock)
 
         let element = makeElement(role: "window")
-        let elementId = await registry.registerElement(element, pid: 100)
+        let elementId = try await registry.registerElement(element, pid: 100)
 
         var retrieved = await registry.getElement(elementId)
         XCTAssertNotNil(retrieved)
@@ -325,12 +463,12 @@ final class ElementRegistryTests: XCTestCase {
         XCTAssertNil(retrieved)
     }
 
-    func testRemoveNonExistentElementIsNoOp() async {
+    func testRemoveNonExistentElementIsNoOp() async throws {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["existing_001"])
         let registry = makeTestRegistry(currentTime: timeMock, idSequence: idMock)
 
-        _ = await registry.registerElement(makeElement(), pid: 100)
+        _ = try await registry.registerElement(makeElement(), pid: 100)
         var count = await registry.getCachedElementCount()
         XCTAssertEqual(count, 1)
 
@@ -342,14 +480,14 @@ final class ElementRegistryTests: XCTestCase {
 
     // MARK: - PID-Based Operations Tests
 
-    func testGetElementIdsForPidReturnsCorrectIds() async {
+    func testGetElementIdsForPidReturnsCorrectIds() async throws {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["pid100_a", "pid100_b", "pid200_a"])
         let registry = makeTestRegistry(currentTime: timeMock, idSequence: idMock)
 
-        let id1 = await registry.registerElement(makeElement(), pid: 100)
-        let id2 = await registry.registerElement(makeElement(), pid: 100)
-        let id3 = await registry.registerElement(makeElement(), pid: 200)
+        let id1 = try await registry.registerElement(makeElement(), pid: 100)
+        let id2 = try await registry.registerElement(makeElement(), pid: 100)
+        let id3 = try await registry.registerElement(makeElement(), pid: 200)
 
         let pid100Ids = await registry.getElementIds(forPid: 100)
         XCTAssertEqual(Set(pid100Ids), Set([id1, id2]))
@@ -358,26 +496,26 @@ final class ElementRegistryTests: XCTestCase {
         XCTAssertEqual(pid200Ids, [id3])
     }
 
-    func testGetElementIdsForPidReturnsEmptyForUnknownPid() async {
+    func testGetElementIdsForPidReturnsEmptyForUnknownPid() async throws {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["some_id"])
         let registry = makeTestRegistry(currentTime: timeMock, idSequence: idMock)
 
-        _ = await registry.registerElement(makeElement(), pid: 100)
+        _ = try await registry.registerElement(makeElement(), pid: 100)
 
         let unknownPidIds = await registry.getElementIds(forPid: 99999)
         XCTAssertEqual(unknownPidIds, [])
     }
 
-    func testClearElementsForPidRemovesOnlyThatPid() async {
+    func testClearElementsForPidRemovesOnlyThatPid() async throws {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["p1_a", "p1_b", "p2_a", "p3_a"])
         let registry = makeTestRegistry(currentTime: timeMock, idSequence: idMock)
 
-        _ = await registry.registerElement(makeElement(), pid: 100)
-        _ = await registry.registerElement(makeElement(), pid: 100)
-        _ = await registry.registerElement(makeElement(), pid: 200)
-        _ = await registry.registerElement(makeElement(), pid: 300)
+        _ = try await registry.registerElement(makeElement(), pid: 100)
+        _ = try await registry.registerElement(makeElement(), pid: 100)
+        _ = try await registry.registerElement(makeElement(), pid: 200)
+        _ = try await registry.registerElement(makeElement(), pid: 300)
         var count = await registry.getCachedElementCount()
         XCTAssertEqual(count, 4)
 
@@ -393,12 +531,12 @@ final class ElementRegistryTests: XCTestCase {
         XCTAssertEqual(pid300Ids.count, 1)
     }
 
-    func testClearElementsForPidWithNoMatchingElements() async {
+    func testClearElementsForPidWithNoMatchingElements() async throws {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["pid100_only"])
         let registry = makeTestRegistry(currentTime: timeMock, idSequence: idMock)
 
-        _ = await registry.registerElement(makeElement(), pid: 100)
+        _ = try await registry.registerElement(makeElement(), pid: 100)
         var count = await registry.getCachedElementCount()
         XCTAssertEqual(count, 1)
 
@@ -409,7 +547,7 @@ final class ElementRegistryTests: XCTestCase {
         XCTAssertEqual(count, 1)
     }
 
-    func testClearElementsForPidReturnValueReflectsRemovalCount() async {
+    func testClearElementsForPidReturnValueReflectsRemovalCount() async throws {
         // The return value of clearElements(forPid:) is consumed by the
         // findElements/findRegionElements forceRefresh path to log how many
         // stale entries were evicted; pin the contract here.
@@ -417,10 +555,10 @@ final class ElementRegistryTests: XCTestCase {
         let idMock = IDSequenceMock(ids: ["p1_a", "p1_b", "p1_c", "p2_a"])
         let registry = makeTestRegistry(currentTime: timeMock, idSequence: idMock)
 
-        _ = await registry.registerElement(makeElement(), pid: 100)
-        _ = await registry.registerElement(makeElement(), pid: 100)
-        _ = await registry.registerElement(makeElement(), pid: 100)
-        _ = await registry.registerElement(makeElement(), pid: 200)
+        _ = try await registry.registerElement(makeElement(), pid: 100)
+        _ = try await registry.registerElement(makeElement(), pid: 100)
+        _ = try await registry.registerElement(makeElement(), pid: 100)
+        _ = try await registry.registerElement(makeElement(), pid: 200)
 
         let removed = await registry.clearElements(forPid: 100)
         XCTAssertEqual(removed, 3, "Should report exactly the count of entries removed for the target PID")
@@ -442,14 +580,14 @@ final class ElementRegistryTests: XCTestCase {
         XCTAssertEqual(stats["active_elements"], 0)
     }
 
-    func testGetCacheStatsWithActiveElements() async {
+    func testGetCacheStatsWithActiveElements() async throws {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["stat1", "stat2", "stat3"])
         let registry = makeTestRegistry(ttl: 30.0, currentTime: timeMock, idSequence: idMock)
 
-        _ = await registry.registerElement(makeElement(), pid: 100)
-        _ = await registry.registerElement(makeElement(), pid: 100)
-        _ = await registry.registerElement(makeElement(), pid: 200)
+        _ = try await registry.registerElement(makeElement(), pid: 100)
+        _ = try await registry.registerElement(makeElement(), pid: 100)
+        _ = try await registry.registerElement(makeElement(), pid: 200)
 
         let stats = await registry.getCacheStats()
         XCTAssertEqual(stats["total_elements"], 3)
@@ -457,20 +595,20 @@ final class ElementRegistryTests: XCTestCase {
         XCTAssertEqual(stats["active_elements"], 3)
     }
 
-    func testGetCacheStatsWithMixedActiveAndExpired() async {
+    func testGetCacheStatsWithMixedActiveAndExpired() async throws {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["old1", "old2", "new1"])
         let registry = makeTestRegistry(ttl: 30.0, currentTime: timeMock, idSequence: idMock)
 
         // Register 2 elements at time 0
-        _ = await registry.registerElement(makeElement(), pid: 100)
-        _ = await registry.registerElement(makeElement(), pid: 100)
+        _ = try await registry.registerElement(makeElement(), pid: 100)
+        _ = try await registry.registerElement(makeElement(), pid: 100)
 
         // Advance time to 35 seconds (past TTL)
         timeMock.advance(by: 35.0)
 
         // Register 1 more element at time 35
-        _ = await registry.registerElement(makeElement(), pid: 200)
+        _ = try await registry.registerElement(makeElement(), pid: 200)
 
         let stats = await registry.getCacheStats()
         XCTAssertEqual(stats["total_elements"], 3)
@@ -480,20 +618,20 @@ final class ElementRegistryTests: XCTestCase {
 
     // MARK: - Cleanup Tests
 
-    func testTriggerCleanupRemovesExpiredElements() async {
+    func testTriggerCleanupRemovesExpiredElements() async throws {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["cleanup1", "cleanup2", "cleanup3"])
         let registry = makeTestRegistry(ttl: 10.0, currentTime: timeMock, idSequence: idMock)
 
         // Register 2 elements at time 0
-        _ = await registry.registerElement(makeElement(), pid: 100)
-        _ = await registry.registerElement(makeElement(), pid: 100)
+        _ = try await registry.registerElement(makeElement(), pid: 100)
+        _ = try await registry.registerElement(makeElement(), pid: 100)
 
         // Advance time past TTL
         timeMock.advance(by: 15.0)
 
         // Register 1 more element at time 15
-        _ = await registry.registerElement(makeElement(), pid: 200)
+        _ = try await registry.registerElement(makeElement(), pid: 200)
 
         var count = await registry.getCachedElementCount()
         XCTAssertEqual(count, 3)
@@ -506,13 +644,13 @@ final class ElementRegistryTests: XCTestCase {
         XCTAssertEqual(count, 1)
     }
 
-    func testTriggerCleanupWithNoExpiredElements() async {
+    func testTriggerCleanupWithNoExpiredElements() async throws {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["fresh1", "fresh2"])
         let registry = makeTestRegistry(ttl: 30.0, currentTime: timeMock, idSequence: idMock)
 
-        _ = await registry.registerElement(makeElement(), pid: 100)
-        _ = await registry.registerElement(makeElement(), pid: 100)
+        _ = try await registry.registerElement(makeElement(), pid: 100)
+        _ = try await registry.registerElement(makeElement(), pid: 100)
 
         // Don't advance time - elements are fresh
         await registry.triggerCleanup()
@@ -523,7 +661,7 @@ final class ElementRegistryTests: XCTestCase {
 
     // MARK: - Concurrent Access Tests
 
-    func testConcurrentRegistrations() async {
+    func testConcurrentRegistrations() async throws {
         let timeMock = CurrentTimeMock()
         var idCounter = 0
         let lock = NSLock()
@@ -536,23 +674,23 @@ final class ElementRegistryTests: XCTestCase {
         let registry = makeTestRegistry(currentTime: timeMock, idSequence: idMock)
 
         // Prepare elements outside of task group to avoid Sendable issues
-        var elements: [Macosusesdk_Type_Element] = []
+        var elements: [Macosusesdk_V1_Element] = []
         for i in 0 ..< 100 {
             elements.append(makeElement(role: "item\(i)"))
         }
 
         // Register 100 elements concurrently
-        await withTaskGroup(of: String.self) { group in
+        try await withThrowingTaskGroup(of: String.self) { group in
             for i in 0 ..< 100 {
                 let element = elements[i]
                 let pid = pid_t(i % 10)
                 group.addTask {
-                    await registry.registerElement(element, pid: pid)
+                    try await registry.registerElement(element, pid: pid)
                 }
             }
 
             var registeredIds = Set<String>()
-            for await id in group {
+            for try await id in group {
                 registeredIds.insert(id)
             }
             XCTAssertEqual(registeredIds.count, 100, "All registrations should produce unique IDs")
@@ -562,7 +700,7 @@ final class ElementRegistryTests: XCTestCase {
         XCTAssertEqual(finalCount, 100)
     }
 
-    func testConcurrentReadsAndWrites() async {
+    func testConcurrentReadsAndWrites() async throws {
         let timeMock = CurrentTimeMock()
         var idCounter = 0
         let lock = NSLock()
@@ -577,7 +715,7 @@ final class ElementRegistryTests: XCTestCase {
         // Pre-register some elements
         var preIds: [String] = []
         for _ in 0 ..< 10 {
-            let id = await registry.registerElement(makeElement(), pid: 100)
+            let id = try await registry.registerElement(makeElement(), pid: 100)
             preIds.append(id)
         }
 
@@ -587,7 +725,7 @@ final class ElementRegistryTests: XCTestCase {
         let capturedIds = preIds
 
         // Concurrent reads and writes
-        await withTaskGroup(of: Void.self) { group in
+        try await withThrowingTaskGroup(of: Void.self) { group in
             // Readers
             for id in capturedIds {
                 group.addTask {
@@ -600,7 +738,7 @@ final class ElementRegistryTests: XCTestCase {
             // Writers
             for _ in 0 ..< 20 {
                 group.addTask {
-                    _ = await registry.registerElement(writerElement, pid: 200)
+                    _ = try await registry.registerElement(writerElement, pid: 200)
                 }
             }
 
@@ -610,6 +748,7 @@ final class ElementRegistryTests: XCTestCase {
                     _ = await registry.updateElement(id, element: updaterElement)
                 }
             }
+            try await group.waitForAll()
         }
 
         // Verify no crashes and count is correct
@@ -619,46 +758,46 @@ final class ElementRegistryTests: XCTestCase {
 
     // MARK: - Edge Cases
 
-    func testRegisterWithZeroPid() async {
+    func testRegisterWithZeroPid() async throws {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["zero_pid_001"])
         let registry = makeTestRegistry(currentTime: timeMock, idSequence: idMock)
 
         // PID 0 is a valid edge case (kernel)
-        let elementId = await registry.registerElement(makeElement(), pid: 0)
+        let elementId = try await registry.registerElement(makeElement(), pid: 0)
         let ids = await registry.getElementIds(forPid: 0)
         XCTAssertEqual(ids, [elementId])
     }
 
-    func testRegisterWithNegativePid() async {
+    func testRegisterWithNegativePid() async throws {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["neg_pid_001"])
         let registry = makeTestRegistry(currentTime: timeMock, idSequence: idMock)
 
         // Negative PIDs shouldn't exist but registry should handle them
-        let elementId = await registry.registerElement(makeElement(), pid: -1)
+        let elementId = try await registry.registerElement(makeElement(), pid: -1)
         let ids = await registry.getElementIds(forPid: -1)
         XCTAssertEqual(ids, [elementId])
     }
 
-    func testElementWithEmptyRole() async {
+    func testElementWithEmptyRole() async throws {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["empty_role_001"])
         let registry = makeTestRegistry(currentTime: timeMock, idSequence: idMock)
 
         let element = makeElement(role: "")
-        let elementId = await registry.registerElement(element, pid: 100)
+        let elementId = try await registry.registerElement(element, pid: 100)
 
         let retrieved = await registry.getElement(elementId)
         XCTAssertEqual(retrieved?.role, "")
     }
 
-    func testMultipleUpdatesToSameElement() async {
+    func testMultipleUpdatesToSameElement() async throws {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["multi_update_001"])
         let registry = makeTestRegistry(currentTime: timeMock, idSequence: idMock)
 
-        let elementId = await registry.registerElement(makeElement(text: "v1"), pid: 100)
+        let elementId = try await registry.registerElement(makeElement(text: "v1"), pid: 100)
 
         for i in 2 ... 10 {
             let updated = makeElement(text: "v\(i)")
@@ -670,12 +809,12 @@ final class ElementRegistryTests: XCTestCase {
         XCTAssertEqual(final?.text, "v10")
     }
 
-    func testVeryShortTTL() async {
+    func testVeryShortTTL() async throws {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["short_ttl_001"])
         let registry = makeTestRegistry(ttl: 0.001, currentTime: timeMock, idSequence: idMock)
 
-        let elementId = await registry.registerElement(makeElement(), pid: 100)
+        let elementId = try await registry.registerElement(makeElement(), pid: 100)
 
         // Even a tiny advance should expire it
         timeMock.advance(by: 0.002)
@@ -684,12 +823,12 @@ final class ElementRegistryTests: XCTestCase {
         XCTAssertNil(retrieved)
     }
 
-    func testVeryLongTTL() async {
+    func testVeryLongTTL() async throws {
         let timeMock = CurrentTimeMock()
         let idMock = IDSequenceMock(ids: ["long_ttl_001"])
         let registry = makeTestRegistry(ttl: 86400 * 365, currentTime: timeMock, idSequence: idMock) // 1 year
 
-        let elementId = await registry.registerElement(makeElement(), pid: 100)
+        let elementId = try await registry.registerElement(makeElement(), pid: 100)
 
         // Advance 364 days - still valid
         timeMock.advance(by: 86400 * 364)

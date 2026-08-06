@@ -18,6 +18,9 @@ option java_package = "com.macosusesdk.v1";
 // Contains only cheap CoreGraphics data. For expensive AX state queries,
 // use GetWindowState to fetch the WindowState singleton sub-resource.
 message Window {
+  reserved 4;
+  reserved "z_index";
+
   option (google.api.resource) = {
     type: "macosusesdk.com/Window"
     pattern: "applications/{application}/windows/{window}"
@@ -26,7 +29,9 @@ message Window {
   };
 
   // Resource name in the format "applications/{application}/windows/{window}"
-  // where {application} is the process ID and {window} is the window ID.
+  // where {application} identifies one exact kernel process instance and
+  // {window} is a server-generated opaque ID for one live window generation.
+  // Clients must not parse either ID or substitute a Core Graphics window ID.
   string name = 1 [(google.api.field_behavior) = IDENTIFIER];
 
   // The title of the window.
@@ -42,29 +47,22 @@ message Window {
   // See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
   //
   // Data Source (AX Authority): Fresh Accessibility API queries (kAXPositionAttribute, kAXSizeAttribute).
-  // These fields are queried from AX on every request and reflect the immediate state after mutations.
-  // They are NOT cached from CGWindowList (which can lag by 10-100ms), ensuring mutation responses
-  // (MoveWindow, ResizeWindow) return the exact requested values without polling delays.
+  // These fields are queried from AX on every request. Mutation RPCs return
+  // only after observed AX readback reaches its documented steady state.
   Bounds bounds = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
-
-  // Z-order index (higher values are in front).
-  //
-  // Data Source (Registry Authority): Cached value from CGWindowList via WindowRegistry.
-  // This is a stable metadata field that does not change during window mutations (move/resize).
-  // Defaults to 0 if registry data is unavailable.
-  int32 z_index = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Whether the window is currently visible on screen.
   //
   // Data Source (Hybrid Authority - Differs by RPC):
   //
   // GetWindow (AX-First Visibility):
-  //   Computes visible using fresh AX queries with optimistic assumption:
-  //     visible = (!axMinimized && !axHidden) ? true : (registry.isOnScreen ?? false)
+  //   Computes visible using fresh, error-preserving AX queries:
+  //     visible = (!axMinimized && !ownerApplicationHidden) ? true : (registry.isOnScreen ?? false)
   //
-  //   This AX-first approach ensures mutation responses (MoveWindow/ResizeWindow) immediately
-  //   report visible=true without waiting for stale CGWindowList to update. Fresh AX state
-  //   (minimized, hidden) is authoritative; registry is only consulted as fallback.
+  //   Visibility is true only when the admitted Core Graphics snapshot reports
+  //   the window on-screen and fresh AX state reports neither the window
+  //   minimized nor its owner hidden. Missing or malformed AX values fail the
+  //   request; the server never fabricates visible=true.
   //
   // ListWindows (Registry-Only Performance):
   //   Returns registry.isOnScreen directly from cached CGWindowList with NO per-window AX queries.
@@ -83,6 +81,12 @@ message Window {
   // This is a stable metadata field that does not change during window mutations.
   // Empty string if NSRunningApplication resolution fails or registry data is unavailable.
   string bundle_id = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Core Graphics window layer from kCGWindowLayer.
+  //
+  // This is a compositing layer, not a z-order index. Multiple windows may
+  // share the same layer; clients must not infer front-to-back order from it.
+  int32 layer = 11 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Bounding rectangle for window positioning.
@@ -96,10 +100,10 @@ message Bounds {
   // Y coordinate of the window's origin in Global Display Coordinates.
   double y = 2;
 
-  // Width of the window in pixels.
+  // Width of the window in logical display points.
   double width = 3;
 
-  // Height of the window in pixels.
+  // Height of the window in logical display points.
   double height = 4;
 }
 
@@ -107,6 +111,9 @@ message Bounds {
 // This is a singleton sub-resource that clients must explicitly request.
 // Use GetWindowState to fetch this data on-demand.
 message WindowState {
+  reserved 10;
+  reserved "fullscreen";
+
   option (google.api.resource) = {
     type: "macosusesdk.com/WindowState"
     pattern: "applications/{application}/windows/{window}/state"
@@ -119,7 +126,7 @@ message WindowState {
 
   // Whether the window can be resized.
   //
-  // Data Source: AX query of AXSizeSettable attribute.
+  // Data Source: AXUIElementIsAttributeSettable for kAXSizeAttribute.
   // This is an expensive query that should only be fetched on-demand via GetWindowState.
   bool resizable = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
@@ -138,21 +145,21 @@ message WindowState {
   // Whether the window is a modal dialog.
   //
   // Data Source: AX queries of kAXModalAttribute and kAXSubroleAttribute.
-  // True if explicitly marked modal or subrole contains "Dialog" or "Sheet".
+  // True if explicitly marked modal or the exact subrole is AXDialog or AXSystemDialog.
   // This is an expensive query that should only be fetched on-demand via GetWindowState.
   bool modal = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Whether the window is a floating window.
   //
   // Data Source: AX query of kAXSubroleAttribute.
-  // True if subrole contains "Floating".
+  // True if the exact subrole is AXFloatingWindow or AXSystemFloatingWindow.
   // This is an expensive query that should only be fetched on-demand via GetWindowState.
   bool floating = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
 
-  // Whether the window is explicitly hidden according to AX attributes.
+  // Whether the window's owner application is explicitly hidden according to AX.
   //
-  // Data Source: Fresh AX query of kAXHiddenAttribute.
-  // True means the window is explicitly hidden by the application (NOT minimized to dock).
+  // Data Source: Fresh kAXHiddenAttribute query on the owner application element.
+  // True means the owner application is hidden (NOT that this window is minimized to dock).
   // This field is distinct from:
   //   - Window.visible (hybrid formula combining registry + AX state)
   //   - minimized (window is in dock, not explicitly hidden)
@@ -178,11 +185,4 @@ message WindowState {
   // True if this window is the application's main (focused) window.
   // This is an expensive query that should only be fetched on-demand via GetWindowState.
   bool focused = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
-
-  // Whether the window is in full-screen mode.
-  //
-  // Data Source: Currently UNIMPLEMENTED (kAXFullscreenAttribute is not standard).
-  // Optional: unset (nil) if the AX API does not provide a definitive answer.
-  // Clients should check HasFullscreen() before accessing this field.
-  optional bool fullscreen = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
 }

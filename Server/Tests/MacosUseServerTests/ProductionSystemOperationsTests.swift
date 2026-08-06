@@ -6,20 +6,11 @@ import Testing
 
 struct ProductionSystemOperationsTests {
     @Test
-    func `ProductionSystemOperations conforms and returns CG window list`() {
+    func `ProductionSystemOperations conforms and returns CG window list`() throws {
         let sys: SystemOperations = ProductionSystemOperations.shared
 
-        let windows = sys.cgWindowListCopyWindowInfo(options: [.optionAll, .excludeDesktopElements], relativeToWindow: kCGNullWindowID)
+        let windows = try sys.cgWindowListCopyWindowInfo(options: [.optionAll, .excludeDesktopElements], relativeToWindow: kCGNullWindowID)
         // We don't assert a specific count — just ensure the call completes and returns a valid array
         #expect(windows is [[String: Any]], "Expected window list to be an array of dictionaries")
-    }
-
-    @Test
-    func `fetchAXWindowInfo returns nil for obviously-missing pid/window`() {
-        let sys: SystemOperations = ProductionSystemOperations.shared
-
-        // Try with pid 0 + window 0 — should be absent and thus return nil.
-        let info = sys.fetchAXWindowInfo(pid: 0, windowId: 0, expectedBounds: .zero)
-        #expect(info == nil, "Expected no AX window info for pid 0 window 0")
     }
 }

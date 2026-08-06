@@ -1,8 +1,109 @@
+import Darwin
 import Foundation
 @preconcurrency import OSAKit
 
+private enum ChildStopReason {
+    case timeout
+    case cancelled
+}
+
+private final class ChildProcessTermination: @unchecked Sendable {
+    private let lock = NSLock()
+    private var status: Int32?
+    private var waiters: [CheckedContinuation<Int32, Never>] = []
+
+    func finish(status: Int32) {
+        lock.lock()
+        guard self.status == nil else {
+            lock.unlock()
+            return
+        }
+        self.status = status
+        let waiters = self.waiters
+        self.waiters.removeAll()
+        lock.unlock()
+        for waiter in waiters {
+            waiter.resume(returning: status)
+        }
+    }
+
+    func wait() async -> Int32 {
+        await withCheckedContinuation { continuation in
+            lock.lock()
+            if let status {
+                lock.unlock()
+                continuation.resume(returning: status)
+            } else {
+                waiters.append(continuation)
+                lock.unlock()
+            }
+        }
+    }
+}
+
+/// Thread-safe lifecycle controller for one exact child process. A stop request
+/// first sends SIGTERM, then escalates to SIGKILL if the same `Process` instance
+/// is still running after the grace period. Foundation's termination handler is
+/// the reap authority, so returning from execution means the exact child is gone.
+private final class ChildProcessController: @unchecked Sendable {
+    private let process: Process
+    private let lock = NSLock()
+    private var storedReason: ChildStopReason?
+    private var forceKillTask: Task<Void, Never>?
+
+    init(process: Process) {
+        self.process = process
+    }
+
+    var stopReason: ChildStopReason? {
+        lock.lock()
+        defer { lock.unlock() }
+        return storedReason
+    }
+
+    func requestStop(reason: ChildStopReason) {
+        lock.lock()
+        guard storedReason == nil, process.isRunning else {
+            lock.unlock()
+            return
+        }
+        storedReason = reason
+        let pid = process.processIdentifier
+        process.terminate()
+        forceKillTask = Task.detached(priority: .utility) { [weak self] in
+            try? await Task.sleep(for: .milliseconds(250))
+            self?.forceKillIfStillRunning(pid: pid)
+        }
+        lock.unlock()
+    }
+
+    func waitForEscalation() async {
+        let task = currentForceKillTask()
+        if let task {
+            await task.value
+        }
+    }
+
+    private func forceKillIfStillRunning(pid: pid_t) {
+        lock.lock()
+        defer { lock.unlock() }
+        guard storedReason != nil, process.isRunning, process.processIdentifier == pid else {
+            return
+        }
+        _ = Darwin.kill(pid, SIGKILL)
+    }
+
+    private func currentForceKillTask() -> Task<Void, Never>? {
+        lock.lock()
+        defer { lock.unlock() }
+        return forceKillTask
+    }
+}
+
 /// Errors that can occur during script execution.
 enum ScriptExecutionError: Error, CustomStringConvertible {
+    case admissionClosed
+    case mutationQueueFull
     case timeout
     case compilationFailed(String)
     case executionFailed(String)
@@ -14,6 +115,10 @@ enum ScriptExecutionError: Error, CustomStringConvertible {
 
     var description: String {
         switch self {
+        case .admissionClosed:
+            "Script execution admission is closed"
+        case .mutationQueueFull:
+            "Physical desktop mutation queue is full"
         case .timeout:
             "Script execution timed out"
         case let .compilationFailed(msg):
@@ -66,9 +171,102 @@ struct ScriptValidationResult {
 /// sandbox and can be bypassed by determined users. They serve to prevent accidental
 /// catastrophic operations.
 actor ScriptExecutor {
-    static let shared = ScriptExecutor()
+    private struct ActiveExecution: Sendable {
+        let cancel: @Sendable () -> Void
+        let wait: @Sendable () async -> Void
+    }
 
-    private init() {}
+    nonisolated let mutationGate: PhysicalDesktopMutationGate
+    private let processOperation: (@Sendable () async throws -> Void)?
+    private let processStartHandler: (@Sendable (pid_t) -> Void)?
+    private var activeExecutions: [UUID: ActiveExecution] = [:]
+    private var acceptingExecutions = true
+
+    init(
+        mutationGate: PhysicalDesktopMutationGate,
+        processOperation: (@Sendable () async throws -> Void)? = nil,
+        processStartHandler: (@Sendable (pid_t) -> Void)? = nil,
+    ) {
+        self.mutationGate = mutationGate
+        self.processOperation = processOperation
+        self.processStartHandler = processStartHandler
+    }
+
+    private nonisolated static func validatedTimeoutNanoseconds(
+        _ timeout: TimeInterval,
+    ) throws -> UInt64 {
+        guard timeout.isFinite,
+              timeout > 0,
+              timeout <= RequestNumericValidation.maximumTimeoutSeconds
+        else {
+            throw ScriptExecutionError.processError("Timeout must be a finite positive duration")
+        }
+        return UInt64((timeout * 1_000_000_000).rounded(.up))
+    }
+
+    func beginDraining() {
+        acceptingExecutions = false
+    }
+
+    func shutdown() async {
+        acceptingExecutions = false
+        let executions = activeExecutions
+        for execution in executions.values {
+            execution.cancel()
+        }
+        for execution in executions.values {
+            await execution.wait()
+        }
+        for id in executions.keys {
+            activeExecutions.removeValue(forKey: id)
+        }
+    }
+
+    func activeExecutionCount() -> Int {
+        activeExecutions.count
+    }
+
+    private func withOwnedExecution<Result: Sendable>(
+        _ operation: @escaping @Sendable () async throws -> Result,
+    ) async throws -> Result {
+        guard acceptingExecutions else {
+            throw ScriptExecutionError.admissionClosed
+        }
+
+        let id = UUID()
+        let task = Task {
+            try Task.checkCancellation()
+            let result = try await operation()
+            try Task.checkCancellation()
+            return result
+        }
+        activeExecutions[id] = ActiveExecution(
+            cancel: { task.cancel() },
+            wait: { _ = try? await task.value },
+        )
+        defer { activeExecutions.removeValue(forKey: id) }
+
+        return try await withTaskCancellationHandler {
+            try await task.value
+        } onCancel: {
+            task.cancel()
+        }
+    }
+
+    private nonisolated func withPhysicalDesktopMutation<Result: Sendable>(
+        _ operation: @Sendable () async throws -> Result,
+    ) async throws -> Result {
+        do {
+            return try await mutationGate.withExclusiveOperation(operation)
+        } catch let error as PhysicalDesktopMutationError {
+            switch error {
+            case .admissionClosed:
+                throw ScriptExecutionError.admissionClosed
+            case .queueFull:
+                throw ScriptExecutionError.mutationQueueFull
+            }
+        }
+    }
 
     /// Executes an AppleScript string and returns the result.
     ///
@@ -82,6 +280,21 @@ actor ScriptExecutor {
         timeout: TimeInterval = 30.0,
         compileOnly: Bool = false,
     ) async throws -> ScriptExecutionResult {
+        _ = try Self.validatedTimeoutNanoseconds(timeout)
+        return try await withOwnedExecution { [self] in
+            try await executeAppleScriptBody(
+                script,
+                timeout: timeout,
+                compileOnly: compileOnly,
+            )
+        }
+    }
+
+    private func executeAppleScriptBody(
+        _ script: String,
+        timeout: TimeInterval,
+        compileOnly: Bool,
+    ) async throws -> ScriptExecutionResult {
         let startTime = Date()
 
         // Validate script is not empty
@@ -92,21 +305,17 @@ actor ScriptExecutor {
         // Security check: basic validation
         try validateAppleScriptSecurity(script)
 
-        // Compile the script
-        guard let appleScript = NSAppleScript(source: script) else {
-            throw ScriptExecutionError.compilationFailed("Failed to create NSAppleScript instance")
-        }
-
-        // Get compilation errors
-        var compileError: NSDictionary?
-        if !appleScript.compileAndReturnError(&compileError) {
-            let errorMsg =
-                compileError?[NSAppleScript.errorMessage] as? String ?? "Unknown compilation error"
-            throw ScriptExecutionError.compilationFailed(errorMsg)
-        }
-
         // If compile-only mode, return success
         if compileOnly {
+            guard let appleScript = NSAppleScript(source: script) else {
+                throw ScriptExecutionError.compilationFailed("Failed to create NSAppleScript instance")
+            }
+            var compileError: NSDictionary?
+            if !appleScript.compileAndReturnError(&compileError) {
+                let errorMsg =
+                    compileError?[NSAppleScript.errorMessage] as? String ?? "Unknown compilation error"
+                throw ScriptExecutionError.compilationFailed(errorMsg)
+            }
             let duration = Date().timeIntervalSince(startTime)
             return ScriptExecutionResult(
                 success: true,
@@ -116,19 +325,16 @@ actor ScriptExecutor {
             )
         }
 
-        // Execute via osascript as a direct child process. We pass each non-empty
-        // line as its own `-e` argument so multi-line scripts compile correctly,
-        // and we avoid wrapping the binary in /bin/bash so termination is sent to
-        // the real process.
-        let scriptArgs = script
-            .split(separator: "\n", omittingEmptySubsequences: true)
-            .flatMap { ["-e", String($0)] }
-
-        let shellResult = try await executeProcess(
-            executable: "/usr/bin/osascript",
-            args: scriptArgs,
-            timeout: timeout,
-        )
+        // Execute through one exact osascript child so timeout and cancellation
+        // cover both compilation and execution without an uninterruptible in-process
+        // OSA call. One `-e` argument preserves the source byte-for-byte.
+        let shellResult = try await withPhysicalDesktopMutation { [self] in
+            try await executeProcess(
+                executable: "/usr/bin/osascript",
+                args: ["-e", script],
+                timeout: timeout,
+            )
+        }
         let duration = Date().timeIntervalSince(startTime)
 
         let stdout = shellResult.stdout.trimmingCharacters(in: CharacterSet(charactersIn: "\r\n"))
@@ -163,6 +369,21 @@ actor ScriptExecutor {
         timeout: TimeInterval = 30.0,
         compileOnly: Bool = false,
     ) async throws -> ScriptExecutionResult {
+        _ = try Self.validatedTimeoutNanoseconds(timeout)
+        return try await withOwnedExecution { [self] in
+            try await executeJavaScriptBody(
+                script,
+                timeout: timeout,
+                compileOnly: compileOnly,
+            )
+        }
+    }
+
+    private func executeJavaScriptBody(
+        _ script: String,
+        timeout: TimeInterval,
+        compileOnly: Bool,
+    ) async throws -> ScriptExecutionResult {
         let startTime = Date()
 
         // Validate script is not empty
@@ -173,24 +394,18 @@ actor ScriptExecutor {
         // Security check: basic validation
         try validateJavaScriptSecurity(script)
 
-        // Create OSAScript with JavaScript language
-        // Note: OSALanguage initialization differs - using JavaScript identifier
-        guard let jsLanguage = OSALanguage(forName: "JavaScript") else {
-            throw ScriptExecutionError.compilationFailed("JavaScript language not available")
-        }
-        let osaScript = OSAScript(source: script, language: jsLanguage)
-
-        // Compile the script
-        var compileError: NSDictionary?
-        osaScript.compileAndReturnError(&compileError)
-
-        if let error = compileError {
-            let errorMsg = error[NSAppleScript.errorMessage] as? String ?? "Unknown compilation error"
-            throw ScriptExecutionError.compilationFailed(errorMsg)
-        }
-
         // If compile-only mode, return success
         if compileOnly {
+            guard let jsLanguage = OSALanguage(forName: "JavaScript") else {
+                throw ScriptExecutionError.compilationFailed("JavaScript language not available")
+            }
+            let osaScript = OSAScript(source: script, language: jsLanguage)
+            var compileError: NSDictionary?
+            osaScript.compileAndReturnError(&compileError)
+            if let error = compileError {
+                let errorMsg = error[NSAppleScript.errorMessage] as? String ?? "Unknown compilation error"
+                throw ScriptExecutionError.compilationFailed(errorMsg)
+            }
             let duration = Date().timeIntervalSince(startTime)
             return ScriptExecutionResult(
                 success: true,
@@ -200,33 +415,24 @@ actor ScriptExecutor {
             )
         }
 
-        // Execute with timeout
-        return try await withTimeout(seconds: timeout) {
-            var executeError: NSDictionary?
-            let descriptor = osaScript.executeAndReturnError(&executeError)
-
-            let duration = Date().timeIntervalSince(startTime)
-
-            if let error = executeError {
-                let errorMsg = error[NSAppleScript.errorMessage] as? String ?? "Unknown execution error"
-                return ScriptExecutionResult(
-                    success: false,
-                    output: "",
-                    error: errorMsg,
-                    duration: duration,
-                )
-            }
-
-            // Get output as string (JSON-encoded if applicable)
-            let output = descriptor?.stringValue ?? ""
-
-            return ScriptExecutionResult(
-                success: true,
-                output: output,
-                error: nil,
-                duration: duration,
+        // Execute through an exact child for the same timeout/cancellation/reap
+        // guarantees as AppleScript and shell execution.
+        let processResult = try await withPhysicalDesktopMutation { [self] in
+            try await executeProcess(
+                executable: "/usr/bin/osascript",
+                args: ["-l", "JavaScript", "-e", script],
+                timeout: timeout,
             )
         }
+        let duration = Date().timeIntervalSince(startTime)
+        let stdout = processResult.stdout.trimmingCharacters(in: CharacterSet(charactersIn: "\r\n"))
+        let stderr = processResult.stderr.trimmingCharacters(in: CharacterSet(charactersIn: "\r\n"))
+        return ScriptExecutionResult(
+            success: processResult.success,
+            output: stdout,
+            error: processResult.success ? nil : (stderr.isEmpty ? processResult.error : stderr),
+            duration: duration,
+        )
     }
 
     /// Executes an external process directly (without a shell wrapper) and returns
@@ -251,6 +457,21 @@ actor ScriptExecutor {
     ) async throws -> ShellCommandResult {
         let startTime = Date()
 
+        let timeoutNanoseconds = try Self.validatedTimeoutNanoseconds(timeout)
+
+        if let processOperation {
+            try await processOperation()
+            try Task.checkCancellation()
+            return ShellCommandResult(
+                success: true,
+                stdout: "",
+                stderr: "",
+                exitCode: 0,
+                duration: Date().timeIntervalSince(startTime),
+                error: nil,
+            )
+        }
+
         let process = Process()
         process.executableURL = URL(fileURLWithPath: executable)
         process.arguments = args
@@ -274,51 +495,82 @@ actor ScriptExecutor {
         process.standardOutput = stdoutPipe
         process.standardError = stderrPipe
         process.standardInput = stdinPipe
+        let termination = ChildProcessTermination()
+        process.terminationHandler = { child in
+            termination.finish(status: child.terminationStatus)
+        }
 
         do {
             try process.run()
+            processStartHandler?(process.processIdentifier)
         } catch {
             throw ScriptExecutionError.processError(
                 "Failed to launch process: \(error.localizedDescription)",
             )
         }
 
-        if let stdinData = stdin?.data(using: .utf8) {
-            try? stdinPipe.fileHandleForWriting.write(contentsOf: stdinData)
-            try? stdinPipe.fileHandleForWriting.close()
+        // Start draining stdout/stderr concurrently before waitUntilExit() so a
+        // child that fills the pipe buffer cannot deadlock before exiting.
+        let stdoutTask = Task.detached(priority: .utility) {
+            try? stdoutPipe.fileHandleForReading.readToEnd()
+        }
+        let stderrTask = Task.detached(priority: .utility) {
+            try? stderrPipe.fileHandleForReading.readToEnd()
+        }
+        let controller = ChildProcessController(process: process)
+
+        do {
+            if let stdinData = stdin?.data(using: .utf8) {
+                try stdinPipe.fileHandleForWriting.write(contentsOf: stdinData)
+            }
+            // Always close stdin, including when no input was supplied. Commands
+            // such as `cat` must observe EOF instead of hanging until timeout.
+            try stdinPipe.fileHandleForWriting.close()
+        } catch {
+            controller.requestStop(reason: .cancelled)
+            _ = await termination.wait()
+            await controller.waitForEscalation()
+            _ = await stdoutTask.value
+            _ = await stderrTask.value
+            throw ScriptExecutionError.processError(
+                "Failed to write process stdin: \(error.localizedDescription)",
+            )
         }
 
-        let timeoutTask = Task {
-            try await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
-            if process.isRunning {
-                process.terminate()
+        let timeoutTask = Task.detached(priority: .utility) {
+            do {
+                try await Task.sleep(nanoseconds: timeoutNanoseconds)
+                controller.requestStop(reason: .timeout)
+            } catch {
+                // Normal process completion cancels the watchdog.
             }
         }
 
-        // Start draining stdout/stderr concurrently before waitUntilExit() so a
-        // child that fills the pipe buffer cannot deadlock before exiting.
-        let stdoutTask = Task {
-            try? stdoutPipe.fileHandleForReading.readToEnd()
+        let exitCode = await withTaskCancellationHandler {
+            await termination.wait()
+        } onCancel: {
+            controller.requestStop(reason: .cancelled)
         }
-        let stderrTask = Task {
-            try? stderrPipe.fileHandleForReading.readToEnd()
-        }
-
-        process.waitUntilExit()
         timeoutTask.cancel()
+        await timeoutTask.value
+        await controller.waitForEscalation()
 
         let duration = Date().timeIntervalSince(startTime)
 
         let stdoutData = await stdoutTask.value ?? Data()
         let stderrData = await stderrTask.value ?? Data()
 
-        if duration >= timeout {
+        switch controller.stopReason {
+        case .timeout:
             throw ScriptExecutionError.timeout
+        case .cancelled:
+            throw CancellationError()
+        case nil:
+            try Task.checkCancellation()
         }
 
         let stdout = String(data: stdoutData, encoding: .utf8) ?? ""
         let stderr = String(data: stderrData, encoding: .utf8) ?? ""
-        let exitCode = process.terminationStatus
 
         return ShellCommandResult(
             success: exitCode == 0,
@@ -350,8 +602,29 @@ actor ScriptExecutor {
         stdin: String? = nil,
         shell: String = "/bin/bash",
     ) async throws -> ShellCommandResult {
-        let startTime = Date()
+        _ = try Self.validatedTimeoutNanoseconds(timeout)
+        return try await withOwnedExecution { [self] in
+            try await executeShellCommandBody(
+                command,
+                args: args,
+                workingDirectory: workingDirectory,
+                environment: environment,
+                timeout: timeout,
+                stdin: stdin,
+                shell: shell,
+            )
+        }
+    }
 
+    private func executeShellCommandBody(
+        _ command: String,
+        args: [String],
+        workingDirectory: String?,
+        environment: [String: String]?,
+        timeout: TimeInterval,
+        stdin: String?,
+        shell: String,
+    ) async throws -> ShellCommandResult {
         // Validate command
         guard !command.isEmpty else {
             throw ScriptExecutionError.invalidScript
@@ -360,102 +633,23 @@ actor ScriptExecutor {
         // Security check
         try validateShellCommandSecurity(command, args: args)
 
-        // Create process
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: shell)
-
         // Build command with args
-        var commandWithArgs = command
-        if !args.isEmpty {
-            commandWithArgs += " " + args.map { shellEscape($0) }.joined(separator: " ")
+        let commandWithArgs = if args.isEmpty {
+            command
+        } else {
+            command + " " + args.map { shellEscape($0) }.joined(separator: " ")
         }
 
-        process.arguments = ["-c", commandWithArgs]
-
-        // Set working directory if provided
-        if let workingDir = workingDirectory {
-            process.currentDirectoryURL = URL(fileURLWithPath: workingDir)
-        }
-
-        // Set environment if provided
-        if let env = environment {
-            var processEnv = ProcessInfo.processInfo.environment
-            for (key, value) in env {
-                processEnv[key] = value
-            }
-            process.environment = processEnv
-        }
-
-        // Setup pipes for stdout, stderr, stdin
-        let stdoutPipe = Pipe()
-        let stderrPipe = Pipe()
-        let stdinPipe = Pipe()
-
-        process.standardOutput = stdoutPipe
-        process.standardError = stderrPipe
-        process.standardInput = stdinPipe
-
-        // Launch process
-        do {
-            try process.run()
-        } catch {
-            throw ScriptExecutionError.processError(
-                "Failed to launch process: \(error.localizedDescription)",
+        return try await withPhysicalDesktopMutation { [self] in
+            try await executeProcess(
+                executable: shell,
+                args: ["-c", commandWithArgs],
+                workingDirectory: workingDirectory,
+                environment: environment,
+                timeout: timeout,
+                stdin: stdin,
             )
         }
-
-        // Write stdin if provided
-        if let stdinData = stdin?.data(using: .utf8) {
-            try? stdinPipe.fileHandleForWriting.write(contentsOf: stdinData)
-            try? stdinPipe.fileHandleForWriting.close()
-        }
-
-        // Wait for process with timeout
-        let timeoutTask = Task {
-            try await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
-            if process.isRunning {
-                process.terminate()
-            }
-        }
-
-        // Drain stdout/stderr concurrently while waiting so the child cannot block
-        // on a full pipe buffer before exit.
-        let stdoutTask = Task {
-            try? stdoutPipe.fileHandleForReading.readToEnd()
-        }
-        let stderrTask = Task {
-            try? stderrPipe.fileHandleForReading.readToEnd()
-        }
-
-        process.waitUntilExit()
-        timeoutTask.cancel()
-
-        let duration = Date().timeIntervalSince(startTime)
-
-        // Read stdout and stderr before checking timeout so callers still see any
-        // output produced before the process was terminated.
-        let stdoutData = await stdoutTask.value ?? Data()
-        let stderrData = await stderrTask.value ?? Data()
-
-        // Check if timed out. We infer timeout from the elapsed duration rather than
-        // the exit status because terminationStatus is unreliable for signal-killed
-        // processes and can collide with legitimate exit code 15.
-        if duration >= timeout {
-            throw ScriptExecutionError.timeout
-        }
-
-        let stdout = String(data: stdoutData, encoding: .utf8) ?? ""
-        let stderr = String(data: stderrData, encoding: .utf8) ?? ""
-        let exitCode = process.terminationStatus
-
-        return ShellCommandResult(
-            success: exitCode == 0,
-            stdout: stdout,
-            stderr: stderr,
-            exitCode: exitCode,
-            duration: duration,
-            error: exitCode != 0 ? "Command exited with code \(exitCode)" : nil,
-        )
     }
 
     /// Validates a script without executing it.
@@ -465,6 +659,15 @@ actor ScriptExecutor {
     ///   - type: The script type (AppleScript or JXA)
     /// - Returns: Validation result
     func validateScript(_ script: String, type: ScriptType) async throws -> ScriptValidationResult {
+        try await withOwnedExecution { [self] in
+            try await validateScriptBody(script, type: type)
+        }
+    }
+
+    private func validateScriptBody(
+        _ script: String,
+        type: ScriptType,
+    ) async throws -> ScriptValidationResult {
         switch type {
         case .appleScript:
             try await validateAppleScript(script)
@@ -597,31 +800,6 @@ actor ScriptExecutor {
                 "Privilege escalation via 'sudo' is not allowed. " +
                     "Shell commands run with the permissions of the current user.",
             )
-        }
-    }
-
-    private func withTimeout<T: Sendable>(
-        seconds: TimeInterval,
-        operation: @Sendable @escaping () throws -> T,
-    ) async throws -> T {
-        try await withThrowingTaskGroup(of: T.self) { group in
-            // Add operation task
-            group.addTask {
-                try operation()
-            }
-
-            // Add timeout task
-            group.addTask {
-                try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
-                throw ScriptExecutionError.timeout
-            }
-
-            // Return first result (either operation or timeout)
-            guard let result = try await group.next() else {
-                throw ScriptExecutionError.executionFailed("Task group was cancelled before completion")
-            }
-            group.cancelAll()
-            return result
         }
     }
 }

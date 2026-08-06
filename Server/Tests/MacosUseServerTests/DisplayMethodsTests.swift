@@ -52,6 +52,21 @@ final class DisplayMethodsTests: XCTestCase {
         )
     }
 
+    func testDisplayNameForCursorRejectsMissingActiveDisplay() {
+        XCTAssertThrowsError(
+            try MacosUseService.displayNameForCursor(
+                cursorLocation: .zero,
+                activeDisplays: [],
+            ),
+        ) { error in
+            guard let rpcError = error as? RPCError else {
+                XCTFail("Expected an RPCError, got \(error)")
+                return
+            }
+            XCTAssertEqual(rpcError.code, .internalError)
+        }
+    }
+
     // MARK: - ListDisplays Tests
 
     func testListDisplaysReturnsAtLeastOneDisplay() async throws {
@@ -405,7 +420,7 @@ final class DisplayMethodsTests: XCTestCase {
             XCTFail("Expected error for invalid display ID")
         } catch let error as RPCError {
             XCTAssertEqual(error.code, .invalidArgument)
-            XCTAssertTrue(error.message.contains("Invalid display ID"))
+            XCTAssertTrue(error.message.contains("Invalid display resource name"))
         }
     }
 
@@ -527,11 +542,7 @@ final class DisplayMethodsTests: XCTestCase {
         )
         let msg = try response.message
 
-        // Should return a display reference in format "displays/{id}" or "displays/unknown"
-        XCTAssertTrue(
-            msg.display.hasPrefix("displays/"),
-            "Display reference should have format 'displays/{id}', got '\(msg.display)'",
-        )
+        XCTAssertNoThrow(try ParsingHelpers.parseDisplayName(msg.display))
     }
 
     func testCaptureCursorPositionDisplayIsKnown() async throws {
@@ -541,12 +552,7 @@ final class DisplayMethodsTests: XCTestCase {
         )
         let msg = try response.message
 
-        // Under normal conditions, the cursor should be on a known display
-        // (not "displays/unknown") unless something unusual is happening
-        XCTAssertNotEqual(
-            msg.display, "displays/unknown",
-            "Cursor should be on a known display (got 'displays/unknown')",
-        )
+        XCTAssertNoThrow(try ParsingHelpers.parseDisplayName(msg.display))
     }
 
     func testCaptureCursorPositionWithinDisplayBounds() async throws {
@@ -590,20 +596,7 @@ final class DisplayMethodsTests: XCTestCase {
         )
         let cursorMsg = try cursorResponse.message
 
-        // If not unknown, the display reference should correspond to a valid display
-        guard cursorMsg.display != "displays/unknown" else {
-            return
-        }
-
-        // Extract display ID from the reference
-        let components = cursorMsg.display.split(separator: "/")
-        guard components.count == 2,
-              components[0] == "displays",
-              let displayID = Int64(components[1])
-        else {
-            XCTFail("Invalid display reference format: \(cursorMsg.display)")
-            return
-        }
+        let displayID = try Int64(ParsingHelpers.parseDisplayName(cursorMsg.display).displayID)
 
         // Verify this display exists in listDisplays
         let listResponse = try await service.listDisplays(
@@ -654,9 +647,6 @@ final class DisplayMethodsTests: XCTestCase {
     }
 
     func testGetDisplayResourceNameWithLeadingSlash() async throws {
-        // Note: Swift's String.split omits empty subsequences by default,
-        // so "/displays/123" splits to ["displays", "123"] and passes parsing.
-        // It then correctly returns notFound for a non-existent display ID.
         var getRequest = Macosusesdk_V1_GetDisplayRequest()
         getRequest.name = "/displays/999999999"
 
@@ -664,10 +654,10 @@ final class DisplayMethodsTests: XCTestCase {
             _ = try await service.getDisplay(
                 request: makeGetDisplayRequest(getRequest), context: makeGetDisplayContext(),
             )
-            XCTFail("Expected error for non-existent display with leading slash")
+            XCTFail("Expected error for noncanonical display resource name")
         } catch let error as RPCError {
-            // Leading slash is tolerated by the parser, but the display doesn't exist
-            XCTAssertEqual(error.code, .notFound)
+            XCTAssertEqual(error.code, .invalidArgument)
+            XCTAssertTrue(error.message.contains("Invalid display resource name"))
         }
     }
 
@@ -687,24 +677,17 @@ final class DisplayMethodsTests: XCTestCase {
     }
 
     func testGetDisplayZeroDisplayID() async throws {
-        // Note: On macOS, display ID 0 can actually be valid (often the main display).
-        // CGDisplayBounds(0) may return a valid non-zero rect.
-        // This test verifies the RPC handles display ID 0 without crashing.
         var getRequest = Macosusesdk_V1_GetDisplayRequest()
         getRequest.name = "displays/0"
 
-        // Display ID 0 may or may not exist depending on system configuration
         do {
-            let response = try await service.getDisplay(
+            _ = try await service.getDisplay(
                 request: makeGetDisplayRequest(getRequest), context: makeGetDisplayContext(),
             )
-            let msg = try response.message
-            // If it succeeds, display ID should be 0
-            XCTAssertEqual(msg.displayID, 0)
+            XCTFail("Expected error for noncanonical zero display ID")
         } catch let error as RPCError {
-            // If it fails, it should be notFound
-            XCTAssertEqual(error.code, .notFound)
-            XCTAssertTrue(error.message.contains("Display not found"))
+            XCTAssertEqual(error.code, .invalidArgument)
+            XCTAssertTrue(error.message.contains("Invalid display resource name"))
         }
     }
 
@@ -719,7 +702,7 @@ final class DisplayMethodsTests: XCTestCase {
             XCTFail("Expected error for negative display ID")
         } catch let error as RPCError {
             XCTAssertEqual(error.code, .invalidArgument)
-            XCTAssertTrue(error.message.contains("Invalid display ID"))
+            XCTAssertTrue(error.message.contains("Invalid display resource name"))
         }
     }
 
@@ -795,7 +778,7 @@ final class DisplayMethodsTests: XCTestCase {
             XCTFail("Expected error for overflow display ID")
         } catch let error as RPCError {
             XCTAssertEqual(error.code, .invalidArgument)
-            XCTAssertTrue(error.message.contains("Invalid display ID"))
+            XCTAssertTrue(error.message.contains("Invalid display resource name"))
         }
     }
 }

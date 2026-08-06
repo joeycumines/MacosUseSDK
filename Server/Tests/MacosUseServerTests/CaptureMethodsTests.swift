@@ -42,7 +42,7 @@ final class CaptureMethodsTests: XCTestCase {
 
     func testCaptureScreenshotRequestDefaultValues() {
         let request = Macosusesdk_V1_CaptureScreenshotRequest()
-        XCTAssertEqual(request.display, 0)
+        XCTAssertTrue(request.display.isEmpty)
         XCTAssertEqual(request.format, .unspecified)
         XCTAssertEqual(request.quality, 0)
         XCTAssertFalse(request.includeOcrText)
@@ -50,12 +50,12 @@ final class CaptureMethodsTests: XCTestCase {
 
     func testCaptureScreenshotRequestWithCustomValues() {
         var request = Macosusesdk_V1_CaptureScreenshotRequest()
-        request.display = 1
+        request.display = "displays/1"
         request.format = .jpeg
         request.quality = 85
         request.includeOcrText = true
 
-        XCTAssertEqual(request.display, 1)
+        XCTAssertEqual(request.display, "displays/1")
         XCTAssertEqual(request.format, .jpeg)
         XCTAssertEqual(request.quality, 85)
         XCTAssertTrue(request.includeOcrText)
@@ -107,7 +107,7 @@ final class CaptureMethodsTests: XCTestCase {
     func testCaptureRegionScreenshotRequestDefaultValues() {
         let request = Macosusesdk_V1_CaptureRegionScreenshotRequest()
         XCTAssertFalse(request.hasRegion)
-        XCTAssertEqual(request.display, 0)
+        XCTAssertTrue(request.display.isEmpty)
         XCTAssertEqual(request.format, .unspecified)
         XCTAssertEqual(request.quality, 0)
         XCTAssertFalse(request.includeOcrText)
@@ -196,7 +196,7 @@ final class CaptureMethodsTests: XCTestCase {
     // MARK: - Quality Parameter Tests
 
     func testQualityParameterBoundaries() {
-        // Quality should be clamped between 0 and 100
+        // The wire type preserves values; the public service enforces the range.
         var request = Macosusesdk_V1_CaptureScreenshotRequest()
 
         // Test minimum (0)
@@ -213,14 +213,14 @@ final class CaptureMethodsTests: XCTestCase {
     }
 
     func testQualityParameterNegativeValue() {
-        // Proto allows negative values, but implementation should clamp
+        // Generated messages preserve invalid input for service validation.
         var request = Macosusesdk_V1_CaptureScreenshotRequest()
         request.quality = -10
         XCTAssertEqual(request.quality, -10) // Proto accepts it
     }
 
     func testQualityParameterAbove100() {
-        // Proto allows values > 100, but implementation should clamp
+        // Generated messages preserve invalid input for service validation.
         var request = Macosusesdk_V1_CaptureScreenshotRequest()
         request.quality = 150
         XCTAssertEqual(request.quality, 150) // Proto accepts it
@@ -228,19 +228,16 @@ final class CaptureMethodsTests: XCTestCase {
 
     // MARK: - Display ID Tests
 
-    func testDisplayIdZeroMeansMainDisplay() {
-        var request = Macosusesdk_V1_CaptureScreenshotRequest()
-        request.display = 0
-
-        // Display 0 means main display in implementation
-        XCTAssertEqual(request.display, 0)
+    func testEmptyDisplayMeansMainDisplay() {
+        let request = Macosusesdk_V1_CaptureScreenshotRequest()
+        XCTAssertTrue(request.display.isEmpty)
     }
 
-    func testDisplayIdSpecific() {
+    func testExactDisplayResource() {
         var request = Macosusesdk_V1_CaptureScreenshotRequest()
-        request.display = 12345
+        request.display = "displays/12345"
 
-        XCTAssertEqual(request.display, 12345)
+        XCTAssertEqual(request.display, "displays/12345")
     }
 
     // MARK: - ScreenshotError Tests (Validation Logic)
@@ -389,7 +386,6 @@ final class CaptureMethodsTests: XCTestCase {
             cacheExpiration: 30.0,
             clock: { Date() },
             idGenerator: { "test_elem_\(Int.random(in: 1000 ... 9999))" },
-            startCleanup: false,
         )
 
         // Try to get a non-existent element
@@ -397,23 +393,22 @@ final class CaptureMethodsTests: XCTestCase {
         XCTAssertNil(element, "Non-existent element should return nil")
     }
 
-    func testElementRegistryRegisterAndRetrieve() async {
+    func testElementRegistryRegisterAndRetrieve() async throws {
         let registry = ElementRegistry(
             cacheExpiration: 30.0,
             clock: { Date() },
             idGenerator: { "test_elem_1234" },
-            startCleanup: false,
         )
 
         // Create a test element with bounds
-        var element = Macosusesdk_Type_Element()
+        var element = Macosusesdk_V1_Element()
         element.x = 100
         element.y = 200
         element.width = 300
         element.height = 400
 
         // Register element
-        let elementId = await registry.registerElement(element, pid: 1234)
+        let elementId = try await registry.registerElement(element, pid: 1234)
         XCTAssertEqual(elementId, "test_elem_1234")
 
         // Retrieve element
@@ -430,17 +425,16 @@ final class CaptureMethodsTests: XCTestCase {
             cacheExpiration: 30.0,
             clock: { Date() },
             idGenerator: { "bounds_elem" },
-            startCleanup: false,
         )
 
         // Element WITH bounds
-        var elementWithBounds = Macosusesdk_Type_Element()
+        var elementWithBounds = Macosusesdk_V1_Element()
         elementWithBounds.x = 50
         elementWithBounds.y = 100
         elementWithBounds.width = 200
         elementWithBounds.height = 150
 
-        let idWithBounds = await registry.registerElement(elementWithBounds, pid: 1)
+        let idWithBounds = try await registry.registerElement(elementWithBounds, pid: 1)
         let retrievedWithBounds = await registry.getElement(idWithBounds)
 
         let unwrappedElement = try XCTUnwrap(retrievedWithBounds)
@@ -455,16 +449,15 @@ final class CaptureMethodsTests: XCTestCase {
             cacheExpiration: 30.0,
             clock: { Date() },
             idGenerator: { "no_bounds_elem" },
-            startCleanup: false,
         )
 
         // Element WITHOUT bounds (just role/elementID set)
-        var elementNoBounds = Macosusesdk_Type_Element()
+        var elementNoBounds = Macosusesdk_V1_Element()
         elementNoBounds.role = "button"
         elementNoBounds.elementID = "test_button"
         // Note: x, y, width, height not set
 
-        let idNoBounds = await registry.registerElement(elementNoBounds, pid: 2)
+        let idNoBounds = try await registry.registerElement(elementNoBounds, pid: 2)
         let retrievedNoBounds = await registry.getElement(idNoBounds)
 
         let unwrappedElement = try XCTUnwrap(retrievedNoBounds)
@@ -502,12 +495,23 @@ final class CaptureMethodsTests: XCTestCase {
         response.format = .jpeg
         response.width = 500
         response.height = 400
+        response.region = Macosusesdk_Type_Region.with {
+            $0.x = -100
+            $0.y = 200
+            $0.width = 500
+            $0.height = 400
+        }
         response.ocrText = "Text from region"
 
         XCTAssertEqual(response.imageData.prefix(2), Data([0xFF, 0xD8]))
         XCTAssertEqual(response.format, .jpeg)
         XCTAssertEqual(response.width, 500)
         XCTAssertEqual(response.height, 400)
+        XCTAssertTrue(response.hasRegion)
+        XCTAssertEqual(response.region.x, -100, accuracy: 0.001)
+        XCTAssertEqual(response.region.y, 200, accuracy: 0.001)
+        XCTAssertEqual(response.region.width, 500, accuracy: 0.001)
+        XCTAssertEqual(response.region.height, 400, accuracy: 0.001)
         XCTAssertEqual(response.ocrText, "Text from region")
     }
 

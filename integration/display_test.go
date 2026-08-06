@@ -29,6 +29,9 @@ func TestListDisplays(t *testing.T) {
 
 	// Validate fields look sane
 	for _, d := range resp.Displays {
+		if d.GetName() == "" {
+			t.Fatalf("display %d had an empty resource name", d.GetDisplayId())
+		}
 		if d.GetDisplayId() == 0 {
 			t.Fatalf("display had zero id")
 		}
@@ -40,6 +43,19 @@ func TestListDisplays(t *testing.T) {
 		}
 		if d.GetScale() <= 0 {
 			t.Fatalf("display %d has non-positive scale %v", d.GetDisplayId(), d.GetScale())
+		}
+		got, err := client.GetDisplay(ctx, &pb.GetDisplayRequest{Name: d.GetName()})
+		if err != nil {
+			t.Fatalf("GetDisplay(%q) failed: %v", d.GetName(), err)
+		}
+		if got.GetName() != d.GetName() || got.GetDisplayId() != d.GetDisplayId() {
+			t.Fatalf(
+				"GetDisplay(%q) identity mismatch: got name=%q id=%d, want id=%d",
+				d.GetName(),
+				got.GetName(),
+				got.GetDisplayId(),
+				d.GetDisplayId(),
+			)
 		}
 		if vf := d.GetVisibleFrame(); vf != nil {
 			if vf.GetWidth() <= 0 || vf.GetHeight() <= 0 {

@@ -10,14 +10,12 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"math"
 	"reflect"
 	"strings"
 	"testing"
 
-	typepb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
 	"github.com/joeycumines/MacosUseSDK/internal/config"
 	"google.golang.org/grpc"
@@ -77,8 +75,8 @@ func TestInputName(t *testing.T) {
 		},
 		{
 			name:  "named input returns the name",
-			input: &pb.Input{Name: "inputs/abc123"},
-			want:  "inputs/abc123",
+			input: &pb.Input{Name: "applications/-/inputs/abc123"},
+			want:  "applications/-/inputs/abc123",
 		},
 	}
 
@@ -87,34 +85,6 @@ func TestInputName(t *testing.T) {
 			got := inputName(tt.input)
 			if got != tt.want {
 				t.Errorf("inputName() = %q, want %q", got, tt.want)
-			}
-		})
-	}
-}
-
-// --- C1b: mapButtonString ---
-
-func TestMapButtonString(t *testing.T) {
-	tests := []struct {
-		name   string
-		button string
-		want   pb.MouseClick_ClickType
-	}{
-		{"left", "left", pb.MouseClick_CLICK_TYPE_LEFT},
-		{"right", "right", pb.MouseClick_CLICK_TYPE_RIGHT},
-		{"middle", "middle", pb.MouseClick_CLICK_TYPE_MIDDLE},
-		{"empty defaults to left", "", pb.MouseClick_CLICK_TYPE_LEFT},
-		{"unknown defaults to left", "other", pb.MouseClick_CLICK_TYPE_LEFT},
-		{"back maps to left", "back", pb.MouseClick_CLICK_TYPE_LEFT},
-		{"forward maps to left", "forward", pb.MouseClick_CLICK_TYPE_LEFT},
-		{"case insensitive RIGHT", "RIGHT", pb.MouseClick_CLICK_TYPE_RIGHT},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := mapButtonString(tt.button)
-			if got != tt.want {
-				t.Errorf("mapButtonString(%q) = %v, want %v", tt.button, got, tt.want)
 			}
 		})
 	}
@@ -202,7 +172,110 @@ type mockClickClient struct {
 
 func (m *mockClickClient) CreateInput(ctx context.Context, req *pb.CreateInputRequest, opts ...grpc.CallOption) (*pb.Input, error) {
 	m.created = append(m.created, req)
-	return &pb.Input{Name: "inputs/click-test"}, nil
+	return completedInputResponse(req), nil
+}
+
+func TestCUAInputHandlersRejectFailedBackendResources(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    string
+		handler func(*MCPServer, *ToolCall) (*ToolResult, error)
+	}{
+		{name: "click", args: `{"target":"desktop","x":10,"y":20}`, handler: func(s *MCPServer, call *ToolCall) (*ToolResult, error) { return s.cuaHandleClick(call) }},
+		{name: "double_click", args: `{"target":"desktop","x":10,"y":20}`, handler: func(s *MCPServer, call *ToolCall) (*ToolResult, error) { return s.handleDoubleClick(call) }},
+		{name: "type", args: `{"target":"desktop","text":"x"}`, handler: func(s *MCPServer, call *ToolCall) (*ToolResult, error) { return s.handleType(call) }},
+		{name: "keypress", args: `{"target":"desktop","keys":["a"]}`, handler: func(s *MCPServer, call *ToolCall) (*ToolResult, error) { return s.handleKeypress(call) }},
+		{name: "scroll", args: `{"target":"desktop","x":10,"y":20,"scroll_y":1}`, handler: func(s *MCPServer, call *ToolCall) (*ToolResult, error) { return s.cuaHandleScroll(call) }},
+		{name: "drag", args: `{"target":"desktop","path":[{"x":10,"y":20},{"x":30,"y":40}]}`, handler: func(s *MCPServer, call *ToolCall) (*ToolResult, error) { return s.cuaHandleDrag(call) }},
+		{name: "move", args: `{"target":"desktop","x":10,"y":20}`, handler: func(s *MCPServer, call *ToolCall) (*ToolResult, error) { return s.handleMove(call) }},
+	}
+
+	nonCompletedStates := []pb.Input_State{
+		pb.Input_STATE_UNSPECIFIED,
+		pb.Input_STATE_PENDING,
+		pb.Input_STATE_EXECUTING,
+		pb.Input_STATE_FAILED,
+		pb.Input_STATE_CANCELLED,
+	}
+	for _, tt := range tests {
+		for _, state := range nonCompletedStates {
+			t.Run(tt.name+"/"+state.String(), func(t *testing.T) {
+				client := &mockMacosUseClient{
+					createInputFunc: func(_ context.Context, request *pb.CreateInputRequest) (*pb.Input, error) {
+						response := completedInputResponse(request)
+						response.State = state
+						response.Error = "injected backend failure"
+						response.DeliveryResult = nil
+						return response, nil
+					},
+				}
+				result, err := tt.handler(
+					newTestMCPServer(client),
+					&ToolCall{Name: tt.name, Arguments: json.RawMessage(tt.args)},
+				)
+				if err != nil {
+					t.Fatalf("handler returned transport error: %v", err)
+				}
+				if !resultIsError(result) {
+					t.Fatalf("backend %s resource became MCP success: %q", state, resultText(result))
+				}
+				if state == pb.Input_STATE_FAILED && !resultContains(result, "injected backend failure") {
+					t.Fatalf("error omitted backend reason: %q", resultText(result))
+				}
+			})
+		}
+	}
+}
+
+func TestCUAModifiedPointerActionsUseOneAtomicInput(t *testing.T) {
+	tests := []struct {
+		name       string
+		args       string
+		handler    func(*MCPServer, *ToolCall) (*ToolResult, error)
+		wantAction func(*pb.InputAction) bool
+		modifiers  func(*pb.InputAction) []pb.KeyPress_Modifier
+	}{
+		{name: "click", args: `{"target":"desktop","x":10,"y":20,"keys":["shift"]}`, handler: func(s *MCPServer, call *ToolCall) (*ToolResult, error) { return s.cuaHandleClick(call) }, wantAction: func(action *pb.InputAction) bool { return action.GetClick() != nil }, modifiers: func(action *pb.InputAction) []pb.KeyPress_Modifier { return action.GetClick().GetModifiers() }},
+		{name: "double_click", args: `{"target":"desktop","x":10,"y":20,"keys":["shift"]}`, handler: func(s *MCPServer, call *ToolCall) (*ToolResult, error) { return s.handleDoubleClick(call) }, wantAction: func(action *pb.InputAction) bool { return action.GetClick() != nil }, modifiers: func(action *pb.InputAction) []pb.KeyPress_Modifier { return action.GetClick().GetModifiers() }},
+		{name: "scroll", args: `{"target":"desktop","x":10,"y":20,"scroll_y":1,"keys":["shift"]}`, handler: func(s *MCPServer, call *ToolCall) (*ToolResult, error) { return s.cuaHandleScroll(call) }, wantAction: func(action *pb.InputAction) bool { return action.GetScroll() != nil }, modifiers: func(action *pb.InputAction) []pb.KeyPress_Modifier { return action.GetScroll().GetModifiers() }},
+		{name: "drag", args: `{"target":"desktop","path":[{"x":10,"y":20},{"x":30,"y":40}],"keys":["shift"]}`, handler: func(s *MCPServer, call *ToolCall) (*ToolResult, error) { return s.cuaHandleDrag(call) }, wantAction: func(action *pb.InputAction) bool { return action.GetDrag() != nil }, modifiers: func(action *pb.InputAction) []pb.KeyPress_Modifier { return action.GetDrag().GetModifiers() }},
+		{name: "move", args: `{"target":"desktop","x":10,"y":20,"keys":["shift"]}`, handler: func(s *MCPServer, call *ToolCall) (*ToolResult, error) { return s.handleMove(call) }, wantAction: func(action *pb.InputAction) bool { return action.GetMoveMouse() != nil }, modifiers: func(action *pb.InputAction) []pb.KeyPress_Modifier { return action.GetMoveMouse().GetModifiers() }},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var requests []*pb.CreateInputRequest
+			client := &mockMacosUseClient{
+				createInputFunc: func(_ context.Context, request *pb.CreateInputRequest) (*pb.Input, error) {
+					requests = append(requests, request)
+					return completedInputResponse(request), nil
+				},
+			}
+			result, err := tt.handler(
+				newTestMCPServer(client),
+				&ToolCall{Name: tt.name, Arguments: json.RawMessage(tt.args)},
+			)
+			if err != nil {
+				t.Fatalf("handler returned transport error: %v", err)
+			}
+			if resultIsError(result) {
+				t.Fatalf("handler returned MCP error: %q", resultText(result))
+			}
+			if len(requests) != 1 {
+				t.Fatalf("modified action emitted %d CreateInput RPCs, want one atomic RPC", len(requests))
+			}
+			action := requests[0].GetInput().GetAction()
+			if action == nil || !tt.wantAction(action) {
+				t.Fatalf("atomic RPC carried wrong action: %T", action.GetInputType())
+			}
+			if got := tt.modifiers(action); !reflect.DeepEqual(got, []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_SHIFT}) {
+				t.Fatalf("atomic RPC modifiers = %v, want SHIFT", got)
+			}
+			if drag := action.GetDrag(); drag != nil && len(drag.GetPath()) != 2 {
+				t.Fatalf("atomic drag path length = %d, want 2", len(drag.GetPath()))
+			}
+		})
+	}
 }
 
 // TestCUAHandleClick_ClickCount verifies the click_count bound, default, and
@@ -217,31 +290,31 @@ func TestCUAHandleClick_ClickCount(t *testing.T) {
 	}{
 		{
 			name:           "default to single",
-			args:           `{"x":100,"y":200}`,
+			args:           `{"target":"desktop","x":100,"y":200}`,
 			wantSubstr:     "single left-click",
 			wantClickCount: 1,
 		},
 		{
 			name:           "double click",
-			args:           `{"x":100,"y":200,"click_count":2}`,
+			args:           `{"target":"desktop","x":100,"y":200,"click_count":2}`,
 			wantSubstr:     "double left-click",
 			wantClickCount: 2,
 		},
 		{
 			name:           "triple click",
-			args:           `{"x":100,"y":200,"click_count":3}`,
+			args:           `{"target":"desktop","x":100,"y":200,"click_count":3}`,
 			wantSubstr:     "triple left-click",
 			wantClickCount: 3,
 		},
 		{
 			name:           "quadruple click",
-			args:           `{"x":100,"y":200,"click_count":4}`,
+			args:           `{"target":"desktop","x":100,"y":200,"click_count":4}`,
 			wantSubstr:     "4-tuple left-click",
 			wantClickCount: 4,
 		},
 		{
 			name:           "maximum 10 click",
-			args:           `{"x":100,"y":200,"click_count":10}`,
+			args:           `{"target":"desktop","x":100,"y":200,"click_count":10}`,
 			wantSubstr:     "10-tuple left-click",
 			wantClickCount: 10,
 		},
@@ -249,7 +322,7 @@ func TestCUAHandleClick_ClickCount(t *testing.T) {
 			name:       "above maximum rejected",
 			args:       `{"x":100,"y":200,"click_count":11}`,
 			wantError:  true,
-			wantSubstr: "click_count must be at most 10",
+			wantSubstr: "click_count must be between 1 and 10",
 		},
 	}
 
@@ -331,88 +404,6 @@ func TestCUAHandleKeypress_InvalidParams(t *testing.T) {
 				t.Errorf("expected result to contain %q, got: %q", tt.wantSubstr, resultText(result))
 			}
 		})
-	}
-}
-
-// TestCUAHandleKeypress_AllModifiersNoPanic verifies H8 fix: when all keys are
-// modifiers (no non-modifier key), the handler should not panic with an
-// index-out-of-range on empty nonModifierKeys slice.
-// We test the cuaKeysToModifiers logic directly.
-func TestCUAHandleKeypress_AllModifiersNoPanic(t *testing.T) {
-	tests := []struct {
-		name            string
-		keys            []string
-		wantModifiers   int
-		wantNonModifier int
-	}{
-		{
-			name:            "all modifiers ctrl+shift",
-			keys:            []string{"ctrl", "shift"},
-			wantModifiers:   2,
-			wantNonModifier: 0,
-		},
-		{
-			name:            "single modifier ctrl",
-			keys:            []string{"ctrl"},
-			wantModifiers:   1,
-			wantNonModifier: 0,
-		},
-		{
-			name:            "modifier plus key cmd+c",
-			keys:            []string{"cmd", "c"},
-			wantModifiers:   1,
-			wantNonModifier: 1,
-		},
-		{
-			name:            "plain key a",
-			keys:            []string{"a"},
-			wantModifiers:   0,
-			wantNonModifier: 1,
-		},
-		{
-			name:            "empty keys",
-			keys:            []string{},
-			wantModifiers:   0,
-			wantNonModifier: 0,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mods, nonMods := cuaKeysToModifiers(tt.keys)
-			if len(mods) != tt.wantModifiers {
-				t.Errorf("modifiers count = %d, want %d", len(mods), tt.wantModifiers)
-			}
-			if len(nonMods) != tt.wantNonModifier {
-				t.Errorf("non-modifier count = %d, want %d", len(nonMods), tt.wantNonModifier)
-			}
-		})
-	}
-}
-
-// TestCUAHandleKeypress_EmptyModifierEnumsGuard verifies the H8 guard:
-// when both modifierEnums and nonModifierKeys are empty, the handler
-// returns an error rather than panicking.
-func TestCUAHandleKeypress_EmptyModifierEnumsGuard(t *testing.T) {
-	s := newTestServer()
-
-	// Keys that are neither modifiers nor valid (unknown keys go to nonModifierKeys)
-	// The only way to get both empty is with an empty keys array, which is caught earlier.
-	// But let's verify the guard path by testing the cuaKeysToModifiers output.
-	mods, nonMods := cuaKeysToModifiers([]string{})
-	if len(mods) != 0 || len(nonMods) != 0 {
-		t.Errorf("expected both empty, got mods=%d nonMods=%d", len(mods), len(nonMods))
-	}
-
-	// The handler checks: if len(nonModifierKeys) == 0 && len(modifierEnums) == 0
-	// This is the H8 guard — verify it returns an error for empty keys
-	call := &ToolCall{Name: "keypress", Arguments: json.RawMessage(`{"keys":[]}`)}
-	result, err := s.handleKeypress(call)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if !resultIsError(result) {
-		t.Errorf("expected error result for empty keys, got: %+v", result)
 	}
 }
 
@@ -501,7 +492,7 @@ func TestCUAHandleMoveWindow_NaNInfinityRejection(t *testing.T) {
 	}
 }
 
-// --- H2: cuaHandleFindElements — multiple criteria warning ---
+// --- cuaHandleFindElements — canonical selector admission ---
 
 func TestCUAHandleFindElements_InvalidParams(t *testing.T) {
 	s := newTestServer()
@@ -514,15 +505,21 @@ func TestCUAHandleFindElements_InvalidParams(t *testing.T) {
 	}{
 		{
 			name:       "missing parent parameter",
-			args:       `{"role":"AXButton"}`,
+			args:       `{"selector":"role:AXButton"}`,
 			wantError:  true,
 			wantSubstr: "parent parameter is required",
 		},
 		{
 			name:       "empty parent parameter",
-			args:       `{"parent":"","role":"AXButton"}`,
+			args:       `{"parent":"","selector":"role:AXButton"}`,
 			wantError:  true,
 			wantSubstr: "parent parameter is required",
+		},
+		{
+			name:       "missing selector parameter",
+			args:       `{"parent":"applications/1"}`,
+			wantError:  true,
+			wantSubstr: "selector parameter is required",
 		},
 		{
 			name:       "invalid JSON",
@@ -544,129 +541,6 @@ func TestCUAHandleFindElements_InvalidParams(t *testing.T) {
 			}
 			if tt.wantSubstr != "" && !resultContains(result, tt.wantSubstr) {
 				t.Errorf("expected result to contain %q, got: %q", tt.wantSubstr, resultText(result))
-			}
-		})
-	}
-}
-
-// TestCUAHandleFindElements_MultipleCriteriaWarning verifies H2:
-// when multiple criteria are provided, a warning is included noting
-// only one is used (due to proto oneof).
-func TestCUAHandleFindElements_MultipleCriteriaWarning(t *testing.T) {
-	tests := []struct {
-		name         string
-		role         string
-		text         string
-		textContains string
-		wantCount    int
-		wantWarning  bool
-		wantCriteria string // which criterion is used
-	}{
-		{
-			name:        "single role criterion",
-			role:        "AXButton",
-			wantCount:   1,
-			wantWarning: false,
-		},
-		{
-			name:        "single text criterion",
-			text:        "OK",
-			wantCount:   1,
-			wantWarning: false,
-		},
-		{
-			name:         "single text_contains criterion",
-			textContains: "save",
-			wantCount:    1,
-			wantWarning:  false,
-		},
-		{
-			name:         "role and text — uses role (H2 warning)",
-			role:         "AXButton",
-			text:         "OK",
-			wantCount:    2,
-			wantWarning:  true,
-			wantCriteria: "role",
-		},
-		{
-			name:         "role and text_contains — uses role (H2 warning)",
-			role:         "AXButton",
-			textContains: "save",
-			wantCount:    2,
-			wantWarning:  true,
-			wantCriteria: "role",
-		},
-		{
-			name:         "all three criteria — uses role (H2 warning)",
-			role:         "AXButton",
-			text:         "OK",
-			textContains: "save",
-			wantCount:    3,
-			wantWarning:  true,
-			wantCriteria: "role",
-		},
-		{
-			name:        "no criteria",
-			wantCount:   0,
-			wantWarning: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			providedCriteria := 0
-			if tt.role != "" {
-				providedCriteria++
-			}
-			if tt.text != "" {
-				providedCriteria++
-			}
-			if tt.textContains != "" {
-				providedCriteria++
-			}
-
-			if providedCriteria != tt.wantCount {
-				t.Errorf("criteria count = %d, want %d", providedCriteria, tt.wantCount)
-			}
-
-			hasWarning := providedCriteria > 1
-			if hasWarning != tt.wantWarning {
-				t.Errorf("hasWarning = %v, want %v", hasWarning, tt.wantWarning)
-			}
-
-			if !tt.wantWarning {
-				return
-			}
-
-			// Exercise the handler and assert the reported criterion matches the
-			// actual selector priority (role > text > text_contains).
-			mock := &mockMacosUseClient{
-				findElementsFunc: func(_ context.Context, req *pb.FindElementsRequest) (*pb.FindElementsResponse, error) {
-					if req.Parent != "applications/1" {
-						t.Errorf("FindElements Parent = %q, want applications/1", req.Parent)
-					}
-					return &pb.FindElementsResponse{
-						Elements: []*typepb.Element{{ElementId: "btn1", Role: "AXButton"}},
-					}, nil
-				},
-			}
-			s := newTestMCPServer(mock)
-
-			args, _ := json.Marshal(map[string]string{
-				"parent":        "applications/1",
-				"role":          tt.role,
-				"text":          tt.text,
-				"text_contains": tt.textContains,
-			})
-			call := &ToolCall{Name: "find_elements", Arguments: args}
-			result, err := s.cuaHandleFindElements(call)
-			if err != nil {
-				t.Fatalf("cuaHandleFindElements returned error: %v", err)
-			}
-
-			wantText := "Using " + tt.wantCriteria
-			if !resultContains(result, wantText) {
-				t.Errorf("result does not report %q: %s", wantText, resultText(result))
 			}
 		})
 	}
@@ -708,27 +582,51 @@ func TestCUAHandleListWindows_InvalidParams(t *testing.T) {
 	}
 }
 
-// TestCUAHandleListWindows_PaginationParamsParsed verifies that pagination
-// parameters are correctly parsed from the JSON arguments.
-func TestCUAHandleListWindows_PaginationParamsParsed(t *testing.T) {
-	var params struct {
-		App       string `json:"app"`
-		PageSize  int32  `json:"page_size"`
-		PageToken string `json:"page_token"`
+func TestCUAHandleListWindowsForwardsCompleteQueryAndValidatesResponse(t *testing.T) {
+	var request *pb.ListWindowsRequest
+	server := newTestServer()
+	server.client = &mockMacosUseClient{
+		listWindowsFunc: func(_ context.Context, got *pb.ListWindowsRequest) (*pb.ListWindowsResponse, error) {
+			request = got
+			return &pb.ListWindowsResponse{
+				Windows: []*pb.Window{{
+					Name:    "applications/app-1/windows/window-1",
+					Title:   "Document",
+					Bounds:  &pb.Bounds{X: 10.25, Y: -20.5, Width: 640.5, Height: 480.25},
+					Visible: true,
+					Layer:   7,
+				}},
+				NextPageToken: "opaque-next",
+			}, nil
+		},
 	}
 
-	args := `{"app":"Calculator","page_size":10,"page_token":"abc123"}`
-	if err := json.Unmarshal(json.RawMessage(args), &params); err != nil {
-		t.Fatalf("failed to unmarshal: %v", err)
+	result, err := server.cuaHandleListWindows(&ToolCall{
+		Name: "list_windows",
+		Arguments: json.RawMessage(
+			`{"app":"applications/app-1","page_size":10,"page_token":"opaque","filter":"title=\"Document\"","order_by":"layer desc"}`,
+		),
+	})
+	if err != nil || resultIsError(result) {
+		t.Fatalf("cuaHandleListWindows() error=%v result=%q", err, resultText(result))
 	}
-	if params.App != "Calculator" {
-		t.Errorf("App = %q, want %q", params.App, "Calculator")
+	if request == nil ||
+		request.Parent != "applications/app-1" ||
+		request.PageSize != 10 ||
+		request.PageToken != "opaque" ||
+		request.Filter != `title="Document"` ||
+		request.OrderBy != "layer desc" {
+		t.Fatalf("ListWindows request = %+v", request)
 	}
-	if params.PageSize != 10 {
-		t.Errorf("PageSize = %d, want %d", params.PageSize, 10)
-	}
-	if params.PageToken != "abc123" {
-		t.Errorf("PageToken = %q, want %q", params.PageToken, "abc123")
+	for _, want := range []string{
+		"applications/app-1/windows/window-1",
+		"(10.25, -20.5) 640.5x480.25",
+		"compositing layer 7",
+		"opaque-next",
+	} {
+		if !resultContains(result, want) {
+			t.Fatalf("result %q does not contain %q", resultText(result), want)
+		}
 	}
 }
 
@@ -744,20 +642,20 @@ func TestCUAHandleOpenApp_InvalidParams(t *testing.T) {
 		wantSubstr string
 	}{
 		{
-			name:       "missing id parameter",
+			name:       "missing app parameter",
 			args:       `{}`,
 			wantError:  true,
-			wantSubstr: "id parameter is required",
+			wantSubstr: "app parameter is required",
 		},
 		{
-			name:       "empty id parameter",
-			args:       `{"id":""}`,
+			name:       "empty app parameter",
+			args:       `{"app":""}`,
 			wantError:  true,
-			wantSubstr: "id parameter is required",
+			wantSubstr: "app parameter is required",
 		},
 		{
 			name:       "invalid mode",
-			args:       `{"id":"Calculator","mode":"invalid_mode"}`,
+			args:       `{"app":"applicationBundles/bundle-calculator","mode":"invalid_mode"}`,
 			wantError:  true,
 			wantSubstr: "Unknown mode",
 		},
@@ -796,17 +694,17 @@ func TestCUAHandleOpenApp_BringToFrontDefault(t *testing.T) {
 	}{
 		{
 			name:      "bring_to_front not set defaults to true",
-			args:      `{"id":"Calculator"}`,
+			args:      `{"app":"applicationBundles/bundle-calculator"}`,
 			wantBring: true,
 		},
 		{
 			name:      "bring_to_front explicitly true",
-			args:      `{"id":"Calculator","bring_to_front":true}`,
+			args:      `{"app":"applicationBundles/bundle-calculator","bring_to_front":true}`,
 			wantBring: true,
 		},
 		{
 			name:      "bring_to_front explicitly false",
-			args:      `{"id":"Calculator","bring_to_front":false}`,
+			args:      `{"app":"applicationBundles/bundle-calculator","bring_to_front":false}`,
 			wantBring: false,
 		},
 	}
@@ -814,7 +712,7 @@ func TestCUAHandleOpenApp_BringToFrontDefault(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var params struct {
-				ID           string `json:"id"`
+				App          string `json:"app"`
 				Mode         string `json:"mode"`
 				BringToFront *bool  `json:"bring_to_front"`
 			}
@@ -837,146 +735,22 @@ func TestCUAHandleOpenApp_BringToFrontDefault(t *testing.T) {
 
 // TestCUAHandleOpenApp_ValidModes verifies all valid mode strings are accepted.
 func TestCUAHandleOpenApp_ValidModes(t *testing.T) {
-	validModes := []string{"launch_or_activate", "force_new_instance", "activate_only"}
+	validModes := []string{"launch_or_activate", "force_new_instance"}
 	for _, mode := range validModes {
 		t.Run(mode, func(t *testing.T) {
 			var params struct {
-				ID   string `json:"id"`
+				App  string `json:"app"`
 				Mode string `json:"mode"`
 			}
-			args := `{"id":"Calculator","mode":"` + mode + `"}`
+			args := `{"app":"applicationBundles/bundle-calculator","mode":"` + mode + `"}`
 			if err := json.Unmarshal(json.RawMessage(args), &params); err != nil {
 				t.Fatalf("failed to unmarshal: %v", err)
 			}
 			if params.Mode != mode {
 				t.Errorf("mode = %q, want %q", params.Mode, mode)
 			}
-			if params.ID != "Calculator" {
-				t.Errorf("id = %q, want %q", params.ID, "Calculator")
-			}
-		})
-	}
-}
-
-// --- L3: handleScreenshot — display validation ---
-
-func TestCUAHandleScreenshot_InvalidParams(t *testing.T) {
-	s := newTestServer()
-
-	tests := []struct {
-		name       string
-		args       string
-		wantError  bool
-		wantSubstr string
-	}{
-		{
-			name:       "negative display index",
-			args:       `{"display":-1}`,
-			wantError:  true,
-			wantSubstr: "display must be a non-negative integer",
-		},
-		{
-			name:       "invalid JSON",
-			args:       `{bad`,
-			wantError:  true,
-			wantSubstr: "Invalid parameters",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			call := &ToolCall{Name: "screenshot", Arguments: json.RawMessage(tt.args)}
-			result, err := s.handleScreenshot(call)
-			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
-			}
-			if tt.wantError && !resultIsError(result) {
-				t.Errorf("expected error result, got: %+v", result)
-			}
-			if tt.wantSubstr != "" && !resultContains(result, tt.wantSubstr) {
-				t.Errorf("expected result to contain %q, got: %q", tt.wantSubstr, resultText(result))
-			}
-		})
-	}
-}
-
-// TestCUAHandleScreenshot_DisplayValidation verifies display index validation logic.
-func TestCUAHandleScreenshot_DisplayValidation(t *testing.T) {
-	var params struct {
-		Display int `json:"display"`
-	}
-
-	tests := []struct {
-		name    string
-		args    string
-		wantErr bool
-	}{
-		{"display 0 is valid", `{"display":0}`, false},
-		{"display 1 is valid", `{"display":1}`, false},
-		{"display -1 is invalid", `{"display":-1}`, true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := json.Unmarshal(json.RawMessage(tt.args), &params); err != nil {
-				t.Fatalf("failed to unmarshal: %v", err)
-			}
-			gotErr := params.Display < 0
-			if gotErr != tt.wantErr {
-				t.Errorf("display %d error = %v, want %v", params.Display, gotErr, tt.wantErr)
-			}
-		})
-	}
-}
-
-// TestCUAHandleScreenshot_RegionValidation verifies region capture validation.
-func TestCUAHandleScreenshot_RegionValidation(t *testing.T) {
-	s := newTestServer()
-
-	tests := []struct {
-		name       string
-		args       string
-		wantError  bool
-		wantSubstr string
-	}{
-		{
-			name:       "region with zero width",
-			args:       `{"x":0,"y":0,"width":0,"height":100}`,
-			wantError:  true,
-			wantSubstr: "Region width and height must be positive",
-		},
-		{
-			name:       "region with zero height",
-			args:       `{"x":0,"y":0,"width":100,"height":0}`,
-			wantError:  true,
-			wantSubstr: "Region width and height must be positive",
-		},
-		{
-			name:       "region with negative width",
-			args:       `{"x":0,"y":0,"width":-10,"height":100}`,
-			wantError:  true,
-			wantSubstr: "Region width and height must be positive",
-		},
-		{
-			name:       "region with negative height",
-			args:       `{"x":0,"y":0,"width":100,"height":-10}`,
-			wantError:  true,
-			wantSubstr: "Region width and height must be positive",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			call := &ToolCall{Name: "screenshot", Arguments: json.RawMessage(tt.args)}
-			result, err := s.handleScreenshot(call)
-			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
-			}
-			if tt.wantError && !resultIsError(result) {
-				t.Errorf("expected error result, got: %+v", result)
-			}
-			if tt.wantSubstr != "" && !resultContains(result, tt.wantSubstr) {
-				t.Errorf("expected result to contain %q, got: %q", tt.wantSubstr, resultText(result))
+			if params.App != "applicationBundles/bundle-calculator" {
+				t.Errorf("app = %q, want exact bundle resource", params.App)
 			}
 		})
 	}
@@ -1025,57 +799,6 @@ func TestCUAHandleCloseApp_InvalidParams(t *testing.T) {
 			}
 			if tt.wantSubstr != "" && !resultContains(result, tt.wantSubstr) {
 				t.Errorf("expected result to contain %q, got: %q", tt.wantSubstr, resultText(result))
-			}
-		})
-	}
-}
-
-// TestQuitApplicationAppleScriptArgs verifies that close_app passes the
-// application name to osascript as a positional argv argument rather than
-// interpolating it into AppleScript source, which avoids quoting/escaping bugs.
-func TestQuitApplicationAppleScriptArgs(t *testing.T) {
-	tests := []struct {
-		name        string
-		displayName string
-		want        []string
-	}{
-		{
-			name:        "simple name",
-			displayName: "Calculator",
-			want: []string{
-				"-e", "on run argv",
-				"-e", "tell application (item 1 of argv) to quit",
-				"-e", "end run",
-				"--", "Calculator",
-			},
-		},
-		{
-			name:        "name with double quotes is passed verbatim as argv",
-			displayName: `My "App"`,
-			want: []string{
-				"-e", "on run argv",
-				"-e", "tell application (item 1 of argv) to quit",
-				"-e", "end run",
-				"--", `My "App"`,
-			},
-		},
-		{
-			name:        "name with backslashes is passed verbatim as argv",
-			displayName: `My \App\`,
-			want: []string{
-				"-e", "on run argv",
-				"-e", "tell application (item 1 of argv) to quit",
-				"-e", "end run",
-				"--", `My \App\`,
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := quitApplicationAppleScriptArgs(tt.displayName)
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("quitApplicationAppleScriptArgs() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -1248,18 +971,6 @@ func TestCUAHandleType_InvalidParams(t *testing.T) {
 		wantSubstr string
 	}{
 		{
-			name:       "missing text parameter",
-			args:       `{}`,
-			wantError:  true,
-			wantSubstr: "text parameter is required",
-		},
-		{
-			name:       "empty text parameter",
-			args:       `{"text":""}`,
-			wantError:  true,
-			wantSubstr: "text parameter is required",
-		},
-		{
 			name:       "invalid JSON",
 			args:       `{bad`,
 			wantError:  true,
@@ -1284,21 +995,26 @@ func TestCUAHandleType_InvalidParams(t *testing.T) {
 	}
 }
 
-func TestCUAHandleType_ParentRouting(t *testing.T) {
+func TestCUAHandleType_ExactTargetRouting(t *testing.T) {
 	tests := []struct {
 		name       string
-		parent     string
+		target     string
 		wantParent string
 	}{
 		{
-			name:       "application parent passed through",
-			parent:     "applications/123",
+			name:       "application target",
+			target:     "applications/123",
 			wantParent: "applications/123",
 		},
 		{
-			name:       "window parent canonicalized to application",
-			parent:     "applications/123/windows/456",
+			name:       "window target with application parent",
+			target:     "applications/123/windows/456",
 			wantParent: "applications/123",
+		},
+		{
+			name:       "desktop target with wildcard parent",
+			target:     "desktop",
+			wantParent: "applications/-",
 		},
 	}
 
@@ -1308,12 +1024,12 @@ func TestCUAHandleType_ParentRouting(t *testing.T) {
 			mock := &mockMacosUseClient{
 				createInputFunc: func(_ context.Context, req *pb.CreateInputRequest) (*pb.Input, error) {
 					captured = req
-					return &pb.Input{State: pb.Input_STATE_COMPLETED}, nil
+					return completedInputResponse(req), nil
 				},
 			}
 
 			s := newTestMCPServer(mock)
-			args := fmt.Sprintf(`{"parent":%q,"text":"hello"}`, tt.parent)
+			args := fmt.Sprintf(`{"target":%q,"text":"hello"}`, tt.target)
 			call := &ToolCall{
 				Name:      "type",
 				Arguments: json.RawMessage(args),
@@ -1332,6 +1048,20 @@ func TestCUAHandleType_ParentRouting(t *testing.T) {
 			}
 			if captured.Parent != tt.wantParent {
 				t.Errorf("Parent = %q, want %q", captured.Parent, tt.wantParent)
+			}
+			switch tt.target {
+			case "desktop":
+				if !captured.GetInput().GetTarget().GetDesktop() {
+					t.Errorf("target = %#v, want desktop", captured.GetInput().GetTarget())
+				}
+			case "applications/123":
+				if got := captured.GetInput().GetTarget().GetApplication(); got != tt.target {
+					t.Errorf("application target = %q, want %q", got, tt.target)
+				}
+			default:
+				if got := captured.GetInput().GetTarget().GetWindow(); got != tt.target {
+					t.Errorf("window target = %q, want %q", got, tt.target)
+				}
 			}
 			if captured.GetInput() == nil {
 				t.Fatal("expected Input to be set")
@@ -1533,40 +1263,6 @@ func TestCUAHandleWait_InvalidParams(t *testing.T) {
 	}
 }
 
-// TestCUAHandleWait_DurationCapping verifies wait duration is capped to request timeout.
-func TestCUAHandleWait_DurationCapping(t *testing.T) {
-	cfg := &config.Config{RequestTimeout: 30}
-
-	tests := []struct {
-		name     string
-		duration float64
-		wantMax  float64
-	}{
-		{"negative defaults to 1.0", -5.0, 1.0},
-		{"zero defaults to 1.0", 0.0, 1.0},
-		{"small value passes", 0.5, 0.5},
-		{"within timeout passes", 10.0, 10.0},
-		{"exactly timeout passes", 30.0, 30.0},
-		{"over timeout capped", 60.0, 30.0},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			d := tt.duration
-			if d <= 0 {
-				d = 1.0
-			}
-			maxWait := float64(cfg.RequestTimeout)
-			if d > maxWait {
-				d = maxWait
-			}
-			if d != tt.wantMax {
-				t.Errorf("capped duration = %v, want %v", d, tt.wantMax)
-			}
-		})
-	}
-}
-
 // --- cuaHandleClickElement — parent and element required ---
 
 func TestCUAHandleClickElement_InvalidParams(t *testing.T) {
@@ -1649,18 +1345,6 @@ func TestCUAHandleTypeElement_InvalidParams(t *testing.T) {
 			args:       `{}`,
 			wantError:  true,
 			wantSubstr: "parent parameter is required",
-		},
-		{
-			name:       "missing text",
-			args:       `{"parent":"app/1","element":"btn1"}`,
-			wantError:  true,
-			wantSubstr: "text parameter is required",
-		},
-		{
-			name:       "empty text",
-			args:       `{"parent":"app/1","element":"btn1","text":""}`,
-			wantError:  true,
-			wantSubstr: "text parameter is required",
 		},
 		{
 			name:       "invalid input_method",
@@ -1822,8 +1506,8 @@ func TestCUAHandleTypeElement_SelectorBuildsRequest(t *testing.T) {
 	if sel.Selector.GetRole() != "AXTextArea" {
 		t.Errorf("Selector role = %q, want AXTextArea", sel.Selector.GetRole())
 	}
-	if captured.Value != "hello" {
-		t.Errorf("Value = %q, want hello", captured.Value)
+	if captured.GetValue() != "hello" {
+		t.Errorf("Value = %q, want hello", captured.GetValue())
 	}
 }
 
@@ -1916,9 +1600,9 @@ func TestCUAHandleReadElement_InvalidParams(t *testing.T) {
 func TestCUAHandleReadElement_BareIDCanonicalization(t *testing.T) {
 	var capturedName string
 	mock := &mockMacosUseClient{
-		getElementFunc: func(_ context.Context, req *pb.GetElementRequest) (*typepb.Element, error) {
+		getElementFunc: func(_ context.Context, req *pb.GetElementRequest) (*pb.Element, error) {
 			capturedName = req.Name
-			return &typepb.Element{ElementId: req.Name, Role: "AXTextArea"}, nil
+			return &pb.Element{ElementId: req.Name, Role: "AXTextArea"}, nil
 		},
 		getElementActionsFunc: func(_ context.Context, _ *pb.GetElementActionsRequest, _ ...grpc.CallOption) (*pb.ElementActions, error) {
 			return &pb.ElementActions{}, nil
@@ -1974,12 +1658,6 @@ func TestCUAHandleClipboard_InvalidParams(t *testing.T) {
 			wantError:  true,
 			wantSubstr: "text parameter is required for set action",
 		},
-		{
-			name:       "set with empty text",
-			args:       `{"action":"set","text":""}`,
-			wantError:  true,
-			wantSubstr: "text parameter is required for set action",
-		},
 	}
 
 	for _, tt := range tests {
@@ -1992,22 +1670,6 @@ func TestCUAHandleClipboard_InvalidParams(t *testing.T) {
 				t.Errorf("expected result to contain %q, got: %q", tt.wantSubstr, resultText(result))
 			}
 		})
-	}
-}
-
-func TestCUAHandleClipboard_InputLengthValidation(t *testing.T) {
-	s := newTestServer()
-
-	bigText := strings.Repeat("x", maxInputTextLen+1)
-
-	result, _ := s.handleClipboard(&ToolCall{Arguments: json.RawMessage(
-		fmt.Sprintf(`{"action":"set","text":%q}`, bigText),
-	)})
-	if !result.IsError {
-		t.Fatal("expected error for oversized text input")
-	}
-	if !strings.Contains(resultText(result), "text") || !strings.Contains(resultText(result), "exceeds maximum") {
-		t.Errorf("expected input length error, got: %q", resultText(result))
 	}
 }
 
@@ -2078,73 +1740,6 @@ func TestCUAHandleGetDisplay_NoValidationNeeded(t *testing.T) {
 	// Test documents that get_display needs no input validation.
 }
 
-// --- normalizeCUAKey — key name mapping ---
-
-func TestNormalizeCUAKey(t *testing.T) {
-	tests := []struct {
-		name string
-		key  string
-		want string
-	}{
-		{"ctrl maps to control", "ctrl", "control"},
-		{"CTRL case insensitive", "CTRL", "control"},
-		{"alt maps to option", "alt", "option"},
-		{"meta maps to command", "meta", "command"},
-		{"enter maps to return", "enter", "return"},
-		{"esc maps to escape", "esc", "escape"},
-		{"backspace maps to delete", "backspace", "delete"},
-		{"pageup maps to pageUp", "pageup", "pageUp"},
-		{"page_up maps to pageUp", "page_up", "pageUp"},
-		{"up maps to arrowUp", "up", "arrowUp"},
-		{"down maps to arrowDown", "down", "arrowDown"},
-		{"left maps to arrowLeft", "left", "arrowLeft"},
-		{"right maps to arrowRight", "right", "arrowRight"},
-		{"f1 maps to f1", "f1", "f1"},
-		{"f12 maps to f12", "f12", "f12"},
-		{"unknown key passes through", "a", "a"},
-		{"number passes through", "1", "1"},
-		{"return maps to return", "return", "return"},
-		{"space maps to space", "space", "space"},
-		{"tab maps to tab", "tab", "tab"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := normalizeCUAKey(tt.key)
-			if got != tt.want {
-				t.Errorf("normalizeCUAKey(%q) = %q, want %q", tt.key, got, tt.want)
-			}
-		})
-	}
-}
-
-// --- modifierToKeyName — enum to name conversion ---
-
-func TestModifierToKeyName(t *testing.T) {
-	tests := []struct {
-		name string
-		mod  pb.KeyPress_Modifier
-		want string
-	}{
-		{"command", pb.KeyPress_MODIFIER_COMMAND, "command"},
-		{"option", pb.KeyPress_MODIFIER_OPTION, "option"},
-		{"control", pb.KeyPress_MODIFIER_CONTROL, "control"},
-		{"shift", pb.KeyPress_MODIFIER_SHIFT, "shift"},
-		{"function", pb.KeyPress_MODIFIER_FUNCTION, "function"},
-		{"caps_lock", pb.KeyPress_MODIFIER_CAPS_LOCK, "capslock"},
-		{"unspecified", pb.KeyPress_MODIFIER_UNSPECIFIED, "unknown"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := modifierToKeyName(tt.mod)
-			if got != tt.want {
-				t.Errorf("modifierToKeyName(%v) = %q, want %q", tt.mod, got, tt.want)
-			}
-		})
-	}
-}
-
 // --- extractWindowFromParent — window name extraction ---
 
 func TestExtractWindowFromParent(t *testing.T) {
@@ -2203,6 +1798,7 @@ func TestElementResourceName(t *testing.T) {
 	}{
 		{"app parent", "applications/123", "btn1", "applications/123/elements/btn1"},
 		{"window parent", "applications/123/windows/456", "btn1", "applications/123/elements/btn1"},
+		{"opaque window parent", "applications/process-instance/windows/window-generation", "btn1", "applications/process-instance/elements/btn1"},
 		{"element parent", "applications/123/elements/abc", "child1", "applications/123/elements/child1"},
 		{"invalid parent falls back", "unknown/123", "btn1", "unknown/123/elements/btn1"},
 	}
@@ -2242,176 +1838,14 @@ func TestCUATruncateText(t *testing.T) {
 	}
 }
 
-// --- cuaKeysToModifiers — comprehensive modifier mapping ---
-
-func TestCUAKeysToModifiers(t *testing.T) {
-	tests := []struct {
-		name            string
-		keys            []string
-		wantModifiers   []pb.KeyPress_Modifier
-		wantNonModifier []string
-	}{
-		{
-			name:            "ctrl+c",
-			keys:            []string{"ctrl", "c"},
-			wantModifiers:   []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_CONTROL},
-			wantNonModifier: []string{"c"},
-		},
-		{
-			name:            "cmd+shift+3",
-			keys:            []string{"cmd", "shift", "3"},
-			wantModifiers:   []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_COMMAND, pb.KeyPress_MODIFIER_SHIFT},
-			wantNonModifier: []string{"3"},
-		},
-		{
-			name:            "option+left",
-			keys:            []string{"option", "left"},
-			wantModifiers:   []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_OPTION},
-			wantNonModifier: []string{"left"},
-		},
-		{
-			name:            "alt alias for option",
-			keys:            []string{"alt"},
-			wantModifiers:   []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_OPTION},
-			wantNonModifier: nil,
-		},
-		{
-			name:            "fn modifier",
-			keys:            []string{"fn"},
-			wantModifiers:   []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_FUNCTION},
-			wantNonModifier: nil,
-		},
-		{
-			name:            "command alias for cmd",
-			keys:            []string{"command"},
-			wantModifiers:   []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_COMMAND},
-			wantNonModifier: nil,
-		},
-		{
-			name:            "control alias for ctrl",
-			keys:            []string{"control"},
-			wantModifiers:   []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_CONTROL},
-			wantNonModifier: nil,
-		},
-		{
-			name:            "plain key only",
-			keys:            []string{"a"},
-			wantModifiers:   nil,
-			wantNonModifier: []string{"a"},
-		},
-		{
-			name:            "empty input",
-			keys:            []string{},
-			wantModifiers:   nil,
-			wantNonModifier: nil,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mods, nonMods := cuaKeysToModifiers(tt.keys)
-
-			if len(mods) != len(tt.wantModifiers) {
-				t.Errorf("modifiers count = %d, want %d", len(mods), len(tt.wantModifiers))
-			} else {
-				for i, m := range mods {
-					if m != tt.wantModifiers[i] {
-						t.Errorf("modifiers[%d] = %v, want %v", i, m, tt.wantModifiers[i])
-					}
-				}
-			}
-
-			if len(nonMods) != len(tt.wantNonModifier) {
-				t.Errorf("nonModifier count = %d, want %d", len(nonMods), len(tt.wantNonModifier))
-			} else {
-				for i, k := range nonMods {
-					if k != tt.wantNonModifier[i] {
-						t.Errorf("nonModifier[%d] = %q, want %q", i, k, tt.wantNonModifier[i])
-					}
-				}
-			}
-		})
-	}
-}
-
-// --- detectBareBinary ---
-
-func TestDetectBareBinary(t *testing.T) {
-	tests := []struct {
-		name         string
-		stdout       string
-		exitCode     int32
-		commandErr   error
-		wantBare     bool
-		wantContains string
-	}{
-		{
-			name:         "normal bundle id",
-			stdout:       "com.apple.TextEdit\n",
-			wantBare:     false,
-			wantContains: "",
-		},
-		{
-			name:         "empty bundle id",
-			stdout:       "",
-			wantBare:     true,
-			wantContains: "bare binary",
-		},
-		{
-			name:         "missing value",
-			stdout:       "missing value",
-			wantBare:     true,
-			wantContains: "bare binary",
-		},
-		{
-			name:     "command fails",
-			exitCode: 1,
-			wantBare: false,
-		},
-		{
-			name:       "command error",
-			commandErr: errors.New("osascript not found"),
-			wantBare:   false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mock := &mockMacosUseClient{
-				executeShellCommandFunc: func(_ context.Context, req *pb.ExecuteShellCommandRequest) (*pb.ExecuteShellCommandResponse, error) {
-					if req.Command != "/usr/bin/osascript" {
-						t.Errorf("unexpected command: %s", req.Command)
-					}
-					if tt.commandErr != nil {
-						return nil, tt.commandErr
-					}
-					return &pb.ExecuteShellCommandResponse{
-						ExitCode: tt.exitCode,
-						Stdout:   tt.stdout,
-					}, nil
-				},
-			}
-			s := newTestMCPServer(mock)
-
-			gotBare, gotWarning := s.detectBareBinary(context.Background(), 123)
-			if gotBare != tt.wantBare {
-				t.Errorf("detectBareBinary() bare = %v, want %v", gotBare, tt.wantBare)
-			}
-			if gotWarning != "" && !strings.Contains(gotWarning, tt.wantContains) {
-				t.Errorf("detectBareBinary() warning = %q, want to contain %q", gotWarning, tt.wantContains)
-			}
-		})
-	}
-}
-
 // --- handleReadElement canonicalization ---
 
 func TestCUAHandleReadElement_WindowParentCanonicalizesToAppElements(t *testing.T) {
 	var capturedName string
 	mock := &mockMacosUseClient{
-		getElementFunc: func(_ context.Context, req *pb.GetElementRequest) (*typepb.Element, error) {
+		getElementFunc: func(_ context.Context, req *pb.GetElementRequest) (*pb.Element, error) {
 			capturedName = req.Name
-			return &typepb.Element{ElementId: req.Name, Role: "AXTextArea"}, nil
+			return &pb.Element{ElementId: req.Name, Role: "AXTextArea"}, nil
 		},
 		getElementActionsFunc: func(_ context.Context, _ *pb.GetElementActionsRequest, _ ...grpc.CallOption) (*pb.ElementActions, error) {
 			return &pb.ElementActions{}, nil
@@ -2473,8 +1907,8 @@ func TestCUAHandleTypeElement_AXValueErrorMessage(t *testing.T) {
 		focusWindowFunc: func(context.Context, *pb.FocusWindowRequest) (*pb.Window, error) {
 			return &pb.Window{Name: "applications/1/windows/1"}, nil
 		},
-		getElementFunc: func(_ context.Context, req *pb.GetElementRequest) (*typepb.Element, error) {
-			return &typepb.Element{ElementId: req.Name, Role: "AXTextArea"}, nil
+		getElementFunc: func(_ context.Context, req *pb.GetElementRequest) (*pb.Element, error) {
+			return &pb.Element{ElementId: req.Name, Role: "AXTextArea"}, nil
 		},
 		writeElementValueFunc: func(_ context.Context, _ *pb.WriteElementValueRequest, _ ...grpc.CallOption) (*pb.WriteElementValueResponse, error) {
 			return nil, fmt.Errorf("rpc error: code = Internal desc = AXValue set failed for element elem_123 (AXError -25200)")
@@ -2542,7 +1976,7 @@ func TestCUAHandleClickElement_SelectorReportsFailure(t *testing.T) {
 		clickElementFunc: func(_ context.Context, req *pb.ClickElementRequest, _ ...grpc.CallOption) (*pb.ClickElementResponse, error) {
 			return &pb.ClickElementResponse{
 				Success: false,
-				Element: &typepb.Element{Role: "AXButton"},
+				Element: &pb.Element{Role: "AXButton"},
 			}, nil
 		},
 	}
@@ -2681,19 +2115,19 @@ func TestCUAHandleClickElement_ElementIDReferenceUnavailable(t *testing.T) {
 }
 
 func TestCUAHandleTypeElement_KeystrokesBuildsRequest(t *testing.T) {
-	var captured *pb.CreateInputRequest
-	var capturedClick *pb.ClickElementRequest
+	var capturedWrite *pb.WriteElementValueRequest
+	clickElementCalls := 0
 	mock := &mockMacosUseClient{
 		focusWindowFunc: func(context.Context, *pb.FocusWindowRequest) (*pb.Window, error) {
 			return &pb.Window{Name: "applications/1/windows/1"}, nil
 		},
-		clickElementFunc: func(_ context.Context, req *pb.ClickElementRequest, _ ...grpc.CallOption) (*pb.ClickElementResponse, error) {
-			capturedClick = req
+		clickElementFunc: func(_ context.Context, _ *pb.ClickElementRequest, _ ...grpc.CallOption) (*pb.ClickElementResponse, error) {
+			clickElementCalls++
 			return &pb.ClickElementResponse{Success: true}, nil
 		},
-		createInputFunc: func(_ context.Context, req *pb.CreateInputRequest) (*pb.Input, error) {
-			captured = req
-			return &pb.Input{Name: "inputs/type-test", State: pb.Input_STATE_COMPLETED}, nil
+		writeElementValueFunc: func(_ context.Context, req *pb.WriteElementValueRequest, _ ...grpc.CallOption) (*pb.WriteElementValueResponse, error) {
+			capturedWrite = req
+			return &pb.WriteElementValueResponse{Success: true}, nil
 		},
 	}
 
@@ -2711,32 +2145,31 @@ func TestCUAHandleTypeElement_KeystrokesBuildsRequest(t *testing.T) {
 		t.Fatalf("unexpected error result: %v", resultText(result))
 	}
 
-	if capturedClick == nil {
-		t.Fatal("ClickElement was not called")
-	}
-	if capturedClick.Parent != "applications/1/windows/1" {
-		t.Errorf("ClickElement Parent = %q, want applications/1/windows/1", capturedClick.Parent)
-	}
-	clickSel, ok := capturedClick.Target.(*pb.ClickElementRequest_Selector)
-	if !ok {
-		t.Fatalf("ClickElement Target is not a selector, got %T", capturedClick.Target)
-	}
-	if clickSel.Selector.GetRole() != "AXTextArea" {
-		t.Errorf("ClickElement Selector role = %q, want AXTextArea", clickSel.Selector.GetRole())
+	// The keystroke path must NOT pre-click the element: focus is acquired by the
+	// Swift WriteElementValue keystroke-replacement path (AX focus with click
+	// fallback). A Go-side pre-click would double-toggle checkboxes/toggles.
+	if clickElementCalls != 0 {
+		t.Fatalf("keystroke path issued %d ClickElement RPC(s); expected 0 (no pre-click)", clickElementCalls)
 	}
 
-	if captured == nil {
-		t.Fatal("CreateInput was not called")
+	if capturedWrite == nil {
+		t.Fatal("WriteElementValue was not called")
 	}
-	if captured.Parent != "applications/1" {
-		t.Errorf("Parent = %q, want applications/1", captured.Parent)
+	if capturedWrite.Parent != "applications/1/windows/1" {
+		t.Errorf("WriteElementValue Parent = %q, want applications/1/windows/1", capturedWrite.Parent)
 	}
-	act := captured.GetInput().GetAction()
-	if act.GetTypeText() == nil {
-		t.Fatalf("expected type_text action, got %T", act)
+	if capturedWrite.WriteMode != pb.WriteElementValueRequest_WRITE_MODE_KEYSTROKE_REPLACEMENT {
+		t.Errorf("WriteMode = %v, want KEYSTROKE_REPLACEMENT", capturedWrite.WriteMode)
 	}
-	if act.GetTypeText().Text != "hello" {
-		t.Errorf("text = %q, want hello", act.GetTypeText().Text)
+	writeSel, ok := capturedWrite.Target.(*pb.WriteElementValueRequest_Selector)
+	if !ok {
+		t.Fatalf("WriteElementValue Target is not a selector, got %T", capturedWrite.Target)
+	}
+	if writeSel.Selector.GetRole() != "AXTextArea" {
+		t.Errorf("WriteElementValue Selector role = %q, want AXTextArea", writeSel.Selector.GetRole())
+	}
+	if capturedWrite.GetValue() != "hello" {
+		t.Errorf("Value = %q, want hello", capturedWrite.GetValue())
 	}
 }
 
@@ -2749,13 +2182,8 @@ func TestCUAHandleTypeElement_KeystrokesFailure(t *testing.T) {
 			_ = req
 			return &pb.ClickElementResponse{Success: true}, nil
 		},
-		createInputFunc: func(_ context.Context, req *pb.CreateInputRequest) (*pb.Input, error) {
-			_ = req
-			return &pb.Input{
-				Name:  "inputs/type-test",
-				State: pb.Input_STATE_FAILED,
-				Error: "keystroke failure",
-			}, nil
+		writeElementValueFunc: func(_ context.Context, req *pb.WriteElementValueRequest, _ ...grpc.CallOption) (*pb.WriteElementValueResponse, error) {
+			return nil, fmt.Errorf("rpc error: code = Internal desc = write failed")
 		},
 	}
 
@@ -2772,25 +2200,25 @@ func TestCUAHandleTypeElement_KeystrokesFailure(t *testing.T) {
 	if !resultIsError(result) {
 		t.Fatalf("expected error result, got: %v", resultText(result))
 	}
-	if !strings.Contains(resultText(result), "keystroke typing failed") {
-		t.Errorf("expected keystroke failure message, got: %q", resultText(result))
+	if !strings.Contains(resultText(result), "write failed") {
+		t.Errorf("expected write failure message, got: %q", resultText(result))
 	}
 }
 
 func TestCUAHandleTypeElement_KeystrokesElementBuildsRequest(t *testing.T) {
-	var captured *pb.CreateInputRequest
-	var capturedClick *pb.ClickElementRequest
+	var capturedWrite *pb.WriteElementValueRequest
+	clickElementCalls := 0
 	mock := &mockMacosUseClient{
 		focusWindowFunc: func(context.Context, *pb.FocusWindowRequest) (*pb.Window, error) {
 			return &pb.Window{Name: "applications/1/windows/1"}, nil
 		},
-		clickElementFunc: func(_ context.Context, req *pb.ClickElementRequest, _ ...grpc.CallOption) (*pb.ClickElementResponse, error) {
-			capturedClick = req
+		clickElementFunc: func(_ context.Context, _ *pb.ClickElementRequest, _ ...grpc.CallOption) (*pb.ClickElementResponse, error) {
+			clickElementCalls++
 			return &pb.ClickElementResponse{Success: true}, nil
 		},
-		createInputFunc: func(_ context.Context, req *pb.CreateInputRequest) (*pb.Input, error) {
-			captured = req
-			return &pb.Input{Name: "inputs/type-test", State: pb.Input_STATE_COMPLETED}, nil
+		writeElementValueFunc: func(_ context.Context, req *pb.WriteElementValueRequest, _ ...grpc.CallOption) (*pb.WriteElementValueResponse, error) {
+			capturedWrite = req
+			return &pb.WriteElementValueResponse{Success: true}, nil
 		},
 	}
 
@@ -2808,42 +2236,47 @@ func TestCUAHandleTypeElement_KeystrokesElementBuildsRequest(t *testing.T) {
 		t.Fatalf("unexpected error result: %v", resultText(result))
 	}
 
-	if capturedClick == nil {
-		t.Fatal("ClickElement was not called")
-	}
-	if capturedClick.Parent != "applications/1/windows/1" {
-		t.Errorf("ClickElement Parent = %q, want applications/1/windows/1", capturedClick.Parent)
-	}
-	clickElem, ok := capturedClick.Target.(*pb.ClickElementRequest_ElementId)
-	if !ok {
-		t.Fatalf("ClickElement Target is not element_id, got %T", capturedClick.Target)
-	}
-	if clickElem.ElementId != "elem_1" {
-		t.Errorf("ClickElement ElementId = %q, want elem_1", clickElem.ElementId)
+	// No Go-side pre-click in the keystroke path; focus is owned by Swift.
+	if clickElementCalls != 0 {
+		t.Fatalf("keystroke path issued %d ClickElement RPC(s); expected 0 (no pre-click)", clickElementCalls)
 	}
 
-	if captured == nil {
-		t.Fatal("CreateInput was not called")
+	if capturedWrite == nil {
+		t.Fatal("WriteElementValue was not called")
 	}
-	if captured.Parent != "applications/1" {
-		t.Errorf("CreateInput Parent = %q, want applications/1", captured.Parent)
+	if capturedWrite.Parent != "applications/1/windows/1" {
+		t.Errorf("WriteElementValue Parent = %q, want applications/1/windows/1", capturedWrite.Parent)
+	}
+	if capturedWrite.WriteMode != pb.WriteElementValueRequest_WRITE_MODE_KEYSTROKE_REPLACEMENT {
+		t.Errorf("WriteMode = %v, want KEYSTROKE_REPLACEMENT", capturedWrite.WriteMode)
+	}
+	writeElem, ok := capturedWrite.Target.(*pb.WriteElementValueRequest_ElementId)
+	if !ok {
+		t.Fatalf("WriteElementValue Target is not element_id, got %T", capturedWrite.Target)
+	}
+	if writeElem.ElementId != "elem_1" {
+		t.Errorf("WriteElementValue ElementId = %q, want elem_1", writeElem.ElementId)
 	}
 }
 
-func TestCUAHandleTypeElement_KeystrokesClickFailure(t *testing.T) {
-	var createInputCalled bool
+func TestCUAHandleTypeElement_KeystrokesNoPreClick(t *testing.T) {
+	// Regression guard (defect C4): the keystroke path must route directly to
+	// WriteElementValue and never issue a ClickElement RPC, because the Swift
+	// keystroke-replacement path owns focus acquisition. A Go-side pre-click
+	// double-toggles checkboxes/toggles and produces an untruthful result.
+	clickElementCalls := 0
+	var writeElementValueCalled bool
 	mock := &mockMacosUseClient{
 		focusWindowFunc: func(context.Context, *pb.FocusWindowRequest) (*pb.Window, error) {
 			return &pb.Window{Name: "applications/1/windows/1"}, nil
 		},
-		clickElementFunc: func(_ context.Context, req *pb.ClickElementRequest, _ ...grpc.CallOption) (*pb.ClickElementResponse, error) {
-			_ = req
-			return nil, fmt.Errorf("rpc error: code = FailedPrecondition desc = element not visible")
+		clickElementFunc: func(_ context.Context, _ *pb.ClickElementRequest, _ ...grpc.CallOption) (*pb.ClickElementResponse, error) {
+			clickElementCalls++
+			return &pb.ClickElementResponse{Success: true}, nil
 		},
-		createInputFunc: func(_ context.Context, req *pb.CreateInputRequest) (*pb.Input, error) {
-			createInputCalled = true
-			_ = req
-			return &pb.Input{Name: "inputs/type-test", State: pb.Input_STATE_COMPLETED}, nil
+		writeElementValueFunc: func(_ context.Context, _ *pb.WriteElementValueRequest, _ ...grpc.CallOption) (*pb.WriteElementValueResponse, error) {
+			writeElementValueCalled = true
+			return &pb.WriteElementValueResponse{Success: true}, nil
 		},
 	}
 
@@ -2857,10 +2290,13 @@ func TestCUAHandleTypeElement_KeystrokesClickFailure(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !resultIsError(result) {
-		t.Fatalf("expected error result, got: %v", resultText(result))
+	if resultIsError(result) {
+		t.Fatalf("unexpected error result: %v", resultText(result))
 	}
-	if createInputCalled {
-		t.Error("CreateInput was called despite ClickElement failure")
+	if clickElementCalls != 0 {
+		t.Fatalf("keystroke path issued %d ClickElement RPC(s); expected 0", clickElementCalls)
+	}
+	if !writeElementValueCalled {
+		t.Fatal("WriteElementValue was not called")
 	}
 }

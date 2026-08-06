@@ -28,18 +28,25 @@ func TestClipboardTextFlow(t *testing.T) {
 	}
 
 	// Write a text value
+	const want = "integration-text-123"
 	writeResp, err := client.WriteClipboard(ctx, &pb.WriteClipboardRequest{
-		Content:       &pb.ClipboardContent{Content: &pb.ClipboardContent_Text{Text: "integration-text-123"}},
-		ClearExisting: true,
+		Content: &pb.ClipboardContent{
+			Type:    pb.ContentType_CONTENT_TYPE_TEXT.Enum(),
+			Content: &pb.ClipboardContent_Text{Text: want},
+		},
 	})
 	if err != nil {
 		t.Fatalf("WriteClipboard failed: %v", err)
 	}
-	if !writeResp.Success {
-		t.Fatalf("WriteClipboard returned success=false")
+	observed := writeResp.GetClipboard()
+	if observed.GetName() != "clipboard" {
+		t.Fatalf("WriteClipboard response name = %q, want clipboard", observed.GetName())
 	}
-	if writeResp.Type != pb.ContentType_CONTENT_TYPE_TEXT {
-		t.Fatalf("WriteClipboard response reported wrong type: %v", writeResp.Type)
+	if observed.GetContent().GetType() != pb.ContentType_CONTENT_TYPE_TEXT {
+		t.Fatalf("WriteClipboard response reported wrong type: %v", observed.GetContent().GetType())
+	}
+	if got := observed.GetContent().GetText(); got != want {
+		t.Fatalf("WriteClipboard observed text = %q, want %q", got, want)
 	}
 
 	// Read back
@@ -48,11 +55,11 @@ func TestClipboardTextFlow(t *testing.T) {
 		t.Fatalf("GetClipboard failed: %v", err)
 	}
 
-	if got.Content.Type != pb.ContentType_CONTENT_TYPE_TEXT {
-		t.Fatalf("expected content type TEXT got %v", got.Content.Type)
+	if got.Content.GetType() != pb.ContentType_CONTENT_TYPE_TEXT {
+		t.Fatalf("expected content type TEXT got %v", got.Content.GetType())
 	}
 	// Extract text
-	if got.Content.GetText() != "integration-text-123" {
+	if got.Content.GetText() != want {
 		t.Fatalf("clipboard text mismatch: %v", got.Content.GetText())
 	}
 
@@ -95,16 +102,20 @@ func TestClipboardHistory(t *testing.T) {
 
 	// Write two distinct values
 	_, err := client.WriteClipboard(ctx, &pb.WriteClipboardRequest{
-		Content:       &pb.ClipboardContent{Content: &pb.ClipboardContent_Text{Text: "history-one"}},
-		ClearExisting: true,
+		Content: &pb.ClipboardContent{
+			Type:    pb.ContentType_CONTENT_TYPE_TEXT.Enum(),
+			Content: &pb.ClipboardContent_Text{Text: "history-one"},
+		},
 	})
 	if err != nil {
 		t.Fatalf("WriteClipboard failed: %v", err)
 	}
 
 	_, err = client.WriteClipboard(ctx, &pb.WriteClipboardRequest{
-		Content:       &pb.ClipboardContent{Content: &pb.ClipboardContent_Text{Text: "history-two"}},
-		ClearExisting: true,
+		Content: &pb.ClipboardContent{
+			Type:    pb.ContentType_CONTENT_TYPE_TEXT.Enum(),
+			Content: &pb.ClipboardContent_Text{Text: "history-two"},
+		},
 	})
 	if err != nil {
 		t.Fatalf("WriteClipboard second failed: %v", err)

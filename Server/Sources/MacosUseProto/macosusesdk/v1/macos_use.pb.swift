@@ -29,20 +29,287 @@ fileprivate nonisolated struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobu
   typealias Version = _2
 }
 
-/// Request to open an application.
+/// Describes how an application reached the closed state.
+public nonisolated enum Macosusesdk_V1_ApplicationCloseDisposition: SwiftProtobuf.Enum, Swift.CaseIterable {
+  public typealias RawValue = Int
+
+  /// The close disposition is unspecified.
+  case unspecified // = 0
+
+  /// The exact tracked process had already exited before the close request.
+  case alreadyExited // = 1
+
+  /// The exact tracked process exited after the graceful close request.
+  case graceful // = 2
+
+  /// The exact tracked process required force termination after the graceful
+  /// close attempt did not converge.
+  case forced // = 3
+  case UNRECOGNIZED(Int)
+
+  public init() {
+    self = .unspecified
+  }
+
+  public init?(rawValue: Int) {
+    switch rawValue {
+    case 0: self = .unspecified
+    case 1: self = .alreadyExited
+    case 2: self = .graceful
+    case 3: self = .forced
+    default: self = .UNRECOGNIZED(rawValue)
+    }
+  }
+
+  public var rawValue: Int {
+    switch self {
+    case .unspecified: return 0
+    case .alreadyExited: return 1
+    case .graceful: return 2
+    case .forced: return 3
+    case .UNRECOGNIZED(let i): return i
+    }
+  }
+
+  // The compiler won't synthesize support with the UNRECOGNIZED case.
+  public static let allCases: [Macosusesdk_V1_ApplicationCloseDisposition] = [
+    .unspecified,
+    .alreadyExited,
+    .graceful,
+    .forced,
+  ]
+
+}
+
+/// Controls how OpenApplication resolves or creates an application process.
+public nonisolated enum Macosusesdk_V1_ApplicationOpenMode: SwiftProtobuf.Enum, Swift.CaseIterable {
+  public typealias RawValue = Int
+
+  /// Use launch-or-activate behavior.
+  case unspecified // = 0
+
+  /// Launch the application if absent, otherwise reuse its existing process.
+  case launchOrActivate // = 1
+
+  /// Always request a distinct application process.
+  case forceNewInstance // = 2
+  case UNRECOGNIZED(Int)
+
+  public init() {
+    self = .unspecified
+  }
+
+  public init?(rawValue: Int) {
+    switch rawValue {
+    case 0: self = .unspecified
+    case 1: self = .launchOrActivate
+    case 2: self = .forceNewInstance
+    default: self = .UNRECOGNIZED(rawValue)
+    }
+  }
+
+  public var rawValue: Int {
+    switch self {
+    case .unspecified: return 0
+    case .launchOrActivate: return 1
+    case .forceNewInstance: return 2
+    case .UNRECOGNIZED(let i): return i
+    }
+  }
+
+  // The compiler won't synthesize support with the UNRECOGNIZED case.
+  public static let allCases: [Macosusesdk_V1_ApplicationOpenMode] = [
+    .unspecified,
+    .launchOrActivate,
+    .forceNewInstance,
+  ]
+
+}
+
+/// Describes the observed outcome of OpenApplication.
+public nonisolated enum Macosusesdk_V1_ApplicationOpenDisposition: SwiftProtobuf.Enum, Swift.CaseIterable {
+  public typealias RawValue = Int
+
+  /// The open disposition is unspecified.
+  case unspecified // = 0
+
+  /// A new application process was launched.
+  case launchedNew // = 1
+
+  /// An existing application process was activated.
+  case activatedExisting // = 2
+
+  /// The selected process was already active.
+  case alreadyActive // = 3
+
+  /// An existing process was reused without activation because background=true.
+  case reusedExisting // = 4
+  case UNRECOGNIZED(Int)
+
+  public init() {
+    self = .unspecified
+  }
+
+  public init?(rawValue: Int) {
+    switch rawValue {
+    case 0: self = .unspecified
+    case 1: self = .launchedNew
+    case 2: self = .activatedExisting
+    case 3: self = .alreadyActive
+    case 4: self = .reusedExisting
+    default: self = .UNRECOGNIZED(rawValue)
+    }
+  }
+
+  public var rawValue: Int {
+    switch self {
+    case .unspecified: return 0
+    case .launchedNew: return 1
+    case .activatedExisting: return 2
+    case .alreadyActive: return 3
+    case .reusedExisting: return 4
+    case .UNRECOGNIZED(let i): return i
+    }
+  }
+
+  // The compiler won't synthesize support with the UNRECOGNIZED case.
+  public static let allCases: [Macosusesdk_V1_ApplicationOpenDisposition] = [
+    .unspecified,
+    .launchedNew,
+    .activatedExisting,
+    .alreadyActive,
+    .reusedExisting,
+  ]
+
+}
+
+/// Describes the observed outcome of ActivateApplication.
+public nonisolated enum Macosusesdk_V1_ApplicationActivationDisposition: SwiftProtobuf.Enum, Swift.CaseIterable {
+  public typealias RawValue = Int
+
+  /// The activation disposition is unspecified.
+  case unspecified // = 0
+
+  /// The exact process became active during this request.
+  case activated // = 1
+
+  /// The exact process was already active.
+  case alreadyActive // = 2
+  case UNRECOGNIZED(Int)
+
+  public init() {
+    self = .unspecified
+  }
+
+  public init?(rawValue: Int) {
+    switch rawValue {
+    case 0: self = .unspecified
+    case 1: self = .activated
+    case 2: self = .alreadyActive
+    default: self = .UNRECOGNIZED(rawValue)
+    }
+  }
+
+  public var rawValue: Int {
+    switch self {
+    case .unspecified: return 0
+    case .activated: return 1
+    case .alreadyActive: return 2
+    case .UNRECOGNIZED(let i): return i
+    }
+  }
+
+  // The compiler won't synthesize support with the UNRECOGNIZED case.
+  public static let allCases: [Macosusesdk_V1_ApplicationActivationDisposition] = [
+    .unspecified,
+    .activated,
+    .alreadyActive,
+  ]
+
+}
+
+/// Request to get one installed application bundle.
+public nonisolated struct Macosusesdk_V1_GetApplicationBundleRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Resource name of the exact installed application bundle.
+  public var name: String = String()
+
+  /// Amount of metadata to return. Unspecified defaults to BASIC.
+  public var view: Macosusesdk_V1_ApplicationView = .unspecified
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Request to list discoverable installed application bundles.
+public nonisolated struct Macosusesdk_V1_ListApplicationBundlesRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Maximum number of bundles to return. Zero uses the server default;
+  /// negative values are invalid and values above 1000 are clamped to 1000.
+  public var pageSize: Int32 = 0
+
+  /// Opaque token from a previous request with identical semantic query inputs,
+  /// including the effective page size after defaulting and clamping.
+  public var pageToken: String = String()
+
+  /// Ordering specification. Supported fields are name, display_name,
+  /// bundle_id, and bundle_url, optionally followed by " desc".
+  public var orderBy: String = String()
+
+  /// Filter expression. Supported equality fields are display_name and
+  /// bundle_id; multiple conditions use AND semantics.
+  public var filter: String = String()
+
+  /// Amount of metadata to return. Unspecified defaults to BASIC.
+  public var view: Macosusesdk_V1_ApplicationView = .unspecified
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Response from listing installed application bundles.
+public nonisolated struct Macosusesdk_V1_ListApplicationBundlesResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// The application bundles.
+  public var applicationBundles: [Macosusesdk_V1_ApplicationBundle] = []
+
+  /// Opaque token for the next page, or empty when the collection is exhausted.
+  public var nextPageToken: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Request to open one exact application bundle.
 public nonisolated struct Macosusesdk_V1_OpenApplicationRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// The identifier (name, bundle ID, or path) of the application to open.
-  /// Examples: "Calculator", "com.apple.calculator", "/Applications/Calculator.app"
-  public var id: String = String()
+  /// Resource name of the exact installed application bundle to open.
+  public var name: String = String()
 
   /// If true, the application is opened without being activated (brought to foreground).
   /// The user's current focus is preserved. Defaults to false (activates app).
   /// Uses NSWorkspace.OpenConfiguration.activates = false internally.
   public var background: Bool = false
+
+  /// How to reuse or create the exact bundle's process. Unspecified uses
+  /// launch-or-activate behavior. Activating one exact existing process uses
+  /// ActivateApplication instead.
+  public var mode: Macosusesdk_V1_ApplicationOpenMode = .unspecified
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -65,25 +332,14 @@ public nonisolated struct Macosusesdk_V1_OpenApplicationResponse: Sendable {
   /// Clears the value of `application`. Subsequent reads from it will return its default value.
   public mutating func clearApplication() {self._application = nil}
 
+  /// What the open request observably did with the application process.
+  public var disposition: Macosusesdk_V1_ApplicationOpenDisposition = .unspecified
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
 
   fileprivate var _application: Macosusesdk_V1_Application? = nil
-}
-
-/// Metadata for OpenApplication long-running operation.
-public nonisolated struct Macosusesdk_V1_OpenApplicationMetadata: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  /// The identifier being opened.
-  public var id: String = String()
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  public init() {}
 }
 
 /// Request to get an application.
@@ -95,23 +351,12 @@ public nonisolated struct Macosusesdk_V1_GetApplicationRequest: Sendable {
   /// Resource name of the application.
   public var name: String = String()
 
-  /// Optional. Field mask specifying which fields to return.
-  /// If not specified or empty, all fields are returned.
-  /// Supported fields: name, pid, display_name, bundle_id.
-  public var readMask: SwiftProtobuf.Google_Protobuf_FieldMask {
-    get {_readMask ?? SwiftProtobuf.Google_Protobuf_FieldMask()}
-    set {_readMask = newValue}
-  }
-  /// Returns true if `readMask` has been explicitly set.
-  public var hasReadMask: Bool {self._readMask != nil}
-  /// Clears the value of `readMask`. Subsequent reads from it will return its default value.
-  public mutating func clearReadMask() {self._readMask = nil}
+  /// Amount of metadata to return. Unspecified defaults to BASIC.
+  public var view: Macosusesdk_V1_ApplicationView = .unspecified
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
-
-  fileprivate var _readMask: SwiftProtobuf.Google_Protobuf_FieldMask? = nil
 }
 
 /// Request to list applications.
@@ -128,15 +373,16 @@ public nonisolated struct Macosusesdk_V1_ListApplicationsRequest: Sendable {
   /// Only its presence or absence should be used to determine pagination state.
   public var pageToken: String = String()
 
-  /// Optional. Ordering specification for results.
-  /// Supported values: "name" (default), "pid", "display_name"
-  /// Append " desc" for descending order (e.g., "name desc").
+  /// Ordering specification. Supported fields are name, pid, display_name,
+  /// bundle_id, and active, optionally followed by " desc".
   public var orderBy: String = String()
 
-  /// Optional. Filter expression for results.
-  /// Supported filters: name="..." (filters by display_name)
-  /// Multiple conditions can be combined with spaces (AND semantics).
+  /// Filter expression. Supported equality fields are display_name and
+  /// bundle_id; multiple conditions use AND semantics.
   public var filter: String = String()
+
+  /// Amount of metadata to return. Unspecified defaults to BASIC.
+  public var view: Macosusesdk_V1_ApplicationView = .unspecified
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -162,8 +408,48 @@ public nonisolated struct Macosusesdk_V1_ListApplicationsResponse: Sendable {
   public init() {}
 }
 
-/// Request to delete an application.
-public nonisolated struct Macosusesdk_V1_DeleteApplicationRequest: Sendable {
+/// Request to activate one exact running application process instance.
+public nonisolated struct Macosusesdk_V1_ActivateApplicationRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Resource name of the exact running application.
+  public var name: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Response from activating an application.
+public nonisolated struct Macosusesdk_V1_ActivateApplicationResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Refreshed snapshot of the exact running application.
+  public var application: Macosusesdk_V1_Application {
+    get {_application ?? Macosusesdk_V1_Application()}
+    set {_application = newValue}
+  }
+  /// Returns true if `application` has been explicitly set.
+  public var hasApplication: Bool {self._application != nil}
+  /// Clears the value of `application`. Subsequent reads from it will return its default value.
+  public mutating func clearApplication() {self._application = nil}
+
+  /// What the activation request observably did.
+  public var disposition: Macosusesdk_V1_ApplicationActivationDisposition = .unspecified
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _application: Macosusesdk_V1_Application? = nil
+}
+
+/// Request to close an application.
+public nonisolated struct Macosusesdk_V1_CloseApplicationRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -171,7 +457,10 @@ public nonisolated struct Macosusesdk_V1_DeleteApplicationRequest: Sendable {
   /// Resource name of the application.
   public var name: String = String()
 
-  /// If set to true, any pending inputs for this application will also be deleted.
+  /// If true, the server may force-terminate the exact owned process after a
+  /// bounded graceful close attempt does not converge. If false, failure to
+  /// exit gracefully returns DEADLINE_EXCEEDED and the application remains
+  /// tracked.
   public var force: Bool = false
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -179,39 +468,60 @@ public nonisolated struct Macosusesdk_V1_DeleteApplicationRequest: Sendable {
   public init() {}
 }
 
-/// Request to create an input.
-public nonisolated struct Macosusesdk_V1_CreateInputRequest: @unchecked Sendable {
+/// Response from closing an application.
+public nonisolated struct Macosusesdk_V1_CloseApplicationResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Parent resource. Either "applications/{application}" or "" for desktop inputs.
-  public var parent: String {
-    get {_storage._parent}
-    set {_uniqueStorage()._parent = newValue}
+  /// Snapshot of the exact tracked application accepted by this request.
+  public var application: Macosusesdk_V1_Application {
+    get {_application ?? Macosusesdk_V1_Application()}
+    set {_application = newValue}
   }
+  /// Returns true if `application` has been explicitly set.
+  public var hasApplication: Bool {self._application != nil}
+  /// Clears the value of `application`. Subsequent reads from it will return its default value.
+  public mutating func clearApplication() {self._application = nil}
 
-  /// The input to create.
-  public var input: Macosusesdk_V1_Input {
-    get {_storage._input ?? Macosusesdk_V1_Input()}
-    set {_uniqueStorage()._input = newValue}
-  }
-  /// Returns true if `input` has been explicitly set.
-  public var hasInput: Bool {_storage._input != nil}
-  /// Clears the value of `input`. Subsequent reads from it will return its default value.
-  public mutating func clearInput() {_uniqueStorage()._input = nil}
-
-  /// Optional input ID. If not provided, the server generates one.
-  public var inputID: String {
-    get {_storage._inputID}
-    set {_uniqueStorage()._inputID = newValue}
-  }
+  /// How the exact tracked process reached the closed state.
+  public var disposition: Macosusesdk_V1_ApplicationCloseDisposition = .unspecified
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
 
-  fileprivate var _storage = _StorageClass.defaultInstance
+  fileprivate var _application: Macosusesdk_V1_Application? = nil
+}
+
+/// Request to create an input.
+public nonisolated struct Macosusesdk_V1_CreateInputRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Parent resource. Use "applications/{application}" for application-owned
+  /// input or the explicit wildcard "applications/-" for desktop-wide input.
+  public var parent: String = String()
+
+  /// The input to create.
+  public var input: Macosusesdk_V1_Input {
+    get {_input ?? Macosusesdk_V1_Input()}
+    set {_input = newValue}
+  }
+  /// Returns true if `input` has been explicitly set.
+  public var hasInput: Bool {self._input != nil}
+  /// Clears the value of `input`. Subsequent reads from it will return its default value.
+  public mutating func clearInput() {self._input = nil}
+
+  /// Optional input ID. If not provided, the server generates one.
+  public var inputID: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _input: Macosusesdk_V1_Input? = nil
 }
 
 /// Request to get an input.
@@ -234,7 +544,8 @@ public nonisolated struct Macosusesdk_V1_ListInputsRequest: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Parent resource. Either "applications/{application}" or "" for desktop inputs.
+  /// Parent resource. Use "applications/{application}" for application-owned
+  /// input or the explicit wildcard "applications/-" for desktop-wide input.
   public var parent: String = String()
 
   /// Maximum number of inputs to return.
@@ -245,7 +556,8 @@ public nonisolated struct Macosusesdk_V1_ListInputsRequest: Sendable {
   /// Only its presence or absence should be used to determine pagination state.
   public var pageToken: String = String()
 
-  /// Filter inputs by state. Valid values: PENDING, EXECUTING, COMPLETED, FAILED.
+  /// Filter inputs by state. Valid values: PENDING, EXECUTING, COMPLETED,
+  /// FAILED, CANCELLED.
   public var filter: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -284,11 +596,6 @@ public nonisolated struct Macosusesdk_V1_TraverseAccessibilityRequest: Sendable 
   /// Whether to return only visible elements.
   public var visibleOnly: Bool = false
 
-  /// Whether to activate (bring to foreground) the target application before
-  /// traversal. When false (the default), traversal is performed passively
-  /// without disturbing window ordering.
-  public var activate: Bool = false
-
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
@@ -304,7 +611,7 @@ public nonisolated struct Macosusesdk_V1_TraverseAccessibilityResponse: Sendable
   public var app: String = String()
 
   /// Elements found in the traversal.
-  public var elements: [Macosusesdk_Type_Element] = []
+  public var elements: [Macosusesdk_V1_Element] = []
 
   /// Statistics about the traversal.
   public var stats: Macosusesdk_Type_TraversalStats {
@@ -361,10 +668,10 @@ public nonisolated struct Macosusesdk_V1_WatchAccessibilityResponse: Sendable {
   // methods supported on all messages.
 
   /// Elements added since last update.
-  public var added: [Macosusesdk_Type_Element] = []
+  public var added: [Macosusesdk_V1_Element] = []
 
   /// Elements removed since last update.
-  public var removed: [Macosusesdk_Type_Element] = []
+  public var removed: [Macosusesdk_V1_Element] = []
 
   /// Elements modified since last update.
   public var modified: [Macosusesdk_V1_ModifiedElement] = []
@@ -381,8 +688,8 @@ public nonisolated struct Macosusesdk_V1_ModifiedElement: @unchecked Sendable {
   // methods supported on all messages.
 
   /// The element before modification.
-  public var oldElement: Macosusesdk_Type_Element {
-    get {_storage._oldElement ?? Macosusesdk_Type_Element()}
+  public var oldElement: Macosusesdk_V1_Element {
+    get {_storage._oldElement ?? Macosusesdk_V1_Element()}
     set {_uniqueStorage()._oldElement = newValue}
   }
   /// Returns true if `oldElement` has been explicitly set.
@@ -391,8 +698,8 @@ public nonisolated struct Macosusesdk_V1_ModifiedElement: @unchecked Sendable {
   public mutating func clearOldElement() {_uniqueStorage()._oldElement = nil}
 
   /// The element after modification.
-  public var newElement: Macosusesdk_Type_Element {
-    get {_storage._newElement ?? Macosusesdk_Type_Element()}
+  public var newElement: Macosusesdk_V1_Element {
+    get {_storage._newElement ?? Macosusesdk_V1_Element()}
     set {_uniqueStorage()._newElement = newValue}
   }
   /// Returns true if `newElement` has been explicitly set.
@@ -471,7 +778,7 @@ public nonisolated struct Macosusesdk_V1_FindElementsResponse: Sendable {
   // methods supported on all messages.
 
   /// Elements matching the selector.
-  public var elements: [Macosusesdk_Type_Element] = []
+  public var elements: [Macosusesdk_V1_Element] = []
 
   /// Token to retrieve the next page of results.
   /// This token is opaque and its structure must not be relied upon by clients.
@@ -549,7 +856,7 @@ public nonisolated struct Macosusesdk_V1_FindRegionElementsResponse: Sendable {
   // methods supported on all messages.
 
   /// Elements within the region.
-  public var elements: [Macosusesdk_Type_Element] = []
+  public var elements: [Macosusesdk_V1_Element] = []
 
   /// Token to retrieve the next page of results.
   /// This token is opaque and its structure must not be relied upon by clients.
@@ -570,6 +877,45 @@ public nonisolated struct Macosusesdk_V1_GetElementRequest: Sendable {
   /// The name of the element to retrieve.
   /// Format: applications/{application}/elements/{element}
   public var name: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Request to list retained element resources for one application.
+public nonisolated struct Macosusesdk_V1_ListElementsRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Parent application resource in the format "applications/{application}".
+  public var parent: String = String()
+
+  /// Maximum number of elements to return. If zero, the server uses 100. Values
+  /// above 1000 are coerced to 1000; negative values are invalid.
+  public var pageSize: Int32 = 0
+
+  /// Opaque token from a previous ListElements request. The parent must match
+  /// the request that produced the token.
+  public var pageToken: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Response from listing retained element resources.
+public nonisolated struct Macosusesdk_V1_ListElementsResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Retained nonexpired elements in canonical resource-name order.
+  public var elements: [Macosusesdk_V1_Element] = []
+
+  /// Opaque token for the next page, or empty when no subsequent page exists.
+  public var nextPageToken: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -684,8 +1030,8 @@ public nonisolated struct Macosusesdk_V1_ClickElementResponse: Sendable {
   public var success: Bool = false
 
   /// The element that was clicked.
-  public var element: Macosusesdk_Type_Element {
-    get {_element ?? Macosusesdk_Type_Element()}
+  public var element: Macosusesdk_V1_Element {
+    get {_element ?? Macosusesdk_V1_Element()}
     set {_element = newValue}
   }
   /// Returns true if `element` has been explicitly set.
@@ -693,11 +1039,15 @@ public nonisolated struct Macosusesdk_V1_ClickElementResponse: Sendable {
   /// Clears the value of `element`. Subsequent reads from it will return its default value.
   public mutating func clearElement() {self._element = nil}
 
+  /// The Input resource produced by the physical click, if a W2 input
+  /// transaction was executed. Absent when the click was purely AX-based.
+  public var input: String = String()
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
 
-  fileprivate var _element: Macosusesdk_Type_Element? = nil
+  fileprivate var _element: Macosusesdk_V1_Element? = nil
 }
 
 /// Request to write an element's value.
@@ -730,8 +1080,19 @@ public nonisolated struct Macosusesdk_V1_WriteElementValueRequest: Sendable {
     set {target = .selector(newValue)}
   }
 
-  /// Value to write.
-  public var value: String = String()
+  /// Value to write. When omitted, the element value is cleared. An explicit
+  /// empty string sets the value to empty rather than clearing.
+  public var value: String {
+    get {_value ?? String()}
+    set {_value = newValue}
+  }
+  /// Returns true if `value` has been explicitly set.
+  public var hasValue: Bool {self._value != nil}
+  /// Clears the value of `value`. Subsequent reads from it will return its default value.
+  public mutating func clearValue() {self._value = nil}
+
+  /// Write strategy to use. Defaults to DIRECT_AX when unspecified.
+  public var writeMode: Macosusesdk_V1_WriteElementValueRequest.WriteMode = .unspecified
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -744,7 +1105,56 @@ public nonisolated struct Macosusesdk_V1_WriteElementValueRequest: Sendable {
 
   }
 
+  /// Strategy for writing to an editable element.
+  public nonisolated enum WriteMode: SwiftProtobuf.Enum, Swift.CaseIterable {
+    public typealias RawValue = Int
+
+    /// Default — write directly through the Accessibility API.
+    case unspecified // = 0
+
+    /// Write the value through the accessibility AXValue attribute and
+    /// verify with live readback before returning.
+    case directAx // = 1
+
+    /// Replace the current value by selecting all, typing the new text
+    /// through owned W2 physical input, and verifying with AX readback.
+    case keystrokeReplacement // = 2
+    case UNRECOGNIZED(Int)
+
+    public init() {
+      self = .unspecified
+    }
+
+    public init?(rawValue: Int) {
+      switch rawValue {
+      case 0: self = .unspecified
+      case 1: self = .directAx
+      case 2: self = .keystrokeReplacement
+      default: self = .UNRECOGNIZED(rawValue)
+      }
+    }
+
+    public var rawValue: Int {
+      switch self {
+      case .unspecified: return 0
+      case .directAx: return 1
+      case .keystrokeReplacement: return 2
+      case .UNRECOGNIZED(let i): return i
+      }
+    }
+
+    // The compiler won't synthesize support with the UNRECOGNIZED case.
+    public static let allCases: [Macosusesdk_V1_WriteElementValueRequest.WriteMode] = [
+      .unspecified,
+      .directAx,
+      .keystrokeReplacement,
+    ]
+
+  }
+
   public init() {}
+
+  fileprivate var _value: String? = nil
 }
 
 /// Response from writing an element's value.
@@ -757,8 +1167,8 @@ public nonisolated struct Macosusesdk_V1_WriteElementValueResponse: Sendable {
   public var success: Bool = false
 
   /// The element that was modified.
-  public var element: Macosusesdk_Type_Element {
-    get {_element ?? Macosusesdk_Type_Element()}
+  public var element: Macosusesdk_V1_Element {
+    get {_element ?? Macosusesdk_V1_Element()}
     set {_element = newValue}
   }
   /// Returns true if `element` has been explicitly set.
@@ -766,11 +1176,15 @@ public nonisolated struct Macosusesdk_V1_WriteElementValueResponse: Sendable {
   /// Clears the value of `element`. Subsequent reads from it will return its default value.
   public mutating func clearElement() {self._element = nil}
 
+  /// The Input resource produced by keystroke replacement, if that mode was
+  /// used. Absent when a direct AX write was performed.
+  public var input: String = String()
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
 
-  fileprivate var _element: Macosusesdk_Type_Element? = nil
+  fileprivate var _element: Macosusesdk_V1_Element? = nil
 }
 
 /// Request to get available actions for an element.
@@ -859,8 +1273,8 @@ public nonisolated struct Macosusesdk_V1_PerformElementActionResponse: Sendable 
   public var success: Bool = false
 
   /// The element.
-  public var element: Macosusesdk_Type_Element {
-    get {_element ?? Macosusesdk_Type_Element()}
+  public var element: Macosusesdk_V1_Element {
+    get {_element ?? Macosusesdk_V1_Element()}
     set {_element = newValue}
   }
   /// Returns true if `element` has been explicitly set.
@@ -868,11 +1282,15 @@ public nonisolated struct Macosusesdk_V1_PerformElementActionResponse: Sendable 
   /// Clears the value of `element`. Subsequent reads from it will return its default value.
   public mutating func clearElement() {self._element = nil}
 
+  /// The Input resource produced if a physical fallback was executed.
+  /// Absent when the action was purely AX-based.
+  public var input: String = String()
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
 
-  fileprivate var _element: Macosusesdk_Type_Element? = nil
+  fileprivate var _element: Macosusesdk_V1_Element? = nil
 }
 
 /// Request to wait for an element to appear (long-running operation).
@@ -914,8 +1332,8 @@ public nonisolated struct Macosusesdk_V1_WaitElementResponse: Sendable {
   // methods supported on all messages.
 
   /// The element that appeared.
-  public var element: Macosusesdk_Type_Element {
-    get {_element ?? Macosusesdk_Type_Element()}
+  public var element: Macosusesdk_V1_Element {
+    get {_element ?? Macosusesdk_V1_Element()}
     set {_element = newValue}
   }
   /// Returns true if `element` has been explicitly set.
@@ -927,7 +1345,7 @@ public nonisolated struct Macosusesdk_V1_WaitElementResponse: Sendable {
 
   public init() {}
 
-  fileprivate var _element: Macosusesdk_Type_Element? = nil
+  fileprivate var _element: Macosusesdk_V1_Element? = nil
 }
 
 /// Metadata for WaitElement long-running operation.
@@ -1099,8 +1517,8 @@ public nonisolated struct Macosusesdk_V1_WaitElementStateResponse: Sendable {
   // methods supported on all messages.
 
   /// The element in the expected state.
-  public var element: Macosusesdk_Type_Element {
-    get {_element ?? Macosusesdk_Type_Element()}
+  public var element: Macosusesdk_V1_Element {
+    get {_element ?? Macosusesdk_V1_Element()}
     set {_element = newValue}
   }
   /// Returns true if `element` has been explicitly set.
@@ -1112,7 +1530,7 @@ public nonisolated struct Macosusesdk_V1_WaitElementStateResponse: Sendable {
 
   public init() {}
 
-  fileprivate var _element: Macosusesdk_Type_Element? = nil
+  fileprivate var _element: Macosusesdk_V1_Element? = nil
 }
 
 /// Metadata for WaitElementState operation.
@@ -1150,9 +1568,9 @@ public nonisolated struct Macosusesdk_V1_GetWindowRequest: Sendable {
   /// Resource name of the window.
   public var name: String = String()
 
-  /// Optional. Field mask specifying which fields to return.
-  /// If not specified or empty, all fields are returned.
-  /// Supported fields: name, title, bounds, visible, z_index, minimized, bundle_id, state.
+  /// Field mask specifying which fields to return. If not specified or empty,
+  /// all fields are returned. Supported fields: name, title, bounds, visible,
+  /// layer, bundle_id, or "*". The wildcard must be the only path.
   public var readMask: SwiftProtobuf.Google_Protobuf_FieldMask {
     get {_readMask ?? SwiftProtobuf.Google_Protobuf_FieldMask()}
     set {_readMask = newValue}
@@ -1178,7 +1596,10 @@ public nonisolated struct Macosusesdk_V1_ListWindowsRequest: Sendable {
   /// Parent application.
   public var parent: String = String()
 
-  /// Maximum number of windows to return.
+  /// Maximum number of windows to return. Zero uses the default of 100; values
+  /// above 1000 are coerced to 1000. A changed value on a continuation request
+  /// is honored. Parent, filter, and ordering must otherwise match the request
+  /// that produced the token.
   public var pageSize: Int32 = 0
 
   /// Page token from a previous ListWindows call.
@@ -1186,14 +1607,14 @@ public nonisolated struct Macosusesdk_V1_ListWindowsRequest: Sendable {
   /// Only its presence or absence should be used to determine pagination state.
   public var pageToken: String = String()
 
-  /// Optional. Ordering specification for results.
-  /// Supported values: "window_id" (default), "title", "z_order"
-  /// Append " desc" for descending order (e.g., "title desc").
+  /// Ordering specification. Supported fields are name, title, and layer in a
+  /// comma-separated list; append " desc" for descending order. Omitted
+  /// directions are ascending. The opaque name is the final stable tie-breaker.
   public var orderBy: String = String()
 
-  /// Optional. Filter expression for results.
-  /// Supported filters: title="...", visible=true/false, minimized=true/false
-  /// Multiple conditions can be combined with spaces (AND semantics).
+  /// Filter expression. Supported clauses are case-sensitive title="..."
+  /// equality with the * wildcard and visible=true/false;
+  /// multiple conditions use whitespace or AND semantics.
   public var filter: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -1259,14 +1680,31 @@ public nonisolated struct Macosusesdk_V1_MoveWindowRequest: Sendable {
   public var name: String = String()
 
   /// New X coordinate in Global Display Coordinates (top-left origin, Y increases downward).
-  public var x: Double = 0
+  public var x: Double {
+    get {_x ?? 0}
+    set {_x = newValue}
+  }
+  /// Returns true if `x` has been explicitly set.
+  public var hasX: Bool {self._x != nil}
+  /// Clears the value of `x`. Subsequent reads from it will return its default value.
+  public mutating func clearX() {self._x = nil}
 
   /// New Y coordinate in Global Display Coordinates (top-left origin, Y increases downward).
-  public var y: Double = 0
+  public var y: Double {
+    get {_y ?? 0}
+    set {_y = newValue}
+  }
+  /// Returns true if `y` has been explicitly set.
+  public var hasY: Bool {self._y != nil}
+  /// Clears the value of `y`. Subsequent reads from it will return its default value.
+  public mutating func clearY() {self._y = nil}
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
+
+  fileprivate var _x: Double? = nil
+  fileprivate var _y: Double? = nil
 }
 
 /// Request to resize a window.
@@ -1689,7 +2127,8 @@ public nonisolated struct Macosusesdk_V1_UpdateMacroRequest: Sendable {
   /// Clears the value of `macro`. Subsequent reads from it will return its default value.
   public mutating func clearMacro() {self._macro = nil}
 
-  /// Fields to update.
+  /// Fields to update. Supported fields: display_name, description, actions,
+  /// parameters, and tags. An empty mask replaces all mutable fields.
   public var updateMask: SwiftProtobuf.Google_Protobuf_FieldMask {
     get {_updateMask ?? SwiftProtobuf.Google_Protobuf_FieldMask()}
     set {_updateMask = newValue}
@@ -1736,7 +2175,9 @@ public nonisolated struct Macosusesdk_V1_ExecuteMacroRequest: Sendable {
   /// Parameter values (for parameterized macros).
   public var parameterValues: Dictionary<String,String> = [:]
 
-  /// Application context (if needed).
+  /// Exact running application generation that owns every physical action in
+  /// the macro. Required when any branch contains input, ClickElement, or
+  /// TypeText; may be omitted only for a wholly nonphysical graph.
   public var application: String = String()
 
   /// Execution options.
@@ -1762,17 +2203,8 @@ public nonisolated struct Macosusesdk_V1_ExecutionOptions: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Execution speed multiplier (1.0 = normal speed).
-  public var speed: Double = 0
-
-  /// Whether to continue on error.
-  public var continueOnError: Bool = false
-
   /// Maximum execution time in seconds.
   public var timeout: Double = 0
-
-  /// Whether to record execution for debugging.
-  public var recordExecution: Bool = false
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -1872,9 +2304,6 @@ public nonisolated struct Macosusesdk_V1_BeginTransactionRequest: Sendable {
 
     /// All operations appear atomic (full snapshot/restore on rollback).
     case serializable // = 1
-
-    /// Operations may see partial changes (best-effort rollback).
-    case readCommitted // = 2
     case UNRECOGNIZED(Int)
 
     public init() {
@@ -1885,7 +2314,6 @@ public nonisolated struct Macosusesdk_V1_BeginTransactionRequest: Sendable {
       switch rawValue {
       case 0: self = .unspecified
       case 1: self = .serializable
-      case 2: self = .readCommitted
       default: self = .UNRECOGNIZED(rawValue)
       }
     }
@@ -1894,7 +2322,6 @@ public nonisolated struct Macosusesdk_V1_BeginTransactionRequest: Sendable {
       switch self {
       case .unspecified: return 0
       case .serializable: return 1
-      case .readCommitted: return 2
       case .UNRECOGNIZED(let i): return i
       }
     }
@@ -1903,7 +2330,6 @@ public nonisolated struct Macosusesdk_V1_BeginTransactionRequest: Sendable {
     public static let allCases: [Macosusesdk_V1_BeginTransactionRequest.IsolationLevel] = [
       .unspecified,
       .serializable,
-      .readCommitted,
     ]
 
   }
@@ -1919,6 +2345,9 @@ public nonisolated struct Macosusesdk_V1_BeginTransactionResponse: Sendable {
 
   /// Transaction ID for subsequent operations.
   public var transactionID: String = String()
+
+  /// Revision ID representing the session state at transaction start.
+  public var revisionID: String = String()
 
   /// Session with updated state.
   public var session: Macosusesdk_V1_Session {
@@ -2000,14 +2429,15 @@ public nonisolated struct Macosusesdk_V1_CaptureScreenshotRequest: Sendable {
   /// Image format.
   public var format: Macosusesdk_V1_ImageFormat = .unspecified
 
-  /// JPEG quality (1-100, only for JPEG format).
+  /// JPEG quality (1-100, only for JPEG format). A zero value selects the
+  /// effective default quality of 85.
   public var quality: Int32 = 0
-
-  /// Include display index in filename.
-  public var display: Int32 = 0
 
   /// Whether to include OCR text extraction.
   public var includeOcrText: Bool = false
+
+  /// Exact display resource to capture. If omitted, captures the main display.
+  public var display: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -2032,12 +2462,59 @@ public nonisolated struct Macosusesdk_V1_CaptureScreenshotResponse: Sendable {
   /// Image height in pixels.
   public var height: Int32 = 0
 
-  /// OCR-extracted text (if requested).
-  public var ocrText: String = String()
+  /// OCR outcome. Unset when OCR was not requested; successful empty text is
+  /// distinct from extraction failure.
+  public var ocrResult: Macosusesdk_V1_CaptureScreenshotResponse.OneOf_OcrResult? = nil
+
+  /// Successfully extracted OCR text. An empty string is a successful result.
+  public var ocrText: String {
+    get {
+      if case .ocrText(let v)? = ocrResult {return v}
+      return String()
+    }
+    set {ocrResult = .ocrText(newValue)}
+  }
+
+  /// OCR extraction failure for an otherwise successful image capture.
+  public var ocrError: Google_Rpc_Status {
+    get {
+      if case .ocrError(let v)? = ocrResult {return v}
+      return Google_Rpc_Status()
+    }
+    set {ocrResult = .ocrError(newValue)}
+  }
+
+  /// Exact active display resource captured from the admitted topology snapshot.
+  public var display: String = String()
+
+  /// Exact captured logical region in Global Display Coordinates (top-left origin).
+  public var region: Macosusesdk_Type_Region {
+    get {_region ?? Macosusesdk_Type_Region()}
+    set {_region = newValue}
+  }
+  /// Returns true if `region` has been explicitly set.
+  public var hasRegion: Bool {self._region != nil}
+  /// Clears the value of `region`. Subsequent reads from it will return its default value.
+  public mutating func clearRegion() {self._region = nil}
+
+  /// Encoded image pixels per logical display point.
+  public var scale: Double = 0
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
+  /// OCR outcome. Unset when OCR was not requested; successful empty text is
+  /// distinct from extraction failure.
+  public nonisolated enum OneOf_OcrResult: Equatable, Sendable {
+    /// Successfully extracted OCR text. An empty string is a successful result.
+    case ocrText(String)
+    /// OCR extraction failure for an otherwise successful image capture.
+    case ocrError(Google_Rpc_Status)
+
+  }
+
   public init() {}
+
+  fileprivate var _region: Macosusesdk_Type_Region? = nil
 }
 
 /// Request to capture a screenshot of a specific window.
@@ -2052,7 +2529,8 @@ public nonisolated struct Macosusesdk_V1_CaptureWindowScreenshotRequest: Sendabl
   /// Image format.
   public var format: Macosusesdk_V1_ImageFormat = .unspecified
 
-  /// JPEG quality (1-100, only for JPEG format).
+  /// JPEG quality (1-100, only for JPEG format). A zero value selects the
+  /// effective default quality of 85.
   public var quality: Int32 = 0
 
   /// Whether to include window shadow.
@@ -2067,32 +2545,121 @@ public nonisolated struct Macosusesdk_V1_CaptureWindowScreenshotRequest: Sendabl
 }
 
 /// Response from capturing a window screenshot.
-public nonisolated struct Macosusesdk_V1_CaptureWindowScreenshotResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_CaptureWindowScreenshotResponse: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
   /// Image data (encoded according to format).
-  public var imageData: Data = Data()
+  public var imageData: Data {
+    get {_storage._imageData}
+    set {_uniqueStorage()._imageData = newValue}
+  }
 
   /// Image format used.
-  public var format: Macosusesdk_V1_ImageFormat = .unspecified
+  public var format: Macosusesdk_V1_ImageFormat {
+    get {_storage._format}
+    set {_uniqueStorage()._format = newValue}
+  }
 
   /// Image width in pixels.
-  public var width: Int32 = 0
+  public var width: Int32 {
+    get {_storage._width}
+    set {_uniqueStorage()._width = newValue}
+  }
 
   /// Image height in pixels.
-  public var height: Int32 = 0
+  public var height: Int32 {
+    get {_storage._height}
+    set {_uniqueStorage()._height = newValue}
+  }
 
   /// Window that was captured.
-  public var window: String = String()
+  public var window: String {
+    get {_storage._window}
+    set {_uniqueStorage()._window = newValue}
+  }
 
-  /// OCR-extracted text (if requested).
-  public var ocrText: String = String()
+  /// OCR outcome. Unset when OCR was not requested; successful empty text is
+  /// distinct from extraction failure.
+  public var ocrResult: OneOf_OcrResult? {
+    get {return _storage._ocrResult}
+    set {_uniqueStorage()._ocrResult = newValue}
+  }
+
+  /// Successfully extracted OCR text. An empty string is a successful result.
+  public var ocrText: String {
+    get {
+      if case .ocrText(let v)? = _storage._ocrResult {return v}
+      return String()
+    }
+    set {_uniqueStorage()._ocrResult = .ocrText(newValue)}
+  }
+
+  /// OCR extraction failure for an otherwise successful image capture.
+  public var ocrError: Google_Rpc_Status {
+    get {
+      if case .ocrError(let v)? = _storage._ocrResult {return v}
+      return Google_Rpc_Status()
+    }
+    set {_uniqueStorage()._ocrResult = .ocrError(newValue)}
+  }
+
+  /// Exact ScreenCaptureKit source-window frame in Global Display Coordinates
+  /// (top-left origin).
+  public var windowFrame: Macosusesdk_Type_Region {
+    get {_storage._windowFrame ?? Macosusesdk_Type_Region()}
+    set {_uniqueStorage()._windowFrame = newValue}
+  }
+  /// Returns true if `windowFrame` has been explicitly set.
+  public var hasWindowFrame: Bool {_storage._windowFrame != nil}
+  /// Clears the value of `windowFrame`. Subsequent reads from it will return its default value.
+  public mutating func clearWindowFrame() {_uniqueStorage()._windowFrame = nil}
+
+  /// ScreenCaptureKit content-filter region in Global Display Coordinates
+  /// (top-left origin). Transparent encoded padding is not represented.
+  public var region: Macosusesdk_Type_Region {
+    get {_storage._region ?? Macosusesdk_Type_Region()}
+    set {_uniqueStorage()._region = newValue}
+  }
+  /// Returns true if `region` has been explicitly set.
+  public var hasRegion: Bool {_storage._region != nil}
+  /// Clears the value of `region`. Subsequent reads from it will return its default value.
+  public mutating func clearRegion() {_uniqueStorage()._region = nil}
+
+  /// ScreenCaptureKit pixels-per-point scale admitted for this capture.
+  public var scale: Double {
+    get {_storage._scale}
+    set {_uniqueStorage()._scale = newValue}
+  }
+
+  /// Whether the capture configuration included the window shadow.
+  public var shadowIncluded: Bool {
+    get {_storage._shadowIncluded}
+    set {_uniqueStorage()._shadowIncluded = newValue}
+  }
+
+  /// Whether the encoded logical footprint omits any source-window footprint.
+  public var clipped: Bool {
+    get {_storage._clipped}
+    set {_uniqueStorage()._clipped = newValue}
+  }
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
+  /// OCR outcome. Unset when OCR was not requested; successful empty text is
+  /// distinct from extraction failure.
+  public nonisolated enum OneOf_OcrResult: Equatable, Sendable {
+    /// Successfully extracted OCR text. An empty string is a successful result.
+    case ocrText(String)
+    /// OCR extraction failure for an otherwise successful image capture.
+    case ocrError(Google_Rpc_Status)
+
+  }
+
   public init() {}
+
+  fileprivate var _storage = _StorageClass.defaultInstance
 }
 
 /// Request to capture a screenshot of a specific element.
@@ -2110,7 +2677,8 @@ public nonisolated struct Macosusesdk_V1_CaptureElementScreenshotRequest: Sendab
   /// Image format.
   public var format: Macosusesdk_V1_ImageFormat = .unspecified
 
-  /// JPEG quality (1-100, only for JPEG format).
+  /// JPEG quality (1-100, only for JPEG format). A zero value selects the
+  /// effective default quality of 85.
   public var quality: Int32 = 0
 
   /// Padding around element in pixels.
@@ -2125,32 +2693,132 @@ public nonisolated struct Macosusesdk_V1_CaptureElementScreenshotRequest: Sendab
 }
 
 /// Response from capturing an element screenshot.
-public nonisolated struct Macosusesdk_V1_CaptureElementScreenshotResponse: Sendable {
+public nonisolated struct Macosusesdk_V1_CaptureElementScreenshotResponse: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
   /// Image data (encoded according to format).
-  public var imageData: Data = Data()
+  public var imageData: Data {
+    get {_storage._imageData}
+    set {_uniqueStorage()._imageData = newValue}
+  }
 
   /// Image format used.
-  public var format: Macosusesdk_V1_ImageFormat = .unspecified
+  public var format: Macosusesdk_V1_ImageFormat {
+    get {_storage._format}
+    set {_uniqueStorage()._format = newValue}
+  }
 
   /// Image width in pixels.
-  public var width: Int32 = 0
+  public var width: Int32 {
+    get {_storage._width}
+    set {_uniqueStorage()._width = newValue}
+  }
 
   /// Image height in pixels.
-  public var height: Int32 = 0
+  public var height: Int32 {
+    get {_storage._height}
+    set {_uniqueStorage()._height = newValue}
+  }
 
   /// Element ID that was captured.
-  public var elementID: String = String()
+  public var elementID: String {
+    get {_storage._elementID}
+    set {_uniqueStorage()._elementID = newValue}
+  }
 
-  /// OCR-extracted text (if requested).
-  public var ocrText: String = String()
+  /// OCR outcome. Unset when OCR was not requested; successful empty text is
+  /// distinct from extraction failure.
+  public var ocrResult: OneOf_OcrResult? {
+    get {return _storage._ocrResult}
+    set {_uniqueStorage()._ocrResult = newValue}
+  }
+
+  /// Successfully extracted OCR text. An empty string is a successful result.
+  public var ocrText: String {
+    get {
+      if case .ocrText(let v)? = _storage._ocrResult {return v}
+      return String()
+    }
+    set {_uniqueStorage()._ocrResult = .ocrText(newValue)}
+  }
+
+  /// OCR extraction failure for an otherwise successful image capture.
+  public var ocrError: Google_Rpc_Status {
+    get {
+      if case .ocrError(let v)? = _storage._ocrResult {return v}
+      return Google_Rpc_Status()
+    }
+    set {_uniqueStorage()._ocrResult = .ocrError(newValue)}
+  }
+
+  /// Exact application or window scope used to resolve the captured element.
+  public var parent: String {
+    get {_storage._parent}
+    set {_uniqueStorage()._parent = newValue}
+  }
+
+  /// Exact admitted element frame in Global Display Coordinates (top-left origin).
+  public var elementFrame: Macosusesdk_Type_Region {
+    get {_storage._elementFrame ?? Macosusesdk_Type_Region()}
+    set {_uniqueStorage()._elementFrame = newValue}
+  }
+  /// Returns true if `elementFrame` has been explicitly set.
+  public var hasElementFrame: Bool {_storage._elementFrame != nil}
+  /// Clears the value of `elementFrame`. Subsequent reads from it will return its default value.
+  public mutating func clearElementFrame() {_uniqueStorage()._elementFrame = nil}
+
+  /// Exact active display resource selected from the unpadded element frame.
+  public var display: String {
+    get {_storage._display}
+    set {_uniqueStorage()._display = newValue}
+  }
+
+  /// Exact encoded logical region in Global Display Coordinates (top-left
+  /// origin), after pixel padding, display-edge clipping, and pixel alignment.
+  public var region: Macosusesdk_Type_Region {
+    get {_storage._region ?? Macosusesdk_Type_Region()}
+    set {_uniqueStorage()._region = newValue}
+  }
+  /// Returns true if `region` has been explicitly set.
+  public var hasRegion: Bool {_storage._region != nil}
+  /// Clears the value of `region`. Subsequent reads from it will return its default value.
+  public mutating func clearRegion() {_uniqueStorage()._region = nil}
+
+  /// Encoded image pixels per logical display point.
+  public var scale: Double {
+    get {_storage._scale}
+    set {_uniqueStorage()._scale = newValue}
+  }
+
+  /// Exact requested padding in encoded image pixels.
+  public var padding: Int32 {
+    get {_storage._padding}
+    set {_uniqueStorage()._padding = newValue}
+  }
+
+  /// Whether display-edge clipping removed any requested padded footprint.
+  public var clipped: Bool {
+    get {_storage._clipped}
+    set {_uniqueStorage()._clipped = newValue}
+  }
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
+  /// OCR outcome. Unset when OCR was not requested; successful empty text is
+  /// distinct from extraction failure.
+  public nonisolated enum OneOf_OcrResult: Equatable, Sendable {
+    /// Successfully extracted OCR text. An empty string is a successful result.
+    case ocrText(String)
+    /// OCR extraction failure for an otherwise successful image capture.
+    case ocrError(Google_Rpc_Status)
+
+  }
+
   public init() {}
+
+  fileprivate var _storage = _StorageClass.defaultInstance
 }
 
 /// Request to capture a screenshot of a screen region.
@@ -2174,14 +2842,16 @@ public nonisolated struct Macosusesdk_V1_CaptureRegionScreenshotRequest: Sendabl
   /// Image format.
   public var format: Macosusesdk_V1_ImageFormat = .unspecified
 
-  /// JPEG quality (1-100, only for JPEG format).
+  /// JPEG quality (1-100, only for JPEG format). A zero value selects the
+  /// effective default quality of 85.
   public var quality: Int32 = 0
-
-  /// Display index (for multi-monitor setups).
-  public var display: Int32 = 0
 
   /// Whether to include OCR text extraction.
   public var includeOcrText: Bool = false
+
+  /// Exact display resource containing the region. If omitted, the display is
+  /// inferred from the region in Global Display Coordinates (top-left origin).
+  public var display: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -2218,10 +2888,45 @@ public nonisolated struct Macosusesdk_V1_CaptureRegionScreenshotResponse: Sendab
   /// Clears the value of `region`. Subsequent reads from it will return its default value.
   public mutating func clearRegion() {self._region = nil}
 
-  /// OCR-extracted text (if requested).
-  public var ocrText: String = String()
+  /// OCR outcome. Unset when OCR was not requested; successful empty text is
+  /// distinct from extraction failure.
+  public var ocrResult: Macosusesdk_V1_CaptureRegionScreenshotResponse.OneOf_OcrResult? = nil
+
+  /// Successfully extracted OCR text. An empty string is a successful result.
+  public var ocrText: String {
+    get {
+      if case .ocrText(let v)? = ocrResult {return v}
+      return String()
+    }
+    set {ocrResult = .ocrText(newValue)}
+  }
+
+  /// OCR extraction failure for an otherwise successful image capture.
+  public var ocrError: Google_Rpc_Status {
+    get {
+      if case .ocrError(let v)? = ocrResult {return v}
+      return Google_Rpc_Status()
+    }
+    set {ocrResult = .ocrError(newValue)}
+  }
+
+  /// Exact active display resource from which the region was captured.
+  public var display: String = String()
+
+  /// Encoded image pixels per logical display point.
+  public var scale: Double = 0
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  /// OCR outcome. Unset when OCR was not requested; successful empty text is
+  /// distinct from extraction failure.
+  public nonisolated enum OneOf_OcrResult: Equatable, Sendable {
+    /// Successfully extracted OCR text. An empty string is a successful result.
+    case ocrText(String)
+    /// OCR extraction failure for an otherwise successful image capture.
+    case ocrError(Google_Rpc_Status)
+
+  }
 
   public init() {}
 
@@ -2259,9 +2964,6 @@ public nonisolated struct Macosusesdk_V1_WriteClipboardRequest: Sendable {
   /// Clears the value of `content`. Subsequent reads from it will return its default value.
   public mutating func clearContent() {self._content = nil}
 
-  /// Whether to clear existing clipboard content first.
-  public var clearExisting_p: Bool = false
-
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
@@ -2275,15 +2977,21 @@ public nonisolated struct Macosusesdk_V1_WriteClipboardResponse: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Whether the operation succeeded.
-  public var success: Bool = false
-
-  /// Content type that was written.
-  public var type: Macosusesdk_V1_ContentType = .unspecified
+  /// Exact clipboard resource observed after the write.
+  public var clipboard: Macosusesdk_V1_Clipboard {
+    get {_clipboard ?? Macosusesdk_V1_Clipboard()}
+    set {_clipboard = newValue}
+  }
+  /// Returns true if `clipboard` has been explicitly set.
+  public var hasClipboard: Bool {self._clipboard != nil}
+  /// Clears the value of `clipboard`. Subsequent reads from it will return its default value.
+  public mutating func clearClipboard() {self._clipboard = nil}
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
+
+  fileprivate var _clipboard: Macosusesdk_V1_Clipboard? = nil
 }
 
 /// Request to clear clipboard contents.
@@ -2297,18 +3005,27 @@ public nonisolated struct Macosusesdk_V1_ClearClipboardRequest: Sendable {
   public init() {}
 }
 
-/// Response from clearing clipboard.
+/// Response from clearing clipboard contents.
 public nonisolated struct Macosusesdk_V1_ClearClipboardResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Whether the operation succeeded.
-  public var success: Bool = false
+  /// Exact empty clipboard resource observed after the clear.
+  public var clipboard: Macosusesdk_V1_Clipboard {
+    get {_clipboard ?? Macosusesdk_V1_Clipboard()}
+    set {_clipboard = newValue}
+  }
+  /// Returns true if `clipboard` has been explicitly set.
+  public var hasClipboard: Bool {self._clipboard != nil}
+  /// Clears the value of `clipboard`. Subsequent reads from it will return its default value.
+  public mutating func clearClipboard() {self._clipboard = nil}
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
+
+  fileprivate var _clipboard: Macosusesdk_V1_Clipboard? = nil
 }
 
 /// Request to get clipboard history (if available).
@@ -2415,132 +3132,6 @@ public nonisolated struct Macosusesdk_V1_AutomateSaveFileDialogResponse: Sendabl
 
   /// Final save path.
   public var savedPath: String = String()
-
-  /// Error message if failed.
-  public var error: String = String()
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  public init() {}
-}
-
-/// Request to select a file programmatically.
-public nonisolated struct Macosusesdk_V1_SelectFileRequest: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  /// Application context.
-  public var application: String = String()
-
-  /// File path to select.
-  public var filePath: String = String()
-
-  /// Whether to reveal Finder after selection.
-  public var revealFinder: Bool = false
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  public init() {}
-}
-
-/// Response from selecting a file.
-public nonisolated struct Macosusesdk_V1_SelectFileResponse: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  /// Whether the operation succeeded.
-  public var success: Bool = false
-
-  /// Selected file path.
-  public var selectedPath: String = String()
-
-  /// Error message if failed.
-  public var error: String = String()
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  public init() {}
-}
-
-/// Request to select a directory.
-public nonisolated struct Macosusesdk_V1_SelectDirectoryRequest: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  /// Application context.
-  public var application: String = String()
-
-  /// Directory path to select.
-  public var directoryPath: String = String()
-
-  /// Whether to create directory when it doesn't exist.
-  public var createMissing: Bool = false
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  public init() {}
-}
-
-/// Response from selecting a directory.
-public nonisolated struct Macosusesdk_V1_SelectDirectoryResponse: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  /// Whether the operation succeeded.
-  public var success: Bool = false
-
-  /// Selected directory path.
-  public var selectedPath: String = String()
-
-  /// Whether the directory was created.
-  public var created: Bool = false
-
-  /// Error message if failed.
-  public var error: String = String()
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  public init() {}
-}
-
-/// Request to drag and drop files.
-public nonisolated struct Macosusesdk_V1_DragFilesRequest: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  /// Application context.
-  public var application: String = String()
-
-  /// File paths to drag.
-  public var filePaths: [String] = []
-
-  /// Target element ID to drop on.
-  public var targetElementID: String = String()
-
-  /// Drag duration in seconds.
-  public var duration: Double = 0
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  public init() {}
-}
-
-/// Response from dragging files.
-public nonisolated struct Macosusesdk_V1_DragFilesResponse: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  /// Whether the operation succeeded.
-  public var success: Bool = false
-
-  /// Number of files dropped.
-  public var filesDropped: Int32 = 0
 
   /// Error message if failed.
   public var error: String = String()
@@ -2807,108 +3398,25 @@ public nonisolated struct Macosusesdk_V1_GetScriptingDictionariesRequest: Sendab
 
 fileprivate nonisolated let _protobuf_package = "macosusesdk.v1"
 
-nonisolated extension Macosusesdk_V1_OpenApplicationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".OpenApplicationRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}id\0\u{1}background\0")
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.id) }()
-      case 2: try { try decoder.decodeSingularBoolField(value: &self.background) }()
-      default: break
-      }
-    }
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.id.isEmpty {
-      try visitor.visitSingularStringField(value: self.id, fieldNumber: 1)
-    }
-    if self.background != false {
-      try visitor.visitSingularBoolField(value: self.background, fieldNumber: 2)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Macosusesdk_V1_OpenApplicationRequest, rhs: Macosusesdk_V1_OpenApplicationRequest) -> Bool {
-    if lhs.id != rhs.id {return false}
-    if lhs.background != rhs.background {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+nonisolated extension Macosusesdk_V1_ApplicationCloseDisposition: SwiftProtobuf._ProtoNameProviding {
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0APPLICATION_CLOSE_DISPOSITION_UNSPECIFIED\0\u{1}APPLICATION_CLOSE_DISPOSITION_ALREADY_EXITED\0\u{1}APPLICATION_CLOSE_DISPOSITION_GRACEFUL\0\u{1}APPLICATION_CLOSE_DISPOSITION_FORCED\0")
 }
 
-nonisolated extension Macosusesdk_V1_OpenApplicationResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".OpenApplicationResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0")
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularMessageField(value: &self._application) }()
-      default: break
-      }
-    }
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    try { if let v = self._application {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
-    } }()
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Macosusesdk_V1_OpenApplicationResponse, rhs: Macosusesdk_V1_OpenApplicationResponse) -> Bool {
-    if lhs._application != rhs._application {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+nonisolated extension Macosusesdk_V1_ApplicationOpenMode: SwiftProtobuf._ProtoNameProviding {
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0APPLICATION_OPEN_MODE_UNSPECIFIED\0\u{1}APPLICATION_OPEN_MODE_LAUNCH_OR_ACTIVATE\0\u{1}APPLICATION_OPEN_MODE_FORCE_NEW_INSTANCE\0")
 }
 
-nonisolated extension Macosusesdk_V1_OpenApplicationMetadata: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".OpenApplicationMetadata"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}id\0")
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.id) }()
-      default: break
-      }
-    }
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.id.isEmpty {
-      try visitor.visitSingularStringField(value: self.id, fieldNumber: 1)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Macosusesdk_V1_OpenApplicationMetadata, rhs: Macosusesdk_V1_OpenApplicationMetadata) -> Bool {
-    if lhs.id != rhs.id {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
+nonisolated extension Macosusesdk_V1_ApplicationOpenDisposition: SwiftProtobuf._ProtoNameProviding {
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0APPLICATION_OPEN_DISPOSITION_UNSPECIFIED\0\u{1}APPLICATION_OPEN_DISPOSITION_LAUNCHED_NEW\0\u{1}APPLICATION_OPEN_DISPOSITION_ACTIVATED_EXISTING\0\u{1}APPLICATION_OPEN_DISPOSITION_ALREADY_ACTIVE\0\u{1}APPLICATION_OPEN_DISPOSITION_REUSED_EXISTING\0")
 }
 
-nonisolated extension Macosusesdk_V1_GetApplicationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".GetApplicationRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}read_mask\0")
+nonisolated extension Macosusesdk_V1_ApplicationActivationDisposition: SwiftProtobuf._ProtoNameProviding {
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0APPLICATION_ACTIVATION_DISPOSITION_UNSPECIFIED\0\u{1}APPLICATION_ACTIVATION_DISPOSITION_ACTIVATED\0\u{1}APPLICATION_ACTIVATION_DISPOSITION_ALREADY_ACTIVE\0")
+}
+
+nonisolated extension Macosusesdk_V1_GetApplicationBundleRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".GetApplicationBundleRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}view\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -2917,37 +3425,33 @@ nonisolated extension Macosusesdk_V1_GetApplicationRequest: SwiftProtobuf.Messag
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
-      case 2: try { try decoder.decodeSingularMessageField(value: &self._readMask) }()
+      case 2: try { try decoder.decodeSingularEnumField(value: &self.view) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
     if !self.name.isEmpty {
       try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
     }
-    try { if let v = self._readMask {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
-    } }()
+    if self.view != .unspecified {
+      try visitor.visitSingularEnumField(value: self.view, fieldNumber: 2)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Macosusesdk_V1_GetApplicationRequest, rhs: Macosusesdk_V1_GetApplicationRequest) -> Bool {
+  public static func ==(lhs: Macosusesdk_V1_GetApplicationBundleRequest, rhs: Macosusesdk_V1_GetApplicationBundleRequest) -> Bool {
     if lhs.name != rhs.name {return false}
-    if lhs._readMask != rhs._readMask {return false}
+    if lhs.view != rhs.view {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
-nonisolated extension Macosusesdk_V1_ListApplicationsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".ListApplicationsRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}page_size\0\u{3}page_token\0\u{3}order_by\0\u{1}filter\0")
+nonisolated extension Macosusesdk_V1_ListApplicationBundlesRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ListApplicationBundlesRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}page_size\0\u{3}page_token\0\u{3}order_by\0\u{1}filter\0\u{1}view\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -2959,6 +3463,7 @@ nonisolated extension Macosusesdk_V1_ListApplicationsRequest: SwiftProtobuf.Mess
       case 2: try { try decoder.decodeSingularStringField(value: &self.pageToken) }()
       case 3: try { try decoder.decodeSingularStringField(value: &self.orderBy) }()
       case 4: try { try decoder.decodeSingularStringField(value: &self.filter) }()
+      case 5: try { try decoder.decodeSingularEnumField(value: &self.view) }()
       default: break
       }
     }
@@ -2977,6 +3482,208 @@ nonisolated extension Macosusesdk_V1_ListApplicationsRequest: SwiftProtobuf.Mess
     if !self.filter.isEmpty {
       try visitor.visitSingularStringField(value: self.filter, fieldNumber: 4)
     }
+    if self.view != .unspecified {
+      try visitor.visitSingularEnumField(value: self.view, fieldNumber: 5)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_ListApplicationBundlesRequest, rhs: Macosusesdk_V1_ListApplicationBundlesRequest) -> Bool {
+    if lhs.pageSize != rhs.pageSize {return false}
+    if lhs.pageToken != rhs.pageToken {return false}
+    if lhs.orderBy != rhs.orderBy {return false}
+    if lhs.filter != rhs.filter {return false}
+    if lhs.view != rhs.view {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Macosusesdk_V1_ListApplicationBundlesResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ListApplicationBundlesResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}application_bundles\0\u{3}next_page_token\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeRepeatedMessageField(value: &self.applicationBundles) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.nextPageToken) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.applicationBundles.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.applicationBundles, fieldNumber: 1)
+    }
+    if !self.nextPageToken.isEmpty {
+      try visitor.visitSingularStringField(value: self.nextPageToken, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_ListApplicationBundlesResponse, rhs: Macosusesdk_V1_ListApplicationBundlesResponse) -> Bool {
+    if lhs.applicationBundles != rhs.applicationBundles {return false}
+    if lhs.nextPageToken != rhs.nextPageToken {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Macosusesdk_V1_OpenApplicationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".OpenApplicationRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}background\0\u{1}mode\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      case 2: try { try decoder.decodeSingularBoolField(value: &self.background) }()
+      case 3: try { try decoder.decodeSingularEnumField(value: &self.mode) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
+    }
+    if self.background != false {
+      try visitor.visitSingularBoolField(value: self.background, fieldNumber: 2)
+    }
+    if self.mode != .unspecified {
+      try visitor.visitSingularEnumField(value: self.mode, fieldNumber: 3)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_OpenApplicationRequest, rhs: Macosusesdk_V1_OpenApplicationRequest) -> Bool {
+    if lhs.name != rhs.name {return false}
+    if lhs.background != rhs.background {return false}
+    if lhs.mode != rhs.mode {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Macosusesdk_V1_OpenApplicationResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".OpenApplicationResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0\u{1}disposition\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._application) }()
+      case 2: try { try decoder.decodeSingularEnumField(value: &self.disposition) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._application {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
+    if self.disposition != .unspecified {
+      try visitor.visitSingularEnumField(value: self.disposition, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_OpenApplicationResponse, rhs: Macosusesdk_V1_OpenApplicationResponse) -> Bool {
+    if lhs._application != rhs._application {return false}
+    if lhs.disposition != rhs.disposition {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Macosusesdk_V1_GetApplicationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".GetApplicationRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{2}\u{2}view\0\u{b}read_mask\0\u{c}\u{2}\u{1}")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      case 3: try { try decoder.decodeSingularEnumField(value: &self.view) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
+    }
+    if self.view != .unspecified {
+      try visitor.visitSingularEnumField(value: self.view, fieldNumber: 3)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_GetApplicationRequest, rhs: Macosusesdk_V1_GetApplicationRequest) -> Bool {
+    if lhs.name != rhs.name {return false}
+    if lhs.view != rhs.view {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Macosusesdk_V1_ListApplicationsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ListApplicationsRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}page_size\0\u{3}page_token\0\u{3}order_by\0\u{1}filter\0\u{1}view\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularInt32Field(value: &self.pageSize) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.pageToken) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.orderBy) }()
+      case 4: try { try decoder.decodeSingularStringField(value: &self.filter) }()
+      case 5: try { try decoder.decodeSingularEnumField(value: &self.view) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.pageSize != 0 {
+      try visitor.visitSingularInt32Field(value: self.pageSize, fieldNumber: 1)
+    }
+    if !self.pageToken.isEmpty {
+      try visitor.visitSingularStringField(value: self.pageToken, fieldNumber: 2)
+    }
+    if !self.orderBy.isEmpty {
+      try visitor.visitSingularStringField(value: self.orderBy, fieldNumber: 3)
+    }
+    if !self.filter.isEmpty {
+      try visitor.visitSingularStringField(value: self.filter, fieldNumber: 4)
+    }
+    if self.view != .unspecified {
+      try visitor.visitSingularEnumField(value: self.view, fieldNumber: 5)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -2985,6 +3692,7 @@ nonisolated extension Macosusesdk_V1_ListApplicationsRequest: SwiftProtobuf.Mess
     if lhs.pageToken != rhs.pageToken {return false}
     if lhs.orderBy != rhs.orderBy {return false}
     if lhs.filter != rhs.filter {return false}
+    if lhs.view != rhs.view {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -3025,8 +3733,77 @@ nonisolated extension Macosusesdk_V1_ListApplicationsResponse: SwiftProtobuf.Mes
   }
 }
 
-nonisolated extension Macosusesdk_V1_DeleteApplicationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".DeleteApplicationRequest"
+nonisolated extension Macosusesdk_V1_ActivateApplicationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ActivateApplicationRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_ActivateApplicationRequest, rhs: Macosusesdk_V1_ActivateApplicationRequest) -> Bool {
+    if lhs.name != rhs.name {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Macosusesdk_V1_ActivateApplicationResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ActivateApplicationResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0\u{1}disposition\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._application) }()
+      case 2: try { try decoder.decodeSingularEnumField(value: &self.disposition) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._application {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
+    if self.disposition != .unspecified {
+      try visitor.visitSingularEnumField(value: self.disposition, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_ActivateApplicationResponse, rhs: Macosusesdk_V1_ActivateApplicationResponse) -> Bool {
+    if lhs._application != rhs._application {return false}
+    if lhs.disposition != rhs.disposition {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Macosusesdk_V1_CloseApplicationRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".CloseApplicationRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}force\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -3052,9 +3829,48 @@ nonisolated extension Macosusesdk_V1_DeleteApplicationRequest: SwiftProtobuf.Mes
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Macosusesdk_V1_DeleteApplicationRequest, rhs: Macosusesdk_V1_DeleteApplicationRequest) -> Bool {
+  public static func ==(lhs: Macosusesdk_V1_CloseApplicationRequest, rhs: Macosusesdk_V1_CloseApplicationRequest) -> Bool {
     if lhs.name != rhs.name {return false}
     if lhs.force != rhs.force {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Macosusesdk_V1_CloseApplicationResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".CloseApplicationResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0\u{1}disposition\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._application) }()
+      case 2: try { try decoder.decodeSingularEnumField(value: &self.disposition) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._application {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
+    if self.disposition != .unspecified {
+      try visitor.visitSingularEnumField(value: self.disposition, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_CloseApplicationResponse, rhs: Macosusesdk_V1_CloseApplicationResponse) -> Bool {
+    if lhs._application != rhs._application {return false}
+    if lhs.disposition != rhs.disposition {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -3064,81 +3880,41 @@ nonisolated extension Macosusesdk_V1_CreateInputRequest: SwiftProtobuf.Message, 
   public static let protoMessageName: String = _protobuf_package + ".CreateInputRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{1}input\0\u{3}input_id\0")
 
-  fileprivate class _StorageClass {
-    var _parent: String = String()
-    var _input: Macosusesdk_V1_Input? = nil
-    var _inputID: String = String()
-
-      // This property is used as the initial default value for new instances of the type.
-      // The type itself is protecting the reference to its storage via CoW semantics.
-      // This will force a copy to be made of this reference when the first mutation occurs;
-      // hence, it is safe to mark this as `nonisolated(unsafe)`.
-      static nonisolated(unsafe) let defaultInstance = _StorageClass()
-
-    private init() {}
-
-    init(copying source: _StorageClass) {
-      _parent = source._parent
-      _input = source._input
-      _inputID = source._inputID
-    }
-  }
-
-  fileprivate mutating func _uniqueStorage() -> _StorageClass {
-    if !isKnownUniquelyReferenced(&_storage) {
-      _storage = _StorageClass(copying: _storage)
-    }
-    return _storage
-  }
-
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    _ = _uniqueStorage()
-    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
-      while let fieldNumber = try decoder.nextFieldNumber() {
-        // The use of inline closures is to circumvent an issue where the compiler
-        // allocates stack space for every case branch when no optimizations are
-        // enabled. https://github.com/apple/swift-protobuf/issues/1034
-        switch fieldNumber {
-        case 1: try { try decoder.decodeSingularStringField(value: &_storage._parent) }()
-        case 2: try { try decoder.decodeSingularMessageField(value: &_storage._input) }()
-        case 3: try { try decoder.decodeSingularStringField(value: &_storage._inputID) }()
-        default: break
-        }
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.parent) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._input) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.inputID) }()
+      default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every if/case branch local when no optimizations
-      // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-      // https://github.com/apple/swift-protobuf/issues/1182
-      if !_storage._parent.isEmpty {
-        try visitor.visitSingularStringField(value: _storage._parent, fieldNumber: 1)
-      }
-      try { if let v = _storage._input {
-        try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
-      } }()
-      if !_storage._inputID.isEmpty {
-        try visitor.visitSingularStringField(value: _storage._inputID, fieldNumber: 3)
-      }
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.parent.isEmpty {
+      try visitor.visitSingularStringField(value: self.parent, fieldNumber: 1)
+    }
+    try { if let v = self._input {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+    } }()
+    if !self.inputID.isEmpty {
+      try visitor.visitSingularStringField(value: self.inputID, fieldNumber: 3)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_CreateInputRequest, rhs: Macosusesdk_V1_CreateInputRequest) -> Bool {
-    if lhs._storage !== rhs._storage {
-      let storagesAreEqual: Bool = withExtendedLifetime((lhs._storage, rhs._storage)) { (_args: (_StorageClass, _StorageClass)) in
-        let _storage = _args.0
-        let rhs_storage = _args.1
-        if _storage._parent != rhs_storage._parent {return false}
-        if _storage._input != rhs_storage._input {return false}
-        if _storage._inputID != rhs_storage._inputID {return false}
-        return true
-      }
-      if !storagesAreEqual {return false}
-    }
+    if lhs.parent != rhs.parent {return false}
+    if lhs._input != rhs._input {return false}
+    if lhs.inputID != rhs.inputID {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -3256,7 +4032,7 @@ nonisolated extension Macosusesdk_V1_ListInputsResponse: SwiftProtobuf.Message, 
 
 nonisolated extension Macosusesdk_V1_TraverseAccessibilityRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".TraverseAccessibilityRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}visible_only\0\u{1}activate\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}visible_only\0\u{b}activate\0\u{c}\u{3}\u{1}")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -3266,7 +4042,6 @@ nonisolated extension Macosusesdk_V1_TraverseAccessibilityRequest: SwiftProtobuf
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
       case 2: try { try decoder.decodeSingularBoolField(value: &self.visibleOnly) }()
-      case 3: try { try decoder.decodeSingularBoolField(value: &self.activate) }()
       default: break
       }
     }
@@ -3279,16 +4054,12 @@ nonisolated extension Macosusesdk_V1_TraverseAccessibilityRequest: SwiftProtobuf
     if self.visibleOnly != false {
       try visitor.visitSingularBoolField(value: self.visibleOnly, fieldNumber: 2)
     }
-    if self.activate != false {
-      try visitor.visitSingularBoolField(value: self.activate, fieldNumber: 3)
-    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_TraverseAccessibilityRequest, rhs: Macosusesdk_V1_TraverseAccessibilityRequest) -> Bool {
     if lhs.name != rhs.name {return false}
     if lhs.visibleOnly != rhs.visibleOnly {return false}
-    if lhs.activate != rhs.activate {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -3428,8 +4199,8 @@ nonisolated extension Macosusesdk_V1_ModifiedElement: SwiftProtobuf.Message, Swi
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}old_element\0\u{3}new_element\0\u{1}changes\0")
 
   fileprivate class _StorageClass {
-    var _oldElement: Macosusesdk_Type_Element? = nil
-    var _newElement: Macosusesdk_Type_Element? = nil
+    var _oldElement: Macosusesdk_V1_Element? = nil
+    var _newElement: Macosusesdk_V1_Element? = nil
     var _changes: [Macosusesdk_V1_AttributeChange] = []
 
       // This property is used as the initial default value for new instances of the type.
@@ -3725,6 +4496,81 @@ nonisolated extension Macosusesdk_V1_GetElementRequest: SwiftProtobuf.Message, S
   }
 }
 
+nonisolated extension Macosusesdk_V1_ListElementsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ListElementsRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}page_size\0\u{3}page_token\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.parent) }()
+      case 2: try { try decoder.decodeSingularInt32Field(value: &self.pageSize) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.pageToken) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.parent.isEmpty {
+      try visitor.visitSingularStringField(value: self.parent, fieldNumber: 1)
+    }
+    if self.pageSize != 0 {
+      try visitor.visitSingularInt32Field(value: self.pageSize, fieldNumber: 2)
+    }
+    if !self.pageToken.isEmpty {
+      try visitor.visitSingularStringField(value: self.pageToken, fieldNumber: 3)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_ListElementsRequest, rhs: Macosusesdk_V1_ListElementsRequest) -> Bool {
+    if lhs.parent != rhs.parent {return false}
+    if lhs.pageSize != rhs.pageSize {return false}
+    if lhs.pageToken != rhs.pageToken {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Macosusesdk_V1_ListElementsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ListElementsResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}elements\0\u{3}next_page_token\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeRepeatedMessageField(value: &self.elements) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.nextPageToken) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.elements.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.elements, fieldNumber: 1)
+    }
+    if !self.nextPageToken.isEmpty {
+      try visitor.visitSingularStringField(value: self.nextPageToken, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_ListElementsResponse, rhs: Macosusesdk_V1_ListElementsResponse) -> Bool {
+    if lhs.elements != rhs.elements {return false}
+    if lhs.nextPageToken != rhs.nextPageToken {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
 nonisolated extension Macosusesdk_V1_ClickElementRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ClickElementRequest"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}element_id\0\u{1}selector\0\u{3}click_type\0")
@@ -3803,7 +4649,7 @@ nonisolated extension Macosusesdk_V1_ClickElementRequest.ClickType: SwiftProtobu
 
 nonisolated extension Macosusesdk_V1_ClickElementResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ClickElementResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}element\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}element\0\u{1}input\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -3813,6 +4659,7 @@ nonisolated extension Macosusesdk_V1_ClickElementResponse: SwiftProtobuf.Message
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
       case 2: try { try decoder.decodeSingularMessageField(value: &self._element) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.input) }()
       default: break
       }
     }
@@ -3829,12 +4676,16 @@ nonisolated extension Macosusesdk_V1_ClickElementResponse: SwiftProtobuf.Message
     try { if let v = self._element {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
     } }()
+    if !self.input.isEmpty {
+      try visitor.visitSingularStringField(value: self.input, fieldNumber: 3)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_ClickElementResponse, rhs: Macosusesdk_V1_ClickElementResponse) -> Bool {
     if lhs.success != rhs.success {return false}
     if lhs._element != rhs._element {return false}
+    if lhs.input != rhs.input {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -3842,7 +4693,7 @@ nonisolated extension Macosusesdk_V1_ClickElementResponse: SwiftProtobuf.Message
 
 nonisolated extension Macosusesdk_V1_WriteElementValueRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".WriteElementValueRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}element_id\0\u{1}selector\0\u{1}value\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}parent\0\u{3}element_id\0\u{1}selector\0\u{1}value\0\u{3}write_mode\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -3872,7 +4723,8 @@ nonisolated extension Macosusesdk_V1_WriteElementValueRequest: SwiftProtobuf.Mes
           self.target = .selector(v)
         }
       }()
-      case 4: try { try decoder.decodeSingularStringField(value: &self.value) }()
+      case 4: try { try decoder.decodeSingularStringField(value: &self._value) }()
+      case 5: try { try decoder.decodeSingularEnumField(value: &self.writeMode) }()
       default: break
       }
     }
@@ -3897,8 +4749,11 @@ nonisolated extension Macosusesdk_V1_WriteElementValueRequest: SwiftProtobuf.Mes
     }()
     case nil: break
     }
-    if !self.value.isEmpty {
-      try visitor.visitSingularStringField(value: self.value, fieldNumber: 4)
+    try { if let v = self._value {
+      try visitor.visitSingularStringField(value: v, fieldNumber: 4)
+    } }()
+    if self.writeMode != .unspecified {
+      try visitor.visitSingularEnumField(value: self.writeMode, fieldNumber: 5)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -3906,15 +4761,20 @@ nonisolated extension Macosusesdk_V1_WriteElementValueRequest: SwiftProtobuf.Mes
   public static func ==(lhs: Macosusesdk_V1_WriteElementValueRequest, rhs: Macosusesdk_V1_WriteElementValueRequest) -> Bool {
     if lhs.parent != rhs.parent {return false}
     if lhs.target != rhs.target {return false}
-    if lhs.value != rhs.value {return false}
+    if lhs._value != rhs._value {return false}
+    if lhs.writeMode != rhs.writeMode {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
+nonisolated extension Macosusesdk_V1_WriteElementValueRequest.WriteMode: SwiftProtobuf._ProtoNameProviding {
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0WRITE_MODE_UNSPECIFIED\0\u{1}WRITE_MODE_DIRECT_AX\0\u{1}WRITE_MODE_KEYSTROKE_REPLACEMENT\0")
+}
+
 nonisolated extension Macosusesdk_V1_WriteElementValueResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".WriteElementValueResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}element\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}element\0\u{1}input\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -3924,6 +4784,7 @@ nonisolated extension Macosusesdk_V1_WriteElementValueResponse: SwiftProtobuf.Me
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
       case 2: try { try decoder.decodeSingularMessageField(value: &self._element) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.input) }()
       default: break
       }
     }
@@ -3940,12 +4801,16 @@ nonisolated extension Macosusesdk_V1_WriteElementValueResponse: SwiftProtobuf.Me
     try { if let v = self._element {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
     } }()
+    if !self.input.isEmpty {
+      try visitor.visitSingularStringField(value: self.input, fieldNumber: 3)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_WriteElementValueResponse, rhs: Macosusesdk_V1_WriteElementValueResponse) -> Bool {
     if lhs.success != rhs.success {return false}
     if lhs._element != rhs._element {return false}
+    if lhs.input != rhs.input {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -4085,7 +4950,7 @@ nonisolated extension Macosusesdk_V1_PerformElementActionRequest: SwiftProtobuf.
 
 nonisolated extension Macosusesdk_V1_PerformElementActionResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".PerformElementActionResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}element\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}element\0\u{1}input\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -4095,6 +4960,7 @@ nonisolated extension Macosusesdk_V1_PerformElementActionResponse: SwiftProtobuf
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
       case 2: try { try decoder.decodeSingularMessageField(value: &self._element) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.input) }()
       default: break
       }
     }
@@ -4111,12 +4977,16 @@ nonisolated extension Macosusesdk_V1_PerformElementActionResponse: SwiftProtobuf
     try { if let v = self._element {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
     } }()
+    if !self.input.isEmpty {
+      try visitor.visitSingularStringField(value: self.input, fieldNumber: 3)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_PerformElementActionResponse, rhs: Macosusesdk_V1_PerformElementActionResponse) -> Bool {
     if lhs.success != rhs.success {return false}
     if lhs._element != rhs._element {return false}
+    if lhs.input != rhs.input {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -4692,30 +5562,34 @@ nonisolated extension Macosusesdk_V1_MoveWindowRequest: SwiftProtobuf.Message, S
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
-      case 2: try { try decoder.decodeSingularDoubleField(value: &self.x) }()
-      case 3: try { try decoder.decodeSingularDoubleField(value: &self.y) }()
+      case 2: try { try decoder.decodeSingularDoubleField(value: &self._x) }()
+      case 3: try { try decoder.decodeSingularDoubleField(value: &self._y) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
     if !self.name.isEmpty {
       try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
     }
-    if self.x.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.x, fieldNumber: 2)
-    }
-    if self.y.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.y, fieldNumber: 3)
-    }
+    try { if let v = self._x {
+      try visitor.visitSingularDoubleField(value: v, fieldNumber: 2)
+    } }()
+    try { if let v = self._y {
+      try visitor.visitSingularDoubleField(value: v, fieldNumber: 3)
+    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_MoveWindowRequest, rhs: Macosusesdk_V1_MoveWindowRequest) -> Bool {
     if lhs.name != rhs.name {return false}
-    if lhs.x != rhs.x {return false}
-    if lhs.y != rhs.y {return false}
+    if lhs._x != rhs._x {return false}
+    if lhs._y != rhs._y {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -5602,7 +6476,7 @@ nonisolated extension Macosusesdk_V1_ExecuteMacroRequest: SwiftProtobuf.Message,
 
 nonisolated extension Macosusesdk_V1_ExecutionOptions: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ExecutionOptions"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}speed\0\u{3}continue_on_error\0\u{1}timeout\0\u{3}record_execution\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\u{3}timeout\0\u{b}speed\0\u{b}continue_on_error\0\u{b}record_execution\0\u{c}\u{1}\u{1}\u{c}\u{2}\u{1}\u{c}\u{4}\u{1}")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -5610,36 +6484,21 @@ nonisolated extension Macosusesdk_V1_ExecutionOptions: SwiftProtobuf.Message, Sw
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularDoubleField(value: &self.speed) }()
-      case 2: try { try decoder.decodeSingularBoolField(value: &self.continueOnError) }()
       case 3: try { try decoder.decodeSingularDoubleField(value: &self.timeout) }()
-      case 4: try { try decoder.decodeSingularBoolField(value: &self.recordExecution) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.speed.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.speed, fieldNumber: 1)
-    }
-    if self.continueOnError != false {
-      try visitor.visitSingularBoolField(value: self.continueOnError, fieldNumber: 2)
-    }
     if self.timeout.bitPattern != 0 {
       try visitor.visitSingularDoubleField(value: self.timeout, fieldNumber: 3)
-    }
-    if self.recordExecution != false {
-      try visitor.visitSingularBoolField(value: self.recordExecution, fieldNumber: 4)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_ExecutionOptions, rhs: Macosusesdk_V1_ExecutionOptions) -> Bool {
-    if lhs.speed != rhs.speed {return false}
-    if lhs.continueOnError != rhs.continueOnError {return false}
     if lhs.timeout != rhs.timeout {return false}
-    if lhs.recordExecution != rhs.recordExecution {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -5789,12 +6648,12 @@ nonisolated extension Macosusesdk_V1_BeginTransactionRequest: SwiftProtobuf.Mess
 }
 
 nonisolated extension Macosusesdk_V1_BeginTransactionRequest.IsolationLevel: SwiftProtobuf._ProtoNameProviding {
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0ISOLATION_LEVEL_UNSPECIFIED\0\u{1}ISOLATION_LEVEL_SERIALIZABLE\0\u{1}ISOLATION_LEVEL_READ_COMMITTED\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0ISOLATION_LEVEL_UNSPECIFIED\0\u{1}ISOLATION_LEVEL_SERIALIZABLE\0")
 }
 
 nonisolated extension Macosusesdk_V1_BeginTransactionResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".BeginTransactionResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}transaction_id\0\u{1}session\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}transaction_id\0\u{3}revision_id\0\u{1}session\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -5803,7 +6662,8 @@ nonisolated extension Macosusesdk_V1_BeginTransactionResponse: SwiftProtobuf.Mes
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularStringField(value: &self.transactionID) }()
-      case 2: try { try decoder.decodeSingularMessageField(value: &self._session) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.revisionID) }()
+      case 3: try { try decoder.decodeSingularMessageField(value: &self._session) }()
       default: break
       }
     }
@@ -5817,14 +6677,18 @@ nonisolated extension Macosusesdk_V1_BeginTransactionResponse: SwiftProtobuf.Mes
     if !self.transactionID.isEmpty {
       try visitor.visitSingularStringField(value: self.transactionID, fieldNumber: 1)
     }
+    if !self.revisionID.isEmpty {
+      try visitor.visitSingularStringField(value: self.revisionID, fieldNumber: 2)
+    }
     try { if let v = self._session {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
     } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_BeginTransactionResponse, rhs: Macosusesdk_V1_BeginTransactionResponse) -> Bool {
     if lhs.transactionID != rhs.transactionID {return false}
+    if lhs.revisionID != rhs.revisionID {return false}
     if lhs._session != rhs._session {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
@@ -5938,7 +6802,7 @@ nonisolated extension Macosusesdk_V1_GetSessionSnapshotRequest: SwiftProtobuf.Me
 
 nonisolated extension Macosusesdk_V1_CaptureScreenshotRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CaptureScreenshotRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}format\0\u{1}quality\0\u{1}display\0\u{3}include_ocr_text\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}format\0\u{1}quality\0\u{4}\u{2}include_ocr_text\0\u{1}display\0\u{c}\u{3}\u{1}")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -5948,8 +6812,8 @@ nonisolated extension Macosusesdk_V1_CaptureScreenshotRequest: SwiftProtobuf.Mes
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularEnumField(value: &self.format) }()
       case 2: try { try decoder.decodeSingularInt32Field(value: &self.quality) }()
-      case 3: try { try decoder.decodeSingularInt32Field(value: &self.display) }()
       case 4: try { try decoder.decodeSingularBoolField(value: &self.includeOcrText) }()
+      case 5: try { try decoder.decodeSingularStringField(value: &self.display) }()
       default: break
       }
     }
@@ -5962,11 +6826,11 @@ nonisolated extension Macosusesdk_V1_CaptureScreenshotRequest: SwiftProtobuf.Mes
     if self.quality != 0 {
       try visitor.visitSingularInt32Field(value: self.quality, fieldNumber: 2)
     }
-    if self.display != 0 {
-      try visitor.visitSingularInt32Field(value: self.display, fieldNumber: 3)
-    }
     if self.includeOcrText != false {
       try visitor.visitSingularBoolField(value: self.includeOcrText, fieldNumber: 4)
+    }
+    if !self.display.isEmpty {
+      try visitor.visitSingularStringField(value: self.display, fieldNumber: 5)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -5974,8 +6838,8 @@ nonisolated extension Macosusesdk_V1_CaptureScreenshotRequest: SwiftProtobuf.Mes
   public static func ==(lhs: Macosusesdk_V1_CaptureScreenshotRequest, rhs: Macosusesdk_V1_CaptureScreenshotRequest) -> Bool {
     if lhs.format != rhs.format {return false}
     if lhs.quality != rhs.quality {return false}
-    if lhs.display != rhs.display {return false}
     if lhs.includeOcrText != rhs.includeOcrText {return false}
+    if lhs.display != rhs.display {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -5983,7 +6847,7 @@ nonisolated extension Macosusesdk_V1_CaptureScreenshotRequest: SwiftProtobuf.Mes
 
 nonisolated extension Macosusesdk_V1_CaptureScreenshotResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CaptureScreenshotResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}image_data\0\u{1}format\0\u{1}width\0\u{1}height\0\u{3}ocr_text\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}image_data\0\u{1}format\0\u{1}width\0\u{1}height\0\u{3}ocr_text\0\u{1}display\0\u{1}region\0\u{1}scale\0\u{3}ocr_error\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -5995,13 +6859,40 @@ nonisolated extension Macosusesdk_V1_CaptureScreenshotResponse: SwiftProtobuf.Me
       case 2: try { try decoder.decodeSingularEnumField(value: &self.format) }()
       case 3: try { try decoder.decodeSingularInt32Field(value: &self.width) }()
       case 4: try { try decoder.decodeSingularInt32Field(value: &self.height) }()
-      case 5: try { try decoder.decodeSingularStringField(value: &self.ocrText) }()
+      case 5: try {
+        var v: String?
+        try decoder.decodeSingularStringField(value: &v)
+        if let v = v {
+          if self.ocrResult != nil {try decoder.handleConflictingOneOf()}
+          self.ocrResult = .ocrText(v)
+        }
+      }()
+      case 6: try { try decoder.decodeSingularStringField(value: &self.display) }()
+      case 7: try { try decoder.decodeSingularMessageField(value: &self._region) }()
+      case 8: try { try decoder.decodeSingularDoubleField(value: &self.scale) }()
+      case 9: try {
+        var v: Google_Rpc_Status?
+        var hadOneofValue = false
+        if let current = self.ocrResult {
+          hadOneofValue = true
+          if case .ocrError(let m) = current {v = m}
+        }
+        try decoder.decodeSingularMessageField(value: &v)
+        if let v = v {
+          if hadOneofValue {try decoder.handleConflictingOneOf()}
+          self.ocrResult = .ocrError(v)
+        }
+      }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
     if !self.imageData.isEmpty {
       try visitor.visitSingularBytesField(value: self.imageData, fieldNumber: 1)
     }
@@ -6014,9 +6905,21 @@ nonisolated extension Macosusesdk_V1_CaptureScreenshotResponse: SwiftProtobuf.Me
     if self.height != 0 {
       try visitor.visitSingularInt32Field(value: self.height, fieldNumber: 4)
     }
-    if !self.ocrText.isEmpty {
-      try visitor.visitSingularStringField(value: self.ocrText, fieldNumber: 5)
+    try { if case .ocrText(let v)? = self.ocrResult {
+      try visitor.visitSingularStringField(value: v, fieldNumber: 5)
+    } }()
+    if !self.display.isEmpty {
+      try visitor.visitSingularStringField(value: self.display, fieldNumber: 6)
     }
+    try { if let v = self._region {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
+    } }()
+    if self.scale.bitPattern != 0 {
+      try visitor.visitSingularDoubleField(value: self.scale, fieldNumber: 8)
+    }
+    try { if case .ocrError(let v)? = self.ocrResult {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 9)
+    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -6025,7 +6928,10 @@ nonisolated extension Macosusesdk_V1_CaptureScreenshotResponse: SwiftProtobuf.Me
     if lhs.format != rhs.format {return false}
     if lhs.width != rhs.width {return false}
     if lhs.height != rhs.height {return false}
-    if lhs.ocrText != rhs.ocrText {return false}
+    if lhs.ocrResult != rhs.ocrResult {return false}
+    if lhs.display != rhs.display {return false}
+    if lhs._region != rhs._region {return false}
+    if lhs.scale != rhs.scale {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -6083,54 +6989,167 @@ nonisolated extension Macosusesdk_V1_CaptureWindowScreenshotRequest: SwiftProtob
 
 nonisolated extension Macosusesdk_V1_CaptureWindowScreenshotResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CaptureWindowScreenshotResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}image_data\0\u{1}format\0\u{1}width\0\u{1}height\0\u{1}window\0\u{3}ocr_text\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}image_data\0\u{1}format\0\u{1}width\0\u{1}height\0\u{1}window\0\u{3}ocr_text\0\u{3}ocr_error\0\u{3}window_frame\0\u{1}region\0\u{1}scale\0\u{3}shadow_included\0\u{1}clipped\0")
+
+  fileprivate class _StorageClass {
+    var _imageData: Data = Data()
+    var _format: Macosusesdk_V1_ImageFormat = .unspecified
+    var _width: Int32 = 0
+    var _height: Int32 = 0
+    var _window: String = String()
+    var _ocrResult: Macosusesdk_V1_CaptureWindowScreenshotResponse.OneOf_OcrResult?
+    var _windowFrame: Macosusesdk_Type_Region? = nil
+    var _region: Macosusesdk_Type_Region? = nil
+    var _scale: Double = 0
+    var _shadowIncluded: Bool = false
+    var _clipped: Bool = false
+
+      // This property is used as the initial default value for new instances of the type.
+      // The type itself is protecting the reference to its storage via CoW semantics.
+      // This will force a copy to be made of this reference when the first mutation occurs;
+      // hence, it is safe to mark this as `nonisolated(unsafe)`.
+      static nonisolated(unsafe) let defaultInstance = _StorageClass()
+
+    private init() {}
+
+    init(copying source: _StorageClass) {
+      _imageData = source._imageData
+      _format = source._format
+      _width = source._width
+      _height = source._height
+      _window = source._window
+      _ocrResult = source._ocrResult
+      _windowFrame = source._windowFrame
+      _region = source._region
+      _scale = source._scale
+      _shadowIncluded = source._shadowIncluded
+      _clipped = source._clipped
+    }
+  }
+
+  fileprivate mutating func _uniqueStorage() -> _StorageClass {
+    if !isKnownUniquelyReferenced(&_storage) {
+      _storage = _StorageClass(copying: _storage)
+    }
+    return _storage
+  }
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularBytesField(value: &self.imageData) }()
-      case 2: try { try decoder.decodeSingularEnumField(value: &self.format) }()
-      case 3: try { try decoder.decodeSingularInt32Field(value: &self.width) }()
-      case 4: try { try decoder.decodeSingularInt32Field(value: &self.height) }()
-      case 5: try { try decoder.decodeSingularStringField(value: &self.window) }()
-      case 6: try { try decoder.decodeSingularStringField(value: &self.ocrText) }()
-      default: break
+    _ = _uniqueStorage()
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      while let fieldNumber = try decoder.nextFieldNumber() {
+        // The use of inline closures is to circumvent an issue where the compiler
+        // allocates stack space for every case branch when no optimizations are
+        // enabled. https://github.com/apple/swift-protobuf/issues/1034
+        switch fieldNumber {
+        case 1: try { try decoder.decodeSingularBytesField(value: &_storage._imageData) }()
+        case 2: try { try decoder.decodeSingularEnumField(value: &_storage._format) }()
+        case 3: try { try decoder.decodeSingularInt32Field(value: &_storage._width) }()
+        case 4: try { try decoder.decodeSingularInt32Field(value: &_storage._height) }()
+        case 5: try { try decoder.decodeSingularStringField(value: &_storage._window) }()
+        case 6: try {
+          var v: String?
+          try decoder.decodeSingularStringField(value: &v)
+          if let v = v {
+            if _storage._ocrResult != nil {try decoder.handleConflictingOneOf()}
+            _storage._ocrResult = .ocrText(v)
+          }
+        }()
+        case 7: try {
+          var v: Google_Rpc_Status?
+          var hadOneofValue = false
+          if let current = _storage._ocrResult {
+            hadOneofValue = true
+            if case .ocrError(let m) = current {v = m}
+          }
+          try decoder.decodeSingularMessageField(value: &v)
+          if let v = v {
+            if hadOneofValue {try decoder.handleConflictingOneOf()}
+            _storage._ocrResult = .ocrError(v)
+          }
+        }()
+        case 8: try { try decoder.decodeSingularMessageField(value: &_storage._windowFrame) }()
+        case 9: try { try decoder.decodeSingularMessageField(value: &_storage._region) }()
+        case 10: try { try decoder.decodeSingularDoubleField(value: &_storage._scale) }()
+        case 11: try { try decoder.decodeSingularBoolField(value: &_storage._shadowIncluded) }()
+        case 12: try { try decoder.decodeSingularBoolField(value: &_storage._clipped) }()
+        default: break
+        }
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.imageData.isEmpty {
-      try visitor.visitSingularBytesField(value: self.imageData, fieldNumber: 1)
-    }
-    if self.format != .unspecified {
-      try visitor.visitSingularEnumField(value: self.format, fieldNumber: 2)
-    }
-    if self.width != 0 {
-      try visitor.visitSingularInt32Field(value: self.width, fieldNumber: 3)
-    }
-    if self.height != 0 {
-      try visitor.visitSingularInt32Field(value: self.height, fieldNumber: 4)
-    }
-    if !self.window.isEmpty {
-      try visitor.visitSingularStringField(value: self.window, fieldNumber: 5)
-    }
-    if !self.ocrText.isEmpty {
-      try visitor.visitSingularStringField(value: self.ocrText, fieldNumber: 6)
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every if/case branch local when no optimizations
+      // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+      // https://github.com/apple/swift-protobuf/issues/1182
+      if !_storage._imageData.isEmpty {
+        try visitor.visitSingularBytesField(value: _storage._imageData, fieldNumber: 1)
+      }
+      if _storage._format != .unspecified {
+        try visitor.visitSingularEnumField(value: _storage._format, fieldNumber: 2)
+      }
+      if _storage._width != 0 {
+        try visitor.visitSingularInt32Field(value: _storage._width, fieldNumber: 3)
+      }
+      if _storage._height != 0 {
+        try visitor.visitSingularInt32Field(value: _storage._height, fieldNumber: 4)
+      }
+      if !_storage._window.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._window, fieldNumber: 5)
+      }
+      switch _storage._ocrResult {
+      case .ocrText?: try {
+        guard case .ocrText(let v)? = _storage._ocrResult else { preconditionFailure() }
+        try visitor.visitSingularStringField(value: v, fieldNumber: 6)
+      }()
+      case .ocrError?: try {
+        guard case .ocrError(let v)? = _storage._ocrResult else { preconditionFailure() }
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
+      }()
+      case nil: break
+      }
+      try { if let v = _storage._windowFrame {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 8)
+      } }()
+      try { if let v = _storage._region {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 9)
+      } }()
+      if _storage._scale.bitPattern != 0 {
+        try visitor.visitSingularDoubleField(value: _storage._scale, fieldNumber: 10)
+      }
+      if _storage._shadowIncluded != false {
+        try visitor.visitSingularBoolField(value: _storage._shadowIncluded, fieldNumber: 11)
+      }
+      if _storage._clipped != false {
+        try visitor.visitSingularBoolField(value: _storage._clipped, fieldNumber: 12)
+      }
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_CaptureWindowScreenshotResponse, rhs: Macosusesdk_V1_CaptureWindowScreenshotResponse) -> Bool {
-    if lhs.imageData != rhs.imageData {return false}
-    if lhs.format != rhs.format {return false}
-    if lhs.width != rhs.width {return false}
-    if lhs.height != rhs.height {return false}
-    if lhs.window != rhs.window {return false}
-    if lhs.ocrText != rhs.ocrText {return false}
+    if lhs._storage !== rhs._storage {
+      let storagesAreEqual: Bool = withExtendedLifetime((lhs._storage, rhs._storage)) { (_args: (_StorageClass, _StorageClass)) in
+        let _storage = _args.0
+        let rhs_storage = _args.1
+        if _storage._imageData != rhs_storage._imageData {return false}
+        if _storage._format != rhs_storage._format {return false}
+        if _storage._width != rhs_storage._width {return false}
+        if _storage._height != rhs_storage._height {return false}
+        if _storage._window != rhs_storage._window {return false}
+        if _storage._ocrResult != rhs_storage._ocrResult {return false}
+        if _storage._windowFrame != rhs_storage._windowFrame {return false}
+        if _storage._region != rhs_storage._region {return false}
+        if _storage._scale != rhs_storage._scale {return false}
+        if _storage._shadowIncluded != rhs_storage._shadowIncluded {return false}
+        if _storage._clipped != rhs_storage._clipped {return false}
+        return true
+      }
+      if !storagesAreEqual {return false}
+    }
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -6193,54 +7212,181 @@ nonisolated extension Macosusesdk_V1_CaptureElementScreenshotRequest: SwiftProto
 
 nonisolated extension Macosusesdk_V1_CaptureElementScreenshotResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CaptureElementScreenshotResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}image_data\0\u{1}format\0\u{1}width\0\u{1}height\0\u{3}element_id\0\u{3}ocr_text\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}image_data\0\u{1}format\0\u{1}width\0\u{1}height\0\u{3}element_id\0\u{3}ocr_text\0\u{3}ocr_error\0\u{1}parent\0\u{3}element_frame\0\u{1}display\0\u{1}region\0\u{1}scale\0\u{1}padding\0\u{1}clipped\0")
+
+  fileprivate class _StorageClass {
+    var _imageData: Data = Data()
+    var _format: Macosusesdk_V1_ImageFormat = .unspecified
+    var _width: Int32 = 0
+    var _height: Int32 = 0
+    var _elementID: String = String()
+    var _ocrResult: Macosusesdk_V1_CaptureElementScreenshotResponse.OneOf_OcrResult?
+    var _parent: String = String()
+    var _elementFrame: Macosusesdk_Type_Region? = nil
+    var _display: String = String()
+    var _region: Macosusesdk_Type_Region? = nil
+    var _scale: Double = 0
+    var _padding: Int32 = 0
+    var _clipped: Bool = false
+
+      // This property is used as the initial default value for new instances of the type.
+      // The type itself is protecting the reference to its storage via CoW semantics.
+      // This will force a copy to be made of this reference when the first mutation occurs;
+      // hence, it is safe to mark this as `nonisolated(unsafe)`.
+      static nonisolated(unsafe) let defaultInstance = _StorageClass()
+
+    private init() {}
+
+    init(copying source: _StorageClass) {
+      _imageData = source._imageData
+      _format = source._format
+      _width = source._width
+      _height = source._height
+      _elementID = source._elementID
+      _ocrResult = source._ocrResult
+      _parent = source._parent
+      _elementFrame = source._elementFrame
+      _display = source._display
+      _region = source._region
+      _scale = source._scale
+      _padding = source._padding
+      _clipped = source._clipped
+    }
+  }
+
+  fileprivate mutating func _uniqueStorage() -> _StorageClass {
+    if !isKnownUniquelyReferenced(&_storage) {
+      _storage = _StorageClass(copying: _storage)
+    }
+    return _storage
+  }
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularBytesField(value: &self.imageData) }()
-      case 2: try { try decoder.decodeSingularEnumField(value: &self.format) }()
-      case 3: try { try decoder.decodeSingularInt32Field(value: &self.width) }()
-      case 4: try { try decoder.decodeSingularInt32Field(value: &self.height) }()
-      case 5: try { try decoder.decodeSingularStringField(value: &self.elementID) }()
-      case 6: try { try decoder.decodeSingularStringField(value: &self.ocrText) }()
-      default: break
+    _ = _uniqueStorage()
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      while let fieldNumber = try decoder.nextFieldNumber() {
+        // The use of inline closures is to circumvent an issue where the compiler
+        // allocates stack space for every case branch when no optimizations are
+        // enabled. https://github.com/apple/swift-protobuf/issues/1034
+        switch fieldNumber {
+        case 1: try { try decoder.decodeSingularBytesField(value: &_storage._imageData) }()
+        case 2: try { try decoder.decodeSingularEnumField(value: &_storage._format) }()
+        case 3: try { try decoder.decodeSingularInt32Field(value: &_storage._width) }()
+        case 4: try { try decoder.decodeSingularInt32Field(value: &_storage._height) }()
+        case 5: try { try decoder.decodeSingularStringField(value: &_storage._elementID) }()
+        case 6: try {
+          var v: String?
+          try decoder.decodeSingularStringField(value: &v)
+          if let v = v {
+            if _storage._ocrResult != nil {try decoder.handleConflictingOneOf()}
+            _storage._ocrResult = .ocrText(v)
+          }
+        }()
+        case 7: try {
+          var v: Google_Rpc_Status?
+          var hadOneofValue = false
+          if let current = _storage._ocrResult {
+            hadOneofValue = true
+            if case .ocrError(let m) = current {v = m}
+          }
+          try decoder.decodeSingularMessageField(value: &v)
+          if let v = v {
+            if hadOneofValue {try decoder.handleConflictingOneOf()}
+            _storage._ocrResult = .ocrError(v)
+          }
+        }()
+        case 8: try { try decoder.decodeSingularStringField(value: &_storage._parent) }()
+        case 9: try { try decoder.decodeSingularMessageField(value: &_storage._elementFrame) }()
+        case 10: try { try decoder.decodeSingularStringField(value: &_storage._display) }()
+        case 11: try { try decoder.decodeSingularMessageField(value: &_storage._region) }()
+        case 12: try { try decoder.decodeSingularDoubleField(value: &_storage._scale) }()
+        case 13: try { try decoder.decodeSingularInt32Field(value: &_storage._padding) }()
+        case 14: try { try decoder.decodeSingularBoolField(value: &_storage._clipped) }()
+        default: break
+        }
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.imageData.isEmpty {
-      try visitor.visitSingularBytesField(value: self.imageData, fieldNumber: 1)
-    }
-    if self.format != .unspecified {
-      try visitor.visitSingularEnumField(value: self.format, fieldNumber: 2)
-    }
-    if self.width != 0 {
-      try visitor.visitSingularInt32Field(value: self.width, fieldNumber: 3)
-    }
-    if self.height != 0 {
-      try visitor.visitSingularInt32Field(value: self.height, fieldNumber: 4)
-    }
-    if !self.elementID.isEmpty {
-      try visitor.visitSingularStringField(value: self.elementID, fieldNumber: 5)
-    }
-    if !self.ocrText.isEmpty {
-      try visitor.visitSingularStringField(value: self.ocrText, fieldNumber: 6)
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every if/case branch local when no optimizations
+      // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+      // https://github.com/apple/swift-protobuf/issues/1182
+      if !_storage._imageData.isEmpty {
+        try visitor.visitSingularBytesField(value: _storage._imageData, fieldNumber: 1)
+      }
+      if _storage._format != .unspecified {
+        try visitor.visitSingularEnumField(value: _storage._format, fieldNumber: 2)
+      }
+      if _storage._width != 0 {
+        try visitor.visitSingularInt32Field(value: _storage._width, fieldNumber: 3)
+      }
+      if _storage._height != 0 {
+        try visitor.visitSingularInt32Field(value: _storage._height, fieldNumber: 4)
+      }
+      if !_storage._elementID.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._elementID, fieldNumber: 5)
+      }
+      switch _storage._ocrResult {
+      case .ocrText?: try {
+        guard case .ocrText(let v)? = _storage._ocrResult else { preconditionFailure() }
+        try visitor.visitSingularStringField(value: v, fieldNumber: 6)
+      }()
+      case .ocrError?: try {
+        guard case .ocrError(let v)? = _storage._ocrResult else { preconditionFailure() }
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
+      }()
+      case nil: break
+      }
+      if !_storage._parent.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._parent, fieldNumber: 8)
+      }
+      try { if let v = _storage._elementFrame {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 9)
+      } }()
+      if !_storage._display.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._display, fieldNumber: 10)
+      }
+      try { if let v = _storage._region {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 11)
+      } }()
+      if _storage._scale.bitPattern != 0 {
+        try visitor.visitSingularDoubleField(value: _storage._scale, fieldNumber: 12)
+      }
+      if _storage._padding != 0 {
+        try visitor.visitSingularInt32Field(value: _storage._padding, fieldNumber: 13)
+      }
+      if _storage._clipped != false {
+        try visitor.visitSingularBoolField(value: _storage._clipped, fieldNumber: 14)
+      }
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_CaptureElementScreenshotResponse, rhs: Macosusesdk_V1_CaptureElementScreenshotResponse) -> Bool {
-    if lhs.imageData != rhs.imageData {return false}
-    if lhs.format != rhs.format {return false}
-    if lhs.width != rhs.width {return false}
-    if lhs.height != rhs.height {return false}
-    if lhs.elementID != rhs.elementID {return false}
-    if lhs.ocrText != rhs.ocrText {return false}
+    if lhs._storage !== rhs._storage {
+      let storagesAreEqual: Bool = withExtendedLifetime((lhs._storage, rhs._storage)) { (_args: (_StorageClass, _StorageClass)) in
+        let _storage = _args.0
+        let rhs_storage = _args.1
+        if _storage._imageData != rhs_storage._imageData {return false}
+        if _storage._format != rhs_storage._format {return false}
+        if _storage._width != rhs_storage._width {return false}
+        if _storage._height != rhs_storage._height {return false}
+        if _storage._elementID != rhs_storage._elementID {return false}
+        if _storage._ocrResult != rhs_storage._ocrResult {return false}
+        if _storage._parent != rhs_storage._parent {return false}
+        if _storage._elementFrame != rhs_storage._elementFrame {return false}
+        if _storage._display != rhs_storage._display {return false}
+        if _storage._region != rhs_storage._region {return false}
+        if _storage._scale != rhs_storage._scale {return false}
+        if _storage._padding != rhs_storage._padding {return false}
+        if _storage._clipped != rhs_storage._clipped {return false}
+        return true
+      }
+      if !storagesAreEqual {return false}
+    }
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -6248,7 +7394,7 @@ nonisolated extension Macosusesdk_V1_CaptureElementScreenshotResponse: SwiftProt
 
 nonisolated extension Macosusesdk_V1_CaptureRegionScreenshotRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CaptureRegionScreenshotRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}region\0\u{1}format\0\u{1}quality\0\u{1}display\0\u{3}include_ocr_text\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}region\0\u{1}format\0\u{1}quality\0\u{4}\u{2}include_ocr_text\0\u{1}display\0\u{c}\u{4}\u{1}")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -6259,8 +7405,8 @@ nonisolated extension Macosusesdk_V1_CaptureRegionScreenshotRequest: SwiftProtob
       case 1: try { try decoder.decodeSingularMessageField(value: &self._region) }()
       case 2: try { try decoder.decodeSingularEnumField(value: &self.format) }()
       case 3: try { try decoder.decodeSingularInt32Field(value: &self.quality) }()
-      case 4: try { try decoder.decodeSingularInt32Field(value: &self.display) }()
       case 5: try { try decoder.decodeSingularBoolField(value: &self.includeOcrText) }()
+      case 6: try { try decoder.decodeSingularStringField(value: &self.display) }()
       default: break
       }
     }
@@ -6280,11 +7426,11 @@ nonisolated extension Macosusesdk_V1_CaptureRegionScreenshotRequest: SwiftProtob
     if self.quality != 0 {
       try visitor.visitSingularInt32Field(value: self.quality, fieldNumber: 3)
     }
-    if self.display != 0 {
-      try visitor.visitSingularInt32Field(value: self.display, fieldNumber: 4)
-    }
     if self.includeOcrText != false {
       try visitor.visitSingularBoolField(value: self.includeOcrText, fieldNumber: 5)
+    }
+    if !self.display.isEmpty {
+      try visitor.visitSingularStringField(value: self.display, fieldNumber: 6)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -6293,8 +7439,8 @@ nonisolated extension Macosusesdk_V1_CaptureRegionScreenshotRequest: SwiftProtob
     if lhs._region != rhs._region {return false}
     if lhs.format != rhs.format {return false}
     if lhs.quality != rhs.quality {return false}
-    if lhs.display != rhs.display {return false}
     if lhs.includeOcrText != rhs.includeOcrText {return false}
+    if lhs.display != rhs.display {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -6302,7 +7448,7 @@ nonisolated extension Macosusesdk_V1_CaptureRegionScreenshotRequest: SwiftProtob
 
 nonisolated extension Macosusesdk_V1_CaptureRegionScreenshotResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".CaptureRegionScreenshotResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}image_data\0\u{1}format\0\u{1}width\0\u{1}height\0\u{1}region\0\u{3}ocr_text\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}image_data\0\u{1}format\0\u{1}width\0\u{1}height\0\u{1}region\0\u{3}ocr_text\0\u{1}display\0\u{1}scale\0\u{3}ocr_error\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -6315,7 +7461,29 @@ nonisolated extension Macosusesdk_V1_CaptureRegionScreenshotResponse: SwiftProto
       case 3: try { try decoder.decodeSingularInt32Field(value: &self.width) }()
       case 4: try { try decoder.decodeSingularInt32Field(value: &self.height) }()
       case 5: try { try decoder.decodeSingularMessageField(value: &self._region) }()
-      case 6: try { try decoder.decodeSingularStringField(value: &self.ocrText) }()
+      case 6: try {
+        var v: String?
+        try decoder.decodeSingularStringField(value: &v)
+        if let v = v {
+          if self.ocrResult != nil {try decoder.handleConflictingOneOf()}
+          self.ocrResult = .ocrText(v)
+        }
+      }()
+      case 7: try { try decoder.decodeSingularStringField(value: &self.display) }()
+      case 8: try { try decoder.decodeSingularDoubleField(value: &self.scale) }()
+      case 9: try {
+        var v: Google_Rpc_Status?
+        var hadOneofValue = false
+        if let current = self.ocrResult {
+          hadOneofValue = true
+          if case .ocrError(let m) = current {v = m}
+        }
+        try decoder.decodeSingularMessageField(value: &v)
+        if let v = v {
+          if hadOneofValue {try decoder.handleConflictingOneOf()}
+          self.ocrResult = .ocrError(v)
+        }
+      }()
       default: break
       }
     }
@@ -6341,9 +7509,18 @@ nonisolated extension Macosusesdk_V1_CaptureRegionScreenshotResponse: SwiftProto
     try { if let v = self._region {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
     } }()
-    if !self.ocrText.isEmpty {
-      try visitor.visitSingularStringField(value: self.ocrText, fieldNumber: 6)
+    try { if case .ocrText(let v)? = self.ocrResult {
+      try visitor.visitSingularStringField(value: v, fieldNumber: 6)
+    } }()
+    if !self.display.isEmpty {
+      try visitor.visitSingularStringField(value: self.display, fieldNumber: 7)
     }
+    if self.scale.bitPattern != 0 {
+      try visitor.visitSingularDoubleField(value: self.scale, fieldNumber: 8)
+    }
+    try { if case .ocrError(let v)? = self.ocrResult {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 9)
+    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -6353,7 +7530,9 @@ nonisolated extension Macosusesdk_V1_CaptureRegionScreenshotResponse: SwiftProto
     if lhs.width != rhs.width {return false}
     if lhs.height != rhs.height {return false}
     if lhs._region != rhs._region {return false}
-    if lhs.ocrText != rhs.ocrText {return false}
+    if lhs.ocrResult != rhs.ocrResult {return false}
+    if lhs.display != rhs.display {return false}
+    if lhs.scale != rhs.scale {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -6391,7 +7570,7 @@ nonisolated extension Macosusesdk_V1_GetClipboardRequest: SwiftProtobuf.Message,
 
 nonisolated extension Macosusesdk_V1_WriteClipboardRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".WriteClipboardRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}content\0\u{3}clear_existing\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}content\0\u{b}clear_existing\0\u{c}\u{2}\u{1}")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -6400,7 +7579,6 @@ nonisolated extension Macosusesdk_V1_WriteClipboardRequest: SwiftProtobuf.Messag
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularMessageField(value: &self._content) }()
-      case 2: try { try decoder.decodeSingularBoolField(value: &self.clearExisting_p) }()
       default: break
       }
     }
@@ -6414,15 +7592,11 @@ nonisolated extension Macosusesdk_V1_WriteClipboardRequest: SwiftProtobuf.Messag
     try { if let v = self._content {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
     } }()
-    if self.clearExisting_p != false {
-      try visitor.visitSingularBoolField(value: self.clearExisting_p, fieldNumber: 2)
-    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_WriteClipboardRequest, rhs: Macosusesdk_V1_WriteClipboardRequest) -> Bool {
     if lhs._content != rhs._content {return false}
-    if lhs.clearExisting_p != rhs.clearExisting_p {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -6430,7 +7604,7 @@ nonisolated extension Macosusesdk_V1_WriteClipboardRequest: SwiftProtobuf.Messag
 
 nonisolated extension Macosusesdk_V1_WriteClipboardResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".WriteClipboardResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}type\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}clipboard\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -6438,26 +7612,25 @@ nonisolated extension Macosusesdk_V1_WriteClipboardResponse: SwiftProtobuf.Messa
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
-      case 2: try { try decoder.decodeSingularEnumField(value: &self.type) }()
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._clipboard) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.success != false {
-      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
-    }
-    if self.type != .unspecified {
-      try visitor.visitSingularEnumField(value: self.type, fieldNumber: 2)
-    }
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._clipboard {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_WriteClipboardResponse, rhs: Macosusesdk_V1_WriteClipboardResponse) -> Bool {
-    if lhs.success != rhs.success {return false}
-    if lhs.type != rhs.type {return false}
+    if lhs._clipboard != rhs._clipboard {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -6484,7 +7657,7 @@ nonisolated extension Macosusesdk_V1_ClearClipboardRequest: SwiftProtobuf.Messag
 
 nonisolated extension Macosusesdk_V1_ClearClipboardResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ClearClipboardResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}clipboard\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -6492,21 +7665,25 @@ nonisolated extension Macosusesdk_V1_ClearClipboardResponse: SwiftProtobuf.Messa
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._clipboard) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.success != false {
-      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
-    }
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._clipboard {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_ClearClipboardResponse, rhs: Macosusesdk_V1_ClearClipboardResponse) -> Bool {
-    if lhs.success != rhs.success {return false}
+    if lhs._clipboard != rhs._clipboard {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -6726,256 +7903,6 @@ nonisolated extension Macosusesdk_V1_AutomateSaveFileDialogResponse: SwiftProtob
   public static func ==(lhs: Macosusesdk_V1_AutomateSaveFileDialogResponse, rhs: Macosusesdk_V1_AutomateSaveFileDialogResponse) -> Bool {
     if lhs.success != rhs.success {return false}
     if lhs.savedPath != rhs.savedPath {return false}
-    if lhs.error != rhs.error {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
-}
-
-nonisolated extension Macosusesdk_V1_SelectFileRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".SelectFileRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0\u{3}file_path\0\u{3}reveal_finder\0")
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.application) }()
-      case 2: try { try decoder.decodeSingularStringField(value: &self.filePath) }()
-      case 3: try { try decoder.decodeSingularBoolField(value: &self.revealFinder) }()
-      default: break
-      }
-    }
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.application.isEmpty {
-      try visitor.visitSingularStringField(value: self.application, fieldNumber: 1)
-    }
-    if !self.filePath.isEmpty {
-      try visitor.visitSingularStringField(value: self.filePath, fieldNumber: 2)
-    }
-    if self.revealFinder != false {
-      try visitor.visitSingularBoolField(value: self.revealFinder, fieldNumber: 3)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Macosusesdk_V1_SelectFileRequest, rhs: Macosusesdk_V1_SelectFileRequest) -> Bool {
-    if lhs.application != rhs.application {return false}
-    if lhs.filePath != rhs.filePath {return false}
-    if lhs.revealFinder != rhs.revealFinder {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
-}
-
-nonisolated extension Macosusesdk_V1_SelectFileResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".SelectFileResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{3}selected_path\0\u{1}error\0")
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
-      case 2: try { try decoder.decodeSingularStringField(value: &self.selectedPath) }()
-      case 3: try { try decoder.decodeSingularStringField(value: &self.error) }()
-      default: break
-      }
-    }
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.success != false {
-      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
-    }
-    if !self.selectedPath.isEmpty {
-      try visitor.visitSingularStringField(value: self.selectedPath, fieldNumber: 2)
-    }
-    if !self.error.isEmpty {
-      try visitor.visitSingularStringField(value: self.error, fieldNumber: 3)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Macosusesdk_V1_SelectFileResponse, rhs: Macosusesdk_V1_SelectFileResponse) -> Bool {
-    if lhs.success != rhs.success {return false}
-    if lhs.selectedPath != rhs.selectedPath {return false}
-    if lhs.error != rhs.error {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
-}
-
-nonisolated extension Macosusesdk_V1_SelectDirectoryRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".SelectDirectoryRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0\u{3}directory_path\0\u{3}create_missing\0")
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.application) }()
-      case 2: try { try decoder.decodeSingularStringField(value: &self.directoryPath) }()
-      case 3: try { try decoder.decodeSingularBoolField(value: &self.createMissing) }()
-      default: break
-      }
-    }
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.application.isEmpty {
-      try visitor.visitSingularStringField(value: self.application, fieldNumber: 1)
-    }
-    if !self.directoryPath.isEmpty {
-      try visitor.visitSingularStringField(value: self.directoryPath, fieldNumber: 2)
-    }
-    if self.createMissing != false {
-      try visitor.visitSingularBoolField(value: self.createMissing, fieldNumber: 3)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Macosusesdk_V1_SelectDirectoryRequest, rhs: Macosusesdk_V1_SelectDirectoryRequest) -> Bool {
-    if lhs.application != rhs.application {return false}
-    if lhs.directoryPath != rhs.directoryPath {return false}
-    if lhs.createMissing != rhs.createMissing {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
-}
-
-nonisolated extension Macosusesdk_V1_SelectDirectoryResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".SelectDirectoryResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{3}selected_path\0\u{1}created\0\u{1}error\0")
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
-      case 2: try { try decoder.decodeSingularStringField(value: &self.selectedPath) }()
-      case 3: try { try decoder.decodeSingularBoolField(value: &self.created) }()
-      case 4: try { try decoder.decodeSingularStringField(value: &self.error) }()
-      default: break
-      }
-    }
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.success != false {
-      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
-    }
-    if !self.selectedPath.isEmpty {
-      try visitor.visitSingularStringField(value: self.selectedPath, fieldNumber: 2)
-    }
-    if self.created != false {
-      try visitor.visitSingularBoolField(value: self.created, fieldNumber: 3)
-    }
-    if !self.error.isEmpty {
-      try visitor.visitSingularStringField(value: self.error, fieldNumber: 4)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Macosusesdk_V1_SelectDirectoryResponse, rhs: Macosusesdk_V1_SelectDirectoryResponse) -> Bool {
-    if lhs.success != rhs.success {return false}
-    if lhs.selectedPath != rhs.selectedPath {return false}
-    if lhs.created != rhs.created {return false}
-    if lhs.error != rhs.error {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
-}
-
-nonisolated extension Macosusesdk_V1_DragFilesRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".DragFilesRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0\u{3}file_paths\0\u{3}target_element_id\0\u{1}duration\0")
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.application) }()
-      case 2: try { try decoder.decodeRepeatedStringField(value: &self.filePaths) }()
-      case 3: try { try decoder.decodeSingularStringField(value: &self.targetElementID) }()
-      case 4: try { try decoder.decodeSingularDoubleField(value: &self.duration) }()
-      default: break
-      }
-    }
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.application.isEmpty {
-      try visitor.visitSingularStringField(value: self.application, fieldNumber: 1)
-    }
-    if !self.filePaths.isEmpty {
-      try visitor.visitRepeatedStringField(value: self.filePaths, fieldNumber: 2)
-    }
-    if !self.targetElementID.isEmpty {
-      try visitor.visitSingularStringField(value: self.targetElementID, fieldNumber: 3)
-    }
-    if self.duration.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.duration, fieldNumber: 4)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Macosusesdk_V1_DragFilesRequest, rhs: Macosusesdk_V1_DragFilesRequest) -> Bool {
-    if lhs.application != rhs.application {return false}
-    if lhs.filePaths != rhs.filePaths {return false}
-    if lhs.targetElementID != rhs.targetElementID {return false}
-    if lhs.duration != rhs.duration {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
-}
-
-nonisolated extension Macosusesdk_V1_DragFilesResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".DragFilesResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{3}files_dropped\0\u{1}error\0")
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
-      case 2: try { try decoder.decodeSingularInt32Field(value: &self.filesDropped) }()
-      case 3: try { try decoder.decodeSingularStringField(value: &self.error) }()
-      default: break
-      }
-    }
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.success != false {
-      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
-    }
-    if self.filesDropped != 0 {
-      try visitor.visitSingularInt32Field(value: self.filesDropped, fieldNumber: 2)
-    }
-    if !self.error.isEmpty {
-      try visitor.visitSingularStringField(value: self.error, fieldNumber: 3)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Macosusesdk_V1_DragFilesResponse, rhs: Macosusesdk_V1_DragFilesResponse) -> Bool {
-    if lhs.success != rhs.success {return false}
-    if lhs.filesDropped != rhs.filesDropped {return false}
     if lhs.error != rhs.error {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true

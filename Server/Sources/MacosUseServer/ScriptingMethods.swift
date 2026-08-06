@@ -8,9 +8,58 @@ import MacosUseSDK
 import OSLog
 import SwiftProtobuf
 
+private func parseExecutionTimeout(
+    _ duration: SwiftProtobuf.Google_Protobuf_Duration,
+    isPresent: Bool,
+) throws -> TimeInterval {
+    guard isPresent else {
+        return 30
+    }
+    return try RequestNumericValidation.positiveProtobufTimeoutSeconds(duration)
+}
+
+private func executeWithRequestCancellation<Result: Sendable>(
+    context: ServerContext,
+    operation: @Sendable @escaping () async throws -> Result,
+) async throws -> Result {
+    let execution = Task {
+        try await operation()
+    }
+    let cancellation = Task {
+        do {
+            try await context.cancellation.cancelled
+            execution.cancel()
+        } catch {
+            // The operation completed and cancelled this watcher, or the
+            // request cancellation source itself terminated.
+        }
+    }
+
+    do {
+        let result = try await withTaskCancellationHandler {
+            try await execution.value
+        } onCancel: {
+            cancellation.cancel()
+            execution.cancel()
+        }
+        cancellation.cancel()
+        await cancellation.value
+        return result
+    } catch is CancellationError {
+        cancellation.cancel()
+        execution.cancel()
+        await cancellation.value
+        throw RPCError(code: .cancelled, message: "Script execution was cancelled")
+    } catch {
+        cancellation.cancel()
+        await cancellation.value
+        throw error
+    }
+}
+
 extension MacosUseService {
     func executeAppleScript(
-        request: ServerRequest<Macosusesdk_V1_ExecuteAppleScriptRequest>, context _: ServerContext,
+        request: ServerRequest<Macosusesdk_V1_ExecuteAppleScriptRequest>, context: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_ExecuteAppleScriptResponse> {
         Self.logger.info("executeAppleScript called")
         let req = request.message
@@ -24,20 +73,17 @@ extension MacosUseService {
             )
         }
 
-        // Parse timeout from Duration
-        let timeout: TimeInterval = if req.hasTimeout {
-            Double(req.timeout.seconds) + (Double(req.timeout.nanos) / 1_000_000_000)
-        } else {
-            30.0 // Default 30 seconds
-        }
+        let timeout = try parseExecutionTimeout(req.timeout, isPresent: req.hasTimeout)
 
         do {
             // Execute AppleScript using ScriptExecutor
-            let result = try await ScriptExecutor.shared.executeAppleScript(
-                req.script,
-                timeout: timeout,
-                compileOnly: req.compileOnly,
-            )
+            let result = try await executeWithRequestCancellation(context: context) {
+                try await self.scriptExecutor.executeAppleScript(
+                    req.script,
+                    timeout: timeout,
+                    compileOnly: req.compileOnly,
+                )
+            }
 
             let response = Macosusesdk_V1_ExecuteAppleScriptResponse.with {
                 $0.success = result.success
@@ -51,6 +97,8 @@ extension MacosUseService {
                 }
             }
             return ServerResponse(message: response)
+        } catch let error as RPCError {
+            throw error
         } catch let error as ScriptExecutionError {
             let response = Macosusesdk_V1_ExecuteAppleScriptResponse.with {
                 $0.success = false
@@ -72,7 +120,7 @@ extension MacosUseService {
 
     func executeJavaScript(
         request: ServerRequest<Macosusesdk_V1_ExecuteJavaScriptRequest>,
-        context _: ServerContext,
+        context: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_ExecuteJavaScriptResponse> {
         Self.logger.info("executeJavaScript called")
         let req = request.message
@@ -86,20 +134,17 @@ extension MacosUseService {
             )
         }
 
-        // Parse timeout from Duration
-        let timeout: TimeInterval = if req.hasTimeout {
-            Double(req.timeout.seconds) + (Double(req.timeout.nanos) / 1_000_000_000)
-        } else {
-            30.0 // Default 30 seconds
-        }
+        let timeout = try parseExecutionTimeout(req.timeout, isPresent: req.hasTimeout)
 
         do {
             // Execute JavaScript using ScriptExecutor
-            let result = try await ScriptExecutor.shared.executeJavaScript(
-                req.script,
-                timeout: timeout,
-                compileOnly: req.compileOnly,
-            )
+            let result = try await executeWithRequestCancellation(context: context) {
+                try await self.scriptExecutor.executeJavaScript(
+                    req.script,
+                    timeout: timeout,
+                    compileOnly: req.compileOnly,
+                )
+            }
 
             let response = Macosusesdk_V1_ExecuteJavaScriptResponse.with {
                 $0.success = result.success
@@ -113,6 +158,8 @@ extension MacosUseService {
                 }
             }
             return ServerResponse(message: response)
+        } catch let error as RPCError {
+            throw error
         } catch let error as ScriptExecutionError {
             let response = Macosusesdk_V1_ExecuteJavaScriptResponse.with {
                 $0.success = false
@@ -133,7 +180,7 @@ extension MacosUseService {
     }
 
     func executeShellCommand(
-        request: ServerRequest<Macosusesdk_V1_ExecuteShellCommandRequest>, context _: ServerContext,
+        request: ServerRequest<Macosusesdk_V1_ExecuteShellCommandRequest>, context: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_ExecuteShellCommandResponse> {
         Self.logger.info("executeShellCommand called")
         let req = request.message
@@ -147,12 +194,7 @@ extension MacosUseService {
             )
         }
 
-        // Parse timeout from Duration
-        let timeout: TimeInterval = if req.hasTimeout {
-            Double(req.timeout.seconds) + (Double(req.timeout.nanos) / 1_000_000_000)
-        } else {
-            30.0 // Default 30 seconds
-        }
+        let timeout = try parseExecutionTimeout(req.timeout, isPresent: req.hasTimeout)
 
         // Extract shell (default to /bin/bash)
         let shell = req.shell.isEmpty ? "/bin/bash" : req.shell
@@ -170,15 +212,17 @@ extension MacosUseService {
 
         do {
             // Execute shell command using ScriptExecutor
-            let result = try await ScriptExecutor.shared.executeShellCommand(
-                req.command,
-                args: Array(req.args),
-                workingDirectory: workingDir,
-                environment: environment,
-                timeout: timeout,
-                stdin: stdin,
-                shell: shell,
-            )
+            let result = try await executeWithRequestCancellation(context: context) {
+                try await self.scriptExecutor.executeShellCommand(
+                    req.command,
+                    args: Array(req.args),
+                    workingDirectory: workingDir,
+                    environment: environment,
+                    timeout: timeout,
+                    stdin: stdin,
+                    shell: shell,
+                )
+            }
 
             let response = Macosusesdk_V1_ExecuteShellCommandResponse.with {
                 $0.success = result.success
@@ -194,6 +238,8 @@ extension MacosUseService {
                 }
             }
             return ServerResponse(message: response)
+        } catch let error as RPCError {
+            throw error
         } catch let error as ScriptExecutionError {
             let response = Macosusesdk_V1_ExecuteShellCommandResponse.with {
                 $0.success = false
@@ -218,7 +264,7 @@ extension MacosUseService {
     }
 
     func validateScript(
-        request: ServerRequest<Macosusesdk_V1_ValidateScriptRequest>, context _: ServerContext,
+        request: ServerRequest<Macosusesdk_V1_ValidateScriptRequest>, context: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_ValidateScriptResponse> {
         Self.logger.info("validateScript called")
         let req = request.message
@@ -246,8 +292,10 @@ extension MacosUseService {
         }
 
         do {
-            // Validate script using ScriptExecutor
-            let result = try await ScriptExecutor.shared.validateScript(req.script, type: scriptType)
+            // Validate script using the composition-owned executor.
+            let result = try await executeWithRequestCancellation(context: context) {
+                try await self.scriptExecutor.validateScript(req.script, type: scriptType)
+            }
 
             let response = Macosusesdk_V1_ValidateScriptResponse.with {
                 $0.valid = result.valid
@@ -255,6 +303,8 @@ extension MacosUseService {
                 $0.warnings = result.warnings
             }
             return ServerResponse(message: response)
+        } catch let error as RPCError {
+            throw error
         } catch let error as ScriptExecutionError {
             let response = Macosusesdk_V1_ValidateScriptResponse.with {
                 $0.valid = false

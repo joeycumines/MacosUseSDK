@@ -136,89 +136,24 @@ final class ActionTypesTests: XCTestCase {
         }
     }
 
-    // MARK: - Mouse Down/Up Actions
+    // MARK: - Atomic Pointer Actions
 
-    func testInputAction_mouseDownDefaultButton() {
+    func testInputAction_clickSequencePreservesCompleteIntent() {
         let point = CGPoint(x: 100, y: 50)
-        let action = InputAction.mouseDown(point: point)
+        let action = InputAction.clickSequence(
+            point: point,
+            button: .center,
+            clickCount: 3,
+            modifiers: .maskShift,
+        )
 
-        if case let .mouseDown(p, button, modifiers) = action {
-            XCTAssertEqual(p.x, 100)
-            XCTAssertEqual(p.y, 50)
-            XCTAssertEqual(button, .left)
-            XCTAssertTrue(modifiers.isEmpty)
-        } else {
-            XCTFail("Expected .mouseDown case")
-        }
-    }
-
-    func testInputAction_mouseDownRightButton() {
-        let point = CGPoint(x: 100, y: 50)
-        let action = InputAction.mouseDown(point: point, button: .right, modifiers: [.maskShift])
-
-        if case let .mouseDown(p, button, modifiers) = action {
-            XCTAssertEqual(button, .right)
+        if case let .clickSequence(actualPoint, button, clickCount, modifiers) = action {
+            XCTAssertEqual(actualPoint, point)
+            XCTAssertEqual(button, .center)
+            XCTAssertEqual(clickCount, 3)
             XCTAssertTrue(modifiers.contains(.maskShift))
         } else {
-            XCTFail("Expected .mouseDown case")
-        }
-    }
-
-    func testInputAction_mouseUpCenterButton() {
-        let point = CGPoint(x: 100, y: 50)
-        let action = InputAction.mouseUp(point: point, button: .center)
-
-        if case let .mouseUp(_, button, _) = action {
-            XCTAssertEqual(button, .center)
-        } else {
-            XCTFail("Expected .mouseUp case")
-        }
-    }
-
-    // MARK: - PrimaryAction
-
-    func testPrimaryAction_openIdentifier() {
-        let action = PrimaryAction.open(identifier: "Calculator")
-
-        if case let .open(identifier) = action {
-            XCTAssertEqual(identifier, "Calculator")
-        } else {
-            XCTFail("Expected .open case")
-        }
-    }
-
-    func testPrimaryAction_openBundleId() {
-        let action = PrimaryAction.open(identifier: "com.apple.calculator")
-
-        if case let .open(identifier) = action {
-            XCTAssertEqual(identifier, "com.apple.calculator")
-        } else {
-            XCTFail("Expected .open case")
-        }
-    }
-
-    func testPrimaryAction_inputAction() {
-        let clickAction = InputAction.click(point: CGPoint(x: 100, y: 50))
-        let action = PrimaryAction.input(action: clickAction)
-
-        if case let .input(input) = action {
-            if case let .click(point) = input {
-                XCTAssertEqual(point.x, 100)
-            } else {
-                XCTFail("Expected nested .click")
-            }
-        } else {
-            XCTFail("Expected .input case")
-        }
-    }
-
-    func testPrimaryAction_traverseOnly() {
-        let action = PrimaryAction.traverseOnly
-
-        if case .traverseOnly = action {
-            // Expected
-        } else {
-            XCTFail("Expected .traverseOnly case")
+            XCTFail("Expected .clickSequence case")
         }
     }
 
@@ -236,16 +171,6 @@ final class ActionTypesTests: XCTestCase {
         XCTAssertEqual(actions.count, 5)
     }
 
-    func testPrimaryAction_sendable() {
-        let actions: [PrimaryAction] = [
-            .open(identifier: "test"),
-            .input(action: .click(point: .zero)),
-            .traverseOnly,
-        ]
-
-        XCTAssertEqual(actions.count, 3)
-    }
-
     // MARK: - Codable
 
     func testInputAction_notCodable() {
@@ -254,13 +179,6 @@ final class ActionTypesTests: XCTestCase {
         let action = InputAction.press(keyName: "return", flags: [.maskCommand])
 
         // If this compiles, InputAction is not Codable (which is expected)
-        XCTAssertNotNil(action)
-    }
-
-    func testPrimaryAction_notCodable() {
-        let action = PrimaryAction.open(identifier: "test")
-
-        // If this compiles, PrimaryAction is not Codable (which is expected)
         XCTAssertNotNil(action)
     }
 }

@@ -6,8 +6,6 @@ import (
 	"testing"
 	"time"
 
-	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
-	typepb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
 )
 
@@ -27,11 +25,9 @@ func TestElementActions_GetActionsForButton(t *testing.T) {
 	defer conn.Close()
 
 	client := pb.NewMacosUseClient(conn)
-	opsClient := longrunningpb.NewOperationsClient(conn)
-
 	// Open Calculator
 	t.Log("Opening Calculator...")
-	app := openCalculator(t, ctx, client, opsClient)
+	app := openCalculator(t, ctx, client)
 	defer cleanupApplication(t, ctx, client, app)
 
 	// Wait for Calculator to be ready
@@ -55,7 +51,7 @@ func TestElementActions_GetActionsForButton(t *testing.T) {
 
 	// Traverse to find a button element
 	t.Log("Traversing accessibility tree to find a button...")
-	var buttonElement *typepb.Element
+	var buttonElement *pb.Element
 	err = PollUntilContext(ctx, 200*time.Millisecond, func() (bool, error) {
 		resp, err := client.TraverseAccessibility(ctx, &pb.TraverseAccessibilityRequest{
 			Name: app.Name,
@@ -108,6 +104,46 @@ func TestElementActions_GetActionsForButton(t *testing.T) {
 
 // TestElementActions_PerformAXPress verifies PerformElementAction with AXPress changes display.
 // Presses a number button using selector and verifies the Calculator display updates.
+// resolveCalculatorButtonElementID finds the opaque element_id of a Calculator
+// button whose role contains "button" and whose trimmed text equals label. A
+// bare ElementSelector_Text{Text: label} matches multiple AX nodes in macOS
+// Calculator (the digit button plus an accessibility label/duplicate), so
+// selector-based PerformElementAction fails with "Selector matched multiple
+// elements". Resolving the button element_id first and targeting it directly is
+// deterministic and mode-independent.
+func resolveCalculatorButtonElementID(
+	t *testing.T,
+	ctx context.Context,
+	client pb.MacosUseClient,
+	app *pb.Application,
+	label string,
+) string {
+	t.Helper()
+	resolveCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	var elementID string
+	err := PollUntilContext(resolveCtx, 100*time.Millisecond, func() (bool, error) {
+		response, traverseErr := client.TraverseAccessibility(resolveCtx, &pb.TraverseAccessibilityRequest{Name: app.Name})
+		if traverseErr != nil {
+			return false, nil
+		}
+		for _, element := range response.GetElements() {
+			if element == nil || !strings.Contains(strings.ToLower(element.GetRole()), "button") {
+				continue
+			}
+			if strings.TrimSpace(element.GetText()) == label && element.GetElementId() != "" {
+				elementID = element.GetElementId()
+				return true, nil
+			}
+		}
+		return false, nil
+	})
+	if err != nil {
+		t.Fatalf("Calculator button %q element_id did not resolve: %v", label, err)
+	}
+	return elementID
+}
+
 func TestElementActions_PerformAXPress(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
@@ -121,11 +157,9 @@ func TestElementActions_PerformAXPress(t *testing.T) {
 	defer conn.Close()
 
 	client := pb.NewMacosUseClient(conn)
-	opsClient := longrunningpb.NewOperationsClient(conn)
-
 	// Open Calculator
 	t.Log("Opening Calculator...")
-	app := openCalculator(t, ctx, client, opsClient)
+	app := openCalculator(t, ctx, client)
 	defer cleanupApplication(t, ctx, client, app)
 
 	// Wait for Calculator to be ready
@@ -154,7 +188,7 @@ func TestElementActions_PerformAXPress(t *testing.T) {
 
 	// Verify button 5 exists and has AXPress in its actions (from traversal)
 	t.Log("Verifying button 5 exists with AXPress action...")
-	var button5 *typepb.Element
+	var button5 *pb.Element
 	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
 		resp, err := client.TraverseAccessibility(ctx, &pb.TraverseAccessibilityRequest{
 			Name: app.Name,
@@ -182,21 +216,22 @@ func TestElementActions_PerformAXPress(t *testing.T) {
 	}
 	t.Logf("Found button 5: role=%s, actions=%v", button5.Role, button5.Actions)
 
-	// Perform AXPress on button 5 using selector
-	t.Log("Performing AXPress on button 5 using selector...")
+	// Perform AXPress on button 5 using its exact element_id. A bare
+	// ElementSelector_Text{Text: "5"} matches multiple AX nodes in Calculator
+	// (the digit button plus an accessibility label), so selector targeting fails
+	// with "Selector matched multiple elements"; the resolved element_id is
+	// deterministic.
+	button5ID := resolveCalculatorButtonElementID(t, ctx, client, app, "5")
+	t.Log("Performing AXPress on button 5 via resolved element_id...")
 	_, err = client.PerformElementAction(ctx, &pb.PerformElementActionRequest{
 		Parent: app.Name,
-		Target: &pb.PerformElementActionRequest_Selector{
-			Selector: &typepb.ElementSelector{
-				Criteria: &typepb.ElementSelector_Text{Text: "5"},
-			},
-		},
+		Target: &pb.PerformElementActionRequest_ElementId{ElementId: button5ID},
 		Action: "AXPress",
 	})
 	if err != nil {
 		t.Fatalf("PerformElementAction (AXPress) failed: %v", err)
 	}
-	t.Log("✓ AXPress performed successfully via selector")
+	t.Log("✓ AXPress performed successfully via element_id")
 
 	// Verify Calculator display shows "5" (state-delta verification)
 	// Use direct traversal to avoid t.Fatalf in readCalculatorResult
@@ -250,11 +285,9 @@ func TestElementActions_FindAndPressButton(t *testing.T) {
 	defer conn.Close()
 
 	client := pb.NewMacosUseClient(conn)
-	opsClient := longrunningpb.NewOperationsClient(conn)
-
 	// Open Calculator
 	t.Log("Opening Calculator...")
-	app := openCalculator(t, ctx, client, opsClient)
+	app := openCalculator(t, ctx, client)
 	defer cleanupApplication(t, ctx, client, app)
 
 	// Wait for Calculator to be ready
@@ -282,20 +315,20 @@ func TestElementActions_FindAndPressButton(t *testing.T) {
 	performInput(t, ctx, client, app, "c")
 
 	// Use selector to perform action (find by text "7")
-	t.Log("Performing AXPress on button 7 using selector...")
+	// Perform AXPress on button 7 using its exact element_id. As in the AXPress
+	// test, a bare ElementSelector_Text{Text: "7"} matches multiple AX nodes, so
+	// resolve the button element_id deterministically first.
+	button7ID := resolveCalculatorButtonElementID(t, ctx, client, app, "7")
+	t.Log("Performing AXPress on button 7 via resolved element_id...")
 	_, err = client.PerformElementAction(ctx, &pb.PerformElementActionRequest{
 		Parent: app.Name,
-		Target: &pb.PerformElementActionRequest_Selector{
-			Selector: &typepb.ElementSelector{
-				Criteria: &typepb.ElementSelector_Text{Text: "7"},
-			},
-		},
+		Target: &pb.PerformElementActionRequest_ElementId{ElementId: button7ID},
 		Action: "AXPress",
 	})
 	if err != nil {
-		t.Fatalf("PerformElementAction (selector) failed: %v", err)
+		t.Fatalf("PerformElementAction (element_id) failed: %v", err)
 	}
-	t.Log("✓ AXPress performed via selector")
+	t.Log("✓ AXPress performed via element_id")
 
 	// Verify display changed to 7 using direct traversal (avoid readCalculatorResult which uses t.Fatalf)
 	t.Log("Verifying Calculator display...")

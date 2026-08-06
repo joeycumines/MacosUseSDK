@@ -16,8 +16,8 @@ import XCTest
 ///   focused app, so the target must be frontmost).
 /// - `.click`, `.doubleClick`, `.rightClick` → `true` (clicks on background
 ///   windows are silently consumed by the frontmost app).
-/// - `.move`, `.mouseDown`, `.mouseUp`, `.drag` → `false` (callers may need
-///   to compose these primitives with their own activation sequence).
+/// - `.move`, `.movePointer`, `.drag`, `.dragPath`, `.hover` → `false`.
+/// - `.scroll` → `true` when a target application is supplied.
 ///
 /// Exhaustiveness matters: a future `InputAction` case would force a
 /// compile error in the SDK's `requiresAppActivation` switch (which has
@@ -65,20 +65,26 @@ final class InputActionAppActivationTests: XCTestCase {
         )
     }
 
+    func testRequiresAppActivation_forAtomicClickAndScroll_returnsTrue() {
+        XCTAssertTrue(InputAction.clickSequence(
+            point: CGPoint(x: 100, y: 100),
+            button: .center,
+            clickCount: 3,
+            modifiers: .maskShift,
+        ).requiresAppActivation)
+        XCTAssertTrue(InputAction.scroll(
+            at: CGPoint(x: 100, y: 100),
+            horizontal: 0,
+            vertical: 10,
+            duration: 0,
+            modifiers: [],
+        ).requiresAppActivation)
+    }
+
     // MARK: - False Cases (caller-managed activation)
 
     func testRequiresAppActivation_forMove_returnsFalse() {
         let action = InputAction.move(to: CGPoint(x: 100, y: 100))
-        XCTAssertFalse(action.requiresAppActivation)
-    }
-
-    func testRequiresAppActivation_forMouseDown_returnsFalse() {
-        let action = InputAction.mouseDown(point: CGPoint(x: 100, y: 100), button: .left, modifiers: [])
-        XCTAssertFalse(action.requiresAppActivation)
-    }
-
-    func testRequiresAppActivation_forMouseUp_returnsFalse() {
-        let action = InputAction.mouseUp(point: CGPoint(x: 100, y: 100), button: .left, modifiers: [])
         XCTAssertFalse(action.requiresAppActivation)
     }
 
@@ -90,5 +96,23 @@ final class InputActionAppActivationTests: XCTestCase {
             duration: 0,
         )
         XCTAssertFalse(action.requiresAppActivation)
+    }
+
+    func testRequiresAppActivation_forMovePathAndHover_returnsFalse() {
+        XCTAssertFalse(InputAction.movePointer(
+            to: CGPoint(x: 100, y: 100),
+            duration: 1,
+            modifiers: .maskShift,
+        ).requiresAppActivation)
+        XCTAssertFalse(InputAction.dragPath(
+            points: [CGPoint(x: 0, y: 0), CGPoint(x: 10, y: 10)],
+            button: .left,
+            duration: 1,
+            modifiers: [],
+        ).requiresAppActivation)
+        XCTAssertFalse(InputAction.hover(
+            at: CGPoint(x: 100, y: 100),
+            duration: 1,
+        ).requiresAppActivation)
     }
 }

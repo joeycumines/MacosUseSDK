@@ -16,17 +16,20 @@ import (
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
 )
 
-// handleFindElements handles the find_elements tool — find UI elements by criteria.
-// Uses flat parameters (role, text, text_contains) instead of nested selector object.
+const typeElementDescription = "Set the value of an editable UI element (text field, text area, secure field). " +
+	"Auto-focuses the exact target element before writing, then verifies the value with an Accessibility readback. " +
+	"IMPORTANT: omit `text` to CLEAR the element value; an explicit empty string \"\" sets it to empty rather than clearing — so always supply `text` unless clearing is intended. " +
+	"Use a find_elements handle for the exact parent-bound AX identity, or a selector that must resolve to exactly one element. " +
+	"Defaults to direct AX value mutation (input_method 'ax'); use input_method 'keystrokes' for web/Electron apps that require real DOM keyboard events (it selects-all then types, replacing the current value)."
+
+// handleFindElements handles the find_elements tool using one explicit selector.
 func (s *MCPServer) cuaHandleFindElements(call *ToolCall) (*ToolResult, error) {
-	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(s.toolCallContext(call), time.Duration(s.cfg.RequestTimeout)*time.Second)
 	defer cancel()
 
 	var params struct {
 		Parent       string `json:"parent"`
-		Role         string `json:"role"`
-		Text         string `json:"text"`
-		TextContains string `json:"text_contains"`
+		Selector     string `json:"selector"`
 		ForceRefresh bool   `json:"force_refresh"`
 		PageSize     int32  `json:"page_size"`
 		PageToken    string `json:"page_token"`
@@ -39,45 +42,15 @@ func (s *MCPServer) cuaHandleFindElements(call *ToolCall) (*ToolResult, error) {
 	if params.Parent == "" {
 		return errorResult("parent parameter is required"), nil
 	}
+	if params.Selector == "" {
+		return errorResult("selector parameter is required"), nil
+	}
 	if params.PageSize < 0 {
 		return errorResult("page_size must be non-negative"), nil
 	}
-
-	// Build selector from flat params — selector uses oneof, so we set one criterion
-	var selector *typepb.ElementSelector
-	if params.Role != "" || params.Text != "" || params.TextContains != "" {
-		selector = &typepb.ElementSelector{}
-		switch {
-		case params.Role != "":
-			selector.Criteria = &typepb.ElementSelector_Role{Role: params.Role}
-		case params.Text != "":
-			selector.Criteria = &typepb.ElementSelector_Text{Text: params.Text}
-		case params.TextContains != "":
-			selector.Criteria = &typepb.ElementSelector_TextContains{TextContains: params.TextContains}
-		}
-	}
-
-	// Warn if multiple criteria were provided (only one is actually used due to oneof)
-	providedCriteria := 0
-	if params.Role != "" {
-		providedCriteria++
-	}
-	if params.Text != "" {
-		providedCriteria++
-	}
-	if params.TextContains != "" {
-		providedCriteria++
-	}
-	var criteriaWarning string
-	if providedCriteria > 1 {
-		// Match the selector priority: role > text > text_contains
-		criteriaName := "role"
-		if params.Role == "" && params.Text != "" {
-			criteriaName = "text"
-		} else if params.Role == "" && params.Text == "" && params.TextContains != "" {
-			criteriaName = "text_contains"
-		}
-		criteriaWarning = fmt.Sprintf("\n\nNote: Only one search criterion is supported at a time. Using %s. Other criteria were ignored.", criteriaName)
+	selector, err := parseElementSelector(params.Selector)
+	if err != nil {
+		return errorResultf("Invalid selector: %v", err), nil
 	}
 
 	resp, err := s.client.FindElements(ctx, &pb.FindElementsRequest{
@@ -109,9 +82,6 @@ func (s *MCPServer) cuaHandleFindElements(call *ToolCall) (*ToolResult, error) {
 	}
 
 	result := fmt.Sprintf("Found %d elements:\n%s", len(resp.Elements), strings.Join(lines, "\n"))
-	if criteriaWarning != "" {
-		result += criteriaWarning
-	}
 	if resp.NextPageToken != "" {
 		result += fmt.Sprintf("\n\nMore results available. Use page_token: %s", resp.NextPageToken)
 	}
@@ -119,10 +89,11 @@ func (s *MCPServer) cuaHandleFindElements(call *ToolCall) (*ToolResult, error) {
 }
 
 // handleClickElement handles the click_element tool — click a UI element via accessibility APIs.
-// Targeting can be done by either element ID or selector (e.g., "role:AXButton", "text:Save").
-// Selector is preferred because element IDs from find_elements are ephemeral.
+// Targeting can be done by either a parent-bound element handle or one
+// selector (e.g., "role:AXButton", "text:Save"). A selector is a
+// rediscovery mechanism and must resolve uniquely before mutation.
 func (s *MCPServer) cuaHandleClickElement(call *ToolCall) (*ToolResult, error) {
-	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(s.toolCallContext(call), time.Duration(s.cfg.RequestTimeout)*time.Second)
 	defer cancel()
 
 	var params struct {
@@ -261,14 +232,24 @@ func extractWindowFromParent(parent string) string {
 	return ""
 }
 
-// parseParentPID extracts the application PID from a resource-name parent string.
-// Both "applications/123" and "applications/123/windows/456" return pid 123.
-// Returns 0 if the parent does not start with a valid application resource name.
+// applicationParentResource extracts the exact application prefix from an
+// application or application-child resource name.
+func applicationParentResource(parent string) (string, bool) {
+	parts := strings.Split(strings.TrimSpace(parent), "/")
+	if len(parts) < 2 || parts[0] != "applications" || parts[1] == "" {
+		return "", false
+	}
+	return strings.Join(parts[:2], "/"), true
+}
+
+// parseParentPID extracts a legacy numeric PID from a parent resource name.
+// Opaque production application identities deliberately return zero.
 func parseParentPID(parent string) int64 {
-	parts := strings.Split(parent, "/")
-	if len(parts) < 2 || parts[0] != "applications" {
+	applicationParent, ok := applicationParentResource(parent)
+	if !ok {
 		return 0
 	}
+	parts := strings.Split(applicationParent, "/")
 	pid, err := strconv.ParseInt(parts[1], 10, 64)
 	if err != nil {
 		return 0
@@ -277,11 +258,11 @@ func parseParentPID(parent string) int64 {
 }
 
 // elementResourceName builds a canonical element resource name from a parent
-// (application or window) and the element id. Window-scoped parents use the
-// application PID because element resources are always scoped per application.
+// (application or window) and the element id. Element resources are children
+// of the exact opaque application resource even when discovery used a window.
 func elementResourceName(parent, elementID string) string {
-	if pid := parseParentPID(parent); pid != 0 {
-		return fmt.Sprintf("applications/%d/elements/%s", pid, elementID)
+	if applicationParent, ok := applicationParentResource(parent); ok {
+		return fmt.Sprintf("%s/elements/%s", applicationParent, elementID)
 	}
 	return fmt.Sprintf("%s/elements/%s", parent, elementID)
 }
@@ -312,10 +293,11 @@ func parseElementSelector(selector string) (*typepb.ElementSelector, error) {
 }
 
 // handleTypeElement handles the type_element tool — set value of a UI element with auto-focus.
-// Targeting can be done by either element ID or selector (e.g., "role:AXTextArea", "text:Save").
-// Selector is preferred because element IDs from find_elements are ephemeral.
+// Targeting can be done by either a parent-bound element handle or one
+// selector (e.g., "role:AXTextArea", "text:Save"). A selector is a
+// rediscovery mechanism and must resolve uniquely before mutation.
 func (s *MCPServer) handleTypeElement(call *ToolCall) (*ToolResult, error) {
-	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(s.toolCallContext(call), time.Duration(s.cfg.RequestTimeout)*time.Second)
 	defer cancel()
 
 	var params struct {
@@ -340,12 +322,17 @@ func (s *MCPServer) handleTypeElement(call *ToolCall) (*ToolResult, error) {
 		return errorResult("provide either element or selector, not both"), nil
 	}
 
-	if params.Text == "" {
-		return errorResult("text parameter is required"), nil
-	}
-
 	if errResult := validateInputLen(params.Text, maxInputTextLen, "text"); errResult != nil {
 		return errResult, nil
+	}
+
+	// Proto contract: omitted Value clears the element; explicit empty string
+	// sets the value to empty.  Since Go cannot distinguish omitted from ""
+	// without a *string, treat empty Text as clear (Value=nil).  Callers
+	// wanting set-to-empty may pass a single space.
+	var value *string
+	if params.Text != "" {
+		value = &params.Text
 	}
 
 	inputMethod := strings.ToLower(strings.TrimSpace(params.InputMethod))
@@ -362,61 +349,17 @@ func (s *MCPServer) handleTypeElement(call *ToolCall) (*ToolResult, error) {
 		// Best-effort focus acquisition
 	}
 
-	// Keystroke mode bypasses WriteElementValue and sends physical keyboard events
-	// to the target application. This is required for web/Electron apps whose
-	// controlled components rely on DOM keyboard events rather than AXValue mutation.
-	// Before emitting keystrokes we must focus the specific target element (not just
-	// the window), otherwise the events go to the application's current first responder.
-	if inputMethod == "keystrokes" {
-		clickReq := &pb.ClickElementRequest{Parent: params.Parent}
-		if params.Element != "" {
-			clickReq.Target = &pb.ClickElementRequest_ElementId{ElementId: params.Element}
-		} else {
-			selector, err := parseElementSelector(params.Selector)
-			if err != nil {
-				return errorResultf("Invalid selector: %v", err), nil
-			}
-			clickReq.Target = &pb.ClickElementRequest_Selector{Selector: selector}
-		}
-		if _, err := s.client.ClickElement(ctx, clickReq); err != nil {
-			return grpcErrorResult(err, "type_element"), nil
-		}
-
-		appParent := fmt.Sprintf("applications/%d", parseParentPID(params.Parent))
-		if parseParentPID(params.Parent) == 0 || appParent == "applications/0" {
-			appParent = defaultApplicationParent
-		}
-		resp, err := s.client.CreateInput(ctx, &pb.CreateInputRequest{
-			Parent: appParent,
-			Input: &pb.Input{
-				Action: &pb.InputAction{
-					InputType: &pb.InputAction_TypeText{
-						TypeText: &pb.TextInput{
-							Text:      params.Text,
-							CharDelay: 0,
-						},
-					},
-				},
-			},
-		})
-		if err != nil {
-			return grpcErrorResult(err, "type_element"), nil
-		}
-		if resp.State == pb.Input_STATE_FAILED {
-			errText := resp.GetError()
-			if errText == "" {
-				errText = "server reported keystroke typing failed"
-			}
-			return errorResultf("keystroke typing failed: %s", errText), nil
-		}
-		return textResultf("Typed %d characters via keystrokes into application %s", len(params.Text), appParent), nil
-	}
-
-	// Resolve target: element ID takes precedence, otherwise parse selector string.
+	// Both input_method values now route through WriteElementValue, differing
+	// only in WriteMode.  This unifies readback convergence, input-resource
+	// population, and correctness guarantees across the two code paths.
 	writeReq := &pb.WriteElementValueRequest{
 		Parent: params.Parent,
-		Value:  params.Text,
+		Value:  value,
 	}
+	if inputMethod == "keystrokes" {
+		writeReq.WriteMode = pb.WriteElementValueRequest_WRITE_MODE_KEYSTROKE_REPLACEMENT
+	}
+
 	if params.Element != "" {
 		writeReq.Target = &pb.WriteElementValueRequest_ElementId{ElementId: params.Element}
 	} else {
@@ -459,7 +402,7 @@ func (s *MCPServer) handleTypeElement(call *ToolCall) (*ToolResult, error) {
 // Combines GetElement + GetElementActions into a single response.
 // Accepts either a full element resource name or an element ID returned by find_elements.
 func (s *MCPServer) handleReadElement(call *ToolCall) (*ToolResult, error) {
-	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(s.toolCallContext(call), time.Duration(s.cfg.RequestTimeout)*time.Second)
 	defer cancel()
 
 	var params struct {

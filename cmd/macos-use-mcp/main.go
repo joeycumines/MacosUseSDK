@@ -1,14 +1,15 @@
 // Copyright 2025 Joseph Cumines
 //
-// MCP tool for MacosUseSDK - provides JSON-RPC 2.0 interface over stdio or HTTP/SSE
+// MCP tool for MacosUseSDK - provides JSON-RPC 2.0 over stdio or Streamable HTTP.
 
 package main
 
 import (
+	"errors"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 
 	"github.com/joeycumines/MacosUseSDK/internal/config"
@@ -17,60 +18,63 @@ import (
 )
 
 func main() {
-	// Load configuration
+	if err := runMain(); err != nil {
+		log.Printf("Server error: %v", err)
+		os.Exit(1)
+	}
+}
+
+func runMain() error {
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatalf("Failed to load configuration: %v", err)
+		return fmt.Errorf("failed to load configuration: %w", err)
 	}
 
-	// Create MCP server
 	mcpServer, err := server.NewMCPServer(cfg)
 	if err != nil {
-		log.Fatalf("Failed to create MCP server: %v", err)
+		return fmt.Errorf("failed to create MCP server: %w", err)
 	}
 
-	// Handle graceful shutdown
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	defer signal.Stop(sigChan)
 
-	var wg sync.WaitGroup
-	errChan := make(chan error, 1)
-
-	// Start serving based on transport type
-	wg.Go(func() {
-		var serveErr error
+	serve := func() error {
 		switch cfg.Transport {
 		case config.TransportHTTP:
-			serveErr = runHTTPTransport(cfg, mcpServer)
+			return runHTTPTransport(cfg, mcpServer)
 		default:
-			serveErr = runStdioTransport(cfg, mcpServer)
+			return runStdioTransport(cfg, mcpServer)
 		}
-		if serveErr != nil {
-			errChan <- serveErr
-		}
-	})
-
-	// Wait for shutdown signal or error
-	select {
-	case sig := <-sigChan:
-		log.Printf("Received signal %v, shutting down...", sig)
-		mcpServer.Shutdown()
-	case err := <-errChan:
-		log.Printf("Server error: %v", err)
 	}
+	return supervise(serve, mcpServer.Shutdown, sigChan)
+}
 
-	// Wait for graceful shutdown
-	done := make(chan struct{})
+func supervise(serve func() error, shutdown func() error, signals <-chan os.Signal) error {
+	serveDone := make(chan error, 1)
 	go func() {
-		wg.Wait()
-		close(done)
+		serveDone <- serve()
 	}()
 
 	select {
-	case <-done:
+	case sig := <-signals:
+		log.Printf("Received signal %v, shutting down...", sig)
+		shutdownErr := shutdown()
+		select {
+		case serveErr := <-serveDone:
+			log.Println("Server shutdown complete")
+			return errors.Join(serveErr, shutdownErr)
+		case <-signals:
+			log.Println("Forced shutdown")
+			return shutdownErr
+		}
+	case serveErr := <-serveDone:
+		if serveErr == nil {
+			log.Println("Transport closed, shutting down...")
+		}
+		shutdownErr := shutdown()
 		log.Println("Server shutdown complete")
-	case <-sigChan:
-		log.Println("Forced shutdown")
+		return errors.Join(serveErr, shutdownErr)
 	}
 }
 
@@ -80,16 +84,22 @@ func runStdioTransport(_ *config.Config, mcpServer *server.MCPServer) error {
 	return mcpServer.Serve(tr)
 }
 
-// runHTTPTransport runs the MCP server with HTTP/SSE transport
+// runHTTPTransport runs the MCP server with Streamable HTTP transport.
 func runHTTPTransport(cfg *config.Config, mcpServer *server.MCPServer) error {
-	httpCfg := &transport.HTTPTransportConfig{
-		Address:           cfg.HTTPAddress,
-		SocketPath:        cfg.HTTPSocketPath,
-		HeartbeatInterval: cfg.HeartbeatInterval,
-		CORSOrigin:        cfg.CORSOrigin,
-		ReadTimeout:       cfg.HTTPReadTimeout,
-		WriteTimeout:      cfg.HTTPWriteTimeout,
-	}
-	tr := transport.NewHTTPTransport(httpCfg)
+	tr := transport.NewHTTPTransport(httpTransportConfig(cfg))
 	return mcpServer.ServeHTTP(tr)
+}
+
+func httpTransportConfig(cfg *config.Config) *transport.HTTPTransportConfig {
+	return &transport.HTTPTransportConfig{
+		Address:      cfg.HTTPAddress,
+		SocketPath:   cfg.HTTPSocketPath,
+		CORSOrigin:   cfg.CORSOrigin,
+		ReadTimeout:  cfg.HTTPReadTimeout,
+		WriteTimeout: cfg.HTTPWriteTimeout,
+		TLSCertFile:  cfg.TLSCertFile,
+		TLSKeyFile:   cfg.TLSKeyFile,
+		APIKey:       cfg.APIKey,
+		RateLimit:    cfg.RateLimit,
+	}
 }

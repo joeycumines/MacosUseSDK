@@ -138,8 +138,8 @@ final class InputMethodsTests: XCTestCase {
     func testInputResourceNameGlobal() {
         // For desktop-level inputs (no parent)
         let inputId = "abc123"
-        let name = "desktopInputs/\(inputId)"
-        XCTAssertEqual(name, "desktopInputs/abc123")
+        let name = "applications/-/inputs/\(inputId)"
+        XCTAssertEqual(name, "applications/-/inputs/abc123")
     }
 
     func testInputResourceNameWithParent() {

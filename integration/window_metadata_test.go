@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
 )
 
@@ -52,7 +51,7 @@ func rediscoverWindowAfterMutation(
 	return foundWindow
 }
 
-// TestWindowMetadataPreservation verifies that window metadata (bundleID, zIndex, visible)
+// TestWindowMetadataPreservation verifies that window metadata (bundleID, layer, visible)
 // is correctly preserved and updated in responses after window mutation operations.
 func TestWindowMetadataPreservation(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
@@ -66,11 +65,9 @@ func TestWindowMetadataPreservation(t *testing.T) {
 	defer conn.Close()
 
 	client := pb.NewMacosUseClient(conn)
-	opsClient := longrunningpb.NewOperationsClient(conn)
-
 	// 2. Open TextEdit
 	t.Log("Opening TextEdit...")
-	app := openTextEdit(t, ctx, client, opsClient)
+	app := openTextEdit(t, ctx, client)
 	defer cleanupApplication(t, ctx, client, app)
 
 	// 2.5. Dismiss file picker dialog and create a new document
@@ -102,12 +99,31 @@ func TestWindowMetadataPreservation(t *testing.T) {
 		t.Logf("Warning: failed to close file picker: %v", err)
 	}
 
+	// Snapshot the windows that already exist so the selection below only
+	// considers the document this test creates. TextEdit restores previous
+	// sessions — including documents left dirty by a prior run's SIGKILL —
+	// and a restored unsaved document cannot be closed via AX without
+	// answering a save dialog.
+	preExistingWindows := map[string]struct{}{}
+	if resp, err := client.ListWindows(ctx, &pb.ListWindowsRequest{
+		Parent: app.Name,
+	}); err == nil {
+		for _, window := range resp.Windows {
+			preExistingWindows[window.Name] = struct{}{}
+		}
+	}
+
 	// Create a new document using Cmd+N
 	t.Log("Creating new document with Cmd+N...")
-	_, err = client.CreateInput(ctx, &pb.CreateInputRequest{
-		Parent: app.Name,
-		Input: &pb.Input{
-			Action: &pb.InputAction{
+	createCompletedInput(
+		t,
+		ctx,
+		client,
+		newIntegrationInputRequest(
+			t,
+			app.GetName(),
+			applicationInputTarget(app.GetName()),
+			&pb.InputAction{
 				InputType: &pb.InputAction_PressKey{
 					PressKey: &pb.KeyPress{
 						Key:       "n",
@@ -115,11 +131,10 @@ func TestWindowMetadataPreservation(t *testing.T) {
 					},
 				},
 			},
-		},
-	})
-	if err != nil {
-		t.Fatalf("Failed to send Cmd+N: %v", err)
-	}
+		),
+		2,
+		"create TextEdit document with Cmd+N",
+	)
 
 	// 3. Wait for document window to appear and get initial window
 	t.Log("Waiting for TextEdit document window to appear...")
@@ -133,6 +148,10 @@ func TestWindowMetadataPreservation(t *testing.T) {
 		}
 		// Find a suitable document window (reasonable dimensions, minimizable)
 		for _, window := range resp.Windows {
+			if _, exists := preExistingWindows[window.Name]; exists {
+				// Restored from a previous session — not the window this test created.
+				continue
+			}
 			if window.Bounds != nil &&
 				window.Bounds.Width >= 200 && window.Bounds.Height >= 200 {
 				// Verify it's minimizable using GetWindowState
@@ -171,16 +190,16 @@ func TestWindowMetadataPreservation(t *testing.T) {
 	if freshWindow.BundleId == "" {
 		t.Error("Initial window: bundleID is empty")
 	}
-	if freshWindow.ZIndex == 0 {
-		t.Log("Warning: Initial window zIndex is 0 (may be valid)")
+	if freshWindow.Layer == 0 {
+		t.Log("Initial window layer is 0 (a valid normal-window layer)")
 	}
 	// visible should be true for a newly opened, non-minimized window (AX-based check)
 	if !freshWindow.Visible {
 		t.Error("Initial window: expected visible=true for new window (from GetWindow AX query)")
 	}
 
-	t.Logf("Initial window (AX-based): bundleID=%s, zIndex=%d, visible=%v",
-		freshWindow.BundleId, freshWindow.ZIndex, freshWindow.Visible)
+	t.Logf("Initial window (AX-based): bundleID=%s, layer=%d, visible=%v",
+		freshWindow.BundleId, freshWindow.Layer, freshWindow.Visible)
 
 	// Use freshWindow for subsequent operations
 	initialWindow = freshWindow
@@ -195,11 +214,11 @@ func TestWindowMetadataPreservation(t *testing.T) {
 
 	// 5. Test MoveWindow - verify metadata is preserved in response
 	t.Log("Testing MoveWindow metadata preservation...")
-	const moveX, moveY float64 = 150, 150
+	moveX, moveY := 150.0, 150.0
 	moveResp, err := client.MoveWindow(ctx, &pb.MoveWindowRequest{
 		Name: currentWindowName,
-		X:    moveX,
-		Y:    moveY,
+		X:    &moveX,
+		Y:    &moveY,
 	})
 	if err != nil {
 		t.Fatalf("MoveWindow failed: %v", err)
@@ -213,15 +232,15 @@ func TestWindowMetadataPreservation(t *testing.T) {
 		t.Errorf("MoveWindow response: bundleID mismatch, expected=%s, got=%s",
 			expectedBundleID, moveResp.BundleId)
 	}
-	if moveResp.ZIndex == 0 {
-		t.Log("Warning: MoveWindow response zIndex is 0")
+	if moveResp.Layer == 0 {
+		t.Log("MoveWindow response layer is 0 (a valid normal-window layer)")
 	}
 	// Window should still be visible after move
 	if !moveResp.Visible {
 		t.Error("MoveWindow response: visible is false (expected true)")
 	}
-	t.Logf("MoveWindow response: bundleID=%s, zIndex=%d, visible=%v ✓",
-		moveResp.BundleId, moveResp.ZIndex, moveResp.Visible)
+	t.Logf("MoveWindow response: bundleID=%s, layer=%d, visible=%v ✓",
+		moveResp.BundleId, moveResp.Layer, moveResp.Visible)
 
 	// Rediscover window after move - CGWindowID may have regenerated asynchronously
 	// The rediscoverWindowAfterMutation helper uses PollUntil pattern with retries

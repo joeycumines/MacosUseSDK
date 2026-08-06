@@ -6,68 +6,86 @@ package server
 
 import (
 	"encoding/json"
-	"log/slog"
+	"fmt"
 	"os"
-	"strings"
 	"sync"
 	"time"
+
+	"golang.org/x/sys/unix"
 )
 
 // AuditLogger provides structured audit logging for tool invocations.
-// It logs tool name, redacted arguments, result status, and duration.
-// Uses log/slog for structured JSON output.
+// It logs only non-content metadata: tool name, result status, and duration.
 type AuditLogger struct {
-	logger  *slog.Logger
 	file    *os.File
 	enabled bool
 	mu      sync.RWMutex
 }
 
-// redactedKeys is the list of argument keys that should be redacted in audit logs.
-var redactedKeys = map[string]bool{
-	"password":       true,
-	"secret":         true,
-	"token":          true,
-	"api_key":        true,
-	"apikey":         true,
-	"credential":     true,
-	"credentials":    true,
-	"private_key":    true,
-	"privatekey":     true,
-	"access_token":   true,
-	"refresh_token":  true,
-	"authorization":  true,
-	"auth":           true,
-	"bearer":         true,
-	"session_id":     true,
-	"cookie":         true,
-	"passphrase":     true,
-	"encryption_key": true,
-	"decryption_key": true,
+type auditEntry struct {
+	Time            time.Time `json:"time"`
+	Timestamp       time.Time `json:"timestamp"`
+	Level           string    `json:"level"`
+	Message         string    `json:"msg"`
+	Tool            string    `json:"tool"`
+	Status          string    `json:"status"`
+	DurationSeconds float64   `json:"duration_seconds"`
 }
 
 // NewAuditLogger creates a new audit logger that writes to the specified file.
 // If filePath is empty, audit logging is disabled. Returns an error if the
-// file cannot be opened.
+// path is not an owner-private, singly linked regular file.
 func NewAuditLogger(filePath string) (*AuditLogger, error) {
 	if filePath == "" {
 		return &AuditLogger{enabled: false}, nil
 	}
 
-	file, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	file, err := openAuditFile(filePath)
 	if err != nil {
 		return nil, err
 	}
 
-	handler := slog.NewJSONHandler(file, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
-	})
-
 	return &AuditLogger{
-		logger:  slog.New(handler),
 		file:    file,
 		enabled: true,
 	}, nil
+}
+
+func openAuditFile(filePath string) (*os.File, error) {
+	flags := unix.O_APPEND | unix.O_CLOEXEC | unix.O_CREAT | unix.O_NOFOLLOW | unix.O_NONBLOCK | unix.O_WRONLY
+	fd, err := unix.Open(filePath, flags, 0600)
+	if err != nil {
+		return nil, fmt.Errorf("open audit log %q: %w", filePath, err)
+	}
+	file := os.NewFile(uintptr(fd), filePath)
+	if file == nil {
+		_ = unix.Close(fd)
+		return nil, fmt.Errorf("open audit log %q: invalid file descriptor", filePath)
+	}
+
+	var stat unix.Stat_t
+	if err := unix.Fstat(fd, &stat); err != nil {
+		_ = file.Close()
+		return nil, fmt.Errorf("inspect audit log %q: %w", filePath, err)
+	}
+	if stat.Mode&unix.S_IFMT != unix.S_IFREG {
+		_ = file.Close()
+		return nil, fmt.Errorf("audit log %q is not a regular file", filePath)
+	}
+	if stat.Nlink != 1 {
+		_ = file.Close()
+		return nil, fmt.Errorf("audit log %q has %d hard links; want exactly one", filePath, stat.Nlink)
+	}
+	if stat.Uid != uint32(os.Geteuid()) {
+		_ = file.Close()
+		return nil, fmt.Errorf("audit log %q is owned by uid %d; want %d", filePath, stat.Uid, os.Geteuid())
+	}
+	if permissions := os.FileMode(stat.Mode & 0777); permissions != 0600 {
+		_ = file.Close()
+		return nil, fmt.Errorf("audit log %q permissions are %#o; want 0600", filePath, permissions)
+	}
+
+	return file, nil
 }
 
 // Close closes the audit log file if it is open.
@@ -77,7 +95,10 @@ func (a *AuditLogger) Close() error {
 	defer a.mu.Unlock()
 
 	if a.file != nil {
-		return a.file.Close()
+		err := a.file.Close()
+		a.file = nil
+		a.enabled = false
+		return err
 	}
 	return nil
 }
@@ -92,85 +113,30 @@ func (a *AuditLogger) IsEnabled() bool {
 	return a.enabled
 }
 
-// LogToolCall logs a tool invocation with redacted arguments.
-// Sensitive fields like passwords and tokens are automatically redacted.
-func (a *AuditLogger) LogToolCall(tool string, args json.RawMessage, status string, duration time.Duration) {
-	if !a.IsEnabled() {
-		return
+// LogToolCall logs only non-content invocation metadata. Arguments are accepted
+// for call-site compatibility but are deliberately never parsed or persisted.
+func (a *AuditLogger) LogToolCall(tool string, _ json.RawMessage, status string, duration time.Duration) error {
+	if a == nil {
+		return nil
 	}
 
-	a.mu.RLock()
-	logger := a.logger
-	a.mu.RUnlock()
-
-	if logger == nil {
-		return
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if !a.enabled || a.file == nil {
+		return nil
 	}
 
-	// Redact sensitive arguments
-	redactedArgs := redactArguments(args)
-
-	logger.Info("tool_invocation",
-		slog.String("tool", tool),
-		slog.String("arguments", redactedArgs),
-		slog.String("status", status),
-		slog.Float64("duration_seconds", duration.Seconds()),
-		slog.Time("timestamp", time.Now().UTC()),
-	)
-}
-
-// redactArguments redacts sensitive values from JSON arguments.
-func redactArguments(args json.RawMessage) string {
-	if len(args) == 0 {
-		return "{}"
+	now := time.Now().UTC()
+	if err := json.NewEncoder(a.file).Encode(auditEntry{
+		Time:            now,
+		Level:           "INFO",
+		Message:         "tool_invocation",
+		Tool:            tool,
+		Status:          status,
+		DurationSeconds: duration.Seconds(),
+		Timestamp:       now,
+	}); err != nil {
+		return fmt.Errorf("write audit metadata: %w", err)
 	}
-
-	var parsed map[string]any
-	if err := json.Unmarshal(args, &parsed); err != nil {
-		// Can't parse, return placeholder
-		return "[unparseable]"
-	}
-
-	redactMapValues(parsed)
-
-	redacted, err := json.Marshal(parsed)
-	if err != nil {
-		return "[error]"
-	}
-	return string(redacted)
-}
-
-// redactMapValues recursively redacts sensitive values in a map.
-func redactMapValues(m map[string]any) {
-	for key, value := range m {
-		lowerKey := strings.ToLower(key)
-
-		// Check if key should be redacted
-		if redactedKeys[lowerKey] {
-			m[key] = "[REDACTED]"
-			continue
-		}
-
-		// Check for partial matches
-		for redactKey := range redactedKeys {
-			if strings.Contains(lowerKey, redactKey) {
-				m[key] = "[REDACTED]"
-				break
-			}
-		}
-
-		// Recurse into nested maps
-		if nested, ok := value.(map[string]any); ok {
-			redactMapValues(nested)
-		}
-
-		// Handle arrays
-		if arr, ok := value.([]any); ok {
-			for _, item := range arr {
-				if nestedMap, ok := item.(map[string]any); ok {
-					redactMapValues(nestedMap)
-				}
-			}
-		}
-	}
+	return nil
 }

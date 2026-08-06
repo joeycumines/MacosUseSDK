@@ -34,7 +34,7 @@ The MCP Server is the specialized worker process that exposes the capability to 
 * **Linux:** It wraps xdotool or ydotool for input injection and ffmpeg or scrot for screen capture.  
 * **Windows/macOS:** It often wraps pyautogui or native accessibility APIs (like Apple's Accessibility API or Windows UI Automation). The Server exposes these capabilities as standardized MCP Tools (e.g., computer, bash, str\_replace\_editor) and Resources (e.g., screen://current).7
 
-### **1.2 Transport Mechanisms: Stdio vs. HTTP/SSE**
+### **1.2 Transport Mechanisms: Stdio vs. Streamable HTTP**
 
 The choice of transport mechanism fundamentally dictates the latency profile and deployment topology of the agent.
 
@@ -46,26 +46,26 @@ For local agents, the MCP Client spawns the MCP Server as a subprocess and commu
 * **Advantages:** Zero network latency, which is critical for the tight feedback loops required in GUI automation. The server automatically inherits the security context of the user (unless specifically sandboxed).  
 * **Limitations:** The server must reside on the same machine as the Host. If the Host process terminates, the Server process is typically killed, losing any ephemeral state.9
 
-#### **1.2.2 Server-Sent Events (SSE) over HTTP (Remote Execution)**
+#### **1.2.2 Streamable HTTP (Remote Execution)**
 
-For cloud-based agents or "Cloud Computer" scenarios, MCP utilizes SSE for server-to-client messages and standard HTTP POST requests for client-to-server messages.
+For remote scenarios, current MCP uses a single Streamable HTTP endpoint. Clients POST JSON-RPC messages and advertise both `application/json` and `text/event-stream`; servers may answer requests with either representation. A server that does not initiate standalone streams may return HTTP 405 to GET.
 
-* **Mechanism:** The Client opens a persistent HTTP connection to receive events (like "Tool Execution Finished") via SSE. It sends commands via separate HTTP POST requests.  
+* **Mechanism:** A client POSTs each JSON-RPC message to one MCP endpoint. Notifications accepted by the server receive HTTP 202 with no body; requests receive one correlated JSON-RPC response.
 * **Implications for Computer Use:** This topology enables the **"Remote Desktop"** pattern. An agent running in a data center (e.g., an AWS Bedrock instance) can control a virtual machine running elsewhere via an MCP Server exposing that VM's desktop. This decouples the risk of execution from the model's inference environment but introduces network latency that must be mitigated by the harness (e.g., via wait actions).8
 
 **Table 1: Transport Protocol Comparison for Computer Use**
 
-| Feature | Stdio Transport | SSE over HTTP |
+| Feature | Stdio Transport | Streamable HTTP |
 | :---- | :---- | :---- |
 | **Latency** | Microsecond scale (IPC) | Millisecond scale (Network) |
 | **State Management** | Tied to process lifecycle | Session-based (requires state persistence) |
 | **Security Boundary** | Process isolation (weak) | Network isolation (strong) |
 | **Primary Use Case** | Local Desktop Assistant (Claude Desktop) | Cloud Agents / CI/CD Automation |
-| **Message Direction** | Bidirectional Pipe | Simplex Streams (Push/Pull) |
+| **Message Direction** | Bidirectional Pipe | Correlated POST responses; optional SSE streams |
 
-## **1A. MacosUseSDK HTTP/SSE Transport Extension (Non-Standard)**
+## **1A. MacosUseSDK Streamable HTTP Transport**
 
-> **⚠️ IMPORTANT:** The HTTP/SSE transport described in this section is a **project-specific extension** that is **not part of the official MCP specification** (version 2025-11-25). The canonical MCP 2025-11-25 protocol defines stdio and Streamable HTTP transports; this project implements stdio and an earlier custom HTTP/SSE extension. This custom HTTP transport is provided as a convenience for scenarios where stdio is not practical (e.g., web-based clients, remote access, multi-client scenarios). Clients should not expect interoperability with other MCP servers/clients using this transport pattern.
+MacosUseSDK implements the MCP 2025-11-25 Streamable HTTP transport as the supported network transport. The obsolete project-specific split endpoint transport is not registered.
 
 ### **1B. MCP 2025-11-25 Message-Level Compliance**
 
@@ -81,36 +81,28 @@ The stdio MCP server in `internal/server/mcp.go` targets the **MCP 2025-11-25** 
 
 ### **1A.1 Transport Architecture**
 
-MacosUseSDK implements a custom HTTP/SSE transport for JSON-RPC 2.0 communication that supplements the standard stdio transport. This extension follows the general patterns described in the MCP specification's SSE over HTTP discussion but uses a custom endpoint structure.
+MacosUseSDK supplements stdio with a stateless Streamable HTTP server. It uses synchronous JSON responses and does not initiate standalone SSE streams or issue session identifiers.
 
 **Endpoints:**
 
 | Endpoint | Method | Description |
 | :---- | :---- | :---- |
-| `/message` | POST | Submit JSON-RPC 2.0 request messages. Returns synchronous JSON-RPC response. |
-| `/events` | GET | Server-Sent Events (SSE) stream for real-time event broadcast. |
+| `/mcp` | POST | Submit a JSON-RPC request or notification. Requests receive JSON; accepted notifications receive HTTP 202 with no body. |
+| `/mcp` | GET | Returns HTTP 405 because this stateless server does not initiate standalone SSE streams. |
+| `/mcp` | DELETE | Returns HTTP 405 because this server does not create transport sessions. |
 | `/health` | GET | Health check endpoint returning server status. |
 
 ### **1A.2 Message Flow**
 
-1. **Client → Server:** HTTP POST to `/message` with JSON-RPC 2.0 request body.
-2. **Server → Client (sync):** JSON-RPC 2.0 response returned in HTTP response body.
-3. **Server → Client (async):** Responses also broadcast as SSE events with event type `message`.
+1. **Client → Server:** POST to `/mcp` with `Content-Type: application/json`, an `Accept` header containing both `application/json` and `text/event-stream`, and `MCP-Protocol-Version: 2025-11-25` after initialization.
+2. **Server → Client request response:** Return one correlated JSON-RPC response with `Content-Type: application/json`.
+3. **Server → Client notification acknowledgement:** Return HTTP 202 with an empty body after accepting the notification.
 
-**SSE Event Format:**
-```
-id: <monotonic-event-id>
-event: message
-data: <json-rpc-2.0-response>
-```
+The server accepts the compatibility protocol version `2025-03-26` and assumes it when the protocol-version header is absent. Any other explicit version is rejected with HTTP 400.
 
-### **1A.3 Reconnection Support**
+### **1A.3 Session and Reconnection Behavior**
 
-The HTTP transport implements SSE reconnection handling per the HTML5 EventSource specification:
-
-- Clients may send `Last-Event-ID` header on reconnection to `/events`.
-- Server maintains a rolling buffer of recent events (default: 1000 events).
-- Missed events since `Last-Event-ID` are replayed on reconnection.
+The server is stateless at the transport layer: it does not return `MCP-Session-Id`, maintain replay buffers, or broadcast responses across clients. Each POST is independently correlated to its response.
 
 ### **1A.4 Configuration**
 
@@ -118,11 +110,10 @@ The HTTP transport implements SSE reconnection handling per the HTML5 EventSourc
 
 | Environment Variable | Description | Default |
 | :---- | :---- | :---- |
-| `MCP_TRANSPORT` | Transport type: `stdio` or `sse` | `stdio` |
-| `MCP_HTTP_ADDRESS` | HTTP/SSE listen address | `:8080` |
+| `MCP_TRANSPORT` | Transport type: `stdio` or `streamable-http` | `stdio` |
+| `MCP_HTTP_ADDRESS` | Streamable HTTP listen address | `127.0.0.1:8080` |
 | `MCP_HTTP_SOCKET` | Unix socket path (takes precedence over address) | _(none)_ |
-| `MCP_CORS_ORIGIN` | CORS allowed origin | `*` |
-| `MCP_HEARTBEAT_INTERVAL` | SSE heartbeat interval | `30s` |
+| `MCP_CORS_ORIGIN` | Exact browser Origin to allow | _(none; Origin-bearing requests denied)_ |
 | `MCP_HTTP_READ_TIMEOUT` | HTTP read timeout | `30s` |
 | `MCP_HTTP_WRITE_TIMEOUT` | HTTP write timeout | `30s` |
 
@@ -133,11 +124,11 @@ The HTTP transport implements SSE reconnection handling per the HTML5 EventSourc
 | `MCP_TLS_CERT_FILE` | Path to TLS certificate for HTTPS | _(none)_ |
 | `MCP_TLS_KEY_FILE` | Path to TLS private key for HTTPS | _(none)_ |
 
-When both `MCP_TLS_CERT_FILE` and `MCP_TLS_KEY_FILE` are set, the server starts with HTTPS instead of HTTP. The certificate should be in PEM format.
+When both `MCP_TLS_CERT_FILE` and `MCP_TLS_KEY_FILE` are set, the server starts with HTTPS instead of HTTP. The certificate should be in PEM format. The two variables are atomic: setting only one is a startup error. Certificate and key parsing completes before the process binds or removes any listener.
 
 **Example:**
 ```bash
-MCP_TRANSPORT=sse \
+MCP_TRANSPORT=streamable-http \
   MCP_TLS_CERT_FILE=/etc/ssl/certs/server.crt \
   MCP_TLS_KEY_FILE=/etc/ssl/private/server.key \
   ./macos-use-mcp
@@ -149,17 +140,20 @@ MCP_TRANSPORT=sse \
 | :---- | :---- | :---- |
 | `MCP_API_KEY` | API key for Bearer token authentication | _(none)_ |
 
-When `MCP_API_KEY` is set, all requests (except `/health` and `/metrics`) require the `Authorization: Bearer <key>` header. The server uses constant-time comparison to prevent timing attacks.
+When `MCP_API_KEY` is set, all requests except `/health` require the `Authorization: Bearer <key>` header. The server uses constant-time comparison to prevent timing attacks.
 
 **Example:**
 ```bash
 # Server
-MCP_TRANSPORT=sse MCP_API_KEY=your-secret-key ./macos-use-mcp
+MCP_TRANSPORT=streamable-http MCP_API_KEY=your-secret-key ./macos-use-mcp
 
 # Client
 curl -H "Authorization: Bearer your-secret-key" \
+     -H "Accept: application/json, text/event-stream" \
+     -H "Content-Type: application/json" \
+     -H "MCP-Protocol-Version: 2025-11-25" \
      -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' \
-     http://localhost:8080/message
+     http://localhost:8080/mcp
 ```
 
 #### Rate Limiting Configuration
@@ -168,32 +162,31 @@ curl -H "Authorization: Bearer your-secret-key" \
 | :---- | :---- | :---- |
 | `MCP_RATE_LIMIT` | Rate limit in requests per second | `0` (disabled) |
 
-When set to a positive value, the server enforces a token bucket rate limiter with burst capacity of 2x the rate. Requests exceeding the limit receive HTTP 429 (Too Many Requests) with a `Retry-After: 1` header. The `/health` and `/metrics` endpoints are exempt from rate limiting.
+When set to a positive value, the server enforces a token bucket rate limiter with burst capacity of 2x the rate. Requests exceeding the limit receive HTTP 429 (Too Many Requests) with a `Retry-After: 1` header. The `/health` and `/metrics` endpoints are exempt from rate limiting; `/metrics` remains protected when API-key authentication is enabled.
 
 **Example:**
 ```bash
 # Allow 100 requests per second with burst of 200
-MCP_TRANSPORT=sse MCP_RATE_LIMIT=100 ./macos-use-mcp
+MCP_TRANSPORT=streamable-http MCP_RATE_LIMIT=100 ./macos-use-mcp
 ```
 
 #### Audit Logging Configuration
 
 | Environment Variable | Description | Default |
 | :---- | :---- | :---- |
-| `MCP_AUDIT_LOG_FILE` | Path to audit log file | _(none)_ |
+| `MCP_AUDIT_LOG_FILE` | Path to an owner-private audit log file | _(none)_ |
 
 When set, all tool invocations are logged to the specified file in structured JSON format. The audit log includes:
 - Tool name
-- Arguments (with sensitive values redacted)
 - Status (ok/error)
 - Duration in seconds
 - UTC timestamp
 
-Sensitive keys automatically redacted: `password`, `secret`, `token`, `api_key`, `credential`, `private_key`, etc.
+Tool arguments and user content are never parsed or persisted. The path must resolve directly to a regular file owned by the current user, with mode `0600` and exactly one hard link. Symlinks, devices, FIFOs, multiply linked files, and files with broader permissions are rejected during startup.
 
 **Example log entry:**
 ```json
-{"time":"2026-02-04T12:00:00Z","level":"INFO","msg":"tool_invocation","tool":"click","arguments":"{\"x\":100,\"y\":200}","status":"ok","duration_seconds":0.015,"timestamp":"2026-02-04T12:00:00Z"}
+{"time":"2026-02-04T12:00:00Z","level":"INFO","msg":"tool_invocation","tool":"click","status":"ok","duration_seconds":0.015,"timestamp":"2026-02-04T12:00:00Z"}
 ```
 
 ### **1A.5 Observability: Metrics Endpoint**
@@ -206,8 +199,7 @@ The HTTP transport exposes a `/metrics` endpoint that provides Prometheus-compat
 | :---- | :---- | :---- | :---- |
 | `mcp_requests_total` | Counter | `tool`, `status` | Total number of tool invocations |
 | `mcp_request_duration_seconds` | Histogram | `tool` | Tool invocation latency distribution |
-| `mcp_sse_events_sent_total` | Counter | _(none)_ | Total SSE events broadcast |
-| `mcp_sse_connections_active` | Gauge | _(none)_ | Current number of SSE connections |
+| `go_goroutines` | Gauge | _(none)_ | Live Go goroutine count |
 
 **Histogram Buckets (seconds):** 0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0
 
@@ -239,7 +231,13 @@ The HTTP transport now supports production-grade security features:
 
 3. **Rate Limiting:** Token bucket rate limiter via `MCP_RATE_LIMIT` to prevent abuse and ensure fair resource allocation.
 
-4. **CORS:** Configurable origin restriction via `MCP_CORS_ORIGIN`. Set to your client's origin in production.
+4. **Origin validation:** Origin-bearing HTTP requests are denied by default. Set `MCP_CORS_ORIGIN` to the exact trusted browser origin; mismatches are rejected with HTTP 403 before dispatch.
+
+Configuration fails before listener bind for malformed or partial TLS, negative
+or non-finite rate limits, invalid timeouts or booleans, wildcard/non-origin CORS
+values, relative Unix socket paths, and malformed TCP addresses. A non-loopback
+TCP address additionally requires TLS, API-key authentication, and a positive
+rate limit.
 
 5. **Shell Command Protection:** Shell command execution is disabled by default (`MCP_SHELL_COMMANDS_ENABLED=false`). Only enable in trusted environments with explicit opt-in.
 
@@ -256,9 +254,9 @@ Or with a reverse proxy:
 ### **1A.7 Implementation Notes**
 
 - The HTTP transport uses Go's `net/http` package with configurable timeouts.
-- `WriteTimeout` is disabled by default (0) to support long-lived SSE connections.
+- HTTP read and write timeouts both default to 30 seconds.
 - Unix domain socket support is available for local IPC without TCP overhead.
-- The transport implements the `Transport` interface but `ReadMessage()` returns an error directing users to use the callback-based `Serve(handler)` pattern.
+- The transport implements the shared interface for composition, while HTTP request/response dispatch uses the callback-based `Serve(handler)` path; standalone `ReadMessage()` and `WriteMessage()` are unsupported.
 
 ---
 

@@ -15,14 +15,34 @@ extension MacosUseService {
         let req = request.message
         Self.logger.info("createSession called")
 
+        guard req.hasSession else {
+            throw RPCErrorHelpers.validationError(
+                message: "session is required",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "session",
+            )
+        }
+        guard req.session.name.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "session.name must be omitted when creating a session",
+                reason: "INVALID_RESOURCE_NAME",
+                field: "session.name",
+                value: req.session.name,
+            )
+        }
+
         // Extract session parameters from request
-        let sessionId = req.sessionID.isEmpty ? nil : req.sessionID
+        let sessionId: String? = if req.sessionID.isEmpty {
+            nil
+        } else {
+            try ParsingHelpers.validateResourceID(req.sessionID, field: "session_id")
+        }
         let displayName =
             req.session.displayName.isEmpty ? "Unnamed Session" : req.session.displayName
         let metadata = req.session.metadata
 
         // Create session in SessionManager
-        let session = await SessionManager.shared.createSession(
+        let session = try await sessionManager.createSession(
             sessionId: sessionId,
             displayName: displayName,
             metadata: metadata,
@@ -45,9 +65,10 @@ extension MacosUseService {
                 field: "name",
             )
         }
+        _ = try ParsingHelpers.parseSessionName(req.name)
 
         // Get session from SessionManager
-        guard let session = await SessionManager.shared.getSession(name: req.name) else {
+        guard let session = await sessionManager.getSession(name: req.name) else {
             throw RPCError(code: .notFound, message: "Session not found: \(req.name)")
         }
 
@@ -61,10 +82,10 @@ extension MacosUseService {
         Self.logger.info("listSessions called")
 
         // List sessions from SessionManager with pagination
-        let pageSize = Int(req.pageSize)
+        let pageSize = try RequestNumericValidation.pageSize(req.pageSize, default: 50)
         let pageToken = req.pageToken.isEmpty ? nil : req.pageToken
 
-        let (sessions, nextToken) = await SessionManager.shared.listSessions(
+        let (sessions, nextToken) = try await sessionManager.listSessions(
             pageSize: pageSize,
             pageToken: pageToken,
         )
@@ -82,6 +103,10 @@ extension MacosUseService {
         let req = request.message
         Self.logger.info("deleteSession called")
 
+        guard !req.force else {
+            throw RPCError(code: .unimplemented, message: "force deletion is not supported")
+        }
+
         // Validate name is not empty
         guard !req.name.isEmpty else {
             throw RPCErrorHelpers.validationError(
@@ -90,9 +115,10 @@ extension MacosUseService {
                 field: "name",
             )
         }
+        _ = try ParsingHelpers.parseSessionName(req.name)
 
         // Delete session from SessionManager
-        let deleted = await SessionManager.shared.deleteSession(name: req.name)
+        let deleted = await sessionManager.deleteSession(name: req.name)
 
         if !deleted {
             throw RPCError(code: .notFound, message: "Session not found: \(req.name)")
@@ -107,6 +133,10 @@ extension MacosUseService {
         let req = request.message
         Self.logger.info("beginTransaction called")
 
+        let timeout = try RequestNumericValidation.optionalTimeout(req.timeout, default: 300)
+        guard req.timeout == 0 else {
+            throw RPCError(code: .unimplemented, message: "transaction timeout is not supported")
+        }
         // Validate session name is not empty
         guard !req.session.isEmpty else {
             throw RPCErrorHelpers.validationError(
@@ -115,14 +145,14 @@ extension MacosUseService {
                 field: "session",
             )
         }
+        _ = try ParsingHelpers.parseSessionName(req.session)
 
         do {
             // Begin transaction in SessionManager
             let isolationLevel =
                 req.isolationLevel == .unspecified ? .serializable : req.isolationLevel
-            let timeout = req.timeout > 0 ? req.timeout : 300.0
 
-            let (transactionId, session) = try await SessionManager.shared.beginTransaction(
+            let (transactionId, revisionId, session) = try await sessionManager.beginTransaction(
                 sessionName: req.session,
                 isolationLevel: isolationLevel,
                 timeout: timeout,
@@ -130,6 +160,7 @@ extension MacosUseService {
 
             let response = Macosusesdk_V1_BeginTransactionResponse.with {
                 $0.transactionID = transactionId
+                $0.revisionID = revisionId
                 $0.session = session
             }
             return ServerResponse(message: response)
@@ -154,6 +185,7 @@ extension MacosUseService {
                 field: "name",
             )
         }
+        _ = try ParsingHelpers.parseSessionName(req.name)
         guard !req.transactionID.isEmpty else {
             throw RPCErrorHelpers.validationError(
                 message: "transaction_id is required",
@@ -164,7 +196,7 @@ extension MacosUseService {
 
         do {
             // Commit transaction in SessionManager
-            let transaction = try await SessionManager.shared
+            let transaction = try await sessionManager
                 .commitTransaction(
                     sessionName: req.name,
                     transactionId: req.transactionID,
@@ -192,6 +224,7 @@ extension MacosUseService {
                 field: "name",
             )
         }
+        _ = try ParsingHelpers.parseSessionName(req.name)
         guard !req.transactionID.isEmpty else {
             throw RPCErrorHelpers.validationError(
                 message: "transaction_id is required",
@@ -202,7 +235,7 @@ extension MacosUseService {
 
         do {
             // Rollback transaction in SessionManager
-            let transaction = try await SessionManager.shared
+            let transaction = try await sessionManager
                 .rollbackTransaction(
                     sessionName: req.name,
                     transactionId: req.transactionID,
@@ -231,9 +264,10 @@ extension MacosUseService {
                 field: "name",
             )
         }
+        _ = try ParsingHelpers.parseSessionName(req.name)
 
         // Get session snapshot from SessionManager
-        guard let snapshot = await SessionManager.shared.getSessionSnapshot(sessionName: req.name)
+        guard let snapshot = await sessionManager.getSessionSnapshot(sessionName: req.name)
         else {
             throw RPCError(code: .notFound, message: "Session not found: \(req.name)")
         }

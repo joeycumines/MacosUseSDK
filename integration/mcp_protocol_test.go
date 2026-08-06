@@ -1,7 +1,4 @@
 // Copyright 2025 Joseph Cumines
-//
-// MCP protocol integration tests - validates protocol handshake,
-// notifications/initialized handling, and display grounding.
 
 package integration
 
@@ -15,16 +12,8 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
-	pbtype "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
-	"github.com/joeycumines/MacosUseSDK/internal/transport"
 )
 
-// TestMCPInitialize_ProtocolVersion verifies the MCP initialize handshake
-// returns the correct protocol version (2025-11-25) per MCP specification.
-// Task: T067
 func TestMCPInitialize_ProtocolVersion(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
@@ -32,42 +21,15 @@ func TestMCPInitialize_ProtocolVersion(t *testing.T) {
 	serverCmd, serverAddr := startServer(t, ctx)
 	defer cleanupServer(t, serverCmd, serverAddr)
 
-	conn := connectToServer(t, ctx, serverAddr)
-	defer conn.Close()
-
 	_, baseURL, cleanup := startMCPTestServer(t, ctx, serverAddr)
 	defer cleanup()
 
-	initRequest := `{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{}}}`
-	resp, err := http.Post(baseURL+"/message", "application/json", bytes.NewBufferString(initRequest))
-	if err != nil {
-		t.Fatalf("Initialize request failed: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		t.Fatalf("Initialize returned status %d, body: %s", resp.StatusCode, body)
-	}
-
-	var response struct {
-		JSONRPC string          `json:"jsonrpc"`
-		ID      int             `json:"id"`
-		Result  json.RawMessage `json:"result"`
-		Error   *struct {
-			Code    int    `json:"code"`
-			Message string `json:"message"`
-		} `json:"error"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		t.Fatalf("Failed to decode response: %v", err)
-	}
-
+	response := postMCPRequest(t, baseURL, validMCPInitializePayload(1))
 	if response.Error != nil {
-		t.Fatalf("Initialize returned error: code=%d, message=%s", response.Error.Code, response.Error.Message)
+		t.Fatalf("initialize returned error: code=%d message=%s", response.Error.Code, response.Error.Message)
 	}
 
-	var initResult struct {
+	var result struct {
 		ProtocolVersion string `json:"protocolVersion"`
 		Capabilities    struct {
 			Tools map[string]any `json:"tools"`
@@ -76,132 +38,338 @@ func TestMCPInitialize_ProtocolVersion(t *testing.T) {
 			Name    string `json:"name"`
 			Version string `json:"version"`
 		} `json:"serverInfo"`
-		DisplayInfo json.RawMessage `json:"displayInfo,omitempty"`
+		DisplayInfo json.RawMessage `json:"displayInfo"`
 	}
-	if err := json.Unmarshal(response.Result, &initResult); err != nil {
-		t.Fatalf("Failed to unmarshal init result: %v", err)
+	if err := json.Unmarshal(response.Result, &result); err != nil {
+		t.Fatalf("decode initialize result: %v", err)
 	}
-
-	const expectedVersion = "2025-11-25"
-	if initResult.ProtocolVersion != expectedVersion {
-		t.Errorf("protocolVersion = %q, want %q", initResult.ProtocolVersion, expectedVersion)
+	if result.ProtocolVersion != "2025-11-25" {
+		t.Fatalf("protocolVersion = %q, want 2025-11-25", result.ProtocolVersion)
 	}
-
-	if initResult.ServerInfo.Name == "" {
-		t.Error("serverInfo.name should not be empty")
+	if result.ServerInfo.Name != "macos-use-sdk" || result.ServerInfo.Version == "" {
+		t.Fatalf("unexpected serverInfo: name=%q version=%q", result.ServerInfo.Name, result.ServerInfo.Version)
 	}
-	if initResult.ServerInfo.Name != "macos-use-sdk" {
-		t.Errorf("serverInfo.name = %q, want %q", initResult.ServerInfo.Name, "macos-use-sdk")
+	if result.Capabilities.Tools == nil {
+		t.Fatal("initialize omitted tools capability")
 	}
-
-	if initResult.Capabilities.Tools == nil {
-		t.Log("capabilities.tools is nil (acceptable)")
+	if len(result.DisplayInfo) == 0 || string(result.DisplayInfo) == "null" {
+		t.Fatal("initialize omitted production display grounding")
 	}
-
-	t.Log("Initialize handshake validated successfully with protocol version 2025-11-25")
 }
 
-// TestMCPNotificationsInitialized_HandledSilently verifies that the server
-// handles notifications/initialized without returning an error response.
-// Per MCP spec: clients send this notification after receiving initialize response.
-// Task: T068
+func TestMCPInitialize_InvalidParams(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
+	serverCmd, serverAddr := startServer(t, ctx)
+	defer cleanupServer(t, serverCmd, serverAddr)
+	_, baseURL, cleanup := startMCPTestServer(t, ctx, serverAddr)
+	defer cleanup()
+
+	for index, payload := range []string{
+		`{"jsonrpc":"2.0","id":1,"method":"initialize","params":[]}`,
+		`{"jsonrpc":"2.0","id":2,"method":"initialize","params":{"protocolVersion":42,"capabilities":{},"clientInfo":{"name":"test","version":"1"}}}`,
+		`{"jsonrpc":"2.0","id":3,"method":"initialize","params":{}}`,
+	} {
+		response := postMCPRequest(t, baseURL, payload)
+		if response.Error == nil || response.Error.Code != -32602 {
+			t.Fatalf("invalid initialize case %d response=%+v, want -32602", index, response)
+		}
+		if string(response.ID) != fmt.Sprint(index+1) || len(response.Result) != 0 {
+			t.Fatalf("invalid initialize case %d response=%+v, want correlated error only", index, response)
+		}
+	}
+
+	recovered := postMCPRequest(t, baseURL, validMCPInitializePayload(4))
+	if recovered.Error != nil || len(recovered.Result) == 0 || string(recovered.ID) != "4" {
+		t.Fatalf("valid initialize after invalid inputs returned %+v", recovered)
+	}
+}
+
 func TestMCPNotificationsInitialized_HandledSilently(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
 	defer cleanupServer(t, serverCmd, serverAddr)
-
-	conn := connectToServer(t, ctx, serverAddr)
-	defer conn.Close()
-
 	_, baseURL, cleanup := startMCPTestServer(t, ctx, serverAddr)
 	defer cleanup()
 
-	initRequest := `{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}`
-	initResp, err := http.Post(baseURL+"/message", "application/json", bytes.NewBufferString(initRequest))
-	if err != nil {
-		t.Fatalf("Initialize request failed: %v", err)
+	initialize := postMCPRequest(t, baseURL, validMCPInitializePayload(1))
+	if initialize.Error != nil {
+		t.Fatalf("initialize returned error: %+v", initialize.Error)
 	}
-	initResp.Body.Close()
 
-	notificationRequest := `{"jsonrpc":"2.0","method":"notifications/initialized"}`
-	resp, err := http.Post(baseURL+"/message", "application/json", bytes.NewBufferString(notificationRequest))
+	request, err := newProductionMCPRequest(
+		ctx,
+		http.MethodPost,
+		baseURL,
+		bytes.NewBufferString(`{"jsonrpc":"2.0","method":"notifications/initialized"}`),
+	)
 	if err != nil {
-		t.Fatalf("notifications/initialized request failed: %v", err)
+		t.Fatalf("create initialized notification: %v", err)
+	}
+	applyDefaultMCPSession(request, baseURL)
+	resp, err := http.DefaultClient.Do(request)
+	if err != nil {
+		t.Fatalf("send initialized notification: %v", err)
 	}
 	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
+	if resp.StatusCode != http.StatusAccepted {
 		body, _ := io.ReadAll(resp.Body)
-		t.Fatalf("notifications/initialized returned status %d, body: %s", resp.StatusCode, body)
+		t.Fatalf("initialized notification status=%d body=%q, want 202", resp.StatusCode, body)
 	}
-
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		t.Fatalf("Failed to read response body: %v", err)
+		t.Fatalf("read initialized notification response: %v", err)
+	}
+	if len(body) != 0 {
+		t.Fatalf("initialized notification returned a body: %q", body)
+	}
+}
+
+func TestMCPKnownNotification_HandledSilently(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
+	serverCmd, serverAddr := startServer(t, ctx)
+	defer cleanupServer(t, serverCmd, serverAddr)
+	_, baseURL, cleanup := startMCPTestServer(t, ctx, serverAddr)
+	defer cleanup()
+
+	initialize := postMCPRequest(t, baseURL, validMCPInitializePayload(1))
+	if initialize.Error != nil {
+		t.Fatalf("initialize returned error: %+v", initialize.Error)
 	}
 
-	if len(body) > 0 {
-		var response map[string]any
-		if err := json.Unmarshal(body, &response); err != nil {
-			t.Logf("Server returned non-JSON response (acceptable for notification): %s", string(body))
-		} else {
-			if errObj, ok := response["error"]; ok {
-				t.Errorf("notifications/initialized returned error: %v", errObj)
+	request, err := newProductionMCPRequest(
+		ctx,
+		http.MethodPost,
+		baseURL,
+		bytes.NewBufferString(`{"jsonrpc":"2.0","method":"tools/list","params":{}}`),
+	)
+	if err != nil {
+		t.Fatalf("create known notification: %v", err)
+	}
+	applyDefaultMCPSession(request, baseURL)
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		t.Fatalf("send known notification: %v", err)
+	}
+	defer response.Body.Close()
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		t.Fatalf("read known notification response: %v", err)
+	}
+	if response.StatusCode != http.StatusAccepted || len(body) != 0 {
+		t.Fatalf("known notification status=%d body=%q, want 202 with no body", response.StatusCode, body)
+	}
+}
+
+func TestMCPMalformedRequestsAndNullID_HTTP(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
+	serverCmd, serverAddr := startServer(t, ctx)
+	defer cleanupServer(t, serverCmd, serverAddr)
+	_, baseURL, cleanup := startMCPTestServer(t, ctx, serverAddr)
+	defer cleanup()
+
+	initialize := postMCPRequest(t, baseURL, validMCPInitializePayload(1))
+	if initialize.Error != nil {
+		t.Fatalf("initialize returned error: %+v", initialize.Error)
+	}
+
+	tests := []struct {
+		name     string
+		payload  string
+		wantCode int
+	}{
+		{name: "invalid JSON", payload: `{malformed-json`, wantCode: -32700},
+		{name: "trailing JSON", payload: `{"jsonrpc":"2.0","id":2,"method":"ping"} trailing`, wantCode: -32700},
+		{name: "empty object", payload: `{}`, wantCode: -32600},
+		{name: "wrong JSON-RPC version", payload: `{"jsonrpc":"1.0","id":2,"method":"ping"}`, wantCode: -32600},
+		{name: "non-string method", payload: `{"jsonrpc":"2.0","id":2,"method":1}`, wantCode: -32600},
+		{name: "scalar params", payload: `{"jsonrpc":"2.0","id":2,"method":"ping","params":"bad"}`, wantCode: -32600},
+		{name: "boolean ID", payload: `{"jsonrpc":"2.0","id":true,"method":"ping"}`, wantCode: -32600},
+		{name: "null ID", payload: `{"jsonrpc":"2.0","id":null,"method":"ping"}`, wantCode: -32600},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			request, err := newProductionMCPRequest(
+				ctx,
+				http.MethodPost,
+				baseURL,
+				bytes.NewBufferString(test.payload),
+			)
+			if err != nil {
+				t.Fatalf("create malformed MCP request: %v", err)
 			}
-			if _, ok := response["id"]; ok {
-				t.Log("Note: Server returned id in response to notification (allowed for compatibility)")
+			applyDefaultMCPSession(request, baseURL)
+			response, err := http.DefaultClient.Do(request)
+			if err != nil {
+				t.Fatalf("send malformed MCP request: %v", err)
 			}
+			defer response.Body.Close()
+			if response.StatusCode != http.StatusBadRequest {
+				body, _ := io.ReadAll(response.Body)
+				t.Fatalf("malformed MCP status=%d body=%q, want 400", response.StatusCode, body)
+			}
+			if contentType := response.Header.Get("Content-Type"); !strings.Contains(contentType, "application/json") {
+				t.Fatalf("malformed MCP content type=%q, want application/json", contentType)
+			}
+			var decoded mcpResponse
+			if err := json.NewDecoder(response.Body).Decode(&decoded); err != nil {
+				t.Fatalf("decode malformed MCP response: %v", err)
+			}
+			if decoded.JSONRPC != "2.0" || decoded.Error == nil || decoded.Error.Code != test.wantCode {
+				t.Fatalf("malformed MCP response=%+v, want JSON-RPC error %d", decoded, test.wantCode)
+			}
+			if string(decoded.ID) != "null" {
+				t.Fatalf("malformed MCP response id=%q, want null", decoded.ID)
+			}
+		})
+	}
+
+	following := postMCPRequest(t, baseURL, `{"jsonrpc":"2.0","id":9,"method":"ping"}`)
+	if following.Error != nil || string(following.ID) != "9" || string(following.Result) != "{}" {
+		t.Fatalf("valid request after malformed inputs returned %+v", following)
+	}
+}
+
+func TestMCPConcurrentAndLongSession_HTTP(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
+	serverCmd, serverAddr := startServer(t, ctx)
+	defer cleanupServer(t, serverCmd, serverAddr)
+	_, baseURL, cleanup := startMCPTestServer(t, ctx, serverAddr)
+	defer cleanup()
+
+	initialize := postMCPRequest(t, baseURL, validMCPInitializePayload(1))
+	if initialize.Error != nil {
+		t.Fatalf("initialize returned error: %+v", initialize.Error)
+	}
+	baseline := postMCPRequest(t, baseURL, `{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}`)
+	if baseline.Error != nil || len(baseline.Result) == 0 {
+		t.Fatalf("baseline tools/list response = %+v", baseline)
+	}
+
+	type requestResult struct {
+		response mcpResponse
+		err      error
+		id       int
+		tools    bool
+	}
+	const concurrentRequests = 64
+	results := make(chan requestResult, concurrentRequests)
+	for index := range concurrentRequests {
+		id := 1000 + index
+		tools := index%2 == 0
+		method := "ping"
+		if tools {
+			method = "tools/list"
+		}
+		go func() {
+			payload := fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":%q,"params":{}}`, id, method)
+			response, err := requestMCPHTTP(ctx, baseURL, payload)
+			results <- requestResult{response: response, err: err, id: id, tools: tools}
+		}()
+	}
+	for range concurrentRequests {
+		result := <-results
+		if result.err != nil {
+			t.Fatalf("concurrent request %d failed: %v", result.id, result.err)
+		}
+		if result.response.JSONRPC != "2.0" || result.response.Error != nil || string(result.response.ID) != fmt.Sprint(result.id) {
+			t.Fatalf("concurrent response for %d = %+v", result.id, result.response)
+		}
+		if result.tools {
+			if !bytes.Equal(result.response.Result, baseline.Result) {
+				t.Fatalf("concurrent tools/list result drifted for request %d", result.id)
+			}
+		} else if string(result.response.Result) != "{}" {
+			t.Fatalf("concurrent ping result for %d = %q", result.id, result.response.Result)
 		}
 	}
 
-	t.Log("notifications/initialized handled correctly (no error response)")
+	const longSessionRequests = 256
+	for index := range longSessionRequests {
+		id := 2000 + index
+		method := "ping"
+		wantResult := json.RawMessage(`{}`)
+		if index%32 == 0 {
+			method = "tools/list"
+			wantResult = baseline.Result
+		}
+		payload := fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":%q,"params":{}}`, id, method)
+		response, err := requestMCPHTTP(ctx, baseURL, payload)
+		if err != nil {
+			t.Fatalf("long-session request %d failed: %v", id, err)
+		}
+		if response.Error != nil || string(response.ID) != fmt.Sprint(id) || !bytes.Equal(response.Result, wantResult) {
+			t.Fatalf("long-session response for %d = %+v", id, response)
+		}
+	}
+
+	final := postMCPRequest(t, baseURL, `{"jsonrpc":"2.0","id":9999,"method":"tools/list","params":{}}`)
+	if final.Error != nil || !bytes.Equal(final.Result, baseline.Result) {
+		t.Fatalf("final tools/list response drifted after long session: %+v", final)
+	}
 }
 
-// TestMCPInitialize_DisplayGrounding verifies that display information
-// is included in the initialize response for display grounding.
-// Task: T069
+func TestMCPRequestCancellation_HTTP(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
+	serverCmd, serverAddr := startServer(t, ctx)
+	defer cleanupServer(t, serverCmd, serverAddr)
+	_, baseURL, cleanup := startMCPTestServer(t, ctx, serverAddr)
+	defer cleanup()
+
+	client := &http.Client{Timeout: 15 * time.Second}
+	sessionID := initializeHTTPSession(t, ctx, client, baseURL, 1)
+	requestResult := make(chan sessionHTTPResult, 1)
+	go func() {
+		requestResult <- sendSessionMCP(
+			t,
+			ctx,
+			client,
+			baseURL,
+			http.MethodPost,
+			sessionID,
+			`{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"wait","arguments":{"duration":10}}}`,
+		)
+	}()
+	cancelled := cancelSessionRequestUntilDone(t, ctx, client, baseURL, sessionID, 2, requestResult)
+	if cancelled.Status != http.StatusNoContent || len(cancelled.Body) != 0 {
+		t.Fatalf("cancelled MCP request status=%d body=%q, want 204 empty", cancelled.Status, cancelled.Body)
+	}
+
+	final := sendSessionMCP(t, ctx, client, baseURL, http.MethodPost, sessionID, `{"jsonrpc":"2.0","id":3,"method":"ping"}`)
+	var finalResponse mcpResponse
+	if final.Err != nil || final.Status != http.StatusOK || json.Unmarshal(final.Body, &finalResponse) != nil ||
+		finalResponse.Error != nil || string(finalResponse.ID) != "3" || string(finalResponse.Result) != "{}" {
+		t.Fatalf("ping after cancellation status=%d response=%+v body=%q error=%v", final.Status, finalResponse, final.Body, final.Err)
+	}
+}
+
 func TestMCPInitialize_DisplayGrounding(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
 	defer cleanupServer(t, serverCmd, serverAddr)
-
-	conn := connectToServer(t, ctx, serverAddr)
-	defer conn.Close()
-
 	_, baseURL, cleanup := startMCPTestServer(t, ctx, serverAddr)
 	defer cleanup()
 
-	initRequest := `{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}`
-	resp, err := http.Post(baseURL+"/message", "application/json", bytes.NewBufferString(initRequest))
-	if err != nil {
-		t.Fatalf("Initialize request failed: %v", err)
-	}
-	defer resp.Body.Close()
-
-	var response struct {
-		JSONRPC string          `json:"jsonrpc"`
-		ID      int             `json:"id"`
-		Result  json.RawMessage `json:"result"`
-		Error   *struct {
-			Code    int    `json:"code"`
-			Message string `json:"message"`
-		} `json:"error"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		t.Fatalf("Failed to decode response: %v", err)
-	}
-
+	response := postMCPRequest(t, baseURL, validMCPInitializePayload(1))
 	if response.Error != nil {
-		t.Fatalf("Initialize returned error: %v", response.Error)
+		t.Fatalf("initialize returned error: %+v", response.Error)
 	}
-
-	var initResult struct {
-		ProtocolVersion string `json:"protocolVersion"`
-		DisplayInfo     struct {
+	var result struct {
+		DisplayInfo struct {
 			Screens []struct {
 				ID           string  `json:"id"`
 				Width        float64 `json:"width"`
@@ -212,451 +380,117 @@ func TestMCPInitialize_DisplayGrounding(t *testing.T) {
 			} `json:"screens"`
 		} `json:"displayInfo"`
 	}
-	if err := json.Unmarshal(response.Result, &initResult); err != nil {
-		t.Fatalf("Failed to unmarshal init result: %v", err)
+	if err := json.Unmarshal(response.Result, &result); err != nil {
+		t.Fatalf("decode initialize display grounding: %v", err)
 	}
-
-	if len(initResult.DisplayInfo.Screens) == 0 {
-		t.Fatal("displayInfo.screens is empty - expected at least one screen")
+	if len(result.DisplayInfo.Screens) == 0 {
+		t.Fatal("displayInfo.screens is empty")
 	}
-
-	mainScreen := initResult.DisplayInfo.Screens[0]
-	if mainScreen.ID == "" {
-		t.Error("screen.id should not be empty")
-	}
-	if mainScreen.Width <= 0 {
-		t.Errorf("screen.width = %f, want > 0", mainScreen.Width)
-	}
-	if mainScreen.Height <= 0 {
-		t.Errorf("screen.height = %f, want > 0", mainScreen.Height)
-	}
-	if mainScreen.PixelDensity <= 0 {
-		t.Errorf("screen.pixel_density = %f, want > 0", mainScreen.PixelDensity)
-	}
-
-	hasMain := false
-	for _, screen := range initResult.DisplayInfo.Screens {
-		if screen.ID == "main" {
-			hasMain = true
-			break
+	for _, screen := range result.DisplayInfo.Screens {
+		if screen.ID == "" || screen.Width <= 0 || screen.Height <= 0 || screen.PixelDensity <= 0 {
+			t.Fatalf(
+				"invalid grounded screen: id=%q size=%vx%v density=%v origin=(%v,%v)",
+				screen.ID,
+				screen.Width,
+				screen.Height,
+				screen.PixelDensity,
+				screen.OriginX,
+				screen.OriginY,
+			)
 		}
 	}
-
-	if !hasMain && len(initResult.DisplayInfo.Screens) > 0 {
-		t.Log("Note: No screen with id='main' found (first screen may be secondary display)")
-	}
-
-	for _, s := range initResult.DisplayInfo.Screens {
-		t.Logf("  Screen %s: %vx%v @ (%v,%v), density=%v",
-			s.ID, s.Width, s.Height, s.OriginX, s.OriginY, s.PixelDensity)
-	}
-	t.Logf("Display grounding validated: %d screens", len(initResult.DisplayInfo.Screens))
 }
 
-// TestMCPToolsList_ReturnsAllTools verifies tools/list returns all registered tools.
-func TestMCPToolsList_ReturnsAllTools(t *testing.T) {
+func TestMCPToolsList_ReturnsProductionRegistry(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	serverCmd, serverAddr := startServer(t, ctx)
 	defer cleanupServer(t, serverCmd, serverAddr)
-
-	conn := connectToServer(t, ctx, serverAddr)
-	defer conn.Close()
-
 	_, baseURL, cleanup := startMCPTestServer(t, ctx, serverAddr)
 	defer cleanup()
 
-	initRequest := `{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}`
-	initResp, err := http.Post(baseURL+"/message", "application/json", bytes.NewBufferString(initRequest))
-	if err != nil {
-		t.Fatalf("Initialize failed: %v", err)
+	initialize := postMCPRequest(t, baseURL, validMCPInitializePayload(1))
+	if initialize.Error != nil {
+		t.Fatalf("initialize returned error: %+v", initialize.Error)
 	}
-	initResp.Body.Close()
+	response := postMCPRequest(t, baseURL, `{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}`)
+	if response.Error != nil {
+		t.Fatalf("tools/list returned error: %+v", response.Error)
+	}
 
-	listRequest := `{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}`
-	resp, err := http.Post(baseURL+"/message", "application/json", bytes.NewBufferString(listRequest))
+	var result struct {
+		Tools []struct {
+			Name        string         `json:"name"`
+			Description string         `json:"description"`
+			InputSchema map[string]any `json:"inputSchema"`
+		} `json:"tools"`
+	}
+	if err := json.Unmarshal(response.Result, &result); err != nil {
+		t.Fatalf("decode tools/list result: %v", err)
+	}
+	if len(result.Tools) == 0 {
+		t.Fatal("production tools/list returned no tools")
+	}
+	seen := make(map[string]struct{}, len(result.Tools))
+	for _, tool := range result.Tools {
+		if tool.Name == "" || tool.Description == "" || tool.InputSchema == nil {
+			t.Fatalf("invalid production tool metadata: name=%q description=%q schema=%v", tool.Name, tool.Description, tool.InputSchema)
+		}
+		if _, duplicate := seen[tool.Name]; duplicate {
+			t.Fatalf("production tools/list returned duplicate tool %q", tool.Name)
+		}
+		seen[tool.Name] = struct{}{}
+	}
+	if _, ok := seen["drag"]; !ok {
+		t.Fatal("production tools/list omitted drag")
+	}
+}
+
+type mcpResponse struct {
+	JSONRPC string          `json:"jsonrpc"`
+	ID      json.RawMessage `json:"id"`
+	Result  json.RawMessage `json:"result"`
+	Error   *struct {
+		Code    int    `json:"code"`
+		Message string `json:"message"`
+	} `json:"error"`
+}
+
+func postMCPRequest(t *testing.T, baseURL, payload string) mcpResponse {
+	t.Helper()
+	resp, err := postProductionMCP(t.Context(), baseURL, bytes.NewBufferString(payload))
 	if err != nil {
-		t.Fatalf("tools/list request failed: %v", err)
+		t.Fatalf("send MCP request: %v", err)
 	}
 	defer resp.Body.Close()
-
-	var response struct {
-		Result struct {
-			Tools []struct {
-				Name        string         `json:"name"`
-				Description string         `json:"description"`
-				InputSchema map[string]any `json:"inputSchema"`
-			} `json:"tools"`
-		} `json:"result"`
-		Error *struct {
-			Code    int    `json:"code"`
-			Message string `json:"message"`
-		} `json:"error"`
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		t.Fatalf("MCP request status=%d body=%q", resp.StatusCode, body)
 	}
+	var response mcpResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		t.Fatalf("Failed to decode response: %v", err)
+		t.Fatalf("decode MCP response: %v", err)
 	}
-
-	if response.Error != nil {
-		t.Fatalf("tools/list returned error: %v", response.Error)
+	if response.JSONRPC != "2.0" {
+		t.Fatalf("jsonrpc=%q, want 2.0", response.JSONRPC)
 	}
-
-	expectedToolCount := 23
-	if len(response.Result.Tools) != expectedToolCount {
-		t.Errorf("Expected %d tools, got %d", expectedToolCount, len(response.Result.Tools))
-	}
-
-	criticalTools := []string{
-		"screenshot",
-		"click",
-		"type",
-		"keypress",
-		"list_windows",
-		"get_display",
-	}
-
-	toolMap := make(map[string]bool)
-	for _, tool := range response.Result.Tools {
-		toolMap[tool.Name] = true
-		if tool.Name == "" {
-			t.Error("Tool with empty name found")
-		}
-		if tool.Description == "" {
-			t.Logf("Warning: Tool %s has empty description", tool.Name)
-		}
-		if tool.InputSchema == nil {
-			t.Logf("Warning: Tool %s has nil inputSchema", tool.Name)
-		}
-	}
-
-	for _, toolName := range criticalTools {
-		if !toolMap[toolName] {
-			t.Errorf("Critical tool %q missing from tools/list", toolName)
-		}
-	}
-
-	t.Logf("tools/list returned %d tools", len(response.Result.Tools))
+	return response
 }
 
-// startMCPTestServer starts an MCP server backed by the gRPC server and returns cleanup.
-func startMCPTestServer(t *testing.T, ctx context.Context, grpcAddr string) (*transport.HTTPTransport, string, func()) {
-	t.Helper()
-	cfg := &mcpTestConfig{
-		ServerAddr:     grpcAddr,
-		RequestTimeout: 30,
+func requestMCPHTTP(ctx context.Context, baseURL, payload string) (mcpResponse, error) {
+	response, err := postProductionMCP(ctx, baseURL, bytes.NewBufferString(payload))
+	if err != nil {
+		return mcpResponse{}, fmt.Errorf("send request: %w", err)
 	}
-	return startMCPHTTPTransport(t, ctx, cfg)
-}
-
-// mcpTestConfig mirrors internal/config.Config for test purposes
-type mcpTestConfig struct {
-	ServerAddr     string
-	RequestTimeout int
-}
-
-// startMCPHTTPTransport creates a real MCP HTTP transport connected to gRPC
-func startMCPHTTPTransport(t *testing.T, ctx context.Context, cfg *mcpTestConfig) (*transport.HTTPTransport, string, func()) {
-	t.Helper()
-	conn := connectToServer(t, ctx, cfg.ServerAddr)
-	client := pb.NewMacosUseClient(conn)
-	opsClient := longrunningpb.NewOperationsClient(conn)
-	handler := createMCPTestHandler(t, client, opsClient)
-	tr, baseURL, cleanup := startHTTPTransport(t, ctx, handler)
-	return tr, baseURL, func() {
-		cleanup()
-		conn.Close()
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(response.Body)
+		return mcpResponse{}, fmt.Errorf("status=%d body=%q", response.StatusCode, body)
 	}
-}
-
-// createMCPTestHandler creates an MCP-compliant handler for testing
-func createMCPTestHandler(t *testing.T, client pb.MacosUseClient, opsClient longrunningpb.OperationsClient) func(*transport.Message) (*transport.Message, error) {
-	return func(msg *transport.Message) (*transport.Message, error) {
-		switch msg.Method {
-		case "initialize":
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
-			displayInfo := `{"screens":[]}`
-			if resp, err := client.ListDisplays(ctx, &pb.ListDisplaysRequest{}); err == nil && len(resp.Displays) > 0 {
-				screens := make([]map[string]any, 0, len(resp.Displays))
-				for i, d := range resp.Displays {
-					id := "main"
-					if !d.IsMain {
-						id = strings.ReplaceAll(strings.ToLower(d.Name), "/", "-")
-						if id == "" {
-							id = "display-" + string(rune('0'+i))
-						}
-					}
-					screens = append(screens, map[string]any{
-						"id":            id,
-						"width":         d.Frame.Width,
-						"height":        d.Frame.Height,
-						"pixel_density": d.Scale,
-						"origin_x":      d.Frame.X,
-						"origin_y":      d.Frame.Y,
-					})
-				}
-				if infoBytes, err := json.Marshal(map[string]any{"screens": screens}); err == nil {
-					displayInfo = string(infoBytes)
-				}
-			}
-			result := []byte(`{"protocolVersion":"2025-11-25","capabilities":{"tools":{}},"serverInfo":{"name":"macos-use-sdk","version":"0.1.0"},"displayInfo":` + displayInfo + `}`)
-			return &transport.Message{
-				JSONRPC: "2.0",
-				ID:      msg.ID,
-				Result:  result,
-			}, nil
-		case "notifications/initialized":
-			return nil, nil
-		case "tools/list":
-			tools := getMCPToolDefinitions()
-			result, _ := json.Marshal(map[string]any{"tools": tools})
-			return &transport.Message{
-				JSONRPC: "2.0",
-				ID:      msg.ID,
-				Result:  result,
-			}, nil
-		case "tools/call":
-			var params struct {
-				Name      string          `json:"name"`
-				Arguments json.RawMessage `json:"arguments"`
-			}
-			if err := json.Unmarshal(msg.Params, &params); err != nil {
-				return &transport.Message{
-					JSONRPC: "2.0",
-					ID:      msg.ID,
-					Error: &transport.ErrorObj{
-						Code:    transport.ErrCodeInvalidParams,
-						Message: err.Error(),
-					},
-				}, nil
-			}
-			// Check if tool is in known tool list; if not, return JSON-RPC error
-			if !isKnownTool(params.Name) {
-				return &transport.Message{
-					JSONRPC: "2.0",
-					ID:      msg.ID,
-					Error: &transport.ErrorObj{
-						Code:    transport.ErrCodeMethodNotFound,
-						Message: "Unknown tool: " + params.Name,
-					},
-				}, nil
-			}
-			result, isError := executeMCPToolCall(client, opsClient, params.Name, params.Arguments)
-			resultMap := map[string]any{
-				"content": []map[string]any{
-					{"type": "text", "text": result},
-				},
-			}
-			if isError {
-				resultMap["isError"] = true
-			}
-			resultBytes, _ := json.Marshal(resultMap)
-			return &transport.Message{
-				JSONRPC: "2.0",
-				ID:      msg.ID,
-				Result:  resultBytes,
-			}, nil
-		default:
-			return &transport.Message{
-				JSONRPC: "2.0",
-				ID:      msg.ID,
-				Error: &transport.ErrorObj{
-					Code:    transport.ErrCodeMethodNotFound,
-					Message: "Method not found: " + msg.Method,
-				},
-			}, nil
-		}
+	var decoded mcpResponse
+	if err := json.NewDecoder(response.Body).Decode(&decoded); err != nil {
+		return mcpResponse{}, fmt.Errorf("decode response: %w", err)
 	}
-}
-
-// getMCPToolDefinitions returns the redesigned MCP tool definitions used by tests.
-func getMCPToolDefinitions() []map[string]any {
-	return []map[string]any{
-		{"name": "screenshot", "description": "Capture screen and return base64-encoded image", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
-		{"name": "click", "description": "Click at screen coordinates", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}, "required": []string{"x", "y"}}},
-		{"name": "double_click", "description": "Double-click at screen coordinates", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}, "required": []string{"x", "y"}}},
-		{"name": "type", "description": "Type text", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}, "required": []string{"text"}}},
-		{"name": "keypress", "description": "Press a key", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}, "required": []string{"keys"}}},
-		{"name": "scroll", "description": "Scroll content", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
-		{"name": "drag", "description": "Drag", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}, "required": []string{"path"}}},
-		{"name": "move", "description": "Move mouse", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}, "required": []string{"x", "y"}}},
-		{"name": "wait", "description": "Wait for duration", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
-		{"name": "open_app", "description": "Open an application", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
-		{"name": "list_apps", "description": "List applications", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
-		{"name": "close_app", "description": "Close an application", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
-		{"name": "find_elements", "description": "Find accessibility elements", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
-		{"name": "click_element", "description": "Click an accessibility element", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
-		{"name": "type_element", "description": "Type text into an accessibility element", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
-		{"name": "read_element", "description": "Read an accessibility element", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
-		{"name": "focus_window", "description": "Focus a window", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
-		{"name": "move_window", "description": "Move a window", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
-		{"name": "resize_window", "description": "Resize a window", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
-		{"name": "list_windows", "description": "List windows", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
-		{"name": "clipboard", "description": "Clipboard operations", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
-		{"name": "run", "description": "Run commands", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
-		{"name": "get_display", "description": "Get display information", "inputSchema": map[string]any{"type": "object", "properties": map[string]any{}}},
-	}
-}
-
-// isKnownTool checks if a tool name is in the redesigned tool list.
-func isKnownTool(name string) bool {
-	for _, tool := range getMCPToolDefinitions() {
-		if tool["name"] == name {
-			return true
-		}
-	}
-	return false
-}
-
-// executeMCPToolCall executes an MCP tool call via gRPC backend
-func executeMCPToolCall(client pb.MacosUseClient, _ longrunningpb.OperationsClient, toolName string, args json.RawMessage) (string, bool) {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-	defer cancel()
-	switch toolName {
-	case "get_display":
-		resp, err := client.ListDisplays(ctx, &pb.ListDisplaysRequest{})
-		if err != nil {
-			return "Error: " + err.Error(), true
-		}
-		result, _ := json.Marshal(resp.Displays)
-		return string(result), false
-	case "list_windows":
-		var params struct {
-			App       string `json:"app"`
-			PageSize  int32  `json:"page_size"`
-			PageToken string `json:"page_token"`
-		}
-		if err := json.Unmarshal(args, &params); err != nil {
-			return "Invalid params: " + err.Error(), true
-		}
-		resp, err := client.ListWindows(ctx, &pb.ListWindowsRequest{
-			Parent:    params.App,
-			PageSize:  params.PageSize,
-			PageToken: params.PageToken,
-		})
-		if err != nil {
-			return "Error: " + err.Error(), true
-		}
-		if len(resp.Windows) == 0 {
-			return "No windows found", true
-		}
-		lines := make([]string, 0, len(resp.Windows))
-		for _, w := range resp.Windows {
-			lines = append(lines, fmt.Sprintf("- %s (%s)", w.Title, w.Name))
-		}
-		result := fmt.Sprintf("Found %d windows:\n%s", len(resp.Windows), strings.Join(lines, "\n"))
-		if resp.NextPageToken != "" {
-			result += fmt.Sprintf("\n\nMore results available. Use page_token: %s", resp.NextPageToken)
-		}
-		return result, false
-	case "screenshot":
-		resp, err := client.CaptureScreenshot(ctx, &pb.CaptureScreenshotRequest{})
-		if err != nil {
-			return "Error: " + err.Error(), true
-		}
-		data := "Screenshot captured, size: "
-		if len(resp.ImageData) > 0 {
-			data += string(rune(len(resp.ImageData)/1024)) + "KB"
-		}
-		return data, false
-	case "type":
-		var params struct {
-			Text string `json:"text"`
-		}
-		if err := json.Unmarshal(args, &params); err != nil {
-			return "Invalid params: " + err.Error(), true
-		}
-		_, err := client.CreateInput(ctx, &pb.CreateInputRequest{
-			Parent: "applications/-",
-			Input: &pb.Input{
-				Action: &pb.InputAction{
-					InputType: &pb.InputAction_TypeText{
-						TypeText: &pb.TextInput{
-							Text: params.Text,
-						},
-					},
-				},
-			},
-		})
-		if err != nil {
-			return "Error: " + err.Error(), true
-		}
-		return "Text typed: " + params.Text, false
-	case "keypress":
-		var params struct {
-			Keys []string `json:"keys"`
-		}
-		if err := json.Unmarshal(args, &params); err != nil {
-			return "Invalid params: " + err.Error(), true
-		}
-		if len(params.Keys) == 0 {
-			return "Invalid params: keys is required", true
-		}
-		primaryKey := params.Keys[len(params.Keys)-1]
-		var modifiers []pb.KeyPress_Modifier
-		for _, mod := range params.Keys[:len(params.Keys)-1] {
-			switch strings.ToLower(mod) {
-			case "command", "cmd":
-				modifiers = append(modifiers, pb.KeyPress_MODIFIER_COMMAND)
-			case "option", "alt":
-				modifiers = append(modifiers, pb.KeyPress_MODIFIER_OPTION)
-			case "control", "ctrl":
-				modifiers = append(modifiers, pb.KeyPress_MODIFIER_CONTROL)
-			case "shift":
-				modifiers = append(modifiers, pb.KeyPress_MODIFIER_SHIFT)
-			case "function", "fn":
-				modifiers = append(modifiers, pb.KeyPress_MODIFIER_FUNCTION)
-			case "capslock":
-				modifiers = append(modifiers, pb.KeyPress_MODIFIER_CAPS_LOCK)
-			}
-		}
-		_, err := client.CreateInput(ctx, &pb.CreateInputRequest{
-			Parent: "applications/-",
-			Input: &pb.Input{
-				Action: &pb.InputAction{
-					InputType: &pb.InputAction_PressKey{
-						PressKey: &pb.KeyPress{
-							Key:       primaryKey,
-							Modifiers: modifiers,
-						},
-					},
-				},
-			},
-		})
-		if err != nil {
-			return "Error: " + err.Error(), true
-		}
-		return "Key pressed: " + primaryKey, false
-	case "click":
-		var params struct {
-			X *float64 `json:"x"`
-			Y *float64 `json:"y"`
-		}
-		if err := json.Unmarshal(args, &params); err != nil {
-			return "Invalid params: " + err.Error(), true
-		}
-		if params.X == nil || params.Y == nil {
-			return "Invalid params: x and y are required", true
-		}
-		_, err := client.CreateInput(ctx, &pb.CreateInputRequest{
-			Parent: "applications/-",
-			Input: &pb.Input{
-				Action: &pb.InputAction{
-					InputType: &pb.InputAction_Click{
-						Click: &pb.MouseClick{
-							Position:  &pbtype.Point{X: *params.X, Y: *params.Y},
-							ClickType: pb.MouseClick_CLICK_TYPE_LEFT,
-						},
-					},
-				},
-			},
-		})
-		if err != nil {
-			return "Error: " + err.Error(), true
-		}
-		return "Clicked", false
-	default:
-		return "Tool not implemented in test: " + toolName, true
-	}
+	return decoded, nil
 }

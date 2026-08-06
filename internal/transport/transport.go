@@ -1,8 +1,24 @@
 // Copyright 2025 Joseph Cumines
 
 // Package transport provides MCP message transport interfaces and implementations
-// for JSON-RPC 2.0 communication over stdio and HTTP/SSE.
+// for JSON-RPC 2.0 communication over stdio and Streamable HTTP.
 package transport
+
+import "errors"
+
+var (
+	// ErrRequestCancelled tells a transport that explicit MCP cancellation won
+	// the completion race and the original request must not receive a response.
+	ErrRequestCancelled = errors.New("MCP request cancelled")
+	// ErrTransportClosed identifies local transport shutdown independently from
+	// peer EOF or an underlying I/O failure.
+	ErrTransportClosed = errors.New("transport is closed")
+)
+
+// MaxJSONRPCMessageBytes is the shared maximum size of one JSON-RPC message.
+// HTTP counts request-body bytes. Newline-delimited stdio counts every frame
+// byte except the terminating LF.
+const MaxJSONRPCMessageBytes = 8 << 20
 
 // JSON-RPC 2.0 standard error codes.
 // See: https://www.jsonrpc.org/specification#error_object
@@ -21,6 +37,10 @@ const (
 
 	// ErrCodeInternalError indicates an internal JSON-RPC error.
 	ErrCodeInternalError = -32603
+
+	// ErrCodeServerBusy indicates that the implementation-defined active request
+	// budget is exhausted and the request was not admitted for execution.
+	ErrCodeServerBusy = -32000
 )
 
 // Transport defines the interface for MCP message transport.

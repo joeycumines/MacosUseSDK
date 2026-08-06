@@ -13,7 +13,6 @@ package macosusesdkv1
 import (
 	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
 	context "context"
-	_type "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -26,10 +25,13 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	MacosUse_GetApplicationBundle_FullMethodName     = "/macosusesdk.v1.MacosUse/GetApplicationBundle"
+	MacosUse_ListApplicationBundles_FullMethodName   = "/macosusesdk.v1.MacosUse/ListApplicationBundles"
 	MacosUse_OpenApplication_FullMethodName          = "/macosusesdk.v1.MacosUse/OpenApplication"
 	MacosUse_GetApplication_FullMethodName           = "/macosusesdk.v1.MacosUse/GetApplication"
 	MacosUse_ListApplications_FullMethodName         = "/macosusesdk.v1.MacosUse/ListApplications"
-	MacosUse_DeleteApplication_FullMethodName        = "/macosusesdk.v1.MacosUse/DeleteApplication"
+	MacosUse_ActivateApplication_FullMethodName      = "/macosusesdk.v1.MacosUse/ActivateApplication"
+	MacosUse_CloseApplication_FullMethodName         = "/macosusesdk.v1.MacosUse/CloseApplication"
 	MacosUse_CreateInput_FullMethodName              = "/macosusesdk.v1.MacosUse/CreateInput"
 	MacosUse_GetInput_FullMethodName                 = "/macosusesdk.v1.MacosUse/GetInput"
 	MacosUse_ListInputs_FullMethodName               = "/macosusesdk.v1.MacosUse/ListInputs"
@@ -47,6 +49,7 @@ const (
 	MacosUse_FindElements_FullMethodName             = "/macosusesdk.v1.MacosUse/FindElements"
 	MacosUse_FindRegionElements_FullMethodName       = "/macosusesdk.v1.MacosUse/FindRegionElements"
 	MacosUse_GetElement_FullMethodName               = "/macosusesdk.v1.MacosUse/GetElement"
+	MacosUse_ListElements_FullMethodName             = "/macosusesdk.v1.MacosUse/ListElements"
 	MacosUse_ClickElement_FullMethodName             = "/macosusesdk.v1.MacosUse/ClickElement"
 	MacosUse_WriteElementValue_FullMethodName        = "/macosusesdk.v1.MacosUse/WriteElementValue"
 	MacosUse_GetElementActions_FullMethodName        = "/macosusesdk.v1.MacosUse/GetElementActions"
@@ -79,9 +82,6 @@ const (
 	MacosUse_GetClipboardHistory_FullMethodName      = "/macosusesdk.v1.MacosUse/GetClipboardHistory"
 	MacosUse_AutomateOpenFileDialog_FullMethodName   = "/macosusesdk.v1.MacosUse/AutomateOpenFileDialog"
 	MacosUse_AutomateSaveFileDialog_FullMethodName   = "/macosusesdk.v1.MacosUse/AutomateSaveFileDialog"
-	MacosUse_SelectFile_FullMethodName               = "/macosusesdk.v1.MacosUse/SelectFile"
-	MacosUse_SelectDirectory_FullMethodName          = "/macosusesdk.v1.MacosUse/SelectDirectory"
-	MacosUse_DragFiles_FullMethodName                = "/macosusesdk.v1.MacosUse/DragFiles"
 	MacosUse_CreateMacro_FullMethodName              = "/macosusesdk.v1.MacosUse/CreateMacro"
 	MacosUse_GetMacro_FullMethodName                 = "/macosusesdk.v1.MacosUse/GetMacro"
 	MacosUse_ListMacros_FullMethodName               = "/macosusesdk.v1.MacosUse/ListMacros"
@@ -101,14 +101,21 @@ const (
 //
 // MacosUse is the primary service for automating macOS applications.
 type MacosUseClient interface {
-	// Opens or activates an application. This is a long-running operation.
-	OpenApplication(ctx context.Context, in *OpenApplicationRequest, opts ...grpc.CallOption) (*longrunningpb.Operation, error)
-	// Gets a specific application being tracked.
+	// Gets one exact installed application bundle.
+	GetApplicationBundle(ctx context.Context, in *GetApplicationBundleRequest, opts ...grpc.CallOption) (*ApplicationBundle, error)
+	// Lists discoverable installed application bundles without opening them.
+	ListApplicationBundles(ctx context.Context, in *ListApplicationBundlesRequest, opts ...grpc.CallOption) (*ListApplicationBundlesResponse, error)
+	// Opens one exact installed application bundle.
+	OpenApplication(ctx context.Context, in *OpenApplicationRequest, opts ...grpc.CallOption) (*OpenApplicationResponse, error)
+	// Gets one exact running application process instance.
 	GetApplication(ctx context.Context, in *GetApplicationRequest, opts ...grpc.CallOption) (*Application, error)
-	// Lists all applications currently tracked.
+	// Lists exact currently running user application process instances.
 	ListApplications(ctx context.Context, in *ListApplicationsRequest, opts ...grpc.CallOption) (*ListApplicationsResponse, error)
-	// Stops tracking an application. This does NOT quit the app.
-	DeleteApplication(ctx context.Context, in *DeleteApplicationRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Activates one exact running application process instance.
+	ActivateApplication(ctx context.Context, in *ActivateApplicationRequest, opts ...grpc.CallOption) (*ActivateApplicationResponse, error)
+	// Closes an exact tracked application instance and stops tracking it after
+	// the owned process is observed to exit.
+	CloseApplication(ctx context.Context, in *CloseApplicationRequest, opts ...grpc.CallOption) (*CloseApplicationResponse, error)
 	// Creates an input action to be executed.
 	CreateInput(ctx context.Context, in *CreateInputRequest, opts ...grpc.CallOption) (*Input, error)
 	// Gets a specific input.
@@ -142,7 +149,9 @@ type MacosUseClient interface {
 	// Finds elements within a screen region.
 	FindRegionElements(ctx context.Context, in *FindRegionElementsRequest, opts ...grpc.CallOption) (*FindRegionElementsResponse, error)
 	// Gets a specific element.
-	GetElement(ctx context.Context, in *GetElementRequest, opts ...grpc.CallOption) (*_type.Element, error)
+	GetElement(ctx context.Context, in *GetElementRequest, opts ...grpc.CallOption) (*Element, error)
+	// Lists retained element resources for an application.
+	ListElements(ctx context.Context, in *ListElementsRequest, opts ...grpc.CallOption) (*ListElementsResponse, error)
 	// Clicks an element.
 	ClickElement(ctx context.Context, in *ClickElementRequest, opts ...grpc.CallOption) (*ClickElementResponse, error)
 	// Writes an element's value.
@@ -208,12 +217,6 @@ type MacosUseClient interface {
 	AutomateOpenFileDialog(ctx context.Context, in *AutomateOpenFileDialogRequest, opts ...grpc.CallOption) (*AutomateOpenFileDialogResponse, error)
 	// Automates a save file dialog.
 	AutomateSaveFileDialog(ctx context.Context, in *AutomateSaveFileDialogRequest, opts ...grpc.CallOption) (*AutomateSaveFileDialogResponse, error)
-	// Selects a file programmatically.
-	SelectFile(ctx context.Context, in *SelectFileRequest, opts ...grpc.CallOption) (*SelectFileResponse, error)
-	// Selects a directory.
-	SelectDirectory(ctx context.Context, in *SelectDirectoryRequest, opts ...grpc.CallOption) (*SelectDirectoryResponse, error)
-	// Drags and drops files.
-	DragFiles(ctx context.Context, in *DragFilesRequest, opts ...grpc.CallOption) (*DragFilesResponse, error)
 	// Creates a macro.
 	CreateMacro(ctx context.Context, in *CreateMacroRequest, opts ...grpc.CallOption) (*Macro, error)
 	// Gets a macro.
@@ -246,9 +249,29 @@ func NewMacosUseClient(cc grpc.ClientConnInterface) MacosUseClient {
 	return &macosUseClient{cc}
 }
 
-func (c *macosUseClient) OpenApplication(ctx context.Context, in *OpenApplicationRequest, opts ...grpc.CallOption) (*longrunningpb.Operation, error) {
+func (c *macosUseClient) GetApplicationBundle(ctx context.Context, in *GetApplicationBundleRequest, opts ...grpc.CallOption) (*ApplicationBundle, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(longrunningpb.Operation)
+	out := new(ApplicationBundle)
+	err := c.cc.Invoke(ctx, MacosUse_GetApplicationBundle_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *macosUseClient) ListApplicationBundles(ctx context.Context, in *ListApplicationBundlesRequest, opts ...grpc.CallOption) (*ListApplicationBundlesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListApplicationBundlesResponse)
+	err := c.cc.Invoke(ctx, MacosUse_ListApplicationBundles_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *macosUseClient) OpenApplication(ctx context.Context, in *OpenApplicationRequest, opts ...grpc.CallOption) (*OpenApplicationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OpenApplicationResponse)
 	err := c.cc.Invoke(ctx, MacosUse_OpenApplication_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -276,10 +299,20 @@ func (c *macosUseClient) ListApplications(ctx context.Context, in *ListApplicati
 	return out, nil
 }
 
-func (c *macosUseClient) DeleteApplication(ctx context.Context, in *DeleteApplicationRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *macosUseClient) ActivateApplication(ctx context.Context, in *ActivateApplicationRequest, opts ...grpc.CallOption) (*ActivateApplicationResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, MacosUse_DeleteApplication_FullMethodName, in, out, cOpts...)
+	out := new(ActivateApplicationResponse)
+	err := c.cc.Invoke(ctx, MacosUse_ActivateApplication_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *macosUseClient) CloseApplication(ctx context.Context, in *CloseApplicationRequest, opts ...grpc.CallOption) (*CloseApplicationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CloseApplicationResponse)
+	err := c.cc.Invoke(ctx, MacosUse_CloseApplication_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -455,10 +488,20 @@ func (c *macosUseClient) FindRegionElements(ctx context.Context, in *FindRegionE
 	return out, nil
 }
 
-func (c *macosUseClient) GetElement(ctx context.Context, in *GetElementRequest, opts ...grpc.CallOption) (*_type.Element, error) {
+func (c *macosUseClient) GetElement(ctx context.Context, in *GetElementRequest, opts ...grpc.CallOption) (*Element, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(_type.Element)
+	out := new(Element)
 	err := c.cc.Invoke(ctx, MacosUse_GetElement_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *macosUseClient) ListElements(ctx context.Context, in *ListElementsRequest, opts ...grpc.CallOption) (*ListElementsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListElementsResponse)
+	err := c.cc.Invoke(ctx, MacosUse_ListElements_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -794,36 +837,6 @@ func (c *macosUseClient) AutomateSaveFileDialog(ctx context.Context, in *Automat
 	return out, nil
 }
 
-func (c *macosUseClient) SelectFile(ctx context.Context, in *SelectFileRequest, opts ...grpc.CallOption) (*SelectFileResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(SelectFileResponse)
-	err := c.cc.Invoke(ctx, MacosUse_SelectFile_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *macosUseClient) SelectDirectory(ctx context.Context, in *SelectDirectoryRequest, opts ...grpc.CallOption) (*SelectDirectoryResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(SelectDirectoryResponse)
-	err := c.cc.Invoke(ctx, MacosUse_SelectDirectory_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *macosUseClient) DragFiles(ctx context.Context, in *DragFilesRequest, opts ...grpc.CallOption) (*DragFilesResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DragFilesResponse)
-	err := c.cc.Invoke(ctx, MacosUse_DragFiles_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *macosUseClient) CreateMacro(ctx context.Context, in *CreateMacroRequest, opts ...grpc.CallOption) (*Macro, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Macro)
@@ -940,14 +953,21 @@ func (c *macosUseClient) GetScriptingDictionaries(ctx context.Context, in *GetSc
 //
 // MacosUse is the primary service for automating macOS applications.
 type MacosUseServer interface {
-	// Opens or activates an application. This is a long-running operation.
-	OpenApplication(context.Context, *OpenApplicationRequest) (*longrunningpb.Operation, error)
-	// Gets a specific application being tracked.
+	// Gets one exact installed application bundle.
+	GetApplicationBundle(context.Context, *GetApplicationBundleRequest) (*ApplicationBundle, error)
+	// Lists discoverable installed application bundles without opening them.
+	ListApplicationBundles(context.Context, *ListApplicationBundlesRequest) (*ListApplicationBundlesResponse, error)
+	// Opens one exact installed application bundle.
+	OpenApplication(context.Context, *OpenApplicationRequest) (*OpenApplicationResponse, error)
+	// Gets one exact running application process instance.
 	GetApplication(context.Context, *GetApplicationRequest) (*Application, error)
-	// Lists all applications currently tracked.
+	// Lists exact currently running user application process instances.
 	ListApplications(context.Context, *ListApplicationsRequest) (*ListApplicationsResponse, error)
-	// Stops tracking an application. This does NOT quit the app.
-	DeleteApplication(context.Context, *DeleteApplicationRequest) (*emptypb.Empty, error)
+	// Activates one exact running application process instance.
+	ActivateApplication(context.Context, *ActivateApplicationRequest) (*ActivateApplicationResponse, error)
+	// Closes an exact tracked application instance and stops tracking it after
+	// the owned process is observed to exit.
+	CloseApplication(context.Context, *CloseApplicationRequest) (*CloseApplicationResponse, error)
 	// Creates an input action to be executed.
 	CreateInput(context.Context, *CreateInputRequest) (*Input, error)
 	// Gets a specific input.
@@ -981,7 +1001,9 @@ type MacosUseServer interface {
 	// Finds elements within a screen region.
 	FindRegionElements(context.Context, *FindRegionElementsRequest) (*FindRegionElementsResponse, error)
 	// Gets a specific element.
-	GetElement(context.Context, *GetElementRequest) (*_type.Element, error)
+	GetElement(context.Context, *GetElementRequest) (*Element, error)
+	// Lists retained element resources for an application.
+	ListElements(context.Context, *ListElementsRequest) (*ListElementsResponse, error)
 	// Clicks an element.
 	ClickElement(context.Context, *ClickElementRequest) (*ClickElementResponse, error)
 	// Writes an element's value.
@@ -1047,12 +1069,6 @@ type MacosUseServer interface {
 	AutomateOpenFileDialog(context.Context, *AutomateOpenFileDialogRequest) (*AutomateOpenFileDialogResponse, error)
 	// Automates a save file dialog.
 	AutomateSaveFileDialog(context.Context, *AutomateSaveFileDialogRequest) (*AutomateSaveFileDialogResponse, error)
-	// Selects a file programmatically.
-	SelectFile(context.Context, *SelectFileRequest) (*SelectFileResponse, error)
-	// Selects a directory.
-	SelectDirectory(context.Context, *SelectDirectoryRequest) (*SelectDirectoryResponse, error)
-	// Drags and drops files.
-	DragFiles(context.Context, *DragFilesRequest) (*DragFilesResponse, error)
 	// Creates a macro.
 	CreateMacro(context.Context, *CreateMacroRequest) (*Macro, error)
 	// Gets a macro.
@@ -1085,7 +1101,13 @@ type MacosUseServer interface {
 // pointer dereference when methods are called.
 type UnimplementedMacosUseServer struct{}
 
-func (UnimplementedMacosUseServer) OpenApplication(context.Context, *OpenApplicationRequest) (*longrunningpb.Operation, error) {
+func (UnimplementedMacosUseServer) GetApplicationBundle(context.Context, *GetApplicationBundleRequest) (*ApplicationBundle, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetApplicationBundle not implemented")
+}
+func (UnimplementedMacosUseServer) ListApplicationBundles(context.Context, *ListApplicationBundlesRequest) (*ListApplicationBundlesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListApplicationBundles not implemented")
+}
+func (UnimplementedMacosUseServer) OpenApplication(context.Context, *OpenApplicationRequest) (*OpenApplicationResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method OpenApplication not implemented")
 }
 func (UnimplementedMacosUseServer) GetApplication(context.Context, *GetApplicationRequest) (*Application, error) {
@@ -1094,8 +1116,11 @@ func (UnimplementedMacosUseServer) GetApplication(context.Context, *GetApplicati
 func (UnimplementedMacosUseServer) ListApplications(context.Context, *ListApplicationsRequest) (*ListApplicationsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListApplications not implemented")
 }
-func (UnimplementedMacosUseServer) DeleteApplication(context.Context, *DeleteApplicationRequest) (*emptypb.Empty, error) {
-	return nil, status.Error(codes.Unimplemented, "method DeleteApplication not implemented")
+func (UnimplementedMacosUseServer) ActivateApplication(context.Context, *ActivateApplicationRequest) (*ActivateApplicationResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ActivateApplication not implemented")
+}
+func (UnimplementedMacosUseServer) CloseApplication(context.Context, *CloseApplicationRequest) (*CloseApplicationResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CloseApplication not implemented")
 }
 func (UnimplementedMacosUseServer) CreateInput(context.Context, *CreateInputRequest) (*Input, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateInput not implemented")
@@ -1145,8 +1170,11 @@ func (UnimplementedMacosUseServer) FindElements(context.Context, *FindElementsRe
 func (UnimplementedMacosUseServer) FindRegionElements(context.Context, *FindRegionElementsRequest) (*FindRegionElementsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method FindRegionElements not implemented")
 }
-func (UnimplementedMacosUseServer) GetElement(context.Context, *GetElementRequest) (*_type.Element, error) {
+func (UnimplementedMacosUseServer) GetElement(context.Context, *GetElementRequest) (*Element, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetElement not implemented")
+}
+func (UnimplementedMacosUseServer) ListElements(context.Context, *ListElementsRequest) (*ListElementsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListElements not implemented")
 }
 func (UnimplementedMacosUseServer) ClickElement(context.Context, *ClickElementRequest) (*ClickElementResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ClickElement not implemented")
@@ -1244,15 +1272,6 @@ func (UnimplementedMacosUseServer) AutomateOpenFileDialog(context.Context, *Auto
 func (UnimplementedMacosUseServer) AutomateSaveFileDialog(context.Context, *AutomateSaveFileDialogRequest) (*AutomateSaveFileDialogResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method AutomateSaveFileDialog not implemented")
 }
-func (UnimplementedMacosUseServer) SelectFile(context.Context, *SelectFileRequest) (*SelectFileResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method SelectFile not implemented")
-}
-func (UnimplementedMacosUseServer) SelectDirectory(context.Context, *SelectDirectoryRequest) (*SelectDirectoryResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method SelectDirectory not implemented")
-}
-func (UnimplementedMacosUseServer) DragFiles(context.Context, *DragFilesRequest) (*DragFilesResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method DragFiles not implemented")
-}
 func (UnimplementedMacosUseServer) CreateMacro(context.Context, *CreateMacroRequest) (*Macro, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateMacro not implemented")
 }
@@ -1305,6 +1324,42 @@ func RegisterMacosUseServer(s grpc.ServiceRegistrar, srv MacosUseServer) {
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&MacosUse_ServiceDesc, srv)
+}
+
+func _MacosUse_GetApplicationBundle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetApplicationBundleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MacosUseServer).GetApplicationBundle(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MacosUse_GetApplicationBundle_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MacosUseServer).GetApplicationBundle(ctx, req.(*GetApplicationBundleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MacosUse_ListApplicationBundles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListApplicationBundlesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MacosUseServer).ListApplicationBundles(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MacosUse_ListApplicationBundles_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MacosUseServer).ListApplicationBundles(ctx, req.(*ListApplicationBundlesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _MacosUse_OpenApplication_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -1361,20 +1416,38 @@ func _MacosUse_ListApplications_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MacosUse_DeleteApplication_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteApplicationRequest)
+func _MacosUse_ActivateApplication_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ActivateApplicationRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MacosUseServer).DeleteApplication(ctx, in)
+		return srv.(MacosUseServer).ActivateApplication(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MacosUse_DeleteApplication_FullMethodName,
+		FullMethod: MacosUse_ActivateApplication_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MacosUseServer).DeleteApplication(ctx, req.(*DeleteApplicationRequest))
+		return srv.(MacosUseServer).ActivateApplication(ctx, req.(*ActivateApplicationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MacosUse_CloseApplication_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CloseApplicationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MacosUseServer).CloseApplication(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MacosUse_CloseApplication_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MacosUseServer).CloseApplication(ctx, req.(*CloseApplicationRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1674,6 +1747,24 @@ func _MacosUse_GetElement_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MacosUseServer).GetElement(ctx, req.(*GetElementRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MacosUse_ListElements_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListElementsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MacosUseServer).ListElements(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MacosUse_ListElements_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MacosUseServer).ListElements(ctx, req.(*ListElementsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2247,60 +2338,6 @@ func _MacosUse_AutomateSaveFileDialog_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MacosUse_SelectFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SelectFileRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MacosUseServer).SelectFile(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: MacosUse_SelectFile_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MacosUseServer).SelectFile(ctx, req.(*SelectFileRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _MacosUse_SelectDirectory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SelectDirectoryRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MacosUseServer).SelectDirectory(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: MacosUse_SelectDirectory_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MacosUseServer).SelectDirectory(ctx, req.(*SelectDirectoryRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _MacosUse_DragFiles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DragFilesRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MacosUseServer).DragFiles(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: MacosUse_DragFiles_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MacosUseServer).DragFiles(ctx, req.(*DragFilesRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _MacosUse_CreateMacro_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateMacroRequest)
 	if err := dec(in); err != nil {
@@ -2507,6 +2544,14 @@ var MacosUse_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*MacosUseServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
+			MethodName: "GetApplicationBundle",
+			Handler:    _MacosUse_GetApplicationBundle_Handler,
+		},
+		{
+			MethodName: "ListApplicationBundles",
+			Handler:    _MacosUse_ListApplicationBundles_Handler,
+		},
+		{
 			MethodName: "OpenApplication",
 			Handler:    _MacosUse_OpenApplication_Handler,
 		},
@@ -2519,8 +2564,12 @@ var MacosUse_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _MacosUse_ListApplications_Handler,
 		},
 		{
-			MethodName: "DeleteApplication",
-			Handler:    _MacosUse_DeleteApplication_Handler,
+			MethodName: "ActivateApplication",
+			Handler:    _MacosUse_ActivateApplication_Handler,
+		},
+		{
+			MethodName: "CloseApplication",
+			Handler:    _MacosUse_CloseApplication_Handler,
 		},
 		{
 			MethodName: "CreateInput",
@@ -2585,6 +2634,10 @@ var MacosUse_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetElement",
 			Handler:    _MacosUse_GetElement_Handler,
+		},
+		{
+			MethodName: "ListElements",
+			Handler:    _MacosUse_ListElements_Handler,
 		},
 		{
 			MethodName: "ClickElement",
@@ -2709,18 +2762,6 @@ var MacosUse_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AutomateSaveFileDialog",
 			Handler:    _MacosUse_AutomateSaveFileDialog_Handler,
-		},
-		{
-			MethodName: "SelectFile",
-			Handler:    _MacosUse_SelectFile_Handler,
-		},
-		{
-			MethodName: "SelectDirectory",
-			Handler:    _MacosUse_SelectDirectory_Handler,
-		},
-		{
-			MethodName: "DragFiles",
-			Handler:    _MacosUse_DragFiles_Handler,
 		},
 		{
 			MethodName: "CreateMacro",

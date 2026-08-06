@@ -6,7 +6,9 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -15,40 +17,51 @@ import (
 
 // handleGetDisplay handles the get_display tool — returns display info and cursor position.
 func (s *MCPServer) cuaHandleGetDisplay(call *ToolCall) (*ToolResult, error) {
-	ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.RequestTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(s.toolCallContext(call), time.Duration(s.cfg.RequestTimeout)*time.Second)
 	defer cancel()
 
-	// Get displays
-	displaysResp, err := s.client.ListDisplays(ctx, &pb.ListDisplaysRequest{})
+	displays, err := loadAndValidateDisplayTopology(ctx, s.client)
 	if err != nil {
+		var validationError *displayResponseValidationError
+		if errors.As(err, &validationError) {
+			return errorResultf("Invalid display response: %v", err), nil
+		}
 		return grpcErrorResult(err, "get_display"), nil
 	}
 
-	// Get cursor position
 	cursorResp, cursorErr := s.client.CaptureCursorPosition(ctx, &pb.CaptureCursorPositionRequest{})
+	if cursorErr != nil {
+		return grpcErrorResult(cursorErr, "get_display"), nil
+	}
+	if err := validateCursorTopology(cursorResp, displays); err != nil {
+		return errorResultf("Invalid cursor response: %v", err), nil
+	}
 
-	// Build display info
 	var displayLines []string
-	for _, d := range displaysResp.Displays {
+	for _, display := range displays {
 		mainMark := ""
-		if d.IsMain {
-			mainMark = " (main)"
+		if display.IsMain {
+			mainMark = ", main"
 		}
 		displayLines = append(displayLines, fmt.Sprintf(
-			"- Display %d%s: %s, visible: %s, scale %.1f",
-			d.DisplayId, mainMark,
-			frameString(d.Frame),
-			frameString(d.VisibleFrame),
-			d.Scale,
+			"- %s (id %d%s): %s, visible: %s, scale %s",
+			display.Name,
+			display.DisplayId,
+			mainMark,
+			frameString(display.Frame),
+			frameString(display.VisibleFrame),
+			strconv.FormatFloat(display.Scale, 'g', -1, 64),
 		))
 	}
 
 	var result strings.Builder
-	result.WriteString(fmt.Sprintf("Displays (%d):\n%s", len(displaysResp.Displays), strings.Join(displayLines, "\n")))
-
-	if cursorErr == nil && cursorResp != nil {
-		result.WriteString(fmt.Sprintf("\n\nCursor position: (%.0f, %.0f) on %s", cursorResp.X, cursorResp.Y, cursorResp.Display))
-	}
+	result.WriteString(fmt.Sprintf("Displays (%d):\n%s", len(displays), strings.Join(displayLines, "\n")))
+	result.WriteString(fmt.Sprintf(
+		"\n\nCursor position: (%s, %s) on %s",
+		strconv.FormatFloat(cursorResp.X, 'g', -1, 64),
+		strconv.FormatFloat(cursorResp.Y, 'g', -1, 64),
+		cursorResp.Display,
+	))
 
 	return textResult(result.String()), nil
 }

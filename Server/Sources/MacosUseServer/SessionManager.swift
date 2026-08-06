@@ -9,14 +9,14 @@ private let logger = MacosUseSDK.sdkLogger(category: "SessionManager")
 /// Thread-safe session and transaction manager for the MacosUseSDK gRPC server.
 /// Manages session lifecycle, transaction state, operation history, and resource tracking.
 actor SessionManager {
-    /// Shared singleton instance
-    static let shared = SessionManager()
-
     /// Active sessions keyed by session name
     private var sessions: [String: SessionState] = [:]
 
     /// Default session timeout in seconds
-    private let defaultSessionTimeout: TimeInterval = 3600 // 1 hour
+    private let defaultSessionTimeout: TimeInterval
+    private let cleanupOperation: (@Sendable () async -> Void)?
+    private var cleanupTask: Task<Void, Never>?
+    private var acceptingSessions = true
 
     /// Session state wrapper containing session proto and associated metadata
     private struct SessionState {
@@ -41,11 +41,32 @@ actor SessionManager {
         var operationIndex: Int
     }
 
-    private init() {
-        // Start background cleanup task
-        Task {
-            await startCleanupTask()
+    init(
+        defaultSessionTimeout: TimeInterval = 3600,
+        cleanupOperation: (@Sendable () async -> Void)? = nil,
+    ) {
+        self.defaultSessionTimeout = defaultSessionTimeout
+        self.cleanupOperation = cleanupOperation
+    }
+
+    func startCleanup() throws {
+        guard acceptingSessions else { throw SessionError.admissionClosed }
+        guard cleanupTask == nil else { return }
+
+        let cleanupOperation = self.cleanupOperation
+        cleanupTask = Task { [weak self] in
+            guard let self else { return }
+            if let cleanupOperation {
+                await cleanupOperation()
+            } else {
+                await runCleanupLoop()
+            }
+            await cleanupDidExit()
         }
+    }
+
+    func cleanupTaskCount() -> Int {
+        cleanupTask == nil ? 0 : 1
     }
 
     /// Create a new session
@@ -53,9 +74,11 @@ actor SessionManager {
         sessionId: String?,
         displayName: String,
         metadata: [String: String],
-    ) async -> Macosusesdk_V1_Session {
+    ) async throws -> Macosusesdk_V1_Session {
+        guard acceptingSessions else { throw SessionError.admissionClosed }
         let id = sessionId ?? UUID().uuidString
         let name = "sessions/\(id)"
+        guard sessions[name] == nil else { throw SessionError.alreadyExists }
 
         let now = Date()
         let expireTime = now.addingTimeInterval(defaultSessionTimeout)
@@ -97,23 +120,31 @@ actor SessionManager {
     }
 
     /// List all sessions with pagination
-    func listSessions(pageSize: Int, pageToken: String?) async -> (
+    func listSessions(pageSize: Int, pageToken: String?) async throws -> (
         sessions: [Macosusesdk_V1_Session], nextPageToken: String?,
     ) {
-        let allSessions = sessions.values.map(\.session).sorted { $0.name < $1.name }
-
-        // Simple pagination: page token is the last session name
-        let startIndex: Int = if let token = pageToken, !token.isEmpty {
-            allSessions.firstIndex(where: { $0.name > token }) ?? allSessions.count
-        } else {
-            0
-        }
-
         let effectivePageSize = pageSize > 0 ? pageSize : 50
-        let endIndex = min(startIndex + effectivePageSize, allSessions.count)
-
-        let pageSessions = Array(allSessions[startIndex ..< endIndex])
-        let nextToken = endIndex < allSessions.count ? pageSessions.last?.name : nil
+        let queryBinding = ParsingHelpers.pageTokenQuery(
+            method: "ListSessions",
+            parameters: [("page_size", String(effectivePageSize))],
+        )
+        let offset = try ParsingHelpers.pageOffset(
+            token: pageToken ?? "",
+            queryBinding: queryBinding,
+        )
+        let allSessions = sessions.values.map(\.session).sorted { $0.name < $1.name }
+        let range = try ParsingHelpers.pageRange(
+            offset: offset,
+            pageSize: effectivePageSize,
+            totalCount: allSessions.count,
+        )
+        let pageSessions = Array(allSessions[range])
+        let encodedNextToken = ParsingHelpers.nextPageToken(
+            endOffset: range.upperBound,
+            totalCount: allSessions.count,
+            queryBinding: queryBinding,
+        )
+        let nextToken = encodedNextToken.isEmpty ? nil : encodedNextToken
 
         return (pageSessions, nextToken)
     }
@@ -138,6 +169,9 @@ actor SessionManager {
     /// - Returns: The number of sessions that were invalidated.
     @discardableResult
     func invalidateAllSessions() async -> Int {
+        acceptingSessions = false
+        let task = cleanupTask
+        task?.cancel()
         let sessionNames = Array(sessions.keys)
         let count = sessionNames.count
 
@@ -153,6 +187,8 @@ actor SessionManager {
 
         // Remove all sessions
         sessions.removeAll()
+        await task?.value
+        cleanupTask = nil
 
         logger.info("Invalidated \(count, privacy: .public) session(s) during shutdown")
         return count
@@ -163,7 +199,7 @@ actor SessionManager {
         sessionName: String,
         isolationLevel: Macosusesdk_V1_BeginTransactionRequest.IsolationLevel,
         timeout _: TimeInterval,
-    ) async throws -> (transactionId: String, session: Macosusesdk_V1_Session) {
+    ) async throws -> (transactionId: String, revisionId: String, session: Macosusesdk_V1_Session) {
         guard var state = sessions[sessionName] else {
             throw SessionError.sessionNotFound
         }
@@ -189,15 +225,24 @@ actor SessionManager {
             $0.operationsCount = 0
         }
 
-        // Create snapshot for rollback (if SERIALIZABLE isolation)
+        // A revision ID is only meaningful when a rollback snapshot is actually
+        // stored. Returning a revision ID for a non-SERIALIZABLE isolation level
+        // would hand the client a rollback handle that resolves to no stored
+        // snapshot (rollbackTransaction would reject it with revisionNotFound) —
+        // a design trap. Only SERIALIZABLE transactions are rollback-capable, so
+        // only they receive a revision ID; others get an empty revision ID,
+        // signalling that rollback is unavailable for that isolation level.
+        let revisionId: String
         if isolationLevel == .serializable {
-            let snapshotId = "snapshot-\(transactionId)"
+            revisionId = "snapshot-\(transactionId)"
             let snapshot = SessionSnapshotState(
-                revisionId: snapshotId,
+                revisionId: revisionId,
                 timestamp: now,
                 operationIndex: state.operations.count,
             )
             state.snapshots.append(snapshot)
+        } else {
+            revisionId = ""
         }
 
         state.activeTransaction = TransactionState(
@@ -211,7 +256,7 @@ actor SessionManager {
         state.session.lastAccessTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: now)
 
         sessions[sessionName] = state
-        return (transactionId, state.session)
+        return (transactionId, revisionId, state.session)
     }
 
     /// Commit a transaction
@@ -383,10 +428,19 @@ actor SessionManager {
     }
 
     /// Background task to clean up expired sessions
-    private func startCleanupTask() async {
-        while true {
+    private func runCleanupLoop() async {
+        while !Task.isCancelled {
             // Sleep for 1 minute
-            try? await Task.sleep(nanoseconds: 60_000_000_000)
+            do {
+                try await Task.sleep(nanoseconds: 60_000_000_000)
+            } catch is CancellationError {
+                return
+            } catch {
+                logger.error("Session cleanup sleep failed")
+                return
+            }
+
+            guard !Task.isCancelled else { return }
 
             let now = Date()
 
@@ -411,9 +465,15 @@ actor SessionManager {
             }
         }
     }
+
+    private func cleanupDidExit() {
+        cleanupTask = nil
+    }
 }
 
-enum SessionError: Error, CustomStringConvertible {
+enum SessionError: Error, CustomStringConvertible, Equatable {
+    case admissionClosed
+    case alreadyExists
     case sessionNotFound
     case transactionAlreadyActive
     case noActiveTransaction
@@ -423,6 +483,10 @@ enum SessionError: Error, CustomStringConvertible {
 
     var description: String {
         switch self {
+        case .admissionClosed:
+            "Session admission is closed"
+        case .alreadyExists:
+            "Session already exists"
         case .sessionNotFound:
             "Session not found"
         case .transactionAlreadyActive:

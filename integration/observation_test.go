@@ -38,7 +38,7 @@ func TestWindowChangeObservation(t *testing.T) {
 
 	// 2. Application Setup - Open TextEdit
 	t.Log("Opening TextEdit...")
-	app := openTextEdit(t, ctx, client, opsClient)
+	app := openTextEdit(t, ctx, client)
 	defer cleanupApplication(t, ctx, client, app)
 
 	// 3. Dismiss file picker dialog and create a new document
@@ -67,12 +67,31 @@ func TestWindowChangeObservation(t *testing.T) {
 		t.Logf("Warning: failed to close file picker: %v", err)
 	}
 
+	// Snapshot the windows that already exist so the selection below only
+	// considers the document this test creates. TextEdit restores previous
+	// sessions — including documents left dirty by a prior run's SIGKILL —
+	// and a restored unsaved document cannot be closed via AX without
+	// answering a save dialog, which would make the close step below fail.
+	preExistingWindows := map[string]struct{}{}
+	if resp, err := client.ListWindows(ctx, &pb.ListWindowsRequest{
+		Parent: app.Name,
+	}); err == nil {
+		for _, window := range resp.Windows {
+			preExistingWindows[window.Name] = struct{}{}
+		}
+	}
+
 	// Create a new document using Cmd+N
 	t.Log("Creating new document with Cmd+N...")
-	_, err = client.CreateInput(ctx, &pb.CreateInputRequest{
-		Parent: app.Name,
-		Input: &pb.Input{
-			Action: &pb.InputAction{
+	createCompletedInput(
+		t,
+		ctx,
+		client,
+		newIntegrationInputRequest(
+			t,
+			app.GetName(),
+			applicationInputTarget(app.GetName()),
+			&pb.InputAction{
 				InputType: &pb.InputAction_PressKey{
 					PressKey: &pb.KeyPress{
 						Key:       "n",
@@ -80,11 +99,10 @@ func TestWindowChangeObservation(t *testing.T) {
 					},
 				},
 			},
-		},
-	})
-	if err != nil {
-		t.Fatalf("Failed to send Cmd+N: %v", err)
-	}
+		),
+		2,
+		"create TextEdit document with Cmd+N",
+	)
 
 	// Wait for document window to appear
 	t.Log("Waiting for TextEdit document window to appear...")
@@ -98,6 +116,10 @@ func TestWindowChangeObservation(t *testing.T) {
 		}
 		// A real document window should have reasonable dimensions (ListWindows doesn't return detailed state)
 		for _, window := range resp.Windows {
+			if _, exists := preExistingWindows[window.Name]; exists {
+				// Restored from a previous session — not the window this test created.
+				continue
+			}
 			if window.Bounds != nil &&
 				window.Bounds.Width >= 200 && window.Bounds.Height >= 200 {
 				// Found a candidate - use GetWindowState to check if it's minimizable
@@ -369,8 +391,8 @@ func TestWindowChangeObservation(t *testing.T) {
 	t.Logf("Test 2: Moving window to (%.0f, %.0f)...", targetX, targetY)
 	moveResp, err := client.MoveWindow(ctx, &pb.MoveWindowRequest{
 		Name: currentWindowName,
-		X:    targetX,
-		Y:    targetY,
+		X:    &targetX,
+		Y:    &targetY,
 	})
 	if err != nil {
 		t.Fatalf("MoveWindow failed: %v", err)

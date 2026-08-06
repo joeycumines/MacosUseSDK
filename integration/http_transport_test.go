@@ -1,11 +1,8 @@
 // Copyright 2025 Joseph Cumines
-//
-// HTTP/SSE transport integration tests
 
 package integration
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -14,612 +11,392 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/joeycumines/MacosUseSDK/internal/transport"
 )
 
-// startHTTPTransport starts an HTTP transport for testing and returns
-// the transport, the base URL, and cleanup function.
-func startHTTPTransport(t *testing.T, ctx context.Context, handler func(*transport.Message) (*transport.Message, error)) (*transport.HTTPTransport, string, func()) {
+func startHTTPTransport(
+	t *testing.T,
+	ctx context.Context,
+	handler func(*transport.Message) (*transport.Message, error),
+) (*transport.HTTPTransport, string, string, func()) {
 	t.Helper()
-
-	// Find an available port
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
-		t.Fatalf("Failed to find available port: %v", err)
+		t.Fatalf("reserve HTTP transport address: %v", err)
 	}
-	port := listener.Addr().(*net.TCPAddr).Port
-	listener.Close()
-
-	addr := fmt.Sprintf("127.0.0.1:%d", port)
-	config := &transport.HTTPTransportConfig{
-		Address:           addr,
-		CORSOrigin:        "*",
-		HeartbeatInterval: 1 * time.Second,
-		ReadTimeout:       10 * time.Second,
-		WriteTimeout:      0,
+	address := listener.Addr().String()
+	if err := listener.Close(); err != nil {
+		t.Fatalf("release reserved HTTP transport address: %v", err)
 	}
 
-	tr := transport.NewHTTPTransport(config)
+	tr := transport.NewHTTPTransport(&transport.HTTPTransportConfig{
+		Address:      address,
+		CORSOrigin:   "https://trusted.example",
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	})
+	serverResult := make(chan error, 1)
+	go func() { serverResult <- tr.Serve(handler) }()
+	baseURL := "http://" + address
 
-	serverErrCh := make(chan error, 1)
-	go func() {
-		serverErrCh <- tr.Serve(handler)
-	}()
-
-	baseURL := fmt.Sprintf("http://%s", addr)
-
-	err = PollUntilContext(ctx, 50*time.Millisecond, func() (bool, error) {
-		resp, err := http.Get(baseURL + "/health")
+	readyCtx, cancelReady := context.WithTimeout(ctx, 5*time.Second)
+	defer cancelReady()
+	if err := PollUntilContext(readyCtx, 25*time.Millisecond, func() (bool, error) {
+		response, err := http.Get(baseURL + "/health")
 		if err != nil {
 			return false, nil
 		}
-		resp.Body.Close()
-		return resp.StatusCode == http.StatusOK, nil
-	})
-	if err != nil {
-		tr.Close()
-		t.Fatalf("HTTP transport failed to become ready: %v", err)
+		_, drainErr := io.Copy(io.Discard, response.Body)
+		closeErr := response.Body.Close()
+		return response.StatusCode == http.StatusOK && drainErr == nil && closeErr == nil, nil
+	}); err != nil {
+		_ = tr.Close()
+		t.Fatalf("HTTP transport did not become ready: %v", err)
 	}
 
+	var cleanupOnce sync.Once
 	cleanup := func() {
-		tr.Close()
-		select {
-		case <-serverErrCh:
-		case <-time.After(1 * time.Second):
-		}
+		cleanupOnce.Do(func() {
+			if err := tr.Close(); err != nil {
+				t.Errorf("close HTTP transport: %v", err)
+			}
+			stoppedCtx, cancelStopped := context.WithTimeout(context.Background(), 2*time.Second)
+			defer cancelStopped()
+			var serveErr error
+			if err := PollUntilContext(stoppedCtx, 10*time.Millisecond, func() (bool, error) {
+				select {
+				case serveErr = <-serverResult:
+					return true, nil
+				default:
+					return false, nil
+				}
+			}); err != nil {
+				t.Errorf("HTTP transport serve loop did not stop: %v", err)
+			} else if serveErr != nil {
+				t.Errorf("HTTP transport serve error: %v", serveErr)
+			}
+		})
 	}
-
-	return tr, baseURL, cleanup
+	return tr, baseURL, address, cleanup
 }
 
-// echoHandler echoes the request method in the result.
-func echoHandler(msg *transport.Message) (*transport.Message, error) {
+func echoHandler(message *transport.Message) (*transport.Message, error) {
 	return &transport.Message{
 		JSONRPC: "2.0",
-		ID:      msg.ID,
-		Result:  json.RawMessage(`{"echo":"ok","method":"` + msg.Method + `"}`),
+		ID:      message.ID,
+		Result:  json.RawMessage(`{"echo":"ok","method":"` + message.Method + `"}`),
 	}, nil
 }
 
-// TestHTTPTransport_HealthEndpoint verifies GET /health returns 200 OK.
 func TestHTTPTransport_HealthEndpoint(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-
-	_, baseURL, cleanup := startHTTPTransport(t, ctx, echoHandler)
+	_, baseURL, _, cleanup := startHTTPTransport(t, ctx, echoHandler)
 	defer cleanup()
 
-	resp, err := http.Get(baseURL + "/health")
+	response, err := http.Get(baseURL + "/health")
 	if err != nil {
-		t.Fatalf("GET /health failed: %v", err)
+		t.Fatalf("GET /health: %v", err)
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("GET /health status = %d, want 200", resp.StatusCode)
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("GET /health status=%d, want 200", response.StatusCode)
 	}
-
-	contentType := resp.Header.Get("Content-Type")
-	if !strings.Contains(contentType, "application/json") {
-		t.Errorf("Content-Type = %s, want application/json", contentType)
+	if contentType := response.Header.Get("Content-Type"); !strings.Contains(contentType, "application/json") {
+		t.Fatalf("GET /health Content-Type=%q, want application/json", contentType)
 	}
-
 	var health map[string]any
-	if err := json.NewDecoder(resp.Body).Decode(&health); err != nil {
-		t.Fatalf("Failed to decode health response: %v", err)
+	if err := json.NewDecoder(response.Body).Decode(&health); err != nil {
+		t.Fatalf("decode health response: %v", err)
+	}
+	if health["status"] != "ok" || health["server_time"] == nil {
+		t.Fatalf("health response=%v, want status and server_time", health)
 	}
 
-	if health["status"] != "ok" {
-		t.Errorf("health.status = %v, want 'ok'", health["status"])
+	post, err := http.Post(baseURL+"/health", "application/json", nil)
+	if err != nil {
+		t.Fatalf("POST /health: %v", err)
 	}
-	if _, ok := health["clients"]; !ok {
-		t.Error("health response missing 'clients' field")
-	}
-	if _, ok := health["server_time"]; !ok {
-		t.Error("health response missing 'server_time' field")
+	post.Body.Close()
+	if post.StatusCode != http.StatusMethodNotAllowed {
+		t.Fatalf("POST /health status=%d, want 405", post.StatusCode)
 	}
 }
 
-// TestHTTPTransport_HealthEndpoint_MethodNotAllowed verifies POST to /health returns 405.
-func TestHTTPTransport_HealthEndpoint_MethodNotAllowed(t *testing.T) {
+func TestHTTPTransport_StreamableRequestAndRecovery(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-
-	_, baseURL, cleanup := startHTTPTransport(t, ctx, echoHandler)
+	_, baseURL, _, cleanup := startHTTPTransport(t, ctx, echoHandler)
 	defer cleanup()
+	sessionID := initializeDirectStreamableHTTPSession(t, ctx, http.DefaultClient, baseURL)
 
-	resp, err := http.Post(baseURL+"/health", "application/json", nil)
-	if err != nil {
-		t.Fatalf("POST /health failed: %v", err)
+	response := sendDirectStreamableHTTP(t, ctx, baseURL, sessionID, `{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}`)
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(response.Body)
+		t.Fatalf("POST /mcp status=%d body=%q, want 200", response.StatusCode, body)
 	}
-	defer resp.Body.Close()
+	var message transport.Message
+	if err := json.NewDecoder(response.Body).Decode(&message); err != nil {
+		t.Fatalf("decode /mcp response: %v", err)
+	}
+	if message.JSONRPC != "2.0" || string(message.ID) != "1" || message.Error != nil {
+		t.Fatalf("unexpected /mcp response: %+v", message)
+	}
 
-	if resp.StatusCode != http.StatusMethodNotAllowed {
-		t.Errorf("POST /health status = %d, want 405", resp.StatusCode)
+	malformed := sendDirectStreamableHTTP(t, ctx, baseURL, sessionID, `{invalid json}`)
+	defer malformed.Body.Close()
+	if malformed.StatusCode != http.StatusBadRequest {
+		t.Fatalf("malformed POST /mcp status=%d, want 400", malformed.StatusCode)
+	}
+	var parseResponse transport.Message
+	if err := json.NewDecoder(malformed.Body).Decode(&parseResponse); err != nil {
+		t.Fatalf("decode parse-error response: %v", err)
+	}
+	if parseResponse.Error == nil || parseResponse.Error.Code != transport.ErrCodeParseError || string(parseResponse.ID) != "null" {
+		t.Fatalf("parse-error response=%+v", parseResponse)
+	}
+
+	recovered := sendDirectStreamableHTTP(t, ctx, baseURL, sessionID, `{"jsonrpc":"2.0","id":2,"method":"ping"}`)
+	defer recovered.Body.Close()
+	if recovered.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(recovered.Body)
+		t.Fatalf("recovery POST /mcp status=%d body=%q, want 200", recovered.StatusCode, body)
 	}
 }
 
-// TestHTTPTransport_MessageEndpoint verifies POST /message handles JSON-RPC.
-func TestHTTPTransport_MessageEndpoint(t *testing.T) {
+func TestHTTPTransport_StreamableTopology(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-
-	_, baseURL, cleanup := startHTTPTransport(t, ctx, echoHandler)
+	_, baseURL, _, cleanup := startHTTPTransport(t, ctx, echoHandler)
 	defer cleanup()
+	sessionID := initializeDirectStreamableHTTPSession(t, ctx, http.DefaultClient, baseURL)
 
-	reqBody := `{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}`
-	resp, err := http.Post(baseURL+"/message", "application/json", bytes.NewBufferString(reqBody))
+	get, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+transport.MCPEndpointPath, nil)
 	if err != nil {
-		t.Fatalf("POST /message failed: %v", err)
+		t.Fatalf("create GET /mcp: %v", err)
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		t.Fatalf("POST /message status = %d, want 200. Body: %s", resp.StatusCode, body)
-	}
-
-	contentType := resp.Header.Get("Content-Type")
-	if !strings.Contains(contentType, "application/json") {
-		t.Errorf("Content-Type = %s, want application/json", contentType)
-	}
-
-	var msg transport.Message
-	if err := json.NewDecoder(resp.Body).Decode(&msg); err != nil {
-		t.Fatalf("Failed to decode response: %v", err)
-	}
-
-	if msg.JSONRPC != "2.0" {
-		t.Errorf("response.jsonrpc = %s, want 2.0", msg.JSONRPC)
-	}
-	if msg.Error != nil {
-		t.Errorf("response has unexpected error: %v", msg.Error)
-	}
-	if msg.Result == nil {
-		t.Error("response.result is nil")
-	}
-
-	var result map[string]any
-	if err := json.Unmarshal(msg.Result, &result); err != nil {
-		t.Fatalf("Failed to unmarshal result: %v", err)
-	}
-	if result["method"] != "tools/list" {
-		t.Errorf("result.method = %v, want tools/list", result["method"])
-	}
-}
-
-// TestHTTPTransport_MessageEndpoint_InvalidJSON verifies POST /message with bad JSON returns 400.
-func TestHTTPTransport_MessageEndpoint_InvalidJSON(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	_, baseURL, cleanup := startHTTPTransport(t, ctx, echoHandler)
-	defer cleanup()
-
-	resp, err := http.Post(baseURL+"/message", "application/json", bytes.NewBufferString("{invalid json}"))
+	get.Header.Set("Accept", "text/event-stream")
+	get.Header.Set("MCP-Session-Id", sessionID)
+	getResponse, err := http.DefaultClient.Do(get)
 	if err != nil {
-		t.Fatalf("POST /message failed: %v", err)
+		t.Fatalf("GET /mcp: %v", err)
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Errorf("POST /message with invalid JSON status = %d, want 400", resp.StatusCode)
-	}
-}
-
-// TestHTTPTransport_MessageEndpoint_MethodNotAllowed verifies GET to /message returns 405.
-func TestHTTPTransport_MessageEndpoint_MethodNotAllowed(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	_, baseURL, cleanup := startHTTPTransport(t, ctx, echoHandler)
-	defer cleanup()
-
-	resp, err := http.Get(baseURL + "/message")
-	if err != nil {
-		t.Fatalf("GET /message failed: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusMethodNotAllowed {
-		t.Errorf("GET /message status = %d, want 405", resp.StatusCode)
-	}
-}
-
-// TestHTTPTransport_SSEConnection verifies the SSE endpoint accepts connections.
-func TestHTTPTransport_SSEConnection(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	_, baseURL, cleanup := startHTTPTransport(t, ctx, echoHandler)
-	defer cleanup()
-
-	req, err := http.NewRequestWithContext(ctx, "GET", baseURL+"/events", nil)
-	if err != nil {
-		t.Fatalf("Failed to create SSE request: %v", err)
+	getResponse.Body.Close()
+	if getResponse.StatusCode != http.StatusMethodNotAllowed {
+		t.Fatalf("GET /mcp status=%d, want 405", getResponse.StatusCode)
 	}
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		t.Fatalf("GET /events failed: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("GET /events status = %d, want 200", resp.StatusCode)
-	}
-
-	contentType := resp.Header.Get("Content-Type")
-	if !strings.Contains(contentType, "text/event-stream") {
-		t.Errorf("Content-Type = %s, want text/event-stream", contentType)
-	}
-
-	cacheControl := resp.Header.Get("Cache-Control")
-	if !strings.Contains(cacheControl, "no-cache") {
-		t.Errorf("Cache-Control = %s, want no-cache", cacheControl)
-	}
-
-	reader := bufio.NewReader(resp.Body)
-	readCtx, readCancel := context.WithTimeout(ctx, 3*time.Second)
-	defer readCancel()
-
-	receivedHeartbeat := false
-	lineCh := make(chan string, 10)
-	errCh := make(chan error, 1)
-
-	go func() {
-		for {
-			line, err := reader.ReadString('\n')
-			if err != nil {
-				errCh <- err
-				return
-			}
-			lineCh <- line
+	for _, path := range []string{"/message", "/events"} {
+		response, err := http.Get(baseURL + path)
+		if err != nil {
+			t.Fatalf("GET legacy %s: %v", path, err)
 		}
-	}()
-
-	for {
-		select {
-		case <-readCtx.Done():
-			if !receivedHeartbeat {
-				t.Error("Did not receive heartbeat within timeout")
-			}
-			return
-		case err := <-errCh:
-			if err != io.EOF && !receivedHeartbeat {
-				t.Errorf("SSE read error: %v", err)
-			}
-			return
-		case line := <-lineCh:
-			if strings.HasPrefix(line, ": heartbeat") {
-				receivedHeartbeat = true
-				return
-			}
+		response.Body.Close()
+		if response.StatusCode != http.StatusNotFound {
+			t.Fatalf("legacy %s status=%d, want 404", path, response.StatusCode)
 		}
 	}
 }
 
-// TestHTTPTransport_SSEConnection_MethodNotAllowed verifies POST to /events returns 405.
-func TestHTTPTransport_SSEConnection_MethodNotAllowed(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	_, baseURL, cleanup := startHTTPTransport(t, ctx, echoHandler)
-	defer cleanup()
-
-	resp, err := http.Post(baseURL+"/events", "application/json", nil)
-	if err != nil {
-		t.Fatalf("POST /events failed: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusMethodNotAllowed {
-		t.Errorf("POST /events status = %d, want 405", resp.StatusCode)
-	}
-}
-
-// TestHTTPTransport_SSEBroadcast verifies messages are broadcast to SSE clients.
-func TestHTTPTransport_SSEBroadcast(t *testing.T) {
+func TestHTTPTransport_ConcurrentResponsesRemainRequestScoped(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
-
-	tr, baseURL, cleanup := startHTTPTransport(t, ctx, echoHandler)
+	_, baseURL, _, cleanup := startHTTPTransport(t, ctx, echoHandler)
 	defer cleanup()
+	// A dedicated non-reusing client prevents the fixture from racing surplus
+	// speculative dials into net/http StateNew after all intended requests have
+	// completed. The 64 requests still execute concurrently on distinct sockets.
+	clientTransport := &http.Transport{DisableKeepAlives: true}
+	defer clientTransport.CloseIdleConnections()
+	client := &http.Client{Transport: clientTransport}
+	sessionID := initializeDirectStreamableHTTPSession(t, ctx, client, baseURL)
 
-	sseReq, err := http.NewRequestWithContext(ctx, "GET", baseURL+"/events", nil)
-	if err != nil {
-		t.Fatalf("Failed to create SSE request: %v", err)
-	}
-
-	sseClient := &http.Client{}
-	sseResp, err := sseClient.Do(sseReq)
-	if err != nil {
-		t.Fatalf("GET /events failed: %v", err)
-	}
-	defer sseResp.Body.Close()
-
-	err = PollUntilContext(ctx, 50*time.Millisecond, func() (bool, error) {
-		resp, err := http.Get(baseURL + "/health")
-		if err != nil {
-			return false, nil
-		}
-		defer resp.Body.Close()
-
-		var health map[string]any
-		if err := json.NewDecoder(resp.Body).Decode(&health); err != nil {
-			return false, nil
-		}
-		clients, ok := health["clients"].(float64)
-		return ok && clients >= 1, nil
-	})
-	if err != nil {
-		t.Fatalf("SSE client count never reached 1: %v", err)
-	}
-
-	eventCh := make(chan string, 10)
-	go func() {
-		reader := bufio.NewReader(sseResp.Body)
-		for {
-			line, err := reader.ReadString('\n')
-			if err != nil {
+	const requestCount = 64
+	errors := make(chan error, requestCount)
+	var waitGroup sync.WaitGroup
+	for id := 1; id <= requestCount; id++ {
+		waitGroup.Add(1)
+		go func(id int) {
+			defer waitGroup.Done()
+			payload := fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"ping"}`, id)
+			response := sendDirectStreamableHTTPNoFatalWithClient(client, ctx, baseURL, sessionID, payload)
+			if response.err != nil {
+				errors <- response.err
 				return
 			}
-			eventCh <- line
-		}
-	}()
-
-	testMsg := &transport.Message{
-		JSONRPC: "2.0",
-		ID:      json.RawMessage(`99`),
-		Result:  json.RawMessage(`{"broadcast":"test"}`),
-	}
-	if err := tr.WriteMessage(testMsg); err != nil {
-		t.Fatalf("WriteMessage failed: %v", err)
-	}
-
-	receivedBroadcast := false
-	broadcastCtx, broadcastCancel := context.WithTimeout(ctx, 5*time.Second)
-	defer broadcastCancel()
-
-	for {
-		select {
-		case <-broadcastCtx.Done():
-			if !receivedBroadcast {
-				t.Error("Did not receive broadcast event")
-			}
-			return
-		case line := <-eventCh:
-			if strings.Contains(line, "broadcast") && strings.Contains(line, "test") {
-				receivedBroadcast = true
+			var message transport.Message
+			if err := json.NewDecoder(response.response.Body).Decode(&message); err != nil {
+				_ = response.response.Body.Close()
+				errors <- fmt.Errorf("request %d decode: %w", id, err)
 				return
 			}
-		}
+			// A JSON decoder may stop after the first value without consuming the
+			// response terminator. Drain and close before declaring this request
+			// complete so graceful shutdown is testing the server, not 64 client
+			// connections that the test itself left mid-response.
+			if _, err := io.Copy(io.Discard, response.response.Body); err != nil {
+				_ = response.response.Body.Close()
+				errors <- fmt.Errorf("request %d drain response: %w", id, err)
+				return
+			}
+			if err := response.response.Body.Close(); err != nil {
+				errors <- fmt.Errorf("request %d close response: %w", id, err)
+				return
+			}
+			if response.response.StatusCode != http.StatusOK || string(message.ID) != fmt.Sprint(id) {
+				errors <- fmt.Errorf("request %d received status=%d id=%q", id, response.response.StatusCode, message.ID)
+			}
+		}(id)
+	}
+	waitGroup.Wait()
+	close(errors)
+	for err := range errors {
+		t.Error(err)
 	}
 }
 
-// TestHTTPTransport_CORSHeaders verifies CORS headers are set correctly.
-func TestHTTPTransport_CORSHeaders(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	_, baseURL, cleanup := startHTTPTransport(t, ctx, echoHandler)
-	defer cleanup()
-
-	resp, err := http.Get(baseURL + "/health")
-	if err != nil {
-		t.Fatalf("GET /health failed: %v", err)
-	}
-	resp.Body.Close()
-
-	corsOrigin := resp.Header.Get("Access-Control-Allow-Origin")
-	if corsOrigin != "*" {
-		t.Errorf("Access-Control-Allow-Origin = %s, want '*'", corsOrigin)
-	}
-
-	corsMethods := resp.Header.Get("Access-Control-Allow-Methods")
-	if !strings.Contains(corsMethods, "GET") || !strings.Contains(corsMethods, "POST") {
-		t.Errorf("Access-Control-Allow-Methods = %s, want GET, POST, OPTIONS", corsMethods)
-	}
-
-	corsHeaders := resp.Header.Get("Access-Control-Allow-Headers")
-	if !strings.Contains(corsHeaders, "Content-Type") {
-		t.Errorf("Access-Control-Allow-Headers = %s, want Content-Type", corsHeaders)
-	}
-}
-
-// TestHTTPTransport_CORSPreflight verifies OPTIONS requests are handled for CORS.
 func TestHTTPTransport_CORSPreflight(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-
-	_, baseURL, cleanup := startHTTPTransport(t, ctx, echoHandler)
+	_, baseURL, _, cleanup := startHTTPTransport(t, ctx, echoHandler)
 	defer cleanup()
 
-	req, err := http.NewRequestWithContext(ctx, "OPTIONS", baseURL+"/message", nil)
+	request, err := http.NewRequestWithContext(ctx, http.MethodOptions, baseURL+transport.MCPEndpointPath, nil)
 	if err != nil {
-		t.Fatalf("Failed to create OPTIONS request: %v", err)
+		t.Fatalf("create CORS preflight: %v", err)
 	}
-	req.Header.Set("Origin", "https://example.com")
-	req.Header.Set("Access-Control-Request-Method", "POST")
-	req.Header.Set("Access-Control-Request-Headers", "Content-Type")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	request.Header.Set("Origin", "https://trusted.example")
+	request.Header.Set("Access-Control-Request-Method", "POST")
+	request.Header.Set("Access-Control-Request-Headers", "Accept, Content-Type, MCP-Protocol-Version")
+	response, err := http.DefaultClient.Do(request)
 	if err != nil {
-		t.Fatalf("OPTIONS /message failed: %v", err)
+		t.Fatalf("send CORS preflight: %v", err)
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusNoContent {
-		t.Errorf("OPTIONS /message status = %d, want 204", resp.StatusCode)
+	response.Body.Close()
+	if response.StatusCode != http.StatusNoContent {
+		t.Fatalf("CORS preflight status=%d, want 204", response.StatusCode)
 	}
-
-	corsOrigin := resp.Header.Get("Access-Control-Allow-Origin")
-	if corsOrigin != "*" {
-		t.Errorf("Access-Control-Allow-Origin = %s, want '*'", corsOrigin)
+	if response.Header.Get("Access-Control-Allow-Origin") != "https://trusted.example" {
+		t.Fatalf("CORS origin=%q, want trusted origin", response.Header.Get("Access-Control-Allow-Origin"))
 	}
-
-	corsMethods := resp.Header.Get("Access-Control-Allow-Methods")
-	if !strings.Contains(corsMethods, "POST") {
-		t.Errorf("Access-Control-Allow-Methods = %s, want to contain POST", corsMethods)
+	for _, required := range []string{"POST", "DELETE"} {
+		if !strings.Contains(response.Header.Get("Access-Control-Allow-Methods"), required) {
+			t.Errorf("CORS methods omitted %s: %q", required, response.Header.Get("Access-Control-Allow-Methods"))
+		}
+	}
+	for _, required := range []string{"Accept", "MCP-Protocol-Version"} {
+		if !strings.Contains(response.Header.Get("Access-Control-Allow-Headers"), required) {
+			t.Errorf("CORS headers omitted %s: %q", required, response.Header.Get("Access-Control-Allow-Headers"))
+		}
 	}
 }
 
-// TestHTTPTransport_GracefulShutdown verifies transport shuts down gracefully.
 func TestHTTPTransport_GracefulShutdown(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-
-	tr, baseURL, _ := startHTTPTransport(t, ctx, echoHandler)
-
-	sseReq, err := http.NewRequestWithContext(ctx, "GET", baseURL+"/events", nil)
-	if err != nil {
-		t.Fatalf("Failed to create SSE request: %v", err)
-	}
-
-	sseClient := &http.Client{}
-	sseResp, err := sseClient.Do(sseReq)
-	if err != nil {
-		t.Fatalf("GET /events failed: %v", err)
-	}
-	defer sseResp.Body.Close()
-
-	doneCh := make(chan struct{})
-	go func() {
-		reader := bufio.NewReader(sseResp.Body)
-		for {
-			_, err := reader.ReadString('\n')
-			if err != nil {
-				close(doneCh)
-				return
-			}
-		}
-	}()
-
-	err = PollUntilContext(ctx, 50*time.Millisecond, func() (bool, error) {
-		resp, err := http.Get(baseURL + "/health")
-		if err != nil {
-			return false, nil
-		}
-		defer resp.Body.Close()
-
-		var health map[string]any
-		if err := json.NewDecoder(resp.Body).Decode(&health); err != nil {
-			return false, nil
-		}
-		clients, ok := health["clients"].(float64)
-		return ok && clients >= 1, nil
-	})
-	if err != nil {
-		t.Fatalf("SSE client not established: %v", err)
-	}
-
-	if err := tr.Close(); err != nil {
-		t.Errorf("Close() error = %v", err)
-	}
-
+	tr, _, address, cleanup := startHTTPTransport(t, ctx, echoHandler)
+	cleanup()
 	if !tr.IsClosed() {
-		t.Error("Transport should be closed after Close()")
+		t.Fatal("transport is not closed after cleanup")
 	}
-
-	select {
-	case <-doneCh:
-		// SSE connection closed as expected
-	case <-time.After(3 * time.Second):
-		t.Error("SSE connection did not close within timeout")
+	if err := tr.Close(); err != nil {
+		t.Fatalf("second Close() error=%v, want idempotent success", err)
+	}
+	releaseCtx, cancelRelease := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancelRelease()
+	if err := waitForPortAvailable(t, releaseCtx, address); err != nil {
+		t.Fatalf("HTTP transport address was not released: %v", err)
 	}
 }
 
-// TestHTTPTransport_SSELastEventID verifies Last-Event-ID header is accepted for reconnection.
-// This test verifies that the SSE endpoint accepts the Last-Event-ID header which is used
-// for clients to resume receiving events after a disconnect.
-func TestHTTPTransport_SSELastEventID(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
-
-	tr, baseURL, cleanup := startHTTPTransport(t, ctx, echoHandler)
-	defer cleanup()
-
-	// First, broadcast some messages to populate the event store
-	for i := range 3 {
-		testMsg := &transport.Message{
-			JSONRPC: "2.0",
-			ID:      json.RawMessage(fmt.Sprintf(`%d`, i+1)),
-			Result:  json.RawMessage(fmt.Sprintf(`{"event_num":%d}`, i+1)),
-		}
-		if err := tr.WriteMessage(testMsg); err != nil {
-			t.Fatalf("WriteMessage failed: %v", err)
-		}
+func sendDirectStreamableHTTP(
+	t *testing.T,
+	ctx context.Context,
+	baseURL string,
+	sessionID string,
+	payload string,
+) *http.Response {
+	t.Helper()
+	result := sendDirectStreamableHTTPNoFatal(ctx, baseURL, sessionID, payload)
+	if result.err != nil {
+		t.Fatalf("send Streamable HTTP request: %v", result.err)
 	}
+	return result.response
+}
 
-	// Connect with Last-Event-ID header set to "1" to request events after ID 1
-	req, err := http.NewRequestWithContext(ctx, "GET", baseURL+"/events", nil)
+type directStreamableHTTPResult struct {
+	response *http.Response
+	err      error
+}
+
+func sendDirectStreamableHTTPNoFatal(
+	ctx context.Context,
+	baseURL string,
+	sessionID string,
+	payload string,
+) directStreamableHTTPResult {
+	return sendDirectStreamableHTTPNoFatalWithClient(http.DefaultClient, ctx, baseURL, sessionID, payload)
+}
+
+func sendDirectStreamableHTTPNoFatalWithClient(
+	client *http.Client,
+	ctx context.Context,
+	baseURL string,
+	sessionID string,
+	payload string,
+) directStreamableHTTPResult {
+	request, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		baseURL+transport.MCPEndpointPath,
+		bytes.NewBufferString(payload),
+	)
 	if err != nil {
-		t.Fatalf("Failed to create SSE request: %v", err)
+		return directStreamableHTTPResult{err: err}
 	}
-	req.Header.Set("Last-Event-ID", "1")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		t.Fatalf("GET /events with Last-Event-ID failed: %v", err)
+	request.Header.Set("Accept", "application/json, text/event-stream")
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("MCP-Protocol-Version", transport.MCPProtocolVersionCurrent)
+	if sessionID != "" {
+		request.Header.Set("MCP-Session-Id", sessionID)
 	}
-	defer resp.Body.Close()
+	response, err := client.Do(request)
+	return directStreamableHTTPResult{response: response, err: err}
+}
 
-	// Verify the connection is accepted
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("GET /events status = %d, want 200", resp.StatusCode)
+func initializeDirectStreamableHTTPSession(
+	t *testing.T,
+	ctx context.Context,
+	client *http.Client,
+	baseURL string,
+) string {
+	t.Helper()
+	result := sendDirectStreamableHTTPNoFatalWithClient(
+		client,
+		ctx,
+		baseURL,
+		"",
+		`{"jsonrpc":"2.0","id":"initialize","method":"initialize","params":{}}`,
+	)
+	if result.err != nil {
+		t.Fatalf("initialize Streamable HTTP session: %v", result.err)
 	}
-
-	// Verify content type is SSE
-	contentType := resp.Header.Get("Content-Type")
-	if !strings.Contains(contentType, "text/event-stream") {
-		t.Errorf("Content-Type = %s, want text/event-stream", contentType)
+	defer result.response.Body.Close()
+	if result.response.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(result.response.Body)
+		t.Fatalf("initialize Streamable HTTP session status=%d body=%q", result.response.StatusCode, body)
 	}
-
-	// Read some data to ensure the connection is functional
-	reader := bufio.NewReader(resp.Body)
-	readCtx, readCancel := context.WithTimeout(ctx, 3*time.Second)
-	defer readCancel()
-
-	receivedData := false
-	lineCh := make(chan string, 10)
-	errCh := make(chan error, 1)
-
-	go func() {
-		for {
-			line, err := reader.ReadString('\n')
-			if err != nil {
-				errCh <- err
-				return
-			}
-			lineCh <- line
-		}
-	}()
-
-	// Wait for any data (heartbeat or replayed events)
-	for {
-		select {
-		case <-readCtx.Done():
-			if !receivedData {
-				t.Error("Did not receive any data from SSE after reconnect")
-			}
-			return
-		case err := <-errCh:
-			if err != io.EOF {
-				t.Errorf("SSE read error: %v", err)
-			}
-			return
-		case line := <-lineCh:
-			// Any data received indicates the connection is working
-			if len(strings.TrimSpace(line)) > 0 || strings.HasPrefix(line, ":") {
-				receivedData = true
-				return
-			}
-		}
+	sessionID := result.response.Header.Get("MCP-Session-Id")
+	if sessionID == "" {
+		t.Fatal("initialize Streamable HTTP session omitted MCP-Session-Id")
 	}
+	if _, err := io.Copy(io.Discard, result.response.Body); err != nil {
+		t.Fatalf("drain Streamable HTTP initialize response: %v", err)
+	}
+	return sessionID
 }

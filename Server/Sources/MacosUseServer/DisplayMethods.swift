@@ -1,124 +1,61 @@
-import AppKit
-import ApplicationServices
 import CoreGraphics
 import Foundation
 import GRPCCore
 import MacosUseProto
-import MacosUseSDK
 import OSLog
 import SwiftProtobuf
 
 extension MacosUseService {
+    /// Compatibility helper for existing pure tests. Production RPCs resolve
+    /// cursor ownership from the injected immutable topology snapshot below.
+    static func displayNameForCursor(
+        cursorLocation: CGPoint,
+        activeDisplays: [CGDirectDisplayID],
+    ) throws -> String {
+        for displayID in activeDisplays where displayID > 0 {
+            let bounds = CGDisplayBounds(displayID)
+            if bounds.containsHalfOpen(cursorLocation) {
+                let name = "displays/\(displayID)"
+                _ = try ParsingHelpers.parseDisplayName(name, field: "display")
+                return name
+            }
+        }
+        throw RPCError(
+            code: .internalError,
+            message: "Cursor position does not belong to an active display",
+        )
+    }
+
     func listDisplays(
         request: ServerRequest<Macosusesdk_V1_ListDisplaysRequest>,
         context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_ListDisplaysResponse> {
         let req = request.message
         Self.logger.info("listDisplays called")
-
-        // Enumerate active displays using CoreGraphics
-        let maxDisplays: UInt32 = 64
-        var activeDisplays = [CGDirectDisplayID](repeating: 0, count: Int(maxDisplays))
-        var displayCount: UInt32 = 0
-        let err = activeDisplays.withUnsafeMutableBufferPointer { ptr in
-            CGGetActiveDisplayList(maxDisplays, ptr.baseAddress, &displayCount)
-        }
-        if err != CGError.success {
-            throw RPCError(code: .internalError, message: "Failed to enumerate displays: \(err)")
-        }
-
-        // Build list of (did, bounds) so we can compute visible frames on the MainActor in a single hop
-        var displayInfos: [(did: CGDirectDisplayID, bounds: CGRect)] = []
-        for i in 0 ..< Int(displayCount) {
-            let did = activeDisplays[i]
-            let bounds = CGDisplayBounds(did)
-            displayInfos.append((did: did, bounds: bounds))
-        }
-
-        // Query NSScreen on the main thread once and capture only Sendable primitives (local offsets and scale)
-        let screenMap: [CGDirectDisplayID: (localVisibleX: Double, localVisibleY: Double, visibleW: Double, visibleH: Double, scale: Double)] = await MainActor.run {
-            var m: [CGDirectDisplayID: (Double, Double, Double, Double, Double)] = [:]
-            for screen in NSScreen.screens {
-                if let n = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber {
-                    let did = CGDirectDisplayID(n.uint32Value)
-                    // visibleFrame and frame are in AppKit coordinates (bottom-left origin, global)
-                    let screenFrame = screen.frame
-                    let visibleFrame = screen.visibleFrame
-
-                    // Compute local offsets of visibleFrame relative to the screen's frame (both AppKit coords)
-                    let localX = Double(visibleFrame.origin.x - screenFrame.origin.x)
-                    let localY = Double(visibleFrame.origin.y - screenFrame.origin.y)
-
-                    m[did] = (localX, localY, Double(visibleFrame.size.width), Double(visibleFrame.size.height), Double(screen.backingScaleFactor))
-                }
-            }
-            return m
-        }
-
-        var displays: [Macosusesdk_V1_Display] = []
-        for info in displayInfos {
-            let did = info.did
-            let bounds = info.bounds
-
-            let displayMsg = Macosusesdk_V1_Display.with {
-                $0.displayID = Int64(did)
-
-                // Frame in Global Display Coordinates (top-left origin)
-                $0.frame = Macosusesdk_Type_Region.with {
-                    $0.x = Double(bounds.origin.x)
-                    $0.y = Double(bounds.origin.y)
-                    $0.width = Double(bounds.size.width)
-                    $0.height = Double(bounds.size.height)
-                }
-
-                // Visible frame: compute from NSScreen local offsets if available
-                $0.visibleFrame = if let entry = screenMap[did] {
-                    Macosusesdk_Type_Region.with {
-                        $0.x = Double(bounds.origin.x + CGFloat(entry.localVisibleX))
-                        $0.y = Double(bounds.origin.y + (bounds.size.height - CGFloat(entry.localVisibleY + entry.visibleH)))
-                        $0.width = entry.visibleW
-                        $0.height = entry.visibleH
-                    }
-                } else {
-                    // Fallback to full frame if NSScreen not found
-                    Macosusesdk_Type_Region.with {
-                        $0.x = Double(bounds.origin.x)
-                        $0.y = Double(bounds.origin.y)
-                        $0.width = Double(bounds.size.width)
-                        $0.height = Double(bounds.size.height)
-                    }
-                }
-
-                $0.scale = if let entry = screenMap[did] {
-                    entry.scale
-                } else {
-                    1.0
-                }
-
-                $0.isMain = (CGDisplayIsMain(did) != 0)
-            }
-
-            displays.append(displayMsg)
-        }
-
-        // Sort results deterministically by display ID
-        displays.sort { $0.displayID < $1.displayID }
-
-        // Pagination per AIP-158
-        let offset: Int = if req.pageToken.isEmpty { 0 } else { try decodePageToken(req.pageToken) }
-
-        let pageSize = req.pageSize > 0 ? Int(req.pageSize) : 100
-        let totalCount = displays.count
-        let startIndex = min(offset, totalCount)
-        let endIndex = min(startIndex + pageSize, totalCount)
-        let page = Array(displays[startIndex ..< endIndex])
-        let nextPageToken = endIndex < totalCount ? encodePageToken(offset: endIndex) : ""
-
+        let pageSize = try RequestNumericValidation.pageSize(req.pageSize)
+        let queryBinding = ParsingHelpers.pageTokenQuery(
+            method: "ListDisplays",
+            parameters: [("page_size", String(pageSize))],
+        )
+        let offset = try ParsingHelpers.pageOffset(
+            token: req.pageToken,
+            queryBinding: queryBinding,
+        )
+        let snapshot = try await displayTopologyProvider.snapshot().validated()
+        let displays = snapshot.displays.map(displayMessage)
+        let range = try ParsingHelpers.pageRange(
+            offset: offset,
+            pageSize: pageSize,
+            totalCount: displays.count,
+        )
         let response = Macosusesdk_V1_ListDisplaysResponse.with {
-            $0.displays = page
-            $0.nextPageToken = nextPageToken
+            $0.displays = Array(displays[range])
+            $0.nextPageToken = ParsingHelpers.nextPageToken(
+                endOffset: range.upperBound,
+                totalCount: displays.count,
+                queryBinding: queryBinding,
+            )
         }
-
         return ServerResponse(message: response)
     }
 
@@ -128,82 +65,12 @@ extension MacosUseService {
     ) async throws -> ServerResponse<Macosusesdk_V1_Display> {
         let req = request.message
         Self.logger.info("getDisplay called for \(req.name, privacy: .public)")
-
-        // Parse the display ID from the resource name
-        // Format: displays/{display_id}
-        let components = req.name.split(separator: "/")
-        guard components.count == 2, components[0] == "displays" else {
-            throw RPCError(
-                code: .invalidArgument,
-                message: "Invalid display resource name: \(req.name). Expected format: displays/{display_id}",
-            )
+        let displayID = try ParsingHelpers.parseDisplayName(req.name).displayID
+        let snapshot = try await displayTopologyProvider.snapshot().validated()
+        guard let display = snapshot.display(id: displayID) else {
+            throw RPCError(code: .notFound, message: "Display not found: \(req.name)")
         }
-
-        guard let displayID = UInt32(components[1]) else {
-            throw RPCError(
-                code: .invalidArgument,
-                message: "Invalid display ID: \(components[1])",
-            )
-        }
-
-        // Get display bounds
-        // CGDisplayBounds returns CGRect.zero for non-existent display IDs
-        let bounds = CGDisplayBounds(displayID)
-        if bounds.size.width <= 0 || bounds.size.height <= 0 {
-            throw RPCError(
-                code: .notFound,
-                message: "Display not found: \(displayID)",
-            )
-        }
-
-        // Query NSScreen for visible frame and scale
-        let screenInfo = await MainActor.run { () -> (localVisibleX: Double, localVisibleY: Double, visibleW: Double, visibleH: Double, scale: Double)? in
-            for screen in NSScreen.screens {
-                if let n = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber {
-                    let screenDid = CGDirectDisplayID(n.uint32Value)
-                    if screenDid == displayID {
-                        let screenFrame = screen.frame
-                        let visibleFrame = screen.visibleFrame
-                        let localX = Double(visibleFrame.origin.x - screenFrame.origin.x)
-                        let localY = Double(visibleFrame.origin.y - screenFrame.origin.y)
-                        return (localX, localY, Double(visibleFrame.size.width), Double(visibleFrame.size.height), Double(screen.backingScaleFactor))
-                    }
-                }
-            }
-            return nil
-        }
-
-        let displayMsg = Macosusesdk_V1_Display.with {
-            $0.name = req.name
-            $0.displayID = Int64(displayID)
-
-            // Frame in Global Display Coordinates (top-left origin)
-            $0.frame = Macosusesdk_Type_Region.with {
-                $0.x = Double(bounds.origin.x)
-                $0.y = Double(bounds.origin.y)
-                $0.width = Double(bounds.size.width)
-                $0.height = Double(bounds.size.height)
-            }
-
-            // Visible frame
-            if let entry = screenInfo {
-                $0.visibleFrame = Macosusesdk_Type_Region.with {
-                    $0.x = Double(bounds.origin.x + CGFloat(entry.localVisibleX))
-                    $0.y = Double(bounds.origin.y + (bounds.size.height - CGFloat(entry.localVisibleY + entry.visibleH)))
-                    $0.width = entry.visibleW
-                    $0.height = entry.visibleH
-                }
-                $0.scale = entry.scale
-            } else {
-                // Fallback to full frame
-                $0.visibleFrame = $0.frame
-                $0.scale = 1.0
-            }
-
-            $0.isMain = (CGDisplayIsMain(displayID) != 0)
-        }
-
-        return ServerResponse(message: displayMsg)
+        return ServerResponse(message: displayMessage(display))
     }
 
     func captureCursorPosition(
@@ -211,43 +78,95 @@ extension MacosUseService {
         context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_CaptureCursorPositionResponse> {
         Self.logger.info("captureCursorPosition called")
-
-        // Get cursor position from CoreGraphics
-        // CGEvent returns Mouse Position in Global Display Coordinates (top-left origin)
-        guard let event = CGEvent(source: nil) else {
-            throw RPCError(code: .internalError, message: "Failed to create CGEvent for cursor position")
+        let snapshot = try await displayTopologyProvider.snapshot().validated()
+        let location = try await displayTopologyProvider.cursorLocation()
+        let matches = snapshot.displays.filter { $0.frame.containsHalfOpen(location) }
+        guard matches.count == 1, let display = matches.first else {
+            throw RPCError(
+                code: .unavailable,
+                message: "Cursor position does not belong to one exact active display",
+            )
         }
-        let cursorLocation = event.location
+        return ServerResponse(
+            message: Macosusesdk_V1_CaptureCursorPositionResponse.with {
+                $0.x = location.x
+                $0.y = location.y
+                $0.display = display.name
+            },
+        )
+    }
 
-        // Find which display the cursor is on
-        var displayForCursor = "displays/unknown"
-        let maxDisplays: UInt32 = 64
-        var activeDisplays = [CGDirectDisplayID](repeating: 0, count: Int(maxDisplays))
-        var displayCount: UInt32 = 0
-        let err = activeDisplays.withUnsafeMutableBufferPointer { ptr in
-            CGGetActiveDisplayList(maxDisplays, ptr.baseAddress, &displayCount)
+    private func displayMessage(_ display: DisplayTopologyDisplay) -> Macosusesdk_V1_Display {
+        Macosusesdk_V1_Display.with {
+            $0.name = display.name
+            $0.displayID = Int64(display.displayID)
+            $0.frame = regionMessage(display.frame)
+            $0.visibleFrame = regionMessage(display.visibleFrame)
+            $0.isMain = display.isMain
+            $0.scale = display.scale
         }
-        if err == CGError.success {
-            for i in 0 ..< Int(displayCount) {
-                let did = activeDisplays[i]
-                let bounds = CGDisplayBounds(did)
-                if cursorLocation.x >= bounds.origin.x,
-                   cursorLocation.x < bounds.origin.x + bounds.size.width,
-                   cursorLocation.y >= bounds.origin.y,
-                   cursorLocation.y < bounds.origin.y + bounds.size.height
-                {
-                    displayForCursor = "displays/\(did)"
-                    break
-                }
+    }
+
+    func captureDisplay(
+        name: String,
+        from snapshot: DisplayTopologySnapshot,
+    ) throws -> DisplayTopologyDisplay {
+        guard !name.isEmpty else {
+            return try snapshot.mainDisplay()
+        }
+        let displayID = try ParsingHelpers.parseDisplayName(name, field: "display").displayID
+        guard let display = snapshot.display(id: displayID) else {
+            throw RPCError(code: .notFound, message: "Display not found: \(name)")
+        }
+        return display
+    }
+
+    func captureDisplay(
+        containing region: CGRect,
+        explicitName: String,
+        from snapshot: DisplayTopologySnapshot,
+    ) throws -> DisplayTopologyDisplay {
+        if !explicitName.isEmpty {
+            let display = try captureDisplay(name: explicitName, from: snapshot)
+            guard display.frame.containsWithTolerance(region) else {
+                throw RPCError(
+                    code: .invalidArgument,
+                    message: "Region is not fully contained by the selected display",
+                )
             }
+            return display
         }
-
-        let response = Macosusesdk_V1_CaptureCursorPositionResponse.with {
-            $0.x = cursorLocation.x
-            $0.y = cursorLocation.y
-            $0.display = displayForCursor
+        let matches = snapshot.displays(containing: region)
+        guard matches.count == 1, let display = matches.first else {
+            throw RPCError(
+                code: .invalidArgument,
+                message: matches.isEmpty
+                    ? "Region crosses or falls outside active displays"
+                    : "Region belongs to multiple active displays",
+            )
         }
+        return display
+    }
 
-        return ServerResponse(message: response)
+    func regionMessage(_ frame: CGRect) -> Macosusesdk_Type_Region {
+        Macosusesdk_Type_Region.with {
+            $0.x = frame.origin.x
+            $0.y = frame.origin.y
+            $0.width = frame.width
+            $0.height = frame.height
+        }
+    }
+}
+
+private extension CGRect {
+    func containsHalfOpen(_ point: CGPoint) -> Bool {
+        point.x >= minX && point.x < maxX && point.y >= minY && point.y < maxY
+    }
+
+    func containsWithTolerance(_ other: CGRect, tolerance: CGFloat = 0.001) -> Bool {
+        other.minX >= minX - tolerance &&
+            other.minY >= minY - tolerance &&
+            other.maxX <= maxX + tolerance &&
+            other.maxY <= maxY + tolerance
     }
 }

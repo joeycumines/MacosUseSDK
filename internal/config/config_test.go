@@ -6,6 +6,8 @@ package config
 
 import (
 	"os"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 )
@@ -19,7 +21,6 @@ func TestLoad_Defaults(t *testing.T) {
 	os.Unsetenv("MCP_TRANSPORT")
 	os.Unsetenv("MCP_HTTP_ADDRESS")
 	os.Unsetenv("MCP_HTTP_SOCKET")
-	os.Unsetenv("MCP_HEARTBEAT_INTERVAL")
 	os.Unsetenv("MCP_CORS_ORIGIN")
 	os.Unsetenv("MCP_TLS_CERT_FILE")
 	os.Unsetenv("MCP_TLS_KEY_FILE")
@@ -48,16 +49,24 @@ func TestLoad_Defaults(t *testing.T) {
 		t.Errorf("Transport = %s, want stdio", cfg.Transport)
 	}
 
-	if cfg.HTTPAddress != ":8080" {
-		t.Errorf("HTTPAddress = %s, want :8080", cfg.HTTPAddress)
+	if cfg.HTTPAddress != "127.0.0.1:8080" {
+		t.Errorf("HTTPAddress = %s, want 127.0.0.1:8080", cfg.HTTPAddress)
 	}
 
-	if cfg.HeartbeatInterval != 30*time.Second {
-		t.Errorf("HeartbeatInterval = %v, want 30s", cfg.HeartbeatInterval)
+	if cfg.CORSOrigin != "" {
+		t.Errorf("CORSOrigin = %s, want empty secure default", cfg.CORSOrigin)
 	}
+}
 
-	if cfg.CORSOrigin != "*" {
-		t.Errorf("CORSOrigin = %s, want *", cfg.CORSOrigin)
+func TestLoad_PhysicalRequestTimeoutMustFitTimeDuration(t *testing.T) {
+	const maximumDurationSeconds = int64((1<<63 - 1) / int64(time.Second))
+	t.Setenv(
+		"MACOS_USE_REQUEST_TIMEOUT",
+		strconv.FormatInt(maximumDurationSeconds+1, 10),
+	)
+	_, err := Load()
+	if err == nil || !strings.Contains(err.Error(), "MACOS_USE_REQUEST_TIMEOUT") {
+		t.Fatalf("Load() error=%v, want request-timeout overflow rejection", err)
 	}
 }
 
@@ -75,8 +84,8 @@ func TestLoad_TransportStdio(t *testing.T) {
 	}
 }
 
-func TestLoad_TransportSSE(t *testing.T) {
-	os.Setenv("MCP_TRANSPORT", "sse")
+func TestLoad_TransportStreamableHTTP(t *testing.T) {
+	os.Setenv("MCP_TRANSPORT", "streamable-http")
 	defer os.Unsetenv("MCP_TRANSPORT")
 
 	cfg, err := Load()
@@ -85,17 +94,19 @@ func TestLoad_TransportSSE(t *testing.T) {
 	}
 
 	if cfg.Transport != TransportHTTP {
-		t.Errorf("Transport = %s, want sse", cfg.Transport)
+		t.Errorf("Transport = %s, want streamable-http", cfg.Transport)
 	}
 }
 
 func TestLoad_TransportInvalid(t *testing.T) {
-	os.Setenv("MCP_TRANSPORT", "invalid")
-	defer os.Unsetenv("MCP_TRANSPORT")
-
-	_, err := Load()
-	if err == nil {
-		t.Error("Load() should return error for invalid transport")
+	for _, value := range []string{"invalid", "sse"} {
+		t.Run(value, func(t *testing.T) {
+			t.Setenv("MCP_TRANSPORT", value)
+			_, err := Load()
+			if err == nil {
+				t.Fatalf("Load() accepted obsolete or invalid transport %q", value)
+			}
+		})
 	}
 }
 
@@ -110,8 +121,8 @@ func TestLoad_InvalidInt(t *testing.T) {
 }
 
 func TestLoad_InvalidDuration(t *testing.T) {
-	os.Setenv("MCP_HEARTBEAT_INTERVAL", "not-a-duration")
-	defer os.Unsetenv("MCP_HEARTBEAT_INTERVAL")
+	os.Setenv("MCP_HTTP_READ_TIMEOUT", "not-a-duration")
+	defer os.Unsetenv("MCP_HTTP_READ_TIMEOUT")
 
 	_, err := Load()
 	if err == nil {
@@ -120,16 +131,14 @@ func TestLoad_InvalidDuration(t *testing.T) {
 }
 
 func TestLoad_HTTPConfig(t *testing.T) {
-	os.Setenv("MCP_HTTP_ADDRESS", ":9000")
+	os.Setenv("MCP_HTTP_ADDRESS", "127.0.0.1:9000")
 	os.Setenv("MCP_HTTP_SOCKET", "/tmp/mcp.sock")
-	os.Setenv("MCP_HEARTBEAT_INTERVAL", "60s")
 	os.Setenv("MCP_CORS_ORIGIN", "https://example.com")
 	os.Setenv("MCP_HTTP_READ_TIMEOUT", "45s")
 	os.Setenv("MCP_HTTP_WRITE_TIMEOUT", "45s")
 	defer func() {
 		os.Unsetenv("MCP_HTTP_ADDRESS")
 		os.Unsetenv("MCP_HTTP_SOCKET")
-		os.Unsetenv("MCP_HEARTBEAT_INTERVAL")
 		os.Unsetenv("MCP_CORS_ORIGIN")
 		os.Unsetenv("MCP_HTTP_READ_TIMEOUT")
 		os.Unsetenv("MCP_HTTP_WRITE_TIMEOUT")
@@ -140,16 +149,12 @@ func TestLoad_HTTPConfig(t *testing.T) {
 		t.Fatalf("Load() error = %v", err)
 	}
 
-	if cfg.HTTPAddress != ":9000" {
-		t.Errorf("HTTPAddress = %s, want :9000", cfg.HTTPAddress)
+	if cfg.HTTPAddress != "127.0.0.1:9000" {
+		t.Errorf("HTTPAddress = %s, want 127.0.0.1:9000", cfg.HTTPAddress)
 	}
 
 	if cfg.HTTPSocketPath != "/tmp/mcp.sock" {
 		t.Errorf("HTTPSocketPath = %s, want /tmp/mcp.sock", cfg.HTTPSocketPath)
-	}
-
-	if cfg.HeartbeatInterval != 60*time.Second {
-		t.Errorf("HeartbeatInterval = %v, want 60s", cfg.HeartbeatInterval)
 	}
 
 	if cfg.CORSOrigin != "https://example.com" {
@@ -170,8 +175,8 @@ func TestTransportTypeConstants(t *testing.T) {
 		t.Errorf("TransportStdio = %s, want stdio", TransportStdio)
 	}
 
-	if TransportHTTP != "sse" {
-		t.Errorf("TransportHTTP = %s, want sse", TransportHTTP)
+	if TransportHTTP != "streamable-http" {
+		t.Errorf("TransportHTTP = %s, want streamable-http", TransportHTTP)
 	}
 }
 
@@ -227,16 +232,18 @@ func TestGetEnv(t *testing.T) {
 
 func TestGetEnvAsBool(t *testing.T) {
 	tests := []struct {
-		value string
-		want  bool
+		value     string
+		want      bool
+		wantError bool
 	}{
-		{"true", true},
-		{"1", true},
-		{"yes", true},
-		{"false", false},
-		{"0", false},
-		{"no", false},
-		{"", false},
+		{"true", true, false},
+		{"1", true, false},
+		{"yes", true, false},
+		{"false", false, false},
+		{"0", false, false},
+		{"no", false, false},
+		{"", false, false},
+		{"truthy", false, true},
 	}
 
 	for _, tt := range tests {
@@ -248,7 +255,16 @@ func TestGetEnvAsBool(t *testing.T) {
 				os.Unsetenv("TEST_BOOL")
 			}
 
-			got := getEnvAsBool("TEST_BOOL", false)
+			got, err := getEnvAsBool("TEST_BOOL", false)
+			if tt.wantError {
+				if err == nil {
+					t.Fatalf("getEnvAsBool(%q) succeeded, want error", tt.value)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("getEnvAsBool(%q) error = %v", tt.value, err)
+			}
 			if got != tt.want {
 				t.Errorf("getEnvAsBool(%q) = %v, want %v", tt.value, got, tt.want)
 			}
@@ -424,6 +440,136 @@ func TestLoad_RateLimitInvalid(t *testing.T) {
 	_, err := Load()
 	if err == nil {
 		t.Error("Load() should return error for invalid rate limit")
+	}
+}
+
+func TestLoad_RejectsUnsafeHTTPConfiguration(t *testing.T) {
+	tests := []struct {
+		environment map[string]string
+		name        string
+		wantError   string
+	}{
+		{
+			name:        "certificate without key",
+			environment: map[string]string{"MCP_TLS_CERT_FILE": "/tmp/server.crt"},
+			wantError:   "MCP_TLS_CERT_FILE and MCP_TLS_KEY_FILE must be configured together",
+		},
+		{
+			name:        "key without certificate",
+			environment: map[string]string{"MCP_TLS_KEY_FILE": "/tmp/server.key"},
+			wantError:   "MCP_TLS_CERT_FILE and MCP_TLS_KEY_FILE must be configured together",
+		},
+		{
+			name:        "negative rate",
+			environment: map[string]string{"MCP_RATE_LIMIT": "-0.5"},
+			wantError:   "MCP_RATE_LIMIT must be zero or a finite positive number",
+		},
+		{
+			name:        "non-finite rate",
+			environment: map[string]string{"MCP_RATE_LIMIT": "NaN"},
+			wantError:   "MCP_RATE_LIMIT must be zero or a finite positive number",
+		},
+		{
+			name:        "zero request timeout",
+			environment: map[string]string{"MACOS_USE_REQUEST_TIMEOUT": "0"},
+			wantError:   "MACOS_USE_REQUEST_TIMEOUT must be positive",
+		},
+		{
+			name:        "trailing request timeout data",
+			environment: map[string]string{"MACOS_USE_REQUEST_TIMEOUT": "30seconds"},
+			wantError:   "invalid value for MACOS_USE_REQUEST_TIMEOUT",
+		},
+		{
+			name:        "negative read timeout",
+			environment: map[string]string{"MCP_HTTP_READ_TIMEOUT": "-1s"},
+			wantError:   "MCP_HTTP_READ_TIMEOUT must be positive",
+		},
+		{
+			name:        "negative write timeout",
+			environment: map[string]string{"MCP_HTTP_WRITE_TIMEOUT": "-1s"},
+			wantError:   "MCP_HTTP_WRITE_TIMEOUT must not be negative",
+		},
+		{
+			name:        "origin with path",
+			environment: map[string]string{"MCP_CORS_ORIGIN": "https://trusted.example/path"},
+			wantError:   "MCP_CORS_ORIGIN must be an exact HTTP or HTTPS origin",
+		},
+		{
+			name:        "wildcard origin",
+			environment: map[string]string{"MCP_CORS_ORIGIN": "*"},
+			wantError:   "MCP_CORS_ORIGIN must be an exact HTTP or HTTPS origin",
+		},
+		{
+			name:        "invalid listener address",
+			environment: map[string]string{"MCP_HTTP_ADDRESS": "localhost"},
+			wantError:   "MCP_HTTP_ADDRESS must be a host:port listener address",
+		},
+		{
+			name:        "unspecified listener without controls",
+			environment: map[string]string{"MCP_HTTP_ADDRESS": ":9000"},
+			wantError:   "non-loopback MCP_HTTP_ADDRESS requires TLS, API key authentication, and rate limiting",
+		},
+		{
+			name: "remote listener missing rate limit",
+			environment: map[string]string{
+				"MCP_API_KEY":       "production-secret",
+				"MCP_HTTP_ADDRESS":  "0.0.0.0:9000",
+				"MCP_TLS_CERT_FILE": "/tmp/server.crt",
+				"MCP_TLS_KEY_FILE":  "/tmp/server.key",
+			},
+			wantError: "non-loopback MCP_HTTP_ADDRESS requires TLS, API key authentication, and rate limiting",
+		},
+		{
+			name:        "relative socket path",
+			environment: map[string]string{"MCP_HTTP_SOCKET": "relative/mcp.sock"},
+			wantError:   "MCP_HTTP_SOCKET must be an absolute path",
+		},
+		{
+			name:        "invalid boolean",
+			environment: map[string]string{"MCP_SHELL_COMMANDS_ENABLED": "truthy"},
+			wantError:   "invalid value for MCP_SHELL_COMMANDS_ENABLED",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Setenv("MCP_TRANSPORT", "streamable-http")
+			t.Setenv("MCP_HTTP_ADDRESS", "127.0.0.1:8080")
+			t.Setenv("MCP_HTTP_SOCKET", "")
+			t.Setenv("MCP_TLS_CERT_FILE", "")
+			t.Setenv("MCP_TLS_KEY_FILE", "")
+			t.Setenv("MCP_API_KEY", "")
+			t.Setenv("MCP_RATE_LIMIT", "0")
+			t.Setenv("MCP_CORS_ORIGIN", "")
+			for key, value := range test.environment {
+				t.Setenv(key, value)
+			}
+
+			_, err := Load()
+			if err == nil {
+				t.Fatalf("Load() succeeded, want error containing %q", test.wantError)
+			}
+			if !strings.Contains(err.Error(), test.wantError) {
+				t.Fatalf("Load() error = %q, want substring %q", err, test.wantError)
+			}
+		})
+	}
+}
+
+func TestLoad_AllowsProtectedRemoteHTTPListener(t *testing.T) {
+	t.Setenv("MCP_TRANSPORT", "streamable-http")
+	t.Setenv("MCP_HTTP_ADDRESS", "0.0.0.0:9443")
+	t.Setenv("MCP_TLS_CERT_FILE", "/tmp/server.crt")
+	t.Setenv("MCP_TLS_KEY_FILE", "/tmp/server.key")
+	t.Setenv("MCP_API_KEY", "production-secret")
+	t.Setenv("MCP_RATE_LIMIT", "25")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() rejected protected remote listener: %v", err)
+	}
+	if cfg.HTTPAddress != "0.0.0.0:9443" {
+		t.Fatalf("HTTPAddress = %q, want protected remote listener", cfg.HTTPAddress)
 	}
 }
 

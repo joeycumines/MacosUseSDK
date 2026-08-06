@@ -13,6 +13,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"golang.org/x/sys/unix"
 )
 
 func TestNewAuditLogger_Disabled(t *testing.T) {
@@ -37,6 +39,182 @@ func TestNewAuditLogger_Enabled(t *testing.T) {
 
 	if !logger.IsEnabled() {
 		t.Error("Expected logger to be enabled")
+	}
+}
+
+func TestAuditLogger_NonContentMetadataOnly(t *testing.T) {
+	logPath := filepath.Join(t.TempDir(), "audit.log")
+	logger, err := NewAuditLogger(logPath)
+	if err != nil {
+		t.Fatalf("NewAuditLogger error = %v", err)
+	}
+
+	const privateMarker = "FUNC-002-AUDIT-PRIVATE-CONTENT-7b83d1"
+	logger.LogToolCall(
+		"type",
+		json.RawMessage(`{"text":"`+privateMarker+`","parent":"applications/123"}`),
+		"success",
+		50*time.Millisecond,
+	)
+	if err := logger.Close(); err != nil {
+		t.Fatalf("Close error = %v", err)
+	}
+
+	content, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatalf("ReadFile error = %v", err)
+	}
+	if strings.Contains(string(content), privateMarker) {
+		t.Fatalf("audit log persisted private tool content: %s", content)
+	}
+	var entry map[string]any
+	if err := json.Unmarshal(content, &entry); err != nil {
+		t.Fatalf("decode audit entry: %v", err)
+	}
+	if _, exists := entry["arguments"]; exists {
+		t.Fatalf("audit entry contains forbidden arguments field: %v", entry)
+	}
+	for _, field := range []string{"tool", "status", "duration_seconds", "timestamp"} {
+		if _, exists := entry[field]; !exists {
+			t.Errorf("audit metadata omitted %q: %v", field, entry)
+		}
+	}
+}
+
+func TestNewAuditLogger_CreatesOwnerPrivateRegularFile(t *testing.T) {
+	logPath := filepath.Join(t.TempDir(), "audit.log")
+	logger, err := NewAuditLogger(logPath)
+	if err != nil {
+		t.Fatalf("NewAuditLogger error = %v", err)
+	}
+	defer logger.Close()
+
+	info, err := os.Lstat(logPath)
+	if err != nil {
+		t.Fatalf("Lstat audit log: %v", err)
+	}
+	if !info.Mode().IsRegular() {
+		t.Fatalf("audit log mode=%v, want regular file", info.Mode())
+	}
+	if got := info.Mode().Perm(); got != 0600 {
+		t.Fatalf("audit log permissions=%#o, want 0600", got)
+	}
+}
+
+func TestNewAuditLogger_RejectsSymlinkWithoutTouchingTarget(t *testing.T) {
+	tmpDir := t.TempDir()
+	targetPath := filepath.Join(tmpDir, "target")
+	const sentinel = "do-not-touch"
+	if err := os.WriteFile(targetPath, []byte(sentinel), 0600); err != nil {
+		t.Fatalf("write target: %v", err)
+	}
+	logPath := filepath.Join(tmpDir, "audit.log")
+	if err := os.Symlink(targetPath, logPath); err != nil {
+		t.Fatalf("create symlink: %v", err)
+	}
+
+	logger, err := NewAuditLogger(logPath)
+	if logger != nil {
+		_ = logger.Close()
+	}
+	if err == nil {
+		t.Fatal("NewAuditLogger accepted symlink path")
+	}
+	content, readErr := os.ReadFile(targetPath)
+	if readErr != nil {
+		t.Fatalf("read target: %v", readErr)
+	}
+	if string(content) != sentinel {
+		t.Fatalf("symlink target changed: %q", content)
+	}
+}
+
+func TestNewAuditLogger_RejectsHardLinkedFile(t *testing.T) {
+	tmpDir := t.TempDir()
+	targetPath := filepath.Join(tmpDir, "target")
+	if err := os.WriteFile(targetPath, []byte("sentinel"), 0600); err != nil {
+		t.Fatalf("write target: %v", err)
+	}
+	logPath := filepath.Join(tmpDir, "audit.log")
+	if err := os.Link(targetPath, logPath); err != nil {
+		t.Fatalf("create hard link: %v", err)
+	}
+
+	logger, err := NewAuditLogger(logPath)
+	if logger != nil {
+		_ = logger.Close()
+	}
+	if err == nil {
+		t.Fatal("NewAuditLogger accepted multiply linked file")
+	}
+}
+
+func TestNewAuditLogger_RejectsExistingNonPrivateFile(t *testing.T) {
+	logPath := filepath.Join(t.TempDir(), "audit.log")
+	if err := os.WriteFile(logPath, []byte("existing"), 0644); err != nil {
+		t.Fatalf("write existing log: %v", err)
+	}
+	if err := os.Chmod(logPath, 0644); err != nil {
+		t.Fatalf("chmod existing log: %v", err)
+	}
+
+	logger, err := NewAuditLogger(logPath)
+	if logger != nil {
+		_ = logger.Close()
+	}
+	if err == nil {
+		t.Fatal("NewAuditLogger accepted group/world-readable file")
+	}
+}
+
+func TestNewAuditLogger_RejectsFIFOWithoutBlocking(t *testing.T) {
+	logPath := filepath.Join(t.TempDir(), "audit.fifo")
+	if err := unix.Mkfifo(logPath, 0600); err != nil {
+		t.Fatalf("create FIFO: %v", err)
+	}
+	type openResult struct {
+		logger *AuditLogger
+		err    error
+	}
+	result := make(chan openResult, 1)
+	go func() {
+		logger, err := NewAuditLogger(logPath)
+		result <- openResult{logger: logger, err: err}
+	}()
+
+	select {
+	case opened := <-result:
+		if opened.logger != nil {
+			_ = opened.logger.Close()
+		}
+		if opened.err == nil {
+			t.Fatal("NewAuditLogger accepted FIFO")
+		}
+	case <-time.After(250 * time.Millisecond):
+		// Unblock an implementation that accidentally used a blocking writer
+		// open so the test cannot leak its diagnostic goroutine.
+		readerFD, readerErr := unix.Open(logPath, unix.O_NONBLOCK|unix.O_RDONLY, 0)
+		if readerErr == nil {
+			defer unix.Close(readerFD)
+		}
+		select {
+		case opened := <-result:
+			if opened.logger != nil {
+				_ = opened.logger.Close()
+			}
+		case <-time.After(time.Second):
+		}
+		t.Fatal("NewAuditLogger blocked while opening FIFO")
+	}
+}
+
+func TestNewAuditLogger_RejectsDevice(t *testing.T) {
+	logger, err := NewAuditLogger("/dev/null")
+	if logger != nil {
+		_ = logger.Close()
+	}
+	if err == nil {
+		t.Fatal("NewAuditLogger accepted character device")
 	}
 }
 
@@ -106,125 +284,39 @@ func TestAuditLogger_NilLogger(t *testing.T) {
 	logger.LogToolCall("click", args, "success", 50*time.Millisecond)
 }
 
-func TestRedactArguments(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    string
-		expected []string // strings that should appear in output
-		excluded []string // strings that should NOT appear in output
-	}{
-		{
-			name:     "no sensitive data",
-			input:    `{"x": 100, "y": 200}`,
-			expected: []string{"100", "200"},
-			excluded: []string{"REDACTED"},
-		},
-		{
-			name:     "password field",
-			input:    `{"username": "user", "password": "secret123"}`,
-			expected: []string{"user", "REDACTED"},
-			excluded: []string{"secret123"},
-		},
-		{
-			name:     "api_key field",
-			input:    `{"data": "value", "api_key": "sk-12345"}`,
-			expected: []string{"value", "REDACTED"},
-			excluded: []string{"sk-12345"},
-		},
-		{
-			name:     "token field",
-			input:    `{"token": "eyJhbGc...", "name": "test"}`,
-			expected: []string{"test", "REDACTED"},
-			excluded: []string{"eyJhbGc"},
-		},
-		{
-			name:     "nested sensitive",
-			input:    `{"config": {"secret": "hidden"}}`,
-			expected: []string{"REDACTED"},
-			excluded: []string{"hidden"},
-		},
-		{
-			name:     "partial match",
-			input:    `{"my_password_field": "value123"}`,
-			expected: []string{"REDACTED"},
-			excluded: []string{"value123"},
-		},
-		{
-			name:     "empty args",
-			input:    ``,
-			expected: []string{"{}"},
-			excluded: []string{},
-		},
-		{
-			name:     "invalid json",
-			input:    `{invalid}`,
-			expected: []string{"unparseable"},
-			excluded: []string{},
-		},
+func TestAuditLogger_ArgumentShapesNeverPersisted(t *testing.T) {
+	logPath := filepath.Join(t.TempDir(), "audit.log")
+	logger, err := NewAuditLogger(logPath)
+	if err != nil {
+		t.Fatalf("NewAuditLogger error = %v", err)
 	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := redactArguments(json.RawMessage(tt.input))
-
-			for _, exp := range tt.expected {
-				if !strings.Contains(result, exp) {
-					t.Errorf("Expected %q in result, got: %s", exp, result)
-				}
-			}
-
-			for _, exc := range tt.excluded {
-				if strings.Contains(result, exc) {
-					t.Errorf("Should NOT contain %q, got: %s", exc, result)
-				}
-			}
-		})
+	markers := []string{
+		"AUDIT-SAFE-VISIBLE-ARGUMENT",
+		"AUDIT-SAFE-NESTED-SECRET",
+		"AUDIT-SAFE-MALFORMED",
 	}
-}
-
-func TestRedactMapValues_CaseInsensitive(t *testing.T) {
-	m := map[string]any{
-		"PASSWORD":  "secret1",
-		"Password":  "secret2",
-		"pAsSwOrD":  "secret3",
-		"safe_data": "visible",
+	arguments := []json.RawMessage{
+		json.RawMessage(`{"text":"` + markers[0] + `"}`),
+		json.RawMessage(`{"nested":{"password":"` + markers[1] + `"}}`),
+		json.RawMessage(`{` + markers[2]),
 	}
-
-	redactMapValues(m)
-
-	if m["PASSWORD"] != "[REDACTED]" {
-		t.Errorf("PASSWORD should be redacted, got: %v", m["PASSWORD"])
+	for _, args := range arguments {
+		logger.LogToolCall("type", args, "success", time.Millisecond)
 	}
-	if m["Password"] != "[REDACTED]" {
-		t.Errorf("Password should be redacted, got: %v", m["Password"])
+	if err := logger.Close(); err != nil {
+		t.Fatalf("Close error = %v", err)
 	}
-	if m["pAsSwOrD"] != "[REDACTED]" {
-		t.Errorf("pAsSwOrD should be redacted, got: %v", m["pAsSwOrD"])
+	content, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatalf("ReadFile error = %v", err)
 	}
-	if m["safe_data"] != "visible" {
-		t.Errorf("safe_data should NOT be redacted, got: %v", m["safe_data"])
+	for _, marker := range markers {
+		if strings.Contains(string(content), marker) {
+			t.Errorf("audit log persisted argument marker %q", marker)
+		}
 	}
-}
-
-func TestRedactMapValues_ArrayOfMaps(t *testing.T) {
-	m := map[string]any{
-		"items": []any{
-			map[string]any{
-				"name":     "item1",
-				"password": "secret",
-			},
-		},
-	}
-
-	redactMapValues(m)
-
-	items := m["items"].([]any)
-	item := items[0].(map[string]any)
-	if item["password"] != "[REDACTED]" {
-		t.Errorf("Nested password in array should be redacted, got: %v", item["password"])
-	}
-	if item["name"] != "item1" {
-		t.Errorf("name should NOT be redacted, got: %v", item["name"])
+	if strings.Contains(string(content), `"arguments"`) {
+		t.Fatalf("audit log persisted forbidden arguments field: %s", content)
 	}
 }
 
@@ -350,8 +442,8 @@ func TestAuditLogger_JSONFormatValidation(t *testing.T) {
 	}
 }
 
-// TestAuditLogger_CloseIdempotency verifies that calling Close() multiple times
-// does not panic or return unexpected errors (except for "already closed" which is acceptable).
+// TestAuditLogger_CloseIdempotency verifies that repeated Close calls preserve
+// successful cleanup and disable future writes.
 func TestAuditLogger_CloseIdempotency(t *testing.T) {
 	tmpDir := t.TempDir()
 	logPath := filepath.Join(tmpDir, "idempotent_audit.log")
@@ -371,16 +463,15 @@ func TestAuditLogger_CloseIdempotency(t *testing.T) {
 		t.Errorf("First Close() error = %v", err1)
 	}
 
-	// Second close should not panic
-	// It may return an error (e.g., "file already closed") but should not panic
-	err2 := logger.Close()
-	// We don't assert on err2 value because behavior may vary,
-	// but we verify no panic occurred by reaching this line
-	_ = err2
-
-	// Third close for good measure
-	err3 := logger.Close()
-	_ = err3
+	if err := logger.Close(); err != nil {
+		t.Errorf("Second Close() error = %v", err)
+	}
+	if err := logger.Close(); err != nil {
+		t.Errorf("Third Close() error = %v", err)
+	}
+	if logger.IsEnabled() {
+		t.Error("logger remains enabled after Close")
+	}
 
 	// Verify file content is intact
 	content, err := os.ReadFile(logPath)
@@ -443,7 +534,6 @@ func TestAuditLogger_LogEntryFields(t *testing.T) {
 		"level",            // slog adds this automatically
 		"msg",              // the message ("tool_invocation")
 		"tool",             // tool name
-		"arguments",        // redacted arguments
 		"status",           // success/error
 		"duration_seconds", // duration in seconds
 		"timestamp",        // explicit timestamp we add
@@ -473,9 +563,8 @@ func TestAuditLogger_LogEntryFields(t *testing.T) {
 		t.Errorf("Expected duration_seconds ~0.15, got %v", entry["duration_seconds"])
 	}
 
-	// Verify arguments are present (should contain the JSON)
-	if args, ok := entry["arguments"].(string); !ok || !strings.Contains(args, "100") {
-		t.Errorf("Expected arguments to contain '100', got %v", entry["arguments"])
+	if _, exists := entry["arguments"]; exists {
+		t.Errorf("forbidden arguments field present: %v", entry["arguments"])
 	}
 }
 
@@ -497,10 +586,11 @@ func TestAuditLogger_WriteAfterClose(t *testing.T) {
 		t.Fatalf("Close error = %v", err)
 	}
 
-	// Write after close - should not panic
-	// The logger may silently fail or error, but should not panic
+	// Write after close is an idempotent no-op.
 	args2 := json.RawMessage(`{"after": true}`)
-	logger.LogToolCall("after", args2, "success", 10*time.Millisecond)
+	if err := logger.LogToolCall("after", args2, "success", 10*time.Millisecond); err != nil {
+		t.Fatalf("LogToolCall after close error = %v", err)
+	}
 
 	// Verify file exists and has the "before" entry
 	content, err := os.ReadFile(logPath)
@@ -511,37 +601,30 @@ func TestAuditLogger_WriteAfterClose(t *testing.T) {
 	if !strings.Contains(string(content), "before") {
 		t.Error("Log should contain 'before' entry")
 	}
+	if strings.Contains(string(content), `"tool":"after"`) {
+		t.Error("Log contains entry written after Close")
+	}
 }
 
-// TestAuditLogger_WriteFailure_ReadOnlyFile tests behavior when the log file
-// becomes unwritable (simulating disk full or permission issues).
-func TestAuditLogger_WriteFailure_ReadOnlyFile(t *testing.T) {
+func TestAuditLogger_WriteFailureIsReturned(t *testing.T) {
 	tmpDir := t.TempDir()
-	logPath := filepath.Join(tmpDir, "readonly_audit.log")
+	logPath := filepath.Join(tmpDir, "failed_audit.log")
 
 	logger, err := NewAuditLogger(logPath)
 	if err != nil {
 		t.Fatalf("NewAuditLogger error = %v", err)
 	}
-	defer logger.Close()
-
-	// Write one entry successfully
 	args := json.RawMessage(`{"first": true}`)
-	logger.LogToolCall("first", args, "success", 10*time.Millisecond)
-
-	// Make the file read-only
-	if err := os.Chmod(logPath, 0444); err != nil {
-		t.Fatalf("Chmod error = %v", err)
+	if err := logger.LogToolCall("first", args, "success", 10*time.Millisecond); err != nil {
+		t.Fatalf("initial LogToolCall error = %v", err)
 	}
-	// Restore permissions for cleanup
-	defer os.Chmod(logPath, 0644)
-
-	// Attempt to write - the logger uses slog which may buffer or silently fail
-	// We mainly want to ensure no panic occurs
+	if err := logger.file.Close(); err != nil {
+		t.Fatalf("close underlying file: %v", err)
+	}
 	args2 := json.RawMessage(`{"second": true}`)
-	logger.LogToolCall("second", args2, "success", 10*time.Millisecond)
-
-	// The test passes if we reach here without panic
+	if err := logger.LogToolCall("second", args2, "success", 10*time.Millisecond); err == nil {
+		t.Fatal("LogToolCall swallowed underlying write failure")
+	}
 }
 
 // TestAuditLogger_InvalidPath_PermissionDenied tests error handling for permission denied.
@@ -562,8 +645,9 @@ func TestAuditLogger_InvalidPath_PermissionDenied(t *testing.T) {
 	}
 }
 
-// TestAuditLogger_LargeArgumentRedaction tests redaction of large argument payloads.
-func TestAuditLogger_LargeArgumentRedaction(t *testing.T) {
+// TestAuditLogger_LargeArgumentsAreNeverPersisted proves the non-content policy
+// does not degrade into size-limited or key-name-based redaction.
+func TestAuditLogger_LargeArgumentsAreNeverPersisted(t *testing.T) {
 	tmpDir := t.TempDir()
 	logPath := filepath.Join(tmpDir, "large_args.log")
 
@@ -573,7 +657,8 @@ func TestAuditLogger_LargeArgumentRedaction(t *testing.T) {
 	}
 	defer logger.Close()
 
-	// Create a large argument with a secret somewhere in the middle
+	// Create a large argument with private data in both ordinary and
+	// secret-looking fields. Neither class may enter the audit log.
 	largeData := make(map[string]any)
 	for i := range 100 {
 		largeData[string(rune('a'+i%26))+string(rune('0'+i/26))] = i
@@ -595,19 +680,14 @@ func TestAuditLogger_LargeArgumentRedaction(t *testing.T) {
 
 	logStr := string(content)
 
-	// Should not contain the secret
 	if strings.Contains(logStr, "super_secret_value") {
 		t.Error("Log should NOT contain 'super_secret_value'")
 	}
-
-	// Should contain REDACTED indicator
-	if !strings.Contains(logStr, "REDACTED") {
-		t.Error("Log should contain REDACTED for password field")
+	if strings.Contains(logStr, strings.Repeat("x", 100)) {
+		t.Error("Log should NOT contain ordinary argument content")
 	}
-
-	// Should contain normal data
-	if !strings.Contains(logStr, strings.Repeat("x", 100)) {
-		t.Error("Log should contain normal_field data")
+	if strings.Contains(logStr, `"arguments"`) {
+		t.Error("Log should NOT contain an arguments field")
 	}
 }
 

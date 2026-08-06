@@ -2,6 +2,9 @@ package integration
 
 import (
 	"context"
+	"fmt"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -32,61 +35,28 @@ func TestNoFocusStealingWithPassiveObservation(t *testing.T) {
 
 	// 2. Open Calculator
 	t.Log("Opening Calculator...")
-	app := openCalculator(t, ctx, client, opsClient)
+	app := openCalculator(t, ctx, client)
 	defer cleanupApplication(t, ctx, client, app)
 
-	// 3. Find Calculator window
-	t.Log("Finding Calculator window...")
-	var calcWindow *pb.Window
-	err := PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
-		resp, err := client.ListWindows(ctx, &pb.ListWindowsRequest{
-			Parent: app.Name,
-		})
-		if err != nil {
-			return false, nil
-		}
-		if len(resp.Windows) > 0 {
-			calcWindow = resp.Windows[0]
-			return true, nil
-		}
-		return false, nil
-	})
-	if err != nil {
-		t.Fatalf("Failed to find Calculator window: %v", err)
-	}
-	t.Logf("Found Calculator window: %s", calcWindow.Name)
-
-	// 4. Deactivate Calculator using Finder
+	// 3. Deactivate the exact Calculator process using Finder. Require a
+	// stable baseline so late application-launch activation cannot be blamed on
+	// the observer.
 	t.Log("Deactivating Calculator by activating Finder...")
-	_, err = client.ExecuteAppleScript(ctx, &pb.ExecuteAppleScriptRequest{
+	_, err := client.ExecuteAppleScript(ctx, &pb.ExecuteAppleScriptRequest{
 		Script: `tell application "Finder" to activate`,
 	})
 	if err != nil {
 		t.Fatalf("Failed to activate Finder: %v", err)
 	}
 
-	// Wait for Calculator to not be frontmost. This step requires the test
-	// runner to be in an interactive GUI session where the frontmost
-	// application can be changed. In headless/automation environments that
-	// cannot switch focus, the rest of this test is meaningless, so skip it.
 	deactivateCtx, cancelDeactivate := context.WithTimeout(ctx, 10*time.Second)
 	defer cancelDeactivate()
-	err = PollUntilContext(deactivateCtx, 100*time.Millisecond, func() (bool, error) {
-		resp, err := client.ExecuteAppleScript(deactivateCtx, &pb.ExecuteAppleScriptRequest{
-			Script: `tell application "System Events" to return name of first application process whose frontmost is true`,
-		})
-		if err != nil {
-			return false, nil
-		}
-		frontmost := resp.GetOutput()
-		t.Logf("Current frontmost: %s", frontmost)
-		return frontmost != "Calculator", nil
-	})
+	err = waitForStableBackgroundProcess(deactivateCtx, client, app.Pid, time.Second)
 	if err != nil {
-		t.Skip("Cannot change frontmost application in this environment; skipping focus-stealing test")
+		t.Fatalf("Failed to establish stable background Calculator PID %d: %v", app.Pid, err)
 	}
 
-	// 5. Create observation with activate=false (passive mode)
+	// 4. Create observation with activate=false (passive mode)
 	t.Log("Creating passive observation (activate=false)...")
 	createReq := &pb.CreateObservationRequest{
 		Parent: app.Name,
@@ -134,20 +104,9 @@ func TestNoFocusStealingWithPassiveObservation(t *testing.T) {
 		t.Logf("Cancelled observation: %s", obs.Name)
 	}()
 
-	// 6. Perform UI changes on Calculator window
-	t.Log("Performing window resize on Calculator...")
-	newWidth := calcWindow.Bounds.Width + 50
-	newHeight := calcWindow.Bounds.Height + 50
-	_, err = client.ResizeWindow(ctx, &pb.ResizeWindowRequest{
-		Name:   calcWindow.Name,
-		Width:  newWidth,
-		Height: newHeight,
-	})
-	if err != nil {
-		t.Logf("Warning: ResizeWindow failed (may not be critical): %v", err)
-	}
-
-	// 7. Poll multiple times to verify Calculator never becomes frontmost
+	// 5. Poll multiple times to verify the exact owned Calculator process never
+	// becomes frontmost. Another Calculator process is external activity, not
+	// evidence that this observation activated its target.
 	t.Log("Verifying Calculator never becomes frontmost during observation polling...")
 	focusStealingDetected := false
 	pollCount := 0
@@ -155,35 +114,35 @@ func TestNoFocusStealingWithPassiveObservation(t *testing.T) {
 
 	checkCtx, cancelCheck := context.WithTimeout(ctx, 10*time.Second)
 	defer cancelCheck()
+	pollTicker := time.NewTicker(100 * time.Millisecond)
+	defer pollTicker.Stop()
 
 pollLoop:
 	for i := range maxPolls {
 		pollCount++
 
-		resp, err := client.ExecuteAppleScript(checkCtx, &pb.ExecuteAppleScriptRequest{
-			Script: `tell application "System Events" to return name of first application process whose frontmost is true`,
-		})
+		present, frontmost, err := exactProcessFrontmost(checkCtx, client, app.Pid)
 		if err != nil {
-			t.Logf("Warning: Failed to check frontmost app on poll %d: %v", i, err)
-			continue
+			t.Fatalf("Failed to inspect Calculator PID %d on poll %d: %v", app.Pid, i, err)
 		}
-
-		currentFrontmost := resp.GetOutput()
-		if currentFrontmost == "Calculator" {
+		if !present {
+			t.Fatalf("Owned Calculator PID %d disappeared on poll %d", app.Pid, i)
+		}
+		if frontmost {
 			focusStealingDetected = true
-			t.Errorf("FOCUS STEALING DETECTED on poll %d: Calculator became frontmost!", i)
+			t.Errorf("FOCUS STEALING DETECTED on poll %d: owned Calculator PID %d became frontmost", i, app.Pid)
 			break pollLoop
 		}
-		t.Logf("Poll %d: frontmost=%s (OK)", i, currentFrontmost)
+		t.Logf("Poll %d: Calculator PID %d remained background (OK)", i, app.Pid)
 
 		select {
 		case <-checkCtx.Done():
 			break pollLoop
-		case <-time.After(100 * time.Millisecond):
+		case <-pollTicker.C:
 		}
 	}
 
-	// 8. Final verification
+	// 6. Final verification
 	if focusStealingDetected {
 		t.Fatalf("Focus stealing occurred during passive observation")
 	}
@@ -207,7 +166,7 @@ func TestFocusStealingWithActiveObservation(t *testing.T) {
 	opsClient := longrunningpb.NewOperationsClient(conn)
 
 	t.Log("Opening Calculator...")
-	app := openCalculator(t, ctx, client, opsClient)
+	app := openCalculator(t, ctx, client)
 	defer cleanupApplication(t, ctx, client, app)
 
 	t.Log("Deactivating Calculator by activating Finder...")
@@ -220,17 +179,9 @@ func TestFocusStealingWithActiveObservation(t *testing.T) {
 
 	deactivateCtx, cancelDeactivate := context.WithTimeout(ctx, 10*time.Second)
 	defer cancelDeactivate()
-	err = PollUntilContext(deactivateCtx, 100*time.Millisecond, func() (bool, error) {
-		resp, err := client.ExecuteAppleScript(deactivateCtx, &pb.ExecuteAppleScriptRequest{
-			Script: `tell application "System Events" to return name of first application process whose frontmost is true`,
-		})
-		if err != nil {
-			return false, nil
-		}
-		return resp.GetOutput() != "Calculator", nil
-	})
+	err = waitForStableBackgroundProcess(deactivateCtx, client, app.Pid, time.Second)
 	if err != nil {
-		t.Skip("Cannot change frontmost application in this environment; skipping focus-stealing test")
+		t.Fatalf("Failed to establish stable background Calculator PID %d: %v", app.Pid, err)
 	}
 	t.Log("Calculator is no longer frontmost")
 
@@ -283,22 +234,81 @@ func TestFocusStealingWithActiveObservation(t *testing.T) {
 	t.Log("Verifying Calculator becomes frontmost with active observation...")
 	calculatorBecameFrontmost := false
 	err = PollUntilContext(ctx, 200*time.Millisecond, func() (bool, error) {
-		resp, err := client.ExecuteAppleScript(ctx, &pb.ExecuteAppleScriptRequest{
-			Script: `tell application "System Events" to return name of first application process whose frontmost is true`,
-		})
+		present, frontmost, err := exactProcessFrontmost(ctx, client, app.Pid)
 		if err != nil {
-			return false, nil
+			return false, err
 		}
-		if resp.GetOutput() == "Calculator" {
+		if !present {
+			return false, fmt.Errorf("owned Calculator PID %d disappeared", app.Pid)
+		}
+		if frontmost {
 			calculatorBecameFrontmost = true
 			return true, nil
 		}
 		return false, nil
 	})
+	if err != nil {
+		t.Fatalf("Failed while waiting for active observation focus: %v", err)
+	}
 
 	if !calculatorBecameFrontmost {
 		t.Fatalf("Expected Calculator to become frontmost with activate=true, but it did not")
 	}
 
 	t.Log("SUCCESS: Calculator correctly became frontmost with active observation (activate=true)")
+}
+
+func waitForStableBackgroundProcess(
+	ctx context.Context,
+	client pb.MacosUseClient,
+	pid int32,
+	stableFor time.Duration,
+) error {
+	var stableSince time.Time
+	return PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
+		present, frontmost, err := exactProcessFrontmost(ctx, client, pid)
+		if err != nil {
+			return false, err
+		}
+		if !present {
+			return false, fmt.Errorf("owned process PID %d disappeared", pid)
+		}
+		if frontmost {
+			stableSince = time.Time{}
+			_, err = client.ExecuteAppleScript(ctx, &pb.ExecuteAppleScriptRequest{
+				Script: `tell application "Finder" to activate`,
+			})
+			return false, err
+		}
+		if stableSince.IsZero() {
+			stableSince = time.Now()
+		}
+		return time.Since(stableSince) >= stableFor, nil
+	})
+}
+
+func exactProcessFrontmost(
+	ctx context.Context,
+	client pb.MacosUseClient,
+	pid int32,
+) (present bool, frontmost bool, err error) {
+	script := `tell application "System Events"
+set matches to every application process whose unix id is ` + strconv.FormatInt(int64(pid), 10) + `
+if (count of matches) is 0 then return "missing"
+return frontmost of item 1 of matches
+end tell`
+	resp, err := client.ExecuteAppleScript(ctx, &pb.ExecuteAppleScriptRequest{Script: script})
+	if err != nil {
+		return false, false, err
+	}
+	switch strings.ToLower(strings.TrimSpace(resp.GetOutput())) {
+	case "true":
+		return true, true, nil
+	case "false":
+		return true, false, nil
+	case "missing":
+		return false, false, nil
+	default:
+		return false, false, fmt.Errorf("unexpected exact-PID frontmost response %q", resp.GetOutput())
+	}
 }

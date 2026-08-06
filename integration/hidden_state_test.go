@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
 )
 
@@ -38,11 +37,9 @@ func TestCmdHHiddenStateBehavior(t *testing.T) {
 	defer conn.Close()
 
 	client := pb.NewMacosUseClient(conn)
-	opsClient := longrunningpb.NewOperationsClient(conn)
-
 	// 2. Open Calculator
 	t.Log("Opening Calculator...")
-	app := openCalculator(t, ctx, client, opsClient)
+	app := openCalculator(t, ctx, client)
 	defer cleanupApplication(t, ctx, client, app)
 
 	// 3. Wait for Calculator window to appear and get initial window
@@ -111,10 +108,15 @@ func TestCmdHHiddenStateBehavior(t *testing.T) {
 
 	// 6. Send Cmd+H to hide the application
 	t.Log("Sending Cmd+H to hide Calculator...")
-	_, err = client.CreateInput(ctx, &pb.CreateInputRequest{
-		Parent: app.Name,
-		Input: &pb.Input{
-			Action: &pb.InputAction{
+	createCompletedInput(
+		t,
+		ctx,
+		client,
+		newIntegrationInputRequest(
+			t,
+			app.GetName(),
+			applicationInputTarget(app.GetName()),
+			&pb.InputAction{
 				InputType: &pb.InputAction_PressKey{
 					PressKey: &pb.KeyPress{
 						Key:       "h",
@@ -122,11 +124,10 @@ func TestCmdHHiddenStateBehavior(t *testing.T) {
 					},
 				},
 			},
-		},
-	})
-	if err != nil {
-		t.Fatalf("Failed to send Cmd+H: %v", err)
-	}
+		),
+		2,
+		"hide Calculator with Cmd+H",
+	)
 
 	// 7. Poll until no visible windows remain (Cmd+H hides all windows)
 	t.Log("Polling for all windows to become hidden after Cmd+H...")

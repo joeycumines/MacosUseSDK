@@ -11,7 +11,7 @@ struct ObservationMemoryLeakTests {
     private let observationCount = 100
 
     @Test
-    func `Create and cancel observations leaves no residue`() async {
+    func `Create and cancel observations leaves no residue`() async throws {
         let registry = WindowRegistry()
         let manager = ObservationManager(windowRegistry: registry)
 
@@ -25,7 +25,7 @@ struct ObservationMemoryLeakTests {
             let name = "observations/test-leak-\(i)"
             names.append(name)
 
-            _ = await manager.createObservation(
+            _ = try await manager.createObservation(
                 name: name,
                 type: .windowChanges,
                 parent: "applications/1234",
@@ -56,7 +56,7 @@ struct ObservationMemoryLeakTests {
     }
 
     @Test
-    func `Rapid create/cancel cycle doesn't accumulate state`() async {
+    func `Rapid create/cancel cycle doesn't accumulate state`() async throws {
         let registry = WindowRegistry()
         let manager = ObservationManager(windowRegistry: registry)
 
@@ -64,7 +64,7 @@ struct ObservationMemoryLeakTests {
         for i in 0 ..< observationCount {
             let name = "observations/rapid-\(i)"
 
-            _ = await manager.createObservation(
+            _ = try await manager.createObservation(
                 name: name,
                 type: .elementChanges,
                 parent: "applications/5678",
@@ -83,14 +83,14 @@ struct ObservationMemoryLeakTests {
     }
 
     @Test
-    func `CancelAllObservations cleans up everything`() async {
+    func `CancelAllObservations cleans up everything`() async throws {
         let registry = WindowRegistry()
         let manager = ObservationManager(windowRegistry: registry)
 
         // Create multiple observations
         for i in 0 ..< 20 {
             let name = "observations/batch-\(i)"
-            _ = await manager.createObservation(
+            _ = try await manager.createObservation(
                 name: name,
                 type: .treeChanges,
                 parent: "applications/9999",
@@ -110,12 +110,12 @@ struct ObservationMemoryLeakTests {
     }
 
     @Test
-    func `Double cancel is safe`() async {
+    func `Double cancel is safe`() async throws {
         let registry = WindowRegistry()
         let manager = ObservationManager(windowRegistry: registry)
 
         let name = "observations/double-cancel"
-        _ = await manager.createObservation(
+        _ = try await manager.createObservation(
             name: name,
             type: .windowChanges,
             parent: "applications/1111",
@@ -138,16 +138,16 @@ struct ObservationMemoryLeakTests {
     }
 
     @Test
-    func `Concurrent create/cancel from multiple tasks is safe`() async {
+    func `Concurrent create/cancel from multiple tasks is safe`() async throws {
         let registry = WindowRegistry()
         let manager = ObservationManager(windowRegistry: registry)
 
         // Create observations concurrently
-        await withTaskGroup(of: Void.self) { group in
+        try await withThrowingTaskGroup(of: Void.self) { group in
             for i in 0 ..< 50 {
                 group.addTask {
                     let name = "observations/concurrent-\(i)"
-                    _ = await manager.createObservation(
+                    _ = try await manager.createObservation(
                         name: name,
                         type: .attributeChanges,
                         parent: "applications/2222",
@@ -157,6 +157,7 @@ struct ObservationMemoryLeakTests {
                     )
                 }
             }
+            try await group.waitForAll()
         }
 
         // Cancel concurrently

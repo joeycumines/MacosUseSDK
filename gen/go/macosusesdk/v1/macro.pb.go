@@ -1491,7 +1491,7 @@ type MacroParameter struct {
 	// Parameter description.
 	Description string `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
 	// Whether parameter is required.
-	Required      bool `protobuf:"varint,5,opt,name=required,proto3" json:"required,omitempty"`
+	Required      *bool `protobuf:"varint,5,opt,name=required,proto3,oneof" json:"required,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1555,8 +1555,8 @@ func (x *MacroParameter) GetDescription() string {
 }
 
 func (x *MacroParameter) GetRequired() bool {
-	if x != nil {
-		return x.Required
+	if x != nil && x.Required != nil {
+		return *x.Required
 	}
 	return false
 }
@@ -1670,20 +1670,21 @@ const file_macosusesdk_v1_macro_proto_rawDesc = "" +
 	"\x04args\x18\x02 \x03(\v2$.macosusesdk.v1.MethodCall.ArgsEntryB\x03\xe0A\x01R\x04args\x1a7\n" +
 	"\tArgsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x9b\x03\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xad\x03\n" +
 	"\x0eMacroParameter\x12\x15\n" +
 	"\x03key\x18\x01 \x01(\tB\x03\xe0A\x02R\x03key\x12E\n" +
 	"\x04type\x18\x02 \x01(\x0e2,.macosusesdk.v1.MacroParameter.ParameterTypeB\x03\xe0A\x02R\x04type\x12(\n" +
 	"\rdefault_value\x18\x03 \x01(\tB\x03\xe0A\x01R\fdefaultValue\x12%\n" +
-	"\vdescription\x18\x04 \x01(\tB\x03\xe0A\x01R\vdescription\x12\x1f\n" +
-	"\brequired\x18\x05 \x01(\bB\x03\xe0A\x02R\brequired\"\xb8\x01\n" +
+	"\vdescription\x18\x04 \x01(\tB\x03\xe0A\x01R\vdescription\x12$\n" +
+	"\brequired\x18\x05 \x01(\bB\x03\xe0A\x02H\x00R\brequired\x88\x01\x01\"\xb8\x01\n" +
 	"\rParameterType\x12\x1e\n" +
 	"\x1aPARAMETER_TYPE_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15PARAMETER_TYPE_STRING\x10\x01\x12\x1a\n" +
 	"\x16PARAMETER_TYPE_INTEGER\x10\x02\x12\x1a\n" +
 	"\x16PARAMETER_TYPE_BOOLEAN\x10\x03\x12\x1b\n" +
 	"\x17PARAMETER_TYPE_SELECTOR\x10\x04\x12\x17\n" +
-	"\x13PARAMETER_TYPE_PATH\x10\x05B\xc1\x01\n" +
+	"\x13PARAMETER_TYPE_PATH\x10\x05B\v\n" +
+	"\t_requiredB\xc1\x01\n" +
 	"\x12com.macosusesdk.v1B\n" +
 	"MacroProtoP\x01ZFgithub.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1\xa2\x02\x03MXX\xaa\x02\x0eMacosusesdk.V1\xca\x02\x0eMacosusesdk\\V1\xe2\x02\x1aMacosusesdk\\V1\\GPBMetadata\xea\x02\x0fMacosusesdk::V1b\x06proto3"
 
@@ -1798,6 +1799,7 @@ func file_macosusesdk_v1_macro_proto_init() {
 		(*AssignAction_Parameter)(nil),
 		(*AssignAction_Expression)(nil),
 	}
+	file_macosusesdk_v1_macro_proto_msgTypes[14].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

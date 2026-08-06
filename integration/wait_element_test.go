@@ -31,7 +31,7 @@ func TestWaitElement_ButtonExists(t *testing.T) {
 
 	// Open Calculator
 	t.Log("Opening Calculator...")
-	app := openCalculator(t, ctx, client, opsClient)
+	app := openCalculator(t, ctx, client)
 	defer cleanupApplication(t, ctx, client, app)
 
 	// Wait for Calculator windows to appear
@@ -130,7 +130,7 @@ func TestWaitElement_Timeout(t *testing.T) {
 
 	// Open Calculator
 	t.Log("Opening Calculator...")
-	app := openCalculator(t, ctx, client, opsClient)
+	app := openCalculator(t, ctx, client)
 	defer cleanupApplication(t, ctx, client, app)
 
 	// Wait for Calculator to be ready
@@ -224,7 +224,7 @@ func TestWaitElement_LROLifecycle(t *testing.T) {
 
 	// Open Calculator
 	t.Log("Opening Calculator...")
-	app := openCalculator(t, ctx, client, opsClient)
+	app := openCalculator(t, ctx, client)
 	defer cleanupApplication(t, ctx, client, app)
 
 	// Test LRO lifecycle with a selector that will take some time

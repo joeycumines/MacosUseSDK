@@ -6,7 +6,13 @@ package config
 
 import (
 	"fmt"
+	"math"
+	"net"
+	"net/url"
 	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -16,8 +22,11 @@ type TransportType string
 const (
 	// TransportStdio uses stdin/stdout for communication
 	TransportStdio TransportType = "stdio"
-	// TransportHTTP uses HTTP/SSE for communication
-	TransportHTTP TransportType = "sse"
+	// TransportHTTP uses the MCP Streamable HTTP transport.
+	TransportHTTP TransportType = "streamable-http"
+
+	defaultMaxConcurrentRequests          = 512
+	defaultMaxConcurrentRequestsPerClient = 256
 )
 
 // Config holds the configuration for the MCP tool, loaded from environment variables.
@@ -31,11 +40,11 @@ type Config struct {
 	ServerSocketPath string
 	// ServerCertFile is the path to the server TLS certificate (env: MACOS_USE_SERVER_CERT_FILE, optional)
 	ServerCertFile string
-	// HTTPAddress is the HTTP/SSE server listen address (env: MCP_HTTP_ADDRESS, default: :8080)
+	// HTTPAddress is the Streamable HTTP server listen address (env: MCP_HTTP_ADDRESS, default: 127.0.0.1:8080)
 	HTTPAddress string
 	// HTTPSocketPath is the Unix socket path for HTTP transport (env: MCP_HTTP_SOCKET, optional)
 	HTTPSocketPath string
-	// CORSOrigin is the allowed CORS origin (env: MCP_CORS_ORIGIN, default: *)
+	// CORSOrigin is the allowed browser Origin (env: MCP_CORS_ORIGIN, default: none)
 	CORSOrigin string
 	// TLSCertFile is the path to the TLS certificate for HTTPS (env: MCP_TLS_CERT_FILE, optional)
 	TLSCertFile string
@@ -45,13 +54,11 @@ type Config struct {
 	// If set, all requests (except /health) require Authorization: Bearer <key> header.
 	APIKey string
 	// AuditLogFile is the path to the audit log file (env: MCP_AUDIT_LOG_FILE, optional)
-	// If set, tool invocations are logged to this file in structured JSON format.
+	// If set, non-content tool metadata is appended to an owner-private regular file.
 	// If empty, audit logging is disabled.
 	AuditLogFile string
-	// Transport is the transport type: "stdio" or "sse" (env: MCP_TRANSPORT, default: stdio)
+	// Transport is the transport type: "stdio" or "streamable-http" (env: MCP_TRANSPORT, default: stdio)
 	Transport TransportType
-	// HeartbeatInterval is the SSE heartbeat interval (env: MCP_HEARTBEAT_INTERVAL, default: 30s)
-	HeartbeatInterval time.Duration
 	// HTTPReadTimeout is the HTTP server read timeout (env: MCP_HTTP_READ_TIMEOUT, default: 30s)
 	HTTPReadTimeout time.Duration
 	// HTTPWriteTimeout is the HTTP server write timeout (env: MCP_HTTP_WRITE_TIMEOUT, default: 30s)
@@ -60,6 +67,10 @@ type Config struct {
 	RateLimit float64
 	// RequestTimeout is the gRPC request timeout in seconds (env: MACOS_USE_REQUEST_TIMEOUT, default: 30)
 	RequestTimeout int
+	// MaxConcurrentRequests is the global active MCP request limit (env: MCP_MAX_CONCURRENT_REQUESTS, default: 512)
+	MaxConcurrentRequests int
+	// MaxConcurrentRequestsPerClient is the active MCP request limit for one transport-owned client (env: MCP_MAX_CONCURRENT_REQUESTS_PER_CLIENT, default: 256)
+	MaxConcurrentRequestsPerClient int
 	// ServerTLS enables TLS for gRPC (env: MACOS_USE_SERVER_TLS, default: false)
 	ServerTLS bool
 	// Debug enables debug logging (env: MACOS_USE_DEBUG, default: false)
@@ -76,8 +87,14 @@ func Load() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	heartbeatInterval, err := getEnvAsDuration("MCP_HEARTBEAT_INTERVAL", 30*time.Second)
+	maxConcurrentRequests, err := getEnvAsInt("MCP_MAX_CONCURRENT_REQUESTS", defaultMaxConcurrentRequests)
+	if err != nil {
+		return nil, err
+	}
+	maxConcurrentRequestsPerClient, err := getEnvAsInt(
+		"MCP_MAX_CONCURRENT_REQUESTS_PER_CLIENT",
+		defaultMaxConcurrentRequestsPerClient,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -97,21 +114,37 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
+	serverTLS, err := getEnvAsBool("MACOS_USE_SERVER_TLS", false)
+	if err != nil {
+		return nil, err
+	}
+
+	debug, err := getEnvAsBool("MACOS_USE_DEBUG", false)
+	if err != nil {
+		return nil, err
+	}
+
+	shellCommandsEnabled, err := getEnvAsBool("MCP_SHELL_COMMANDS_ENABLED", false)
+	if err != nil {
+		return nil, err
+	}
+
 	cfg := &Config{
-		ServerAddr:       getEnv("MACOS_USE_SERVER_ADDR", "localhost:50051"),
-		ServerSocketPath: os.Getenv("MACOS_USE_SERVER_SOCKET_PATH"),
-		ServerTLS:        getEnvAsBool("MACOS_USE_SERVER_TLS", false),
-		ServerCertFile:   os.Getenv("MACOS_USE_SERVER_CERT_FILE"),
-		RequestTimeout:   requestTimeout,
-		Debug:            getEnvAsBool("MACOS_USE_DEBUG", false),
+		ServerAddr:                     getEnv("MACOS_USE_SERVER_ADDR", "localhost:50051"),
+		ServerSocketPath:               os.Getenv("MACOS_USE_SERVER_SOCKET_PATH"),
+		ServerTLS:                      serverTLS,
+		ServerCertFile:                 os.Getenv("MACOS_USE_SERVER_CERT_FILE"),
+		RequestTimeout:                 requestTimeout,
+		MaxConcurrentRequests:          maxConcurrentRequests,
+		MaxConcurrentRequestsPerClient: maxConcurrentRequestsPerClient,
+		Debug:                          debug,
 		// MCP Transport configuration
-		Transport:         TransportType(getEnv("MCP_TRANSPORT", "stdio")),
-		HTTPAddress:       getEnv("MCP_HTTP_ADDRESS", ":8080"),
-		HTTPSocketPath:    os.Getenv("MCP_HTTP_SOCKET"),
-		HeartbeatInterval: heartbeatInterval,
-		CORSOrigin:        getEnv("MCP_CORS_ORIGIN", "*"),
-		HTTPReadTimeout:   httpReadTimeout,
-		HTTPWriteTimeout:  httpWriteTimeout,
+		Transport:        TransportType(getEnv("MCP_TRANSPORT", "stdio")),
+		HTTPAddress:      getEnv("MCP_HTTP_ADDRESS", "127.0.0.1:8080"),
+		HTTPSocketPath:   os.Getenv("MCP_HTTP_SOCKET"),
+		CORSOrigin:       os.Getenv("MCP_CORS_ORIGIN"),
+		HTTPReadTimeout:  httpReadTimeout,
+		HTTPWriteTimeout: httpWriteTimeout,
 		// TLS configuration for HTTPS
 		TLSCertFile: os.Getenv("MCP_TLS_CERT_FILE"),
 		TLSKeyFile:  os.Getenv("MCP_TLS_KEY_FILE"),
@@ -122,19 +155,110 @@ func Load() (*Config, error) {
 		// Rate limiting
 		RateLimit: rateLimit,
 		// Security: shell commands are disabled by default
-		ShellCommandsEnabled: getEnvAsBool("MCP_SHELL_COMMANDS_ENABLED", false),
+		ShellCommandsEnabled: shellCommandsEnabled,
 	}
 
-	if cfg.ServerAddr == "" && cfg.ServerSocketPath == "" {
-		return nil, fmt.Errorf("server address or socket path must be provided")
-	}
-
-	// Validate transport type
-	if cfg.Transport != TransportStdio && cfg.Transport != TransportHTTP {
-		return nil, fmt.Errorf("invalid transport type: %s (must be 'stdio' or 'sse')", cfg.Transport)
+	if err := cfg.validate(); err != nil {
+		return nil, err
 	}
 
 	return cfg, nil
+}
+
+func (c *Config) validate() error {
+	if c.ServerAddr == "" && c.ServerSocketPath == "" {
+		return fmt.Errorf("server address or socket path must be provided")
+	}
+	if c.Transport != TransportStdio && c.Transport != TransportHTTP {
+		return fmt.Errorf("invalid transport type: %s (must be 'stdio' or 'streamable-http')", c.Transport)
+	}
+	if c.RequestTimeout <= 0 {
+		return fmt.Errorf("MACOS_USE_REQUEST_TIMEOUT must be positive")
+	}
+	const maximumDurationSeconds = int64((1<<63 - 1) / int64(time.Second))
+	if int64(c.RequestTimeout) > maximumDurationSeconds {
+		return fmt.Errorf(
+			"MACOS_USE_REQUEST_TIMEOUT must not exceed %d seconds",
+			maximumDurationSeconds,
+		)
+	}
+	if c.MaxConcurrentRequests <= 0 {
+		return fmt.Errorf("MCP_MAX_CONCURRENT_REQUESTS must be positive")
+	}
+	if c.MaxConcurrentRequestsPerClient <= 0 {
+		return fmt.Errorf("MCP_MAX_CONCURRENT_REQUESTS_PER_CLIENT must be positive")
+	}
+	if c.MaxConcurrentRequestsPerClient > c.MaxConcurrentRequests {
+		return fmt.Errorf("MCP_MAX_CONCURRENT_REQUESTS_PER_CLIENT must not exceed MCP_MAX_CONCURRENT_REQUESTS")
+	}
+	if c.HTTPReadTimeout <= 0 {
+		return fmt.Errorf("MCP_HTTP_READ_TIMEOUT must be positive")
+	}
+	if c.HTTPWriteTimeout < 0 {
+		return fmt.Errorf("MCP_HTTP_WRITE_TIMEOUT must not be negative")
+	}
+	if math.IsNaN(c.RateLimit) || math.IsInf(c.RateLimit, 0) || c.RateLimit < 0 {
+		return fmt.Errorf("MCP_RATE_LIMIT must be zero or a finite positive number")
+	}
+	if (c.TLSCertFile == "") != (c.TLSKeyFile == "") {
+		return fmt.Errorf("MCP_TLS_CERT_FILE and MCP_TLS_KEY_FILE must be configured together")
+	}
+	if err := validateCORSOrigin(c.CORSOrigin); err != nil {
+		return err
+	}
+	if c.Transport != TransportHTTP {
+		return nil
+	}
+	if c.HTTPSocketPath != "" {
+		if !filepath.IsAbs(c.HTTPSocketPath) {
+			return fmt.Errorf("MCP_HTTP_SOCKET must be an absolute path")
+		}
+		return nil
+	}
+	return c.validateHTTPAddress()
+}
+
+func (c *Config) validateHTTPAddress() error {
+	host, port, err := net.SplitHostPort(c.HTTPAddress)
+	if err != nil {
+		return fmt.Errorf("MCP_HTTP_ADDRESS must be a host:port listener address: %w", err)
+	}
+	portNumber, err := strconv.Atoi(port)
+	if err != nil || portNumber < 1 || portNumber > 65535 {
+		return fmt.Errorf("MCP_HTTP_ADDRESS must contain a numeric port between 1 and 65535")
+	}
+
+	loopback := strings.EqualFold(host, "localhost")
+	if ip := net.ParseIP(host); ip != nil {
+		loopback = ip.IsLoopback()
+	}
+	if !loopback && (c.TLSCertFile == "" || c.APIKey == "" || c.RateLimit <= 0) {
+		return fmt.Errorf("non-loopback MCP_HTTP_ADDRESS requires TLS, API key authentication, and rate limiting")
+	}
+	return nil
+}
+
+func validateCORSOrigin(origin string) error {
+	if origin == "" {
+		return nil
+	}
+	parsed, err := url.Parse(origin)
+	if err != nil ||
+		(parsed.Scheme != "http" && parsed.Scheme != "https") ||
+		parsed.Host == "" ||
+		parsed.Hostname() == "" ||
+		parsed.User != nil ||
+		parsed.Opaque != "" ||
+		parsed.Path != "" ||
+		parsed.RawPath != "" ||
+		parsed.ForceQuery ||
+		parsed.RawQuery != "" ||
+		parsed.Fragment != "" ||
+		strings.TrimSpace(origin) != origin ||
+		parsed.String() != origin {
+		return fmt.Errorf("MCP_CORS_ORIGIN must be an exact HTTP or HTTPS origin without credentials, path, query, or fragment")
+	}
+	return nil
 }
 
 func getEnv(key, defaultValue string) string {
@@ -144,12 +268,19 @@ func getEnv(key, defaultValue string) string {
 	return defaultValue
 }
 
-func getEnvAsBool(key string, defaultValue bool) bool {
+func getEnvAsBool(key string, defaultValue bool) (bool, error) {
 	value := os.Getenv(key)
 	if value == "" {
-		return defaultValue
+		return defaultValue, nil
 	}
-	return value == "true" || value == "1" || value == "yes"
+	switch strings.ToLower(value) {
+	case "true", "1", "yes":
+		return true, nil
+	case "false", "0", "no":
+		return false, nil
+	default:
+		return false, fmt.Errorf("invalid value for %s: %q (expected true, false, 1, 0, yes, or no)", key, value)
+	}
 }
 
 func getEnvAsInt(key string, defaultValue int) (int, error) {
@@ -157,8 +288,7 @@ func getEnvAsInt(key string, defaultValue int) (int, error) {
 	if value == "" {
 		return defaultValue, nil
 	}
-	var result int
-	_, err := fmt.Sscanf(value, "%d", &result)
+	result, err := strconv.Atoi(value)
 	if err != nil {
 		return 0, fmt.Errorf("invalid value for %s: %q (expected integer)", key, value)
 	}
@@ -170,8 +300,7 @@ func getEnvAsFloat(key string, defaultValue float64) (float64, error) {
 	if value == "" {
 		return defaultValue, nil
 	}
-	var result float64
-	_, err := fmt.Sscanf(value, "%f", &result)
+	result, err := strconv.ParseFloat(value, 64)
 	if err != nil {
 		return 0, fmt.Errorf("invalid value for %s: %q (expected number)", key, value)
 	}

@@ -39,25 +39,19 @@ struct SystemOperationsTests {
         func getAXWindowID(element _: AnyObject) -> CGWindowID? {
             nil
         }
-
-        func fetchAXWindowInfo(pid _: Int32, windowId _: CGWindowID, expectedBounds _: CGRect) -> WindowInfoResult? {
-            let element = NSObject()
-            return WindowInfoResult(element: element, bounds: .zero, title: "", minimized: false, hidden: false, focused: false)
-        }
     }
 
     @Test
-    func `Mock conforms to SystemOperations and methods compile`() {
+    func `Mock conforms to SystemOperations and methods compile`() throws {
         let sys: SystemOperations = MockSystemOperations()
 
-        _ = sys.cgWindowListCopyWindowInfo(options: .optionOnScreenOnly, relativeToWindow: kCGNullWindowID)
+        _ = try sys.cgWindowListCopyWindowInfo(options: .optionOnScreenOnly, relativeToWindow: kCGNullWindowID)
         _ = sys.getRunningApplicationBundleID(pid: 0)
         _ = sys.createAXApplication(pid: 0)
         _ = sys.copyAXAttribute(element: NSObject(), attribute: "attr")
         _ = sys.setAXAttribute(element: NSObject(), attribute: "attr", value: "value")
         _ = sys.performAXAction(element: NSObject(), action: "do")
         _ = sys.getAXWindowID(element: NSObject())
-        _ = sys.fetchAXWindowInfo(pid: 0, windowId: 0, expectedBounds: .zero)
 
         #expect(true, "Calls succeed and compile against the interface")
     }

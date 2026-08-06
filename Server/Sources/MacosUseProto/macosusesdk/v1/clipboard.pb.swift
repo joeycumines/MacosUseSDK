@@ -134,7 +134,14 @@ public nonisolated struct Macosusesdk_V1_ClipboardContent: Sendable {
   // methods supported on all messages.
 
   /// Content type.
-  public var type: Macosusesdk_V1_ContentType = .unspecified
+  public var type: Macosusesdk_V1_ContentType {
+    get {_type ?? .unspecified}
+    set {_type = newValue}
+  }
+  /// Returns true if `type` has been explicitly set.
+  public var hasType: Bool {self._type != nil}
+  /// Clears the value of `type`. Subsequent reads from it will return its default value.
+  public mutating func clearType() {self._type = nil}
 
   /// The actual content (type-specific).
   public var content: Macosusesdk_V1_ClipboardContent.OneOf_Content? = nil
@@ -213,6 +220,8 @@ public nonisolated struct Macosusesdk_V1_ClipboardContent: Sendable {
   }
 
   public init() {}
+
+  fileprivate var _type: Macosusesdk_V1_ContentType? = nil
 }
 
 /// File paths for clipboard file content.
@@ -342,7 +351,7 @@ nonisolated extension Macosusesdk_V1_ClipboardContent: SwiftProtobuf.Message, Sw
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularEnumField(value: &self.type) }()
+      case 1: try { try decoder.decodeSingularEnumField(value: &self._type) }()
       case 10: try {
         var v: String?
         try decoder.decodeSingularStringField(value: &v)
@@ -406,9 +415,9 @@ nonisolated extension Macosusesdk_V1_ClipboardContent: SwiftProtobuf.Message, Sw
     // allocates stack space for every if/case branch local when no optimizations
     // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
     // https://github.com/apple/swift-protobuf/issues/1182
-    if self.type != .unspecified {
-      try visitor.visitSingularEnumField(value: self.type, fieldNumber: 1)
-    }
+    try { if let v = self._type {
+      try visitor.visitSingularEnumField(value: v, fieldNumber: 1)
+    } }()
     switch self.content {
     case .text?: try {
       guard case .text(let v)? = self.content else { preconditionFailure() }
@@ -440,7 +449,7 @@ nonisolated extension Macosusesdk_V1_ClipboardContent: SwiftProtobuf.Message, Sw
   }
 
   public static func ==(lhs: Macosusesdk_V1_ClipboardContent, rhs: Macosusesdk_V1_ClipboardContent) -> Bool {
-    if lhs.type != rhs.type {return false}
+    if lhs._type != rhs._type {return false}
     if lhs.content != rhs.content {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true

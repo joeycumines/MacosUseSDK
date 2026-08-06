@@ -708,7 +708,14 @@ public nonisolated struct Macosusesdk_V1_MacroParameter: Sendable {
   public var description_p: String = String()
 
   /// Whether parameter is required.
-  public var required: Bool = false
+  public var required: Bool {
+    get {_required ?? false}
+    set {_required = newValue}
+  }
+  /// Returns true if `required` has been explicitly set.
+  public var hasRequired: Bool {self._required != nil}
+  /// Clears the value of `required`. Subsequent reads from it will return its default value.
+  public mutating func clearRequired() {self._required = nil}
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -776,6 +783,8 @@ public nonisolated struct Macosusesdk_V1_MacroParameter: Sendable {
   }
 
   public init() {}
+
+  fileprivate var _required: Bool? = nil
 }
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
@@ -1727,13 +1736,17 @@ nonisolated extension Macosusesdk_V1_MacroParameter: SwiftProtobuf.Message, Swif
       case 2: try { try decoder.decodeSingularEnumField(value: &self.type) }()
       case 3: try { try decoder.decodeSingularStringField(value: &self.defaultValue) }()
       case 4: try { try decoder.decodeSingularStringField(value: &self.description_p) }()
-      case 5: try { try decoder.decodeSingularBoolField(value: &self.required) }()
+      case 5: try { try decoder.decodeSingularBoolField(value: &self._required) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
     if !self.key.isEmpty {
       try visitor.visitSingularStringField(value: self.key, fieldNumber: 1)
     }
@@ -1746,9 +1759,9 @@ nonisolated extension Macosusesdk_V1_MacroParameter: SwiftProtobuf.Message, Swif
     if !self.description_p.isEmpty {
       try visitor.visitSingularStringField(value: self.description_p, fieldNumber: 4)
     }
-    if self.required != false {
-      try visitor.visitSingularBoolField(value: self.required, fieldNumber: 5)
-    }
+    try { if let v = self._required {
+      try visitor.visitSingularBoolField(value: v, fieldNumber: 5)
+    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -1757,7 +1770,7 @@ nonisolated extension Macosusesdk_V1_MacroParameter: SwiftProtobuf.Message, Swif
     if lhs.type != rhs.type {return false}
     if lhs.defaultValue != rhs.defaultValue {return false}
     if lhs.description_p != rhs.description_p {return false}
-    if lhs.required != rhs.required {return false}
+    if lhs._required != rhs._required {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

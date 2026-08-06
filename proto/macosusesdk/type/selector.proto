@@ -110,10 +110,10 @@ message ElementSelector {
 // See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
 message PositionSelector {
   // X coordinate in Global Display Coordinates.
-  double x = 1 [(google.api.field_behavior) = REQUIRED];
+  optional double x = 1 [(google.api.field_behavior) = REQUIRED];
 
   // Y coordinate in Global Display Coordinates.
-  double y = 2 [(google.api.field_behavior) = REQUIRED];
+  optional double y = 2 [(google.api.field_behavior) = REQUIRED];
 
   // Tolerance for matching position (in pixels).
   double tolerance = 3 [(google.api.field_behavior) = OPTIONAL];

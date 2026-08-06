@@ -1,6 +1,7 @@
 import AppKit
 import CoreGraphics
 import Foundation
+import GRPCCore
 @testable import MacosUseServer
 import Testing
 
@@ -146,6 +147,37 @@ struct WindowRegistryCacheInvalidationTests {
     }
 
     // MARK: - invalidate(windowID:) Tests
+
+    @Test
+    func `missing optional Core Graphics onscreen key means not ordered onscreen`() async throws {
+        var entry = makeWindowEntry(
+            id: 1001,
+            pid: 100,
+            bounds: CGRect(x: 0, y: 0, width: 800, height: 600),
+        )
+        entry.removeValue(forKey: kCGWindowIsOnscreen as String)
+        let registry = WindowRegistry(system: makeMockSystemOps(windows: [entry]))
+
+        let windows = try await registry.listWindows(forPID: 100)
+
+        #expect(windows.count == 1)
+        #expect(windows.first?.isOnScreen == false)
+    }
+
+    @Test
+    func `malformed present Core Graphics onscreen key fails closed`() async {
+        var entry = makeWindowEntry(
+            id: 1001,
+            pid: 100,
+            bounds: CGRect(x: 0, y: 0, width: 800, height: 600),
+        )
+        entry[kCGWindowIsOnscreen as String] = "false"
+        let registry = WindowRegistry(system: makeMockSystemOps(windows: [entry]))
+
+        await #expect(throws: RPCError.self) {
+            _ = try await registry.listWindows(forPID: 100)
+        }
+    }
 
     @Test
     func `invalidate removes cached window`() async throws {

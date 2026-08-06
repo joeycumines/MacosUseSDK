@@ -43,10 +43,10 @@ public nonisolated struct Macosusesdk_Type_Point: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// X coordinate in Global Display Coordinates (pixels from left edge of main display).
+  /// X coordinate in Global Display Coordinates (logical points from the main display origin).
   public var x: Double = 0
 
-  /// Y coordinate in Global Display Coordinates (pixels from top edge of main display).
+  /// Y coordinate in Global Display Coordinates (logical points from the main display origin).
   public var y: Double = 0
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -69,10 +69,10 @@ public nonisolated struct Macosusesdk_Type_Region: Sendable {
   /// Y coordinate of the region's origin in Global Display Coordinates.
   public var y: Double = 0
 
-  /// Width of the region in pixels.
+  /// Width of the region in logical display points.
   public var width: Double = 0
 
-  /// Height of the region in pixels.
+  /// Height of the region in logical display points.
   public var height: Double = 0
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()

@@ -8,24 +8,10 @@ import XCTest
 /// ClipboardHistoryManager is an actor that manages clipboard history entries.
 /// These tests verify the history management logic without touching NSPasteboard.
 final class ClipboardHistoryManagerTests: XCTestCase {
-    // MARK: - Setup / Teardown
-
-    override func setUp() async throws {
-        try await super.setUp()
-        // Reset history before each test to ensure isolation
-        await ClipboardHistoryManager.shared._resetForTesting()
-    }
-
-    override func tearDown() async throws {
-        // Clean up after test
-        await ClipboardHistoryManager.shared._resetForTesting()
-        try await super.tearDown()
-    }
-
     // MARK: - ClipboardHistoryManager Tests
 
     func testAddEntry_addsToHistory() async {
-        let manager = ClipboardHistoryManager.shared
+        let manager = ClipboardHistoryManager(sourceApplication: { "Test source" })
 
         // Create content and add entry
         var content = Macosusesdk_V1_ClipboardContent()
@@ -39,7 +25,7 @@ final class ClipboardHistoryManagerTests: XCTestCase {
     }
 
     func testAddEntry_mostRecentFirst() async {
-        let manager = ClipboardHistoryManager.shared
+        let manager = ClipboardHistoryManager(sourceApplication: { "Test source" })
 
         // Add first entry
         var content1 = Macosusesdk_V1_ClipboardContent()
@@ -63,7 +49,7 @@ final class ClipboardHistoryManagerTests: XCTestCase {
     }
 
     func testAddEntry_setCopiedTime() async {
-        let manager = ClipboardHistoryManager.shared
+        let manager = ClipboardHistoryManager(sourceApplication: { "Test source" })
 
         let beforeAdd = Date()
 
@@ -84,7 +70,7 @@ final class ClipboardHistoryManagerTests: XCTestCase {
     }
 
     func testAddEntry_setsSourceApplication() async {
-        let manager = ClipboardHistoryManager.shared
+        let manager = ClipboardHistoryManager(sourceApplication: { "Test source" })
 
         var content = Macosusesdk_V1_ClipboardContent()
         content.type = .text
@@ -95,22 +81,20 @@ final class ClipboardHistoryManagerTests: XCTestCase {
         XCTAssertEqual(history.entries.count, 1)
         let firstEntry = history.entries[0]
 
-        // Source application should be set to something (even "Unknown")
-        XCTAssertFalse(firstEntry.sourceApplication.isEmpty)
+        XCTAssertEqual(firstEntry.sourceApplication, "Test source")
     }
 
     func testGetHistory_emptyByDefault() async {
-        let manager = ClipboardHistoryManager.shared
+        let manager = ClipboardHistoryManager(sourceApplication: { "Test source" })
 
         let history = await manager.getHistory()
 
-        // After reset, history should be empty
         XCTAssertEqual(history.entries.count, 0)
     }
 
     func testAddEntry_limitEnforcedAtMaxEntries() async {
-        let manager = ClipboardHistoryManager.shared
-        let maxEntries = await manager._maxEntries
+        let manager = ClipboardHistoryManager(sourceApplication: { "Test source" })
+        let maxEntries = await manager.entryLimit()
 
         // Add entries up to max + 10
         for i in 0 ..< (maxEntries + 10) {
@@ -134,7 +118,7 @@ final class ClipboardHistoryManagerTests: XCTestCase {
     }
 
     func testAddEntry_differentContentTypes() async {
-        let manager = ClipboardHistoryManager.shared
+        let manager = ClipboardHistoryManager(sourceApplication: { "Test source" })
 
         // Add text
         var textContent = Macosusesdk_V1_ClipboardContent()

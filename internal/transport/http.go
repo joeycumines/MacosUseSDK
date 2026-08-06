@@ -1,291 +1,160 @@
 // Copyright 2025 Joseph Cumines
 //
-// HTTP/SSE transport for JSON-RPC 2.0 communication
+// Streamable HTTP transport for JSON-RPC 2.0 communication
 
 package transport
 
 import (
+	"bytes"
 	"context"
+	"crypto/rand"
 	"crypto/subtle"
 	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
+	"mime"
 	"net"
 	"net/http"
 	"os"
+	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"golang.org/x/sys/unix"
 )
 
 // HTTP transport constants
 const (
-	// maxEventStoreSize is the maximum number of events to retain for reconnection replay.
-	maxEventStoreSize = 1000
-	// sseClientBufferSize is the buffer size for SSE client response channels.
-	sseClientBufferSize = 100
+	// MCPEndpointPath is the single endpoint for MCP Streamable HTTP requests.
+	MCPEndpointPath = "/mcp"
+	// MCPProtocolVersionCurrent is the protocol version implemented by this transport.
+	MCPProtocolVersionCurrent = "2025-11-25"
+	// mcpProtocolVersionFallback is assumed when the version header is absent.
+	mcpProtocolVersionFallback = "2025-03-26"
 	// serverShutdownTimeout is the timeout for graceful HTTP server shutdown.
-	serverShutdownTimeout = 5 * time.Second
+	// net/http deliberately does not treat a StateNew connection as idle until
+	// it has remained unread for more than five seconds. Keep the production
+	// grace window beyond that threshold, its whole-second comparison, and the
+	// shutdown poll jitter so speculative client dials from normal concurrent
+	// traffic do not become false shutdown failures.
+	serverShutdownTimeout = 8 * time.Second
+	// HTTP sessions are bounded in both count and idle lifetime so abandoned
+	// clients cannot grow transport state indefinitely.
+	maxHTTPSessions     = 1024
+	httpSessionTTL      = time.Hour
+	sessionIDByteLength = 32
+	maxSessionIDLength  = 128
 )
 
 // HTTPTransportConfig holds configuration for HTTP transport.
 // Address is the HTTP server address (e.g., ":8080" or "localhost:8080").
 // SocketPath is an optional Unix domain socket path (takes precedence over Address).
-// CORSOrigin is the allowed CORS origin (default: "*").
-// HeartbeatInterval is the interval for SSE heartbeat pings (default: 15s).
+// CORSOrigin is the allowed browser Origin (default: none).
 // ReadTimeout for HTTP server (default: 30s).
-// WriteTimeout for HTTP server (default: 0 = disabled for SSE compatibility).
-// Note: WriteTimeout is disabled by default because SSE streams require long-lived connections.
+// WriteTimeout for HTTP server (default: 30s).
 // TLSCertFile is the path to the TLS certificate file (optional, enables TLS if set).
 // TLSKeyFile is the path to the TLS private key file (optional, required if TLSCertFile is set).
 // APIKey is the API key for Bearer token authentication (optional, no auth if empty).
 // RateLimit is the rate limit in requests per second (0 = disabled).
 type HTTPTransportConfig struct {
-	Address           string
-	SocketPath        string
-	CORSOrigin        string
-	TLSCertFile       string
-	TLSKeyFile        string
-	APIKey            string
-	HeartbeatInterval time.Duration
-	ReadTimeout       time.Duration
-	WriteTimeout      time.Duration
-	RateLimit         float64
+	Address      string
+	SocketPath   string
+	CORSOrigin   string
+	TLSCertFile  string
+	TLSKeyFile   string
+	APIKey       string
+	ReadTimeout  time.Duration
+	WriteTimeout time.Duration
+	RateLimit    float64
 }
 
 // DefaultHTTPConfig returns the default HTTP transport configuration.
-// Address defaults to ":8080", heartbeat interval to 15 seconds,
-// CORS allows all origins, and read timeout is 30 seconds.
+// Address defaults to loopback port 8080, browser Origins are denied by
+// default, and HTTP read/write timeouts are 30 seconds.
 func DefaultHTTPConfig() *HTTPTransportConfig {
 	return &HTTPTransportConfig{
-		Address:           ":8080",
-		HeartbeatInterval: 15 * time.Second,
-		CORSOrigin:        "*",
-		ReadTimeout:       30 * time.Second,
-		WriteTimeout:      0, // Disabled for SSE compatibility
+		Address:      "127.0.0.1:8080",
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
 	}
 }
 
-// HTTPTransport implements HTTP/SSE transport for MCP.
-// It provides POST /message for JSON-RPC requests, GET /events for SSE streaming,
-// GET /health for server health checks, and GET /metrics for Prometheus-style metrics.
-// This is a non-standard MCP transport extension documented in docs/ai-artifacts/05-mcp-integration.md.
+// HTTPTransport implements MCP Streamable HTTP with synchronous JSON responses.
+// The single /mcp endpoint accepts POST and deliberately returns 405 for GET
+// because this server does not currently initiate standalone SSE streams.
 type HTTPTransport struct {
 	config      *HTTPTransportConfig
 	server      *http.Server
 	handler     func(*Message) (*Message, error)
-	clients     *ClientRegistry
 	metrics     *MetricsRegistry
 	rateLimiter *RateLimiter
-	shutdownCh  chan struct{}
-	eventID     atomic.Uint64
-	closed      atomic.Bool
+	sessions    map[string]*httpSession
+	closeErr    error
+	// shutdownTimeout is injectable only for deterministic shutdown tests.
+	// Production instances always receive serverShutdownTimeout.
+	shutdownTimeout time.Duration
+	closed          atomic.Bool
+	closeOnce       sync.Once
+	sessionMu       sync.Mutex
+	serveMu         sync.Mutex
+	socketMu        sync.Mutex
+	socketIdentity  unixSocketIdentity
+	socketOwned     bool
 }
 
-// ClientRegistry manages connected SSE clients and event distribution.
-// It maintains a thread-safe registry of clients and an event store for
-// reconnection handling via Last-Event-ID.
-type ClientRegistry struct {
-	clients    map[string]*SSEClient
-	eventStore *EventStore
-	mu         sync.RWMutex
-	nextID     atomic.Uint64
+type httpSession struct {
+	scope    *ClientScope
+	lastUsed time.Time
 }
 
-// SSEClient represents a connected SSE client with its event channel.
-// The ResponseChan is buffered to prevent blocking on slow clients.
-type SSEClient struct {
-	ResponseChan chan *SSEEvent
-	CreatedAt    time.Time
-	ID           string
-	LastEventID  string
+type unixSocketIdentity struct {
+	device uint64
+	inode  uint64
 }
 
-// SSEEvent represents a Server-Sent Event with optional id, event type, and data.
-// The ID is used for reconnection handling via Last-Event-ID header.
-type SSEEvent struct {
-	ID    string
-	Event string
-	Data  string
-}
-
-// EventStore stores recent events for reconnection handling.
-// When a client reconnects with Last-Event-ID, missed events can be replayed.
-type EventStore struct {
-	eventMap map[string]*SSEEvent
-	events   []*SSEEvent
-	mu       sync.RWMutex
-	maxSize  int
-}
-
-// NewEventStore creates a new event store with the specified maximum capacity.
-// When the store is full, the oldest events are discarded to make room for new ones.
-func NewEventStore(maxSize int) *EventStore {
-	return &EventStore{
-		events:   make([]*SSEEvent, 0, maxSize),
-		maxSize:  maxSize,
-		eventMap: make(map[string]*SSEEvent),
-	}
-}
-
-// Add adds an event to the store. If the store is at capacity,
-// the oldest event is removed to make room for the new event.
-func (s *EventStore) Add(event *SSEEvent) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if len(s.events) >= s.maxSize {
-		// Remove oldest
-		oldest := s.events[0]
-		delete(s.eventMap, oldest.ID)
-		s.events = s.events[1:]
-	}
-	s.events = append(s.events, event)
-	s.eventMap[event.ID] = event
-}
-
-// GetSince returns all events that occurred after the event with the given ID.
-// If lastEventID is empty or not found, returns nil (no replay).
-// This is used for SSE reconnection replay via the Last-Event-ID header.
-func (s *EventStore) GetSince(lastEventID string) []*SSEEvent {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	if lastEventID == "" {
-		return nil
-	}
-
-	found := false
-	var result []*SSEEvent
-	for _, e := range s.events {
-		if found {
-			result = append(result, e)
-		}
-		if e.ID == lastEventID {
-			found = true
-		}
-	}
-	return result
-}
-
-// NewClientRegistry creates a new client registry with an internal event store
-// for replay support. The registry manages SSE client connections and event broadcasting.
-func NewClientRegistry() *ClientRegistry {
-	return &ClientRegistry{
-		clients:    make(map[string]*SSEClient),
-		eventStore: NewEventStore(maxEventStoreSize),
-	}
-}
-
-// Add adds a new SSE client to the registry and returns the client handle.
-// The lastEventID is used for potential event replay on reconnection.
-// The client's ResponseChan receives events broadcast to all clients.
-func (r *ClientRegistry) Add(lastEventID string) *SSEClient {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	id := fmt.Sprintf("client-%d", r.nextID.Add(1))
-	client := &SSEClient{
-		ID:           id,
-		ResponseChan: make(chan *SSEEvent, sseClientBufferSize),
-		CreatedAt:    time.Now(),
-		LastEventID:  lastEventID,
-	}
-	r.clients[id] = client
-	return client
-}
-
-// Remove removes a client from the registry and closes its event channel.
-// Safe to call multiple times; subsequent calls are no-ops.
-func (r *ClientRegistry) Remove(id string) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	if client, ok := r.clients[id]; ok {
-		close(client.ResponseChan)
-		delete(r.clients, id)
-	}
-}
-
-// Get returns a client by ID, or (nil, false) if not found.
-func (r *ClientRegistry) Get(id string) (*SSEClient, bool) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	client, ok := r.clients[id]
-	return client, ok
-}
-
-// Broadcast sends an event to all connected clients via their ResponseChan.
-// Events are also stored in the event store for replay on reconnection.
-// If a client's buffer is full, the event is dropped for that client with a warning log.
-func (r *ClientRegistry) Broadcast(event *SSEEvent) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
-	r.eventStore.Add(event)
-
-	for _, client := range r.clients {
-		select {
-		case client.ResponseChan <- event:
-		default:
-			// Client buffer full, event will be lost for this client
-			log.Printf("Warning: dropping event %s for client %s (buffer full)", event.ID, client.ID)
-		}
-	}
-}
-
-// Count returns the current number of connected SSE clients.
-func (r *ClientRegistry) Count() int {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	return len(r.clients)
-}
-
-// NewHTTPTransport creates a new HTTP/SSE transport with the given configuration.
-// If config is nil, default configuration is used. The transport sets up routes
-// for /message, /events, /health, and /metrics endpoints.
+// NewHTTPTransport creates a Streamable HTTP transport with the given configuration.
+// If config is nil, default configuration is used.
 func NewHTTPTransport(config *HTTPTransportConfig) *HTTPTransport {
 	if config == nil {
 		config = DefaultHTTPConfig()
 	}
-	if config.HeartbeatInterval == 0 {
-		config.HeartbeatInterval = 15 * time.Second
-	}
-	if config.CORSOrigin == "" {
-		config.CORSOrigin = "*"
-	}
 	if config.ReadTimeout == 0 {
 		config.ReadTimeout = 30 * time.Second
 	}
-	// Note: WriteTimeout defaults to 0 (disabled) for SSE compatibility.
-	// SSE streams require long-lived connections, so we don't force a default.
+	if config.WriteTimeout == 0 {
+		config.WriteTimeout = 30 * time.Second
+	}
 
 	t := &HTTPTransport{
-		config:      config,
-		clients:     NewClientRegistry(),
-		metrics:     NewMetricsRegistry(),
-		rateLimiter: NewRateLimiter(config.RateLimit),
-		shutdownCh:  make(chan struct{}),
+		config:          config,
+		metrics:         NewMetricsRegistry(),
+		rateLimiter:     NewRateLimiter(config.RateLimit),
+		sessions:        make(map[string]*httpSession),
+		shutdownTimeout: serverShutdownTimeout,
 	}
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/message", t.handleMessage)
-	mux.HandleFunc("/events", t.handleSSE)
+	mux.HandleFunc(MCPEndpointPath, t.handleMCP)
 	mux.HandleFunc("/health", t.handleHealth)
 	mux.HandleFunc("/metrics", t.handleMetrics)
 
-	// Build middleware chain: CORS wrapper -> Auth wrapper -> Rate limit wrapper -> mux
+	// Build middleware chain with Origin validation outermost so an untrusted
+	// browser origin is rejected before authentication, rate accounting, or dispatch.
 	var handler http.Handler = mux
-	handler = t.corsMiddleware(handler)
-	if config.APIKey != "" {
-		handler = t.authMiddleware(handler)
-	}
 	if t.rateLimiter != nil {
 		handler = RateLimitMiddleware(t.rateLimiter, handler)
 	}
+	if config.APIKey != "" {
+		handler = t.authMiddleware(handler)
+	}
+	handler = t.corsMiddleware(handler)
 
 	t.server = &http.Server{
 		Handler:      handler,
@@ -296,13 +165,28 @@ func NewHTTPTransport(config *HTTPTransportConfig) *HTTPTransport {
 	return t
 }
 
-// corsMiddleware adds CORS headers to all responses
+// corsMiddleware validates browser Origin and adds CORS response headers.
 func (t *HTTPTransport) corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", t.config.CORSOrigin)
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Last-Event-ID, Authorization")
-		w.Header().Set("Access-Control-Expose-Headers", "Content-Type")
+		// Origin changes both admission and response headers. Ensure shared caches
+		// never reuse a trusted-origin response for an untrusted browser origin (or
+		// cache a rejection over a later trusted request).
+		w.Header().Add("Vary", "Origin")
+		originValues := r.Header.Values("Origin")
+		if len(originValues) > 1 ||
+			(len(originValues) == 1 &&
+				(t.config.CORSOrigin == "" ||
+					(t.config.CORSOrigin != "*" && originValues[0] != t.config.CORSOrigin))) {
+			http.Error(w, "Origin not allowed", http.StatusForbidden)
+			return
+		}
+
+		if t.config.CORSOrigin != "" {
+			w.Header().Set("Access-Control-Allow-Origin", t.config.CORSOrigin)
+		}
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Last-Event-ID, MCP-Protocol-Version, MCP-Session-Id, Authorization")
+		w.Header().Set("Access-Control-Expose-Headers", "Content-Type, MCP-Session-Id")
 
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusNoContent)
@@ -330,14 +214,18 @@ func (t *HTTPTransport) authMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// Expect "Bearer <token>" format
-		const bearerPrefix = "Bearer "
-		if !strings.HasPrefix(authHeader, bearerPrefix) {
+		// HTTP authentication scheme names are case-insensitive. Bearer tokens
+		// themselves remain exact and are compared in constant time.
+		scheme, token, ok := strings.Cut(authHeader, " ")
+		if !ok || !strings.EqualFold(scheme, "Bearer") {
 			http.Error(w, "Invalid authorization format, expected Bearer token", http.StatusUnauthorized)
 			return
 		}
-
-		token := strings.TrimPrefix(authHeader, bearerPrefix)
+		token = strings.TrimLeft(token, " ")
+		if strings.ContainsAny(token, " \t\r\n") {
+			http.Error(w, "Invalid API key", http.StatusUnauthorized)
+			return
+		}
 		// Use constant-time comparison to prevent timing attacks
 		if subtle.ConstantTimeCompare([]byte(token), []byte(t.config.APIKey)) != 1 {
 			http.Error(w, "Invalid API key", http.StatusUnauthorized)
@@ -348,26 +236,109 @@ func (t *HTTPTransport) authMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// handleMessage handles POST /message for JSON-RPC requests
-func (t *HTTPTransport) handleMessage(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
+func (t *HTTPTransport) handleMCP(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Allow", "GET, POST, DELETE")
+	switch r.Method {
+	case http.MethodPost:
+		t.handleMCPPost(w, r)
+	case http.MethodGet:
+		if _, ok := t.requireHTTPSession(w, r); !ok {
+			return
+		}
+		if !acceptsMediaType(r.Header.Values("Accept"), "text/event-stream") {
+			http.Error(w, "Accept must include text/event-stream", http.StatusNotAcceptable)
+			return
+		}
+		http.Error(w, "Standalone SSE stream is not supported", http.StatusMethodNotAllowed)
+	case http.MethodDelete:
+		t.handleMCPDelete(w, r)
+	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (t *HTTPTransport) handleMCPPost(w http.ResponseWriter, r *http.Request) {
+	if !acceptsMediaType(r.Header.Values("Accept"), "application/json") ||
+		!acceptsMediaType(r.Header.Values("Accept"), "text/event-stream") {
+		http.Error(w, "Accept must include application/json and text/event-stream", http.StatusNotAcceptable)
+		return
+	}
+	if !hasJSONContentType(r.Header.Get("Content-Type")) {
+		http.Error(w, "Content-Type must be application/json encoded as UTF-8", http.StatusUnsupportedMediaType)
+		return
+	}
+	if !validMCPProtocolVersionHeader(r.Header.Values("MCP-Protocol-Version")) {
+		http.Error(w, "Invalid or unsupported MCP-Protocol-Version", http.StatusBadRequest)
 		return
 	}
 
-	var msg Message
-	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
-		http.Error(w, fmt.Sprintf("Invalid JSON: %v", err), http.StatusBadRequest)
+	r.Body = http.MaxBytesReader(w, r.Body, MaxJSONRPCMessageBytes)
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		status := http.StatusBadRequest
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
+			status = http.StatusRequestEntityTooLarge
+		}
+		writeHTTPProtocolError(w, status, ErrCodeInvalidRequest, invalidRequestMessage)
 		return
 	}
+	msg, err := DecodeRequest(body)
+	if err != nil {
+		var readErr *MessageReadError
+		if !errors.As(err, &readErr) {
+			readErr = newRequestReadError(ErrCodeInvalidRequest, invalidRequestMessage, err)
+		}
+		writeHTTPProtocolError(w, http.StatusBadRequest, readErr.Code, readErr.Message)
+		return
+	}
+	initialize := msg.Method == "initialize"
+	if initialize {
+		if _, present, valid := parseMCPSessionHeader(r.Header.Values("MCP-Session-Id")); present || !valid {
+			http.Error(w, "MCP-Session-Id is not valid on initialize", http.StatusBadRequest)
+			return
+		}
+	} else {
+		scope, ok := t.requireHTTPSession(w, r)
+		if !ok {
+			return
+		}
+		msg.ClientScope = scope
+	}
+	// Streamable HTTP explicitly does not equate a disconnected response stream
+	// with MCP cancellation. Preserve request values while removing its deadline
+	// and cancellation; explicit notifications and client/session lifetime own
+	// cancellation after admission.
+	msg.Context = context.WithoutCancel(r.Context())
 
 	if t.handler == nil {
 		http.Error(w, "Handler not set", http.StatusInternalServerError)
 		return
 	}
 
-	response, err := t.handler(&msg)
+	response, err := t.handler(msg)
+	notification := len(bytes.TrimSpace(msg.ID)) == 0
+	if initialize && err == nil && !notification && response != nil && response.Error == nil {
+		sessionID, sessionErr := t.createHTTPSession()
+		if sessionErr != nil {
+			http.Error(w, sessionErr.Error(), http.StatusServiceUnavailable)
+			return
+		}
+		w.Header().Set("MCP-Session-Id", sessionID)
+	}
+	if notification {
+		if err != nil {
+			writeHTTPProtocolError(w, http.StatusInternalServerError, ErrCodeInternalError, err.Error())
+			return
+		}
+		w.WriteHeader(http.StatusAccepted)
+		return
+	}
 	if err != nil {
+		if errors.Is(err, ErrRequestCancelled) {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
 		response = &Message{
 			JSONRPC: "2.0",
 			ID:      msg.ID,
@@ -378,129 +349,186 @@ func (t *HTTPTransport) handleMessage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// JSON-RPC 2.0 notifications have no response; return 204 No Content.
 	if response == nil {
-		w.WriteHeader(http.StatusNoContent)
-		return
+		response = &Message{
+			JSONRPC: "2.0",
+			ID:      msg.ID,
+			Error: &ErrorObj{
+				Code:    ErrCodeInternalError,
+				Message: "request handler returned no response",
+			},
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		log.Printf("Error encoding response: %v", err)
 	}
-
-	// Also broadcast the response as an SSE event for streaming clients
-	if response != nil {
-		eventData, err := json.Marshal(response)
-		if err != nil {
-			log.Printf("Error marshaling SSE event data: %v", err)
-		} else {
-			t.clients.Broadcast(&SSEEvent{
-				ID:    fmt.Sprintf("%d", t.eventID.Add(1)),
-				Event: "message",
-				Data:  string(eventData),
-			})
-			t.metrics.RecordSSEEvent()
-		}
-	}
 }
 
-// handleSSE handles GET /events for SSE streaming
-func (t *HTTPTransport) handleSSE(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+func (t *HTTPTransport) handleMCPDelete(w http.ResponseWriter, r *http.Request) {
+	sessionID, present, valid := parseMCPSessionHeader(r.Header.Values("MCP-Session-Id"))
+	if !present || !valid {
+		http.Error(w, "valid MCP-Session-Id is required", http.StatusBadRequest)
 		return
 	}
 
-	flusher, ok := w.(http.Flusher)
+	t.sessionMu.Lock()
+	t.pruneExpiredHTTPSessionsLocked(time.Now())
+	session, ok := t.sessions[sessionID]
+	if ok {
+		delete(t.sessions, sessionID)
+	}
+	t.sessionMu.Unlock()
 	if !ok {
-		http.Error(w, "SSE not supported", http.StatusInternalServerError)
+		http.Error(w, "MCP session not found", http.StatusNotFound)
 		return
 	}
+	session.scope.Close()
+	w.WriteHeader(http.StatusNoContent)
+}
 
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
-
-	// Handle Last-Event-ID for reconnection
-	lastEventID := r.Header.Get("Last-Event-ID")
-
-	client := t.clients.Add(lastEventID)
-	defer func() {
-		t.clients.Remove(client.ID)
-		t.metrics.SetSSEConnections(t.clients.Count())
-	}()
-
-	// Update active connection count
-	t.metrics.SetSSEConnections(t.clients.Count())
-
-	log.Printf("SSE client connected: %s", client.ID)
-
-	// Send any missed events if reconnecting
-	if lastEventID != "" {
-		missedEvents := t.clients.eventStore.GetSince(lastEventID)
-		for _, event := range missedEvents {
-			if err := writeSSEEvent(w, event); err != nil {
-				log.Printf("SSE client %s: write error during reconnect replay: %v", client.ID, err)
-				return
-			}
-		}
-		flusher.Flush()
+func (t *HTTPTransport) requireHTTPSession(w http.ResponseWriter, r *http.Request) (*ClientScope, bool) {
+	sessionID, present, valid := parseMCPSessionHeader(r.Header.Values("MCP-Session-Id"))
+	if !present || !valid {
+		http.Error(w, "valid MCP-Session-Id is required", http.StatusBadRequest)
+		return nil, false
 	}
 
-	// Start heartbeat
-	heartbeatTicker := time.NewTicker(t.config.HeartbeatInterval)
-	defer heartbeatTicker.Stop()
+	t.sessionMu.Lock()
+	now := time.Now()
+	t.pruneExpiredHTTPSessionsLocked(now)
+	session, ok := t.sessions[sessionID]
+	if ok {
+		session.lastUsed = now
+	}
+	t.sessionMu.Unlock()
+	if !ok {
+		http.Error(w, "MCP session not found", http.StatusNotFound)
+		return nil, false
+	}
+	return session.scope, true
+}
 
-	ctx := r.Context()
-	for {
-		select {
-		case <-ctx.Done():
-			log.Printf("SSE client disconnected: %s", client.ID)
-			return
-		case <-t.shutdownCh:
-			fmt.Fprintf(w, "event: complete\ndata: server shutdown\n\n")
-			flusher.Flush()
-			return
-		case <-heartbeatTicker.C:
-			// Send heartbeat
-			if _, err := fmt.Fprintf(w, ": heartbeat\n\n"); err != nil {
-				log.Printf("SSE client %s: heartbeat write error: %v", client.ID, err)
-				return
-			}
-			flusher.Flush()
-		case event, ok := <-client.ResponseChan:
-			if !ok {
-				return
-			}
-			if err := writeSSEEvent(w, event); err != nil {
-				log.Printf("SSE client %s: write error: %v", client.ID, err)
-				return
-			}
-			flusher.Flush()
+func parseMCPSessionHeader(values []string) (sessionID string, present, valid bool) {
+	if len(values) == 0 {
+		return "", false, true
+	}
+	if len(values) != 1 {
+		return "", true, false
+	}
+	sessionID = values[0]
+	if sessionID == "" || len(sessionID) > maxSessionIDLength || strings.TrimSpace(sessionID) != sessionID || strings.Contains(sessionID, ",") {
+		return "", true, false
+	}
+	for i := range len(sessionID) {
+		if sessionID[i] < 0x21 || sessionID[i] > 0x7e {
+			return "", true, false
+		}
+	}
+	return sessionID, true, true
+}
+
+func (t *HTTPTransport) createHTTPSession() (string, error) {
+	var random [sessionIDByteLength]byte
+	for range 4 {
+		if _, err := rand.Read(random[:]); err != nil {
+			return "", fmt.Errorf("generate MCP session ID: %w", err)
+		}
+		sessionID := base64.RawURLEncoding.EncodeToString(random[:])
+		t.sessionMu.Lock()
+		if t.closed.Load() {
+			t.sessionMu.Unlock()
+			return "", ErrTransportClosed
+		}
+		now := time.Now()
+		t.pruneExpiredHTTPSessionsLocked(now)
+		if len(t.sessions) >= maxHTTPSessions {
+			t.sessionMu.Unlock()
+			return "", fmt.Errorf("MCP session capacity reached")
+		}
+		if _, exists := t.sessions[sessionID]; !exists {
+			t.sessions[sessionID] = &httpSession{scope: NewClientScope(), lastUsed: now}
+			t.sessionMu.Unlock()
+			return sessionID, nil
+		}
+		t.sessionMu.Unlock()
+	}
+	return "", fmt.Errorf("generate unique MCP session ID")
+}
+
+func (t *HTTPTransport) pruneExpiredHTTPSessionsLocked(now time.Time) {
+	cutoff := now.Add(-httpSessionTTL)
+	for sessionID, session := range t.sessions {
+		if session.lastUsed.Before(cutoff) {
+			delete(t.sessions, sessionID)
+			session.scope.Close()
 		}
 	}
 }
 
-// writeSSEEvent writes an SSE event to the writer, properly handling multiline data.
-// Returns an error if writing fails (e.g., client disconnected).
-func writeSSEEvent(w io.Writer, event *SSEEvent) error {
-	if _, err := fmt.Fprintf(w, "id: %s\n", event.ID); err != nil {
-		return err
+func (t *HTTPTransport) closeHTTPSessions() {
+	t.sessionMu.Lock()
+	sessions := t.sessions
+	t.sessions = make(map[string]*httpSession)
+	t.sessionMu.Unlock()
+	for _, session := range sessions {
+		session.scope.Close()
 	}
-	if _, err := fmt.Fprintf(w, "event: %s\n", event.Event); err != nil {
-		return err
-	}
-	// SSE spec: each line of data must be prefixed with "data:"
-	for line := range strings.SplitSeq(event.Data, "\n") {
-		if _, err := fmt.Fprintf(w, "data: %s\n", line); err != nil {
-			return err
+}
+
+func acceptsMediaType(values []string, target string) bool {
+	for _, value := range values {
+		for item := range strings.SplitSeq(value, ",") {
+			mediaType, parameters, err := mime.ParseMediaType(strings.TrimSpace(item))
+			if err != nil || !strings.EqualFold(mediaType, target) {
+				continue
+			}
+			if quality, ok := parameters["q"]; ok {
+				parsed, err := strconv.ParseFloat(quality, 64)
+				if err != nil || parsed <= 0 {
+					continue
+				}
+			}
+			return true
 		}
 	}
-	if _, err := fmt.Fprint(w, "\n"); err != nil {
-		return err
+	return false
+}
+
+func hasJSONContentType(value string) bool {
+	mediaType, parameters, err := mime.ParseMediaType(value)
+	if err != nil || !strings.EqualFold(mediaType, "application/json") {
+		return false
 	}
-	return nil
+	charset, ok := parameters["charset"]
+	return !ok || strings.EqualFold(charset, "utf-8")
+}
+
+func validMCPProtocolVersionHeader(values []string) bool {
+	if len(values) == 0 {
+		return true
+	}
+	if len(values) != 1 {
+		return false
+	}
+	version := strings.TrimSpace(values[0])
+	return version == MCPProtocolVersionCurrent || version == mcpProtocolVersionFallback
+}
+
+func writeHTTPProtocolError(w http.ResponseWriter, status, code int, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	if err := json.NewEncoder(w).Encode(&Message{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage("null"),
+		Error: &ErrorObj{
+			Code:    code,
+			Message: message,
+		},
+	}); err != nil {
+		log.Printf("Error encoding JSON-RPC protocol error: %v", err)
+	}
 }
 
 // handleHealth handles GET /health for health checks
@@ -512,7 +540,6 @@ func (t *HTTPTransport) handleHealth(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(map[string]any{
 		"status":      "ok",
-		"clients":     t.clients.Count(),
 		"server_time": time.Now().UTC().Format(time.RFC3339),
 	}); err != nil {
 		log.Printf("Error encoding health response: %v", err)
@@ -520,14 +547,14 @@ func (t *HTTPTransport) handleHealth(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleMetrics handles GET /metrics for Prometheus-style metrics exposition.
-// Exposes mcp_requests_total, mcp_request_duration_seconds, mcp_sse_connections_active,
-// and mcp_sse_events_sent_total in Prometheus text format.
+// Exposes MCP request metrics and the live Go goroutine count in Prometheus format.
 func (t *HTTPTransport) handleMetrics(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 	w.Header().Set("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
+	t.metrics.SetGauge("go_goroutines", "", float64(runtime.NumGoroutine()))
 	if err := t.metrics.WritePrometheus(w); err != nil {
 		log.Printf("Error writing metrics: %v", err)
 	}
@@ -537,48 +564,171 @@ func (t *HTTPTransport) handleMetrics(w http.ResponseWriter, r *http.Request) {
 // If TLSCertFile and TLSKeyFile are configured, the server uses TLS.
 // Otherwise, it serves plain HTTP.
 func (t *HTTPTransport) Serve(handler func(*Message) (*Message, error)) error {
+	tlsConfig, err := t.loadTLSConfig()
+	if err != nil {
+		return err
+	}
+
+	// Registration and Close form one lifecycle decision. Holding this lock
+	// through bind guarantees that either Serve registers first and Close shuts
+	// that listener down, or Close wins and no later listener side effect occurs.
+	t.serveMu.Lock()
+	if t.closed.Load() {
+		t.serveMu.Unlock()
+		return ErrTransportClosed
+	}
 	t.handler = handler
 
 	var listener net.Listener
-	var err error
 
 	if t.config.SocketPath != "" {
-		// Use Unix domain socket - remove stale socket file if it exists
-		if err := os.Remove(t.config.SocketPath); err != nil && !os.IsNotExist(err) {
-			log.Printf("Warning: failed to remove stale socket %s: %v", t.config.SocketPath, err)
-		}
-		listener, err = net.Listen("unix", t.config.SocketPath)
+		listener, err = t.listenUnixSocket()
 		if err != nil {
-			return fmt.Errorf("failed to listen on socket %s: %w", t.config.SocketPath, err)
+			t.serveMu.Unlock()
+			return err
 		}
-		log.Printf("HTTP/SSE transport listening on unix:%s", t.config.SocketPath)
+		log.Printf("Streamable HTTP transport listening on unix:%s", t.config.SocketPath)
 	} else {
 		// Use TCP
 		listener, err = net.Listen("tcp", t.config.Address)
 		if err != nil {
+			t.serveMu.Unlock()
 			return fmt.Errorf("failed to listen on %s: %w", t.config.Address, err)
 		}
-		log.Printf("HTTP/SSE transport listening on %s", t.config.Address)
+		log.Printf("Streamable HTTP transport listening on %s", t.config.Address)
 	}
 
-	// If TLS is configured, wrap the listener with TLS
-	if t.config.TLSCertFile != "" && t.config.TLSKeyFile != "" {
-		cert, err := tls.LoadX509KeyPair(t.config.TLSCertFile, t.config.TLSKeyFile)
-		if err != nil {
-			return fmt.Errorf("failed to load TLS certificate: %w", err)
-		}
-		tlsConfig := &tls.Config{
-			Certificates: []tls.Certificate{cert},
-			MinVersion:   tls.VersionTLS12,
-		}
+	if tlsConfig != nil {
 		listener = tls.NewListener(listener, tlsConfig)
 		log.Printf("TLS enabled with certificate: %s", t.config.TLSCertFile)
 	}
+	t.serveMu.Unlock()
 
 	if err := t.server.Serve(listener); err != nil && err != http.ErrServerClosed {
 		return err
 	}
 	return nil
+}
+
+func (t *HTTPTransport) listenUnixSocket() (net.Listener, error) {
+	path := t.config.SocketPath
+	var existing unix.Stat_t
+	if err := unix.Lstat(path, &existing); err == nil {
+		return nil, fmt.Errorf("refusing Unix socket path %q: path already exists", path)
+	} else if !errors.Is(err, unix.ENOENT) {
+		return nil, fmt.Errorf("inspect Unix socket path %q: %w", path, err)
+	}
+
+	listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: path, Net: "unix"})
+	if err != nil {
+		return nil, fmt.Errorf("failed to listen on socket %s: %w", path, err)
+	}
+	// Go otherwise unlinks the configured pathname blindly when the listener
+	// closes, which can delete a file swapped into place after bind.
+	listener.SetUnlinkOnClose(false)
+
+	identity, _, err := inspectUnixSocketPath(path)
+	if err != nil {
+		_ = listener.Close()
+		return nil, fmt.Errorf("inspect created Unix socket %q: %w", path, err)
+	}
+	if err := chmodUnixSocketPath(path, 0600); err != nil {
+		_ = listener.Close()
+		_ = removeUnixSocketIfIdentity(path, identity)
+		return nil, fmt.Errorf("set Unix socket %q owner-private: %w", path, err)
+	}
+	verified, permissions, err := inspectUnixSocketPath(path)
+	if err != nil || verified != identity {
+		_ = listener.Close()
+		return nil, fmt.Errorf("unix socket path %q changed during admission", path)
+	}
+	if permissions != 0600 {
+		_ = listener.Close()
+		_ = removeUnixSocketIfIdentity(path, identity)
+		return nil, fmt.Errorf("unix socket %q permissions are %#o; want 0600", path, permissions)
+	}
+
+	t.socketMu.Lock()
+	t.socketIdentity = identity
+	t.socketOwned = true
+	t.socketMu.Unlock()
+	return listener, nil
+}
+
+func chmodUnixSocketPath(path string, mode uint32) error {
+	// Darwin rejects fchmod(2) on an AF_UNIX listener descriptor with EINVAL.
+	// Operate on the bound pathname without following a replacement symlink,
+	// then verify the socket identity again before admitting the listener.
+	return unix.Fchmodat(unix.AT_FDCWD, path, mode, unix.AT_SYMLINK_NOFOLLOW)
+}
+
+func inspectUnixSocketPath(path string) (unixSocketIdentity, os.FileMode, error) {
+	var stat unix.Stat_t
+	if err := unix.Lstat(path, &stat); err != nil {
+		return unixSocketIdentity{}, 0, err
+	}
+	if stat.Mode&unix.S_IFMT != unix.S_IFSOCK {
+		return unixSocketIdentity{}, 0, fmt.Errorf("path is not a socket")
+	}
+	if stat.Uid != uint32(os.Geteuid()) {
+		return unixSocketIdentity{}, 0, fmt.Errorf("socket is owned by uid %d; want %d", stat.Uid, os.Geteuid())
+	}
+	if stat.Nlink != 1 {
+		return unixSocketIdentity{}, 0, fmt.Errorf("socket has %d links; want exactly one", stat.Nlink)
+	}
+	return unixSocketIdentity{
+		device: uint64(stat.Dev),
+		inode:  uint64(stat.Ino),
+	}, os.FileMode(stat.Mode & 0777), nil
+}
+
+func removeUnixSocketIfIdentity(path string, expected unixSocketIdentity) error {
+	actual, _, err := inspectUnixSocketPath(path)
+	if errors.Is(err, unix.ENOENT) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("unix socket path changed; refusing removal: %w", err)
+	}
+	if actual != expected {
+		return fmt.Errorf("unix socket path changed; refusing removal")
+	}
+	if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("remove Unix socket %q: %w", path, err)
+	}
+	return nil
+}
+
+func (t *HTTPTransport) cleanupUnixSocket() error {
+	if t.config.SocketPath == "" {
+		return nil
+	}
+	t.socketMu.Lock()
+	defer t.socketMu.Unlock()
+	if !t.socketOwned {
+		return nil
+	}
+	t.socketOwned = false
+	return removeUnixSocketIfIdentity(t.config.SocketPath, t.socketIdentity)
+}
+
+func (t *HTTPTransport) loadTLSConfig() (*tls.Config, error) {
+	certificateConfigured := t.config.TLSCertFile != ""
+	keyConfigured := t.config.TLSKeyFile != ""
+	if !certificateConfigured && !keyConfigured {
+		return nil, nil
+	}
+	if certificateConfigured != keyConfigured {
+		return nil, fmt.Errorf("TLS certificate and private key must be configured together")
+	}
+	certificate, err := tls.LoadX509KeyPair(t.config.TLSCertFile, t.config.TLSKeyFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load TLS certificate: %w", err)
+	}
+	return &tls.Config{
+		Certificates: []tls.Certificate{certificate},
+		MinVersion:   tls.VersionTLS12,
+	}, nil
 }
 
 // IsTLSEnabled returns true if TLS is configured for this transport.
@@ -613,79 +763,49 @@ func (t *HTTPTransport) ReadMessage() (*Message, error) {
 	return nil, fmt.Errorf("ReadMessage is not supported by HTTPTransport: use Serve(handler) callback pattern instead")
 }
 
-// WriteMessage broadcasts a message to all connected SSE clients.
-// The message is serialized to JSON and sent as an SSE event.
-func (t *HTTPTransport) WriteMessage(msg *Message) error {
+// WriteMessage is retained only to satisfy Transport. Streamable HTTP writes
+// the correlated response synchronously from the request handler.
+func (t *HTTPTransport) WriteMessage(_ *Message) error {
 	if t.closed.Load() {
-		return fmt.Errorf("transport is closed")
+		return ErrTransportClosed
 	}
-
-	data, err := json.Marshal(msg)
-	if err != nil {
-		return fmt.Errorf("failed to marshal message: %w", err)
-	}
-
-	t.clients.Broadcast(&SSEEvent{
-		ID:    fmt.Sprintf("%d", t.eventID.Add(1)),
-		Event: "message",
-		Data:  string(data),
-	})
-	t.metrics.RecordSSEEvent()
-
-	return nil
+	return fmt.Errorf("WriteMessage is not supported by synchronous Streamable HTTP")
 }
 
 // Close closes the HTTP transport and shuts down the server gracefully.
-// It signals all SSE clients and waits up to 5 seconds for cleanup.
+// It waits up to eight seconds for in-flight HTTP requests to finish.
 func (t *HTTPTransport) Close() error {
-	if t.closed.Swap(true) {
-		return nil
-	}
+	t.closeOnce.Do(func() {
+		t.serveMu.Lock()
+		t.closed.Store(true)
+		t.serveMu.Unlock()
+		t.closeHTTPSessions()
 
-	close(t.shutdownCh)
-
-	ctx, cancel := context.WithTimeout(context.Background(), serverShutdownTimeout)
-	defer cancel()
-
-	if err := t.server.Shutdown(ctx); err != nil {
-		return fmt.Errorf("failed to shutdown server: %w", err)
-	}
-
-	// Clean up Unix socket file if we were using one
-	if t.config.SocketPath != "" {
-		if err := os.Remove(t.config.SocketPath); err != nil && !os.IsNotExist(err) {
-			log.Printf("Warning: failed to remove socket file %s: %v", t.config.SocketPath, err)
+		ctx, cancel := context.WithTimeout(context.Background(), t.shutdownTimeout)
+		shutdownErr := t.server.Shutdown(ctx)
+		cancel()
+		if shutdownErr != nil {
+			// Shutdown preserves active and newly accepted connections. Once the
+			// bounded grace period expires, force-close every remaining connection
+			// so Close actually releases transport-owned resources.
+			forceErr := t.server.Close()
+			t.closeErr = fmt.Errorf("failed to gracefully shutdown server: %w; forced close completed", shutdownErr)
+			if forceErr != nil && !errors.Is(forceErr, http.ErrServerClosed) {
+				t.closeErr = errors.Join(t.closeErr, fmt.Errorf("failed to force-close server: %w", forceErr))
+			}
 		}
-	}
 
-	return nil
+		if err := t.cleanupUnixSocket(); err != nil {
+			t.closeErr = errors.Join(t.closeErr, err)
+		}
+	})
+
+	return t.closeErr
 }
 
 // IsClosed returns true if the transport has been closed.
 func (t *HTTPTransport) IsClosed() bool {
 	return t.closed.Load()
-}
-
-// BroadcastEvent sends a custom SSE event to all connected clients.
-// The event type is used for client-side filtering (e.g., "observation", "heartbeat").
-// This is used by observation streaming to broadcast events to all SSE clients.
-func (t *HTTPTransport) BroadcastEvent(eventType string, data string) {
-	if t.closed.Load() {
-		return
-	}
-
-	t.clients.Broadcast(&SSEEvent{
-		ID:    fmt.Sprintf("%d", t.eventID.Add(1)),
-		Event: eventType,
-		Data:  data,
-	})
-	t.metrics.RecordSSEEvent()
-}
-
-// ShutdownChan returns a channel that is closed when the transport is shutting down.
-// This allows handlers to detect shutdown and clean up gracefully.
-func (t *HTTPTransport) ShutdownChan() <-chan struct{} {
-	return t.shutdownCh
 }
 
 // Ensure HTTPTransport implements Transport interface

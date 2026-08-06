@@ -106,57 +106,6 @@ struct WindowListingPerformanceTests {
         #expect(avgDuration < 0.5, "listWindows should complete under 500ms")
     }
 
-    /// Measure performance with multiple Calculator windows.
-    ///
-    /// Opens Calculator multiple times to test window count scaling.
-    @Test(.disabled("Disabled by default - opens multiple Calculator windows"))
-    @MainActor
-    func `listWindows with multiple Calculator windows`() async throws {
-        let registry = WindowRegistry()
-        var pids: [pid_t] = []
-
-        // Define test cases: number of windows to open
-        let testCases = [1, 3, 5]
-
-        for windowCount in testCases {
-            // Open Calculator instances
-            for _ in 0 ..< windowCount {
-                if let app = NSWorkspace.shared.runningApplications.first(where: {
-                    $0.bundleIdentifier == "com.apple.calculator"
-                }) {
-                    pids.append(app.processIdentifier)
-                } else {
-                    // Try to launch Calculator
-                    if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.calculator") {
-                        let config = NSWorkspace.OpenConfiguration()
-                        config.activates = false
-                        let app = try await NSWorkspace.shared.openApplication(at: url, configuration: config)
-                        pids.append(app.processIdentifier)
-                    }
-                }
-            }
-
-            // Wait for windows to be ready
-            try await Task.sleep(for: .milliseconds(500))
-
-            // Measure listing time
-            let start = CFAbsoluteTimeGetCurrent()
-            _ = try await registry.listAllWindows()
-            let duration = CFAbsoluteTimeGetCurrent() - start
-
-            print("With \(windowCount) Calculator instance(s): \(String(format: "%.3f", duration * 1000))ms")
-
-            // Clean up Calculators
-            for pid in pids {
-                if let app = NSRunningApplication(processIdentifier: pid) {
-                    app.terminate()
-                }
-            }
-            pids.removeAll()
-            try await Task.sleep(for: .milliseconds(300))
-        }
-    }
-
     /// Measure cache effectiveness - second call should be faster.
     @Test
     func `Cache performance comparison`() async throws {

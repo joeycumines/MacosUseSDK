@@ -151,7 +151,9 @@ struct ObservationManagerTests {
 
         // Verify no .minimized event is emitted
         let hasMinimizedEvent = changes.contains { change in
-            if case .minimized = change { return true }
+            if case .minimized = change {
+                return true
+            }
             return false
         }
         #expect(hasMinimizedEvent == false, "MUST NOT emit .minimized when window is hidden (kAXHiddenAttribute)")
@@ -166,7 +168,11 @@ struct ObservationManagerTests {
         let curr1: [AXWindowSnapshot] = [.testWindow(id: 1, minimized: true, visible: false)]
         let changes1 = manager.detectWindowChanges(previous: prev1, current: curr1)
 
-        let hasMinimized1 = changes1.contains { if case .minimized = $0 { return true }; return false }
+        let hasMinimized1 = changes1.contains {
+            if case .minimized = $0 {
+                return true
+            }; return false
+        }
         #expect(hasMinimized1 == true, "MUST emit .minimized when minimized attribute changes to true")
 
         // Scenario 2: Window becomes hidden (minimized=false, visible=false)
@@ -175,7 +181,11 @@ struct ObservationManagerTests {
         let curr2: [AXWindowSnapshot] = [.testWindow(id: 2, minimized: false, visible: false)]
         let changes2 = manager.detectWindowChanges(previous: prev2, current: curr2)
 
-        let hasMinimized2 = changes2.contains { if case .minimized = $0 { return true }; return false }
+        let hasMinimized2 = changes2.contains {
+            if case .minimized = $0 {
+                return true
+            }; return false
+        }
         #expect(hasMinimized2 == false, "MUST NOT emit .minimized when only visibility changes (hidden, not minimized)")
     }
 }

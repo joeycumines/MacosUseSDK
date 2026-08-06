@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
 )
 
@@ -23,11 +22,9 @@ func TestListWindowsPagination(t *testing.T) {
 	defer conn.Close()
 
 	client := pb.NewMacosUseClient(conn)
-	opsClient := longrunningpb.NewOperationsClient(conn)
-
 	// 2. Application Setup
 	t.Log("Opening Calculator...")
-	app := openCalculator(t, ctx, client, opsClient)
+	app := openCalculator(t, ctx, client)
 	defer cleanupApplication(t, ctx, client, app)
 
 	// 3. Wait for State Consistency
@@ -126,14 +123,12 @@ func TestListApplicationsPagination(t *testing.T) {
 	defer conn.Close()
 
 	client := pb.NewMacosUseClient(conn)
-	opsClient := longrunningpb.NewOperationsClient(conn)
-
 	// 2. Open multiple applications to ensure pagination is meaningful
 	t.Log("Opening Calculator and TextEdit...")
-	app1 := openCalculator(t, ctx, client, opsClient)
+	app1 := openCalculator(t, ctx, client)
 	defer cleanupApplication(t, ctx, client, app1)
 
-	app2 := openTextEdit(t, ctx, client, opsClient)
+	app2 := openTextEdit(t, ctx, client)
 	defer cleanupApplication(t, ctx, client, app2)
 
 	// 3. Test Case: Full list (no pagination params)
@@ -206,47 +201,16 @@ func TestListApplicationsPagination(t *testing.T) {
 
 // openTextEdit opens TextEdit application with a new empty document for testing.
 // Uses OpenApplication followed by AppleScript to create a new document, avoiding the file picker.
-func openTextEdit(t *testing.T, ctx context.Context, client pb.MacosUseClient, opsClient longrunningpb.OperationsClient) *pb.Application {
+func openTextEdit(t *testing.T, ctx context.Context, client pb.MacosUseClient) *pb.Application {
+	t.Helper()
+
 	// Robustly kill TextEdit, clear saved state, and disable modal dialogs
 	killTextEdit(t)
 
-	// Open TextEdit using OpenApplication
-	op, err := client.OpenApplication(ctx, &pb.OpenApplicationRequest{
-		Id: "com.apple.TextEdit",
-	})
-	if err != nil {
-		t.Fatalf("Failed to start OpenApplication for TextEdit: %v", err)
-	}
-
-	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
-		op, err = opsClient.GetOperation(ctx, &longrunningpb.GetOperationRequest{
-			Name: op.Name,
-		})
-		if err != nil {
-			return false, err
-		}
-		return op.Done, nil
-	})
-	if err != nil {
-		t.Fatalf("Failed waiting for OpenApplication (TextEdit): %v", err)
-	}
-
-	if op.GetError() != nil {
-		t.Fatalf("OpenApplication (TextEdit) failed: %v", op.GetError())
-	}
-
-	response := &pb.OpenApplicationResponse{}
-	if err := op.GetResponse().UnmarshalTo(response); err != nil {
-		t.Fatalf("Failed to unmarshal TextEdit operation response: %v", err)
-	}
-
-	app := response.Application
-	if app == nil {
-		t.Fatal("TextEdit operation completed but no application returned")
-	}
+	app := OpenApplicationObserved(t, ctx, client, "com.apple.TextEdit")
 
 	// Use AppleScript to create a new document, bypassing the file picker
-	_, err = client.ExecuteAppleScript(ctx, &pb.ExecuteAppleScriptRequest{
+	_, err := client.ExecuteAppleScript(ctx, &pb.ExecuteAppleScriptRequest{
 		Script: `tell application "TextEdit" to make new document`,
 	})
 	if err != nil {
@@ -272,10 +236,8 @@ func TestListInputsPagination(t *testing.T) {
 	defer conn.Close()
 
 	client := pb.NewMacosUseClient(conn)
-	opsClient := longrunningpb.NewOperationsClient(conn)
-
 	// 2. Application Setup
-	app := openCalculator(t, ctx, client, opsClient)
+	app := openCalculator(t, ctx, client)
 	defer cleanupApplication(t, ctx, client, app)
 
 	// 3. Data Seeding

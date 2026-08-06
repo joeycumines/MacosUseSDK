@@ -24,15 +24,91 @@ fileprivate nonisolated struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobu
   typealias Version = _2
 }
 
-/// A resource representing a running application instance that the server
-/// is actively tracking for automation.
+/// Controls the amount of application metadata returned by Get and List RPCs.
+public nonisolated enum Macosusesdk_V1_ApplicationView: SwiftProtobuf.Enum, Swift.CaseIterable {
+  public typealias RawValue = Int
+
+  /// Defaults to BASIC.
+  case unspecified // = 0
+
+  /// Returns stable identity and ordinary display metadata.
+  case basic // = 1
+
+  /// Also returns privacy-sensitive bundle location and version metadata where
+  /// those fields are available.
+  case full // = 2
+  case UNRECOGNIZED(Int)
+
+  public init() {
+    self = .unspecified
+  }
+
+  public init?(rawValue: Int) {
+    switch rawValue {
+    case 0: self = .unspecified
+    case 1: self = .basic
+    case 2: self = .full
+    default: self = .UNRECOGNIZED(rawValue)
+    }
+  }
+
+  public var rawValue: Int {
+    switch self {
+    case .unspecified: return 0
+    case .basic: return 1
+    case .full: return 2
+    case .UNRECOGNIZED(let i): return i
+    }
+  }
+
+  // The compiler won't synthesize support with the UNRECOGNIZED case.
+  public static let allCases: [Macosusesdk_V1_ApplicationView] = [
+    .unspecified,
+    .basic,
+    .full,
+  ]
+
+}
+
+/// A discoverable installed macOS application bundle. Each distinct bundle
+/// location is a separate resource even when multiple installations share a
+/// bundle identifier.
+public nonisolated struct Macosusesdk_V1_ApplicationBundle: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Resource name in the format "applicationBundles/{application_bundle}".
+  /// The resource ID is opaque and identifies one exact standardized bundle URL.
+  public var name: String = String()
+
+  /// The localized display name declared by the bundle.
+  public var displayName: String = String()
+
+  /// The bundle identifier, if the bundle declares one. This value is not a
+  /// unique resource key because distinct installations may share it.
+  public var bundleID: String = String()
+
+  /// The exact file URL for this installation. Populated only in FULL view.
+  public var bundleURL: String = String()
+
+  /// The human-readable bundle version. Populated only in FULL view.
+  public var version: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// A resource representing one exact running application process instance.
+/// Its opaque name changes when a PID is reused by a different process.
 public nonisolated struct Macosusesdk_V1_Application: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Resource name in the format "applications/{application}"
-  /// where {application} is the process ID (PID).
+  /// Resource name in the format "applications/{application}". The resource ID
+  /// is opaque and binds the PID to its kernel process start identity.
   public var name: String = String()
 
   /// The process ID of the application.
@@ -41,18 +117,94 @@ public nonisolated struct Macosusesdk_V1_Application: Sendable {
   /// The localized name of the application.
   public var displayName: String = String()
 
+  /// The exact installed bundle resource backing this process, when its bundle
+  /// URL is discoverable in the current catalog.
+  public var applicationBundle: String = String()
+
+  /// The bundle identifier reported by the process, if present.
+  public var bundleID: String = String()
+
+  /// Whether this exact process is currently the active application.
+  public var active: Bool = false
+
+  /// Kernel-observed process start time used as part of exact instance identity.
+  public var processStartTime: SwiftProtobuf.Google_Protobuf_Timestamp {
+    get {_processStartTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_processStartTime = newValue}
+  }
+  /// Returns true if `processStartTime` has been explicitly set.
+  public var hasProcessStartTime: Bool {self._processStartTime != nil}
+  /// Clears the value of `processStartTime`. Subsequent reads from it will return its default value.
+  public mutating func clearProcessStartTime() {self._processStartTime = nil}
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
+
+  fileprivate var _processStartTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
 }
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
 fileprivate nonisolated let _protobuf_package = "macosusesdk.v1"
 
+nonisolated extension Macosusesdk_V1_ApplicationView: SwiftProtobuf._ProtoNameProviding {
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0APPLICATION_VIEW_UNSPECIFIED\0\u{1}APPLICATION_VIEW_BASIC\0\u{1}APPLICATION_VIEW_FULL\0")
+}
+
+nonisolated extension Macosusesdk_V1_ApplicationBundle: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ApplicationBundle"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{3}display_name\0\u{3}bundle_id\0\u{3}bundle_url\0\u{1}version\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.displayName) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.bundleID) }()
+      case 4: try { try decoder.decodeSingularStringField(value: &self.bundleURL) }()
+      case 5: try { try decoder.decodeSingularStringField(value: &self.version) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
+    }
+    if !self.displayName.isEmpty {
+      try visitor.visitSingularStringField(value: self.displayName, fieldNumber: 2)
+    }
+    if !self.bundleID.isEmpty {
+      try visitor.visitSingularStringField(value: self.bundleID, fieldNumber: 3)
+    }
+    if !self.bundleURL.isEmpty {
+      try visitor.visitSingularStringField(value: self.bundleURL, fieldNumber: 4)
+    }
+    if !self.version.isEmpty {
+      try visitor.visitSingularStringField(value: self.version, fieldNumber: 5)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_ApplicationBundle, rhs: Macosusesdk_V1_ApplicationBundle) -> Bool {
+    if lhs.name != rhs.name {return false}
+    if lhs.displayName != rhs.displayName {return false}
+    if lhs.bundleID != rhs.bundleID {return false}
+    if lhs.bundleURL != rhs.bundleURL {return false}
+    if lhs.version != rhs.version {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
 nonisolated extension Macosusesdk_V1_Application: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Application"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}pid\0\u{3}display_name\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}pid\0\u{3}display_name\0\u{3}application_bundle\0\u{3}bundle_id\0\u{1}active\0\u{3}process_start_time\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -63,12 +215,20 @@ nonisolated extension Macosusesdk_V1_Application: SwiftProtobuf.Message, SwiftPr
       case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
       case 2: try { try decoder.decodeSingularInt32Field(value: &self.pid) }()
       case 3: try { try decoder.decodeSingularStringField(value: &self.displayName) }()
+      case 4: try { try decoder.decodeSingularStringField(value: &self.applicationBundle) }()
+      case 5: try { try decoder.decodeSingularStringField(value: &self.bundleID) }()
+      case 6: try { try decoder.decodeSingularBoolField(value: &self.active) }()
+      case 7: try { try decoder.decodeSingularMessageField(value: &self._processStartTime) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
     if !self.name.isEmpty {
       try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
     }
@@ -78,6 +238,18 @@ nonisolated extension Macosusesdk_V1_Application: SwiftProtobuf.Message, SwiftPr
     if !self.displayName.isEmpty {
       try visitor.visitSingularStringField(value: self.displayName, fieldNumber: 3)
     }
+    if !self.applicationBundle.isEmpty {
+      try visitor.visitSingularStringField(value: self.applicationBundle, fieldNumber: 4)
+    }
+    if !self.bundleID.isEmpty {
+      try visitor.visitSingularStringField(value: self.bundleID, fieldNumber: 5)
+    }
+    if self.active != false {
+      try visitor.visitSingularBoolField(value: self.active, fieldNumber: 6)
+    }
+    try { if let v = self._processStartTime {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
+    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -85,6 +257,10 @@ nonisolated extension Macosusesdk_V1_Application: SwiftProtobuf.Message, SwiftPr
     if lhs.name != rhs.name {return false}
     if lhs.pid != rhs.pid {return false}
     if lhs.displayName != rhs.displayName {return false}
+    if lhs.applicationBundle != rhs.applicationBundle {return false}
+    if lhs.bundleID != rhs.bundleID {return false}
+    if lhs.active != rhs.active {return false}
+    if lhs._processStartTime != rhs._processStartTime {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

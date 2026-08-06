@@ -1,12 +1,83 @@
 import AppKit // Needed for Process and potentially other things later
 import Carbon.HIToolbox
 import CoreGraphics
+import CryptoKit
 import Foundation
 import OSLog
 
 private let logger = sdkLogger(category: "InputController")
 
 // --- Dynamic Key Code Resolution via TIS/UCKeyTranslate ---
+
+public struct KeyboardInputSourceIdentity: Hashable, Sendable {
+    public let sourceID: String
+    public let unicodeLayoutSHA256: String
+    public let keyboardType: UInt32
+
+    public init(
+        sourceID: String,
+        unicodeLayoutSHA256: String,
+        keyboardType: UInt32,
+    ) {
+        self.sourceID = sourceID
+        self.unicodeLayoutSHA256 = unicodeLayoutSHA256
+        self.keyboardType = keyboardType
+    }
+}
+
+public struct ResolvedInputKey: Hashable, Sendable {
+    public let keyCode: CGKeyCode
+    public let sourceIdentity: KeyboardInputSourceIdentity?
+
+    public init(
+        keyCode: CGKeyCode,
+        sourceIdentity: KeyboardInputSourceIdentity?,
+    ) {
+        self.keyCode = keyCode
+        self.sourceIdentity = sourceIdentity
+    }
+}
+
+private struct KeyboardLayoutSnapshot {
+    let layoutData: CFData
+    let identity: KeyboardInputSourceIdentity
+}
+
+private func keyboardLayoutSnapshot() -> KeyboardLayoutSnapshot? {
+    guard let sourceRef = TISCopyCurrentKeyboardInputSource() else {
+        logger.warning("TISCopyCurrentKeyboardInputSource returned nil")
+        return nil
+    }
+    let source = sourceRef.takeRetainedValue()
+    guard let sourceIDRef = TISGetInputSourceProperty(
+        source,
+        kTISPropertyInputSourceID,
+    ), let layoutDataRef = TISGetInputSourceProperty(
+        source,
+        kTISPropertyUnicodeKeyLayoutData,
+    )
+    else {
+        logger.warning("Current keyboard input source lacks identity or Unicode layout data")
+        return nil
+    }
+    let sourceID = unsafeBitCast(sourceIDRef, to: CFString.self) as String
+    let layoutData = unsafeBitCast(layoutDataRef, to: CFData.self)
+    let digest = SHA256.hash(data: layoutData as Data)
+        .map { String(format: "%02x", $0) }
+        .joined()
+    return KeyboardLayoutSnapshot(
+        layoutData: layoutData,
+        identity: KeyboardInputSourceIdentity(
+            sourceID: sourceID,
+            unicodeLayoutSHA256: digest,
+            keyboardType: UInt32(LMGetKbdType()),
+        ),
+    )
+}
+
+public func currentKeyboardInputSourceIdentity() -> KeyboardInputSourceIdentity? {
+    keyboardLayoutSnapshot()?.identity
+}
 
 /// Resolves a `CGKeyCode` for a given character by querying the current keyboard
 /// input source via TIS and translating each virtual key code with `UCKeyTranslate`.
@@ -29,32 +100,16 @@ public func resolveKeyCode(for character: String) -> CGKeyCode? {
 
     let target = character.lowercased()
 
-    // 1. Obtain the current keyboard input source.
-    guard let sourceRef = TISCopyCurrentKeyboardInputSource() else {
-        logger.warning("TISCopyCurrentKeyboardInputSource returned nil")
+    guard let layout = keyboardLayoutSnapshot() else {
         return nil
     }
-    let source = sourceRef.takeRetainedValue()
-
-    // 2. Get the Unicode key layout data.
-    guard
-        let layoutDataRef = TISGetInputSourceProperty(
-            source, kTISPropertyUnicodeKeyLayoutData,
-        )
-    else {
-        logger.warning(
-            "TISGetInputSourceProperty returned nil for kTISPropertyUnicodeKeyLayoutData",
-        )
-        return nil
-    }
-
-    let layoutData = unsafeBitCast(layoutDataRef, to: CFData.self)
+    let layoutData = layout.layoutData
     let layoutPtr = unsafeBitCast(
         CFDataGetBytePtr(layoutData),
         to: UnsafePointer<UCKeyboardLayout>.self,
     )
 
-    let keyboardType = UInt32(LMGetKbdType())
+    let keyboardType = layout.identity.keyboardType
 
     // 3. Iterate virtual key codes 0-127 and translate each.
     var deadKeyState: UInt32 = 0
@@ -132,22 +187,205 @@ public let KEY_ARROW_UP: CGKeyCode = 126
 
 // --- Helper Functions (Internal or Fileprivate) ---
 
-/// Creates a CGEventSource or throws
-private func createEventSource() throws -> CGEventSource {
-    guard let source = CGEventSource(stateID: .hidSystemState) else {
-        throw MacosUseSDKError.inputSimulationFailed("failed to create event source")
+private let maximumInputHoldDuration = 3600.0
+private let maximumDragDuration = 60.0
+private let maximumPointerDuration = 60.0
+private let maximumHoverDuration = 3600.0
+private let maximumClickCount = 10
+
+private func durationNanoseconds(_ duration: Double, maximum: Double, field: String) throws -> UInt64 {
+    guard duration.isFinite, duration >= 0, duration <= maximum else {
+        throw MacosUseSDKError.inputInvalidArgument(
+            "\(field) must be finite and between 0 and \(maximum) seconds",
+        )
     }
-    return source
+    return UInt64(duration * 1_000_000_000)
 }
 
-/// Posts a CGEvent or throws
-private func postEvent(_ event: CGEvent?, actionDescription: String) async throws {
-    guard let event else {
-        throw MacosUseSDKError.inputSimulationFailed("failed to create \(actionDescription) event")
+private func postSingleInputEvent(
+    _ event: InputEvent,
+    backend: any InputEventBackend,
+) async throws -> UInt64 {
+    let prepared = try backend.prepare(event)
+    try Task.checkCancellation()
+    return try await backend.post(prepared)
+}
+
+private func scheduledOffset(
+    index: Int,
+    intervalCount: Int,
+    totalNanoseconds: UInt64,
+) -> UInt64 {
+    precondition(index >= 0 && index <= intervalCount)
+    precondition(intervalCount > 0)
+    return totalNanoseconds * UInt64(index) / UInt64(intervalCount)
+}
+
+private func scheduledDeadline(
+    start: UInt64,
+    offset: UInt64,
+) -> UInt64 {
+    let (deadline, overflow) = start.addingReportingOverflow(offset)
+    precondition(!overflow)
+    return deadline
+}
+
+private func pauseUntilDeadline(
+    _ deadline: UInt64,
+    backend: any InputEventBackend,
+) async throws {
+    while true {
+        let now = backend.monotonicTimeNanoseconds()
+        guard now < deadline else {
+            return
+        }
+        try await backend.pause(nanoseconds: deadline - now)
     }
-    event.post(tap: .cghidEventTap)
-    // Add a small delay after posting, crucial for some applications
-    try await Task.sleep(nanoseconds: 15_000_000) // 15 milliseconds
+}
+
+private enum InputCleanupSettlement {
+    case settled
+    case processRouteRetired
+}
+
+private func settleRouteBoundCleanup(
+    backend: any InputEventBackend,
+    _ operation: @escaping @Sendable () async throws -> Void,
+) async -> InputCleanupSettlement {
+    let worker = Task.detached(priority: .userInitiated) {
+        var retryDelayNanoseconds: UInt64 = 1_000_000
+        while true {
+            do {
+                try await operation()
+                return InputCleanupSettlement.settled
+            } catch is InputProcessRouteRetired {
+                return InputCleanupSettlement.processRouteRetired
+            } catch {
+                // A posted down event or detached cursor creates a durable
+                // release obligation. Caller cancellation cannot terminate
+                // this joined worker. Backoff remains bounded so persistent OS
+                // failure is visible without monopolizing an executor.
+                await backend.pauseForCleanupRetry(
+                    nanoseconds: retryDelayNanoseconds,
+                )
+                retryDelayNanoseconds = min(
+                    retryDelayNanoseconds * 2,
+                    100_000_000,
+                )
+            }
+        }
+    }
+    return await worker.value
+}
+
+private func settleLocalCleanup(
+    backend: any InputEventBackend,
+    _ operation: @escaping @Sendable () async throws -> Void,
+) async {
+    let worker = Task.detached(priority: .userInitiated) {
+        var retryDelayNanoseconds: UInt64 = 1_000_000
+        while true {
+            do {
+                try await operation()
+                return
+            } catch {
+                // Cursor reassociation is host-global safety restoration. A
+                // retired process route cannot discharge this local duty.
+                await backend.pauseForCleanupRetry(
+                    nanoseconds: retryDelayNanoseconds,
+                )
+                retryDelayNanoseconds = min(
+                    retryDelayNanoseconds * 2,
+                    100_000_000,
+                )
+            }
+        }
+    }
+    await worker.value
+}
+
+private func postPairedInputEvents(
+    down: InputEvent,
+    up: InputEvent,
+    holdNanoseconds: UInt64 = 0,
+    backend: any InputEventBackend,
+) async throws {
+    try backend.checkPostAccess()
+    // Pre-create both events before posting down. The production backend then
+    // needs no allocation or fallible event construction to perform cleanup.
+    let preparedDown = try backend.prepare(down)
+    let preparedUp = try backend.prepare(up)
+    let cleanupObligationKind: InputCleanupObligationKind = switch down {
+    case .keyDown, .unicodeKeyDown:
+        .keyRelease
+    case .mouseDown:
+        .pointerRelease
+    case .keyUp, .unicodeKeyUp, .mouseUp, .mouseMove, .mouseDrag, .scroll:
+        preconditionFailure("paired input requires a key or pointer down event")
+    }
+    try await postPreparedInputEvents(
+        down: preparedDown,
+        up: preparedUp,
+        cleanupObligationKind: cleanupObligationKind,
+        holdNanoseconds: holdNanoseconds,
+        backend: backend,
+    )
+}
+
+@discardableResult
+private func postPreparedInputEvents(
+    down preparedDown: PreparedInputEvent,
+    up preparedUp: PreparedInputEvent,
+    cleanupObligationKind: InputCleanupObligationKind,
+    holdNanoseconds: UInt64 = 0,
+    backend: any InputEventBackend,
+) async throws -> UInt64 {
+    try Task.checkCancellation()
+    let cleanupTracker = backend as? any InputCleanupObligationTracking
+    let cleanupObligation = cleanupTracker?.armCleanupObligation(
+        cleanupObligationKind,
+    )
+
+    do {
+        // A throwing backend call may have committed the down event before it
+        // reported failure. Arm the matching release before invoking it.
+        let downPostTime = try await backend.post(preparedDown)
+        if holdNanoseconds > 0 {
+            try await pauseUntilDeadline(
+                scheduledDeadline(start: downPostTime, offset: holdNanoseconds),
+                backend: backend,
+            )
+        } else {
+            // Preserve an injectable cancellation boundary without inflating
+            // the documented down-to-up duration.
+            try await backend.pause(nanoseconds: 0)
+        }
+        try Task.checkCancellation()
+        _ = try await backend.post(preparedUp)
+        if let cleanupObligation {
+            cleanupTracker?.settleCleanupObligation(cleanupObligation)
+        }
+        return downPostTime
+    } catch {
+        if preparedDown.invocationEvidence == .notInvoked {
+            if let cleanupObligation {
+                cleanupTracker?.abandonCleanupObligation(cleanupObligation)
+            }
+            throw error
+        }
+        let settlement = await settleRouteBoundCleanup(backend: backend) {
+            _ = try await backend.postForCleanup(preparedUp)
+        }
+        if let cleanupObligation {
+            switch settlement {
+            case .settled:
+                cleanupTracker?.settleCleanupObligation(cleanupObligation)
+            case .processRouteRetired:
+                cleanupTracker?.abandonCleanupObligation(cleanupObligation)
+            }
+        }
+        throw error
+    }
 }
 
 // --- Public Input Simulation Functions ---
@@ -158,19 +396,24 @@ private func postEvent(_ event: CGEvent?, actionDescription: String) async throw
 ///   - flags: The modifier flags (`CGEventFlags`) to apply (e.g., `.maskCommand`, `.maskShift`).
 /// - Throws: `MacosUseSDKError` if the event source cannot be created or the event cannot be posted.
 public func pressKey(keyCode: CGKeyCode, flags: CGEventFlags = []) async throws {
+    try await pressKey(
+        keyCode: keyCode,
+        flags: flags,
+        backend: CoreGraphicsInputEventBackend(),
+    )
+}
+
+func pressKey(
+    keyCode: CGKeyCode,
+    flags: CGEventFlags = [],
+    backend: any InputEventBackend,
+) async throws {
     logger.info("simulating key press: (code: \(keyCode, privacy: .public), flags: \(flags.rawValue, privacy: .public))")
-    let source = try createEventSource()
-
-    let keyDown = CGEvent(keyboardEventSource: source, virtualKey: keyCode, keyDown: true)
-    keyDown?.flags = flags // Apply modifier flags
-    try await postEvent(keyDown, actionDescription: "key down (code: \(keyCode), flags: \(flags.rawValue))")
-
-    // Short delay between key down and key up is often necessary
-    // Task.sleep now handled in postEvent
-
-    let keyUp = CGEvent(keyboardEventSource: source, virtualKey: keyCode, keyDown: false)
-    keyUp?.flags = flags // Apply modifier flags for key up as well
-    try await postEvent(keyUp, actionDescription: "key up (code: \(keyCode), flags: \(flags.rawValue))")
+    try await postPairedInputEvents(
+        down: .keyDown(keyCode: keyCode, flags: flags),
+        up: .keyUp(keyCode: keyCode, flags: flags),
+        backend: backend,
+    )
     logger.info("key press simulation complete.")
 }
 
@@ -181,220 +424,371 @@ public func pressKey(keyCode: CGKeyCode, flags: CGEventFlags = []) async throws 
 ///   - duration: The duration in seconds to hold the key down before releasing.
 /// - Throws: `MacosUseSDKError` if the event source cannot be created or the event cannot be posted.
 public func pressKeyHold(keyCode: CGKeyCode, flags: CGEventFlags = [], duration: Double) async throws {
+    try await pressKeyHold(
+        keyCode: keyCode,
+        flags: flags,
+        duration: duration,
+        backend: CoreGraphicsInputEventBackend(),
+    )
+}
+
+func pressKeyHold(
+    keyCode: CGKeyCode,
+    flags: CGEventFlags = [],
+    duration: Double,
+    backend: any InputEventBackend,
+) async throws {
     logger.info(
         "simulating key hold: (code: \(keyCode, privacy: .public), flags: \(flags.rawValue, privacy: .public), duration: \(duration, privacy: .public)s)",
     )
-    let source = try createEventSource()
-
-    let keyDown = CGEvent(keyboardEventSource: source, virtualKey: keyCode, keyDown: true)
-    keyDown?.flags = flags
-    try await postEvent(keyDown, actionDescription: "key down (code: \(keyCode), flags: \(flags.rawValue))")
-
-    // Hold the key for the specified duration
-    try await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000))
-
-    let keyUp = CGEvent(keyboardEventSource: source, virtualKey: keyCode, keyDown: false)
-    keyUp?.flags = flags
-    try await postEvent(keyUp, actionDescription: "key up (code: \(keyCode), flags: \(flags.rawValue))")
+    let holdNanoseconds = try durationNanoseconds(
+        duration,
+        maximum: maximumInputHoldDuration,
+        field: "key hold duration",
+    )
+    try await postPairedInputEvents(
+        down: .keyDown(keyCode: keyCode, flags: flags),
+        up: .keyUp(keyCode: keyCode, flags: flags),
+        holdNanoseconds: holdNanoseconds,
+        backend: backend,
+    )
     logger.info("key hold simulation complete.")
 }
 
-/// Simulates pressing a mouse button down without releasing.
-/// Used for stateful drag operations where button down and up are separate events.
-/// - Parameters:
-///   - point: The `CGPoint` where the button should be pressed (Global Display Coordinates).
-///   - button: The mouse button (`.left`, `.right`, `.center`).
-///   - modifiers: Optional modifier flags to hold during the press.
-/// - Throws: `MacosUseSDKError` if the event source cannot be created or the event cannot be posted.
-public func mouseButtonDown(at point: CGPoint, button: CGMouseButton = .left, modifiers: CGEventFlags = [])
-    async throws
-{
-    logger.info(
-        "simulating mouse button down at: (\(point.x, privacy: .public), \(point.y, privacy: .public)), button: \(button.rawValue, privacy: .public)",
+/// Simulates a complete mouse click sequence at Global Display Coordinates
+/// (top-left origin). Every event carries the supplied modifier flags, and each
+/// successful down is synchronously paired with an up even under cancellation.
+/// The cursor is synchronously warped to the click coordinate after all events
+/// are prepared and before the first event is posted.
+public func clickMouse(
+    at point: CGPoint,
+    button: CGMouseButton = .left,
+    clickCount: Int = 1,
+    modifiers: CGEventFlags = [],
+) async throws {
+    try await clickMouse(
+        at: point,
+        button: button,
+        clickCount: clickCount,
+        modifiers: modifiers,
+        backend: CoreGraphicsInputEventBackend(),
     )
-    let source = try createEventSource()
-
-    let mouseType: CGEventType = switch button {
-    case .left:
-        .leftMouseDown
-    case .right:
-        .rightMouseDown
-    case .center:
-        .otherMouseDown
-    default:
-        .leftMouseDown
-    }
-
-    let mouseDown = CGEvent(
-        mouseEventSource: source, mouseType: mouseType, mouseCursorPosition: point,
-        mouseButton: button,
-    )
-    mouseDown?.flags = modifiers
-    try await postEvent(mouseDown, actionDescription: "mouse button down at (\(point.x), \(point.y))")
-    logger.info("mouse button down simulation complete.")
 }
 
-/// Simulates releasing a mouse button.
-/// Used for stateful drag operations where button down and up are separate events.
-/// - Parameters:
-///   - point: The `CGPoint` where the button should be released (Global Display Coordinates).
-///   - button: The mouse button (`.left`, `.right`, `.center`).
-///   - modifiers: Optional modifier flags to hold during the release.
-/// - Throws: `MacosUseSDKError` if the event source cannot be created or the event cannot be posted.
-public func mouseButtonUp(at point: CGPoint, button: CGMouseButton = .left, modifiers: CGEventFlags = [])
-    async throws
-{
-    logger.info(
-        "simulating mouse button up at: (\(point.x, privacy: .public), \(point.y, privacy: .public)), button: \(button.rawValue, privacy: .public)",
-    )
-    let source = try createEventSource()
-
-    let mouseType: CGEventType = switch button {
-    case .left:
-        .leftMouseUp
-    case .right:
-        .rightMouseUp
-    case .center:
-        .otherMouseUp
-    default:
-        .leftMouseUp
+func clickMouse(
+    at point: CGPoint,
+    button: CGMouseButton = .left,
+    clickCount: Int = 1,
+    modifiers: CGEventFlags = [],
+    backend: any InputEventBackend,
+) async throws {
+    guard point.x.isFinite, point.y.isFinite else {
+        throw MacosUseSDKError.inputInvalidArgument("click coordinates must be finite")
     }
-
-    let mouseUp = CGEvent(
-        mouseEventSource: source, mouseType: mouseType, mouseCursorPosition: point,
-        mouseButton: button,
+    guard (1 ... maximumClickCount).contains(clickCount) else {
+        throw MacosUseSDKError.inputInvalidArgument(
+            "click count must be between 1 and \(maximumClickCount)",
+        )
+    }
+    try backend.checkPostAccess()
+    logger.info(
+        "simulating click sequence at: (\(point.x, privacy: .public), \(point.y, privacy: .public)), button: \(button.rawValue, privacy: .public), count: \(clickCount, privacy: .public)",
     )
-    mouseUp?.flags = modifiers
-    try await postEvent(mouseUp, actionDescription: "mouse button up at (\(point.x), \(point.y))")
-    logger.info("mouse button up simulation complete.")
-}
 
-/// Simulates a left mouse click at the specified screen coordinates.
-/// Does not move the cursor first. Call `moveMouse` beforehand if needed.
-/// - Parameter point: The `CGPoint` where the click should occur.
-/// - Throws: `MacosUseSDKError` if the event source cannot be created or the event cannot be posted.
-public func clickMouse(at point: CGPoint) async throws {
-    logger.info("simulating left click at: (\(point.x, privacy: .public), \(point.y, privacy: .public))")
-    let source = try createEventSource()
-
-    // Create and post mouse down event
-    let mouseDown = CGEvent(
-        mouseEventSource: source, mouseType: .leftMouseDown, mouseCursorPosition: point,
-        mouseButton: .left,
-    )
-    try await postEvent(mouseDown, actionDescription: "mouse down at (\(point.x), \(point.y))")
-
-    // Short delay - moved into postEvent
-    // Task.sleep now handled in postEvent
-
-    // Create and post mouse up event
-    let mouseUp = CGEvent(
-        mouseEventSource: source, mouseType: .leftMouseUp, mouseCursorPosition: point,
-        mouseButton: .left,
-    )
-    try await postEvent(mouseUp, actionDescription: "mouse up at (\(point.x), \(point.y))")
-    logger.info("left click simulation complete.")
+    let preparedPairs = try (1 ... clickCount).map { clickIndex in
+        let clickState = Int64(clickIndex)
+        return try (
+            backend.prepare(.mouseDown(
+                point: point,
+                button: button,
+                modifiers: modifiers,
+                clickCount: clickState,
+            )),
+            backend.prepare(.mouseUp(
+                point: point,
+                button: button,
+                modifiers: modifiers,
+                clickCount: clickState,
+            )),
+        )
+    }
+    try Task.checkCancellation()
+    try await backend.warpCursor(x: point.x, y: point.y)
+    for (down, up) in preparedPairs {
+        try await postPreparedInputEvents(
+            down: down,
+            up: up,
+            cleanupObligationKind: .pointerRelease,
+            backend: backend,
+        )
+    }
+    logger.info("click sequence simulation complete.")
 }
 
 /// Simulates a left mouse double click at the specified screen coordinates.
-/// Does not move the cursor first. Call `moveMouse` beforehand if needed.
+/// The cursor is synchronously warped to the exact coordinate before posting.
 /// - Parameter point: The `CGPoint` where the double click should occur.
 /// - Throws: `MacosUseSDKError` if the event source cannot be created or the event cannot be posted.
 public func doubleClickMouse(at point: CGPoint) async throws {
-    logger.info("simulating double-click at: (\(point.x, privacy: .public), \(point.y, privacy: .public))")
-    let source = try createEventSource()
-
-    // Use the specific double-click event type directly
-    let doubleClickEvent = CGEvent(
-        mouseEventSource: source, mouseType: .leftMouseDown, mouseCursorPosition: point,
-        mouseButton: .left,
-    )
-    doubleClickEvent?.setIntegerValueField(.mouseEventClickState, value: 2) // Set click count
-    try await postEvent(
-        doubleClickEvent, actionDescription: "double click down at (\(point.x), \(point.y))",
-    )
-
-    // Task.sleep now handled in postEvent
-
-    let mouseUpEvent = CGEvent(
-        mouseEventSource: source, mouseType: .leftMouseUp, mouseCursorPosition: point,
-        mouseButton: .left,
-    )
-    mouseUpEvent?.setIntegerValueField(.mouseEventClickState, value: 2) // Set click count
-    try await postEvent(mouseUpEvent, actionDescription: "double click up at (\(point.x), \(point.y))")
-    logger.info("double-click simulation complete.")
+    try await doubleClickMouse(at: point, backend: CoreGraphicsInputEventBackend())
 }
 
-/// Simulates a right mouse click at the specified coordinates
+func doubleClickMouse(at point: CGPoint, backend: any InputEventBackend) async throws {
+    try await clickMouse(at: point, clickCount: 2, backend: backend)
+}
+
 /// Simulates a right mouse click at the specified screen coordinates.
-/// Does not move the cursor first. Call `moveMouse` beforehand if needed.
+/// The cursor is synchronously warped to the exact coordinate before posting.
 /// - Parameter point: The `CGPoint` where the right click should occur.
 /// - Throws: `MacosUseSDKError` if the event source cannot be created or the event cannot be posted.
 public func rightClickMouse(at point: CGPoint) async throws {
-    logger.info("simulating right-click at: (\(point.x, privacy: .public), \(point.y, privacy: .public))")
-    let source = try createEventSource()
-
-    // Create and post mouse down event (RIGHT button)
-    let mouseDown = CGEvent(
-        mouseEventSource: source, mouseType: .rightMouseDown, mouseCursorPosition: point,
-        mouseButton: .right,
-    )
-    try await postEvent(mouseDown, actionDescription: "right mouse down at (\(point.x), \(point.y))")
-
-    // Short delay - moved into postEvent
-    // Task.sleep now handled in postEvent
-
-    // Create and post mouse up event (RIGHT button)
-    let mouseUp = CGEvent(
-        mouseEventSource: source, mouseType: .rightMouseUp, mouseCursorPosition: point,
-        mouseButton: .right,
-    )
-    try await postEvent(mouseUp, actionDescription: "right mouse up at (\(point.x), \(point.y))")
-    logger.info("right-click simulation complete.")
+    try await rightClickMouse(at: point, backend: CoreGraphicsInputEventBackend())
 }
 
-/// Moves the mouse cursor to the specified screen coordinates.
+func rightClickMouse(at point: CGPoint, backend: any InputEventBackend) async throws {
+    try await clickMouse(at: point, button: .right, backend: backend)
+}
+
+/// Moves the mouse cursor to the specified screen coordinates. Each generated
+/// movement first warps the hardware cursor to its exact Global Display
+/// Coordinate and then posts the matching movement event.
 /// - Parameter point: The `CGPoint` to move the cursor to.
 /// - Throws: `MacosUseSDKError` if the event source cannot be created or the event cannot be posted.
-public func moveMouse(to point: CGPoint) async throws {
-    logger.info("moving mouse to: (\(point.x, privacy: .public), \(point.y, privacy: .public))")
-    let source = try createEventSource()
+public func moveMouse(
+    to point: CGPoint,
+    duration: Double = 0,
+    modifiers: CGEventFlags = [],
+) async throws {
+    try await moveMouse(
+        to: point,
+        duration: duration,
+        modifiers: modifiers,
+        backend: CoreGraphicsInputEventBackend(),
+    )
+}
 
-    // .mouseMoved type doesn't require a button state
-    let mouseMove = CGEvent(
-        mouseEventSource: source, mouseType: .mouseMoved, mouseCursorPosition: point, mouseButton: .left,
-    ) // Button doesn't matter for move
-    try await postEvent(mouseMove, actionDescription: "mouse move to (\(point.x), \(point.y))")
+func moveMouse(
+    to point: CGPoint,
+    duration: Double = 0,
+    modifiers: CGEventFlags = [],
+    backend: any InputEventBackend,
+) async throws {
+    guard point.x.isFinite, point.y.isFinite else {
+        throw MacosUseSDKError.inputInvalidArgument("move coordinates must be finite")
+    }
+    let durationNanoseconds = try durationNanoseconds(
+        duration,
+        maximum: maximumPointerDuration,
+        field: "move duration",
+    )
+    try backend.checkPostAccess()
+    logger.info("moving mouse to: (\(point.x, privacy: .public), \(point.y, privacy: .public))")
+    if durationNanoseconds == 0 {
+        let prepared = try backend.prepare(.mouseMove(point: point, modifiers: modifiers))
+        try Task.checkCancellation()
+        try await backend.warpCursor(x: point.x, y: point.y)
+        try Task.checkCancellation()
+        _ = try await backend.post(prepared)
+        logger.info("mouse move simulation complete.")
+        return
+    }
+
+    let start = try backend.cursorPosition()
+    guard start.x.isFinite, start.y.isFinite else {
+        throw MacosUseSDKError.inputSimulationFailed("cursor position is not finite")
+    }
+    let steps = 20
+    let preparedMoves = try (1 ... steps).map { step in
+        let fraction = Double(step) / Double(steps)
+        let intermediate = CGPoint(
+            x: start.x + ((point.x - start.x) * fraction),
+            y: start.y + ((point.y - start.y) * fraction),
+        )
+        return try (
+            intermediate,
+            backend.prepare(.mouseMove(point: intermediate, modifiers: modifiers)),
+        )
+    }
+    var firstPostTime: UInt64?
+    for (index, move) in preparedMoves.enumerated() {
+        if let firstPostTime {
+            try await pauseUntilDeadline(
+                scheduledDeadline(
+                    start: firstPostTime,
+                    offset: scheduledOffset(
+                        index: index,
+                        intervalCount: preparedMoves.count - 1,
+                        totalNanoseconds: durationNanoseconds,
+                    ),
+                ),
+                backend: backend,
+            )
+        }
+        try Task.checkCancellation()
+        try await backend.warpCursor(x: move.0.x, y: move.0.y)
+        try Task.checkCancellation()
+        let postTime = try await backend.post(move.1)
+        if firstPostTime == nil {
+            firstPostTime = postTime
+        }
+    }
     logger.info("mouse move simulation complete.")
 }
 
-/// Simulates a mouse drag movement to the specified screen coordinates.
-/// Uses `CGEventType.leftMouseDragged` which is required for the window manager
-/// to recognize title-bar drags and other drag interactions. This differs from
-/// `moveMouse` which uses `.mouseMoved` (not recognized as drag by window manager).
-///
-/// Use this between `mouseButtonDown` and `mouseButtonUp` calls for drag operations
-/// in Global Display Coordinates (top-left origin).
-///
-/// - Parameter point: The `CGPoint` to drag to.
-/// - Throws: `MacosUseSDKError` if the event source cannot be created or the event cannot be posted.
-public func dragMouse(to point: CGPoint) async throws {
-    logger.info("dragging mouse to: (\(point.x, privacy: .public), \(point.y, privacy: .public))")
-    let source = try createEventSource()
+private func scrollDelta(_ value: Double, field: String) throws -> Int32 {
+    guard value.isFinite else {
+        throw MacosUseSDKError.inputInvalidArgument("\(field) must be finite")
+    }
+    let rounded = value.rounded(.toNearestOrAwayFromZero)
+    guard rounded >= Double(Int32.min), rounded <= Double(Int32.max) else {
+        throw MacosUseSDKError.inputInvalidArgument("\(field) is outside the supported range")
+    }
+    let result = Int32(rounded)
+    guard value == 0 || result != 0 else {
+        throw MacosUseSDKError.inputInvalidArgument(
+            "\(field) magnitude must be at least one pixel",
+        )
+    }
+    return result
+}
 
-    let dragEvent = CGEvent(
-        mouseEventSource: source, mouseType: .leftMouseDragged, mouseCursorPosition: point, mouseButton: .left,
+public func scrollMouse(
+    at point: CGPoint? = nil,
+    horizontal: Double,
+    vertical: Double,
+    duration: Double = 0,
+    modifiers: CGEventFlags = [],
+) async throws {
+    try await scrollMouse(
+        at: point,
+        horizontal: horizontal,
+        vertical: vertical,
+        duration: duration,
+        modifiers: modifiers,
+        backend: CoreGraphicsInputEventBackend(),
     )
-    try await postEvent(dragEvent, actionDescription: "mouse drag to (\(point.x), \(point.y))")
-    logger.info("mouse drag simulation complete.")
+}
+
+func scrollMouse(
+    at point: CGPoint? = nil,
+    horizontal: Double,
+    vertical: Double,
+    duration: Double = 0,
+    modifiers: CGEventFlags = [],
+    backend: any InputEventBackend,
+) async throws {
+    if let point, !point.x.isFinite || !point.y.isFinite {
+        throw MacosUseSDKError.inputInvalidArgument("scroll coordinates must be finite")
+    }
+    let horizontalDelta = try scrollDelta(horizontal, field: "horizontal scroll delta")
+    let verticalDelta = try scrollDelta(vertical, field: "vertical scroll delta")
+    guard horizontalDelta != 0 || verticalDelta != 0 else {
+        throw MacosUseSDKError.inputInvalidArgument("scroll must have a non-zero delta")
+    }
+    let totalDuration = try durationNanoseconds(
+        duration,
+        maximum: maximumPointerDuration,
+        field: "scroll duration",
+    )
+    try backend.checkPostAccess()
+    let resolvedPoint = try point ?? backend.cursorPosition()
+    guard resolvedPoint.x.isFinite, resolvedPoint.y.isFinite else {
+        throw MacosUseSDKError.inputSimulationFailed(
+            "cursor position is not finite",
+        )
+    }
+    let maximumMagnitude = max(abs(Int64(horizontalDelta)), abs(Int64(verticalDelta)))
+    let steps = totalDuration == 0 ? 1 : Int(min(20, maximumMagnitude))
+    let preparedEvents = try (0 ..< steps).map { step in
+        let nextNumerator = Int64(step + 1)
+        let priorNumerator = Int64(step)
+        let divisor = Int64(steps)
+        let stepHorizontal = Int32(
+            (Int64(horizontalDelta) * nextNumerator / divisor)
+                - (Int64(horizontalDelta) * priorNumerator / divisor),
+        )
+        let stepVertical = Int32(
+            (Int64(verticalDelta) * nextNumerator / divisor)
+                - (Int64(verticalDelta) * priorNumerator / divisor),
+        )
+        return try backend.prepare(.scroll(
+            point: resolvedPoint,
+            horizontal: stepHorizontal,
+            vertical: stepVertical,
+            modifiers: modifiers,
+        ))
+    }
+    if point != nil {
+        try Task.checkCancellation()
+        try await backend.warpCursor(x: resolvedPoint.x, y: resolvedPoint.y)
+    }
+    let scheduleOrigin = backend.monotonicTimeNanoseconds()
+    for (index, prepared) in preparedEvents.enumerated() {
+        let offset = if preparedEvents.count == 1 {
+            totalDuration
+        } else {
+            scheduledOffset(
+                index: index,
+                intervalCount: preparedEvents.count - 1,
+                totalNanoseconds: totalDuration,
+            )
+        }
+        if offset > 0 {
+            try await pauseUntilDeadline(
+                scheduledDeadline(
+                    start: scheduleOrigin,
+                    offset: offset,
+                ),
+                backend: backend,
+            )
+        }
+        try Task.checkCancellation()
+        _ = try await backend.post(prepared)
+    }
+}
+
+public func hoverMouse(at point: CGPoint, duration: Double) async throws {
+    try await hoverMouse(
+        at: point,
+        duration: duration,
+        backend: CoreGraphicsInputEventBackend(),
+    )
+}
+
+func hoverMouse(
+    at point: CGPoint,
+    duration: Double,
+    backend: any InputEventBackend,
+) async throws {
+    let hoverDuration = try durationNanoseconds(
+        duration,
+        maximum: maximumHoverDuration,
+        field: "hover duration",
+    )
+    guard hoverDuration > 0 else {
+        throw MacosUseSDKError.inputInvalidArgument("hover duration must be greater than zero")
+    }
+    guard point.x.isFinite, point.y.isFinite else {
+        throw MacosUseSDKError.inputInvalidArgument("hover coordinates must be finite")
+    }
+    try backend.checkPostAccess()
+    let prepared = try backend.prepare(.mouseMove(point: point, modifiers: []))
+    try Task.checkCancellation()
+    try await backend.warpCursor(x: point.x, y: point.y)
+    try Task.checkCancellation()
+    let postTime = try await backend.post(prepared)
+    try await pauseUntilDeadline(
+        scheduledDeadline(start: postTime, offset: hoverDuration),
+        backend: backend,
+    )
 }
 
 /// Performs a complete mouse drag operation from start to end position.
 ///
 /// Warps the system cursor to the start position first (required for drag recognition),
-/// then executes: buttonDown → incremental `leftMouseDragged` events with cursor warps → buttonUp.
-/// Uses 20 intermediate steps with brief pauses to simulate realistic drag motion that the
-/// macOS window manager recognizes for title-bar drags and other drag interactions.
+/// then executes: buttonDown → each caller-supplied path waypoint with a
+/// corresponding drag event and cursor warp → buttonUp. The path is
+/// authoritative and is never interpolated or rewritten.
 ///
 /// IMPORTANT: CGEvent's `mouseCursorPosition` alone does NOT physically reposition the system
 /// cursor. The window manager tracks the hardware cursor for drag operations, so we must use
@@ -411,124 +805,424 @@ public func dragMouse(to point: CGPoint) async throws {
 ///   - duration: Total duration of drag in seconds (0 = fast drag with minimal delays).
 /// - Throws: `MacosUseSDKError` if any event cannot be created or posted.
 public func performDrag(from: CGPoint, to: CGPoint, button: CGMouseButton = .left, duration: Double = 0) async throws {
+    try await performDrag(
+        path: [from, to],
+        button: button,
+        duration: duration,
+        modifiers: [],
+        backend: CoreGraphicsInputEventBackend(),
+    )
+}
+
+func performDrag(
+    from: CGPoint,
+    to: CGPoint,
+    button: CGMouseButton = .left,
+    duration: Double = 0,
+    backend: any InputEventBackend,
+) async throws {
+    try await performDrag(
+        path: [from, to],
+        button: button,
+        duration: duration,
+        modifiers: [],
+        backend: backend,
+    )
+}
+
+public func performDrag(
+    path: [CGPoint],
+    button: CGMouseButton = .left,
+    duration: Double = 0,
+    modifiers: CGEventFlags = [],
+) async throws {
+    try await performDrag(
+        path: path,
+        button: button,
+        duration: duration,
+        modifiers: modifiers,
+        backend: CoreGraphicsInputEventBackend(),
+    )
+}
+
+func performDrag(
+    path: [CGPoint],
+    button: CGMouseButton = .left,
+    duration: Double = 0,
+    modifiers: CGEventFlags = [],
+    backend: any InputEventBackend,
+) async throws {
+    guard (2 ... 100).contains(path.count) else {
+        throw MacosUseSDKError.inputInvalidArgument(
+            "drag path must contain between 2 and 100 points",
+        )
+    }
+    guard path.allSatisfy({ $0.x.isFinite && $0.y.isFinite }) else {
+        throw MacosUseSDKError.inputInvalidArgument("drag coordinates must be finite")
+    }
+    let from = path[0]
+    let to = path[path.count - 1]
     logger.info(
         "performing drag from: (\(from.x, privacy: .public), \(from.y, privacy: .public)) to: (\(to.x, privacy: .public), \(to.y, privacy: .public))",
     )
 
-    // Step 0: Warp the system cursor to start and suppress physical mouse interference.
-    CGWarpMouseCursorPosition(from)
-    CGAssociateMouseAndMouseCursorPosition(boolean_t(0)) // Detach physical mouse during drag
-    defer { CGAssociateMouseAndMouseCursorPosition(boolean_t(1)) } // Re-attach on exit
-
-    // Brief pause for cursor warp to register with window server
-    try await Task.sleep(nanoseconds: 50_000_000) // 50ms
-
-    // Step 1: Mouse button down at start position
-    try await mouseButtonDown(at: from, button: button)
-
-    // Brief pause to let window manager register the grab
-    try await Task.sleep(nanoseconds: 100_000_000) // 100ms
-
-    // Step 2: Incremental drag movements with cursor warps
-    let steps = 20
-    let stepDelayNs: UInt64 = duration > 0 ? UInt64(duration / Double(steps) * 1_000_000_000) : 10_000_000 // 10ms default
-
-    let source = try createEventSource()
-    let dragEventType: CGEventType = button == .left ? .leftMouseDragged : .rightMouseDragged
-
-    for step in 1 ... steps {
-        let fraction = Double(step) / Double(steps)
-        let stepPoint = CGPoint(
-            x: from.x + (to.x - from.x) * fraction,
-            y: from.y + (to.y - from.y) * fraction,
-        )
-
-        // Warp cursor to keep system cursor in sync with drag events
-        CGWarpMouseCursorPosition(stepPoint)
-
-        let dragEvent = CGEvent(
-            mouseEventSource: source, mouseType: dragEventType, mouseCursorPosition: stepPoint, mouseButton: button,
-        )
-        try await postEvent(dragEvent, actionDescription: "drag step \(step)/\(steps)")
-
-        if step < steps {
-            try await Task.sleep(nanoseconds: stepDelayNs)
-        }
+    let totalDurationNanoseconds = try durationNanoseconds(
+        duration,
+        maximum: maximumDragDuration,
+        field: "drag duration",
+    )
+    try backend.checkPostAccess()
+    let points = path
+    // Prepare every fallible event before detaching the cursor or posting down.
+    let preparedDown = try backend.prepare(.mouseDown(
+        point: from,
+        button: button,
+        modifiers: modifiers,
+        clickCount: 1,
+    ))
+    let preparedDrags = try points.dropFirst().map { point in
+        try backend.prepare(.mouseDrag(
+            point: point,
+            button: button,
+            modifiers: modifiers,
+        ))
+    }
+    let preparedUps = try points.map { point in
+        try backend.prepare(.mouseUp(
+            point: point,
+            button: button,
+            modifiers: modifiers,
+            clickCount: 1,
+        ))
     }
 
-    // Brief pause before releasing
-    try await Task.sleep(nanoseconds: 50_000_000) // 50ms
+    var currentPointIndex = 0
+    var buttonReleaseRequired = false
+    var cursorReassociationRequired = false
+    let cleanupTracker = backend as? any InputCleanupObligationTracking
+    var pointerReleaseObligation: InputCleanupObligation?
+    var cursorReassociationObligation: InputCleanupObligation?
 
-    // Step 3: Mouse button up at end position
-    try await mouseButtonUp(at: to, button: button)
+    do {
+        try Task.checkCancellation()
+        try await backend.warpCursor(x: from.x, y: from.y)
+        try Task.checkCancellation()
+        cursorReassociationObligation = cleanupTracker?.armCleanupObligation(
+            .cursorReassociation,
+        )
+        cursorReassociationRequired = true
+        try await backend.setCursorAssociated(false)
+        try await backend.pause(nanoseconds: 0)
+
+        try Task.checkCancellation()
+        pointerReleaseObligation = cleanupTracker?.armCleanupObligation(
+            .pointerRelease,
+        )
+        buttonReleaseRequired = true
+        let downPostTime = try await backend.post(preparedDown)
+
+        let intervalCount = preparedDrags.count + 1
+        for (index, preparedDrag) in preparedDrags.enumerated() {
+            let pointIndex = index + 1
+            let point = points[pointIndex]
+            try await pauseUntilDeadline(
+                scheduledDeadline(
+                    start: downPostTime,
+                    offset: scheduledOffset(
+                        index: pointIndex,
+                        intervalCount: intervalCount,
+                        totalNanoseconds: totalDurationNanoseconds,
+                    ),
+                ),
+                backend: backend,
+            )
+            try Task.checkCancellation()
+            try await backend.warpCursor(x: point.x, y: point.y)
+            currentPointIndex = pointIndex
+            try Task.checkCancellation()
+            _ = try await backend.post(preparedDrag)
+        }
+
+        try await pauseUntilDeadline(
+            scheduledDeadline(
+                start: downPostTime,
+                offset: totalDurationNanoseconds,
+            ),
+            backend: backend,
+        )
+        try Task.checkCancellation()
+        _ = try await backend.post(preparedUps[currentPointIndex])
+        buttonReleaseRequired = false
+        if let pointerReleaseObligation {
+            cleanupTracker?.settleCleanupObligation(pointerReleaseObligation)
+        }
+        try await backend.setCursorAssociated(true)
+        cursorReassociationRequired = false
+        if let cursorReassociationObligation {
+            cleanupTracker?.settleCleanupObligation(
+                cursorReassociationObligation,
+            )
+        }
+    } catch {
+        if buttonReleaseRequired {
+            if preparedDown.invocationEvidence == .notInvoked {
+                if let pointerReleaseObligation {
+                    cleanupTracker?.abandonCleanupObligation(
+                        pointerReleaseObligation,
+                    )
+                }
+            } else {
+                let preparedRelease = preparedUps[currentPointIndex]
+                let settlement = await settleRouteBoundCleanup(backend: backend) {
+                    _ = try await backend.postForCleanup(preparedRelease)
+                }
+                if let pointerReleaseObligation {
+                    switch settlement {
+                    case .settled:
+                        cleanupTracker?.settleCleanupObligation(
+                            pointerReleaseObligation,
+                        )
+                    case .processRouteRetired:
+                        cleanupTracker?.abandonCleanupObligation(
+                            pointerReleaseObligation,
+                        )
+                    }
+                }
+            }
+        }
+        if cursorReassociationRequired {
+            await settleLocalCleanup(backend: backend) {
+                try await backend.setCursorAssociated(true)
+            }
+            if let cursorReassociationObligation {
+                cleanupTracker?.settleCleanupObligation(
+                    cursorReassociationObligation,
+                )
+            }
+        }
+        throw error
+    }
 
     logger.info("drag operation complete.")
 }
 
-/// Simulates typing a string of text using AppleScript `keystroke`.
-/// This is generally more reliable for arbitrary text than simulating individual key presses.
-/// - Parameter text: The `String` to type.
-/// - Throws: `MacosUseSDKError` if the osascript command fails to execute or returns an error.
-public func writeText(_ text: String) async throws {
-    // Using AppleScript's 'keystroke' is simplest for arbitrary text,
-    // as it handles character mapping, keyboard layouts, etc.
-    // A pure CGEvent approach would require complex character-to-keycode+flags mapping.
-    logger.info("simulating text writing: \"\(text, privacy: .private)\" (using AppleScript)")
-
-    // Escape double quotes and backslashes within the text for AppleScript string
-    let escapedText = text.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(
-        of: "\"", with: "\\\"",
+/// Types Unicode text through Core Graphics without launching an orphanable
+/// subprocess. Each grapheme is represented by a pre-created down/up pair.
+public func writeText(_ text: String, characterDelay: Double = 0) async throws {
+    try await writeText(
+        text,
+        characterDelay: characterDelay,
+        backend: CoreGraphicsInputEventBackend(),
     )
-    let script = "tell application \"System Events\" to keystroke \"\(escapedText)\""
+}
 
-    // Use a continuation to bridge the callback-based Process API to async/await
-    try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-        process.arguments = ["-e", script]
-
-        let errorPipe = Pipe()
-        process.standardError = errorPipe
-
-        process.terminationHandler = { proc in
-            let status = proc.terminationStatus
-            // Break retain cycle by clearing the handler
-            proc.terminationHandler = nil
-            if status == 0 {
-                continuation.resume()
-            } else {
-                let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
-                let errorString =
-                    String(data: errorData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
-                        ?? ""
-                logger.error("osascript failed: \(status, privacy: .public) \(errorString, privacy: .public)")
-                continuation.resume(
-                    throwing: MacosUseSDKError.osascriptExecutionFailed(status: status, message: errorString),
-                )
-            }
-        }
-
-        do {
-            try process.run()
-        } catch {
-            continuation.resume(
-                throwing: MacosUseSDKError.inputSimulationFailed(
-                    "failed to run osascript: \(error.localizedDescription)",
+func writeText(
+    _ text: String,
+    characterDelay: Double = 0,
+    backend: any InputEventBackend,
+) async throws {
+    let delayNanoseconds = try durationNanoseconds(
+        characterDelay,
+        maximum: maximumPointerDuration,
+        field: "character delay",
+    )
+    try backend.checkPostAccess()
+    let characters = text.map(String.init)
+    let preparedPairs = try characters.map { character in
+        try (
+            backend.prepare(.unicodeKeyDown(text: character)),
+            backend.prepare(.unicodeKeyUp(text: character)),
+        )
+    }
+    var priorDownPostTime: UInt64?
+    for pair in preparedPairs {
+        if let priorDownPostTime, delayNanoseconds > 0 {
+            try await pauseUntilDeadline(
+                scheduledDeadline(
+                    start: priorDownPostTime,
+                    offset: delayNanoseconds,
                 ),
+                backend: backend,
             )
         }
+        priorDownPostTime = try await postPreparedInputEvents(
+            down: pair.0,
+            up: pair.1,
+            cleanupObligationKind: .keyRelease,
+            backend: backend,
+        )
     }
     logger.info("text writing simulation complete.")
 }
 
-/// Maps common key names (case-insensitive) to their CGKeyCode. Public for potential use by the tool.
-/// Maps common key names (case-insensitive) or a numeric string to their `CGKeyCode`.
-/// - Parameter keyName: The name of the key (e.g., "return", "a", "esc") or a string representation of the key code number.
-/// - Returns: The corresponding `CGKeyCode` or `nil` if the name is not recognized and cannot be parsed as a number.
-public func mapKeyNameToKeyCode(_ keyName: String) -> CGKeyCode? {
+/// Types arbitrary Unicode through physical Command-V pairs while a
+/// composition owner supplies and restores the process-global pasteboard.
+/// One fresh down/up pair is prepared for every grapheme so delivery and
+/// release ownership remain exact across cancellation.
+public func writeTextByPasting(
+    _ text: String,
+    characterDelay: Double = 0,
+    pasteKeyCode: CGKeyCode,
+    preparePasteboardText: @escaping @Sendable (String) async throws -> Void,
+    awaitPasteboardConsumption: @escaping @Sendable () async throws -> Void,
+    backend: any InputEventBackend,
+) async throws {
+    let delayNanoseconds = try durationNanoseconds(
+        characterDelay,
+        maximum: maximumPointerDuration,
+        field: "character delay",
+    )
+    try backend.checkPostAccess()
+    let characters = text.map(String.init)
+    let preparedPairs = try characters.map { _ in
+        try (
+            backend.prepare(.keyDown(keyCode: pasteKeyCode, flags: .maskCommand)),
+            backend.prepare(.keyUp(keyCode: pasteKeyCode, flags: .maskCommand)),
+        )
+    }
+    var priorDownPostTime: UInt64?
+    for (character, pair) in zip(characters, preparedPairs) {
+        if let priorDownPostTime, delayNanoseconds > 0 {
+            try await pauseUntilDeadline(
+                scheduledDeadline(
+                    start: priorDownPostTime,
+                    offset: delayNanoseconds,
+                ),
+                backend: backend,
+            )
+        }
+        try Task.checkCancellation()
+        try await preparePasteboardText(character)
+        try Task.checkCancellation()
+        priorDownPostTime = try await postPreparedInputEvents(
+            down: pair.0,
+            up: pair.1,
+            cleanupObligationKind: .keyRelease,
+            backend: backend,
+        )
+        try await awaitPasteboardConsumption()
+    }
+    logger.info("physical Unicode paste sequence complete.")
+}
+
+/// Executes one complete semantic input action through the supplied event
+/// backend. The same implementation is used by production Core Graphics
+/// posting and by non-posting verification backends, so tests exercise event
+/// preparation, timing, cancellation, and cleanup below the service layer.
+///
+/// Visualization is intentionally separate from this primitive: callers that
+/// render feedback should do so around this operation without changing the
+/// event sequence or its ownership guarantees.
+@MainActor
+public func executeInputAction(
+    _ action: InputAction,
+    backend: any InputEventBackend,
+) async throws {
+    switch action {
+    case let .click(point):
+        try await clickMouse(at: point, backend: backend)
+    case let .doubleClick(point):
+        try await clickMouse(at: point, clickCount: 2, backend: backend)
+    case let .rightClick(point):
+        try await clickMouse(at: point, button: .right, backend: backend)
+    case let .clickSequence(point, button, clickCount, modifiers):
+        try await clickMouse(
+            at: point,
+            button: button,
+            clickCount: clickCount,
+            modifiers: modifiers,
+            backend: backend,
+        )
+    case let .type(text):
+        try await writeText(text, backend: backend)
+    case let .typeText(text, characterDelay):
+        try await writeText(
+            text,
+            characterDelay: characterDelay,
+            backend: backend,
+        )
+    case let .press(keyName, flags):
+        guard let keyCode = mapKeyNameToKeyCode(keyName) else {
+            throw MacosUseSDKError.inputInvalidArgument("Unknown key name: \(keyName)")
+        }
+        try await pressKey(keyCode: keyCode, flags: flags, backend: backend)
+    case let .pressHold(keyName, flags, duration):
+        guard let keyCode = mapKeyNameToKeyCode(keyName) else {
+            throw MacosUseSDKError.inputInvalidArgument("Unknown key name: \(keyName)")
+        }
+        try await pressKeyHold(
+            keyCode: keyCode,
+            flags: flags,
+            duration: duration,
+            backend: backend,
+        )
+    case let .pressKeyCode(keyCode, flags):
+        try await pressKey(keyCode: keyCode, flags: flags, backend: backend)
+    case let .pressKeyCodeHold(keyCode, flags, duration):
+        try await pressKeyHold(
+            keyCode: keyCode,
+            flags: flags,
+            duration: duration,
+            backend: backend,
+        )
+    case let .move(point):
+        try await moveMouse(to: point, backend: backend)
+    case let .movePointer(point, duration, modifiers):
+        try await moveMouse(
+            to: point,
+            duration: duration,
+            modifiers: modifiers,
+            backend: backend,
+        )
+    case let .drag(from, to, button, duration):
+        try await performDrag(
+            from: from,
+            to: to,
+            button: button,
+            duration: duration,
+            backend: backend,
+        )
+    case let .dragPath(points, button, duration, modifiers):
+        try await performDrag(
+            path: points,
+            button: button,
+            duration: duration,
+            modifiers: modifiers,
+            backend: backend,
+        )
+    case let .scroll(point, horizontal, vertical, duration, modifiers):
+        try await scrollMouse(
+            at: point,
+            horizontal: horizontal,
+            vertical: vertical,
+            duration: duration,
+            modifiers: modifiers,
+            backend: backend,
+        )
+    case let .hover(point, duration):
+        try await hoverMouse(at: point, duration: duration, backend: backend)
+    }
+}
+
+/// Executes one complete semantic input action with the production Core
+/// Graphics backend.
+@MainActor
+public func executeInputAction(_ action: InputAction) async throws {
+    try await executeInputAction(
+        action,
+        backend: CoreGraphicsInputEventBackend(),
+    )
+}
+
+/// Maps layout-independent key names and single characters from the current
+/// keyboard input source to their `CGKeyCode`.
+///
+/// Character lookup deliberately has no US-QWERTY or numeric-keycode fallback:
+/// if the current input source cannot produce the requested character, the
+/// caller's intent cannot be executed truthfully.
+public func layoutIndependentKeyCode(for keyName: String) -> CGKeyCode? {
     let lowered = keyName.lowercased()
 
-    // --- Special Keys (layout-independent, hardcoded) ---
     switch lowered {
     case "return", "enter": return KEY_RETURN
     case "tab": return KEY_TAB
@@ -552,86 +1246,80 @@ public func mapKeyNameToKeyCode(_ keyName: String) -> CGKeyCode? {
     case "f10": return 109
     case "f11": return 103
     case "f12": return 111
-    // Add F13-F20 if needed
     default:
-        break // Fall through to dynamic / fallback resolution below.
-    }
-
-    // --- Single characters: try dynamic TIS/UCKeyTranslate resolution first ---
-    if lowered.count == 1 {
-        if let dynamicCode = resolveKeyCode(for: lowered) {
-            return dynamicCode
+        // Numeric fallback: a multi-character pure decimal string that parses
+        // as a non-negative integer is treated as a raw, layout-independent
+        // CGKeyCode. This lets callers address keys outside the named map
+        // (F13-F24, media keys, non-US layout positions) by their numeric code.
+        // A SINGLE digit ("0".."9") is intentionally NOT intercepted here: it
+        // is a single character and must fall through to layout translation in
+        // resolveInputKey, where it resolves to the real hardware key code for
+        // the active keyboard layout (e.g. "0" -> 29 on US layouts). Int(String)
+        // rejects whitespace and non-digits; a leading "+" is accepted (e.g.
+        // "+5" parses to 5, which is the raw code the caller asked for), so the
+        // UInt16 range guard below is what actually bounds valid key codes.
+        // Values outside the UInt16 key-code range are not valid key codes and
+        // are rejected.
+        if lowered.count > 1,
+           let raw = Int(lowered),
+           (0 ... Int(UInt16.max)).contains(raw)
+        {
+            return CGKeyCode(raw)
         }
-        logger.info(
-            "dynamic resolution failed for '\(keyName, privacy: .public)', falling back to US-QWERTY map",
-        )
-    }
-
-    // --- Fallback: US-QWERTY hardcoded map ---
-    switch lowered {
-    // Letters
-    case "a": return 0
-    case "b": return 11
-    case "c": return 8
-    case "d": return 2
-    case "e": return 14
-    case "f": return 3
-    case "g": return 5
-    case "h": return 4
-    case "i": return 34
-    case "j": return 38
-    case "k": return 40
-    case "l": return 37
-    case "m": return 46
-    case "n": return 45
-    case "o": return 31
-    case "p": return 35
-    case "q": return 12
-    case "r": return 15
-    case "s": return 1
-    case "t": return 17
-    case "u": return 32
-    case "v": return 9
-    case "w": return 13
-    case "x": return 7
-    case "y": return 16
-    case "z": return 6
-    // Numbers (Main Keyboard Row)
-    case "1": return 18
-    case "2": return 19
-    case "3": return 20
-    case "4": return 21
-    case "5": return 23
-    case "6": return 22
-    case "7": return 26
-    case "8": return 28
-    case "9": return 25
-    case "0": return 29
-    // Symbols (Common - May vary significantly by layout)
-    case "-": return 27
-    case "=": return 24
-    case "[": return 33
-    case "]": return 30
-    case "\\": return 42 // Backslash
-    case ";": return 41
-    case "'": return 39 // Quote
-    case ",": return 43
-    case ".": return 47
-    case "/": return 44
-    case "`": return 50 // Grave accent / Tilde
-    default:
-        // If not a known name, attempt to interpret it as a raw key code number
-        logger.info(
-            "key '\(keyName, privacy: .public)' not explicitly mapped, attempting conversion to CGKeyCode number.",
-        )
-        return CGKeyCode(keyName) // Returns nil if conversion fails
+        return nil
     }
 }
 
-// --- Removed Main Script Logic ---
-// The argument parsing, switch statement, fail(), completeSuccessfully(), startTime
-// and related logic have been removed from this file. They will be handled by the
-// InputControllerTool executable's main.swift.
+/// Resolves one validated public key intent against one exact keyboard-input
+/// source snapshot. Named keys are layout-independent; character keys retain
+/// the source ID, layout-data digest, and keyboard type used for translation.
+public func resolveInputKey(_ keyName: String) -> ResolvedInputKey? {
+    if let keyCode = layoutIndependentKeyCode(for: keyName) {
+        return ResolvedInputKey(keyCode: keyCode, sourceIdentity: nil)
+    }
+    let lowered = keyName.lowercased()
+    guard lowered.count == 1, let layout = keyboardLayoutSnapshot() else {
+        return nil
+    }
 
-// --- Retained Helper Structures/Functions if needed by public API ---
-// (e.g., mapKeyNameToKeyCode is now public)
+    let layoutPtr = unsafeBitCast(
+        CFDataGetBytePtr(layout.layoutData),
+        to: UnsafePointer<UCKeyboardLayout>.self,
+    )
+    var deadKeyState: UInt32 = 0
+    let maxLength = 4
+    var chars = [UniChar](repeating: 0, count: maxLength)
+    var actualLength = 0
+    for keyCode: UInt16 in 0 ... 127 {
+        deadKeyState = 0
+        actualLength = 0
+        let status = UCKeyTranslate(
+            layoutPtr,
+            keyCode,
+            UInt16(kUCKeyActionDisplay),
+            0,
+            layout.identity.keyboardType,
+            OptionBits(kUCKeyTranslateNoDeadKeysBit),
+            &deadKeyState,
+            maxLength,
+            &actualLength,
+            &chars,
+        )
+        guard status == noErr, actualLength > 0 else { continue }
+        let produced = String(
+            utf16CodeUnits: chars,
+            count: actualLength,
+        ).lowercased()
+        if produced == lowered {
+            return ResolvedInputKey(
+                keyCode: CGKeyCode(keyCode),
+                sourceIdentity: layout.identity,
+            )
+        }
+    }
+    return nil
+}
+
+public func mapKeyNameToKeyCode(_ keyName: String) -> CGKeyCode? {
+    resolveInputKey(keyName)?.keyCode
+}

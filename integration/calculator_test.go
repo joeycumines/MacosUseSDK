@@ -2,19 +2,16 @@ package integration
 
 import (
 	"context"
-	"fmt"
 	"os/exec"
 	"strings"
 	"testing"
 	"time"
 
-	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
-	typepb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
 )
 
 const (
-	calculatorAppName = "Calculator"
+	calculatorBundleID = "com.apple.calculator"
 )
 
 // TestCalculatorAddition is an integration test that:
@@ -36,11 +33,9 @@ func TestCalculatorAddition(t *testing.T) {
 	defer conn.Close()
 
 	client := pb.NewMacosUseClient(conn)
-	opsClient := longrunningpb.NewOperationsClient(conn)
-
 	// Open Calculator
 	t.Log("Opening Calculator...")
-	app := openCalculator(t, ctx, client, opsClient)
+	app := openCalculator(t, ctx, client)
 	defer cleanupApplication(t, ctx, client, app)
 
 	// Wait for app to be ready (poll until windows are available)
@@ -127,11 +122,9 @@ func TestCalculatorMultiplication(t *testing.T) {
 	defer conn.Close()
 
 	client := pb.NewMacosUseClient(conn)
-	opsClient := longrunningpb.NewOperationsClient(conn)
-
 	// Open Calculator
 	t.Log("Opening Calculator...")
-	app := openCalculator(t, ctx, client, opsClient)
+	app := openCalculator(t, ctx, client)
 	defer cleanupApplication(t, ctx, client, app)
 
 	// Wait for app to be ready (poll until windows are available)
@@ -204,50 +197,10 @@ func TestCalculatorMultiplication(t *testing.T) {
 	t.Logf("✅ Successfully performed calculation, result: %s", result)
 }
 
-// openCalculator opens the Calculator app and waits for the operation to complete
-func openCalculator(t *testing.T, ctx context.Context, client pb.MacosUseClient, opsClient longrunningpb.OperationsClient) *pb.Application {
-	// Start the long-running operation
-	op, err := client.OpenApplication(ctx, &pb.OpenApplicationRequest{
-		Id: calculatorAppName,
-	})
-	if err != nil {
-		t.Fatalf("Failed to start OpenApplication: %v", err)
-	}
-
-	t.Logf("OpenApplication operation started: %s", op.Name)
-
-	// Poll the operation until it completes using PollUntilContext
-	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
-		op, err = opsClient.GetOperation(ctx, &longrunningpb.GetOperationRequest{
-			Name: op.Name,
-		})
-		if err != nil {
-			return false, fmt.Errorf("failed to get operation status: %w", err)
-		}
-		return op.Done, nil
-	})
-	if err != nil {
-		t.Fatalf("Failed waiting for OpenApplication operation: %v", err)
-	}
-
-	// Check for error
-	if op.GetError() != nil {
-		t.Fatalf("OpenApplication operation failed: %v", op.GetError())
-	}
-
-	// Extract the Application from the response
-	response := &pb.OpenApplicationResponse{}
-	if err := op.GetResponse().UnmarshalTo(response); err != nil {
-		t.Fatalf("Failed to unmarshal operation response: %v", err)
-	}
-
-	app := response.Application
-	if app == nil {
-		t.Fatalf("Operation completed but no application returned")
-	}
-
-	t.Logf("Calculator opened successfully: %s (PID: %d)", app.Name, app.Pid)
-	return app
+// openCalculator opens or activates Calculator and requires an observed unary result.
+func openCalculator(t *testing.T, ctx context.Context, client pb.MacosUseClient) *pb.Application {
+	t.Helper()
+	return OpenApplicationObserved(t, ctx, client, calculatorBundleID)
 }
 
 // switchCalculatorToBasicMode switches Calculator to Basic (decimal) mode using keyboard shortcut
@@ -301,7 +254,7 @@ func readCalculatorResult(t *testing.T, ctx context.Context, client pb.MacosUseC
 }
 
 // findCalculatorDisplay searches through elements for the calculator display
-func findCalculatorDisplay(elements []*typepb.Element) string {
+func findCalculatorDisplay(elements []*pb.Element) string {
 	// Strategy: Look for the largest numeric text element
 	// Calculator's main display shows the result prominently
 	var candidates []string

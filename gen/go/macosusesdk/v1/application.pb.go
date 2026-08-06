@@ -14,6 +14,7 @@ import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -26,24 +27,173 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// A resource representing a running application instance that the server
-// is actively tracking for automation.
-type Application struct {
+// Controls the amount of application metadata returned by Get and List RPCs.
+type ApplicationView int32
+
+const (
+	// Defaults to BASIC.
+	ApplicationView_APPLICATION_VIEW_UNSPECIFIED ApplicationView = 0
+	// Returns stable identity and ordinary display metadata.
+	ApplicationView_APPLICATION_VIEW_BASIC ApplicationView = 1
+	// Also returns privacy-sensitive bundle location and version metadata where
+	// those fields are available.
+	ApplicationView_APPLICATION_VIEW_FULL ApplicationView = 2
+)
+
+// Enum value maps for ApplicationView.
+var (
+	ApplicationView_name = map[int32]string{
+		0: "APPLICATION_VIEW_UNSPECIFIED",
+		1: "APPLICATION_VIEW_BASIC",
+		2: "APPLICATION_VIEW_FULL",
+	}
+	ApplicationView_value = map[string]int32{
+		"APPLICATION_VIEW_UNSPECIFIED": 0,
+		"APPLICATION_VIEW_BASIC":       1,
+		"APPLICATION_VIEW_FULL":        2,
+	}
+)
+
+func (x ApplicationView) Enum() *ApplicationView {
+	p := new(ApplicationView)
+	*p = x
+	return p
+}
+
+func (x ApplicationView) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ApplicationView) Descriptor() protoreflect.EnumDescriptor {
+	return file_macosusesdk_v1_application_proto_enumTypes[0].Descriptor()
+}
+
+func (ApplicationView) Type() protoreflect.EnumType {
+	return &file_macosusesdk_v1_application_proto_enumTypes[0]
+}
+
+func (x ApplicationView) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ApplicationView.Descriptor instead.
+func (ApplicationView) EnumDescriptor() ([]byte, []int) {
+	return file_macosusesdk_v1_application_proto_rawDescGZIP(), []int{0}
+}
+
+// A discoverable installed macOS application bundle. Each distinct bundle
+// location is a separate resource even when multiple installations share a
+// bundle identifier.
+type ApplicationBundle struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Resource name in the format "applications/{application}"
-	// where {application} is the process ID (PID).
+	// Resource name in the format "applicationBundles/{application_bundle}".
+	// The resource ID is opaque and identifies one exact standardized bundle URL.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	// The process ID of the application.
-	Pid int32 `protobuf:"varint,2,opt,name=pid,proto3" json:"pid,omitempty"`
-	// The localized name of the application.
-	DisplayName   string `protobuf:"bytes,3,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	// The localized display name declared by the bundle.
+	DisplayName string `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	// The bundle identifier, if the bundle declares one. This value is not a
+	// unique resource key because distinct installations may share it.
+	BundleId string `protobuf:"bytes,3,opt,name=bundle_id,json=bundleId,proto3" json:"bundle_id,omitempty"`
+	// The exact file URL for this installation. Populated only in FULL view.
+	BundleUrl string `protobuf:"bytes,4,opt,name=bundle_url,json=bundleUrl,proto3" json:"bundle_url,omitempty"`
+	// The human-readable bundle version. Populated only in FULL view.
+	Version       string `protobuf:"bytes,5,opt,name=version,proto3" json:"version,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
+func (x *ApplicationBundle) Reset() {
+	*x = ApplicationBundle{}
+	mi := &file_macosusesdk_v1_application_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ApplicationBundle) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApplicationBundle) ProtoMessage() {}
+
+func (x *ApplicationBundle) ProtoReflect() protoreflect.Message {
+	mi := &file_macosusesdk_v1_application_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApplicationBundle.ProtoReflect.Descriptor instead.
+func (*ApplicationBundle) Descriptor() ([]byte, []int) {
+	return file_macosusesdk_v1_application_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *ApplicationBundle) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ApplicationBundle) GetDisplayName() string {
+	if x != nil {
+		return x.DisplayName
+	}
+	return ""
+}
+
+func (x *ApplicationBundle) GetBundleId() string {
+	if x != nil {
+		return x.BundleId
+	}
+	return ""
+}
+
+func (x *ApplicationBundle) GetBundleUrl() string {
+	if x != nil {
+		return x.BundleUrl
+	}
+	return ""
+}
+
+func (x *ApplicationBundle) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+// A resource representing one exact running application process instance.
+// Its opaque name changes when a PID is reused by a different process.
+type Application struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Resource name in the format "applications/{application}". The resource ID
+	// is opaque and binds the PID to its kernel process start identity.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The process ID of the application.
+	Pid int32 `protobuf:"varint,2,opt,name=pid,proto3" json:"pid,omitempty"`
+	// The localized name of the application.
+	DisplayName string `protobuf:"bytes,3,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	// The exact installed bundle resource backing this process, when its bundle
+	// URL is discoverable in the current catalog.
+	ApplicationBundle string `protobuf:"bytes,4,opt,name=application_bundle,json=applicationBundle,proto3" json:"application_bundle,omitempty"`
+	// The bundle identifier reported by the process, if present.
+	BundleId string `protobuf:"bytes,5,opt,name=bundle_id,json=bundleId,proto3" json:"bundle_id,omitempty"`
+	// Whether this exact process is currently the active application.
+	Active bool `protobuf:"varint,6,opt,name=active,proto3" json:"active,omitempty"`
+	// Kernel-observed process start time used as part of exact instance identity.
+	ProcessStartTime *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=process_start_time,json=processStartTime,proto3" json:"process_start_time,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
 func (x *Application) Reset() {
 	*x = Application{}
-	mi := &file_macosusesdk_v1_application_proto_msgTypes[0]
+	mi := &file_macosusesdk_v1_application_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -55,7 +205,7 @@ func (x *Application) String() string {
 func (*Application) ProtoMessage() {}
 
 func (x *Application) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_application_proto_msgTypes[0]
+	mi := &file_macosusesdk_v1_application_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -68,7 +218,7 @@ func (x *Application) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Application.ProtoReflect.Descriptor instead.
 func (*Application) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_application_proto_rawDescGZIP(), []int{0}
+	return file_macosusesdk_v1_application_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Application) GetName() string {
@@ -92,16 +242,61 @@ func (x *Application) GetDisplayName() string {
 	return ""
 }
 
+func (x *Application) GetApplicationBundle() string {
+	if x != nil {
+		return x.ApplicationBundle
+	}
+	return ""
+}
+
+func (x *Application) GetBundleId() string {
+	if x != nil {
+		return x.BundleId
+	}
+	return ""
+}
+
+func (x *Application) GetActive() bool {
+	if x != nil {
+		return x.Active
+	}
+	return false
+}
+
+func (x *Application) GetProcessStartTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ProcessStartTime
+	}
+	return nil
+}
+
 var File_macosusesdk_v1_application_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_application_proto_rawDesc = "" +
 	"\n" +
-	" macosusesdk/v1/application.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\"\xbe\x01\n" +
+	" macosusesdk/v1/application.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb1\x02\n" +
+	"\x11ApplicationBundle\x12\x17\n" +
+	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12&\n" +
+	"\fdisplay_name\x18\x02 \x01(\tB\x03\xe0A\x03R\vdisplayName\x12 \n" +
+	"\tbundle_id\x18\x03 \x01(\tB\x03\xe0A\x03R\bbundleId\x12\"\n" +
+	"\n" +
+	"bundle_url\x18\x04 \x01(\tB\x03\xe0A\x03R\tbundleUrl\x12\x1d\n" +
+	"\aversion\x18\x05 \x01(\tB\x03\xe0A\x03R\aversion:v\xeaAs\n" +
+	"!macosusesdk.com/ApplicationBundle\x12'applicationBundles/{application_bundle}*\x12applicationBundles2\x11applicationBundle\"\xa6\x03\n" +
 	"\vApplication\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12\x15\n" +
 	"\x03pid\x18\x02 \x01(\x05B\x03\xe0A\x03R\x03pid\x12&\n" +
-	"\fdisplay_name\x18\x03 \x01(\tB\x03\xe0A\x03R\vdisplayName:W\xeaAT\n" +
-	"\x1bmacosusesdk.com/Application\x12\x1aapplications/{application}*\fapplications2\vapplicationB\xc7\x01\n" +
+	"\fdisplay_name\x18\x03 \x01(\tB\x03\xe0A\x03R\vdisplayName\x12X\n" +
+	"\x12application_bundle\x18\x04 \x01(\tB)\xe0A\x03\xfaA#\n" +
+	"!macosusesdk.com/ApplicationBundleR\x11applicationBundle\x12 \n" +
+	"\tbundle_id\x18\x05 \x01(\tB\x03\xe0A\x03R\bbundleId\x12\x1b\n" +
+	"\x06active\x18\x06 \x01(\bB\x03\xe0A\x03R\x06active\x12M\n" +
+	"\x12process_start_time\x18\a \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\x10processStartTime:W\xeaAT\n" +
+	"\x1bmacosusesdk.com/Application\x12\x1aapplications/{application}*\fapplications2\vapplication*j\n" +
+	"\x0fApplicationView\x12 \n" +
+	"\x1cAPPLICATION_VIEW_UNSPECIFIED\x10\x00\x12\x1a\n" +
+	"\x16APPLICATION_VIEW_BASIC\x10\x01\x12\x19\n" +
+	"\x15APPLICATION_VIEW_FULL\x10\x02B\xc7\x01\n" +
 	"\x12com.macosusesdk.v1B\x10ApplicationProtoP\x01ZFgithub.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1\xa2\x02\x03MXX\xaa\x02\x0eMacosusesdk.V1\xca\x02\x0eMacosusesdk\\V1\xe2\x02\x1aMacosusesdk\\V1\\GPBMetadata\xea\x02\x0fMacosusesdk::V1b\x06proto3"
 
 var (
@@ -116,16 +311,21 @@ func file_macosusesdk_v1_application_proto_rawDescGZIP() []byte {
 	return file_macosusesdk_v1_application_proto_rawDescData
 }
 
-var file_macosusesdk_v1_application_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_macosusesdk_v1_application_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_macosusesdk_v1_application_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_macosusesdk_v1_application_proto_goTypes = []any{
-	(*Application)(nil), // 0: macosusesdk.v1.Application
+	(ApplicationView)(0),          // 0: macosusesdk.v1.ApplicationView
+	(*ApplicationBundle)(nil),     // 1: macosusesdk.v1.ApplicationBundle
+	(*Application)(nil),           // 2: macosusesdk.v1.Application
+	(*timestamppb.Timestamp)(nil), // 3: google.protobuf.Timestamp
 }
 var file_macosusesdk_v1_application_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	3, // 0: macosusesdk.v1.Application.process_start_time:type_name -> google.protobuf.Timestamp
+	1, // [1:1] is the sub-list for method output_type
+	1, // [1:1] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_macosusesdk_v1_application_proto_init() }
@@ -138,13 +338,14 @@ func file_macosusesdk_v1_application_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_macosusesdk_v1_application_proto_rawDesc), len(file_macosusesdk_v1_application_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   1,
+			NumEnums:      1,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_macosusesdk_v1_application_proto_goTypes,
 		DependencyIndexes: file_macosusesdk_v1_application_proto_depIdxs,
+		EnumInfos:         file_macosusesdk_v1_application_proto_enumTypes,
 		MessageInfos:      file_macosusesdk_v1_application_proto_msgTypes,
 	}.Build()
 	File_macosusesdk_v1_application_proto = out.File

@@ -5,6 +5,7 @@
 
 import CoreGraphics
 import Foundation
+import GRPCCore
 @testable import MacosUseServer
 import XCTest
 
@@ -13,9 +14,9 @@ import XCTest
 /// verify the pure math that converts screen-point coordinates to image-pixel
 /// coordinates for cropping.
 final class ScreenshotScaleTests: XCTestCase {
-    func testPixelScaleFactors_Retina_2x() {
+    func testPixelScaleFactors_Retina_2x() throws {
         // 1512×982 point display captured at 3024×1964 pixels (2x Retina)
-        let (scaleX, scaleY) = ScreenshotCapture.pixelScaleFactors(
+        let (scaleX, scaleY) = try ScreenshotCapture.pixelScaleFactors(
             imageWidth: 3024,
             imageHeight: 1964,
             frame: CGRect(x: 0, y: 0, width: 1512, height: 982),
@@ -24,9 +25,9 @@ final class ScreenshotScaleTests: XCTestCase {
         XCTAssertEqual(scaleY, 2.0, accuracy: 0.01)
     }
 
-    func testPixelScaleFactors_NonRetina_1x() {
+    func testPixelScaleFactors_NonRetina_1x() throws {
         // 2560×1440 point display captured at 2560×1440 pixels (1x non-Retina)
-        let (scaleX, scaleY) = ScreenshotCapture.pixelScaleFactors(
+        let (scaleX, scaleY) = try ScreenshotCapture.pixelScaleFactors(
             imageWidth: 2560,
             imageHeight: 1440,
             frame: CGRect(x: 0, y: 0, width: 2560, height: 1440),
@@ -35,10 +36,10 @@ final class ScreenshotScaleTests: XCTestCase {
         XCTAssertEqual(scaleY, 1.0, accuracy: 0.01)
     }
 
-    func testPixelScaleFactors_ScaledDisplayMode() {
+    func testPixelScaleFactors_ScaledDisplayMode() throws {
         // User selected "More Space": 3456×2234 points, but hardware is
         // 3024×1964 pixels (pointPixelScale < 1 — fewer pixels than points)
-        let (scaleX, scaleY) = ScreenshotCapture.pixelScaleFactors(
+        let (scaleX, scaleY) = try ScreenshotCapture.pixelScaleFactors(
             imageWidth: 3024,
             imageHeight: 1964,
             frame: CGRect(x: 0, y: 0, width: 3456, height: 2234),
@@ -47,10 +48,10 @@ final class ScreenshotScaleTests: XCTestCase {
         XCTAssertEqual(scaleY, 0.879, accuracy: 0.01)
     }
 
-    func testPixelScaleFactors_MultiMonitor_OffsetFrame() {
+    func testPixelScaleFactors_MultiMonitor_OffsetFrame() throws {
         // Secondary display offset in global coordinates — frame origin
         // doesn't affect the scale (only width/height matter)
-        let (scaleX, scaleY) = ScreenshotCapture.pixelScaleFactors(
+        let (scaleX, scaleY) = try ScreenshotCapture.pixelScaleFactors(
             imageWidth: 6016,
             imageHeight: 3384,
             frame: CGRect(x: -1801, y: -1692, width: 3008, height: 1692),
@@ -59,26 +60,68 @@ final class ScreenshotScaleTests: XCTestCase {
         XCTAssertEqual(scaleY, 2.0, accuracy: 0.01)
     }
 
-    func testPixelScaleFactors_ZeroFrame_ReturnsUnity() {
-        // Division by zero guard — returns (1.0, 1.0) so caller's
-        // CGImage.cropping(to:) returns nil and the error path handles it
-        let (scaleX, scaleY) = ScreenshotCapture.pixelScaleFactors(
-            imageWidth: 100,
-            imageHeight: 100,
-            frame: .zero,
+    func testPixelScaleFactors_RejectsInvalidFrame() {
+        XCTAssertThrowsError(
+            try ScreenshotCapture.pixelScaleFactors(
+                imageWidth: 100,
+                imageHeight: 100,
+                frame: .zero,
+            ),
         )
-        XCTAssertEqual(scaleX, 1.0)
-        XCTAssertEqual(scaleY, 1.0)
+        XCTAssertThrowsError(
+            try ScreenshotCapture.pixelScaleFactors(
+                imageWidth: 100,
+                imageHeight: 100,
+                frame: CGRect(
+                    x: CGFloat.greatestFiniteMagnitude,
+                    y: 0,
+                    width: CGFloat.greatestFiniteMagnitude,
+                    height: 1,
+                ),
+            ),
+        )
+        XCTAssertThrowsError(
+            try ScreenshotCapture.pixelScaleFactors(
+                imageWidth: 100,
+                imageHeight: 100,
+                frame: CGRect(
+                    x: CGFloat.greatestFiniteMagnitude,
+                    y: 0,
+                    width: 1,
+                    height: 1,
+                ),
+            ),
+        )
     }
 
-    func testPixelScaleFactors_CropRectComputation() {
+    func testCheckedNativePixelDimensions() throws {
+        let dimensions = try ScreenshotCapture.checkedNativePixelDimensions(
+            frame: CGRect(x: -100, y: -50, width: 1512, height: 982),
+            scale: 2,
+        )
+        XCTAssertEqual(dimensions.width, 3024)
+        XCTAssertEqual(dimensions.height, 1964)
+    }
+
+    func testCheckedNativePixelDimensionsRejectsRepresentationalExcess() {
+        XCTAssertThrowsError(
+            try ScreenshotCapture.checkedNativePixelDimensions(
+                frame: CGRect(x: 0, y: 0, width: CGFloat(Int32.max), height: 1),
+                scale: 2,
+            ),
+        ) { error in
+            XCTAssertEqual((error as? RPCError)?.code, .resourceExhausted)
+        }
+    }
+
+    func testPixelScaleFactors_CropRectComputation() throws {
         // End-to-end verification: given a 2x Retina display and a request
         // to crop a 200×100 point region at offset (100, 50), verify the
         // crop rect in pixel coordinates is correct.
         let displayFrame = CGRect(x: 0, y: 0, width: 1512, height: 982)
         let bounds = CGRect(x: 100, y: 50, width: 200, height: 100)
 
-        let (scaleX, scaleY) = ScreenshotCapture.pixelScaleFactors(
+        let (scaleX, scaleY) = try ScreenshotCapture.pixelScaleFactors(
             imageWidth: 3024,
             imageHeight: 1964,
             frame: displayFrame,

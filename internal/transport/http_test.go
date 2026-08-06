@@ -1,6 +1,6 @@
 // Copyright 2025 Joseph Cumines
 //
-// HTTP/SSE transport unit tests
+// MCP Streamable HTTP transport unit tests
 
 package transport
 
@@ -23,29 +23,22 @@ func TestNewHTTPTransport(t *testing.T) {
 	if tr.config == nil {
 		t.Error("Transport config is nil")
 	}
-	if tr.config.Address != ":8080" {
-		t.Errorf("Default address = %s, want :8080", tr.config.Address)
+	if tr.config.Address != "127.0.0.1:8080" {
+		t.Errorf("Default address = %s, want 127.0.0.1:8080", tr.config.Address)
 	}
-	if tr.config.HeartbeatInterval != 15*time.Second {
-		t.Errorf("Default heartbeat = %v, want 15s", tr.config.HeartbeatInterval)
-	}
-	if tr.config.CORSOrigin != "*" {
-		t.Errorf("Default CORS = %s, want *", tr.config.CORSOrigin)
+	if tr.config.CORSOrigin != "" {
+		t.Errorf("Default CORS = %s, want empty secure default", tr.config.CORSOrigin)
 	}
 }
 
 func TestNewHTTPTransport_WithConfig(t *testing.T) {
 	cfg := &HTTPTransportConfig{
-		Address:           ":9000",
-		HeartbeatInterval: 60 * time.Second,
-		CORSOrigin:        "https://example.com",
+		Address:    ":9000",
+		CORSOrigin: "https://example.com",
 	}
 	tr := NewHTTPTransport(cfg)
 	if tr.config.Address != ":9000" {
 		t.Errorf("Address = %s, want :9000", tr.config.Address)
-	}
-	if tr.config.HeartbeatInterval != 60*time.Second {
-		t.Errorf("HeartbeatInterval = %v, want 60s", tr.config.HeartbeatInterval)
 	}
 	if tr.config.CORSOrigin != "https://example.com" {
 		t.Errorf("CORSOrigin = %s, want https://example.com", tr.config.CORSOrigin)
@@ -54,20 +47,17 @@ func TestNewHTTPTransport_WithConfig(t *testing.T) {
 
 func TestDefaultHTTPConfig(t *testing.T) {
 	cfg := DefaultHTTPConfig()
-	if cfg.Address != ":8080" {
-		t.Errorf("Address = %s, want :8080", cfg.Address)
+	if cfg.Address != "127.0.0.1:8080" {
+		t.Errorf("Address = %s, want 127.0.0.1:8080", cfg.Address)
 	}
-	if cfg.HeartbeatInterval != 15*time.Second {
-		t.Errorf("HeartbeatInterval = %v, want 15s", cfg.HeartbeatInterval)
-	}
-	if cfg.CORSOrigin != "*" {
-		t.Errorf("CORSOrigin = %s, want *", cfg.CORSOrigin)
+	if cfg.CORSOrigin != "" {
+		t.Errorf("CORSOrigin = %s, want empty secure default", cfg.CORSOrigin)
 	}
 	if cfg.ReadTimeout != 30*time.Second {
 		t.Errorf("ReadTimeout = %v, want 30s", cfg.ReadTimeout)
 	}
-	if cfg.WriteTimeout != 0 {
-		t.Errorf("WriteTimeout = %v, want 0 (disabled for SSE)", cfg.WriteTimeout)
+	if cfg.WriteTimeout != 30*time.Second {
+		t.Errorf("WriteTimeout = %v, want 30s", cfg.WriteTimeout)
 	}
 }
 
@@ -83,11 +73,13 @@ func TestHTTPTransport_HandleMessage(t *testing.T) {
 
 	// Create test request
 	body := bytes.NewBufferString(`{"jsonrpc":"2.0","id":1,"method":"tools/list"}`)
-	req := httptest.NewRequest("POST", "/message", body)
+	req := httptest.NewRequest("POST", MCPEndpointPath, body)
+	req.Header.Set("Accept", "application/json, text/event-stream")
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("MCP-Session-Id", newHTTPTestSession(t, tr))
 	w := httptest.NewRecorder()
 
-	tr.handleMessage(w, req)
+	tr.handleMCPPost(w, req)
 
 	resp := w.Result()
 	if resp.StatusCode != http.StatusOK {
@@ -108,10 +100,12 @@ func TestHTTPTransport_HandleMessage(t *testing.T) {
 func TestHTTPTransport_HandleMessage_MethodNotAllowed(t *testing.T) {
 	tr := NewHTTPTransport(nil)
 
-	req := httptest.NewRequest("GET", "/message", nil)
+	req := httptest.NewRequest("GET", MCPEndpointPath, nil)
+	req.Header.Set("Accept", "text/event-stream")
+	req.Header.Set("MCP-Session-Id", newHTTPTestSession(t, tr))
 	w := httptest.NewRecorder()
 
-	tr.handleMessage(w, req)
+	tr.handleMCP(w, req)
 
 	if w.Code != http.StatusMethodNotAllowed {
 		t.Errorf("Status = %d, want 405", w.Code)
@@ -122,20 +116,31 @@ func TestHTTPTransport_HandleMessage_InvalidJSON(t *testing.T) {
 	tr := NewHTTPTransport(nil)
 
 	body := bytes.NewBufferString(`{invalid json}`)
-	req := httptest.NewRequest("POST", "/message", body)
+	req := httptest.NewRequest("POST", MCPEndpointPath, body)
+	req.Header.Set("Accept", "application/json, text/event-stream")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("MCP-Session-Id", newHTTPTestSession(t, tr))
 	w := httptest.NewRecorder()
 
-	tr.handleMessage(w, req)
+	tr.handleMCPPost(w, req)
 
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("Status = %d, want 400", w.Code)
 	}
 }
 
+func newHTTPTestSession(t *testing.T, tr *HTTPTransport) string {
+	t.Helper()
+	sessionID, err := tr.createHTTPSession()
+	if err != nil {
+		t.Fatalf("create HTTP test session: %v", err)
+	}
+	return sessionID
+}
+
 // TestHTTPTransport_HandleMessage_Notification verifies that JSON-RPC 2.0
-// notifications (where handler returns nil, nil) produce a 204 No Content
-// response instead of encoding JSON null. A prior bug sent "null" as the
-// response body with 200 OK.
+// notifications (where handler returns nil, nil) produce the Streamable HTTP
+// 202 Accepted response with no body.
 func TestHTTPTransport_HandleMessage_Notification(t *testing.T) {
 	tr := NewHTTPTransport(nil)
 	tr.handler = func(msg *Message) (*Message, error) {
@@ -144,15 +149,17 @@ func TestHTTPTransport_HandleMessage_Notification(t *testing.T) {
 	}
 
 	body := bytes.NewBufferString(`{"jsonrpc":"2.0","method":"notifications/initialized"}`)
-	req := httptest.NewRequest("POST", "/message", body)
+	req := httptest.NewRequest("POST", MCPEndpointPath, body)
+	req.Header.Set("Accept", "application/json, text/event-stream")
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("MCP-Session-Id", newHTTPTestSession(t, tr))
 	w := httptest.NewRecorder()
 
-	tr.handleMessage(w, req)
+	tr.handleMCPPost(w, req)
 
 	resp := w.Result()
-	if resp.StatusCode != http.StatusNoContent {
-		t.Errorf("Status = %d, want 204 for notification", resp.StatusCode)
+	if resp.StatusCode != http.StatusAccepted {
+		t.Errorf("Status = %d, want 202 for notification", resp.StatusCode)
 	}
 
 	respBody, _ := io.ReadAll(resp.Body)
@@ -194,7 +201,7 @@ func TestHTTPTransport_CORS(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest("OPTIONS", "/message", nil)
+	req := httptest.NewRequest("OPTIONS", MCPEndpointPath, nil)
 	w := httptest.NewRecorder()
 
 	handler.ServeHTTP(w, req)
@@ -251,8 +258,8 @@ func TestHTTPTransport_WriteMessage(t *testing.T) {
 		Result:  json.RawMessage(`{"ok":true}`),
 	}
 
-	if err := tr.WriteMessage(msg); err != nil {
-		t.Errorf("WriteMessage() error = %v", err)
+	if err := tr.WriteMessage(msg); err == nil || !strings.Contains(err.Error(), "not supported") {
+		t.Fatalf("WriteMessage() error = %v, want unsupported", err)
 	}
 }
 
@@ -271,117 +278,6 @@ func TestHTTPTransport_WriteMessage_Closed(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "closed") {
 		t.Errorf("Error should mention closed, got: %v", err)
-	}
-}
-
-func TestClientRegistry(t *testing.T) {
-	reg := NewClientRegistry()
-
-	if reg.Count() != 0 {
-		t.Errorf("Initial count = %d, want 0", reg.Count())
-	}
-
-	client := reg.Add("")
-	if client == nil {
-		t.Fatal("Add() returned nil")
-	}
-	if client.ID == "" {
-		t.Error("Client ID should not be empty")
-	}
-
-	if reg.Count() != 1 {
-		t.Errorf("Count after add = %d, want 1", reg.Count())
-	}
-
-	found, ok := reg.Get(client.ID)
-	if !ok || found.ID != client.ID {
-		t.Error("Get() should return the added client")
-	}
-
-	reg.Remove(client.ID)
-	if reg.Count() != 0 {
-		t.Errorf("Count after remove = %d, want 0", reg.Count())
-	}
-}
-
-func TestClientRegistry_Broadcast(t *testing.T) {
-	reg := NewClientRegistry()
-	client := reg.Add("")
-
-	event := &SSEEvent{
-		ID:    "1",
-		Event: "message",
-		Data:  "test data",
-	}
-
-	reg.Broadcast(event)
-
-	select {
-	case received := <-client.ResponseChan:
-		if received.ID != "1" {
-			t.Errorf("Event ID = %s, want 1", received.ID)
-		}
-	default:
-		t.Error("Client should have received the broadcast")
-	}
-}
-
-func TestEventStore(t *testing.T) {
-	store := NewEventStore(3)
-
-	store.Add(&SSEEvent{ID: "1", Event: "msg", Data: "data1"})
-	store.Add(&SSEEvent{ID: "2", Event: "msg", Data: "data2"})
-	store.Add(&SSEEvent{ID: "3", Event: "msg", Data: "data3"})
-
-	events := store.GetSince("1")
-	if len(events) != 2 {
-		t.Errorf("GetSince('1') returned %d events, want 2", len(events))
-	}
-
-	// Add one more to trigger eviction (store max is 3, now has 4, so oldest is evicted)
-	store.Add(&SSEEvent{ID: "4", Event: "msg", Data: "data4"})
-
-	// Event 1 was evicted, so GetSince("1") returns nothing (ID not found)
-	events = store.GetSince("1")
-	if len(events) != 0 {
-		t.Errorf("GetSince('1') after eviction returned %d events, want 0 (ID 1 evicted)", len(events))
-	}
-
-	// GetSince("2") should return events 3 and 4
-	events = store.GetSince("2")
-	if len(events) != 2 {
-		t.Errorf("GetSince('2') after eviction returned %d events, want 2", len(events))
-	}
-}
-
-func TestSSEEvent_Format(t *testing.T) {
-	event := &SSEEvent{
-		ID:    "123",
-		Event: "message",
-		Data:  `{"test":true}`,
-	}
-
-	if event.ID != "123" {
-		t.Errorf("ID = %s, want 123", event.ID)
-	}
-	if event.Event != "message" {
-		t.Errorf("Event = %s, want message", event.Event)
-	}
-	if event.Data != `{"test":true}` {
-		t.Errorf("Data = %s, want {\"test\":true}", event.Data)
-	}
-}
-
-func TestSSEClient(t *testing.T) {
-	client := &SSEClient{
-		ID:           "client-1",
-		ResponseChan: make(chan *SSEEvent, 10),
-		CreatedAt:    time.Now(),
-		LastEventID:  "0",
-	}
-
-	if client.ID != "client-1" {
-		t.Errorf("ID = %s, want client-1", client.ID)
 	}
 }
 
@@ -409,7 +305,7 @@ func TestHTTPTransport_AuthMiddleware_ValidToken(t *testing.T) {
 		w.Write([]byte("authenticated"))
 	}))
 
-	req := httptest.NewRequest("POST", "/message", nil)
+	req := httptest.NewRequest("POST", MCPEndpointPath, nil)
 	req.Header.Set("Authorization", "Bearer test-secret-key")
 	w := httptest.NewRecorder()
 
@@ -429,7 +325,7 @@ func TestHTTPTransport_AuthMiddleware_InvalidToken(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest("POST", "/message", nil)
+	req := httptest.NewRequest("POST", MCPEndpointPath, nil)
 	req.Header.Set("Authorization", "Bearer wrong-key")
 	w := httptest.NewRecorder()
 
@@ -452,7 +348,7 @@ func TestHTTPTransport_AuthMiddleware_MissingHeader(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest("POST", "/message", nil)
+	req := httptest.NewRequest("POST", MCPEndpointPath, nil)
 	w := httptest.NewRecorder()
 
 	handler.ServeHTTP(w, req)
@@ -474,7 +370,7 @@ func TestHTTPTransport_AuthMiddleware_InvalidFormat(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest("POST", "/message", nil)
+	req := httptest.NewRequest("POST", MCPEndpointPath, nil)
 	req.Header.Set("Authorization", "Basic dXNlcjpwYXNz") // Using Basic auth instead of Bearer
 	w := httptest.NewRecorder()
 
@@ -590,7 +486,7 @@ func TestHTTPTransport_CORS_AuthorizationHeader(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest("OPTIONS", "/message", nil)
+	req := httptest.NewRequest("OPTIONS", MCPEndpointPath, nil)
 	w := httptest.NewRecorder()
 
 	handler.ServeHTTP(w, req)
@@ -607,8 +503,6 @@ func TestHTTPTransport_HandleMetrics(t *testing.T) {
 	// Record some metrics
 	tr.metrics.RecordRequest("click", "ok", 50*time.Millisecond)
 	tr.metrics.RecordRequest("type", "error", 100*time.Millisecond)
-	tr.metrics.SetSSEConnections(3)
-	tr.metrics.RecordSSEEvent()
 
 	req := httptest.NewRequest("GET", "/metrics", nil)
 	w := httptest.NewRecorder()
@@ -635,8 +529,9 @@ func TestHTTPTransport_HandleMetrics(t *testing.T) {
 	if !strings.Contains(bodyStr, "# TYPE mcp_request_duration_seconds histogram") {
 		t.Errorf("Missing histogram type, got:\n%s", bodyStr)
 	}
-	if !strings.Contains(bodyStr, "# TYPE mcp_sse_connections_active gauge") {
-		t.Errorf("Missing gauge type, got:\n%s", bodyStr)
+	if !strings.Contains(bodyStr, "# TYPE go_goroutines gauge") ||
+		!strings.Contains(bodyStr, "go_goroutines ") {
+		t.Errorf("Missing live Go goroutine gauge, got:\n%s", bodyStr)
 	}
 	if !strings.Contains(bodyStr, `tool="click"`) {
 		t.Errorf("Missing click tool metric, got:\n%s", bodyStr)
@@ -750,7 +645,7 @@ func TestCORS_Preflight_ValidOrigin(t *testing.T) {
 				t.Error("Next handler should not be called for OPTIONS")
 			}))
 
-			req := httptest.NewRequest("OPTIONS", "/message", nil)
+			req := httptest.NewRequest("OPTIONS", MCPEndpointPath, nil)
 			if tt.requestOrigin != "" {
 				req.Header.Set("Origin", tt.requestOrigin)
 			}
@@ -768,9 +663,8 @@ func TestCORS_Preflight_ValidOrigin(t *testing.T) {
 	}
 }
 
-// TestCORS_Preflight_InvalidOrigin verifies that when a specific origin is
-// configured, the server still echoes it back (current implementation does
-// not validate the incoming Origin header against an allowlist).
+// TestCORS_Preflight_InvalidOrigin verifies that a configured origin is an
+// allowlist boundary, not only a response header value.
 func TestCORS_Preflight_InvalidOrigin(t *testing.T) {
 	tr := NewHTTPTransport(&HTTPTransportConfig{
 		CORSOrigin: "https://allowed.example.com",
@@ -781,21 +675,17 @@ func TestCORS_Preflight_InvalidOrigin(t *testing.T) {
 	}))
 
 	// Request from a different origin
-	req := httptest.NewRequest("OPTIONS", "/message", nil)
+	req := httptest.NewRequest("OPTIONS", MCPEndpointPath, nil)
 	req.Header.Set("Origin", "https://malicious.example.com")
 	w := httptest.NewRecorder()
 
 	handler.ServeHTTP(w, req)
 
-	// Current implementation: origin is NOT validated, configured value is echoed
-	// The browser will reject the response if it doesn't match the request Origin,
-	// but the server doesn't perform this validation.
-	if w.Code != http.StatusNoContent {
-		t.Errorf("Status = %d, want %d", w.Code, http.StatusNoContent)
+	if w.Code != http.StatusForbidden {
+		t.Errorf("Status = %d, want %d", w.Code, http.StatusForbidden)
 	}
-	// Server echoes configured origin (not the request origin)
-	if got := w.Header().Get("Access-Control-Allow-Origin"); got != "https://allowed.example.com" {
-		t.Errorf("Access-Control-Allow-Origin = %q, want %q", got, "https://allowed.example.com")
+	if got := w.Header().Get("Access-Control-Allow-Origin"); got != "" {
+		t.Errorf("rejected origin received Access-Control-Allow-Origin %q", got)
 	}
 }
 
@@ -821,7 +711,7 @@ func TestCORS_ActualRequest_ValidOrigin(t *testing.T) {
 		{
 			name:           "POST request with specific origin",
 			method:         "POST",
-			path:           "/message",
+			path:           MCPEndpointPath,
 			configOrigin:   "https://trusted.example.com",
 			requestOrigin:  "https://trusted.example.com",
 			wantAllowedOrg: "https://trusted.example.com",
@@ -829,7 +719,7 @@ func TestCORS_ActualRequest_ValidOrigin(t *testing.T) {
 		{
 			name:           "GET request without Origin header",
 			method:         "GET",
-			path:           "/events",
+			path:           MCPEndpointPath,
 			configOrigin:   "https://app.example.com",
 			requestOrigin:  "",
 			wantAllowedOrg: "https://app.example.com",
@@ -866,10 +756,8 @@ func TestCORS_ActualRequest_ValidOrigin(t *testing.T) {
 	}
 }
 
-// TestCORS_ActualRequest_InvalidOrigin verifies CORS headers are echoed
-// even when the request Origin doesn't match the configured allowed origin.
-// Note: The browser enforces CORS, not the server. The server echoes the
-// configured origin and the browser rejects mismatches.
+// TestCORS_ActualRequest_InvalidOrigin verifies that an untrusted Origin is
+// rejected before request dispatch.
 func TestCORS_ActualRequest_InvalidOrigin(t *testing.T) {
 	tr := NewHTTPTransport(&HTTPTransportConfig{
 		CORSOrigin: "https://allowed.example.com",
@@ -881,19 +769,20 @@ func TestCORS_ActualRequest_InvalidOrigin(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest("POST", "/message", nil)
+	req := httptest.NewRequest("POST", MCPEndpointPath, nil)
 	req.Header.Set("Origin", "https://malicious.example.com")
 	w := httptest.NewRecorder()
 
 	handler.ServeHTTP(w, req)
 
-	// Handler is still called (server doesn't block requests based on Origin)
-	if !handlerCalled {
-		t.Error("Handler should be called (server doesn't enforce CORS origin)")
+	if handlerCalled {
+		t.Error("handler was called for an untrusted Origin")
 	}
-	// Server echoes configured origin, not request origin
-	if got := w.Header().Get("Access-Control-Allow-Origin"); got != "https://allowed.example.com" {
-		t.Errorf("Access-Control-Allow-Origin = %q, want %q", got, "https://allowed.example.com")
+	if w.Code != http.StatusForbidden {
+		t.Errorf("Status = %d, want %d", w.Code, http.StatusForbidden)
+	}
+	if got := w.Header().Get("Access-Control-Allow-Origin"); got != "" {
+		t.Errorf("rejected origin received Access-Control-Allow-Origin %q", got)
 	}
 }
 
@@ -917,13 +806,13 @@ func TestCORS_AllowMethods(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 			}))
 
-			req := httptest.NewRequest(tt.method, "/message", nil)
+			req := httptest.NewRequest(tt.method, MCPEndpointPath, nil)
 			w := httptest.NewRecorder()
 
 			handler.ServeHTTP(w, req)
 
 			allowMethods := w.Header().Get("Access-Control-Allow-Methods")
-			expectedMethods := []string{"GET", "POST", "OPTIONS"}
+			expectedMethods := []string{"GET", "POST", "DELETE", "OPTIONS"}
 			for _, method := range expectedMethods {
 				if !strings.Contains(allowMethods, method) {
 					t.Errorf("Access-Control-Allow-Methods = %q, missing %q", allowMethods, method)
@@ -942,13 +831,13 @@ func TestCORS_AllowHeaders(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest("OPTIONS", "/message", nil)
+	req := httptest.NewRequest("OPTIONS", MCPEndpointPath, nil)
 	w := httptest.NewRecorder()
 
 	handler.ServeHTTP(w, req)
 
 	allowHeaders := w.Header().Get("Access-Control-Allow-Headers")
-	expectedHeaders := []string{"Content-Type", "Last-Event-ID", "Authorization"}
+	expectedHeaders := []string{"Accept", "Content-Type", "Last-Event-ID", "MCP-Protocol-Version", "MCP-Session-Id", "Authorization"}
 	for _, header := range expectedHeaders {
 		if !strings.Contains(allowHeaders, header) {
 			t.Errorf("Access-Control-Allow-Headers = %q, missing %q", allowHeaders, header)
@@ -965,7 +854,7 @@ func TestCORS_ExposeHeaders(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest("GET", "/message", nil)
+	req := httptest.NewRequest("GET", MCPEndpointPath, nil)
 	w := httptest.NewRecorder()
 
 	handler.ServeHTTP(w, req)
@@ -973,6 +862,9 @@ func TestCORS_ExposeHeaders(t *testing.T) {
 	exposeHeaders := w.Header().Get("Access-Control-Expose-Headers")
 	if !strings.Contains(exposeHeaders, "Content-Type") {
 		t.Errorf("Access-Control-Expose-Headers = %q, missing 'Content-Type'", exposeHeaders)
+	}
+	if !strings.Contains(exposeHeaders, "MCP-Session-Id") {
+		t.Errorf("Access-Control-Expose-Headers = %q, missing 'MCP-Session-Id'", exposeHeaders)
 	}
 }
 
@@ -1001,7 +893,7 @@ func TestCORS_WildcardOriginHandling(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 			}))
 
-			req := httptest.NewRequest(tt.method, "/message", nil)
+			req := httptest.NewRequest(tt.method, MCPEndpointPath, nil)
 			req.Header.Set("Origin", tt.requestOrigin)
 			w := httptest.NewRecorder()
 
@@ -1017,24 +909,23 @@ func TestCORS_WildcardOriginHandling(t *testing.T) {
 
 // TestCORS_DefaultConfig verifies CORS behavior with default configuration.
 func TestCORS_DefaultConfig(t *testing.T) {
-	tr := NewHTTPTransport(nil) // Uses default config with CORSOrigin: "*"
+	tr := NewHTTPTransport(nil)
 
 	handler := tr.corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest("OPTIONS", "/message", nil)
+	req := httptest.NewRequest("OPTIONS", MCPEndpointPath, nil)
 	req.Header.Set("Origin", "https://any-origin.com")
 	w := httptest.NewRecorder()
 
 	handler.ServeHTTP(w, req)
 
-	// Default config should allow all origins
-	if got := w.Header().Get("Access-Control-Allow-Origin"); got != "*" {
-		t.Errorf("Access-Control-Allow-Origin = %q, want %q (default)", got, "*")
+	if got := w.Header().Get("Access-Control-Allow-Origin"); got != "" {
+		t.Errorf("rejected default Origin received Access-Control-Allow-Origin %q", got)
 	}
-	if w.Code != http.StatusNoContent {
-		t.Errorf("Status = %d, want %d", w.Code, http.StatusNoContent)
+	if w.Code != http.StatusForbidden {
+		t.Errorf("Status = %d, want %d", w.Code, http.StatusForbidden)
 	}
 }
 
@@ -1049,7 +940,7 @@ func TestCORS_PreflightDoesNotCallNextHandler(t *testing.T) {
 		handlerCalled = true
 	}))
 
-	req := httptest.NewRequest("OPTIONS", "/message", nil)
+	req := httptest.NewRequest("OPTIONS", MCPEndpointPath, nil)
 	w := httptest.NewRecorder()
 
 	handler.ServeHTTP(w, req)
@@ -1062,7 +953,7 @@ func TestCORS_PreflightDoesNotCallNextHandler(t *testing.T) {
 // TestCORS_HeadersPresentOnAllEndpoints verifies CORS headers are set
 // regardless of the endpoint being accessed.
 func TestCORS_HeadersPresentOnAllEndpoints(t *testing.T) {
-	endpoints := []string{"/message", "/events", "/health", "/metrics"}
+	endpoints := []string{MCPEndpointPath, "/health", "/metrics"}
 
 	for _, endpoint := range endpoints {
 		t.Run(endpoint, func(t *testing.T) {
@@ -1089,347 +980,5 @@ func TestCORS_HeadersPresentOnAllEndpoints(t *testing.T) {
 				t.Errorf("Access-Control-Allow-Headers missing for endpoint %s", endpoint)
 			}
 		})
-	}
-}
-
-// =============================================================================
-// BroadcastEvent Tests - Added for Task 49
-// =============================================================================
-
-// TestHTTPTransport_BroadcastEvent verifies that BroadcastEvent sends custom
-// SSE events to all connected clients.
-func TestHTTPTransport_BroadcastEvent(t *testing.T) {
-	tr := NewHTTPTransport(nil)
-	defer tr.Close()
-
-	// Add a test client using the ClientRegistry API
-	client := tr.clients.Add("")
-
-	// Broadcast a custom event
-	tr.BroadcastEvent("observation", `{"test":"data"}`)
-
-	// Verify event was received
-	select {
-	case event := <-client.ResponseChan:
-		if event.Event != "observation" {
-			t.Errorf("Event type = %q, want %q", event.Event, "observation")
-		}
-		if event.Data != `{"test":"data"}` {
-			t.Errorf("Event data = %q, want %q", event.Data, `{"test":"data"}`)
-		}
-		if event.ID == "" {
-			t.Error("Event ID should not be empty")
-		}
-	case <-time.After(100 * time.Millisecond):
-		t.Fatal("Timed out waiting for broadcast event")
-	}
-
-	// Cleanup
-	tr.clients.Remove(client.ID)
-}
-
-// TestHTTPTransport_BroadcastEvent_MultipleClients verifies events are sent
-// to all connected clients.
-func TestHTTPTransport_BroadcastEvent_MultipleClients(t *testing.T) {
-	tr := NewHTTPTransport(nil)
-	defer tr.Close()
-
-	// Add multiple clients using the ClientRegistry API
-	clients := make([]*SSEClient, 3)
-	for i := range 3 {
-		clients[i] = tr.clients.Add("")
-	}
-	defer func() {
-		for _, c := range clients {
-			tr.clients.Remove(c.ID)
-		}
-	}()
-
-	// Broadcast event
-	tr.BroadcastEvent("observation_error", `{"error":"test"}`)
-
-	// All clients should receive the event
-	for i, client := range clients {
-		select {
-		case event := <-client.ResponseChan:
-			if event.Event != "observation_error" {
-				t.Errorf("Client %d: Event type = %q, want %q", i, event.Event, "observation_error")
-			}
-		case <-time.After(100 * time.Millisecond):
-			t.Errorf("Client %d: Timed out waiting for event", i)
-		}
-	}
-}
-
-// TestHTTPTransport_BroadcastEvent_ClosedTransport verifies that broadcasting
-// on a closed transport is a no-op (does not panic).
-func TestHTTPTransport_BroadcastEvent_ClosedTransport(t *testing.T) {
-	tr := NewHTTPTransport(nil)
-	tr.Close()
-
-	// Should not panic
-	tr.BroadcastEvent("observation", `{"test":"data"}`)
-
-	// Verify transport is closed
-	if !tr.IsClosed() {
-		t.Error("Transport should be closed")
-	}
-}
-
-// TestHTTPTransport_BroadcastEvent_EventIDIncrement verifies that event IDs
-// are unique and incrementing.
-func TestHTTPTransport_BroadcastEvent_EventIDIncrement(t *testing.T) {
-	tr := NewHTTPTransport(nil)
-	defer tr.Close()
-
-	client := tr.clients.Add("")
-	defer tr.clients.Remove(client.ID)
-
-	// Broadcast multiple events
-	tr.BroadcastEvent("event1", "data1")
-	tr.BroadcastEvent("event2", "data2")
-	tr.BroadcastEvent("event3", "data3")
-
-	// Collect events and verify IDs increment
-	var ids []string
-	for range 3 {
-		select {
-		case event := <-client.ResponseChan:
-			ids = append(ids, event.ID)
-		case <-time.After(100 * time.Millisecond):
-			t.Fatal("Timed out waiting for events")
-		}
-	}
-
-	// Verify IDs are unique
-	seen := make(map[string]bool)
-	for _, id := range ids {
-		if seen[id] {
-			t.Errorf("Duplicate event ID: %s", id)
-		}
-		seen[id] = true
-	}
-}
-
-// TestHTTPTransport_BroadcastEvent_MetricsRecorded verifies that broadcasts
-// increment SSE event metrics.
-func TestHTTPTransport_BroadcastEvent_MetricsRecorded(t *testing.T) {
-	tr := NewHTTPTransport(nil)
-	defer tr.Close()
-
-	// Get initial event count (indirectly via metrics export)
-	initialMetrics := tr.Metrics()
-	if initialMetrics == nil {
-		t.Fatal("Metrics should not be nil")
-	}
-
-	// Broadcast some events
-	tr.BroadcastEvent("test1", "data1")
-	tr.BroadcastEvent("test2", "data2")
-
-	// Metrics should have recorded events
-	// Note: Direct verification would require exposing internal counters,
-	// but we verify that the call completes without error
-}
-
-// =============================================================================
-// ShutdownChan Tests - Added for Task 49
-// =============================================================================
-
-// TestHTTPTransport_ShutdownChan verifies that ShutdownChan returns a valid channel.
-func TestHTTPTransport_ShutdownChan(t *testing.T) {
-	tr := NewHTTPTransport(nil)
-
-	ch := tr.ShutdownChan()
-	if ch == nil {
-		t.Fatal("ShutdownChan() returned nil")
-	}
-
-	// Channel should be open initially
-	select {
-	case <-ch:
-		t.Error("Shutdown channel should not be closed initially")
-	default:
-		// Expected - channel is open
-	}
-
-	tr.Close()
-}
-
-// TestHTTPTransport_ShutdownChan_ClosedOnClose verifies that the shutdown channel
-// is closed when the transport is closed.
-func TestHTTPTransport_ShutdownChan_ClosedOnClose(t *testing.T) {
-	tr := NewHTTPTransport(nil)
-	ch := tr.ShutdownChan()
-
-	// Close transport
-	tr.Close()
-
-	// Shutdown channel should now be closed
-	select {
-	case <-ch:
-		// Expected - channel is closed
-	case <-time.After(100 * time.Millisecond):
-		t.Error("Shutdown channel should be closed after transport Close()")
-	}
-}
-
-// TestHTTPTransport_ShutdownChan_ReadOnly verifies that the channel is read-only.
-func TestHTTPTransport_ShutdownChan_ReadOnly(t *testing.T) {
-	tr := NewHTTPTransport(nil)
-	defer tr.Close()
-
-	// The return type is <-chan struct{} which is inherently read-only.
-	// This test documents the expected behavior.
-	ch := tr.ShutdownChan()
-
-	// Type assertion should confirm it's a receive-only channel
-	// (This is enforced by the function signature, so this test just verifies behavior)
-	select {
-	case <-ch:
-		t.Error("Channel should not be closed yet")
-	default:
-		// Expected
-	}
-}
-
-// TestHTTPTransport_ShutdownChan_MultipleReaders verifies that multiple goroutines
-// can wait on the shutdown channel.
-func TestHTTPTransport_ShutdownChan_MultipleReaders(t *testing.T) {
-	tr := NewHTTPTransport(nil)
-	ch := tr.ShutdownChan()
-
-	// Start multiple goroutines waiting on shutdown
-	const numReaders = 5
-	done := make(chan int, numReaders)
-
-	for i := range numReaders {
-		go func(id int) {
-			<-ch
-			done <- id
-		}(i)
-	}
-
-	// Close transport to signal shutdown
-	tr.Close()
-
-	// All readers should complete
-	received := make(map[int]bool)
-	for i := range numReaders {
-		select {
-		case id := <-done:
-			received[id] = true
-		case <-time.After(100 * time.Millisecond):
-			t.Fatalf("Timed out waiting for reader %d", i)
-		}
-	}
-
-	if len(received) != numReaders {
-		t.Errorf("Expected %d readers to complete, got %d", numReaders, len(received))
-	}
-}
-
-// =============================================================================
-// Heartbeat Timing Tests - Added for Task 49
-// =============================================================================
-
-// TestHTTPTransport_SSE_HeartbeatTiming verifies that heartbeats are sent at
-// the configured interval on SSE connections.
-func TestHTTPTransport_SSE_HeartbeatTiming(t *testing.T) {
-	// Use a very short heartbeat interval for testing
-	tr := NewHTTPTransport(&HTTPTransportConfig{
-		HeartbeatInterval: 50 * time.Millisecond,
-	})
-	defer tr.Close()
-
-	// Create a pipe to capture SSE output
-	pr, pw := io.Pipe()
-
-	// Create a response recorder that writes to the pipe
-	rr := &pipeResponseRecorder{
-		headers: make(http.Header),
-		writer:  pw,
-		flushed: make(chan struct{}, 100),
-	}
-
-	req := httptest.NewRequest("GET", "/events", nil)
-
-	// Run handleSSE in background
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		tr.handleSSE(rr, req)
-		pw.Close()
-	}()
-
-	// Read from the pipe and look for heartbeats
-	reader := io.Reader(pr)
-	buf := make([]byte, 1024)
-
-	// Wait for at least 2 heartbeats within a reasonable time
-	deadline := time.After(300 * time.Millisecond)
-	heartbeatCount := 0
-	readDone := make(chan int)
-
-	go func() {
-		for {
-			n, err := reader.Read(buf)
-			if err != nil {
-				readDone <- heartbeatCount
-				return
-			}
-			data := string(buf[:n])
-			// Count heartbeat comments (lines starting with ":")
-			if strings.Contains(data, ": heartbeat") {
-				heartbeatCount++
-				if heartbeatCount >= 2 {
-					readDone <- heartbeatCount
-					return
-				}
-			}
-		}
-	}()
-
-	// Wait for heartbeats or timeout
-	select {
-	case count := <-readDone:
-		if count < 2 {
-			t.Errorf("Expected at least 2 heartbeats, got %d", count)
-		}
-	case <-deadline:
-		t.Error("Timed out waiting for heartbeats")
-	}
-
-	// Cleanup
-	tr.Close()
-	pr.Close()
-	<-done
-}
-
-// pipeResponseRecorder is a custom ResponseWriter for SSE testing that writes
-// to an io.Writer instead of an internal buffer.
-type pipeResponseRecorder struct {
-	headers http.Header
-	writer  io.Writer
-	status  int
-	flushed chan struct{}
-}
-
-func (r *pipeResponseRecorder) Header() http.Header {
-	return r.headers
-}
-
-func (r *pipeResponseRecorder) Write(b []byte) (int, error) {
-	return r.writer.Write(b)
-}
-
-func (r *pipeResponseRecorder) WriteHeader(statusCode int) {
-	r.status = statusCode
-}
-
-func (r *pipeResponseRecorder) Flush() {
-	select {
-	case r.flushed <- struct{}{}:
-	default:
 	}
 }

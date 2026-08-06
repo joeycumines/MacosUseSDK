@@ -11,7 +11,6 @@
 package macosusesdkv1
 
 import (
-	_type "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -421,7 +420,14 @@ type ObservationFilter struct {
 	// Specific element roles to observe (empty = all roles).
 	Roles []string `protobuf:"bytes,3,rep,name=roles,proto3" json:"roles,omitempty"`
 	// Specific attributes to observe (for attribute change observations).
-	Attributes    []string `protobuf:"bytes,4,rep,name=attributes,proto3" json:"attributes,omitempty"`
+	Attributes []string `protobuf:"bytes,4,rep,name=attributes,proto3" json:"attributes,omitempty"`
+	// Whether to restrict observation to the focused element only.
+	FocusOnly bool `protobuf:"varint,5,opt,name=focus_only,json=focusOnly,proto3" json:"focus_only,omitempty"`
+	// Whether to include element geometry in change detection.
+	Geometry bool `protobuf:"varint,6,opt,name=geometry,proto3" json:"geometry,omitempty"`
+	// Whether to observe application activation state changes.
+	// Reserved for FUNC-012; silently ignored during FUNC-004.
+	Activation    bool `protobuf:"varint,7,opt,name=activation,proto3" json:"activation,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -482,6 +488,27 @@ func (x *ObservationFilter) GetAttributes() []string {
 		return x.Attributes
 	}
 	return nil
+}
+
+func (x *ObservationFilter) GetFocusOnly() bool {
+	if x != nil {
+		return x.FocusOnly
+	}
+	return false
+}
+
+func (x *ObservationFilter) GetGeometry() bool {
+	if x != nil {
+		return x.Geometry
+	}
+	return false
+}
+
+func (x *ObservationFilter) GetActivation() bool {
+	if x != nil {
+		return x.Activation
+	}
+	return false
 }
 
 // An event from an observation.
@@ -653,7 +680,7 @@ func (*ObservationEvent_ApplicationEvent) isObservationEvent_EventType() {}
 type ElementEvent struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The element.
-	Element       *_type.Element `protobuf:"bytes,1,opt,name=element,proto3" json:"element,omitempty"`
+	Element       *Element `protobuf:"bytes,1,opt,name=element,proto3" json:"element,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -688,7 +715,7 @@ func (*ElementEvent) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_observation_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *ElementEvent) GetElement() *_type.Element {
+func (x *ElementEvent) GetElement() *Element {
 	if x != nil {
 		return x.Element
 	}
@@ -699,9 +726,9 @@ func (x *ElementEvent) GetElement() *_type.Element {
 type ElementModified struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The element before modification.
-	OldElement *_type.Element `protobuf:"bytes,1,opt,name=old_element,json=oldElement,proto3" json:"old_element,omitempty"`
+	OldElement *Element `protobuf:"bytes,1,opt,name=old_element,json=oldElement,proto3" json:"old_element,omitempty"`
 	// The element after modification.
-	NewElement *_type.Element `protobuf:"bytes,2,opt,name=new_element,json=newElement,proto3" json:"new_element,omitempty"`
+	NewElement *Element `protobuf:"bytes,2,opt,name=new_element,json=newElement,proto3" json:"new_element,omitempty"`
 	// Changed attributes.
 	Changes       []*AttributeChange `protobuf:"bytes,3,rep,name=changes,proto3" json:"changes,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -738,14 +765,14 @@ func (*ElementModified) Descriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_observation_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *ElementModified) GetOldElement() *_type.Element {
+func (x *ElementModified) GetOldElement() *Element {
 	if x != nil {
 		return x.OldElement
 	}
 	return nil
 }
 
-func (x *ElementModified) GetNewElement() *_type.Element {
+func (x *ElementModified) GetNewElement() *Element {
 	if x != nil {
 		return x.NewElement
 	}
@@ -937,7 +964,7 @@ var File_macosusesdk_v1_observation_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_observation_proto_rawDesc = "" +
 	"\n" +
-	" macosusesdk/v1/observation.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1emacosusesdk/type/element.proto\"\xb2\x05\n" +
+	" macosusesdk/v1/observation.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cmacosusesdk/v1/element.proto\"\xb2\x05\n" +
 	"\vObservation\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x128\n" +
 	"\x04type\x18\x02 \x01(\x0e2\x1f.macosusesdk.v1.ObservationTypeB\x03\xe0A\x02R\x04type\x12<\n" +
@@ -956,14 +983,20 @@ const file_macosusesdk_v1_observation_proto_rawDesc = "" +
 	"\x0fSTATE_COMPLETED\x10\x03\x12\x13\n" +
 	"\x0fSTATE_CANCELLED\x10\x04\x12\x10\n" +
 	"\fSTATE_FAILED\x10\x05:r\xeaAo\n" +
-	"\x1bmacosusesdk.com/Observation\x125applications/{application}/observations/{observation}*\fobservations2\vobservation\"\xa5\x01\n" +
+	"\x1bmacosusesdk.com/Observation\x125applications/{application}/observations/{observation}*\fobservations2\vobservation\"\x8f\x02\n" +
 	"\x11ObservationFilter\x12(\n" +
 	"\rpoll_interval\x18\x01 \x01(\x01B\x03\xe0A\x01R\fpollInterval\x12&\n" +
 	"\fvisible_only\x18\x02 \x01(\bB\x03\xe0A\x01R\vvisibleOnly\x12\x19\n" +
 	"\x05roles\x18\x03 \x03(\tB\x03\xe0A\x01R\x05roles\x12#\n" +
 	"\n" +
 	"attributes\x18\x04 \x03(\tB\x03\xe0A\x01R\n" +
-	"attributes\"\xb7\x04\n" +
+	"attributes\x12\"\n" +
+	"\n" +
+	"focus_only\x18\x05 \x01(\bB\x03\xe0A\x01R\tfocusOnly\x12\x1f\n" +
+	"\bgeometry\x18\x06 \x01(\bB\x03\xe0A\x01R\bgeometry\x12#\n" +
+	"\n" +
+	"activation\x18\a \x01(\bB\x03\xe0A\x01R\n" +
+	"activation\"\xb7\x04\n" +
 	"\x10ObservationEvent\x12E\n" +
 	"\vobservation\x18\x01 \x01(\tB#\xe0A\x03\xfaA\x1d\n" +
 	"\x1bmacosusesdk.com/ObservationR\vobservation\x12>\n" +
@@ -977,13 +1010,13 @@ const file_macosusesdk_v1_observation_proto_rawDesc = "" +
 	"\fwindow_event\x18\r \x01(\v2\x1b.macosusesdk.v1.WindowEventH\x00R\vwindowEvent\x12O\n" +
 	"\x11application_event\x18\x0e \x01(\v2 .macosusesdk.v1.ApplicationEventH\x00R\x10applicationEventB\f\n" +
 	"\n" +
-	"event_type\"H\n" +
-	"\fElementEvent\x128\n" +
-	"\aelement\x18\x01 \x01(\v2\x19.macosusesdk.type.ElementB\x03\xe0A\x03R\aelement\"\xd3\x01\n" +
-	"\x0fElementModified\x12?\n" +
-	"\vold_element\x18\x01 \x01(\v2\x19.macosusesdk.type.ElementB\x03\xe0A\x03R\n" +
-	"oldElement\x12?\n" +
-	"\vnew_element\x18\x02 \x01(\v2\x19.macosusesdk.type.ElementB\x03\xe0A\x03R\n" +
+	"event_type\"F\n" +
+	"\fElementEvent\x126\n" +
+	"\aelement\x18\x01 \x01(\v2\x17.macosusesdk.v1.ElementB\x03\xe0A\x03R\aelement\"\xcf\x01\n" +
+	"\x0fElementModified\x12=\n" +
+	"\vold_element\x18\x01 \x01(\v2\x17.macosusesdk.v1.ElementB\x03\xe0A\x03R\n" +
+	"oldElement\x12=\n" +
+	"\vnew_element\x18\x02 \x01(\v2\x17.macosusesdk.v1.ElementB\x03\xe0A\x03R\n" +
 	"newElement\x12>\n" +
 	"\achanges\x18\x03 \x03(\v2\x1f.macosusesdk.v1.AttributeChangeB\x03\xe0A\x03R\achanges\"x\n" +
 	"\x0fAttributeChange\x12!\n" +
@@ -1052,7 +1085,7 @@ var file_macosusesdk_v1_observation_proto_goTypes = []any{
 	(*WindowEvent)(nil),                        // 10: macosusesdk.v1.WindowEvent
 	(*ApplicationEvent)(nil),                   // 11: macosusesdk.v1.ApplicationEvent
 	(*timestamppb.Timestamp)(nil),              // 12: google.protobuf.Timestamp
-	(*_type.Element)(nil),                      // 13: macosusesdk.type.Element
+	(*Element)(nil),                            // 13: macosusesdk.v1.Element
 }
 var file_macosusesdk_v1_observation_proto_depIdxs = []int32{
 	0,  // 0: macosusesdk.v1.Observation.type:type_name -> macosusesdk.v1.ObservationType
@@ -1067,9 +1100,9 @@ var file_macosusesdk_v1_observation_proto_depIdxs = []int32{
 	8,  // 9: macosusesdk.v1.ObservationEvent.element_modified:type_name -> macosusesdk.v1.ElementModified
 	10, // 10: macosusesdk.v1.ObservationEvent.window_event:type_name -> macosusesdk.v1.WindowEvent
 	11, // 11: macosusesdk.v1.ObservationEvent.application_event:type_name -> macosusesdk.v1.ApplicationEvent
-	13, // 12: macosusesdk.v1.ElementEvent.element:type_name -> macosusesdk.type.Element
-	13, // 13: macosusesdk.v1.ElementModified.old_element:type_name -> macosusesdk.type.Element
-	13, // 14: macosusesdk.v1.ElementModified.new_element:type_name -> macosusesdk.type.Element
+	13, // 12: macosusesdk.v1.ElementEvent.element:type_name -> macosusesdk.v1.Element
+	13, // 13: macosusesdk.v1.ElementModified.old_element:type_name -> macosusesdk.v1.Element
+	13, // 14: macosusesdk.v1.ElementModified.new_element:type_name -> macosusesdk.v1.Element
 	9,  // 15: macosusesdk.v1.ElementModified.changes:type_name -> macosusesdk.v1.AttributeChange
 	2,  // 16: macosusesdk.v1.WindowEvent.event_type:type_name -> macosusesdk.v1.WindowEvent.WindowEventType
 	3,  // 17: macosusesdk.v1.ApplicationEvent.event_type:type_name -> macosusesdk.v1.ApplicationEvent.ApplicationEventType
@@ -1085,6 +1118,7 @@ func file_macosusesdk_v1_observation_proto_init() {
 	if File_macosusesdk_v1_observation_proto != nil {
 		return
 	}
+	file_macosusesdk_v1_element_proto_init()
 	file_macosusesdk_v1_observation_proto_msgTypes[2].OneofWrappers = []any{
 		(*ObservationEvent_ElementAdded)(nil),
 		(*ObservationEvent_ElementRemoved)(nil),

@@ -13,7 +13,13 @@ public struct MacroContext {
     var variables: [String: String] = [:]
     var parameters: [String: String] = [:]
     var parent: String = ""
-    var pid: pid_t?
+    var operationID: String = ""
+    var nextPhysicalOrdinal: UInt64 = 0
+    var applicationGeneration: AppStateStore.ApplicationProcessGenerationLease?
+
+    var pid: pid_t? {
+        applicationGeneration?.pid
+    }
 }
 
 /// Error types for macro execution
@@ -46,54 +52,222 @@ public enum MacroExecutionError: Error, CustomStringConvertible {
     }
 }
 
-/// Actor for executing macros with support for all action types
-///
-/// ## Thread Safety (nonisolated(unsafe))
-///
-/// `MacroExecutor.shared` uses `nonisolated(unsafe)` to allow access from any
-/// isolation domain. This is safe because:
-/// 1. The singleton is initialized ONCE in main.swift BEFORE the gRPC server starts
-/// 2. All subsequent accesses are reads-only (no reassignment)
-/// 3. The actor itself handles all internal state synchronization
-///
-/// **INVARIANT**: `shared` MUST be set before any gRPC RPC handler executes.
-public actor MacroExecutor {
-    /// Private storage for the shared singleton.
-    ///
-    /// - Precondition: Must be initialized in main.swift before use.
-    /// - Warning: Accessing before initialization will trigger preconditionFailure.
-    private nonisolated(unsafe) static var _shared: MacroExecutor?
+enum MacroExecutionBoundary: Equatable, Sendable {
+    case action
+    case condition
+    case loopIteration
+    case forEachItem
+    case waitPoll
+    case completion
+}
 
-    /// Access the shared MacroExecutor instance.
-    /// Triggers preconditionFailure if accessed before initialization.
-    public nonisolated static var shared: MacroExecutor {
-        get {
-            guard let instance = _shared else {
-                preconditionFailure(
-                    "MacroExecutor.shared accessed before initialization. " +
-                        "Ensure main.swift initializes MacroExecutor.shared before starting gRPC server.",
-                )
-            }
-            return instance
+typealias MacroExecutionBoundaryObserver = @Sendable (MacroExecutionBoundary) async -> Void
+typealias MacroDeadlineWaiter = @Sendable (ContinuousClock.Instant) async throws -> Void
+typealias MacroDeadlineOutcomeObserver = @Sendable () async -> Void
+
+enum MacroExecutionRaceWinner: Equatable, Sendable {
+    case body
+    case deadline
+}
+
+typealias MacroExecutionRaceWinnerObserver = @Sendable (MacroExecutionRaceWinner) async -> Void
+
+private struct MacroExecutionControl: Sendable {
+    let clock: ContinuousClock
+    let deadline: ContinuousClock.Instant
+    let observer: MacroExecutionBoundaryObserver
+    let validateGeneration: @Sendable () async throws -> Void
+
+    func checkpoint(_ boundary: MacroExecutionBoundary) async throws {
+        await Task.yield()
+        try Task.checkCancellation()
+        guard clock.now <= deadline else {
+            throw MacroExecutionError.timeout
         }
-        set {
-            _shared = newValue
+        await observer(boundary)
+        try Task.checkCancellation()
+        try await validateGeneration()
+        guard clock.now <= deadline else {
+            throw MacroExecutionError.timeout
         }
     }
 
+    func sleep(for requested: Duration, boundary: MacroExecutionBoundary) async throws {
+        try await checkpoint(boundary)
+        let remaining = clock.now.duration(to: deadline)
+        guard remaining > .zero else {
+            throw MacroExecutionError.timeout
+        }
+        let bounded = min(requested, remaining)
+        if bounded > .zero {
+            try await clock.sleep(for: bounded)
+        }
+        try await checkpoint(boundary)
+        if requested > remaining {
+            throw MacroExecutionError.timeout
+        }
+    }
+
+    func sleep(seconds: Double, boundary: MacroExecutionBoundary) async throws {
+        guard seconds.isFinite, seconds >= 0 else {
+            throw MacroExecutionError.invalidAction("Wait duration must be finite and non-negative")
+        }
+        try await sleep(for: .seconds(seconds), boundary: boundary)
+    }
+}
+
+private enum MacroExecutionRaceEvent: @unchecked Sendable {
+    case body(Result<Void, any Error>)
+    case deadline(Result<Void, any Error>)
+
+    var winner: MacroExecutionRaceWinner {
+        switch self {
+        case .body:
+            .body
+        case .deadline:
+            .deadline
+        }
+    }
+
+    func get() throws {
+        switch self {
+        case let .body(result), let .deadline(result):
+            try result.get()
+        }
+    }
+}
+
+private func staleApplicationGenerationError() -> RPCError {
+    RPCError(
+        code: .notFound,
+        message: "Application not found or process identity is stale",
+    )
+}
+
+/// Actor for executing macros with support for all action types.
+public actor MacroExecutor {
     /// Shared window registry for consistent window tracking
     private let windowRegistry: WindowRegistry
+    nonisolated let inputTransactionExecutor: InputTransactionExecutor
+    nonisolated let automationCoordinator: AutomationCoordinator
+    nonisolated let elementRegistry: ElementRegistry
+    nonisolated let elementLocator: ElementLocator
+    private let executionBoundaryObserver: MacroExecutionBoundaryObserver
+    private let deadlineWaiter: MacroDeadlineWaiter
+    private let deadlineOutcomeObserver: MacroDeadlineOutcomeObserver
+    private let raceWinnerObserver: MacroExecutionRaceWinnerObserver
+    private var acceptingExecutions = true
+    private var executionTasks: [UUID: Task<Void, any Error>] = [:]
 
-    init(windowRegistry: WindowRegistry) {
+    init(
+        windowRegistry: WindowRegistry,
+        inputTransactionExecutor: InputTransactionExecutor,
+        automationCoordinator: AutomationCoordinator? = nil,
+        elementRegistry: ElementRegistry? = nil,
+        elementLocator: ElementLocator? = nil,
+        executionBoundaryObserver: @escaping MacroExecutionBoundaryObserver = { _ in },
+        deadlineWaiter: @escaping MacroDeadlineWaiter = {
+            try await ContinuousClock().sleep(until: $0)
+        },
+        deadlineOutcomeObserver: @escaping MacroDeadlineOutcomeObserver = {},
+        raceWinnerObserver: @escaping MacroExecutionRaceWinnerObserver = { _ in },
+    ) {
+        let automationCoordinator = automationCoordinator ?? AutomationCoordinator()
+        let elementRegistry = elementRegistry ?? automationCoordinator.elementRegistry
         self.windowRegistry = windowRegistry
+        self.inputTransactionExecutor = inputTransactionExecutor
+        self.automationCoordinator = automationCoordinator
+        self.elementRegistry = elementRegistry
+        self.elementLocator = elementLocator ?? ElementLocator(
+            elementRegistry: elementRegistry,
+            automationCoordinator: automationCoordinator,
+        )
+        self.executionBoundaryObserver = executionBoundaryObserver
+        self.deadlineWaiter = deadlineWaiter
+        self.deadlineOutcomeObserver = deadlineOutcomeObserver
+        self.raceWinnerObserver = raceWinnerObserver
     }
 
     /// Execute a macro with given parameters
-    public func executeMacro(
+    func executeMacro(
         macro: Macosusesdk_V1_Macro,
+        operationName: String? = nil,
         parameters: [String: String],
         parent: String,
+        applicationGeneration: AppStateStore.ApplicationProcessGenerationLease? = nil,
         timeout: Double,
+    ) async throws {
+        guard acceptingExecutions else {
+            throw MacroExecutionError.executionFailed("Macro execution admission is closed")
+        }
+        try Task.checkCancellation()
+        guard timeout.isFinite, timeout >= 0 else {
+            throw MacroExecutionError.invalidAction("Macro timeout must be finite and non-negative")
+        }
+        guard (parent.isEmpty && applicationGeneration == nil)
+            || (!parent.isEmpty && applicationGeneration?.name == parent)
+        else {
+            throw staleApplicationGenerationError()
+        }
+
+        let id = UUID()
+        let clock = ContinuousClock()
+        let deadline = clock.now.advanced(by: .seconds(timeout))
+        let task = Task {
+            try await self.executeMacroBeforeDeadline(
+                macro: macro,
+                operationName: operationName ?? "operations/\(UUID().uuidString)",
+                parameters: parameters,
+                parent: parent,
+                applicationGeneration: applicationGeneration,
+                clock: clock,
+                deadline: deadline,
+            )
+        }
+        executionTasks[id] = task
+
+        do {
+            try await withTaskCancellationHandler {
+                try await task.value
+            } onCancel: {
+                task.cancel()
+            }
+            executionTasks.removeValue(forKey: id)
+        } catch {
+            executionTasks.removeValue(forKey: id)
+            throw error
+        }
+    }
+
+    func activeExecutionCount() -> Int {
+        executionTasks.count
+    }
+
+    func beginDraining() {
+        guard acceptingExecutions else { return }
+        acceptingExecutions = false
+        for task in executionTasks.values {
+            task.cancel()
+        }
+    }
+
+    func shutdown() async {
+        beginDraining()
+        let tasks = Array(executionTasks.values)
+        for task in tasks {
+            _ = try? await task.value
+        }
+        executionTasks.removeAll(keepingCapacity: false)
+    }
+
+    private func executeMacroBody(
+        macro: Macosusesdk_V1_Macro,
+        operationName: String,
+        parameters: [String: String],
+        parent: String,
+        applicationGeneration: AppStateStore.ApplicationProcessGenerationLease?,
+        clock: ContinuousClock,
+        deadline: ContinuousClock.Instant,
     ) async throws {
         logger.info("Executing macro: \(macro.name, privacy: .public)")
 
@@ -105,8 +279,13 @@ public actor MacroExecutor {
         }
 
         // Build execution context
-        let pid = try? ParsingHelpers.parseOptionalPID(fromName: parent)
-        var context = MacroContext(parameters: parameters, parent: parent, pid: pid)
+        let operationID = try ParsingHelpers.parseOperationName(operationName).operationId
+        var context = MacroContext(
+            parameters: parameters,
+            parent: parent,
+            operationID: operationID,
+            applicationGeneration: applicationGeneration,
+        )
 
         // Apply default values for missing optional parameters
         for param in macro.parameters where !param.required && !param.defaultValue.isEmpty {
@@ -116,43 +295,109 @@ public actor MacroExecutor {
         }
 
         // Set timeout
-        let deadline = Date().addingTimeInterval(timeout)
+        let control = MacroExecutionControl(
+            clock: clock,
+            deadline: deadline,
+            observer: executionBoundaryObserver,
+            validateGeneration: { [inputTransactionExecutor, applicationGeneration] in
+                guard let applicationGeneration else { return }
+                guard await inputTransactionExecutor.stateStore
+                    .applicationProcessGenerationLease(name: applicationGeneration.name)
+                    == applicationGeneration,
+                    inputTransactionExecutor.system.isApplicationProcessRunning(
+                        applicationGeneration.identity,
+                    )
+                else {
+                    throw staleApplicationGenerationError()
+                }
+            },
+        )
 
         // Execute all actions
         for action in macro.actions {
-            // Check timeout
-            if Date() > deadline {
-                throw MacroExecutionError.timeout
-            }
-
-            try await executeAction(action, context: &context)
+            try await executeAction(action, context: &context, control: control)
         }
+        try await control.checkpoint(.completion)
 
         logger.info("Macro execution completed: \(macro.name, privacy: .public)")
+    }
+
+    private func executeMacroBeforeDeadline(
+        macro: Macosusesdk_V1_Macro,
+        operationName: String,
+        parameters: [String: String],
+        parent: String,
+        applicationGeneration: AppStateStore.ApplicationProcessGenerationLease?,
+        clock: ContinuousClock,
+        deadline: ContinuousClock.Instant,
+    ) async throws {
+        let deadlineWaiter = deadlineWaiter
+        let deadlineOutcomeObserver = deadlineOutcomeObserver
+        let raceWinnerObserver = raceWinnerObserver
+        let selected = await withTaskGroup(
+            of: MacroExecutionRaceEvent.self,
+            returning: MacroExecutionRaceEvent.self,
+        ) { group in
+            group.addTask {
+                do {
+                    try await self.executeMacroBody(
+                        macro: macro,
+                        operationName: operationName,
+                        parameters: parameters,
+                        parent: parent,
+                        applicationGeneration: applicationGeneration,
+                        clock: clock,
+                        deadline: deadline,
+                    )
+                    return .body(.success(()))
+                } catch {
+                    return .body(.failure(error))
+                }
+            }
+            group.addTask {
+                do {
+                    try await deadlineWaiter(deadline)
+                    try Task.checkCancellation()
+                    await deadlineOutcomeObserver()
+                    return .deadline(.failure(MacroExecutionError.timeout))
+                } catch {
+                    return .deadline(.failure(error))
+                }
+            }
+
+            let first = await group.next()!
+            await raceWinnerObserver(first.winner)
+            group.cancelAll()
+            while await group.next() != nil {}
+            return first
+        }
+        try selected.get()
     }
 
     private func executeAction(
         _ action: Macosusesdk_V1_MacroAction,
         context: inout MacroContext,
+        control: MacroExecutionControl,
     ) async throws {
+        try await control.checkpoint(.action)
         switch action.action {
         case let .input(inputAction):
-            try await executeInputAction(inputAction, context: context)
+            try await executeInputAction(inputAction, context: &context)
 
         case let .wait(waitAction):
-            try await executeWaitAction(waitAction, context: context)
+            try await executeWaitAction(waitAction, context: context, control: control)
 
         case let .conditional(conditionalAction):
-            try await executeConditionalAction(conditionalAction, context: &context)
+            try await executeConditionalAction(conditionalAction, context: &context, control: control)
 
         case let .loop(loopAction):
-            try await executeLoopAction(loopAction, context: &context)
+            try await executeLoopAction(loopAction, context: &context, control: control)
 
         case let .assign(assignAction):
             try executeAssignAction(assignAction, context: &context)
 
         case let .methodCall(methodCall):
-            try await executeMethodCall(methodCall, context: context)
+            try await executeMethodCall(methodCall, context: &context)
 
         case .none:
             throw MacroExecutionError.invalidAction("Empty action")
@@ -161,42 +406,56 @@ public actor MacroExecutor {
 
     private func executeInputAction(
         _ inputAction: Macosusesdk_V1_InputAction,
-        context: MacroContext,
+        context: inout MacroContext,
     ) async throws {
         // Substitute variables in input action
         var processedAction = inputAction
         processedAction = try substituteVariables(in: processedAction, context: context)
 
-        // Execute via AutomationCoordinator
-        try await AutomationCoordinator.shared.handleExecuteInput(
-            action: processedAction,
-            pid: context.pid,
-            showAnimation: false,
-            animationDuration: 0,
-        )
+        let ordinal = context.nextPhysicalOrdinal
+        let (nextOrdinal, overflow) = ordinal.addingReportingOverflow(1)
+        guard !overflow else {
+            throw MacroExecutionError.executionFailed("Physical macro action ordinal overflow")
+        }
+        context.nextPhysicalOrdinal = nextOrdinal
+        try await executePhysicalInput(processedAction, ordinal: ordinal, context: context)
     }
 
     private func executeWaitAction(
         _ waitAction: Macosusesdk_V1_WaitAction,
         context: MacroContext,
+        control: MacroExecutionControl,
     ) async throws {
         // Simple delay
         if !waitAction.hasCondition {
-            let nanoseconds = UInt64(waitAction.duration * 1_000_000_000)
-            try await Task.sleep(nanoseconds: nanoseconds)
+            try await control.sleep(seconds: waitAction.duration, boundary: .waitPoll)
             return
         }
 
         // Wait for condition
         let timeout = waitAction.condition.timeout > 0 ? waitAction.condition.timeout : 30.0
-        let endTime = Date().addingTimeInterval(timeout)
-        let pollInterval: TimeInterval = 0.5
+        guard timeout.isFinite else {
+            throw MacroExecutionError.invalidAction(
+                "Wait condition timeout must be finite",
+            )
+        }
+        let conditionDeadline = min(
+            control.deadline,
+            control.clock.now.advanced(by: .seconds(timeout)),
+        )
+        let pollInterval = Duration.milliseconds(500)
 
-        while Date() < endTime {
+        while control.clock.now < conditionDeadline {
+            try await control.checkpoint(.waitPoll)
             if try await evaluateWaitCondition(waitAction.condition, context: context) {
                 return
             }
-            try await Task.sleep(nanoseconds: UInt64(pollInterval * 1_000_000_000))
+            let remaining = control.clock.now.duration(to: conditionDeadline)
+            guard remaining > .zero else { break }
+            try await control.sleep(
+                for: min(pollInterval, remaining),
+                boundary: .waitPoll,
+            )
         }
 
         throw MacroExecutionError.timeout
@@ -212,7 +471,7 @@ public actor MacroExecutor {
             // Parse string to determine selector type
             let selector = parseSelectorString(selectorString)
             let validatedSelector = try SelectorParser.shared.parseSelector(selector)
-            let elementsWithPaths = try await ElementLocator.shared.findElements(
+            let elementsWithPaths = try await elementLocator.findElements(
                 selector: validatedSelector,
                 parent: context.parent,
                 visibleOnly: true,
@@ -241,16 +500,21 @@ public actor MacroExecutor {
     private func executeConditionalAction(
         _ conditionalAction: Macosusesdk_V1_ConditionalAction,
         context: inout MacroContext,
+        control: MacroExecutionControl,
     ) async throws {
-        let conditionMet = try await evaluateCondition(conditionalAction.condition, context: context)
+        let conditionMet = try await evaluateCondition(
+            conditionalAction.condition,
+            context: context,
+            control: control,
+        )
 
         if conditionMet {
             for action in conditionalAction.thenActions {
-                try await executeAction(action, context: &context)
+                try await executeAction(action, context: &context, control: control)
             }
         } else {
             for action in conditionalAction.elseActions {
-                try await executeAction(action, context: &context)
+                try await executeAction(action, context: &context, control: control)
             }
         }
     }
@@ -258,13 +522,15 @@ public actor MacroExecutor {
     private func evaluateCondition(
         _ condition: Macosusesdk_V1_MacroCondition,
         context: MacroContext,
+        control: MacroExecutionControl,
     ) async throws -> Bool {
+        try await control.checkpoint(.condition)
         switch condition.condition {
         case let .elementExists(selectorString):
             // Parse string to determine selector type
             let selector = parseSelectorString(selectorString)
             let validatedSelector = try SelectorParser.shared.parseSelector(selector)
-            let elementsWithPaths = try await ElementLocator.shared.findElements(
+            let elementsWithPaths = try await elementLocator.findElements(
                 selector: validatedSelector,
                 parent: context.parent,
                 visibleOnly: true,
@@ -290,7 +556,11 @@ public actor MacroExecutor {
             return value == varCondition.value
 
         case let .compound(compoundCondition):
-            return try await evaluateCompoundCondition(compoundCondition, context: context)
+            return try await evaluateCompoundCondition(
+                compoundCondition,
+                context: context,
+                control: control,
+            )
 
         case .none:
             return false
@@ -300,16 +570,21 @@ public actor MacroExecutor {
     private func evaluateCompoundCondition(
         _ compound: Macosusesdk_V1_CompoundCondition,
         context: MacroContext,
+        control: MacroExecutionControl,
     ) async throws -> Bool {
         switch compound.operator {
         case .and:
-            for condition in compound.conditions where try await !evaluateCondition(condition, context: context) {
+            for condition in compound.conditions
+                where try await !evaluateCondition(condition, context: context, control: control)
+            {
                 return false
             }
             return true
 
         case .or:
-            for condition in compound.conditions where try await evaluateCondition(condition, context: context) {
+            for condition in compound.conditions
+                where try await evaluateCondition(condition, context: context, control: control)
+            {
                 return true
             }
             return false
@@ -318,7 +593,11 @@ public actor MacroExecutor {
             guard compound.conditions.count == 1 else {
                 throw MacroExecutionError.invalidAction("NOT operator requires exactly one condition")
             }
-            return try await !evaluateCondition(compound.conditions[0], context: context)
+            return try await !evaluateCondition(
+                compound.conditions[0],
+                context: context,
+                control: control,
+            )
 
         case .unspecified, .UNRECOGNIZED:
             throw MacroExecutionError.invalidAction("Unspecified compound operator")
@@ -328,24 +607,35 @@ public actor MacroExecutor {
     private func executeLoopAction(
         _ loopAction: Macosusesdk_V1_LoopAction,
         context: inout MacroContext,
+        control: MacroExecutionControl,
     ) async throws {
         switch loopAction.loopType {
         case let .count(count):
+            guard count >= 0 else {
+                throw MacroExecutionError.invalidAction("Loop count must be non-negative")
+            }
             for _ in 0 ..< count {
+                try await control.checkpoint(.loopIteration)
                 for action in loopAction.actions {
-                    try await executeAction(action, context: &context)
+                    try await executeAction(action, context: &context, control: control)
                 }
             }
 
         case let .whileCondition(condition):
-            while try await evaluateCondition(condition, context: context) {
+            while try await evaluateCondition(condition, context: context, control: control) {
+                try await control.checkpoint(.loopIteration)
                 for action in loopAction.actions {
-                    try await executeAction(action, context: &context)
+                    try await executeAction(action, context: &context, control: control)
                 }
             }
 
         case let .foreach(forEachLoop):
-            try await executeForEachLoop(forEachLoop, actions: loopAction.actions, context: &context)
+            try await executeForEachLoop(
+                forEachLoop,
+                actions: loopAction.actions,
+                context: &context,
+                control: control,
+            )
 
         case .none:
             throw MacroExecutionError.invalidAction("Loop type not specified")
@@ -356,6 +646,7 @@ public actor MacroExecutor {
         _ forEach: Macosusesdk_V1_ForEachLoop,
         actions: [Macosusesdk_V1_MacroAction],
         context: inout MacroContext,
+        control: MacroExecutionControl,
     ) async throws {
         var items: [String] = []
 
@@ -365,7 +656,7 @@ public actor MacroExecutor {
             // Parse string to determine selector type
             let selector = parseSelectorString(selectorString)
             let validatedSelector = try SelectorParser.shared.parseSelector(selector)
-            let elementsWithPaths = try await ElementLocator.shared.findElements(
+            let elementsWithPaths = try await elementLocator.findElements(
                 selector: validatedSelector,
                 parent: context.parent,
                 visibleOnly: true,
@@ -394,9 +685,10 @@ public actor MacroExecutor {
 
         // Execute actions for each item
         for item in items {
+            try await control.checkpoint(.forEachItem)
             context.variables[forEach.itemVariable] = item
             for action in actions {
-                try await executeAction(action, context: &context)
+                try await executeAction(action, context: &context, control: control)
             }
         }
     }
@@ -434,7 +726,7 @@ public actor MacroExecutor {
 
     private func executeMethodCall(
         _ methodCall: Macosusesdk_V1_MethodCall,
-        context: MacroContext,
+        context: inout MacroContext,
     ) async throws {
         // Substitute variables in arguments
         var processedArgs: [String: String] = [:]
@@ -450,7 +742,7 @@ public actor MacroExecutor {
             }
 
             // Retrieve element from registry to get coordinates
-            guard let element = await ElementRegistry.shared.getElement(elementId) else {
+            guard let element = await elementRegistry.getElement(elementId) else {
                 throw MacroExecutionError.elementNotFound(elementId)
             }
 
@@ -464,22 +756,25 @@ public actor MacroExecutor {
             let centerY = element.y + (element.height / 2)
 
             // Click the element at its center
-            try await AutomationCoordinator.shared.handleExecuteInput(
-                action: Macosusesdk_V1_InputAction.with {
-                    $0.inputType = .click(
-                        Macosusesdk_V1_MouseClick.with {
-                            $0.position = Macosusesdk_Type_Point.with {
-                                $0.x = centerX
-                                $0.y = centerY
-                            }
-                            $0.clickType = .left
-                            $0.clickCount = 1
-                        },
-                    )
+            let clickOrdinal = context.nextPhysicalOrdinal
+            let (clickNextOrdinal, clickOverflow) = clickOrdinal.addingReportingOverflow(1)
+            guard !clickOverflow else {
+                throw MacroExecutionError.executionFailed("Physical macro action ordinal overflow")
+            }
+            context.nextPhysicalOrdinal = clickNextOrdinal
+            try await executePhysicalInput(
+                Macosusesdk_V1_InputAction.with {
+                    $0.click = Macosusesdk_V1_MouseClick.with {
+                        $0.position = Macosusesdk_Type_Point.with {
+                            $0.x = centerX
+                            $0.y = centerY
+                        }
+                        $0.clickType = .left
+                        $0.clickCount = 1
+                    }
                 },
-                pid: context.pid,
-                showAnimation: false,
-                animationDuration: 0,
+                ordinal: clickOrdinal,
+                context: context,
             )
 
         case "TypeText":
@@ -487,21 +782,68 @@ public actor MacroExecutor {
                 throw MacroExecutionError.invalidAction("TypeText requires text argument")
             }
 
-            try await AutomationCoordinator.shared.handleExecuteInput(
-                action: Macosusesdk_V1_InputAction.with {
-                    $0.inputType = .typeText(
-                        Macosusesdk_V1_TextInput.with {
-                            $0.text = text
-                        },
-                    )
+            let typeOrdinal = context.nextPhysicalOrdinal
+            let (typeNextOrdinal, typeOverflow) = typeOrdinal.addingReportingOverflow(1)
+            guard !typeOverflow else {
+                throw MacroExecutionError.executionFailed("Physical macro action ordinal overflow")
+            }
+            context.nextPhysicalOrdinal = typeNextOrdinal
+            try await executePhysicalInput(
+                Macosusesdk_V1_InputAction.with {
+                    $0.typeText = Macosusesdk_V1_TextInput.with {
+                        $0.text = text
+                    }
                 },
-                pid: context.pid,
-                showAnimation: false,
-                animationDuration: 0,
+                ordinal: typeOrdinal,
+                context: context,
             )
 
         default:
             throw MacroExecutionError.invalidAction("Unknown method: \(methodCall.method)")
+        }
+    }
+
+    private func executePhysicalInput(
+        _ action: Macosusesdk_V1_InputAction,
+        ordinal: UInt64,
+        context: MacroContext,
+    ) async throws {
+        guard let applicationGeneration = context.applicationGeneration,
+              applicationGeneration.name == context.parent,
+              applicationGeneration.pid == context.pid
+        else {
+            throw MacroExecutionError.executionFailed(
+                "Physical macro action requires one exact application generation",
+            )
+        }
+
+        let inputID = "macro-\(context.operationID)-\(ordinal)"
+        let request = Macosusesdk_V1_CreateInputRequest.with {
+            $0.parent = applicationGeneration.name
+            $0.inputID = inputID
+            $0.input = Macosusesdk_V1_Input.with {
+                $0.action = action
+                $0.target.application = applicationGeneration.name
+            }
+        }
+        let input = try await inputTransactionExecutor.execute(
+            request,
+            expectedApplicationGeneration: applicationGeneration,
+        )
+        let expectedName = "\(applicationGeneration.name)/inputs/\(inputID)"
+        guard input.name == expectedName,
+              input.action == action,
+              input.target.application == applicationGeneration.name,
+              input.state == .completed,
+              input.error.isEmpty,
+              input.hasDeliveryResult,
+              input.deliveryResult.commitment == .committedAndSettled,
+              input.deliveryResult.postedEventCount > 0,
+              input.deliveryResult.routedDeliveryObserved
+        else {
+            throw MacroExecutionError.executionFailed(
+                "Physical macro Input did not settle with exact committed delivery truth",
+            )
         }
     }
 

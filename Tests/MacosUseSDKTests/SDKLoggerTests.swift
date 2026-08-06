@@ -140,10 +140,7 @@ final class SDKLoggerCategoryTests: XCTestCase {
             "WindowQuery",
             "InputController",
             "AppOpener",
-            "ActionCoordinator",
-            "CombinedActions",
-            "DrawVisuals",
-            "HighlightInput",
+            "InputOverlayRenderer",
         ]
 
         // Verify we can create loggers for each expected category

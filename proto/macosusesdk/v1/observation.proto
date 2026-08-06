@@ -9,7 +9,7 @@ package macosusesdk.v1;
 import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 import "google/protobuf/timestamp.proto";
-import "macosusesdk/type/element.proto";
+import "macosusesdk/v1/element.proto";
 
 option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1";
 option java_multiple_files = true;
@@ -86,6 +86,16 @@ message ObservationFilter {
 
   // Specific attributes to observe (for attribute change observations).
   repeated string attributes = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to restrict observation to the focused element only.
+  bool focus_only = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to include element geometry in change detection.
+  bool geometry = 6 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to observe application activation state changes.
+  // Reserved for FUNC-012; silently ignored during FUNC-004.
+  bool activation = 7 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // An event from an observation.
@@ -124,16 +134,16 @@ message ObservationEvent {
 // Event related to an element.
 message ElementEvent {
   // The element.
-  macosusesdk.type.Element element = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+  Element element = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Event for an element modification.
 message ElementModified {
   // The element before modification.
-  macosusesdk.type.Element old_element = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+  Element old_element = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // The element after modification.
-  macosusesdk.type.Element new_element = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  Element new_element = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Changed attributes.
   repeated AttributeChange changes = 3 [(google.api.field_behavior) = OUTPUT_ONLY];

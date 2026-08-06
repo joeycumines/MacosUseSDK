@@ -15,24 +15,79 @@ extension MacosUseService {
         let req = request.message
         Self.logger.info("createObservation called (LRO)")
 
-        // Parse parent resource name to get PID
-        let pid = try parsePID(fromName: req.parent)
+        guard req.hasObservation else {
+            throw RPCErrorHelpers.validationError(
+                message: "observation is required",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "observation",
+            )
+        }
+        guard req.observation.name.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "observation.name must be omitted when creating an observation",
+                reason: "INVALID_RESOURCE_NAME",
+                field: "observation.name",
+                value: req.observation.name,
+            )
+        }
+        let requestedObservationID: String? = if req.observationID.isEmpty {
+            nil
+        } else {
+            try ParsingHelpers.validateResourceID(
+                req.observationID,
+                field: "observation_id",
+            )
+        }
+
+        // Reject unspecified and application-changes observation types.
+        switch req.observation.type {
+        case .unspecified:
+            throw RPCErrorHelpers.validationError(
+                message: "observation.type is required and must not be unspecified",
+                reason: "REQUIRED_FIELD_MISSING",
+                field: "observation.type",
+            )
+        case .applicationChanges:
+            throw RPCError(
+                code: .unimplemented,
+                message: "OBSERVATION_TYPE_APPLICATION_CHANGES is not yet implemented; deferred to FUNC-012",
+            )
+        case .UNRECOGNIZED:
+            throw RPCErrorHelpers.validationError(
+                message: "observation.type is unrecognized; update the client to a supported value",
+                reason: "INVALID_ARGUMENT",
+                field: "observation.type",
+            )
+        default:
+            break
+        }
+
+        var filter: Macosusesdk_V1_ObservationFilter?
+        if req.observation.hasFilter {
+            var validatedFilter = req.observation.filter
+            validatedFilter.pollInterval = try RequestNumericValidation.optionalPollInterval(
+                validatedFilter.pollInterval,
+                default: 1,
+                field: "observation.filter.poll_interval",
+            )
+            filter = validatedFilter
+        }
+        let pid = try await resolveApplicationPID(fromName: req.parent)
 
         // Generate observation ID
         let observationId =
-            req.observationID.isEmpty ? UUID().uuidString : req.observationID
+            requestedObservationID ?? UUID().uuidString
         let observationName = "\(req.parent)/observations/\(observationId)"
 
         // Create operation for LRO
-        let opName = "operations/observation/\(observationId)"
+        let opName = "operations/\(UUID().uuidString)"
 
-        // Create initial observation in ObservationManager
-        let observation = await ObservationManager.shared.createObservation(
+        // Prepare metadata without publishing manager state. The owned operation
+        // registers this exact resource only after operation admission succeeds.
+        let observation = ObservationManager.makeObservation(
             name: observationName,
             type: req.observation.type,
-            parent: req.parent,
-            filter: req.observation.hasFilter ? req.observation.filter : nil,
-            pid: pid,
+            filter: filter,
             activate: req.observation.activate,
         )
 
@@ -42,40 +97,83 @@ extension MacosUseService {
             $0.value = try observation.serializedData()
         }
 
-        // Create LRO
-        let op = await operationStore.createOperation(name: opName, metadata: metadata)
-
-        // Start observation in background
-        Task { [operationStore] in
-            do {
-                // Start the observation
-                try await ObservationManager.shared.startObservation(name: observationName)
-
-                // Get updated observation
-                guard
-                    let startedObservation = await ObservationManager.shared.getObservation(
-                        name: observationName,
+        // Atomically create the LRO with ownership of its producer task.
+        let op = try await operationStore.createOperation(
+            name: opName,
+            metadata: metadata,
+            execution: { [operationStore, observationManager] in
+                var ownsObservation = false
+                do {
+                    try Task.checkCancellation()
+                    try await observationManager.registerObservation(
+                        observation,
+                        parent: req.parent,
+                        pid: pid,
+                        activate: req.observation.activate,
                     )
-                else {
-                    throw RPCError(code: .internalError, message: "Failed to start observation")
-                }
+                    ownsObservation = true
 
-                // Mark operation as done with observation in response
-                try await operationStore.finishOperation(name: opName, responseMessage: startedObservation)
+                    // Start the observation
+                    try await observationManager.startObservation(name: observationName)
+                    try Task.checkCancellation()
 
-            } catch {
-                // Mark operation as failed
-                var errOp = await operationStore.getOperation(name: opName) ?? op
-                errOp.done = true
-                errOp.error = Google_Rpc_Status.with {
-                    $0.code = Int32(RPCError.Code.internalError.rawValue)
-                    $0.message = "\(error)"
+                    // Get updated observation
+                    guard
+                        let startedObservation = await observationManager.getObservation(
+                            name: observationName,
+                        )
+                    else {
+                        throw RPCError(code: .internalError, message: "Failed to start observation")
+                    }
+
+                    // Mark operation as done with observation in response
+                    let publication = try await operationStore.finishOperation(
+                        name: opName,
+                        responseMessage: startedObservation,
+                    )
+                    await Self.reconcileObservationPublication(
+                        publication,
+                        observationName: observationName,
+                        observationManager: observationManager,
+                    )
+                    ownsObservation = false
+
+                } catch is CancellationError {
+                    if ownsObservation {
+                        _ = await observationManager.cancelObservation(name: observationName)
+                    }
+                    await operationStore.failOperation(
+                        name: opName,
+                        code: Int32(RPCError.Code.cancelled.rawValue),
+                        message: "Observation creation cancelled",
+                    )
+                } catch {
+                    if ownsObservation {
+                        _ = await observationManager.cancelObservation(name: observationName)
+                    }
+                    await operationStore.failOperation(
+                        name: opName,
+                        code: Int32(RPCError.Code.internalError.rawValue),
+                        message: "\(error)",
+                    )
                 }
-                await operationStore.putOperation(errOp)
-            }
-        }
+            },
+        )
 
         return ServerResponse(message: op)
+    }
+
+    static func reconcileObservationPublication(
+        _ publication: OperationPublicationOutcome,
+        observationName: String,
+        observationManager: ObservationManager,
+    ) async {
+        switch publication {
+        case .published, .discarded:
+            return
+        case .alreadyTerminal:
+            _ = await observationManager.cancelObservation(name: observationName)
+        }
     }
 
     func getObservation(
@@ -92,9 +190,10 @@ extension MacosUseService {
                 field: "name",
             )
         }
+        _ = try await resolveApplicationChildResource(req.name, collection: "observations")
 
         // Get observation from ObservationManager
-        guard let observation = await ObservationManager.shared.getObservation(name: req.name)
+        guard let observation = await observationManager.getObservation(name: req.name)
         else {
             throw RPCError(code: .notFound, message: "Observation not found")
         }
@@ -107,35 +206,38 @@ extension MacosUseService {
     ) async throws -> ServerResponse<Macosusesdk_V1_ListObservationsResponse> {
         let req = request.message
         Self.logger.info("listObservations called")
+        let pageSize = try RequestNumericValidation.pageSize(req.pageSize)
+        let queryBinding = ParsingHelpers.pageTokenQuery(
+            method: "ListObservations",
+            parameters: [
+                ("parent", req.parent),
+                ("page_size", String(pageSize)),
+            ],
+        )
+        let offset = try ParsingHelpers.pageOffset(
+            token: req.pageToken,
+            queryBinding: queryBinding,
+        )
+        _ = try await resolveApplicationPID(fromName: req.parent)
 
         // List observations for parent
-        let allObservations = await ObservationManager.shared.listObservations(parent: req.parent)
+        let allObservations = await observationManager.listObservations(parent: req.parent)
 
         // Sort by name for deterministic ordering
         let sortedObservations = allObservations.sorted { $0.name < $1.name }
 
-        // Decode page_token to get offset
-        let offset: Int = if req.pageToken.isEmpty {
-            0
-        } else {
-            try decodePageToken(req.pageToken)
-        }
-
-        // Determine page size (default 100 if not specified or <= 0)
-        let pageSize = req.pageSize > 0 ? Int(req.pageSize) : 100
         let totalCount = sortedObservations.count
-
-        // Calculate slice bounds
-        let startIndex = min(offset, totalCount)
-        let endIndex = min(startIndex + pageSize, totalCount)
-        let pageObservations = Array(sortedObservations[startIndex ..< endIndex])
-
-        // Generate next_page_token if more results exist
-        let nextPageToken = if endIndex < totalCount {
-            encodePageToken(offset: endIndex)
-        } else {
-            ""
-        }
+        let range = try ParsingHelpers.pageRange(
+            offset: offset,
+            pageSize: pageSize,
+            totalCount: totalCount,
+        )
+        let pageObservations = Array(sortedObservations[range])
+        let nextPageToken = ParsingHelpers.nextPageToken(
+            endOffset: range.upperBound,
+            totalCount: totalCount,
+            queryBinding: queryBinding,
+        )
 
         let response = Macosusesdk_V1_ListObservationsResponse.with {
             $0.observations = pageObservations
@@ -158,10 +260,11 @@ extension MacosUseService {
                 field: "name",
             )
         }
+        _ = try await resolveApplicationChildResource(req.name, collection: "observations")
 
         // Cancel observation in ObservationManager
         guard
-            let observation = await ObservationManager.shared.cancelObservation(name: req.name)
+            let observation = await observationManager.cancelObservation(name: req.name)
         else {
             throw RPCError(code: .notFound, message: "Observation not found")
         }
@@ -184,43 +287,54 @@ extension MacosUseService {
                 field: "name",
             )
         }
+        _ = try await resolveApplicationChildResource(req.name, collection: "observations")
 
         // Verify observation exists
-        guard await ObservationManager.shared.getObservation(name: req.name) != nil else {
+        guard await observationManager.getObservation(name: req.name) != nil else {
             throw RPCError(code: .notFound, message: "Observation not found")
         }
 
         // Create event stream
-        guard let eventStream = await ObservationManager.shared.createEventStream(name: req.name)
+        guard let eventStream = await observationManager.createEventStream(name: req.name)
         else {
             throw RPCError(code: .notFound, message: "Failed to create event stream")
         }
 
-        return StreamingServerResponse { writer async in
-            // Stream events to client
-            // NOTE: The for-await-in loop will suspend and yield control, allowing the gRPC
-            // executor to handle this task cooperatively with others.
-            for await event in eventStream {
-                // Check if client disconnected
-                if Task.isCancelled {
-                    Self.logger.info("client disconnected from observation stream")
-                    break
-                }
-
-                // Send event to client
-                let response = Macosusesdk_V1_StreamObservationsResponse.with {
-                    $0.event = event
-                }
-
-                do {
+        return StreamingServerResponse { [observationManager] writer async throws -> Metadata in
+            let producer = try await observationManager.createEventStreamProducer(
+                id: eventStream.id,
+                name: req.name,
+            ) {
+                for await event in eventStream.stream {
+                    try Task.checkCancellation()
+                    let response = Macosusesdk_V1_StreamObservationsResponse.with {
+                        $0.event = event
+                    }
                     try await writer.write(response)
-                } catch {
-                    break
                 }
             }
 
-            // Return trailing metadata after stream completes
-            return [:]
+            do {
+                try await withTaskCancellationHandler {
+                    try await withRPCCancellationHandler {
+                        try await producer.value
+                    } onCancelRPC: {
+                        producer.cancel()
+                    }
+                } onCancel: {
+                    producer.cancel()
+                }
+                await observationManager.releaseEventStream(id: eventStream.id, name: req.name)
+                return [:]
+            } catch {
+                producer.cancel()
+                _ = await producer.result
+                await observationManager.releaseEventStream(id: eventStream.id, name: req.name)
+                if error is CancellationError {
+                    throw RPCError(code: .cancelled, message: "observation stream cancelled")
+                }
+                throw error
+            }
         }
     }
 }

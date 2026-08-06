@@ -5,17 +5,235 @@
 import AppKit
 import ApplicationServices
 import Foundation
+import GRPCCore
 import MacosUseProto
 @preconcurrency import ScreenCaptureKit
 import UniformTypeIdentifiers
 import Vision
 
+enum ScreenshotOCRResult: Sendable {
+    case notRequested
+    case text(String)
+    case failure(Google_Rpc_Status)
+
+    func validate(requested: Bool) throws {
+        switch (requested, self) {
+        case (false, .notRequested), (true, .text):
+            return
+        case let (true, .failure(status)) where (1 ... 16).contains(status.code):
+            return
+        case (false, .text), (false, .failure), (true, .notRequested):
+            throw RPCError(
+                code: .unavailable,
+                message: "Screenshot OCR metadata is inconsistent with the request",
+            )
+        case (true, .failure):
+            throw RPCError(
+                code: .unavailable,
+                message: "Screenshot OCR failure contains a non-error status code",
+            )
+        }
+    }
+}
+
+struct ScreenshotCaptureOutput: Sendable {
+    let data: Data
+    let format: Macosusesdk_V1_ImageFormat
+    let pixelWidth: Int32
+    let pixelHeight: Int32
+    let displayID: CGDirectDisplayID
+    let logicalFrame: CGRect
+    let scale: Double
+    let ocrResult: ScreenshotOCRResult
+}
+
+struct WindowScreenshotCaptureSource: Sendable {
+    let name: String
+    let windowID: CGWindowID
+    let ownerPID: pid_t
+    let processIdentity: ApplicationProcessIdentity?
+    let admittedFrame: CGRect
+}
+
+struct WindowScreenshotCaptureOutput: Sendable {
+    let data: Data
+    let format: Macosusesdk_V1_ImageFormat
+    let pixelWidth: Int32
+    let pixelHeight: Int32
+    let sourceName: String
+    let windowID: CGWindowID
+    let ownerPID: pid_t
+    let windowFrame: CGRect
+    let logicalFrame: CGRect
+    let scale: Double
+    let shadowIncluded: Bool
+    let clipped: Bool
+    let ocrResult: ScreenshotOCRResult
+}
+
+protocol ScreenshotCapturing: Sendable {
+    func captureDisplay(
+        _ display: DisplayTopologyDisplay,
+        format: Macosusesdk_V1_ImageFormat,
+        quality: Int32,
+        includeOCR: Bool,
+    ) async throws -> ScreenshotCaptureOutput
+
+    func captureRegion(
+        _ region: CGRect,
+        display: DisplayTopologyDisplay,
+        format: Macosusesdk_V1_ImageFormat,
+        quality: Int32,
+        includeOCR: Bool,
+    ) async throws -> ScreenshotCaptureOutput
+
+    func captureWindow(
+        _ source: WindowScreenshotCaptureSource,
+        format: Macosusesdk_V1_ImageFormat,
+        quality: Int32,
+        includeShadow: Bool,
+        includeOCR: Bool,
+    ) async throws -> WindowScreenshotCaptureOutput
+}
+
+struct ProductionScreenshotCapturer: ScreenshotCapturing {
+    func captureDisplay(
+        _ display: DisplayTopologyDisplay,
+        format: Macosusesdk_V1_ImageFormat,
+        quality: Int32,
+        includeOCR: Bool,
+    ) async throws -> ScreenshotCaptureOutput {
+        try await ScreenshotCapture.captureDisplay(
+            display,
+            format: format,
+            quality: quality,
+            includeOCR: includeOCR,
+        )
+    }
+
+    func captureRegion(
+        _ region: CGRect,
+        display: DisplayTopologyDisplay,
+        format: Macosusesdk_V1_ImageFormat,
+        quality: Int32,
+        includeOCR: Bool,
+    ) async throws -> ScreenshotCaptureOutput {
+        try await ScreenshotCapture.captureRegion(
+            region,
+            display: display,
+            format: format,
+            quality: quality,
+            includeOCR: includeOCR,
+        )
+    }
+
+    func captureWindow(
+        _ source: WindowScreenshotCaptureSource,
+        format: Macosusesdk_V1_ImageFormat,
+        quality: Int32,
+        includeShadow: Bool,
+        includeOCR: Bool,
+    ) async throws -> WindowScreenshotCaptureOutput {
+        try await ScreenshotCapture.captureWindow(
+            source,
+            format: format,
+            quality: quality,
+            includeShadow: includeShadow,
+            includeOCR: includeOCR,
+        )
+    }
+}
+
 /// Utility for capturing screenshots with various options.
 @MainActor
 struct ScreenshotCapture {
+    static func captureDisplay(
+        _ display: DisplayTopologyDisplay,
+        format: Macosusesdk_V1_ImageFormat,
+        quality: Int32,
+        includeOCR: Bool,
+    ) async throws -> ScreenshotCaptureOutput {
+        let content = try await SCShareableContent.current
+        let source = try exactDisplay(display, in: content)
+        let filter = SCContentFilter(display: source, excludingWindows: [])
+        try validateCaptureFilter(filter, against: display)
+        let image = try await capture(filter: filter)
+        try await revalidateCaptureDisplay(display)
+        return try captureOutput(
+            image: image,
+            display: display,
+            logicalFrame: display.frame,
+            format: format,
+            quality: quality,
+            includeOCR: includeOCR,
+        )
+    }
+
+    static func captureRegion(
+        _ region: CGRect,
+        display: DisplayTopologyDisplay,
+        format: Macosusesdk_V1_ImageFormat,
+        quality: Int32,
+        includeOCR: Bool,
+    ) async throws -> ScreenshotCaptureOutput {
+        guard EndpointSafeGeometry.containsValidEndpoints(
+            region,
+            requiresPositiveSize: true,
+        ),
+            display.frame.containsWithTolerance(region)
+        else {
+            throw RPCError(code: .invalidArgument, message: "Capture region is outside its display")
+        }
+
+        let content = try await SCShareableContent.current
+        let source = try exactDisplay(display, in: content)
+        let filter = SCContentFilter(display: source, excludingWindows: [])
+        try validateCaptureFilter(filter, against: display)
+        let fullImage = try await capture(filter: filter)
+        try await revalidateCaptureDisplay(display)
+        let scaleX = CGFloat(fullImage.width) / display.frame.width
+        let scaleY = CGFloat(fullImage.height) / display.frame.height
+        guard nearlyEqual(scaleX, CGFloat(display.scale)),
+              nearlyEqual(scaleY, CGFloat(display.scale))
+        else {
+            throw RPCError(code: .unavailable, message: "Capture pixel scale changed")
+        }
+
+        let requestedPixels = CGRect(
+            x: (region.minX - display.frame.minX) * scaleX,
+            y: (region.minY - display.frame.minY) * scaleY,
+            width: region.width * scaleX,
+            height: region.height * scaleY,
+        )
+        let imageBounds = CGRect(x: 0, y: 0, width: fullImage.width, height: fullImage.height)
+        let pixelFrame = requestedPixels.integral.intersection(imageBounds)
+        guard !pixelFrame.isNull,
+              pixelFrame.width > 0,
+              pixelFrame.height > 0,
+              pixelFrame.containsWithTolerance(requestedPixels),
+              let image = fullImage.cropping(to: pixelFrame)
+        else {
+            throw RPCError(code: .unavailable, message: "Capture region could not be quantized")
+        }
+        let logicalFrame = CGRect(
+            x: display.frame.minX + pixelFrame.minX / scaleX,
+            y: display.frame.minY + pixelFrame.minY / scaleY,
+            width: pixelFrame.width / scaleX,
+            height: pixelFrame.height / scaleY,
+        )
+        return try captureOutput(
+            image: image,
+            display: display,
+            logicalFrame: logicalFrame,
+            format: format,
+            quality: quality,
+            includeOCR: includeOCR,
+        )
+    }
+
     /// Capture the entire screen or a specific display.
     /// - Parameters:
-    ///   - displayID: Optional display ID (0 for main display, nil for all displays)
+    ///   - displayID: Exact display ID, or nil for the main display.
     ///   - format: Image format (PNG, JPEG, TIFF)
     ///   - quality: JPEG quality (1-100, only applicable for JPEG)
     ///   - includeOCR: Whether to extract text via OCR
@@ -27,8 +245,9 @@ struct ScreenshotCapture {
         includeOCR: Bool = false,
     ) async throws -> (data: Data, width: Int32, height: Int32, ocrText: String?) {
         let content = try await SCShareableContent.current
-        let display = content.displays.first { $0.displayID == (displayID ?? CGMainDisplayID()) }
-            ?? content.displays.first
+        let display = content.displays.first {
+            $0.displayID == (displayID ?? CGMainDisplayID())
+        }
 
         guard let display else {
             throw ScreenshotError.captureFailedScreen
@@ -36,65 +255,108 @@ struct ScreenshotCapture {
 
         let cgImage = try await capture(filter: .init(display: display, excludingWindows: []))
 
-        let width = cgImage.width
-        let height = cgImage.height
+        let dimensions = try checkedImageDimensions(cgImage)
         let imageData = try encodeImage(cgImage, format: format, quality: quality)
 
-        var ocrText: String?
-        if includeOCR {
-            ocrText = try? extractText(from: cgImage)
-        }
+        let ocrText = includeOCR ? try extractText(from: cgImage) : nil
 
-        return (imageData, Int32(width), Int32(height), ocrText)
+        return (imageData, dimensions.width, dimensions.height, ocrText)
     }
 
-    /// Capture a specific window by ID.
+    /// Capture one exact process-owned window.
     /// - Parameters:
-    ///   - windowID: CGWindowID to capture
+    ///   - source: Exact public binding, CG ID, owner PID, process identity,
+    ///     and admitted frame.
     ///   - includeShadow: Whether to include window shadow
     ///   - format: Image format (PNG, JPEG, TIFF)
     ///   - quality: JPEG quality (1-100, only applicable for JPEG)
     ///   - includeOCR: Whether to extract text via OCR
     /// - Returns: Captured image data and metadata
     static func captureWindow(
-        windowID: CGWindowID,
-        includeShadow: Bool = false,
+        _ source: WindowScreenshotCaptureSource,
         format: Macosusesdk_V1_ImageFormat = .png,
         quality: Int32 = 85,
+        includeShadow: Bool = false,
         includeOCR: Bool = false,
-    ) async throws -> (data: Data, width: Int32, height: Int32, ocrText: String?) {
+    ) async throws -> WindowScreenshotCaptureOutput {
         let content = try await SCShareableContent.current
         guard
             let window = content.windows.first(where: {
-                $0.windowID == windowID && $0.isOnScreen
-            })
+                $0.windowID == source.windowID &&
+                    $0.owningApplication?.processID == source.ownerPID &&
+                    $0.isOnScreen
+            }),
+            window.frame.nearlyEquals(source.admittedFrame)
         else {
-            throw ScreenshotError.windowNotFound(windowID)
+            throw RPCError(code: .unavailable, message: "Exact capture window source changed")
         }
 
         let filter = SCContentFilter(desktopIndependentWindow: window)
-        let config = SCStreamConfiguration()
-
-        // shouldBeOpaque controls the alpha channel:
-        //   includeShadow == true  → alpha channel (shadow blends with background)
-        //   includeShadow == false → fully opaque (no transparency)
-        // Note: capturesShadowsOnly was incorrectly set to includeShadow,
-        // which would capture ONLY the shadow (not the window content).
-        // It is now left at the default (false) to always capture the window.
-        config.shouldBeOpaque = !includeShadow
-
-        let cgImage = try await capture(filter: filter, config: config)
-
-        let width = cgImage.width
-        let height = cgImage.height
-        let imageData = try encodeImage(cgImage, format: format, quality: quality)
-
-        var ocrText: String?
-        if includeOCR {
-            ocrText = try? extractText(from: cgImage)
+        let configuration = windowCaptureConfiguration(includeShadow: includeShadow)
+        let logicalFrame = filter.contentRect
+        let scale = Double(filter.pointPixelScale)
+        guard EndpointSafeGeometry.containsValidEndpoints(
+            logicalFrame,
+            requiresPositiveSize: true,
+        ),
+            scale.isFinite,
+            scale > 0
+        else {
+            throw RPCError(code: .unavailable, message: "Window capture geometry is unavailable")
+        }
+        let image = try await capture(filter: filter, config: configuration)
+        let dimensions = try checkedImageDimensions(image)
+        guard abs(Double(image.width) - Double(logicalFrame.width) * scale) < 1,
+              abs(Double(image.height) - Double(logicalFrame.height) * scale) < 1
+        else {
+            throw RPCError(code: .unavailable, message: "Window capture pixel geometry changed")
+        }
+        let verifiedContent = try await SCShareableContent.current
+        guard
+            let verifiedWindow = verifiedContent.windows.first(where: {
+                $0.windowID == source.windowID &&
+                    $0.owningApplication?.processID == source.ownerPID &&
+                    $0.isOnScreen
+            }),
+            verifiedWindow.frame.nearlyEquals(window.frame),
+            verifiedWindow.frame.nearlyEquals(source.admittedFrame)
+        else {
+            throw RPCError(code: .unavailable, message: "Exact capture window source changed during capture")
+        }
+        let verifiedFilter = SCContentFilter(desktopIndependentWindow: verifiedWindow)
+        guard verifiedFilter.contentRect.nearlyEquals(logicalFrame),
+              nearlyEqual(
+                  CGFloat(verifiedFilter.pointPixelScale),
+                  CGFloat(filter.pointPixelScale),
+              ),
+              logicalFrame.containsWithTolerance(verifiedWindow.frame)
+        else {
+            throw RPCError(code: .unavailable, message: "Window capture geometry changed during capture")
         }
 
-        return (imageData, Int32(width), Int32(height), ocrText)
+        return try WindowScreenshotCaptureOutput(
+            data: encodeImage(image, format: format, quality: quality),
+            format: format,
+            pixelWidth: dimensions.width,
+            pixelHeight: dimensions.height,
+            sourceName: source.name,
+            windowID: verifiedWindow.windowID,
+            ownerPID: verifiedWindow.owningApplication?.processID ?? 0,
+            windowFrame: verifiedWindow.frame,
+            logicalFrame: logicalFrame,
+            scale: scale,
+            shadowIncluded: includeShadow,
+            clipped: false,
+            ocrResult: ocrResult(for: image, requested: includeOCR),
+        )
+    }
+
+    static func windowCaptureConfiguration(includeShadow: Bool) -> SCStreamConfiguration {
+        let configuration = SCStreamConfiguration()
+        configuration.ignoreShadowsSingleWindow = !includeShadow
+        configuration.capturesShadowsOnly = false
+        configuration.ignoreGlobalClipSingleWindow = true
+        return configuration
     }
 
     /// Capture a specific screen region.
@@ -117,9 +379,11 @@ struct ScreenshotCapture {
         }
 
         let content = try await SCShareableContent.current
-        let display = content.displays.first { $0.frame.intersects(bounds) }
-            ?? content.displays.first { $0.displayID == (displayID ?? CGMainDisplayID()) }
-            ?? content.displays.first
+        let display: SCDisplay? = if let displayID {
+            content.displays.first { $0.displayID == displayID }
+        } else {
+            content.displays.first { $0.frame.contains(bounds) }
+        }
 
         guard let display else {
             throw ScreenshotError.captureFailedRegion(bounds)
@@ -131,7 +395,7 @@ struct ScreenshotCapture {
         // We must scale the crop rect from points to pixels to match the image.
         let fullImage = try await capture(filter: .init(display: display, excludingWindows: []))
 
-        let (scaleX, scaleY) = Self.pixelScaleFactors(
+        let (scaleX, scaleY) = try Self.pixelScaleFactors(
             imageWidth: fullImage.width,
             imageHeight: fullImage.height,
             frame: display.frame,
@@ -151,16 +415,12 @@ struct ScreenshotCapture {
             throw ScreenshotError.captureFailedRegion(bounds)
         }
 
-        let width = croppedImage.width
-        let height = croppedImage.height
+        let dimensions = try checkedImageDimensions(croppedImage)
         let imageData = try encodeImage(croppedImage, format: format, quality: quality)
 
-        var ocrText: String?
-        if includeOCR {
-            ocrText = try? extractText(from: croppedImage)
-        }
+        let ocrText = includeOCR ? try extractText(from: croppedImage) : nil
 
-        return (imageData, Int32(width), Int32(height), ocrText)
+        return (imageData, dimensions.width, dimensions.height, ocrText)
     }
 
     /// Computes pixel-to-point scale factors for converting a screen-point
@@ -168,18 +428,75 @@ struct ScreenshotCapture {
     /// the correct sub-rect on Retina displays where the captured image is
     /// in pixels but the requested bounds are in screen points.
     ///
-    /// Returns (1.0, 1.0) when the frame has zero dimensions to avoid
-    /// division by zero — the caller's `CGImage.cropping(to:)` will return
-    /// nil and the error path handles it.
     nonisolated static func pixelScaleFactors(
         imageWidth: Int,
         imageHeight: Int,
         frame: CGRect,
-    ) -> (scaleX: CGFloat, scaleY: CGFloat) {
-        guard frame.width > 0, frame.height > 0 else {
-            return (1.0, 1.0)
+    ) throws -> (scaleX: CGFloat, scaleY: CGFloat) {
+        guard imageWidth > 0,
+              imageHeight > 0,
+              EndpointSafeGeometry.containsValidEndpoints(
+                  frame,
+                  requiresPositiveSize: true,
+              )
+        else {
+            throw RPCError(
+                code: .unavailable,
+                message: "Capture pixel geometry is unavailable",
+            )
         }
-        return (CGFloat(imageWidth) / frame.width, CGFloat(imageHeight) / frame.height)
+        let scaleX = CGFloat(imageWidth) / frame.width
+        let scaleY = CGFloat(imageHeight) / frame.height
+        guard scaleX.isFinite, scaleX > 0, scaleY.isFinite, scaleY > 0 else {
+            throw RPCError(
+                code: .unavailable,
+                message: "Capture pixel scale is unavailable",
+            )
+        }
+        return (scaleX, scaleY)
+    }
+
+    nonisolated static func checkedNativePixelDimensions(
+        frame: CGRect,
+        scale: CGFloat,
+    ) throws -> (width: Int, height: Int) {
+        guard EndpointSafeGeometry.containsValidEndpoints(
+            frame,
+            requiresPositiveSize: true,
+        ),
+            scale.isFinite,
+            scale > 0
+        else {
+            throw RPCError(
+                code: .unavailable,
+                message: "Capture source geometry is unavailable",
+            )
+        }
+
+        let rawWidth = frame.width * scale
+        let rawHeight = frame.height * scale
+        guard rawWidth.isFinite, rawWidth > 0, rawHeight.isFinite, rawHeight > 0 else {
+            throw RPCError(
+                code: .unavailable,
+                message: "Capture pixel geometry is unavailable",
+            )
+        }
+        guard rawWidth <= CGFloat(Int32.max), rawHeight <= CGFloat(Int32.max) else {
+            throw RPCError(
+                code: .resourceExhausted,
+                message: "Capture pixel dimensions are too large",
+            )
+        }
+
+        let width = Int(rawWidth.rounded())
+        let height = Int(rawHeight.rounded())
+        guard width > 0, height > 0 else {
+            throw RPCError(
+                code: .unavailable,
+                message: "Capture pixel dimensions are unavailable",
+            )
+        }
+        return (width, height)
     }
 
     private static func capture(
@@ -195,8 +512,12 @@ struct ScreenshotCapture {
         // Ref: https://developer.apple.com/documentation/screencapturekit/sccontentfilter/contentrect
         // Ref: https://developer.apple.com/documentation/screencapturekit/sccontentfilter/pointpixelscale
         let scale = CGFloat(filter.pointPixelScale)
-        config.width = Int(filter.contentRect.width * scale)
-        config.height = Int(filter.contentRect.height * scale)
+        let dimensions = try checkedNativePixelDimensions(
+            frame: filter.contentRect,
+            scale: scale,
+        )
+        config.width = dimensions.width
+        config.height = dimensions.height
 
         // Use SCScreenshotManager for single-frame captures (macOS 14+).
         // This replaces the SCStream + CaptureDelegate + continuation pattern,
@@ -206,6 +527,88 @@ struct ScreenshotCapture {
             contentFilter: filter,
             configuration: config,
         )
+    }
+
+    private static func exactDisplay(
+        _ expected: DisplayTopologyDisplay,
+        in content: SCShareableContent,
+    ) throws -> SCDisplay {
+        guard let display = content.displays.first(where: { $0.displayID == expected.displayID }),
+              display.frame.nearlyEquals(expected.frame)
+        else {
+            throw RPCError(code: .unavailable, message: "Capture display topology changed")
+        }
+        return display
+    }
+
+    private static func revalidateCaptureDisplay(
+        _ expected: DisplayTopologyDisplay,
+    ) async throws {
+        let content = try await SCShareableContent.current
+        let source = try exactDisplay(expected, in: content)
+        let filter = SCContentFilter(display: source, excludingWindows: [])
+        try validateCaptureFilter(filter, against: expected)
+    }
+
+    private static func validateCaptureFilter(
+        _ filter: SCContentFilter,
+        against display: DisplayTopologyDisplay,
+    ) throws {
+        guard filter.contentRect.nearlyEquals(display.frame),
+              nearlyEqual(CGFloat(filter.pointPixelScale), CGFloat(display.scale))
+        else {
+            throw RPCError(code: .unavailable, message: "Capture display geometry changed")
+        }
+    }
+
+    private static func captureOutput(
+        image: CGImage,
+        display: DisplayTopologyDisplay,
+        logicalFrame: CGRect,
+        format: Macosusesdk_V1_ImageFormat,
+        quality: Int32,
+        includeOCR: Bool,
+    ) throws -> ScreenshotCaptureOutput {
+        let dimensions = try checkedImageDimensions(image)
+        return try ScreenshotCaptureOutput(
+            data: encodeImage(image, format: format, quality: quality),
+            format: format,
+            pixelWidth: dimensions.width,
+            pixelHeight: dimensions.height,
+            displayID: display.displayID,
+            logicalFrame: logicalFrame,
+            scale: display.scale,
+            ocrResult: ocrResult(for: image, requested: includeOCR),
+        )
+    }
+
+    private static func checkedImageDimensions(
+        _ image: CGImage,
+    ) throws -> (width: Int32, height: Int32) {
+        guard image.width > 0, image.height > 0 else {
+            throw RPCError(code: .unavailable, message: "Captured image dimensions are unavailable")
+        }
+        guard image.width <= Int(Int32.max), image.height <= Int(Int32.max) else {
+            throw RPCError(code: .resourceExhausted, message: "Captured image dimensions are too large")
+        }
+        return (Int32(image.width), Int32(image.height))
+    }
+
+    private static func ocrResult(
+        for image: CGImage,
+        requested: Bool,
+    ) -> ScreenshotOCRResult {
+        guard requested else { return .notRequested }
+        do {
+            return try .text(extractText(from: image))
+        } catch {
+            return .failure(
+                Google_Rpc_Status.with {
+                    $0.code = 13
+                    $0.message = "OCR extraction failed"
+                },
+            )
+        }
     }
 
     /// Encode a CGImage to the requested format.
@@ -281,6 +684,26 @@ struct ScreenshotCapture {
 
         return recognizedStrings.joined(separator: "\n")
     }
+}
+
+private extension CGRect {
+    func nearlyEquals(_ other: CGRect, tolerance: CGFloat = 0.001) -> Bool {
+        nearlyEqual(minX, other.minX, tolerance: tolerance) &&
+            nearlyEqual(minY, other.minY, tolerance: tolerance) &&
+            nearlyEqual(width, other.width, tolerance: tolerance) &&
+            nearlyEqual(height, other.height, tolerance: tolerance)
+    }
+
+    func containsWithTolerance(_ other: CGRect, tolerance: CGFloat = 0.001) -> Bool {
+        other.minX >= minX - tolerance &&
+            other.minY >= minY - tolerance &&
+            other.maxX <= maxX + tolerance &&
+            other.maxY <= maxY + tolerance
+    }
+}
+
+private func nearlyEqual(_ lhs: CGFloat, _ rhs: CGFloat, tolerance: CGFloat = 0.001) -> Bool {
+    abs(lhs - rhs) <= tolerance
 }
 
 enum ScreenshotError: Error, CustomStringConvertible {

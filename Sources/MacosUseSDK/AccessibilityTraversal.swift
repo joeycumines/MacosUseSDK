@@ -1,12 +1,12 @@
 // The Swift Programming Language
 // https://docs.swift.org/swift-book
 
-import AppKit // For NSWorkspace, NSRunningApplication, NSApplication
 @preconcurrency import ApplicationServices // For Accessibility API (AXUIElement, etc.)
 import Foundation // For basic types, JSONEncoder, Date
 import OSLog
 
 private let logger = sdkLogger(category: "AccessibilityTraversal")
+let accessibilityTrustCheckShouldPrompt = false
 
 /// Mark AXUIElement as Sendable - it's safe because it's an opaque CFTypeRef
 /// managed by the Accessibility framework. We only store/pass references.
@@ -130,6 +130,85 @@ public struct ElementData: Codable, Hashable, Sendable {
     }
 }
 
+public enum AccessibilityTraversalLimitError: Error, Equatable, LocalizedError {
+    case depthExceeded
+    case nodeLimitExceeded
+    case deadlineExceeded
+
+    public var errorDescription: String? {
+        switch self {
+        case .depthExceeded:
+            "Accessibility traversal exceeded its maximum depth"
+        case .nodeLimitExceeded:
+            "Accessibility traversal exceeded its maximum node count"
+        case .deadlineExceeded:
+            "Accessibility traversal exceeded its deadline"
+        }
+    }
+}
+
+final class AccessibilityTraversalBudget {
+    private let maxDepth: Int
+    private let maxNodes: Int
+    private let deadlineExceeded: () -> Bool
+    private var visitedNodeCount = 0
+
+    init(
+        maxDepth: Int,
+        maxNodes: Int,
+        deadlineExceeded: @escaping () -> Bool,
+    ) {
+        precondition(maxDepth >= 0)
+        precondition(maxNodes > 0)
+        self.maxDepth = maxDepth
+        self.maxNodes = maxNodes
+        self.deadlineExceeded = deadlineExceeded
+    }
+
+    func beginElement(depth: Int) throws {
+        try checkAXStep()
+        guard depth <= maxDepth else {
+            throw AccessibilityTraversalLimitError.depthExceeded
+        }
+        guard visitedNodeCount < maxNodes else {
+            throw AccessibilityTraversalLimitError.nodeLimitExceeded
+        }
+        visitedNodeCount += 1
+    }
+
+    func checkAXStep() throws {
+        try Task.checkCancellation()
+        guard !deadlineExceeded() else {
+            throw AccessibilityTraversalLimitError.deadlineExceeded
+        }
+    }
+}
+
+func isUnavailableOptionalTraversalMetadataError(_ error: AXError) -> Bool {
+    switch error {
+    case .failure, .cannotComplete, .attributeUnsupported, .noValue:
+        true
+    default:
+        false
+    }
+}
+
+func stableTraversalElements(_ elements: [ElementData]) -> [ElementData] {
+    elements.sorted {
+        let lhsY = $0.y ?? Double.greatestFiniteMagnitude
+        let rhsY = $1.y ?? Double.greatestFiniteMagnitude
+        if lhsY != rhsY {
+            return lhsY < rhsY
+        }
+        let lhsX = $0.x ?? Double.greatestFiniteMagnitude
+        let rhsX = $1.x ?? Double.greatestFiniteMagnitude
+        if lhsX != rhsX {
+            return lhsX < rhsX
+        }
+        return $0.path.lexicographicallyPrecedes($1.path)
+    }
+}
+
 /// Statistics about the accessibility traversal operation.
 ///
 /// Provides counts of collected elements, excluded elements, and breakdowns
@@ -187,6 +266,22 @@ public func traverseAccessibilityTree(pid: Int32, onlyVisibleElements: Bool = fa
     return try operation.executeTraversal()
 }
 
+/// Traverses one exact Accessibility subtree while preserving the owning
+/// application's process identity and trust boundary.
+public func traverseAccessibilitySubtree(
+    pid: Int32,
+    rootElement: AXUIElement,
+    onlyVisibleElements: Bool = false,
+) throws -> ResponseData {
+    let operation = AccessibilityTraversalOperation(
+        pid: pid,
+        onlyVisibleElements: onlyVisibleElements,
+        shouldActivate: false,
+        rootElement: rootElement,
+    )
+    return try operation.executeTraversal()
+}
+
 // --- Internal Implementation Detail ---
 
 /// Class to encapsulate the state and logic of a single traversal operation
@@ -194,11 +289,12 @@ private class AccessibilityTraversalOperation {
     let pid: Int32
     let onlyVisibleElements: Bool
     let shouldActivate: Bool
+    let rootElement: AXUIElement?
     var visitedElements: Set<AXUIElement> = []
-    var collectedElements: Set<ElementData> = []
+    var collectedElements: [ElementData] = []
     var statistics: Statistics = .init()
     var stepStartTime: Date = .init()
-    let maxDepth = 100
+    let traversalBudget: AccessibilityTraversalBudget
 
     /// Define roles considered non-interactable by default
     let nonInteractableRoles: Set<String> = [
@@ -208,14 +304,27 @@ private class AccessibilityTraversalOperation {
         "AXToolbar", "AXDisclosureTriangle",
     ]
 
-    init(pid: Int32, onlyVisibleElements: Bool, shouldActivate: Bool = false) {
+    init(
+        pid: Int32,
+        onlyVisibleElements: Bool,
+        shouldActivate: Bool = false,
+        rootElement: AXUIElement? = nil,
+    ) {
         self.pid = pid
         self.onlyVisibleElements = onlyVisibleElements
         self.shouldActivate = shouldActivate
+        self.rootElement = rootElement
+        let deadline = ProcessInfo.processInfo.systemUptime + 15
+        traversalBudget = AccessibilityTraversalBudget(
+            maxDepth: 100,
+            maxNodes: 100_000,
+            deadlineExceeded: { ProcessInfo.processInfo.systemUptime >= deadline },
+        )
     }
 
     /// --- Main Execution Method ---
     func executeTraversal() throws -> ResponseData {
+        try Task.checkCancellation()
         let overallStartTime = Date()
         logger.info(
             "starting traversal for pid: \(String(describing: self.pid), privacy: .public) (Visible Only: \(String(describing: self.onlyVisibleElements), privacy: .public))",
@@ -223,7 +332,9 @@ private class AccessibilityTraversalOperation {
         stepStartTime = Date() // Initialize step timer
         // 1. Accessibility Check
         logger.info("checking accessibility permissions...")
-        let checkOptions = ["AXTrustedCheckOptionPrompt": kCFBooleanTrue] as CFDictionary
+        try traversalBudget.checkAXStep()
+        let promptValue = accessibilityTrustCheckShouldPrompt ? kCFBooleanTrue : kCFBooleanFalse
+        let checkOptions = ["AXTrustedCheckOptionPrompt": promptValue] as CFDictionary
         let isTrusted = AXIsProcessTrustedWithOptions(checkOptions)
 
         if !isTrusted {
@@ -235,26 +346,48 @@ private class AccessibilityTraversalOperation {
         }
         logStepCompletion("checking accessibility permissions (granted)")
 
-        // 2. Find Application by PID and Create AXUIElement
-        // Remove strict dependency on NSRunningApplication. It is primarily needed for .activate().
-        let runningApp = NSRunningApplication(processIdentifier: pid)
-        if runningApp == nil {
-            logger.warning("NSRunningApplication returned nil for PID \(self.pid, privacy: .public). The app might be in a transient state. Proceeding with raw AX creation.")
+        // 2. Create the AX application directly. Lagging Workspace or WindowServer
+        // process views must never guard a valid Accessibility target.
+        let appElement = AXUIElementCreateApplication(pid)
+        let titleValue = try copyAttributeValue(
+            element: appElement,
+            attribute: kAXTitleAttribute as String,
+        )
+        let targetAppName = if let title = titleValue as? String,
+                               !title.isEmpty
+        {
+            title
+        } else {
+            "App (PID: \(pid))"
         }
 
-        let targetAppName = runningApp?.localizedName ?? "App (PID: \(pid))"
-
-        // Create the AX element directly from the PID. This works at the CoreFoundation level
-        // and does not require the Window Server to be fully in sync.
-        let appElement = AXUIElementCreateApplication(pid)
-
-        // 3. Activate App if needed (Only if we have a runningApp handle AND caller opted in)
+        // 3. Activation is an AX action followed by AX readback. The server
+        // normally performs this inside its global mutation lease and calls
+        // traversal with shouldActivate=false; this path preserves the direct
+        // SDK API without relying on NSRunningApplication.
         var didActivate = false
-        if shouldActivate, let app = runningApp, app.activationPolicy == NSApplication.ActivationPolicy.regular {
-            if !app.isActive {
-                app.activate() // Default options are usually sufficient
-                didActivate = true
+        if shouldActivate {
+            try traversalBudget.checkAXStep()
+            let setResult = AXUIElementSetAttributeValue(
+                appElement,
+                kAXFrontmostAttribute as CFString,
+                true as CFTypeRef,
+            )
+            guard setResult == .success else {
+                throw MacosUseSDKError.internalError(
+                    "Failed to set AXFrontmost for PID \(pid): AX error \(setResult.rawValue)",
+                )
             }
+            let frontmostValue = try copyAttributeValue(
+                element: appElement,
+                attribute: kAXFrontmostAttribute as String,
+            )
+            guard frontmostValue as? Bool == true else {
+                throw MacosUseSDKError.internalError(
+                    "AXFrontmost did not converge for PID \(pid)",
+                )
+            }
+            didActivate = true
         }
         if didActivate {
             logStepCompletion("activating application '\(targetAppName)'")
@@ -263,20 +396,14 @@ private class AccessibilityTraversalOperation {
         }
 
         // 4. Start Traversal
-        walkElementTree(element: appElement, depth: 0, path: [])
+        try Task.checkCancellation()
+        try walkElementTree(element: rootElement ?? appElement, depth: 0, path: [])
         logStepCompletion(
             "traversing accessibility tree (\(collectedElements.count) elements collected)",
         )
 
         // 5. Process Results
-        let sortedElements = collectedElements.sorted {
-            let y0 = $0.y ?? Double.greatestFiniteMagnitude
-            let y1 = $1.y ?? Double.greatestFiniteMagnitude
-            if y0 != y1 { return y0 < y1 }
-            let x0 = $0.x ?? Double.greatestFiniteMagnitude
-            let x1 = $1.x ?? Double.greatestFiniteMagnitude
-            return x0 < x1
-        }
+        let sortedElements = stableTraversalElements(collectedElements)
         // logStepCompletion("sorting \(sortedElements.count) elements") // Log implicitly
 
         // Set the final count statistic
@@ -301,13 +428,37 @@ private class AccessibilityTraversalOperation {
     // --- Helper Functions (now methods of the class) ---
 
     /// Safely copy an attribute value
-    func copyAttributeValue(element: AXUIElement, attribute: String) -> CFTypeRef? {
+    func copyAttributeValue(element: AXUIElement, attribute: String) throws -> CFTypeRef? {
+        try copyAttributeValue(element: element, attribute: attribute, optionalMetadata: false)
+    }
+
+    /// Copy descriptive metadata without letting an attribute-local absence
+    /// invalidate an otherwise readable element. Identity, hierarchy, value,
+    /// geometry, and focus reads continue to fail closed.
+    func copyOptionalMetadataAttributeValue(element: AXUIElement, attribute: String) throws -> CFTypeRef? {
+        try copyAttributeValue(element: element, attribute: attribute, optionalMetadata: true)
+    }
+
+    private func copyAttributeValue(
+        element: AXUIElement,
+        attribute: String,
+        optionalMetadata: Bool,
+    ) throws -> CFTypeRef? {
+        try traversalBudget.checkAXStep()
         var value: CFTypeRef?
         let result = AXUIElementCopyAttributeValue(element, attribute as CFString, &value)
-        if result == .success {
+        switch result {
+        case .success:
             return value
-        } else if result != .attributeUnsupported, result != .noValue {}
-        return nil
+        case .attributeUnsupported, .noValue:
+            return nil
+        case let error where optionalMetadata && isUnavailableOptionalTraversalMetadataError(error):
+            return nil
+        default:
+            throw MacosUseSDKError.internalError(
+                "Failed to read Accessibility attribute \(attribute): AX error \(result.rawValue)",
+            )
+        }
     }
 
     /// ISO 8601 formatter for CFDate display conversion. Lazily initialized.
@@ -381,7 +532,7 @@ private class AccessibilityTraversalOperation {
     }
 
     /// Extract attributes, text, and geometry
-    func extractElementAttributes(element: AXUIElement) -> (
+    func extractElementAttributes(element: AXUIElement) throws -> (
         role: String, roleDesc: String?, text: String?, allTextParts: [String], position: CGPoint?,
         size: CGSize?, enabled: Bool?, focused: Bool?, attributes: [String: String],
     ) {
@@ -394,11 +545,13 @@ private class AccessibilityTraversalOperation {
         var focused: Bool?
         var attributes: [String: String] = [:]
 
-        if let roleValue = copyAttributeValue(element: element, attribute: kAXRoleAttribute as String) {
+        if let roleValue = try copyAttributeValue(element: element, attribute: kAXRoleAttribute as String) {
             role = getDisplayString(roleValue) ?? "AXUnknown"
         }
-        if let roleDescValue = copyAttributeValue(
-            element: element, attribute: kAXRoleDescriptionAttribute as String,
+        if let roleDescValue = try copyAttributeValue(
+            element: element,
+            attribute: kAXRoleDescriptionAttribute as String,
+            optionalMetadata: true,
         ) {
             roleDesc = getDisplayString(roleDescValue)
         }
@@ -408,7 +561,15 @@ private class AccessibilityTraversalOperation {
             "AXLabel", "AXHelp",
         ]
         for attr in textAttributes {
-            if let attrValue = copyAttributeValue(element: element, attribute: attr),
+            let attrValue = if attr == kAXDescriptionAttribute as String ||
+                attr == "AXLabel" ||
+                attr == "AXHelp"
+            {
+                try copyOptionalMetadataAttributeValue(element: element, attribute: attr)
+            } else {
+                try copyAttributeValue(element: element, attribute: attr)
+            }
+            if let attrValue,
                let text = getDisplayString(attrValue),
                !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             {
@@ -419,23 +580,23 @@ private class AccessibilityTraversalOperation {
             textParts.isEmpty
                 ? nil : textParts.joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
 
-        if let posValue = copyAttributeValue(
+        if let posValue = try copyAttributeValue(
             element: element, attribute: kAXPositionAttribute as String,
         ) {
             position = getCGPointValue(posValue)
         }
 
-        if let sizeValue = copyAttributeValue(element: element, attribute: kAXSizeAttribute as String) {
+        if let sizeValue = try copyAttributeValue(element: element, attribute: kAXSizeAttribute as String) {
             size = getCGSizeValue(sizeValue)
         }
 
-        if let enabledValue = copyAttributeValue(
+        if let enabledValue = try copyAttributeValue(
             element: element, attribute: kAXEnabledAttribute as String,
         ) {
             enabled = getBoolValue(enabledValue)
         }
 
-        if let focusedValue = copyAttributeValue(
+        if let focusedValue = try copyAttributeValue(
             element: element, attribute: kAXFocusedAttribute as String,
         ) {
             focused = getBoolValue(focusedValue)
@@ -449,7 +610,14 @@ private class AccessibilityTraversalOperation {
             kAXHelpAttribute as String,
         ]
         for attr in commonAttributes {
-            if let attrValue = copyAttributeValue(element: element, attribute: attr),
+            let attrValue = if attr == kAXDescriptionAttribute as String ||
+                attr == kAXHelpAttribute as String
+            {
+                try copyOptionalMetadataAttributeValue(element: element, attribute: attr)
+            } else {
+                try copyAttributeValue(element: element, attribute: attr)
+            }
+            if let attrValue,
                let strValue = getDisplayString(attrValue)
             {
                 attributes[attr] = strValue
@@ -460,16 +628,18 @@ private class AccessibilityTraversalOperation {
     }
 
     /// Recursive traversal function (now a method)
-    func walkElementTree(element: AXUIElement, depth: Int, path: [Int32]) {
-        // 1. Check for cycles and depth limit
-        if visitedElements.contains(element) || depth > maxDepth {
+    func walkElementTree(element: AXUIElement, depth: Int, path: [Int32]) throws {
+        try Task.checkCancellation()
+        // 1. Check for cycles, then fail closed at finite traversal limits.
+        if visitedElements.contains(element) {
             return
         }
+        try traversalBudget.beginElement(depth: depth)
         visitedElements.insert(element)
 
         // 2. Process the current element
         let (role, roleDesc, combinedText, _, position, size, enabled, focused, attributes) =
-            extractElementAttributes(
+            try extractElementAttributes(
                 element: element,
             )
         let hasText = combinedText != nil && !combinedText!.isEmpty
@@ -519,11 +689,11 @@ private class AccessibilityTraversalOperation {
                 path: path,
             )
 
-            if collectedElements.insert(elementData).inserted {
-                // Update text counts only for collected elements
-                if hasText { statistics.with_text_count += 1 } else { statistics.without_text_count += 1 }
+            collectedElements.append(elementData)
+            if hasText {
+                statistics.with_text_count += 1
             } else {
-                // Duplicate — already collected
+                statistics.without_text_count += 1
             }
         } else {
             // Update exclusion counts
@@ -532,14 +702,18 @@ private class AccessibilityTraversalOperation {
             // If element was excluded solely due to visibility (passesOriginalFilter=true but not visible),
             // do NOT blame its text or role status.
             if !passesOriginalFilter {
-                if isNonInteractable { statistics.excluded_non_interactable += 1 }
-                if !hasText { statistics.excluded_no_text += 1 }
+                if isNonInteractable {
+                    statistics.excluded_non_interactable += 1
+                }
+                if !hasText {
+                    statistics.excluded_no_text += 1
+                }
             }
         }
 
         // 5. Recursively traverse children, windows, main window
         // a) Windows (use negative indices starting from -1 to distinguish from regular children)
-        if let windowsValue = copyAttributeValue(
+        if let windowsValue = try copyAttributeValue(
             element: element, attribute: kAXWindowsAttribute as String,
         ) {
             if let windowsArray = windowsValue as? [AXUIElement] {
@@ -548,26 +722,26 @@ private class AccessibilityTraversalOperation {
                 {
                     // Use -(windowIndex + 1) to distinguish windows from children
                     let windowPath = path + [Int32(-(windowIndex + 1))]
-                    walkElementTree(element: windowElement, depth: depth + 1, path: windowPath)
+                    try walkElementTree(element: windowElement, depth: depth + 1, path: windowPath)
                 }
             } else if CFGetTypeID(windowsValue) == CFArrayGetTypeID() {}
         }
 
         // b) Main Window (use special index -10000 to distinguish)
-        if let mainWindowValue = copyAttributeValue(
+        if let mainWindowValue = try copyAttributeValue(
             element: element, attribute: kAXMainWindowAttribute as String,
         ) {
             if CFGetTypeID(mainWindowValue) == AXUIElementGetTypeID() {
                 let mainWindowElement = mainWindowValue as! AXUIElement
                 if !visitedElements.contains(mainWindowElement) {
                     let mainWindowPath = path + [Int32(-10000)]
-                    walkElementTree(element: mainWindowElement, depth: depth + 1, path: mainWindowPath)
+                    try walkElementTree(element: mainWindowElement, depth: depth + 1, path: mainWindowPath)
                 }
             } else {}
         }
 
         // c) Regular Children (use 0-based indices)
-        if let childrenValue = copyAttributeValue(
+        if let childrenValue = try copyAttributeValue(
             element: element, attribute: kAXChildrenAttribute as String,
         ) {
             if let childrenArray = childrenValue as? [AXUIElement] {
@@ -575,7 +749,7 @@ private class AccessibilityTraversalOperation {
                     where !visitedElements.contains(childElement)
                 {
                     let childPath = path + [Int32(childIndex)]
-                    walkElementTree(element: childElement, depth: depth + 1, path: childPath)
+                    try walkElementTree(element: childElement, depth: depth + 1, path: childPath)
                 }
             } else if CFGetTypeID(childrenValue) == CFArrayGetTypeID() {}
         }

@@ -2,7 +2,10 @@ package integration
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
+	"testing"
 	"time"
 )
 
@@ -59,5 +62,42 @@ func PollUntilContext(ctx context.Context, interval time.Duration, condition fun
 				return nil
 			}
 		}
+	}
+}
+
+func TestWaitForServerReadinessBoundsEachProbe(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	attempts := 0
+	err := waitForServerReadiness(ctx, time.Millisecond, 5*time.Millisecond, func(attemptCtx context.Context) error {
+		attempts++
+		if attempts == 1 {
+			<-attemptCtx.Done()
+			return attemptCtx.Err()
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("waitForServerReadiness: %v", err)
+	}
+	if attempts != 2 {
+		t.Fatalf("readiness attempts = %d, want 2", attempts)
+	}
+}
+
+func TestWaitForServerReadinessReportsLastProbeError(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	probeErr := errors.New("injected readiness failure")
+
+	err := waitForServerReadiness(ctx, time.Millisecond, time.Second, func(context.Context) error {
+		cancel()
+		return probeErr
+	})
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("readiness error = %v, want context cancellation", err)
+	}
+	if !strings.Contains(err.Error(), probeErr.Error()) {
+		t.Fatalf("readiness error = %v, want last probe error %q", err, probeErr)
 	}
 }

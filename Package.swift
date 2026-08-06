@@ -9,34 +9,9 @@ let package = Package(
         .macOS(.v12),
     ],
     products: [
-        // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
             name: "MacosUseSDK",
             targets: ["MacosUseSDK"],
-        ),
-        .executable(
-            name: "TraversalTool",
-            targets: ["TraversalTool"],
-        ),
-        .executable(
-            name: "HighlightTraversalTool",
-            targets: ["HighlightTraversalTool"],
-        ),
-        .executable(
-            name: "InputControllerTool",
-            targets: ["InputControllerTool"],
-        ),
-        .executable(
-            name: "VisualInputTool",
-            targets: ["VisualInputTool"],
-        ),
-        .executable(
-            name: "AppOpenerTool",
-            targets: ["AppOpenerTool"],
-        ),
-        .executable(
-            name: "ActionTool",
-            targets: ["ActionTool"],
         ),
     ],
     dependencies: [
@@ -52,32 +27,6 @@ let package = Package(
                 .linkedFramework("AppKit"),
                 .linkedFramework("ApplicationServices"),
             ],
-        ),
-        .executableTarget(
-            name: "TraversalTool",
-            dependencies: ["MacosUseSDK"],
-        ),
-        .executableTarget(
-            name: "HighlightTraversalTool",
-            dependencies: [
-                "MacosUseSDK",
-            ],
-        ),
-        .executableTarget(
-            name: "InputControllerTool",
-            dependencies: ["MacosUseSDK"],
-        ),
-        .executableTarget(
-            name: "VisualInputTool",
-            dependencies: ["MacosUseSDK"],
-        ),
-        .executableTarget(
-            name: "AppOpenerTool",
-            dependencies: ["MacosUseSDK"],
-        ),
-        .executableTarget(
-            name: "ActionTool",
-            dependencies: ["MacosUseSDK"],
         ),
         .testTarget(
             name: "MacosUseSDKTests",

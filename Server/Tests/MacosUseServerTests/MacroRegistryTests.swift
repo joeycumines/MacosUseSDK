@@ -13,7 +13,7 @@ final class MacroRegistryTests: XCTestCase {
     // MARK: - Create Tests
 
     func testCreateMacroWithGeneratedID() async {
-        let registry = MacroRegistry.shared
+        let registry = MacroRegistry(persistenceURL: nil)
 
         let macro = await registry.createMacro(
             macroId: nil,
@@ -33,7 +33,7 @@ final class MacroRegistryTests: XCTestCase {
     }
 
     func testCreateMacroWithProvidedID() async {
-        let registry = MacroRegistry.shared
+        let registry = MacroRegistry(persistenceURL: nil)
         let testId = "test-macro-\(UUID().uuidString)"
 
         let macro = await registry.createMacro(
@@ -52,7 +52,7 @@ final class MacroRegistryTests: XCTestCase {
     // MARK: - Get Tests
 
     func testGetMacroExisting() async {
-        let registry = MacroRegistry.shared
+        let registry = MacroRegistry(persistenceURL: nil)
         let testId = "get-test-\(UUID().uuidString)"
 
         // Create a macro first
@@ -73,7 +73,7 @@ final class MacroRegistryTests: XCTestCase {
     }
 
     func testGetMacroNonExistent() async {
-        let registry = MacroRegistry.shared
+        let registry = MacroRegistry(persistenceURL: nil)
 
         let result = await registry.getMacro(name: "macros/nonexistent-\(UUID().uuidString)")
 
@@ -82,20 +82,20 @@ final class MacroRegistryTests: XCTestCase {
 
     // MARK: - List Tests
 
-    func testListMacrosEmpty() async {
+    func testListMacrosEmpty() async throws {
         // Since we can't clear the shared registry, we just verify list returns results
-        let registry = MacroRegistry.shared
+        let registry = MacroRegistry(persistenceURL: nil)
 
         // List with a filter that won't match anything (by checking result)
         // Since we can't clear the shared registry, we just verify list returns results
-        let (macros, _) = await registry.listMacros(pageSize: 10, pageToken: nil)
+        let (macros, _) = try await registry.listMacros(pageSize: 10, pageToken: nil)
 
         // Just verify it returns without error - can't guarantee empty due to shared state
         XCTAssertTrue(macros.count >= 0)
     }
 
-    func testListMacrosPagination() async {
-        let registry = MacroRegistry.shared
+    func testListMacrosPagination() async throws {
+        let registry = MacroRegistry(persistenceURL: nil)
         let prefix = "list-page-\(UUID().uuidString)"
 
         // Create multiple macros
@@ -111,23 +111,23 @@ final class MacroRegistryTests: XCTestCase {
         }
 
         // Request smaller page
-        let (firstPage, nextToken) = await registry.listMacros(pageSize: 3, pageToken: nil)
+        let (firstPage, nextToken) = try await registry.listMacros(pageSize: 3, pageToken: nil)
 
         XCTAssertEqual(firstPage.count, 3)
         XCTAssertNotNil(nextToken)
 
         // Request second page
-        let (secondPage, finalToken) = await registry.listMacros(pageSize: 3, pageToken: nextToken)
+        let (secondPage, _) = try await registry.listMacros(pageSize: 3, pageToken: nextToken)
 
         // Should get remaining (depends on total registry state)
         XCTAssertTrue(secondPage.count <= 3)
     }
 
-    func testListMacrosDefaultPageSize() async {
-        let registry = MacroRegistry.shared
+    func testListMacrosDefaultPageSize() async throws {
+        let registry = MacroRegistry(persistenceURL: nil)
 
         // Page size 0 should use default (50)
-        let (macros, _) = await registry.listMacros(pageSize: 0, pageToken: nil)
+        let (macros, _) = try await registry.listMacros(pageSize: 0, pageToken: nil)
 
         // Just verify it doesn't crash and returns up to 50
         XCTAssertTrue(macros.count <= 50)
@@ -136,7 +136,7 @@ final class MacroRegistryTests: XCTestCase {
     // MARK: - Update Tests
 
     func testUpdateMacroExisting() async throws {
-        let registry = MacroRegistry.shared
+        let registry = MacroRegistry(persistenceURL: nil)
         let testId = "update-test-\(UUID().uuidString)"
 
         // Create
@@ -167,7 +167,7 @@ final class MacroRegistryTests: XCTestCase {
     }
 
     func testUpdateMacroNonExistent() async {
-        let registry = MacroRegistry.shared
+        let registry = MacroRegistry(persistenceURL: nil)
 
         let result = await registry.updateMacro(
             name: "macros/nonexistent-\(UUID().uuidString)",
@@ -184,7 +184,7 @@ final class MacroRegistryTests: XCTestCase {
     // MARK: - Delete Tests
 
     func testDeleteMacroExisting() async {
-        let registry = MacroRegistry.shared
+        let registry = MacroRegistry(persistenceURL: nil)
         let testId = "delete-test-\(UUID().uuidString)"
 
         // Create
@@ -211,7 +211,7 @@ final class MacroRegistryTests: XCTestCase {
     }
 
     func testDeleteMacroNonExistent() async {
-        let registry = MacroRegistry.shared
+        let registry = MacroRegistry(persistenceURL: nil)
 
         let result = await registry.deleteMacro(name: "macros/nonexistent-\(UUID().uuidString)")
 
@@ -221,7 +221,7 @@ final class MacroRegistryTests: XCTestCase {
     // MARK: - Execution Count Tests
 
     func testIncrementExecutionCount() async {
-        let registry = MacroRegistry.shared
+        let registry = MacroRegistry(persistenceURL: nil)
         let testId = "exec-count-\(UUID().uuidString)"
 
         // Create
@@ -250,7 +250,7 @@ final class MacroRegistryTests: XCTestCase {
     }
 
     func testIncrementExecutionCountNonExistent() async {
-        let registry = MacroRegistry.shared
+        let registry = MacroRegistry(persistenceURL: nil)
 
         // Should not crash for non-existent macro
         await registry.incrementExecutionCount(name: "macros/nonexistent-\(UUID().uuidString)")

@@ -183,11 +183,8 @@ struct MacroRegistryPersistenceTests {
 
         let persistenceURL = tempDir.appendingPathComponent("macros.json")
 
-        // Create empty persisted state
-        let emptyRegistry = MacroRegistry(persistenceURL: persistenceURL)
-        try await emptyRegistry.save()
-
-        // Registry with in-memory data
+        // A registry creates a macro. createMacro now auto-persists, so the
+        // macro is present both in memory and on disk.
         let registry = MacroRegistry(persistenceURL: persistenceURL)
         _ = await registry.createMacro(
             macroId: "memory-only",
@@ -197,11 +194,15 @@ struct MacroRegistryPersistenceTests {
             parameters: [],
             tags: [],
         )
+        #expect(await registry.getMacro(name: "macros/memory-only") != nil)
 
-        // Load (should clear)
+        // Remove the persisted file out-of-band so the macro survives only in
+        // memory. load(clearExisting: true) must then clear that in-memory state
+        // because the file (the source of truth) no longer contains it.
+        try FileManager.default.removeItem(at: persistenceURL)
+
         try await registry.load(clearExisting: true)
 
-        // Memory-only macro should be gone
         let retrieved = await registry.getMacro(name: "macros/memory-only")
         #expect(retrieved == nil)
     }
@@ -213,21 +214,10 @@ struct MacroRegistryPersistenceTests {
 
         let persistenceURL = tempDir.appendingPathComponent("macros.json")
 
-        // Create persisted state with one macro
-        let registry1 = MacroRegistry(persistenceURL: persistenceURL)
-        _ = await registry1.createMacro(
-            macroId: "persisted",
-            displayName: "Persisted",
-            description: "From disk",
-            actions: [],
-            parameters: [],
-            tags: [],
-        )
-        try await registry1.save()
-
-        // Registry with in-memory data
-        let registry2 = MacroRegistry(persistenceURL: persistenceURL)
-        _ = await registry2.createMacro(
+        // registry holds "memory" in-memory (createMacro auto-persists it to the
+        // shared file, so the file currently contains only "memory").
+        let registry = MacroRegistry(persistenceURL: persistenceURL)
+        _ = await registry.createMacro(
             macroId: "memory",
             displayName: "Memory",
             description: "In memory",
@@ -236,12 +226,30 @@ struct MacroRegistryPersistenceTests {
             tags: [],
         )
 
-        // Load without clearing
-        try await registry2.load(clearExisting: false)
+        // A second registry with a DIFFERENT URL writes "persisted" to its own
+        // file, then we copy that file over the shared URL so the shared file
+        // contains only "persisted" while registry still holds "memory" in
+        // memory. (registry2's auto-persist cannot touch the shared URL.)
+        let otherURL = tempDir.appendingPathComponent("other.json")
+        let registry2 = MacroRegistry(persistenceURL: otherURL)
+        _ = await registry2.createMacro(
+            macroId: "persisted",
+            displayName: "Persisted",
+            description: "From disk",
+            actions: [],
+            parameters: [],
+            tags: [],
+        )
+        // Replace the shared file with registry2's persisted store.
+        try FileManager.default.removeItem(at: persistenceURL)
+        try FileManager.default.copyItem(at: otherURL, to: persistenceURL)
 
-        // Both should exist
-        let persisted = await registry2.getMacro(name: "macros/persisted")
-        let memory = await registry2.getMacro(name: "macros/memory")
+        // load(clearExisting: false) must merge the file's "persisted" into
+        // registry's memory WITHOUT dropping the in-memory "memory".
+        try await registry.load(clearExisting: false)
+
+        let persisted = await registry.getMacro(name: "macros/persisted")
+        let memory = await registry.getMacro(name: "macros/memory")
         #expect(persisted != nil)
         #expect(memory != nil)
     }
@@ -421,6 +429,96 @@ struct MacroRegistryPersistenceTests {
         // Verify timestamps are present
         #expect((retrieved?.createTime.seconds ?? 0) > 0)
         #expect((retrieved?.updateTime.seconds ?? 0) > 0)
+    }
+
+    // MARK: - Restart Survival (defect C2)
+
+    @Test
+    func `macros survive a simulated server restart through the composition`() async throws {
+        // The production contract (defect C2): mutating the composition-owned
+        // registry must durably persist so a fresh server process — constructing
+        // a new composition over the same persistence URL and calling
+        // loadPersistedMacros() on startup — observes the previously created
+        // macro. Before C2, save()/load() were dead code and every macro was
+        // lost on restart.
+        let tempDir = try createTempDirectory()
+        defer { cleanupTempDirectory(tempDir) }
+        let persistenceURL = tempDir.appendingPathComponent("macros.json")
+
+        // Simulate the first server process: create a macro through the
+        // composition-owned registry.
+        let firstRegistry = MacroRegistry(persistenceURL: persistenceURL)
+        let created = await firstRegistry.createMacro(
+            macroId: "survives-restart",
+            displayName: "Survives Restart",
+            description: "Must persist across processes",
+            actions: [],
+            parameters: [],
+            tags: ["restart"],
+        )
+        // createMacro now auto-persists; the file must exist and be non-empty.
+        #expect(FileManager.default.fileExists(atPath: persistenceURL.path))
+
+        // Simulate a restart: a brand-new registry bound to the same URL, with
+        // no in-memory state, hydrates from disk exactly as the composition's
+        // loadPersistedMacros() does on startup.
+        let restartedRegistry = MacroRegistry(persistenceURL: persistenceURL)
+        #expect(await restartedRegistry.count() == 0) // empty before load
+        try await restartedRegistry.load()
+
+        let recovered = await restartedRegistry.getMacro(name: created.name)
+        #expect(recovered != nil)
+        #expect(recovered?.name == created.name)
+        #expect(recovered?.displayName == "Survives Restart")
+        #expect(recovered?.tags == ["restart"])
+    }
+
+    @Test
+    func `mutation methods persist durably across registry instances`() async throws {
+        // Each mutating path (create/update/delete/incrementExecutionCount)
+        // must persist so the change is visible to a fresh registry over the
+        // same URL. Guards against a regression that reverts any single
+        // persist() call.
+        let tempDir = try createTempDirectory()
+        defer { cleanupTempDirectory(tempDir) }
+        let persistenceURL = tempDir.appendingPathComponent("macros.json")
+
+        let writer = MacroRegistry(persistenceURL: persistenceURL)
+        let created = await writer.createMacro(
+            macroId: "mutated",
+            displayName: "Original",
+            description: "",
+            actions: [],
+            parameters: [],
+            tags: [],
+        )
+        _ = await writer.updateMacro(
+            name: created.name,
+            displayName: "Updated",
+            description: nil,
+            actions: nil,
+            parameters: nil,
+            tags: ["t1"],
+        )
+
+        // A fresh registry must observe the update (proves updateMacro persisted).
+        let reader = MacroRegistry(persistenceURL: persistenceURL)
+        try await reader.load()
+        let afterUpdate = await reader.getMacro(name: created.name)
+        #expect(afterUpdate?.displayName == "Updated")
+        #expect(afterUpdate?.tags == ["t1"])
+
+        // incrementExecutionCount must persist.
+        await writer.incrementExecutionCount(name: created.name)
+        let reader2 = MacroRegistry(persistenceURL: persistenceURL)
+        try await reader2.load()
+        #expect(await reader2.getMacro(name: created.name)?.executionCount == 1)
+
+        // deleteMacro must persist.
+        _ = await writer.deleteMacro(name: created.name)
+        let reader3 = MacroRegistry(persistenceURL: persistenceURL)
+        try await reader3.load()
+        #expect(await reader3.getMacro(name: created.name) == nil)
     }
 
     // MARK: - Helper Types

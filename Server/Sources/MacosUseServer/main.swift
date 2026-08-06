@@ -22,80 +22,31 @@ private func setSecureUmask() -> mode_t {
     umask(secureUmask)
 }
 
-// MARK: - Signal Handling
-
-/// C-compatible signal handler for graceful shutdown.
-///
-/// ## Thread Safety (nonisolated(unsafe))
-///
-/// This closure uses `nonisolated(unsafe)` because:
-/// 1. It is a C function pointer required by signal() API
-/// 2. It is a module-level constant initialized at load time (before main())
-/// 3. It only reads static data (getpid()) and calls async-signal-safe functions
-/// 4. It contains no mutable state or closures capturing external variables
-///
-/// The handler converts SIGTERM to SIGINT which Swift runtime handles for task cancellation.
-private nonisolated(unsafe) let signalHandler: @convention(c) (Int32) -> Void = { _ in
-    // Send SIGINT to trigger Swift runtime cancellation
-    kill(getpid(), SIGINT)
-}
-
-/// Install signal handlers for graceful shutdown
-/// MUST be nonisolated to call signal() C API
-private nonisolated func installSignalHandlers() {
-    // Install SIGTERM handler (converted to SIGINT for Swift runtime)
-    _ = signal(SIGTERM, signalHandler)
-    // Log after installation (in MainActor context)
-    Task { @MainActor in
-        logger.info("Installed SIGTERM handler")
-    }
-
-    // SIGINT (Ctrl+C) is automatically handled by Swift runtime
-    // for Task cancellation, no need to install handler
-}
-
 // MARK: - Graceful Shutdown
 
 /// Performs graceful shutdown of server resources.
 ///
 /// This function ensures all resources are properly cleaned up in the correct order:
-/// 1. Cancel all active observations (stops polling tasks, finishes event streams)
-/// 2. Invalidate all sessions (marks sessions expired, cleans up resources)
-/// 3. Drain operation store (cancels pending LROs)
+/// 1. Await the composition-owned service lifetime drain started with transport shutdown
+/// 2. Remove only the exact Unix-socket identity claimed after bind
 ///
 /// - Parameters:
-///   - socketPath: Optional Unix socket path to clean up.
-///   - operationStore: The operation store to drain.
+///   - socketOwner: Optional identity-bound Unix socket path to clean up.
+///   - serviceLifetime: The composition-owned producer and mutation lifetime.
 @MainActor
-private func performGracefulShutdown(socketPath: String?, operationStore: OperationStore) async {
+private func performGracefulShutdown(
+    socketOwner: UnixSocketPathOwner?,
+    serviceLifetime: ServiceLifetime,
+) async throws {
     logger.info("Initiating graceful shutdown...")
 
-    // Step 1: Cancel all active observations
-    // This stops polling tasks and finishes all event stream continuations
-    logger.info("Cancelling all active observations...")
-    await ObservationManager.shared.cancelAllObservations()
-    logger.info("All observations cancelled")
+    await serviceLifetime.shutdown()
+    logger.info("Composition-owned service work drained")
 
-    // Step 2: Invalidate all sessions
-    // This marks sessions as expired and removes them from the store
-    logger.info("Invalidating all sessions...")
-    await SessionManager.shared.invalidateAllSessions()
-    logger.info("All sessions invalidated")
-
-    // Step 3: Drain operation store (cancel pending operations)
-    logger.info("Draining operation store...")
-    await operationStore.drainAllOperations()
-    logger.info("Operation store drained")
-
-    // Step 4: Clean up Unix socket file if it exists
-    if let socketPath {
-        do {
-            if FileManager.default.fileExists(atPath: socketPath) {
-                try FileManager.default.removeItem(atPath: socketPath)
-                logger.info("Unix socket file cleaned up: \(socketPath, privacy: .private)")
-            }
-        } catch {
-            logger.warning("Failed to clean up Unix socket file: \(error.localizedDescription, privacy: .public)")
+    // Remove only the exact socket identity claimed after bind.
+    if let socketOwner {
+        if try socketOwner.cleanup() {
+            logger.info("Owned Unix socket file cleaned up: \(socketOwner.path, privacy: .private)")
         }
     }
 
@@ -139,21 +90,19 @@ private func performGracefulShutdown(socketPath: String?, operationStore: Operat
 /// │     └─ Window state tracking via Quartz/AX                                   │
 /// │        Depends on: ProductionSystemOperations                                 │
 /// │                                                                               │
-/// │  7. ObservationManager.shared = ObservationManager(windowRegistry:, system:) │
-/// │     └─ Singleton actor for observation polling/streaming                      │
-/// │        Depends on: WindowRegistry, ProductionSystemOperations                 │
-/// │        MUST be set before gRPC server starts (RPC handlers access it)        │
+/// │  7. ObservationManager(windowRegistry:, system:, coordinator:)                │
+/// │     └─ Composition-owned actor for observation polling/streaming              │
+/// │        Depends on: WindowRegistry, ProductionSystemOperations, coordinator    │
 /// │                                                                               │
-/// │  8. MacroExecutor.shared = MacroExecutor(windowRegistry:)                     │
-/// │     └─ Singleton actor for macro execution                                   │
-/// │        Depends on: WindowRegistry                                            │
-/// │        MUST be set before gRPC server starts (RPC handlers access it)        │
+/// │  8. MacosUseService(stateStore:, operationStore:, windowRegistry:, system:)   │
+/// │     └─ Owns one exact InputTransactionExecutor and MacroExecutor graph         │
+/// │        Depends on: state, window, system, topology, and mutation ownership     │
 /// │                                                                               │
-/// │  9. MacosUseService(stateStore:, operationStore:, windowRegistry:, system:)  │
-/// │     └─ Main gRPC service provider                                            │
-/// │        Depends on: All of the above                                          │
+/// │  9. ServiceLifetime(service-owned executors and all producer owners)           │
+/// │     └─ Captures the exact service-owned macro/input authority graph            │
+/// │        Depends on: MacosUseService and every composition-owned work owner      │
 /// │                                                                               │
-/// │ 10. GRPCServer.serve()                                                        │
+/// │ 10. GRPCServer.serve()                                                         │
 /// │     └─ Start accepting connections - ALL singletons MUST be initialized      │
 /// └─────────────────────────────────────────────────────────────────────────────┘
 /// ```
@@ -163,10 +112,9 @@ private func performGracefulShutdown(socketPath: String?, operationStore: Operat
 /// 1. **NSApplication.shared**: macOS accessibility APIs (AXUIElement) require
 ///    an active AppKit runloop. Without this, AX calls may hang or return errors.
 ///
-/// 2. **Singleton initialization**: `ObservationManager.shared` and `MacroExecutor.shared`
-///    are accessed from gRPC RPC handlers which can execute on any thread/actor.
-///    They MUST be initialized before `GRPCServer.serve()` or handlers will hit
-///    preconditionFailure guards.
+/// 2. **Composition ownership**: Observation and macro handlers use the exact
+///    instances injected into `MacosUseService`, so every physical producer shares
+///    the service coordinator and mutation gate.
 ///
 /// 3. **WindowRegistry sharing**: ObservationManager, MacroExecutor, and MacosUseService
 ///    all share the SAME WindowRegistry instance for consistent window state.
@@ -174,9 +122,6 @@ private func performGracefulShutdown(socketPath: String?, operationStore: Operat
 @MainActor
 func main() async throws {
     logger.info("MacosUseServer starting...")
-
-    // Install signal handlers for graceful shutdown
-    installSignalHandlers()
 
     // ═══════════════════════════════════════════════════════════════════════════
     // STEP 1: NSApplication.shared
@@ -201,19 +146,29 @@ func main() async throws {
     } else {
         logger.info("Will listen on \(config.listenAddress, privacy: .public):\(config.port, privacy: .public)")
     }
+    let socketOwner: UnixSocketPathOwner? = try config.unixSocketPath.map { socketPath in
+        let owner = UnixSocketPathOwner(path: socketPath)
+        try owner.prepareForBind()
+        return owner
+    }
 
     // ═══════════════════════════════════════════════════════════════════════════
     // STEP 3: AppStateStore
     // Copy-on-write state container for query isolation (CQRS pattern)
     // ═══════════════════════════════════════════════════════════════════════════
-    let stateStore = AppStateStore()
+    let composition = MacosUseServiceComposition()
+    try await composition.sessionManager.startCleanup()
+    try await composition.elementRegistry.startCleanup()
+    // Hydrate the composition-owned macro registry so previously created macros
+    // survive a server restart. Failures are logged and swallowed inside the
+    // composition so a bad persisted file cannot block startup.
+    await composition.loadPersistedMacros()
     logger.info("State store initialized")
 
     // ═══════════════════════════════════════════════════════════════════════════
     // STEP 4: OperationStore
     // LRO (Long-Running Operation) store for async operations like OpenApplication
     // ═══════════════════════════════════════════════════════════════════════════
-    let operationStore = OperationStore()
     logger.info("Operation store initialized")
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -228,12 +183,10 @@ func main() async throws {
     // System adapter for AX/CG APIs, and window state tracking
     // WindowRegistry depends on SystemOperations for AX queries
     // ═══════════════════════════════════════════════════════════════════════════
-    let system = ProductionSystemOperations.shared
-    let sharedWindowRegistry = WindowRegistry(system: system)
     logger.info("Shared window registry created")
 
     // Load descriptor sets for reflection service
-    let descriptorSetPaths = Bundle.module.paths(
+    let descriptorSetPaths = ResourceBundleHelper.bundle.paths(
         forResourcesOfType: "pb",
         inDirectory: "DescriptorSets",
     )
@@ -244,27 +197,20 @@ func main() async throws {
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // STEP 7-8: Singleton Actor Initialization
-    // CRITICAL: Must happen BEFORE GRPCServer.serve()
-    // RPC handlers access these singletons; if not set, preconditionFailure fires
+    // STEP 7-8: Composition-owned actors
+    // The service, observation manager, and macro executor already share the exact
+    // registry, system adapter, coordinator, and mutation gate.
     // ═══════════════════════════════════════════════════════════════════════════
-    ObservationManager.shared = ObservationManager(windowRegistry: sharedWindowRegistry, system: system)
-    MacroExecutor.shared = MacroExecutor(windowRegistry: sharedWindowRegistry)
-    logger.info("Singleton actors initialized with shared registry")
+    logger.info("Composition-owned actors initialized with shared mutation runtime")
 
     // ═══════════════════════════════════════════════════════════════════════════
     // STEP 9: MacosUseService + OperationsProvider
     // Main gRPC service providers - depend on ALL above components
     // ═══════════════════════════════════════════════════════════════════════════
-    let macosUseService = MacosUseService(
-        stateStore: stateStore,
-        operationStore: operationStore,
-        windowRegistry: sharedWindowRegistry,
-        system: system,
-    )
+    let macosUseService = composition.macosUseService
     logger.info("Service provider created")
 
-    let operationsProvider = OperationsProvider(operationStore: operationStore)
+    let operationsProvider = composition.operationsProvider
     logger.info("Operations provider created")
 
     // Build services array - all services must conform to GRPCCore.RegistrableRPCService
@@ -285,11 +231,6 @@ func main() async throws {
     let address: GRPCNIOTransportCore.SocketAddress
 
     if let socketPath = config.unixSocketPath {
-        // Clean up old socket file if it exists
-        var isDir: ObjCBool = false
-        if FileManager.default.fileExists(atPath: socketPath, isDirectory: &isDir) {
-            try FileManager.default.removeItem(atPath: socketPath)
-        }
         address = .unixDomainSocket(path: socketPath)
         logger.info("Binding to Unix Domain Socket: \(socketPath, privacy: .private)")
     } else {
@@ -297,58 +238,84 @@ func main() async throws {
         logger.info("Binding to TCP: \(config.listenAddress, privacy: .public):\(config.port, privacy: .public)")
     }
 
+    let grpcTransport: HTTP2ServerTransport.Posix = .http2NIOPosix(
+        address: address,
+        transportSecurity: .plaintext,
+    )
     let server = GRPCServer(
-        transport: .http2NIOPosix(
-            address: address,
-            transportSecurity: .plaintext,
-        ),
+        transport: productionServerTransport(grpcTransport),
         services: services,
+        interceptors: productionServerInterceptors(),
     )
 
     // ═══════════════════════════════════════════════════════════════════════════
     // STEP 10: Start gRPC Server
-    // At this point ALL singletons are initialized and safe to access
+    // At this point every composition-owned dependency is initialized.
     // ═══════════════════════════════════════════════════════════════════════════
     logger.info("gRPC server starting")
 
-    // Start server in background to allow explicit socket permission setting
-    async let serverTask: Void = server.serve()
-
-    // For Unix sockets, explicitly set restrictive permissions (defense in depth)
-    // This ensures the socket is owner-readable/writable only, even if umask failed
-    if let socketPath = config.unixSocketPath {
-        // Small delay to allow socket creation
-        try await Task.sleep(for: .milliseconds(100))
-        let permissions: mode_t = 0o600 // owner read/write only
-        if chmod(socketPath, permissions) == 0 {
-            logger.info("Set Unix socket permissions: 0\(String(permissions, radix: 8), privacy: .public)")
-        } else {
-            logger.error("Failed to set Unix socket permissions: \(errno, privacy: .public)")
-        }
+    let signalSource = ShutdownSignalSource()
+    let serverTask = Task {
+        try await server.serve()
     }
-
-    // Set health status to SERVING for the main service and overall server health
-    healthService.provider.updateStatus(.serving, forService: "macosusesdk.v1.MacosUse")
-    healthService.provider.updateStatus(.serving, forService: "") // Empty string = overall server health
-    logger.info("Health service status set to SERVING")
-
-    // Wait for server completion (SIGINT/SIGTERM triggers task cancellation)
+    var lifecycleError: (any Error)?
     do {
-        try await serverTask
+        // A Unix listener is not admitted until its exact owner-private socket
+        // identity has appeared. This replaces the fixed startup sleep.
+        try await socketOwner?.claimCreatedSocket()
+
+        healthService.provider.updateStatus(.serving, forService: "macosusesdk.v1.MacosUse")
+        healthService.provider.updateStatus(.serving, forService: "")
+        logger.info("Health service status set to SERVING")
+
+        try await waitForServerTermination(
+            serverTask: serverTask,
+            shutdownSignals: signalSource.stream,
+            beginGracefulShutdown: {
+                healthService.provider.updateStatus(.notServing, forService: "macosusesdk.v1.MacosUse")
+                healthService.provider.updateStatus(.notServing, forService: "")
+                server.beginGracefulShutdown()
+                await composition.serviceLifetime.shutdown()
+            },
+        )
         logger.info("gRPC server stopped normally")
-    } catch is CancellationError {
-        logger.info("gRPC server received shutdown signal")
     } catch {
+        lifecycleError = error
         logger.error("gRPC server error: \(error.localizedDescription, privacy: .public)")
+        healthService.provider.updateStatus(.notServing, forService: "macosusesdk.v1.MacosUse")
+        healthService.provider.updateStatus(.notServing, forService: "")
+        server.beginGracefulShutdown()
+        await composition.serviceLifetime.shutdown()
+        _ = try? await serverTask.value
     }
 
-    // Set health status to NOT_SERVING during shutdown
     healthService.provider.updateStatus(.notServing, forService: "macosusesdk.v1.MacosUse")
     healthService.provider.updateStatus(.notServing, forService: "")
     logger.info("Health service status set to NOT_SERVING")
 
-    // Perform graceful shutdown - cleanup resources in correct order
-    await performGracefulShutdown(socketPath: config.unixSocketPath, operationStore: operationStore)
+    var cleanupError: (any Error)?
+    do {
+        try await performGracefulShutdown(
+            socketOwner: socketOwner,
+            serviceLifetime: composition.serviceLifetime,
+        )
+    } catch {
+        cleanupError = error
+        logger.error("Graceful shutdown failed: \(error.localizedDescription, privacy: .public)")
+    }
+
+    if let lifecycleError, let cleanupError {
+        throw ServerLifecycleError.lifecycleAndCleanup(
+            lifecycle: lifecycleError,
+            cleanup: cleanupError,
+        )
+    }
+    if let lifecycleError {
+        throw lifecycleError
+    }
+    if let cleanupError {
+        throw cleanupError
+    }
 }
 
 try await main()

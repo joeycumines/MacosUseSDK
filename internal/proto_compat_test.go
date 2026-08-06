@@ -35,8 +35,8 @@ func TestProtoBackwardCompat_Window_ZeroValueDefaults(t *testing.T) {
 	if window.Title != "" {
 		t.Errorf("Expected empty Title, got %q", window.Title)
 	}
-	if window.ZIndex != 0 {
-		t.Errorf("Expected zero ZIndex, got %d", window.ZIndex)
+	if window.Layer != 0 {
+		t.Errorf("Expected zero Layer, got %d", window.Layer)
 	}
 	if window.Bounds != nil {
 		t.Errorf("Expected nil Bounds, got %v", window.Bounds)
@@ -100,7 +100,7 @@ func TestProtoFieldNumbers_Window(t *testing.T) {
 		"name":      1,
 		"title":     2,
 		"bounds":    3,
-		"z_index":   4,
+		"layer":     11,
 		"visible":   5,
 		"bundle_id": 10,
 	}
@@ -149,15 +149,43 @@ func TestProtoFieldNumbers_Application(t *testing.T) {
 	fields := md.Fields()
 
 	expectedFields := map[string]protoreflect.FieldNumber{
-		"name":         1,
-		"pid":          2,
-		"display_name": 3,
+		"name":               1,
+		"pid":                2,
+		"display_name":       3,
+		"application_bundle": 4,
+		"bundle_id":          5,
+		"active":             6,
+		"process_start_time": 7,
 	}
 
 	for fieldName, expectedNum := range expectedFields {
 		fd := fields.ByName(protoreflect.Name(fieldName))
 		if fd == nil {
 			t.Errorf("Field %q not found in Application message", fieldName)
+			continue
+		}
+		if fd.Number() != expectedNum {
+			t.Errorf("Field %q has number %d, expected %d", fieldName, fd.Number(), expectedNum)
+		}
+	}
+}
+
+// TestProtoFieldNumbers_ApplicationBundle verifies exact installed bundle
+// identity remains wire-compatible.
+func TestProtoFieldNumbers_ApplicationBundle(t *testing.T) {
+	var bundle pb.ApplicationBundle
+	fields := bundle.ProtoReflect().Descriptor().Fields()
+	expectedFields := map[string]protoreflect.FieldNumber{
+		"name":         1,
+		"display_name": 2,
+		"bundle_id":    3,
+		"bundle_url":   4,
+		"version":      5,
+	}
+	for fieldName, expectedNum := range expectedFields {
+		fd := fields.ByName(protoreflect.Name(fieldName))
+		if fd == nil {
+			t.Errorf("Field %q not found in ApplicationBundle message", fieldName)
 			continue
 		}
 		if fd.Number() != expectedNum {
@@ -204,18 +232,65 @@ func TestProtoFieldNumbers_Input(t *testing.T) {
 	fields := md.Fields()
 
 	expectedFields := map[string]protoreflect.FieldNumber{
-		"name":          1,
-		"action":        2,
-		"state":         3,
-		"create_time":   4,
-		"complete_time": 5,
-		"error":         6,
+		"name":            1,
+		"action":          2,
+		"state":           3,
+		"create_time":     4,
+		"complete_time":   5,
+		"error":           6,
+		"target":          7,
+		"delivery_result": 8,
 	}
 
 	for fieldName, expectedNum := range expectedFields {
 		fd := fields.ByName(protoreflect.Name(fieldName))
 		if fd == nil {
 			t.Errorf("Field %q not found in Input message", fieldName)
+			continue
+		}
+		if fd.Number() != expectedNum {
+			t.Errorf("Field %q has number %d, expected %d", fieldName, fd.Number(), expectedNum)
+		}
+	}
+}
+
+// TestProtoFieldNumbers_InputTarget verifies every exact target arm remains
+// stable on the wire.
+func TestProtoFieldNumbers_InputTarget(t *testing.T) {
+	var target pb.InputTarget
+	fields := target.ProtoReflect().Descriptor().Fields()
+	expectedFields := map[string]protoreflect.FieldNumber{
+		"application": 1,
+		"window":      2,
+		"display":     3,
+		"desktop":     4,
+	}
+	for fieldName, expectedNum := range expectedFields {
+		fd := fields.ByName(protoreflect.Name(fieldName))
+		if fd == nil {
+			t.Errorf("Field %q not found in InputTarget message", fieldName)
+			continue
+		}
+		if fd.Number() != expectedNum {
+			t.Errorf("Field %q has number %d, expected %d", fieldName, fd.Number(), expectedNum)
+		}
+	}
+}
+
+// TestProtoFieldNumbers_InputDeliveryResult verifies delivery truth remains
+// stable on the wire.
+func TestProtoFieldNumbers_InputDeliveryResult(t *testing.T) {
+	var delivery pb.InputDeliveryResult
+	fields := delivery.ProtoReflect().Descriptor().Fields()
+	expectedFields := map[string]protoreflect.FieldNumber{
+		"commitment":               1,
+		"posted_event_count":       2,
+		"routed_delivery_observed": 3,
+	}
+	for fieldName, expectedNum := range expectedFields {
+		fd := fields.ByName(protoreflect.Name(fieldName))
+		if fd == nil {
+			t.Errorf("Field %q not found in InputDeliveryResult message", fieldName)
 			continue
 		}
 		if fd.Number() != expectedNum {
@@ -271,12 +346,35 @@ func TestProtoEnumValues_InputState(t *testing.T) {
 		"STATE_EXECUTING":   2,
 		"STATE_COMPLETED":   3,
 		"STATE_FAILED":      4,
+		"STATE_CANCELLED":   5,
 	}
 
 	for name, expectedNum := range expectedValues {
 		val := pb.Input_State_value[name]
 		if val != expectedNum {
 			t.Errorf("Enum Input.State.%s has value %d, expected %d", name, val, expectedNum)
+		}
+	}
+}
+
+// TestProtoEnumValues_InputDeliveryCommitment verifies every public delivery
+// truth value remains stable.
+func TestProtoEnumValues_InputDeliveryCommitment(t *testing.T) {
+	expectedValues := map[string]int32{
+		"COMMITMENT_UNSPECIFIED":           0,
+		"COMMITMENT_NO_EFFECT":             1,
+		"COMMITMENT_POSSIBLY_COMMITTED":    2,
+		"COMMITMENT_COMMITTED_AND_SETTLED": 3,
+	}
+	for name, expectedNum := range expectedValues {
+		val := pb.InputDeliveryResult_Commitment_value[name]
+		if val != expectedNum {
+			t.Errorf(
+				"Enum InputDeliveryResult.Commitment.%s has value %d, expected %d",
+				name,
+				val,
+				expectedNum,
+			)
 		}
 	}
 }
@@ -325,11 +423,12 @@ func TestProtoMessageFieldCounts(t *testing.T) {
 		msg      proto.Message
 		minCount int
 	}{
-		{"Window", &pb.Window{}, 6},           // name, title, bounds, z_index, visible, bundle_id
+		{"Window", &pb.Window{}, 6},           // name, title, bounds, visible, bundle_id, layer
 		{"Observation", &pb.Observation{}, 8}, // name, type, state, create_time, start_time, end_time, filter, activate
-		{"Application", &pb.Application{}, 3}, // name, pid, display_name
-		{"Session", &pb.Session{}, 8},         // name, display_name, state, create_time, last_access_time, expire_time, transaction_id, metadata
-		{"Input", &pb.Input{}, 6},             // name, action, state, create_time, complete_time, error
+		{"Application", &pb.Application{}, 7}, // exact process identity and display metadata
+		{"ApplicationBundle", &pb.ApplicationBundle{}, 5},
+		{"Session", &pb.Session{}, 8}, // name, display_name, state, create_time, last_access_time, expire_time, transaction_id, metadata
+		{"Input", &pb.Input{}, 8},     // plus exact target and delivery result
 	}
 
 	for _, tc := range testCases {
@@ -348,9 +447,9 @@ func TestProtoMessageFieldCounts(t *testing.T) {
 func TestProtoUnknownFieldPreservation(t *testing.T) {
 	// Create a Window with known fields
 	original := &pb.Window{
-		Name:   "windows/123",
-		Title:  "Test Window",
-		ZIndex: 42,
+		Name:  "windows/123",
+		Title: "Test Window",
+		Layer: 42,
 	}
 
 	// Serialize
@@ -377,8 +476,8 @@ func TestProtoUnknownFieldPreservation(t *testing.T) {
 	if parsed.Title != original.Title {
 		t.Errorf("Title not preserved: got %q, want %q", parsed.Title, original.Title)
 	}
-	if parsed.ZIndex != original.ZIndex {
-		t.Errorf("ZIndex not preserved: got %d, want %d", parsed.ZIndex, original.ZIndex)
+	if parsed.Layer != original.Layer {
+		t.Errorf("Layer not preserved: got %d, want %d", parsed.Layer, original.Layer)
 	}
 
 	// Re-serialize and verify unknown field is preserved

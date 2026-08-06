@@ -16,7 +16,6 @@ import (
 	"testing"
 	"time"
 
-	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
 	pbtype "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
 	"google.golang.org/grpc"
@@ -183,12 +182,10 @@ func TestErrorScenarios_AppCrashDuringOperation(t *testing.T) {
 	defer conn.Close()
 
 	client := pb.NewMacosUseClient(conn)
-	opsClient := longrunningpb.NewOperationsClient(conn)
-
 	// Open Calculator
 	t.Log("Opening Calculator...")
-	app := OpenApplicationAndWait(t, ctx, client, opsClient, "com.apple.calculator")
-	defer CleanupApplication(t, ctx, client, app.Name)
+	app := OpenApplicationObserved(t, ctx, client, "com.apple.calculator")
+	defer CleanupApplication(t, ctx, client, app)
 
 	// Wait for app to be ready
 	t.Log("Waiting for Calculator to be ready...")
@@ -256,8 +253,8 @@ func TestErrorScenarios_AppCrashDuringOperation(t *testing.T) {
 
 	// Verify we can open a new app (full recovery)
 	t.Log("Verifying new app can be opened...")
-	newApp := OpenApplicationAndWait(t, ctx, client, opsClient, "com.apple.calculator")
-	defer CleanupApplication(t, ctx, client, newApp.Name)
+	newApp := OpenApplicationObserved(t, ctx, client, "com.apple.calculator")
+	defer CleanupApplication(t, ctx, client, newApp)
 
 	if newApp.Pid != app.Pid {
 		t.Logf("✓ New Calculator instance started (old PID: %d, new PID: %d)", app.Pid, newApp.Pid)
@@ -294,25 +291,18 @@ func TestErrorScenarios_InvalidCoordinates(t *testing.T) {
 			description: "Valid positive coordinates",
 		},
 		{
-			name:        "valid_negative",
-			x:           -100,
-			y:           -100,
-			shouldFail:  false,
-			description: "Valid negative coordinates (secondary display)",
-		},
-		{
 			name:        "extreme_positive",
 			x:           99999,
 			y:           99999,
-			shouldFail:  false,
-			description: "Extreme positive coordinates (off-screen but valid)",
+			shouldFail:  true,
+			description: "Coordinate outside the active desktop union",
 		},
 		{
 			name:        "extreme_negative",
 			x:           -99999,
 			y:           -99999,
-			shouldFail:  false,
-			description: "Extreme negative coordinates (off-screen but valid)",
+			shouldFail:  true,
+			description: "Coordinate outside the active desktop union",
 		},
 		{
 			name:        "nan_x",
@@ -346,18 +336,19 @@ func TestErrorScenarios_InvalidCoordinates(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := client.CreateInput(ctx, &pb.CreateInputRequest{
-				Parent: "applications/-",
-				Input: &pb.Input{
-					Action: &pb.InputAction{
-						InputType: &pb.InputAction_MoveMouse{
-							MoveMouse: &pb.MouseMove{
-								Position: &pbtype.Point{X: tc.x, Y: tc.y},
-							},
+			request := newIntegrationInputRequest(
+				t,
+				"applications/-",
+				desktopInputTarget(),
+				&pb.InputAction{
+					InputType: &pb.InputAction_MoveMouse{
+						MoveMouse: &pb.MouseMove{
+							Position: &pbtype.Point{X: tc.x, Y: tc.y},
 						},
 					},
 				},
-			})
+			)
+			input, err := client.CreateInput(ctx, request)
 
 			if tc.shouldFail {
 				if err != nil {
@@ -373,10 +364,18 @@ func TestErrorScenarios_InvalidCoordinates(t *testing.T) {
 				}
 			} else {
 				if err != nil {
-					t.Logf("Note: Valid coordinates rejected: %v (%s)", err, tc.description)
-				} else {
-					t.Logf("✓ Coordinates accepted: %s", tc.description)
+					t.Fatalf("Valid coordinates rejected: %v (%s)", err, tc.description)
 				}
+				requireCompletedInput(
+					t,
+					ctx,
+					client,
+					request,
+					input,
+					1,
+					tc.description,
+				)
+				t.Logf("✓ Coordinates accepted: %s", tc.description)
 			}
 		})
 	}
@@ -428,20 +427,20 @@ func TestErrorScenarios_MissingElement(t *testing.T) {
 		t.Error("Expected error for non-existent window")
 	}
 
-	// Test 3: Delete non-existent application
-	t.Log("Test 3: Deleting non-existent application...")
-	_, err = client.DeleteApplication(ctx, &pb.DeleteApplicationRequest{
-		Name: "applications/does.not.exist.app",
+	// Test 3: Close non-existent application
+	t.Log("Test 3: Closing non-existent application...")
+	_, err = client.CloseApplication(ctx, &pb.CloseApplicationRequest{
+		Name: "applications/999999999",
 	})
 	if err != nil {
 		st, ok := status.FromError(err)
 		if ok && st.Code() == codes.NotFound {
-			t.Logf("✓ Delete non-existent application correctly returned NotFound: %s", st.Message())
+			t.Logf("✓ Close non-existent application correctly returned NotFound: %s", st.Message())
 		} else {
-			t.Logf("Delete non-existent application error: %v", err)
+			t.Logf("Close non-existent application error: %v", err)
 		}
 	} else {
-		t.Log("Note: Delete of non-existent application succeeded (idempotent behavior)")
+		t.Error("Close of a non-existent application unexpectedly succeeded")
 	}
 
 	// Test 4: Get non-existent input
@@ -595,8 +594,6 @@ func TestErrorScenarios_GracefulRecovery(t *testing.T) {
 	defer conn.Close()
 
 	client := pb.NewMacosUseClient(conn)
-	opsClient := longrunningpb.NewOperationsClient(conn)
-
 	// Establish baseline - verify server is working
 	t.Log("Establishing baseline...")
 	baseResp, err := client.ListApplications(ctx, &pb.ListApplicationsRequest{})
@@ -642,8 +639,8 @@ func TestErrorScenarios_GracefulRecovery(t *testing.T) {
 
 	// Recovery Test 3: After opening and closing an app
 	t.Log("Recovery Test 3: After app lifecycle...")
-	app := OpenApplicationAndWait(t, ctx, client, opsClient, "com.apple.calculator")
-	CleanupApplication(t, ctx, client, app.Name)
+	app := OpenApplicationObserved(t, ctx, client, "com.apple.calculator")
+	CleanupApplication(t, ctx, client, app)
 
 	// Verify server still works
 	resp3, err := client.ListApplications(ctx, &pb.ListApplicationsRequest{})

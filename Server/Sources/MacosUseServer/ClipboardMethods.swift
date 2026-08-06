@@ -20,8 +20,16 @@ extension MacosUseService {
             throw RPCError(code: .invalidArgument, message: "Invalid clipboard name: \(req.name)")
         }
 
-        let response = await ClipboardManager.shared.readClipboard()
-        return ServerResponse(message: response)
+        do {
+            let response = try await clipboardManager.readClipboard()
+            return ServerResponse(message: response)
+        } catch ClipboardAccessError.queueFull {
+            throw RPCError(code: .resourceExhausted, message: "Clipboard access queue is full")
+        } catch is CancellationError {
+            throw RPCError(code: .cancelled, message: "Clipboard read was cancelled")
+        } catch {
+            throw RPCError(code: .internalError, message: "Failed to read clipboard: \(error)")
+        }
     }
 
     func writeClipboard(
@@ -36,19 +44,29 @@ extension MacosUseService {
         }
 
         do {
-            // Write to clipboard
-            let clipboard = try await ClipboardManager.shared.writeClipboard(
-                content: req.content,
-                req.clearExisting_p,
+            // Clipboard ownership must always be cleared before a write,
+            // irrespective of the legacy request hint.
+            let clipboard = try await clipboardManager.writeClipboard(content: req.content)
+            return ServerResponse(
+                message: Macosusesdk_V1_WriteClipboardResponse.with {
+                    $0.clipboard = clipboard
+                },
             )
-
-            let response = Macosusesdk_V1_WriteClipboardResponse.with {
-                $0.success = true
-                $0.type = clipboard.content.type
-            }
-            return ServerResponse(message: response)
         } catch let error as ClipboardError {
-            throw RPCError(code: .internalError, message: error.description)
+            switch error {
+            case .invalidContent:
+                throw RPCError(code: .invalidArgument, message: error.description)
+            case .writeFailed, .readFailed:
+                throw RPCError(code: .internalError, message: error.description)
+            }
+        } catch PhysicalDesktopMutationError.queueFull {
+            throw RPCError(code: .resourceExhausted, message: "Physical mutation queue is full")
+        } catch PhysicalDesktopMutationError.admissionClosed {
+            throw RPCError(code: .unavailable, message: "Physical mutation admission is closed")
+        } catch ClipboardAccessError.queueFull {
+            throw RPCError(code: .resourceExhausted, message: "Clipboard access queue is full")
+        } catch is CancellationError {
+            throw RPCError(code: .cancelled, message: "Clipboard write was cancelled")
         } catch {
             throw RPCError(code: .internalError, message: "Failed to write clipboard: \(error)")
         }
@@ -60,12 +78,26 @@ extension MacosUseService {
         _ = request.message
         Self.logger.info("clearClipboard called")
 
-        await ClipboardManager.shared.clearClipboard()
-
-        let response = Macosusesdk_V1_ClearClipboardResponse.with {
-            $0.success = true
+        do {
+            let clipboard = try await clipboardManager.clearClipboard()
+            return ServerResponse(
+                message: Macosusesdk_V1_ClearClipboardResponse.with {
+                    $0.clipboard = clipboard
+                },
+            )
+        } catch let error as ClipboardError {
+            throw RPCError(code: .internalError, message: error.description)
+        } catch PhysicalDesktopMutationError.queueFull {
+            throw RPCError(code: .resourceExhausted, message: "Physical mutation queue is full")
+        } catch PhysicalDesktopMutationError.admissionClosed {
+            throw RPCError(code: .unavailable, message: "Physical mutation admission is closed")
+        } catch ClipboardAccessError.queueFull {
+            throw RPCError(code: .resourceExhausted, message: "Clipboard access queue is full")
+        } catch is CancellationError {
+            throw RPCError(code: .cancelled, message: "Clipboard clear was cancelled")
+        } catch {
+            throw RPCError(code: .internalError, message: "Failed to clear clipboard: \(error)")
         }
-        return ServerResponse(message: response)
     }
 
     func getClipboardHistory(
@@ -81,7 +113,7 @@ extension MacosUseService {
             )
         }
 
-        let response = await ClipboardHistoryManager.shared.getHistory()
+        let response = await clipboardHistoryManager.getHistory()
         return ServerResponse(message: response)
     }
 }

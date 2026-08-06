@@ -24,11 +24,9 @@ func TestFindElementsPagination(t *testing.T) {
 	defer conn.Close()
 
 	client := pb.NewMacosUseClient(conn)
-	opsClient := longrunningpb.NewOperationsClient(conn)
-
 	// Open Calculator
 	t.Log("Opening Calculator...")
-	app := openCalculator(t, ctx, client, opsClient)
+	app := openCalculator(t, ctx, client)
 	defer cleanupApplication(t, ctx, client, app)
 
 	// Wait for Calculator to be ready
@@ -45,10 +43,12 @@ func TestFindElementsPagination(t *testing.T) {
 		t.Fatalf("Calculator windows never appeared: %v", err)
 	}
 
-	// Test: Full list
-	t.Log("Fetching all elements...")
+	// Test: Full list of text-bearing elements. FindElements requires an explicit
+	// selector at the public boundary, so use a valid regex that matches any text.
+	t.Log("Fetching all text-bearing elements...")
 	respAll, err := client.FindElements(ctx, &pb.FindElementsRequest{
-		Parent: app.Name,
+		Parent:   app.Name,
+		Selector: anyTextSelector(),
 	})
 	if err != nil {
 		t.Fatalf("FindElements failed: %v", err)
@@ -63,6 +63,7 @@ func TestFindElementsPagination(t *testing.T) {
 	t.Log("Testing page_size=3...")
 	resp1, err := client.FindElements(ctx, &pb.FindElementsRequest{
 		Parent:   app.Name,
+		Selector: anyTextSelector(),
 		PageSize: 3,
 	})
 	if err != nil {
@@ -81,6 +82,7 @@ func TestFindElementsPagination(t *testing.T) {
 		t.Log("Testing next page...")
 		resp2, err := client.FindElements(ctx, &pb.FindElementsRequest{
 			Parent:    app.Name,
+			Selector:  anyTextSelector(),
 			PageSize:  3,
 			PageToken: resp1.NextPageToken,
 		})
@@ -104,6 +106,7 @@ func TestFindElementsPagination(t *testing.T) {
 	t.Log("Testing invalid token...")
 	_, err = client.FindElements(ctx, &pb.FindElementsRequest{
 		Parent:    app.Name,
+		Selector:  anyTextSelector(),
 		PageToken: "invalid-token",
 	})
 	if err == nil {
@@ -131,10 +134,8 @@ func TestFindRegionElementsPagination(t *testing.T) {
 	defer conn.Close()
 
 	client := pb.NewMacosUseClient(conn)
-	opsClient := longrunningpb.NewOperationsClient(conn)
-
 	t.Log("Opening Calculator...")
-	app := openCalculator(t, ctx, client, opsClient)
+	app := openCalculator(t, ctx, client)
 	defer cleanupApplication(t, ctx, client, app)
 
 	// Wait for Calculator to be ready
@@ -151,9 +152,10 @@ func TestFindRegionElementsPagination(t *testing.T) {
 		t.Fatalf("Calculator not ready: %v", err)
 	}
 
-	// First, use FindElements to get ALL elements and establish that data exists
+	// First, use FindElements to get text-bearing elements and establish that data exists.
 	allElements, err := client.FindElements(ctx, &pb.FindElementsRequest{
-		Parent: app.Name,
+		Parent:   app.Name,
+		Selector: anyTextSelector(),
 	})
 	if err != nil {
 		t.Fatalf("FindElements failed: %v", err)
@@ -246,6 +248,12 @@ func TestFindRegionElementsPagination(t *testing.T) {
 	}
 }
 
+func anyTextSelector() *pbtype.ElementSelector {
+	return &pbtype.ElementSelector{
+		Criteria: &pbtype.ElementSelector_TextRegex{TextRegex: ".*"},
+	}
+}
+
 // TestListObservationsPagination verifies ListObservations pagination.
 func TestListObservationsPagination(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
@@ -261,7 +269,7 @@ func TestListObservationsPagination(t *testing.T) {
 	opsClient := longrunningpb.NewOperationsClient(conn)
 
 	t.Log("Opening Calculator...")
-	app := openCalculator(t, ctx, client, opsClient)
+	app := openCalculator(t, ctx, client)
 	defer cleanupApplication(t, ctx, client, app)
 
 	// Create 3 observations

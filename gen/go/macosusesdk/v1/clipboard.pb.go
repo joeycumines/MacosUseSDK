@@ -164,7 +164,7 @@ func (x *Clipboard) GetAvailableTypes() []ContentType {
 type ClipboardContent struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Content type.
-	Type ContentType `protobuf:"varint,1,opt,name=type,proto3,enum=macosusesdk.v1.ContentType" json:"type,omitempty"`
+	Type *ContentType `protobuf:"varint,1,opt,name=type,proto3,enum=macosusesdk.v1.ContentType,oneof" json:"type,omitempty"`
 	// The actual content (type-specific).
 	//
 	// Types that are valid to be assigned to Content:
@@ -211,8 +211,8 @@ func (*ClipboardContent) Descriptor() ([]byte, []int) {
 }
 
 func (x *ClipboardContent) GetType() ContentType {
-	if x != nil {
-		return x.Type
+	if x != nil && x.Type != nil {
+		return *x.Type
 	}
 	return ContentType_CONTENT_TYPE_UNSPECIFIED
 }
@@ -490,9 +490,9 @@ const file_macosusesdk_v1_clipboard_proto_rawDesc = "" +
 	"\acontent\x18\x02 \x01(\v2 .macosusesdk.v1.ClipboardContentB\x03\xe0A\x03R\acontent\x12I\n" +
 	"\x0favailable_types\x18\x03 \x03(\x0e2\x1b.macosusesdk.v1.ContentTypeB\x03\xe0A\x03R\x0eavailableTypes:@\xeaA=\n" +
 	"\x19macosusesdk.com/Clipboard\x12\tclipboard*\n" +
-	"clipboards2\tclipboard\"\xf2\x01\n" +
-	"\x10ClipboardContent\x124\n" +
-	"\x04type\x18\x01 \x01(\x0e2\x1b.macosusesdk.v1.ContentTypeB\x03\xe0A\x02R\x04type\x12\x14\n" +
+	"clipboards2\tclipboard\"\x80\x02\n" +
+	"\x10ClipboardContent\x129\n" +
+	"\x04type\x18\x01 \x01(\x0e2\x1b.macosusesdk.v1.ContentTypeB\x03\xe0A\x02H\x01R\x04type\x88\x01\x01\x12\x14\n" +
 	"\x04text\x18\n" +
 	" \x01(\tH\x00R\x04text\x12\x12\n" +
 	"\x03rtf\x18\v \x01(\fH\x00R\x03rtf\x12\x14\n" +
@@ -500,7 +500,8 @@ const file_macosusesdk_v1_clipboard_proto_rawDesc = "" +
 	"\x05image\x18\r \x01(\fH\x00R\x05image\x121\n" +
 	"\x05files\x18\x0e \x01(\v2\x19.macosusesdk.v1.FilePathsH\x00R\x05files\x12\x12\n" +
 	"\x03url\x18\x0f \x01(\tH\x00R\x03urlB\t\n" +
-	"\acontent\"&\n" +
+	"\acontentB\a\n" +
+	"\x05_type\"&\n" +
 	"\tFilePaths\x12\x19\n" +
 	"\x05paths\x18\x01 \x03(\tB\x03\xe0A\x02R\x05paths\"X\n" +
 	"\x10ClipboardHistory\x12D\n" +

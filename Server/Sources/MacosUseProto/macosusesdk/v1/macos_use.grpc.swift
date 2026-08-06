@@ -25,12 +25,38 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
     public static let descriptor = GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse")
     /// Namespace for method metadata.
     public enum Method: Sendable {
+        /// Namespace for "GetApplicationBundle" metadata.
+        public enum GetApplicationBundle: Sendable {
+            /// Request type for "GetApplicationBundle".
+            public typealias Input = Macosusesdk_V1_GetApplicationBundleRequest
+            /// Response type for "GetApplicationBundle".
+            public typealias Output = Macosusesdk_V1_ApplicationBundle
+            /// Descriptor for "GetApplicationBundle".
+            public static let descriptor = GRPCCore.MethodDescriptor(
+                service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
+                method: "GetApplicationBundle",
+                type: .unary
+            )
+        }
+        /// Namespace for "ListApplicationBundles" metadata.
+        public enum ListApplicationBundles: Sendable {
+            /// Request type for "ListApplicationBundles".
+            public typealias Input = Macosusesdk_V1_ListApplicationBundlesRequest
+            /// Response type for "ListApplicationBundles".
+            public typealias Output = Macosusesdk_V1_ListApplicationBundlesResponse
+            /// Descriptor for "ListApplicationBundles".
+            public static let descriptor = GRPCCore.MethodDescriptor(
+                service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
+                method: "ListApplicationBundles",
+                type: .unary
+            )
+        }
         /// Namespace for "OpenApplication" metadata.
         public enum OpenApplication: Sendable {
             /// Request type for "OpenApplication".
             public typealias Input = Macosusesdk_V1_OpenApplicationRequest
             /// Response type for "OpenApplication".
-            public typealias Output = Google_Longrunning_Operation
+            public typealias Output = Macosusesdk_V1_OpenApplicationResponse
             /// Descriptor for "OpenApplication".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
@@ -64,16 +90,29 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
                 type: .unary
             )
         }
-        /// Namespace for "DeleteApplication" metadata.
-        public enum DeleteApplication: Sendable {
-            /// Request type for "DeleteApplication".
-            public typealias Input = Macosusesdk_V1_DeleteApplicationRequest
-            /// Response type for "DeleteApplication".
-            public typealias Output = SwiftProtobuf.Google_Protobuf_Empty
-            /// Descriptor for "DeleteApplication".
+        /// Namespace for "ActivateApplication" metadata.
+        public enum ActivateApplication: Sendable {
+            /// Request type for "ActivateApplication".
+            public typealias Input = Macosusesdk_V1_ActivateApplicationRequest
+            /// Response type for "ActivateApplication".
+            public typealias Output = Macosusesdk_V1_ActivateApplicationResponse
+            /// Descriptor for "ActivateApplication".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "DeleteApplication",
+                method: "ActivateApplication",
+                type: .unary
+            )
+        }
+        /// Namespace for "CloseApplication" metadata.
+        public enum CloseApplication: Sendable {
+            /// Request type for "CloseApplication".
+            public typealias Input = Macosusesdk_V1_CloseApplicationRequest
+            /// Response type for "CloseApplication".
+            public typealias Output = Macosusesdk_V1_CloseApplicationResponse
+            /// Descriptor for "CloseApplication".
+            public static let descriptor = GRPCCore.MethodDescriptor(
+                service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
+                method: "CloseApplication",
                 type: .unary
             )
         }
@@ -290,11 +329,24 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             /// Request type for "GetElement".
             public typealias Input = Macosusesdk_V1_GetElementRequest
             /// Response type for "GetElement".
-            public typealias Output = Macosusesdk_Type_Element
+            public typealias Output = Macosusesdk_V1_Element
             /// Descriptor for "GetElement".
             public static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
                 method: "GetElement",
+                type: .unary
+            )
+        }
+        /// Namespace for "ListElements" metadata.
+        public enum ListElements: Sendable {
+            /// Request type for "ListElements".
+            public typealias Input = Macosusesdk_V1_ListElementsRequest
+            /// Response type for "ListElements".
+            public typealias Output = Macosusesdk_V1_ListElementsResponse
+            /// Descriptor for "ListElements".
+            public static let descriptor = GRPCCore.MethodDescriptor(
+                service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
+                method: "ListElements",
                 type: .unary
             )
         }
@@ -714,45 +766,6 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
                 type: .unary
             )
         }
-        /// Namespace for "SelectFile" metadata.
-        public enum SelectFile: Sendable {
-            /// Request type for "SelectFile".
-            public typealias Input = Macosusesdk_V1_SelectFileRequest
-            /// Response type for "SelectFile".
-            public typealias Output = Macosusesdk_V1_SelectFileResponse
-            /// Descriptor for "SelectFile".
-            public static let descriptor = GRPCCore.MethodDescriptor(
-                service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "SelectFile",
-                type: .unary
-            )
-        }
-        /// Namespace for "SelectDirectory" metadata.
-        public enum SelectDirectory: Sendable {
-            /// Request type for "SelectDirectory".
-            public typealias Input = Macosusesdk_V1_SelectDirectoryRequest
-            /// Response type for "SelectDirectory".
-            public typealias Output = Macosusesdk_V1_SelectDirectoryResponse
-            /// Descriptor for "SelectDirectory".
-            public static let descriptor = GRPCCore.MethodDescriptor(
-                service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "SelectDirectory",
-                type: .unary
-            )
-        }
-        /// Namespace for "DragFiles" metadata.
-        public enum DragFiles: Sendable {
-            /// Request type for "DragFiles".
-            public typealias Input = Macosusesdk_V1_DragFilesRequest
-            /// Response type for "DragFiles".
-            public typealias Output = Macosusesdk_V1_DragFilesResponse
-            /// Descriptor for "DragFiles".
-            public static let descriptor = GRPCCore.MethodDescriptor(
-                service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "macosusesdk.v1.MacosUse"),
-                method: "DragFiles",
-                type: .unary
-            )
-        }
         /// Namespace for "CreateMacro" metadata.
         public enum CreateMacro: Sendable {
             /// Request type for "CreateMacro".
@@ -898,10 +911,13 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
         }
         /// Descriptors for all methods in the "macosusesdk.v1.MacosUse" service.
         public static let descriptors: [GRPCCore.MethodDescriptor] = [
+            GetApplicationBundle.descriptor,
+            ListApplicationBundles.descriptor,
             OpenApplication.descriptor,
             GetApplication.descriptor,
             ListApplications.descriptor,
-            DeleteApplication.descriptor,
+            ActivateApplication.descriptor,
+            CloseApplication.descriptor,
             CreateInput.descriptor,
             GetInput.descriptor,
             ListInputs.descriptor,
@@ -919,6 +935,7 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             FindElements.descriptor,
             FindRegionElements.descriptor,
             GetElement.descriptor,
+            ListElements.descriptor,
             ClickElement.descriptor,
             WriteElementValue.descriptor,
             GetElementActions.descriptor,
@@ -951,9 +968,6 @@ public enum Macosusesdk_V1_MacosUse: Sendable {
             GetClipboardHistory.descriptor,
             AutomateOpenFileDialog.descriptor,
             AutomateSaveFileDialog.descriptor,
-            SelectFile.descriptor,
-            SelectDirectory.descriptor,
-            DragFiles.descriptor,
             CreateMacro.descriptor,
             GetMacro.descriptor,
             ListMacros.descriptor,
@@ -994,11 +1008,47 @@ extension Macosusesdk_V1_MacosUse {
     /// >
     /// > MacosUse is the primary service for automating macOS applications.
     public protocol StreamingServiceProtocol: GRPCCore.RegistrableRPCService {
+        /// Handle the "GetApplicationBundle" method.
+        ///
+        /// > Source IDL Documentation:
+        /// >
+        /// > Gets one exact installed application bundle.
+        ///
+        /// - Parameters:
+        ///   - request: A streaming request of `Macosusesdk_V1_GetApplicationBundleRequest` messages.
+        ///   - context: Context providing information about the RPC.
+        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
+        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
+        ///     to an internal error.
+        /// - Returns: A streaming response of `Macosusesdk_V1_ApplicationBundle` messages.
+        func getApplicationBundle(
+            request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetApplicationBundleRequest>,
+            context: GRPCCore.ServerContext
+        ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ApplicationBundle>
+
+        /// Handle the "ListApplicationBundles" method.
+        ///
+        /// > Source IDL Documentation:
+        /// >
+        /// > Lists discoverable installed application bundles without opening them.
+        ///
+        /// - Parameters:
+        ///   - request: A streaming request of `Macosusesdk_V1_ListApplicationBundlesRequest` messages.
+        ///   - context: Context providing information about the RPC.
+        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
+        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
+        ///     to an internal error.
+        /// - Returns: A streaming response of `Macosusesdk_V1_ListApplicationBundlesResponse` messages.
+        func listApplicationBundles(
+            request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ListApplicationBundlesRequest>,
+            context: GRPCCore.ServerContext
+        ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ListApplicationBundlesResponse>
+
         /// Handle the "OpenApplication" method.
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > Opens or activates an application. This is a long-running operation.
+        /// > Opens one exact installed application bundle.
         ///
         /// - Parameters:
         ///   - request: A streaming request of `Macosusesdk_V1_OpenApplicationRequest` messages.
@@ -1006,17 +1056,17 @@ extension Macosusesdk_V1_MacosUse {
         /// - Throws: Any error which occurred during the processing of the request. Thrown errors
         ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
         ///     to an internal error.
-        /// - Returns: A streaming response of `Google_Longrunning_Operation` messages.
+        /// - Returns: A streaming response of `Macosusesdk_V1_OpenApplicationResponse` messages.
         func openApplication(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_OpenApplicationRequest>,
             context: GRPCCore.ServerContext
-        ) async throws -> GRPCCore.StreamingServerResponse<Google_Longrunning_Operation>
+        ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_OpenApplicationResponse>
 
         /// Handle the "GetApplication" method.
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > Gets a specific application being tracked.
+        /// > Gets one exact running application process instance.
         ///
         /// - Parameters:
         ///   - request: A streaming request of `Macosusesdk_V1_GetApplicationRequest` messages.
@@ -1034,7 +1084,7 @@ extension Macosusesdk_V1_MacosUse {
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > Lists all applications currently tracked.
+        /// > Lists exact currently running user application process instances.
         ///
         /// - Parameters:
         ///   - request: A streaming request of `Macosusesdk_V1_ListApplicationsRequest` messages.
@@ -1048,23 +1098,42 @@ extension Macosusesdk_V1_MacosUse {
             context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ListApplicationsResponse>
 
-        /// Handle the "DeleteApplication" method.
+        /// Handle the "ActivateApplication" method.
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > Stops tracking an application. This does NOT quit the app.
+        /// > Activates one exact running application process instance.
         ///
         /// - Parameters:
-        ///   - request: A streaming request of `Macosusesdk_V1_DeleteApplicationRequest` messages.
+        ///   - request: A streaming request of `Macosusesdk_V1_ActivateApplicationRequest` messages.
         ///   - context: Context providing information about the RPC.
         /// - Throws: Any error which occurred during the processing of the request. Thrown errors
         ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
         ///     to an internal error.
-        /// - Returns: A streaming response of `SwiftProtobuf.Google_Protobuf_Empty` messages.
-        func deleteApplication(
-            request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_DeleteApplicationRequest>,
+        /// - Returns: A streaming response of `Macosusesdk_V1_ActivateApplicationResponse` messages.
+        func activateApplication(
+            request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ActivateApplicationRequest>,
             context: GRPCCore.ServerContext
-        ) async throws -> GRPCCore.StreamingServerResponse<SwiftProtobuf.Google_Protobuf_Empty>
+        ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ActivateApplicationResponse>
+
+        /// Handle the "CloseApplication" method.
+        ///
+        /// > Source IDL Documentation:
+        /// >
+        /// > Closes an exact tracked application instance and stops tracking it after
+        /// > the owned process is observed to exit.
+        ///
+        /// - Parameters:
+        ///   - request: A streaming request of `Macosusesdk_V1_CloseApplicationRequest` messages.
+        ///   - context: Context providing information about the RPC.
+        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
+        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
+        ///     to an internal error.
+        /// - Returns: A streaming response of `Macosusesdk_V1_CloseApplicationResponse` messages.
+        func closeApplication(
+            request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_CloseApplicationRequest>,
+            context: GRPCCore.ServerContext
+        ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_CloseApplicationResponse>
 
         /// Handle the "CreateInput" method.
         ///
@@ -1366,11 +1435,29 @@ extension Macosusesdk_V1_MacosUse {
         /// - Throws: Any error which occurred during the processing of the request. Thrown errors
         ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
         ///     to an internal error.
-        /// - Returns: A streaming response of `Macosusesdk_Type_Element` messages.
+        /// - Returns: A streaming response of `Macosusesdk_V1_Element` messages.
         func getElement(
             request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetElementRequest>,
             context: GRPCCore.ServerContext
-        ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_Type_Element>
+        ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Element>
+
+        /// Handle the "ListElements" method.
+        ///
+        /// > Source IDL Documentation:
+        /// >
+        /// > Lists retained element resources for an application.
+        ///
+        /// - Parameters:
+        ///   - request: A streaming request of `Macosusesdk_V1_ListElementsRequest` messages.
+        ///   - context: Context providing information about the RPC.
+        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
+        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
+        ///     to an internal error.
+        /// - Returns: A streaming response of `Macosusesdk_V1_ListElementsResponse` messages.
+        func listElements(
+            request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ListElementsRequest>,
+            context: GRPCCore.ServerContext
+        ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ListElementsResponse>
 
         /// Handle the "ClickElement" method.
         ///
@@ -1949,60 +2036,6 @@ extension Macosusesdk_V1_MacosUse {
             context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_AutomateSaveFileDialogResponse>
 
-        /// Handle the "SelectFile" method.
-        ///
-        /// > Source IDL Documentation:
-        /// >
-        /// > Selects a file programmatically.
-        ///
-        /// - Parameters:
-        ///   - request: A streaming request of `Macosusesdk_V1_SelectFileRequest` messages.
-        ///   - context: Context providing information about the RPC.
-        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
-        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
-        ///     to an internal error.
-        /// - Returns: A streaming response of `Macosusesdk_V1_SelectFileResponse` messages.
-        func selectFile(
-            request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_SelectFileRequest>,
-            context: GRPCCore.ServerContext
-        ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_SelectFileResponse>
-
-        /// Handle the "SelectDirectory" method.
-        ///
-        /// > Source IDL Documentation:
-        /// >
-        /// > Selects a directory.
-        ///
-        /// - Parameters:
-        ///   - request: A streaming request of `Macosusesdk_V1_SelectDirectoryRequest` messages.
-        ///   - context: Context providing information about the RPC.
-        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
-        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
-        ///     to an internal error.
-        /// - Returns: A streaming response of `Macosusesdk_V1_SelectDirectoryResponse` messages.
-        func selectDirectory(
-            request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_SelectDirectoryRequest>,
-            context: GRPCCore.ServerContext
-        ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_SelectDirectoryResponse>
-
-        /// Handle the "DragFiles" method.
-        ///
-        /// > Source IDL Documentation:
-        /// >
-        /// > Drags and drops files.
-        ///
-        /// - Parameters:
-        ///   - request: A streaming request of `Macosusesdk_V1_DragFilesRequest` messages.
-        ///   - context: Context providing information about the RPC.
-        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
-        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
-        ///     to an internal error.
-        /// - Returns: A streaming response of `Macosusesdk_V1_DragFilesResponse` messages.
-        func dragFiles(
-            request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_DragFilesRequest>,
-            context: GRPCCore.ServerContext
-        ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_DragFilesResponse>
-
         /// Handle the "CreateMacro" method.
         ///
         /// > Source IDL Documentation:
@@ -2214,11 +2247,47 @@ extension Macosusesdk_V1_MacosUse {
     /// >
     /// > MacosUse is the primary service for automating macOS applications.
     public protocol ServiceProtocol: Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
+        /// Handle the "GetApplicationBundle" method.
+        ///
+        /// > Source IDL Documentation:
+        /// >
+        /// > Gets one exact installed application bundle.
+        ///
+        /// - Parameters:
+        ///   - request: A request containing a single `Macosusesdk_V1_GetApplicationBundleRequest` message.
+        ///   - context: Context providing information about the RPC.
+        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
+        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
+        ///     to an internal error.
+        /// - Returns: A response containing a single `Macosusesdk_V1_ApplicationBundle` message.
+        func getApplicationBundle(
+            request: GRPCCore.ServerRequest<Macosusesdk_V1_GetApplicationBundleRequest>,
+            context: GRPCCore.ServerContext
+        ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ApplicationBundle>
+
+        /// Handle the "ListApplicationBundles" method.
+        ///
+        /// > Source IDL Documentation:
+        /// >
+        /// > Lists discoverable installed application bundles without opening them.
+        ///
+        /// - Parameters:
+        ///   - request: A request containing a single `Macosusesdk_V1_ListApplicationBundlesRequest` message.
+        ///   - context: Context providing information about the RPC.
+        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
+        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
+        ///     to an internal error.
+        /// - Returns: A response containing a single `Macosusesdk_V1_ListApplicationBundlesResponse` message.
+        func listApplicationBundles(
+            request: GRPCCore.ServerRequest<Macosusesdk_V1_ListApplicationBundlesRequest>,
+            context: GRPCCore.ServerContext
+        ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ListApplicationBundlesResponse>
+
         /// Handle the "OpenApplication" method.
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > Opens or activates an application. This is a long-running operation.
+        /// > Opens one exact installed application bundle.
         ///
         /// - Parameters:
         ///   - request: A request containing a single `Macosusesdk_V1_OpenApplicationRequest` message.
@@ -2226,17 +2295,17 @@ extension Macosusesdk_V1_MacosUse {
         /// - Throws: Any error which occurred during the processing of the request. Thrown errors
         ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
         ///     to an internal error.
-        /// - Returns: A response containing a single `Google_Longrunning_Operation` message.
+        /// - Returns: A response containing a single `Macosusesdk_V1_OpenApplicationResponse` message.
         func openApplication(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_OpenApplicationRequest>,
             context: GRPCCore.ServerContext
-        ) async throws -> GRPCCore.ServerResponse<Google_Longrunning_Operation>
+        ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_OpenApplicationResponse>
 
         /// Handle the "GetApplication" method.
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > Gets a specific application being tracked.
+        /// > Gets one exact running application process instance.
         ///
         /// - Parameters:
         ///   - request: A request containing a single `Macosusesdk_V1_GetApplicationRequest` message.
@@ -2254,7 +2323,7 @@ extension Macosusesdk_V1_MacosUse {
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > Lists all applications currently tracked.
+        /// > Lists exact currently running user application process instances.
         ///
         /// - Parameters:
         ///   - request: A request containing a single `Macosusesdk_V1_ListApplicationsRequest` message.
@@ -2268,23 +2337,42 @@ extension Macosusesdk_V1_MacosUse {
             context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ListApplicationsResponse>
 
-        /// Handle the "DeleteApplication" method.
+        /// Handle the "ActivateApplication" method.
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > Stops tracking an application. This does NOT quit the app.
+        /// > Activates one exact running application process instance.
         ///
         /// - Parameters:
-        ///   - request: A request containing a single `Macosusesdk_V1_DeleteApplicationRequest` message.
+        ///   - request: A request containing a single `Macosusesdk_V1_ActivateApplicationRequest` message.
         ///   - context: Context providing information about the RPC.
         /// - Throws: Any error which occurred during the processing of the request. Thrown errors
         ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
         ///     to an internal error.
-        /// - Returns: A response containing a single `SwiftProtobuf.Google_Protobuf_Empty` message.
-        func deleteApplication(
-            request: GRPCCore.ServerRequest<Macosusesdk_V1_DeleteApplicationRequest>,
+        /// - Returns: A response containing a single `Macosusesdk_V1_ActivateApplicationResponse` message.
+        func activateApplication(
+            request: GRPCCore.ServerRequest<Macosusesdk_V1_ActivateApplicationRequest>,
             context: GRPCCore.ServerContext
-        ) async throws -> GRPCCore.ServerResponse<SwiftProtobuf.Google_Protobuf_Empty>
+        ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ActivateApplicationResponse>
+
+        /// Handle the "CloseApplication" method.
+        ///
+        /// > Source IDL Documentation:
+        /// >
+        /// > Closes an exact tracked application instance and stops tracking it after
+        /// > the owned process is observed to exit.
+        ///
+        /// - Parameters:
+        ///   - request: A request containing a single `Macosusesdk_V1_CloseApplicationRequest` message.
+        ///   - context: Context providing information about the RPC.
+        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
+        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
+        ///     to an internal error.
+        /// - Returns: A response containing a single `Macosusesdk_V1_CloseApplicationResponse` message.
+        func closeApplication(
+            request: GRPCCore.ServerRequest<Macosusesdk_V1_CloseApplicationRequest>,
+            context: GRPCCore.ServerContext
+        ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_CloseApplicationResponse>
 
         /// Handle the "CreateInput" method.
         ///
@@ -2586,11 +2674,29 @@ extension Macosusesdk_V1_MacosUse {
         /// - Throws: Any error which occurred during the processing of the request. Thrown errors
         ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
         ///     to an internal error.
-        /// - Returns: A response containing a single `Macosusesdk_Type_Element` message.
+        /// - Returns: A response containing a single `Macosusesdk_V1_Element` message.
         func getElement(
             request: GRPCCore.ServerRequest<Macosusesdk_V1_GetElementRequest>,
             context: GRPCCore.ServerContext
-        ) async throws -> GRPCCore.ServerResponse<Macosusesdk_Type_Element>
+        ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Element>
+
+        /// Handle the "ListElements" method.
+        ///
+        /// > Source IDL Documentation:
+        /// >
+        /// > Lists retained element resources for an application.
+        ///
+        /// - Parameters:
+        ///   - request: A request containing a single `Macosusesdk_V1_ListElementsRequest` message.
+        ///   - context: Context providing information about the RPC.
+        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
+        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
+        ///     to an internal error.
+        /// - Returns: A response containing a single `Macosusesdk_V1_ListElementsResponse` message.
+        func listElements(
+            request: GRPCCore.ServerRequest<Macosusesdk_V1_ListElementsRequest>,
+            context: GRPCCore.ServerContext
+        ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ListElementsResponse>
 
         /// Handle the "ClickElement" method.
         ///
@@ -3169,60 +3275,6 @@ extension Macosusesdk_V1_MacosUse {
             context: GRPCCore.ServerContext
         ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_AutomateSaveFileDialogResponse>
 
-        /// Handle the "SelectFile" method.
-        ///
-        /// > Source IDL Documentation:
-        /// >
-        /// > Selects a file programmatically.
-        ///
-        /// - Parameters:
-        ///   - request: A request containing a single `Macosusesdk_V1_SelectFileRequest` message.
-        ///   - context: Context providing information about the RPC.
-        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
-        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
-        ///     to an internal error.
-        /// - Returns: A response containing a single `Macosusesdk_V1_SelectFileResponse` message.
-        func selectFile(
-            request: GRPCCore.ServerRequest<Macosusesdk_V1_SelectFileRequest>,
-            context: GRPCCore.ServerContext
-        ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_SelectFileResponse>
-
-        /// Handle the "SelectDirectory" method.
-        ///
-        /// > Source IDL Documentation:
-        /// >
-        /// > Selects a directory.
-        ///
-        /// - Parameters:
-        ///   - request: A request containing a single `Macosusesdk_V1_SelectDirectoryRequest` message.
-        ///   - context: Context providing information about the RPC.
-        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
-        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
-        ///     to an internal error.
-        /// - Returns: A response containing a single `Macosusesdk_V1_SelectDirectoryResponse` message.
-        func selectDirectory(
-            request: GRPCCore.ServerRequest<Macosusesdk_V1_SelectDirectoryRequest>,
-            context: GRPCCore.ServerContext
-        ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_SelectDirectoryResponse>
-
-        /// Handle the "DragFiles" method.
-        ///
-        /// > Source IDL Documentation:
-        /// >
-        /// > Drags and drops files.
-        ///
-        /// - Parameters:
-        ///   - request: A request containing a single `Macosusesdk_V1_DragFilesRequest` message.
-        ///   - context: Context providing information about the RPC.
-        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
-        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
-        ///     to an internal error.
-        /// - Returns: A response containing a single `Macosusesdk_V1_DragFilesResponse` message.
-        func dragFiles(
-            request: GRPCCore.ServerRequest<Macosusesdk_V1_DragFilesRequest>,
-            context: GRPCCore.ServerContext
-        ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_DragFilesResponse>
-
         /// Handle the "CreateMacro" method.
         ///
         /// > Source IDL Documentation:
@@ -3432,11 +3484,47 @@ extension Macosusesdk_V1_MacosUse {
     /// >
     /// > MacosUse is the primary service for automating macOS applications.
     public protocol SimpleServiceProtocol: Macosusesdk_V1_MacosUse.ServiceProtocol {
+        /// Handle the "GetApplicationBundle" method.
+        ///
+        /// > Source IDL Documentation:
+        /// >
+        /// > Gets one exact installed application bundle.
+        ///
+        /// - Parameters:
+        ///   - request: A `Macosusesdk_V1_GetApplicationBundleRequest` message.
+        ///   - context: Context providing information about the RPC.
+        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
+        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
+        ///     to an internal error.
+        /// - Returns: A `Macosusesdk_V1_ApplicationBundle` to respond with.
+        func getApplicationBundle(
+            request: Macosusesdk_V1_GetApplicationBundleRequest,
+            context: GRPCCore.ServerContext
+        ) async throws -> Macosusesdk_V1_ApplicationBundle
+
+        /// Handle the "ListApplicationBundles" method.
+        ///
+        /// > Source IDL Documentation:
+        /// >
+        /// > Lists discoverable installed application bundles without opening them.
+        ///
+        /// - Parameters:
+        ///   - request: A `Macosusesdk_V1_ListApplicationBundlesRequest` message.
+        ///   - context: Context providing information about the RPC.
+        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
+        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
+        ///     to an internal error.
+        /// - Returns: A `Macosusesdk_V1_ListApplicationBundlesResponse` to respond with.
+        func listApplicationBundles(
+            request: Macosusesdk_V1_ListApplicationBundlesRequest,
+            context: GRPCCore.ServerContext
+        ) async throws -> Macosusesdk_V1_ListApplicationBundlesResponse
+
         /// Handle the "OpenApplication" method.
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > Opens or activates an application. This is a long-running operation.
+        /// > Opens one exact installed application bundle.
         ///
         /// - Parameters:
         ///   - request: A `Macosusesdk_V1_OpenApplicationRequest` message.
@@ -3444,17 +3532,17 @@ extension Macosusesdk_V1_MacosUse {
         /// - Throws: Any error which occurred during the processing of the request. Thrown errors
         ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
         ///     to an internal error.
-        /// - Returns: A `Google_Longrunning_Operation` to respond with.
+        /// - Returns: A `Macosusesdk_V1_OpenApplicationResponse` to respond with.
         func openApplication(
             request: Macosusesdk_V1_OpenApplicationRequest,
             context: GRPCCore.ServerContext
-        ) async throws -> Google_Longrunning_Operation
+        ) async throws -> Macosusesdk_V1_OpenApplicationResponse
 
         /// Handle the "GetApplication" method.
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > Gets a specific application being tracked.
+        /// > Gets one exact running application process instance.
         ///
         /// - Parameters:
         ///   - request: A `Macosusesdk_V1_GetApplicationRequest` message.
@@ -3472,7 +3560,7 @@ extension Macosusesdk_V1_MacosUse {
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > Lists all applications currently tracked.
+        /// > Lists exact currently running user application process instances.
         ///
         /// - Parameters:
         ///   - request: A `Macosusesdk_V1_ListApplicationsRequest` message.
@@ -3486,23 +3574,42 @@ extension Macosusesdk_V1_MacosUse {
             context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_ListApplicationsResponse
 
-        /// Handle the "DeleteApplication" method.
+        /// Handle the "ActivateApplication" method.
         ///
         /// > Source IDL Documentation:
         /// >
-        /// > Stops tracking an application. This does NOT quit the app.
+        /// > Activates one exact running application process instance.
         ///
         /// - Parameters:
-        ///   - request: A `Macosusesdk_V1_DeleteApplicationRequest` message.
+        ///   - request: A `Macosusesdk_V1_ActivateApplicationRequest` message.
         ///   - context: Context providing information about the RPC.
         /// - Throws: Any error which occurred during the processing of the request. Thrown errors
         ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
         ///     to an internal error.
-        /// - Returns: A `SwiftProtobuf.Google_Protobuf_Empty` to respond with.
-        func deleteApplication(
-            request: Macosusesdk_V1_DeleteApplicationRequest,
+        /// - Returns: A `Macosusesdk_V1_ActivateApplicationResponse` to respond with.
+        func activateApplication(
+            request: Macosusesdk_V1_ActivateApplicationRequest,
             context: GRPCCore.ServerContext
-        ) async throws -> SwiftProtobuf.Google_Protobuf_Empty
+        ) async throws -> Macosusesdk_V1_ActivateApplicationResponse
+
+        /// Handle the "CloseApplication" method.
+        ///
+        /// > Source IDL Documentation:
+        /// >
+        /// > Closes an exact tracked application instance and stops tracking it after
+        /// > the owned process is observed to exit.
+        ///
+        /// - Parameters:
+        ///   - request: A `Macosusesdk_V1_CloseApplicationRequest` message.
+        ///   - context: Context providing information about the RPC.
+        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
+        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
+        ///     to an internal error.
+        /// - Returns: A `Macosusesdk_V1_CloseApplicationResponse` to respond with.
+        func closeApplication(
+            request: Macosusesdk_V1_CloseApplicationRequest,
+            context: GRPCCore.ServerContext
+        ) async throws -> Macosusesdk_V1_CloseApplicationResponse
 
         /// Handle the "CreateInput" method.
         ///
@@ -3805,11 +3912,29 @@ extension Macosusesdk_V1_MacosUse {
         /// - Throws: Any error which occurred during the processing of the request. Thrown errors
         ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
         ///     to an internal error.
-        /// - Returns: A `Macosusesdk_Type_Element` to respond with.
+        /// - Returns: A `Macosusesdk_V1_Element` to respond with.
         func getElement(
             request: Macosusesdk_V1_GetElementRequest,
             context: GRPCCore.ServerContext
-        ) async throws -> Macosusesdk_Type_Element
+        ) async throws -> Macosusesdk_V1_Element
+
+        /// Handle the "ListElements" method.
+        ///
+        /// > Source IDL Documentation:
+        /// >
+        /// > Lists retained element resources for an application.
+        ///
+        /// - Parameters:
+        ///   - request: A `Macosusesdk_V1_ListElementsRequest` message.
+        ///   - context: Context providing information about the RPC.
+        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
+        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
+        ///     to an internal error.
+        /// - Returns: A `Macosusesdk_V1_ListElementsResponse` to respond with.
+        func listElements(
+            request: Macosusesdk_V1_ListElementsRequest,
+            context: GRPCCore.ServerContext
+        ) async throws -> Macosusesdk_V1_ListElementsResponse
 
         /// Handle the "ClickElement" method.
         ///
@@ -4389,60 +4514,6 @@ extension Macosusesdk_V1_MacosUse {
             context: GRPCCore.ServerContext
         ) async throws -> Macosusesdk_V1_AutomateSaveFileDialogResponse
 
-        /// Handle the "SelectFile" method.
-        ///
-        /// > Source IDL Documentation:
-        /// >
-        /// > Selects a file programmatically.
-        ///
-        /// - Parameters:
-        ///   - request: A `Macosusesdk_V1_SelectFileRequest` message.
-        ///   - context: Context providing information about the RPC.
-        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
-        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
-        ///     to an internal error.
-        /// - Returns: A `Macosusesdk_V1_SelectFileResponse` to respond with.
-        func selectFile(
-            request: Macosusesdk_V1_SelectFileRequest,
-            context: GRPCCore.ServerContext
-        ) async throws -> Macosusesdk_V1_SelectFileResponse
-
-        /// Handle the "SelectDirectory" method.
-        ///
-        /// > Source IDL Documentation:
-        /// >
-        /// > Selects a directory.
-        ///
-        /// - Parameters:
-        ///   - request: A `Macosusesdk_V1_SelectDirectoryRequest` message.
-        ///   - context: Context providing information about the RPC.
-        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
-        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
-        ///     to an internal error.
-        /// - Returns: A `Macosusesdk_V1_SelectDirectoryResponse` to respond with.
-        func selectDirectory(
-            request: Macosusesdk_V1_SelectDirectoryRequest,
-            context: GRPCCore.ServerContext
-        ) async throws -> Macosusesdk_V1_SelectDirectoryResponse
-
-        /// Handle the "DragFiles" method.
-        ///
-        /// > Source IDL Documentation:
-        /// >
-        /// > Drags and drops files.
-        ///
-        /// - Parameters:
-        ///   - request: A `Macosusesdk_V1_DragFilesRequest` message.
-        ///   - context: Context providing information about the RPC.
-        /// - Throws: Any error which occurred during the processing of the request. Thrown errors
-        ///     of type `RPCError` are mapped to appropriate statuses. All other errors are converted
-        ///     to an internal error.
-        /// - Returns: A `Macosusesdk_V1_DragFilesResponse` to respond with.
-        func dragFiles(
-            request: Macosusesdk_V1_DragFilesRequest,
-            context: GRPCCore.ServerContext
-        ) async throws -> Macosusesdk_V1_DragFilesResponse
-
         /// Handle the "CreateMacro" method.
         ///
         /// > Source IDL Documentation:
@@ -4648,9 +4719,31 @@ extension Macosusesdk_V1_MacosUse {
 extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
     public func registerMethods<Transport>(with router: inout GRPCCore.RPCRouter<Transport>) where Transport: GRPCCore.ServerTransport {
         router.registerHandler(
+            forMethod: Macosusesdk_V1_MacosUse.Method.GetApplicationBundle.descriptor,
+            deserializer: GRPCProtobuf.ProtobufDeserializer<Macosusesdk_V1_GetApplicationBundleRequest>(),
+            serializer: GRPCProtobuf.ProtobufSerializer<Macosusesdk_V1_ApplicationBundle>(),
+            handler: { request, context in
+                try await self.getApplicationBundle(
+                    request: request,
+                    context: context
+                )
+            }
+        )
+        router.registerHandler(
+            forMethod: Macosusesdk_V1_MacosUse.Method.ListApplicationBundles.descriptor,
+            deserializer: GRPCProtobuf.ProtobufDeserializer<Macosusesdk_V1_ListApplicationBundlesRequest>(),
+            serializer: GRPCProtobuf.ProtobufSerializer<Macosusesdk_V1_ListApplicationBundlesResponse>(),
+            handler: { request, context in
+                try await self.listApplicationBundles(
+                    request: request,
+                    context: context
+                )
+            }
+        )
+        router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.OpenApplication.descriptor,
             deserializer: GRPCProtobuf.ProtobufDeserializer<Macosusesdk_V1_OpenApplicationRequest>(),
-            serializer: GRPCProtobuf.ProtobufSerializer<Google_Longrunning_Operation>(),
+            serializer: GRPCProtobuf.ProtobufSerializer<Macosusesdk_V1_OpenApplicationResponse>(),
             handler: { request, context in
                 try await self.openApplication(
                     request: request,
@@ -4681,11 +4774,22 @@ extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             }
         )
         router.registerHandler(
-            forMethod: Macosusesdk_V1_MacosUse.Method.DeleteApplication.descriptor,
-            deserializer: GRPCProtobuf.ProtobufDeserializer<Macosusesdk_V1_DeleteApplicationRequest>(),
-            serializer: GRPCProtobuf.ProtobufSerializer<SwiftProtobuf.Google_Protobuf_Empty>(),
+            forMethod: Macosusesdk_V1_MacosUse.Method.ActivateApplication.descriptor,
+            deserializer: GRPCProtobuf.ProtobufDeserializer<Macosusesdk_V1_ActivateApplicationRequest>(),
+            serializer: GRPCProtobuf.ProtobufSerializer<Macosusesdk_V1_ActivateApplicationResponse>(),
             handler: { request, context in
-                try await self.deleteApplication(
+                try await self.activateApplication(
+                    request: request,
+                    context: context
+                )
+            }
+        )
+        router.registerHandler(
+            forMethod: Macosusesdk_V1_MacosUse.Method.CloseApplication.descriptor,
+            deserializer: GRPCProtobuf.ProtobufDeserializer<Macosusesdk_V1_CloseApplicationRequest>(),
+            serializer: GRPCProtobuf.ProtobufSerializer<Macosusesdk_V1_CloseApplicationResponse>(),
+            handler: { request, context in
+                try await self.closeApplication(
                     request: request,
                     context: context
                 )
@@ -4870,9 +4974,20 @@ extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
         router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.GetElement.descriptor,
             deserializer: GRPCProtobuf.ProtobufDeserializer<Macosusesdk_V1_GetElementRequest>(),
-            serializer: GRPCProtobuf.ProtobufSerializer<Macosusesdk_Type_Element>(),
+            serializer: GRPCProtobuf.ProtobufSerializer<Macosusesdk_V1_Element>(),
             handler: { request, context in
                 try await self.getElement(
+                    request: request,
+                    context: context
+                )
+            }
+        )
+        router.registerHandler(
+            forMethod: Macosusesdk_V1_MacosUse.Method.ListElements.descriptor,
+            deserializer: GRPCProtobuf.ProtobufDeserializer<Macosusesdk_V1_ListElementsRequest>(),
+            serializer: GRPCProtobuf.ProtobufSerializer<Macosusesdk_V1_ListElementsResponse>(),
+            handler: { request, context in
+                try await self.listElements(
                     request: request,
                     context: context
                 )
@@ -5231,39 +5346,6 @@ extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
             }
         )
         router.registerHandler(
-            forMethod: Macosusesdk_V1_MacosUse.Method.SelectFile.descriptor,
-            deserializer: GRPCProtobuf.ProtobufDeserializer<Macosusesdk_V1_SelectFileRequest>(),
-            serializer: GRPCProtobuf.ProtobufSerializer<Macosusesdk_V1_SelectFileResponse>(),
-            handler: { request, context in
-                try await self.selectFile(
-                    request: request,
-                    context: context
-                )
-            }
-        )
-        router.registerHandler(
-            forMethod: Macosusesdk_V1_MacosUse.Method.SelectDirectory.descriptor,
-            deserializer: GRPCProtobuf.ProtobufDeserializer<Macosusesdk_V1_SelectDirectoryRequest>(),
-            serializer: GRPCProtobuf.ProtobufSerializer<Macosusesdk_V1_SelectDirectoryResponse>(),
-            handler: { request, context in
-                try await self.selectDirectory(
-                    request: request,
-                    context: context
-                )
-            }
-        )
-        router.registerHandler(
-            forMethod: Macosusesdk_V1_MacosUse.Method.DragFiles.descriptor,
-            deserializer: GRPCProtobuf.ProtobufDeserializer<Macosusesdk_V1_DragFilesRequest>(),
-            serializer: GRPCProtobuf.ProtobufSerializer<Macosusesdk_V1_DragFilesResponse>(),
-            handler: { request, context in
-                try await self.dragFiles(
-                    request: request,
-                    context: context
-                )
-            }
-        )
-        router.registerHandler(
             forMethod: Macosusesdk_V1_MacosUse.Method.CreateMacro.descriptor,
             deserializer: GRPCProtobuf.ProtobufDeserializer<Macosusesdk_V1_CreateMacroRequest>(),
             serializer: GRPCProtobuf.ProtobufSerializer<Macosusesdk_V1_Macro>(),
@@ -5390,10 +5472,32 @@ extension Macosusesdk_V1_MacosUse.StreamingServiceProtocol {
 // Default implementation of streaming methods from 'StreamingServiceProtocol'.
 @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
 extension Macosusesdk_V1_MacosUse.ServiceProtocol {
+    public func getApplicationBundle(
+        request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetApplicationBundleRequest>,
+        context: GRPCCore.ServerContext
+    ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ApplicationBundle> {
+        let response = try await self.getApplicationBundle(
+            request: GRPCCore.ServerRequest(stream: request),
+            context: context
+        )
+        return GRPCCore.StreamingServerResponse(single: response)
+    }
+
+    public func listApplicationBundles(
+        request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ListApplicationBundlesRequest>,
+        context: GRPCCore.ServerContext
+    ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ListApplicationBundlesResponse> {
+        let response = try await self.listApplicationBundles(
+            request: GRPCCore.ServerRequest(stream: request),
+            context: context
+        )
+        return GRPCCore.StreamingServerResponse(single: response)
+    }
+
     public func openApplication(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_OpenApplicationRequest>,
         context: GRPCCore.ServerContext
-    ) async throws -> GRPCCore.StreamingServerResponse<Google_Longrunning_Operation> {
+    ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_OpenApplicationResponse> {
         let response = try await self.openApplication(
             request: GRPCCore.ServerRequest(stream: request),
             context: context
@@ -5423,11 +5527,22 @@ extension Macosusesdk_V1_MacosUse.ServiceProtocol {
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    public func deleteApplication(
-        request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_DeleteApplicationRequest>,
+    public func activateApplication(
+        request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ActivateApplicationRequest>,
         context: GRPCCore.ServerContext
-    ) async throws -> GRPCCore.StreamingServerResponse<SwiftProtobuf.Google_Protobuf_Empty> {
-        let response = try await self.deleteApplication(
+    ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ActivateApplicationResponse> {
+        let response = try await self.activateApplication(
+            request: GRPCCore.ServerRequest(stream: request),
+            context: context
+        )
+        return GRPCCore.StreamingServerResponse(single: response)
+    }
+
+    public func closeApplication(
+        request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_CloseApplicationRequest>,
+        context: GRPCCore.ServerContext
+    ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_CloseApplicationResponse> {
+        let response = try await self.closeApplication(
             request: GRPCCore.ServerRequest(stream: request),
             context: context
         )
@@ -5613,8 +5728,19 @@ extension Macosusesdk_V1_MacosUse.ServiceProtocol {
     public func getElement(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_GetElementRequest>,
         context: GRPCCore.ServerContext
-    ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_Type_Element> {
+    ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_Element> {
         let response = try await self.getElement(
+            request: GRPCCore.ServerRequest(stream: request),
+            context: context
+        )
+        return GRPCCore.StreamingServerResponse(single: response)
+    }
+
+    public func listElements(
+        request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_ListElementsRequest>,
+        context: GRPCCore.ServerContext
+    ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_ListElementsResponse> {
+        let response = try await self.listElements(
             request: GRPCCore.ServerRequest(stream: request),
             context: context
         )
@@ -5973,39 +6099,6 @@ extension Macosusesdk_V1_MacosUse.ServiceProtocol {
         return GRPCCore.StreamingServerResponse(single: response)
     }
 
-    public func selectFile(
-        request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_SelectFileRequest>,
-        context: GRPCCore.ServerContext
-    ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_SelectFileResponse> {
-        let response = try await self.selectFile(
-            request: GRPCCore.ServerRequest(stream: request),
-            context: context
-        )
-        return GRPCCore.StreamingServerResponse(single: response)
-    }
-
-    public func selectDirectory(
-        request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_SelectDirectoryRequest>,
-        context: GRPCCore.ServerContext
-    ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_SelectDirectoryResponse> {
-        let response = try await self.selectDirectory(
-            request: GRPCCore.ServerRequest(stream: request),
-            context: context
-        )
-        return GRPCCore.StreamingServerResponse(single: response)
-    }
-
-    public func dragFiles(
-        request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_DragFilesRequest>,
-        context: GRPCCore.ServerContext
-    ) async throws -> GRPCCore.StreamingServerResponse<Macosusesdk_V1_DragFilesResponse> {
-        let response = try await self.dragFiles(
-            request: GRPCCore.ServerRequest(stream: request),
-            context: context
-        )
-        return GRPCCore.StreamingServerResponse(single: response)
-    }
-
     public func createMacro(
         request: GRPCCore.StreamingServerRequest<Macosusesdk_V1_CreateMacroRequest>,
         context: GRPCCore.ServerContext
@@ -6131,11 +6224,37 @@ extension Macosusesdk_V1_MacosUse.ServiceProtocol {
 // Default implementation of methods from 'ServiceProtocol'.
 @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
 extension Macosusesdk_V1_MacosUse.SimpleServiceProtocol {
+    public func getApplicationBundle(
+        request: GRPCCore.ServerRequest<Macosusesdk_V1_GetApplicationBundleRequest>,
+        context: GRPCCore.ServerContext
+    ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ApplicationBundle> {
+        return GRPCCore.ServerResponse<Macosusesdk_V1_ApplicationBundle>(
+            message: try await self.getApplicationBundle(
+                request: request.message,
+                context: context
+            ),
+            metadata: [:]
+        )
+    }
+
+    public func listApplicationBundles(
+        request: GRPCCore.ServerRequest<Macosusesdk_V1_ListApplicationBundlesRequest>,
+        context: GRPCCore.ServerContext
+    ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ListApplicationBundlesResponse> {
+        return GRPCCore.ServerResponse<Macosusesdk_V1_ListApplicationBundlesResponse>(
+            message: try await self.listApplicationBundles(
+                request: request.message,
+                context: context
+            ),
+            metadata: [:]
+        )
+    }
+
     public func openApplication(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_OpenApplicationRequest>,
         context: GRPCCore.ServerContext
-    ) async throws -> GRPCCore.ServerResponse<Google_Longrunning_Operation> {
-        return GRPCCore.ServerResponse<Google_Longrunning_Operation>(
+    ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_OpenApplicationResponse> {
+        return GRPCCore.ServerResponse<Macosusesdk_V1_OpenApplicationResponse>(
             message: try await self.openApplication(
                 request: request.message,
                 context: context
@@ -6170,12 +6289,25 @@ extension Macosusesdk_V1_MacosUse.SimpleServiceProtocol {
         )
     }
 
-    public func deleteApplication(
-        request: GRPCCore.ServerRequest<Macosusesdk_V1_DeleteApplicationRequest>,
+    public func activateApplication(
+        request: GRPCCore.ServerRequest<Macosusesdk_V1_ActivateApplicationRequest>,
         context: GRPCCore.ServerContext
-    ) async throws -> GRPCCore.ServerResponse<SwiftProtobuf.Google_Protobuf_Empty> {
-        return GRPCCore.ServerResponse<SwiftProtobuf.Google_Protobuf_Empty>(
-            message: try await self.deleteApplication(
+    ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ActivateApplicationResponse> {
+        return GRPCCore.ServerResponse<Macosusesdk_V1_ActivateApplicationResponse>(
+            message: try await self.activateApplication(
+                request: request.message,
+                context: context
+            ),
+            metadata: [:]
+        )
+    }
+
+    public func closeApplication(
+        request: GRPCCore.ServerRequest<Macosusesdk_V1_CloseApplicationRequest>,
+        context: GRPCCore.ServerContext
+    ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_CloseApplicationResponse> {
+        return GRPCCore.ServerResponse<Macosusesdk_V1_CloseApplicationResponse>(
+            message: try await self.closeApplication(
                 request: request.message,
                 context: context
             ),
@@ -6398,9 +6530,22 @@ extension Macosusesdk_V1_MacosUse.SimpleServiceProtocol {
     public func getElement(
         request: GRPCCore.ServerRequest<Macosusesdk_V1_GetElementRequest>,
         context: GRPCCore.ServerContext
-    ) async throws -> GRPCCore.ServerResponse<Macosusesdk_Type_Element> {
-        return GRPCCore.ServerResponse<Macosusesdk_Type_Element>(
+    ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_Element> {
+        return GRPCCore.ServerResponse<Macosusesdk_V1_Element>(
             message: try await self.getElement(
+                request: request.message,
+                context: context
+            ),
+            metadata: [:]
+        )
+    }
+
+    public func listElements(
+        request: GRPCCore.ServerRequest<Macosusesdk_V1_ListElementsRequest>,
+        context: GRPCCore.ServerContext
+    ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_ListElementsResponse> {
+        return GRPCCore.ServerResponse<Macosusesdk_V1_ListElementsResponse>(
+            message: try await self.listElements(
                 request: request.message,
                 context: context
             ),
@@ -6821,45 +6966,6 @@ extension Macosusesdk_V1_MacosUse.SimpleServiceProtocol {
     ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_AutomateSaveFileDialogResponse> {
         return GRPCCore.ServerResponse<Macosusesdk_V1_AutomateSaveFileDialogResponse>(
             message: try await self.automateSaveFileDialog(
-                request: request.message,
-                context: context
-            ),
-            metadata: [:]
-        )
-    }
-
-    public func selectFile(
-        request: GRPCCore.ServerRequest<Macosusesdk_V1_SelectFileRequest>,
-        context: GRPCCore.ServerContext
-    ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_SelectFileResponse> {
-        return GRPCCore.ServerResponse<Macosusesdk_V1_SelectFileResponse>(
-            message: try await self.selectFile(
-                request: request.message,
-                context: context
-            ),
-            metadata: [:]
-        )
-    }
-
-    public func selectDirectory(
-        request: GRPCCore.ServerRequest<Macosusesdk_V1_SelectDirectoryRequest>,
-        context: GRPCCore.ServerContext
-    ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_SelectDirectoryResponse> {
-        return GRPCCore.ServerResponse<Macosusesdk_V1_SelectDirectoryResponse>(
-            message: try await self.selectDirectory(
-                request: request.message,
-                context: context
-            ),
-            metadata: [:]
-        )
-    }
-
-    public func dragFiles(
-        request: GRPCCore.ServerRequest<Macosusesdk_V1_DragFilesRequest>,
-        context: GRPCCore.ServerContext
-    ) async throws -> GRPCCore.ServerResponse<Macosusesdk_V1_DragFilesResponse> {
-        return GRPCCore.ServerResponse<Macosusesdk_V1_DragFilesResponse>(
-            message: try await self.dragFiles(
                 request: request.message,
                 context: context
             ),

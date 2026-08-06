@@ -42,6 +42,8 @@ const (
 	Input_STATE_COMPLETED Input_State = 3
 	// Input failed with an error.
 	Input_STATE_FAILED Input_State = 4
+	// Input was cancelled before execution or while its owned cleanup settled.
+	Input_STATE_CANCELLED Input_State = 5
 )
 
 // Enum value maps for Input_State.
@@ -52,6 +54,7 @@ var (
 		2: "STATE_EXECUTING",
 		3: "STATE_COMPLETED",
 		4: "STATE_FAILED",
+		5: "STATE_CANCELLED",
 	}
 	Input_State_value = map[string]int32{
 		"STATE_UNSPECIFIED": 0,
@@ -59,6 +62,7 @@ var (
 		"STATE_EXECUTING":   2,
 		"STATE_COMPLETED":   3,
 		"STATE_FAILED":      4,
+		"STATE_CANCELLED":   5,
 	}
 )
 
@@ -87,6 +91,67 @@ func (x Input_State) Number() protoreflect.EnumNumber {
 // Deprecated: Use Input_State.Descriptor instead.
 func (Input_State) EnumDescriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_input_proto_rawDescGZIP(), []int{0, 0}
+}
+
+// Degree to which the requested action is known to have reached a physical
+// input sink.
+type InputDeliveryResult_Commitment int32
+
+const (
+	// The server has no usable delivery classification.
+	InputDeliveryResult_COMMITMENT_UNSPECIFIED InputDeliveryResult_Commitment = 0
+	// No requested physical effect reached an operating-system sink.
+	InputDeliveryResult_COMMITMENT_NO_EFFECT InputDeliveryResult_Commitment = 1
+	// At least one requested physical effect may have reached an
+	// operating-system sink, but complete routed event delivery and safety
+	// cleanup could not be proved.
+	InputDeliveryResult_COMMITMENT_POSSIBLY_COMMITTED InputDeliveryResult_Commitment = 2
+	// Every requested event reached the selected route and every release
+	// obligation settled.
+	InputDeliveryResult_COMMITMENT_COMMITTED_AND_SETTLED InputDeliveryResult_Commitment = 3
+)
+
+// Enum value maps for InputDeliveryResult_Commitment.
+var (
+	InputDeliveryResult_Commitment_name = map[int32]string{
+		0: "COMMITMENT_UNSPECIFIED",
+		1: "COMMITMENT_NO_EFFECT",
+		2: "COMMITMENT_POSSIBLY_COMMITTED",
+		3: "COMMITMENT_COMMITTED_AND_SETTLED",
+	}
+	InputDeliveryResult_Commitment_value = map[string]int32{
+		"COMMITMENT_UNSPECIFIED":           0,
+		"COMMITMENT_NO_EFFECT":             1,
+		"COMMITMENT_POSSIBLY_COMMITTED":    2,
+		"COMMITMENT_COMMITTED_AND_SETTLED": 3,
+	}
+)
+
+func (x InputDeliveryResult_Commitment) Enum() *InputDeliveryResult_Commitment {
+	p := new(InputDeliveryResult_Commitment)
+	*p = x
+	return p
+}
+
+func (x InputDeliveryResult_Commitment) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (InputDeliveryResult_Commitment) Descriptor() protoreflect.EnumDescriptor {
+	return file_macosusesdk_v1_input_proto_enumTypes[1].Descriptor()
+}
+
+func (InputDeliveryResult_Commitment) Type() protoreflect.EnumType {
+	return &file_macosusesdk_v1_input_proto_enumTypes[1]
+}
+
+func (x InputDeliveryResult_Commitment) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use InputDeliveryResult_Commitment.Descriptor instead.
+func (InputDeliveryResult_Commitment) EnumDescriptor() ([]byte, []int) {
+	return file_macosusesdk_v1_input_proto_rawDescGZIP(), []int{2, 0}
 }
 
 // Click type enumeration.
@@ -130,11 +195,11 @@ func (x MouseClick_ClickType) String() string {
 }
 
 func (MouseClick_ClickType) Descriptor() protoreflect.EnumDescriptor {
-	return file_macosusesdk_v1_input_proto_enumTypes[1].Descriptor()
+	return file_macosusesdk_v1_input_proto_enumTypes[2].Descriptor()
 }
 
 func (MouseClick_ClickType) Type() protoreflect.EnumType {
-	return &file_macosusesdk_v1_input_proto_enumTypes[1]
+	return &file_macosusesdk_v1_input_proto_enumTypes[2]
 }
 
 func (x MouseClick_ClickType) Number() protoreflect.EnumNumber {
@@ -143,7 +208,7 @@ func (x MouseClick_ClickType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use MouseClick_ClickType.Descriptor instead.
 func (MouseClick_ClickType) EnumDescriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_input_proto_rawDescGZIP(), []int{2, 0}
+	return file_macosusesdk_v1_input_proto_rawDescGZIP(), []int{4, 0}
 }
 
 // Modifier key enumeration.
@@ -199,11 +264,11 @@ func (x KeyPress_Modifier) String() string {
 }
 
 func (KeyPress_Modifier) Descriptor() protoreflect.EnumDescriptor {
-	return file_macosusesdk_v1_input_proto_enumTypes[2].Descriptor()
+	return file_macosusesdk_v1_input_proto_enumTypes[3].Descriptor()
 }
 
 func (KeyPress_Modifier) Type() protoreflect.EnumType {
-	return &file_macosusesdk_v1_input_proto_enumTypes[2]
+	return &file_macosusesdk_v1_input_proto_enumTypes[3]
 }
 
 func (x KeyPress_Modifier) Number() protoreflect.EnumNumber {
@@ -212,140 +277,16 @@ func (x KeyPress_Modifier) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use KeyPress_Modifier.Descriptor instead.
 func (KeyPress_Modifier) EnumDescriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_input_proto_rawDescGZIP(), []int{4, 0}
-}
-
-// Gesture type enumeration.
-type Gesture_GestureType int32
-
-const (
-	// Default unspecified gesture.
-	Gesture_GESTURE_TYPE_UNSPECIFIED Gesture_GestureType = 0
-	// Pinch (zoom out).
-	Gesture_GESTURE_TYPE_PINCH Gesture_GestureType = 1
-	// Zoom (zoom in).
-	Gesture_GESTURE_TYPE_ZOOM Gesture_GestureType = 2
-	// Rotate.
-	Gesture_GESTURE_TYPE_ROTATE Gesture_GestureType = 3
-	// Swipe.
-	Gesture_GESTURE_TYPE_SWIPE Gesture_GestureType = 4
-	// Force touch (pressure-sensitive).
-	Gesture_GESTURE_TYPE_FORCE_TOUCH Gesture_GestureType = 5
-)
-
-// Enum value maps for Gesture_GestureType.
-var (
-	Gesture_GestureType_name = map[int32]string{
-		0: "GESTURE_TYPE_UNSPECIFIED",
-		1: "GESTURE_TYPE_PINCH",
-		2: "GESTURE_TYPE_ZOOM",
-		3: "GESTURE_TYPE_ROTATE",
-		4: "GESTURE_TYPE_SWIPE",
-		5: "GESTURE_TYPE_FORCE_TOUCH",
-	}
-	Gesture_GestureType_value = map[string]int32{
-		"GESTURE_TYPE_UNSPECIFIED": 0,
-		"GESTURE_TYPE_PINCH":       1,
-		"GESTURE_TYPE_ZOOM":        2,
-		"GESTURE_TYPE_ROTATE":      3,
-		"GESTURE_TYPE_SWIPE":       4,
-		"GESTURE_TYPE_FORCE_TOUCH": 5,
-	}
-)
-
-func (x Gesture_GestureType) Enum() *Gesture_GestureType {
-	p := new(Gesture_GestureType)
-	*p = x
-	return p
-}
-
-func (x Gesture_GestureType) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (Gesture_GestureType) Descriptor() protoreflect.EnumDescriptor {
-	return file_macosusesdk_v1_input_proto_enumTypes[3].Descriptor()
-}
-
-func (Gesture_GestureType) Type() protoreflect.EnumType {
-	return &file_macosusesdk_v1_input_proto_enumTypes[3]
-}
-
-func (x Gesture_GestureType) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use Gesture_GestureType.Descriptor instead.
-func (Gesture_GestureType) EnumDescriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_input_proto_rawDescGZIP(), []int{9, 0}
-}
-
-// Direction enumeration for swipes.
-type Gesture_Direction int32
-
-const (
-	// Default unspecified direction.
-	Gesture_DIRECTION_UNSPECIFIED Gesture_Direction = 0
-	// Swipe up.
-	Gesture_DIRECTION_UP Gesture_Direction = 1
-	// Swipe down.
-	Gesture_DIRECTION_DOWN Gesture_Direction = 2
-	// Swipe left.
-	Gesture_DIRECTION_LEFT Gesture_Direction = 3
-	// Swipe right.
-	Gesture_DIRECTION_RIGHT Gesture_Direction = 4
-)
-
-// Enum value maps for Gesture_Direction.
-var (
-	Gesture_Direction_name = map[int32]string{
-		0: "DIRECTION_UNSPECIFIED",
-		1: "DIRECTION_UP",
-		2: "DIRECTION_DOWN",
-		3: "DIRECTION_LEFT",
-		4: "DIRECTION_RIGHT",
-	}
-	Gesture_Direction_value = map[string]int32{
-		"DIRECTION_UNSPECIFIED": 0,
-		"DIRECTION_UP":          1,
-		"DIRECTION_DOWN":        2,
-		"DIRECTION_LEFT":        3,
-		"DIRECTION_RIGHT":       4,
-	}
-)
-
-func (x Gesture_Direction) Enum() *Gesture_Direction {
-	p := new(Gesture_Direction)
-	*p = x
-	return p
-}
-
-func (x Gesture_Direction) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (Gesture_Direction) Descriptor() protoreflect.EnumDescriptor {
-	return file_macosusesdk_v1_input_proto_enumTypes[4].Descriptor()
-}
-
-func (Gesture_Direction) Type() protoreflect.EnumType {
-	return &file_macosusesdk_v1_input_proto_enumTypes[4]
-}
-
-func (x Gesture_Direction) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use Gesture_Direction.Descriptor instead.
-func (Gesture_Direction) EnumDescriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_input_proto_rawDescGZIP(), []int{9, 1}
+	return file_macosusesdk_v1_input_proto_rawDescGZIP(), []int{6, 0}
 }
 
 // A resource representing an input action that was or will be executed.
-// Inputs form a timeline for each application.
+// Inputs form an execution timeline under an application or the explicit
+// desktop wildcard parent while target records the exact delivery authority.
 type Input struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Resource name in the format "applications/{application}/inputs/{input}".
+	// Desktop-wide input uses the explicit wildcard application segment "-".
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The specific action to perform or that was performed.
 	Action *InputAction `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"`
@@ -356,9 +297,13 @@ type Input struct {
 	// When the input completed (success or failure).
 	CompleteTime *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=complete_time,json=completeTime,proto3" json:"complete_time,omitempty"`
 	// Error message if the input failed.
-	Error         string `protobuf:"bytes,6,opt,name=error,proto3" json:"error,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Error string `protobuf:"bytes,6,opt,name=error,proto3" json:"error,omitempty"`
+	// Exact authority and coordinate scope selected for this input.
+	Target *InputTarget `protobuf:"bytes,7,opt,name=target,proto3" json:"target,omitempty"`
+	// Truthful delivery commitment recorded after execution settles.
+	DeliveryResult *InputDeliveryResult `protobuf:"bytes,8,opt,name=delivery_result,json=deliveryResult,proto3" json:"delivery_result,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *Input) Reset() {
@@ -433,6 +378,204 @@ func (x *Input) GetError() string {
 	return ""
 }
 
+func (x *Input) GetTarget() *InputTarget {
+	if x != nil {
+		return x.Target
+	}
+	return nil
+}
+
+func (x *Input) GetDeliveryResult() *InputDeliveryResult {
+	if x != nil {
+		return x.DeliveryResult
+	}
+	return nil
+}
+
+// Exact delivery authority for an input action.
+type InputTarget struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Destination:
+	//
+	//	*InputTarget_Application
+	//	*InputTarget_Window
+	//	*InputTarget_Display
+	//	*InputTarget_Desktop
+	Destination   isInputTarget_Destination `protobuf_oneof:"destination"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InputTarget) Reset() {
+	*x = InputTarget{}
+	mi := &file_macosusesdk_v1_input_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InputTarget) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InputTarget) ProtoMessage() {}
+
+func (x *InputTarget) ProtoReflect() protoreflect.Message {
+	mi := &file_macosusesdk_v1_input_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InputTarget.ProtoReflect.Descriptor instead.
+func (*InputTarget) Descriptor() ([]byte, []int) {
+	return file_macosusesdk_v1_input_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *InputTarget) GetDestination() isInputTarget_Destination {
+	if x != nil {
+		return x.Destination
+	}
+	return nil
+}
+
+func (x *InputTarget) GetApplication() string {
+	if x != nil {
+		if x, ok := x.Destination.(*InputTarget_Application); ok {
+			return x.Application
+		}
+	}
+	return ""
+}
+
+func (x *InputTarget) GetWindow() string {
+	if x != nil {
+		if x, ok := x.Destination.(*InputTarget_Window); ok {
+			return x.Window
+		}
+	}
+	return ""
+}
+
+func (x *InputTarget) GetDisplay() string {
+	if x != nil {
+		if x, ok := x.Destination.(*InputTarget_Display); ok {
+			return x.Display
+		}
+	}
+	return ""
+}
+
+func (x *InputTarget) GetDesktop() bool {
+	if x != nil {
+		if x, ok := x.Destination.(*InputTarget_Desktop); ok {
+			return x.Desktop
+		}
+	}
+	return false
+}
+
+type isInputTarget_Destination interface {
+	isInputTarget_Destination()
+}
+
+type InputTarget_Application struct {
+	// Exact running application resource.
+	Application string `protobuf:"bytes,1,opt,name=application,proto3,oneof"`
+}
+
+type InputTarget_Window struct {
+	// Exact opaque window resource.
+	Window string `protobuf:"bytes,2,opt,name=window,proto3,oneof"`
+}
+
+type InputTarget_Display struct {
+	// Exact display resource.
+	Display string `protobuf:"bytes,3,opt,name=display,proto3,oneof"`
+}
+
+type InputTarget_Desktop struct {
+	// Explicit authorization for the active desktop union.
+	Desktop bool `protobuf:"varint,4,opt,name=desktop,proto3,oneof"`
+}
+
+func (*InputTarget_Application) isInputTarget_Destination() {}
+
+func (*InputTarget_Window) isInputTarget_Destination() {}
+
+func (*InputTarget_Display) isInputTarget_Destination() {}
+
+func (*InputTarget_Desktop) isInputTarget_Destination() {}
+
+// Delivery truth for one settled input transaction.
+type InputDeliveryResult struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Delivery commitment after execution and cleanup settle.
+	Commitment InputDeliveryResult_Commitment `protobuf:"varint,1,opt,name=commitment,proto3,enum=macosusesdk.v1.InputDeliveryResult_Commitment" json:"commitment,omitempty"`
+	// Number of events whose post operation was invoked.
+	PostedEventCount int32 `protobuf:"varint,2,opt,name=posted_event_count,json=postedEventCount,proto3" json:"posted_event_count,omitempty"`
+	// Whether delivery on the selected application/window/display/desktop route
+	// was observed rather than inferred from a void posting API.
+	RoutedDeliveryObserved bool `protobuf:"varint,3,opt,name=routed_delivery_observed,json=routedDeliveryObserved,proto3" json:"routed_delivery_observed,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *InputDeliveryResult) Reset() {
+	*x = InputDeliveryResult{}
+	mi := &file_macosusesdk_v1_input_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InputDeliveryResult) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InputDeliveryResult) ProtoMessage() {}
+
+func (x *InputDeliveryResult) ProtoReflect() protoreflect.Message {
+	mi := &file_macosusesdk_v1_input_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InputDeliveryResult.ProtoReflect.Descriptor instead.
+func (*InputDeliveryResult) Descriptor() ([]byte, []int) {
+	return file_macosusesdk_v1_input_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *InputDeliveryResult) GetCommitment() InputDeliveryResult_Commitment {
+	if x != nil {
+		return x.Commitment
+	}
+	return InputDeliveryResult_COMMITMENT_UNSPECIFIED
+}
+
+func (x *InputDeliveryResult) GetPostedEventCount() int32 {
+	if x != nil {
+		return x.PostedEventCount
+	}
+	return 0
+}
+
+func (x *InputDeliveryResult) GetRoutedDeliveryObserved() bool {
+	if x != nil {
+		return x.RoutedDeliveryObserved
+	}
+	return false
+}
+
 // Specification of an input action.
 type InputAction struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -451,9 +594,6 @@ type InputAction struct {
 	//	*InputAction_Drag
 	//	*InputAction_Scroll
 	//	*InputAction_Hover
-	//	*InputAction_Gesture
-	//	*InputAction_ButtonDown
-	//	*InputAction_ButtonUp
 	InputType     isInputAction_InputType `protobuf_oneof:"input_type"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -461,7 +601,7 @@ type InputAction struct {
 
 func (x *InputAction) Reset() {
 	*x = InputAction{}
-	mi := &file_macosusesdk_v1_input_proto_msgTypes[1]
+	mi := &file_macosusesdk_v1_input_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -473,7 +613,7 @@ func (x *InputAction) String() string {
 func (*InputAction) ProtoMessage() {}
 
 func (x *InputAction) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_input_proto_msgTypes[1]
+	mi := &file_macosusesdk_v1_input_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -486,7 +626,7 @@ func (x *InputAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InputAction.ProtoReflect.Descriptor instead.
 func (*InputAction) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_input_proto_rawDescGZIP(), []int{1}
+	return file_macosusesdk_v1_input_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *InputAction) GetShowAnimation() bool {
@@ -573,33 +713,6 @@ func (x *InputAction) GetHover() *Hover {
 	return nil
 }
 
-func (x *InputAction) GetGesture() *Gesture {
-	if x != nil {
-		if x, ok := x.InputType.(*InputAction_Gesture); ok {
-			return x.Gesture
-		}
-	}
-	return nil
-}
-
-func (x *InputAction) GetButtonDown() *MouseButtonDown {
-	if x != nil {
-		if x, ok := x.InputType.(*InputAction_ButtonDown); ok {
-			return x.ButtonDown
-		}
-	}
-	return nil
-}
-
-func (x *InputAction) GetButtonUp() *MouseButtonUp {
-	if x != nil {
-		if x, ok := x.InputType.(*InputAction_ButtonUp); ok {
-			return x.ButtonUp
-		}
-	}
-	return nil
-}
-
 type isInputAction_InputType interface {
 	isInputAction_InputType()
 }
@@ -639,21 +752,6 @@ type InputAction_Hover struct {
 	Hover *Hover `protobuf:"bytes,16,opt,name=hover,proto3,oneof"`
 }
 
-type InputAction_Gesture struct {
-	// Multi-touch gesture.
-	Gesture *Gesture `protobuf:"bytes,17,opt,name=gesture,proto3,oneof"`
-}
-
-type InputAction_ButtonDown struct {
-	// Press mouse button down (for stateful drag operations).
-	ButtonDown *MouseButtonDown `protobuf:"bytes,18,opt,name=button_down,json=buttonDown,proto3,oneof"`
-}
-
-type InputAction_ButtonUp struct {
-	// Release mouse button (for stateful drag operations).
-	ButtonUp *MouseButtonUp `protobuf:"bytes,19,opt,name=button_up,json=buttonUp,proto3,oneof"`
-}
-
 func (*InputAction_Click) isInputAction_InputType() {}
 
 func (*InputAction_TypeText) isInputAction_InputType() {}
@@ -668,12 +766,6 @@ func (*InputAction_Scroll) isInputAction_InputType() {}
 
 func (*InputAction_Hover) isInputAction_InputType() {}
 
-func (*InputAction_Gesture) isInputAction_InputType() {}
-
-func (*InputAction_ButtonDown) isInputAction_InputType() {}
-
-func (*InputAction_ButtonUp) isInputAction_InputType() {}
-
 // Mouse click action.
 //
 // COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
@@ -685,16 +777,18 @@ type MouseClick struct {
 	// window coordinates for click targets.
 	Position *_type.Point `protobuf:"bytes,1,opt,name=position,proto3" json:"position,omitempty"`
 	// Click type.
-	ClickType MouseClick_ClickType `protobuf:"varint,2,opt,name=click_type,json=clickType,proto3,enum=macosusesdk.v1.MouseClick_ClickType" json:"click_type,omitempty"`
+	ClickType *MouseClick_ClickType `protobuf:"varint,2,opt,name=click_type,json=clickType,proto3,enum=macosusesdk.v1.MouseClick_ClickType,oneof" json:"click_type,omitempty"`
 	// Number of clicks (1 for single, 2 for double, etc.).
-	ClickCount    int32 `protobuf:"varint,3,opt,name=click_count,json=clickCount,proto3" json:"click_count,omitempty"`
+	ClickCount *int32 `protobuf:"varint,3,opt,name=click_count,json=clickCount,proto3,oneof" json:"click_count,omitempty"`
+	// Modifier keys applied atomically to every click event.
+	Modifiers     []KeyPress_Modifier `protobuf:"varint,4,rep,packed,name=modifiers,proto3,enum=macosusesdk.v1.KeyPress_Modifier" json:"modifiers,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *MouseClick) Reset() {
 	*x = MouseClick{}
-	mi := &file_macosusesdk_v1_input_proto_msgTypes[2]
+	mi := &file_macosusesdk_v1_input_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -706,7 +800,7 @@ func (x *MouseClick) String() string {
 func (*MouseClick) ProtoMessage() {}
 
 func (x *MouseClick) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_input_proto_msgTypes[2]
+	mi := &file_macosusesdk_v1_input_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -719,7 +813,7 @@ func (x *MouseClick) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MouseClick.ProtoReflect.Descriptor instead.
 func (*MouseClick) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_input_proto_rawDescGZIP(), []int{2}
+	return file_macosusesdk_v1_input_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *MouseClick) GetPosition() *_type.Point {
@@ -730,17 +824,24 @@ func (x *MouseClick) GetPosition() *_type.Point {
 }
 
 func (x *MouseClick) GetClickType() MouseClick_ClickType {
-	if x != nil {
-		return x.ClickType
+	if x != nil && x.ClickType != nil {
+		return *x.ClickType
 	}
 	return MouseClick_CLICK_TYPE_UNSPECIFIED
 }
 
 func (x *MouseClick) GetClickCount() int32 {
-	if x != nil {
-		return x.ClickCount
+	if x != nil && x.ClickCount != nil {
+		return *x.ClickCount
 	}
 	return 0
+}
+
+func (x *MouseClick) GetModifiers() []KeyPress_Modifier {
+	if x != nil {
+		return x.Modifiers
+	}
+	return nil
 }
 
 // Text input action.
@@ -748,8 +849,6 @@ type TextInput struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Text to type.
 	Text string `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
-	// Whether to use IME for input (for non-ASCII text).
-	UseIme bool `protobuf:"varint,2,opt,name=use_ime,json=useIme,proto3" json:"use_ime,omitempty"`
 	// Delay between characters in seconds.
 	CharDelay     float64 `protobuf:"fixed64,3,opt,name=char_delay,json=charDelay,proto3" json:"char_delay,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -758,7 +857,7 @@ type TextInput struct {
 
 func (x *TextInput) Reset() {
 	*x = TextInput{}
-	mi := &file_macosusesdk_v1_input_proto_msgTypes[3]
+	mi := &file_macosusesdk_v1_input_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -770,7 +869,7 @@ func (x *TextInput) String() string {
 func (*TextInput) ProtoMessage() {}
 
 func (x *TextInput) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_input_proto_msgTypes[3]
+	mi := &file_macosusesdk_v1_input_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -783,7 +882,7 @@ func (x *TextInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TextInput.ProtoReflect.Descriptor instead.
 func (*TextInput) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_input_proto_rawDescGZIP(), []int{3}
+	return file_macosusesdk_v1_input_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *TextInput) GetText() string {
@@ -791,13 +890,6 @@ func (x *TextInput) GetText() string {
 		return x.Text
 	}
 	return ""
-}
-
-func (x *TextInput) GetUseIme() bool {
-	if x != nil {
-		return x.UseIme
-	}
-	return false
 }
 
 func (x *TextInput) GetCharDelay() float64 {
@@ -822,7 +914,7 @@ type KeyPress struct {
 
 func (x *KeyPress) Reset() {
 	*x = KeyPress{}
-	mi := &file_macosusesdk_v1_input_proto_msgTypes[4]
+	mi := &file_macosusesdk_v1_input_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -834,7 +926,7 @@ func (x *KeyPress) String() string {
 func (*KeyPress) ProtoMessage() {}
 
 func (x *KeyPress) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_input_proto_msgTypes[4]
+	mi := &file_macosusesdk_v1_input_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -847,7 +939,7 @@ func (x *KeyPress) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use KeyPress.ProtoReflect.Descriptor instead.
 func (*KeyPress) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_input_proto_rawDescGZIP(), []int{4}
+	return file_macosusesdk_v1_input_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *KeyPress) GetKey() string {
@@ -880,14 +972,16 @@ type MouseMove struct {
 	// Target position in Global Display Coordinates.
 	Position *_type.Point `protobuf:"bytes,1,opt,name=position,proto3" json:"position,omitempty"`
 	// Duration of movement in seconds (for smooth animation).
-	Duration      float64 `protobuf:"fixed64,2,opt,name=duration,proto3" json:"duration,omitempty"`
+	Duration float64 `protobuf:"fixed64,2,opt,name=duration,proto3" json:"duration,omitempty"`
+	// Modifier keys applied atomically to every movement event.
+	Modifiers     []KeyPress_Modifier `protobuf:"varint,3,rep,packed,name=modifiers,proto3,enum=macosusesdk.v1.KeyPress_Modifier" json:"modifiers,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *MouseMove) Reset() {
 	*x = MouseMove{}
-	mi := &file_macosusesdk_v1_input_proto_msgTypes[5]
+	mi := &file_macosusesdk_v1_input_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -899,7 +993,7 @@ func (x *MouseMove) String() string {
 func (*MouseMove) ProtoMessage() {}
 
 func (x *MouseMove) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_input_proto_msgTypes[5]
+	mi := &file_macosusesdk_v1_input_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -912,7 +1006,7 @@ func (x *MouseMove) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MouseMove.ProtoReflect.Descriptor instead.
 func (*MouseMove) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_input_proto_rawDescGZIP(), []int{5}
+	return file_macosusesdk_v1_input_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *MouseMove) GetPosition() *_type.Point {
@@ -929,6 +1023,13 @@ func (x *MouseMove) GetDuration() float64 {
 	return 0
 }
 
+func (x *MouseMove) GetModifiers() []KeyPress_Modifier {
+	if x != nil {
+		return x.Modifiers
+	}
+	return nil
+}
+
 // Mouse drag action.
 //
 // COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
@@ -942,14 +1043,21 @@ type MouseDrag struct {
 	// Duration of drag in seconds.
 	Duration float64 `protobuf:"fixed64,3,opt,name=duration,proto3" json:"duration,omitempty"`
 	// Mouse button to use for drag.
-	Button        MouseClick_ClickType `protobuf:"varint,4,opt,name=button,proto3,enum=macosusesdk.v1.MouseClick_ClickType" json:"button,omitempty"`
+	Button *MouseClick_ClickType `protobuf:"varint,4,opt,name=button,proto3,enum=macosusesdk.v1.MouseClick_ClickType,oneof" json:"button,omitempty"`
+	// Modifier keys applied atomically to every drag event.
+	Modifiers []KeyPress_Modifier `protobuf:"varint,5,rep,packed,name=modifiers,proto3,enum=macosusesdk.v1.KeyPress_Modifier" json:"modifiers,omitempty"`
+	// Ordered drag waypoints in Global Display Coordinates. When present, this
+	// path is authoritative and must contain at least two points. The first and
+	// last points must equal start_position and end_position when those legacy
+	// fields are also supplied.
+	Path          []*_type.Point `protobuf:"bytes,6,rep,name=path,proto3" json:"path,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *MouseDrag) Reset() {
 	*x = MouseDrag{}
-	mi := &file_macosusesdk_v1_input_proto_msgTypes[6]
+	mi := &file_macosusesdk_v1_input_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -961,7 +1069,7 @@ func (x *MouseDrag) String() string {
 func (*MouseDrag) ProtoMessage() {}
 
 func (x *MouseDrag) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_input_proto_msgTypes[6]
+	mi := &file_macosusesdk_v1_input_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -974,7 +1082,7 @@ func (x *MouseDrag) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MouseDrag.ProtoReflect.Descriptor instead.
 func (*MouseDrag) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_input_proto_rawDescGZIP(), []int{6}
+	return file_macosusesdk_v1_input_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *MouseDrag) GetStartPosition() *_type.Point {
@@ -999,10 +1107,24 @@ func (x *MouseDrag) GetDuration() float64 {
 }
 
 func (x *MouseDrag) GetButton() MouseClick_ClickType {
-	if x != nil {
-		return x.Button
+	if x != nil && x.Button != nil {
+		return *x.Button
 	}
 	return MouseClick_CLICK_TYPE_UNSPECIFIED
+}
+
+func (x *MouseDrag) GetModifiers() []KeyPress_Modifier {
+	if x != nil {
+		return x.Modifiers
+	}
+	return nil
+}
+
+func (x *MouseDrag) GetPath() []*_type.Point {
+	if x != nil {
+		return x.Path
+	}
+	return nil
 }
 
 // Scroll action.
@@ -1019,14 +1141,16 @@ type Scroll struct {
 	// Vertical scroll amount (positive = up, negative = down).
 	Vertical float64 `protobuf:"fixed64,3,opt,name=vertical,proto3" json:"vertical,omitempty"`
 	// Duration of scroll in seconds (for momentum effect).
-	Duration      float64 `protobuf:"fixed64,4,opt,name=duration,proto3" json:"duration,omitempty"`
+	Duration float64 `protobuf:"fixed64,4,opt,name=duration,proto3" json:"duration,omitempty"`
+	// Modifier keys applied atomically to every scroll event.
+	Modifiers     []KeyPress_Modifier `protobuf:"varint,5,rep,packed,name=modifiers,proto3,enum=macosusesdk.v1.KeyPress_Modifier" json:"modifiers,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Scroll) Reset() {
 	*x = Scroll{}
-	mi := &file_macosusesdk_v1_input_proto_msgTypes[7]
+	mi := &file_macosusesdk_v1_input_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1038,7 +1162,7 @@ func (x *Scroll) String() string {
 func (*Scroll) ProtoMessage() {}
 
 func (x *Scroll) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_input_proto_msgTypes[7]
+	mi := &file_macosusesdk_v1_input_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1051,7 +1175,7 @@ func (x *Scroll) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Scroll.ProtoReflect.Descriptor instead.
 func (*Scroll) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_input_proto_rawDescGZIP(), []int{7}
+	return file_macosusesdk_v1_input_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *Scroll) GetPosition() *_type.Point {
@@ -1082,6 +1206,13 @@ func (x *Scroll) GetDuration() float64 {
 	return 0
 }
 
+func (x *Scroll) GetModifiers() []KeyPress_Modifier {
+	if x != nil {
+		return x.Modifiers
+	}
+	return nil
+}
+
 // Hover action.
 //
 // COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
@@ -1098,7 +1229,7 @@ type Hover struct {
 
 func (x *Hover) Reset() {
 	*x = Hover{}
-	mi := &file_macosusesdk_v1_input_proto_msgTypes[8]
+	mi := &file_macosusesdk_v1_input_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1110,7 +1241,7 @@ func (x *Hover) String() string {
 func (*Hover) ProtoMessage() {}
 
 func (x *Hover) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_input_proto_msgTypes[8]
+	mi := &file_macosusesdk_v1_input_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1123,7 +1254,7 @@ func (x *Hover) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Hover.ProtoReflect.Descriptor instead.
 func (*Hover) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_input_proto_rawDescGZIP(), []int{8}
+	return file_macosusesdk_v1_input_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *Hover) GetPosition() *_type.Point {
@@ -1140,239 +1271,11 @@ func (x *Hover) GetDuration() float64 {
 	return 0
 }
 
-// Multi-touch gesture.
-//
-// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
-// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
-type Gesture struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Center point of the gesture in Global Display Coordinates.
-	Center *_type.Point `protobuf:"bytes,1,opt,name=center,proto3" json:"center,omitempty"`
-	// Gesture type.
-	GestureType Gesture_GestureType `protobuf:"varint,2,opt,name=gesture_type,json=gestureType,proto3,enum=macosusesdk.v1.Gesture_GestureType" json:"gesture_type,omitempty"`
-	// Scale factor (for pinch/zoom gestures).
-	Scale float64 `protobuf:"fixed64,3,opt,name=scale,proto3" json:"scale,omitempty"`
-	// Rotation angle in degrees (for rotation gestures).
-	Rotation float64 `protobuf:"fixed64,4,opt,name=rotation,proto3" json:"rotation,omitempty"`
-	// Number of fingers (for swipe gestures).
-	FingerCount int32 `protobuf:"varint,5,opt,name=finger_count,json=fingerCount,proto3" json:"finger_count,omitempty"`
-	// Direction for swipe gestures.
-	Direction     Gesture_Direction `protobuf:"varint,6,opt,name=direction,proto3,enum=macosusesdk.v1.Gesture_Direction" json:"direction,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Gesture) Reset() {
-	*x = Gesture{}
-	mi := &file_macosusesdk_v1_input_proto_msgTypes[9]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Gesture) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Gesture) ProtoMessage() {}
-
-func (x *Gesture) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_input_proto_msgTypes[9]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Gesture.ProtoReflect.Descriptor instead.
-func (*Gesture) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_input_proto_rawDescGZIP(), []int{9}
-}
-
-func (x *Gesture) GetCenter() *_type.Point {
-	if x != nil {
-		return x.Center
-	}
-	return nil
-}
-
-func (x *Gesture) GetGestureType() Gesture_GestureType {
-	if x != nil {
-		return x.GestureType
-	}
-	return Gesture_GESTURE_TYPE_UNSPECIFIED
-}
-
-func (x *Gesture) GetScale() float64 {
-	if x != nil {
-		return x.Scale
-	}
-	return 0
-}
-
-func (x *Gesture) GetRotation() float64 {
-	if x != nil {
-		return x.Rotation
-	}
-	return 0
-}
-
-func (x *Gesture) GetFingerCount() int32 {
-	if x != nil {
-		return x.FingerCount
-	}
-	return 0
-}
-
-func (x *Gesture) GetDirection() Gesture_Direction {
-	if x != nil {
-		return x.Direction
-	}
-	return Gesture_DIRECTION_UNSPECIFIED
-}
-
-// Mouse button press action (without release).
-// Used for stateful drag operations where button down and up are separate events.
-//
-// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
-type MouseButtonDown struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Position where button is pressed in Global Display Coordinates.
-	Position *_type.Point `protobuf:"bytes,1,opt,name=position,proto3" json:"position,omitempty"`
-	// Button type.
-	Button MouseClick_ClickType `protobuf:"varint,2,opt,name=button,proto3,enum=macosusesdk.v1.MouseClick_ClickType" json:"button,omitempty"`
-	// Modifier keys to hold during press.
-	Modifiers     []KeyPress_Modifier `protobuf:"varint,3,rep,packed,name=modifiers,proto3,enum=macosusesdk.v1.KeyPress_Modifier" json:"modifiers,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *MouseButtonDown) Reset() {
-	*x = MouseButtonDown{}
-	mi := &file_macosusesdk_v1_input_proto_msgTypes[10]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *MouseButtonDown) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*MouseButtonDown) ProtoMessage() {}
-
-func (x *MouseButtonDown) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_input_proto_msgTypes[10]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use MouseButtonDown.ProtoReflect.Descriptor instead.
-func (*MouseButtonDown) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_input_proto_rawDescGZIP(), []int{10}
-}
-
-func (x *MouseButtonDown) GetPosition() *_type.Point {
-	if x != nil {
-		return x.Position
-	}
-	return nil
-}
-
-func (x *MouseButtonDown) GetButton() MouseClick_ClickType {
-	if x != nil {
-		return x.Button
-	}
-	return MouseClick_CLICK_TYPE_UNSPECIFIED
-}
-
-func (x *MouseButtonDown) GetModifiers() []KeyPress_Modifier {
-	if x != nil {
-		return x.Modifiers
-	}
-	return nil
-}
-
-// Mouse button release action.
-// Used for stateful drag operations where button down and up are separate events.
-//
-// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
-type MouseButtonUp struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Position where button is released in Global Display Coordinates.
-	Position *_type.Point `protobuf:"bytes,1,opt,name=position,proto3" json:"position,omitempty"`
-	// Button type.
-	Button MouseClick_ClickType `protobuf:"varint,2,opt,name=button,proto3,enum=macosusesdk.v1.MouseClick_ClickType" json:"button,omitempty"`
-	// Modifier keys to hold during release.
-	Modifiers     []KeyPress_Modifier `protobuf:"varint,3,rep,packed,name=modifiers,proto3,enum=macosusesdk.v1.KeyPress_Modifier" json:"modifiers,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *MouseButtonUp) Reset() {
-	*x = MouseButtonUp{}
-	mi := &file_macosusesdk_v1_input_proto_msgTypes[11]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *MouseButtonUp) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*MouseButtonUp) ProtoMessage() {}
-
-func (x *MouseButtonUp) ProtoReflect() protoreflect.Message {
-	mi := &file_macosusesdk_v1_input_proto_msgTypes[11]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use MouseButtonUp.ProtoReflect.Descriptor instead.
-func (*MouseButtonUp) Descriptor() ([]byte, []int) {
-	return file_macosusesdk_v1_input_proto_rawDescGZIP(), []int{11}
-}
-
-func (x *MouseButtonUp) GetPosition() *_type.Point {
-	if x != nil {
-		return x.Position
-	}
-	return nil
-}
-
-func (x *MouseButtonUp) GetButton() MouseClick_ClickType {
-	if x != nil {
-		return x.Button
-	}
-	return MouseClick_CLICK_TYPE_UNSPECIFIED
-}
-
-func (x *MouseButtonUp) GetModifiers() []KeyPress_Modifier {
-	if x != nil {
-		return x.Modifiers
-	}
-	return nil
-}
-
 var File_macosusesdk_v1_input_proto protoreflect.FileDescriptor
 
 const file_macosusesdk_v1_input_proto_rawDesc = "" +
 	"\n" +
-	"\x1amacosusesdk/v1/input.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1fmacosusesdk/type/geometry.proto\"\xfa\x03\n" +
+	"\x1amacosusesdk/v1/input.proto\x12\x0emacosusesdk.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1fmacosusesdk/type/geometry.proto\"\x9d\x05\n" +
 	"\x05Input\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x128\n" +
 	"\x06action\x18\x02 \x01(\v2\x1b.macosusesdk.v1.InputActionB\x03\xe0A\x02R\x06action\x126\n" +
@@ -1380,14 +1283,38 @@ const file_macosusesdk_v1_input_proto_rawDesc = "" +
 	"\vcreate_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\n" +
 	"createTime\x12D\n" +
 	"\rcomplete_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\fcompleteTime\x12\x19\n" +
-	"\x05error\x18\x06 \x01(\tB\x03\xe0A\x03R\x05error\"m\n" +
+	"\x05error\x18\x06 \x01(\tB\x03\xe0A\x03R\x05error\x128\n" +
+	"\x06target\x18\a \x01(\v2\x1b.macosusesdk.v1.InputTargetB\x03\xe0A\x02R\x06target\x12Q\n" +
+	"\x0fdelivery_result\x18\b \x01(\v2#.macosusesdk.v1.InputDeliveryResultB\x03\xe0A\x03R\x0edeliveryResult\"\x82\x01\n" +
 	"\x05State\x12\x15\n" +
 	"\x11STATE_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rSTATE_PENDING\x10\x01\x12\x13\n" +
 	"\x0fSTATE_EXECUTING\x10\x02\x12\x13\n" +
 	"\x0fSTATE_COMPLETED\x10\x03\x12\x10\n" +
-	"\fSTATE_FAILED\x10\x04:T\xeaAQ\n" +
-	"\x15macosusesdk.com/Input\x12)applications/{application}/inputs/{input}*\x06inputs2\x05input\"\xa7\x05\n" +
+	"\fSTATE_FAILED\x10\x04\x12\x13\n" +
+	"\x0fSTATE_CANCELLED\x10\x05:T\xeaAQ\n" +
+	"\x15macosusesdk.com/Input\x12)applications/{application}/inputs/{input}*\x06inputs2\x05input\"\xef\x01\n" +
+	"\vInputTarget\x12D\n" +
+	"\vapplication\x18\x01 \x01(\tB \xfaA\x1d\n" +
+	"\x1bmacosusesdk.com/ApplicationH\x00R\vapplication\x125\n" +
+	"\x06window\x18\x02 \x01(\tB\x1b\xfaA\x18\n" +
+	"\x16macosusesdk.com/WindowH\x00R\x06window\x128\n" +
+	"\adisplay\x18\x03 \x01(\tB\x1c\xfaA\x19\n" +
+	"\x17macosusesdk.com/DisplayH\x00R\adisplay\x12\x1a\n" +
+	"\adesktop\x18\x04 \x01(\bH\x00R\adesktopB\r\n" +
+	"\vdestination\"\xea\x02\n" +
+	"\x13InputDeliveryResult\x12S\n" +
+	"\n" +
+	"commitment\x18\x01 \x01(\x0e2..macosusesdk.v1.InputDeliveryResult.CommitmentB\x03\xe0A\x03R\n" +
+	"commitment\x121\n" +
+	"\x12posted_event_count\x18\x02 \x01(\x05B\x03\xe0A\x03R\x10postedEventCount\x12=\n" +
+	"\x18routed_delivery_observed\x18\x03 \x01(\bB\x03\xe0A\x03R\x16routedDeliveryObserved\"\x8b\x01\n" +
+	"\n" +
+	"Commitment\x12\x1a\n" +
+	"\x16COMMITMENT_UNSPECIFIED\x10\x00\x12\x18\n" +
+	"\x14COMMITMENT_NO_EFFECT\x10\x01\x12!\n" +
+	"\x1dCOMMITMENT_POSSIBLY_COMMITTED\x10\x02\x12$\n" +
+	" COMMITMENT_COMMITTED_AND_SETTLED\x10\x03\"\x97\x04\n" +
 	"\vInputAction\x12*\n" +
 	"\x0eshow_animation\x18\x01 \x01(\bB\x03\xe0A\x01R\rshowAnimation\x122\n" +
 	"\x12animation_duration\x18\x02 \x01(\x01B\x03\xe0A\x01R\x11animationDuration\x122\n" +
@@ -1399,30 +1326,28 @@ const file_macosusesdk_v1_input_proto_rawDesc = "" +
 	"move_mouse\x18\r \x01(\v2\x19.macosusesdk.v1.MouseMoveH\x00R\tmoveMouse\x12/\n" +
 	"\x04drag\x18\x0e \x01(\v2\x19.macosusesdk.v1.MouseDragH\x00R\x04drag\x120\n" +
 	"\x06scroll\x18\x0f \x01(\v2\x16.macosusesdk.v1.ScrollH\x00R\x06scroll\x12-\n" +
-	"\x05hover\x18\x10 \x01(\v2\x15.macosusesdk.v1.HoverH\x00R\x05hover\x123\n" +
-	"\agesture\x18\x11 \x01(\v2\x17.macosusesdk.v1.GestureH\x00R\agesture\x12B\n" +
-	"\vbutton_down\x18\x12 \x01(\v2\x1f.macosusesdk.v1.MouseButtonDownH\x00R\n" +
-	"buttonDown\x12<\n" +
-	"\tbutton_up\x18\x13 \x01(\v2\x1d.macosusesdk.v1.MouseButtonUpH\x00R\bbuttonUpB\f\n" +
+	"\x05hover\x18\x10 \x01(\v2\x15.macosusesdk.v1.HoverH\x00R\x05hoverB\f\n" +
 	"\n" +
-	"input_type\"\xa1\x02\n" +
+	"input_typeJ\x04\b\x11\x10\x14R\agestureR\vbutton_downR\tbutton_up\"\x90\x03\n" +
 	"\n" +
 	"MouseClick\x128\n" +
-	"\bposition\x18\x01 \x01(\v2\x17.macosusesdk.type.PointB\x03\xe0A\x02R\bposition\x12H\n" +
+	"\bposition\x18\x01 \x01(\v2\x17.macosusesdk.type.PointB\x03\xe0A\x02R\bposition\x12M\n" +
 	"\n" +
-	"click_type\x18\x02 \x01(\x0e2$.macosusesdk.v1.MouseClick.ClickTypeB\x03\xe0A\x01R\tclickType\x12$\n" +
-	"\vclick_count\x18\x03 \x01(\x05B\x03\xe0A\x01R\n" +
-	"clickCount\"i\n" +
+	"click_type\x18\x02 \x01(\x0e2$.macosusesdk.v1.MouseClick.ClickTypeB\x03\xe0A\x01H\x00R\tclickType\x88\x01\x01\x12)\n" +
+	"\vclick_count\x18\x03 \x01(\x05B\x03\xe0A\x01H\x01R\n" +
+	"clickCount\x88\x01\x01\x12D\n" +
+	"\tmodifiers\x18\x04 \x03(\x0e2!.macosusesdk.v1.KeyPress.ModifierB\x03\xe0A\x01R\tmodifiers\"i\n" +
 	"\tClickType\x12\x1a\n" +
 	"\x16CLICK_TYPE_UNSPECIFIED\x10\x00\x12\x13\n" +
 	"\x0fCLICK_TYPE_LEFT\x10\x01\x12\x14\n" +
 	"\x10CLICK_TYPE_RIGHT\x10\x02\x12\x15\n" +
-	"\x11CLICK_TYPE_MIDDLE\x10\x03\"f\n" +
+	"\x11CLICK_TYPE_MIDDLE\x10\x03B\r\n" +
+	"\v_click_typeB\x0e\n" +
+	"\f_click_count\"W\n" +
 	"\tTextInput\x12\x17\n" +
-	"\x04text\x18\x01 \x01(\tB\x03\xe0A\x02R\x04text\x12\x1c\n" +
-	"\ause_ime\x18\x02 \x01(\bB\x03\xe0A\x01R\x06useIme\x12\"\n" +
+	"\x04text\x18\x01 \x01(\tB\x03\xe0A\x02R\x04text\x12\"\n" +
 	"\n" +
-	"char_delay\x18\x03 \x01(\x01B\x03\xe0A\x01R\tcharDelay\"\xbc\x02\n" +
+	"char_delay\x18\x03 \x01(\x01B\x03\xe0A\x01R\tcharDelayJ\x04\b\x02\x10\x03R\ause_ime\"\xbc\x02\n" +
 	"\bKeyPress\x12\x15\n" +
 	"\x03key\x18\x01 \x01(\tB\x03\xe0A\x02R\x03key\x12D\n" +
 	"\tmodifiers\x18\x02 \x03(\x0e2!.macosusesdk.v1.KeyPress.ModifierB\x03\xe0A\x01R\tmodifiers\x12(\n" +
@@ -1434,53 +1359,30 @@ const file_macosusesdk_v1_input_proto_rawDesc = "" +
 	"\x10MODIFIER_CONTROL\x10\x03\x12\x12\n" +
 	"\x0eMODIFIER_SHIFT\x10\x04\x12\x15\n" +
 	"\x11MODIFIER_FUNCTION\x10\x05\x12\x16\n" +
-	"\x12MODIFIER_CAPS_LOCK\x10\x06\"f\n" +
+	"\x12MODIFIER_CAPS_LOCK\x10\x06\"\xac\x01\n" +
 	"\tMouseMove\x128\n" +
 	"\bposition\x18\x01 \x01(\v2\x17.macosusesdk.type.PointB\x03\xe0A\x02R\bposition\x12\x1f\n" +
-	"\bduration\x18\x02 \x01(\x01B\x03\xe0A\x01R\bduration\"\xf5\x01\n" +
+	"\bduration\x18\x02 \x01(\x01B\x03\xe0A\x01R\bduration\x12D\n" +
+	"\tmodifiers\x18\x03 \x03(\x0e2!.macosusesdk.v1.KeyPress.ModifierB\x03\xe0A\x01R\tmodifiers\"\xfd\x02\n" +
 	"\tMouseDrag\x12C\n" +
 	"\x0estart_position\x18\x01 \x01(\v2\x17.macosusesdk.type.PointB\x03\xe0A\x02R\rstartPosition\x12?\n" +
 	"\fend_position\x18\x02 \x01(\v2\x17.macosusesdk.type.PointB\x03\xe0A\x02R\vendPosition\x12\x1f\n" +
-	"\bduration\x18\x03 \x01(\x01B\x03\xe0A\x01R\bduration\x12A\n" +
-	"\x06button\x18\x04 \x01(\x0e2$.macosusesdk.v1.MouseClick.ClickTypeB\x03\xe0A\x01R\x06button\"\xa9\x01\n" +
+	"\bduration\x18\x03 \x01(\x01B\x03\xe0A\x01R\bduration\x12F\n" +
+	"\x06button\x18\x04 \x01(\x0e2$.macosusesdk.v1.MouseClick.ClickTypeB\x03\xe0A\x01H\x00R\x06button\x88\x01\x01\x12D\n" +
+	"\tmodifiers\x18\x05 \x03(\x0e2!.macosusesdk.v1.KeyPress.ModifierB\x03\xe0A\x01R\tmodifiers\x120\n" +
+	"\x04path\x18\x06 \x03(\v2\x17.macosusesdk.type.PointB\x03\xe0A\x01R\x04pathB\t\n" +
+	"\a_button\"\xef\x01\n" +
 	"\x06Scroll\x128\n" +
 	"\bposition\x18\x01 \x01(\v2\x17.macosusesdk.type.PointB\x03\xe0A\x01R\bposition\x12#\n" +
 	"\n" +
 	"horizontal\x18\x02 \x01(\x01B\x03\xe0A\x01R\n" +
 	"horizontal\x12\x1f\n" +
 	"\bvertical\x18\x03 \x01(\x01B\x03\xe0A\x01R\bvertical\x12\x1f\n" +
-	"\bduration\x18\x04 \x01(\x01B\x03\xe0A\x01R\bduration\"b\n" +
+	"\bduration\x18\x04 \x01(\x01B\x03\xe0A\x01R\bduration\x12D\n" +
+	"\tmodifiers\x18\x05 \x03(\x0e2!.macosusesdk.v1.KeyPress.ModifierB\x03\xe0A\x01R\tmodifiers\"b\n" +
 	"\x05Hover\x128\n" +
 	"\bposition\x18\x01 \x01(\v2\x17.macosusesdk.type.PointB\x03\xe0A\x02R\bposition\x12\x1f\n" +
-	"\bduration\x18\x02 \x01(\x01B\x03\xe0A\x02R\bduration\"\xd9\x04\n" +
-	"\aGesture\x124\n" +
-	"\x06center\x18\x01 \x01(\v2\x17.macosusesdk.type.PointB\x03\xe0A\x02R\x06center\x12K\n" +
-	"\fgesture_type\x18\x02 \x01(\x0e2#.macosusesdk.v1.Gesture.GestureTypeB\x03\xe0A\x02R\vgestureType\x12\x19\n" +
-	"\x05scale\x18\x03 \x01(\x01B\x03\xe0A\x01R\x05scale\x12\x1f\n" +
-	"\brotation\x18\x04 \x01(\x01B\x03\xe0A\x01R\brotation\x12&\n" +
-	"\ffinger_count\x18\x05 \x01(\x05B\x03\xe0A\x01R\vfingerCount\x12D\n" +
-	"\tdirection\x18\x06 \x01(\x0e2!.macosusesdk.v1.Gesture.DirectionB\x03\xe0A\x01R\tdirection\"\xa9\x01\n" +
-	"\vGestureType\x12\x1c\n" +
-	"\x18GESTURE_TYPE_UNSPECIFIED\x10\x00\x12\x16\n" +
-	"\x12GESTURE_TYPE_PINCH\x10\x01\x12\x15\n" +
-	"\x11GESTURE_TYPE_ZOOM\x10\x02\x12\x17\n" +
-	"\x13GESTURE_TYPE_ROTATE\x10\x03\x12\x16\n" +
-	"\x12GESTURE_TYPE_SWIPE\x10\x04\x12\x1c\n" +
-	"\x18GESTURE_TYPE_FORCE_TOUCH\x10\x05\"u\n" +
-	"\tDirection\x12\x19\n" +
-	"\x15DIRECTION_UNSPECIFIED\x10\x00\x12\x10\n" +
-	"\fDIRECTION_UP\x10\x01\x12\x12\n" +
-	"\x0eDIRECTION_DOWN\x10\x02\x12\x12\n" +
-	"\x0eDIRECTION_LEFT\x10\x03\x12\x13\n" +
-	"\x0fDIRECTION_RIGHT\x10\x04\"\xd4\x01\n" +
-	"\x0fMouseButtonDown\x128\n" +
-	"\bposition\x18\x01 \x01(\v2\x17.macosusesdk.type.PointB\x03\xe0A\x02R\bposition\x12A\n" +
-	"\x06button\x18\x02 \x01(\x0e2$.macosusesdk.v1.MouseClick.ClickTypeB\x03\xe0A\x01R\x06button\x12D\n" +
-	"\tmodifiers\x18\x03 \x03(\x0e2!.macosusesdk.v1.KeyPress.ModifierB\x03\xe0A\x01R\tmodifiers\"\xd2\x01\n" +
-	"\rMouseButtonUp\x128\n" +
-	"\bposition\x18\x01 \x01(\v2\x17.macosusesdk.type.PointB\x03\xe0A\x02R\bposition\x12A\n" +
-	"\x06button\x18\x02 \x01(\x0e2$.macosusesdk.v1.MouseClick.ClickTypeB\x03\xe0A\x01R\x06button\x12D\n" +
-	"\tmodifiers\x18\x03 \x03(\x0e2!.macosusesdk.v1.KeyPress.ModifierB\x03\xe0A\x01R\tmodifiersB\xc1\x01\n" +
+	"\bduration\x18\x02 \x01(\x01B\x03\xe0A\x02R\bdurationB\xc1\x01\n" +
 	"\x12com.macosusesdk.v1B\n" +
 	"InputProtoP\x01ZFgithub.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1;macosusesdkv1\xa2\x02\x03MXX\xaa\x02\x0eMacosusesdk.V1\xca\x02\x0eMacosusesdk\\V1\xe2\x02\x1aMacosusesdk\\V1\\GPBMetadata\xea\x02\x0fMacosusesdk::V1b\x06proto3"
 
@@ -1496,67 +1398,61 @@ func file_macosusesdk_v1_input_proto_rawDescGZIP() []byte {
 	return file_macosusesdk_v1_input_proto_rawDescData
 }
 
-var file_macosusesdk_v1_input_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
-var file_macosusesdk_v1_input_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_macosusesdk_v1_input_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
+var file_macosusesdk_v1_input_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_macosusesdk_v1_input_proto_goTypes = []any{
-	(Input_State)(0),              // 0: macosusesdk.v1.Input.State
-	(MouseClick_ClickType)(0),     // 1: macosusesdk.v1.MouseClick.ClickType
-	(KeyPress_Modifier)(0),        // 2: macosusesdk.v1.KeyPress.Modifier
-	(Gesture_GestureType)(0),      // 3: macosusesdk.v1.Gesture.GestureType
-	(Gesture_Direction)(0),        // 4: macosusesdk.v1.Gesture.Direction
-	(*Input)(nil),                 // 5: macosusesdk.v1.Input
-	(*InputAction)(nil),           // 6: macosusesdk.v1.InputAction
-	(*MouseClick)(nil),            // 7: macosusesdk.v1.MouseClick
-	(*TextInput)(nil),             // 8: macosusesdk.v1.TextInput
-	(*KeyPress)(nil),              // 9: macosusesdk.v1.KeyPress
-	(*MouseMove)(nil),             // 10: macosusesdk.v1.MouseMove
-	(*MouseDrag)(nil),             // 11: macosusesdk.v1.MouseDrag
-	(*Scroll)(nil),                // 12: macosusesdk.v1.Scroll
-	(*Hover)(nil),                 // 13: macosusesdk.v1.Hover
-	(*Gesture)(nil),               // 14: macosusesdk.v1.Gesture
-	(*MouseButtonDown)(nil),       // 15: macosusesdk.v1.MouseButtonDown
-	(*MouseButtonUp)(nil),         // 16: macosusesdk.v1.MouseButtonUp
-	(*timestamppb.Timestamp)(nil), // 17: google.protobuf.Timestamp
-	(*_type.Point)(nil),           // 18: macosusesdk.type.Point
+	(Input_State)(0),                    // 0: macosusesdk.v1.Input.State
+	(InputDeliveryResult_Commitment)(0), // 1: macosusesdk.v1.InputDeliveryResult.Commitment
+	(MouseClick_ClickType)(0),           // 2: macosusesdk.v1.MouseClick.ClickType
+	(KeyPress_Modifier)(0),              // 3: macosusesdk.v1.KeyPress.Modifier
+	(*Input)(nil),                       // 4: macosusesdk.v1.Input
+	(*InputTarget)(nil),                 // 5: macosusesdk.v1.InputTarget
+	(*InputDeliveryResult)(nil),         // 6: macosusesdk.v1.InputDeliveryResult
+	(*InputAction)(nil),                 // 7: macosusesdk.v1.InputAction
+	(*MouseClick)(nil),                  // 8: macosusesdk.v1.MouseClick
+	(*TextInput)(nil),                   // 9: macosusesdk.v1.TextInput
+	(*KeyPress)(nil),                    // 10: macosusesdk.v1.KeyPress
+	(*MouseMove)(nil),                   // 11: macosusesdk.v1.MouseMove
+	(*MouseDrag)(nil),                   // 12: macosusesdk.v1.MouseDrag
+	(*Scroll)(nil),                      // 13: macosusesdk.v1.Scroll
+	(*Hover)(nil),                       // 14: macosusesdk.v1.Hover
+	(*timestamppb.Timestamp)(nil),       // 15: google.protobuf.Timestamp
+	(*_type.Point)(nil),                 // 16: macosusesdk.type.Point
 }
 var file_macosusesdk_v1_input_proto_depIdxs = []int32{
-	6,  // 0: macosusesdk.v1.Input.action:type_name -> macosusesdk.v1.InputAction
+	7,  // 0: macosusesdk.v1.Input.action:type_name -> macosusesdk.v1.InputAction
 	0,  // 1: macosusesdk.v1.Input.state:type_name -> macosusesdk.v1.Input.State
-	17, // 2: macosusesdk.v1.Input.create_time:type_name -> google.protobuf.Timestamp
-	17, // 3: macosusesdk.v1.Input.complete_time:type_name -> google.protobuf.Timestamp
-	7,  // 4: macosusesdk.v1.InputAction.click:type_name -> macosusesdk.v1.MouseClick
-	8,  // 5: macosusesdk.v1.InputAction.type_text:type_name -> macosusesdk.v1.TextInput
-	9,  // 6: macosusesdk.v1.InputAction.press_key:type_name -> macosusesdk.v1.KeyPress
-	10, // 7: macosusesdk.v1.InputAction.move_mouse:type_name -> macosusesdk.v1.MouseMove
-	11, // 8: macosusesdk.v1.InputAction.drag:type_name -> macosusesdk.v1.MouseDrag
-	12, // 9: macosusesdk.v1.InputAction.scroll:type_name -> macosusesdk.v1.Scroll
-	13, // 10: macosusesdk.v1.InputAction.hover:type_name -> macosusesdk.v1.Hover
-	14, // 11: macosusesdk.v1.InputAction.gesture:type_name -> macosusesdk.v1.Gesture
-	15, // 12: macosusesdk.v1.InputAction.button_down:type_name -> macosusesdk.v1.MouseButtonDown
-	16, // 13: macosusesdk.v1.InputAction.button_up:type_name -> macosusesdk.v1.MouseButtonUp
-	18, // 14: macosusesdk.v1.MouseClick.position:type_name -> macosusesdk.type.Point
-	1,  // 15: macosusesdk.v1.MouseClick.click_type:type_name -> macosusesdk.v1.MouseClick.ClickType
-	2,  // 16: macosusesdk.v1.KeyPress.modifiers:type_name -> macosusesdk.v1.KeyPress.Modifier
-	18, // 17: macosusesdk.v1.MouseMove.position:type_name -> macosusesdk.type.Point
-	18, // 18: macosusesdk.v1.MouseDrag.start_position:type_name -> macosusesdk.type.Point
-	18, // 19: macosusesdk.v1.MouseDrag.end_position:type_name -> macosusesdk.type.Point
-	1,  // 20: macosusesdk.v1.MouseDrag.button:type_name -> macosusesdk.v1.MouseClick.ClickType
-	18, // 21: macosusesdk.v1.Scroll.position:type_name -> macosusesdk.type.Point
-	18, // 22: macosusesdk.v1.Hover.position:type_name -> macosusesdk.type.Point
-	18, // 23: macosusesdk.v1.Gesture.center:type_name -> macosusesdk.type.Point
-	3,  // 24: macosusesdk.v1.Gesture.gesture_type:type_name -> macosusesdk.v1.Gesture.GestureType
-	4,  // 25: macosusesdk.v1.Gesture.direction:type_name -> macosusesdk.v1.Gesture.Direction
-	18, // 26: macosusesdk.v1.MouseButtonDown.position:type_name -> macosusesdk.type.Point
-	1,  // 27: macosusesdk.v1.MouseButtonDown.button:type_name -> macosusesdk.v1.MouseClick.ClickType
-	2,  // 28: macosusesdk.v1.MouseButtonDown.modifiers:type_name -> macosusesdk.v1.KeyPress.Modifier
-	18, // 29: macosusesdk.v1.MouseButtonUp.position:type_name -> macosusesdk.type.Point
-	1,  // 30: macosusesdk.v1.MouseButtonUp.button:type_name -> macosusesdk.v1.MouseClick.ClickType
-	2,  // 31: macosusesdk.v1.MouseButtonUp.modifiers:type_name -> macosusesdk.v1.KeyPress.Modifier
-	32, // [32:32] is the sub-list for method output_type
-	32, // [32:32] is the sub-list for method input_type
-	32, // [32:32] is the sub-list for extension type_name
-	32, // [32:32] is the sub-list for extension extendee
-	0,  // [0:32] is the sub-list for field type_name
+	15, // 2: macosusesdk.v1.Input.create_time:type_name -> google.protobuf.Timestamp
+	15, // 3: macosusesdk.v1.Input.complete_time:type_name -> google.protobuf.Timestamp
+	5,  // 4: macosusesdk.v1.Input.target:type_name -> macosusesdk.v1.InputTarget
+	6,  // 5: macosusesdk.v1.Input.delivery_result:type_name -> macosusesdk.v1.InputDeliveryResult
+	1,  // 6: macosusesdk.v1.InputDeliveryResult.commitment:type_name -> macosusesdk.v1.InputDeliveryResult.Commitment
+	8,  // 7: macosusesdk.v1.InputAction.click:type_name -> macosusesdk.v1.MouseClick
+	9,  // 8: macosusesdk.v1.InputAction.type_text:type_name -> macosusesdk.v1.TextInput
+	10, // 9: macosusesdk.v1.InputAction.press_key:type_name -> macosusesdk.v1.KeyPress
+	11, // 10: macosusesdk.v1.InputAction.move_mouse:type_name -> macosusesdk.v1.MouseMove
+	12, // 11: macosusesdk.v1.InputAction.drag:type_name -> macosusesdk.v1.MouseDrag
+	13, // 12: macosusesdk.v1.InputAction.scroll:type_name -> macosusesdk.v1.Scroll
+	14, // 13: macosusesdk.v1.InputAction.hover:type_name -> macosusesdk.v1.Hover
+	16, // 14: macosusesdk.v1.MouseClick.position:type_name -> macosusesdk.type.Point
+	2,  // 15: macosusesdk.v1.MouseClick.click_type:type_name -> macosusesdk.v1.MouseClick.ClickType
+	3,  // 16: macosusesdk.v1.MouseClick.modifiers:type_name -> macosusesdk.v1.KeyPress.Modifier
+	3,  // 17: macosusesdk.v1.KeyPress.modifiers:type_name -> macosusesdk.v1.KeyPress.Modifier
+	16, // 18: macosusesdk.v1.MouseMove.position:type_name -> macosusesdk.type.Point
+	3,  // 19: macosusesdk.v1.MouseMove.modifiers:type_name -> macosusesdk.v1.KeyPress.Modifier
+	16, // 20: macosusesdk.v1.MouseDrag.start_position:type_name -> macosusesdk.type.Point
+	16, // 21: macosusesdk.v1.MouseDrag.end_position:type_name -> macosusesdk.type.Point
+	2,  // 22: macosusesdk.v1.MouseDrag.button:type_name -> macosusesdk.v1.MouseClick.ClickType
+	3,  // 23: macosusesdk.v1.MouseDrag.modifiers:type_name -> macosusesdk.v1.KeyPress.Modifier
+	16, // 24: macosusesdk.v1.MouseDrag.path:type_name -> macosusesdk.type.Point
+	16, // 25: macosusesdk.v1.Scroll.position:type_name -> macosusesdk.type.Point
+	3,  // 26: macosusesdk.v1.Scroll.modifiers:type_name -> macosusesdk.v1.KeyPress.Modifier
+	16, // 27: macosusesdk.v1.Hover.position:type_name -> macosusesdk.type.Point
+	28, // [28:28] is the sub-list for method output_type
+	28, // [28:28] is the sub-list for method input_type
+	28, // [28:28] is the sub-list for extension type_name
+	28, // [28:28] is the sub-list for extension extendee
+	0,  // [0:28] is the sub-list for field type_name
 }
 
 func init() { file_macosusesdk_v1_input_proto_init() }
@@ -1565,6 +1461,12 @@ func file_macosusesdk_v1_input_proto_init() {
 		return
 	}
 	file_macosusesdk_v1_input_proto_msgTypes[1].OneofWrappers = []any{
+		(*InputTarget_Application)(nil),
+		(*InputTarget_Window)(nil),
+		(*InputTarget_Display)(nil),
+		(*InputTarget_Desktop)(nil),
+	}
+	file_macosusesdk_v1_input_proto_msgTypes[3].OneofWrappers = []any{
 		(*InputAction_Click)(nil),
 		(*InputAction_TypeText)(nil),
 		(*InputAction_PressKey)(nil),
@@ -1572,17 +1474,16 @@ func file_macosusesdk_v1_input_proto_init() {
 		(*InputAction_Drag)(nil),
 		(*InputAction_Scroll)(nil),
 		(*InputAction_Hover)(nil),
-		(*InputAction_Gesture)(nil),
-		(*InputAction_ButtonDown)(nil),
-		(*InputAction_ButtonUp)(nil),
 	}
+	file_macosusesdk_v1_input_proto_msgTypes[4].OneofWrappers = []any{}
+	file_macosusesdk_v1_input_proto_msgTypes[8].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_macosusesdk_v1_input_proto_rawDesc), len(file_macosusesdk_v1_input_proto_rawDesc)),
-			NumEnums:      5,
-			NumMessages:   12,
+			NumEnums:      4,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

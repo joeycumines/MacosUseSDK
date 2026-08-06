@@ -94,10 +94,10 @@ func TestCUAHandleGetDisplay_MultipleDisplays(t *testing.T) {
 	text := result.Content[0].Text
 	wantContains := []string{
 		"Displays (2):",
-		"Display 1 (main):",
-		"Display 2:",
-		"scale 2.0",
-		"scale 1.0",
+		"displays/1 (id 1, main):",
+		"displays/2 (id 2):",
+		"scale 2",
+		"scale 1",
 		"Cursor position: (100, 200) on displays/1",
 	}
 	for _, want := range wantContains {
@@ -105,7 +105,7 @@ func TestCUAHandleGetDisplay_MultipleDisplays(t *testing.T) {
 			t.Errorf("result text missing %q:\n%s", want, text)
 		}
 	}
-	if strings.Contains(text, "Display 2 (main)") {
+	if strings.Contains(text, "displays/2 (id 2, main)") {
 		t.Errorf("result text incorrectly marks Display 2 as main:\n%s", text)
 	}
 }
@@ -116,7 +116,7 @@ func TestCUAHandleGetDisplay_SingleDisplay(t *testing.T) {
 			return &pb.ListDisplaysResponse{
 				Displays: []*pb.Display{
 					{
-						Name:         "displays/main",
+						Name:         "displays/42",
 						DisplayId:    42,
 						Frame:        &typepb.Region{X: 0, Y: 0, Width: 2560, Height: 1440},
 						VisibleFrame: &typepb.Region{X: 0, Y: 25, Width: 2560, Height: 1415},
@@ -125,6 +125,9 @@ func TestCUAHandleGetDisplay_SingleDisplay(t *testing.T) {
 					},
 				},
 			}, nil
+		},
+		captureCursorPositionFunc: func(ctx context.Context, req *pb.CaptureCursorPositionRequest) (*pb.CaptureCursorPositionResponse, error) {
+			return &pb.CaptureCursorPositionResponse{X: 100, Y: 200, Display: "displays/42"}, nil
 		},
 	}
 
@@ -139,7 +142,7 @@ func TestCUAHandleGetDisplay_SingleDisplay(t *testing.T) {
 	}
 
 	text := result.Content[0].Text
-	wantContains := []string{"Displays (1):", "Display 42 (main):", "scale 2.0"}
+	wantContains := []string{"Displays (1):", "displays/42 (id 42, main):", "scale 2"}
 	for _, want := range wantContains {
 		if !strings.Contains(text, want) {
 			t.Errorf("result text missing %q:\n%s", want, text)
@@ -160,13 +163,13 @@ func TestCUAHandleGetDisplay_NoDisplays(t *testing.T) {
 	if err != nil {
 		t.Fatalf("cuaHandleGetDisplay returned error: %v", err)
 	}
-	if result.IsError {
-		t.Errorf("result.IsError = true, want false")
+	if !result.IsError {
+		t.Errorf("result.IsError = false, want true")
 	}
 
 	text := result.Content[0].Text
-	if !strings.Contains(text, "Displays (0):") {
-		t.Errorf("result text missing 'Displays (0):':\n%s", text)
+	if !strings.Contains(text, "topology is empty") {
+		t.Errorf("result text missing topology failure:\n%s", text)
 	}
 }
 
@@ -180,11 +183,14 @@ func TestCUAHandleGetDisplay_NegativeCoordinates(t *testing.T) {
 						DisplayId:    2,
 						Frame:        &typepb.Region{X: -1920, Y: 0, Width: 1920, Height: 1080},
 						VisibleFrame: &typepb.Region{X: -1920, Y: 0, Width: 1920, Height: 1080},
-						IsMain:       false,
+						IsMain:       true,
 						Scale:        1.0,
 					},
 				},
 			}, nil
+		},
+		captureCursorPositionFunc: func(ctx context.Context, req *pb.CaptureCursorPositionRequest) (*pb.CaptureCursorPositionResponse, error) {
+			return &pb.CaptureCursorPositionResponse{X: -100, Y: 200, Display: "displays/2"}, nil
 		},
 	}
 
@@ -203,12 +209,19 @@ func TestCUAHandleGetDisplay_NegativeCoordinates(t *testing.T) {
 	}
 }
 
-func TestCUAHandleGetDisplay_CursorErrorIgnored(t *testing.T) {
+func TestCUAHandleGetDisplay_CursorErrorFailsClosed(t *testing.T) {
 	mockClient := &mockCUADisplayClient{
 		listDisplaysFunc: func(ctx context.Context, req *pb.ListDisplaysRequest) (*pb.ListDisplaysResponse, error) {
 			return &pb.ListDisplaysResponse{
 				Displays: []*pb.Display{
-					{Name: "displays/1", DisplayId: 1, IsMain: true, Scale: 1.0},
+					{
+						Name:         "displays/1",
+						DisplayId:    1,
+						Frame:        &typepb.Region{X: 0, Y: 0, Width: 1920, Height: 1080},
+						VisibleFrame: &typepb.Region{X: 0, Y: 25, Width: 1920, Height: 1055},
+						IsMain:       true,
+						Scale:        1,
+					},
 				},
 			}, nil
 		},
@@ -223,12 +236,12 @@ func TestCUAHandleGetDisplay_CursorErrorIgnored(t *testing.T) {
 	if err != nil {
 		t.Fatalf("cuaHandleGetDisplay returned error: %v", err)
 	}
-	if result.IsError {
-		t.Errorf("result.IsError = true, want false")
+	if !result.IsError {
+		t.Errorf("result.IsError = false, want true")
 	}
 
-	if strings.Contains(result.Content[0].Text, "Cursor position") {
-		t.Errorf("cursor error should be silently omitted; got %q", result.Content[0].Text)
+	if !strings.Contains(result.Content[0].Text, "accessibility permission denied") {
+		t.Errorf("cursor error should be reported; got %q", result.Content[0].Text)
 	}
 }
 
@@ -258,7 +271,17 @@ func TestCUAHandleGetDisplay_ListError(t *testing.T) {
 func TestCUAHandleGetDisplay_ContentTypeIsText(t *testing.T) {
 	mockClient := &mockCUADisplayClient{
 		listDisplaysFunc: func(ctx context.Context, req *pb.ListDisplaysRequest) (*pb.ListDisplaysResponse, error) {
-			return &pb.ListDisplaysResponse{Displays: []*pb.Display{{DisplayId: 1, IsMain: true, Scale: 1.0}}}, nil
+			return &pb.ListDisplaysResponse{Displays: []*pb.Display{{
+				Name:         "displays/1",
+				DisplayId:    1,
+				Frame:        &typepb.Region{X: 0, Y: 0, Width: 1920, Height: 1080},
+				VisibleFrame: &typepb.Region{X: 0, Y: 25, Width: 1920, Height: 1055},
+				IsMain:       true,
+				Scale:        1,
+			}}}, nil
+		},
+		captureCursorPositionFunc: func(ctx context.Context, req *pb.CaptureCursorPositionRequest) (*pb.CaptureCursorPositionResponse, error) {
+			return &pb.CaptureCursorPositionResponse{X: 100, Y: 200, Display: "displays/1"}, nil
 		},
 	}
 

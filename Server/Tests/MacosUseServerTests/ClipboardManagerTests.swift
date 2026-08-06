@@ -4,6 +4,26 @@ import Foundation
 @testable import MacosUseServer
 import XCTest
 
+enum MockPasteboardCall: Equatable, CustomStringConvertible {
+    case clearContents
+    case setString(String)
+    case setData(Int) // Store data length for comparison
+    case writeObjects(Int) // Store object count
+
+    var description: String {
+        switch self {
+        case .clearContents:
+            "clearContents()"
+        case let .setString(s):
+            "setString(\"\(s)\")"
+        case let .setData(len):
+            "setData(length: \(len))"
+        case let .writeObjects(count):
+            "writeObjects(count: \(count))"
+        }
+    }
+}
+
 /// Unit tests for ClipboardManager verifying clearContents is called before every write.
 ///
 /// Per AGENTS.md: "ClipboardManager MUST call pasteboard.clearContents() before EVERY write operation"
@@ -14,36 +34,17 @@ final class ClipboardManagerTests: XCTestCase {
     // MARK: - Mock Pasteboard
 
     /// Mock pasteboard that records all method calls in order.
-    final class MockPasteboard: @unchecked Sendable {
-        /// Enum to track which methods were called.
-        enum Call: Equatable, CustomStringConvertible {
-            case clearContents
-            case setString(String)
-            case setData(Int) // Store data length for comparison
-            case writeObjects(Int) // Store object count
-
-            var description: String {
-                switch self {
-                case .clearContents:
-                    "clearContents()"
-                case let .setString(s):
-                    "setString(\"\(s)\")"
-                case let .setData(len):
-                    "setData(length: \(len))"
-                case let .writeObjects(count):
-                    "writeObjects(count: \(count))"
-                }
-            }
-        }
-
+    final class MockPasteboard: @unchecked Sendable, ClipboardPasteboard {
         private let lock = NSLock()
-        private var _calls: [Call] = []
+        private var _calls: [MockPasteboardCall] = []
         private var _setStringResult = true
         private var _setDataResult = true
         private var _writeObjectsResult = true
+        private var _content = Macosusesdk_V1_ClipboardContent()
+        private var _changeCount = 0
 
         /// Recorded calls in order.
-        var calls: [Call] {
+        var calls: [MockPasteboardCall] {
             lock.lock()
             defer { lock.unlock() }
             return _calls
@@ -98,13 +99,32 @@ final class ClipboardManagerTests: XCTestCase {
             _setStringResult = true
             _setDataResult = true
             _writeObjectsResult = true
+            _content = Macosusesdk_V1_ClipboardContent()
+            _changeCount = 0
+        }
+
+        func installCurrentContent(_ content: Macosusesdk_V1_ClipboardContent) {
+            setCurrentContent(content)
+        }
+
+        func installExternalContent(_ content: Macosusesdk_V1_ClipboardContent) {
+            lock.lock()
+            defer { lock.unlock() }
+            _changeCount += 1
+            _content = content
+        }
+
+        func changeCount() async -> Int {
+            lock.withLock { _changeCount }
         }
 
         func clearContents() -> Int {
             lock.lock()
             defer { lock.unlock() }
             _calls.append(.clearContents)
-            return 1 // New change count
+            _changeCount += 1
+            _content = Macosusesdk_V1_ClipboardContent()
+            return _changeCount
         }
 
         func setString(_ string: String, forType _: NSPasteboard.PasteboardType) -> Bool {
@@ -127,89 +147,199 @@ final class ClipboardManagerTests: XCTestCase {
             _calls.append(.writeObjects(objects.count))
             return _writeObjectsResult
         }
-    }
 
-    // MARK: - Testable Clipboard Writer
+        func read() async -> Macosusesdk_V1_Clipboard {
+            snapshot()
+        }
 
-    /// A testable clipboard writer that uses our mock pasteboard.
-    /// This mirrors the writeClipboard logic from ClipboardManager but with injectable pasteboard.
-    struct TestableClipboardWriter {
-        let mockPasteboard: MockPasteboard
+        func clear() async {
+            _ = clearContents()
+        }
 
-        /// Simulates writeClipboard with an injectable mock pasteboard.
-        /// This replicates the exact logic from ClipboardManager.writeClipboard.
-        func writeClipboard(content: Macosusesdk_V1_ClipboardContent) throws -> Bool {
-            // CRITICAL: NSPasteboard documentation states clearing before writing is recommended.
-            // We MUST always clear before writing to ensure proper ownership transfer.
-            _ = mockPasteboard.clearContents()
-
-            var success = false
-
-            switch content.content {
+        func write(_ content: Macosusesdk_V1_ClipboardContent) async -> Bool {
+            let success: Bool = switch content.content {
             case let .text(text):
-                success = mockPasteboard.setString(text, forType: .string)
-
-            case let .rtf(rtfData):
-                success = mockPasteboard.setData(rtfData, forType: .rtf)
-
+                setString(text, forType: .string)
+            case let .rtf(data):
+                setData(data, forType: .rtf)
             case let .html(html):
-                if let htmlData = html.data(using: .utf8) {
-                    success = mockPasteboard.setData(htmlData, forType: .html)
-                }
-
-            case let .image(imageData):
-                if let image = NSImage(data: imageData) {
-                    success = mockPasteboard.writeObjects([image])
-                }
-
-            case let .files(filePaths):
-                let urls = filePaths.paths.compactMap { URL(fileURLWithPath: $0) }
-                success = mockPasteboard.writeObjects(urls as [NSURL])
-
-            case let .url(urlString):
-                if let url = URL(string: urlString) {
-                    success = mockPasteboard.writeObjects([url as NSURL])
-                }
-
+                html.data(using: .utf8).map { setData($0, forType: .html) } ?? false
+            case let .image(data):
+                NSImage(data: data).map { writeObjects([$0]) } ?? false
+            case let .files(paths):
+                writeObjects(paths.paths.map { URL(fileURLWithPath: $0) } as [NSURL])
+            case let .url(value):
+                URL(string: value).map { writeObjects([$0 as NSURL]) } ?? false
             case .none:
-                throw ClipboardError.invalidContent("No content specified")
+                false
             }
-
-            if !success {
-                throw ClipboardError.writeFailed("Failed to write clipboard content")
+            if success {
+                setCurrentContent(content)
             }
-
             return success
+        }
+
+        private func snapshot() -> Macosusesdk_V1_Clipboard {
+            lock.lock()
+            defer { lock.unlock() }
+            let content = _content
+            return Macosusesdk_V1_Clipboard.with {
+                $0.name = "clipboard"
+                $0.content = content
+                if content.content != nil {
+                    $0.availableTypes = [content.type]
+                }
+            }
+        }
+
+        private func setCurrentContent(_ content: Macosusesdk_V1_ClipboardContent) {
+            lock.lock()
+            defer { lock.unlock() }
+            _content = content
         }
     }
 
     // MARK: - Properties
 
     private var mockPasteboard: MockPasteboard!
-    private var writer: TestableClipboardWriter!
+    private var manager: ClipboardManager!
 
     // MARK: - Setup / Teardown
 
     override func setUp() {
         super.setUp()
         mockPasteboard = MockPasteboard()
-        writer = TestableClipboardWriter(mockPasteboard: mockPasteboard)
+        manager = ClipboardManager(
+            mutationGate: PhysicalDesktopMutationGate(),
+            historyManager: ClipboardHistoryManager(sourceApplication: { "Test source" }),
+            pasteboard: mockPasteboard,
+        )
     }
 
     override func tearDown() {
         mockPasteboard = nil
-        writer = nil
+        manager = nil
         super.tearDown()
+    }
+
+    func testTemporaryTextRestoresOriginalClipboardAfterSuccess() async throws {
+        let original = Macosusesdk_V1_ClipboardContent.with {
+            $0.type = .text
+            $0.content = .text("original")
+        }
+        mockPasteboard.installCurrentContent(original)
+        let pasteboard = try XCTUnwrap(mockPasteboard)
+
+        let staged = try await manager.withTemporaryText { replaceText in
+            try await replaceText("λ")
+            return await pasteboard.read()
+        }
+
+        XCTAssertEqual(staged.content.content, .text("λ"))
+        let restored = await mockPasteboard.read()
+        let pendingAccessCount = await manager.pendingClipboardAccessCount()
+        XCTAssertEqual(restored.content, original)
+        XCTAssertEqual(pendingAccessCount, 0)
+    }
+
+    func testTemporaryTextRestoresOriginalClipboardAfterOperationFailure() async throws {
+        enum ExpectedFailure: Error {
+            case operation
+        }
+
+        let original = Macosusesdk_V1_ClipboardContent.with {
+            $0.type = .text
+            $0.content = .text("original")
+        }
+        mockPasteboard.installCurrentContent(original)
+
+        do {
+            _ = try await manager.withTemporaryText { replaceText in
+                try await replaceText("🙂")
+                throw ExpectedFailure.operation
+            }
+            XCTFail("Expected the physical paste operation to fail")
+        } catch ExpectedFailure.operation {
+            // Expected.
+        }
+
+        let restored = await mockPasteboard.read()
+        let pendingAccessCount = await manager.pendingClipboardAccessCount()
+        XCTAssertEqual(restored.content, original)
+        XCTAssertEqual(pendingAccessCount, 0)
+    }
+
+    func testTemporaryTextDoesNotOverwriteExternalClipboardMutation() async throws {
+        let original = Macosusesdk_V1_ClipboardContent.with {
+            $0.type = .text
+            $0.content = .text("original")
+        }
+        let external = Macosusesdk_V1_ClipboardContent.with {
+            $0.type = .text
+            $0.content = .text("external")
+        }
+        mockPasteboard.installCurrentContent(original)
+        let pasteboard = try XCTUnwrap(mockPasteboard)
+
+        do {
+            _ = try await manager.withTemporaryText { replaceText in
+                try await replaceText("temporary")
+                pasteboard.installExternalContent(external)
+                return ()
+            }
+            XCTFail("Expected external clipboard ownership loss to fail closed")
+        } catch {
+            // The exact ownership error is asserted by the preserved bytes:
+            // restoration must not overwrite the external owner's content.
+        }
+
+        let observed = await mockPasteboard.read()
+        let pendingAccessCount = await manager.pendingClipboardAccessCount()
+        XCTAssertEqual(observed.content, external)
+        XCTAssertEqual(pendingAccessCount, 0)
+    }
+
+    func testTemporaryTextPreservesOperationAndExternalOwnershipFailures() async throws {
+        enum ExpectedFailure: Error {
+            case operation
+        }
+
+        let original = Macosusesdk_V1_ClipboardContent.with {
+            $0.type = .text
+            $0.content = .text("original")
+        }
+        let external = Macosusesdk_V1_ClipboardContent.with {
+            $0.type = .text
+            $0.content = .text("external")
+        }
+        mockPasteboard.installCurrentContent(original)
+        let pasteboard = try XCTUnwrap(mockPasteboard)
+
+        do {
+            _ = try await manager.withTemporaryText { replaceText in
+                try await replaceText("temporary")
+                pasteboard.installExternalContent(external)
+                throw ExpectedFailure.operation
+            }
+            XCTFail("Expected operation and restoration failures")
+        } catch let error as TemporaryClipboardRestorationError {
+            XCTAssertTrue(error.operationError is ExpectedFailure)
+        }
+
+        let observed = await mockPasteboard.read()
+        let pendingAccessCount = await manager.pendingClipboardAccessCount()
+        XCTAssertEqual(observed.content, external)
+        XCTAssertEqual(pendingAccessCount, 0)
     }
 
     // MARK: - Test: clearContents Called Before Write (Text)
 
-    func testWriteText_clearContentsCalledBeforeSetString() throws {
+    func testWriteText_clearContentsCalledBeforeSetString() async throws {
         var content = Macosusesdk_V1_ClipboardContent()
         content.type = .text
         content.content = .text("Hello, World!")
 
-        _ = try writer.writeClipboard(content: content)
+        _ = try await manager.writeClipboard(content: content)
 
         let calls = mockPasteboard.calls
         XCTAssertEqual(calls.count, 2, "Expected exactly 2 calls: clearContents + setString")
@@ -217,12 +347,12 @@ final class ClipboardManagerTests: XCTestCase {
         XCTAssertEqual(calls[1], .setString("Hello, World!"), "Second call must be setString()")
     }
 
-    func testWriteText_clearContentsCalledExactlyOnce() throws {
+    func testWriteText_clearContentsCalledExactlyOnce() async throws {
         var content = Macosusesdk_V1_ClipboardContent()
         content.type = .text
         content.content = .text("Test")
 
-        _ = try writer.writeClipboard(content: content)
+        _ = try await manager.writeClipboard(content: content)
 
         let clearCalls = mockPasteboard.calls.filter { $0 == .clearContents }
         XCTAssertEqual(clearCalls.count, 1, "clearContents() must be called exactly once per write")
@@ -230,13 +360,13 @@ final class ClipboardManagerTests: XCTestCase {
 
     // MARK: - Test: clearContents Called Before Write (RTF)
 
-    func testWriteRTF_clearContentsCalledBeforeSetData() throws {
-        let rtfData = Data("RTF data".utf8)
+    func testWriteRTF_clearContentsCalledBeforeSetData() async throws {
+        let rtfData = Data(#"{\rtf1\ansi RTF data}"#.utf8)
         var content = Macosusesdk_V1_ClipboardContent()
         content.type = .rtf
         content.content = .rtf(rtfData)
 
-        _ = try writer.writeClipboard(content: content)
+        _ = try await manager.writeClipboard(content: content)
 
         let calls = mockPasteboard.calls
         XCTAssertEqual(calls.count, 2, "Expected exactly 2 calls: clearContents + setData")
@@ -246,13 +376,13 @@ final class ClipboardManagerTests: XCTestCase {
 
     // MARK: - Test: clearContents Called Before Write (HTML)
 
-    func testWriteHTML_clearContentsCalledBeforeSetData() throws {
+    func testWriteHTML_clearContentsCalledBeforeSetData() async throws {
         let htmlString = "<html><body>Test</body></html>"
         var content = Macosusesdk_V1_ClipboardContent()
         content.type = .html
         content.content = .html(htmlString)
 
-        _ = try writer.writeClipboard(content: content)
+        _ = try await manager.writeClipboard(content: content)
 
         let calls = mockPasteboard.calls
         XCTAssertEqual(calls.count, 2, "Expected exactly 2 calls: clearContents + setData")
@@ -265,12 +395,12 @@ final class ClipboardManagerTests: XCTestCase {
 
     // MARK: - Test: clearContents Called Before Write (URL)
 
-    func testWriteURL_clearContentsCalledBeforeWriteObjects() throws {
+    func testWriteURL_clearContentsCalledBeforeWriteObjects() async throws {
         var content = Macosusesdk_V1_ClipboardContent()
         content.type = .url
         content.content = .url("https://example.com")
 
-        _ = try writer.writeClipboard(content: content)
+        _ = try await manager.writeClipboard(content: content)
 
         let calls = mockPasteboard.calls
         XCTAssertEqual(calls.count, 2, "Expected exactly 2 calls: clearContents + writeObjects")
@@ -280,7 +410,7 @@ final class ClipboardManagerTests: XCTestCase {
 
     // MARK: - Test: clearContents Called Before Write (Files)
 
-    func testWriteFiles_clearContentsCalledBeforeWriteObjects() throws {
+    func testWriteFiles_clearContentsCalledBeforeWriteObjects() async throws {
         var filePaths = Macosusesdk_V1_FilePaths()
         filePaths.paths = ["/tmp/file1.txt", "/tmp/file2.txt"]
 
@@ -288,7 +418,7 @@ final class ClipboardManagerTests: XCTestCase {
         content.type = .files
         content.content = .files(filePaths)
 
-        _ = try writer.writeClipboard(content: content)
+        _ = try await manager.writeClipboard(content: content)
 
         let calls = mockPasteboard.calls
         XCTAssertEqual(calls.count, 2, "Expected exactly 2 calls: clearContents + writeObjects")
@@ -298,7 +428,7 @@ final class ClipboardManagerTests: XCTestCase {
 
     // MARK: - Test: clearContents Called Before Write (Image)
 
-    func testWriteImage_clearContentsCalledBeforeWriteObjects() throws {
+    func testWriteImage_clearContentsCalledBeforeWriteObjects() async throws {
         // Create a valid 1x1 PNG image
         let image = NSImage(size: NSSize(width: 1, height: 1))
         image.lockFocus()
@@ -315,7 +445,7 @@ final class ClipboardManagerTests: XCTestCase {
         content.type = .image
         content.content = .image(pngData)
 
-        _ = try writer.writeClipboard(content: content)
+        _ = try await manager.writeClipboard(content: content)
 
         let calls = mockPasteboard.calls
         XCTAssertEqual(calls.count, 2, "Expected exactly 2 calls: clearContents + writeObjects")
@@ -325,7 +455,7 @@ final class ClipboardManagerTests: XCTestCase {
 
     // MARK: - Test: Multiple Writes Clear Each Time
 
-    func testMultipleWrites_clearContentsCalledBeforeEachWrite() throws {
+    func testMultipleWrites_clearContentsCalledBeforeEachWrite() async throws {
         var content1 = Macosusesdk_V1_ClipboardContent()
         content1.type = .text
         content1.content = .text("First")
@@ -338,9 +468,9 @@ final class ClipboardManagerTests: XCTestCase {
         content3.type = .text
         content3.content = .text("Third")
 
-        _ = try writer.writeClipboard(content: content1)
-        _ = try writer.writeClipboard(content: content2)
-        _ = try writer.writeClipboard(content: content3)
+        _ = try await manager.writeClipboard(content: content1)
+        _ = try await manager.writeClipboard(content: content2)
+        _ = try await manager.writeClipboard(content: content3)
 
         let calls = mockPasteboard.calls
         XCTAssertEqual(calls.count, 6, "Expected 6 calls: 3x (clearContents + setString)")
@@ -356,18 +486,22 @@ final class ClipboardManagerTests: XCTestCase {
 
     // MARK: - Test: clearContents Called Even On Write Failure
 
-    func testWriteFailure_clearContentsStillCalledFirst() throws {
+    func testWriteFailure_clearContentsStillCalledFirst() async throws {
         mockPasteboard.setStringResult = false
 
         var content = Macosusesdk_V1_ClipboardContent()
         content.type = .text
         content.content = .text("This will fail")
 
-        XCTAssertThrowsError(try writer.writeClipboard(content: content)) { error in
-            guard case ClipboardError.writeFailed = error else {
-                XCTFail("Expected writeFailed error, got: \(error)")
-                return
+        do {
+            _ = try await manager.writeClipboard(content: content)
+            XCTFail("Expected writeFailed error")
+        } catch let error as ClipboardError {
+            guard case .writeFailed = error else {
+                return XCTFail("Expected writeFailed error, got: \(error)")
             }
+        } catch {
+            XCTFail("Expected ClipboardError.writeFailed, got: \(error)")
         }
 
         // Even though write failed, clearContents must have been called first
@@ -378,38 +512,44 @@ final class ClipboardManagerTests: XCTestCase {
 
     // MARK: - Test: No Content Throws Error (No clearContents called)
 
-    func testNoContent_throwsError() throws {
+    func testNoContent_throwsError() async throws {
         let content = Macosusesdk_V1_ClipboardContent()
         // content.content is not set (none case)
 
-        XCTAssertThrowsError(try writer.writeClipboard(content: content)) { error in
-            guard case ClipboardError.invalidContent = error else {
-                XCTFail("Expected invalidContent error, got: \(error)")
-                return
+        do {
+            _ = try await manager.writeClipboard(content: content)
+            XCTFail("Expected invalidContent error")
+        } catch let error as ClipboardError {
+            guard case .invalidContent = error else {
+                return XCTFail("Expected invalidContent error, got: \(error)")
             }
+        } catch {
+            XCTFail("Expected ClipboardError.invalidContent, got: \(error)")
         }
+        XCTAssertTrue(mockPasteboard.calls.isEmpty, "Invalid content must fail before clipboard mutation")
     }
 
     // MARK: - Test: Order Verification with Different Content Types
 
-    func testMixedContentTypes_clearContentsAlwaysPrecedesWrite() throws {
+    func testMixedContentTypes_clearContentsAlwaysPrecedesWrite() async throws {
         // Write text
         var textContent = Macosusesdk_V1_ClipboardContent()
         textContent.type = .text
         textContent.content = .text("text")
-        _ = try writer.writeClipboard(content: textContent)
+        _ = try await manager.writeClipboard(content: textContent)
 
         // Write URL
         var urlContent = Macosusesdk_V1_ClipboardContent()
         urlContent.type = .url
         urlContent.content = .url("https://example.com")
-        _ = try writer.writeClipboard(content: urlContent)
+        _ = try await manager.writeClipboard(content: urlContent)
 
         // Write RTF
         var rtfContent = Macosusesdk_V1_ClipboardContent()
         rtfContent.type = .rtf
-        rtfContent.content = .rtf(Data("rtf".utf8))
-        _ = try writer.writeClipboard(content: rtfContent)
+        let rtfData = Data(#"{\rtf1\ansi rtf}"#.utf8)
+        rtfContent.content = .rtf(rtfData)
+        _ = try await manager.writeClipboard(content: rtfContent)
 
         let calls = mockPasteboard.calls
         XCTAssertEqual(calls.count, 6)
@@ -426,17 +566,17 @@ final class ClipboardManagerTests: XCTestCase {
         // Verify writes are in expected positions
         XCTAssertEqual(calls[1], .setString("text"))
         XCTAssertEqual(calls[3], .writeObjects(1)) // URL
-        XCTAssertEqual(calls[5], .setData(3)) // RTF
+        XCTAssertEqual(calls[5], .setData(rtfData.count)) // RTF
     }
 
     // MARK: - Test: Empty Text Still Clears and Writes
 
-    func testEmptyText_clearContentsStillCalled() throws {
+    func testEmptyText_clearContentsStillCalled() async throws {
         var content = Macosusesdk_V1_ClipboardContent()
         content.type = .text
         content.content = .text("")
 
-        _ = try writer.writeClipboard(content: content)
+        _ = try await manager.writeClipboard(content: content)
 
         let calls = mockPasteboard.calls
         XCTAssertEqual(calls.count, 2)
@@ -446,7 +586,7 @@ final class ClipboardManagerTests: XCTestCase {
 
     // MARK: - Test: Empty Files Array
 
-    func testEmptyFilesArray_clearContentsStillCalled() throws {
+    func testEmptyFilesArray_rejectedBeforeClearContents() async throws {
         var filePaths = Macosusesdk_V1_FilePaths()
         filePaths.paths = []
 
@@ -454,10 +594,16 @@ final class ClipboardManagerTests: XCTestCase {
         content.type = .files
         content.content = .files(filePaths)
 
-        _ = try writer.writeClipboard(content: content)
+        do {
+            _ = try await manager.writeClipboard(content: content)
+            XCTFail("Expected empty file paths to be rejected")
+        } catch let error as ClipboardError {
+            guard case .invalidContent = error else {
+                return XCTFail("Expected invalidContent, got \(error)")
+            }
+        }
 
         let calls = mockPasteboard.calls
-        XCTAssertGreaterThanOrEqual(calls.count, 1)
-        XCTAssertEqual(calls[0], .clearContents, "clearContents() must be called even for empty files")
+        XCTAssertTrue(calls.isEmpty, "Invalid file content must fail before clipboard mutation")
     }
 }

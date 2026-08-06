@@ -72,4 +72,58 @@ final class AccessibilityTraversalAPITests: XCTestCase {
             break
         }
     }
+
+    func testTraversalPermissionCheckNeverRequestsSystemPrompt() {
+        XCTAssertFalse(accessibilityTrustCheckShouldPrompt)
+    }
+
+    func testTraversalObservesCancellationBeforeAXWork() async {
+        let barrier = TraversalStartBarrier()
+        let traversal = Task {
+            await barrier.waitForRelease()
+            return try traverseAccessibilityTree(pid: -1, shouldActivate: false)
+        }
+        await barrier.waitUntilEntered()
+        traversal.cancel()
+        await barrier.release()
+
+        do {
+            _ = try await traversal.value
+            XCTFail("Expected traversal cancellation")
+        } catch is CancellationError {
+            // Expected.
+        } catch {
+            XCTFail("Unexpected error: \(error)")
+        }
+    }
+}
+
+private actor TraversalStartBarrier {
+    private var entered = false
+    private var releaseContinuation: CheckedContinuation<Void, Never>?
+    private var enteredContinuations: [CheckedContinuation<Void, Never>] = []
+
+    func waitForRelease() async {
+        entered = true
+        let continuations = enteredContinuations
+        enteredContinuations.removeAll(keepingCapacity: false)
+        for continuation in continuations {
+            continuation.resume()
+        }
+        await withCheckedContinuation { continuation in
+            releaseContinuation = continuation
+        }
+    }
+
+    func waitUntilEntered() async {
+        guard !entered else { return }
+        await withCheckedContinuation { continuation in
+            enteredContinuations.append(continuation)
+        }
+    }
+
+    func release() {
+        releaseContinuation?.resume()
+        releaseContinuation = nil
+    }
 }

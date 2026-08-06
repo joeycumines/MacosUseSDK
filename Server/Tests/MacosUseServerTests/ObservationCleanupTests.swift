@@ -1,5 +1,6 @@
 import CoreGraphics
 import Foundation
+import GRPCCore
 import MacosUseProto
 @testable import MacosUseServer
 import Testing
@@ -13,14 +14,43 @@ struct ObservationCleanupTests {
         return ObservationManager(windowRegistry: registry)
     }
 
+    @Test
+    func `registerObservation rejects invalid poll interval before state`() async throws {
+        let manager = makeObservationManager()
+        let name = "observations/invalid-direct-poll"
+        let observation = ObservationManager.makeObservation(
+            name: name,
+            type: .windowChanges,
+            filter: Macosusesdk_V1_ObservationFilter.with { $0.pollInterval = 61 },
+            activate: false,
+        )
+
+        do {
+            _ = try await manager.registerObservation(
+                observation,
+                parent: "applications/test",
+                pid: 1234,
+                activate: false,
+            )
+            Issue.record("Expected direct observation registration to reject the poll interval")
+        } catch let error as RPCError {
+            #expect(error.code == .invalidArgument)
+            #expect(error.message == "observation.filter.poll_interval is outside the supported range")
+        }
+
+        #expect(await manager.getObservation(name: name) == nil)
+        #expect(await manager.monitorTaskCount() == 0)
+        #expect(await manager.streamContinuationCount(name: name) == 0)
+    }
+
     // MARK: - cancelObservation Cleanup Tests
 
     @Test
-    func `cancelObservation returns cancelled observation`() async {
+    func `cancelObservation returns cancelled observation`() async throws {
         let manager = makeObservationManager()
 
         // Create an observation
-        let created = await manager.createObservation(
+        let created = try await manager.createObservation(
             name: "observations/test-cancel-1",
             type: .elementChanges,
             parent: "sessions/test",
@@ -39,18 +69,18 @@ struct ObservationCleanupTests {
     }
 
     @Test
-    func `cancelObservation removes observation from active list`() async {
+    func `cancelObservation removes observation from active list`() async throws {
         let manager = makeObservationManager()
 
         // Create observations
-        _ = await manager.createObservation(
+        _ = try await manager.createObservation(
             name: "observations/cleanup-1",
             type: .windowChanges,
             parent: "sessions/test",
             filter: nil,
             pid: 1234,
         )
-        _ = await manager.createObservation(
+        _ = try await manager.createObservation(
             name: "observations/cleanup-2",
             type: .windowChanges,
             parent: "sessions/test",
@@ -74,10 +104,10 @@ struct ObservationCleanupTests {
     }
 
     @Test
-    func `cancelObservation is idempotent`() async {
+    func `cancelObservation is idempotent`() async throws {
         let manager = makeObservationManager()
 
-        _ = await manager.createObservation(
+        _ = try await manager.createObservation(
             name: "observations/idempotent-test",
             type: .elementChanges,
             parent: "sessions/test",
@@ -109,7 +139,7 @@ struct ObservationCleanupTests {
     func `cancelObservation sets end time`() async throws {
         let manager = makeObservationManager()
 
-        let created = await manager.createObservation(
+        let created = try await manager.createObservation(
             name: "observations/endtime-test",
             type: .windowChanges,
             parent: "sessions/test",
@@ -127,10 +157,10 @@ struct ObservationCleanupTests {
     // MARK: - failObservation Cleanup Tests
 
     @Test
-    func `failObservation changes state to failed`() async {
+    func `failObservation changes state to failed`() async throws {
         let manager = makeObservationManager()
 
-        _ = await manager.createObservation(
+        _ = try await manager.createObservation(
             name: "observations/fail-test",
             type: .attributeChanges,
             parent: "sessions/test",
@@ -147,10 +177,10 @@ struct ObservationCleanupTests {
     }
 
     @Test
-    func `failObservation removes polling task`() async {
+    func `failObservation removes polling task`() async throws {
         let manager = makeObservationManager()
 
-        let created = await manager.createObservation(
+        let created = try await manager.createObservation(
             name: "observations/polling-fail",
             type: .windowChanges,
             parent: "sessions/test",
@@ -171,14 +201,14 @@ struct ObservationCleanupTests {
     }
 
     @Test
-    func `failObservation is safe for non-existent observation`() async {
+    func `failObservation is safe for non-existent observation`() async throws {
         let manager = makeObservationManager()
 
         // Should not crash
         await manager.failObservation(name: "observations/does-not-exist", error: TestError.simulatedError)
 
         // Verify manager is still functional
-        let obs = await manager.createObservation(
+        let obs = try await manager.createObservation(
             name: "observations/after-fail",
             type: .elementChanges,
             parent: "sessions/test",
@@ -191,10 +221,10 @@ struct ObservationCleanupTests {
     // MARK: - Stream Continuation Tests
 
     @Test
-    func `createEventStream returns stream for valid observation`() async {
+    func `createEventStream returns stream for valid observation`() async throws {
         let manager = makeObservationManager()
 
-        _ = await manager.createObservation(
+        _ = try await manager.createObservation(
             name: "observations/stream-test",
             type: .windowChanges,
             parent: "sessions/test",
@@ -215,10 +245,10 @@ struct ObservationCleanupTests {
     }
 
     @Test
-    func `Multiple independent event streams can be created`() async {
+    func `Multiple independent event streams can be created`() async throws {
         let manager = makeObservationManager()
 
-        _ = await manager.createObservation(
+        _ = try await manager.createObservation(
             name: "observations/multi-stream",
             type: .elementChanges,
             parent: "sessions/test",
@@ -237,10 +267,10 @@ struct ObservationCleanupTests {
     // MARK: - completeObservation Tests
 
     @Test
-    func `completeObservation changes state to completed`() async {
+    func `completeObservation changes state to completed`() async throws {
         let manager = makeObservationManager()
 
-        _ = await manager.createObservation(
+        _ = try await manager.createObservation(
             name: "observations/complete-test",
             type: .windowChanges,
             parent: "sessions/test",
@@ -256,10 +286,10 @@ struct ObservationCleanupTests {
     }
 
     @Test
-    func `completeObservation cleans up resources`() async {
+    func `completeObservation cleans up resources`() async throws {
         let manager = makeObservationManager()
 
-        _ = await manager.createObservation(
+        _ = try await manager.createObservation(
             name: "observations/cleanup-complete",
             type: .elementChanges,
             parent: "sessions/test",
@@ -281,10 +311,10 @@ struct ObservationCleanupTests {
     // MARK: - State Transition Tests
 
     @Test
-    func `Observation state transitions: pending -> active -> cancelled`() async {
+    func `Observation state transitions: pending -> active -> cancelled`() async throws {
         let manager = makeObservationManager()
 
-        let created = await manager.createObservation(
+        let created = try await manager.createObservation(
             name: "observations/state-transition-1",
             type: .windowChanges,
             parent: "sessions/test",
@@ -305,10 +335,10 @@ struct ObservationCleanupTests {
     }
 
     @Test
-    func `Observation state transitions: pending -> active -> completed`() async {
+    func `Observation state transitions: pending -> active -> completed`() async throws {
         let manager = makeObservationManager()
 
-        _ = await manager.createObservation(
+        _ = try await manager.createObservation(
             name: "observations/state-transition-2",
             type: .elementChanges,
             parent: "sessions/test",
@@ -324,10 +354,10 @@ struct ObservationCleanupTests {
     }
 
     @Test
-    func `Observation state transitions: pending -> active -> failed`() async {
+    func `Observation state transitions: pending -> active -> failed`() async throws {
         let manager = makeObservationManager()
 
-        _ = await manager.createObservation(
+        _ = try await manager.createObservation(
             name: "observations/state-transition-3",
             type: .treeChanges,
             parent: "sessions/test",
@@ -345,7 +375,7 @@ struct ObservationCleanupTests {
     // MARK: - Active Observation Count Tests
 
     @Test
-    func `getActiveObservationCount reflects actual active observations`() async {
+    func `getActiveObservationCount reflects actual active observations`() async throws {
         let manager = makeObservationManager()
 
         // Initially empty
@@ -353,14 +383,14 @@ struct ObservationCleanupTests {
         #expect(initialCount == 0, "Initially should have 0 active observations")
 
         // Create and start observations
-        _ = await manager.createObservation(
+        _ = try await manager.createObservation(
             name: "observations/count-1",
             type: .windowChanges,
             parent: "sessions/test",
             filter: nil,
             pid: 1234,
         )
-        _ = await manager.createObservation(
+        _ = try await manager.createObservation(
             name: "observations/count-2",
             type: .elementChanges,
             parent: "sessions/test",
@@ -391,12 +421,12 @@ struct ObservationCleanupTests {
     // MARK: - Concurrent Cleanup Tests
 
     @Test
-    func `Concurrent cancel operations are safe`() async {
+    func `Concurrent cancel operations are safe`() async throws {
         let manager = makeObservationManager()
 
         // Create multiple observations
         for i in 0 ..< 10 {
-            _ = await manager.createObservation(
+            _ = try await manager.createObservation(
                 name: "observations/concurrent-\(i)",
                 type: .windowChanges,
                 parent: "sessions/test",
@@ -420,12 +450,12 @@ struct ObservationCleanupTests {
     }
 
     @Test
-    func `Cancel and create operations are safe concurrently`() async {
+    func `Cancel and create operations are safe concurrently`() async throws {
         let manager = makeObservationManager()
 
         // Pre-create some observations
         for i in 0 ..< 5 {
-            _ = await manager.createObservation(
+            _ = try await manager.createObservation(
                 name: "observations/pre-\(i)",
                 type: .elementChanges,
                 parent: "sessions/test",
@@ -435,7 +465,7 @@ struct ObservationCleanupTests {
         }
 
         // Concurrently cancel existing and create new
-        await withTaskGroup(of: Void.self) { group in
+        try await withThrowingTaskGroup(of: Void.self) { group in
             // Cancellers
             for i in 0 ..< 5 {
                 group.addTask {
@@ -445,7 +475,7 @@ struct ObservationCleanupTests {
             // Creators
             for i in 5 ..< 10 {
                 group.addTask {
-                    _ = await manager.createObservation(
+                    _ = try await manager.createObservation(
                         name: "observations/new-\(i)",
                         type: .windowChanges,
                         parent: "sessions/test",
@@ -454,6 +484,7 @@ struct ObservationCleanupTests {
                     )
                 }
             }
+            try await group.waitForAll()
         }
 
         // Verify new observations exist
@@ -462,10 +493,214 @@ struct ObservationCleanupTests {
             #expect(obs != nil, "New observation \(i) should exist")
         }
     }
+
+    @Test
+    func `cancelObservation awaits the exact monitor task`() async throws {
+        let probe = BlockingObservationMonitorProbe()
+        let manager = ObservationManager(
+            windowRegistry: WindowRegistry(),
+            monitorOperation: { _ in await probe.run() },
+        )
+        let name = "observations/join-single-monitor"
+
+        _ = try await manager.createObservation(
+            name: name,
+            type: .windowChanges,
+            parent: "applications/1234",
+            filter: nil,
+            pid: 1234,
+        )
+        try await manager.startObservation(name: name)
+        await probe.waitUntilEntered()
+
+        let cancellation = Task {
+            let observation = await manager.cancelObservation(name: name)
+            await probe.recordCancellationReturned()
+            return observation
+        }
+        await probe.waitUntilCancellationObserved()
+
+        #expect(await probe.didCancellationReturn() == false)
+        #expect(await manager.monitorTaskCount() == 1)
+
+        await probe.release()
+        let observation = await cancellation.value
+
+        #expect(observation?.state == .cancelled)
+        #expect(await manager.monitorTaskCount() == 0)
+    }
+
+    @Test
+    func `cancelAllObservations closes admission and awaits every monitor`() async throws {
+        let probe = BlockingObservationMonitorProbe()
+        let manager = ObservationManager(
+            windowRegistry: WindowRegistry(),
+            monitorOperation: { _ in await probe.run() },
+        )
+        let name = "observations/join-all-monitors"
+
+        _ = try await manager.createObservation(
+            name: name,
+            type: .windowChanges,
+            parent: "applications/1234",
+            filter: nil,
+            pid: 1234,
+        )
+        try await manager.startObservation(name: name)
+        await probe.waitUntilEntered()
+
+        let drain = Task {
+            let count = await manager.cancelAllObservations()
+            await probe.recordCancellationReturned()
+            return count
+        }
+        await probe.waitUntilCancellationObserved()
+
+        #expect(await probe.didCancellationReturn() == false)
+        #expect(await manager.monitorTaskCount() == 1)
+
+        await probe.release()
+        #expect(await drain.value == 1)
+        #expect(await manager.monitorTaskCount() == 0)
+
+        do {
+            _ = try await manager.createObservation(
+                name: "observations/after-drain",
+                type: .windowChanges,
+                parent: "applications/1234",
+                filter: nil,
+                pid: 1234,
+            )
+            Issue.record("Expected observation admission to remain closed after drain")
+        } catch let error as ObservationError {
+            #expect(error == .admissionClosed)
+        }
+    }
+
+    @Test
+    func `terminal observations cannot recreate event streams`() async throws {
+        let manager = makeObservationManager()
+        let name = "observations/terminal-stream"
+
+        _ = try await manager.createObservation(
+            name: name,
+            type: .windowChanges,
+            parent: "applications/1234",
+            filter: nil,
+            pid: 1234,
+        )
+        #expect(await manager.createEventStream(name: name) != nil)
+
+        _ = await manager.cancelObservation(name: name)
+
+        #expect(await manager.createEventStream(name: name) == nil)
+        #expect(await manager.streamContinuationCount(name: name) == 0)
+    }
+
+    @Test
+    func `observation names and monitor starts are unique`() async throws {
+        let manager = ObservationManager(
+            windowRegistry: WindowRegistry(),
+            monitorOperation: { _ in await Task.yield() },
+        )
+        let name = "observations/unique-lifecycle"
+
+        _ = try await manager.createObservation(
+            name: name,
+            type: .windowChanges,
+            parent: "applications/1234",
+            filter: nil,
+            pid: 1234,
+        )
+
+        do {
+            _ = try await manager.createObservation(
+                name: name,
+                type: .elementChanges,
+                parent: "applications/9999",
+                filter: nil,
+                pid: 9999,
+            )
+            Issue.record("Expected duplicate observation creation to fail")
+        } catch let error as ObservationError {
+            #expect(error == .alreadyExists)
+        }
+
+        try await manager.startObservation(name: name)
+        do {
+            try await manager.startObservation(name: name)
+            Issue.record("Expected duplicate monitor start to fail")
+        } catch let error as ObservationError {
+            #expect(error == .alreadyStarted)
+        }
+
+        _ = await manager.cancelObservation(name: name)
+    }
 }
 
 // MARK: - Test Helpers
 
 private enum TestError: Error {
     case simulatedError
+}
+
+private actor BlockingObservationMonitorProbe {
+    private var entered = false
+    private var cancellationObserved = false
+    private var cancellationReturned = false
+    private var releaseContinuation: CheckedContinuation<Void, Never>?
+    private var enteredContinuations: [CheckedContinuation<Void, Never>] = []
+    private var cancellationContinuations: [CheckedContinuation<Void, Never>] = []
+
+    func run() async {
+        await withTaskCancellationHandler {
+            entered = true
+            let continuations = enteredContinuations
+            enteredContinuations.removeAll()
+            for continuation in continuations {
+                continuation.resume()
+            }
+            await withCheckedContinuation { continuation in
+                releaseContinuation = continuation
+            }
+        } onCancel: {
+            Task { await self.recordCancellationObserved() }
+        }
+    }
+
+    func waitUntilEntered() async {
+        guard !entered else { return }
+        await withCheckedContinuation { continuation in
+            enteredContinuations.append(continuation)
+        }
+    }
+
+    func waitUntilCancellationObserved() async {
+        guard !cancellationObserved else { return }
+        await withCheckedContinuation { continuation in
+            cancellationContinuations.append(continuation)
+        }
+    }
+
+    func release() {
+        releaseContinuation?.resume()
+        releaseContinuation = nil
+    }
+
+    func recordCancellationReturned() {
+        cancellationReturned = true
+    }
+
+    func didCancellationReturn() -> Bool {
+        cancellationReturned
+    }
+
+    private func recordCancellationObserved() {
+        cancellationObserved = true
+        let continuations = cancellationContinuations
+        cancellationContinuations.removeAll()
+        for continuation in continuations {
+            continuation.resume()
+        }
+    }
 }

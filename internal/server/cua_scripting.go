@@ -53,7 +53,7 @@ func (s *MCPServer) handleRun(call *ToolCall) (*ToolResult, error) {
 	if scriptTimeout > 0 && scriptTimeout < requestTimeout {
 		effectiveTimeout = scriptTimeout
 	}
-	ctx, cancel := context.WithTimeout(s.ctx, effectiveTimeout)
+	ctx, cancel := context.WithTimeout(s.toolCallContext(call), effectiveTimeout)
 	defer cancel()
 
 	switch params.Type {

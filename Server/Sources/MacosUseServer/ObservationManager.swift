@@ -1,5 +1,6 @@
 import ApplicationServices
 import Foundation
+import GRPCCore
 import MacosUseProto
 import MacosUseSDK
 import OSLog
@@ -7,51 +8,36 @@ import SwiftProtobuf
 
 private let logger = MacosUseSDK.sdkLogger(category: "ObservationManager")
 
+struct ObservationEventStreamLease: Sendable {
+    let id: UUID
+    let stream: AsyncStream<Macosusesdk_V1_ObservationEvent>
+}
+
 /// Manages active observations and coordinates streaming of observation events.
 ///
-/// ## Thread Safety (nonisolated(unsafe))
-///
-/// `ObservationManager.shared` uses `nonisolated(unsafe)` to allow access from any
-/// isolation domain. This is safe because:
-/// 1. The singleton is initialized ONCE in main.swift BEFORE the gRPC server starts
-/// 2. All subsequent accesses are reads-only (no reassignment)
-/// 3. The actor itself handles all internal state synchronization
-///
-/// **INVARIANT**: `shared` MUST be set before any gRPC RPC handler executes.
 actor ObservationManager {
-    /// Shared singleton instance.
-    ///
-    /// - Precondition: Must be initialized in main.swift before use.
-    /// - Warning: Accessing before initialization will trigger preconditionFailure.
-    private nonisolated(unsafe) static var _shared: ObservationManager?
-
-    /// Access the shared ObservationManager instance.
-    /// Triggers preconditionFailure if accessed before initialization.
-    nonisolated static var shared: ObservationManager {
-        get {
-            guard let instance = _shared else {
-                preconditionFailure(
-                    "ObservationManager.shared accessed before initialization. " +
-                        "Ensure main.swift initializes ObservationManager.shared before starting gRPC server.",
-                )
-            }
-            return instance
-        }
-        set {
-            _shared = newValue
-        }
-    }
-
     private let windowRegistry: WindowRegistry
     private let system: SystemOperations
+    private let monitorOperation: (@Sendable (String) async -> Void)?
+    nonisolated let automationCoordinator: AutomationCoordinator
     private var observations: [String: ObservationState] = [:]
     private var eventStreams: [String: [UUID: AsyncStream<Macosusesdk_V1_ObservationEvent>.Continuation]] = [:]
-    private var sequenceCounters: [String: Int64] = [:]
+    private var streamProducerTasks: [UUID: Task<Void, any Error>] = [:]
     private var tasks: [String: Task<Void, Never>] = [:]
+    private var acceptingObservations = true
 
-    init(windowRegistry: WindowRegistry, system: SystemOperations = ProductionSystemOperations.shared) {
+    init(
+        windowRegistry: WindowRegistry,
+        system: SystemOperations = ProductionSystemOperations.shared,
+        automationCoordinator: AutomationCoordinator? = nil,
+        monitorOperation: (@Sendable (String) async -> Void)? = nil,
+    ) {
         self.windowRegistry = windowRegistry
         self.system = system
+        self.monitorOperation = monitorOperation
+        self.automationCoordinator = automationCoordinator ?? AutomationCoordinator(
+            activationSystem: system,
+        )
     }
 
     func createObservation(
@@ -61,36 +47,100 @@ actor ObservationManager {
         filter: Macosusesdk_V1_ObservationFilter?,
         pid: pid_t,
         activate: Bool = false,
+    ) throws -> Macosusesdk_V1_Observation {
+        let observation = Self.makeObservation(
+            name: name,
+            type: type,
+            filter: filter,
+            activate: activate,
+        )
+        return try registerObservation(
+            observation,
+            parent: parent,
+            pid: pid,
+            activate: activate,
+        )
+    }
+
+    nonisolated static func makeObservation(
+        name: String,
+        type: Macosusesdk_V1_ObservationType,
+        filter: Macosusesdk_V1_ObservationFilter?,
+        activate: Bool,
     ) -> Macosusesdk_V1_Observation {
-        let now = Date()
-        let observation = Macosusesdk_V1_Observation.with {
+        Macosusesdk_V1_Observation.with {
             $0.name = name
             $0.type = type
             $0.state = .pending
-            $0.createTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: now)
+            $0.createTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
             $0.activate = activate
             if let filter {
                 $0.filter = filter
             }
         }
+    }
+
+    @discardableResult
+    func registerObservation(
+        _ observation: Macosusesdk_V1_Observation,
+        parent: String,
+        pid: pid_t,
+        activate: Bool,
+    ) throws -> Macosusesdk_V1_Observation {
+        guard acceptingObservations else {
+            throw ObservationError.admissionClosed
+        }
+        guard observations[observation.name] == nil else {
+            throw ObservationError.alreadyExists
+        }
+        guard observation.state == .pending,
+              !observation.name.isEmpty,
+              observation.hasCreateTime
+        else {
+            throw ObservationError.invalidState
+        }
+        if observation.hasFilter {
+            _ = try RequestNumericValidation.optionalPollInterval(
+                observation.filter.pollInterval,
+                default: 1,
+                field: "observation.filter.poll_interval",
+            )
+        }
 
         let state = ObservationState(observation: observation, parent: parent, pid: pid, activate: activate)
-        observations[name] = state
-        sequenceCounters[name] = 0
-        eventStreams[name] = [:]
+        observations[observation.name] = state
+        eventStreams[observation.name] = [:]
         return observation
     }
 
     func startObservation(name: String) async throws {
+        guard acceptingObservations else { throw ObservationError.admissionClosed }
+        try Task.checkCancellation()
         guard var state = observations[name] else { throw ObservationError.notFound }
+        switch state.observation.state {
+        case .pending:
+            break
+        case .active:
+            throw ObservationError.alreadyStarted
+        case .completed, .cancelled, .failed, .unspecified, .UNRECOGNIZED:
+            throw ObservationError.invalidState
+        }
+        guard tasks[name] == nil else { throw ObservationError.alreadyStarted }
+
         state.observation.state = .active
         state.observation.startTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
         observations[name] = state
 
         let initialState = state
-        let manager = self
-        let task = Task.detached {
-            await manager.monitorObservation(name: name, initialState: initialState)
+        let monitorOperation = self.monitorOperation
+        let task = Task { [weak self] in
+            guard let self else { return }
+            if let monitorOperation {
+                await monitorOperation(name)
+            } else {
+                await monitorObservation(name: name, initialState: initialState)
+            }
+            await monitorDidExit(name: name)
         }
         tasks[name] = task
     }
@@ -107,21 +157,42 @@ actor ObservationManager {
         observations.values.count { $0.observation.state == .active }
     }
 
+    func monitorTaskCount() -> Int {
+        tasks.count
+    }
+
+    func streamContinuationCount(name: String) -> Int {
+        eventStreams[name]?.count ?? 0
+    }
+
+    func streamProducerCount() -> Int {
+        streamProducerTasks.count
+    }
+
     func cancelObservation(name: String) async -> Macosusesdk_V1_Observation? {
         guard var state = observations[name] else { return nil }
-        tasks[name]?.cancel()
-        tasks.removeValue(forKey: name)
-        state.observation.state = .cancelled
-        state.observation.endTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
-        observations[name] = state
-        if let continuations = eventStreams[name] {
-            for continuation in continuations.values {
-                continuation.finish()
-            }
+        let task = tasks[name]
+        let streamIDs = eventStreams[name].map { Array($0.keys) } ?? []
+        let streamTasks = streamIDs.compactMap { streamProducerTasks[$0] }
+        task?.cancel()
+        for streamTask in streamTasks {
+            streamTask.cancel()
         }
-        eventStreams.removeValue(forKey: name)
-        sequenceCounters.removeValue(forKey: name)
-        return state.observation
+        if state.observation.state == .pending || state.observation.state == .active {
+            state.observation.state = .cancelled
+            state.observation.endTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
+            observations[name] = state
+        }
+        finishEventStreams(name: name)
+        await task?.value
+        for streamTask in streamTasks {
+            _ = try? await streamTask.value
+        }
+        tasks.removeValue(forKey: name)
+        for id in streamIDs {
+            streamProducerTasks.removeValue(forKey: id)
+        }
+        return observations[name]?.observation
     }
 
     /// Cancels all active observations during graceful shutdown.
@@ -135,101 +206,133 @@ actor ObservationManager {
     /// - Returns: The number of observations that were cancelled.
     @discardableResult
     func cancelAllObservations() async -> Int {
+        acceptingObservations = false
         let observationNames = Array(observations.keys)
-        var cancelledCount = 0
+        let monitorTasks = Array(tasks.values)
+        let streamTasks = Array(streamProducerTasks.values)
 
-        for name in observationNames {
-            // Cancel the polling task
-            tasks[name]?.cancel()
-            tasks.removeValue(forKey: name)
-
-            // Mark observation as cancelled
-            if var state = observations[name] {
-                state.observation.state = .cancelled
-                state.observation.endTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
-                observations[name] = state
-                cancelledCount += 1
-            }
-
-            // Finish all event stream continuations
-            if let continuations = eventStreams[name] {
-                for continuation in continuations.values {
-                    continuation.finish()
-                }
-            }
-            eventStreams.removeValue(forKey: name)
-            sequenceCounters.removeValue(forKey: name)
+        for task in monitorTasks {
+            task.cancel()
+        }
+        for task in streamTasks {
+            task.cancel()
         }
 
-        // Clear all observations (they're all cancelled now)
-        observations.removeAll()
+        for name in observationNames {
+            if var state = observations[name] {
+                if state.observation.state == .pending || state.observation.state == .active {
+                    state.observation.state = .cancelled
+                    state.observation.endTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
+                    observations[name] = state
+                }
+            }
+            finishEventStreams(name: name)
+        }
 
-        logger.info("Cancelled \(cancelledCount, privacy: .public) observation(s) during shutdown")
-        return cancelledCount
+        observations.removeAll()
+        for task in monitorTasks {
+            await task.value
+        }
+        for task in streamTasks {
+            _ = try? await task.value
+        }
+        tasks.removeAll()
+        streamProducerTasks.removeAll()
+
+        logger.info("Cancelled \(observationNames.count, privacy: .public) observation(s) during shutdown")
+        return observationNames.count
     }
 
     func completeObservation(name: String) async {
-        guard var state = observations[name] else { return }
-        state.observation.state = .completed
-        state.observation.endTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
-        observations[name] = state
-        tasks[name]?.cancel()
-        tasks.removeValue(forKey: name)
-        if let continuations = eventStreams[name] {
-            for continuation in continuations.values {
-                continuation.finish()
-            }
-        }
-        eventStreams.removeValue(forKey: name)
+        await terminateObservation(name: name, terminalState: .completed)
     }
 
     func failObservation(name: String, error _: Error) async {
+        await terminateObservation(name: name, terminalState: .failed)
+    }
+
+    private func terminateObservation(
+        name: String,
+        terminalState: Macosusesdk_V1_Observation.State,
+    ) async {
         guard var state = observations[name] else { return }
-        state.observation.state = .failed
-        state.observation.endTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
-        observations[name] = state
-        tasks[name]?.cancel()
+        let task = tasks[name]
+        task?.cancel()
+        if state.observation.state == .pending || state.observation.state == .active {
+            state.observation.state = terminalState
+            state.observation.endTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
+            observations[name] = state
+        }
+        finishEventStreams(name: name)
+        await task?.value
         tasks.removeValue(forKey: name)
-        if let continuations = eventStreams[name] {
+    }
+
+    func createEventStream(name: String) -> ObservationEventStreamLease? {
+        guard let state = observations[name],
+              state.observation.state == .pending || state.observation.state == .active,
+              eventStreams[name] != nil
+        else {
+            return nil
+        }
+
+        let continuationID = UUID()
+        let (stream, continuation) = AsyncStream<Macosusesdk_V1_ObservationEvent>.makeStream(
+            bufferingPolicy: .bufferingNewest(100),
+        )
+        eventStreams[name]?[continuationID] = continuation
+        return ObservationEventStreamLease(id: continuationID, stream: stream)
+    }
+
+    func createEventStreamProducer(
+        id: UUID,
+        name: String,
+        operation: @escaping @Sendable () async throws -> Void,
+    ) throws -> Task<Void, any Error> {
+        guard acceptingObservations, eventStreams[name]?[id] != nil else {
+            throw RPCError(code: .unavailable, message: "Observation stream admission is closed")
+        }
+        let task = Task { try await operation() }
+        streamProducerTasks[id] = task
+        return task
+    }
+
+    func releaseEventStream(id: UUID, name: String) {
+        streamProducerTasks.removeValue(forKey: id)
+        eventStreams[name]?.removeValue(forKey: id)?.finish()
+    }
+
+    private func publishEvent(name: String, event: Macosusesdk_V1_ObservationEvent) {
+        guard let continuations = eventStreams[name] else { return }
+        for continuation in continuations.values {
+            continuation.yield(event)
+        }
+    }
+
+    private func finishEventStreams(name: String) {
+        if let continuations = eventStreams.removeValue(forKey: name) {
             for continuation in continuations.values {
                 continuation.finish()
             }
         }
-        eventStreams.removeValue(forKey: name)
     }
 
-    func createEventStream(name: String) -> AsyncStream<Macosusesdk_V1_ObservationEvent>? {
-        guard observations[name] != nil else { return nil }
-        let continuationID = UUID()
-        return AsyncStream<Macosusesdk_V1_ObservationEvent>(bufferingPolicy: .bufferingNewest(100)) { continuation in
-            Task { await self.addStreamContinuation(id: continuationID, name: name, continuation: continuation) }
-            continuation.onTermination = { @Sendable _ in
-                Task { await self.removeStreamContinuation(id: continuationID, name: name) }
-            }
-        }
+    private func monitorDidExit(name: String) {
+        tasks.removeValue(forKey: name)
+        guard var state = observations[name], state.observation.state == .active else { return }
+        state.observation.state = .completed
+        state.observation.endTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
+        observations[name] = state
+        finishEventStreams(name: name)
     }
 
-    private func addStreamContinuation(id: UUID, name: String, continuation: AsyncStream<Macosusesdk_V1_ObservationEvent>.Continuation) async {
-        if eventStreams[name] != nil { eventStreams[name]?[id] = continuation } else { eventStreams[name] = [id: continuation] }
-    }
-
-    private func removeStreamContinuation(id: UUID, name: String) async {
-        eventStreams[name]?.removeValue(forKey: id)
-        if eventStreams[name]?.isEmpty == true { eventStreams.removeValue(forKey: name) }
-    }
-
-    private nonisolated func publishEvent(name: String, event: Macosusesdk_V1_ObservationEvent) {
-        Task.detached {
-            let continuations = await self.getCurrentContinuations(name: name)
-            for continuation in continuations {
-                continuation.yield(event)
-            }
-        }
-    }
-
-    private func getCurrentContinuations(name: String) -> [AsyncStream<Macosusesdk_V1_ObservationEvent>.Continuation] {
-        guard let continuations = eventStreams[name] else { return [] }
-        return Array(continuations.values)
+    private func monitorDidFail(name: String) {
+        tasks.removeValue(forKey: name)
+        guard var state = observations[name], state.observation.state == .active else { return }
+        state.observation.state = .failed
+        state.observation.endTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
+        observations[name] = state
+        finishEventStreams(name: name)
     }
 
     private nonisolated func monitorObservation(name: String, initialState: ObservationState) async {
@@ -239,7 +342,7 @@ actor ObservationManager {
         let shouldActivate = initialState.activate
         let pollInterval = (filter.pollInterval > 0) ? filter.pollInterval : 1.0
 
-        var previousElements: [Macosusesdk_Type_Element] = []
+        var previousElements: [Macosusesdk_V1_Element] = []
         var previousWindows: [AXWindowSnapshot] = []
         var sequence: Int64 = 0
 
@@ -248,13 +351,18 @@ actor ObservationManager {
             do {
                 switch type {
                 case .elementChanges, .treeChanges:
-                    let traverseResult = try await AutomationCoordinator.shared.handleTraverse(pid: pid, visibleOnly: filter.visibleOnly, shouldActivate: shouldActivate)
+                    let traverseResult = try await automationCoordinator.handleTraverse(
+                        pid: pid,
+                        visibleOnly: filter.visibleOnly,
+                        shouldActivate: shouldActivate,
+                        applicationName: initialState.parent,
+                    )
                     let currentElements = traverseResult.elements
                     let changes = detectElementChanges(previous: previousElements, current: currentElements)
                     for change in changes {
                         let event = createObservationEvent(name: name, change: change, sequence: sequence)
                         sequence += 1
-                        publishEvent(name: name, event: event)
+                        await publishEvent(name: name, event: event)
                     }
                     previousElements = currentElements
 
@@ -292,20 +400,25 @@ actor ObservationManager {
                     for change in windowChanges {
                         let event = createWindowObservationEvent(name: name, change: change, sequence: sequence)
                         sequence += 1
-                        publishEvent(name: name, event: event)
+                        await publishEvent(name: name, event: event)
                     }
                     previousWindows = currentWithOrphans
 
                 case .applicationChanges: break
 
                 case .attributeChanges:
-                    let traverseResult = try await AutomationCoordinator.shared.handleTraverse(pid: pid, visibleOnly: filter.visibleOnly, shouldActivate: shouldActivate)
+                    let traverseResult = try await automationCoordinator.handleTraverse(
+                        pid: pid,
+                        visibleOnly: filter.visibleOnly,
+                        shouldActivate: shouldActivate,
+                        applicationName: initialState.parent,
+                    )
                     let currentElements = traverseResult.elements
                     let changes = detectAttributeChanges(previous: previousElements, current: currentElements, watchedAttributes: filter.attributes)
                     for change in changes {
                         let event = createObservationEvent(name: name, change: change, sequence: sequence)
                         sequence += 1
-                        publishEvent(name: name, event: event)
+                        await publishEvent(name: name, event: event)
                     }
                     previousElements = currentElements
 
@@ -316,7 +429,7 @@ actor ObservationManager {
                 // Task was cancelled - state already set to .cancelled by cancelObservation
                 return
             } catch {
-                await ObservationManager.shared.failObservation(name: name, error: error)
+                await monitorDidFail(name: name)
                 return
             }
         }
@@ -530,7 +643,9 @@ actor ObservationManager {
             guard let cgID = axData.cgWindowID else { continue }
 
             // Optional: Simple size filter to reduce noise (1x1 keepalives)
-            if axData.axBounds.width < 10 || axData.axBounds.height < 10 { continue }
+            if axData.axBounds.width < 10 || axData.axBounds.height < 10 {
+                continue
+            }
 
             usedAXIndices.insert(axData.axIndex)
             usedCGWindowIDs.insert(cgID)
@@ -592,7 +707,7 @@ actor ObservationManager {
         return snapshots
     }
 
-    private nonisolated func detectElementChanges(previous: [Macosusesdk_Type_Element], current: [Macosusesdk_Type_Element]) -> [ElementChange] {
+    private nonisolated func detectElementChanges(previous: [Macosusesdk_V1_Element], current: [Macosusesdk_V1_Element]) -> [ElementChange] {
         var changes: [ElementChange] = []
         // Use uniquingKeysWith to handle any duplicate paths gracefully (keep first occurrence)
         let previousMap = Dictionary(previous.map { ($0.path, $0) }, uniquingKeysWith: { first, _ in first })
@@ -612,20 +727,22 @@ actor ObservationManager {
         return changes
     }
 
-    private nonisolated func detectAttributeChanges(previous: [Macosusesdk_Type_Element], current: [Macosusesdk_Type_Element], watchedAttributes: [String]) -> [ElementChange] {
+    private nonisolated func detectAttributeChanges(previous: [Macosusesdk_V1_Element], current: [Macosusesdk_V1_Element], watchedAttributes: [String]) -> [ElementChange] {
         var changes: [ElementChange] = []
         // Use uniquingKeysWith to handle any duplicate paths gracefully (keep first occurrence)
         let previousMap = Dictionary(previous.map { ($0.path, $0) }, uniquingKeysWith: { first, _ in first })
         for element in current {
             if let prevElement = previousMap[element.path] {
                 let attributeChanges = findAttributeChanges(old: prevElement, new: element, watched: watchedAttributes)
-                if !attributeChanges.isEmpty { changes.append(.modified(old: prevElement, new: element)) }
+                if !attributeChanges.isEmpty {
+                    changes.append(.modified(old: prevElement, new: element))
+                }
             }
         }
         return changes
     }
 
-    private nonisolated func findAttributeChanges(old: Macosusesdk_Type_Element, new: Macosusesdk_Type_Element, watched: [String]) -> [Macosusesdk_V1_AttributeChange] {
+    private nonisolated func findAttributeChanges(old: Macosusesdk_V1_Element, new: Macosusesdk_V1_Element, watched: [String]) -> [Macosusesdk_V1_AttributeChange] {
         var attributeChanges: [Macosusesdk_V1_AttributeChange] = []
         let attributesToCheck = watched.isEmpty ? Array(old.attributes.keys) + Array(new.attributes.keys) : watched
         for attr in Set(attributesToCheck) {
@@ -635,13 +752,19 @@ actor ObservationManager {
                 attributeChanges.append(Macosusesdk_V1_AttributeChange.with { $0.attribute = attr; $0.oldValue = oldValue; $0.newValue = newValue })
             }
         }
-        if old.text != new.text { attributeChanges.append(Macosusesdk_V1_AttributeChange.with { $0.attribute = "text"; $0.oldValue = old.text; $0.newValue = new.text }) }
-        if old.enabled != new.enabled { attributeChanges.append(Macosusesdk_V1_AttributeChange.with { $0.attribute = "enabled"; $0.oldValue = "\(old.enabled)"; $0.newValue = "\(new.enabled)" }) }
-        if old.focused != new.focused { attributeChanges.append(Macosusesdk_V1_AttributeChange.with { $0.attribute = "focused"; $0.oldValue = "\(old.focused)"; $0.newValue = "\(new.focused)" }) }
+        if old.text != new.text {
+            attributeChanges.append(Macosusesdk_V1_AttributeChange.with { $0.attribute = "text"; $0.oldValue = old.text; $0.newValue = new.text })
+        }
+        if old.enabled != new.enabled {
+            attributeChanges.append(Macosusesdk_V1_AttributeChange.with { $0.attribute = "enabled"; $0.oldValue = "\(old.enabled)"; $0.newValue = "\(new.enabled)" })
+        }
+        if old.focused != new.focused {
+            attributeChanges.append(Macosusesdk_V1_AttributeChange.with { $0.attribute = "focused"; $0.oldValue = "\(old.focused)"; $0.newValue = "\(new.focused)" })
+        }
         return attributeChanges
     }
 
-    private nonisolated func elementsEqual(_ a: Macosusesdk_Type_Element, _ b: Macosusesdk_Type_Element) -> Bool {
+    private nonisolated func elementsEqual(_ a: Macosusesdk_V1_Element, _ b: Macosusesdk_V1_Element) -> Bool {
         a.role == b.role && a.text == b.text && a.enabled == b.enabled && a.focused == b.focused && a.attributes == b.attributes
     }
 
@@ -675,10 +798,18 @@ actor ObservationManager {
 
         for window in current {
             if let prevWindow = previousMap[window.windowID] {
-                if window.bounds.origin != prevWindow.bounds.origin { changes.append(.moved(old: prevWindow, new: window)) }
-                if window.bounds.size != prevWindow.bounds.size { changes.append(.resized(old: prevWindow, new: window)) }
+                if window.bounds.origin != prevWindow.bounds.origin {
+                    changes.append(.moved(old: prevWindow, new: window))
+                }
+                if window.bounds.size != prevWindow.bounds.size {
+                    changes.append(.resized(old: prevWindow, new: window))
+                }
                 if window.minimized != prevWindow.minimized {
-                    if window.minimized { changes.append(.minimized(window)) } else { changes.append(.restored(window)) }
+                    if window.minimized {
+                        changes.append(.minimized(window))
+                    } else {
+                        changes.append(.restored(window))
+                    }
                 }
                 // Detect visibility changes (hidden/shown via Cmd+H or kAXHiddenAttribute)
                 // Note: visibility is calculated as !minimized && !hidden
@@ -686,7 +817,11 @@ actor ObservationManager {
                 // This guard ensures Cmd+H (ax hidden) produces hidden/shown, while Cmd+M (minimize)
                 // produces minimized/restored only — avoiding duplicate/ambiguous events.
                 if window.visible != prevWindow.visible, window.minimized == prevWindow.minimized {
-                    if window.visible { changes.append(.shown(window)) } else { changes.append(.hidden(window)) }
+                    if window.visible {
+                        changes.append(.shown(window))
+                    } else {
+                        changes.append(.hidden(window))
+                    }
                 }
             }
         }
@@ -720,9 +855,9 @@ private struct ObservationState {
 }
 
 private enum ElementChange {
-    case added(Macosusesdk_Type_Element)
-    case removed(Macosusesdk_Type_Element)
-    case modified(old: Macosusesdk_Type_Element, new: Macosusesdk_Type_Element)
+    case added(Macosusesdk_V1_Element)
+    case removed(Macosusesdk_V1_Element)
+    case modified(old: Macosusesdk_V1_Element, new: Macosusesdk_V1_Element)
 }
 
 struct AXWindowSnapshot: Hashable {
@@ -755,7 +890,9 @@ enum WindowChange {
 }
 
 /// Errors that can occur during observation lifecycle management.
-enum ObservationError: Error {
+enum ObservationError: Error, Equatable {
+    case admissionClosed
+    case alreadyExists
     case notFound
     case alreadyStarted
     case invalidState

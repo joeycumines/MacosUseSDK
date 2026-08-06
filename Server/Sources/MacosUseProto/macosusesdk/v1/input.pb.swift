@@ -25,50 +25,81 @@ fileprivate nonisolated struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobu
 }
 
 /// A resource representing an input action that was or will be executed.
-/// Inputs form a timeline for each application.
-public nonisolated struct Macosusesdk_V1_Input: Sendable {
+/// Inputs form an execution timeline under an application or the explicit
+/// desktop wildcard parent while target records the exact delivery authority.
+public nonisolated struct Macosusesdk_V1_Input: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
   /// Resource name in the format "applications/{application}/inputs/{input}".
-  public var name: String = String()
+  /// Desktop-wide input uses the explicit wildcard application segment "-".
+  public var name: String {
+    get {_storage._name}
+    set {_uniqueStorage()._name = newValue}
+  }
 
   /// The specific action to perform or that was performed.
   public var action: Macosusesdk_V1_InputAction {
-    get {_action ?? Macosusesdk_V1_InputAction()}
-    set {_action = newValue}
+    get {_storage._action ?? Macosusesdk_V1_InputAction()}
+    set {_uniqueStorage()._action = newValue}
   }
   /// Returns true if `action` has been explicitly set.
-  public var hasAction: Bool {self._action != nil}
+  public var hasAction: Bool {_storage._action != nil}
   /// Clears the value of `action`. Subsequent reads from it will return its default value.
-  public mutating func clearAction() {self._action = nil}
+  public mutating func clearAction() {_uniqueStorage()._action = nil}
 
   /// Current state of the input.
-  public var state: Macosusesdk_V1_Input.State = .unspecified
+  public var state: Macosusesdk_V1_Input.State {
+    get {_storage._state}
+    set {_uniqueStorage()._state = newValue}
+  }
 
   /// When the input was created.
   public var createTime: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {_createTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
-    set {_createTime = newValue}
+    get {_storage._createTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_uniqueStorage()._createTime = newValue}
   }
   /// Returns true if `createTime` has been explicitly set.
-  public var hasCreateTime: Bool {self._createTime != nil}
+  public var hasCreateTime: Bool {_storage._createTime != nil}
   /// Clears the value of `createTime`. Subsequent reads from it will return its default value.
-  public mutating func clearCreateTime() {self._createTime = nil}
+  public mutating func clearCreateTime() {_uniqueStorage()._createTime = nil}
 
   /// When the input completed (success or failure).
   public var completeTime: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {_completeTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
-    set {_completeTime = newValue}
+    get {_storage._completeTime ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_uniqueStorage()._completeTime = newValue}
   }
   /// Returns true if `completeTime` has been explicitly set.
-  public var hasCompleteTime: Bool {self._completeTime != nil}
+  public var hasCompleteTime: Bool {_storage._completeTime != nil}
   /// Clears the value of `completeTime`. Subsequent reads from it will return its default value.
-  public mutating func clearCompleteTime() {self._completeTime = nil}
+  public mutating func clearCompleteTime() {_uniqueStorage()._completeTime = nil}
 
   /// Error message if the input failed.
-  public var error: String = String()
+  public var error: String {
+    get {_storage._error}
+    set {_uniqueStorage()._error = newValue}
+  }
+
+  /// Exact authority and coordinate scope selected for this input.
+  public var target: Macosusesdk_V1_InputTarget {
+    get {_storage._target ?? Macosusesdk_V1_InputTarget()}
+    set {_uniqueStorage()._target = newValue}
+  }
+  /// Returns true if `target` has been explicitly set.
+  public var hasTarget: Bool {_storage._target != nil}
+  /// Clears the value of `target`. Subsequent reads from it will return its default value.
+  public mutating func clearTarget() {_uniqueStorage()._target = nil}
+
+  /// Truthful delivery commitment recorded after execution settles.
+  public var deliveryResult: Macosusesdk_V1_InputDeliveryResult {
+    get {_storage._deliveryResult ?? Macosusesdk_V1_InputDeliveryResult()}
+    set {_uniqueStorage()._deliveryResult = newValue}
+  }
+  /// Returns true if `deliveryResult` has been explicitly set.
+  public var hasDeliveryResult: Bool {_storage._deliveryResult != nil}
+  /// Clears the value of `deliveryResult`. Subsequent reads from it will return its default value.
+  public mutating func clearDeliveryResult() {_uniqueStorage()._deliveryResult = nil}
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -90,6 +121,9 @@ public nonisolated struct Macosusesdk_V1_Input: Sendable {
 
     /// Input failed with an error.
     case failed // = 4
+
+    /// Input was cancelled before execution or while its owned cleanup settled.
+    case cancelled // = 5
     case UNRECOGNIZED(Int)
 
     public init() {
@@ -103,6 +137,7 @@ public nonisolated struct Macosusesdk_V1_Input: Sendable {
       case 2: self = .executing
       case 3: self = .completed
       case 4: self = .failed
+      case 5: self = .cancelled
       default: self = .UNRECOGNIZED(rawValue)
       }
     }
@@ -114,6 +149,7 @@ public nonisolated struct Macosusesdk_V1_Input: Sendable {
       case .executing: return 2
       case .completed: return 3
       case .failed: return 4
+      case .cancelled: return 5
       case .UNRECOGNIZED(let i): return i
       }
     }
@@ -125,15 +161,151 @@ public nonisolated struct Macosusesdk_V1_Input: Sendable {
       .executing,
       .completed,
       .failed,
+      .cancelled,
     ]
 
   }
 
   public init() {}
 
-  fileprivate var _action: Macosusesdk_V1_InputAction? = nil
-  fileprivate var _createTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
-  fileprivate var _completeTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+  fileprivate var _storage = _StorageClass.defaultInstance
+}
+
+/// Exact delivery authority for an input action.
+public nonisolated struct Macosusesdk_V1_InputTarget: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var destination: Macosusesdk_V1_InputTarget.OneOf_Destination? = nil
+
+  /// Exact running application resource.
+  public var application: String {
+    get {
+      if case .application(let v)? = destination {return v}
+      return String()
+    }
+    set {destination = .application(newValue)}
+  }
+
+  /// Exact opaque window resource.
+  public var window: String {
+    get {
+      if case .window(let v)? = destination {return v}
+      return String()
+    }
+    set {destination = .window(newValue)}
+  }
+
+  /// Exact display resource.
+  public var display: String {
+    get {
+      if case .display(let v)? = destination {return v}
+      return String()
+    }
+    set {destination = .display(newValue)}
+  }
+
+  /// Explicit authorization for the active desktop union.
+  public var desktop: Bool {
+    get {
+      if case .desktop(let v)? = destination {return v}
+      return false
+    }
+    set {destination = .desktop(newValue)}
+  }
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public nonisolated enum OneOf_Destination: Equatable, Sendable {
+    /// Exact running application resource.
+    case application(String)
+    /// Exact opaque window resource.
+    case window(String)
+    /// Exact display resource.
+    case display(String)
+    /// Explicit authorization for the active desktop union.
+    case desktop(Bool)
+
+  }
+
+  public init() {}
+}
+
+/// Delivery truth for one settled input transaction.
+public nonisolated struct Macosusesdk_V1_InputDeliveryResult: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Delivery commitment after execution and cleanup settle.
+  public var commitment: Macosusesdk_V1_InputDeliveryResult.Commitment = .unspecified
+
+  /// Number of events whose post operation was invoked.
+  public var postedEventCount: Int32 = 0
+
+  /// Whether delivery on the selected application/window/display/desktop route
+  /// was observed rather than inferred from a void posting API.
+  public var routedDeliveryObserved: Bool = false
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  /// Degree to which the requested action is known to have reached a physical
+  /// input sink.
+  public nonisolated enum Commitment: SwiftProtobuf.Enum, Swift.CaseIterable {
+    public typealias RawValue = Int
+
+    /// The server has no usable delivery classification.
+    case unspecified // = 0
+
+    /// No requested physical effect reached an operating-system sink.
+    case noEffect // = 1
+
+    /// At least one requested physical effect may have reached an
+    /// operating-system sink, but complete routed event delivery and safety
+    /// cleanup could not be proved.
+    case possiblyCommitted // = 2
+
+    /// Every requested event reached the selected route and every release
+    /// obligation settled.
+    case committedAndSettled // = 3
+    case UNRECOGNIZED(Int)
+
+    public init() {
+      self = .unspecified
+    }
+
+    public init?(rawValue: Int) {
+      switch rawValue {
+      case 0: self = .unspecified
+      case 1: self = .noEffect
+      case 2: self = .possiblyCommitted
+      case 3: self = .committedAndSettled
+      default: self = .UNRECOGNIZED(rawValue)
+      }
+    }
+
+    public var rawValue: Int {
+      switch self {
+      case .unspecified: return 0
+      case .noEffect: return 1
+      case .possiblyCommitted: return 2
+      case .committedAndSettled: return 3
+      case .UNRECOGNIZED(let i): return i
+      }
+    }
+
+    // The compiler won't synthesize support with the UNRECOGNIZED case.
+    public static let allCases: [Macosusesdk_V1_InputDeliveryResult.Commitment] = [
+      .unspecified,
+      .noEffect,
+      .possiblyCommitted,
+      .committedAndSettled,
+    ]
+
+  }
+
+  public init() {}
 }
 
 /// Specification of an input action.
@@ -214,33 +386,6 @@ public nonisolated struct Macosusesdk_V1_InputAction: Sendable {
     set {inputType = .hover(newValue)}
   }
 
-  /// Multi-touch gesture.
-  public var gesture: Macosusesdk_V1_Gesture {
-    get {
-      if case .gesture(let v)? = inputType {return v}
-      return Macosusesdk_V1_Gesture()
-    }
-    set {inputType = .gesture(newValue)}
-  }
-
-  /// Press mouse button down (for stateful drag operations).
-  public var buttonDown: Macosusesdk_V1_MouseButtonDown {
-    get {
-      if case .buttonDown(let v)? = inputType {return v}
-      return Macosusesdk_V1_MouseButtonDown()
-    }
-    set {inputType = .buttonDown(newValue)}
-  }
-
-  /// Release mouse button (for stateful drag operations).
-  public var buttonUp: Macosusesdk_V1_MouseButtonUp {
-    get {
-      if case .buttonUp(let v)? = inputType {return v}
-      return Macosusesdk_V1_MouseButtonUp()
-    }
-    set {inputType = .buttonUp(newValue)}
-  }
-
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// The specific input type and parameters.
@@ -259,12 +404,6 @@ public nonisolated struct Macosusesdk_V1_InputAction: Sendable {
     case scroll(Macosusesdk_V1_Scroll)
     /// Hover at a point for duration.
     case hover(Macosusesdk_V1_Hover)
-    /// Multi-touch gesture.
-    case gesture(Macosusesdk_V1_Gesture)
-    /// Press mouse button down (for stateful drag operations).
-    case buttonDown(Macosusesdk_V1_MouseButtonDown)
-    /// Release mouse button (for stateful drag operations).
-    case buttonUp(Macosusesdk_V1_MouseButtonUp)
 
   }
 
@@ -293,10 +432,27 @@ public nonisolated struct Macosusesdk_V1_MouseClick: Sendable {
   public mutating func clearPosition() {self._position = nil}
 
   /// Click type.
-  public var clickType: Macosusesdk_V1_MouseClick.ClickType = .unspecified
+  public var clickType: Macosusesdk_V1_MouseClick.ClickType {
+    get {_clickType ?? .unspecified}
+    set {_clickType = newValue}
+  }
+  /// Returns true if `clickType` has been explicitly set.
+  public var hasClickType: Bool {self._clickType != nil}
+  /// Clears the value of `clickType`. Subsequent reads from it will return its default value.
+  public mutating func clearClickType() {self._clickType = nil}
 
   /// Number of clicks (1 for single, 2 for double, etc.).
-  public var clickCount: Int32 = 0
+  public var clickCount: Int32 {
+    get {_clickCount ?? 0}
+    set {_clickCount = newValue}
+  }
+  /// Returns true if `clickCount` has been explicitly set.
+  public var hasClickCount: Bool {self._clickCount != nil}
+  /// Clears the value of `clickCount`. Subsequent reads from it will return its default value.
+  public mutating func clearClickCount() {self._clickCount = nil}
+
+  /// Modifier keys applied atomically to every click event.
+  public var modifiers: [Macosusesdk_V1_KeyPress.Modifier] = []
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -354,6 +510,8 @@ public nonisolated struct Macosusesdk_V1_MouseClick: Sendable {
   public init() {}
 
   fileprivate var _position: Macosusesdk_Type_Point? = nil
+  fileprivate var _clickType: Macosusesdk_V1_MouseClick.ClickType? = nil
+  fileprivate var _clickCount: Int32? = nil
 }
 
 /// Text input action.
@@ -364,9 +522,6 @@ public nonisolated struct Macosusesdk_V1_TextInput: Sendable {
 
   /// Text to type.
   public var text: String = String()
-
-  /// Whether to use IME for input (for non-ASCII text).
-  public var useIme: Bool = false
 
   /// Delay between characters in seconds.
   public var charDelay: Double = 0
@@ -487,6 +642,9 @@ public nonisolated struct Macosusesdk_V1_MouseMove: Sendable {
   /// Duration of movement in seconds (for smooth animation).
   public var duration: Double = 0
 
+  /// Modifier keys applied atomically to every movement event.
+  public var modifiers: [Macosusesdk_V1_KeyPress.Modifier] = []
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
@@ -527,7 +685,23 @@ public nonisolated struct Macosusesdk_V1_MouseDrag: Sendable {
   public var duration: Double = 0
 
   /// Mouse button to use for drag.
-  public var button: Macosusesdk_V1_MouseClick.ClickType = .unspecified
+  public var button: Macosusesdk_V1_MouseClick.ClickType {
+    get {_button ?? .unspecified}
+    set {_button = newValue}
+  }
+  /// Returns true if `button` has been explicitly set.
+  public var hasButton: Bool {self._button != nil}
+  /// Clears the value of `button`. Subsequent reads from it will return its default value.
+  public mutating func clearButton() {self._button = nil}
+
+  /// Modifier keys applied atomically to every drag event.
+  public var modifiers: [Macosusesdk_V1_KeyPress.Modifier] = []
+
+  /// Ordered drag waypoints in Global Display Coordinates. When present, this
+  /// path is authoritative and must contain at least two points. The first and
+  /// last points must equal start_position and end_position when those legacy
+  /// fields are also supplied.
+  public var path: [Macosusesdk_Type_Point] = []
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -535,6 +709,7 @@ public nonisolated struct Macosusesdk_V1_MouseDrag: Sendable {
 
   fileprivate var _startPosition: Macosusesdk_Type_Point? = nil
   fileprivate var _endPosition: Macosusesdk_Type_Point? = nil
+  fileprivate var _button: Macosusesdk_V1_MouseClick.ClickType? = nil
 }
 
 /// Scroll action.
@@ -565,6 +740,9 @@ public nonisolated struct Macosusesdk_V1_Scroll: Sendable {
 
   /// Duration of scroll in seconds (for momentum effect).
   public var duration: Double = 0
+
+  /// Modifier keys applied atomically to every scroll event.
+  public var modifiers: [Macosusesdk_V1_KeyPress.Modifier] = []
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -602,238 +780,136 @@ public nonisolated struct Macosusesdk_V1_Hover: Sendable {
   fileprivate var _position: Macosusesdk_Type_Point? = nil
 }
 
-/// Multi-touch gesture.
-///
-/// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
-/// See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
-public nonisolated struct Macosusesdk_V1_Gesture: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  /// Center point of the gesture in Global Display Coordinates.
-  public var center: Macosusesdk_Type_Point {
-    get {_center ?? Macosusesdk_Type_Point()}
-    set {_center = newValue}
-  }
-  /// Returns true if `center` has been explicitly set.
-  public var hasCenter: Bool {self._center != nil}
-  /// Clears the value of `center`. Subsequent reads from it will return its default value.
-  public mutating func clearCenter() {self._center = nil}
-
-  /// Gesture type.
-  public var gestureType: Macosusesdk_V1_Gesture.GestureType = .unspecified
-
-  /// Scale factor (for pinch/zoom gestures).
-  public var scale: Double = 0
-
-  /// Rotation angle in degrees (for rotation gestures).
-  public var rotation: Double = 0
-
-  /// Number of fingers (for swipe gestures).
-  public var fingerCount: Int32 = 0
-
-  /// Direction for swipe gestures.
-  public var direction: Macosusesdk_V1_Gesture.Direction = .unspecified
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  /// Gesture type enumeration.
-  public nonisolated enum GestureType: SwiftProtobuf.Enum, Swift.CaseIterable {
-    public typealias RawValue = Int
-
-    /// Default unspecified gesture.
-    case unspecified // = 0
-
-    /// Pinch (zoom out).
-    case pinch // = 1
-
-    /// Zoom (zoom in).
-    case zoom // = 2
-
-    /// Rotate.
-    case rotate // = 3
-
-    /// Swipe.
-    case swipe // = 4
-
-    /// Force touch (pressure-sensitive).
-    case forceTouch // = 5
-    case UNRECOGNIZED(Int)
-
-    public init() {
-      self = .unspecified
-    }
-
-    public init?(rawValue: Int) {
-      switch rawValue {
-      case 0: self = .unspecified
-      case 1: self = .pinch
-      case 2: self = .zoom
-      case 3: self = .rotate
-      case 4: self = .swipe
-      case 5: self = .forceTouch
-      default: self = .UNRECOGNIZED(rawValue)
-      }
-    }
-
-    public var rawValue: Int {
-      switch self {
-      case .unspecified: return 0
-      case .pinch: return 1
-      case .zoom: return 2
-      case .rotate: return 3
-      case .swipe: return 4
-      case .forceTouch: return 5
-      case .UNRECOGNIZED(let i): return i
-      }
-    }
-
-    // The compiler won't synthesize support with the UNRECOGNIZED case.
-    public static let allCases: [Macosusesdk_V1_Gesture.GestureType] = [
-      .unspecified,
-      .pinch,
-      .zoom,
-      .rotate,
-      .swipe,
-      .forceTouch,
-    ]
-
-  }
-
-  /// Direction enumeration for swipes.
-  public nonisolated enum Direction: SwiftProtobuf.Enum, Swift.CaseIterable {
-    public typealias RawValue = Int
-
-    /// Default unspecified direction.
-    case unspecified // = 0
-
-    /// Swipe up.
-    case up // = 1
-
-    /// Swipe down.
-    case down // = 2
-
-    /// Swipe left.
-    case left // = 3
-
-    /// Swipe right.
-    case right // = 4
-    case UNRECOGNIZED(Int)
-
-    public init() {
-      self = .unspecified
-    }
-
-    public init?(rawValue: Int) {
-      switch rawValue {
-      case 0: self = .unspecified
-      case 1: self = .up
-      case 2: self = .down
-      case 3: self = .left
-      case 4: self = .right
-      default: self = .UNRECOGNIZED(rawValue)
-      }
-    }
-
-    public var rawValue: Int {
-      switch self {
-      case .unspecified: return 0
-      case .up: return 1
-      case .down: return 2
-      case .left: return 3
-      case .right: return 4
-      case .UNRECOGNIZED(let i): return i
-      }
-    }
-
-    // The compiler won't synthesize support with the UNRECOGNIZED case.
-    public static let allCases: [Macosusesdk_V1_Gesture.Direction] = [
-      .unspecified,
-      .up,
-      .down,
-      .left,
-      .right,
-    ]
-
-  }
-
-  public init() {}
-
-  fileprivate var _center: Macosusesdk_Type_Point? = nil
-}
-
-/// Mouse button press action (without release).
-/// Used for stateful drag operations where button down and up are separate events.
-///
-/// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
-public nonisolated struct Macosusesdk_V1_MouseButtonDown: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  /// Position where button is pressed in Global Display Coordinates.
-  public var position: Macosusesdk_Type_Point {
-    get {_position ?? Macosusesdk_Type_Point()}
-    set {_position = newValue}
-  }
-  /// Returns true if `position` has been explicitly set.
-  public var hasPosition: Bool {self._position != nil}
-  /// Clears the value of `position`. Subsequent reads from it will return its default value.
-  public mutating func clearPosition() {self._position = nil}
-
-  /// Button type.
-  public var button: Macosusesdk_V1_MouseClick.ClickType = .unspecified
-
-  /// Modifier keys to hold during press.
-  public var modifiers: [Macosusesdk_V1_KeyPress.Modifier] = []
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  public init() {}
-
-  fileprivate var _position: Macosusesdk_Type_Point? = nil
-}
-
-/// Mouse button release action.
-/// Used for stateful drag operations where button down and up are separate events.
-///
-/// COORDINATE SYSTEM: Global Display Coordinates (top-left origin, Y increases downward).
-public nonisolated struct Macosusesdk_V1_MouseButtonUp: Sendable {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  /// Position where button is released in Global Display Coordinates.
-  public var position: Macosusesdk_Type_Point {
-    get {_position ?? Macosusesdk_Type_Point()}
-    set {_position = newValue}
-  }
-  /// Returns true if `position` has been explicitly set.
-  public var hasPosition: Bool {self._position != nil}
-  /// Clears the value of `position`. Subsequent reads from it will return its default value.
-  public mutating func clearPosition() {self._position = nil}
-
-  /// Button type.
-  public var button: Macosusesdk_V1_MouseClick.ClickType = .unspecified
-
-  /// Modifier keys to hold during release.
-  public var modifiers: [Macosusesdk_V1_KeyPress.Modifier] = []
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  public init() {}
-
-  fileprivate var _position: Macosusesdk_Type_Point? = nil
-}
-
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
 fileprivate nonisolated let _protobuf_package = "macosusesdk.v1"
 
 nonisolated extension Macosusesdk_V1_Input: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Input"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}action\0\u{1}state\0\u{3}create_time\0\u{3}complete_time\0\u{1}error\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}name\0\u{1}action\0\u{1}state\0\u{3}create_time\0\u{3}complete_time\0\u{1}error\0\u{1}target\0\u{3}delivery_result\0")
+
+  fileprivate class _StorageClass {
+    var _name: String = String()
+    var _action: Macosusesdk_V1_InputAction? = nil
+    var _state: Macosusesdk_V1_Input.State = .unspecified
+    var _createTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+    var _completeTime: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+    var _error: String = String()
+    var _target: Macosusesdk_V1_InputTarget? = nil
+    var _deliveryResult: Macosusesdk_V1_InputDeliveryResult? = nil
+
+      // This property is used as the initial default value for new instances of the type.
+      // The type itself is protecting the reference to its storage via CoW semantics.
+      // This will force a copy to be made of this reference when the first mutation occurs;
+      // hence, it is safe to mark this as `nonisolated(unsafe)`.
+      static nonisolated(unsafe) let defaultInstance = _StorageClass()
+
+    private init() {}
+
+    init(copying source: _StorageClass) {
+      _name = source._name
+      _action = source._action
+      _state = source._state
+      _createTime = source._createTime
+      _completeTime = source._completeTime
+      _error = source._error
+      _target = source._target
+      _deliveryResult = source._deliveryResult
+    }
+  }
+
+  fileprivate mutating func _uniqueStorage() -> _StorageClass {
+    if !isKnownUniquelyReferenced(&_storage) {
+      _storage = _StorageClass(copying: _storage)
+    }
+    return _storage
+  }
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    _ = _uniqueStorage()
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      while let fieldNumber = try decoder.nextFieldNumber() {
+        // The use of inline closures is to circumvent an issue where the compiler
+        // allocates stack space for every case branch when no optimizations are
+        // enabled. https://github.com/apple/swift-protobuf/issues/1034
+        switch fieldNumber {
+        case 1: try { try decoder.decodeSingularStringField(value: &_storage._name) }()
+        case 2: try { try decoder.decodeSingularMessageField(value: &_storage._action) }()
+        case 3: try { try decoder.decodeSingularEnumField(value: &_storage._state) }()
+        case 4: try { try decoder.decodeSingularMessageField(value: &_storage._createTime) }()
+        case 5: try { try decoder.decodeSingularMessageField(value: &_storage._completeTime) }()
+        case 6: try { try decoder.decodeSingularStringField(value: &_storage._error) }()
+        case 7: try { try decoder.decodeSingularMessageField(value: &_storage._target) }()
+        case 8: try { try decoder.decodeSingularMessageField(value: &_storage._deliveryResult) }()
+        default: break
+        }
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every if/case branch local when no optimizations
+      // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+      // https://github.com/apple/swift-protobuf/issues/1182
+      if !_storage._name.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._name, fieldNumber: 1)
+      }
+      try { if let v = _storage._action {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+      } }()
+      if _storage._state != .unspecified {
+        try visitor.visitSingularEnumField(value: _storage._state, fieldNumber: 3)
+      }
+      try { if let v = _storage._createTime {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
+      } }()
+      try { if let v = _storage._completeTime {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
+      } }()
+      if !_storage._error.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._error, fieldNumber: 6)
+      }
+      try { if let v = _storage._target {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
+      } }()
+      try { if let v = _storage._deliveryResult {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 8)
+      } }()
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_Input, rhs: Macosusesdk_V1_Input) -> Bool {
+    if lhs._storage !== rhs._storage {
+      let storagesAreEqual: Bool = withExtendedLifetime((lhs._storage, rhs._storage)) { (_args: (_StorageClass, _StorageClass)) in
+        let _storage = _args.0
+        let rhs_storage = _args.1
+        if _storage._name != rhs_storage._name {return false}
+        if _storage._action != rhs_storage._action {return false}
+        if _storage._state != rhs_storage._state {return false}
+        if _storage._createTime != rhs_storage._createTime {return false}
+        if _storage._completeTime != rhs_storage._completeTime {return false}
+        if _storage._error != rhs_storage._error {return false}
+        if _storage._target != rhs_storage._target {return false}
+        if _storage._deliveryResult != rhs_storage._deliveryResult {return false}
+        return true
+      }
+      if !storagesAreEqual {return false}
+    }
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Macosusesdk_V1_Input.State: SwiftProtobuf._ProtoNameProviding {
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0STATE_UNSPECIFIED\0\u{1}STATE_PENDING\0\u{1}STATE_EXECUTING\0\u{1}STATE_COMPLETED\0\u{1}STATE_FAILED\0\u{1}STATE_CANCELLED\0")
+}
+
+nonisolated extension Macosusesdk_V1_InputTarget: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".InputTarget"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}application\0\u{1}window\0\u{1}display\0\u{1}desktop\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -841,12 +917,38 @@ nonisolated extension Macosusesdk_V1_Input: SwiftProtobuf.Message, SwiftProtobuf
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.name) }()
-      case 2: try { try decoder.decodeSingularMessageField(value: &self._action) }()
-      case 3: try { try decoder.decodeSingularEnumField(value: &self.state) }()
-      case 4: try { try decoder.decodeSingularMessageField(value: &self._createTime) }()
-      case 5: try { try decoder.decodeSingularMessageField(value: &self._completeTime) }()
-      case 6: try { try decoder.decodeSingularStringField(value: &self.error) }()
+      case 1: try {
+        var v: String?
+        try decoder.decodeSingularStringField(value: &v)
+        if let v = v {
+          if self.destination != nil {try decoder.handleConflictingOneOf()}
+          self.destination = .application(v)
+        }
+      }()
+      case 2: try {
+        var v: String?
+        try decoder.decodeSingularStringField(value: &v)
+        if let v = v {
+          if self.destination != nil {try decoder.handleConflictingOneOf()}
+          self.destination = .window(v)
+        }
+      }()
+      case 3: try {
+        var v: String?
+        try decoder.decodeSingularStringField(value: &v)
+        if let v = v {
+          if self.destination != nil {try decoder.handleConflictingOneOf()}
+          self.destination = .display(v)
+        }
+      }()
+      case 4: try {
+        var v: Bool?
+        try decoder.decodeSingularBoolField(value: &v)
+        if let v = v {
+          if self.destination != nil {try decoder.handleConflictingOneOf()}
+          self.destination = .desktop(v)
+        }
+      }()
       default: break
       }
     }
@@ -857,46 +959,82 @@ nonisolated extension Macosusesdk_V1_Input: SwiftProtobuf.Message, SwiftProtobuf
     // allocates stack space for every if/case branch local when no optimizations
     // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
     // https://github.com/apple/swift-protobuf/issues/1182
-    if !self.name.isEmpty {
-      try visitor.visitSingularStringField(value: self.name, fieldNumber: 1)
-    }
-    try { if let v = self._action {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
-    } }()
-    if self.state != .unspecified {
-      try visitor.visitSingularEnumField(value: self.state, fieldNumber: 3)
-    }
-    try { if let v = self._createTime {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
-    } }()
-    try { if let v = self._completeTime {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
-    } }()
-    if !self.error.isEmpty {
-      try visitor.visitSingularStringField(value: self.error, fieldNumber: 6)
+    switch self.destination {
+    case .application?: try {
+      guard case .application(let v)? = self.destination else { preconditionFailure() }
+      try visitor.visitSingularStringField(value: v, fieldNumber: 1)
+    }()
+    case .window?: try {
+      guard case .window(let v)? = self.destination else { preconditionFailure() }
+      try visitor.visitSingularStringField(value: v, fieldNumber: 2)
+    }()
+    case .display?: try {
+      guard case .display(let v)? = self.destination else { preconditionFailure() }
+      try visitor.visitSingularStringField(value: v, fieldNumber: 3)
+    }()
+    case .desktop?: try {
+      guard case .desktop(let v)? = self.destination else { preconditionFailure() }
+      try visitor.visitSingularBoolField(value: v, fieldNumber: 4)
+    }()
+    case nil: break
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Macosusesdk_V1_Input, rhs: Macosusesdk_V1_Input) -> Bool {
-    if lhs.name != rhs.name {return false}
-    if lhs._action != rhs._action {return false}
-    if lhs.state != rhs.state {return false}
-    if lhs._createTime != rhs._createTime {return false}
-    if lhs._completeTime != rhs._completeTime {return false}
-    if lhs.error != rhs.error {return false}
+  public static func ==(lhs: Macosusesdk_V1_InputTarget, rhs: Macosusesdk_V1_InputTarget) -> Bool {
+    if lhs.destination != rhs.destination {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
-nonisolated extension Macosusesdk_V1_Input.State: SwiftProtobuf._ProtoNameProviding {
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0STATE_UNSPECIFIED\0\u{1}STATE_PENDING\0\u{1}STATE_EXECUTING\0\u{1}STATE_COMPLETED\0\u{1}STATE_FAILED\0")
+nonisolated extension Macosusesdk_V1_InputDeliveryResult: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".InputDeliveryResult"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}commitment\0\u{3}posted_event_count\0\u{3}routed_delivery_observed\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularEnumField(value: &self.commitment) }()
+      case 2: try { try decoder.decodeSingularInt32Field(value: &self.postedEventCount) }()
+      case 3: try { try decoder.decodeSingularBoolField(value: &self.routedDeliveryObserved) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.commitment != .unspecified {
+      try visitor.visitSingularEnumField(value: self.commitment, fieldNumber: 1)
+    }
+    if self.postedEventCount != 0 {
+      try visitor.visitSingularInt32Field(value: self.postedEventCount, fieldNumber: 2)
+    }
+    if self.routedDeliveryObserved != false {
+      try visitor.visitSingularBoolField(value: self.routedDeliveryObserved, fieldNumber: 3)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Macosusesdk_V1_InputDeliveryResult, rhs: Macosusesdk_V1_InputDeliveryResult) -> Bool {
+    if lhs.commitment != rhs.commitment {return false}
+    if lhs.postedEventCount != rhs.postedEventCount {return false}
+    if lhs.routedDeliveryObserved != rhs.routedDeliveryObserved {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Macosusesdk_V1_InputDeliveryResult.Commitment: SwiftProtobuf._ProtoNameProviding {
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0COMMITMENT_UNSPECIFIED\0\u{1}COMMITMENT_NO_EFFECT\0\u{1}COMMITMENT_POSSIBLY_COMMITTED\0\u{1}COMMITMENT_COMMITTED_AND_SETTLED\0")
 }
 
 nonisolated extension Macosusesdk_V1_InputAction: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".InputAction"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}show_animation\0\u{3}animation_duration\0\u{2}\u{8}click\0\u{3}type_text\0\u{3}press_key\0\u{3}move_mouse\0\u{1}drag\0\u{1}scroll\0\u{1}hover\0\u{1}gesture\0\u{3}button_down\0\u{3}button_up\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}show_animation\0\u{3}animation_duration\0\u{2}\u{8}click\0\u{3}type_text\0\u{3}press_key\0\u{3}move_mouse\0\u{1}drag\0\u{1}scroll\0\u{1}hover\0\u{b}gesture\0\u{b}button_down\0\u{b}button_up\0\u{c}\u{11}\u{3}")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -997,45 +1135,6 @@ nonisolated extension Macosusesdk_V1_InputAction: SwiftProtobuf.Message, SwiftPr
           self.inputType = .hover(v)
         }
       }()
-      case 17: try {
-        var v: Macosusesdk_V1_Gesture?
-        var hadOneofValue = false
-        if let current = self.inputType {
-          hadOneofValue = true
-          if case .gesture(let m) = current {v = m}
-        }
-        try decoder.decodeSingularMessageField(value: &v)
-        if let v = v {
-          if hadOneofValue {try decoder.handleConflictingOneOf()}
-          self.inputType = .gesture(v)
-        }
-      }()
-      case 18: try {
-        var v: Macosusesdk_V1_MouseButtonDown?
-        var hadOneofValue = false
-        if let current = self.inputType {
-          hadOneofValue = true
-          if case .buttonDown(let m) = current {v = m}
-        }
-        try decoder.decodeSingularMessageField(value: &v)
-        if let v = v {
-          if hadOneofValue {try decoder.handleConflictingOneOf()}
-          self.inputType = .buttonDown(v)
-        }
-      }()
-      case 19: try {
-        var v: Macosusesdk_V1_MouseButtonUp?
-        var hadOneofValue = false
-        if let current = self.inputType {
-          hadOneofValue = true
-          if case .buttonUp(let m) = current {v = m}
-        }
-        try decoder.decodeSingularMessageField(value: &v)
-        if let v = v {
-          if hadOneofValue {try decoder.handleConflictingOneOf()}
-          self.inputType = .buttonUp(v)
-        }
-      }()
       default: break
       }
     }
@@ -1081,18 +1180,6 @@ nonisolated extension Macosusesdk_V1_InputAction: SwiftProtobuf.Message, SwiftPr
       guard case .hover(let v)? = self.inputType else { preconditionFailure() }
       try visitor.visitSingularMessageField(value: v, fieldNumber: 16)
     }()
-    case .gesture?: try {
-      guard case .gesture(let v)? = self.inputType else { preconditionFailure() }
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 17)
-    }()
-    case .buttonDown?: try {
-      guard case .buttonDown(let v)? = self.inputType else { preconditionFailure() }
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 18)
-    }()
-    case .buttonUp?: try {
-      guard case .buttonUp(let v)? = self.inputType else { preconditionFailure() }
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 19)
-    }()
     case nil: break
     }
     try unknownFields.traverse(visitor: &visitor)
@@ -1109,7 +1196,7 @@ nonisolated extension Macosusesdk_V1_InputAction: SwiftProtobuf.Message, SwiftPr
 
 nonisolated extension Macosusesdk_V1_MouseClick: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".MouseClick"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}position\0\u{3}click_type\0\u{3}click_count\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}position\0\u{3}click_type\0\u{3}click_count\0\u{1}modifiers\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1118,8 +1205,9 @@ nonisolated extension Macosusesdk_V1_MouseClick: SwiftProtobuf.Message, SwiftPro
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularMessageField(value: &self._position) }()
-      case 2: try { try decoder.decodeSingularEnumField(value: &self.clickType) }()
-      case 3: try { try decoder.decodeSingularInt32Field(value: &self.clickCount) }()
+      case 2: try { try decoder.decodeSingularEnumField(value: &self._clickType) }()
+      case 3: try { try decoder.decodeSingularInt32Field(value: &self._clickCount) }()
+      case 4: try { try decoder.decodeRepeatedEnumField(value: &self.modifiers) }()
       default: break
       }
     }
@@ -1133,19 +1221,23 @@ nonisolated extension Macosusesdk_V1_MouseClick: SwiftProtobuf.Message, SwiftPro
     try { if let v = self._position {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
     } }()
-    if self.clickType != .unspecified {
-      try visitor.visitSingularEnumField(value: self.clickType, fieldNumber: 2)
-    }
-    if self.clickCount != 0 {
-      try visitor.visitSingularInt32Field(value: self.clickCount, fieldNumber: 3)
+    try { if let v = self._clickType {
+      try visitor.visitSingularEnumField(value: v, fieldNumber: 2)
+    } }()
+    try { if let v = self._clickCount {
+      try visitor.visitSingularInt32Field(value: v, fieldNumber: 3)
+    } }()
+    if !self.modifiers.isEmpty {
+      try visitor.visitPackedEnumField(value: self.modifiers, fieldNumber: 4)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_MouseClick, rhs: Macosusesdk_V1_MouseClick) -> Bool {
     if lhs._position != rhs._position {return false}
-    if lhs.clickType != rhs.clickType {return false}
-    if lhs.clickCount != rhs.clickCount {return false}
+    if lhs._clickType != rhs._clickType {return false}
+    if lhs._clickCount != rhs._clickCount {return false}
+    if lhs.modifiers != rhs.modifiers {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -1157,7 +1249,7 @@ nonisolated extension Macosusesdk_V1_MouseClick.ClickType: SwiftProtobuf._ProtoN
 
 nonisolated extension Macosusesdk_V1_TextInput: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".TextInput"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}text\0\u{3}use_ime\0\u{3}char_delay\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}text\0\u{4}\u{2}char_delay\0\u{b}use_ime\0\u{c}\u{2}\u{1}")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1166,7 +1258,6 @@ nonisolated extension Macosusesdk_V1_TextInput: SwiftProtobuf.Message, SwiftProt
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularStringField(value: &self.text) }()
-      case 2: try { try decoder.decodeSingularBoolField(value: &self.useIme) }()
       case 3: try { try decoder.decodeSingularDoubleField(value: &self.charDelay) }()
       default: break
       }
@@ -1177,9 +1268,6 @@ nonisolated extension Macosusesdk_V1_TextInput: SwiftProtobuf.Message, SwiftProt
     if !self.text.isEmpty {
       try visitor.visitSingularStringField(value: self.text, fieldNumber: 1)
     }
-    if self.useIme != false {
-      try visitor.visitSingularBoolField(value: self.useIme, fieldNumber: 2)
-    }
     if self.charDelay.bitPattern != 0 {
       try visitor.visitSingularDoubleField(value: self.charDelay, fieldNumber: 3)
     }
@@ -1188,7 +1276,6 @@ nonisolated extension Macosusesdk_V1_TextInput: SwiftProtobuf.Message, SwiftProt
 
   public static func ==(lhs: Macosusesdk_V1_TextInput, rhs: Macosusesdk_V1_TextInput) -> Bool {
     if lhs.text != rhs.text {return false}
-    if lhs.useIme != rhs.useIme {return false}
     if lhs.charDelay != rhs.charDelay {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
@@ -1241,7 +1328,7 @@ nonisolated extension Macosusesdk_V1_KeyPress.Modifier: SwiftProtobuf._ProtoName
 
 nonisolated extension Macosusesdk_V1_MouseMove: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".MouseMove"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}position\0\u{1}duration\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}position\0\u{1}duration\0\u{1}modifiers\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1251,6 +1338,7 @@ nonisolated extension Macosusesdk_V1_MouseMove: SwiftProtobuf.Message, SwiftProt
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularMessageField(value: &self._position) }()
       case 2: try { try decoder.decodeSingularDoubleField(value: &self.duration) }()
+      case 3: try { try decoder.decodeRepeatedEnumField(value: &self.modifiers) }()
       default: break
       }
     }
@@ -1267,12 +1355,16 @@ nonisolated extension Macosusesdk_V1_MouseMove: SwiftProtobuf.Message, SwiftProt
     if self.duration.bitPattern != 0 {
       try visitor.visitSingularDoubleField(value: self.duration, fieldNumber: 2)
     }
+    if !self.modifiers.isEmpty {
+      try visitor.visitPackedEnumField(value: self.modifiers, fieldNumber: 3)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Macosusesdk_V1_MouseMove, rhs: Macosusesdk_V1_MouseMove) -> Bool {
     if lhs._position != rhs._position {return false}
     if lhs.duration != rhs.duration {return false}
+    if lhs.modifiers != rhs.modifiers {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -1280,7 +1372,7 @@ nonisolated extension Macosusesdk_V1_MouseMove: SwiftProtobuf.Message, SwiftProt
 
 nonisolated extension Macosusesdk_V1_MouseDrag: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".MouseDrag"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}start_position\0\u{3}end_position\0\u{1}duration\0\u{1}button\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}start_position\0\u{3}end_position\0\u{1}duration\0\u{1}button\0\u{1}modifiers\0\u{1}path\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1291,7 +1383,9 @@ nonisolated extension Macosusesdk_V1_MouseDrag: SwiftProtobuf.Message, SwiftProt
       case 1: try { try decoder.decodeSingularMessageField(value: &self._startPosition) }()
       case 2: try { try decoder.decodeSingularMessageField(value: &self._endPosition) }()
       case 3: try { try decoder.decodeSingularDoubleField(value: &self.duration) }()
-      case 4: try { try decoder.decodeSingularEnumField(value: &self.button) }()
+      case 4: try { try decoder.decodeSingularEnumField(value: &self._button) }()
+      case 5: try { try decoder.decodeRepeatedEnumField(value: &self.modifiers) }()
+      case 6: try { try decoder.decodeRepeatedMessageField(value: &self.path) }()
       default: break
       }
     }
@@ -1311,8 +1405,14 @@ nonisolated extension Macosusesdk_V1_MouseDrag: SwiftProtobuf.Message, SwiftProt
     if self.duration.bitPattern != 0 {
       try visitor.visitSingularDoubleField(value: self.duration, fieldNumber: 3)
     }
-    if self.button != .unspecified {
-      try visitor.visitSingularEnumField(value: self.button, fieldNumber: 4)
+    try { if let v = self._button {
+      try visitor.visitSingularEnumField(value: v, fieldNumber: 4)
+    } }()
+    if !self.modifiers.isEmpty {
+      try visitor.visitPackedEnumField(value: self.modifiers, fieldNumber: 5)
+    }
+    if !self.path.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.path, fieldNumber: 6)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -1321,7 +1421,9 @@ nonisolated extension Macosusesdk_V1_MouseDrag: SwiftProtobuf.Message, SwiftProt
     if lhs._startPosition != rhs._startPosition {return false}
     if lhs._endPosition != rhs._endPosition {return false}
     if lhs.duration != rhs.duration {return false}
-    if lhs.button != rhs.button {return false}
+    if lhs._button != rhs._button {return false}
+    if lhs.modifiers != rhs.modifiers {return false}
+    if lhs.path != rhs.path {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -1329,7 +1431,7 @@ nonisolated extension Macosusesdk_V1_MouseDrag: SwiftProtobuf.Message, SwiftProt
 
 nonisolated extension Macosusesdk_V1_Scroll: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Scroll"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}position\0\u{1}horizontal\0\u{1}vertical\0\u{1}duration\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}position\0\u{1}horizontal\0\u{1}vertical\0\u{1}duration\0\u{1}modifiers\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1341,6 +1443,7 @@ nonisolated extension Macosusesdk_V1_Scroll: SwiftProtobuf.Message, SwiftProtobu
       case 2: try { try decoder.decodeSingularDoubleField(value: &self.horizontal) }()
       case 3: try { try decoder.decodeSingularDoubleField(value: &self.vertical) }()
       case 4: try { try decoder.decodeSingularDoubleField(value: &self.duration) }()
+      case 5: try { try decoder.decodeRepeatedEnumField(value: &self.modifiers) }()
       default: break
       }
     }
@@ -1363,6 +1466,9 @@ nonisolated extension Macosusesdk_V1_Scroll: SwiftProtobuf.Message, SwiftProtobu
     if self.duration.bitPattern != 0 {
       try visitor.visitSingularDoubleField(value: self.duration, fieldNumber: 4)
     }
+    if !self.modifiers.isEmpty {
+      try visitor.visitPackedEnumField(value: self.modifiers, fieldNumber: 5)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -1371,6 +1477,7 @@ nonisolated extension Macosusesdk_V1_Scroll: SwiftProtobuf.Message, SwiftProtobu
     if lhs.horizontal != rhs.horizontal {return false}
     if lhs.vertical != rhs.vertical {return false}
     if lhs.duration != rhs.duration {return false}
+    if lhs.modifiers != rhs.modifiers {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -1410,161 +1517,6 @@ nonisolated extension Macosusesdk_V1_Hover: SwiftProtobuf.Message, SwiftProtobuf
   public static func ==(lhs: Macosusesdk_V1_Hover, rhs: Macosusesdk_V1_Hover) -> Bool {
     if lhs._position != rhs._position {return false}
     if lhs.duration != rhs.duration {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
-}
-
-nonisolated extension Macosusesdk_V1_Gesture: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".Gesture"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}center\0\u{3}gesture_type\0\u{1}scale\0\u{1}rotation\0\u{3}finger_count\0\u{1}direction\0")
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularMessageField(value: &self._center) }()
-      case 2: try { try decoder.decodeSingularEnumField(value: &self.gestureType) }()
-      case 3: try { try decoder.decodeSingularDoubleField(value: &self.scale) }()
-      case 4: try { try decoder.decodeSingularDoubleField(value: &self.rotation) }()
-      case 5: try { try decoder.decodeSingularInt32Field(value: &self.fingerCount) }()
-      case 6: try { try decoder.decodeSingularEnumField(value: &self.direction) }()
-      default: break
-      }
-    }
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    try { if let v = self._center {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
-    } }()
-    if self.gestureType != .unspecified {
-      try visitor.visitSingularEnumField(value: self.gestureType, fieldNumber: 2)
-    }
-    if self.scale.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.scale, fieldNumber: 3)
-    }
-    if self.rotation.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.rotation, fieldNumber: 4)
-    }
-    if self.fingerCount != 0 {
-      try visitor.visitSingularInt32Field(value: self.fingerCount, fieldNumber: 5)
-    }
-    if self.direction != .unspecified {
-      try visitor.visitSingularEnumField(value: self.direction, fieldNumber: 6)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Macosusesdk_V1_Gesture, rhs: Macosusesdk_V1_Gesture) -> Bool {
-    if lhs._center != rhs._center {return false}
-    if lhs.gestureType != rhs.gestureType {return false}
-    if lhs.scale != rhs.scale {return false}
-    if lhs.rotation != rhs.rotation {return false}
-    if lhs.fingerCount != rhs.fingerCount {return false}
-    if lhs.direction != rhs.direction {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
-}
-
-nonisolated extension Macosusesdk_V1_Gesture.GestureType: SwiftProtobuf._ProtoNameProviding {
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0GESTURE_TYPE_UNSPECIFIED\0\u{1}GESTURE_TYPE_PINCH\0\u{1}GESTURE_TYPE_ZOOM\0\u{1}GESTURE_TYPE_ROTATE\0\u{1}GESTURE_TYPE_SWIPE\0\u{1}GESTURE_TYPE_FORCE_TOUCH\0")
-}
-
-nonisolated extension Macosusesdk_V1_Gesture.Direction: SwiftProtobuf._ProtoNameProviding {
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0DIRECTION_UNSPECIFIED\0\u{1}DIRECTION_UP\0\u{1}DIRECTION_DOWN\0\u{1}DIRECTION_LEFT\0\u{1}DIRECTION_RIGHT\0")
-}
-
-nonisolated extension Macosusesdk_V1_MouseButtonDown: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".MouseButtonDown"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}position\0\u{1}button\0\u{1}modifiers\0")
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularMessageField(value: &self._position) }()
-      case 2: try { try decoder.decodeSingularEnumField(value: &self.button) }()
-      case 3: try { try decoder.decodeRepeatedEnumField(value: &self.modifiers) }()
-      default: break
-      }
-    }
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    try { if let v = self._position {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
-    } }()
-    if self.button != .unspecified {
-      try visitor.visitSingularEnumField(value: self.button, fieldNumber: 2)
-    }
-    if !self.modifiers.isEmpty {
-      try visitor.visitPackedEnumField(value: self.modifiers, fieldNumber: 3)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Macosusesdk_V1_MouseButtonDown, rhs: Macosusesdk_V1_MouseButtonDown) -> Bool {
-    if lhs._position != rhs._position {return false}
-    if lhs.button != rhs.button {return false}
-    if lhs.modifiers != rhs.modifiers {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
-}
-
-nonisolated extension Macosusesdk_V1_MouseButtonUp: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".MouseButtonUp"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}position\0\u{1}button\0\u{1}modifiers\0")
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularMessageField(value: &self._position) }()
-      case 2: try { try decoder.decodeSingularEnumField(value: &self.button) }()
-      case 3: try { try decoder.decodeRepeatedEnumField(value: &self.modifiers) }()
-      default: break
-      }
-    }
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    try { if let v = self._position {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
-    } }()
-    if self.button != .unspecified {
-      try visitor.visitSingularEnumField(value: self.button, fieldNumber: 2)
-    }
-    if !self.modifiers.isEmpty {
-      try visitor.visitPackedEnumField(value: self.modifiers, fieldNumber: 3)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Macosusesdk_V1_MouseButtonUp, rhs: Macosusesdk_V1_MouseButtonUp) -> Bool {
-    if lhs._position != rhs._position {return false}
-    if lhs.button != rhs.button {return false}
-    if lhs.modifiers != rhs.modifiers {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

@@ -10,12 +10,9 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
-	"os"
-	"os/exec"
-	"strings"
-	"sync"
 	"testing"
 	"time"
 )
@@ -35,19 +32,7 @@ func TestStdioTransport_Initialize(t *testing.T) {
 	defer cleanup()
 
 	// Send initialize request
-	initReq := map[string]any{
-		"jsonrpc": "2.0",
-		"id":      1,
-		"method":  "initialize",
-		"params": map[string]any{
-			"protocolVersion": "2025-11-25",
-			"capabilities":    map[string]any{},
-			"clientInfo": map[string]any{
-				"name":    "test-client",
-				"version": "1.0.0",
-			},
-		},
-	}
+	initReq := validMCPInitializeRequest(1)
 
 	response, err := sendStdioRequest(ctx, stdin, stdout, initReq)
 	if err != nil {
@@ -114,12 +99,7 @@ func TestStdioTransport_ToolsList(t *testing.T) {
 	defer cleanup()
 
 	// Initialize first
-	initReq := map[string]any{
-		"jsonrpc": "2.0",
-		"id":      1,
-		"method":  "initialize",
-		"params":  map[string]any{},
-	}
+	initReq := validMCPInitializeRequest(1)
 	_, err := sendStdioRequest(ctx, stdin, stdout, initReq)
 	if err != nil {
 		t.Fatalf("Initialize failed: %v", err)
@@ -205,12 +185,7 @@ func TestStdioTransport_CaptureScreenshot(t *testing.T) {
 	defer cleanup()
 
 	// Initialize first
-	initReq := map[string]any{
-		"jsonrpc": "2.0",
-		"id":      1,
-		"method":  "initialize",
-		"params":  map[string]any{},
-	}
+	initReq := validMCPInitializeRequest(1)
 	_, err := sendStdioRequest(ctx, stdin, stdout, initReq)
 	if err != nil {
 		t.Fatalf("Initialize failed: %v", err)
@@ -322,6 +297,7 @@ func TestStdioTransport_FullWorkflow(t *testing.T) {
 		"method":  "initialize",
 		"params": map[string]any{
 			"protocolVersion": "2025-11-25",
+			"capabilities":    map[string]any{},
 			"clientInfo": map[string]any{
 				"name":    "workflow-test",
 				"version": "1.0.0",
@@ -490,12 +466,7 @@ func TestStdioTransport_InvalidMethod(t *testing.T) {
 	defer cleanup()
 
 	// Initialize first
-	initReq := map[string]any{
-		"jsonrpc": "2.0",
-		"id":      1,
-		"method":  "initialize",
-		"params":  map[string]any{},
-	}
+	initReq := validMCPInitializeRequest(1)
 	_, err := sendStdioRequest(ctx, stdin, stdout, initReq)
 	if err != nil {
 		t.Fatalf("Initialize failed: %v", err)
@@ -526,6 +497,271 @@ func TestStdioTransport_InvalidMethod(t *testing.T) {
 	t.Logf("Unknown method correctly returned error: code=%d, message=%s", response.Error.Code, response.Error.Message)
 }
 
+func TestStdioTransport_KnownNotificationDoesNotReturnResponse(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	serverCmd, serverAddr := startServer(t, ctx)
+	defer cleanupServer(t, serverCmd, serverAddr)
+	_, stdin, stdout, cleanup := startMCPStdioProcess(t, ctx, serverAddr)
+	defer cleanup()
+
+	initialize := validMCPInitializeRequest(1)
+	if _, err := sendStdioRequest(ctx, stdin, stdout, initialize); err != nil {
+		t.Fatalf("initialize failed: %v", err)
+	}
+
+	notification := map[string]any{
+		"jsonrpc": "2.0",
+		"method":  "tools/list",
+		"params":  map[string]any{},
+	}
+	if err := writeStdioMessage(stdin, notification); err != nil {
+		t.Fatalf("send known notification: %v", err)
+	}
+
+	readCtx, cancelRead := context.WithTimeout(ctx, 3*time.Second)
+	defer cancelRead()
+	response, err := readStdioResponse(readCtx, stdout)
+	if err == nil {
+		t.Fatalf("known notification returned a response: %+v", response)
+	}
+	if readCtx.Err() != context.DeadlineExceeded {
+		t.Fatalf("known notification read failed before silence deadline: %v", err)
+	}
+}
+
+func TestStdioTransport_MalformedFrameRecovers(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	serverCmd, serverAddr := startServer(t, ctx)
+	defer cleanupServer(t, serverCmd, serverAddr)
+	_, stdin, stdout, cleanup := startMCPStdioProcess(t, ctx, serverAddr)
+	defer cleanup()
+
+	initialize := validMCPInitializeRequest(1)
+	if _, err := sendStdioRequest(ctx, stdin, stdout, initialize); err != nil {
+		t.Fatalf("initialize failed: %v", err)
+	}
+
+	if _, err := io.WriteString(stdin, "{malformed-json\n"); err != nil {
+		t.Fatalf("write malformed stdio frame: %v", err)
+	}
+	parseCtx, cancelParse := context.WithTimeout(ctx, 5*time.Second)
+	defer cancelParse()
+	parseResponse, err := readStdioResponse(parseCtx, stdout)
+	if err != nil {
+		t.Fatalf("malformed frame returned no JSON-RPC parse error: %v", err)
+	}
+	if parseResponse.Error == nil || parseResponse.Error.Code != -32700 {
+		t.Fatalf("malformed frame response=%+v, want parse error -32700", parseResponse)
+	}
+	if string(parseResponse.ID) != "null" {
+		t.Fatalf("malformed frame response id=%q, want null", parseResponse.ID)
+	}
+
+	ping := map[string]any{
+		"jsonrpc": "2.0",
+		"id":      2,
+		"method":  "ping",
+	}
+	pingResponse, err := sendStdioRequest(ctx, stdin, stdout, ping)
+	if err != nil {
+		t.Fatalf("valid request after malformed frame failed: %v", err)
+	}
+	if pingResponse.Error != nil || string(pingResponse.ID) != "2" || string(pingResponse.Result) != "{}" {
+		t.Fatalf("valid request after malformed frame returned %+v", pingResponse)
+	}
+}
+
+func TestStdioTransport_InvalidRequestsAndNullIDRecover(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	serverCmd, serverAddr := startServer(t, ctx)
+	defer cleanupServer(t, serverCmd, serverAddr)
+	_, stdin, stdout, cleanup := startMCPStdioProcess(t, ctx, serverAddr)
+	defer cleanup()
+
+	initialize := validMCPInitializeRequest(1)
+	if _, err := sendStdioRequest(ctx, stdin, stdout, initialize); err != nil {
+		t.Fatalf("initialize failed: %v", err)
+	}
+
+	invalidRequests := []struct {
+		name    string
+		payload string
+	}{
+		{name: "wrong JSON-RPC version", payload: `{"jsonrpc":"1.0","id":2,"method":"ping"}`},
+		{name: "non-string method", payload: `{"jsonrpc":"2.0","id":2,"method":1}`},
+		{name: "scalar params", payload: `{"jsonrpc":"2.0","id":2,"method":"ping","params":"bad"}`},
+		{name: "boolean ID", payload: `{"jsonrpc":"2.0","id":true,"method":"ping"}`},
+		{name: "empty object", payload: `{}`},
+	}
+	for _, test := range invalidRequests {
+		t.Run(test.name, func(t *testing.T) {
+			if _, err := io.WriteString(stdin, test.payload+"\n"); err != nil {
+				t.Fatalf("write invalid stdio request: %v", err)
+			}
+			readCtx, cancelRead := context.WithTimeout(ctx, 5*time.Second)
+			defer cancelRead()
+			response, err := readStdioResponse(readCtx, stdout)
+			if err != nil {
+				t.Fatalf("invalid stdio request returned no response: %v", err)
+			}
+			if response.JSONRPC != "2.0" || response.Error == nil || response.Error.Code != -32600 {
+				t.Fatalf("invalid stdio response=%+v, want -32600", response)
+			}
+			if string(response.ID) != "null" {
+				t.Fatalf("invalid stdio response id=%q, want null", response.ID)
+			}
+		})
+	}
+
+	if _, err := io.WriteString(stdin, `{"jsonrpc":"2.0","id":null,"method":"ping"}`+"\n"); err != nil {
+		t.Fatalf("write null-ID stdio request: %v", err)
+	}
+	nullIDResponse, err := readStdioResponse(ctx, stdout)
+	if err != nil {
+		t.Fatalf("explicit null-ID stdio request returned no response: %v", err)
+	}
+	if nullIDResponse.Error == nil || nullIDResponse.Error.Code != -32600 || string(nullIDResponse.ID) != "null" {
+		t.Fatalf("explicit null-ID stdio request returned %+v, want invalid request", nullIDResponse)
+	}
+
+	if _, err := io.WriteString(stdin, `{"jsonrpc":"2.0","id":null,"method":"unknown/method"}`+"\n"); err != nil {
+		t.Fatalf("write unknown null-ID stdio request: %v", err)
+	}
+	unknownCtx, cancelUnknown := context.WithTimeout(ctx, time.Second)
+	defer cancelUnknown()
+	unknownResponse, err := readStdioResponse(unknownCtx, stdout)
+	if err != nil {
+		t.Fatalf("unknown null-ID stdio request returned no response: %v", err)
+	}
+	if unknownResponse.Error == nil || unknownResponse.Error.Code != -32600 || string(unknownResponse.ID) != "null" {
+		t.Fatalf("unknown null-ID stdio request returned %+v, want invalid request before dispatch", unknownResponse)
+	}
+
+	ping := map[string]any{"jsonrpc": "2.0", "id": 9, "method": "ping"}
+	pingResponse, err := sendStdioRequest(ctx, stdin, stdout, ping)
+	if err != nil {
+		t.Fatalf("valid request after invalid requests failed: %v", err)
+	}
+	if pingResponse.Error != nil || string(pingResponse.ID) != "9" || string(pingResponse.Result) != "{}" {
+		t.Fatalf("valid request after invalid requests returned %+v", pingResponse)
+	}
+}
+
+func TestStdioTransport_ConcurrentAndLongSession(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	serverCmd, serverAddr := startServer(t, ctx)
+	defer cleanupServer(t, serverCmd, serverAddr)
+	_, stdin, stdout, cleanup := startMCPStdioProcess(t, ctx, serverAddr)
+	defer cleanup()
+
+	initialize := validMCPInitializeRequest(1)
+	if _, err := sendStdioRequest(ctx, stdin, stdout, initialize); err != nil {
+		t.Fatalf("initialize failed: %v", err)
+	}
+
+	// Pipeline enough requests to force concurrent dispatcher goroutines. Stdio
+	// responses may arrive in any order, so correlate every unique request ID.
+	const pipelinedRequests = 256
+	wantIDs := make(map[string]struct{}, pipelinedRequests)
+	for index := range pipelinedRequests {
+		id := 1000 + index
+		wantIDs[fmt.Sprint(id)] = struct{}{}
+		if err := writeStdioMessage(stdin, map[string]any{
+			"jsonrpc": "2.0",
+			"id":      id,
+			"method":  "ping",
+		}); err != nil {
+			t.Fatalf("write pipelined request %d: %v", id, err)
+		}
+	}
+	readCtx, cancelRead := context.WithTimeout(ctx, 15*time.Second)
+	defer cancelRead()
+	for range pipelinedRequests {
+		response, err := readStdioResponse(readCtx, stdout)
+		if err != nil {
+			t.Fatalf("read pipelined response: %v", err)
+		}
+		id := string(response.ID)
+		if _, ok := wantIDs[id]; !ok {
+			t.Fatalf("unexpected or duplicate pipelined response ID %q", id)
+		}
+		delete(wantIDs, id)
+		if response.JSONRPC != "2.0" || response.Error != nil || string(response.Result) != "{}" {
+			t.Fatalf("pipelined response for %s = %+v", id, response)
+		}
+	}
+	if len(wantIDs) != 0 {
+		t.Fatalf("missing %d pipelined responses", len(wantIDs))
+	}
+
+	toolsResponse, err := sendStdioRequest(ctx, stdin, stdout, map[string]any{
+		"jsonrpc": "2.0",
+		"id":      9999,
+		"method":  "tools/list",
+		"params":  map[string]any{},
+	})
+	if err != nil {
+		t.Fatalf("tools/list after pipelined session failed: %v", err)
+	}
+	if toolsResponse.Error != nil || string(toolsResponse.ID) != "9999" || len(toolsResponse.Result) == 0 {
+		t.Fatalf("tools/list after pipelined session returned %+v", toolsResponse)
+	}
+}
+
+func TestStdioResponsePumpTimeoutKeepsOneOwnedReaderAndJoinsAtEOF(t *testing.T) {
+	t.Parallel()
+
+	reader, writer := io.Pipe()
+	pump := newStdioResponsePump(bufio.NewReader(reader))
+
+	timeoutCtx, cancelTimeout := context.WithTimeout(context.Background(), 20*time.Millisecond)
+	defer cancelTimeout()
+	if response, err := pump.read(timeoutCtx); !errors.Is(err, context.DeadlineExceeded) || response != nil {
+		t.Fatalf("timed read response=%+v error=%v, want deadline exceeded", response, err)
+	}
+	select {
+	case <-pump.done:
+		t.Fatal("response reader exited on caller timeout instead of remaining singly owned")
+	default:
+	}
+
+	writeDone := make(chan error, 1)
+	go func() {
+		_, writeErr := io.WriteString(
+			writer,
+			`{"jsonrpc":"2.0","id":73,"result":{}}`+"\n",
+		)
+		if writeErr == nil {
+			writeErr = writer.Close()
+		}
+		writeDone <- writeErr
+	}()
+
+	readCtx, cancelRead := context.WithTimeout(context.Background(), time.Second)
+	defer cancelRead()
+	response, err := pump.read(readCtx)
+	if err != nil || response == nil || string(response.ID) != "73" ||
+		response.Error != nil || string(response.Result) != "{}" {
+		t.Fatalf("post-timeout response=%+v error=%v", response, err)
+	}
+	if err := <-writeDone; err != nil {
+		t.Fatalf("write response and EOF: %v", err)
+	}
+	select {
+	case <-pump.done:
+	case <-readCtx.Done():
+		t.Fatalf("response reader did not join after EOF: %v", readCtx.Err())
+	}
+}
+
 // TestStdioTransport_InvalidTool verifies that calling a non-existent tool
 // returns a proper error.
 func TestStdioTransport_InvalidTool(t *testing.T) {
@@ -541,12 +777,7 @@ func TestStdioTransport_InvalidTool(t *testing.T) {
 	defer cleanup()
 
 	// Initialize first
-	initReq := map[string]any{
-		"jsonrpc": "2.0",
-		"id":      1,
-		"method":  "initialize",
-		"params":  map[string]any{},
-	}
+	initReq := validMCPInitializeRequest(1)
 	_, err := sendStdioRequest(ctx, stdin, stdout, initReq)
 	if err != nil {
 		t.Fatalf("Initialize failed: %v", err)
@@ -578,205 +809,4 @@ func TestStdioTransport_InvalidTool(t *testing.T) {
 	}
 
 	t.Logf("Invalid tool correctly returned error: code=%d, message=%s", response.Error.Code, response.Error.Message)
-}
-
-// --- Helper types and functions ---
-
-// stdioResponse represents a JSON-RPC 2.0 response
-type stdioResponse struct {
-	JSONRPC string          `json:"jsonrpc"`
-	ID      json.RawMessage `json:"id,omitempty"`
-	Result  json.RawMessage `json:"result,omitempty"`
-	Error   *struct {
-		Code    int             `json:"code"`
-		Message string          `json:"message"`
-		Data    json.RawMessage `json:"data,omitempty"`
-	} `json:"error,omitempty"`
-}
-
-// startMCPStdioProcess starts the macos-use-mcp binary in stdio mode.
-// Returns the command, stdin writer, stdout reader, and cleanup function.
-func startMCPStdioProcess(t *testing.T, ctx context.Context, grpcAddr string) (*exec.Cmd, io.WriteCloser, *bufio.Reader, func()) {
-	t.Helper()
-
-	// Build the MCP binary path
-	mcpBinaryPath := "../cmd/macos-use-mcp"
-
-	// Check if binary exists, if not try to find built binary
-	builtBinary := "../.build/debug/macos-use-mcp"
-	if _, err := os.Stat(builtBinary); err == nil {
-		mcpBinaryPath = builtBinary
-	} else {
-		// Try go run approach
-		mcpBinaryPath = "go"
-	}
-
-	var cmd *exec.Cmd
-	if mcpBinaryPath == "go" {
-		cmd = exec.CommandContext(ctx, "go", "run", "../cmd/macos-use-mcp")
-	} else {
-		cmd = exec.CommandContext(ctx, mcpBinaryPath)
-	}
-
-	// Configure environment for stdio transport
-	cmd.Env = append(os.Environ(),
-		"MCP_TRANSPORT=stdio",
-		fmt.Sprintf("MACOS_USE_SERVER_ADDR=%s", grpcAddr),
-		"MACOS_USE_DEBUG=false",
-	)
-
-	// Set up pipes
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		t.Fatalf("Failed to create stdin pipe: %v", err)
-	}
-
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		t.Fatalf("Failed to create stdout pipe: %v", err)
-	}
-
-	// Capture stderr for debugging
-	stderrPipe, err := cmd.StderrPipe()
-	if err != nil {
-		t.Fatalf("Failed to create stderr pipe: %v", err)
-	}
-
-	// Start the process
-	t.Log("Starting MCP process in stdio mode...")
-	if err := cmd.Start(); err != nil {
-		t.Fatalf("Failed to start MCP process: %v", err)
-	}
-	t.Logf("MCP process started (PID: %d)", cmd.Process.Pid)
-
-	// Read stderr in background for debugging
-	var stderrMu sync.Mutex
-	var stderrBuf strings.Builder
-	go func() {
-		scanner := bufio.NewScanner(stderrPipe)
-		for scanner.Scan() {
-			stderrMu.Lock()
-			stderrBuf.WriteString(scanner.Text())
-			stderrBuf.WriteString("\n")
-			stderrMu.Unlock()
-		}
-	}()
-
-	reader := bufio.NewReader(stdout)
-
-	cleanup := func() {
-		t.Log("Cleaning up MCP process...")
-
-		// Close stdin to signal EOF
-		stdin.Close()
-
-		// Wait for process to exit with timeout
-		done := make(chan error, 1)
-		go func() {
-			done <- cmd.Wait()
-		}()
-
-		select {
-		case err := <-done:
-			if err != nil {
-				// Log stderr if process failed
-				stderrMu.Lock()
-				stderr := stderrBuf.String()
-				stderrMu.Unlock()
-				if stderr != "" {
-					t.Logf("MCP process stderr:\n%s", stderr)
-				}
-			}
-			t.Logf("MCP process exited: %v", err)
-		case <-time.After(5 * time.Second):
-			t.Log("MCP process did not exit, killing...")
-			cmd.Process.Kill()
-			<-done
-		}
-	}
-
-	// Wait a moment for the process to be ready
-	// Use polling rather than time.Sleep
-	readyCtx, readyCancel := context.WithTimeout(ctx, 5*time.Second)
-	defer readyCancel()
-
-	err = PollUntilContext(readyCtx, 50*time.Millisecond, func() (bool, error) {
-		// Just check that the process is still running
-		if cmd.ProcessState != nil && cmd.ProcessState.Exited() {
-			return false, fmt.Errorf("MCP process exited unexpectedly")
-		}
-		return true, nil
-	})
-	if err != nil {
-		cleanup()
-		t.Fatalf("MCP process failed to become ready: %v", err)
-	}
-
-	return cmd, stdin, reader, cleanup
-}
-
-// writeStdioMessage writes a JSON-RPC message to stdin
-func writeStdioMessage(stdin io.Writer, msg map[string]any) error {
-	data, err := json.Marshal(msg)
-	if err != nil {
-		return fmt.Errorf("failed to marshal message: %w", err)
-	}
-
-	// Write message followed by newline
-	if _, err := stdin.Write(append(data, '\n')); err != nil {
-		return fmt.Errorf("failed to write message: %w", err)
-	}
-
-	return nil
-}
-
-// readStdioResponse reads a JSON-RPC response from stdout with timeout
-func readStdioResponse(ctx context.Context, reader *bufio.Reader) (*stdioResponse, error) {
-	// Use a channel to handle the blocking read with context
-	type readResult struct {
-		line string
-		err  error
-	}
-
-	resultCh := make(chan readResult, 1)
-	go func() {
-		line, err := reader.ReadString('\n')
-		resultCh <- readResult{line, err}
-	}()
-
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	case result := <-resultCh:
-		if result.err != nil {
-			return nil, fmt.Errorf("failed to read response: %w", result.err)
-		}
-
-		line := strings.TrimSpace(result.line)
-		if line == "" {
-			return nil, fmt.Errorf("empty response received")
-		}
-
-		var resp stdioResponse
-		if err := json.Unmarshal([]byte(line), &resp); err != nil {
-			return nil, fmt.Errorf("failed to parse response: %w (line: %s)", err, line)
-		}
-
-		return &resp, nil
-	}
-}
-
-// sendStdioRequest sends a JSON-RPC request and waits for the response
-func sendStdioRequest(ctx context.Context, stdin io.Writer, stdout *bufio.Reader, req map[string]any) (*stdioResponse, error) {
-	// Create a timeout context for this request
-	reqCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
-
-	// Write the request
-	if err := writeStdioMessage(stdin, req); err != nil {
-		return nil, err
-	}
-
-	// Read the response
-	return readStdioResponse(reqCtx, stdout)
 }

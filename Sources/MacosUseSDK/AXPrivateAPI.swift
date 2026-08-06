@@ -23,8 +23,8 @@ private let resolvedGetWindowFn: AXUIElementGetWindowFn? = {
 /// `_AXUIElementGetWindow` API (resolved via `dlsym` at first use).
 ///
 /// This is the single source of truth for `_AXUIElementGetWindow` resolution
-/// across the entire codebase. Both the SDK's `fetchAXWindowInfo` and the
-/// Server's `ProductionSystemOperations.getAXWindowID` delegate to this function.
+/// across the entire codebase. The server's exact retained-element authority
+/// delegates to this function and never substitutes title/bounds heuristics.
 ///
 /// - Parameter element: The AXUIElement to query.
 /// - Returns: A tuple of `(result: AXError, windowID: CGWindowID)`. If the private API

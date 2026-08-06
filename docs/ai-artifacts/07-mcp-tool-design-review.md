@@ -743,7 +743,7 @@ Before PR approval, verify all mandatory items:
 | OpenApplication | open_application | ✓ |
 | ListApplications | list_applications | ✓ |
 | GetApplication | get_application | ✓ |
-| DeleteApplication | delete_application | ✓ |
+| CloseApplication | close_app | ✓ |
 | ExecuteAppleScript | execute_apple_script | ✓ |
 | ExecuteJavaScript | execute_javascript | ✓ |
 | ExecuteShellCommand | execute_shell_command | ✓ |
@@ -785,4 +785,3 @@ Before PR approval, verify all mandatory items:
 | `heartbeat` | Keep-alive ping (30s interval) |
 | `error` | Connection-level errors |
 | `complete` | Streaming response completion |
-

@@ -5,13 +5,11 @@ import SwiftProtobuf
 
 /// Thread-safe registry for macro storage and management with persistence support
 public actor MacroRegistry {
-    public static let shared = MacroRegistry()
-
     private let logger = Logger(subsystem: "MacosUseServer", category: "MacroRegistry")
     private var macros: [String: Macosusesdk_V1_Macro] = [:]
     private let persistenceURL: URL?
 
-    private init() {
+    public init() {
         // Default persistence location: Application Support/MacosUseServer/macros.json
         if let appSupport = FileManager.default.urls(
             for: .applicationSupportDirectory,
@@ -54,6 +52,7 @@ public actor MacroRegistry {
         }
 
         macros[name] = macro
+        persist()
         return macro
     }
 
@@ -63,22 +62,29 @@ public actor MacroRegistry {
     }
 
     /// List all macros (with pagination support)
-    public func listMacros(pageSize: Int, pageToken: String?) -> ([Macosusesdk_V1_Macro], String?) {
-        let allMacros = Array(macros.values).sorted { $0.name < $1.name }
-
-        // Parse page token (we'll use it as start index)
-        let startIndex = pageToken.flatMap(Int.init) ?? 0
-        guard startIndex >= 0, startIndex < allMacros.count else {
-            return ([], nil)
-        }
-
-        // Apply pagination
+    public func listMacros(pageSize: Int, pageToken: String?) throws -> ([Macosusesdk_V1_Macro], String?) {
         let effectivePageSize = pageSize > 0 ? pageSize : 50
-        let endIndex = min(startIndex + effectivePageSize, allMacros.count)
-        let page = Array(allMacros[startIndex ..< endIndex])
-
-        // Generate next token
-        let nextToken = endIndex < allMacros.count ? String(endIndex) : nil
+        let queryBinding = ParsingHelpers.pageTokenQuery(
+            method: "ListMacros",
+            parameters: [("page_size", String(effectivePageSize))],
+        )
+        let offset = try ParsingHelpers.pageOffset(
+            token: pageToken ?? "",
+            queryBinding: queryBinding,
+        )
+        let allMacros = Array(macros.values).sorted { $0.name < $1.name }
+        let range = try ParsingHelpers.pageRange(
+            offset: offset,
+            pageSize: effectivePageSize,
+            totalCount: allMacros.count,
+        )
+        let page = Array(allMacros[range])
+        let encodedNextToken = ParsingHelpers.nextPageToken(
+            endOffset: range.upperBound,
+            totalCount: allMacros.count,
+            queryBinding: queryBinding,
+        )
+        let nextToken = encodedNextToken.isEmpty ? nil : encodedNextToken
 
         return (page, nextToken)
     }
@@ -116,12 +122,17 @@ public actor MacroRegistry {
         macro.updateTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
 
         macros[name] = macro
+        persist()
         return macro
     }
 
     /// Delete a macro
     public func deleteMacro(name: String) -> Bool {
-        macros.removeValue(forKey: name) != nil
+        let removed = macros.removeValue(forKey: name) != nil
+        if removed {
+            persist()
+        }
+        return removed
     }
 
     /// Increment execution count for a macro
@@ -130,6 +141,7 @@ public actor MacroRegistry {
         macro.executionCount += 1
         macro.updateTime = SwiftProtobuf.Google_Protobuf_Timestamp(date: Date())
         macros[name] = macro
+        persist()
     }
 
     // MARK: - Persistence
@@ -221,6 +233,7 @@ public actor MacroRegistry {
         do {
             data = try Data(contentsOf: url)
         } catch {
+            logger.error("Failed to read persisted macros at \(url.path, privacy: .private): \(error.localizedDescription, privacy: .public)")
             throw PersistenceError.fileOperationFailed("Failed to read file: \(error.localizedDescription)")
         }
 
@@ -230,11 +243,13 @@ public actor MacroRegistry {
             let decoder = JSONDecoder()
             store = try decoder.decode(MacroStore.self, from: data)
         } catch {
+            logger.error("Failed to decode persisted macros at \(url.path, privacy: .private): \(error.localizedDescription, privacy: .public)")
             throw PersistenceError.corruptedFile("Failed to decode store: \(error.localizedDescription)")
         }
 
         // Version check (for future migrations)
         guard store.version == 1 else {
+            logger.error("Unsupported macro store version \(store.version, privacy: .public) at \(url.path, privacy: .private)")
             throw PersistenceError.corruptedFile("Unsupported store version: \(store.version)")
         }
 
@@ -245,17 +260,37 @@ public actor MacroRegistry {
 
         for jsonString in store.macros {
             guard let jsonData = jsonString.data(using: .utf8) else {
+                logger.error("Failed to decode a macro JSON string (invalid UTF-8) at \(url.path, privacy: .private)")
                 throw PersistenceError.corruptedFile("Failed to decode macro JSON string")
             }
             do {
                 let macro = try Macosusesdk_V1_Macro(jsonUTF8Data: jsonData)
                 macros[macro.name] = macro
             } catch {
+                logger.error("Failed to parse a macro proto at \(url.path, privacy: .private): \(error.localizedDescription, privacy: .public)")
                 throw PersistenceError.corruptedFile("Failed to parse macro proto: \(error.localizedDescription)")
             }
         }
 
         logger.info("Loaded \(self.macros.count, privacy: .public) macros from \(url.path, privacy: .private)")
+    }
+
+    /// Persists the current registry state without blocking the mutating call.
+    ///
+    /// A persistence failure is logged but never surfaced to the caller: an
+    /// in-memory mutation has already succeeded and the registry remains
+    /// internally consistent; losing durability is preferable to reverting a
+    /// completed mutation or failing a write that the caller cannot recover.
+    /// `noStorageLocation` (a registry with no persistence URL, e.g. in tests)
+    /// is silent and expected.
+    private func persist() {
+        do {
+            try save()
+        } catch PersistenceError.noStorageLocation {
+            // Expected for in-memory-only registries (tests, no App Support).
+        } catch {
+            logger.error("Failed to persist macros: \(String(describing: error), privacy: .public)")
+        }
     }
 
     /// Get the number of macros in the registry.

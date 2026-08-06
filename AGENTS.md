@@ -7,7 +7,6 @@ This file provides guidance to AI agents.
 MacosUseSDK is a macOS accessibility automation framework consisting of:
 
 - **Swift library**: Core SDK using Accessibility APIs for UI traversal and input simulation
-- **Command-line tools**: Standalone executables for common automation tasks
 - **Swift gRPC server**: Production server backing the CUA-aligned MCP tools for AI agent integration
 - **Go MCP server**: MCP proxy layer exposing functionality via Model Context Protocol
 
@@ -84,7 +83,7 @@ MCP_HTTP_ADDR=0.0.0.0:8080 MCP_API_KEY=secret ./Server/.build/release/MacosUseSe
 ## Key Directories
 
 - `Server/` - Swift gRPC server with Accessibility API integration
-- `Sources/` - Swift SDK and command-line tools
+- `Sources/` - Swift SDK
 - `internal/` - Go modules for config, server, transport
 - `proto/` - Protocol buffer definitions (must mirror package structure)
 - `integration/` - Integration tests (target Calculator, TextEdit, Finder)
@@ -200,7 +199,7 @@ Previous sins (now corrected, not to be repeated):
 - **Atomic Testing:** ALL new behavior and ALL modifications MUST be accompanied by automated tests in the SAME change set.
 - **Golden Applications:** Integration tests must strictly target `TextEdit`, `Calculator`, or `Finder` as defined in the plan.
 - **CI Integrity:** Tests and CI checks MUST be kept green. Disabling tests is forbidden without a documented fix plan.
-- **Test Fixture Lifecycle:** Every test suite must ensure a clean state (SIGKILL target apps) before running and perform aggressive cleanup (DeleteApplication) after running.
+- **Test Fixture Lifecycle:** Every test suite must ensure a clean state (SIGKILL target apps) before running and perform aggressive cleanup (`CloseApplication` with exact resource identity and observed process exit) after running.
 
 ### Documentation and Planning
 

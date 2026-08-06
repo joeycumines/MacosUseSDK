@@ -1,6 +1,6 @@
 // Copyright 2025 Joseph Cumines
 //
-// HTTP/SSE transport API key authentication tests
+// Streamable HTTP transport API key authentication tests
 
 package transport
 
@@ -29,7 +29,7 @@ func TestAuthMiddleware_ValidBearerToken(t *testing.T) {
 		w.Write([]byte("authenticated"))
 	}))
 
-	endpoints := []string{"/message", "/events", "/metrics"}
+	endpoints := []string{MCPEndpointPath, "/metrics"}
 	for _, endpoint := range endpoints {
 		t.Run(endpoint, func(t *testing.T) {
 			req := httptest.NewRequest("POST", endpoint, nil)
@@ -68,13 +68,12 @@ func TestAuthMiddleware_InvalidBearerToken(t *testing.T) {
 		{"partial key", "correct-secret"},
 		{"key with extra suffix", "correct-secret-key-extra"},
 		{"uppercase key", "CORRECT-SECRET-KEY"},
-		{"key with leading space", " correct-secret-key"},
 		{"key with trailing space", "correct-secret-key "},
 	}
 
 	for _, tt := range invalidKeys {
 		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest("POST", "/message", nil)
+			req := httptest.NewRequest("POST", MCPEndpointPath, nil)
 			req.Header.Set("Authorization", "Bearer "+tt.key)
 			w := httptest.NewRecorder()
 
@@ -101,7 +100,7 @@ func TestAuthMiddleware_MissingAuthorizationHeader(t *testing.T) {
 		t.Error("Handler should not be called for missing auth")
 	}))
 
-	endpoints := []string{"/message", "/events", "/metrics"}
+	endpoints := []string{MCPEndpointPath, "/metrics"}
 	for _, endpoint := range endpoints {
 		t.Run(endpoint, func(t *testing.T) {
 			req := httptest.NewRequest("GET", endpoint, nil)
@@ -222,16 +221,14 @@ func TestAuthMiddleware_MalformedAuthorizationHeader(t *testing.T) {
 		{"empty header value", "", "Authorization header required"},
 		{"just the key (no scheme)", "test-secret-key", "Invalid authorization format"},
 		{"wrong scheme Bearer2", "Bearer2 test-secret-key", "Invalid authorization format"},
-		{"lowercase bearer", "bearer test-secret-key", "Invalid authorization format"},
-		{"mixed case bEaReR", "bEaReR test-secret-key", "Invalid authorization format"},
-		{"extra spaces", "Bearer  test-secret-key", "Invalid API key"},
+		{"token with embedded spaces", "Bearer test secret-key", "Invalid API key"},
 		{"token scheme", "Token test-secret-key", "Invalid authorization format"},
 		{"API-Key scheme", "API-Key test-secret-key", "Invalid authorization format"},
 	}
 
 	for _, tt := range malformedHeaders {
 		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest("POST", "/message", nil)
+			req := httptest.NewRequest("POST", MCPEndpointPath, nil)
 			if tt.authHeader != "" {
 				req.Header.Set("Authorization", tt.authHeader)
 			}
@@ -249,9 +246,9 @@ func TestAuthMiddleware_MalformedAuthorizationHeader(t *testing.T) {
 	}
 }
 
-// TestAuthMiddleware_CaseSensitivity verifies that the "Bearer" scheme
-// is case-sensitive as per RFC 7235 (HTTP Authentication).
-func TestAuthMiddleware_CaseSensitivity(t *testing.T) {
+// TestAuthMiddleware_SchemeCaseInsensitivity verifies that HTTP auth scheme
+// names are accepted case-insensitively while the API key remains exact.
+func TestAuthMiddleware_SchemeCaseInsensitivity(t *testing.T) {
 	const apiKey = "test-secret-key"
 	tr := NewHTTPTransport(&HTTPTransportConfig{
 		APIKey: apiKey,
@@ -266,19 +263,16 @@ func TestAuthMiddleware_CaseSensitivity(t *testing.T) {
 		scheme     string
 		wantStatus int
 	}{
-		// RFC 7235: Authorization = credentials
-		// credentials = auth-scheme #auth-param
-		// auth-scheme is case-insensitive in HTTP/1.1 BUT "Bearer" is commonly
-		// implemented as case-sensitive. Our implementation is case-sensitive.
 		{"Bearer (correct case)", "Bearer", http.StatusOK},
-		{"bearer (lowercase)", "bearer", http.StatusUnauthorized},
-		{"BEARER (uppercase)", "BEARER", http.StatusUnauthorized},
-		{"BeAReR (mixed case)", "BeAReR", http.StatusUnauthorized},
+		{"bearer (lowercase)", "bearer", http.StatusOK},
+		{"BEARER (uppercase)", "BEARER", http.StatusOK},
+		{"BeAReR (mixed case)", "BeAReR", http.StatusOK},
+		{"multiple separating spaces", "Bearer ", http.StatusOK},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest("POST", "/message", nil)
+			req := httptest.NewRequest("POST", MCPEndpointPath, nil)
 			req.Header.Set("Authorization", tt.scheme+" "+apiKey)
 			w := httptest.NewRecorder()
 
@@ -306,7 +300,7 @@ func TestAuthMiddleware_NoAuthConfigured(t *testing.T) {
 
 	// When creating the transport without APIKey, authMiddleware is NOT applied
 	// to the handler chain. So we test the handler directly.
-	endpoints := []string{"/message", "/events", "/health", "/metrics"}
+	endpoints := []string{MCPEndpointPath, "/health", "/metrics"}
 	methods := []string{"GET", "POST"}
 
 	for _, endpoint := range endpoints {
@@ -361,10 +355,11 @@ func TestAuthIntegration_FullServerWithAuth(t *testing.T) {
 
 	client := ts.Client()
 
-	// Test 1: Valid auth on /message
-	t.Run("valid auth on /message POST", func(t *testing.T) {
-		req, _ := http.NewRequest("POST", ts.URL+"/message", strings.NewReader(`{"jsonrpc":"2.0","id":1,"method":"test"}`))
+	// Test 1: Valid auth on the MCP endpoint.
+	t.Run("valid auth on MCP POST", func(t *testing.T) {
+		req, _ := http.NewRequest("POST", ts.URL+MCPEndpointPath, strings.NewReader(`{"jsonrpc":"2.0","id":1,"method":"test"}`))
 		req.Header.Set("Authorization", "Bearer "+apiKey)
+		req.Header.Set("Accept", "application/json, text/event-stream")
 		req.Header.Set("Content-Type", "application/json")
 
 		resp, err := client.Do(req)
@@ -381,9 +376,9 @@ func TestAuthIntegration_FullServerWithAuth(t *testing.T) {
 		}
 	})
 
-	// Test 2: Invalid auth on /message
-	t.Run("invalid auth on /message POST", func(t *testing.T) {
-		req, _ := http.NewRequest("POST", ts.URL+"/message", strings.NewReader(`{"jsonrpc":"2.0","id":1,"method":"test"}`))
+	// Test 2: Invalid auth on the MCP endpoint.
+	t.Run("invalid auth on MCP POST", func(t *testing.T) {
+		req, _ := http.NewRequest("POST", ts.URL+MCPEndpointPath, strings.NewReader(`{"jsonrpc":"2.0","id":1,"method":"test"}`))
 		req.Header.Set("Authorization", "Bearer wrong-key")
 		req.Header.Set("Content-Type", "application/json")
 
@@ -398,9 +393,9 @@ func TestAuthIntegration_FullServerWithAuth(t *testing.T) {
 		}
 	})
 
-	// Test 3: Missing auth on /message
-	t.Run("missing auth on /message POST", func(t *testing.T) {
-		req, _ := http.NewRequest("POST", ts.URL+"/message", strings.NewReader(`{"jsonrpc":"2.0","id":1,"method":"test"}`))
+	// Test 3: Missing auth on the MCP endpoint.
+	t.Run("missing auth on MCP POST", func(t *testing.T) {
+		req, _ := http.NewRequest("POST", ts.URL+MCPEndpointPath, strings.NewReader(`{"jsonrpc":"2.0","id":1,"method":"test"}`))
 		req.Header.Set("Content-Type", "application/json")
 		// No Authorization header
 
@@ -457,9 +452,9 @@ func TestAuthIntegration_FullServerWithAuth(t *testing.T) {
 		}
 	})
 
-	// Test 7: SSE events endpoint requires auth
-	t.Run("events without auth", func(t *testing.T) {
-		resp, err := client.Get(ts.URL + "/events")
+	// Test 7: Streamable HTTP GET requires auth before method negotiation.
+	t.Run("MCP GET without auth", func(t *testing.T) {
+		resp, err := client.Get(ts.URL + MCPEndpointPath)
 		if err != nil {
 			t.Fatalf("Request failed: %v", err)
 		}
@@ -489,8 +484,7 @@ func TestAuthIntegration_FullServerWithoutAuth(t *testing.T) {
 	}{
 		{"GET", "/health"},
 		{"GET", "/metrics"},
-		// Note: /message requires POST, /events requires GET
-		// but we're testing auth bypass, not endpoint behavior
+		// MCP method/media behavior is covered by the Streamable HTTP suite.
 	}
 
 	for _, ep := range endpoints {
@@ -512,13 +506,8 @@ func TestAuthIntegration_FullServerWithoutAuth(t *testing.T) {
 	}
 }
 
-// TestAuthIntegration_CORSWithAuth verifies that CORS preflight with auth enabled.
-// Note: The current middleware chain is: RateLimit -> Auth -> CORS -> mux,
-// which means Auth checks run BEFORE CORS. This is intentional for security:
-// auth is enforced on all endpoints (except explicitly exempted ones like /health).
-// CORS preflight (OPTIONS) requests WITHOUT auth will be rejected with 401.
-// Clients must include valid Authorization headers even in preflight requests,
-// OR the server should exempt OPTIONS from auth. Current behavior: auth required.
+// TestAuthIntegration_CORSWithAuth verifies that trusted-origin preflight is
+// answered before authentication while actual requests remain authenticated.
 func TestAuthIntegration_CORSWithAuth(t *testing.T) {
 	tr := NewHTTPTransport(&HTTPTransportConfig{
 		APIKey:     "test-key",
@@ -530,9 +519,9 @@ func TestAuthIntegration_CORSWithAuth(t *testing.T) {
 
 	client := ts.Client()
 
-	// Test 1: OPTIONS preflight WITHOUT auth - rejected because auth middleware runs first
-	t.Run("OPTIONS without auth - rejected", func(t *testing.T) {
-		req, _ := http.NewRequest("OPTIONS", ts.URL+"/message", nil)
+	// Browsers do not attach the bearer token to the preflight request.
+	t.Run("OPTIONS without auth - trusted preflight", func(t *testing.T) {
+		req, _ := http.NewRequest("OPTIONS", ts.URL+MCPEndpointPath, nil)
 		req.Header.Set("Origin", "https://allowed.example.com")
 		req.Header.Set("Access-Control-Request-Method", "POST")
 		req.Header.Set("Access-Control-Request-Headers", "Authorization, Content-Type")
@@ -543,15 +532,17 @@ func TestAuthIntegration_CORSWithAuth(t *testing.T) {
 		}
 		defer resp.Body.Close()
 
-		// Auth runs before CORS, so OPTIONS without auth gets 401
-		if resp.StatusCode != http.StatusUnauthorized {
-			t.Errorf("Status = %d, want 401 (auth runs before CORS)", resp.StatusCode)
+		if resp.StatusCode != http.StatusNoContent {
+			t.Errorf("Status = %d, want 204 for trusted CORS preflight", resp.StatusCode)
+		}
+		if v := resp.Header.Get("Access-Control-Allow-Origin"); v != "https://allowed.example.com" {
+			t.Errorf("Access-Control-Allow-Origin = %q, want trusted origin", v)
 		}
 	})
 
 	// Test 2: OPTIONS preflight WITH auth - CORS works
 	t.Run("OPTIONS with auth - CORS works", func(t *testing.T) {
-		req, _ := http.NewRequest("OPTIONS", ts.URL+"/message", nil)
+		req, _ := http.NewRequest("OPTIONS", ts.URL+MCPEndpointPath, nil)
 		req.Header.Set("Authorization", "Bearer test-key")
 		req.Header.Set("Origin", "https://allowed.example.com")
 		req.Header.Set("Access-Control-Request-Method", "POST")
@@ -563,7 +554,7 @@ func TestAuthIntegration_CORSWithAuth(t *testing.T) {
 		}
 		defer resp.Body.Close()
 
-		// With valid auth, request passes through to CORS middleware
+		// Credentials are harmless when explicitly supplied, but not required.
 		if resp.StatusCode != http.StatusNoContent {
 			t.Errorf("Status = %d, want 204 for CORS preflight with auth", resp.StatusCode)
 		}
@@ -621,7 +612,7 @@ func TestAuthMiddleware_ConstantTimeComparison(t *testing.T) {
 
 	for _, key := range keys {
 		t.Run("key="+key, func(t *testing.T) {
-			req := httptest.NewRequest("POST", "/message", nil)
+			req := httptest.NewRequest("POST", MCPEndpointPath, nil)
 			req.Header.Set("Authorization", "Bearer "+key)
 			w := httptest.NewRecorder()
 

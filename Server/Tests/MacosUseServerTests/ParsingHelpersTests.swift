@@ -13,22 +13,20 @@ final class ParsingHelpersTests: XCTestCase {
         XCTAssertEqual(pid, 12345)
     }
 
-    func testParsePIDWithWindowSuffix() throws {
-        // Should successfully extract PID even when there are more components (window suffix)
-        let pid = try ParsingHelpers.parsePID(fromName: "applications/12345/windows/67890")
-        XCTAssertEqual(pid, 12345)
+    func testParsePIDRejectsWindowSuffix() {
+        XCTAssertThrowsError(
+            try ParsingHelpers.parsePID(fromName: "applications/12345/windows/67890"),
+        )
     }
 
-    func testParsePIDWithElementSuffix() throws {
-        // Should successfully extract PID with element suffix
-        let pid = try ParsingHelpers.parsePID(fromName: "applications/789/elements/abc123")
-        XCTAssertEqual(pid, 789)
+    func testParsePIDRejectsElementSuffix() {
+        XCTAssertThrowsError(
+            try ParsingHelpers.parsePID(fromName: "applications/789/elements/abc123"),
+        )
     }
 
-    func testParsePIDZero() throws {
-        // Zero is a valid PID (though typically reserved)
-        let pid = try ParsingHelpers.parsePID(fromName: "applications/0")
-        XCTAssertEqual(pid, 0)
+    func testParsePIDRejectsZero() {
+        XCTAssertThrowsError(try ParsingHelpers.parsePID(fromName: "applications/0"))
     }
 
     func testParsePIDMaxInt32() throws {
@@ -88,12 +86,8 @@ final class ParsingHelpersTests: XCTestCase {
         }
     }
 
-    func testParsePIDInvalidFormatNegativePID() throws {
-        // Note: Negative PIDs parse successfully because Int32 accepts negative values.
-        // In practice, valid macOS PIDs are positive, but the parser doesn't enforce this.
-        // This test documents the current behavior - it returns the negative value.
-        let pid = try ParsingHelpers.parsePID(fromName: "applications/-1")
-        XCTAssertEqual(pid, -1)
+    func testParsePIDInvalidFormatNegativePID() {
+        XCTAssertThrowsError(try ParsingHelpers.parsePID(fromName: "applications/-1"))
     }
 
     func testParsePIDInvalidFormatDecimalPID() {
@@ -125,9 +119,10 @@ final class ParsingHelpersTests: XCTestCase {
         XCTAssertEqual(pid, 12345)
     }
 
-    func testParseOptionalPIDWithWindowSuffix() throws {
-        let pid = try ParsingHelpers.parseOptionalPID(fromName: "applications/12345/windows/67890")
-        XCTAssertEqual(pid, 12345)
+    func testParseOptionalPIDRejectsWindowSuffix() {
+        XCTAssertThrowsError(
+            try ParsingHelpers.parseOptionalPID(fromName: "applications/12345/windows/67890"),
+        )
     }
 
     func testParseOptionalPIDEmptyStringReturnsNil() throws {
@@ -141,10 +136,10 @@ final class ParsingHelpersTests: XCTestCase {
         XCTAssertNil(pid, "Wildcard 'applications/-' should return nil")
     }
 
-    func testParseOptionalPIDWildcardWithSuffix() throws {
-        // "applications/-/inputs/xyz" should still recognize wildcard
-        let pid = try ParsingHelpers.parseOptionalPID(fromName: "applications/-/inputs/xyz")
-        XCTAssertNil(pid, "Wildcard 'applications/-' with suffix should return nil")
+    func testParseOptionalPIDRejectsWildcardWithSuffix() {
+        XCTAssertThrowsError(
+            try ParsingHelpers.parseOptionalPID(fromName: "applications/-/inputs/xyz"),
+        )
     }
 
     func testParseOptionalPIDInvalidPrefix() {
@@ -191,36 +186,33 @@ final class ParsingHelpersTests: XCTestCase {
 
     // MARK: - Page Token Encoding Tests (AIP-158)
 
-    func testEncodePageTokenZero() {
-        let token = ParsingHelpers.encodePageToken(offset: 0)
-        XCTAssertFalse(token.isEmpty)
-        // Token should be base64
-        XCTAssertNotNil(Data(base64Encoded: token))
-    }
+    func testQueryBoundPageTokenRoundTripsAndRejectsDifferentQuery() throws {
+        let originalQuery = ParsingHelpers.pageTokenQuery(
+            method: "ListElements",
+            parameters: [("parent", "applications/123")],
+        )
+        let differentQuery = ParsingHelpers.pageTokenQuery(
+            method: "ListElements",
+            parameters: [("parent", "applications/456")],
+        )
+        let token = ParsingHelpers.encodePageToken(
+            offset: 50,
+            queryBinding: originalQuery,
+        )
 
-    func testEncodePageTokenPositive() {
-        let token = ParsingHelpers.encodePageToken(offset: 100)
-        XCTAssertFalse(token.isEmpty)
-    }
-
-    func testDecodePageTokenRoundTrip() throws {
-        // Test round-trip encoding/decoding
-        for offset in [0, 1, 10, 100, 1000, 99999] {
-            let token = ParsingHelpers.encodePageToken(offset: offset)
-            let decoded = try ParsingHelpers.decodePageToken(token)
-            XCTAssertEqual(decoded, offset, "Round-trip failed for offset \(offset)")
-        }
-    }
-
-    func testDecodePageTokenValidToken() throws {
-        let validToken = ParsingHelpers.encodePageToken(offset: 50)
-        let decoded = try ParsingHelpers.decodePageToken(validToken)
-        XCTAssertEqual(decoded, 50)
-    }
-
-    func testDecodePageTokenUnsignedLegacyTokenRejected() {
-        let legacyToken = Data("offset:50".utf8).base64EncodedString()
-        XCTAssertThrowsError(try ParsingHelpers.decodePageToken(legacyToken)) { error in
+        XCTAssertEqual(
+            try ParsingHelpers.decodePageToken(
+                token,
+                queryBinding: originalQuery,
+            ),
+            50,
+        )
+        XCTAssertThrowsError(
+            try ParsingHelpers.decodePageToken(
+                token,
+                queryBinding: differentQuery,
+            ),
+        ) { error in
             guard let rpcError = error as? RPCError else {
                 XCTFail("Expected RPCError")
                 return
@@ -229,72 +221,48 @@ final class ParsingHelpersTests: XCTestCase {
         }
     }
 
-    func testDecodePageTokenInvalidBase64() {
-        XCTAssertThrowsError(try ParsingHelpers.decodePageToken("not!valid@base64")) { error in
-            guard let rpcError = error as? RPCError else {
-                XCTFail("Expected RPCError")
-                return
+    func testQueryBoundPageTokenRejectsMutationAndLegacyFormats() throws {
+        let query = ParsingHelpers.pageTokenQuery(method: "ListDisplays")
+        let token = ParsingHelpers.encodePageToken(offset: 50, queryBinding: query)
+        var mutatedBytes = Array(token.utf8)
+        mutatedBytes[mutatedBytes.count / 2] ^= 1
+        let mutated = try XCTUnwrap(String(bytes: mutatedBytes, encoding: .utf8))
+        let invalidTokens = [
+            mutated,
+            Data("offset:50".utf8).base64EncodedString(),
+            "not!valid@base64",
+            "",
+            Data("index:50".utf8).base64EncodedString(),
+            Data("offset:-1".utf8).base64EncodedString(),
+            Data("offset:abc".utf8).base64EncodedString(),
+            Data("offset50".utf8).base64EncodedString(),
+        ]
+        for invalidToken in invalidTokens {
+            XCTAssertThrowsError(
+                try ParsingHelpers.decodePageToken(invalidToken, queryBinding: query),
+            ) { error in
+                XCTAssertEqual((error as? RPCError)?.code, .invalidArgument)
             }
-            XCTAssertEqual(rpcError.code, .invalidArgument)
         }
     }
 
-    func testDecodePageTokenEmptyString() {
-        // Empty string should fail (not valid base64)
-        XCTAssertThrowsError(try ParsingHelpers.decodePageToken("")) { error in
-            guard let rpcError = error as? RPCError else {
-                XCTFail("Expected RPCError")
-                return
-            }
-            XCTAssertEqual(rpcError.code, .invalidArgument)
-        }
+    func testPageTokenQueryLengthPrefixesPreventDelimiterCollisions() {
+        let first = ParsingHelpers.pageTokenQuery(
+            method: "ListInputs",
+            parameters: [("parent", "a|filter=b"), ("filter", "c")],
+        )
+        let second = ParsingHelpers.pageTokenQuery(
+            method: "ListInputs",
+            parameters: [("parent", "a"), ("filter", "b|filter=c")],
+        )
+        XCTAssertNotEqual(first, second)
     }
 
-    func testDecodePageTokenWrongPrefix() {
-        // Valid base64 but wrong prefix (not "offset:")
-        let wrongPrefixToken = Data("index:50".utf8).base64EncodedString()
-        XCTAssertThrowsError(try ParsingHelpers.decodePageToken(wrongPrefixToken)) { error in
-            guard let rpcError = error as? RPCError else {
-                XCTFail("Expected RPCError")
-                return
-            }
-            XCTAssertEqual(rpcError.code, .invalidArgument)
-        }
-    }
-
-    func testDecodePageTokenNegativeOffset() {
-        // Negative offsets should be rejected
-        let negativeToken = Data("offset:-1".utf8).base64EncodedString()
-        XCTAssertThrowsError(try ParsingHelpers.decodePageToken(negativeToken)) { error in
-            guard let rpcError = error as? RPCError else {
-                XCTFail("Expected RPCError")
-                return
-            }
-            XCTAssertEqual(rpcError.code, .invalidArgument)
-        }
-    }
-
-    func testDecodePageTokenNotANumber() {
-        // "offset:abc" should fail
-        let notANumberToken = Data("offset:abc".utf8).base64EncodedString()
-        XCTAssertThrowsError(try ParsingHelpers.decodePageToken(notANumberToken)) { error in
-            guard let rpcError = error as? RPCError else {
-                XCTFail("Expected RPCError")
-                return
-            }
-            XCTAssertEqual(rpcError.code, .invalidArgument)
-        }
-    }
-
-    func testDecodePageTokenMalformedNoColon() {
-        // "offset50" (no colon) should fail
-        let malformedToken = Data("offset50".utf8).base64EncodedString()
-        XCTAssertThrowsError(try ParsingHelpers.decodePageToken(malformedToken)) { error in
-            guard let rpcError = error as? RPCError else {
-                XCTFail("Expected RPCError")
-                return
-            }
-            XCTAssertEqual(rpcError.code, .invalidArgument)
+    func testPageRangeRejectsOffsetOutsideCurrentCollection() {
+        XCTAssertThrowsError(
+            try ParsingHelpers.pageRange(offset: 6, pageSize: 1, totalCount: 5),
+        ) { error in
+            XCTAssertEqual((error as? RPCError)?.code, .invalidArgument)
         }
     }
 
@@ -578,8 +546,8 @@ final class ParsingHelpersTests: XCTestCase {
     // MARK: - parseDisplayName Tests
 
     func testParseDisplayNameValid() throws {
-        let resource = try ParsingHelpers.parseDisplayName("displays/main")
-        XCTAssertEqual(resource.displayName, "main")
+        let resource = try ParsingHelpers.parseDisplayName("displays/12345")
+        XCTAssertEqual(resource.displayID, 12345)
     }
 
     func testParseDisplayNameInvalidEmptyId() {
@@ -593,12 +561,31 @@ final class ParsingHelpersTests: XCTestCase {
     }
 
     func testParseDisplayNameInvalidWrongPrefix() {
-        XCTAssertThrowsError(try ParsingHelpers.parseDisplayName("display/main")) { error in
+        XCTAssertThrowsError(try ParsingHelpers.parseDisplayName("display/12345")) { error in
             guard let rpcError = error as? RPCError else {
                 XCTFail("Expected RPCError")
                 return
             }
             XCTAssertEqual(rpcError.code, .invalidArgument)
+        }
+    }
+
+    func testParseDisplayNameRejectsAliasesAndInvalidIdentifiers() {
+        for name in [
+            "displays/main",
+            "displays/0",
+            "displays/01",
+            "/displays/1",
+            "displays/1/extra",
+            "displays/4294967296",
+        ] {
+            XCTAssertThrowsError(try ParsingHelpers.parseDisplayName(name), name) { error in
+                guard let rpcError = error as? RPCError else {
+                    XCTFail("Expected RPCError for \(name)")
+                    return
+                }
+                XCTAssertEqual(rpcError.code, .invalidArgument)
+            }
         }
     }
 
@@ -615,7 +602,7 @@ final class ParsingHelpersTests: XCTestCase {
                 $0.width = 300
                 $0.height = 400
             }
-            $0.zIndex = 5
+            $0.layer = 5
             $0.visible = true
             $0.bundleID = "com.test.app"
         }
@@ -631,7 +618,7 @@ final class ParsingHelpersTests: XCTestCase {
         XCTAssertEqual(result.bounds.y, 200)
         XCTAssertEqual(result.bounds.width, 300)
         XCTAssertEqual(result.bounds.height, 400)
-        XCTAssertEqual(result.zIndex, 5)
+        XCTAssertEqual(result.layer, 5)
         XCTAssertTrue(result.visible)
         XCTAssertEqual(result.bundleID, "com.test.app")
     }
@@ -647,7 +634,7 @@ final class ParsingHelpersTests: XCTestCase {
                 $0.width = 300
                 $0.height = 400
             }
-            $0.zIndex = 5
+            $0.layer = 5
             $0.visible = true
             $0.bundleID = "com.test.app"
         }
@@ -662,7 +649,7 @@ final class ParsingHelpersTests: XCTestCase {
         XCTAssertEqual(result.name, "applications/123/windows/456") // identifier always included
         XCTAssertEqual(result.title, "Test Window")
         XCTAssertEqual(result.bounds.x, 0) // default (not requested)
-        XCTAssertEqual(result.zIndex, 0) // default (not requested)
+        XCTAssertEqual(result.layer, 0) // default (not requested)
         XCTAssertFalse(result.visible) // default (not requested)
         XCTAssertEqual(result.bundleID, "") // default (not requested)
     }
@@ -678,7 +665,7 @@ final class ParsingHelpersTests: XCTestCase {
                 $0.width = 300
                 $0.height = 400
             }
-            $0.zIndex = 5
+            $0.layer = 5
             $0.visible = true
             $0.bundleID = "com.test.app"
         }
@@ -696,7 +683,7 @@ final class ParsingHelpersTests: XCTestCase {
         XCTAssertEqual(result.bounds.y, 200)
         XCTAssertEqual(result.bounds.width, 300)
         XCTAssertEqual(result.bounds.height, 400)
-        XCTAssertEqual(result.zIndex, 0) // default
+        XCTAssertEqual(result.layer, 0) // default
         XCTAssertFalse(result.visible) // default
         XCTAssertEqual(result.bundleID, "") // default
     }
@@ -712,12 +699,12 @@ final class ParsingHelpersTests: XCTestCase {
                 $0.width = 300
                 $0.height = 400
             }
-            $0.zIndex = 5
+            $0.layer = 5
             $0.visible = true
             $0.bundleID = "com.test.app"
         }
         let mask = SwiftProtobuf.Google_Protobuf_FieldMask.with {
-            $0.paths = ["title", "visible", "z_index"]
+            $0.paths = ["title", "visible", "layer"]
         }
 
         // When applying the mask
@@ -727,27 +714,21 @@ final class ParsingHelpersTests: XCTestCase {
         XCTAssertEqual(result.name, "applications/123/windows/456")
         XCTAssertEqual(result.title, "Test Window")
         XCTAssertEqual(result.bounds.x, 0) // default (not requested)
-        XCTAssertEqual(result.zIndex, 5)
+        XCTAssertEqual(result.layer, 5)
         XCTAssertTrue(result.visible)
         XCTAssertEqual(result.bundleID, "") // default (not requested)
     }
 
-    func testApplyFieldMaskWindowUnknownFieldIgnored() {
-        // Given a full window and a mask with an unknown field
-        let window = Macosusesdk_V1_Window.with {
-            $0.name = "applications/123/windows/456"
-            $0.title = "Test Window"
+    func testValidateWindowReadMaskRejectsUnknownAndRemovedFields() {
+        for paths in [
+            ["title", "unknown_field"],
+            ["z_index"],
+        ] {
+            let mask = SwiftProtobuf.Google_Protobuf_FieldMask.with {
+                $0.paths = paths
+            }
+            XCTAssertThrowsError(try ParsingHelpers.validateWindowReadMask(mask))
         }
-        let mask = SwiftProtobuf.Google_Protobuf_FieldMask.with {
-            $0.paths = ["title", "unknown_field", "another_unknown"]
-        }
-
-        // When applying the mask
-        let result = ParsingHelpers.applyFieldMask(to: window, readMask: mask)
-
-        // Then unknown fields are silently ignored
-        XCTAssertEqual(result.name, "applications/123/windows/456")
-        XCTAssertEqual(result.title, "Test Window")
     }
 
     func testApplyFieldMaskWindowNameAlwaysIncluded() {
@@ -903,7 +884,7 @@ final class ParsingHelpersTests: XCTestCase {
                 $0.width = 100
                 $0.height = 200
             }
-            $0.zIndex = 5
+            $0.layer = 5
             $0.visible = true
             $0.bundleID = "com.test.app"
         }
@@ -918,7 +899,7 @@ final class ParsingHelpersTests: XCTestCase {
         XCTAssertEqual(result.name, "applications/123/windows/456")
         XCTAssertEqual(result.title, "Test Window")
         XCTAssertEqual(result.bounds.x, 10)
-        XCTAssertEqual(result.zIndex, 5)
+        XCTAssertEqual(result.layer, 5)
         XCTAssertEqual(result.visible, true)
         XCTAssertEqual(result.bundleID, "com.test.app")
     }

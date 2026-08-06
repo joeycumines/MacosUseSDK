@@ -10,26 +10,21 @@ import SwiftProtobuf
 
 extension MacosUseService {
     func getWindow(
-        request: ServerRequest<Macosusesdk_V1_GetWindowRequest>, context _: ServerContext,
+        request: ServerRequest<Macosusesdk_V1_GetWindowRequest>, context: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
         let req = request.message
         Self.logger.info("getWindow called for \(req.name, privacy: .public)")
-        // Parse "applications/{pid}/windows/{windowId}"
-        let components = req.name.split(separator: "/")
-        guard components.count == 4,
-              components[0] == "applications",
-              components[2] == "windows",
-              let pid = pid_t(components[1]),
-              let windowId = CGWindowID(components[3])
-        else {
-            throw RPCError(code: .invalidArgument, message: "Invalid window name format")
-        }
-
-        // CRITICAL FIX: ALWAYS use AX data for bounds (never fall back to stale CGWindowList).
-        // This ensures GetWindow returns fresh geometry immediately after mutations (MoveWindow, ResizeWindow).
-        // Hybrid data authority: AX is authoritative for geometry/state, Registry provides metadata.
-        let axWindow = try await findWindowElement(pid: pid, windowId: windowId)
-        let fullResponse = try await buildWindowResponseFromAX(name: req.name, pid: pid, windowId: windowId, window: axWindow, registryInfo: nil)
+        try ParsingHelpers.validateWindowReadMask(req.readMask)
+        let resource = try await resolveWindowResource(req.name)
+        let axWindow = try await findWindowElement(
+            resource: resource,
+            cancellation: context.cancellation,
+        )
+        let fullResponse = try await buildWindowResponseFromAX(
+            resource: resource,
+            window: axWindow,
+            cancellation: context.cancellation,
+        )
 
         // Apply read_mask per AIP-157
         let filteredWindow = try ParsingHelpers.applyFieldMask(to: fullResponse.message, readMask: req.readMask)
@@ -41,60 +36,48 @@ extension MacosUseService {
     ) async throws -> ServerResponse<Macosusesdk_V1_ListWindowsResponse> {
         let req = request.message
         Self.logger.info("listWindows called")
-
-        // Parse "applications/{pid}"
-        let pid = try parsePID(fromName: req.parent)
-
-        try await windowRegistry.refreshWindows(forPID: pid)
-        var windowInfos = try await windowRegistry.listWindows(forPID: pid)
-
-        // Apply filter if specified (AIP-160)
-        if !req.filter.isEmpty {
-            windowInfos = applyWindowFilter(windowInfos, filter: req.filter)
-        }
-
-        // Parse order_by (AIP-132)
-        let orderBy = req.orderBy.isEmpty ? "window_id" : req.orderBy.lowercased()
-        let descending = orderBy.contains(" desc")
-        let field = orderBy.replacingOccurrences(of: " desc", with: "").trimmingCharacters(in: .whitespaces)
-
-        // Sort based on field
-        let sortedWindowInfos: [WindowRegistry.WindowInfo] = switch field {
-        case "window_id":
-            windowInfos.sorted { $0.windowID < $1.windowID }
-        case "title":
-            windowInfos.sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
-        case "z_order":
-            windowInfos.sorted { $0.layer < $1.layer }
-        default:
-            // Unknown field, use default window_id ordering
-            windowInfos.sorted { $0.windowID < $1.windowID }
-        }
-
-        // Apply descending order if requested
-        let orderedWindowInfos = descending ? sortedWindowInfos.reversed() : Array(sortedWindowInfos)
-
-        // Decode page_token to get offset
-        let offset: Int = if req.pageToken.isEmpty {
-            0
+        let filterClauses = try parseWindowFilter(req.filter)
+        let ordering = try parseWindowOrdering(req.orderBy)
+        let pageSize = try RequestNumericValidation.pageSize(req.pageSize)
+        let application = try await resolveApplicationResource(fromName: req.parent)
+        let queryBinding = ParsingHelpers.pageTokenQuery(
+            method: "ListWindows",
+            parameters: [
+                ("parent", application.name),
+                ("filter", canonicalWindowFilter(filterClauses)),
+                ("order_by", ordering.queryIdentity),
+            ],
+        )
+        let page: WindowRegistry.WindowPage
+        if req.pageToken.isEmpty {
+            var windowInfos = try await windowRegistry.listWindowBindings(
+                applicationName: application.name,
+                pid: application.pid,
+                processIdentity: application.processIdentity,
+            )
+            try await revalidateApplicationOwner(application)
+            windowInfos = applyWindowFilter(windowInfos, clauses: filterClauses)
+            let orderedWindowInfos = windowInfos.sorted {
+                windowBindingPrecedes($0, $1, ordering: ordering)
+            }
+            page = try await windowRegistry.firstWindowPage(
+                bindings: orderedWindowInfos,
+                pageSize: pageSize,
+                queryBinding: queryBinding,
+                applicationName: application.name,
+                pid: application.pid,
+                processIdentity: application.processIdentity,
+            )
         } else {
-            try decodePageToken(req.pageToken)
-        }
-
-        // Determine page size (default 100 if not specified or <= 0)
-        let pageSize = req.pageSize > 0 ? Int(req.pageSize) : 100
-        let totalCount = orderedWindowInfos.count
-
-        // Calculate slice bounds
-        let startIndex = min(offset, totalCount)
-        let endIndex = min(startIndex + pageSize, totalCount)
-        let pageWindowInfos = Array(orderedWindowInfos[startIndex ..< endIndex])
-
-        // Generate next_page_token if more results exist
-        let nextPageToken = if endIndex < totalCount {
-            encodePageToken(offset: endIndex)
-        } else {
-            ""
+            try await revalidateApplicationOwner(application)
+            page = try await windowRegistry.continuationWindowPage(
+                token: req.pageToken,
+                pageSize: pageSize,
+                queryBinding: queryBinding,
+                applicationName: application.name,
+                pid: application.pid,
+                processIdentity: application.processIdentity,
+            )
         }
 
         // Build window list from registry data only - NO per-window AX queries
@@ -104,9 +87,9 @@ extension MacosUseService {
         // PERFORMANCE: This eliminates the O(N*M) catastrophe where N windows each
         // triggered M blocking AX queries. ListWindows now completes in <50ms regardless
         // of window count.
-        let windows = pageWindowInfos.map { windowInfo in
+        let windows = page.bindings.map { windowInfo in
             Macosusesdk_V1_Window.with {
-                $0.name = "applications/\(pid)/windows/\(windowInfo.windowID)"
+                $0.name = windowInfo.name
                 $0.title = windowInfo.title
                 $0.bounds = Macosusesdk_V1_Bounds.with {
                     $0.x = windowInfo.bounds.origin.x
@@ -114,7 +97,7 @@ extension MacosUseService {
                     $0.width = windowInfo.bounds.size.width
                     $0.height = windowInfo.bounds.size.height
                 }
-                $0.zIndex = Int32(windowInfo.layer)
+                $0.layer = windowInfo.layer
                 $0.visible = windowInfo.isOnScreen
                 $0.bundleID = windowInfo.bundleID ?? ""
             }
@@ -122,34 +105,29 @@ extension MacosUseService {
 
         let response = Macosusesdk_V1_ListWindowsResponse.with {
             $0.windows = windows
-            $0.nextPageToken = nextPageToken
+            $0.nextPageToken = page.nextPageToken
         }
         return ServerResponse(message: response)
     }
 
     func getWindowState(
-        request: ServerRequest<Macosusesdk_V1_GetWindowStateRequest>, context _: ServerContext,
+        request: ServerRequest<Macosusesdk_V1_GetWindowStateRequest>, context: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_WindowState> {
         let req = request.message
         Self.logger.info("getWindowState called for \(req.name, privacy: .public)")
 
-        // Parse "applications/{pid}/windows/{windowId}/state"
-        let components = req.name.split(separator: "/")
-        guard components.count == 5,
-              components[0] == "applications",
-              components[2] == "windows",
-              components[4] == "state",
-              let pid = pid_t(components[1]),
-              let windowId = CGWindowID(components[3])
-        else {
-            throw RPCError(code: .invalidArgument, message: "Invalid window state name format")
-        }
-
-        // Find the window via AX API
-        let axWindow = try await findWindowElement(pid: pid, windowId: windowId)
+        let resource = try await resolveWindowResource(req.name, stateSuffix: true)
+        let axWindow = try await findWindowElement(
+            resource: resource,
+            cancellation: context.cancellation,
+        )
 
         // Build complete WindowState from AX queries
-        let state = try await buildWindowStateFromAX(window: axWindow)
+        let state = try await buildWindowStateFromAX(
+            resource: resource,
+            window: axWindow,
+            cancellation: context.cancellation,
+        )
 
         // Set the resource name
         var response = state
@@ -161,39 +139,127 @@ extension MacosUseService {
     func focusWindow(
         request: ServerRequest<Macosusesdk_V1_FocusWindowRequest>, context: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
+        try await withOwnedWindowMutation(cancellation: context.cancellation) {
+            try await self.focusWindowAdmitted(
+                request: request,
+                cancellation: context.cancellation,
+            )
+        }
+    }
+
+    private func focusWindowAdmitted(
+        request: ServerRequest<Macosusesdk_V1_FocusWindowRequest>,
+        cancellation: ServerContext.RPCCancellationHandle?,
+    ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
         let req = request.message
         Self.logger.info("focusWindow called")
 
-        // Parse "applications/{pid}/windows/{windowId}"
-        let components = req.name.split(separator: "/").map(String.init)
-        guard components.count == 4,
-              components[0] == "applications",
-              components[2] == "windows",
-              let pid = pid_t(components[1]),
-              let windowId = CGWindowID(components[3])
-        else {
-            throw RPCError(code: .invalidArgument, message: "Invalid window name format")
+        let resource = try await resolveWindowResource(req.name)
+        let windowToFocus = try await findWindowElement(
+            resource: resource,
+            cancellation: cancellation,
+        )
+        try await revalidateWindowOwner(resource)
+        guard let application = system.createAXApplication(pid: resource.pid) else {
+            throw RPCError(code: .notFound, message: "Window owner is unavailable")
         }
-
-        let windowToFocus = try await findWindowElement(pid: pid, windowId: windowId)
-
-        // Set kAXMainAttribute to true to focus the window
-        // CRITICAL FIX: AX set operations are thread-safe and should NOT block MainActor
-        try await Task.detached(priority: .userInitiated) { [system = self.system] in
-            let result = system.setAXAttribute(element: windowToFocus as AnyObject, attribute: kAXMainAttribute as String, value: true)
-            guard result == 0 else {
-                throw RPCError(code: .internalError, message: "Failed to focus window: AXErrorCode=\(result)")
+        try checkWindowReadCancellation(cancellation)
+        let setFrontmostResult = system.setAXAttribute(
+            element: application,
+            attribute: kAXFrontmostAttribute as String,
+            value: true,
+        )
+        guard setFrontmostResult == AXError.success.rawValue else {
+            throw rpcErrorForAXMutation(
+                errorCode: setFrontmostResult,
+                operation: "set owner frontmost",
+            )
+        }
+        try await revalidateWindowOwner(resource)
+        // kAXRaiseAction is an OPTIONAL convenience action. Many focusable windows
+        // (e.g. Calculator, panels, utility windows) do not implement it and return
+        // kAXErrorAttributeUnsupported (-25205) / kAXErrorActionUnsupported (-25206),
+        // yet are fully focusable through the authoritative attribute sets below
+        // (kAXFrontmostAttribute on the application, kAXMainAttribute/kAXFocusedAttribute
+        // on the window) plus the AX-read convergence predicate. Treating an
+        // unsupported raise as a hard failure made FocusWindow impossible for such
+        // windows even though they converge. Perform the raise best-effort: only
+        // real failures (permission denied, invalid element, genuine AX errors)
+        // abort; unsupported is logged and the focus sequence continues. The
+        // subsequent attribute sets and waitForWindowFocusConvergence remain the
+        // authoritative gate, so a no-op raise can never report unearned focus.
+        let raiseResult = system.performAXAction(
+            element: windowToFocus as AnyObject,
+            action: kAXRaiseAction as String,
+        )
+        if raiseResult != AXError.success.rawValue {
+            let raiseBestEffort = raiseResult == AXError.attributeUnsupported.rawValue
+                || raiseResult == AXError.actionUnsupported.rawValue
+                || raiseResult == AXError.notImplemented.rawValue
+            if raiseBestEffort {
+                Self.logger.info(
+                    "raise action unsupported for window (error=\(raiseResult, privacy: .public)); focusing via attribute sets only",
+                )
+            } else {
+                throw rpcErrorForAXMutation(
+                    errorCode: raiseResult,
+                    operation: "raise window",
+                )
             }
-        }.value
+        }
+        try await revalidateWindowOwner(resource)
+        let setMainResult = system.setAXAttribute(
+            element: windowToFocus as AnyObject,
+            attribute: kAXMainAttribute as String,
+            value: true,
+        )
+        guard setMainResult == AXError.success.rawValue else {
+            throw rpcErrorForAXMutation(
+                errorCode: setMainResult,
+                operation: "set main window",
+            )
+        }
+        try await revalidateWindowOwner(resource)
+        let setFocusedResult = system.setAXAttribute(
+            element: windowToFocus as AnyObject,
+            attribute: kAXFocusedAttribute as String,
+            value: true,
+        )
+        guard setFocusedResult == AXError.success.rawValue else {
+            throw rpcErrorForAXMutation(
+                errorCode: setFocusedResult,
+                operation: "set focused window",
+            )
+        }
+        try await revalidateWindowOwner(resource)
+        try await waitForWindowFocusConvergence(
+            resource: resource,
+            window: windowToFocus,
+            application: application,
+            cancellation: cancellation,
+        )
 
-        // Return updated window state
-        return try await getWindow(
-            request: ServerRequest(metadata: request.metadata, message: Macosusesdk_V1_GetWindowRequest.with { $0.name = req.name }), context: context,
+        return try await buildWindowResponseFromAX(
+            resource: resource,
+            window: windowToFocus,
+            cancellation: cancellation,
         )
     }
 
     func moveWindow(
-        request: ServerRequest<Macosusesdk_V1_MoveWindowRequest>, context _: ServerContext,
+        request: ServerRequest<Macosusesdk_V1_MoveWindowRequest>, context: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
+        try await withOwnedWindowMutation(cancellation: context.cancellation) {
+            try await self.moveWindowAdmitted(
+                request: request,
+                cancellation: context.cancellation,
+            )
+        }
+    }
+
+    private func moveWindowAdmitted(
+        request: ServerRequest<Macosusesdk_V1_MoveWindowRequest>,
+        cancellation: ServerContext.RPCCancellationHandle?,
     ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
         let req = request.message
         Self.logger.info("moveWindow called")
@@ -216,70 +282,71 @@ extension MacosUseService {
             )
         }
 
-        // Parse "applications/{pid}/windows/{windowId}"
-        let components = req.name.split(separator: "/").map(String.init)
-        guard components.count == 4,
-              components[0] == "applications",
-              components[2] == "windows",
-              let pid = pid_t(components[1]),
-              let windowId = CGWindowID(components[3])
-        else {
-            throw RPCError(code: .invalidArgument, message: "Invalid window name format")
+        let resource = try await resolveWindowResource(req.name)
+        let window = try await findWindowElement(
+            resource: resource,
+            cancellation: cancellation,
+        )
+        try await revalidateWindowOwner(resource)
+        let previousPosition = try readRequiredAXPoint(
+            element: window as AnyObject,
+            attribute: kAXPositionAttribute as String,
+        )
+        let currentSize = try readRequiredAXSize(
+            element: window as AnyObject,
+            attribute: kAXSizeAttribute as String,
+        )
+        var newPosition = CGPoint(x: req.x, y: req.y)
+        guard EndpointSafeGeometry.containsValidEndpoints(
+            CGRect(origin: newPosition, size: currentSize),
+            requiresPositiveSize: false,
+        ) else {
+            throw RPCErrorHelpers.validationError(
+                message: "requested window frame must have finite endpoints",
+                reason: "INVALID_COORDINATE",
+                field: "x",
+            )
         }
-
-        let window = try await findWindowElement(pid: pid, windowId: windowId)
-
-        // Create AXValue and set position
-        // CRITICAL FIX: AX set operations are thread-safe and should NOT block MainActor
-        try await Task.detached(priority: .userInitiated) { [system = self.system] in
-            var newPosition = CGPoint(x: req.x, y: req.y)
-            guard let positionValue = AXValueCreate(.cgPoint, &newPosition) else {
-                throw RPCError(code: .internalError, message: "Failed to create position value")
-            }
-
-            let result = system.setAXAttribute(element: window as AnyObject, attribute: kAXPositionAttribute as String, value: positionValue)
-            guard result == 0 else {
-                throw RPCError(
-                    code: .internalError, message: "Failed to move window: AXErrorCode=\(result)",
-                )
-            }
-        }.value
-
-        // CRITICAL FIX: Refresh and fetch registry metadata BEFORE invalidation (nil registry bug fix)
-        try await windowRegistry.refreshWindows(forPID: pid)
-
-        // After move, the window may have a new CGWindowID. Try to find it by its new position.
-        // Also capture the original window's registry info for metadata.
-        let registryInfo = await windowRegistry.getLastKnownWindow(windowId)
-
-        // Check if window ID changed by looking for the window at the new position
-        let movedWindowInfo = await windowRegistry.findWindowByPosition(pid: pid, x: req.x, y: req.y)
-
-        // Note: We do NOT try to re-acquire the AXUIElement even if the ID changed.
-        // The original window AXUIElement should still be valid (or stale but usable for
-        // querying current state). buildWindowResponseFromAX will query the actual ID
-        // from the element and update the name accordingly.
-        if let movedWindow = movedWindowInfo, movedWindow.windowID != windowId {
-            Self.logger.info("[moveWindow] Window ID changed: \(windowId, privacy: .public) → \(movedWindow.windowID, privacy: .public)")
+        guard let positionValue = AXValueCreate(.cgPoint, &newPosition) else {
+            throw RPCError(code: .internalError, message: "Failed to create position value")
         }
-
-        // Invalidate old cache entry
-        await windowRegistry.invalidate(windowID: windowId)
-
-        // Build response using the original AXUIElement
-        // buildWindowResponseFromAX will query the current window ID from the element
-        // and return the updated name if it changed
-        return try await buildWindowResponseFromAX(
-            name: req.name,
-            pid: pid,
-            windowId: windowId,
+        let result = system.setAXAttribute(
+            element: window as AnyObject,
+            attribute: kAXPositionAttribute as String,
+            value: positionValue,
+        )
+        guard result == AXError.success.rawValue else {
+            throw rpcErrorForAXMutation(errorCode: result, operation: "move window")
+        }
+        _ = try await waitForWindowPointConvergence(
+            resource: resource,
             window: window,
-            registryInfo: movedWindowInfo ?? registryInfo,
+            previous: previousPosition,
+            requested: newPosition,
+            cancellation: cancellation,
+        )
+
+        return try await buildWindowResponseFromAX(
+            resource: resource,
+            window: window,
+            cancellation: cancellation,
         )
     }
 
     func resizeWindow(
-        request: ServerRequest<Macosusesdk_V1_ResizeWindowRequest>, context _: ServerContext,
+        request: ServerRequest<Macosusesdk_V1_ResizeWindowRequest>, context: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
+        try await withOwnedWindowMutation(cancellation: context.cancellation) {
+            try await self.resizeWindowAdmitted(
+                request: request,
+                cancellation: context.cancellation,
+            )
+        }
+    }
+
+    private func resizeWindowAdmitted(
+        request: ServerRequest<Macosusesdk_V1_ResizeWindowRequest>,
+        cancellation: ServerContext.RPCCancellationHandle?,
     ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
         let req = request.message
         Self.logger.info("resizeWindow called")
@@ -302,366 +369,651 @@ extension MacosUseService {
             )
         }
 
-        // Parse "applications/{pid}/windows/{windowId}"
-        let components = req.name.split(separator: "/").map(String.init)
-        guard components.count == 4,
-              components[0] == "applications",
-              components[2] == "windows",
-              let pid = pid_t(components[1]),
-              let windowId = CGWindowID(components[3])
-        else {
-            throw RPCError(code: .invalidArgument, message: "Invalid window name format")
+        let resource = try await resolveWindowResource(req.name)
+        let window = try await findWindowElement(
+            resource: resource,
+            cancellation: cancellation,
+        )
+        try await revalidateWindowOwner(resource)
+        let previousSize = try readRequiredAXSize(
+            element: window as AnyObject,
+            attribute: kAXSizeAttribute as String,
+        )
+        let currentPosition = try readRequiredAXPoint(
+            element: window as AnyObject,
+            attribute: kAXPositionAttribute as String,
+        )
+        var newSize = CGSize(width: req.width, height: req.height)
+        guard EndpointSafeGeometry.containsValidEndpoints(
+            CGRect(origin: currentPosition, size: newSize),
+            requiresPositiveSize: true,
+        ) else {
+            throw RPCErrorHelpers.validationError(
+                message: "requested window frame must have finite endpoints",
+                reason: "INVALID_DIMENSION",
+                field: "width",
+            )
         }
-
-        // Get expected bounds from registry BEFORE finding the element.
-        // This enables bounds-based fallback if the window ID has already regenerated.
-        try await windowRegistry.refreshWindows(forPID: pid)
-        let preResizeInfo = await windowRegistry.getLastKnownWindow(windowId)
-        let preResizeBounds: CGRect? = if let info = preResizeInfo {
-            info.bounds
-        } else {
-            // If we can't find the window in registry, try a more aggressive bounds search
-            // using the window list (the window might have a new ID but similar bounds)
-            // For now, pass nil which will trigger existing fallback logic.
-            nil
+        guard let sizeValue = AXValueCreate(.cgSize, &newSize) else {
+            throw RPCError(code: .internalError, message: "Failed to create size value")
         }
-
-        let window = try await findWindowElement(pid: pid, windowId: windowId, expectedBounds: preResizeBounds)
-
-        // Create AXValue, set size, and verify
-        // CRITICAL FIX: AX set operations are thread-safe and should NOT block MainActor
-        try await Task.detached(priority: .userInitiated) { [system = self.system] in
-            var newSize = CGSize(width: req.width, height: req.height)
-            guard let sizeValue = AXValueCreate(.cgSize, &newSize) else {
-                throw RPCError(code: .internalError, message: "Failed to create size value")
-            }
-
-            let result = system.setAXAttribute(element: window as AnyObject, attribute: kAXSizeAttribute as String, value: sizeValue)
-            guard result == 0 else {
-                throw RPCError(
-                    code: .internalError, message: "Failed to resize window: AXErrorCode=\(result)",
-                )
-            }
-
-            // Verify AX actually applied the change
-            var verifyValue: CFTypeRef?
-            if AXUIElementCopyAttributeValue(window, kAXSizeAttribute as CFString, &verifyValue)
-                == .success,
-                let unwrappedValue = verifyValue,
-                CFGetTypeID(unwrappedValue) == AXValueGetTypeID()
-            {
-                let size = unsafeDowncast(unwrappedValue, to: AXValue.self)
-                var actualSize = CGSize.zero
-                if AXValueGetValue(size, .cgSize, &actualSize) {
-                    Self.logger.info("After resize: requested=\(req.width, privacy: .public)x\(req.height, privacy: .public), actual=\(actualSize.width, privacy: .public)x\(actualSize.height, privacy: .public)")
-                }
-            }
-        }.value
-
-        // CRITICAL FIX: Refresh and fetch registry metadata BEFORE invalidation (nil registry bug fix)
-        try await windowRegistry.refreshWindows(forPID: pid)
-
-        // After resize, the window may have a new CGWindowID. Try to find it by its new bounds.
-        // Also capture the original window's registry info for metadata.
-        let registryInfo = await windowRegistry.getLastKnownWindow(windowId)
-        let expectedBounds = CGRect(
-            x: registryInfo?.bounds.origin.x ?? 0,
-            y: registryInfo?.bounds.origin.y ?? 0,
-            width: req.width,
-            height: req.height,
+        let result = system.setAXAttribute(
+            element: window as AnyObject,
+            attribute: kAXSizeAttribute as String,
+            value: sizeValue,
+        )
+        guard result == AXError.success.rawValue else {
+            throw rpcErrorForAXMutation(errorCode: result, operation: "resize window")
+        }
+        _ = try await waitForWindowSizeConvergence(
+            resource: resource,
+            window: window,
+            previous: previousSize,
+            requested: newSize,
+            cancellation: cancellation,
         )
 
-        // Check if window ID changed by looking for the window with the new size
-        let resizedWindowInfo = await windowRegistry.findWindowByBounds(pid: pid, bounds: expectedBounds)
-        let actualWindowId: CGWindowID
-        let actualName: String
-        let actualWindow: AXUIElement
-
-        if let resizedWindow = resizedWindowInfo, resizedWindow.windowID != windowId {
-            // Window ID changed - use the new ID and re-acquire AXUIElement
-            Self.logger.info("[resizeWindow] Window ID changed: \(windowId, privacy: .public) → \(resizedWindow.windowID, privacy: .public)")
-            actualWindowId = resizedWindow.windowID
-            actualName = "applications/\(pid)/windows/\(actualWindowId)"
-            // Re-acquire fresh AXUIElement for the new window ID
-            actualWindow = try await findWindowElement(pid: pid, windowId: actualWindowId, expectedBounds: expectedBounds)
-        } else {
-            // Window ID didn't change (or we couldn't find a unique match)
-            actualWindowId = windowId
-            actualName = req.name
-            actualWindow = window
-        }
-
-        // Invalidate old cache entry
-        await windowRegistry.invalidate(windowID: windowId)
-
-        // Build response using the (possibly re-acquired) window element
         return try await buildWindowResponseFromAX(
-            name: actualName,
-            pid: pid,
-            windowId: actualWindowId,
-            window: actualWindow,
-            registryInfo: resizedWindowInfo ?? registryInfo,
+            resource: resource,
+            window: window,
+            cancellation: cancellation,
         )
     }
 
     func minimizeWindow(
-        request: ServerRequest<Macosusesdk_V1_MinimizeWindowRequest>, context _: ServerContext,
+        request: ServerRequest<Macosusesdk_V1_MinimizeWindowRequest>, context: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
+        try await withOwnedWindowMutation(cancellation: context.cancellation) {
+            try await self.minimizeWindowAdmitted(
+                request: request,
+                cancellation: context.cancellation,
+            )
+        }
+    }
+
+    private func minimizeWindowAdmitted(
+        request: ServerRequest<Macosusesdk_V1_MinimizeWindowRequest>,
+        cancellation: ServerContext.RPCCancellationHandle?,
     ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
         let req = request.message
         Self.logger.info("minimizeWindow called")
 
-        // Parse "applications/{pid}/windows/{windowId}"
-        let components = req.name.split(separator: "/").map(String.init)
-        guard components.count == 4,
-              components[0] == "applications",
-              components[2] == "windows",
-              let pid = pid_t(components[1]),
-              let windowId = CGWindowID(components[3])
-        else {
-            throw RPCError(code: .invalidArgument, message: "Invalid window name format")
+        let resource = try await resolveWindowResource(req.name)
+        let window = try await findWindowElement(
+            resource: resource,
+            cancellation: cancellation,
+        )
+        try await revalidateWindowOwner(resource)
+
+        let result = system.setAXAttribute(
+            element: window as AnyObject,
+            attribute: kAXMinimizedAttribute as String,
+            value: true,
+        )
+        guard result == AXError.success.rawValue else {
+            throw rpcErrorForAXMutation(errorCode: result, operation: "minimize window")
         }
+        try await waitForWindowBooleanConvergence(
+            resource: resource,
+            window: window,
+            attribute: kAXMinimizedAttribute as String,
+            expected: true,
+            operation: "minimize",
+            cancellation: cancellation,
+        )
 
-        let window = try await findWindowElement(pid: pid, windowId: windowId)
-
-        // Set kAXMinimizedAttribute to true
-        // CRITICAL FIX: AX set operations are thread-safe and should NOT block MainActor
-        try await Task.detached(priority: .userInitiated) { [system = self.system] in
-            let result = system.setAXAttribute(element: window as AnyObject, attribute: kAXMinimizedAttribute as String, value: true)
-            guard result == 0 else {
-                throw RPCError(
-                    code: .internalError, message: "Failed to minimize window: AXErrorCode=\(result)",
-                )
-            }
-        }.value
-
-        // CRITICAL: AX state propagation is async - poll until minimized=true
-        // This prevents race condition where we return stale state
-        let startTime = Date()
-        let timeout = 2.0 // 2 second timeout
-        while Date().timeIntervalSince(startTime) < timeout {
-            let isMinimized = await MainActor.run { () -> Bool in
-                var verifyValue: CFTypeRef?
-                if AXUIElementCopyAttributeValue(window, kAXMinimizedAttribute as CFString, &verifyValue) == .success,
-                   let isMinimizedValue = verifyValue as? Bool
-                {
-                    return isMinimizedValue
-                }
-                return false
-            }
-            if isMinimized {
-                Self.logger.debug("[minimizeWindow] Verified minimized=true after \(Date().timeIntervalSince(startTime) * 1000, privacy: .public)ms")
-                break
-            }
-            // Small yield to allow AX system to propagate change
-            try? await Task.sleep(for: .milliseconds(10))
-        }
-
-        // CRITICAL FIX: Refresh and fetch registry metadata BEFORE invalidation
-        try await windowRegistry.refreshWindows(forPID: pid)
-        let registryInfo = await windowRegistry.getLastKnownWindow(windowId)
-
-        // Invalidate cache to ensure subsequent reads reflect the new minimized state immediately
-        await windowRegistry.invalidate(windowID: windowId)
-
-        // Build response directly from AXUIElement
-        return try await buildWindowResponseFromAX(name: req.name, pid: pid, windowId: windowId, window: window, registryInfo: registryInfo)
+        return try await buildWindowResponseFromAX(
+            resource: resource,
+            window: window,
+            cancellation: cancellation,
+        )
     }
 
     func restoreWindow(
-        request: ServerRequest<Macosusesdk_V1_RestoreWindowRequest>, context _: ServerContext,
+        request: ServerRequest<Macosusesdk_V1_RestoreWindowRequest>, context: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
+        try await withOwnedWindowMutation(cancellation: context.cancellation) {
+            try await self.restoreWindowAdmitted(
+                request: request,
+                cancellation: context.cancellation,
+            )
+        }
+    }
+
+    private func restoreWindowAdmitted(
+        request: ServerRequest<Macosusesdk_V1_RestoreWindowRequest>,
+        cancellation: ServerContext.RPCCancellationHandle?,
     ) async throws -> ServerResponse<Macosusesdk_V1_Window> {
         let req = request.message
         Self.logger.info("restoreWindow called")
 
-        // Parse "applications/{pid}/windows/{windowId}"
-        let components = req.name.split(separator: "/").map(String.init)
-        guard components.count == 4,
-              components[0] == "applications",
-              components[2] == "windows",
-              let pid = pid_t(components[1]),
-              let windowId = CGWindowID(components[3])
-        else {
-            throw RPCError(code: .invalidArgument, message: "Invalid window name format")
+        let resource = try await resolveWindowResource(req.name)
+        let window = try await findWindowElement(
+            resource: resource,
+            cancellation: cancellation,
+        )
+        try await revalidateWindowOwner(resource)
+        let result = system.setAXAttribute(
+            element: window as AnyObject,
+            attribute: kAXMinimizedAttribute as String,
+            value: false,
+        )
+        guard result == AXError.success.rawValue else {
+            throw rpcErrorForAXMutation(errorCode: result, operation: "restore window")
         }
+        try await waitForWindowBooleanConvergence(
+            resource: resource,
+            window: window,
+            attribute: kAXMinimizedAttribute as String,
+            expected: false,
+            operation: "restore",
+            cancellation: cancellation,
+        )
 
-        // CRITICAL FIX: Minimized windows vanish from kAXWindowsAttribute but remain in kAXChildrenAttribute
-        let window = try await findWindowElement(pid: pid, windowId: windowId)
-
-        // Set kAXMinimizedAttribute to false
-        // CRITICAL FIX: AX set operations are thread-safe and should NOT block MainActor
-        try await Task.detached { [system = self.system] in
-            let result = system.setAXAttribute(element: window as AnyObject, attribute: kAXMinimizedAttribute as String, value: false)
-            guard result == 0 else {
-                throw RPCError(code: .internalError, message: "Failed to restore window: AXErrorCode=\(result)")
-            }
-        }.value
-
-        // CRITICAL: AX state propagation is async - poll until minimized=false
-        // This prevents race condition where we return stale state
-        let startTime = Date()
-        let timeout = 2.0 // 2 second timeout
-        while Date().timeIntervalSince(startTime) < timeout {
-            let isMinimized = await MainActor.run { () -> Bool in
-                var verifyValue: CFTypeRef?
-                if AXUIElementCopyAttributeValue(window, kAXMinimizedAttribute as CFString, &verifyValue) == .success,
-                   let isMinimizedValue = verifyValue as? Bool
-                {
-                    return isMinimizedValue
-                }
-                return false
-            }
-            if !isMinimized {
-                Self.logger.debug("[restoreWindow] Verified minimized=false after \(Date().timeIntervalSince(startTime) * 1000, privacy: .public)ms")
-                break
-            }
-            // Small yield to allow AX system to propagate change
-            try? await Task.sleep(for: .milliseconds(10))
-        }
-
-        // CRITICAL FIX: Refresh registry AFTER restore to get updated isOnScreen value
-        // (CGWindowList updates when window becomes visible again)
-        try await windowRegistry.refreshWindows(forPID: pid)
-        let registryInfo = await windowRegistry.getLastKnownWindow(windowId)
-
-        // Invalidate cache to ensure subsequent reads reflect the restored state immediately
-        await windowRegistry.invalidate(windowID: windowId)
-
-        // Build response directly from AXUIElement (AFTER restore operation)
-        return try await buildWindowResponseFromAX(name: req.name, pid: pid, windowId: windowId, window: window, registryInfo: registryInfo)
+        return try await buildWindowResponseFromAX(
+            resource: resource,
+            window: window,
+            cancellation: cancellation,
+        )
     }
 
     func closeWindow(
-        request: ServerRequest<Macosusesdk_V1_CloseWindowRequest>, context _: ServerContext,
+        request: ServerRequest<Macosusesdk_V1_CloseWindowRequest>, context: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_CloseWindowResponse> {
+        guard !request.message.force else {
+            throw RPCError(code: .unimplemented, message: "force close is not supported")
+        }
+        return try await withOwnedWindowMutation(cancellation: context.cancellation) {
+            try await self.closeWindowAdmitted(
+                request: request,
+                cancellation: context.cancellation,
+            )
+        }
+    }
+
+    private func closeWindowAdmitted(
+        request: ServerRequest<Macosusesdk_V1_CloseWindowRequest>,
+        cancellation: ServerContext.RPCCancellationHandle?,
     ) async throws -> ServerResponse<Macosusesdk_V1_CloseWindowResponse> {
         let req = request.message
         Self.logger.info("closeWindow called")
 
-        // Parse "applications/{pid}/windows/{windowId}"
-        let components = req.name.split(separator: "/").map(String.init)
-        guard components.count == 4,
-              components[0] == "applications",
-              components[2] == "windows",
-              let pid = pid_t(components[1]),
-              let windowId = CGWindowID(components[3])
-        else {
-            throw RPCError(code: .invalidArgument, message: "Invalid window name format")
-        }
-
-        let window = try await findWindowElement(pid: pid, windowId: windowId)
+        let resource = try await resolveWindowResource(req.name)
+        let window = try await findWindowElement(
+            resource: resource,
+            cancellation: cancellation,
+        )
+        try await revalidateWindowOwner(resource)
 
         // Get close button and press it (MUST run on MainActor)
         try await MainActor.run {
-            let closeButtonValue = self.system.copyAXAttribute(element: window as AnyObject, attribute: kAXCloseButtonAttribute as String)
-            guard let unwrappedCloseButtonValue = closeButtonValue,
-                  CFGetTypeID(unwrappedCloseButtonValue as CFTypeRef) == AXUIElementGetTypeID()
-            else {
-                throw RPCError(code: .internalError, message: "Failed to get close button")
-            }
-
-            let closeButton = unsafeDowncast(unwrappedCloseButtonValue as CFTypeRef, to: AXUIElement.self)
+            let closeButton = try self.readRequiredAXElement(
+                element: window as AnyObject,
+                attribute: kAXCloseButtonAttribute as String,
+            )
 
             let result = self.system.performAXAction(element: closeButton as AnyObject, action: kAXPressAction as String)
-            guard result == 0 else {
-                throw RPCError(
-                    code: .internalError, message: "Failed to close window: AXErrorCode=\(result)",
+            guard result == AXError.success.rawValue else {
+                throw self.rpcErrorForAXMutation(
+                    errorCode: result,
+                    operation: "close window",
                 )
             }
         }
+        try await waitForWindowDisappearance(
+            resource: resource,
+            window: window,
+            cancellation: cancellation,
+        )
+        try checkWindowReadCancellation(cancellation)
+        await windowRegistry.retireWindowBinding(
+            resourceID: resource.resourceID,
+            applicationName: resource.applicationName,
+            pid: resource.pid,
+            processIdentity: resource.processIdentity,
+        )
+        return ServerResponse(message: Macosusesdk_V1_CloseWindowResponse.with { $0.success = true })
+    }
 
-        return ServerResponse(message: Macosusesdk_V1_CloseWindowResponse())
+    private func withOwnedWindowMutation<Result: Sendable>(
+        cancellation: ServerContext.RPCCancellationHandle,
+        operation: @escaping @Sendable () async throws -> Result,
+    ) async throws -> Result {
+        guard !Task.isCancelled, cancellation.isCancelled == false else {
+            throw RPCError(code: .cancelled, message: "Window mutation cancelled")
+        }
+        let task = Task {
+            try await physicalDesktopMutationGate.withExclusiveOperation(operation)
+        }
+        let cancellationWatcher = Task<Void, Never> {
+            do {
+                try await cancellation.cancelled
+                task.cancel()
+            } catch {
+                // The mutation settled first and owns watcher cancellation.
+            }
+        }
+        do {
+            let result = try await withTaskCancellationHandler {
+                try await task.value
+            } onCancel: {
+                task.cancel()
+            }
+            cancellationWatcher.cancel()
+            await cancellationWatcher.value
+            guard !Task.isCancelled, cancellation.isCancelled == false else {
+                throw RPCError(code: .cancelled, message: "Window mutation cancelled")
+            }
+            return result
+        } catch {
+            cancellationWatcher.cancel()
+            await cancellationWatcher.value
+            if error is CancellationError ||
+                Task.isCancelled ||
+                cancellation.isCancelled
+            {
+                throw RPCError(code: .cancelled, message: "Window mutation cancelled")
+            }
+            throw error
+        }
     }
 
     func captureWindowScreenshot(
-        request: ServerRequest<Macosusesdk_V1_CaptureWindowScreenshotRequest>, context _: ServerContext,
+        request: ServerRequest<Macosusesdk_V1_CaptureWindowScreenshotRequest>, context: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_CaptureWindowScreenshotResponse> {
         let req = request.message
         Self.logger.info("[captureWindowScreenshot] Capturing window screenshot")
-
-        // Parse window resource name: applications/{pid}/windows/{windowId}
-        let components = req.window.split(separator: "/")
-        guard components.count == 4,
-              components[0] == "applications",
-              components[2] == "windows",
-              let pid = pid_t(components[1]),
-              let windowIdInt = Int(components[3])
-        else {
-            throw RPCError(
-                code: .invalidArgument,
-                message: "Invalid window resource name: \(req.window)",
-            )
-        }
-
-        // Find window in registry
-        try await windowRegistry.refreshWindows(forPID: pid)
-        let windowInfo = try await windowRegistry.listWindows(forPID: pid).first {
-            $0.windowID == CGWindowID(windowIdInt)
-        }
-
-        guard let windowInfo else {
-            throw RPCError(
-                code: .notFound,
-                message: "Window not found: \(req.window)",
-            )
-        }
-
-        // Determine format (default to PNG)
-        let format = req.format == .unspecified ? .png : req.format
-
-        // Capture window
-        let result = try await ScreenshotCapture.captureWindow(
-            windowID: windowInfo.windowID,
-            includeShadow: req.includeShadow,
-            format: format,
+        let encoding = try RequestNumericValidation.imageEncoding(
+            format: req.format,
             quality: req.quality,
-            includeOCR: req.includeOcrText,
         )
+        let format = encoding.format
+        let quality = encoding.quality
+        let includeShadow = req.includeShadow
+        let includeOCR = req.includeOcrText
+        _ = try parseWindowResourceName(req.window)
+        return try await captureWorkOwner.withCapture(cancellation: context.cancellation) { [self] in
+            let resource = try await resolveWindowResource(req.window)
+            try Task.checkCancellation()
+            let admittedWindowElement = try await findWindowElement(
+                resource: resource,
+                cancellation: context.cancellation,
+            )
+            try Task.checkCancellation()
+            try await revalidateWindowOwner(resource)
+            guard let captureBinding = await windowRegistry.resolveWindowBinding(
+                resourceID: resource.resourceID,
+                applicationName: resource.applicationName,
+                pid: resource.pid,
+                processIdentity: resource.processIdentity,
+            ) else {
+                throw RPCError(code: .notFound, message: "Window binding is stale")
+            }
+            try Task.checkCancellation()
+            let source = WindowScreenshotCaptureSource(
+                name: resource.name,
+                windowID: captureBinding.windowID,
+                ownerPID: resource.pid,
+                processIdentity: resource.processIdentity,
+                admittedFrame: captureBinding.bounds,
+            )
+            let result = try await screenshotCapture.captureWindow(
+                source,
+                format: format,
+                quality: quality,
+                includeShadow: includeShadow,
+                includeOCR: includeOCR,
+            )
+            try Task.checkCancellation()
+            try validateWindowCaptureOutput(
+                result,
+                source: source,
+                expectedFormat: format,
+                expectedShadow: includeShadow,
+            )
+            try result.ocrResult.validate(requested: includeOCR)
+            try Task.checkCancellation()
+            try await revalidateWindowOwner(resource)
+            let currentWindowElement = try await findWindowElement(
+                resource: resource,
+                cancellation: context.cancellation,
+            )
+            guard CFEqual(admittedWindowElement, currentWindowElement),
+                  let currentBinding = await windowRegistry.resolveWindowBinding(
+                      resourceID: resource.resourceID,
+                      applicationName: resource.applicationName,
+                      pid: resource.pid,
+                      processIdentity: resource.processIdentity,
+                  ),
+                  currentBinding.windowID == source.windowID,
+                  windowCaptureFramesEqual(
+                      currentBinding.bounds,
+                      source.admittedFrame,
+                  ),
+                  currentBinding.retainedElement.map({
+                      CFEqual($0.element, admittedWindowElement)
+                  }) == true
+            else {
+                throw RPCError(
+                    code: .aborted,
+                    message: "Exact window source changed during capture",
+                )
+            }
+            try Task.checkCancellation()
 
-        // Build response
-        var response = Macosusesdk_V1_CaptureWindowScreenshotResponse()
-        response.imageData = result.data
-        response.format = format
-        response.width = result.width
-        response.height = result.height
-        response.window = req.window
-        if let ocrText = result.ocrText {
-            response.ocrText = ocrText
+            var response = Macosusesdk_V1_CaptureWindowScreenshotResponse()
+            response.imageData = result.data
+            response.format = result.format
+            response.width = result.pixelWidth
+            response.height = result.pixelHeight
+            response.window = result.sourceName
+            response.windowFrame = windowCaptureRegionMessage(result.windowFrame)
+            response.region = windowCaptureRegionMessage(result.logicalFrame)
+            response.scale = result.scale
+            response.shadowIncluded = result.shadowIncluded
+            response.clipped = result.clipped
+            switch result.ocrResult {
+            case .notRequested:
+                break
+            case let .text(text):
+                response.ocrText = text
+            case let .failure(status):
+                response.ocrError = status
+            }
+
+            Self.logger.info("[captureWindowScreenshot] Captured \(result.pixelWidth, privacy: .public)x\(result.pixelHeight, privacy: .public) window screenshot")
+            return ServerResponse(message: response)
         }
+    }
 
-        Self.logger.info("[captureWindowScreenshot] Captured \(result.width, privacy: .public)x\(result.height, privacy: .public) window screenshot")
-        return ServerResponse(message: response)
+    private func validateWindowCaptureOutput(
+        _ output: WindowScreenshotCaptureOutput,
+        source: WindowScreenshotCaptureSource,
+        expectedFormat: Macosusesdk_V1_ImageFormat,
+        expectedShadow: Bool,
+    ) throws {
+        let windowFrame = output.windowFrame
+        let logicalFrame = output.logicalFrame
+        let finiteWindowFrame = EndpointSafeGeometry.containsValidEndpoints(
+            windowFrame,
+            requiresPositiveSize: true,
+        )
+        let finiteLogicalFrame = EndpointSafeGeometry.containsValidEndpoints(
+            logicalFrame,
+            requiresPositiveSize: true,
+        )
+        let frameTolerance: CGFloat = 0.001
+        let sourceFrameMatches = abs(windowFrame.minX - source.admittedFrame.minX) <= frameTolerance &&
+            abs(windowFrame.minY - source.admittedFrame.minY) <= frameTolerance &&
+            abs(windowFrame.width - source.admittedFrame.width) <= frameTolerance &&
+            abs(windowFrame.height - source.admittedFrame.height) <= frameTolerance
+        let logicalContainsWindow = windowFrame.minX >= logicalFrame.minX - frameTolerance &&
+            windowFrame.minY >= logicalFrame.minY - frameTolerance &&
+            windowFrame.maxX <= logicalFrame.maxX + frameTolerance &&
+            windowFrame.maxY <= logicalFrame.maxY + frameTolerance
+
+        guard output.sourceName == source.name,
+              output.windowID == source.windowID,
+              output.ownerPID == source.ownerPID,
+              output.format == expectedFormat,
+              output.pixelWidth > 0,
+              output.pixelHeight > 0,
+              !output.data.isEmpty,
+              finiteWindowFrame,
+              finiteLogicalFrame,
+              sourceFrameMatches,
+              logicalFrame.intersects(windowFrame),
+              output.clipped == !logicalContainsWindow,
+              output.scale.isFinite,
+              output.scale > 0,
+              abs(Double(output.pixelWidth) - Double(logicalFrame.width) * output.scale) < 1,
+              abs(Double(output.pixelHeight) - Double(logicalFrame.height) * output.scale) < 1,
+              output.shadowIncluded == expectedShadow
+        else {
+            throw RPCError(code: .unavailable, message: "Window screenshot source metadata is inconsistent")
+        }
+        try EncodedImageValidation.validate(
+            output.data,
+            format: output.format,
+            pixelWidth: output.pixelWidth,
+            pixelHeight: output.pixelHeight,
+        )
+    }
+
+    private func windowCaptureRegionMessage(_ frame: CGRect) -> Macosusesdk_Type_Region {
+        .with {
+            $0.x = frame.origin.x
+            $0.y = frame.origin.y
+            $0.width = frame.width
+            $0.height = frame.height
+        }
+    }
+
+    private func windowCaptureFramesEqual(
+        _ lhs: CGRect,
+        _ rhs: CGRect,
+        tolerance: CGFloat = 0.001,
+    ) -> Bool {
+        abs(lhs.minX - rhs.minX) <= tolerance &&
+            abs(lhs.minY - rhs.minY) <= tolerance &&
+            abs(lhs.width - rhs.width) <= tolerance &&
+            abs(lhs.height - rhs.height) <= tolerance
     }
 
     // MARK: - Filter Helpers
 
-    /// Applies filter expression to window list per AIP-160.
-    /// Supported filters: title="...", visible=true/false, minimized=true/false
-    /// Multiple conditions can be combined with spaces (AND semantics).
-    /// Note: Internal visibility for unit testing.
-    func applyWindowFilter(_ windows: [WindowRegistry.WindowInfo], filter: String) -> [WindowRegistry.WindowInfo] {
-        let filterLower = filter.lowercased()
+    /// Parses and applies the complete supported ListWindows filter grammar.
+    /// Unsupported or partially recognized input fails instead of being ignored.
+    func applyWindowFilter(
+        _ windows: [WindowRegistry.WindowInfo],
+        filter: String,
+    ) throws -> [WindowRegistry.WindowInfo] {
+        try applyWindowFilter(windows, clauses: parseWindowFilter(filter))
+    }
+
+    private func applyWindowFilter(
+        _ windows: [WindowRegistry.WindowInfo],
+        clauses: [WindowFilterClause],
+    ) -> [WindowRegistry.WindowInfo] {
         var result = windows
-
-        // Filter by visible state
-        if filterLower.contains("visible=true") {
-            result = result.filter(\.isOnScreen)
-        } else if filterLower.contains("visible=false") {
-            result = result.filter { !$0.isOnScreen }
+        for clause in clauses {
+            switch clause {
+            case let .title(value):
+                result = result.filter { titleMatches(pattern: value, title: $0.title) }
+            case let .visible(value):
+                result = result.filter { $0.isOnScreen == value }
+            }
         }
-
-        // Filter by minimized state (inverted - not on screen often means minimized)
-        // Note: WindowRegistry doesn't track minimized directly, but isOnScreen is false for minimized windows
-        if filterLower.contains("minimized=true") {
-            result = result.filter { !$0.isOnScreen }
-        } else if filterLower.contains("minimized=false") {
-            result = result.filter(\.isOnScreen)
-        }
-
-        // Filter by title (supports title="..." or title contains)
-        if let titleMatch = extractQuotedValue(from: filter, key: "title") {
-            result = result.filter { $0.title.localizedCaseInsensitiveContains(titleMatch) }
-        }
-
         return result
+    }
+
+    private func applyWindowFilter(
+        _ windows: [WindowRegistry.WindowBinding],
+        clauses: [WindowFilterClause],
+    ) -> [WindowRegistry.WindowBinding] {
+        var result = windows
+        for clause in clauses {
+            switch clause {
+            case let .title(value):
+                result = result.filter { titleMatches(pattern: value, title: $0.title) }
+            case let .visible(value):
+                result = result.filter { $0.isOnScreen == value }
+            }
+        }
+        return result
+    }
+
+    private func parseWindowFilter(_ rawFilter: String) throws -> [WindowFilterClause] {
+        let expression = rawFilter as NSString
+        let length = expression.length
+        guard !rawFilter.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return []
+        }
+        let regex = try NSRegularExpression(
+            pattern: #"(?:(title)\s*=\s*\"([^\"]*)\"|(visible)\s*=\s*(true|false))"#,
+        )
+        var clauses: [WindowFilterClause] = []
+        var cursor = 0
+        while cursor < length {
+            let remaining = expression.substring(from: cursor)
+            if remaining.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                break
+            }
+            let searchRange = NSRange(location: cursor, length: length - cursor)
+            guard let match = regex.firstMatch(in: rawFilter, range: searchRange) else {
+                throw invalidWindowFilter(rawFilter)
+            }
+            let separatorRange = NSRange(location: cursor, length: match.range.location - cursor)
+            let separator = expression.substring(with: separatorRange)
+            let trimmedSeparator = separator.trimmingCharacters(in: .whitespacesAndNewlines)
+            if clauses.isEmpty {
+                guard trimmedSeparator.isEmpty else {
+                    throw invalidWindowFilter(rawFilter)
+                }
+            } else {
+                let containsWhitespace = separator.rangeOfCharacter(from: .whitespacesAndNewlines) != nil
+                guard containsWhitespace,
+                      trimmedSeparator.isEmpty || trimmedSeparator.caseInsensitiveCompare("AND") == .orderedSame
+                else {
+                    throw invalidWindowFilter(rawFilter)
+                }
+            }
+
+            if match.range(at: 1).location != NSNotFound {
+                clauses.append(.title(expression.substring(with: match.range(at: 2))))
+            } else {
+                let value = expression.substring(with: match.range(at: 4)) == "true"
+                clauses.append(.visible(value))
+            }
+            cursor = NSMaxRange(match.range)
+        }
+        return clauses
+    }
+
+    private func parseWindowOrdering(_ rawOrdering: String) throws -> WindowOrdering {
+        let trimmed = rawOrdering.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            return WindowOrdering(terms: [.init(field: .name, descending: false)])
+        }
+        let rawTerms = trimmed.split(separator: ",", omittingEmptySubsequences: false)
+        var terms: [WindowOrdering.Term] = []
+        var seenFields: Set<WindowOrdering.Field> = []
+        for rawTerm in rawTerms {
+            let parts = rawTerm.lowercased().split(whereSeparator: \.isWhitespace).map(String.init)
+            guard parts.count == 1 || parts.count == 2 else {
+                throw invalidWindowOrdering(rawOrdering)
+            }
+            let field: WindowOrdering.Field = switch parts[0] {
+            case "name": .name
+            case "title": .title
+            case "layer": .layer
+            default: throw invalidWindowOrdering(rawOrdering)
+            }
+            guard seenFields.insert(field).inserted else {
+                throw invalidWindowOrdering(rawOrdering)
+            }
+            let descending: Bool = switch parts.count == 2 ? parts[1] : "asc" {
+            case "asc": false
+            case "desc": true
+            default: throw invalidWindowOrdering(rawOrdering)
+            }
+            terms.append(.init(field: field, descending: descending))
+        }
+        return WindowOrdering(terms: terms)
+    }
+
+    private func invalidWindowFilter(_ value: String) -> RPCError {
+        RPCErrorHelpers.validationError(
+            message: "filter contains an unsupported or malformed expression",
+            reason: "INVALID_FILTER",
+            field: "filter",
+            value: value,
+        )
+    }
+
+    private func invalidWindowOrdering(_ value: String) -> RPCError {
+        RPCErrorHelpers.validationError(
+            message: "order_by must be a comma-separated list of name, title, or layer with optional asc or desc",
+            reason: "INVALID_ORDER_BY",
+            field: "order_by",
+            value: value,
+        )
+    }
+
+    private func canonicalWindowFilter(_ clauses: [WindowFilterClause]) -> String {
+        ParsingHelpers.pageTokenQuery(
+            method: "ListWindowsFilter",
+            parameters: clauses.enumerated().map { index, clause in
+                switch clause {
+                case let .title(value):
+                    ("\(index):title", value)
+                case let .visible(value):
+                    ("\(index):visible", String(value))
+                }
+            },
+        )
+    }
+
+    private func windowBindingPrecedes(
+        _ lhs: WindowRegistry.WindowBinding,
+        _ rhs: WindowRegistry.WindowBinding,
+        ordering: WindowOrdering,
+    ) -> Bool {
+        for term in ordering.terms {
+            let comparison: ComparisonResult = switch term.field {
+            case .name:
+                lhs.name.compare(rhs.name)
+            case .title:
+                lhs.title.compare(rhs.title)
+            case .layer:
+                if lhs.layer == rhs.layer {
+                    .orderedSame
+                } else {
+                    lhs.layer < rhs.layer ? .orderedAscending : .orderedDescending
+                }
+            }
+            guard comparison != .orderedSame else {
+                continue
+            }
+            return term.descending
+                ? comparison == .orderedDescending
+                : comparison == .orderedAscending
+        }
+        return lhs.name < rhs.name
+    }
+
+    private func titleMatches(pattern: String, title: String) -> Bool {
+        let patternCharacters = Array(pattern)
+        let titleCharacters = Array(title)
+        var patternIndex = 0
+        var titleIndex = 0
+        var starIndex: Int?
+        var starTitleIndex = 0
+
+        while titleIndex < titleCharacters.count {
+            if patternIndex < patternCharacters.count,
+               patternCharacters[patternIndex] == titleCharacters[titleIndex]
+            {
+                patternIndex += 1
+                titleIndex += 1
+            } else if patternIndex < patternCharacters.count,
+                      patternCharacters[patternIndex] == "*"
+            {
+                starIndex = patternIndex
+                patternIndex += 1
+                starTitleIndex = titleIndex
+            } else if let starIndex {
+                patternIndex = starIndex + 1
+                starTitleIndex += 1
+                titleIndex = starTitleIndex
+            } else {
+                return false
+            }
+        }
+        while patternIndex < patternCharacters.count, patternCharacters[patternIndex] == "*" {
+            patternIndex += 1
+        }
+        return patternIndex == patternCharacters.count
     }
 
     /// Extracts a quoted value from a filter expression like key="value"
@@ -680,5 +1032,36 @@ extension MacosUseService {
             return nil
         }
         return String(filter[valueRange])
+    }
+}
+
+private enum WindowFilterClause {
+    case title(String)
+    case visible(Bool)
+}
+
+private struct WindowOrdering {
+    struct Term {
+        let field: Field
+        let descending: Bool
+    }
+
+    enum Field: Hashable {
+        case name
+        case title
+        case layer
+    }
+
+    let terms: [Term]
+
+    var queryIdentity: String {
+        terms.map { term in
+            let field = switch term.field {
+            case .name: "name"
+            case .title: "title"
+            case .layer: "layer"
+            }
+            return "\(field) \(term.descending ? "desc" : "asc")"
+        }.joined(separator: ",")
     }
 }

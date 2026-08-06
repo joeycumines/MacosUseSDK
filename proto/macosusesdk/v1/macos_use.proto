@@ -17,13 +17,15 @@ import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 // buf:lint:ignore IMPORT_USED For AIP-193 ErrorInfo support (Swift).
 import "google/rpc/error_details.proto";
-import "macosusesdk/type/element.proto";
+import "google/rpc/status.proto";
 import "macosusesdk/type/geometry.proto";
 import "macosusesdk/type/selector.proto";
+import "macosusesdk/type/traversal.proto";
 import "macosusesdk/v1/application.proto";
 import "macosusesdk/v1/clipboard.proto";
 import "macosusesdk/v1/condition.proto";
 import "macosusesdk/v1/display.proto";
+import "macosusesdk/v1/element.proto";
 import "macosusesdk/v1/input.proto";
 import "macosusesdk/v1/macro.proto";
 import "macosusesdk/v1/observation.proto";
@@ -39,32 +41,53 @@ option java_package = "com.macosusesdk.v1";
 
 // MacosUse is the primary service for automating macOS applications.
 service MacosUse {
-  // Opens or activates an application. This is a long-running operation.
-  rpc OpenApplication(OpenApplicationRequest) returns (google.longrunning.Operation) {
-    option (google.api.http) = {
-      post: "/v1/applications:openApplication"
-      body: "*"
-    };
-    option (google.longrunning.operation_info) = {
-      response_type: "OpenApplicationResponse"
-      metadata_type: "OpenApplicationMetadata"
-    };
+  // Gets one exact installed application bundle.
+  rpc GetApplicationBundle(GetApplicationBundleRequest) returns (ApplicationBundle) {
+    option (google.api.http) = {get: "/v1/{name=applicationBundles/*}"};
+    option (google.api.method_signature) = "name";
   }
 
-  // Gets a specific application being tracked.
+  // Lists discoverable installed application bundles without opening them.
+  rpc ListApplicationBundles(ListApplicationBundlesRequest) returns (ListApplicationBundlesResponse) {
+    option (google.api.http) = {get: "/v1/applicationBundles"};
+  }
+
+  // Opens one exact installed application bundle.
+  rpc OpenApplication(OpenApplicationRequest) returns (OpenApplicationResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=applicationBundles/*}:open"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // Gets one exact running application process instance.
   rpc GetApplication(GetApplicationRequest) returns (Application) {
     option (google.api.http) = {get: "/v1/{name=applications/*}"};
     option (google.api.method_signature) = "name";
   }
 
-  // Lists all applications currently tracked.
+  // Lists exact currently running user application process instances.
   rpc ListApplications(ListApplicationsRequest) returns (ListApplicationsResponse) {
     option (google.api.http) = {get: "/v1/applications"};
   }
 
-  // Stops tracking an application. This does NOT quit the app.
-  rpc DeleteApplication(DeleteApplicationRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {delete: "/v1/{name=applications/*}"};
+  // Activates one exact running application process instance.
+  rpc ActivateApplication(ActivateApplicationRequest) returns (ActivateApplicationResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=applications/*}:activate"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // Closes an exact tracked application instance and stops tracking it after
+  // the owned process is observed to exit.
+  rpc CloseApplication(CloseApplicationRequest) returns (CloseApplicationResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=applications/*}:close"
+      body: "*"
+    };
     option (google.api.method_signature) = "name";
   }
 
@@ -206,9 +229,15 @@ service MacosUse {
   }
 
   // Gets a specific element.
-  rpc GetElement(GetElementRequest) returns (macosusesdk.type.Element) {
+  rpc GetElement(GetElementRequest) returns (Element) {
     option (google.api.http) = {get: "/v1/{name=applications/*/elements/*}"};
     option (google.api.method_signature) = "name";
+  }
+
+  // Lists retained element resources for an application.
+  rpc ListElements(ListElementsRequest) returns (ListElementsResponse) {
+    option (google.api.http) = {get: "/v1/{parent=applications/*}/elements"};
+    option (google.api.method_signature) = "parent";
   }
 
   // Clicks an element.
@@ -493,33 +522,6 @@ service MacosUse {
     option (google.api.method_signature) = "application,file_path";
   }
 
-  // Selects a file programmatically.
-  rpc SelectFile(SelectFileRequest) returns (SelectFileResponse) {
-    option (google.api.http) = {
-      post: "/v1/{application=applications/*}:selectFile"
-      body: "*"
-    };
-    option (google.api.method_signature) = "application,file_path";
-  }
-
-  // Selects a directory.
-  rpc SelectDirectory(SelectDirectoryRequest) returns (SelectDirectoryResponse) {
-    option (google.api.http) = {
-      post: "/v1/{application=applications/*}:selectDirectory"
-      body: "*"
-    };
-    option (google.api.method_signature) = "application,directory_path";
-  }
-
-  // Drags and drops files.
-  rpc DragFiles(DragFilesRequest) returns (DragFilesResponse) {
-    option (google.api.http) = {
-      post: "/v1/{application=applications/*}:dragFiles"
-      body: "*"
-    };
-    option (google.api.method_signature) = "application,file_paths,target_element_id";
-  }
-
   // Creates a macro.
   rpc CreateMacro(CreateMacroRequest) returns (Macro) {
     option (google.api.http) = {
@@ -611,42 +613,90 @@ service MacosUse {
   }
 }
 
-// Request to open an application.
+// Request to get one installed application bundle.
+message GetApplicationBundleRequest {
+  // Resource name of the exact installed application bundle.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.com/ApplicationBundle"}
+  ];
+
+  // Amount of metadata to return. Unspecified defaults to BASIC.
+  ApplicationView view = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request to list discoverable installed application bundles.
+message ListApplicationBundlesRequest {
+  // Maximum number of bundles to return. Zero uses the server default;
+  // negative values are invalid and values above 1000 are clamped to 1000.
+  int32 page_size = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Opaque token from a previous request with identical semantic query inputs,
+  // including the effective page size after defaulting and clamping.
+  string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Ordering specification. Supported fields are name, display_name,
+  // bundle_id, and bundle_url, optionally followed by " desc".
+  string order_by = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Filter expression. Supported equality fields are display_name and
+  // bundle_id; multiple conditions use AND semantics.
+  string filter = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Amount of metadata to return. Unspecified defaults to BASIC.
+  ApplicationView view = 5 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from listing installed application bundles.
+message ListApplicationBundlesResponse {
+  // The application bundles.
+  repeated ApplicationBundle application_bundles = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Opaque token for the next page, or empty when the collection is exhausted.
+  string next_page_token = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Request to open one exact application bundle.
 message OpenApplicationRequest {
-  // The identifier (name, bundle ID, or path) of the application to open.
-  // Examples: "Calculator", "com.apple.calculator", "/Applications/Calculator.app"
-  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  // Resource name of the exact installed application bundle to open.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.com/ApplicationBundle"}
+  ];
 
   // If true, the application is opened without being activated (brought to foreground).
   // The user's current focus is preserved. Defaults to false (activates app).
   // Uses NSWorkspace.OpenConfiguration.activates = false internally.
   bool background = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // How to reuse or create the exact bundle's process. Unspecified uses
+  // launch-or-activate behavior. Activating one exact existing process uses
+  // ActivateApplication instead.
+  ApplicationOpenMode mode = 3 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from opening an application.
 message OpenApplicationResponse {
   // The application resource that was opened.
   Application application = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
-}
 
-// Metadata for OpenApplication long-running operation.
-message OpenApplicationMetadata {
-  // The identifier being opened.
-  string id = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // What the open request observably did with the application process.
+  ApplicationOpenDisposition disposition = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to get an application.
 message GetApplicationRequest {
+  reserved 2;
+  reserved "read_mask";
+
   // Resource name of the application.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {type: "macosusesdk.com/Application"}
   ];
 
-  // Optional. Field mask specifying which fields to return.
-  // If not specified or empty, all fields are returned.
-  // Supported fields: name, pid, display_name, bundle_id.
-  google.protobuf.FieldMask read_mask = 2 [(google.api.field_behavior) = OPTIONAL];
+  // Amount of metadata to return. Unspecified defaults to BASIC.
+  ApplicationView view = 3 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Request to list applications.
@@ -659,15 +709,16 @@ message ListApplicationsRequest {
   // Only its presence or absence should be used to determine pagination state.
   string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
 
-  // Optional. Ordering specification for results.
-  // Supported values: "name" (default), "pid", "display_name"
-  // Append " desc" for descending order (e.g., "name desc").
+  // Ordering specification. Supported fields are name, pid, display_name,
+  // bundle_id, and active, optionally followed by " desc".
   string order_by = 3 [(google.api.field_behavior) = OPTIONAL];
 
-  // Optional. Filter expression for results.
-  // Supported filters: name="..." (filters by display_name)
-  // Multiple conditions can be combined with spaces (AND semantics).
+  // Filter expression. Supported equality fields are display_name and
+  // bundle_id; multiple conditions use AND semantics.
   string filter = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Amount of metadata to return. Unspecified defaults to BASIC.
+  ApplicationView view = 5 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from listing applications.
@@ -681,21 +732,52 @@ message ListApplicationsResponse {
   string next_page_token = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
-// Request to delete an application.
-message DeleteApplicationRequest {
+// Request to activate one exact running application process instance.
+message ActivateApplicationRequest {
+  // Resource name of the exact running application.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "macosusesdk.com/Application"}
+  ];
+}
+
+// Response from activating an application.
+message ActivateApplicationResponse {
+  // Refreshed snapshot of the exact running application.
+  Application application = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // What the activation request observably did.
+  ApplicationActivationDisposition disposition = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Request to close an application.
+message CloseApplicationRequest {
   // Resource name of the application.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {type: "macosusesdk.com/Application"}
   ];
 
-  // If set to true, any pending inputs for this application will also be deleted.
+  // If true, the server may force-terminate the exact owned process after a
+  // bounded graceful close attempt does not converge. If false, failure to
+  // exit gracefully returns DEADLINE_EXCEEDED and the application remains
+  // tracked.
   bool force = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from closing an application.
+message CloseApplicationResponse {
+  // Snapshot of the exact tracked application accepted by this request.
+  Application application = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // How the exact tracked process reached the closed state.
+  ApplicationCloseDisposition disposition = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to create an input.
 message CreateInputRequest {
-  // Parent resource. Either "applications/{application}" or "" for desktop inputs.
+  // Parent resource. Use "applications/{application}" for application-owned
+  // input or the explicit wildcard "applications/-" for desktop-wide input.
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {child_type: "macosusesdk.com/Input"}
@@ -719,7 +801,8 @@ message GetInputRequest {
 
 // Request to list inputs.
 message ListInputsRequest {
-  // Parent resource. Either "applications/{application}" or "" for desktop inputs.
+  // Parent resource. Use "applications/{application}" for application-owned
+  // input or the explicit wildcard "applications/-" for desktop-wide input.
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {child_type: "macosusesdk.com/Input"}
@@ -733,7 +816,8 @@ message ListInputsRequest {
   // Only its presence or absence should be used to determine pagination state.
   string page_token = 3 [(google.api.field_behavior) = OPTIONAL];
 
-  // Filter inputs by state. Valid values: PENDING, EXECUTING, COMPLETED, FAILED.
+  // Filter inputs by state. Valid values: PENDING, EXECUTING, COMPLETED,
+  // FAILED, CANCELLED.
   string filter = 4 [(google.api.field_behavior) = OPTIONAL];
 }
 
@@ -750,6 +834,9 @@ message ListInputsResponse {
 
 // Request to traverse accessibility tree.
 message TraverseAccessibilityRequest {
+  reserved 3;
+  reserved "activate";
+
   // Resource name of the application.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
@@ -758,11 +845,6 @@ message TraverseAccessibilityRequest {
 
   // Whether to return only visible elements.
   bool visible_only = 2 [(google.api.field_behavior) = OPTIONAL];
-
-  // Whether to activate (bring to foreground) the target application before
-  // traversal. When false (the default), traversal is performed passively
-  // without disturbing window ordering.
-  bool activate = 3 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from traversing accessibility tree.
@@ -771,7 +853,7 @@ message TraverseAccessibilityResponse {
   string app = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Elements found in the traversal.
-  repeated macosusesdk.type.Element elements = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  repeated Element elements = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Statistics about the traversal.
   macosusesdk.type.TraversalStats stats = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
@@ -798,10 +880,10 @@ message WatchAccessibilityRequest {
 // Response streamed from watching accessibility.
 message WatchAccessibilityResponse {
   // Elements added since last update.
-  repeated macosusesdk.type.Element added = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+  repeated Element added = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Elements removed since last update.
-  repeated macosusesdk.type.Element removed = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  repeated Element removed = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Elements modified since last update.
   repeated ModifiedElement modified = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
@@ -810,10 +892,10 @@ message WatchAccessibilityResponse {
 // An element that was modified.
 message ModifiedElement {
   // The element before modification.
-  macosusesdk.type.Element old_element = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+  Element old_element = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // The element after modification.
-  macosusesdk.type.Element new_element = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  Element new_element = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // List of changed attributes (uses AttributeChange from observation.proto).
   repeated AttributeChange changes = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
@@ -859,7 +941,7 @@ message FindElementsRequest {
 // Response from finding elements.
 message FindElementsResponse {
   // Elements matching the selector.
-  repeated macosusesdk.type.Element elements = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+  repeated Element elements = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Token to retrieve the next page of results.
   // This token is opaque and its structure must not be relied upon by clients.
@@ -907,7 +989,7 @@ message FindRegionElementsRequest {
 // Response from finding elements in a region.
 message FindRegionElementsResponse {
   // Elements within the region.
-  repeated macosusesdk.type.Element elements = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+  repeated Element elements = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Token to retrieve the next page of results.
   // This token is opaque and its structure must not be relied upon by clients.
@@ -921,8 +1003,34 @@ message GetElementRequest {
   // Format: applications/{application}/elements/{element}
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.googleapis.com/Element"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Element"}
   ];
+}
+
+// Request to list retained element resources for one application.
+message ListElementsRequest {
+  // Parent application resource in the format "applications/{application}".
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {child_type: "macosusesdk.com/Element"}
+  ];
+
+  // Maximum number of elements to return. If zero, the server uses 100. Values
+  // above 1000 are coerced to 1000; negative values are invalid.
+  int32 page_size = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Opaque token from a previous ListElements request. The parent must match
+  // the request that produced the token.
+  string page_token = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response from listing retained element resources.
+message ListElementsResponse {
+  // Retained nonexpired elements in canonical resource-name order.
+  repeated Element elements = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Opaque token for the next page, or empty when no subsequent page exists.
+  string next_page_token = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to click an element.
@@ -967,7 +1075,14 @@ message ClickElementResponse {
   bool success = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // The element that was clicked.
-  macosusesdk.type.Element element = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  Element element = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // The Input resource produced by the physical click, if a W2 input
+  // transaction was executed. Absent when the click was purely AX-based.
+  string input = 3 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.resource_reference) = {type: "macosusesdk.com/Input"}
+  ];
 }
 
 // Request to write an element's value.
@@ -987,8 +1102,26 @@ message WriteElementValueRequest {
     macosusesdk.type.ElementSelector selector = 3;
   }
 
-  // Value to write.
-  string value = 4 [(google.api.field_behavior) = OPTIONAL];
+  // Value to write. When omitted, the element value is cleared. An explicit
+  // empty string sets the value to empty rather than clearing.
+  optional string value = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Write strategy to use. Defaults to DIRECT_AX when unspecified.
+  WriteMode write_mode = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Strategy for writing to an editable element.
+  enum WriteMode {
+    // Default — write directly through the Accessibility API.
+    WRITE_MODE_UNSPECIFIED = 0;
+
+    // Write the value through the accessibility AXValue attribute and
+    // verify with live readback before returning.
+    WRITE_MODE_DIRECT_AX = 1;
+
+    // Replace the current value by selecting all, typing the new text
+    // through owned W2 physical input, and verifying with AX readback.
+    WRITE_MODE_KEYSTROKE_REPLACEMENT = 2;
+  }
 }
 
 // Response from writing an element's value.
@@ -997,7 +1130,14 @@ message WriteElementValueResponse {
   bool success = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // The element that was modified.
-  macosusesdk.type.Element element = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  Element element = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // The Input resource produced by keystroke replacement, if that mode was
+  // used. Absent when a direct AX write was performed.
+  string input = 3 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.resource_reference) = {type: "macosusesdk.com/Input"}
+  ];
 }
 
 // Request to get available actions for an element.
@@ -1006,7 +1146,7 @@ message GetElementActionsRequest {
   // Format: applications/{application}/elements/{element}
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.googleapis.com/Element"}
+    (google.api.resource_reference) = {type: "macosusesdk.com/Element"}
   ];
 }
 
@@ -1043,7 +1183,14 @@ message PerformElementActionResponse {
   bool success = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // The element.
-  macosusesdk.type.Element element = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  Element element = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // The Input resource produced if a physical fallback was executed.
+  // Absent when the action was purely AX-based.
+  string input = 3 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.resource_reference) = {type: "macosusesdk.com/Input"}
+  ];
 }
 
 // Request to wait for an element to appear (long-running operation).
@@ -1067,7 +1214,7 @@ message WaitElementRequest {
 // Response from waiting for an element.
 message WaitElementResponse {
   // The element that appeared.
-  macosusesdk.type.Element element = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+  Element element = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Metadata for WaitElement long-running operation.
@@ -1130,7 +1277,7 @@ message StateCondition {
 // Response from waiting for element state.
 message WaitElementStateResponse {
   // The element in the expected state.
-  macosusesdk.type.Element element = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+  Element element = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Metadata for WaitElementState operation.
@@ -1150,9 +1297,9 @@ message GetWindowRequest {
     (google.api.resource_reference) = {type: "macosusesdk.com/Window"}
   ];
 
-  // Optional. Field mask specifying which fields to return.
-  // If not specified or empty, all fields are returned.
-  // Supported fields: name, title, bounds, visible, z_index, minimized, bundle_id, state.
+  // Field mask specifying which fields to return. If not specified or empty,
+  // all fields are returned. Supported fields: name, title, bounds, visible,
+  // layer, bundle_id, or "*". The wildcard must be the only path.
   google.protobuf.FieldMask read_mask = 2 [(google.api.field_behavior) = OPTIONAL];
 }
 
@@ -1164,7 +1311,10 @@ message ListWindowsRequest {
     (google.api.resource_reference) = {type: "macosusesdk.com/Application"}
   ];
 
-  // Maximum number of windows to return.
+  // Maximum number of windows to return. Zero uses the default of 100; values
+  // above 1000 are coerced to 1000. A changed value on a continuation request
+  // is honored. Parent, filter, and ordering must otherwise match the request
+  // that produced the token.
   int32 page_size = 2 [(google.api.field_behavior) = OPTIONAL];
 
   // Page token from a previous ListWindows call.
@@ -1172,14 +1322,14 @@ message ListWindowsRequest {
   // Only its presence or absence should be used to determine pagination state.
   string page_token = 3 [(google.api.field_behavior) = OPTIONAL];
 
-  // Optional. Ordering specification for results.
-  // Supported values: "window_id" (default), "title", "z_order"
-  // Append " desc" for descending order (e.g., "title desc").
+  // Ordering specification. Supported fields are name, title, and layer in a
+  // comma-separated list; append " desc" for descending order. Omitted
+  // directions are ascending. The opaque name is the final stable tie-breaker.
   string order_by = 4 [(google.api.field_behavior) = OPTIONAL];
 
-  // Optional. Filter expression for results.
-  // Supported filters: title="...", visible=true/false, minimized=true/false
-  // Multiple conditions can be combined with spaces (AND semantics).
+  // Filter expression. Supported clauses are case-sensitive title="..."
+  // equality with the * wildcard and visible=true/false;
+  // multiple conditions use whitespace or AND semantics.
   string filter = 5 [(google.api.field_behavior) = OPTIONAL];
 }
 
@@ -1222,10 +1372,10 @@ message MoveWindowRequest {
   ];
 
   // New X coordinate in Global Display Coordinates (top-left origin, Y increases downward).
-  double x = 2 [(google.api.field_behavior) = REQUIRED];
+  optional double x = 2 [(google.api.field_behavior) = REQUIRED];
 
   // New Y coordinate in Global Display Coordinates (top-left origin, Y increases downward).
-  double y = 3 [(google.api.field_behavior) = REQUIRED];
+  optional double y = 3 [(google.api.field_behavior) = REQUIRED];
 }
 
 // Request to resize a window.
@@ -1464,7 +1614,8 @@ message UpdateMacroRequest {
   // The macro to update. The name field must be set.
   Macro macro = 1 [(google.api.field_behavior) = REQUIRED];
 
-  // Fields to update.
+  // Fields to update. Supported fields: display_name, description, actions,
+  // parameters, and tags. An empty mask replaces all mutable fields.
   google.protobuf.FieldMask update_mask = 2 [(google.api.field_behavior) = OPTIONAL];
 }
 
@@ -1491,7 +1642,9 @@ message ExecuteMacroRequest {
   // Parameter values (for parameterized macros).
   map<string, string> parameter_values = 2 [(google.api.field_behavior) = OPTIONAL];
 
-  // Application context (if needed).
+  // Exact running application generation that owns every physical action in
+  // the macro. Required when any branch contains input, ClickElement, or
+  // TypeText; may be omitted only for a wholly nonphysical graph.
   string application = 3 [
     (google.api.field_behavior) = OPTIONAL,
     (google.api.resource_reference) = {type: "macosusesdk.com/Application"}
@@ -1503,17 +1656,11 @@ message ExecuteMacroRequest {
 
 // Options for macro execution.
 message ExecutionOptions {
-  // Execution speed multiplier (1.0 = normal speed).
-  double speed = 1 [(google.api.field_behavior) = OPTIONAL];
-
-  // Whether to continue on error.
-  bool continue_on_error = 2 [(google.api.field_behavior) = OPTIONAL];
+  reserved 1, 2, 4;
+  reserved "speed", "continue_on_error", "record_execution";
 
   // Maximum execution time in seconds.
   double timeout = 3 [(google.api.field_behavior) = OPTIONAL];
-
-  // Whether to record execution for debugging.
-  bool record_execution = 4 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // Response from executing a macro.
@@ -1568,14 +1715,14 @@ message BeginTransactionRequest {
 
   // Isolation level for transactions.
   enum IsolationLevel {
+    reserved 2;
+    reserved "ISOLATION_LEVEL_READ_COMMITTED";
+
     // Default isolation level (SERIALIZABLE).
     ISOLATION_LEVEL_UNSPECIFIED = 0;
 
     // All operations appear atomic (full snapshot/restore on rollback).
     ISOLATION_LEVEL_SERIALIZABLE = 1;
-
-    // Operations may see partial changes (best-effort rollback).
-    ISOLATION_LEVEL_READ_COMMITTED = 2;
   }
 }
 
@@ -1584,8 +1731,11 @@ message BeginTransactionResponse {
   // Transaction ID for subsequent operations.
   string transaction_id = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 
+  // Revision ID representing the session state at transaction start.
+  string revision_id = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
   // Session with updated state.
-  Session session = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  Session session = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to commit a transaction.
@@ -1629,17 +1779,23 @@ message GetSessionSnapshotRequest {
 
 // Request to capture a screenshot of the entire screen.
 message CaptureScreenshotRequest {
+  reserved 3;
+
   // Image format.
   ImageFormat format = 1 [(google.api.field_behavior) = OPTIONAL];
 
-  // JPEG quality (1-100, only for JPEG format).
+  // JPEG quality (1-100, only for JPEG format). A zero value selects the
+  // effective default quality of 85.
   int32 quality = 2 [(google.api.field_behavior) = OPTIONAL];
-
-  // Include display index in filename.
-  int32 display = 3 [(google.api.field_behavior) = OPTIONAL];
 
   // Whether to include OCR text extraction.
   bool include_ocr_text = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Exact display resource to capture. If omitted, captures the main display.
+  string display = 5 [
+    (google.api.field_behavior) = OPTIONAL,
+    (google.api.resource_reference) = {type: "macosusesdk.com/Display"}
+  ];
 }
 
 // Response from capturing a screenshot.
@@ -1656,8 +1812,27 @@ message CaptureScreenshotResponse {
   // Image height in pixels.
   int32 height = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
 
-  // OCR-extracted text (if requested).
-  string ocr_text = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // OCR outcome. Unset when OCR was not requested; successful empty text is
+  // distinct from extraction failure.
+  oneof ocr_result {
+    // Successfully extracted OCR text. An empty string is a successful result.
+    string ocr_text = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+    // OCR extraction failure for an otherwise successful image capture.
+    google.rpc.Status ocr_error = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
+  }
+
+  // Exact active display resource captured from the admitted topology snapshot.
+  string display = 6 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.resource_reference) = {type: "macosusesdk.com/Display"}
+  ];
+
+  // Exact captured logical region in Global Display Coordinates (top-left origin).
+  macosusesdk.type.Region region = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Encoded image pixels per logical display point.
+  double scale = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to capture a screenshot of a specific window.
@@ -1671,7 +1846,8 @@ message CaptureWindowScreenshotRequest {
   // Image format.
   ImageFormat format = 2 [(google.api.field_behavior) = OPTIONAL];
 
-  // JPEG quality (1-100, only for JPEG format).
+  // JPEG quality (1-100, only for JPEG format). A zero value selects the
+  // effective default quality of 85.
   int32 quality = 3 [(google.api.field_behavior) = OPTIONAL];
 
   // Whether to include window shadow.
@@ -1701,8 +1877,32 @@ message CaptureWindowScreenshotResponse {
     (google.api.resource_reference) = {type: "macosusesdk.com/Window"}
   ];
 
-  // OCR-extracted text (if requested).
-  string ocr_text = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // OCR outcome. Unset when OCR was not requested; successful empty text is
+  // distinct from extraction failure.
+  oneof ocr_result {
+    // Successfully extracted OCR text. An empty string is a successful result.
+    string ocr_text = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+    // OCR extraction failure for an otherwise successful image capture.
+    google.rpc.Status ocr_error = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+  }
+
+  // Exact ScreenCaptureKit source-window frame in Global Display Coordinates
+  // (top-left origin).
+  macosusesdk.type.Region window_frame = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // ScreenCaptureKit content-filter region in Global Display Coordinates
+  // (top-left origin). Transparent encoded padding is not represented.
+  macosusesdk.type.Region region = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // ScreenCaptureKit pixels-per-point scale admitted for this capture.
+  double scale = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether the capture configuration included the window shadow.
+  bool shadow_included = 11 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether the encoded logical footprint omits any source-window footprint.
+  bool clipped = 12 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to capture a screenshot of a specific element.
@@ -1719,7 +1919,8 @@ message CaptureElementScreenshotRequest {
   // Image format.
   ImageFormat format = 3 [(google.api.field_behavior) = OPTIONAL];
 
-  // JPEG quality (1-100, only for JPEG format).
+  // JPEG quality (1-100, only for JPEG format). A zero value selects the
+  // effective default quality of 85.
   int32 quality = 4 [(google.api.field_behavior) = OPTIONAL];
 
   // Padding around element in pixels.
@@ -1746,12 +1947,49 @@ message CaptureElementScreenshotResponse {
   // Element ID that was captured.
   string element_id = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
 
-  // OCR-extracted text (if requested).
-  string ocr_text = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // OCR outcome. Unset when OCR was not requested; successful empty text is
+  // distinct from extraction failure.
+  oneof ocr_result {
+    // Successfully extracted OCR text. An empty string is a successful result.
+    string ocr_text = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+    // OCR extraction failure for an otherwise successful image capture.
+    google.rpc.Status ocr_error = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+  }
+
+  // Exact application or window scope used to resolve the captured element.
+  string parent = 8 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.resource_reference) = {type: "*"}
+  ];
+
+  // Exact admitted element frame in Global Display Coordinates (top-left origin).
+  macosusesdk.type.Region element_frame = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Exact active display resource selected from the unpadded element frame.
+  string display = 10 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.resource_reference) = {type: "macosusesdk.com/Display"}
+  ];
+
+  // Exact encoded logical region in Global Display Coordinates (top-left
+  // origin), after pixel padding, display-edge clipping, and pixel alignment.
+  macosusesdk.type.Region region = 11 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Encoded image pixels per logical display point.
+  double scale = 12 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Exact requested padding in encoded image pixels.
+  int32 padding = 13 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether display-edge clipping removed any requested padded footprint.
+  bool clipped = 14 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to capture a screenshot of a screen region.
 message CaptureRegionScreenshotRequest {
+  reserved 4;
+
   // Region to capture.
   // Uses Global Display Coordinates (top-left origin, Y increases downward).
   // See macosusesdk.type.Point message documentation for detailed coordinate system explanation.
@@ -1760,14 +1998,19 @@ message CaptureRegionScreenshotRequest {
   // Image format.
   ImageFormat format = 2 [(google.api.field_behavior) = OPTIONAL];
 
-  // JPEG quality (1-100, only for JPEG format).
+  // JPEG quality (1-100, only for JPEG format). A zero value selects the
+  // effective default quality of 85.
   int32 quality = 3 [(google.api.field_behavior) = OPTIONAL];
-
-  // Display index (for multi-monitor setups).
-  int32 display = 4 [(google.api.field_behavior) = OPTIONAL];
 
   // Whether to include OCR text extraction.
   bool include_ocr_text = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Exact display resource containing the region. If omitted, the display is
+  // inferred from the region in Global Display Coordinates (top-left origin).
+  string display = 6 [
+    (google.api.field_behavior) = OPTIONAL,
+    (google.api.resource_reference) = {type: "macosusesdk.com/Display"}
+  ];
 }
 
 // Response from capturing a region screenshot.
@@ -1787,8 +2030,24 @@ message CaptureRegionScreenshotResponse {
   // Region that was captured.
   macosusesdk.type.Region region = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
 
-  // OCR-extracted text (if requested).
-  string ocr_text = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // OCR outcome. Unset when OCR was not requested; successful empty text is
+  // distinct from extraction failure.
+  oneof ocr_result {
+    // Successfully extracted OCR text. An empty string is a successful result.
+    string ocr_text = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+    // OCR extraction failure for an otherwise successful image capture.
+    google.rpc.Status ocr_error = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
+  }
+
+  // Exact active display resource from which the region was captured.
+  string display = 7 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.resource_reference) = {type: "macosusesdk.com/Display"}
+  ];
+
+  // Encoded image pixels per logical display point.
+  double scale = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to get clipboard contents.
@@ -1803,29 +2062,26 @@ message GetClipboardRequest {
 
 // Request to write clipboard contents.
 message WriteClipboardRequest {
-  // Content to write on clipboard.
-  ClipboardContent content = 1 [(google.api.field_behavior) = OPTIONAL];
+  reserved 2;
+  reserved "clear_existing";
 
-  // Whether to clear existing clipboard content first.
-  bool clear_existing = 2 [(google.api.field_behavior) = OPTIONAL];
+  // Content to write on clipboard.
+  ClipboardContent content = 1 [(google.api.field_behavior) = REQUIRED];
 }
 
 // Response from writing clipboard contents.
 message WriteClipboardResponse {
-  // Whether the operation succeeded.
-  bool success = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
-
-  // Content type that was written.
-  ContentType type = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // Exact clipboard resource observed after the write.
+  Clipboard clipboard = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to clear clipboard contents.
 message ClearClipboardRequest {}
 
-// Response from clearing clipboard.
+// Response from clearing clipboard contents.
 message ClearClipboardResponse {
-  // Whether the operation succeeded.
-  bool success = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // Exact empty clipboard resource observed after the clear.
+  Clipboard clipboard = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Request to get clipboard history (if available).
@@ -1905,93 +2161,6 @@ message AutomateSaveFileDialogResponse {
 
   // Final save path.
   string saved_path = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
-
-  // Error message if failed.
-  string error = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
-}
-
-// Request to select a file programmatically.
-message SelectFileRequest {
-  // Application context.
-  string application = 1 [
-    (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.com/Application"}
-  ];
-
-  // File path to select.
-  string file_path = 2 [(google.api.field_behavior) = REQUIRED];
-
-  // Whether to reveal Finder after selection.
-  bool reveal_finder = 3 [(google.api.field_behavior) = OPTIONAL];
-}
-
-// Response from selecting a file.
-message SelectFileResponse {
-  // Whether the operation succeeded.
-  bool success = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
-
-  // Selected file path.
-  string selected_path = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
-
-  // Error message if failed.
-  string error = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
-}
-
-// Request to select a directory.
-message SelectDirectoryRequest {
-  // Application context.
-  string application = 1 [
-    (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.com/Application"}
-  ];
-
-  // Directory path to select.
-  string directory_path = 2 [(google.api.field_behavior) = REQUIRED];
-
-  // Whether to create directory when it doesn't exist.
-  bool create_missing = 3 [(google.api.field_behavior) = OPTIONAL];
-}
-
-// Response from selecting a directory.
-message SelectDirectoryResponse {
-  // Whether the operation succeeded.
-  bool success = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
-
-  // Selected directory path.
-  string selected_path = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
-
-  // Whether the directory was created.
-  bool created = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
-
-  // Error message if failed.
-  string error = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
-}
-
-// Request to drag and drop files.
-message DragFilesRequest {
-  // Application context.
-  string application = 1 [
-    (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "macosusesdk.com/Application"}
-  ];
-
-  // File paths to drag.
-  repeated string file_paths = 2 [(google.api.field_behavior) = REQUIRED];
-
-  // Target element ID to drop on.
-  string target_element_id = 3 [(google.api.field_behavior) = REQUIRED];
-
-  // Drag duration in seconds.
-  double duration = 4 [(google.api.field_behavior) = OPTIONAL];
-}
-
-// Response from dragging files.
-message DragFilesResponse {
-  // Whether the operation succeeded.
-  bool success = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
-
-  // Number of files dropped.
-  int32 files_dropped = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Error message if failed.
   string error = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
@@ -2125,4 +2294,65 @@ message GetScriptingDictionariesRequest {
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {type: "*"}
   ];
+}
+
+// Describes how an application reached the closed state.
+enum ApplicationCloseDisposition {
+  // The close disposition is unspecified.
+  APPLICATION_CLOSE_DISPOSITION_UNSPECIFIED = 0;
+
+  // The exact tracked process had already exited before the close request.
+  APPLICATION_CLOSE_DISPOSITION_ALREADY_EXITED = 1;
+
+  // The exact tracked process exited after the graceful close request.
+  APPLICATION_CLOSE_DISPOSITION_GRACEFUL = 2;
+
+  // The exact tracked process required force termination after the graceful
+  // close attempt did not converge.
+  APPLICATION_CLOSE_DISPOSITION_FORCED = 3;
+}
+
+// Controls how OpenApplication resolves or creates an application process.
+enum ApplicationOpenMode {
+  reserved 3;
+  reserved "APPLICATION_OPEN_MODE_ACTIVATE_ONLY";
+
+  // Use launch-or-activate behavior.
+  APPLICATION_OPEN_MODE_UNSPECIFIED = 0;
+
+  // Launch the application if absent, otherwise reuse its existing process.
+  APPLICATION_OPEN_MODE_LAUNCH_OR_ACTIVATE = 1;
+
+  // Always request a distinct application process.
+  APPLICATION_OPEN_MODE_FORCE_NEW_INSTANCE = 2;
+}
+
+// Describes the observed outcome of OpenApplication.
+enum ApplicationOpenDisposition {
+  // The open disposition is unspecified.
+  APPLICATION_OPEN_DISPOSITION_UNSPECIFIED = 0;
+
+  // A new application process was launched.
+  APPLICATION_OPEN_DISPOSITION_LAUNCHED_NEW = 1;
+
+  // An existing application process was activated.
+  APPLICATION_OPEN_DISPOSITION_ACTIVATED_EXISTING = 2;
+
+  // The selected process was already active.
+  APPLICATION_OPEN_DISPOSITION_ALREADY_ACTIVE = 3;
+
+  // An existing process was reused without activation because background=true.
+  APPLICATION_OPEN_DISPOSITION_REUSED_EXISTING = 4;
+}
+
+// Describes the observed outcome of ActivateApplication.
+enum ApplicationActivationDisposition {
+  // The activation disposition is unspecified.
+  APPLICATION_ACTIVATION_DISPOSITION_UNSPECIFIED = 0;
+
+  // The exact process became active during this request.
+  APPLICATION_ACTIVATION_DISPOSITION_ACTIVATED = 1;
+
+  // The exact process was already active.
+  APPLICATION_ACTIVATION_DISPOSITION_ALREADY_ACTIVE = 2;
 }

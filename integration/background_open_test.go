@@ -6,12 +6,44 @@ package integration
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"testing"
 	"time"
 
-	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
 )
+
+func requireFinderFrontmost(t *testing.T, ctx context.Context, client pb.MacosUseClient) {
+	t.Helper()
+	activation, err := client.ExecuteAppleScript(ctx, &pb.ExecuteAppleScriptRequest{
+		Script: `tell application "Finder" to activate`,
+	})
+	if err != nil {
+		t.Fatalf("Activate Finder RPC: %v", err)
+	}
+	if !activation.Success {
+		t.Fatalf("Activate Finder script failed: %s", activation.Error)
+	}
+
+	lastFrontmost := ""
+	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
+		response, err := client.ExecuteAppleScript(ctx, &pb.ExecuteAppleScriptRequest{
+			Script: `tell application "System Events" to return name of first application process whose frontmost is true`,
+		})
+		if err != nil {
+			return false, err
+		}
+		if !response.Success {
+			return false, fmt.Errorf("frontmost query failed: %s", response.Error)
+		}
+		lastFrontmost = strings.TrimSpace(response.Output)
+		return lastFrontmost == "Finder", nil
+	})
+	if err != nil {
+		t.Fatalf("Finder did not become frontmost; last observed application %q: %v", lastFrontmost, err)
+	}
+}
 
 // TestBackgroundOpenDoesNotStealFocus verifies that opening an application with
 // background=true does not steal focus from the current frontmost application.
@@ -34,30 +66,10 @@ func TestBackgroundOpenDoesNotStealFocus(t *testing.T) {
 	defer conn.Close()
 
 	client := pb.NewMacosUseClient(conn)
-	opsClient := longrunningpb.NewOperationsClient(conn)
 
 	// 2. Ensure Finder is frontmost first (stable starting point)
 	t.Log("Activating Finder as the starting frontmost application...")
-	_, err := client.ExecuteAppleScript(ctx, &pb.ExecuteAppleScriptRequest{
-		Script: `tell application "Finder" to activate`,
-	})
-	if err != nil {
-		t.Fatalf("Failed to activate Finder: %v", err)
-	}
-
-	// Wait for Finder to become frontmost
-	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
-		resp, err := client.ExecuteAppleScript(ctx, &pb.ExecuteAppleScriptRequest{
-			Script: `tell application "System Events" to return name of first application process whose frontmost is true`,
-		})
-		if err != nil {
-			return false, nil
-		}
-		return resp.GetOutput() == "Finder", nil
-	})
-	if err != nil {
-		t.Fatalf("Failed to make Finder frontmost: %v", err)
-	}
+	requireFinderFrontmost(t, ctx, client)
 
 	// 3. Record the current frontmost app
 	t.Log("Recording initial frontmost application...")
@@ -66,40 +78,23 @@ func TestBackgroundOpenDoesNotStealFocus(t *testing.T) {
 
 	// 4. Open Calculator with background=true
 	t.Log("Opening Calculator with background=true...")
-	op, err := client.OpenApplication(ctx, &pb.OpenApplicationRequest{
-		Id:         "Calculator",
+	bundle := DiscoverApplicationBundle(t, ctx, client, "com.apple.calculator")
+	resp, err := client.OpenApplication(ctx, &pb.OpenApplicationRequest{
+		Name:       bundle.Name,
 		Background: true,
+		Mode:       pb.ApplicationOpenMode_APPLICATION_OPEN_MODE_LAUNCH_OR_ACTIVATE,
 	})
 	if err != nil {
-		t.Fatalf("Failed to initiate OpenApplication: %v", err)
+		t.Fatalf("OpenApplication failed: %v", err)
 	}
-
-	// Wait for operation to complete
-	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
-		op, err = opsClient.GetOperation(ctx, &longrunningpb.GetOperationRequest{
-			Name: op.Name,
-		})
-		if err != nil {
-			return false, nil
-		}
-		return op.Done, nil
-	})
-	if err != nil {
-		t.Fatalf("OpenApplication operation never completed: %v", err)
-	}
-	if op.GetError() != nil {
-		t.Fatalf("OpenApplication failed: %s", op.GetError().GetMessage())
-	}
-
-	// Extract the application from the response
-	resp := &pb.OpenApplicationResponse{}
-	if err := op.GetResponse().UnmarshalTo(resp); err != nil {
-		t.Fatalf("Failed to unmarshal OpenApplicationResponse: %v", err)
-	}
-	app := resp.Application
-	if app == nil {
+	if resp == nil || resp.Application == nil {
 		t.Fatalf("OpenApplication succeeded but returned nil application")
 	}
+	if resp.Disposition != pb.ApplicationOpenDisposition_APPLICATION_OPEN_DISPOSITION_LAUNCHED_NEW &&
+		resp.Disposition != pb.ApplicationOpenDisposition_APPLICATION_OPEN_DISPOSITION_REUSED_EXISTING {
+		t.Fatalf("Background OpenApplication disposition = %s, want launched-new or reused-existing", resp.Disposition)
+	}
+	app := resp.Application
 	t.Logf("Calculator opened with PID %d (name: %s)", app.Pid, app.Name)
 
 	// Clean up Calculator after test
@@ -157,67 +152,31 @@ func TestForegroundOpenDoesStealFocus(t *testing.T) {
 	defer conn.Close()
 
 	client := pb.NewMacosUseClient(conn)
-	opsClient := longrunningpb.NewOperationsClient(conn)
 
 	// 2. Ensure Finder is frontmost first
 	t.Log("Activating Finder as the starting frontmost application...")
-	_, err := client.ExecuteAppleScript(ctx, &pb.ExecuteAppleScriptRequest{
-		Script: `tell application "Finder" to activate`,
-	})
-	if err != nil {
-		t.Fatalf("Failed to activate Finder: %v", err)
-	}
-
-	// Wait for Finder to become frontmost
-	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
-		resp, err := client.ExecuteAppleScript(ctx, &pb.ExecuteAppleScriptRequest{
-			Script: `tell application "System Events" to return name of first application process whose frontmost is true`,
-		})
-		if err != nil {
-			return false, nil
-		}
-		return resp.GetOutput() == "Finder", nil
-	})
-	if err != nil {
-		t.Fatalf("Failed to make Finder frontmost: %v", err)
-	}
+	requireFinderFrontmost(t, ctx, client)
 	t.Log("Finder is frontmost")
 
 	// 3. Open Calculator with background=false (default behavior)
 	t.Log("Opening Calculator with background=false (default)...")
-	op, err := client.OpenApplication(ctx, &pb.OpenApplicationRequest{
-		Id:         "Calculator",
+	bundle := DiscoverApplicationBundle(t, ctx, client, "com.apple.calculator")
+	resp, err := client.OpenApplication(ctx, &pb.OpenApplicationRequest{
+		Name:       bundle.Name,
 		Background: false, // Explicit for clarity
+		Mode:       pb.ApplicationOpenMode_APPLICATION_OPEN_MODE_LAUNCH_OR_ACTIVATE,
 	})
 	if err != nil {
-		t.Fatalf("Failed to initiate OpenApplication: %v", err)
+		t.Fatalf("OpenApplication failed: %v", err)
 	}
-
-	// Wait for operation to complete
-	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
-		op, err = opsClient.GetOperation(ctx, &longrunningpb.GetOperationRequest{
-			Name: op.Name,
-		})
-		if err != nil {
-			return false, nil
-		}
-		return op.Done, nil
-	})
-	if err != nil {
-		t.Fatalf("OpenApplication operation never completed: %v", err)
-	}
-	if op.GetError() != nil {
-		t.Fatalf("OpenApplication failed: %s", op.GetError().GetMessage())
-	}
-
-	resp := &pb.OpenApplicationResponse{}
-	if err := op.GetResponse().UnmarshalTo(resp); err != nil {
-		t.Fatalf("Failed to unmarshal OpenApplicationResponse: %v", err)
-	}
-	app := resp.Application
-	if app == nil {
+	if resp == nil || resp.Application == nil {
 		t.Fatalf("OpenApplication succeeded but returned nil application")
 	}
+	if resp.Disposition == pb.ApplicationOpenDisposition_APPLICATION_OPEN_DISPOSITION_UNSPECIFIED ||
+		resp.Disposition == pb.ApplicationOpenDisposition_APPLICATION_OPEN_DISPOSITION_REUSED_EXISTING {
+		t.Fatalf("Foreground OpenApplication disposition = %s, want observed foreground action", resp.Disposition)
+	}
+	app := resp.Application
 	t.Logf("Calculator opened with PID %d", app.Pid)
 	defer cleanupApplication(t, ctx, client, app)
 
@@ -237,6 +196,9 @@ func TestForegroundOpenDoesStealFocus(t *testing.T) {
 		}
 		return false, nil
 	})
+	if err != nil {
+		t.Fatalf("Calculator did not become frontmost before the convergence deadline: %v", err)
+	}
 	if !calculatorBecameFrontmost {
 		t.Fatalf("Expected Calculator to become frontmost with background=false, but it did not")
 	}

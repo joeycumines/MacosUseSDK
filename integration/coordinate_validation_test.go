@@ -1,17 +1,14 @@
 // Copyright 2025 Joseph Cumines
 //
-// Coordinate validation integration tests for multi-monitor setups.
-// Verifies that negative coordinates work correctly for secondary displays
-// positioned to the left of or above the main display.
-// Task: T072
+// Coordinate validation integration tests for Global Display Coordinates
+// (top-left origin). Physical input is intentionally exercised only by tests
+// that own and observe a golden-application target.
 
 package integration
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"net/http"
+	"math"
 	"testing"
 	"time"
 
@@ -19,10 +16,7 @@ import (
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
 )
 
-// TestCoordinateValidation_NegativeCoordinates verifies that negative coordinates
-// are accepted and work correctly. In Global Display Coordinates, secondary
-// monitors to the left or above the main display have negative coordinates.
-func TestCoordinateValidation_NegativeCoordinates(t *testing.T) {
+func TestCoordinateValidation_DisplayFramesRoundTrip(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
@@ -31,90 +25,94 @@ func TestCoordinateValidation_NegativeCoordinates(t *testing.T) {
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
-
 	client := pb.NewMacosUseClient(conn)
 
-	displayResp, err := client.ListDisplays(ctx, &pb.ListDisplaysRequest{})
+	response, err := client.ListDisplays(ctx, &pb.ListDisplaysRequest{})
 	if err != nil {
 		t.Fatalf("ListDisplays failed: %v", err)
 	}
-
-	if len(displayResp.Displays) == 0 {
-		t.Fatal("No displays found")
+	if len(response.Displays) == 0 {
+		t.Fatal("ListDisplays returned no displays")
 	}
 
-	var minX, minY, maxX, maxY float64
-	for i, d := range displayResp.Displays {
-		frame := d.Frame
-		if i == 0 || frame.X < minX {
-			minX = frame.X
+	var observedNegativeOrigin bool
+	for _, display := range response.Displays {
+		frame := display.GetFrame()
+		if frame == nil || !finiteRegion(frame) || frame.GetWidth() <= 0 || frame.GetHeight() <= 0 {
+			t.Fatalf("display %q returned invalid Global Display Coordinates frame: %+v", display.GetName(), frame)
 		}
-		if i == 0 || frame.Y < minY {
-			minY = frame.Y
+		if frame.GetX() < 0 || frame.GetY() < 0 {
+			observedNegativeOrigin = true
 		}
-		if i == 0 || frame.X+frame.Width > maxX {
-			maxX = frame.X + frame.Width
+		roundTrip, err := client.GetDisplay(ctx, &pb.GetDisplayRequest{Name: display.GetName()})
+		if err != nil {
+			t.Fatalf("GetDisplay(%q) failed: %v", display.GetName(), err)
 		}
-		if i == 0 || frame.Y+frame.Height > maxY {
-			maxY = frame.Y + frame.Height
+		if roundTrip.GetDisplayId() != display.GetDisplayId() || !equalRegion(roundTrip.GetFrame(), frame) {
+			t.Fatalf("display coordinate round trip changed identity or frame: listed=%+v fetched=%+v", display, roundTrip)
 		}
 	}
+	if !observedNegativeOrigin {
+		t.Log("current display topology has no left/above secondary display; no negative origin was fabricated")
+	}
+}
 
-	t.Logf("Display coordinate bounds: X=[%v, %v], Y=[%v, %v]", minX, maxX, minY, maxY)
+func TestCoordinateValidation_VisibleFrameRegionScreenshots(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
 
-	testCoordinates := []struct {
+	serverCmd, serverAddr := startServer(t, ctx)
+	defer cleanupServer(t, serverCmd, serverAddr)
+
+	conn := connectToServer(t, ctx, serverAddr)
+	defer conn.Close()
+	client := pb.NewMacosUseClient(conn)
+
+	displays, err := client.ListDisplays(ctx, &pb.ListDisplaysRequest{})
+	if err != nil {
+		t.Fatalf("ListDisplays failed: %v", err)
+	}
+	mainDisplay := requireMainDisplay(t, displays.Displays)
+	frame := mainDisplay.GetVisibleFrame()
+	if frame == nil {
+		frame = mainDisplay.GetFrame()
+	}
+	if frame == nil || frame.GetWidth() < 4 || frame.GetHeight() < 4 {
+		t.Fatalf("main display has no capturable visible frame: %+v", frame)
+	}
+
+	const sampleSize = 2.0
+	samples := []struct {
 		name string
 		x    float64
 		y    float64
 	}{
-		{"origin_main_display", 100, 100},
-		{"bottom_right_main", 500, 500},
-		{"explicit_negative_x", -100, 100},
-		{"explicit_negative_y", 100, -100},
-		{"explicit_negative_both", -100, -100},
+		{name: "top_left", x: frame.GetX(), y: frame.GetY()},
+		{name: "center", x: frame.GetX() + frame.GetWidth()/2 - 1, y: frame.GetY() + frame.GetHeight()/2 - 1},
+		{name: "bottom_right", x: frame.GetX() + frame.GetWidth() - sampleSize, y: frame.GetY() + frame.GetHeight() - sampleSize},
 	}
-
-	if minX < 0 {
-		testCoordinates = append(testCoordinates, struct {
-			name string
-			x    float64
-			y    float64
-		}{"negative_x_secondary", minX + 50, 100})
-	}
-	if minY < 0 {
-		testCoordinates = append(testCoordinates, struct {
-			name string
-			x    float64
-			y    float64
-		}{"negative_y_secondary", 100, minY + 50})
-	}
-
-	for _, tc := range testCoordinates {
-		t.Run(tc.name, func(t *testing.T) {
-			_, err := client.CreateInput(ctx, &pb.CreateInputRequest{
-				Parent: "applications/-",
-				Input: &pb.Input{
-					Action: &pb.InputAction{
-						InputType: &pb.InputAction_MoveMouse{
-							MoveMouse: &pb.MouseMove{
-								Position: &pbtype.Point{X: tc.x, Y: tc.y},
-							},
-						},
-					},
-				},
+	for _, sample := range samples {
+		t.Run(sample.name, func(t *testing.T) {
+			requested := &pbtype.Region{X: sample.x, Y: sample.y, Width: sampleSize, Height: sampleSize}
+			captured, err := client.CaptureRegionScreenshot(ctx, &pb.CaptureRegionScreenshotRequest{
+				Region:  requested,
+				Format:  pb.ImageFormat_IMAGE_FORMAT_PNG,
+				Display: mainDisplay.GetName(),
 			})
-
 			if err != nil {
-				t.Logf("Note: CreateInput returned: %v", err)
-			} else {
-				t.Logf("Coordinates (%v, %v) accepted by API", tc.x, tc.y)
+				t.Fatalf("CaptureRegionScreenshot(%s) failed: %v", sample.name, err)
+			}
+			if len(captured.GetImageData()) == 0 || captured.GetWidth() <= 0 || captured.GetHeight() <= 0 {
+				t.Fatalf("CaptureRegionScreenshot(%s) returned empty image metadata: width=%d height=%d bytes=%d", sample.name, captured.GetWidth(), captured.GetHeight(), len(captured.GetImageData()))
+			}
+			if !equalRegion(captured.GetRegion(), requested) {
+				t.Fatalf("CaptureRegionScreenshot(%s) changed Global Display Coordinates: got=%+v want=%+v", sample.name, captured.GetRegion(), requested)
 			}
 		})
 	}
 }
 
-// TestCoordinateValidation_ClickAtExtremeCoords tests clicking at extreme coordinates.
-func TestCoordinateValidation_ClickAtExtremeCoords(t *testing.T) {
+func TestCoordinateValidation_MCPRegionScreenshotViaHTTP(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
@@ -123,139 +121,47 @@ func TestCoordinateValidation_ClickAtExtremeCoords(t *testing.T) {
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
-
 	client := pb.NewMacosUseClient(conn)
 
-	displayResp, err := client.ListDisplays(ctx, &pb.ListDisplaysRequest{})
+	displays, err := client.ListDisplays(ctx, &pb.ListDisplaysRequest{})
 	if err != nil {
 		t.Fatalf("ListDisplays failed: %v", err)
 	}
-
-	if len(displayResp.Displays) == 0 {
-		t.Fatal("No displays")
+	mainDisplay := requireMainDisplay(t, displays.Displays)
+	frame := mainDisplay.GetVisibleFrame()
+	if frame == nil {
+		frame = mainDisplay.GetFrame()
 	}
-
-	mainDisplay := displayResp.Displays[0]
-	for _, d := range displayResp.Displays {
-		if d.IsMain {
-			mainDisplay = d
-			break
-		}
+	if frame == nil || frame.GetWidth() < 8 || frame.GetHeight() < 8 {
+		t.Fatalf("main display has no MCP-capturable visible frame: %+v", frame)
 	}
-
-	frame := mainDisplay.Frame
-	corners := []struct {
-		name string
-		x    float64
-		y    float64
-	}{
-		{"top_left", frame.X + 10, frame.Y + 30},
-		{"top_right", frame.X + frame.Width - 10, frame.Y + 30},
-		{"bottom_left", frame.X + 10, frame.Y + frame.Height - 10},
-		{"bottom_right", frame.X + frame.Width - 10, frame.Y + frame.Height - 10},
-		{"center", frame.X + frame.Width/2, frame.Y + frame.Height/2},
-	}
-
-	for _, corner := range corners {
-		t.Run(corner.name, func(t *testing.T) {
-			_, err := client.CreateInput(ctx, &pb.CreateInputRequest{
-				Parent: "applications/-",
-				Input: &pb.Input{
-					Action: &pb.InputAction{
-						InputType: &pb.InputAction_Click{
-							Click: &pb.MouseClick{
-								Position:  &pbtype.Point{X: corner.x, Y: corner.y},
-								ClickType: pb.MouseClick_CLICK_TYPE_LEFT,
-							},
-						},
-					},
-				},
-			})
-
-			if err != nil {
-				t.Logf("Click at (%v, %v) returned: %v", corner.x, corner.y, err)
-			} else {
-				t.Logf("Click at (%v, %v) succeeded", corner.x, corner.y)
-			}
-		})
-	}
-}
-
-// TestCoordinateValidation_MCPViaHTTP tests coordinate handling via MCP HTTP transport.
-func TestCoordinateValidation_MCPViaHTTP(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-	defer cancel()
-
-	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd, serverAddr)
-
-	conn := connectToServer(t, ctx, serverAddr)
-	defer conn.Close()
 
 	_, baseURL, cleanup := startMCPTestServer(t, ctx, serverAddr)
 	defer cleanup()
-
-	initReq := `{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}`
-	initResp, _ := http.Post(baseURL+"/message", "application/json", bytes.NewBufferString(initReq))
-	initResp.Body.Close()
-
-	testCases := []struct {
-		name string
-		x    float64
-		y    float64
-	}{
-		{"positive_coords", 100, 100},
-		{"negative_x", -100, 100},
-		{"negative_y", 100, -100},
-		{"negative_both", -100, -100},
-		{"fractional", 100.5, 100.5},
-		{"large_positive", 5000, 3000},
+	requireMCPInitialize(t, baseURL)
+	result := callProductionMCPTool(t, baseURL, 2, "screenshot", map[string]any{
+		"display": mainDisplay.GetName(),
+		"x":       frame.GetX() + 2,
+		"y":       frame.GetY() + 2,
+		"width":   4,
+		"height":  4,
+		"format":  "png",
+	})
+	var foundImage bool
+	for _, content := range result.Content {
+		if content.Type != "image" {
+			continue
+		}
+		foundImage = true
+		if content.Data == "" || content.MimeType != "image/png" {
+			t.Fatalf("MCP region screenshot returned invalid image content: mime=%q bytes=%d", content.MimeType, len(content.Data))
+		}
 	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			request := map[string]any{
-				"jsonrpc": "2.0",
-				"id":      time.Now().UnixNano(),
-				"method":  "tools/call",
-				"params": map[string]any{
-					"name": "click",
-					"arguments": map[string]any{
-						"x": tc.x,
-						"y": tc.y,
-					},
-				},
-			}
-			reqBytes, _ := json.Marshal(request)
-
-			resp, err := http.Post(baseURL+"/message", "application/json", bytes.NewBuffer(reqBytes))
-			if err != nil {
-				t.Fatalf("HTTP request failed: %v", err)
-			}
-			defer resp.Body.Close()
-
-			var response struct {
-				Result json.RawMessage `json:"result"`
-				Error  *struct {
-					Code    int    `json:"code"`
-					Message string `json:"message"`
-				} `json:"error"`
-			}
-			if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-				t.Fatalf("Failed to decode: %v", err)
-			}
-
-			if response.Error != nil {
-				t.Logf("Click returned error: %s", response.Error.Message)
-				return
-			}
-
-			t.Logf("Click at (%v, %v) succeeded via HTTP", tc.x, tc.y)
-		})
+	if !foundImage {
+		t.Fatal("MCP region screenshot returned no image content")
 	}
 }
 
-// TestCoordinateValidation_DisplayOrigins verifies display origins are reported correctly.
 func TestCoordinateValidation_DisplayOrigins(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
@@ -265,34 +171,61 @@ func TestCoordinateValidation_DisplayOrigins(t *testing.T) {
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
-
 	client := pb.NewMacosUseClient(conn)
 
-	displayResp, err := client.ListDisplays(ctx, &pb.ListDisplaysRequest{})
+	displays, err := client.ListDisplays(ctx, &pb.ListDisplaysRequest{})
 	if err != nil {
 		t.Fatalf("ListDisplays failed: %v", err)
 	}
+	mainDisplay := requireMainDisplay(t, displays.Displays)
+	if mainDisplay.GetFrame().GetX() != 0 || mainDisplay.GetFrame().GetY() != 0 {
+		t.Fatalf("main display Global Display Coordinates origin = (%v,%v), want (0,0)", mainDisplay.GetFrame().GetX(), mainDisplay.GetFrame().GetY())
+	}
+	for _, display := range displays.Displays {
+		if display.GetScale() <= 0 {
+			t.Fatalf("display %q returned invalid scale %v", display.GetName(), display.GetScale())
+		}
+		if !finiteRegion(display.GetFrame()) {
+			t.Fatalf("display %q returned non-finite frame %+v", display.GetName(), display.GetFrame())
+		}
+	}
+}
 
-	var mainFound bool
-	for _, d := range displayResp.Displays {
-		t.Logf("Display: isMain=%v origin=(%v,%v) size=%vx%v scale=%v",
-			d.IsMain, d.Frame.X, d.Frame.Y, d.Frame.Width, d.Frame.Height, d.Scale)
-
-		if d.IsMain {
-			mainFound = true
-			if d.Frame.X != 0 || d.Frame.Y != 0 {
-				t.Errorf("Main display origin should be (0,0), got (%v,%v)",
-					d.Frame.X, d.Frame.Y)
+func requireMainDisplay(t *testing.T, displays []*pb.Display) *pb.Display {
+	t.Helper()
+	if len(displays) == 0 {
+		t.Fatal("ListDisplays returned no displays")
+	}
+	mainIndex := -1
+	for index, display := range displays {
+		if display.GetIsMain() {
+			if mainIndex != -1 {
+				t.Fatalf("ListDisplays returned multiple main displays: %q and %q", displays[mainIndex].GetName(), display.GetName())
 			}
-		}
-
-		if d.Frame.Width <= 0 || d.Frame.Height <= 0 {
-			t.Errorf("Display has invalid dimensions: %vx%v",
-				d.Frame.Width, d.Frame.Height)
+			mainIndex = index
 		}
 	}
-
-	if !mainFound && len(displayResp.Displays) > 0 {
-		t.Log("No display marked as main (first display may be used)")
+	if mainIndex == -1 {
+		t.Fatal("ListDisplays returned no display marked main")
 	}
+	return displays[mainIndex]
+}
+
+func finiteRegion(region *pbtype.Region) bool {
+	return region != nil &&
+		!math.IsNaN(region.GetX()) && !math.IsInf(region.GetX(), 0) &&
+		!math.IsNaN(region.GetY()) && !math.IsInf(region.GetY(), 0) &&
+		!math.IsNaN(region.GetWidth()) && !math.IsInf(region.GetWidth(), 0) &&
+		!math.IsNaN(region.GetHeight()) && !math.IsInf(region.GetHeight(), 0)
+}
+
+func equalRegion(left, right *pbtype.Region) bool {
+	if left == nil || right == nil {
+		return left == right
+	}
+	const epsilon = 0.000_001
+	return math.Abs(left.GetX()-right.GetX()) <= epsilon &&
+		math.Abs(left.GetY()-right.GetY()) <= epsilon &&
+		math.Abs(left.GetWidth()-right.GetWidth()) <= epsilon &&
+		math.Abs(left.GetHeight()-right.GetHeight()) <= epsilon
 }

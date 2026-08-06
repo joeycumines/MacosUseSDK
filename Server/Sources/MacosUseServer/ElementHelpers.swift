@@ -10,8 +10,8 @@ import SwiftProtobuf
 
 extension MacosUseService {
     func findMatchingElement(
-        _ targetElement: Macosusesdk_Type_Element, in elements: [Macosusesdk_Type_Element],
-    ) -> Macosusesdk_Type_Element? {
+        _ targetElement: Macosusesdk_V1_Element, in elements: [Macosusesdk_V1_Element],
+    ) -> Macosusesdk_V1_Element? {
         // Simple matching by position using Euclidean distance from element centers
         guard targetElement.hasX, targetElement.hasY else { return nil }
         // Use center if dimensions available, otherwise use position
@@ -44,7 +44,7 @@ extension MacosUseService {
     }
 
     func elementMatchesCondition(
-        _ element: Macosusesdk_Type_Element, condition: Macosusesdk_V1_StateCondition,
+        _ element: Macosusesdk_V1_Element, condition: Macosusesdk_V1_StateCondition,
     ) -> Bool {
         switch condition.condition {
         case let .enabled(expectedEnabled):

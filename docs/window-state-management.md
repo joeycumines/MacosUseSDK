@@ -1,8 +1,8 @@
-# Window State Management: Architecture, Hybrid Authority, and Implementation
+# Window State Management: Opaque Identity, Hybrid Authority, and Convergence
 
 **Status:** Living Document
 **Context:** MacosUseSDK Window Management Subsystem
-**Relevant Files:** `proto/macosusesdk/v1/window.proto`, `Sources/MacosUseSDK/WindowQuery.swift`, `Server/Sources/MacosUseServer/WindowRegistry.swift`, `Server/Sources/MacosUseServer/WindowHelpers.swift`, `Server/Sources/MacosUseServer/ObservationManager.swift`, `Server/Sources/MacosUseServer/WindowMethods.swift`
+**Relevant Files:** `proto/macosusesdk/v1/window.proto`, `Server/Sources/MacosUseServer/WindowRegistry.swift`, `Server/Sources/MacosUseServer/WindowHelpers.swift`, `Server/Sources/MacosUseServer/ObservationManager.swift`, `Server/Sources/MacosUseServer/WindowMethods.swift`
 
 -----
 
@@ -10,12 +10,12 @@
 
 Window state management on macOS is a "split-brain" problem. The operating system provides two distinct, non-interoperable APIs for window data, neither of which is sufficient on its own:
 
-1.  **Quartz Window Services (CoreGraphics):** A global, high-performance, read-only view of the compositor's display list. It provides stable IDs (`CGWindowID`) and metadata but suffers from data staleness (10-100ms latency) and cannot manipulate windows.
+1.  **Quartz Window Services (CoreGraphics):** A global, high-performance, read-only view of the compositor's display list. It provides snapshot-local IDs (`CGWindowID`) and metadata but suffers from data staleness (10-100ms latency) and cannot manipulate windows. A CG ID is not a public resource identity and may be reused after disappearance.
 2.  **Accessibility API (AX):** A process-specific, heavy, synchronous IPC interface used for fine-grained state inspection and manipulation (Geometry, Visibility). It is authoritative for current state but lacks stable identifiers and cannot see windows on background spaces.
 
 **MacosUseSDK implements a "Hybrid Authority" model.** We do not attempt to abstract away this duality completely. Instead, we explicitly assign authority for specific data fields to specific APIs based on the nature of the RPC (Read-only Enumeration vs. Mutation/Inspection).
 
-This document serves as the definitive reference for this architecture, the bridging logic, race-condition mitigations, and the specific heuristics used to reconcile the two systems.
+This document serves as the definitive reference for this architecture, the opaque public binding model, race-condition mitigations, and the fail-closed bridging logic used to reconcile the two systems.
 
 -----
 
@@ -30,10 +30,11 @@ This distinction is codified in the API implementation as follows:
 | Data Field / Behavior | Authority Source | Implementation Detail |
 | :--- | :--- | :--- |
 | **Enumeration** (List of Windows) | **Quartz** | `CGWindowListCopyWindowInfo` via `WindowRegistry`. **$O(1)$** latency relative to window count. |
-| **Identity** (Window ID) | **Quartz** | `CGWindowID`. |
-| **Geometry** (Position, Size) | **AX** | `kAXPosition`, `kAXSize` via `WindowQuery`. **$O(N)$** latency. |
-| **Visibility** | **Hybrid** | Formula: `!axMinimized && !axHidden`. Overrides Registry `isOnScreen`. |
-| **Z-Order / Layer** | **Quartz** | `kCGWindowLayer` via `WindowRegistry`. |
+| **Public identity** | **WindowRegistry binding** | Server-issued opaque resource ID scoped to an exact application resource, PID, and kernel process identity. A `CGWindowID` is binding metadata, never the public name. |
+| **Geometry** (Position, Size) | **AX** | `kAXPosition` and `kAXSize` from the exact retained `kAXWindows` element. |
+| **List visibility** | **Quartz** | `kCGWindowIsOnscreen` from the same enumeration snapshot. |
+| **Get visibility** | **Quartz + AX** | The admitted Quartz row must be on-screen and fresh AX state must report neither a minimized window nor hidden owner. |
+| **Compositing layer** | **Quartz** | `kCGWindowLayer` via `WindowRegistry`; this is not front-to-back z-order. |
 | **Bundle ID** | **Quartz** | `kCGWindowOwnerPID` resolved to Bundle ID via `WindowRegistry`. |
 | **State Details** (Modal, Focused) | **AX** | `kAXModalAttribute`, `kAXMainAttribute`. |
 
@@ -43,7 +44,7 @@ To balance performance with correctness, the gRPC surface enforces different beh
 
   * **`ListWindows` (Registry-Only):** Optimized for high-frequency polling and UI rendering. It returns a snapshot from the `WindowRegistry`. It **does not** perform per-window AX queries.
       * *Tradeoff:* Geometry and visibility may lag by \~50ms during animations. Windows on background spaces may report `visible=false` even if technically open.
-  * **`GetWindow` / Mutations (AX-Authoritative):** Optimized for correctness. It fetches a fresh AX snapshot to ensure that a window moved via RPC is reported at its *exact* new location immediately, ignoring the stale Quartz cache.
+  * **`GetWindow` / Mutations (AX-Authoritative):** Resolve an existing opaque binding, revalidate its exact owner before and after AX reads, and fail closed on stale, replaced, cross-owner, or ambiguous targets. Mutations hold the physical-desktop lease until cancellation-aware polling observes the requested state (including stable macOS clamping) or returns a precise timeout.
 
 -----
 
@@ -57,7 +58,6 @@ flowchart TD
   classDef client fill:#f8f9fa,stroke:#4a4a4a,stroke-width:1px;
   classDef server fill:#e3f2fd,stroke:#0d47a1,stroke-width:1px;
   classDef macos fill:#e8f5e9,stroke:#1b5e20,stroke-width:1px;
-  classDef heuristic fill:#fff3e0,stroke:#ff6f00,stroke-width:1px;
 
   subgraph Client[Client]
     RPC_Get[RPC: GetWindow / MoveWindow]
@@ -68,9 +68,9 @@ flowchart TD
   subgraph Server_Logic[Server Logic]
     WH[WindowHelpers.swift]
     WR[WindowRegistry.swift]
-    WQ[WindowQuery.swift]
+    Binding[Opaque Window Binding]
   end
-  class WH,WR,WQ server;
+  class WH,WR,Binding server;
 
   subgraph macOS_APIs[macOS APIs]
     Quartz[CoreGraphics / Quartz]
@@ -82,31 +82,20 @@ flowchart TD
   %% ListWindows (fast path)
   RPC_List -->|Request| WR
   WR -->|CGWindowListCopyWindowInfo| Quartz
-  Quartz -->|Snapshot Data| WR
-  WR -->|Metadata Response| RPC_List
+  Quartz -->|One owner snapshot| WR
+  WR -->|Reconcile generation| Binding
+  Binding -->|Opaque names + metadata| RPC_List
 
   %% GetWindow / Mutation (correctness path)
   RPC_Get -->|Request| WH
-  WH -->|1. Fetch Metadata| WR
-  WH -->|2. Fetch Geometry - AX| WQ
-
-  %% Bridging: Private API first, heuristic second
-  WQ -->|Step A - Attempt ID map| P_API
-  P_API -- Success --> AX
-  P_API -- Fail --> Heuristic
-
-  subgraph Heuristics[The Bridging Heuristic]
-    Heuristic{Match Score < 1000px?}
-    Heuristic -- Yes --> AX
-    Heuristic -- No --> NotFound[Error: Window Not Found]
-  end
-  class Heuristic heuristic;
-
-  AX -->|kAXPosition / kAXSize| WQ
+  WH -->|1. Resolve + revalidate binding| Binding
+  WH -->|2. Enumerate owner kAXWindows| AX
+  AX -->|3. Read every private window ID| P_API
+  P_API -->|4. Unique ID match then retained CF equality| WH
+  P_API -->|Unreadable, absent, or ambiguous| NotFound[Fail closed]
 
   %% Merge and respond
-  WQ -->|Geometry| WH
-  WR -->|Metadata| WH
+  Binding -->|Bound metadata| WH
   WH -->|Merged Response| RPC_Get
   %% visual tweaks
   linkStyle default stroke:#4a4a4a,stroke-width:1.2px;
@@ -116,71 +105,41 @@ flowchart TD
 
 1.  **`Server/Sources/MacosUseServer/WindowRegistry.swift`**:
 
-      * Maintains a cached list of windows using `CGWindowListCopyWindowInfo` with options `[.optionAll, .excludeDesktopElements]`.
-      * Refreshes on demand or periodically.
+      * Reads exactly one `CGWindowListCopyWindowInfo` snapshot per owner enumeration using options `[.optionAll, .excludeDesktopElements]`.
+      * Reconciles that snapshot into server-issued, generation-scoped public bindings and retires missing or replaced-owner bindings immediately.
+      * Preserves an opaque public name when the same already-admitted AX element reports a changed CG ID; a later reuse of a retired CG ID receives a different public name.
       * **Constraint:** Never blocks on AX IPC calls.
 
-2.  **`Sources/MacosUseSDK/WindowQuery.swift`**:
+2.  **`Server/Sources/MacosUseServer/WindowHelpers.swift`**:
 
-      * Contains the bridging logic (`fetchAXWindowInfo`).
-      * Executes the "Private API first, Heuristic second" strategy.
-      * **Constraint:** Must run in `Task.detached` to avoid blocking the Main Actor.
-
-3.  **`Server/Sources/MacosUseServer/WindowHelpers.swift`**:
-
-      * Orchestrates the response assembly.
-      * Implements the Visibility Logic formula.
-      * **Constraint:** Executes AX attribute fetching in a `Task.detached` context.
+      * Orchestrates exact-owner resolution, response assembly, mutation convergence, and cancellation.
+      * Preserves AX error codes and type failures instead of flattening them into false/default state. Only explicitly optional absence (`kAXErrorAttributeUnsupported` or `kAXErrorNoValue`) receives the documented default.
+      * Performs structured reads and owner revalidation; no detached lookup is allowed to outlive caller cancellation.
 
 -----
 
-## 4\. The Bridging Implementation (Quartz ↔ AX)
+## 4\. Bound-Target Resolution (Quartz ↔ AX)
 
-There is no public API to convert a `CGWindowID` (Quartz) to an `AXUIElement` (AX). This is the "Extremely Difficult Problem." We solve this via a two-tier strategy implemented in `Sources/MacosUseSDK/WindowQuery.swift`.
+There is no public API to convert a `CGWindowID` (Quartz) to an
+`AXUIElement` (AX). Public callers never select by CG ID: they present an
+existing opaque binding, which fixes the application resource, PID, kernel
+process identity, and last observed CG metadata.
 
-### 4.1 Tier 1: Private API (Gold Standard)
+### 4.1 Exact Initial Admission
 
-We resolve the private symbol at runtime via `dlsym`:
+The server enumerates only the exact owner's `kAXWindows` collection. Every
+candidate must expose a readable window role, private window ID, and
+endpoint-safe frame. Initial admission requires exactly one candidate whose
+private ID equals the binding's CG ID. An unavailable private symbol,
+unreadable candidate, duplicate ID, or missing match fails the request.
 
-```swift
-typealias AXUIElementGetWindowFunc = @convention(c) (AXUIElement, UnsafeMutablePointer<CGWindowID>) -> AXError
+### 4.2 Retained Identity
 
-let handle = dlopen(nil, RTLD_LAZY)
-let sym = dlsym(handle, "_AXUIElementGetWindow")
-```
-
-If `dlsym` returns a non-nil pointer, we cast it to the expected function signature and call it on candidate AX elements. If it returns a `CGWindowID` matching our target, we have a deterministic 1:1 match. This is preferred 100% of the time.
-
-**Graceful degradation:** Unlike `@_silgen_name` (which would crash at launch if the symbol were absent), the `dlsym` approach gracefully returns `nil` when the private symbol is unavailable — for example, if Apple removes it in a future macOS version. In that case, the code silently falls back to Tier 2 heuristic matching with no user-visible error.
-
-### 4.2 Tier 2: The "1000px Heuristic"
-
-If the private API fails (SIP restrictions or OS changes), we fall back to geometric comparison.
-
-1.  We fetch the target window's `bounds` from Quartz.
-2.  We iterate over the application's AX windows.
-3.  We calculate a score using Euclidean distance via `hypot()`: `hypot(AX.x - Quartz.x, AX.y - Quartz.y) + hypot(AX.width - Quartz.width, AX.height - Quartz.height)`.
-4.  **The Threshold:** We accept a match only if the score is **\< 1000.0**.
-5.  **Single-Window Fallback:** When only one AX window exists for the PID, the match is accepted regardless of score, bypassing the 1000px threshold. A single window cannot be ambiguous.
-
-#### Heuristic Fairness, Biases, and Analysis
-
-The geometry-based matching heuristic is intentionally pragmatic but not neutral. There are two sources of systemic bias and specific strategies used to compensate for them:
-
-  * **Shadow Penalty:** Quartz often reports bounds that include drop-shadows and invisible resize handles, while Accessibility (AX) tends to report the content bounds. This permanent delta systematically increases the geometric distance score for applications that draw custom chrome (Electron, webviews, custom frames). The heuristic tolerates this via the threshold so native and custom-window apps are treated comparably.
-  * **Animation Lag:** The compositor (Quartz) and the AX subsystem can be temporarily out-of-sync while a window is moving. The compositor typically leads and AX follows; this can produce transient origin deltas of a few hundred pixels during fast drags.
-
-**Why `1000.0`?** The chosen `1000.0` pixel threshold is a conservative compromise:
-
-  * It comfortably absorbs common shadow penalties and animation-lag deltas observed in practice (tens to several hundreds of pixels).
-  * It prevents matching across large discontinuities (for example an inter-monitor jump of several thousand pixels), which would be a dangerous false positive.
-  * **Fail-Closed Behavior:** Immediately after very large cross-monitor moves (e.g., \>1200px) in the rare case where `_AXUIElementGetWindow` fails, `GetWindow` may temporarily return `NOT_FOUND` until the Quartz and AX views converge. This is accepted as a *fail-closed* tradeoff to avoid misidentifying another window.
-
-Realistic examples observed in implementation:
-
-  * **Stacked clones:** Two identical windows offset by \~20px produce very small scores (≈28 via `hypot(20,20)`). The heuristic easily picks the intended window.
-  * **Electron shadow / custom chrome:** AX content (1000×800) vs CG bounds (1020×820) gives scores ∼28–30 (`hypot(20,20) + hypot(0,0)`) — well under 1000.
-  * **Multi-monitor jump:** Moving a window from x=0 to x=3840 yields scores ≫1000; that correctly rejects the match to avoid cross-monitor false matches.
+After initial admission, the retained AX CF object is authoritative. Each later
+read or mutation must find that same object in the owner's `kAXWindows`
+collection. A different AX object cannot inherit the public name even if it
+reuses the same private ID. A private ID change is accepted only for the same
+retained object and is committed atomically with its observed frame.
 
 -----
 
@@ -188,21 +147,24 @@ Realistic examples observed in implementation:
 
 Visibility is calculated differently depending on the context. This is a deliberate architectural choice to handle the "Background Space" problem.
 
-### 5.1 The Visibility Formula (AX-First Optimistic)
+### 5.1 The Visibility Formula
 
-For `GetWindow` and Event Observation, visibility is calculated as:
+For `GetWindow`, visibility is calculated as:
 
 ```swift
 // Code reference: WindowHelpers.swift
-let isOnScreen = (!axMinimized && !axHidden) ? true : (metadata?.isOnScreen ?? false)
-let visible = isOnScreen && !axMinimized && !axHidden
+let visible = admittedCGWindowIsOnScreen &&
+    !windowMinimized &&
+    !ownerApplicationHidden
 ```
 
 Algebraically, this simplifies to:
-$$visible = \neg axMinimized \land \neg axHidden$$
+$$visible = cgOnScreen \land \neg windowMinimized \land \neg ownerApplicationHidden$$
 
-  * **Note:** We technically fall back to Quartz `isOnScreen` if AX fails, but in practice, if we have an AX handle, the formula above is authoritative.
-  * This ensures that if a user sets `visible=true`, the system reports it as true immediately, even if the Quartz registry is stale.
+  * `kAXMinimized` is read from the exact window. `kAXHidden` is application-specific and is read from the exact owner application.
+  * Required geometry and state reads preserve AX failures and wrong types. Optional title/minimized/hidden/subrole/button absence defaults only for `kAXErrorAttributeUnsupported` or `kAXErrorNoValue`; transient failure is not reported as a legitimate `false` or empty value.
+  * `GetWindowState.resizable` comes from `AXUIElementIsAttributeSettable(kAXSizeAttribute)`. `modal` and `focused` require boolean AX values; dialog and floating classification uses exact documented subrole equality, never substring matching.
+  * `ListWindows` remains registry-only and reports `kCGWindowIsOnscreen` from its one enumeration snapshot. `GetWindow` combines that admitted value with fresh AX minimized/hidden state.
 
 ### 5.2 The "Background Space Visibility" Caveat
 
@@ -274,24 +236,26 @@ flowchart TD
   linkStyle default stroke:#444,stroke-width:1px;
 ```
 
-### 6.4 Window ID Regeneration After Mutations
+### 6.4 Underlying CG ID Changes After Mutations
 
-**Critical macOS Behavior:** After certain window mutations, the `CGWindowID` may appear to change. This is frequently observed in non-native applications (e.g., Electron) or when Accessibility references become stale. To handle this instability, we treat the Window ID as ephemeral.
+**Critical macOS Behavior:** After certain window mutations, the underlying `CGWindowID` may change. MacosUse treats that number as ephemeral metadata, not as public identity.
 
 **Symptoms:**
-- A `MoveWindow` RPC succeeds, but the old window ID becomes invalid.
-- Subsequent `GetWindow` calls with the old ID fail with "not found".
-- Observations may emit `Destroyed` followed by `Created` events for the same logical window.
+- A mutation resolves the already-admitted AX element, but that element now reports a different CG ID.
+- A retired CG ID can later be reused for a different window generation.
+- The owner application can be replaced while retaining the same PID, making all bindings for the old kernel process identity stale.
 
 **Mitigations Implemented:**
-1. **Single-Window Fallback:** If a PID has exactly one window, accept it regardless of ID mismatch (Windows can't be ambiguous if there's only one).
-2. **Bounds-Based Matching:** When ID lookup fails, fall back to heuristic matching using expected geometry.
-3. **Response Name Update:** Mutation RPCs return the *current* window name (which includes the new ID if regenerated), not the original request name.
-4. **Position-Based Rediscovery:** In tests and client code, use position-based window discovery after mutations rather than relying on cached window IDs.
+1. **Opaque generation binding:** The public name is a server-issued UUID scoped to the exact application resource and kernel process identity.
+2. **Stable logical identity:** If the same admitted AX element reports a new CG ID, `WindowRegistry` moves that binding to the new metadata while preserving the public name.
+3. **Immediate retirement:** An owner enumeration retires every missing binding. Closing a window retires its binding only after AX disappearance is observed.
+4. **No reuse:** A later window using the same CG ID receives a fresh public name; the retired name remains stale.
+5. **Fail-closed ambiguity:** Known-ID mismatch, cross-owner access, process replacement, or an already-bound target CG ID returns an error rather than rewriting the binding.
 
 **Test Implications:**
-- Tests should accept `Destroyed`/`Created` event pairs as valid alternatives to `Moved` events when ID regeneration occurs.
-- Tests should use fresh `ListWindows` calls to rediscover window names after geometry mutations.
+- Generated-client tests retain the same public window name across an admitted element's CG-ID change.
+- Tests require a distinct public name after disappearance plus CG-ID reuse and require the old name to remain `NOT_FOUND`.
+- Mutation tests poll the same resource until the requested AX state is stably observed; they do not rediscover by position or accept status-only success.
 
 -----
 
@@ -301,27 +265,26 @@ During the architectural design, several alternative models were evaluated and d
 
 ### 7.1 Registry-Only Visibility (Discarded)
 
-An alternative design would have treated `Window.visible` as purely registry-derived (`kCGWindowIsOnscreen`) across all RPCs.
-
-  * **Pros:** Single source of truth; no AX/Quartz divergence; simpler mental model.
-  * **Cons:** `CGWindowList` can lag 10–100ms behind AX after mutations. This causes `MoveWindow` / `ResizeWindow` RPCs to report `visible=false` immediately after success, even though the window is clearly visible. It also leads to observation flip-flops where a window is rapidly reported as hidden/visible due to registry catch-up.
-  * **Decision:** Rejected in favor of AX-first `GetWindow` precisely to guarantee post-mutation correctness.
+`GetWindow` never fabricates visibility from AX state alone. A window that the
+admitted Quartz snapshot reports off-screen remains `visible=false`, even when
+it is neither minimized nor owned by a hidden application.
 
 ### 7.2 AX-Only Enumeration (Discarded)
 
 Another extreme would have been to use AX alone for enumeration (e.g., `ListWindows` reading only `kAXWindows`).
 
   * **Pros:** Perfect alignment between visibility semantics and AX state.
-  * **Cons:** AX lacks a global view of all windows (background Spaces, minimized windows, some non-standard apps). AX enumeration is significantly slower and blocked by target app responsiveness. It would require per-window AX calls for z-index and positioning, harming scalability.
+  * **Cons:** AX lacks a global view of all windows (background Spaces, minimized windows, some non-standard apps). AX enumeration is significantly slower and blocked by target app responsiveness. It cannot provide a truthful global compositing-layer inventory.
   * **Decision:** The current Hybrid Registry+AX approach is a middle ground: Quartz for global, cheap metadata; AX for per-window detailed state.
 
-### 7.3 Global Bipartite Matching (Deferred)
+### 7.3 Geometry-Based Identity Matching (Rejected)
 
-A more mathematically rigorous mapping between CG and AX windows via a **Hungarian algorithm** over a cost matrix of geometry distances was considered.
+Geometry and title scoring can silently transfer a public identity to a
+different window.
 
-  * **Pros:** Provides a stable, global mapping between all CG windows and all AX windows for a PID. Resolves ambiguous “stacked clone” scenarios better than greedy heuristics.
-  * **Cons:** Significantly more complex to implement and maintain. Requires maintaining a global mapping state, complicating cache invalidation. The benefit over the current scheme is marginal for typical per-window operations where $O(N)$ is small.
-  * **Decision:** The implementation opts for greedy per-window matching with `_AXUIElementGetWindow` as the primary authority.
+  * **Decision:** The server admits one unique private window-ID match from the
+    owner's `kAXWindows` collection and thereafter requires exact retained CF
+    identity. Ambiguous or unreadable candidates fail closed.
 
 -----
 
@@ -397,4 +360,7 @@ This prevents SDK-initiated focus changes from being echoed back as change event
 
 ## 9\. Conclusion
 
-This implementation accepts the reality of macOS's fractured windowing APIs. By using Quartz for the broad view and AX for the detailed view—and bridging them with rigorous heuristics and private APIs—we achieve a system that is performant for enumeration yet correct for manipulation. Any deviation from the "Hybrid Authority" model described here risks re-introducing the split-brain state inconsistencies this architecture was designed to solve.
+This implementation accepts the reality of macOS's fractured windowing APIs.
+Quartz provides the broad immutable inventory; AX provides detailed state for
+one exact retained object. Private IDs bootstrap identity, but geometry and
+title never rescue an unreadable, absent, or ambiguous target.

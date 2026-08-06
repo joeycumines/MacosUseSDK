@@ -6,14 +6,36 @@ package transport
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
-	"strings"
 	"sync"
 	"sync/atomic"
 )
+
+const stdioReadFragmentBytes = 32 << 10
+
+// MessageReadError is a recoverable JSON-RPC input error. The caller must
+// return Code and Message with a null ID, then continue reading later inputs.
+type MessageReadError struct {
+	Cause   error
+	Message string
+	Code    int
+}
+
+func (e *MessageReadError) Error() string {
+	if e.Cause == nil {
+		return e.Message
+	}
+	return fmt.Sprintf("%s: %v", e.Message, e.Cause)
+}
+
+func (e *MessageReadError) Unwrap() error {
+	return e.Cause
+}
 
 // StdioTransport implements the Transport interface for JSON-RPC 2.0
 // communication over standard input/output streams. This is the default
@@ -28,19 +50,31 @@ import (
 //
 //lint:ignore BETTERALIGN struct is intentionally ordered for clarity
 type StdioTransport struct {
-	reader  *bufio.Reader
-	writer  io.Writer
-	writeMu sync.Mutex // protects writer only; never held during blocking reads
-	closed  atomic.Bool
+	reader      *bufio.Reader
+	writer      io.Writer
+	scope       *ClientScope
+	inputCloser io.Closer
+	closeErr    error
+	frame       []byte
+	writeMu     sync.Mutex // protects writer only; never held during blocking reads
+	closeOnce   sync.Once
+	closed      atomic.Bool
 }
 
 // NewStdioTransport creates a new stdio transport with the given reader and writer.
 // The reader is typically os.Stdin and writer is typically os.Stdout.
 func NewStdioTransport(stdin io.Reader, stdout io.Writer) *StdioTransport {
-	return &StdioTransport{
-		reader: bufio.NewReader(stdin),
+	transport := &StdioTransport{
+		reader: bufio.NewReaderSize(stdin, stdioReadFragmentBytes),
 		writer: stdout,
+		scope:  NewClientScope(),
 	}
+	// A closeable stdin is transport-owned. Production os.Stdin, pipes, and
+	// sockets satisfy this contract, allowing shutdown to interrupt a blocked
+	// read rather than abandoning its goroutine. Finite in-memory readers need
+	// no close operation and remain supported for decoder tests.
+	transport.inputCloser, _ = stdin.(io.Closer)
+	return transport
 }
 
 // Message represents a JSON-RPC 2.0 message.
@@ -66,6 +100,14 @@ type Message struct {
 	// Error contains error details for failed requests.
 	// Present only in error responses; mutually exclusive with Result.
 	Error *ErrorObj `json:"error,omitempty"`
+
+	// Context carries transport request cancellation into server dispatch.
+	// It is local process state and is never serialized.
+	Context context.Context `json:"-"`
+
+	// ClientScope is opaque transport-owned identity for request isolation.
+	// It is local process state and is never serialized.
+	ClientScope *ClientScope `json:"-"`
 
 	// JSONRPC is always "2.0" per the JSON-RPC specification.
 	JSONRPC string `json:"jsonrpc"`
@@ -122,28 +164,78 @@ type ErrorObj struct {
 // It is safe for exactly one goroutine to call ReadMessage at a time.
 func (t *StdioTransport) ReadMessage() (*Message, error) {
 	if t.closed.Load() {
-		return nil, fmt.Errorf("transport is closed")
+		return nil, ErrTransportClosed
 	}
 
-	line, err := t.reader.ReadString('\n')
-	if err != nil {
-		if err == io.EOF {
-			return nil, fmt.Errorf("stdin closed")
+	t.frame = t.frame[:0]
+	oversized := false
+	for {
+		fragment, err := t.reader.ReadSlice('\n')
+		if t.closed.Load() {
+			t.frame = t.frame[:0]
+			return nil, ErrTransportClosed
 		}
-		return nil, fmt.Errorf("failed to read line: %w", err)
-	}
 
-	line = strings.TrimSpace(line)
-	if line == "" {
-		return nil, fmt.Errorf("empty line received")
-	}
+		payload := fragment
+		if err == nil {
+			// ReadSlice includes the delimiter. Only the terminating LF is
+			// framing; a preceding CR remains part of the message budget.
+			payload = fragment[:len(fragment)-1]
+		}
+		if !oversized && !t.appendFrame(payload) {
+			// Stop retaining bytes immediately, but drain through this frame's
+			// newline before returning so the next read starts synchronized.
+			oversized = true
+			t.frame = t.frame[:0]
+		}
 
-	var msg Message
-	if err := json.Unmarshal([]byte(line), &msg); err != nil {
-		return nil, fmt.Errorf("failed to parse JSON: %w", err)
+		switch {
+		case err == nil:
+			if oversized {
+				return nil, newRequestReadError(
+					ErrCodeInvalidRequest,
+					invalidRequestMessage,
+					fmt.Errorf("JSON-RPC message exceeds %d bytes", MaxJSONRPCMessageBytes),
+				)
+			}
+			msg, decodeErr := DecodeRequest(t.frame)
+			t.frame = t.frame[:0]
+			if decodeErr != nil {
+				return nil, decodeErr
+			}
+			msg.ClientScope = t.scope
+			return msg, nil
+		case errors.Is(err, bufio.ErrBufferFull):
+			continue
+		case errors.Is(err, io.EOF):
+			t.frame = t.frame[:0]
+			if t.closed.Load() {
+				return nil, ErrTransportClosed
+			}
+			return nil, io.EOF
+		default:
+			t.frame = t.frame[:0]
+			if t.closed.Load() {
+				return nil, ErrTransportClosed
+			}
+			return nil, fmt.Errorf("failed to read line: %w", err)
+		}
 	}
+}
 
-	return &msg, nil
+func (t *StdioTransport) appendFrame(fragment []byte) bool {
+	if len(fragment) > MaxJSONRPCMessageBytes-len(t.frame) {
+		return false
+	}
+	required := len(t.frame) + len(fragment)
+	if required > cap(t.frame) {
+		nextCapacity := min(max(max(cap(t.frame)*2, stdioReadFragmentBytes), required), MaxJSONRPCMessageBytes)
+		grown := make([]byte, len(t.frame), nextCapacity)
+		copy(grown, t.frame)
+		t.frame = grown
+	}
+	t.frame = append(t.frame, fragment...)
+	return true
 }
 
 // WriteMessage writes a JSON-RPC 2.0 message to stdout.
@@ -154,7 +246,7 @@ func (t *StdioTransport) WriteMessage(msg *Message) error {
 	defer t.writeMu.Unlock()
 
 	if t.closed.Load() {
-		return fmt.Errorf("transport is closed")
+		return ErrTransportClosed
 	}
 
 	data, err := json.Marshal(msg)
@@ -175,10 +267,16 @@ func (t *StdioTransport) WriteMessage(msg *Message) error {
 // Close closes the transport and marks it as unavailable.
 // Subsequent operations will return an error.
 func (t *StdioTransport) Close() error {
-	if t.closed.Swap(true) {
-		return nil // already closed
-	}
-	return nil
+	t.closeOnce.Do(func() {
+		t.closed.Store(true)
+		t.scope.Close()
+		if t.inputCloser != nil {
+			if err := t.inputCloser.Close(); err != nil {
+				t.closeErr = fmt.Errorf("close stdio input: %w", err)
+			}
+		}
+	})
+	return t.closeErr
 }
 
 // IsClosed returns true if the transport has been closed.
@@ -193,16 +291,36 @@ func (t *StdioTransport) Serve(handler func(*Message) (*Message, error)) error {
 	for {
 		msg, err := t.ReadMessage()
 		if err != nil {
-			if err.Error() == "stdin closed" {
+			if errors.Is(err, ErrTransportClosed) {
+				return nil
+			}
+			if errors.Is(err, io.EOF) {
 				log.Println("Stdin closed, exiting")
 				return nil
 			}
+			var readErr *MessageReadError
+			if errors.As(err, &readErr) {
+				if writeErr := t.WriteMessage(&Message{
+					JSONRPC: "2.0",
+					ID:      json.RawMessage("null"),
+					Error: &ErrorObj{
+						Code:    readErr.Code,
+						Message: readErr.Message,
+					},
+				}); writeErr != nil {
+					return fmt.Errorf("write JSON-RPC frame error: %w", writeErr)
+				}
+				continue
+			}
 			log.Printf("Error reading message: %v", err)
-			continue
+			return err
 		}
 
 		response, err := handler(msg)
 		if err != nil {
+			if errors.Is(err, ErrRequestCancelled) {
+				continue
+			}
 			log.Printf("Error handling message: %v", err)
 			response = &Message{
 				JSONRPC: "2.0",

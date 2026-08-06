@@ -11,13 +11,13 @@ import XCTest
 /// - Various matching edge cases
 final class ElementLocatorMatchingSelectorTests: XCTestCase {
     private var locator: ElementLocator {
-        ElementLocator.shared
+        ElementLocator(elementRegistry: ElementRegistry())
     }
 
     // MARK: - Position Selector Tests (Euclidean Distance)
 
     func testPositionSelectorExactMatch() async {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.role = "AXButton"
             $0.x = 100
             $0.y = 100
@@ -38,7 +38,7 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
     }
 
     func testPositionSelectorWithinTolerance() async {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.role = "AXButton"
             $0.x = 100
             $0.y = 100
@@ -60,7 +60,7 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
     }
 
     func testPositionSelectorExceedsTolerance() async {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.role = "AXButton"
             $0.x = 100
             $0.y = 100
@@ -82,7 +82,7 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
     }
 
     func testPositionSelectorBoundaryOfTolerance() async {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.role = "AXButton"
             $0.x = 0
             $0.y = 0
@@ -105,7 +105,7 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
 
     func testPositionSelectorUsesElementCenter() async {
         // This test verifies that position matching uses CENTER, not top-left corner
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.role = "AXButton"
             $0.x = 100 // Top-left x
             $0.y = 100 // Top-left y
@@ -141,7 +141,7 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
 
     func testPositionSelectorElementWithoutDimensions() async {
         // When width/height are missing, position matching should fall back to x,y as the "center"
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.role = "AXButton"
             $0.x = 100
             $0.y = 100
@@ -161,7 +161,7 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
     }
 
     func testPositionSelectorElementWithoutPosition() async {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.role = "AXButton"
             // No x/y set
         }
@@ -181,7 +181,7 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
     // MARK: - Role Selector Tests
 
     func testRoleSelectorMatchesCanonicalRole() async {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.role = "AXTextArea"
         }
         let selector = Macosusesdk_Type_ElementSelector.with { $0.role = "AXTextArea" }
@@ -192,7 +192,7 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
     func testRoleSelectorMatchesRoleWithDescription() async {
         // SDK roles often append a human-readable description in parentheses,
         // e.g. "AXTextArea (text entry area)".
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.role = "AXTextArea (text entry area)"
         }
         let selector = Macosusesdk_Type_ElementSelector.with { $0.role = "AXTextArea" }
@@ -203,7 +203,7 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
     func testRoleSelectorWithDescriptionMatchesCanonicalElement() async {
         // LLMs copy-paste the verbose role they see in find_elements output.
         // A selector containing the suffix must still match a canonical element.
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.role = "AXTextArea"
         }
         let selector = Macosusesdk_Type_ElementSelector.with { $0.role = "AXTextArea (text entry area)" }
@@ -212,7 +212,7 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
     }
 
     func testRoleSelectorWithDescriptionsOnBothSides() async {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.role = "AXTextArea (text entry area)"
         }
         let selector = Macosusesdk_Type_ElementSelector.with { $0.role = "AXTextArea (text entry area)" }
@@ -221,7 +221,7 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
     }
 
     func testRoleSelectorMismatchesDifferentRole() async {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.role = "AXButton (push button)"
         }
         let selector = Macosusesdk_Type_ElementSelector.with { $0.role = "AXTextArea" }
@@ -230,7 +230,7 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
     }
 
     func testRoleSelectorIsCaseInsensitive() async {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.role = "axtextarea (text entry area)"
         }
         let selector = Macosusesdk_Type_ElementSelector.with { $0.role = "AXTextArea" }
@@ -253,11 +253,11 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
     // MARK: - NOT Operator Tests
 
     func testNOTOperatorInvertsMatch() async {
-        let button = Macosusesdk_Type_Element.with {
+        let button = Macosusesdk_V1_Element.with {
             $0.role = "AXButton"
             $0.text = "Submit"
         }
-        let staticText = Macosusesdk_Type_Element.with {
+        let staticText = Macosusesdk_V1_Element.with {
             $0.role = "AXStaticText"
             $0.text = "Label"
         }
@@ -282,11 +282,11 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
     func testNOTOperatorWithCompoundInner() async {
         // NOT(role=AXButton AND text=Submit)
         // This should match elements that are NOT (AXButton AND text=Submit)
-        let buttonWithSubmit = Macosusesdk_Type_Element.with {
+        let buttonWithSubmit = Macosusesdk_V1_Element.with {
             $0.role = "AXButton"
             $0.text = "Submit"
         }
-        let buttonWithCancel = Macosusesdk_Type_Element.with {
+        let buttonWithCancel = Macosusesdk_V1_Element.with {
             $0.role = "AXButton"
             $0.text = "Cancel"
         }
@@ -318,7 +318,7 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
     // MARK: - AND Operator Tests
 
     func testANDOperatorAllMatch() async {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.role = "AXButton"
             $0.text = "Submit"
         }
@@ -338,7 +338,7 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
     }
 
     func testANDOperatorPartialMatch() async {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.role = "AXButton"
             $0.text = "Cancel"
         }
@@ -360,13 +360,13 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
     // MARK: - OR Operator Tests
 
     func testOROperatorAnyMatch() async {
-        let button = Macosusesdk_Type_Element.with {
+        let button = Macosusesdk_V1_Element.with {
             $0.role = "AXButton"
         }
-        let link = Macosusesdk_Type_Element.with {
+        let link = Macosusesdk_V1_Element.with {
             $0.role = "AXLink"
         }
-        let text = Macosusesdk_Type_Element.with {
+        let text = Macosusesdk_V1_Element.with {
             $0.role = "AXStaticText"
         }
 
@@ -392,7 +392,7 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
     // MARK: - Role Matching Tests
 
     func testRoleMatchingCaseInsensitive() async {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.role = "AXButton"
         }
 
@@ -413,7 +413,7 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
     // MARK: - Text Matching Tests
 
     func testTextExactMatch() async {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.role = "AXStaticText"
             $0.text = "Hello World"
         }
@@ -433,7 +433,7 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
     }
 
     func testTextContainsMatch() async {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.role = "AXStaticText"
             $0.text = "Hello World"
         }
@@ -447,7 +447,7 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
     }
 
     func testTextRegexMatch() async {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.role = "AXStaticText"
             $0.text = "Hello-123"
         }
@@ -461,7 +461,7 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
     }
 
     func testTextContainsOnElementWithoutText() async {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.role = "AXButton"
             // No text set
         }
@@ -477,7 +477,7 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
     // MARK: - Empty Selector Tests
 
     func testEmptySelectorMatchesAll() async {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.role = "AXButton"
         }
 
@@ -490,7 +490,7 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
     // MARK: - Attribute Matching Tests
 
     func testAttributeMatchingAllPresent() async {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.role = "AXButton"
             $0.attributes = [
                 "AXIdentifier": "submit-btn",
@@ -509,7 +509,7 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
     }
 
     func testAttributeMatchingMissing() async {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.role = "AXButton"
             $0.attributes = ["AXDescription": "Submit form"]
         }
@@ -525,7 +525,7 @@ final class ElementLocatorMatchingSelectorTests: XCTestCase {
     }
 
     func testAttributeMatchingWrongValue() async {
-        let element = Macosusesdk_Type_Element.with {
+        let element = Macosusesdk_V1_Element.with {
             $0.role = "AXButton"
             $0.attributes = ["AXIdentifier": "cancel-btn"]
         }

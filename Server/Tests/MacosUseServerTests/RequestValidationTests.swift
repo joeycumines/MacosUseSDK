@@ -585,4 +585,68 @@ final class RequestValidationTests: XCTestCase {
         let errorInfo = try extractErrorInfo(from: error)
         XCTAssertEqual(errorInfo.metadata["field"], "region.y")
     }
+
+    // MARK: - C24: Screenshot Quality Out-of-Range Classification
+
+    /// C24 regression: an out-of-range quality (e.g. 101) MUST classify as
+    /// OUT_OF_RANGE regardless of image format. Previously the lossless-format
+    /// compatibility check ran first, so 101-on-unspecified/PNG was reported as
+    /// INVALID_ARGUMENT. Per Google AIP a value that parses but is outside its
+    /// valid bounds yields OUT_OF_RANGE.
+    func testC24_OutOfRangeQualityClassifiesOutOfRangeForEveryFormat() throws {
+        let outOfRangeValues: [Int32] = [101, 200, -1, Int32.min]
+        for quality in outOfRangeValues {
+            for format in [Macosusesdk_V1_ImageFormat.unspecified, .png, .tiff, .jpeg] {
+                do {
+                    _ = try RequestNumericValidation.imageEncoding(format: format, quality: quality)
+                    XCTFail("quality \(quality) on format \(format) should have thrown")
+                    continue
+                } catch let error as RPCError {
+                    let info = try extractErrorInfo(from: error)
+                    XCTAssertEqual(
+                        info.reason, "OUT_OF_RANGE",
+                        "quality \(quality) on format \(format) should be OUT_OF_RANGE, got \(info.reason)",
+                    )
+                    XCTAssertEqual(info.metadata["field"], "quality")
+                    XCTAssertEqual(error.code, .invalidArgument)
+                }
+            }
+        }
+    }
+
+    /// C24 complement: a quality that IS in range but is non-zero on a lossless
+    /// format (PNG/TIFF/unspecified) remains INVALID_ARGUMENT — that is a
+    /// semantic/structural mismatch, not a range violation. The range fix must
+    /// not relax this contract.
+    func testC24_LosslessFormatRejectsNonZeroQualityAsInvalidArgument() throws {
+        for format in [Macosusesdk_V1_ImageFormat.unspecified, .png, .tiff] {
+            do {
+                _ = try RequestNumericValidation.imageEncoding(format: format, quality: 50)
+                XCTFail("non-zero quality on lossless format \(format) should have thrown")
+                continue
+            } catch let error as RPCError {
+                let info = try extractErrorInfo(from: error)
+                XCTAssertEqual(
+                    info.reason, "INVALID_ARGUMENT",
+                    "non-zero quality on lossless format \(format) should be INVALID_ARGUMENT, got \(info.reason)",
+                )
+            }
+        }
+    }
+
+    /// C24 complement: in-range quality is accepted for every format it is
+    /// valid for (JPEG accepts 1-100; lossless accepts only the 0 sentinel).
+    func testC24_InRangeQualityIsAccepted() throws {
+        // JPEG accepts the full range plus the zero default.
+        for quality in [Int32(0), 1, 50, 100] {
+            let result = try RequestNumericValidation.imageEncoding(format: .jpeg, quality: quality)
+            XCTAssertEqual(result.format, .jpeg)
+            XCTAssertEqual(result.quality, quality == 0 ? 85 : quality)
+        }
+        // Lossless formats accept the zero sentinel and resolve to quality 0.
+        for format in [Macosusesdk_V1_ImageFormat.unspecified, .png, .tiff] {
+            let result = try RequestNumericValidation.imageEncoding(format: format, quality: 0)
+            XCTAssertEqual(result.quality, 0)
+        }
+    }
 }

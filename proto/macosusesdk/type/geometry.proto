@@ -26,10 +26,10 @@ option java_package = "com.macosusesdk.type";
 //   - Element positions (Element.bounds)
 //   - Screenshot regions (CaptureRegionScreenshotRequest.region)
 message Point {
-  // X coordinate in Global Display Coordinates (pixels from left edge of main display).
+  // X coordinate in Global Display Coordinates (logical points from the main display origin).
   double x = 1;
 
-  // Y coordinate in Global Display Coordinates (pixels from top edge of main display).
+  // Y coordinate in Global Display Coordinates (logical points from the main display origin).
   double y = 2;
 }
 
@@ -44,9 +44,9 @@ message Region {
   // Y coordinate of the region's origin in Global Display Coordinates.
   double y = 2;
 
-  // Width of the region in pixels.
+  // Width of the region in logical display points.
   double width = 3;
 
-  // Height of the region in pixels.
+  // Height of the region in logical display points.
   double height = 4;
 }

@@ -142,8 +142,8 @@ func TestMetricsRegistry_ObserveHistogram_CumulativeBuckets(t *testing.T) {
 func TestMetricsRegistry_SetGauge(t *testing.T) {
 	m := NewMetricsRegistry()
 
-	m.SetGauge("mcp_sse_connections_active", "", 5)
-	m.SetGauge("mcp_sse_connections_active", "", 10)
+	m.SetGauge("go_goroutines", "", 5)
+	m.SetGauge("go_goroutines", "", 10)
 
 	var buf bytes.Buffer
 	if err := m.WritePrometheus(&buf); err != nil {
@@ -151,7 +151,7 @@ func TestMetricsRegistry_SetGauge(t *testing.T) {
 	}
 
 	output := buf.String()
-	if !strings.Contains(output, "mcp_sse_connections_active 10") {
+	if !strings.Contains(output, "go_goroutines 10") {
 		t.Errorf("Expected gauge = 10 (last set value), got:\n%s", output)
 	}
 }
@@ -159,10 +159,10 @@ func TestMetricsRegistry_SetGauge(t *testing.T) {
 func TestMetricsRegistry_IncrementGauge(t *testing.T) {
 	m := NewMetricsRegistry()
 
-	m.SetGauge("mcp_sse_connections_active", "", 0)
-	m.IncrementGauge("mcp_sse_connections_active", "", 1)
-	m.IncrementGauge("mcp_sse_connections_active", "", 1)
-	m.IncrementGauge("mcp_sse_connections_active", "", -1)
+	m.SetGauge("go_goroutines", "", 0)
+	m.IncrementGauge("go_goroutines", "", 1)
+	m.IncrementGauge("go_goroutines", "", 1)
+	m.IncrementGauge("go_goroutines", "", -1)
 
 	var buf bytes.Buffer
 	if err := m.WritePrometheus(&buf); err != nil {
@@ -170,7 +170,7 @@ func TestMetricsRegistry_IncrementGauge(t *testing.T) {
 	}
 
 	output := buf.String()
-	if !strings.Contains(output, "mcp_sse_connections_active 1") {
+	if !strings.Contains(output, "go_goroutines 1") {
 		t.Errorf("Expected gauge = 1 (0+1+1-1), got:\n%s", output)
 	}
 }
@@ -196,40 +196,6 @@ func TestMetricsRegistry_RecordRequest(t *testing.T) {
 	}
 }
 
-func TestMetricsRegistry_RecordSSEEvent(t *testing.T) {
-	m := NewMetricsRegistry()
-
-	m.RecordSSEEvent()
-	m.RecordSSEEvent()
-	m.RecordSSEEvent()
-
-	var buf bytes.Buffer
-	if err := m.WritePrometheus(&buf); err != nil {
-		t.Fatalf("WritePrometheus error: %v", err)
-	}
-
-	output := buf.String()
-	if !strings.Contains(output, "mcp_sse_events_sent_total 3") {
-		t.Errorf("Expected SSE events = 3, got:\n%s", output)
-	}
-}
-
-func TestMetricsRegistry_SetSSEConnections(t *testing.T) {
-	m := NewMetricsRegistry()
-
-	m.SetSSEConnections(5)
-
-	var buf bytes.Buffer
-	if err := m.WritePrometheus(&buf); err != nil {
-		t.Fatalf("WritePrometheus error: %v", err)
-	}
-
-	output := buf.String()
-	if !strings.Contains(output, "mcp_sse_connections_active 5") {
-		t.Errorf("Expected SSE connections = 5, got:\n%s", output)
-	}
-}
-
 func TestMetricsRegistry_ConcurrentAccess(t *testing.T) {
 	m := NewMetricsRegistry()
 
@@ -239,8 +205,7 @@ func TestMetricsRegistry_ConcurrentAccess(t *testing.T) {
 		go func(i int) {
 			defer wg.Done()
 			m.RecordRequest("click", "ok", time.Duration(i)*time.Millisecond)
-			m.SetSSEConnections(i)
-			m.RecordSSEEvent()
+			m.SetGauge("go_goroutines", "", float64(i))
 		}(i)
 	}
 	wg.Wait()
@@ -296,7 +261,7 @@ func TestMetricsRegistry_WritePrometheus_Types(t *testing.T) {
 	// Add some data
 	m.IncrementCounter("mcp_requests_total", `tool="test",status="ok"`)
 	m.ObserveHistogram("mcp_request_duration_seconds", `tool="test"`, 0.1)
-	m.SetGauge("mcp_sse_connections_active", "", 3)
+	m.SetGauge("go_goroutines", "", 3)
 
 	var buf bytes.Buffer
 	if err := m.WritePrometheus(&buf); err != nil {
@@ -312,7 +277,7 @@ func TestMetricsRegistry_WritePrometheus_Types(t *testing.T) {
 	if !strings.Contains(output, "# TYPE mcp_request_duration_seconds histogram") {
 		t.Errorf("Expected histogram type declaration, got:\n%s", output)
 	}
-	if !strings.Contains(output, "# TYPE mcp_sse_connections_active gauge") {
+	if !strings.Contains(output, "# TYPE go_goroutines gauge") {
 		t.Errorf("Expected gauge type declaration, got:\n%s", output)
 	}
 }

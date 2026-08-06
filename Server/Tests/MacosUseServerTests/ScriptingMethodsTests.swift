@@ -371,12 +371,12 @@ final class ScriptingMethodsTests: XCTestCase {
     }
 
     func testExecuteShellCommandWithTimeout() async throws {
-        // Sleep for longer than timeout
+        let clock = ContinuousClock()
+        let start = clock.now
         let request = Macosusesdk_V1_ExecuteShellCommandRequest.with {
-            $0.command = "sleep 10"
+            $0.command = "sleep 2"
             $0.timeout = SwiftProtobuf.Google_Protobuf_Duration.with {
-                $0.seconds = 1
-                $0.nanos = 0
+                $0.nanos = 100_000_000
             }
         }
 
@@ -391,6 +391,65 @@ final class ScriptingMethodsTests: XCTestCase {
             msg.error.lowercased().contains("timeout") || msg.error.lowercased().contains("timed"),
             "Error should indicate timeout",
         )
+        XCTAssertLessThan(start.duration(to: clock.now), .seconds(1))
+    }
+
+    func testExecuteShellCommandHonorsRPCCancellation() async throws {
+        let marker = FileManager.default.temporaryDirectory
+            .appendingPathComponent("macos-use-rpc-cancel-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: marker) }
+
+        let request = Macosusesdk_V1_ExecuteShellCommandRequest.with {
+            $0.command = "echo started > \"$MARKER\"; trap '' TERM; end=$((SECONDS + 2)); while (( SECONDS < end )); do :; done"
+            $0.environment = ["MARKER": marker.path]
+            $0.timeout = SwiftProtobuf.Google_Protobuf_Duration(seconds: 5)
+        }
+        let context = makeShellCommandContext()
+        let service = try XCTUnwrap(service)
+        let serverRequest = makeShellCommandRequest(request)
+        let call = Task {
+            try await service.executeShellCommand(
+                request: serverRequest,
+                context: context,
+            )
+        }
+        try await pollUntilFileExists(marker)
+
+        let clock = ContinuousClock()
+        let cancelStart = clock.now
+        context.cancellation.cancel()
+        do {
+            _ = try await call.value
+            XCTFail("Expected cancelled RPC")
+        } catch let error as RPCError {
+            XCTAssertEqual(error.code, .cancelled)
+        }
+        XCTAssertLessThan(cancelStart.duration(to: clock.now), .seconds(1))
+    }
+
+    func testExecuteShellCommandRejectsInvalidTimeouts() async throws {
+        let invalidDurations = [
+            SwiftProtobuf.Google_Protobuf_Duration(seconds: 0, nanos: 0),
+            SwiftProtobuf.Google_Protobuf_Duration(seconds: -1, nanos: 0),
+            SwiftProtobuf.Google_Protobuf_Duration(seconds: 0, nanos: -1),
+            SwiftProtobuf.Google_Protobuf_Duration(seconds: 0, nanos: 1_000_000_000),
+        ]
+
+        for timeout in invalidDurations {
+            let request = Macosusesdk_V1_ExecuteShellCommandRequest.with {
+                $0.command = "true"
+                $0.timeout = timeout
+            }
+            do {
+                _ = try await service.executeShellCommand(
+                    request: makeShellCommandRequest(request),
+                    context: makeShellCommandContext(),
+                )
+                XCTFail("Expected invalidArgument for timeout \(timeout)")
+            } catch let error as RPCError {
+                XCTAssertEqual(error.code, .invalidArgument)
+            }
+        }
     }
 
     func testExecuteShellCommandWithEmptyCommand() async throws {
@@ -823,4 +882,16 @@ final class ScriptingMethodsTests: XCTestCase {
 
         XCTAssertTrue(msg.valid)
     }
+}
+
+private func pollUntilFileExists(_ url: URL) async throws {
+    let clock = ContinuousClock()
+    let deadline = clock.now.advanced(by: .seconds(1))
+    while clock.now < deadline {
+        if FileManager.default.fileExists(atPath: url.path) {
+            return
+        }
+        try await Task.sleep(for: .milliseconds(10))
+    }
+    throw ScriptExecutionError.processError("Execution marker was not created before deadline")
 }

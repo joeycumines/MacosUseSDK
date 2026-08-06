@@ -1,3 +1,4 @@
+import GRPCCore
 @testable import MacosUseProto
 @testable import MacosUseServer
 import SwiftProtobuf
@@ -100,9 +101,13 @@ final class OperationStoreTests: XCTestCase {
         var response = Google_Protobuf_StringValue()
         response.value = "completed successfully"
 
-        try await store.finishOperation(name: "operations/to-finish", responseMessage: response)
+        let outcome = try await store.finishOperation(
+            name: "operations/to-finish",
+            responseMessage: response,
+        )
 
         let op = await store.getOperation(name: "operations/to-finish")
+        XCTAssertEqual(outcome, .published)
         XCTAssertTrue(op?.done ?? false)
     }
 
@@ -123,51 +128,84 @@ final class OperationStoreTests: XCTestCase {
         XCTAssertTrue(any.typeURL.contains("StringValue"))
     }
 
-    func testFinishOperation_nonExistentOperation_throwsError() async {
+    func testFinishOperation_deletedOperation_discardsLatePublicationWithoutThrowing() async throws {
         let store = OperationStore()
+        let probe = BlockingOwnedOperationProbe()
+        let name = "operations/deleted-before-publication"
+        _ = try await store.createOperation(name: name, execution: {
+            await probe.run()
+        })
+        await probe.waitUntilEntered()
+        let deleted = await store.deleteOperation(name: name)
+        XCTAssertTrue(deleted)
+
         var response = Google_Protobuf_StringValue()
         response.value = "response"
 
-        do {
-            try await store.finishOperation(name: "operations/nonexistent", responseMessage: response)
-            XCTFail("Expected error to be thrown")
-        } catch {
-            let nsError = error as NSError
-            XCTAssertEqual(nsError.domain, "OperationStore")
-            XCTAssertEqual(nsError.code, 1)
-        }
+        let outcome = try await store.finishOperation(
+            name: name,
+            responseMessage: response,
+        )
+
+        XCTAssertEqual(outcome, .discarded)
+        let resurrected = await store.getOperation(name: name)
+        XCTAssertNil(resurrected)
+        await probe.release()
+        try await waitForExecutionTaskCount(0, store: store)
     }
 
-    func testFinishOperation_alreadyDoneOperation_stillUpdates() async throws {
+    func testFinishOperation_arbitraryMissingOperationFailsClosed() async throws {
+        let store = OperationStore()
+        let outcome = try await store.finishOperation(
+            name: "operations/never-created",
+            responseMessage: Google_Protobuf_StringValue.with { $0.value = "response" },
+        )
+
+        XCTAssertEqual(outcome, .alreadyTerminal)
+    }
+
+    func testFinishOperation_alreadyDoneOperation_doesNotOverwriteTerminalResult() async throws {
         let store = OperationStore()
         _ = await store.createOperation(name: "operations/double-finish")
 
         var response1 = Google_Protobuf_StringValue()
         response1.value = "first"
-        try await store.finishOperation(name: "operations/double-finish", responseMessage: response1)
+        let firstOutcome = try await store.finishOperation(
+            name: "operations/double-finish",
+            responseMessage: response1,
+        )
 
         var response2 = Google_Protobuf_StringValue()
         response2.value = "second"
-        try await store.finishOperation(name: "operations/double-finish", responseMessage: response2)
+        let secondOutcome = try await store.finishOperation(
+            name: "operations/double-finish",
+            responseMessage: response2,
+        )
 
         let op = await store.getOperation(name: "operations/double-finish")
+        XCTAssertEqual(firstOutcome, .published)
+        XCTAssertEqual(secondOutcome, .alreadyTerminal)
         XCTAssertTrue(op?.done ?? false)
+        guard case let .response(any) = op?.result else {
+            return XCTFail("Expected the first terminal response")
+        }
+        let retainedResponse = try Google_Protobuf_StringValue(serializedBytes: any.value)
+        XCTAssertEqual(retainedResponse.value, "first")
     }
 
     // MARK: - putOperation Tests
 
-    func testPutOperation_newOperation_storesIt() async {
+    func testPutOperation_missingOperation_doesNotInsertIt() async {
         let store = OperationStore()
         var op = Google_Longrunning_Operation()
         op.name = "operations/put-new"
         op.done = true
 
-        await store.putOperation(op)
+        let replaced = await store.putOperation(op)
 
         let retrieved = await store.getOperation(name: "operations/put-new")
-        XCTAssertNotNil(retrieved)
-        XCTAssertEqual(retrieved?.name, "operations/put-new")
-        XCTAssertTrue(retrieved?.done ?? false)
+        XCTAssertFalse(replaced)
+        XCTAssertNil(retrieved)
     }
 
     func testPutOperation_existingOperation_replacesIt() async {
@@ -185,6 +223,7 @@ final class OperationStoreTests: XCTestCase {
 
     func testPutOperation_withMetadata_preservesMetadata() async {
         let store = OperationStore()
+        _ = await store.createOperation(name: "operations/with-meta")
         var op = Google_Longrunning_Operation()
         op.name = "operations/with-meta"
         var meta = Google_Protobuf_Any()
@@ -196,6 +235,25 @@ final class OperationStoreTests: XCTestCase {
 
         let retrieved = await store.getOperation(name: "operations/with-meta")
         XCTAssertEqual(retrieved?.metadata.value, Data([0xDE, 0xAD, 0xBE, 0xEF]))
+    }
+
+    func testPutOperation_staleSnapshotAfterDeletion_doesNotResurrect() async {
+        let store = OperationStore()
+        let name = "operations/deleted-before-stale-publication"
+        _ = await store.createOperation(name: name)
+        guard var staleSnapshot = await store.getOperation(name: name) else {
+            XCTFail("Expected the operation snapshot to exist before deletion")
+            return
+        }
+
+        await store.deleteOperation(name: name)
+        staleSnapshot.metadata = Google_Protobuf_Any.with {
+            $0.typeURL = "type.googleapis.com/test.StaleMetadata"
+        }
+        await store.putOperation(staleSnapshot)
+
+        let resurrected = await store.getOperation(name: name)
+        XCTAssertNil(resurrected, "Late producer publication must not recreate a deleted public operation")
     }
 
     // MARK: - listOperations Tests
@@ -306,7 +364,7 @@ final class OperationStoreTests: XCTestCase {
         XCTAssertNil(op)
     }
 
-    func testCancelOperation_alreadyDoneOperation_overwritesState() async throws {
+    func testCancelOperation_alreadyDoneOperation_preservesTerminalState() async throws {
         let store = OperationStore()
         _ = await store.createOperation(name: "operations/already-done")
         var response = Google_Protobuf_StringValue()
@@ -316,23 +374,22 @@ final class OperationStoreTests: XCTestCase {
         await store.cancelOperation(name: "operations/already-done")
 
         let op = await store.getOperation(name: "operations/already-done")
-        // Cancellation overwrites the previous state
-        guard case let .error(status) = op?.result else {
-            XCTFail("Expected error result after cancel")
+        guard case let .response(responseAny) = op?.result else {
+            XCTFail("Expected completed response to remain terminal")
             return
         }
-        XCTAssertEqual(status.code, 1) // CANCELLED
+        XCTAssertTrue(responseAny.typeURL.contains("StringValue"))
     }
 
     // MARK: - waitOperation Tests
 
-    func testWaitOperation_alreadyDone_returnsImmediately() async {
+    func testWaitOperation_alreadyDone_returnsImmediately() async throws {
         let store = OperationStore()
         _ = await store.createOperation(name: "operations/already-done")
         await store.cancelOperation(name: "operations/already-done") // marks as done
 
         let startTime = Date()
-        let op = await store.waitOperation(name: "operations/already-done", timeoutNs: nil)
+        let op = try await store.waitOperation(name: "operations/already-done", timeoutNs: nil)
         let elapsed = Date().timeIntervalSince(startTime)
 
         XCTAssertNotNil(op)
@@ -341,21 +398,20 @@ final class OperationStoreTests: XCTestCase {
         XCTAssertLessThan(elapsed, 0.05)
     }
 
-    func testWaitOperation_nonExistentOperation_returnsNilEventually() async {
+    func testWaitOperation_nonExistentOperation_returnsNilImmediately() async throws {
         let store = OperationStore()
 
-        // With a short timeout, should return nil
-        let op = await store.waitOperation(name: "operations/nonexistent", timeoutNs: 50_000_000) // 50ms
+        let op = try await store.waitOperation(name: "operations/nonexistent", timeoutNs: nil)
 
         XCTAssertNil(op)
     }
 
-    func testWaitOperation_withTimeout_respectsTimeout() async {
+    func testWaitOperation_withTimeout_respectsTimeout() async throws {
         let store = OperationStore()
         _ = await store.createOperation(name: "operations/slow") // never completes
 
         let startTime = Date()
-        _ = await store.waitOperation(name: "operations/slow", timeoutNs: 150_000_000) // 150ms
+        _ = try await store.waitOperation(name: "operations/slow", timeoutNs: 150_000_000) // 150ms
         let elapsed = Date().timeIntervalSince(startTime)
 
         // Should respect timeout (within reasonable margin for polling interval)
@@ -363,20 +419,328 @@ final class OperationStoreTests: XCTestCase {
         XCTAssertLessThan(elapsed, 0.5) // But not too long
     }
 
-    func testWaitOperation_operationCompletesInFlight_returnsCompletedOp() async {
+    func testWaitOperation_operationCompletesInFlight_returnsCompletedOp() async throws {
         let store = OperationStore()
-        _ = await store.createOperation(name: "operations/in-flight")
+        let name = "operations/in-flight"
+        _ = await store.createOperation(name: name)
 
-        // Complete the operation after a small delay in a separate task
-        Task {
-            try? await Task.sleep(nanoseconds: 50_000_000) // 50ms
-            await store.cancelOperation(name: "operations/in-flight")
+        let waiter = Task {
+            try await store.waitOperation(name: name, timeoutNs: 500_000_000)
         }
+        try await waitForWaiterCount(1, name: name, store: store)
+        await store.cancelOperation(name: name)
 
-        let op = await store.waitOperation(name: "operations/in-flight", timeoutNs: 500_000_000) // 500ms
+        let op = try await waiter.value
 
         XCTAssertNotNil(op)
         XCTAssertTrue(op?.done ?? false)
+    }
+
+    func testWaitOperation_noTimeoutCancellationRemovesWaiter() async throws {
+        let store = OperationStore()
+        let name = "operations/cancel-waiter"
+        _ = await store.createOperation(name: name)
+
+        let waiter = Task {
+            try await store.waitOperation(name: name, timeoutNs: nil)
+        }
+        try await waitForWaiterCount(1, name: name, store: store)
+
+        waiter.cancel()
+        do {
+            _ = try await waiter.value
+            XCTFail("Expected waiter cancellation")
+        } catch is CancellationError {
+            // Expected.
+        }
+
+        let waiterCount = await store.waiterCount(name: name)
+        XCTAssertEqual(waiterCount, 0)
+    }
+
+    func testWaitOperation_deleteWakesNoTimeoutWaiter() async throws {
+        let store = OperationStore()
+        let name = "operations/delete-waiter"
+        _ = await store.createOperation(name: name)
+
+        let waiter = Task {
+            try await store.waitOperation(name: name, timeoutNs: nil)
+        }
+        try await waitForWaiterCount(1, name: name, store: store)
+
+        await store.deleteOperation(name: name)
+        do {
+            _ = try await waiter.value
+            XCTFail("Expected deleted operation to terminate its waiter")
+        } catch let error as OperationStoreWaitError {
+            XCTAssertEqual(error, .operationDeleted)
+        }
+        let waiterCount = await store.waiterCount(name: name)
+        XCTAssertEqual(waiterCount, 0)
+    }
+
+    func testWaitOperation_drainWakesNoTimeoutWaiterWithCancellation() async throws {
+        let store = OperationStore()
+        let name = "operations/drain-waiter"
+        _ = await store.createOperation(name: name)
+
+        let waiter = Task {
+            try await store.waitOperation(name: name, timeoutNs: nil)
+        }
+        try await waitForWaiterCount(1, name: name, store: store)
+
+        _ = await store.drainAllOperations()
+        let operation = try await waiter.value
+        XCTAssertEqual(operation?.name, name)
+        XCTAssertTrue(operation?.done ?? false)
+        XCTAssertEqual(operation?.error.code, 1)
+        let waiterCount = await store.waiterCount(name: name)
+        XCTAssertEqual(waiterCount, 0)
+    }
+
+    func testWaitOperation_completionWakesWithoutPolling() async throws {
+        let store = OperationStore()
+        let name = "operations/completion-waiter"
+        _ = await store.createOperation(name: name)
+
+        let waiter = Task {
+            try await store.waitOperation(name: name, timeoutNs: nil)
+        }
+        try await waitForWaiterCount(1, name: name, store: store)
+
+        var response = Google_Protobuf_StringValue()
+        response.value = "complete"
+        try await store.finishOperation(name: name, responseMessage: response)
+
+        let operation = try await waiter.value
+        XCTAssertTrue(operation?.done ?? false)
+        let waiterCount = await store.waiterCount(name: name)
+        XCTAssertEqual(waiterCount, 0)
+    }
+
+    func testWaitOperationCompletionJoinsItsFiniteTimeoutTask() async throws {
+        let sleeper = BlockingWaitTimeoutSleeper()
+        let store = OperationStore(waitTimeoutSleeper: { _ in await sleeper.run() })
+        let name = "operations/completion-joins-timeout"
+        _ = await store.createOperation(name: name)
+        let waiterReturned = AsyncReturnProbe()
+        let waiter = Task {
+            do {
+                let result = try await store.waitOperation(
+                    name: name,
+                    timeoutNs: 60_000_000_000,
+                )
+                await waiterReturned.record()
+                return result
+            } catch {
+                await waiterReturned.record()
+                throw error
+            }
+        }
+        try await sleeper.waitUntilEntered()
+
+        let returned = AsyncReturnProbe()
+        let completion = Task {
+            var response = Google_Protobuf_StringValue()
+            response.value = "complete"
+            let outcome = try await store.finishOperation(name: name, responseMessage: response)
+            await returned.record()
+            return outcome
+        }
+        try await sleeper.waitUntilCancellationObserved()
+        let completionReturnedWhileTimeoutOwned = await returned.didReturn()
+        let waiterReturnedWhileTimeoutOwned = await waiterReturned.didReturn()
+        let ownedTimeoutsBeforeRelease = await store.waitTimeoutTaskCount()
+        XCTAssertFalse(completionReturnedWhileTimeoutOwned)
+        XCTAssertFalse(waiterReturnedWhileTimeoutOwned)
+        XCTAssertEqual(ownedTimeoutsBeforeRelease, 1)
+
+        sleeper.release()
+        let completionOutcome = try await completion.value
+        let terminal = try await waiter.value
+        let ownedTimeoutsAfterRelease = await store.waitTimeoutTaskCount()
+        XCTAssertEqual(completionOutcome, .published)
+        XCTAssertTrue(terminal?.done ?? false)
+        XCTAssertEqual(ownedTimeoutsAfterRelease, 0)
+    }
+
+    func testWaitOperationDeletionJoinsItsFiniteTimeoutTask() async throws {
+        let sleeper = BlockingWaitTimeoutSleeper()
+        let store = OperationStore(waitTimeoutSleeper: { _ in await sleeper.run() })
+        let name = "operations/deletion-joins-timeout"
+        _ = await store.createOperation(name: name)
+        let waiterReturned = AsyncReturnProbe()
+        let waiter = Task {
+            do {
+                let result = try await store.waitOperation(
+                    name: name,
+                    timeoutNs: 60_000_000_000,
+                )
+                await waiterReturned.record()
+                return result
+            } catch {
+                await waiterReturned.record()
+                throw error
+            }
+        }
+        try await sleeper.waitUntilEntered()
+
+        let returned = AsyncReturnProbe()
+        let deletion = Task {
+            let deleted = await store.deleteOperation(name: name)
+            await returned.record()
+            return deleted
+        }
+        try await sleeper.waitUntilCancellationObserved()
+        let deletionReturnedWhileTimeoutOwned = await returned.didReturn()
+        let waiterReturnedWhileTimeoutOwned = await waiterReturned.didReturn()
+        let ownedTimeoutsBeforeRelease = await store.waitTimeoutTaskCount()
+        XCTAssertFalse(deletionReturnedWhileTimeoutOwned)
+        XCTAssertFalse(waiterReturnedWhileTimeoutOwned)
+        XCTAssertEqual(ownedTimeoutsBeforeRelease, 1)
+
+        sleeper.release()
+        let deleted = await deletion.value
+        XCTAssertTrue(deleted)
+        do {
+            _ = try await waiter.value
+            XCTFail("Expected deleted waiter to fail")
+        } catch let error as OperationStoreWaitError {
+            XCTAssertEqual(error, .operationDeleted)
+        }
+        let ownedTimeoutsAfterRelease = await store.waitTimeoutTaskCount()
+        XCTAssertEqual(ownedTimeoutsAfterRelease, 0)
+    }
+
+    func testWaitOperationCallerCancellationJoinsItsFiniteTimeoutTask() async throws {
+        let sleeper = BlockingWaitTimeoutSleeper()
+        let store = OperationStore(waitTimeoutSleeper: { _ in await sleeper.run() })
+        let name = "operations/caller-cancellation-joins-timeout"
+        _ = await store.createOperation(name: name)
+        let returned = AsyncReturnProbe()
+        let waiter = Task {
+            do {
+                let result = try await store.waitOperation(
+                    name: name,
+                    timeoutNs: 60_000_000_000,
+                )
+                await returned.record()
+                return result
+            } catch {
+                await returned.record()
+                throw error
+            }
+        }
+        try await sleeper.waitUntilEntered()
+
+        waiter.cancel()
+        try await sleeper.waitUntilCancellationObserved()
+        let waiterReturnedWhileTimeoutOwned = await returned.didReturn()
+        let ownedTimeoutsBeforeRelease = await store.waitTimeoutTaskCount()
+        XCTAssertFalse(waiterReturnedWhileTimeoutOwned)
+        XCTAssertEqual(ownedTimeoutsBeforeRelease, 1)
+
+        sleeper.release()
+        do {
+            _ = try await waiter.value
+            XCTFail("Expected caller cancellation")
+        } catch is CancellationError {
+            // Expected.
+        }
+        try await waitForCondition { await returned.didReturn() }
+        let ownedTimeoutsAfterRelease = await store.waitTimeoutTaskCount()
+        XCTAssertEqual(ownedTimeoutsAfterRelease, 0)
+    }
+
+    func testWaitOperationDrainJoinsItsFiniteTimeoutTask() async throws {
+        let sleeper = BlockingWaitTimeoutSleeper()
+        let store = OperationStore(waitTimeoutSleeper: { _ in await sleeper.run() })
+        let name = "operations/drain-joins-timeout"
+        _ = await store.createOperation(name: name)
+        let waiterReturned = AsyncReturnProbe()
+        let waiter = Task {
+            do {
+                let result = try await store.waitOperation(
+                    name: name,
+                    timeoutNs: 60_000_000_000,
+                )
+                await waiterReturned.record()
+                return result
+            } catch {
+                await waiterReturned.record()
+                throw error
+            }
+        }
+        try await sleeper.waitUntilEntered()
+
+        let returned = AsyncReturnProbe()
+        let drain = Task {
+            let counts = await store.drainAllOperations()
+            await returned.record()
+            return counts
+        }
+        try await sleeper.waitUntilCancellationObserved()
+        let drainReturnedWhileTimeoutOwned = await returned.didReturn()
+        let waiterReturnedWhileTimeoutOwned = await waiterReturned.didReturn()
+        let ownedTimeoutsBeforeRelease = await store.waitTimeoutTaskCount()
+        XCTAssertFalse(drainReturnedWhileTimeoutOwned)
+        XCTAssertFalse(waiterReturnedWhileTimeoutOwned)
+        XCTAssertEqual(ownedTimeoutsBeforeRelease, 1)
+
+        sleeper.release()
+        let counts = await drain.value
+        let terminal = try await waiter.value
+        let ownedTimeoutsAfterRelease = await store.waitTimeoutTaskCount()
+        XCTAssertEqual(counts.pendingCancelled, 1)
+        XCTAssertTrue(terminal?.done ?? false)
+        XCTAssertEqual(ownedTimeoutsAfterRelease, 0)
+    }
+
+    func testDrainClaimsEveryTimedWaiterBeforeItsFirstJoin() async throws {
+        let sleeper = SelectiveBlockingWaitTimeoutSleeper()
+        let store = OperationStore(
+            waitTimeoutSleeper: { timeoutNs in
+                await sleeper.run(token: timeoutNs)
+            },
+        )
+        let names = (0 ..< 4).map { "operations/drain-claims-all-waiters-\($0)" }
+        for name in names {
+            _ = await store.createOperation(name: name)
+        }
+        let waiters = names.enumerated().map { index, name in
+            Task {
+                try await store.waitOperation(
+                    name: name,
+                    timeoutNs: UInt64(index + 1),
+                )
+            }
+        }
+        try await sleeper.waitUntilEntered(count: names.count)
+        defer { sleeper.releaseAll() }
+
+        let drain = Task {
+            await store.drainAllOperations()
+        }
+        try await sleeper.waitUntilCancellationObserved(count: names.count)
+
+        // Drain must synchronously detach every waiter and cancel every timeout
+        // child before awaiting even one cancellation-resistant child.
+        XCTAssertEqual(sleeper.releaseUncancelled(), 0)
+
+        sleeper.releaseAll()
+        let counts = await drain.value
+        XCTAssertEqual(counts.pendingCancelled, names.count)
+        XCTAssertEqual(counts.totalDrained, names.count)
+        for (index, waiter) in waiters.enumerated() {
+            let terminal = try await waiter.value
+            XCTAssertEqual(terminal?.name, names[index])
+            XCTAssertTrue(terminal?.done ?? false)
+            XCTAssertEqual(terminal?.error.code, 1)
+        }
+        let waiterCount = await store.waiterCount()
+        let timeoutTaskCount = await store.waitTimeoutTaskCount()
+        XCTAssertEqual(waiterCount, 0)
+        XCTAssertEqual(timeoutTaskCount, 0)
     }
 
     // MARK: - Actor Isolation Tests
@@ -474,26 +838,16 @@ final class OperationStoreTests: XCTestCase {
         XCTAssertNotNil(retrieved)
     }
 
-    func testCreateOperation_duplicateName_overwritesPrevious() async {
+    func testCreateOperation_duplicateNameIsRejected() async throws {
         let store = OperationStore()
-        let first = await store.createOperation(name: "operations/duplicate")
+        _ = try await store.createOperation(name: "operations/duplicate", execution: {})
 
-        var meta = Google_Protobuf_Any()
-        meta.typeURL = "type.googleapis.com/second"
-        let second = await store.createOperation(name: "operations/duplicate", metadata: meta)
-
-        // Should have the second operation's metadata
-        let retrieved = await store.getOperation(name: "operations/duplicate")
-        XCTAssertTrue(retrieved?.hasMetadata ?? false)
-        XCTAssertEqual(retrieved?.metadata.typeURL, "type.googleapis.com/second")
-
-        // Only one operation with this name
-        let result = await store.listOperations()
-        XCTAssertEqual(result.operations.count(where: { $0.name == "operations/duplicate" }), 1)
-
-        // Suppress warnings about unused values
-        _ = first
-        _ = second
+        do {
+            _ = try await store.createOperation(name: "operations/duplicate", execution: {})
+            XCTFail("Expected duplicate operation identity rejection")
+        } catch let error as OperationStoreError {
+            XCTAssertEqual(error, .duplicateExecution("operations/duplicate"))
+        }
     }
 
     // MARK: - Pagination Tests
@@ -510,7 +864,7 @@ final class OperationStoreTests: XCTestCase {
         XCTAssertFalse(result.nextPageToken.isEmpty, "Should have next page token")
     }
 
-    func testListOperations_pagination_returnsNextPage() async {
+    func testListOperations_pagination_returnsNextPage() async throws {
         let store = OperationStore()
         for i in 0 ..< 10 {
             _ = await store.createOperation(name: "operations/page-\(String(format: "%02d", i))")
@@ -521,7 +875,7 @@ final class OperationStoreTests: XCTestCase {
         XCTAssertEqual(firstPage.operations.count, 3)
 
         // Get second page using token
-        let secondPage = await store.listOperations(pageSize: 3, pageToken: firstPage.nextPageToken)
+        let secondPage = try await store.listOperations(pageSize: 3, pageToken: firstPage.nextPageToken)
         XCTAssertEqual(secondPage.operations.count, 3)
 
         // Names should be different
@@ -530,7 +884,7 @@ final class OperationStoreTests: XCTestCase {
         XCTAssertTrue(firstNames.isDisjoint(with: secondNames), "Pages should not overlap")
     }
 
-    func testListOperations_pagination_lastPageHasEmptyToken() async {
+    func testListOperations_pagination_lastPageHasEmptyToken() async throws {
         let store = OperationStore()
         for i in 0 ..< 5 {
             _ = await store.createOperation(name: "operations/last-\(i)")
@@ -541,7 +895,7 @@ final class OperationStoreTests: XCTestCase {
         XCTAssertFalse(firstPage.nextPageToken.isEmpty)
 
         // Second page (last page)
-        let lastPage = await store.listOperations(pageSize: 3, pageToken: firstPage.nextPageToken)
+        let lastPage = try await store.listOperations(pageSize: 3, pageToken: firstPage.nextPageToken)
         XCTAssertEqual(lastPage.operations.count, 2)
         XCTAssertTrue(lastPage.nextPageToken.isEmpty, "Last page should have empty next token")
     }
@@ -572,19 +926,23 @@ final class OperationStoreTests: XCTestCase {
         XCTAssertFalse(result.nextPageToken.isEmpty)
     }
 
-    func testListOperations_pagination_invalidTokenStartsFromBeginning() async {
+    func testListOperations_pagination_invalidTokenIsRejected() async {
         let store = OperationStore()
         for i in 0 ..< 5 {
             _ = await store.createOperation(name: "operations/invalid-\(i)")
         }
 
-        // Invalid token should be ignored (fail-open)
-        let result = await store.listOperations(pageSize: 3, pageToken: "invalid-garbage-token")
-
-        XCTAssertEqual(result.operations.count, 3, "Should start from beginning on invalid token")
+        do {
+            _ = try await store.listOperations(pageSize: 3, pageToken: "invalid-garbage-token")
+            XCTFail("Expected invalid token rejection")
+        } catch let error as RPCError {
+            XCTAssertEqual(error.code, .invalidArgument)
+        } catch {
+            XCTFail("Expected RPCError, got \(error)")
+        }
     }
 
-    func testListOperations_pagination_negativeOffsetToken_startsFromBeginning() async throws {
+    func testListOperations_pagination_negativeOffsetToken_isRejected() async throws {
         let store = OperationStore()
         for i in 0 ..< 5 {
             _ = await store.createOperation(name: "operations/neg-\(i)")
@@ -594,10 +952,12 @@ final class OperationStoreTests: XCTestCase {
         let maliciousPayload = try JSONEncoder().encode(["offset": -5])
         let maliciousToken = maliciousPayload.base64EncodedString()
 
-        // Should fail-open (treat as invalid), not crash
-        let result = await store.listOperations(pageSize: 3, pageToken: maliciousToken)
-
-        XCTAssertEqual(result.operations.count, 3, "Should start from beginning on negative offset")
+        do {
+            _ = try await store.listOperations(pageSize: 3, pageToken: maliciousToken)
+            XCTFail("Expected negative offset token rejection")
+        } catch let error as RPCError {
+            XCTAssertEqual(error.code, .invalidArgument)
+        }
     }
 
     func testListOperations_pagination_deterministicOrder() async {
@@ -678,7 +1038,7 @@ final class OperationStoreTests: XCTestCase {
         XCTAssertEqual(result.operations.first?.name, "operations/macro/done")
     }
 
-    func testListOperations_combinedFiltersAndPagination() async {
+    func testListOperations_combinedFiltersAndPagination() async throws {
         let store = OperationStore()
         // Create 10 done macro operations
         for i in 0 ..< 10 {
@@ -711,7 +1071,7 @@ final class OperationStoreTests: XCTestCase {
         var allFiltered: [Google_Longrunning_Operation] = firstPage.operations
         var token = firstPage.nextPageToken
         while !token.isEmpty {
-            let nextPage = await store.listOperations(
+            let nextPage = try await store.listOperations(
                 namePrefix: "operations/macro/",
                 showOnlyDone: true,
                 pageSize: 3,
@@ -722,5 +1082,610 @@ final class OperationStoreTests: XCTestCase {
         }
 
         XCTAssertEqual(allFiltered.count, 10, "Should have all 10 done macro operations")
+    }
+
+    func testCancelOperationAllowsUncooperativeProducerSuccessToWin() async throws {
+        let store = OperationStore()
+        let probe = BlockingOwnedOperationProbe()
+        let name = "operations/owned-cancellation"
+
+        _ = try await store.createOperation(name: name, execution: {
+            await probe.run()
+            var response = Google_Protobuf_StringValue()
+            response.value = "late success"
+            _ = try? await store.finishOperation(name: name, responseMessage: response)
+        })
+        await probe.waitUntilEntered()
+
+        let cancellation = Task {
+            await store.cancelOperation(name: name)
+            await probe.recordCancelReturned()
+        }
+        await probe.waitUntilCancellationObserved()
+
+        let cancelReturnedBeforeRelease = await waitForCancelReturn(probe)
+        let executingBeforeRelease = await store.executionTaskCount()
+        let pendingBeforeRelease = await store.getOperation(name: name)
+        XCTAssertTrue(cancelReturnedBeforeRelease)
+        XCTAssertEqual(executingBeforeRelease, 1)
+        XCTAssertFalse(pendingBeforeRelease?.done ?? true)
+        XCTAssertNil(pendingBeforeRelease?.result)
+
+        await probe.release()
+        await cancellation.value
+        try await waitForExecutionTaskCount(0, store: store)
+
+        let operation = await store.getOperation(name: name)
+        XCTAssertTrue(operation?.done ?? false)
+        guard case let .response(any) = operation?.result else {
+            return XCTFail("Expected late producer success to remain authoritative")
+        }
+        let response = try Google_Protobuf_StringValue(serializedBytes: any.value)
+        XCTAssertEqual(response.value, "late success")
+        let executingAfterCancel = await store.executionTaskCount()
+        XCTAssertEqual(executingAfterCancel, 0)
+    }
+
+    func testCancelOperationPublishesCancellationOnlyAfterProducerSettles() async throws {
+        let store = OperationStore()
+        let probe = BlockingOwnedOperationProbe()
+        let name = "operations/cooperative-cancellation"
+
+        _ = try await store.createOperation(name: name, execution: {
+            await probe.run()
+        })
+        await probe.waitUntilEntered()
+
+        let cancelled = await store.cancelOperation(name: name)
+        XCTAssertTrue(cancelled)
+        await probe.waitUntilCancellationObserved()
+
+        let pending = await store.getOperation(name: name)
+        XCTAssertFalse(pending?.done ?? true)
+        XCTAssertNil(pending?.result)
+        let executionTaskCount = await store.executionTaskCount()
+        XCTAssertEqual(executionTaskCount, 1)
+
+        await probe.release()
+        try await waitForExecutionTaskCount(0, store: store)
+
+        let settled = await store.getOperation(name: name)
+        XCTAssertTrue(settled?.done ?? false)
+        XCTAssertEqual(settled?.error.code, Int32(RPCError.Code.cancelled.rawValue))
+        XCTAssertEqual(settled?.error.message, "Operation cancelled")
+    }
+
+    func testDrainAwaitsOwnedExecutionAndClosesProducerAdmission() async throws {
+        let store = OperationStore()
+        let probe = BlockingOwnedOperationProbe()
+        let name = "operations/owned-drain"
+
+        _ = try await store.createOperation(name: name, execution: {
+            await probe.run()
+        })
+        await probe.waitUntilEntered()
+
+        let drain = Task {
+            let counts = await store.drainAllOperations()
+            await probe.recordCancelReturned()
+            return counts
+        }
+        await probe.waitUntilCancellationObserved()
+
+        let drainReturnedBeforeRelease = await probe.didCancelReturn()
+        XCTAssertFalse(drainReturnedBeforeRelease)
+
+        await probe.release()
+        let counts = await drain.value
+        XCTAssertEqual(counts.pendingCancelled, 1)
+        XCTAssertEqual(counts.totalDrained, 1)
+        let operationAfterDrain = await store.getOperation(name: name)
+        let executingAfterDrain = await store.executionTaskCount()
+        XCTAssertNil(operationAfterDrain)
+        XCTAssertEqual(executingAfterDrain, 0)
+
+        do {
+            _ = try await store.createOperation(
+                name: "operations/after-drain",
+                execution: {},
+            )
+            XCTFail("Expected producer admission to remain closed after drain")
+        } catch let error as OperationStoreError {
+            XCTAssertEqual(error, .admissionClosed)
+        }
+    }
+
+    func testDrainSettlesWaiterOnlyAfterOwnedProducerCleanupJoins() async throws {
+        let store = OperationStore()
+        let probe = BlockingOwnedOperationProbe()
+        let name = "operations/cleanup-aware-drain"
+
+        _ = try await store.createOperation(name: name, execution: {
+            await probe.run()
+        })
+        await probe.waitUntilEntered()
+        let waiter = Task {
+            try await store.waitOperation(name: name, timeoutNs: nil)
+        }
+        try await waitForWaiterCount(1, name: name, store: store)
+
+        let drain = Task {
+            await store.drainAllOperations()
+        }
+        await probe.waitUntilCancellationObserved()
+
+        let operationWhileCleanupIsOwned = await store.getOperation(name: name)
+        let waiterCountWhileOwned = await store.waiterCount(name: name)
+        let executionCountWhileOwned = await store.executionTaskCount()
+        XCTAssertFalse(operationWhileCleanupIsOwned?.done ?? true)
+        XCTAssertEqual(waiterCountWhileOwned, 1)
+        XCTAssertEqual(executionCountWhileOwned, 1)
+
+        await probe.release()
+        let terminal = try await waiter.value
+        let counts = await drain.value
+        XCTAssertEqual(terminal?.error.code, Int32(RPCError.Code.cancelled.rawValue))
+        XCTAssertTrue(terminal?.done ?? false)
+        XCTAssertEqual(counts.pendingCancelled, 1)
+        XCTAssertEqual(counts.totalDrained, 1)
+        let finalExecutionCount = await store.executionTaskCount()
+        let finalWaiterCount = await store.waiterCount()
+        let finalOperation = await store.getOperation(name: name)
+        XCTAssertEqual(finalExecutionCount, 0)
+        XCTAssertEqual(finalWaiterCount, 0)
+        XCTAssertNil(finalOperation)
+    }
+
+    func testDeleteDuringDrainDoesNotInflatePublicDrainCounts() async throws {
+        let store = OperationStore()
+        let probe = BlockingOwnedOperationProbe()
+        let name = "operations/delete-during-drain"
+        _ = try await store.createOperation(name: name, execution: {
+            await probe.run()
+        })
+        await probe.waitUntilEntered()
+
+        let drain = Task { await store.drainAllOperations() }
+        await probe.waitUntilCancellationObserved()
+        let deleted = await store.deleteOperation(name: name)
+        XCTAssertTrue(deleted)
+        await probe.release()
+
+        let counts = await drain.value
+        XCTAssertEqual(counts.pendingCancelled, 0)
+        XCTAssertEqual(counts.totalDrained, 0)
+        let executionTaskCount = await store.executionTaskCount()
+        XCTAssertEqual(executionTaskCount, 0)
+    }
+
+    func testPredeletedProducerIsJoinedButExcludedFromPublicDrainCounts() async throws {
+        let store = OperationStore()
+        let probe = BlockingOwnedOperationProbe()
+        let name = "operations/predeleted-drain"
+        _ = try await store.createOperation(name: name, execution: {
+            await probe.run()
+        })
+        await probe.waitUntilEntered()
+        let deleted = await store.deleteOperation(name: name)
+        XCTAssertTrue(deleted)
+
+        let returned = AsyncReturnProbe()
+        let drain = Task {
+            let counts = await store.drainAllOperations()
+            await returned.record()
+            return counts
+        }
+        await probe.waitUntilCancellationObserved()
+        let drainReturnedBeforeRelease = await returned.didReturn()
+        XCTAssertFalse(drainReturnedBeforeRelease)
+        await probe.release()
+
+        let counts = await drain.value
+        XCTAssertEqual(counts.pendingCancelled, 0)
+        XCTAssertEqual(counts.totalDrained, 0)
+        let executionTaskCount = await store.executionTaskCount()
+        XCTAssertEqual(executionTaskCount, 0)
+    }
+
+    func testConcurrentDrainsShareOnePublicTransition() async throws {
+        let store = OperationStore()
+        let probe = BlockingOwnedOperationProbe()
+        let name = "operations/concurrent-drain"
+        _ = try await store.createOperation(name: name, execution: {
+            await probe.run()
+        })
+        await probe.waitUntilEntered()
+
+        let first = Task { await store.drainAllOperations() }
+        let second = Task { await store.drainAllOperations() }
+        await probe.waitUntilCancellationObserved()
+        await probe.release()
+
+        let firstCounts = await first.value
+        let secondCounts = await second.value
+        XCTAssertEqual(firstCounts.pendingCancelled + secondCounts.pendingCancelled, 1)
+        XCTAssertEqual(firstCounts.totalDrained + secondCounts.totalDrained, 1)
+        XCTAssertTrue(
+            (firstCounts.pendingCancelled == 0 && firstCounts.totalDrained == 0)
+                || (secondCounts.pendingCancelled == 0 && secondCounts.totalDrained == 0),
+        )
+    }
+
+    func testTerminalPutCannotPublishAcrossTheShutdownFence() async throws {
+        let store = OperationStore()
+        let probe = BlockingOwnedOperationProbe()
+        let ownedName = "operations/owned-drain-fence"
+        let seededName = "operations/seeded-drain-fence"
+        _ = try await store.createOperation(name: ownedName, execution: {
+            await probe.run()
+        })
+        _ = await store.createOperation(name: seededName)
+        await probe.waitUntilEntered()
+        let waiter = Task {
+            try await store.waitOperation(name: seededName, timeoutNs: nil)
+        }
+        try await waitForWaiterCount(1, name: seededName, store: store)
+
+        let drain = Task { await store.drainAllOperations() }
+        await probe.waitUntilCancellationObserved()
+        let pending = await store.getOperation(name: seededName)
+        var stale = try XCTUnwrap(pending)
+        stale.done = true
+        stale.error = Google_Rpc_Status.with {
+            $0.code = Int32(RPCError.Code.internalError.rawValue)
+            $0.message = "stale publication"
+        }
+        let replaced = await store.putOperation(stale)
+        let waiterCount = await store.waiterCount(name: seededName)
+        XCTAssertFalse(replaced)
+        XCTAssertEqual(waiterCount, 1)
+
+        await probe.release()
+        _ = await drain.value
+        let terminal = try await waiter.value
+        XCTAssertEqual(terminal?.error.code, Int32(RPCError.Code.cancelled.rawValue))
+    }
+
+    func testEveryOwnerlessPublicationPathHonorsTheShutdownFence() async throws {
+        let store = OperationStore()
+        let finishName = "operations/fenced-finish"
+        let failName = "operations/fenced-fail"
+        let metadataName = "operations/fenced-metadata"
+        let cancelName = "operations/fenced-cancel"
+        for name in [finishName, failName, metadataName, cancelName] {
+            _ = await store.createOperation(name: name)
+        }
+        await store.beginDraining()
+
+        var response = Google_Protobuf_StringValue()
+        response.value = "must not publish"
+        let finishOutcome = try await store.finishOperation(
+            name: finishName,
+            responseMessage: response,
+        )
+        await store.failOperation(
+            name: failName,
+            code: Int32(RPCError.Code.internalError.rawValue),
+            message: "must not publish",
+        )
+        var metadata = Google_Protobuf_Any()
+        metadata.typeURL = "type.googleapis.com/fenced.Metadata"
+        let metadataUpdated = await store.updateOperationMetadata(
+            name: metadataName,
+            metadata: metadata,
+        )
+        _ = await store.cancelOperation(name: cancelName)
+
+        XCTAssertEqual(finishOutcome, .alreadyTerminal)
+        XCTAssertFalse(metadataUpdated)
+        for name in [finishName, failName, metadataName, cancelName] {
+            let operation = await store.getOperation(name: name)
+            XCTAssertFalse(operation?.done ?? true)
+            XCTAssertFalse(operation?.hasMetadata ?? true)
+        }
+    }
+
+    func testBeginDrainingClosesProducerAdmissionBeforeDependentShutdown() async throws {
+        let store = OperationStore()
+        await store.beginDraining()
+
+        do {
+            _ = try await store.createOperation(
+                name: "operations/after-front-door-close",
+                execution: {},
+            )
+            XCTFail("Expected producer admission to close synchronously")
+        } catch let error as OperationStoreError {
+            XCTAssertEqual(error, .admissionClosed)
+        }
+    }
+
+    func testOwnedExecutionWithoutTerminalResultFailsInsteadOfLeavingPendingOperation() async throws {
+        let store = OperationStore()
+        let name = "operations/missing-terminal-result"
+
+        _ = try await store.createOperation(name: name, execution: {})
+        try await waitForExecutionTaskCount(0, store: store)
+
+        let operation = await store.getOperation(name: name)
+        XCTAssertTrue(operation?.done ?? false)
+        XCTAssertEqual(operation?.error.code, Int32(RPCError.Code.internalError.rawValue))
+        XCTAssertEqual(
+            operation?.error.message,
+            "Operation producer exited without publishing a terminal result",
+        )
+    }
+
+    private func waitForWaiterCount(
+        _ expectedCount: Int,
+        name: String,
+        store: OperationStore,
+    ) async throws {
+        let clock = ContinuousClock()
+        let deadline = clock.now + .seconds(1)
+        while await store.waiterCount(name: name) != expectedCount {
+            guard clock.now < deadline else {
+                throw WaiterRegistrationTimeout()
+            }
+            await Task.yield()
+        }
+    }
+
+    private func waitForCancelReturn(_ probe: BlockingOwnedOperationProbe) async -> Bool {
+        let clock = ContinuousClock()
+        let deadline = clock.now + .seconds(1)
+        while await !probe.didCancelReturn() {
+            guard clock.now < deadline else { return false }
+            await Task.yield()
+        }
+        return true
+    }
+
+    private func waitForExecutionTaskCount(
+        _ expectedCount: Int,
+        store: OperationStore,
+    ) async throws {
+        let clock = ContinuousClock()
+        let deadline = clock.now + .seconds(1)
+        while await store.executionTaskCount() != expectedCount {
+            guard clock.now < deadline else {
+                throw WaiterRegistrationTimeout()
+            }
+            await Task.yield()
+        }
+    }
+
+    private func waitForCondition(
+        _ condition: @escaping @Sendable () async -> Bool,
+    ) async throws {
+        let clock = ContinuousClock()
+        let deadline = clock.now + .seconds(2)
+        while await !condition() {
+            guard clock.now < deadline else {
+                throw WaiterRegistrationTimeout()
+            }
+            await Task.yield()
+        }
+    }
+}
+
+private struct WaiterRegistrationTimeout: Error {}
+
+private actor AsyncReturnProbe {
+    private var returned = false
+
+    func record() {
+        returned = true
+    }
+
+    func didReturn() -> Bool {
+        returned
+    }
+}
+
+private final class BlockingWaitTimeoutSleeper: @unchecked Sendable {
+    private struct State {
+        var entered = false
+        var cancellationObserved = false
+        var released = false
+        var releaseWaiters: [CheckedContinuation<Void, Never>] = []
+    }
+
+    private let lock = NSLock()
+    private var state = State()
+
+    func run() async {
+        await withTaskCancellationHandler {
+            lock.withLock { state.entered = true }
+            await withCheckedContinuation { continuation in
+                let shouldResume = lock.withLock { () -> Bool in
+                    if state.released {
+                        return true
+                    }
+                    state.releaseWaiters.append(continuation)
+                    return false
+                }
+                if shouldResume {
+                    continuation.resume()
+                }
+            }
+        } onCancel: {
+            self.lock.withLock {
+                self.state.cancellationObserved = true
+            }
+        }
+    }
+
+    func waitUntilEntered() async throws {
+        try await waitForFlag { $0.entered }
+    }
+
+    func waitUntilCancellationObserved() async throws {
+        try await waitForFlag { $0.cancellationObserved }
+    }
+
+    func release() {
+        let waiters = lock.withLock { () -> [CheckedContinuation<Void, Never>] in
+            guard !state.released else { return [] }
+            state.released = true
+            defer { state.releaseWaiters.removeAll(keepingCapacity: false) }
+            return state.releaseWaiters
+        }
+        for waiter in waiters {
+            waiter.resume()
+        }
+    }
+
+    private func waitForFlag(
+        _ predicate: @escaping @Sendable (State) -> Bool,
+    ) async throws {
+        let clock = ContinuousClock()
+        let deadline = clock.now + .seconds(2)
+        while lock.withLock({ !predicate(state) }) {
+            guard clock.now < deadline else {
+                throw WaiterRegistrationTimeout()
+            }
+            await Task.yield()
+        }
+    }
+}
+
+private final class SelectiveBlockingWaitTimeoutSleeper: @unchecked Sendable {
+    private struct State {
+        var entered: Set<UInt64> = []
+        var cancellationObserved: Set<UInt64> = []
+        var released: Set<UInt64> = []
+        var releaseWaiters: [UInt64: CheckedContinuation<Void, Never>] = [:]
+    }
+
+    private let lock = NSLock()
+    private var state = State()
+
+    func run(token: UInt64) async {
+        await withTaskCancellationHandler {
+            lock.withLock { state.entered.insert(token) }
+            await withCheckedContinuation { continuation in
+                let shouldResume = lock.withLock { () -> Bool in
+                    if state.released.contains(token) {
+                        return true
+                    }
+                    state.releaseWaiters[token] = continuation
+                    return false
+                }
+                if shouldResume {
+                    continuation.resume()
+                }
+            }
+        } onCancel: {
+            self.lock.withLock {
+                _ = self.state.cancellationObserved.insert(token)
+            }
+        }
+    }
+
+    func waitUntilEntered(count: Int) async throws {
+        try await waitForState { $0.entered.count == count }
+    }
+
+    func waitUntilCancellationObserved(count: Int) async throws {
+        try await waitForState { $0.cancellationObserved.count == count }
+    }
+
+    @discardableResult
+    func releaseUncancelled() -> Int {
+        let tokens = lock.withLock {
+            state.entered.subtracting(state.cancellationObserved)
+        }
+        release(tokens)
+        return tokens.count
+    }
+
+    func releaseAll() {
+        let tokens = lock.withLock { state.entered }
+        release(tokens)
+    }
+
+    private func release(_ tokens: Set<UInt64>) {
+        let continuations = lock.withLock { () -> [CheckedContinuation<Void, Never>] in
+            state.released.formUnion(tokens)
+            return tokens.compactMap { state.releaseWaiters.removeValue(forKey: $0) }
+        }
+        for continuation in continuations {
+            continuation.resume()
+        }
+    }
+
+    private func waitForState(
+        _ predicate: @escaping @Sendable (State) -> Bool,
+    ) async throws {
+        let clock = ContinuousClock()
+        let deadline = clock.now + .seconds(2)
+        while !lock.withLock({ predicate(state) }) {
+            guard clock.now < deadline else {
+                throw WaiterRegistrationTimeout()
+            }
+            await Task.yield()
+        }
+    }
+}
+
+private actor BlockingOwnedOperationProbe {
+    private var entered = false
+    private var cancellationObserved = false
+    private var cancelReturned = false
+    private var releaseContinuation: CheckedContinuation<Void, Never>?
+    private var enteredContinuations: [CheckedContinuation<Void, Never>] = []
+    private var cancellationContinuations: [CheckedContinuation<Void, Never>] = []
+
+    func run() async {
+        await withTaskCancellationHandler {
+            entered = true
+            let continuations = enteredContinuations
+            enteredContinuations.removeAll()
+            for continuation in continuations {
+                continuation.resume()
+            }
+            await withCheckedContinuation { continuation in
+                releaseContinuation = continuation
+            }
+        } onCancel: {
+            Task { await self.recordCancellationObserved() }
+        }
+    }
+
+    func waitUntilEntered() async {
+        guard !entered else { return }
+        await withCheckedContinuation { continuation in
+            enteredContinuations.append(continuation)
+        }
+    }
+
+    func waitUntilCancellationObserved() async {
+        guard !cancellationObserved else { return }
+        await withCheckedContinuation { continuation in
+            cancellationContinuations.append(continuation)
+        }
+    }
+
+    func release() {
+        releaseContinuation?.resume()
+        releaseContinuation = nil
+    }
+
+    func recordCancelReturned() {
+        cancelReturned = true
+    }
+
+    func didCancelReturn() -> Bool {
+        cancelReturned
+    }
+
+    private func recordCancellationObserved() {
+        cancellationObserved = true
+        let continuations = cancellationContinuations
+        cancellationContinuations.removeAll()
+        for continuation in continuations {
+            continuation.resume()
+        }
     }
 }

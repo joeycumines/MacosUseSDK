@@ -8,15 +8,23 @@ import MacosUseSDK
 import OSLog
 import SwiftProtobuf
 
+private enum ElementMutationTarget: Sendable {
+    case elementID(String)
+    case selector(Macosusesdk_Type_ElementSelector)
+}
+
 extension MacosUseService {
     func traverseAccessibility(
         request: ServerRequest<Macosusesdk_V1_TraverseAccessibilityRequest>, context _: ServerContext,
     ) async throws -> ServerResponse<Macosusesdk_V1_TraverseAccessibilityResponse> {
         let req = request.message
         Self.logger.info("traverseAccessibility called")
-        let pid = try parsePID(fromName: req.name)
-        let response = try await AutomationCoordinator.shared.handleTraverse(
-            pid: pid, visibleOnly: req.visibleOnly, shouldActivate: req.activate,
+        let pid = try await resolveApplicationPID(fromName: req.name)
+        let response = try await automationCoordinator.handleTraverse(
+            pid: pid,
+            visibleOnly: req.visibleOnly,
+            shouldActivate: false,
+            applicationName: req.name,
         )
         return ServerResponse(message: response)
     }
@@ -28,30 +36,38 @@ extension MacosUseService {
         let req = request.message
         Self.logger.info("watchAccessibility called")
 
-        let pid = try parsePID(fromName: req.name)
-        // Clamp poll interval: min 0.1s, max 60s (UX cap; UInt64.max / 1e9 ≈ 1.84e10s)
-        let rawInterval = req.pollInterval > 0 ? req.pollInterval : 1.0
-        let pollInterval = min(max(rawInterval, 0.1), 60.0)
+        let pollInterval = try RequestNumericValidation.optionalPollInterval(
+            req.pollInterval,
+            default: 1,
+        )
+        let pid = try await resolveApplicationPID(fromName: req.name)
 
-        return StreamingServerResponse { writer in
-            var previousByPath: [String: Macosusesdk_Type_Element] = [:]
+        return StreamingServerResponse { [automationCoordinator] writer in
+            let ownedStream = try await automationCoordinator.createTraversalStreamTask {
+                var previousByPath: [String: Macosusesdk_V1_Element] = [:]
 
-            while !Task.isCancelled {
-                do {
-                    let trav = try await AutomationCoordinator.shared.handleTraverse(
-                        pid: pid, visibleOnly: req.visibleOnly,
+                while true {
+                    try Task.checkCancellation()
+                    let currentPID = try await self.resolveApplicationPID(fromName: req.name)
+                    guard currentPID == pid else {
+                        throw RPCError(code: .notFound, message: "Application process identity is stale")
+                    }
+                    let trav = try await automationCoordinator.handleTraverse(
+                        pid: pid,
+                        visibleOnly: req.visibleOnly,
+                        applicationName: req.name,
                     )
 
                     // Build current element map keyed by path
-                    var currentByPath: [String: Macosusesdk_Type_Element] = [:]
+                    var currentByPath: [String: Macosusesdk_V1_Element] = [:]
                     for element in trav.elements {
                         let pathKey = Self.elementPathKey(element)
                         currentByPath[pathKey] = element
                     }
 
                     // Compute diff
-                    var added: [Macosusesdk_Type_Element] = []
-                    var removed: [Macosusesdk_Type_Element] = []
+                    var added: [Macosusesdk_V1_Element] = []
+                    var removed: [Macosusesdk_V1_Element] = []
                     var modified: [Macosusesdk_V1_ModifiedElement] = []
 
                     // Find added and modified elements
@@ -76,10 +92,8 @@ extension MacosUseService {
                     }
 
                     // Find removed elements
-                    for (pathKey, previousElement) in previousByPath {
-                        if currentByPath[pathKey] == nil {
-                            removed.append(previousElement)
-                        }
+                    for (pathKey, previousElement) in previousByPath where currentByPath[pathKey] == nil {
+                        removed.append(previousElement)
                     }
 
                     // Only send response if there are changes (or first poll - all added)
@@ -94,19 +108,34 @@ extension MacosUseService {
                     }
 
                     previousByPath = currentByPath
-                } catch {
-                    Self.logger.warning("watchAccessibility traversal error: \(error, privacy: .public)")
-                    // Don't send empty heartbeat on error — no proto error field exists.
-                    // Silence means "no changes OR temporary error"; persistent errors
-                    // will cause the stream to end naturally.
+                    try await Task.sleep(nanoseconds: UInt64(pollInterval * 1_000_000_000))
                 }
-
-                // Sleep for interval, but allow task cancellation to stop
-                try await Task.sleep(nanoseconds: UInt64(pollInterval * 1_000_000_000))
             }
+            let producer = ownedStream.task
 
-            // Return trailing metadata
-            return [:]
+            do {
+                let metadata = try await withTaskCancellationHandler {
+                    try await withRPCCancellationHandler {
+                        try await producer.value
+                    } onCancelRPC: {
+                        producer.cancel()
+                    }
+                } onCancel: {
+                    producer.cancel()
+                }
+                await automationCoordinator.finishTraversalStream(id: ownedStream.id)
+                return metadata
+            } catch is CancellationError {
+                producer.cancel()
+                _ = await producer.result
+                await automationCoordinator.finishTraversalStream(id: ownedStream.id)
+                throw RPCError(code: .cancelled, message: "accessibility watch cancelled")
+            } catch {
+                producer.cancel()
+                _ = await producer.result
+                await automationCoordinator.finishTraversalStream(id: ownedStream.id)
+                throw error
+            }
         }
     }
 
@@ -114,8 +143,8 @@ extension MacosUseService {
     /// Returns an empty array if elements are identical.
     /// - Note: Internal for testing with @testable import.
     func computeElementChanges(
-        old: Macosusesdk_Type_Element,
-        new: Macosusesdk_Type_Element,
+        old: Macosusesdk_V1_Element,
+        new: Macosusesdk_V1_Element,
     ) -> [Macosusesdk_V1_AttributeChange] {
         var changes: [Macosusesdk_V1_AttributeChange] = []
 
@@ -211,7 +240,7 @@ extension MacosUseService {
     /// Generates a unique path key for an element.
     /// Handles empty paths by using role + position + size as fallback to avoid collisions.
     /// - Note: Static for testing with @testable import.
-    static func elementPathKey(_ element: Macosusesdk_Type_Element) -> String {
+    static func elementPathKey(_ element: Macosusesdk_V1_Element) -> String {
         if element.path.isEmpty {
             // Fallback: use elementId + role + position + size to distinguish elements
             // without path info. Including elementId avoids collisions for same-role
@@ -252,34 +281,44 @@ extension MacosUseService {
 
         // Validate and parse the selector
         let selector = try SelectorParser.shared.parseSelector(req.selector)
-
-        // Decode page_token to get offset
-        let offset: Int = if req.pageToken.isEmpty {
-            0
-        } else {
-            try decodePageToken(req.pageToken)
+        let pageSize = try RequestNumericValidation.pageSize(req.pageSize)
+        let queryBinding = try ParsingHelpers.pageTokenQuery(
+            method: "FindElements",
+            parameters: [
+                ("parent", req.parent),
+                ("selector", req.selector.serializedData().base64EncodedString()),
+                ("visible_only", String(req.visibleOnly)),
+                ("force_refresh", String(req.forceRefresh)),
+                ("page_size", String(pageSize)),
+            ],
+        )
+        let offset = try ParsingHelpers.pageOffset(
+            token: req.pageToken,
+            queryBinding: queryBinding,
+        )
+        let (offsetAndPage, pageOverflow) = offset.addingReportingOverflow(pageSize)
+        let (maxResults, sentinelOverflow) = offsetAndPage.addingReportingOverflow(1)
+        guard !pageOverflow, !sentinelOverflow else {
+            throw RPCErrorHelpers.validationError(
+                message: "page_token offset is outside the current collection",
+                reason: "INVALID_PAGE_TOKEN",
+                field: "page_token",
+            )
         }
 
-        // Determine page size (default 100 if not specified or <= 0)
-        let pageSize = req.pageSize > 0 ? Int(req.pageSize) : 100
-
-        // If force_refresh was requested, clear cached element data for the
-        // target PID before traversal so the response reflects the current
-        // UI state rather than possibly-stale cached entries. We resolve the
-        // PID from the parent resource name. If the parent uses the
-        // AIP-159 wildcard ("applications/-") or is malformed there is no
-        // single PID to clear, so we silently skip the cache flush and let
-        // the ElementLocator call below surface any real error.
-        if req.forceRefresh, let pid = try? ParsingHelpers.parseOptionalPID(fromName: req.parent) {
-            let cleared = await ElementRegistry.shared.clearElements(forPid: pid)
+        let pid = try await resolveApplicationOrWindowParentPID(fromName: req.parent)
+        if req.forceRefresh, offset == 0 {
+            let cleared = await elementRegistry.clearElements(
+                forPid: pid,
+                scope: req.parent,
+            )
             if cleared > 0 {
                 Self.logger.info("forceRefresh: cleared \(cleared, privacy: .public) cached elements for PID \(pid, privacy: .public)")
             }
         }
 
         // Find elements using ElementLocator (request more than needed to check if there's a next page)
-        let maxResults = offset + pageSize + 1 // Request one extra to detect next page
-        let elementsWithPaths = try await ElementLocator.shared.findElements(
+        let elementsWithPaths = try await elementLocator.findElements(
             selector: selector,
             parent: req.parent,
             visibleOnly: req.visibleOnly,
@@ -288,20 +327,21 @@ extension MacosUseService {
 
         // Apply pagination slice
         let totalCount = elementsWithPaths.count
-        let startIndex = min(offset, totalCount)
-        let endIndex = min(startIndex + pageSize, totalCount)
-        let pageElementsWithPaths = Array(elementsWithPaths[startIndex ..< endIndex])
-
-        // Generate next_page_token if more results exist
-        let nextPageToken = if endIndex < totalCount {
-            encodePageToken(offset: endIndex)
-        } else {
-            ""
-        }
+        let range = try ParsingHelpers.pageRange(
+            offset: offset,
+            pageSize: pageSize,
+            totalCount: totalCount,
+        )
+        let pageElementsWithPaths = Array(elementsWithPaths[range])
+        let nextPageToken = ParsingHelpers.nextPageToken(
+            endOffset: range.upperBound,
+            totalCount: totalCount,
+            queryBinding: queryBinding,
+        )
 
         // Build response elements - elements from ElementLocator are already registered
         // with their AXUIElement references preserved. Do NOT re-register them.
-        var elements = [Macosusesdk_Type_Element]()
+        var elements = [Macosusesdk_V1_Element]()
         for (element, path) in pageElementsWithPaths {
             var protoWithPath = element
             protoWithPath.path = path
@@ -358,31 +398,44 @@ extension MacosUseService {
         // Validate selector if provided
         let selector =
             req.hasSelector ? try SelectorParser.shared.parseSelector(req.selector) : nil
-
-        // Decode page_token to get offset
-        let offset: Int = if req.pageToken.isEmpty {
-            0
-        } else {
-            try decodePageToken(req.pageToken)
+        let pageSize = try RequestNumericValidation.pageSize(req.pageSize)
+        let queryBinding = try ParsingHelpers.pageTokenQuery(
+            method: "FindRegionElements",
+            parameters: [
+                ("parent", req.parent),
+                ("region", req.region.serializedData().base64EncodedString()),
+                ("selector", req.hasSelector ? req.selector.serializedData().base64EncodedString() : ""),
+                ("force_refresh", String(req.forceRefresh)),
+                ("page_size", String(pageSize)),
+            ],
+        )
+        let offset = try ParsingHelpers.pageOffset(
+            token: req.pageToken,
+            queryBinding: queryBinding,
+        )
+        let (offsetAndPage, pageOverflow) = offset.addingReportingOverflow(pageSize)
+        let (maxResults, sentinelOverflow) = offsetAndPage.addingReportingOverflow(1)
+        guard !pageOverflow, !sentinelOverflow else {
+            throw RPCErrorHelpers.validationError(
+                message: "page_token offset is outside the current collection",
+                reason: "INVALID_PAGE_TOKEN",
+                field: "page_token",
+            )
         }
 
-        // Determine page size (default 100 if not specified or <= 0)
-        let pageSize = req.pageSize > 0 ? Int(req.pageSize) : 100
-
-        // If force_refresh was requested, clear cached element data for the
-        // target PID before traversal so the response reflects the current
-        // UI state rather than possibly-stale cached entries. Mirrors the
-        // findElements forceRefresh handling above.
-        if req.forceRefresh, let pid = try? ParsingHelpers.parseOptionalPID(fromName: req.parent) {
-            let cleared = await ElementRegistry.shared.clearElements(forPid: pid)
+        let pid = try await resolveApplicationOrWindowParentPID(fromName: req.parent)
+        if req.forceRefresh, offset == 0 {
+            let cleared = await elementRegistry.clearElements(
+                forPid: pid,
+                scope: req.parent,
+            )
             if cleared > 0 {
                 Self.logger.info("forceRefresh: cleared \(cleared, privacy: .public) cached elements for PID \(pid, privacy: .public)")
             }
         }
 
         // Find elements in region using ElementLocator (request more than needed to check if there's a next page)
-        let maxResults = offset + pageSize + 1 // Request one extra to detect next page
-        let elementsWithPaths = try await ElementLocator.shared.findElementsInRegion(
+        let elementsWithPaths = try await elementLocator.findElementsInRegion(
             region: req.region,
             selector: selector,
             parent: req.parent,
@@ -392,20 +445,21 @@ extension MacosUseService {
 
         // Apply pagination slice
         let totalCount = elementsWithPaths.count
-        let startIndex = min(offset, totalCount)
-        let endIndex = min(startIndex + pageSize, totalCount)
-        let pageElementsWithPaths = Array(elementsWithPaths[startIndex ..< endIndex])
-
-        // Generate next_page_token if more results exist
-        let nextPageToken = if endIndex < totalCount {
-            encodePageToken(offset: endIndex)
-        } else {
-            ""
-        }
+        let range = try ParsingHelpers.pageRange(
+            offset: offset,
+            pageSize: pageSize,
+            totalCount: totalCount,
+        )
+        let pageElementsWithPaths = Array(elementsWithPaths[range])
+        let nextPageToken = ParsingHelpers.nextPageToken(
+            endOffset: range.upperBound,
+            totalCount: totalCount,
+            queryBinding: queryBinding,
+        )
 
         // Build response elements - elements from ElementLocator are already registered
         // with their AXUIElement references preserved. Do NOT re-register them.
-        var elements = [Macosusesdk_Type_Element]()
+        var elements = [Macosusesdk_V1_Element]()
         for (element, path) in pageElementsWithPaths {
             var protoWithPath = element
             protoWithPath.path = path
@@ -421,9 +475,17 @@ extension MacosUseService {
 
     func getElement(
         request: ServerRequest<Macosusesdk_V1_GetElementRequest>, context _: ServerContext,
-    ) async throws -> ServerResponse<Macosusesdk_Type_Element> {
+    ) async throws -> ServerResponse<Macosusesdk_V1_Element> {
         let req = request.message
         Self.logger.info("getElement called")
+
+        guard req.unknownFields.data.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "GetElementRequest contains unknown fields",
+                reason: "UNKNOWN_FIELD",
+                field: "request",
+            )
+        }
 
         // Validate name is not empty
         guard !req.name.isEmpty else {
@@ -434,8 +496,55 @@ extension MacosUseService {
             )
         }
 
-        let response = try await ElementLocator.shared.getElement(name: req.name)
+        _ = try await resolveApplicationChildResource(req.name, collection: "elements")
+        let response = try await elementLocator.getElement(name: req.name)
         return ServerResponse(message: response)
+    }
+
+    func listElements(
+        request: ServerRequest<Macosusesdk_V1_ListElementsRequest>, context _: ServerContext,
+    ) async throws -> ServerResponse<Macosusesdk_V1_ListElementsResponse> {
+        let req = request.message
+        Self.logger.info("listElements called")
+
+        guard req.unknownFields.data.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "ListElementsRequest contains unknown fields",
+                reason: "UNKNOWN_FIELD",
+                field: "request",
+            )
+        }
+        let pageSize = try RequestNumericValidation.pageSize(req.pageSize)
+        let queryBinding = ParsingHelpers.pageTokenQuery(
+            method: "ListElements",
+            parameters: [
+                ("parent", req.parent),
+                ("page_size", String(pageSize)),
+            ],
+        )
+        let offset = try ParsingHelpers.pageOffset(
+            token: req.pageToken,
+            queryBinding: queryBinding,
+        )
+        let pid = try await resolveApplicationPID(fromName: req.parent)
+
+        let elements = await elementRegistry.listElements(forPID: pid)
+        let range = try ParsingHelpers.pageRange(
+            offset: offset,
+            pageSize: pageSize,
+            totalCount: elements.count,
+        )
+        let page = Array(elements[range])
+        let nextPageToken = ParsingHelpers.nextPageToken(
+            endOffset: range.upperBound,
+            totalCount: elements.count,
+            queryBinding: queryBinding,
+        )
+
+        return ServerResponse(message: Macosusesdk_V1_ListElementsResponse.with {
+            $0.elements = page
+            $0.nextPageToken = nextPageToken
+        })
     }
 
     func clickElement(
@@ -444,176 +553,146 @@ extension MacosUseService {
         let req = request.message
         Self.logger.info("clickElement called")
 
-        var element: Macosusesdk_Type_Element
-        let pid: pid_t
-        var elementID: String?
-
-        // Parse the selector once so we can re-query visibility after focusing.
-        var validatedSelector: Macosusesdk_Type_ElementSelector?
-        if case let .selector(selector) = req.target {
-            validatedSelector = try SelectorParser.shared.parseSelector(selector)
-        }
-
-        // Find the element to click. For selectors this uses visibleOnly:false so
-        // a background window can still be located; visibility is verified AFTER
-        // the window is focused so we never click hidden/off-screen coordinates.
-        switch req.target {
-        case let .elementID(elementId):
-            guard let foundElement = await ElementRegistry.shared.getElement(elementId) else {
-                throw RPCError(code: .notFound, message: "Element not found")
-            }
-            element = foundElement
-            elementID = elementId
-            pid = try parsePID(fromName: req.parent)
-
-        case .selector:
-            guard let selector = validatedSelector else {
-                throw RPCError(code: .invalidArgument, message: "Selector could not be parsed")
-            }
-            let elementsWithPaths = try await ElementLocator.shared.findElements(
-                selector: selector,
+        let pid = try await resolveApplicationOrWindowParentPID(fromName: req.parent)
+        let target = try Self.parseElementMutationTarget(req.target)
+        let elementLocator = self.elementLocator
+        let response = try await automationCoordinator.handlePhysicalMutationWithOwner { context, ownerID in
+            let admitted = try await Self.resolveElementMutationTarget(
+                target,
                 parent: req.parent,
-                visibleOnly: false,
-                maxResults: 1,
+                expectedPID: pid,
+                locator: elementLocator,
+                context: context,
             )
+            try await context.activateTarget(pid: pid)
+            try await context.focusElementWindow(target: admitted)
 
-            guard let firstElement = elementsWithPaths.first else {
-                throw RPCError(code: .notFound, message: "No element found matching selector")
-            }
-
-            element = firstElement.element
-            elementID = firstElement.element.elementID
-            pid = try parsePID(fromName: req.parent)
-
-        case .none:
-            throw RPCError(
-                code: .invalidArgument, message: "Either element_id or selector must be specified",
+            let exactTarget = try await context.resolveElement(
+                id: admitted.elementID,
+                expectedPID: pid,
+                expectedScope: req.parent,
             )
-        }
-
-        // Acquire focus on the element's window before clicking (best-effort).
-        // This is the #1 reliability fix: ensures the target window is frontmost
-        // so the click reaches the correct element.
-        if let eid = elementID {
-            await AutomationCoordinator.shared.acquireFocusForElement(elementID: eid, pid: pid)
-        }
-
-        // Re-verify visibility now that the window has been brought forward.
-        // The initial selector lookup may have matched a hidden element, so we
-        // must confirm it is actually on-screen before using its coordinates.
-        switch req.target {
-        case .selector:
-            guard let selector = validatedSelector else {
-                throw RPCError(code: .invalidArgument, message: "Selector could not be parsed")
-            }
-            let visibleElements = try await ElementLocator.shared.findElements(
-                selector: selector,
-                parent: req.parent,
-                visibleOnly: true,
-                maxResults: 1,
-            )
-            guard let visible = visibleElements.first else {
-                throw RPCError(
-                    code: .failedPrecondition,
-                    message: "element matching selector is not visible after focusing; bring it into view",
-                )
-            }
-            element = visible.element
-            elementID = visible.element.elementID
-
-        case let .elementID(elementId):
-            guard let axElement = await ElementRegistry.shared.getAXElement(elementId) else {
+            guard let axElement = exactTarget.axElement else {
                 throw RPCError(code: .notFound, message: "Element reference not available")
             }
-            element = Self.refreshBoundsIfPossible(element: element, axElement: axElement)
+            let element = Self.refreshBoundsIfPossible(
+                element: exactTarget.element,
+                axElement: axElement as AnyObject,
+                system: context.system,
+            )
             guard Self.elementClickPointIsOnScreen(element) else {
                 throw RPCError(
                     code: .failedPrecondition,
-                    message: "element '\(elementId)' is not visible on screen; bring it into view",
+                    message: "Element is not visible on screen; bring it into view",
                 )
             }
 
-        case .none:
-            break
-        }
-
-        // Calculate geometric center of element bounds.
-        // The AX frame (kAXPositionAttribute + kAXSizeAttribute) provides
-        // the top-left corner and dimensions. Clicking the top-left of an
-        // element frequently misses the hit area (padding, edge, border).
-        // Always click the geometric center for maximum hit reliability.
-        let clickPoint = try Self.elementClickPoint(element)
-        let centerX = clickPoint.x
-        let centerY = clickPoint.y
-
-        // Determine click type
-        let clickType = req.clickType
-
-        // Perform the click using AutomationCoordinator
-        switch clickType {
-        case .single, .unspecified, .UNRECOGNIZED:
-            try await AutomationCoordinator.shared.handleExecuteInput(
-                action: Macosusesdk_V1_InputAction.with {
-                    $0.inputType = .click(
-                        Macosusesdk_V1_MouseClick.with {
-                            $0.position = Macosusesdk_Type_Point.with {
-                                $0.x = centerX
-                                $0.y = centerY
-                            }
-                            $0.clickType = .left
-                            $0.clickCount = 1
-                        },
-                    )
-                },
-                pid: pid,
-                showAnimation: false,
-                animationDuration: 0,
+            let clickPoint = try Self.elementClickPoint(element)
+            let action: MacosUseSDK.InputAction = switch req.clickType {
+            case .single, .unspecified, .UNRECOGNIZED:
+                .click(point: clickPoint)
+            case .double:
+                .doubleClick(point: clickPoint)
+            case .right:
+                .rightClick(point: clickPoint)
+            }
+            // C6: the physical click publishes a real, retrievable Input
+            // resource; its name surfaces on the response .input field.
+            let inputName = try await self.publishElementInputResource(
+                action: action,
+                parent: req.parent,
+                ownerID: ownerID,
+                route: .process(pid),
+                executor: { try await context.executeInput(action, route: .process(pid)) },
             )
 
-        case .double:
-            try await AutomationCoordinator.shared.handleExecuteInput(
-                action: Macosusesdk_V1_InputAction.with {
-                    $0.inputType = .click(
-                        Macosusesdk_V1_MouseClick.with {
-                            $0.position = Macosusesdk_Type_Point.with {
-                                $0.x = centerX
-                                $0.y = centerY
-                            }
-                            $0.clickType = .left
-                            $0.clickCount = 2
-                        },
-                    )
-                },
-                pid: pid,
-                showAnimation: false,
-                animationDuration: 0,
-            )
-
-        case .right:
-            try await AutomationCoordinator.shared.handleExecuteInput(
-                action: Macosusesdk_V1_InputAction.with {
-                    $0.inputType = .click(
-                        Macosusesdk_V1_MouseClick.with {
-                            $0.position = Macosusesdk_Type_Point.with {
-                                $0.x = centerX
-                                $0.y = centerY
-                            }
-                            $0.clickType = .right
-                            $0.clickCount = 1
-                        },
-                    )
-                },
-                pid: pid,
-                showAnimation: false,
-                animationDuration: 0,
-            )
-        }
-
-        let response = Macosusesdk_V1_ClickElementResponse.with {
-            $0.success = true
-            $0.element = element
+            return Macosusesdk_V1_ClickElementResponse.with {
+                $0.success = true
+                $0.element = element
+                $0.input = inputName
+            }
         }
         return ServerResponse(message: response)
+    }
+
+    /// Polls until the element's AX attribute matches the expected string value.
+    /// Uses InputTextConvergencePolicy for centralised timeout/poll-interval tuning.
+    /// Duplicates of this readback loop in directAx and keystrokeReplacement were
+    /// consolidated here to avoid drift and to enable transient-AX-error handling.
+    private static func waitForAXValueConvergence(
+        system: SystemOperations,
+        element: AnyObject,
+        attribute: String,
+        expected: String,
+        policy: InputTextConvergencePolicy = .init(),
+    ) async throws {
+        let clock = ContinuousClock()
+        let deadline = clock.now.advanced(by: policy.timeout)
+        while true {
+            try Task.checkCancellation()
+            // Read via the error-code-exposing variant so transient AX
+            // failures (cannotComplete / failure) can be distinguished from a
+            // genuine "value has not converged yet". AX can briefly return
+            // cannotComplete while AppKit settles after a routed write; those
+            // must be retried, not fatal. A non-transient non-success error is
+            // surfaced immediately instead of polling until the deadline.
+            let read = system.copyAXAttributeResult(
+                element: element,
+                attribute: attribute,
+            )
+            if read.errorCode == AXError.success.rawValue {
+                if (read.value as? String) == expected {
+                    break
+                }
+            } else if !inputTextAXReadIsTransient(read.errorCode) {
+                throw RPCError(
+                    code: .failedPrecondition,
+                    message: "AX read of \(attribute) failed with AXError \(read.errorCode) while waiting for convergence",
+                )
+            }
+            guard clock.now < deadline else {
+                throw RPCError(
+                    code: .deadlineExceeded,
+                    message: "Timed out waiting for \(attribute) convergence",
+                )
+            }
+            try await Task.sleep(for: policy.pollInterval)
+        }
+    }
+
+    /// Shared finalize block: updates element text + focused field, commits to
+    /// the element registry, and returns a populated success response.
+    /// `inputResourceName` is non-empty only for the keystroke-replacement
+    /// path (C6); it is left empty for the direct-AX path, which performs no
+    /// physical input, so the response .input field is correctly absent.
+    private static func finalizeWriteElementValue(
+        element: inout Macosusesdk_V1_Element,
+        expectedText: String,
+        axElement: AXUIElement,
+        elementID: String,
+        system: SystemOperations,
+        elementRegistry: ElementRegistry,
+        inputResourceName: String = "",
+    ) async throws -> Macosusesdk_V1_WriteElementValueResponse {
+        element.text = expectedText
+        if let focused = system.copyAXAttribute(
+            element: axElement as AnyObject,
+            attribute: kAXFocusedAttribute as String,
+        ) as? Bool {
+            element.focused = focused
+        }
+        guard await elementRegistry.updateElement(
+            elementID,
+            element: element,
+            axElement: axElement,
+        ) else {
+            throw RPCError(code: .notFound, message: "Element expired before response readback")
+        }
+        return Macosusesdk_V1_WriteElementValueResponse.with {
+            $0.success = true
+            $0.element = element
+            $0.input = inputResourceName
+        }
     }
 
     func writeElementValue(
@@ -622,141 +701,268 @@ extension MacosUseService {
         let req = request.message
         Self.logger.info("writeElementValue called")
 
-        var element: Macosusesdk_Type_Element
-        let pid: pid_t
-        var elementID: String?
-
-        // Parse a selector string up front so we can use it again for the
-        // visible-only re-query after the window has been focused.
-        var validatedSelector: Macosusesdk_Type_ElementSelector?
-        if case let .selector(selector) = req.target {
-            validatedSelector = try SelectorParser.shared.parseSelector(selector)
-        }
-
-        // Find the element to modify
-        switch req.target {
-        case let .elementID(elementId):
-            guard let foundElement = await ElementRegistry.shared.getElement(elementId) else {
-                throw RPCError(code: .notFound, message: "Element not found")
-            }
-            element = foundElement
-            elementID = elementId
-            pid = try parsePID(fromName: req.parent)
-
-        case .selector:
-            guard let selector = validatedSelector else {
-                throw RPCError(code: .invalidArgument, message: "Selector could not be parsed")
-            }
-            // Find the target element. Use visibleOnly: false because the selector is
-            // being used as a stable handle across calls; the caller may have not yet
-            // brought the window forward. Focus acquisition happens next.
-            let elementsWithPaths = try await ElementLocator.shared.findElements(
-                selector: selector,
+        let pid = try await resolveApplicationOrWindowParentPID(fromName: req.parent)
+        let target = try Self.parseElementMutationTarget(req.target)
+        let elementLocator = self.elementLocator
+        let elementRegistry = self.elementRegistry
+        // Treat an omitted value as an empty string for both write modes. The
+        // proto distinguishes omitted (clear) from explicit "" (set-to-empty),
+        // but AXValue has no separate "clear" operation, so both write "".
+        let requestValue = req.hasValue ? req.value : ""
+        let writeMode = req.writeMode
+        let response = try await automationCoordinator.handlePhysicalMutationWithOwner { context, ownerID in
+            let admitted = try await Self.resolveElementMutationTarget(
+                target,
                 parent: req.parent,
-                visibleOnly: false,
-                maxResults: 1,
+                expectedPID: pid,
+                locator: elementLocator,
+                context: context,
             )
+            try await context.activateTarget(pid: pid)
+            try await context.focusElementWindow(target: admitted)
 
-            guard let firstElement = elementsWithPaths.first else {
-                throw RPCError(code: .notFound, message: "No element found matching selector")
-            }
-
-            element = firstElement.element
-            elementID = firstElement.element.elementID
-            pid = try parsePID(fromName: req.parent)
-
-        case .none:
-            throw RPCError(
-                code: .invalidArgument, message: "Either element_id or selector must be specified",
+            let exactTarget = try await context.resolveElement(
+                id: admitted.elementID,
+                expectedPID: pid,
+                expectedScope: req.parent,
             )
-        }
-
-        // Acquire focus on the element's window before typing (best-effort).
-        if let eid = elementID {
-            await AutomationCoordinator.shared.acquireFocusForElement(elementID: eid, pid: pid)
-        }
-
-        // Re-verify that the target is actually visible now that the window has
-        // been brought forward. The selector branch may have matched a hidden or
-        // scrolled-out element, and writing AXValue into a background DOM node
-        // silently fails the caller's intent.
-        switch req.target {
-        case .selector:
-            guard let selector = validatedSelector else {
-                throw RPCError(code: .invalidArgument, message: "Selector could not be re-parsed")
-            }
-            let visibleElements = try await ElementLocator.shared.findElements(
-                selector: selector,
-                parent: req.parent,
-                visibleOnly: true,
-                maxResults: 1,
-            )
-            guard let visible = visibleElements.first else {
-                throw RPCError(
-                    code: .failedPrecondition,
-                    message: "element matching selector is not visible after focusing; bring it into view",
-                )
-            }
-            element = visible.element
-            elementID = visible.element.elementID
-
-        case let .elementID(elementId):
-            guard let axElement = await ElementRegistry.shared.getAXElement(elementId)
-            else {
+            guard let axElement = exactTarget.axElement else {
                 throw RPCError(code: .notFound, message: "Element reference not available")
             }
-            element = Self.refreshBoundsIfPossible(element: element, axElement: axElement)
+            var element = Self.refreshBoundsIfPossible(
+                element: exactTarget.element,
+                axElement: axElement as AnyObject,
+                system: context.system,
+            )
             guard Self.elementClickPointIsOnScreen(element) else {
                 throw RPCError(
                     code: .failedPrecondition,
-                    message: "element '\(elementId)' is not visible on screen; bring it into view",
+                    message: "Element is not visible on screen; bring it into view",
+                )
+            }
+            let canonicalRole = ElementLocator.canonicalRole(element.role)
+            guard Self.roleIsTextEditable(canonicalRole) else {
+                throw RPCError(
+                    code: .failedPrecondition,
+                    message: "Element role '\(element.role)' is not editable",
                 )
             }
 
-        case .none:
-            break
-        }
+            // Default an unspecified write mode to direct AX. The switch below
+            // is exhaustive over the resulting (possibly UNRECOGNIZED) value;
+            // .unspecified is unreachable here (normalized above) but listed to
+            // satisfy the generated enum's exhaustiveness requirement.
+            let effectiveMode = writeMode == .unspecified ? .directAx : writeMode
+            switch effectiveMode {
+            case .directAx, .unspecified:
+                // Direct AX value mutation.
 
-        // Refuse to write values into elements that are not known text-editable roles.
-        // This guard is placed AFTER the visible-target re-query so the role is checked
-        // on the actual visible/resolved element, not a hidden, non-editable earlier match.
-        let canonicalRole = ElementLocator.canonicalRole(element.role)
-        guard Self.roleIsTextEditable(canonicalRole) else {
-            throw RPCError(code: .failedPrecondition, message: "Element role '\(element.role)' is not editable")
-        }
+                // Verify kAXValueAttribute is settable before attempting direct AX mutation.
+                // The keystrokeReplacement branch intentionally bypasses this check —
+                // AXSecureTextField, web/Electron controls report settable=false but are
+                // keyboard-editable via Cmd+A + type.
+                let settableCheck = context.system.isAXAttributeSettable(
+                    element: axElement as AnyObject,
+                    attribute: kAXValueAttribute as String,
+                )
+                guard settableCheck.errorCode == AXError.success.rawValue, settableCheck.settable else {
+                    throw RPCError(
+                        code: .failedPrecondition,
+                        message: "Element AXValue is not settable (AXError \(settableCheck.errorCode))",
+                    )
+                }
 
-        guard let eid = elementID,
-              let axElement = await ElementRegistry.shared.getAXElement(eid)
-        else {
-            throw RPCError(code: .notFound, message: "Element reference not available")
-        }
+                let setResult = context.system.setAXAttribute(
+                    element: axElement as AnyObject,
+                    attribute: kAXValueAttribute as String,
+                    value: requestValue,
+                )
+                guard setResult == AXError.success.rawValue else {
+                    throw RPCError(
+                        code: .internalError,
+                        message: "AXValue set failed for element \(exactTarget.elementID) (AXError \(setResult))",
+                    )
+                }
 
-        // Focus the editable element programmatically via AX rather than a
-        // physical mouse click. Some applications report spurious focus errors
-        // even though the element is able to receive text, so we log the error
-        // and continue rather than aborting.
-        let focusErr = AXUIElementSetAttributeValue(
-            axElement, kAXFocusedAttribute as CFString, kCFBooleanTrue as CFTypeRef,
-        )
-        if focusErr != .success {
-            Self.logger.warning(
-                "type_element could not focus element \(eid, privacy: .public) via AX (AXError \(focusErr.rawValue, privacy: .public)); continuing with AXValue attempt",
-            )
-        }
+                try await Self.waitForAXValueConvergence(
+                    system: context.system,
+                    element: axElement as AnyObject,
+                    attribute: kAXValueAttribute as String,
+                    expected: requestValue,
+                )
+                return try await Self.finalizeWriteElementValue(
+                    element: &element,
+                    expectedText: requestValue,
+                    axElement: axElement,
+                    elementID: exactTarget.elementID,
+                    system: context.system,
+                    elementRegistry: elementRegistry,
+                )
 
-        let axErr = AXUIElementSetAttributeValue(axElement, kAXValueAttribute as CFString, req.value as CFString)
-        if axErr != .success {
-            throw RPCError(
-                code: .internalError,
-                message: "AXValue set failed for element \(eid) (AXError \(axErr.rawValue))",
-            )
-        }
+            case .keystrokeReplacement:
+                // W2 keystroke replacement: focus the target element so Cmd+A
+                // and typed text land on the correct first responder, not
+                // whatever control in the window happened to hold keyboard focus.
+                // Try AX focus first; AXSecureTextField/web/Electron controls
+                // may reject kAXFocusedAttribute — fall back to physical click.
+                let focusSetResult = context.system.setAXAttribute(
+                    element: axElement as AnyObject,
+                    attribute: kAXFocusedAttribute as String,
+                    value: true,
+                )
+                if focusSetResult != AXError.success.rawValue {
+                    _ = try await context.executeInput(
+                        .click(
+                            point: Self.elementClickPoint(element),
+                        ),
+                        route: .process(pid),
+                    )
+                }
 
-        let response = Macosusesdk_V1_WriteElementValueResponse.with {
-            $0.success = true
-            $0.element = element
+                // Select all existing content via keyboard shortcut (Cmd+A).
+                _ = try await context.executeInput(
+                    .press(keyName: "a", flags: .maskCommand),
+                    route: .process(pid),
+                )
+
+                let textToType = requestValue
+                // C6: publish ONE real Input resource for the committing action
+                // (the type or the delete that actually changes the value). The
+                // preceding focus-click and Cmd+A are supporting sub-actions and
+                // are not each published (the response .input field is singular).
+                var committedInputName = ""
+                if textToType.isEmpty {
+                    // An empty replacement clears the field: with the selection
+                    // active, a single Delete removes it. Dispatching typeText("")
+                    // would post zero events and fail executeInput's receipt guard,
+                    // so delete the selection instead.
+                    let deleteAction: MacosUseSDK.InputAction = .press(keyName: "delete", flags: [])
+                    committedInputName = try await self.publishElementInputResource(
+                        action: deleteAction,
+                        parent: req.parent,
+                        ownerID: ownerID,
+                        route: .process(pid),
+                        executor: { try await context.executeInput(deleteAction, route: .process(pid)) },
+                    )
+                } else {
+                    let typeAction: MacosUseSDK.InputAction = .typeText(text: textToType, charDelay: 0.01)
+                    committedInputName = try await self.publishElementInputResource(
+                        action: typeAction,
+                        parent: req.parent,
+                        ownerID: ownerID,
+                        route: .process(pid),
+                        executor: { try await context.executeInput(typeAction, route: .process(pid)) },
+                    )
+                }
+
+                // Verify readback convergence via the shared transient-aware helper.
+                try await Self.waitForAXValueConvergence(
+                    system: context.system,
+                    element: axElement as AnyObject,
+                    attribute: kAXValueAttribute as String,
+                    expected: textToType,
+                )
+                return try await Self.finalizeWriteElementValue(
+                    element: &element,
+                    expectedText: textToType,
+                    axElement: axElement,
+                    elementID: exactTarget.elementID,
+                    system: context.system,
+                    elementRegistry: elementRegistry,
+                    inputResourceName: committedInputName,
+                )
+
+            case .UNRECOGNIZED:
+                throw RPCError(code: .invalidArgument, message: "Unrecognized write mode")
+            }
         }
         return ServerResponse(message: response)
+    }
+
+    private static func parseElementMutationTarget(
+        _ target: Macosusesdk_V1_ClickElementRequest.OneOf_Target?,
+    ) throws -> ElementMutationTarget {
+        switch target {
+        case let .elementID(id):
+            return .elementID(id)
+        case let .selector(selector):
+            return try .selector(SelectorParser.shared.parseSelector(selector))
+        case nil:
+            throw RPCError(
+                code: .invalidArgument,
+                message: "Either element_id or selector must be specified",
+            )
+        }
+    }
+
+    private static func parseElementMutationTarget(
+        _ target: Macosusesdk_V1_WriteElementValueRequest.OneOf_Target?,
+    ) throws -> ElementMutationTarget {
+        switch target {
+        case let .elementID(id):
+            return .elementID(id)
+        case let .selector(selector):
+            return try .selector(SelectorParser.shared.parseSelector(selector))
+        case nil:
+            throw RPCError(
+                code: .invalidArgument,
+                message: "Either element_id or selector must be specified",
+            )
+        }
+    }
+
+    private static func parseElementMutationTarget(
+        _ target: Macosusesdk_V1_PerformElementActionRequest.OneOf_Target?,
+    ) throws -> ElementMutationTarget {
+        switch target {
+        case let .elementID(id):
+            return .elementID(id)
+        case let .selector(selector):
+            return try .selector(SelectorParser.shared.parseSelector(selector))
+        case nil:
+            throw RPCError(
+                code: .invalidArgument,
+                message: "Either element_id or selector must be specified",
+            )
+        }
+    }
+
+    @MainActor
+    private static func resolveElementMutationTarget(
+        _ target: ElementMutationTarget,
+        parent: String,
+        expectedPID: pid_t,
+        locator: ElementLocator,
+        context: PhysicalDesktopMutationContext,
+    ) async throws -> RegisteredElementMutationTarget {
+        let elementID: String
+        switch target {
+        case let .elementID(id):
+            elementID = id
+        case let .selector(selector):
+            let matches = try await locator.findElements(
+                selector: selector,
+                parent: parent,
+                visibleOnly: false,
+                maxResults: 2,
+            )
+            guard let match = matches.first else {
+                throw RPCError(code: .notFound, message: "No element found matching selector")
+            }
+            guard matches.count == 1 else {
+                throw RPCError(
+                    code: .failedPrecondition,
+                    message: "Selector matched multiple elements",
+                )
+            }
+            elementID = match.element.elementID
+        }
+
+        return try await context.resolveElement(
+            id: elementID,
+            expectedPID: expectedPID,
+            expectedScope: parent,
+        )
     }
 
     /// Returns true if the canonical accessibility role indicates the element
@@ -782,32 +988,23 @@ extension MacosUseService {
     /// coordinates, while still keeping off-screen elements rejected.
     /// - Note: Internal for testing with @testable import.
     static func refreshBoundsIfPossible(
-        element: Macosusesdk_Type_Element, axElement: AXUIElement,
-    ) -> Macosusesdk_Type_Element {
-        var positionValue: CFTypeRef?
-        var sizeValue: CFTypeRef?
-        let positionErr = AXUIElementCopyAttributeValue(axElement, kAXPositionAttribute as CFString, &positionValue)
-        let sizeErr = AXUIElementCopyAttributeValue(axElement, kAXSizeAttribute as CFString, &sizeValue)
-
-        // AXUIElementCopyAttributeValue follows Core Foundation create/copy
-        // rules and returns a +1 retained CFTypeRef. Swift bridges CFTypeRef to
-        // a strong ARC-managed reference, so the Swift idiom is to clear the
-        // optional references on every exit path; manual CFRelease is unsafe.
-        // Guard-let bindings that continue to use an object keep it alive via
-        // their own strong references.
-        defer {
-            positionValue = nil
-            sizeValue = nil
-        }
-
-        guard positionErr == .success, sizeErr == .success,
-              let positionAXValue = positionValue,
-              let sizeAXValue = sizeValue
-        else {
+        element: Macosusesdk_V1_Element,
+        axElement: AnyObject,
+        system: SystemOperations,
+    ) -> Macosusesdk_V1_Element {
+        guard let positionValue = system.copyAXAttribute(
+            element: axElement,
+            attribute: kAXPositionAttribute as String,
+        ), let sizeValue = system.copyAXAttribute(
+            element: axElement,
+            attribute: kAXSizeAttribute as String,
+        ) else {
             // Fall back to the cached bounds if AX query fails.
             return element
         }
 
+        let positionAXValue = positionValue as AnyObject
+        let sizeAXValue = sizeValue as AnyObject
         var point = CGPoint.zero
         var size = CGSize.zero
         guard CFGetTypeID(positionAXValue) == AXValueGetTypeID(),
@@ -841,35 +1038,33 @@ extension MacosUseService {
         let req = request.message
         Self.logger.info("getElementActions called")
 
-        // Parse element name to get element ID
-        let components = req.name.split(separator: "/").map(String.init)
-        guard components.count == 4,
-              components[0] == "applications",
-              components[2] == "elements"
-        else {
-            throw RPCError(code: .invalidArgument, message: "Invalid element name format")
+        guard req.unknownFields.data.isEmpty else {
+            throw RPCErrorHelpers.validationError(
+                message: "GetElementActionsRequest contains unknown fields",
+                reason: "UNKNOWN_FIELD",
+                field: "request",
+            )
         }
 
-        let elementId = components[3]
+        let resource = try await resolveApplicationChildResource(req.name, collection: "elements")
 
-        // Get element from registry
-        guard let element = await ElementRegistry.shared.getElement(elementId) else {
+        // Resolve both the ephemeral element ID and its application owner.
+        guard let element = await elementRegistry.getElement(
+            resource.resourceID,
+            expectedPID: resource.pid,
+        ) else {
             throw RPCError(code: .notFound, message: "Element not found")
         }
 
-        // Try to get actions from AXUIElement first
-        if let axElement = await ElementRegistry.shared.getAXElement(elementId) {
-            // Query the AXUIElement for its actions
-            var value: CFTypeRef?
-            guard AXUIElementCopyAttributeValue(axElement, "AXActions" as CFString, &value) == .success
-            else {
-                // Fallback to role-based if query fails
-                let actions = getActionsForRole(element.role)
-                let response = Macosusesdk_V1_ElementActions.with { $0.actions = actions }
-                return ServerResponse(message: response)
-            }
-
-            if let actionsArray = value as? [String] {
+        // Try to get actions from the injected AX boundary first.
+        if let axElement = await elementRegistry.getAXElement(
+            resource.resourceID,
+            expectedPID: resource.pid,
+        ) {
+            if let actionsArray = system.copyAXAttribute(
+                element: axElement as AnyObject,
+                attribute: "AXActions",
+            ) as? [String] {
                 let response = Macosusesdk_V1_ElementActions.with {
                     $0.actions = actionsArray
                 }
@@ -901,181 +1096,98 @@ extension MacosUseService {
             )
         }
 
-        var element: Macosusesdk_Type_Element
-        var elementID: String
-        let pid: pid_t
-
-        // Parse the selector once so we can re-query visibility for the fallback.
-        var validatedSelector: Macosusesdk_Type_ElementSelector?
-        if case let .selector(selector) = req.target {
-            validatedSelector = try SelectorParser.shared.parseSelector(selector)
-        }
-
-        // Find the element
-        switch req.target {
-        case let .elementID(id):
-            guard let foundElement = await ElementRegistry.shared.getElement(id) else {
-                throw RPCError(code: .notFound, message: "Element not found")
-            }
-            element = foundElement
-            elementID = id
-            pid = try parsePID(fromName: req.parent)
-
-        case .selector:
-            guard let selector = validatedSelector else {
-                throw RPCError(code: .invalidArgument, message: "Selector could not be parsed")
-            }
-            let elementsWithPaths = try await ElementLocator.shared.findElements(
-                selector: selector,
+        let pid = try await resolveApplicationOrWindowParentPID(fromName: req.parent)
+        let target = try Self.parseElementMutationTarget(req.target)
+        let elementLocator = self.elementLocator
+        let elementRegistry = self.elementRegistry
+        let response = try await automationCoordinator.handlePhysicalMutation { context in
+            let admitted = try await Self.resolveElementMutationTarget(
+                target,
                 parent: req.parent,
-                visibleOnly: false,
-                maxResults: 1,
+                expectedPID: pid,
+                locator: elementLocator,
+                context: context,
             )
+            try await context.activateTarget(pid: pid)
+            try await context.focusElementWindow(target: admitted)
 
-            guard let firstElement = elementsWithPaths.first else {
-                throw RPCError(code: .notFound, message: "No element found matching selector")
-            }
-
-            element = firstElement.element
-            elementID = firstElement.element.elementID
-            pid = try parsePID(fromName: req.parent)
-
-        case .none:
-            throw RPCError(
-                code: .invalidArgument, message: "Either element_id or selector must be specified",
+            let exactTarget = try await context.resolveElement(
+                id: admitted.elementID,
+                expectedPID: pid,
+                expectedScope: req.parent,
             )
-        }
-
-        // Try to get the AXUIElement and perform semantic action (MUST run on MainActor)
-        if let axElement = await ElementRegistry.shared.getAXElement(elementID) {
-            // Acquire focus before performing AX action (best-effort)
-            await AutomationCoordinator.shared.acquireFocusForElement(elementID: elementID, pid: pid)
-
-            let performResult = await MainActor.run { () -> AXError in
-                let actionName: String = switch req.action.lowercased() {
-                case "press", "click":
-                    kAXPressAction as String
-                case "showmenu", "openmenu":
-                    kAXShowMenuAction as String
-                default:
-                    req.action
-                }
-
-                return AXUIElementPerformAction(axElement, actionName as CFString)
-            }
-
-            if performResult == .success {
-                let response = Macosusesdk_V1_PerformElementActionResponse.with {
-                    $0.success = true
-                    $0.element = element
-                }
-                return ServerResponse(message: response)
-            }
-
-            // If action failed but element has position, fall through to coordinate-based fallback
-            if !element.hasX || !element.hasY {
-                throw RPCError(
-                    code: .internalError,
-                    message: "AX action failed: \(performResult.rawValue) and no position available for fallback",
-                )
-            }
-        }
-
-        // Fallback to coordinate-based simulation if AXUIElement is nil or action failed.
-        // We must not trust coordinates from a hidden/off-screen element, so recheck
-        // visibility after the window has been focused.
-        switch req.target {
-        case .selector:
-            guard let selector = validatedSelector else {
-                throw RPCError(
-                    code: .internalError,
-                    message: "AX action failed and selector could not be re-parsed for fallback",
-                )
-            }
-            let visibleElements = try await ElementLocator.shared.findElements(
-                selector: selector,
-                parent: req.parent,
-                visibleOnly: true,
-                maxResults: 1,
-            )
-            guard let visible = visibleElements.first else {
-                throw RPCError(
-                    code: .failedPrecondition,
-                    message: "AX action failed and element matching selector is not visible; bring it into view",
-                )
-            }
-            element = visible.element
-            elementID = visible.element.elementID
-
-        case let .elementID(id):
-            guard let axElement = await ElementRegistry.shared.getAXElement(id) else {
+            guard let axElement = exactTarget.axElement else {
                 throw RPCError(code: .notFound, message: "Element reference not available")
             }
-            element = Self.refreshBoundsIfPossible(element: element, axElement: axElement)
-            guard Self.elementClickPointIsOnScreen(element) else {
+            let normalizedAction = req.action.lowercased()
+            let actionName: String = switch normalizedAction {
+            case "press", "click", "axpress":
+                kAXPressAction as String
+            case "showmenu", "openmenu", "axshowmenu":
+                kAXShowMenuAction as String
+            default:
+                req.action
+            }
+            let performResult = context.system.performAXAction(
+                element: axElement as AnyObject,
+                action: actionName,
+            )
+
+            var element = Self.refreshBoundsIfPossible(
+                element: exactTarget.element,
+                axElement: axElement as AnyObject,
+                system: context.system,
+            )
+            if performResult != AXError.success.rawValue {
+                // A failed AX action is a precondition failure of the element
+                // (the action does not apply in the element's current state),
+                // not a server-internal error. Map the AXError to the closest
+                // gRPC code and, for menu actions, point the caller at the
+                // reliable physical alternative: a coordinate-based right click
+                // (the click tool with button "right") after reading bounds via
+                // read_element / get_element — kAXShowMenuAction is unsupported
+                // by many elements, whereas a contextual-menu click always works.
+                let isMenuAction = normalizedAction == "showmenu"
+                    || normalizedAction == "openmenu"
+                    || normalizedAction == "axshowmenu"
+                let guidance = isMenuAction
+                    ? "; this element does not support the AX menu action — read the element bounds (read_element/get_element) then use the 'click' tool with button 'right' to open a coordinate-based context menu"
+                    : "; use click_element or a typed input tool for physical interactions"
                 throw RPCError(
                     code: .failedPrecondition,
-                    message: "AX action failed and element '\(id)' is not visible on screen; bring it into view",
+                    message: "AX action '\(req.action)' failed with AXError \(performResult)\(guidance)",
                 )
             }
 
-        case .none:
-            break
-        }
-
-        // Use the now-verified visible element's geometric center for the fallback click.
-        let clickPoint = try Self.elementClickPoint(element)
-        let centerX = clickPoint.x
-        let centerY = clickPoint.y
-
-        switch req.action.lowercased() {
-        case "press", "click":
-            try await AutomationCoordinator.shared.handleExecuteInput(
-                action: Macosusesdk_V1_InputAction.with {
-                    $0.inputType = .click(
-                        Macosusesdk_V1_MouseClick.with {
-                            $0.position = Macosusesdk_Type_Point.with {
-                                $0.x = centerX
-                                $0.y = centerY
-                            }
-                            $0.clickType = .left
-                            $0.clickCount = 1
-                        },
-                    )
-                },
-                pid: pid,
-                showAnimation: false,
-                animationDuration: 0,
+            element = Self.refreshBoundsIfPossible(
+                element: element,
+                axElement: axElement as AnyObject,
+                system: context.system,
             )
+            if let focused = context.system.copyAXAttribute(
+                element: axElement as AnyObject,
+                attribute: kAXFocusedAttribute as String,
+            ) as? Bool {
+                element.focused = focused
+            }
+            if let text = context.system.copyAXAttribute(
+                element: axElement as AnyObject,
+                attribute: kAXValueAttribute as String,
+            ) as? String {
+                element.text = text
+            }
+            guard await elementRegistry.updateElement(
+                exactTarget.elementID,
+                element: element,
+                axElement: axElement,
+            ) else {
+                throw RPCError(code: .notFound, message: "Element expired before response readback")
+            }
 
-        case "showmenu", "openmenu":
-            try await AutomationCoordinator.shared.handleExecuteInput(
-                action: Macosusesdk_V1_InputAction.with {
-                    $0.inputType = .click(
-                        Macosusesdk_V1_MouseClick.with {
-                            $0.position = Macosusesdk_Type_Point.with {
-                                $0.x = centerX
-                                $0.y = centerY
-                            }
-                            $0.clickType = .right
-                            $0.clickCount = 1
-                        },
-                    )
-                },
-                pid: pid,
-                showAnimation: false,
-                animationDuration: 0,
-            )
-
-        default:
-            throw RPCError(
-                code: .unimplemented, message: "Action '\(req.action)' is not implemented",
-            )
-        }
-
-        let response = Macosusesdk_V1_PerformElementActionResponse.with {
-            $0.success = true
-            $0.element = element
+            return Macosusesdk_V1_PerformElementActionResponse.with {
+                $0.success = true
+                $0.element = element
+            }
         }
         return ServerResponse(message: response)
     }
@@ -1086,11 +1198,17 @@ extension MacosUseService {
         let req = request.message
         Self.logger.info("waitElement called (LRO)")
 
+        let timeout = try RequestNumericValidation.optionalTimeout(req.timeout, default: 30)
+        let pollInterval = try RequestNumericValidation.optionalPollInterval(
+            req.pollInterval,
+            default: 0.5,
+        )
         // Validate selector
         let selector = try SelectorParser.shared.parseSelector(req.selector)
+        _ = try await resolveApplicationOrWindowParentPID(fromName: req.parent)
 
         // Create LRO
-        let opName = "operations/waitElement/\(UUID().uuidString)"
+        let opName = "operations/\(UUID().uuidString)"
         let metadata = try SwiftProtobuf.Google_Protobuf_Any.with {
             $0.typeURL = "type.googleapis.com/macosusesdk.v1.WaitElementMetadata"
             $0.value = try Macosusesdk_V1_WaitElementMetadata.with {
@@ -1099,78 +1217,92 @@ extension MacosUseService {
             }.serializedData()
         }
 
-        let op = await operationStore.createOperation(name: opName, metadata: metadata)
+        let op = try await operationStore.createOperation(
+            name: opName,
+            metadata: metadata,
+            execution: { [operationStore, elementLocator] in
+                do {
+                    let endTime = Date().timeIntervalSince1970 + timeout
+                    var attempts = 0
 
-        // Start background task
-        Task { [operationStore] in
-            do {
-                let timeout = req.timeout > 0 ? req.timeout : 30.0
-                let rawInterval = req.pollInterval > 0 ? req.pollInterval : 0.5
-                let pollInterval = min(max(rawInterval, 0.1), 60.0)
-                let endTime = Date().timeIntervalSince1970 + timeout
-                var attempts = 0
+                    while Date().timeIntervalSince1970 < endTime {
+                        try Task.checkCancellation()
+                        attempts += 1
 
-                while Date().timeIntervalSince1970 < endTime {
-                    attempts += 1
+                        // Update metadata with attempt count
+                        let updatedMetadata = Macosusesdk_V1_WaitElementMetadata.with {
+                            $0.selector = selector
+                            $0.attempts = Int32(attempts)
+                        }
+                        let metadata = try SwiftProtobuf.Google_Protobuf_Any.with {
+                            $0.typeURL = "type.googleapis.com/macosusesdk.v1.WaitElementMetadata"
+                            $0.value = try updatedMetadata.serializedData()
+                        }
+                        await operationStore.updateOperationMetadata(
+                            name: opName,
+                            metadata: metadata,
+                        )
 
-                    // Update metadata with attempt count
-                    let updatedMetadata = Macosusesdk_V1_WaitElementMetadata.with {
-                        $0.selector = selector
-                        $0.attempts = Int32(attempts)
-                    }
-                    var updatedOp = await operationStore.getOperation(name: opName) ?? op
-                    updatedOp.metadata = try SwiftProtobuf.Google_Protobuf_Any.with {
-                        $0.typeURL = "type.googleapis.com/macosusesdk.v1.WaitElementMetadata"
-                        $0.value = try updatedMetadata.serializedData()
-                    }
-                    await operationStore.putOperation(updatedOp)
+                        // Try to find the element
+                        let elementsWithPaths = try await elementLocator.findElements(
+                            selector: selector,
+                            parent: req.parent,
+                            visibleOnly: true,
+                            maxResults: 2,
+                        )
 
-                    // Try to find the element
-                    let elementsWithPaths = try await ElementLocator.shared.findElements(
-                        selector: selector,
-                        parent: req.parent,
-                        visibleOnly: true,
-                        maxResults: 1,
-                    )
+                        if elementsWithPaths.count > 1 {
+                            await operationStore.failOperation(
+                                name: opName,
+                                code: Int32(RPCError.Code.failedPrecondition.rawValue),
+                                message: "Selector matched multiple elements",
+                            )
+                            return
+                        }
+                        if let firstElement = elementsWithPaths.first {
+                            // Element found! Complete the operation
+                            // Element already has elementID from findElements() registration
+                            var elementWithId = firstElement.element
+                            elementWithId.path = firstElement.path
 
-                    if let firstElement = elementsWithPaths.first {
-                        // Element found! Complete the operation
-                        // Element already has elementID from findElements() registration
-                        var elementWithId = firstElement.element
-                        elementWithId.path = firstElement.path
+                            let response = Macosusesdk_V1_WaitElementResponse.with {
+                                $0.element = elementWithId
+                            }
 
-                        let response = Macosusesdk_V1_WaitElementResponse.with {
-                            $0.element = elementWithId
+                            try await operationStore.finishOperation(name: opName, responseMessage: response)
+                            return
                         }
 
-                        try await operationStore.finishOperation(name: opName, responseMessage: response)
-                        return
+                        // Wait before next attempt
+                        try await Task.sleep(nanoseconds: UInt64(pollInterval * 1_000_000_000))
                     }
 
-                    // Wait before next attempt
-                    try await Task.sleep(nanoseconds: UInt64(pollInterval * 1_000_000_000))
+                    await operationStore.failOperation(
+                        name: opName,
+                        code: Int32(RPCError.Code.deadlineExceeded.rawValue),
+                        message: "Element did not appear within timeout",
+                    )
+                } catch is CancellationError {
+                    await operationStore.failOperation(
+                        name: opName,
+                        code: Int32(RPCError.Code.cancelled.rawValue),
+                        message: "Element wait cancelled",
+                    )
+                } catch let error as RPCError {
+                    await operationStore.failOperation(
+                        name: opName,
+                        code: Int32(error.code.rawValue),
+                        message: error.message,
+                    )
+                } catch {
+                    await operationStore.failOperation(
+                        name: opName,
+                        code: Int32(RPCError.Code.internalError.rawValue),
+                        message: "\(error)",
+                    )
                 }
-
-                // Timeout - mark operation as failed
-                var failedOp = await operationStore.getOperation(name: opName) ?? op
-                failedOp.done = true
-                failedOp.error = Google_Rpc_Status.with {
-                    $0.code = Int32(RPCError.Code.deadlineExceeded.rawValue)
-                    $0.message = "Element did not appear within timeout"
-                }
-                await operationStore.putOperation(failedOp)
-
-            } catch {
-                // Mark operation as failed
-                var errOp = await operationStore.getOperation(name: opName) ?? op
-                errOp.done = true
-                errOp.error = Google_Rpc_Status.with {
-                    $0.code = Int32(RPCError.Code.internalError.rawValue)
-                    $0.message = "\(error)"
-                }
-                await operationStore.putOperation(errOp)
-            }
-        }
+            },
+        )
 
         return ServerResponse(message: op)
     }
@@ -1181,38 +1313,58 @@ extension MacosUseService {
         let req = request.message
         Self.logger.info("waitElementState called (LRO)")
 
-        // Store the original selector for re-running, or create one for elementId case
-        let selectorToUse: Macosusesdk_Type_ElementSelector
-        let pid: pid_t
+        let timeout = try RequestNumericValidation.optionalTimeout(req.timeout, default: 30)
+        let pollInterval = try RequestNumericValidation.optionalPollInterval(
+            req.pollInterval,
+            default: 0.5,
+        )
+        let pid = try await resolveApplicationOrWindowParentPID(fromName: req.parent)
+        let initialElementWithPath: (
+            element: Macosusesdk_V1_Element,
+            path: [Int32],
+        )
 
         switch req.target {
         case let .elementID(elementID):
-            guard let foundElement = await ElementRegistry.shared.getElement(elementID) else {
-                throw RPCError(code: .notFound, message: "Element not found")
-            }
-            pid = try parsePID(fromName: req.parent)
-
-            // Create a selector based on the element's stable attributes
-            // This is a fallback - ideally we'd store the original selector
-            selectorToUse = Macosusesdk_Type_ElementSelector.with {
-                $0.criteria = .role(foundElement.role)
-                // Add more criteria if available for uniqueness
-                if foundElement.hasText, !foundElement.text.isEmpty {
-                    $0.criteria = .compound(
-                        Macosusesdk_Type_CompoundSelector.with {
-                            $0.operator = .and
-                            $0.selectors = [
-                                Macosusesdk_Type_ElementSelector.with { $0.criteria = .role(foundElement.role) },
-                                Macosusesdk_Type_ElementSelector.with { $0.criteria = .text(foundElement.text) },
-                            ]
-                        },
+            do {
+                let target = try await elementRegistry.resolveElementForMutation(
+                    elementID,
+                    expectedPID: pid,
+                    expectedScope: req.parent,
+                )
+                initialElementWithPath = (target.element, target.element.path)
+            } catch let error as ElementMutationResolutionError {
+                switch error {
+                case .admissionClosed:
+                    throw RPCError(code: .unavailable, message: "Element registry admission is closed")
+                case .notFound:
+                    throw RPCError(code: .notFound, message: "Element not found")
+                case .ownerMismatch, .scopeMismatch:
+                    throw RPCError(
+                        code: .failedPrecondition,
+                        message: "Element does not belong to the requested parent",
                     )
                 }
             }
 
         case let .selector(selector):
-            selectorToUse = try SelectorParser.shared.parseSelector(selector)
-            pid = try parsePID(fromName: req.parent)
+            let parsedSelector = try SelectorParser.shared.parseSelector(selector)
+            let matches = try await elementLocator.findElements(
+                selector: parsedSelector,
+                parent: req.parent,
+                visibleOnly: false,
+                maxResults: 2,
+            )
+            guard let match = matches.first else {
+                throw RPCError(code: .notFound, message: "Element not found")
+            }
+            guard matches.count == 1 else {
+                throw RPCError(
+                    code: .failedPrecondition,
+                    message: "Selector matched multiple elements",
+                )
+            }
+            initialElementWithPath = match
 
         case .none:
             throw RPCError(
@@ -1221,7 +1373,7 @@ extension MacosUseService {
         }
 
         // Create LRO
-        let opName = "operations/waitElementState/\(UUID().uuidString)"
+        let opName = "operations/\(UUID().uuidString)"
         let metadata = try SwiftProtobuf.Google_Protobuf_Any.with {
             $0.typeURL = "type.googleapis.com/macosusesdk.v1.WaitElementStateMetadata"
             $0.value = try Macosusesdk_V1_WaitElementStateMetadata.with {
@@ -1230,108 +1382,99 @@ extension MacosUseService {
             }.serializedData()
         }
 
-        let op = await operationStore.createOperation(name: opName, metadata: metadata)
-
-        // Find the initial element
-        let initialElementsWithPaths = try await ElementLocator.shared.findElements(
-            selector: selectorToUse,
-            parent: req.parent,
-            visibleOnly: true,
-            maxResults: 1,
-        )
-
-        guard let initialElementWithPath = initialElementsWithPaths.first else {
-            throw RPCError(code: .notFound, message: "Element not found")
+        let trackedElementId = initialElementWithPath.element.elementID
+        guard !trackedElementId.isEmpty else {
+            throw RPCError(code: .internalError, message: "Discovered element has no stable identity")
         }
 
-        // Get or create element ID for tracking
-        let trackedElementId: String = if !initialElementWithPath.element.elementID.isEmpty {
-            initialElementWithPath.element.elementID
-        } else {
-            await ElementRegistry.shared.registerElement(
-                initialElementWithPath.element,
-                pid: pid,
-            )
-        }
+        // Create the operation only after initial lookup succeeds, then atomically
+        // retain the task that produces its terminal result.
+        let op = try await operationStore.createOperation(
+            name: opName,
+            metadata: metadata,
+            execution: { [operationStore, elementLocator] in
+                do {
+                    let endTime = Date().timeIntervalSince1970 + timeout
+                    var attempts = 0
 
-        // Start background task
-        Task { [operationStore] in
-            do {
-                let timeout = req.timeout > 0 ? req.timeout : 30.0
-                let rawInterval = req.pollInterval > 0 ? req.pollInterval : 0.5
-                let pollInterval = min(max(rawInterval, 0.1), 60.0)
-                let endTime = Date().timeIntervalSince1970 + timeout
-                var attempts = 0
+                    while Date().timeIntervalSince1970 < endTime {
+                        try Task.checkCancellation()
+                        attempts += 1
 
-                while Date().timeIntervalSince1970 < endTime {
-                    attempts += 1
+                        // Update metadata with attempt count
+                        let updatedMetadata = Macosusesdk_V1_WaitElementStateMetadata.with {
+                            $0.condition = req.condition
+                            $0.attempts = Int32(attempts)
+                        }
+                        let metadata = try SwiftProtobuf.Google_Protobuf_Any.with {
+                            $0.typeURL = "type.googleapis.com/macosusesdk.v1.WaitElementStateMetadata"
+                            $0.value = try updatedMetadata.serializedData()
+                        }
+                        await operationStore.updateOperationMetadata(
+                            name: opName,
+                            metadata: metadata,
+                        )
 
-                    // Update metadata with attempt count
-                    let updatedMetadata = Macosusesdk_V1_WaitElementStateMetadata.with {
-                        $0.condition = req.condition
-                        $0.attempts = Int32(attempts)
-                    }
-                    var updatedOp = await operationStore.getOperation(name: opName) ?? op
-                    updatedOp.metadata = try SwiftProtobuf.Google_Protobuf_Any.with {
-                        $0.typeURL = "type.googleapis.com/macosusesdk.v1.WaitElementStateMetadata"
-                        $0.value = try updatedMetadata.serializedData()
-                    }
-                    await operationStore.putOperation(updatedOp)
+                        // Refresh the exact scope, then keep following only the
+                        // same stable AX identity. A lookalike must never replace it.
+                        let currentElementsWithPaths = try await elementLocator.refreshElements(
+                            parent: req.parent,
+                            visibleOnly: false,
+                        )
 
-                    // Re-acquire element using selector on each iteration to handle UI redraws
-                    // This is the selector-based polling approach that is resilient to element invalidation
-                    let currentElementsWithPaths = try await ElementLocator.shared.findElements(
-                        selector: selectorToUse,
-                        parent: req.parent,
-                        visibleOnly: true,
-                        maxResults: 1,
-                    )
-
-                    guard let currentElementWithPath = currentElementsWithPaths.first else {
-                        // Element no longer exists
-                        throw RPCError(code: .notFound, message: "Element no longer available")
-                    }
-
-                    let currentElement = currentElementWithPath.element
-
-                    if elementMatchesCondition(currentElement, condition: req.condition) {
-                        // Condition met! Complete the operation
-                        var elementWithId = currentElement
-                        elementWithId.elementID = trackedElementId
-                        elementWithId.path = currentElementWithPath.path
-
-                        let response = Macosusesdk_V1_WaitElementStateResponse.with {
-                            $0.element = elementWithId
+                        guard let currentElementWithPath = currentElementsWithPaths.first(where: {
+                            $0.element.elementID == trackedElementId
+                        }) else {
+                            // Element no longer exists
+                            throw RPCError(code: .notFound, message: "Element no longer available")
                         }
 
-                        try await operationStore.finishOperation(name: opName, responseMessage: response)
-                        return
+                        let currentElement = currentElementWithPath.element
+
+                        if self.elementMatchesCondition(currentElement, condition: req.condition) {
+                            // Condition met! Complete the operation
+                            var elementWithId = currentElement
+                            elementWithId.elementID = trackedElementId
+                            elementWithId.path = currentElementWithPath.path
+
+                            let response = Macosusesdk_V1_WaitElementStateResponse.with {
+                                $0.element = elementWithId
+                            }
+
+                            try await operationStore.finishOperation(name: opName, responseMessage: response)
+                            return
+                        }
+
+                        // Wait before next attempt
+                        try await Task.sleep(nanoseconds: UInt64(pollInterval * 1_000_000_000))
                     }
 
-                    // Wait before next attempt
-                    try await Task.sleep(nanoseconds: UInt64(pollInterval * 1_000_000_000))
+                    await operationStore.failOperation(
+                        name: opName,
+                        code: Int32(RPCError.Code.deadlineExceeded.rawValue),
+                        message: "Element did not reach expected state within timeout",
+                    )
+                } catch is CancellationError {
+                    await operationStore.failOperation(
+                        name: opName,
+                        code: Int32(RPCError.Code.cancelled.rawValue),
+                        message: "Element state wait cancelled",
+                    )
+                } catch let error as RPCError {
+                    await operationStore.failOperation(
+                        name: opName,
+                        code: Int32(error.code.rawValue),
+                        message: error.message,
+                    )
+                } catch {
+                    await operationStore.failOperation(
+                        name: opName,
+                        code: Int32(RPCError.Code.internalError.rawValue),
+                        message: "\(error)",
+                    )
                 }
-
-                // Timeout - mark operation as failed
-                var failedOp = await operationStore.getOperation(name: opName) ?? op
-                failedOp.done = true
-                failedOp.error = Google_Rpc_Status.with {
-                    $0.code = Int32(RPCError.Code.deadlineExceeded.rawValue)
-                    $0.message = "Element did not reach expected state within timeout"
-                }
-                await operationStore.putOperation(failedOp)
-
-            } catch {
-                // Mark operation as failed
-                var errOp = await operationStore.getOperation(name: opName) ?? op
-                errOp.done = true
-                errOp.error = Google_Rpc_Status.with {
-                    $0.code = Int32(RPCError.Code.internalError.rawValue)
-                    $0.message = "\(error)"
-                }
-                await operationStore.putOperation(errOp)
-            }
-        }
+            },
+        )
 
         return ServerResponse(message: op)
     }
@@ -1342,7 +1485,7 @@ extension MacosUseService {
     /// display. This prevents physical mouse clicks at coordinates that are
     /// entirely off-screen in Global Display Coordinates.
     /// - Note: Internal for testing with @testable import.
-    static func elementClickPointIsOnScreen(_ element: Macosusesdk_Type_Element) -> Bool {
+    static func elementClickPointIsOnScreen(_ element: Macosusesdk_V1_Element) -> Bool {
         guard let center = try? elementClickPoint(element) else { return false }
         var displayID: CGDirectDisplayID = 0
         var count: UInt32 = 0
@@ -1360,7 +1503,7 @@ extension MacosUseService {
     /// - Parameter element: The element to calculate the click point for.
     /// - Returns: A CGPoint at the geometric center of the element's bounds.
     /// - Throws: `RPCError` with `.failedPrecondition` if element has no position, zero size, or missing dimensions.
-    static func elementClickPoint(_ element: Macosusesdk_Type_Element) throws -> CGPoint {
+    static func elementClickPoint(_ element: Macosusesdk_V1_Element) throws -> CGPoint {
         guard element.hasX, element.hasY else {
             throw RPCError(code: .failedPrecondition, message: "Element has no position information")
         }

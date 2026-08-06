@@ -3,6 +3,9 @@ package integration
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"sort"
 	"strings"
 	"testing"
@@ -13,29 +16,16 @@ import (
 	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
 )
 
-// isTextEditTextArea checks if an element role corresponds to TextEdit's main text editing area.
-// TextEdit on different macOS versions uses different accessibility roles:
-// - AXTextArea (plain text editor, older macOS or RTF mode)
-// - AXWebArea (WebKit-based rich text editor, macOS 14+)
-// - AXTextView (legacy compatibility)
-// The role may include a description suffix like "(text entry area)" or "(HTML content)".
 func isTextEditTextArea(role string) bool {
 	roleLower := strings.ToLower(role)
-	// Check for various text editing area indicators
 	return strings.Contains(roleLower, "textarea") ||
 		strings.Contains(roleLower, "textview") ||
 		strings.Contains(roleLower, "webarea") ||
 		strings.Contains(roleLower, "text area") ||
 		strings.Contains(roleLower, "web area") ||
-		strings.Contains(roleLower, "html content") ||
-		// Exact matches for base roles (lowercased)
-		roleLower == "axtextarea" ||
-		roleLower == "axtextview" ||
-		roleLower == "axwebarea"
+		strings.Contains(roleLower, "html content")
 }
 
-// logTraversalDiagnostics logs diagnostic information about the accessibility tree traversal.
-// This helps debug issues where expected elements aren't found.
 func logTraversalDiagnostics(t *testing.T, resp *pb.TraverseAccessibilityResponse) {
 	t.Helper()
 
@@ -46,562 +36,324 @@ func logTraversalDiagnostics(t *testing.T, resp *pb.TraverseAccessibilityRespons
 		resp.Stats.ExcludedNonInteractable,
 		resp.Stats.ExcludedNoText)
 
-	// Log role counts from stats (includes all traversed elements, even filtered ones)
-	if len(resp.Stats.RoleCounts) > 0 {
-		roles := make([]string, 0, len(resp.Stats.RoleCounts))
-		for r := range resp.Stats.RoleCounts {
-			roles = append(roles, r)
-		}
-		sort.Strings(roles)
-		t.Logf("Role counts from stats (%d unique roles):", len(roles))
-		for _, r := range roles {
-			t.Logf("  %s: %d", r, resp.Stats.RoleCounts[r])
-		}
+	roles := make([]string, 0, len(resp.Stats.RoleCounts))
+	for role := range resp.Stats.RoleCounts {
+		roles = append(roles, role)
 	}
-
-	// Log unique roles from returned elements
-	elementRoles := make(map[string]int)
-	for _, elem := range resp.Elements {
-		if elem != nil {
-			elementRoles[elem.Role]++
-		}
-	}
-	if len(elementRoles) > 0 {
-		roles := make([]string, 0, len(elementRoles))
-		for r := range elementRoles {
-			roles = append(roles, r)
-		}
-		sort.Strings(roles)
-		t.Logf("Roles in returned elements (%d unique):", len(roles))
-		for _, r := range roles {
-			t.Logf("  %s: %d", r, elementRoles[r])
-		}
+	sort.Strings(roles)
+	for _, role := range roles {
+		t.Logf("Traversal role %s: %d", role, resp.Stats.RoleCounts[role])
 	}
 }
 
-// createTextEditDocument creates a new TextEdit document and ensures the Open Recent
-// dialog is bypassed. On macOS 14+, TextEdit shows an "Open Recent" dialog at startup
-// which must be dismissed before we can work with actual document content.
-func createTextEditDocument(t *testing.T, ctx context.Context, client pb.MacosUseClient, app *pb.Application) error {
+type textEditElementFixture struct {
+	application *pb.Application
+	window      *pb.Window
+	textArea    *pb.Element
+	marker      string
+}
+
+// openOwnedTextEditElementFixture creates one non-empty fixture-owned file,
+// resolves its exact titled window, focuses that resource, and binds the AX text
+// area by unique content plus Global Display Coordinates inside the owned window.
+func openOwnedTextEditElementFixture(
+	t *testing.T,
+	ctx context.Context,
+	client pb.MacosUseClient,
+	opsClient longrunningpb.OperationsClient,
+) *textEditElementFixture {
 	t.Helper()
 
-	var appleScriptErr, cmdNErr error
-
-	// First, try AppleScript to create a new document
-	_, appleScriptErr = client.ExecuteAppleScript(ctx, &pb.ExecuteAppleScriptRequest{
-		Script: `
-			tell application "TextEdit"
-				activate
-				-- Create new document
-				make new document
-				-- Explicitly set focus to avoid dialog issues
-				set frontmost to true
-			end tell
-		`,
-	})
-	if appleScriptErr != nil {
-		t.Logf("Warning: AppleScript new document failed: %v", appleScriptErr)
+	fileName := fmt.Sprintf("element-integration-%d.txt", time.Now().UnixNano())
+	marker := fmt.Sprintf("OWNED_TEXTEDIT_ELEMENT_%d", time.Now().UnixNano())
+	filePath := filepath.Join(t.TempDir(), fileName)
+	if err := os.WriteFile(filePath, []byte(marker), 0o600); err != nil {
+		t.Fatalf("create owned TextEdit file: %v", err)
 	}
 
-	// Also send Cmd+N to ensure new document is created (bypasses dialog)
-	cmdNInput, err := client.CreateInput(ctx, &pb.CreateInputRequest{
-		Parent: app.Name,
-		Input: &pb.Input{
-			Action: &pb.InputAction{
-				InputType: &pb.InputAction_PressKey{
-					PressKey: &pb.KeyPress{
-						Key:       "n",
-						Modifiers: []pb.KeyPress_Modifier{pb.KeyPress_MODIFIER_COMMAND},
-					},
-				},
-			},
-		},
-	})
-	if err != nil {
-		cmdNErr = err
-		t.Logf("Warning: Failed to send Cmd+N: %v", err)
-	} else {
-		// Wait for Cmd+N to complete
-		_ = PollUntilContext(ctx, 50*time.Millisecond, func() (bool, error) {
-			st, err := client.GetInput(ctx, &pb.GetInputRequest{Name: cmdNInput.Name})
-			if err != nil {
-				return false, nil
-			}
-			return st.State == pb.Input_STATE_COMPLETED || st.State == pb.Input_STATE_FAILED, nil
-		})
+	openCtx, cancelOpen := context.WithTimeout(ctx, 10*time.Second)
+	defer cancelOpen()
+	openCommand := exec.CommandContext(openCtx, "open", "-a", "TextEdit", filePath)
+	if output, err := openCommand.CombinedOutput(); err != nil {
+		t.Fatalf("open owned TextEdit file %q: %v output=%q", fileName, err, output)
 	}
 
-	// If both methods failed, return an error
-	if appleScriptErr != nil && cmdNErr != nil {
-		return fmt.Errorf("failed to create TextEdit document: AppleScript error: %v; Cmd+N error: %v", appleScriptErr, cmdNErr)
-	}
+	attachCtx, cancelAttach := context.WithTimeout(ctx, 20*time.Second)
+	defer cancelAttach()
+	app := OpenApplicationObserved(t, attachCtx, client, "com.apple.TextEdit")
 
-	return nil
-}
-
-// waitForTextEditDocumentWindow waits for a TextEdit document window (not the Open Recent dialog).
-// Document windows have titles like "Untitled" or contain a filename.
-// The Open Recent dialog typically has a "browser" or "outline" element structure.
-func waitForTextEditDocumentWindow(t *testing.T, ctx context.Context, client pb.MacosUseClient, app *pb.Application) error {
-	t.Helper()
-
-	var lastLoggedTitle string
-	attemptCount := 0
-
-	return PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
-		resp, err := client.ListWindows(ctx, &pb.ListWindowsRequest{
-			Parent: app.Name,
-		})
+	windowCtx, cancelWindow := context.WithTimeout(ctx, 10*time.Second)
+	defer cancelWindow()
+	var targetWindow *pb.Window
+	if err := PollUntilContext(windowCtx, 100*time.Millisecond, func() (bool, error) {
+		response, err := client.ListWindows(windowCtx, &pb.ListWindowsRequest{Parent: app.Name})
 		if err != nil {
-			return false, err
+			return false, nil
 		}
-
-		attemptCount++
-
-		// Look for a document window (not the Open Recent dialog)
-		for _, w := range resp.Windows {
-			if w.Bounds == nil || w.Bounds.Width <= 200 || w.Bounds.Height <= 200 {
-				continue
-			}
-
-			title := w.Title
-
-			// Log every 10 attempts for diagnostic
-			if attemptCount%10 == 1 && title != lastLoggedTitle {
-				t.Logf("Checking window: %q (%.0fx%.0f)", title, w.Bounds.Width, w.Bounds.Height)
-				lastLoggedTitle = title
-			}
-
-			// Accept windows with known document patterns
-			if strings.Contains(title, "Untitled") ||
-				strings.Contains(title, ".txt") ||
-				strings.Contains(title, ".rtf") ||
-				strings.Contains(title, "Document") {
-				t.Logf("Found document window (matched pattern): %s (%.0fx%.0f)", title, w.Bounds.Width, w.Bounds.Height)
-				return true, nil
-			}
-
-			// Also accept empty title or title without "Open" - this handles localization and edge cases
-			// The Open Recent dialog typically has "Open" in the title
-			if title == "" || (!strings.Contains(strings.ToLower(title), "open") && !strings.Contains(strings.ToLower(title), "recent")) {
-				t.Logf("Found document window (non-dialog): %q (%.0fx%.0f)", title, w.Bounds.Width, w.Bounds.Height)
+		for _, window := range response.Windows {
+			if window != nil && window.Bounds != nil &&
+				strings.Contains(window.Title, fileName) &&
+				window.Bounds.Width > 0 && window.Bounds.Height > 100 {
+				targetWindow = window
 				return true, nil
 			}
 		}
 		return false, nil
-	})
-}
-
-// TestTextEditElements_TraverseAndFindTextArea verifies accessibility tree traversal
-// and finding the text area element in TextEdit.
-func TestTextEditElements_TraverseAndFindTextArea(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-	defer cancel()
-
-	// Robustly kill TextEdit, clear saved state, and disable modal dialogs
-	killTextEdit(t)
-
-	// Start server
-	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd, serverAddr)
-
-	// Connect to server
-	conn := connectToServer(t, ctx, serverAddr)
-	defer conn.Close()
-
-	client := pb.NewMacosUseClient(conn)
-	opsClient := longrunningpb.NewOperationsClient(conn)
-
-	// Ensure TextEdit isn't tracked
-	CleanupApplication(t, ctx, client, "/Applications/TextEdit.app")
-
-	// Open TextEdit
-	t.Log("Opening TextEdit...")
-	app := OpenApplicationAndWait(t, ctx, client, opsClient, "com.apple.TextEdit")
-	defer cleanupApplication(t, ctx, client, app)
-
-	// Create new document and dismiss any dialogs
-	t.Log("Creating new document...")
-	_ = createTextEditDocument(t, ctx, client, app) // Errors are logged inside
-
-	// Wait for document window
-	t.Log("Waiting for TextEdit document window...")
-	err := waitForTextEditDocumentWindow(t, ctx, client, app)
-	if err != nil {
-		t.Fatalf("TextEdit document window never appeared: %v", err)
+	}); err != nil {
+		t.Fatalf("owned TextEdit window %q never appeared: %v", fileName, err)
 	}
-	t.Log("TextEdit window is ready")
 
-	// Traverse accessibility tree
-	t.Log("Traversing accessibility tree...")
-	var textAreaElement *typepb.Element
-	var lastResp *pb.TraverseAccessibilityResponse
-	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
-		resp, err := client.TraverseAccessibility(ctx, &pb.TraverseAccessibilityRequest{
-			Name: app.Name,
+	focusedWindow, err := client.FocusWindow(windowCtx, &pb.FocusWindowRequest{Name: targetWindow.Name})
+	if err != nil {
+		t.Fatalf("focus owned TextEdit window %q: %v", targetWindow.Name, err)
+	}
+	targetWindow = focusedWindow
+	if err := PollUntilContext(windowCtx, 100*time.Millisecond, func() (bool, error) {
+		state, err := client.GetWindowState(windowCtx, &pb.GetWindowStateRequest{
+			Name: targetWindow.Name + "/state",
 		})
-		if err != nil {
-			return false, err
-		}
-		lastResp = resp
-
-		t.Logf("Found %d elements in accessibility tree", len(resp.Elements))
-
-		// Find text area element (AXTextArea, AXWebArea, or similar)
-		for _, elem := range resp.Elements {
-			if elem == nil {
-				continue
-			}
-			if isTextEditTextArea(elem.Role) {
-				textAreaElement = elem
-				return true, nil
-			}
-		}
-		return false, nil
-	})
-	if err != nil {
-		if lastResp != nil {
-			t.Log("DIAGNOSTIC: Text area not found. Logging all roles discovered:")
-			logTraversalDiagnostics(t, lastResp)
-		}
-		t.Fatalf("Could not find text area element: %v", err)
+		return err == nil && state.Focused, nil
+	}); err != nil {
+		t.Fatalf("owned TextEdit window %q never became focused: %v", targetWindow.Name, err)
 	}
 
-	t.Logf("✓ Found text area: id=%s, role=%s", textAreaElement.ElementId, textAreaElement.Role)
-
-	// Verify text area has basic properties
-	// Note: element_id may be empty in current server implementation - this is a known issue
-	if textAreaElement.ElementId == "" {
-		t.Log("Note: element_id is empty (server does not populate element IDs for traversal results)")
-	}
-	if textAreaElement.Role == "" {
-		t.Error("Text area element should have a role")
-	}
-
-	t.Log("TraverseAndFindTextArea test passed ✓")
-}
-
-// TestTextEditElements_WriteAndReadValue verifies writing to and reading from text area.
-func TestTextEditElements_WriteAndReadValue(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-	defer cancel()
-
-	// Robustly kill TextEdit, clear saved state, and disable modal dialogs
-	killTextEdit(t)
-
-	// Start server
-	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd, serverAddr)
-
-	// Connect to server
-	conn := connectToServer(t, ctx, serverAddr)
-	defer conn.Close()
-
-	client := pb.NewMacosUseClient(conn)
-	opsClient := longrunningpb.NewOperationsClient(conn)
-
-	// Ensure TextEdit isn't tracked
-	CleanupApplication(t, ctx, client, "/Applications/TextEdit.app")
-
-	// Open TextEdit
-	t.Log("Opening TextEdit...")
-	app := OpenApplicationAndWait(t, ctx, client, opsClient, "com.apple.TextEdit")
-	defer cleanupApplication(t, ctx, client, app)
-
-	// Create new document and dismiss any dialogs
-	t.Log("Creating new document...")
-	_ = createTextEditDocument(t, ctx, client, app) // Errors are logged inside
-
-	// Wait for document window
-	t.Log("Waiting for TextEdit document window...")
-	err := waitForTextEditDocumentWindow(t, ctx, client, app)
-	if err != nil {
-		t.Fatalf("TextEdit document window never appeared: %v", err)
-	}
-
-	// Find text area element
-	t.Log("Finding text area element...")
-	var textAreaElement *typepb.Element
-	var lastResp *pb.TraverseAccessibilityResponse
-	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
-		resp, err := client.TraverseAccessibility(ctx, &pb.TraverseAccessibilityRequest{
-			Name: app.Name,
-		})
-		if err != nil {
-			return false, err
-		}
-		lastResp = resp
-
-		for _, elem := range resp.Elements {
-			if elem == nil {
-				continue
-			}
-			if isTextEditTextArea(elem.Role) {
-				textAreaElement = elem
-				return true, nil
-			}
-		}
-		return false, nil
-	})
-	if err != nil {
-		if lastResp != nil {
-			t.Log("DIAGNOSTIC: Text area not found. Logging all roles discovered:")
-			logTraversalDiagnostics(t, lastResp)
-		}
-		t.Fatalf("Could not find text area: %v", err)
-	}
-	t.Logf("Found text area: role=%s", textAreaElement.Role)
-
-	// Write value to text area using selector with the exact role from traversal
-	testValue := "Hello from integration test 12345"
-	t.Logf("Writing value to text area: %q", testValue)
-	writeResp, err := client.WriteElementValue(ctx, &pb.WriteElementValueRequest{
-		Parent: app.Name,
-		Target: &pb.WriteElementValueRequest_Selector{
-			Selector: &typepb.ElementSelector{
-				// Use the exact role from traversal since role matching may be exact
-				Criteria: &typepb.ElementSelector_Role{Role: textAreaElement.Role},
-			},
-		},
-		Value: testValue,
-	})
-	if err != nil {
-		t.Fatalf("WriteElementValue failed: %v", err)
-	}
-	t.Logf("WriteElementValue response: success=%v", writeResp.Success)
-
-	// Verify value was written (state-delta assertion)
-	t.Log("Verifying written value...")
-	var readValue string
-	err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
-		// Re-traverse to get updated element with text
-		resp, err := client.TraverseAccessibility(ctx, &pb.TraverseAccessibilityRequest{
-			Name: app.Name,
-		})
-		if err != nil {
-			return false, err
-		}
-
-		// Find the text area again and check its text
-		for _, elem := range resp.Elements {
-			if elem == nil {
-				continue
-			}
-			if isTextEditTextArea(elem.Role) {
-				readValue = elem.GetText()
-				// Check if text contains our value
-				if strings.Contains(readValue, testValue) {
-					return true, nil
-				}
-			}
-		}
-		return false, nil
-	})
-	if err != nil {
-		t.Errorf("Could not verify written value: got %q, expected %q, error=%v", readValue, testValue, err)
-	} else {
-		t.Logf("✓ Value verified: %q", readValue)
-	}
-
-	t.Log("WriteAndReadValue test passed ✓")
-}
-
-// TestTextEditElements_FindElementsBySelector verifies finding elements by selector.
-func TestTextEditElements_FindElementsBySelector(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-	defer cancel()
-
-	// Robustly kill TextEdit, clear saved state, and disable modal dialogs
-	killTextEdit(t)
-
-	// Start server
-	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd, serverAddr)
-
-	// Connect to server
-	conn := connectToServer(t, ctx, serverAddr)
-	defer conn.Close()
-
-	client := pb.NewMacosUseClient(conn)
-	opsClient := longrunningpb.NewOperationsClient(conn)
-
-	// Ensure TextEdit isn't tracked
-	CleanupApplication(t, ctx, client, "/Applications/TextEdit.app")
-
-	// Open TextEdit
-	t.Log("Opening TextEdit...")
-	app := OpenApplicationAndWait(t, ctx, client, opsClient, "com.apple.TextEdit")
-	defer cleanupApplication(t, ctx, client, app)
-
-	// Create new document and dismiss any dialogs
-	t.Log("Creating new document...")
-	_ = createTextEditDocument(t, ctx, client, app) // Errors are logged inside
-
-	// Wait for document window
-	t.Log("Waiting for TextEdit document window...")
-	err := waitForTextEditDocumentWindow(t, ctx, client, app)
-	if err != nil {
-		t.Fatalf("TextEdit document window never appeared: %v", err)
-	}
-
-	// First, traverse to get the actual text area role
-	t.Log("Finding text area role from traversal...")
-	var textAreaRole string
-	var lastResp *pb.TraverseAccessibilityResponse
-	err = PollUntilContext(ctx, 200*time.Millisecond, func() (bool, error) {
-		resp, err := client.TraverseAccessibility(ctx, &pb.TraverseAccessibilityRequest{
-			Name: app.Name,
+	traversalCtx, cancelTraversal := context.WithTimeout(ctx, 10*time.Second)
+	defer cancelTraversal()
+	var textArea *pb.Element
+	var lastResponse *pb.TraverseAccessibilityResponse
+	if err := PollUntilContext(traversalCtx, 100*time.Millisecond, func() (bool, error) {
+		response, err := client.TraverseAccessibility(traversalCtx, &pb.TraverseAccessibilityRequest{
+			Name: app.Name, VisibleOnly: true,
 		})
 		if err != nil {
 			return false, nil
 		}
-		lastResp = resp
-
-		// Find text area element
-		for _, elem := range resp.Elements {
-			if elem == nil {
+		lastResponse = response
+		for _, element := range response.Elements {
+			if !elementIsOwnedTextArea(element, targetWindow, nil) || !strings.Contains(element.GetText(), marker) {
 				continue
 			}
-			if isTextEditTextArea(elem.Role) {
-				textAreaRole = elem.Role
-				return true, nil
+			textArea = element
+			return true, nil
+		}
+		return false, nil
+	}); err != nil {
+		if lastResponse != nil {
+			logTraversalDiagnostics(t, lastResponse)
+		}
+		t.Fatalf("owned TextEdit text area never exposed marker %q: %v", marker, err)
+	}
+	if textArea.ElementId == "" {
+		t.Fatal("owned TextEdit traversal returned an empty element_id")
+	}
+	if len(textArea.Path) == 0 {
+		t.Fatal("owned TextEdit traversal returned an empty hierarchy path")
+	}
+
+	return &textEditElementFixture{
+		application: app,
+		window:      targetWindow,
+		textArea:    textArea,
+		marker:      marker,
+	}
+}
+
+func cleanupOwnedTextEditElementFixture(
+	t *testing.T,
+	client pb.MacosUseClient,
+	fixture *textEditElementFixture,
+) {
+	t.Helper()
+	cleanupCtx, cancelCleanup := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancelCleanup()
+	cleanupApplication(t, cleanupCtx, client, fixture.application)
+	killTextEdit(t)
+}
+
+func elementIsOwnedTextArea(element *pb.Element, window *pb.Window, expectedPath []int32) bool {
+	if element == nil || !isTextEditTextArea(element.Role) ||
+		element.X == nil || element.Y == nil || element.Width == nil || element.Height == nil ||
+		element.GetWidth() <= 0 || element.GetHeight() <= 0 {
+		return false
+	}
+	if expectedPath != nil && !elementPathEqual(element.Path, expectedPath) {
+		return false
+	}
+	centerX := element.GetX() + element.GetWidth()/2
+	centerY := element.GetY() + element.GetHeight()/2
+	return pointInWindow(centerX, centerY, window.Bounds)
+}
+
+func ownedTextAreaSelector(fixture *textEditElementFixture) *typepb.ElementSelector {
+	return &typepb.ElementSelector{
+		Criteria: &typepb.ElementSelector_Compound{Compound: &typepb.CompoundSelector{
+			Operator: typepb.CompoundSelector_OPERATOR_AND,
+			Selectors: []*typepb.ElementSelector{
+				{Criteria: &typepb.ElementSelector_Role{Role: fixture.textArea.Role}},
+				{Criteria: &typepb.ElementSelector_Text{Text: fixture.marker}},
+			},
+		}},
+	}
+}
+
+func pollOwnedTextAreaValue(
+	ctx context.Context,
+	client pb.MacosUseClient,
+	fixture *textEditElementFixture,
+	want string,
+) (string, error) {
+	var observed string
+	err := PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
+		response, err := client.TraverseAccessibility(ctx, &pb.TraverseAccessibilityRequest{
+			Name: fixture.application.Name, VisibleOnly: true,
+		})
+		if err != nil {
+			return false, nil
+		}
+		for _, element := range response.Elements {
+			if !elementIsOwnedTextArea(element, fixture.window, fixture.textArea.Path) {
+				continue
 			}
+			observed = element.GetText()
+			return observed == want, nil
 		}
 		return false, nil
 	})
-	if err != nil || textAreaRole == "" {
-		t.Logf("Warning: Could not find text area role: %v", err)
-		if lastResp != nil {
-			t.Log("DIAGNOSTIC: Logging all roles discovered:")
-			logTraversalDiagnostics(t, lastResp)
-		}
-		textAreaRole = "AXTextArea (text entry area)" // fallback
-	} else {
-		t.Logf("Found text area role: %s", textAreaRole)
-	}
-
-	// Find elements by role selector using the exact role from traversal
-	t.Logf("Finding elements by role selector (%s)...", textAreaRole)
-	findResp, err := client.FindElements(ctx, &pb.FindElementsRequest{
-		Parent: app.Name,
-		Selector: &typepb.ElementSelector{
-			Criteria: &typepb.ElementSelector_Role{Role: textAreaRole},
-		},
-	})
-	if err != nil {
-		t.Logf("FindElements failed: %v", err)
-	} else if len(findResp.Elements) > 0 {
-		t.Logf("✓ FindElements returned %d elements matching role", len(findResp.Elements))
-		for i, elem := range findResp.Elements {
-			t.Logf("  Element %d: role=%s", i+1, elem.Role)
-		}
-	} else {
-		t.Log("FindElements returned 0 elements")
-		// Log available roles for diagnostic
-		travResp, _ := client.TraverseAccessibility(ctx, &pb.TraverseAccessibilityRequest{
-			Name: app.Name,
-		})
-		if travResp != nil {
-			roles := make(map[string]int)
-			for _, elem := range travResp.Elements {
-				if elem != nil {
-					roles[elem.Role]++
-				}
-			}
-			t.Logf("Available roles in TextEdit: %v", roles)
-		}
-	}
-
-	t.Log("FindElementsBySelector test passed ✓")
+	return observed, err
 }
 
-// TestTextEditElements_WriteValueBySelector verifies WriteElementValue using selector.
-func TestTextEditElements_WriteValueBySelector(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-	defer cancel()
-
-	// Robustly kill TextEdit, clear saved state, and disable modal dialogs
+func newTextEditElementTest(
+	t *testing.T,
+) (context.Context, pb.MacosUseClient, *textEditElementFixture) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), 75*time.Second)
 	killTextEdit(t)
 
-	// Start server
 	serverCmd, serverAddr := startServer(t, ctx)
-	defer cleanupServer(t, serverCmd, serverAddr)
-
-	// Connect to server
 	conn := connectToServer(t, ctx, serverAddr)
-	defer conn.Close()
-
 	client := pb.NewMacosUseClient(conn)
 	opsClient := longrunningpb.NewOperationsClient(conn)
-
-	// Ensure TextEdit isn't tracked
-	CleanupApplication(t, ctx, client, "/Applications/TextEdit.app")
-
-	// Open TextEdit
-	t.Log("Opening TextEdit...")
-	app := OpenApplicationAndWait(t, ctx, client, opsClient, "com.apple.TextEdit")
-	defer cleanupApplication(t, ctx, client, app)
-
-	// Create new document and dismiss any dialogs
-	t.Log("Creating new document...")
-	_ = createTextEditDocument(t, ctx, client, app) // Errors are logged inside
-
-	// Wait for document window
-	t.Log("Waiting for TextEdit document window...")
-	if err := waitForTextEditDocumentWindow(t, ctx, client, app); err != nil {
-		t.Fatalf("TextEdit document window never appeared: %v", err)
-	}
-
-	// Write value using role selector
-	testValue := "Selector-based write test 67890"
-	t.Logf("Writing value via selector: %q", testValue)
-	writeResp, err := client.WriteElementValue(ctx, &pb.WriteElementValueRequest{
-		Parent: app.Name,
-		Target: &pb.WriteElementValueRequest_Selector{
-			Selector: &typepb.ElementSelector{
-				Criteria: &typepb.ElementSelector_Role{Role: "AXTextArea"},
-			},
-		},
-		Value: testValue,
-	})
-	if err != nil {
-		t.Logf("WriteElementValue with selector failed: %v (may not be supported)", err)
-		// This is acceptable - not all implementations support selector-based write
-		t.Log("Selector-based write may not be supported, test passed with warning")
-		return
-	}
-
-	if writeResp.Success {
-		t.Logf("✓ WriteElementValue via selector succeeded")
-
-		// Verify the value
-		t.Log("Verifying written value...")
-		err = PollUntilContext(ctx, 100*time.Millisecond, func() (bool, error) {
-			resp, err := client.TraverseAccessibility(ctx, &pb.TraverseAccessibilityRequest{
-				Name: app.Name,
-			})
-			if err != nil {
-				return false, err
-			}
-
-			for _, elem := range resp.Elements {
-				if elem == nil {
-					continue
-				}
-				if strings.Contains(elem.GetText(), testValue) {
-					return true, nil
-				}
-			}
-			return false, nil
-		})
-		if err != nil {
-			t.Errorf("Could not verify written value: %v", err)
+	var fixture *textEditElementFixture
+	t.Cleanup(func() {
+		if fixture != nil {
+			cleanupOwnedTextEditElementFixture(t, client, fixture)
 		} else {
-			t.Log("✓ Value verified")
+			killTextEdit(t)
 		}
-	} else {
-		t.Logf("WriteElementValue via selector returned success=false")
+		_ = conn.Close()
+		cleanupServer(t, serverCmd, serverAddr)
+		cancel()
+	})
+	fixture = openOwnedTextEditElementFixture(t, ctx, client, opsClient)
+	return ctx, client, fixture
+}
+
+func TestTextEditElements_TraverseAndFindTextArea(t *testing.T) {
+	ctx, client, fixture := newTextEditElementTest(t)
+
+	queryCtx, cancelQuery := context.WithTimeout(ctx, 10*time.Second)
+	defer cancelQuery()
+	var found *pb.Element
+	if err := PollUntilContext(queryCtx, 100*time.Millisecond, func() (bool, error) {
+		response, err := client.TraverseAccessibility(queryCtx, &pb.TraverseAccessibilityRequest{
+			Name: fixture.application.Name, VisibleOnly: true,
+		})
+		if err != nil {
+			return false, nil
+		}
+		for _, element := range response.Elements {
+			if elementIsOwnedTextArea(element, fixture.window, fixture.textArea.Path) &&
+				element.GetText() == fixture.marker {
+				found = element
+				return true, nil
+			}
+		}
+		return false, nil
+	}); err != nil {
+		t.Fatalf("repeated traversal did not return the owned text area: %v", err)
+	}
+	if found.ElementId == "" || found.Role == "" {
+		t.Fatalf("owned text area identity incomplete: id=%q role=%q", found.ElementId, found.Role)
+	}
+}
+
+func TestTextEditElements_WriteAndReadValue(t *testing.T) {
+	ctx, client, fixture := newTextEditElementTest(t)
+
+	testValue := fmt.Sprintf("OWNED_WRITE_%d", time.Now().UnixNano())
+	actionCtx, cancelAction := context.WithTimeout(ctx, 10*time.Second)
+	writeResponse, err := client.WriteElementValue(actionCtx, &pb.WriteElementValueRequest{
+		Parent: fixture.application.Name,
+		Target: &pb.WriteElementValueRequest_ElementId{
+			ElementId: fixture.textArea.ElementId,
+		},
+		Value: &testValue,
+	})
+	cancelAction()
+	if err != nil {
+		t.Fatalf("WriteElementValue for owned element_id failed: %v", err)
+	}
+	if !writeResponse.Success {
+		t.Fatal("WriteElementValue returned success=false without an RPC error")
+	}
+	if writeResponse.Element.ElementId != fixture.textArea.ElementId {
+		t.Fatalf("WriteElementValue returned wrong element: got %q want %q", writeResponse.Element.ElementId, fixture.textArea.ElementId)
 	}
 
-	t.Log("WriteValueBySelector test passed ✓")
+	verifyCtx, cancelVerify := context.WithTimeout(ctx, 10*time.Second)
+	defer cancelVerify()
+	observed, err := pollOwnedTextAreaValue(verifyCtx, client, fixture, testValue)
+	if err != nil {
+		t.Fatalf("owned TextEdit AX value did not change from %q to %q: observed=%q error=%v", fixture.marker, testValue, observed, err)
+	}
+}
+
+func TestTextEditElements_FindElementsBySelector(t *testing.T) {
+	ctx, client, fixture := newTextEditElementTest(t)
+
+	queryCtx, cancelQuery := context.WithTimeout(ctx, 10*time.Second)
+	defer cancelQuery()
+	response, err := client.FindElements(queryCtx, &pb.FindElementsRequest{
+		Parent:      fixture.application.Name,
+		Selector:    ownedTextAreaSelector(fixture),
+		VisibleOnly: true,
+	})
+	if err != nil {
+		t.Fatalf("FindElements for owned compound selector failed: %v", err)
+	}
+	if len(response.Elements) != 1 {
+		t.Fatalf("owned compound selector returned %d elements, want exactly 1", len(response.Elements))
+	}
+	found := response.Elements[0]
+	if !elementIsOwnedTextArea(found, fixture.window, fixture.textArea.Path) || found.GetText() != fixture.marker {
+		t.Fatalf("selector returned wrong element: role=%q text=%q path=%v", found.Role, found.GetText(), found.Path)
+	}
+}
+
+func TestTextEditElements_WriteValueBySelector(t *testing.T) {
+	ctx, client, fixture := newTextEditElementTest(t)
+
+	testValue := fmt.Sprintf("OWNED_SELECTOR_WRITE_%d", time.Now().UnixNano())
+	actionCtx, cancelAction := context.WithTimeout(ctx, 10*time.Second)
+	response, err := client.WriteElementValue(actionCtx, &pb.WriteElementValueRequest{
+		Parent: fixture.application.Name,
+		Target: &pb.WriteElementValueRequest_Selector{
+			Selector: ownedTextAreaSelector(fixture),
+		},
+		Value: &testValue,
+	})
+	cancelAction()
+	if err != nil {
+		t.Fatalf("WriteElementValue for owned compound selector failed: %v", err)
+	}
+	if !response.Success {
+		t.Fatal("selector WriteElementValue returned success=false without an RPC error")
+	}
+
+	verifyCtx, cancelVerify := context.WithTimeout(ctx, 10*time.Second)
+	defer cancelVerify()
+	observed, err := pollOwnedTextAreaValue(verifyCtx, client, fixture, testValue)
+	if err != nil {
+		t.Fatalf("selector write did not mutate the owned TextEdit AX value: observed=%q want=%q error=%v", observed, testValue, err)
+	}
 }

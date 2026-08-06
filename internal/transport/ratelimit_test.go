@@ -136,7 +136,7 @@ func TestRateLimitMiddleware_NilLimiter(t *testing.T) {
 
 	middleware := RateLimitMiddleware(nil, handler)
 
-	req := httptest.NewRequest("GET", "/message", nil)
+	req := httptest.NewRequest("GET", MCPEndpointPath, nil)
 	w := httptest.NewRecorder()
 
 	middleware.ServeHTTP(w, req)
@@ -217,7 +217,7 @@ func TestRateLimitMiddleware_RateLimited(t *testing.T) {
 
 	// First 2 requests should succeed (burst)
 	for i := range 2 {
-		req := httptest.NewRequest("POST", "/message", nil)
+		req := httptest.NewRequest("POST", MCPEndpointPath, nil)
 		w := httptest.NewRecorder()
 		middleware.ServeHTTP(w, req)
 		if w.Code != http.StatusOK {
@@ -226,7 +226,7 @@ func TestRateLimitMiddleware_RateLimited(t *testing.T) {
 	}
 
 	// Third request should be rate limited
-	req := httptest.NewRequest("POST", "/message", nil)
+	req := httptest.NewRequest("POST", MCPEndpointPath, nil)
 	w := httptest.NewRecorder()
 	middleware.ServeHTTP(w, req)
 

@@ -171,6 +171,62 @@ func TestTLSEnabled_EmptyStrings(t *testing.T) {
 	}
 }
 
+func TestTLSServer_ValidatesTLSBeforeListenerBind(t *testing.T) {
+	directory := t.TempDir()
+	invalidCertificatePath := filepath.Join(directory, "invalid.crt")
+	invalidKeyPath := filepath.Join(directory, "invalid.key")
+	if err := os.WriteFile(invalidCertificatePath, []byte("invalid certificate"), 0o600); err != nil {
+		t.Fatalf("write invalid certificate: %v", err)
+	}
+	if err := os.WriteFile(invalidKeyPath, []byte("invalid key"), 0o600); err != nil {
+		t.Fatalf("write invalid key: %v", err)
+	}
+
+	tests := []struct {
+		config    HTTPTransportConfig
+		name      string
+		wantError string
+	}{
+		{
+			name:      "certificate without key",
+			config:    HTTPTransportConfig{TLSCertFile: invalidCertificatePath},
+			wantError: "TLS certificate and private key must be configured together",
+		},
+		{
+			name: "malformed certificate pair",
+			config: HTTPTransportConfig{
+				TLSCertFile: invalidCertificatePath,
+				TLSKeyFile:  invalidKeyPath,
+			},
+			wantError: "failed to load TLS certificate",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			listener, err := net.Listen("tcp", "127.0.0.1:0")
+			if err != nil {
+				t.Fatalf("reserve listener: %v", err)
+			}
+			defer listener.Close()
+
+			test.config.Address = listener.Addr().String()
+			transport := NewHTTPTransport(&test.config)
+			defer transport.Close()
+			err = transport.Serve(func(*Message) (*Message, error) { return nil, nil })
+			if err == nil {
+				t.Fatalf("Serve() succeeded, want %q", test.wantError)
+			}
+			if !strings.Contains(err.Error(), test.wantError) {
+				t.Fatalf("Serve() error = %q, want substring %q", err, test.wantError)
+			}
+			if strings.Contains(err.Error(), "address already in use") {
+				t.Fatalf("Serve() attempted listener bind before TLS validation: %v", err)
+			}
+		})
+	}
+}
+
 // =============================================================================
 // TLS Server Start and Certificate Loading Tests
 // =============================================================================
