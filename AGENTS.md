@@ -114,35 +114,7 @@ GRPC_LISTEN_ADDRESS=127.0.0.1 GRPC_PORT=50051 ./.build/release/MacosUseServer
 
 ## Implementation Constraints
 
-### Critical Ways of Working (STRICT MANDATES)
-
-**1. EXECUTION PROTOCOL (NON-NEGOTIABLE):**
-
-- **NO DIRECT SHELL COMMANDS:** You are FORBIDDEN from running complex multi-argument shell commands directly.
-- **MANDATORY `config.mk` PATTERN:** For ALL build steps, test runs, linting, or execution commands:
-    1. Define a **custom temporary target** in `config.mk`.
-    2. Execute it using the `gmake` tool.
-- **FORBIDDEN ARGUMENT:** You MUST NOT specify the `file` option (e.g., `file=config.mk`) when invoking `gmake`. The invocation must rely strictly on the repository's default Makefile discovery (which includes `config.mk`).
-- **LOGGING REQUIREMENT:** All `config.mk` recipes producing significant output MUST use `| tee $(or $(PROJECT_ROOT),$(error If you are reading this you specified the `file` option when calling `gmake`. DONT DO THAT.))/build.log | tail -n 15` (or similar) to prevent context window flooding.
-  For example (add a logged local target to `config.mk` within `ifndef CUSTOM_TARGETS_DEFINED ... endif` per `example.config.mk`):
-  ```makefile
-  .PHONY: cl-all
-  cl-all: ## Run all targets with logging to build.log
-  cl-all: SHELL := /bin/bash
-  cl-all:
-  	@echo "Output limited to avoid context explosion. See $(or $(PROJECT_ROOT),$(error If you are reading this you specified the `file` option when calling `gmake`. DONT DO THAT.))/build.log for full content."; \
-  	set -o pipefail; \
-  	$(MAKE) all 2>&1 | tee $(or $(PROJECT_ROOT),$(error If you are reading this you specified the `file` option when calling `gmake`. DONT DO THAT.))/build.log | tail -n 15; \
-  	exit $${PIPESTATUS[0]}
-  ```
-
-**2. CONTINUOUS VALIDATION:**
-
-- **DO NOT BREAK THE BUILD:** You must run the core `all` target constantly. Use the repository's logged local target (currently `gmake cl-all`) after every file change when available.
-- **Resource Leak Check:** Integration tests must ensure proper cleanup of observations and connections at teardown.
-- **CI PRE-MERGE BLOCKER:** Before merging, resolve all documented blocking issues and run the repository's required validation targets. Do not refer to status files that are not present in this checkout.
-
-**3. LOG OUTPUT PRIVACY:**
+### Strict Mandates
 
 - AVOID and REPLACE ad-hoc `fputs` or unannotated `print` with `Logger` and `OSLogPrivacy` for any message emitted from Swift server components or SDK helpers in `Server/Sources/MacosUseServer` and `Sources/MacosUseSDK`.
 - `fputs` is forbidden in these server/SDK directories for diagnostic logs — it bypasses OS unified logging and cannot mark privacy. Use `Logger` with explicit `privacy` annotations for every interpolated value. For user-facing CLI help text (static strings) `print` is allowed only outside `Server/Sources/MacosUseServer` and `Sources/MacosUseSDK`.
