@@ -48,7 +48,7 @@ every element's text — faster and more precise than OCR on pixels.
 ### Exact Resource Names
 
 Every tool that targets a desktop entity requires an **exact opaque
-resource name**: `applications/{id}`, `applications/{id}/windows/{id}`,
+resource name**: `applicationBundles/{id}`, `applications/{id}`, `applications/{id}/windows/{id}`,
 `displays/{id}`, or the explicit `desktop` keyword for the active desktop
 union. These come from `list_apps`, `list_windows`, or `get_display` —
 never guess or synthesize them, and never pass display names or bundle
@@ -146,14 +146,14 @@ not auditing its codebase.
 | Category | Key Tools |
 |----------|-----------|
 | **App** | `open_app(bundle)`, `list_apps(kind)`, `close_app(app)` |
-| **Find** | `find_elements(parent, selector)`, `read_element(element)` |
+| **Find** | `find_elements(parent, selector)`, `read_element(parent, element)` |
 | **Click** | `click_element(parent, element \| selector)` |
 | **Type** | `type_element(parent, element \| selector, text)`, `type(target, text)`, `keypress(target, keys)` |
 | **Input** | `click(x, y)`, `double_click(x, y)`, `move(x, y)`, `drag(path)`, `scroll(x, y, scroll_y)`, `type`, `keypress` |
 | **Windows** | `list_windows(app)`, `focus_window(window)`, `move_window(window, x, y)`, `resize_window(window, width, height)` |
 | **Screenshots** | `screenshot(window \| region \| display)` — use *after* AX |
 | **Clipboard** | `clipboard(action="get" \| "set" \| "clear")` |
-| **Scripting** | `run(command, type="shell" \| "applescript" \| "javascript")` — fallback only |
+| **Scripting** | `run(command, type="shell" \| "applescript" \| "javascript")` — shell requires explicit opt-in; fallback only |
 | **Wait** | `wait(duration)` |
 | **Macros** | `create_macro(actions)`, `execute_macro(macro)`, `list_macros()` |
 | **Display** | `get_display()` — display topology and cursor position |

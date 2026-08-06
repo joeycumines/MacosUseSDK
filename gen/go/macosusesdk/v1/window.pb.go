@@ -55,10 +55,10 @@ type Window struct {
 	//
 	// Data Source (Hybrid Authority - Differs by RPC):
 	//
-	// GetWindow (AX-First Visibility):
+	// GetWindow (AX-Validated Visibility):
 	//
 	//	Computes visible using fresh, error-preserving AX queries:
-	//	  visible = (!axMinimized && !ownerApplicationHidden) ? true : (registry.isOnScreen ?? false)
+	//	  visible = registry.isOnScreen && !axMinimized && !ownerApplicationHidden
 	//
 	//	Visibility is true only when the admitted Core Graphics snapshot reports
 	//	the window on-screen and fresh AX state reports neither the window
@@ -68,8 +68,8 @@ type Window struct {
 	// ListWindows (Registry-Only Performance):
 	//
 	//	Returns registry.isOnScreen directly from cached CGWindowList with NO per-window AX queries.
-	//	This ensures <50ms response regardless of window count, suitable for high-frequency polling.
-	//	Registry data may lag 10-100ms behind actual state during rapid window mutations.
+	//	This performs no per-window AX queries; latency depends on snapshot size and system conditions.
+	//	Registry data is a volatile snapshot and may lag actual state during rapid window mutations.
 	//
 	// Recommendation:
 	//   - Use ListWindows for fast enumeration and UI rendering
@@ -79,7 +79,7 @@ type Window struct {
 	// Bundle identifier of the application that owns this window.
 	//
 	// Data Source (Registry Authority): Resolved via NSRunningApplication from cached CGWindowList metadata.
-	// This is a stable metadata field that does not change during window mutations.
+	// This is snapshot metadata and may be empty when resolution is unavailable.
 	// Empty string if NSRunningApplication resolution fails or registry data is unavailable.
 	BundleId string `protobuf:"bytes,10,opt,name=bundle_id,json=bundleId,proto3" json:"bundle_id,omitempty"`
 	// Core Graphics window layer from kCGWindowLayer.

@@ -26,6 +26,7 @@ For web-based integrations:
 ```sh
 export MCP_TRANSPORT=streamable-http
 export MCP_HTTP_ADDRESS=127.0.0.1:8080
+export MACOS_USE_SERVER_ADDR=127.0.0.1:50051
 ./macos-use-mcp
 ```
 
@@ -66,7 +67,7 @@ unless TLS, API-key authentication, and a positive rate limit are all configured
 
 ## Claude Desktop Integration
 
-Add to `~/.config/claude/mcp_settings.json`:
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 ```json
 {

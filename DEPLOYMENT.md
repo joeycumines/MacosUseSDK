@@ -159,7 +159,7 @@ on a parallel phony-prerequisite graph:
 5. **Bundle** — creates a staged `.app`, copies the executable and all SwiftPM
    resource bundles, validates `Info.plist`, then moves the staged app into
    place.
-6. **Sign** — clears extended attributes on the freshly generated app, signs it,
+6. **Sign** — clears extended attributes on the app bundle being signed, signs it,
    and performs strict verification.
 7. **Register** — registers the signed app with LaunchServices.
 8. **Launch** — writes and bootstraps the per-user LaunchAgent in
@@ -550,8 +550,9 @@ gmake macos-use.install
 
 ### Quarantine or extended attributes interfere with signing
 
-The sign target runs `xattr -cr` only against the newly staged local app before
-signing. A locally built application normally should not need a separate
+The sign target runs `xattr -cr` against the app bundle being signed. The full
+install target signs a newly staged local app, while the standalone sign target
+operates on the already-installed bundle. A locally built application normally should not need a separate
 quarantine workaround. Diagnose unexpected attributes before applying broader
 changes:
 
@@ -584,9 +585,10 @@ gmake macos-use.uninstall
 ```
 
 This removes installed runtime artifacts, including the app, LaunchAgent plist,
-socket, logs, resolved `macos-use-mcp` binary, LaunchServices registration, and
-matching TCC records. It does not delete source files or Swift/Go build caches in
-the repository.
+socket, logs, and resolved `macos-use-mcp` binary. It also attempts to remove
+the matching LaunchServices registration and TCC records; macOS may report no
+matching record, and those cleanup commands are intentionally non-fatal. It does
+not delete source files or Swift/Go build caches in the repository.
 
 ## Primary references
 

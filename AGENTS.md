@@ -19,9 +19,6 @@ N.B. Always use `gmake` (GNU Make installed via Homebrew, on macOS) for building
 ```bash
 # Full build (Swift + Go + Proto)
 gmake all
-
-# Via custom target (preferred - limits output)
-gmake make-all-with-log # Output logged to build.log, last 15 lines shown
 ```
 
 ### Testing
@@ -50,7 +47,7 @@ gmake generate
 gmake buf.generate
 
 # Generate descriptor sets for reflection
-gmake proto-generate-descriptors
+gmake buf.descriptor-sets
 ```
 
 ### Linting and Formatting
@@ -62,8 +59,8 @@ gmake fmt
 # Lint all
 gmake lint
 
-# Run all linters (Go-specific)
-gmake lint-all
+# Run all linters
+gmake lint
 
 # IMPORTANT: Use gmake for Go linters (not direct staticcheck invocation)
 gmake go.staticcheck # NOT: staticcheck ./...
@@ -74,10 +71,11 @@ gmake go.vet # Runs go vet with proper flags
 
 ```bash
 cd Server && swift build -c release
-./Server/.build/release/MacosUseServer
+./.build/release/MacosUseServer
 
-# With custom configuration
-MCP_HTTP_ADDR=0.0.0.0:8080 MCP_API_KEY=secret ./Server/.build/release/MacosUseServer
+# The Swift server accepts gRPC configuration only. Configure MCP HTTP
+# transport variables on cmd/macos-use-mcp, not on this executable.
+GRPC_LISTEN_ADDRESS=127.0.0.1 GRPC_PORT=50051 ./.build/release/MacosUseServer
 ```
 
 ## Key Directories
@@ -92,7 +90,7 @@ MCP_HTTP_ADDR=0.0.0.0:8080 MCP_API_KEY=secret ./Server/.build/release/MacosUseSe
 
 ## Important Files
 
-- `blueprint.json` - Master planning document (single source of truth for status)
+- `WIP.md` - Interruption guard and current execution state
 - `CONTRIBUTING.md` - Development guidelines
 - `Makefile` - Build orchestration
 - `config.mk` - Custom build targets (create your own here)
@@ -126,12 +124,12 @@ MCP_HTTP_ADDR=0.0.0.0:8080 MCP_API_KEY=secret ./Server/.build/release/MacosUseSe
     2. Execute it using the `gmake` tool.
 - **FORBIDDEN ARGUMENT:** You MUST NOT specify the `file` option (e.g., `file=config.mk`) when invoking `gmake`. The invocation must rely strictly on the repository's default Makefile discovery (which includes `config.mk`).
 - **LOGGING REQUIREMENT:** All `config.mk` recipes producing significant output MUST use `| tee $(or $(PROJECT_ROOT),$(error If you are reading this you specified the `file` option when calling `gmake`. DONT DO THAT.))/build.log | tail -n 15` (or similar) to prevent context window flooding.
-  For example (add if missing to `config.mk` within `ifndef CUSTOM_TARGETS_DEFINED ... endif` per `example.config.mk`):
+  For example (add a logged local target to `config.mk` within `ifndef CUSTOM_TARGETS_DEFINED ... endif` per `example.config.mk`):
   ```makefile
-  .PHONY: make-all-with-log
-  make-all-with-log: ## Run all targets with logging to build.log
-  make-all-with-log: SHELL := /bin/bash
-  make-all-with-log:
+  .PHONY: cl-all
+  cl-all: ## Run all targets with logging to build.log
+  cl-all: SHELL := /bin/bash
+  cl-all:
   	@echo "Output limited to avoid context explosion. See $(or $(PROJECT_ROOT),$(error If you are reading this you specified the `file` option when calling `gmake`. DONT DO THAT.))/build.log for full content."; \
   	set -o pipefail; \
   	$(MAKE) all 2>&1 | tee $(or $(PROJECT_ROOT),$(error If you are reading this you specified the `file` option when calling `gmake`. DONT DO THAT.))/build.log | tail -n 15; \
@@ -140,9 +138,9 @@ MCP_HTTP_ADDR=0.0.0.0:8080 MCP_API_KEY=secret ./Server/.build/release/MacosUseSe
 
 **2. CONTINUOUS VALIDATION:**
 
-- **DO NOT BREAK THE BUILD:** You must run the core `all` target constantly. Use `gmake make-all-with-log` after every file change.
+- **DO NOT BREAK THE BUILD:** You must run the core `all` target constantly. Use the repository's logged local target (currently `gmake cl-all`) after every file change when available.
 - **Resource Leak Check:** Integration tests must ensure proper cleanup of observations and connections at teardown.
-- **CI PRE-MERGE BLOCKER:** Before any merge to main, ALL critical issues documented in `pre-merge-blueprint.json` MUST be resolved and CI MUST pass. See `PRE_MERGE_STATUS.md` for current blocking issues.
+- **CI PRE-MERGE BLOCKER:** Before merging, resolve all documented blocking issues and run the repository's required validation targets. Do not refer to status files that are not present in this checkout.
 
 **3. LOG OUTPUT PRIVACY:**
 
@@ -163,8 +161,8 @@ Previous sins (now corrected, not to be repeated):
 
 - **Pagination (AIP-158):** You MUST implement `page_size`, `page_token`, and `next_page_token` for ALL List/Find RPCs, and `page_token`/`next_page_token` MUST be treated as opaque by clients (no reliance on internal structure such as `"offset:N"`).
 - **State-Difference Assertions:** Tests MUST NOT rely on "Happy Path" OK statuses. Every mutator RPC (Click, Move, Resize) MUST be followed by an accessor RPC to verify the *delta* in state.
-- **Wait-For-Convergence:** Tests MUST use a `PollUntil` pattern. `time.Sleep` is FORBIDDEN in tests.
-- **NSPasteboard Correctness (2025-11-30):** ClipboardManager MUST call `pasteboard.clearContents()` before EVERY write operation. Apple documentation states: "Clearing the pasteboard before writing is recommended." The previous implementation conditionally cleared based on a parameter, which violated this requirement and caused unreliable clipboard behavior.
+- **Wait-For-Convergence:** Integration and state-convergence tests MUST use a `PollUntil` pattern. Lower-level transport tests may use controlled timing primitives when testing timeout/deadline behavior.
+- **NSPasteboard Correctness (2025-11-30):** Public clipboard write paths clear the pasteboard before writing. Keep that invariant at the public manager boundary; the lower-level pasteboard adapter is not itself the policy boundary.
 
 **API Scope:**
 
@@ -203,10 +201,9 @@ Previous sins (now corrected, not to be repeated):
 
 ### Documentation and Planning
 
-- **Single Source of Truth:** ALL updates to the plan MUST be represented in `./blueprint.json`.
-- **Plan-Local Status Only:** The **STATUS SECTION (ACTION-FOCUSED)** at the top of `blueprint.json` is the only allowed place for high-level status, and it MUST list only remaining work, unresolved discrepancies, and critical patterns that must not be forgotten. Do not accumulate historical "done" items or emojis there.
-- **Verification Before Completion Claims:** Before treating any item as complete, you MUST verify the implementation and its tests. If there is any doubt, treat the item as not done and keep (or re-add) a corresponding action in the plan.
-- **Living Document:** Keep `./blueprint.json` strictly aligned with this constraints document and the *actual* code reality. Update it as part of every change set, trimming completed/verified items from the status section rather than appending new ones.
+- **Execution State:** Record current execution state and interruptions in `WIP.md`.
+- **Verification Before Completion Claims:** Before treating any item as complete, verify the implementation and its tests. If there is any doubt, treat the item as not done.
+- **Living Documents:** Keep `WIP.md` and `docs/window-state-management.md` aligned with the actual code reality.
 
 ### Master (LIVING) Documents
 
@@ -246,6 +243,5 @@ MCP compliance requirements are documented in docs/ai-artifacts/05-mcp-integrati
 
 ### CI/CD Workflows
 
-- MUST use reusable workflow patterns (`workflow_call`).
-- `ci.yaml` is the entry point; individual workflows must not have independent triggers.
+- CI workflow policy applies when workflow files are present; verify the checked-out workflow set before referring to an entry point or reusable workflow.
 - Scripts MUST NOT use `set -e`; use explicit chaining (`&&`) or condition checks.

@@ -299,7 +299,9 @@ func (ApplicationEvent_ApplicationEventType) EnumDescriptor() ([]byte, []int) {
 	return file_macosusesdk_v1_observation_proto_rawDescGZIP(), []int{7, 0}
 }
 
-// An observation monitors UI changes and streams events.
+// An observation monitors supported UI changes and publishes events through the
+// gRPC observation stream. Application-change observations are currently
+// rejected as unimplemented, and observations are in-memory resources.
 type Observation struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Resource name in the format "applications/{application}/observations/{observation}".
@@ -426,7 +428,7 @@ type ObservationFilter struct {
 	// Whether to include element geometry in change detection.
 	Geometry bool `protobuf:"varint,6,opt,name=geometry,proto3" json:"geometry,omitempty"`
 	// Whether to observe application activation state changes.
-	// Reserved for FUNC-012; silently ignored during FUNC-004.
+	// Application-change observations are currently rejected as unimplemented.
 	Activation    bool `protobuf:"varint,7,opt,name=activation,proto3" json:"activation,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

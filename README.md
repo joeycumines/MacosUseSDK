@@ -73,7 +73,7 @@ Window and element management uses a **dual-API approach** (see [window-state-ma
 | **Quartz (CG)** | `CGWindowListCopyWindowInfo` | Fast enumeration, global window list, metadata |
 | **Accessibility (AX)** | `AXUIElement` | Precise geometry, mutations, element interaction |
 
-- `ListWindows` uses **Quartz** (fast, may lag 10-100ms)
+- `ListWindows` uses **Quartz** (one snapshot call plus parsing of the returned population; data may be stale)
 - `GetWindow` uses **Accessibility** (fresh geometry for single window)
 - Window mutations (move/resize) use **Accessibility**
 - Bridging via `_AXUIElementGetWindow` with 1000px heuristic fallback
@@ -84,7 +84,7 @@ macOS uses **two distinct coordinate systems**:
 
 | System | Origin | Y Direction | Used By |
 |--------|--------|-------------|---------|
-| **Global Display** | Top-left of main display | Down ↓ | CGWindowList, AX, CGEvent, Input APIs |
+| **Global Display Coordinates (top-left origin)** | Top-left of main display | Down ↓ | CGWindowList, AX, CGEvent, Input APIs |
 | **AppKit** | Bottom-left of main display | Up ↑ | NSWindow, NSScreen |
 
 **Important**: Window bounds and input coordinates both use **Global Display Coordinates**. No conversion needed between them. Secondary displays may have negative X (left of main) or negative Y (above main).
@@ -136,9 +136,8 @@ and contract checks run with the supported configuration:
 gmake all
 ```
 
-The logged variant (output capped to the last lines, full log in
-`build.log`) is available as `gmake make-all-with-log` when the local
-`config.mk` defines it — see `example.config.mk`.
+The local logged variant (output capped to the last lines, full log in
+`build.log`) is `gmake cl-all` in this checkout.
 
 The root Swift package intentionally publishes only the `MacosUseSDK` library.
 The former standalone command-line products are not part of the supported
@@ -161,11 +160,11 @@ swift test --filter InputTimingContractTests
 
 ## Using the Library
 
-You can also use `MacosUseSDK` as a dependency in your own Swift projects. Add it to your `Package.swift` dependencies:
+You can also use `MacosUseSDK` as a local dependency in your own Swift projects:
 
 ```swift
 dependencies: [
-    .package(url: "/* path or URL to your MacosUseSDK repo */", from: "1.0.0"),
+    .package(path: "../MacosUseSDK"),
 ]
 ```
 
@@ -201,7 +200,7 @@ The repository includes a production-ready gRPC server that exposes all SDK func
 - **Multi-application support**: Automate multiple applications simultaneously
 - **Real-time streaming**: Watch accessibility tree changes in real-time
 - **Thread-safe architecture**: CQRS-style with central control loop
-- **Flexible transport**: Streamable HTTP or Unix domain sockets
+- **Flexible MCP transport**: stdio or Streamable HTTP; the HTTP listener can use TCP or a Unix socket
 - **Production-ready**: TLS, API key authentication, rate limiting, audit logging
 
 ### Quick Start
@@ -238,26 +237,38 @@ See [Server/README.md](Server/README.md) for detailed server documentation.
 Open Calculator and click using MCP tools over HTTP:
 
 ```sh
-# Initialize MCP session
+# Start the Go proxy separately with MCP_TRANSPORT=streamable-http and point
+# MACOS_USE_SERVER_ADDR at the Swift gRPC listener (or use a Unix socket).
+# Then initialize an MCP session.
 curl -X POST http://localhost:8080/mcp \
 	-H "Accept: application/json, text/event-stream" \
 	-H "MCP-Protocol-Version: 2025-11-25" \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","clientInfo":{"name":"example"}}}'
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"example","version":"1.0"}}}'
 
-# Call open_app tool (list_apps first returns the exact applicationBundles/* resource)
+# Call list_apps first, then pass the exact Calculator applicationBundles/*
+# resource it returns to open_app.
 curl -X POST http://localhost:8080/mcp \
 	-H "Accept: application/json, text/event-stream" \
 	-H "MCP-Protocol-Version: 2025-11-25" \
+	-H "MCP-Session-Id: <session-id-from-initialize>" \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"open_app","arguments":{"app":"applicationBundles/1c8c8d1c8d1c8d1c8d1c8d1c8d1c8d1c"}}}'
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"list_apps","arguments":{}}}'
+
+curl -X POST http://localhost:8080/mcp \
+	-H "Accept: application/json, text/event-stream" \
+	-H "MCP-Protocol-Version: 2025-11-25" \
+	-H "MCP-Session-Id: <session-id-from-initialize>" \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"open_app","arguments":{"app":"<calculator-application-bundle-resource>"}}}'
 
 # Call click tool at coordinates
 curl -X POST http://localhost:8080/mcp \
 	-H "Accept: application/json, text/event-stream" \
 	-H "MCP-Protocol-Version: 2025-11-25" \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"click","arguments":{"target":"desktop","x":100,"y":200}}}'
+  -H "MCP-Session-Id: <session-id-from-initialize>" \
+  -d '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"click","arguments":{"target":"desktop","x":100,"y":200}}}'
 ```
 
 ## License

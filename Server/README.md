@@ -107,7 +107,8 @@ TLS is provided by the MCP proxy's Streamable HTTP endpoint:
 
 2. **Configure the MCP proxy:**
    ```bash
-   export MCP_TLS_CERT_FILE="/path/to/cert.pem"
+    export MCP_TRANSPORT="streamable-http"
+    export MCP_TLS_CERT_FILE="/path/to/cert.pem"
    export MCP_TLS_KEY_FILE="/path/to/key.pem"
    ```
 
@@ -136,11 +137,11 @@ See [DEPLOYMENT.md](../DEPLOYMENT.md) for comprehensive deployment guidance.
 │                   MacosUseServer (Swift)                        │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
 │  │ Application │  │   Window    │  │        Element          │  │
-│  │   Service   │  │   Service   │  │        Service          │  │
+│  │  Handler    │  │  Handler    │  │        Handler          │  │
 │  └─────────────┘  └─────────────┘  └─────────────────────────┘  │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
 │  │ Screenshot  │  │    Input    │  │      Observation        │  │
-│  │   Service   │  │   Service   │  │        Service          │  │
+│  │  Handler    │  │  Handler    │  │        Handler          │  │
 │  └─────────────┘  └─────────────┘  └─────────────────────────┘  │
 └───────────────────────────┬─────────────────────────────────────┘
                             │
@@ -171,7 +172,7 @@ Proto files are located in `../proto/macosusesdk/v1/`. To regenerate Swift stubs
 
 ```bash
 # From project root
-make buf-generate
+gmake buf.generate
 ```
 
 ### Dependencies

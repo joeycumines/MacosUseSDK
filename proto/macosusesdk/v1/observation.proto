@@ -16,7 +16,9 @@ option java_multiple_files = true;
 option java_outer_classname = "ObservationProto";
 option java_package = "com.macosusesdk.v1";
 
-// An observation monitors UI changes and streams events.
+// An observation monitors supported UI changes and publishes events through the
+// gRPC observation stream. Application-change observations are currently
+// rejected as unimplemented, and observations are in-memory resources.
 message Observation {
   option (google.api.resource) = {
     type: "macosusesdk.com/Observation"
@@ -94,7 +96,7 @@ message ObservationFilter {
   bool geometry = 6 [(google.api.field_behavior) = OPTIONAL];
 
   // Whether to observe application activation state changes.
-  // Reserved for FUNC-012; silently ignored during FUNC-004.
+  // Application-change observations are currently rejected as unimplemented.
   bool activation = 7 [(google.api.field_behavior) = OPTIONAL];
 }
 

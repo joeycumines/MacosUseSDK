@@ -18,7 +18,7 @@ import (
 
 const typeElementDescription = "Set the value of an editable UI element (text field, text area, secure field). " +
 	"Auto-focuses the exact target element before writing, then verifies the value with an Accessibility readback. " +
-	"IMPORTANT: omit `text` to CLEAR the element value; an explicit empty string \"\" sets it to empty rather than clearing — so always supply `text` unless clearing is intended. " +
+	"IMPORTANT: the current JSON handler treats omitted `text` and an explicit empty string \"\" as CLEAR; provide non-empty text to write a value. " +
 	"Use a find_elements handle for the exact parent-bound AX identity, or a selector that must resolve to exactly one element. " +
 	"Defaults to direct AX value mutation (input_method 'ax'); use input_method 'keystrokes' for web/Electron apps that require real DOM keyboard events (it selects-all then types, replacing the current value)."
 

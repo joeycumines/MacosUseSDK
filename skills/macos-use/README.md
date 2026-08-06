@@ -6,7 +6,7 @@ macOS desktop automation for the MacosUseSDK MCP server.
 
 | File | Purpose |
 |------|---------|
-| `claude-plugin.json` | Plugin manifest with metadata, version, and entry point |
+| `claude-plugin.json` | Plugin manifest with metadata and version |
 | `SKILL.md` | Primary skill instructions — loaded by Claude for macOS automation |
 | `LICENSE` | MIT license |
 | `references/` | Supporting docs (window state, MCP reliability, workflows) |
@@ -17,4 +17,4 @@ This skill activates automatically for tasks involving macOS desktop automation,
 
 ## Entry Point
 
-`SKILL.md` — read first on every activation. It covers the core principles, app lifecycle, safety rules, and quick-reference tool table.
+`SKILL.md` — read first on every activation. It covers the core principles, app lifecycle, safety rules, and quick-reference tool table. The manifest itself carries metadata; it does not declare an `entryPoint` field.

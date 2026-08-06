@@ -10,8 +10,8 @@
 
 Window state management on macOS is a "split-brain" problem. The operating system provides two distinct, non-interoperable APIs for window data, neither of which is sufficient on its own:
 
-1.  **Quartz Window Services (CoreGraphics):** A global, high-performance, read-only view of the compositor's display list. It provides snapshot-local IDs (`CGWindowID`) and metadata but suffers from data staleness (10-100ms latency) and cannot manipulate windows. A CG ID is not a public resource identity and may be reused after disappearance.
-2.  **Accessibility API (AX):** A process-specific, heavy, synchronous IPC interface used for fine-grained state inspection and manipulation (Geometry, Visibility). It is authoritative for current state but lacks stable identifiers and cannot see windows on background spaces.
+1.  **Quartz Window Services (CoreGraphics):** A global, read-only snapshot of the compositor's display list. It provides snapshot-local IDs (`CGWindowID`) and metadata, but snapshots may be stale and cannot manipulate windows. A CG ID is not a public resource identity and may be reused after disappearance.
+2.  **Accessibility API (AX):** A process-specific, synchronous IPC interface used for fine-grained state inspection and manipulation (Geometry, Visibility). It is authoritative for reads of an admitted element but lacks stable public identifiers and may fail to enumerate windows outside the active Space.
 
 **MacosUseSDK implements a "Hybrid Authority" model.** We do not attempt to abstract away this duality completely. Instead, we explicitly assign authority for specific data fields to specific APIs based on the nature of the RPC (Read-only Enumeration vs. Mutation/Inspection).
 
@@ -29,7 +29,7 @@ This distinction is codified in the API implementation as follows:
 
 | Data Field / Behavior | Authority Source | Implementation Detail |
 | :--- | :--- | :--- |
-| **Enumeration** (List of Windows) | **Quartz** | `CGWindowListCopyWindowInfo` via `WindowRegistry`. **$O(1)$** latency relative to window count. |
+| **Enumeration** (List of Windows) | **Quartz** | `CGWindowListCopyWindowInfo` via `WindowRegistry`; one snapshot call followed by parsing of the returned rows. |
 | **Public identity** | **WindowRegistry binding** | Server-issued opaque resource ID scoped to an exact application resource, PID, and kernel process identity. A `CGWindowID` is binding metadata, never the public name. |
 | **Geometry** (Position, Size) | **AX** | `kAXPosition` and `kAXSize` from the exact retained `kAXWindows` element. |
 | **List visibility** | **Quartz** | `kCGWindowIsOnscreen` from the same enumeration snapshot. |
@@ -43,7 +43,7 @@ This distinction is codified in the API implementation as follows:
 To balance performance with correctness, the gRPC surface enforces different behaviors for different calls:
 
   * **`ListWindows` (Registry-Only):** Optimized for high-frequency polling and UI rendering. It returns a snapshot from the `WindowRegistry`. It **does not** perform per-window AX queries.
-      * *Tradeoff:* Geometry and visibility may lag by \~50ms during animations. Windows on background spaces may report `visible=false` even if technically open.
+      * *Tradeoff:* Snapshot metadata may be stale during animations. Windows on background spaces may report `visible=false` even if technically open.
   * **`GetWindow` / Mutations (AX-Authoritative):** Resolve an existing opaque binding, revalidate its exact owner before and after AX reads, and fail closed on stale, replaced, cross-owner, or ambiguous targets. Mutations hold the physical-desktop lease until cancellation-aware polling observes the requested state (including stable macOS clamping) or returns a precise timeout.
 
 -----
@@ -183,8 +183,8 @@ The `ObservationManager` (`Server/Sources/MacosUseServer/ObservationManager.swif
 
 1.  Snapshot current `kAXWindows`.
 2.  Identify windows present in the *previous* snapshot but missing in the *current*.
-3.  **Rescue:** Query `kAXChildren` explicitly. The OS often moves transitioning windows to the generic children list temporarily.
-4.  If found in `kAXChildren`, update the snapshot. If still missing, mark as `Destroyed`.
+3.  **Rescue:** Query `kAXChildren` explicitly, then use an on-screen CG row or the previous snapshot as applicable during transient mutations.
+4.  If all rescue paths fail, emit the destroyed transition for that observation cycle; this is a policy conclusion, not proof of permanent destruction.
 
 ### 6.2 State Transition Logic (`Cmd+H` vs `Cmd+M`)
 
@@ -297,8 +297,8 @@ macOS sends `NSWorkspace.didActivateApplicationNotification` and `didDeactivateA
 1.  The `ObservationManager` polls `traverseAccessibilityTree` on a timer.
 2.  Each poll calls `app.activate()`, bringing the target app to the foreground.
 3.  macOS fires `didActivateApplication` for the target, `didDeactivateApplication` for the previously active app.
-4.  The `ChangeDetector` receives these notifications and may forward them as change events.
-5.  The observation loop re-fires, starting another poll → another `activate()` call → more notifications.
+4.  The `ChangeDetector` receives these notifications for logging and circuit-breaker handling; it does not publish them as current observation events.
+5.  In the historical failure mode, the observation loop re-fired, starting another poll → another `activate()` call → more notifications.
 
 This cycle causes **focus stealing** (the user's foreground app keeps losing focus) and **notification storms** (hundreds of activation events per second).
 
@@ -333,7 +333,10 @@ Set `shouldActivate: true` only when the caller explicitly intends to bring the 
 | Accessibility tree traversal (background tool call) | `false` |
 | Interactive element action requiring foreground | `true` (via caller) |
 
-> **Note:** Currently no production code path passes `shouldActivate: true` through `handleTraverse`. The parameter exists to allow future RPCs (e.g., a "FocusWindow" RPC) to opt-in to activation when the user explicitly requests it.
+> **Note:** Observation requests can pass `activate: true`, which reaches
+> `handleTraverse` and activates the target. The current path does not call
+> `markSDKActivation`, so those workspace notifications are not suppressed by
+> the self-activation tracker. Background observation remains passive by default.
 
 ### 8.4 Circuit Breaker in ChangeDetector
 
@@ -347,14 +350,17 @@ The circuit breaker operates in `shouldCircuitBreak(pid:)` and is checked in bot
 
 ### 8.5 Self-Activation Tracking
 
-When the SDK does activate an app (because the caller passed `shouldActivate: true`), the resulting workspace notifications must not be treated as user-initiated events. The `AutomationCoordinator.handleTraverse()` calls `ChangeDetector.shared.markSDKActivation(pid:)` *before* the activation occurs, and the `ChangeDetector` uses this state to suppress the resulting notifications:
+When an observation explicitly uses `activate: true`, the current traversal path activates the target application, but it does not call `markSDKActivation`; the resulting workspace notifications therefore are not currently suppressed by the self-activation tracker. `ChangeDetector` exposes activation-marking helpers for a future wiring correction:
 
-- **`markSDKActivation(pid:)`**: Records a timestamp for the PID before activation. Called from `AutomationCoordinator.handleTraverse()` when `shouldActivate: true`.
+- **`markSDKActivation(pid:)`**: Records a timestamp for the PID before activation. It is available to a future activation caller but is not currently invoked by `handleTraverse`.
 - **`isSDKActivation(pid:)`**: Returns `true` if the *specific PID* was activated by the SDK within the last 500ms. Used by the activation handler.
 - **`hasRecentSDKActivation()`**: Returns `true` if *any* PID was SDK-activated within the last 500ms. Used by the deactivation handler, because when the SDK activates app B, the *previously active* app A receives the deactivation—and its PID is A, not B.
 - **Suppression:** `handleAppActivated` checks `isSDKActivation(pid:)` for direct match. `handleAppDeactivated` checks `hasRecentSDKActivation()` to catch the other side of an SDK-triggered focus change.
 
-This prevents SDK-initiated focus changes from being echoed back as change events to observation subscribers.
+When the activation-marking helper is wired into an activation caller, it
+prevents SDK-initiated focus changes from being echoed back as change events.
+That suppression is not currently active for the observation `activate: true`
+path.
 
 -----
 

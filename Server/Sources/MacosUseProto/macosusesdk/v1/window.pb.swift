@@ -66,9 +66,9 @@ public nonisolated struct Macosusesdk_V1_Window: Sendable {
   ///
   /// Data Source (Hybrid Authority - Differs by RPC):
   ///
-  /// GetWindow (AX-First Visibility):
+  /// GetWindow (AX-Validated Visibility):
   ///   Computes visible using fresh, error-preserving AX queries:
-  ///     visible = (!axMinimized && !ownerApplicationHidden) ? true : (registry.isOnScreen ?? false)
+  ///     visible = registry.isOnScreen && !axMinimized && !ownerApplicationHidden
   ///
   ///   Visibility is true only when the admitted Core Graphics snapshot reports
   ///   the window on-screen and fresh AX state reports neither the window
@@ -77,8 +77,8 @@ public nonisolated struct Macosusesdk_V1_Window: Sendable {
   ///
   /// ListWindows (Registry-Only Performance):
   ///   Returns registry.isOnScreen directly from cached CGWindowList with NO per-window AX queries.
-  ///   This ensures <50ms response regardless of window count, suitable for high-frequency polling.
-  ///   Registry data may lag 10-100ms behind actual state during rapid window mutations.
+  ///   This performs no per-window AX queries; latency depends on snapshot size and system conditions.
+  ///   Registry data is a volatile snapshot and may lag actual state during rapid window mutations.
   ///
   /// Recommendation:
   ///   - Use ListWindows for fast enumeration and UI rendering
@@ -89,7 +89,7 @@ public nonisolated struct Macosusesdk_V1_Window: Sendable {
   /// Bundle identifier of the application that owns this window.
   ///
   /// Data Source (Registry Authority): Resolved via NSRunningApplication from cached CGWindowList metadata.
-  /// This is a stable metadata field that does not change during window mutations.
+  /// This is snapshot metadata and may be empty when resolution is unavailable.
   /// Empty string if NSRunningApplication resolution fails or registry data is unavailable.
   public var bundleID: String = String()
 

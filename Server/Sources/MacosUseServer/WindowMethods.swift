@@ -85,7 +85,7 @@ extension MacosUseService {
         // Clients MUST use GetWindowState for expensive AX queries (modal, minimizable, etc.).
         //
         // PERFORMANCE: This eliminates the O(N*M) catastrophe where N windows each
-        // triggered M blocking AX queries. ListWindows now completes in <50ms regardless
+        // triggered M blocking AX queries. ListWindows performs one snapshot call plus parsing without per-window AX queries
         // of window count.
         let windows = page.bindings.map { windowInfo in
             Macosusesdk_V1_Window.with {

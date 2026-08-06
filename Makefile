@@ -27,17 +27,6 @@ include $(PROJECT_ROOT)/make/swift.mk
 include $(PROJECT_ROOT)/make/buf.mk
 include $(PROJECT_ROOT)/make/macos-use.mk
 
-MCP_INTEGRATION_BINARY := $(PROJECT_ROOT)/.build/debug/macos-use-mcp
-
-.PHONY: mcp-integration-binary
-mcp-integration-binary: ## Build the exact MCP executable used by production-path integration tests.
-	@mkdir -p $(dir $(MCP_INTEGRATION_BINARY))
-	go build -o $(MCP_INTEGRATION_BINARY) ./cmd/macos-use-mcp
-
-# Integration tests launch the production executable; never fall back to
-# `go run`, which obscures child ownership and can leave a compiled descendant.
-go.test.integration: mcp-integration-binary
-
 ##@ Core Targets
 
 .PHONY: all
@@ -82,4 +71,12 @@ proto-lint: google-api-linter buf.lint ## Run proto linters e.g. google-api-lint
 google-api-linter: ## Lint the proto files.
 	hack/google-api-linter.sh
 
+# N.B. The below comment is for the `make help` output, not for readers of this file.
 ##@ -- End of root Makefile --
+
+MCP_INTEGRATION_BINARY := $(PROJECT_ROOT)/.build/debug/macos-use-mcp
+.PHONY: mcp-integration-binary
+mcp-integration-binary: ## Build the exact MCP executable used by production-path integration tests.
+	@mkdir -p $(dir $(MCP_INTEGRATION_BINARY))
+	go build -o $(MCP_INTEGRATION_BINARY) ./cmd/macos-use-mcp
+go.test.integration: mcp-integration-binary

@@ -70,11 +70,11 @@ For local development with custom server configuration:
 ```sh
 # Swift gRPC server
 export GRPC_LISTEN_ADDRESS="127.0.0.1"
-export GRPC_PORT="8080"
+export GRPC_PORT="50051"
 
 # Go MCP server
 export MCP_HTTP_ADDRESS="127.0.0.1:8080"
-export MACOS_USE_SERVER_ADDR="127.0.0.1:8080"
+export MACOS_USE_SERVER_ADDR="127.0.0.1:50051"
 ```
 
 See the [Deployment Guide](DEPLOYMENT.md) for the full environment variable reference.
@@ -124,7 +124,7 @@ gmake go.test.integration
 cd integration && go test -v -run TestCalculator ./...
 ```
 
-**Important**: Integration tests use `PollUntilContext` patterns, never `time.Sleep`. Tests must assert state differences, not just "OK" status.
+**Important**: Integration and asynchronous state-convergence tests use `PollUntilContext` rather than arbitrary sleeps. Tests must assert state differences, not just "OK" status. Some lower-level transport tests may use timing primitives to test timeout behavior.
 
 ## Test Guidelines
 
@@ -142,7 +142,10 @@ Do not introduce new target applications without discussion.
 
 ### No `time.Sleep` Rule
 
-**BANNED**: `time.Sleep` in all test code. Use `PollUntilContext` for async verification:
+**BANNED for integration and state-convergence tests**: arbitrary `time.Sleep`.
+Use `PollUntilContext` for async verification. Lower-level transport tests may
+use controlled timing primitives when the test specifically verifies timeout
+or deadline behavior:
 
 ```go
 // ❌ WRONG: Arbitrary sleep
@@ -188,18 +191,11 @@ Every test suite must ensure a clean state:
 
 **Before Tests (Setup)**:
 ```go
-func TestMain(m *testing.M) {
-    // SIGKILL target apps to ensure clean state
-    exec.Command("pkill", "-9", "Calculator").Run()
-    exec.Command("pkill", "-9", "TextEdit").Run()
-    
-    // ... start server ...
-    
-    code := m.Run()
-    
-    // ... cleanup ...
-    os.Exit(code)
-}
+// In integration/main_test.go, the package-scoped helper gracefully quits
+// TextEdit, polls for exit, then force-kills Calculator/TextEdit survivors.
+// Finder is intentionally not killed. Reuse that helper from tests in the
+// integration package rather than copying this call into another package.
+killGoldenApplications()
 ```
 
 **After Tests (Cleanup)**:
@@ -210,7 +206,8 @@ func TestSomething(t *testing.T) {
     t.Cleanup(func() {
         // CloseApplication closes the exact owned process and cleans up state.
         _, _ = client.CloseApplication(ctx, &pb.CloseApplicationRequest{
-            Name: fmt.Sprintf("applications/%d", pid),
+            // Use the exact opaque Application.name returned by the server.
+            Name: application.Name,
             Force: true,
         })
     })
@@ -245,7 +242,7 @@ func TestSomething(t *testing.T) {
 1. Fork the repository
 2. Create a feature branch from `main`
 3. Make your changes with tests
-4. Run `make all` to verify
+4. Run `gmake all` to verify
 5. Submit a PR with a descriptive title
 
 Key components:

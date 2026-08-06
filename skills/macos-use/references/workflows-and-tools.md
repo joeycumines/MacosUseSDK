@@ -53,8 +53,9 @@ Starting point whenever you need to know what's on screen.
 ### Read Information from an App
 
 1. `open_app` if not already tracked.
-2. `find_elements` to get the element tree. Elements include `role`, `text`,
-   `enabled`, `focused`, `attributes`.
+2. `find_elements` to get the element tree. Results provide the element ID,
+   text, and role. Use `read_element(parent, element)` for bounds,
+   enabled/focused state, and actions.
 3. Extract text from AX elements — do not screenshot to read text.
 4. After interaction, data may be stale. Use `read_element` on the specific
    handle or `find_elements` with `force_refresh=true` for a fresh read.
@@ -114,18 +115,18 @@ handle returned by `find_elements` over re-issuing a selector.
 
 ## Tool Signatures
 
-All input tools take an exact `target`:
-`desktop`, `applications/{application}`,
-`applications/{application}/windows/{window}`, or `displays/{display}`.
-Resource names are opaque — obtain them from `list_apps`, `list_windows`,
-and `get_display`.
+Pointer input tools (`click`, `double_click`, `move`, `scroll`, and `drag`) take
+an exact `target` of `desktop`, an application/window resource, or
+`displays/{display}`. Keyboard tools (`type` and `keypress`) accept only
+`desktop` or an application/window resource. Resource names are opaque —
+obtain them from `list_apps`, `list_windows`, and `get_display`.
 
 ### App Lifecycle
 
 ```
 open_app(app, bring_to_front=true, mode="launch_or_activate")
   app: exact applicationBundles/* resource (from list_apps) or applications/* process
-list_apps(kind="installed"|"running", filter, order_by, page_size, page_token)
+list_apps(kind="installed"|"running", filter, order_by, page_size, page_token, full)
   kind=installed discovers bundles; kind=running lists exact processes
 close_app(app, force=false)
   app: exact applications/* process resource
@@ -137,8 +138,9 @@ close_app(app, force=false)
 find_elements(parent, selector, force_refresh=false, page_size, page_token)
   parent: "applications/{id}" or "applications/{id}/windows/{id}"
   selector: "role:AXButton" | "text:Save" | "text_contains:save" (required)
-read_element(element)
-  element: parent-bound element handle from find_elements
+read_element(parent, element)
+  parent: application/window used during discovery when element is a bare handle
+  element: parent-bound handle or full element resource name
 ```
 
 ### Element Interaction
@@ -147,8 +149,9 @@ read_element(element)
 click_element(parent, element)          — click by exact find_elements handle (preferred)
 click_element(parent, selector)         — re-discover by unique selector, then click
 type_element(parent, element|selector, text, input_method="ax"|"keystrokes")
-  — set element value; omit text to clear, "" sets empty
-read_element(element)                   — role, text, bounds, value, actions, focused/enabled
+   — set element value; the current MCP JSON handler cannot distinguish omitted
+     text from an explicit empty string, so both clear the value
+read_element(parent, element)            — role, text, bounds, value, actions, focused/enabled
 ```
 
 ### Keyboard & Mouse (physical input)
@@ -200,7 +203,7 @@ run(command, timeout, type="shell"|"applescript"|"javascript")
 ### Waiting
 
 ```
-wait(duration)    — pause for the given duration in seconds (max 30)
+wait(duration)    — pause for the given duration in seconds (max MACOS_USE_REQUEST_TIMEOUT; default 1)
 ```
 
 For "wait until an element appears", poll: call `find_elements` in a loop
@@ -213,8 +216,10 @@ create_macro(display_name, description, actions, tags, macro_id) → macros/{id}
 get_macro(macro)                    — macro: exact macros/{id} resource
 list_macros(page_size, page_token)
 update_macro(macro, display_name, description, actions, tags)
-delete_macro(macro)
-execute_macro(macro)
+delete_macro(macro, force=false) — `force=true` is currently rejected as unimplemented
+execute_macro(macro, application, timeout)
+  application: required when the macro contains physical input actions; omit
+  only for macros containing no physical actions
 ```
 
 Macro actions are an ordered list; each action is a physical input

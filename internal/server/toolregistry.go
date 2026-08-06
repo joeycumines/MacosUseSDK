@@ -367,7 +367,7 @@ func (s *MCPServer) registerTools() {
 					"parent":       map[string]any{"type": "string", "description": "Parent context"},
 					"element":      map[string]any{"type": "string", "description": "Parent-bound element handle from find_elements for one exact AX identity"},
 					"selector":     map[string]any{"type": "string", "description": "One key:value selector that must match exactly one element, e.g. role:AXTextArea, text:hello, text_contains:world"},
-					"text":         map[string]any{"type": "string", "description": "Value to write. Omit to CLEAR the element value; an explicit empty string \"\" sets it to empty rather than clearing."},
+					"text":         map[string]any{"type": "string", "description": "Value to write. The current JSON handler treats omission and an explicit empty string as CLEAR; provide non-empty text to write a value."},
 					"input_method": map[string]any{"type": "string", "description": "Input delivery method: 'ax' (default) uses direct AX value mutation; 'keystrokes' sends physical keyboard events for web/Electron DOM-event compatibility", "enum": []string{"ax", "keystrokes"}},
 				},
 				"required": []string{"parent"},

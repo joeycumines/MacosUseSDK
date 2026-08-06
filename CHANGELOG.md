@@ -9,7 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-#### MCP Server (77 Tools)
+#### Historical MCP Server Inventory (76 Listed Tools)
+
+The following inventory describes the 0.1.0-era design and is not the current
+MCP registry. The current implementation exposes 29 tools; see
+`skills/macos-use/references/workflows-and-tools.md`.
 
 - **Screenshot Tools (4)**: `capture_screenshot`, `capture_window_screenshot`, `capture_region_screenshot`, `capture_element_screenshot`
 - **Input Tools (11)**: `click`, `type_text`, `press_key`, `hold_key`, `mouse_move`, `scroll`, `drag`, `mouse_button_down`, `mouse_button_up`, `hover`, `gesture`
@@ -37,21 +41,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Transports
 
 - **stdio**: JSON-RPC 2.0 over stdin/stdout for Claude Desktop
-- **HTTP/SSE**: Server-Sent Events for web integrations
+- **Streamable HTTP**: Synchronous JSON responses at `/mcp`; standalone SSE is not initiated
 
 #### Documentation
 
-- Comprehensive API reference (docs/ai-artifacts/10-api-reference.md)
-- Production deployment guide (docs/ai-artifacts/08-production-deployment.md)
-- Security hardening guide (docs/ai-artifacts/09-security-hardening.md)
+- Production deployment guide (`DEPLOYMENT.md`)
+- MCP tool reference (`skills/macos-use/references/workflows-and-tools.md`)
 - MCP integration details (docs/ai-artifacts/05-mcp-integration.md)
 - Architecture documentation (docs/ai-artifacts/01-window-management-subsystems.md)
 
 ### Testing
 
-- 350+ unit tests across 14 test files
-- 20+ integration test files
-- PollUntilContext patterns (zero time.Sleep)
+- Unit and integration coverage across the Swift and Go packages
+- PollUntilContext is required for integration/state-convergence tests
 - Golden applications: Calculator, TextEdit, Finder
 
 ### Protocol
@@ -64,7 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Background Application Open Mode**: `open_application` tool supports `background` parameter to launch apps without stealing focus
+- **Background Application Open Mode**: the gRPC `OpenApplication` API supports background launch without stealing focus
 - **MCP Resources Support**: `resources/list` and `resources/read` methods for `screen://`, `accessibility://`, `clipboard://` URIs
 - **MCP Prompts Support**: `prompts/list` and `prompts/get` methods for predefined automation prompts
 
@@ -73,19 +75,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Owned Physical Input Transactions**: `CreateInput` now requires one exact application, window, display, or explicit desktop target; preserves caller IDs and immutable intent; reports `PENDING`, `EXECUTING`, `COMPLETED`, `FAILED`, or `CANCELLED`; and returns explicit delivery commitment, post count, and routed-observation evidence.
 - **Strict MCP Input Boundary**: All seven physical MCP tools require exact targets, generate opaque per-call input IDs, forward complete timing/modifier/path intent, and reject malformed or non-settled backend responses.
 - **Root Product Topology**: Removed the unsupported `ActionTool`, `AppOpenerTool`, `HighlightTraversalTool`, `InputControllerTool`, `TraversalTool`, and `VisualInputTool` executable products instead of preserving unowned bypass paths.
-- **Passive Observation Mode (Default)**: `activate` parameter defaults to `false` on `create_observation` and `traverse_accessibility`, preventing focus theft during polling
+- **Passive Observation Mode (Default)**: observation polling defaults to `activate=false`; the current traversal RPC boundary does not expose an `activate` field
 - **Circuit Breaker in ChangeDetector**: Per-PID throttling (5 events/second) prevents activation storms from external events
-- **SDK Activation Filtering**: `markSDKActivation(pid:)` suppresses workspace notifications from SDK-triggered activations
+- **SDK Activation Filtering**: `ChangeDetector` contains activation suppression helpers for SDK-triggered activations
 
 ### Fixed
 
 - **Activation Cycle Fix**: Eliminated destructive feedback loop where observation polling caused continuous app activation/deactivation cycles
-- **Proto Annotation Improvements**: Added `google.api.field_behavior` annotations (REQUIRED, OPTIONAL, OUTPUT_ONLY) to all proto fields
-- **Lint Cleanup**: Removed all `swiftlint:disable all` directives, fixed explicit `self.` prefixes for Swift 6 concurrency
+- **Proto Annotation Improvements**: Added `google.api.field_behavior` annotations across the hand-authored API fields
+- **Lint Cleanup**: Cleaned hand-written Swift lint directives and explicit `self.` prefixes for Swift 6 concurrency; generated files remain separately excluded from linting
 
 ### Testing
 
-- **35+ New Integration Tests**: Calculator, TextEdit, Finder covering elements, windows, clipboard, observations
+- **Expanded Integration Tests**: Calculator, TextEdit, and Finder coverage for elements, windows, clipboard, and observations
 - **Proto Backward Compatibility Tests**: 15 tests verifying field numbers, enum values, unknown field preservation
 - **CI Improvements**: Proto lint steps, Go/Swift coverage reporting, dependency caching
 

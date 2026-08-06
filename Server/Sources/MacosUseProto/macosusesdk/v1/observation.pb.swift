@@ -87,7 +87,9 @@ public nonisolated enum Macosusesdk_V1_ObservationType: SwiftProtobuf.Enum, Swif
 
 }
 
-/// An observation monitors UI changes and streams events.
+/// An observation monitors supported UI changes and publishes events through the
+/// gRPC observation stream. Application-change observations are currently
+/// rejected as unimplemented, and observations are in-memory resources.
 public nonisolated struct Macosusesdk_V1_Observation: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
@@ -254,7 +256,7 @@ public nonisolated struct Macosusesdk_V1_ObservationFilter: Sendable {
   public var geometry: Bool = false
 
   /// Whether to observe application activation state changes.
-  /// Reserved for FUNC-012; silently ignored during FUNC-004.
+  /// Application-change observations are currently rejected as unimplemented.
   public var activation: Bool = false
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()

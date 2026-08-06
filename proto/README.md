@@ -8,13 +8,15 @@ This directory contains the Protocol Buffer definitions for the MacosUseSDK gRPC
 proto/
 ├── macosusesdk/
 │   ├── type/              # Common type definitions (AIP-213)
-│   │   ├── element.proto    # UI element and traversal types
+│   │   ├── traversal.proto  # Traversal types
 │   │   ├── geometry.proto   # Point and geometric types
 │   │   └── selector.proto   # Selector grammar definitions
 │   └── v1/                # API v1 definitions
 │       ├── application.proto # Application resource
 │       ├── clipboard.proto   # Clipboard resource
 │       ├── condition.proto   # Condition types
+│       ├── display.proto     # Display resource
+│       ├── element.proto     # Element resource
 │       ├── input.proto       # Input resource
 │       ├── macos_use.proto   # MacosUse service and methods
 │       ├── macro.proto       # Macro resource
@@ -52,7 +54,8 @@ The API is built around a hierarchy of resources that represent the state and ca
 4.  **Session** (`sessions/{session}`)
 
       * Maintains context across complex workflows.
-      * Supports transactional semantics for atomic operations.
+       * Supports transaction-like session bookkeeping; rollback truncates recorded history and does not undo
+         already-applied macOS side effects.
 
 5.  **Macro** (`macros/{macro}`)
 
@@ -77,17 +80,22 @@ The API is built around a hierarchy of resources that represent the state and ca
 
 A specific design pattern is applied to Windows to balance performance with data accuracy:
 
-  * **`GetWindow` (AX-First Hybrid Authority):**
+   * **`GetWindow` (AX-Validated Hybrid Authority):**
     Returns fresh Accessibility API (AX) data for geometry (bounds) and title, ensuring mutation
-    responses (MoveWindow/ResizeWindow) reflect the exact requested values without polling delays.
-    Visibility uses an AX-first optimistic approach: assumes visible=true if not minimized/hidden,
-    only falling back to cached registry data when AX state indicates the window is not on screen.
-    This eliminates false negatives from stale CGWindowList during rapid mutations.
+     responses (MoveWindow/ResizeWindow) return after cancellation-aware AX
+     convergence polling observes a stable result, or report a timeout if the
+     requested state does not converge.
+     Visibility requires the admitted registry row to be on screen and fresh AX state to report
+     neither a minimized window nor a hidden owner.
+     This avoids trusting AX alone for visibility; a stale registry row can still
+     report `visible=false`, so callers should treat the result as the admitted
+     hybrid snapshot rather than a guarantee against every Quartz false negative.
 
   * **`ListWindows` (Registry-Only Performance):**
     Returns cached CoreGraphics data (CGWindowList via WindowRegistry) with ZERO per-window AX queries.
-    Completes in <50ms regardless of window count, suitable for high-frequency polling and UI rendering.
-    Registry data (bounds, title, visible) may lag 10-100ms behind actual state during rapid mutations.
+     Performs one Core Graphics snapshot and parses the returned population, with no per-window AX queries.
+     Registry data (bounds, title, visible) is a volatile snapshot and may lag
+     actual state during rapid mutations.
 
   * **`GetWindowState` Singleton (Deep AX Authority):**
     For authoritative accessibility details, the API exposes a singleton sub-resource: `WindowState`
@@ -106,8 +114,8 @@ A specific design pattern is applied to Windows to balance performance with data
 To support complex automation workflows that require reliability, the API introduces **Sessions**:
 
   * **Context:** Sessions allow the server to maintain state (metadata, active targets) across multiple RPCs.
-  * **Transactions:** Sessions support ACID-like transactions via `BeginTransaction`, `CommitTransaction`, and `RollbackTransaction`.
-  * **Isolation:** Clients can specify isolation levels (e.g., `ISOLATION_LEVEL_SERIALIZABLE`) to ensure that a sequence of operations (like navigating a menu) is treated atomically. If a step fails, the session can be rolled back to a known good state.
+  * **Transactions:** Sessions support transaction-like bookkeeping via `BeginTransaction`, `CommitTransaction`, and `RollbackTransaction`.
+  * **Isolation:** Clients can record a workflow under an isolation setting, but rollback only removes recorded operations; it does not reverse external macOS side effects.
 
 ### Service Structure (AIP-190, AIP-191)
 
@@ -131,7 +139,6 @@ Operations that take significant time or wait for external state changes return 
 
 **Implemented LROs:**
 
-  * **`OpenApplication`**: Launches or activates apps.
   * **`WaitElement` / `WaitElementState`**: Suspends execution until a UI element appears or satisfies a condition (e.g., becomes enabled).
   * **`ExecuteMacro`**: Runs a stored sequence of actions.
   * **`CreateObservation`**: Initializes a monitoring stream.
@@ -182,7 +189,9 @@ without changing the immutable action or target.
 
 ### Standard Methods (AIP-130 - AIP-135)
 
-All resources (`Application`, `Input`, `Window`, `Macro`, `Session`, `Observation`) implement standard `Get`, `List`, `Create`, `Update`, and `Delete` methods where applicable.
+Resources expose the standard and custom methods defined for each resource in
+`macos_use.proto`; the surface is not a uniform Get/List/Create/Update/Delete
+set for every resource.
 
 ### Pagination (AIP-158)
 
@@ -209,7 +218,7 @@ Generated code is committed to the repository:
 ### Regenerating Code
 
 ```sh
-make generate
+gmake generate
 ```
 
 ## Linting
@@ -217,7 +226,7 @@ make generate
 The API is validated with `buf lint` and `api-linter`.
 
 ```sh
-make lint
+gmake lint
 ```
 
 ## Dependencies
@@ -230,7 +239,8 @@ The API is versioned as `v1`.
 
 ## HTTP/JSON Mapping
 
-All RPCs include HTTP annotations enabling REST/JSON access via grpc-gateway.
+RPCs include Google HTTP annotations as contract/mapping metadata. This
+repository does not ship a grpc-gateway runtime or REST endpoint.
 
 ## Contributing
 
@@ -238,6 +248,6 @@ When modifying the API:
 
 1.  Follow all applicable AIPs
 2.  Regenerate code with `buf generate`
-3.  Run linters for all protos and code using `make lint`
+3.  Run linters for all protos and code using `gmake lint`
 4.  Update this README with structural or design changes, notable AIPs, or learnings
-5.  Update `blueprint.json` with significant changes
+5.  Update `WIP.md` with significant execution-state changes
