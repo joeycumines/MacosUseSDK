@@ -5,17 +5,17 @@ go 1.26.3
 replace github.com/joeycumines/MacosUseSDK => ../
 
 require (
-	cloud.google.com/go/longrunning v1.0.0
-	github.com/joeycumines/MacosUseSDK v0.0.0-20260522170526-8bd167fa7a3e
+	cloud.google.com/go/longrunning v1.2.0
+	github.com/joeycumines/MacosUseSDK v0.0.0-20260725215237-e90e731995ba
 	github.com/rivo/uniseg v0.4.7
-	google.golang.org/grpc v1.81.1
+	google.golang.org/grpc v1.83.0
 	google.golang.org/protobuf v1.36.11
 )
 
 require (
-	golang.org/x/net v0.56.0 // indirect
-	golang.org/x/sys v0.46.0 // indirect
+	golang.org/x/net v0.57.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/text v0.40.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20260522162733-96412231522c // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260522162733-96412231522c // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20260803160001-6ac0973c030d // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260803160001-6ac0973c030d // indirect
 )
