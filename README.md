@@ -12,24 +12,22 @@
 
 # MacosUseSDK
 
-Library, command-line tools, and MCP/gRPC server to traverse the macOS accessibility tree and simulate user input actions. Allows interaction with UI elements of other applications.
+Swift library plus MCP/gRPC servers for traversing the macOS accessibility tree and performing owned user-input transactions.
 
 ## Components
 
 - **MacosUseSDK**: Core Swift library for accessibility automation
-- **Command-line Tools**: Standalone executables for common automation tasks
-- **MCP Server**: Production server exposing **23 redesigned CUA-aligned MCP tools** for AI agent integration via [Model Context Protocol](https://modelcontextprotocol.io/)
+- **MCP Server**: Production server exposing **29 CUA-aligned MCP tools** for AI agent integration via [Model Context Protocol](https://modelcontextprotocol.io/)
 - **gRPC Server**: Resource-oriented gRPC API following [Google's AIPs](https://google.aip.dev/)
 
 ## Documentation
 
 | Document | Description |
 |----------|-------------|
-| [API Reference](docs/ai-artifacts/10-api-reference.md) | Complete reference for the current 23 MCP tools, environment variables, coordinate systems, and error codes |
-| [Production Deployment](docs/ai-artifacts/08-production-deployment.md) | Deployment guide with TLS, authentication, reverse proxy patterns, and monitoring |
-| [Security Hardening](docs/ai-artifacts/09-security-hardening.md) | Security best practices, shell command risks, authentication options |
-| [MCP Integration](docs/ai-artifacts/05-mcp-integration.md) | Protocol compliance, transport specifications, tool design |
-| [MCP Tool Design](docs/ai-artifacts/06-mcp-tool-design.md) | Historical tool design review and rationale for the compressed 23-tool surface |
+| [Deployment Guide](DEPLOYMENT.md) | Complete local single-user deployment: app bundle, LaunchAgent, Unix socket, signing, TCC grants |
+| [MCP Integration](docs/ai-artifacts/05-mcp-integration.md) | Protocol compliance, transport specifications, security, and tooling details |
+| [MCP Server Design](docs/ai-artifacts/11-mcp-server-design-for-computer-use-agents.md) | Design notes for the CUA-aligned MCP server surface |
+| [Tool Design Review](docs/ai-artifacts/07-mcp-tool-design-review.md) | Tool surface review and rationale |
 
 ## Architecture
 
@@ -40,12 +38,12 @@ Library, command-line tools, and MCP/gRPC server to traverse the macOS accessibi
 │                      AI Agents / Clients                     │
 │                  (Claude, GPT, Custom MCP Clients)           │
 └─────────────────────────┬───────────────────────────────────┘
-                          │ JSON-RPC over HTTP/SSE or stdio
+                          │ JSON-RPC over Streamable HTTP or stdio
                           ▼
 ┌─────────────────────────────────────────────────────────────┐
 │     Go MCP Server (cmd/macos-use-mcp)                        │
-│     • 23 redesigned MCP Tools                                  │
-│     • HTTP/SSE + stdio transports                            │
+│     • 29 CUA-aligned MCP Tools                               │
+│     • Streamable HTTP + stdio transports                     │
 │     • Rate limiting, API key auth, audit logging             │
 └─────────────────────────┬───────────────────────────────────┘
                           │ gRPC (protobuf)
@@ -95,21 +93,21 @@ macOS uses **two distinct coordinate systems**:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `MCP_HTTP_ADDRESS` | HTTP server bind address | `:8080` |
+| `MCP_HTTP_ADDRESS` | HTTP server bind address | `127.0.0.1:8080` |
 | `MCP_HTTP_SOCKET` | Unix socket path (overrides HTTP) | - |
 | `MCP_TLS_CERT_FILE` | TLS certificate for HTTPS | - |
 | `MCP_TLS_KEY_FILE` | TLS private key | - |
 | `MCP_API_KEY` | API key for authentication | - |
 | `MCP_RATE_LIMIT` | Max requests/second; `0` disables | `0` |
-| `MCP_AUDIT_LOG_FILE` | Audit log file path | - |
+| `MCP_AUDIT_LOG_FILE` | Owner-private non-content audit log path | - |
 | `MACOS_USE_SERVER_ADDR` | gRPC server address for MCP proxy | `localhost:50051` |
 | `GRPC_LISTEN_ADDRESS` | Swift server bind address | `127.0.0.1` |
-| `GRPC_PORT` | Swift server port | `50051` |
+| `GRPC_PORT` | Swift server port | `8080` |
 | `GRPC_UNIX_SOCKET` | Swift server Unix socket | - |
 
 ## MCP Tool Catalog
 
-The server exposes **23 redesigned CUA-aligned MCP tools** organized into 5 categories. See the [full tool reference](docs/ai-artifacts/10-api-reference.md) for details.
+The server exposes **29 CUA-aligned MCP tools** organized into 6 categories:
 
 | Category | Tools | Description |
 |----------|-------|-------------|
@@ -118,6 +116,7 @@ The server exposes **23 redesigned CUA-aligned MCP tools** organized into 5 cate
 | **Window Management** | `focus_window`, `move_window`, `resize_window`, `list_windows` | Window enumeration and manipulation |
 | **Application Management** | `open_app`, `list_apps`, `close_app` | Application lifecycle management |
 | **Utility** | `clipboard`, `run`, `get_display` | Clipboard, command execution, and display grounding |
+| **Macros** | `create_macro`, `get_macro`, `list_macros`, `update_macro`, `delete_macro`, `execute_macro` | Recorded multi-step automation sequences |
 
 
 https://github.com/user-attachments/assets/d8dc75ba-5b15-492c-bb40-d2bc5b65483e
@@ -128,104 +127,23 @@ Highlight whatever is happening on the computer: text elements, clicks, typing
 Listen to changes in the UI, elements changed, text changed
 ![Image](https://github.com/user-attachments/assets/4a972dfa-ce4d-4b1a-9781-43379375b313)
 
-## Building the Tools
+## Building
 
-To build the command-line tools provided by this package, navigate to the root directory (`MacosUseSDK`) in your terminal and run:
+Use the repository's logged GNU Make targets so Swift, Go, protobuf generation,
+and contract checks run with the supported configuration:
 
 ```sh
-swift build
+gmake all
 ```
 
-This will compile the tools and place the executables in the `.build/debug/` directory (or `.build/release/` if you use `swift build -c release`). You can run them directly from there (e.g., `.build/debug/TraversalTool`) or use `swift run <ToolName>`.
+The logged variant (output capped to the last lines, full log in
+`build.log`) is available as `gmake make-all-with-log` when the local
+`config.mk` defines it — see `example.config.mk`.
 
-## Available Tools
-
-All tools output informational logs and timing data to `stderr`. Primary output (like PIDs or JSON data) is sent to `stdout`.
-
-### AppOpenerTool
-
-*   **Purpose:** Opens or activates a macOS application by its name, bundle ID, or full path. Outputs the application's PID on success.
-*   **Usage:** `AppOpenerTool <Application Name | Bundle ID | Path>`
-*   **Examples:**
-    ```sh
-    # Open by name
-    swift run AppOpenerTool Calculator
-    # Open by bundle ID
-    swift run AppOpenerTool com.apple.Terminal
-    # Open by path
-    swift run AppOpenerTool /System/Applications/Utilities/Terminal.app
-    # Example output (stdout)
-    # 54321
-    ```
-
-### TraversalTool
-
-*   **Purpose:** Traverses the accessibility tree of a running application (specified by PID) and outputs a JSON representation of the UI elements to `stdout`.
-*   **Usage:** `TraversalTool [--visible-only] <PID>`
-*   **Options:**
-    *   `--visible-only`: Only include elements that have a position and size (are geometrically visible).
-*   **Examples:**
-    ```sh
-    # Get only visible elements for Messages app
-    swift run TraversalTool --visible-only $(swift run AppOpenerTool Messages)
-    ```
-
-### HighlightTraversalTool
-
-*   **Purpose:** Traverses the accessibility tree of a running application (specified by PID) and draws temporary red boxes around all visible UI elements. Also outputs traversal data (JSON) to `stdout`. Useful for debugging accessibility structures.
-*   **Usage:** `HighlightTraversalTool <PID> [--duration <seconds>]`
-*   **Options:**
-    *   `--duration <seconds>`: Specifies how long the highlights remain visible (default: 3.0 seconds).
-*   **Examples:**
-    ```sh
-    # Combine with AppOpenerTool to open Messages and highlight it
-    swift run HighlightTraversalTool $(swift run AppOpenerTool Messages) --duration 5
-    ```
-    *Note: This tool needs to keep running for the duration specified to manage the highlights.*
-
-### InputControllerTool
-
-*   **Purpose:** Simulates keyboard and mouse input events without visual feedback.
-*   **Usage:** See `swift run InputControllerTool --help` (or just run without args) for actions.
-*   **Examples:**
-    ```sh
-    # Press the Enter key
-    swift run InputControllerTool keypress enter
-    # Simulate Cmd+C (Copy)
-    swift run InputControllerTool keypress cmd+c
-    # Simulate Shift+Tab
-    swift run InputControllerTool keypress shift+tab
-    # Left click at screen coordinates (100, 250)
-    swift run InputControllerTool click 100 250
-    # Double click at screen coordinates (150, 300)
-    swift run InputControllerTool doubleclick 150 300
-    # Right click at screen coordinates (200, 350)
-    swift run InputControllerTool rightclick 200 350
-    # Move mouse cursor to (500, 500)
-    swift run InputControllerTool mousemove 500 500
-    # Type the text "Hello World!"
-    swift run InputControllerTool writetext "Hello World!"
-    ```
-
-### VisualInputTool
-
-*   **Purpose:** Simulates keyboard and mouse input events *with* visual feedback (currently a pulsing green circle for mouse actions).
-*   **Usage:** Similar to `InputControllerTool`, but adds a `--duration` option for the visual effect. See `swift run VisualInputTool --help`.
-*   **Options:**
-    *   `--duration <seconds>`: How long the visual feedback effect lasts (default: 0.5 seconds).
-*   **Examples:**
-    ```sh
-    # Left click at (100, 250) with default 0.5s feedback
-    swift run VisualInputTool click 100 250
-    # Right click at (800, 400) with 2 second feedback
-    swift run VisualInputTool rightclick 800 400 --duration 2.0
-    # Move mouse to (500, 500) with 1 second feedback
-    swift run VisualInputTool mousemove 500 500 --duration 1.0
-    # Keypress and writetext (currently NO visualization implemented)
-    swift run VisualInputTool keypress cmd+c
-    swift run VisualInputTool writetext "Testing"
-    ```
-    *Note: This tool needs to keep running for the duration specified to display the visual feedback.*
+The root Swift package intentionally publishes only the `MacosUseSDK` library.
+The former standalone command-line products are not part of the supported
+surface; server deployments should use the owned gRPC transaction or MCP tool
+boundary.
 
 ### Running Tests
 
@@ -234,10 +152,10 @@ Run a specific test method: Provide the full identifier TestClassName/testMethod
 
 ```sh
 swift test
-# Example: Run only the multiply test in CombinedActionsDiffTests
-swift test --filter CombinedActionsDiffTests/testCalculatorMultiplyWithActionAndTraversalHighlight
-# Example: Run all tests in CombinedActionsFocusVisualizationTests
-swift test --filter CombinedActionsFocusVisualizationTests
+# Example: Run the physical-input timing contract suite (SDK package)
+swift test --filter InputTimingContractTests
+# Example: Run the owned input-overlay contract suite (Server package)
+(cd Server && swift test --filter InputOverlayPresenterTests)
 ```
 
 
@@ -259,41 +177,18 @@ And add `MacosUseSDK` to your target's dependencies:
     dependencies: ["MacosUseSDK"]),
 ```
 
-Then import and use the public functions:
+Then import the low-level SDK:
 
 ```swift
 import MacosUseSDK
-import Foundation // For Dispatch etc.
-
-// Example: Get elements from Calculator app
-Task {
-    do {
-        // Find Calculator PID (replace with actual logic or use AppOpenerTool output)
-        // let calcPID: Int32 = ...
-        // let response = try MacosUseSDK.traverseAccessibilityTree(pid: calcPID, onlyVisibleElements: true)
-        // print("Found \(response.elements.count) visible elements.")
-
-        // Example: Click at a point
-        let point = CGPoint(x: 100, y: 200)
-        try MacosUseSDK.clickMouse(at: point)
-
-        // Example: Click with visual feedback (needs main thread for UI)
-        DispatchQueue.main.async {
-            do {
-                 try MacosUseSDK.clickMouseAndVisualize(at: point, duration: 1.0)
-            } catch {
-                 print("Visualization error: \(error)")
-            }
-        }
-
-    } catch {
-        print("MacosUseSDK Error: \(error)")
-    }
-}
-
-// Remember to keep the run loop active if using async UI functions like highlightVisibleElements or *AndVisualize
-// RunLoop.main.run() // Or use within an @main Application structure
 ```
+
+The SDK exposes process-local Accessibility and Core Graphics primitives for
+embedding. Those low-level functions do not carry the public gRPC resource
+target, ownership, cancellation, or delivery receipt. Production automation
+should use the generated `MacosUse` client or the MCP server so each physical
+input names an exact application, window, display, or explicit desktop target
+and returns a truthful terminal delivery result.
 
 ## gRPC Server
 
@@ -301,12 +196,12 @@ The repository includes a production-ready gRPC server that exposes all SDK func
 
 ### Features
 
-- **23 redesigned MCP tools** for focused macOS automation
+- **29 CUA-aligned MCP tools** for focused macOS automation
 - **Resource-oriented API** following [Google's AIPs](https://google.aip.dev/)
 - **Multi-application support**: Automate multiple applications simultaneously
 - **Real-time streaming**: Watch accessibility tree changes in real-time
 - **Thread-safe architecture**: CQRS-style with central control loop
-- **Flexible transport**: HTTP+SSE or Unix domain sockets
+- **Flexible transport**: Streamable HTTP or Unix domain sockets
 - **Production-ready**: TLS, API key authentication, rate limiting, audit logging
 
 ### Quick Start
@@ -325,11 +220,11 @@ cd Server && swift build -c release
 
 ### Environment Variables
 
-Key configuration options (see [API Reference](docs/ai-artifacts/10-api-reference.md#3-environment-variable-reference) for complete list):
+Key configuration options (see [Server/README.md](Server/README.md) for the Swift server and [cmd/macos-use-mcp/README.md](cmd/macos-use-mcp/README.md) for the MCP proxy):
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `MCP_HTTP_ADDRESS` | HTTP server address | `:8080` |
+| `MCP_HTTP_ADDRESS` | HTTP server address | `127.0.0.1:8080` |
 | `MCP_HTTP_SOCKET` | Unix socket path (if set, uses UDS) | - |
 | `MCP_TLS_CERT_FILE` | TLS certificate file path | - |
 | `MCP_TLS_KEY_FILE` | TLS private key file path | - |
@@ -344,19 +239,25 @@ Open Calculator and click using MCP tools over HTTP:
 
 ```sh
 # Initialize MCP session
-curl -X POST http://localhost:8080/message \
+curl -X POST http://localhost:8080/mcp \
+	-H "Accept: application/json, text/event-stream" \
+	-H "MCP-Protocol-Version: 2025-11-25" \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","clientInfo":{"name":"example"}}}'
 
-# Call open_app tool
-curl -X POST http://localhost:8080/message \
+# Call open_app tool (list_apps first returns the exact applicationBundles/* resource)
+curl -X POST http://localhost:8080/mcp \
+	-H "Accept: application/json, text/event-stream" \
+	-H "MCP-Protocol-Version: 2025-11-25" \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"open_app","arguments":{"id":"Calculator"}}}'
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"open_app","arguments":{"app":"applicationBundles/1c8c8d1c8d1c8d1c8d1c8d1c8d1c8d1c"}}}'
 
 # Call click tool at coordinates
-curl -X POST http://localhost:8080/message \
+curl -X POST http://localhost:8080/mcp \
+	-H "Accept: application/json, text/event-stream" \
+	-H "MCP-Protocol-Version: 2025-11-25" \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"click","arguments":{"x":100,"y":200}}}'
+  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"click","arguments":{"target":"desktop","x":100,"y":200}}}'
 ```
 
 ## License

@@ -28,36 +28,33 @@ swift build -c release
 swift run MacosUseServer
 ```
 
-Or from the project root using make:
+Or from the project root using GNU make:
 
 ```bash
-make swift-build     # Builds both SDK and Server
-make swift-run       # Runs the server
+gmake swift.build.Server   # Builds the Server package (release)
+# Run: Server/.build/release/MacosUseServer
 ```
 
 ## Configuration
 
 The server is configured via environment variables. All variables have sensible defaults.
 
-### Core Settings
+### Core Settings (Swift server)
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `MACOS_USE_SERVER_ADDR` | gRPC server listen address | `localhost:50051` |
-| `MACOS_USE_SERVER_TLS` | Enable TLS for gRPC connections | `false` |
-| `MACOS_USE_SERVER_CERT_FILE` | Path to TLS certificate (when TLS enabled) | _(none)_ |
-| `MACOS_USE_REQUEST_TIMEOUT` | Request timeout in seconds | `30` |
-| `MACOS_USE_DEBUG` | Enable debug logging | `false` |
+| `GRPC_LISTEN_ADDRESS` | gRPC server bind address | `127.0.0.1` |
+| `GRPC_PORT` | gRPC server port | `8080` |
+| `GRPC_UNIX_SOCKET` | Unix socket path (overrides TCP) | _(none)_ |
 
 ### Transport Settings (for MCP tool)
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `MCP_TRANSPORT` | Transport type: `stdio` or `sse` | `stdio` |
-| `MCP_HTTP_ADDRESS` | HTTP/SSE listen address | `:8080` |
+| `MCP_TRANSPORT` | Transport type: `stdio` or `streamable-http` | `stdio` |
+| `MCP_HTTP_ADDRESS` | Streamable HTTP listen address | `127.0.0.1:8080` |
 | `MCP_HTTP_SOCKET` | Unix socket path (overrides address) | _(none)_ |
-| `MCP_CORS_ORIGIN` | CORS allowed origin | `*` |
-| `MCP_HEARTBEAT_INTERVAL` | SSE heartbeat interval | `30s` |
+| `MCP_CORS_ORIGIN` | Exact allowed browser origin | _(none)_ |
 | `MCP_HTTP_READ_TIMEOUT` | HTTP read timeout | `30s` |
 | `MCP_HTTP_WRITE_TIMEOUT` | HTTP write timeout | `30s` |
 
@@ -70,35 +67,35 @@ The server is configured via environment variables. All variables have sensible 
 | `MCP_API_KEY` | API key for Bearer token authentication | _(none)_ |
 | `MCP_SHELL_COMMANDS_ENABLED` | Enable shell command execution | `false` |
 | `MCP_RATE_LIMIT` | Rate limit in requests/second (0=disabled) | `0` |
-| `MCP_AUDIT_LOG_FILE` | Path to audit log file | _(none)_ |
+| `MCP_AUDIT_LOG_FILE` | Owner-private non-content audit log path | _(none)_ |
 
 ### Example Configuration
 
 ```bash
-# Production deployment
-export MACOS_USE_SERVER_ADDR="0.0.0.0:50051"
-export MACOS_USE_SERVER_TLS="true"
-export MACOS_USE_SERVER_CERT_FILE="/etc/ssl/certs/server.crt"
-export MCP_API_KEY="$(openssl rand -base64 32)"
-export MCP_RATE_LIMIT="100"
-export MCP_AUDIT_LOG_FILE="/var/log/macos-use-audit.log"
+# Production deployment: Swift gRPC server bound to a unix socket
+export GRPC_LISTEN_ADDRESS="127.0.0.1"
+export GRPC_PORT="8080"
+export GRPC_UNIX_SOCKET="$HOME/Library/Caches/macosuse.sock"
 
 swift run MacosUseServer
 ```
 
+When `MCP_AUDIT_LOG_FILE` is set, the MCP process records tool name, status, duration, and UTC timestamps only; tool arguments and user content are never stored. New files are created with mode `0600`. Existing paths must be regular files owned by the current user, mode `0600`, with one hard link; symlinks and non-regular files are rejected.
+
 ## API Reference
 
-See [docs/10-api-reference.md](../docs/ai-artifacts/10-api-reference.md) for the complete API documentation including:
+See [DEPLOYMENT.md](../DEPLOYMENT.md) for the complete deployment guide and the gRPC proto sources under [proto/](../proto/) for the resource-oriented API. The MCP tool surface is documented in [../skills/macos-use/](../skills/macos-use/).
 
-- 23 redesigned CUA-aligned MCP tools
+- 29 CUA-aligned MCP tools (see the skill's workflow reference)
 - Coordinate system reference
 - Environment variable details
-- Error code reference
 - Resource naming conventions
 
 ## TLS Setup
 
-For production deployments with TLS:
+The Swift gRPC server does not serve TLS: it is intended to bind to
+loopback or an owner-private Unix socket (see the Core Settings table).
+TLS is provided by the MCP proxy's Streamable HTTP endpoint:
 
 1. **Generate or obtain certificates:**
    ```bash
@@ -108,20 +105,17 @@ For production deployments with TLS:
    # For production, use certificates from a trusted CA
    ```
 
-2. **Configure the server:**
-   ```bash
-   export MACOS_USE_SERVER_TLS="true"
-   export MACOS_USE_SERVER_CERT_FILE="/path/to/cert.pem"
-   # Note: Private key path is derived from cert file location
-   ```
-
-3. **For HTTPS (MCP SSE transport):**
+2. **Configure the MCP proxy:**
    ```bash
    export MCP_TLS_CERT_FILE="/path/to/cert.pem"
    export MCP_TLS_KEY_FILE="/path/to/key.pem"
    ```
 
-See [docs/ai-artifacts/08-production-deployment.md](../docs/ai-artifacts/08-production-deployment.md) and [docs/ai-artifacts/09-security-hardening.md](../docs/ai-artifacts/09-security-hardening.md) for comprehensive deployment guidance.
+   Both variables are required; the certificate and key must be configured
+   together, and a non-loopback TCP listener is rejected unless TLS,
+   API-key authentication, and a positive rate limit are all configured.
+
+See [DEPLOYMENT.md](../DEPLOYMENT.md) for comprehensive deployment guidance.
 
 ## Architecture
 
@@ -130,7 +124,7 @@ See [docs/ai-artifacts/08-production-deployment.md](../docs/ai-artifacts/08-prod
 │                        MCP Clients                              │
 │              (Claude, VS Code, AI Assistants)                   │
 └───────────────────────────┬─────────────────────────────────────┘
-                            │ JSON-RPC over stdio/SSE
+                            │ JSON-RPC over stdio / Streamable HTTP
                             ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                       macos-use-mcp (Go)                             │

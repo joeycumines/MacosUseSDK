@@ -44,9 +44,10 @@ The API is built around a hierarchy of resources that represent the state and ca
       * Represents an on-screen window.
       * Designed for high-performance enumeration (see *Window Design Pattern* below).
 
-3.  **Input** (`applications/{application}/inputs/{input}` or `desktopInputs/{input}`)
+3.  **Input** (`applications/{application}/inputs/{input}`; use application `-` for desktop-wide input)
 
-      * Represents a discrete input action (click, type, gesture) within a timeline.
+      * Represents one owned physical input transaction with an exact application, window, display, or explicit desktop target.
+      * Preserves immutable action and target intent plus truthful delivery commitment and posted-event evidence.
 
 4.  **Session** (`sessions/{session}`)
 
@@ -152,7 +153,6 @@ The API exposes extensive custom methods categorized by capability:
 **File System & Dialogs:**
 
   * `AutomateOpenFileDialog`, `AutomateSaveFileDialog`
-  * `SelectFile`, `SelectDirectory`, `DragFiles`
 
 **Script Execution:**
 
@@ -170,9 +170,15 @@ The API exposes extensive custom methods categorized by capability:
   * `WatchAccessibility` (stream tree changes)
   * `StreamObservations` (stream specific monitored events)
 
-### Input Timeline & Circular Buffer
+### Input Lifecycle
 
-Inputs (`CreateInput`) form a timeline. The server maintains a configurable circular buffer of `COMPLETED` inputs, allowing clients to query recent history for debugging or pattern analysis.
+`CreateInput` requires a caller identity and exact target. A queued input remains
+`PENDING`, changes to `EXECUTING` only after final target admission, then settles
+as `COMPLETED`, `FAILED`, or `CANCELLED`. Completed inputs require
+`COMMITTED_AND_SETTLED`, a positive post count, and routed-delivery observation;
+failed or cancelled inputs retain precise `NO_EFFECT` or
+`POSSIBLY_COMMITTED` truth. `GetInput` and `ListInputs` expose persisted history
+without changing the immutable action or target.
 
 ### Standard Methods (AIP-130 - AIP-135)
 

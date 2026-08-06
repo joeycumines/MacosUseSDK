@@ -70,14 +70,14 @@ For local development with custom server configuration:
 ```sh
 # Swift gRPC server
 export GRPC_LISTEN_ADDRESS="127.0.0.1"
-export GRPC_PORT="50051"
+export GRPC_PORT="8080"
 
 # Go MCP server
-export MCP_HTTP_ADDR="127.0.0.1:8080"
-export MCP_SERVER_ADDR="127.0.0.1:50051"
+export MCP_HTTP_ADDRESS="127.0.0.1:8080"
+export MACOS_USE_SERVER_ADDR="127.0.0.1:8080"
 ```
 
-See the [API Reference](docs/ai-artifacts/10-api-reference.md#3-environment-variable-reference) for all 18 environment variables.
+See the [Deployment Guide](DEPLOYMENT.md) for the full environment variable reference.
 
 ## Building
 
@@ -208,8 +208,8 @@ func TestSomething(t *testing.T) {
     // ... test setup ...
     
     t.Cleanup(func() {
-        // DeleteApplication cleans up server-side state
-        _, _ = client.DeleteApplication(ctx, &pb.DeleteApplicationRequest{
+        // CloseApplication closes the exact owned process and cleans up state.
+        _, _ = client.CloseApplication(ctx, &pb.CloseApplicationRequest{
             Name: fmt.Sprintf("applications/%d", pid),
             Force: true,
         })

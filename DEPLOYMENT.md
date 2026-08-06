@@ -1,157 +1,330 @@
-# Deployment Guide
+# Deploying MacosUseSDK Locally on macOS
 
-This guide covers deploying the **MacosUseServer** (gRPC Swift server) locally
-with macOS TCC permissions (Accessibility + Screen Recording) and connecting an
-MCP client (opencode) to it.
+MacosUseSDK is not a conventional command-line service. Its Swift server needs
+to use Accessibility, Core Graphics input, AppKit, and ScreenCaptureKit from the
+logged-in desktop session. That changes the deployment design in three important
+ways:
 
-## Quick Start (2 commands)
+1. the server must have a stable, app-like identity for macOS privacy controls;
+2. the SwiftPM resource bundle must travel with the executable; and
+3. the process must run as a per-user LaunchAgent in the GUI domain.
 
-```sh
-gmake macos-use.install          # Build + bundle + sign + launchd + socket check
-# Then grant TCC permissions in System Settings (see Step 2 below)
-gmake macos-use.restart          # Restart so the server picks up the new TCC grants
+This guide implements that design for a **single-user, same-Mac development
+installation**. It builds the Swift gRPC server and Go MCP proxy, installs the
+server as `~/Applications/MacosUseServer.app`, signs and registers the app, and
+runs it behind an owner-only Unix socket.
+
+> This is a local-development deployment, not a distribution pipeline. Shipping
+> the app to other Macs requires a Developer ID workflow, Hardened Runtime,
+> notarization, stapling, and an update strategy that are intentionally outside
+> this guide.
+
+All commands below are run from the repository root. All deployment targets are
+implemented in [`make/macos-use.mk`](make/macos-use.mk). Run `gmake help` and
+look for the `[MacosUse]` sections to list them.
+
+## The resulting architecture
+
+```text
+┌──────────────┐      MCP over stdio      ┌──────────────────┐
+│   OpenCode   │ ◄──────────────────────► │  macos-use-mcp   │
+│  MCP client  │                          │    Go process    │
+└──────────────┘                          └────────┬─────────┘
+                                                 │ gRPC
+                                                 │ Unix socket (0600)
+                                                 ▼
+                                      ┌────────────────────────┐
+                                      │ MacosUseServer.app     │
+                                      │ Swift LaunchAgent      │
+                                      │ GUI user session       │
+                                      └───────────┬────────────┘
+                                                  │
+                           Accessibility / CGEvent / ScreenCaptureKit
 ```
 
-All deployment targets live in [`make/macos-use.mk`](make/macos-use.mk).
-Run `gmake help` and look for the `[MacosUse]` section to see every target.
+The two executables have deliberately different responsibilities:
+
+- **`MacosUseServer`** is the native Swift service. It receives the macOS TCC
+  grants and runs from an application bundle under the user's GUI launchd
+  domain.
+- **`macos-use-mcp`** is the Go MCP adapter. It speaks MCP to OpenCode and gRPC
+  to the Swift server. It does not need Accessibility or screen-capture access.
+
+For the local installation, the two processes communicate through
+`~/Library/Caches/macosuse.sock`; no TCP listener is required.
 
 ## Prerequisites
 
-- **macOS 15+** (Sequoia — required for Swift 6 concurrency features)
-- **Swift 6.0+** (matching `// swift-tools-version: 6.0` in `Server/Package.swift`)
-- **Go 1.22+** (for the MCP proxy `cmd/macos-use-mcp`)
-- **GNU Make 4.x+** (`brew install make`; invoked as `gmake`)
-- **grpcurl** (`brew install grpcurl`; for manual testing)
+The checked-in source currently establishes the authoritative versions:
 
-## Architecture
+- **macOS 15 or later** — `Server/Package.swift` declares `.macOS(.v15)`.
+- **Swift 6 or later** — `Server/Package.swift` declares
+  `// swift-tools-version: 6.0`.
+- **Go matching `go.mod`** — the current module directive is `go 1.26.3`.
+- **Buf CLI** — `macos-use.build-server` regenerates the descriptor set through
+  the repository's `buf.descriptor-sets` target.
+- **GNU Make 4 or later** — use Homebrew's `gmake`, not Apple's BSD `make`.
+- **Xcode Command Line Tools** — supplies `swift`, `codesign`, `plutil`, and the
+  other macOS development utilities.
 
+A typical Homebrew setup is:
+
+```sh
+xcode-select --install
+brew install go make bufbuild/buf/buf
 ```
-┌───────────┐     stdio/SSE     ┌──────────────────┐     gRPC      ┌──────────────────┐
-│  opencode │◄─────────────────►│  macos-use-mcp   │◄─────────────►│  MacosUseServer  │
-│  (AI)     │                   │  (Go binary)     │  unix socket  │  (Swift binary)  │
-└───────────┘                   └──────────────────┘               └──────────────────┘
+
+`grpcurl` is useful for manual gRPC diagnostics but is not required by the
+installation target:
+
+```sh
+brew install grpcurl
 ```
 
-Two separate processes:
-1. **MacosUseServer** — Swift gRPC server that talks to macOS Accessibility,
-   ScreenCaptureKit, and CGEvent APIs. Must run inside an `.app` bundle for
-   TCC to track its bundle identifier.
-2. **macos-use-mcp** — Go MCP proxy that translates MCP tool calls into gRPC
-   requests to the Swift server. No macOS permissions needed.
+Check the machine and source tree before deploying:
 
-## About Code Signing
+```sh
+gmake macos-use.doctor
+```
 
-The `.app` bundle is signed with an **ad-hoc identity** (`codesign --force --deep
---sign -`). This is sufficient for local deployment — macOS TCC tracks the app
-by its bundle identifier (`com.macosusesdk.server`) and grants permissions when
-the user adds it in System Settings.
+## Quick start
 
-The `macos-use.sign` target clears extended attributes (`xattr -cr`) before
-signing to ensure a clean signature, then verifies with
-`codesign --verify --deep --strict`.
-
-### Apple Documentation References
-
-| Topic | Link |
-|-------|------|
-| Hardened Runtime | <https://developer.apple.com/documentation/security/hardened_runtime> |
-| Notarizing macOS software | <https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution> |
-| Entitlements | <https://developer.apple.com/documentation/bundleresources/entitlements> |
-| codesign(1) man page | <https://www.unix.com/man-page/osx/1/codesign/> |
-| SCScreenshotManager | <https://developer.apple.com/documentation/screencapturekit/scscreenshotmanager> |
-| SCContentFilter.contentRect | <https://developer.apple.com/documentation/screencapturekit/sccontentfilter/contentrect> |
-| SCContentFilter.pointPixelScale | <https://developer.apple.com/documentation/screencapturekit/sccontentfilter/pointpixelscale> |
-| Capturing screen content in macOS | <https://developer.apple.com/documentation/screencapturekit/capturing_screen_content_in_macos> |
-
-## Step-by-Step Local Deployment
-
-### Step 1: Build + Bundle + Sign + Install (one command)
+The default installation uses an ad-hoc signature, which is convenient for a
+one-off local build:
 
 ```sh
 gmake macos-use.install
 ```
 
-This single target performs all of the following:
+Then grant the app both privacy permissions in **System Settings → Privacy &
+Security**:
 
-1. **Builds** the Swift server (release) and the Go MCP proxy
-2. **Deletes** any existing `.app` bundle in full (`rm -rf`)
-3. **Creates** the `.app` bundle structure with `Info.plist`
-4. **Clears** extended attributes (`xattr -cr`) — required for a clean signature
-5. **Signs** with ad-hoc identity (`codesign --force --deep --sign -`)
-6. **Registers** with LaunchServices (`lsregister -f`)
-7. **Creates** and **loads** the launchd service
-8. **Checks** that the socket appears (the `launchd` target polls for it)
+1. **Accessibility** — add `~/Applications/MacosUseServer.app` and enable it.
+2. **Screen & System Audio Recording** — add the same app and enable it. On some
+   macOS releases this panel is labelled **Screen Recording**.
 
-Binary locations after install:
-- Server: `~/Applications/MacosUseServer.app/Contents/MacOS/MacosUseServer`
-- MCP: `~/go/bin/macos-use-mcp` (via `go install`)
+Restart the already-signed service so the new grants apply:
 
-### Step 2: Grant macOS Permissions (TCC)
+```sh
+gmake macos-use.restart
+gmake macos-use.verify
+```
 
-The server needs two TCC permissions. After `gmake macos-use.install` (which
-starts the server), macOS will prompt for each on first use. You can also grant
-them manually:
+`macos-use.restart` does not build, replace, or re-sign the application.
 
-1. Open **System Settings** → **Privacy & Security** → **Accessibility**
-2. Click **+**, navigate to `~/Applications/MacosUseServer.app`, add it
-3. Toggle the switch **ON**
-4. Repeat for **Screen Recording** (System Settings → Privacy & Security →
-   Screen Recording)
+## Prefer a stable signing identity
 
-| Permission       | Triggered By              | Purpose                                    |
-|------------------|---------------------------|-------------------------------------------|
-| Accessibility    | `TraverseAccessibility`  | Reading and controlling UI elements via AX |
-| Screen Recording | `CaptureScreenshot`       | Capturing screen/window/region screenshots |
+TCC tracks protected privileges using an app's code-signing identity. An ad-hoc
+signature is adequate to execute a local app, but it is not a stable identity:
+rebuilding and signing new bytes can cause Accessibility or screen-capture
+approval to disappear.
 
-**After granting, restart the server** so the running process picks up the
-new TCC grants:
+List available code-signing identities:
+
+```sh
+security find-identity -v -p codesigning
+```
+
+For day-to-day development, install with a persistent Apple Development
+identity:
+
+```sh
+gmake macos-use.install \
+  MACOS_USE_SIGN_IDENTITY='Apple Development: Your Name (TEAMID)'
+```
+
+Keep the bundle identifier and signing identity consistent across builds. That
+is the practical way to preserve TCC grants while iterating.
+
+The Makefile intentionally does **not** use `codesign --deep` while signing.
+Apple's signing model is to sign nested code from the inside out and then sign
+the outer app. This bundle currently contains one main executable and
+resource-only SwiftPM bundles, so signing the outer app is sufficient. The
+verification phase does use `--deep --strict` to detect invalid nested content.
+If executable helpers, frameworks, or plug-ins are added later, sign those
+components explicitly before signing the app.
+
+## What `macos-use.install` does
+
+The installation target runs these phases in a fixed order rather than relying
+on a parallel phony-prerequisite graph:
+
+1. **Doctor** — validates macOS, GNU Make, required commands, and source files.
+2. **Build server** — generates the protobuf descriptor set and performs a
+   release Swift build.
+3. **Build MCP proxy** — installs `macos-use-mcp` into the resolved Go binary
+   directory.
+4. **Stop service** — unloads any existing LaunchAgent before replacing signed
+   code on disk.
+5. **Bundle** — creates a staged `.app`, copies the executable and all SwiftPM
+   resource bundles, validates `Info.plist`, then moves the staged app into
+   place.
+6. **Sign** — clears extended attributes on the freshly generated app, signs it,
+   and performs strict verification.
+7. **Register** — registers the signed app with LaunchServices.
+8. **Launch** — writes and bootstraps the per-user LaunchAgent in
+   `gui/$(id -u)`.
+9. **Verify** — fails unless the bundle, descriptor resources, signature,
+   LaunchAgent, running state, socket mode, and MCP binary are all valid.
+
+The low-level targets are intentionally independent. For example,
+`gmake macos-use.register` registers the app that is already installed; it does
+not unexpectedly rebuild or re-sign it.
+
+## Why the SwiftPM resource bundle matters
+
+`Server/Package.swift` declares:
+
+```swift
+resources: [
+    .copy("DescriptorSets"),
+]
+```
+
+SwiftPM therefore emits a resource bundle named
+`MacosUseServer_MacosUseServer.bundle`. The generated `Bundle.module` accessor
+first looks for that bundle relative to `Bundle.main.bundleURL` and otherwise
+falls back to the build-tree path embedded at compile time.
+
+Copying only the executable is not a complete deployment. It leaves production
+startup dependent on the source build directory and can trigger a fatal
+resource-bundle lookup failure.
+
+The corrected bundle phase stores the real resource bundle under the standard
+macOS location:
+
+```text
+MacosUseServer.app/Contents/Resources/MacosUseServer_MacosUseServer.bundle
+```
+
+The verifier checks the installed bundle and at least one packaged `*.pb`
+descriptor file.
+
+## Why this is a LaunchAgent
+
+A LaunchDaemon runs outside the logged-in user's GUI context and is the wrong
+execution domain for a service that talks to the accessibility server,
+WindowServer, AppKit, and ScreenCaptureKit.
+
+The generated plist is installed at:
+
+```text
+~/Library/LaunchAgents/com.macosusesdk.server.plist
+```
+
+It runs in the exact service domain:
+
+```text
+gui/<uid>/com.macosusesdk.server
+```
+
+Lifecycle commands use modern launchctl operations:
+
+- `bootstrap` to load the plist;
+- `bootout` to unload it;
+- `kickstart -k` to restart the loaded service; and
+- `launchctl print gui/<uid>/<label>` to inspect that exact service.
+
+`KeepAlive=true` keeps the server resident and already implies `RunAtLoad`, so a
+separate `RunAtLoad` key is unnecessary. The plist also sets an octal `0177`
+umask. The Swift server independently applies the same restrictive umask and
+changes the socket to `0600` after binding.
+
+## Installed paths
+
+| Artifact | Default path |
+|---|---|
+| Application bundle | `~/Applications/MacosUseServer.app` |
+| Server executable | `~/Applications/MacosUseServer.app/Contents/MacOS/MacosUseServer` |
+| SwiftPM resources | `~/Applications/MacosUseServer.app/Contents/Resources/*.bundle` |
+| LaunchAgent plist | `~/Library/LaunchAgents/com.macosusesdk.server.plist` |
+| gRPC Unix socket | `~/Library/Caches/macosuse.sock` |
+| Standard output log | `~/Library/Logs/macosuse.log` |
+| Standard error log | `~/Library/Logs/macosuse.error.log` |
+| MCP binary | `$GOBIN/macos-use-mcp`, otherwise the first `$GOPATH/bin` |
+| Build logs | `.build-logs/macos-use-server.log` and `.build-logs/macos-use-mcp.log` |
+
+Go's usual default is `~/go/bin`, but the Makefile resolves `GOBIN` and
+`GOPATH` instead of assuming that location.
+
+## Granting and resetting TCC permissions
+
+The server needs these grants:
+
+| Permission | Representative operation | Why it is needed |
+|---|---|---|
+| Accessibility | `find_elements`, element reads, clicks, typing, window mutations | Read and control other apps through AX APIs |
+| Screen & System Audio Recording | `screenshot` | Capture displays and windows with ScreenCaptureKit |
+
+OpenCode may display MCP tools with the configured server-name prefix, such as
+`macos-use_screenshot`.
+
+After changing either permission, restart the process:
 
 ```sh
 gmake macos-use.restart
 ```
 
-> **Note:** Each `gmake macos-use.install` re-codesigns the binary (new cdhash),
-> which may invalidate TCC grants. Re-grant in System Settings, then
-> `gmake macos-use.restart` (which does NOT re-sign).
-
-**To reset a previously-denied or stale permission:**
+To remove denied or stale records during development:
 
 ```sh
 gmake macos-use.tcc-reset
 ```
 
-### Step 3: Verify the Deployment
+Then re-enable both permissions in System Settings and restart again. The reset
+target reports missing records as warnings rather than pretending a record was
+removed.
+
+## Verifying the deployment
+
+Run the strict structural and runtime verifier at any time:
 
 ```sh
 gmake macos-use.verify
 ```
 
-This checks: bundle structure, codesign verification, embedded entitlements,
-Info.plist validity, socket existence, running process, and launchd status.
+Unlike a status display, verification returns a non-zero exit status when a
+required condition fails. It checks:
 
-You can also use the MCP tools to verify end-to-end:
+- the app and executable;
+- `Info.plist` syntax and bundle identifier;
+- the installed SwiftPM bundle and protobuf descriptor resources;
+- strict recursive code-signing validity;
+- the LaunchAgent plist;
+- the exact launchd service and its running state;
+- the Unix socket and its `0600` mode; and
+- the installed MCP executable.
 
-1. **No-permission test** (uses Quartz/CGWindowList, no TCC needed):
-   ```
-   macos-use_list_apps
-   macos-use_list_windows
-   macos-use_get_display
-   ```
+For an end-to-end permission check, exercise the MCP surface in this order:
 
-2. **Accessibility test** (triggers AX permission prompt on first use):
-   ```
-   macos-use_open_app  (id: "Calculator")
-   macos-use_find_elements  (parent: "applications/{pid}")
-   ```
+1. Basic transport and enumeration: `get_display`, `list_apps`, `list_windows`.
+2. Accessibility: `open_app`, then `find_elements` for the returned application.
+3. Screen capture: `screenshot`.
 
-3. **Screen Recording test** (triggers Screen Recording prompt on first use):
-   ```
-   macos-use_screenshot
-   ```
+The Makefile deliberately does not automate TCC interaction or treat a missing
+privacy grant as an installation failure; those decisions require the logged-in
+user.
 
-### Step 4: Configure the MCP Client (opencode)
+## Configuring OpenCode
 
-Create a project-level `opencode.jsonc` in the repo root:
+Keep this MCP server project-scoped by creating `opencode.jsonc` in the
+repository root. OpenCode searches upward from the working directory to the
+nearest Git root, and its project configuration overrides standard global
+configuration.
+
+First determine the actual MCP binary path:
+
+```sh
+GOBIN_PATH="$(go env GOBIN)"
+if [ -z "$GOBIN_PATH" ]; then
+  GOPATH_PATH="$(go env GOPATH)"
+  GOBIN_PATH="${GOPATH_PATH%%:*}/bin"
+fi
+printf '%s\n' "$GOBIN_PATH/macos-use-mcp"
+printf '%s\n' "$HOME/Library/Caches/macosuse.sock"
+```
+
+Use those absolute paths in the project configuration:
 
 ```jsonc
 {
@@ -162,7 +335,8 @@ Create a project-level `opencode.jsonc` in the repo root:
       "command": ["/Users/YOU/go/bin/macos-use-mcp"],
       "enabled": true,
       "environment": {
-        "MACOS_USE_SERVER_SOCKET_PATH": "/Users/YOU/Library/Caches/macosuse.sock"
+        "MACOS_USE_SERVER_SOCKET_PATH": "/Users/YOU/Library/Caches/macosuse.sock",
+        "MCP_TRANSPORT": "stdio"
       },
       "timeout": 10000
     }
@@ -170,125 +344,238 @@ Create a project-level `opencode.jsonc` in the repo root:
 }
 ```
 
-**Why project-level?** This keeps MCP tools scoped to this repo only. The
-global `~/.config/opencode/opencode.jsonc` should NOT contain the `macos-use`
-entry — otherwise the tools activate in every project.
+OpenCode's `timeout` is expressed in milliseconds and controls how long it waits
+to fetch tools from the MCP server. The proxy's own gRPC request timeout is a
+separate setting, `MACOS_USE_REQUEST_TIMEOUT`, expressed in seconds.
 
-**Key env vars for `macos-use-mcp`:**
+Do not add the entry to the global OpenCode configuration unless the tools
+should be available in every project.
 
-| Variable                        | Default             | Description                                    |
-|---------------------------------|---------------------|------------------------------------------------|
-| `MACOS_USE_SERVER_SOCKET_PATH`  | (none)              | Unix socket path to the Swift gRPC server       |
-| `MACOS_USE_SERVER_ADDR`         | `localhost:50051`   | TCP address (used if socket path is empty)       |
-| `MCP_TRANSPORT`                 | `stdio`             | MCP transport: `stdio` or `sse`                 |
-| `MCP_HTTP_ADDRESS`              | `:8080`             | HTTP listen address (SSE transport only)        |
-| `MCP_API_KEY`                   | (none)              | Bearer token auth (if set, all requests need it)|
-| `MCP_RATE_LIMIT`                | `0` (disabled)      | Rate limit in requests/second                   |
+## Runtime configuration
 
-When `MACOS_USE_SERVER_SOCKET_PATH` is set, `MACOS_USE_SERVER_ADDR` is ignored.
+### Swift gRPC server
 
-## Updating After a Rebuild
+The LaunchAgent sets only `GRPC_UNIX_SOCKET`, so the local deployment never
+opens a TCP port.
 
-Simply run:
+| Variable | Source default | Meaning |
+|---|---:|---|
+| `GRPC_LISTEN_ADDRESS` | `127.0.0.1` | TCP bind address when no socket is configured |
+| `GRPC_PORT` | `8080` | TCP port when no socket is configured |
+| `GRPC_UNIX_SOCKET` | empty | Unix socket path; takes precedence over TCP |
+
+### Go MCP proxy
+
+| Variable | Default | Meaning |
+|---|---:|---|
+| `MACOS_USE_SERVER_SOCKET_PATH` | empty | Swift server Unix socket; when set, the TCP address is ignored |
+| `MACOS_USE_SERVER_ADDR` | `localhost:50051` | TCP fallback used only when no socket path is set |
+| `MACOS_USE_REQUEST_TIMEOUT` | `30` | gRPC request timeout in seconds |
+| `MACOS_USE_DEBUG` | `false` | Enable proxy debug logging |
+| `MCP_TRANSPORT` | `stdio` | MCP transport: `stdio` or `streamable-http` |
+| `MCP_HTTP_ADDRESS` | `127.0.0.1:8080` | Listener for Streamable HTTP transport |
+| `MCP_HTTP_SOCKET` | empty | Unix socket for HTTP transport |
+| `MCP_API_KEY` | empty | Bearer-token authentication for HTTP transport |
+| `MCP_RATE_LIMIT` | `0` | Requests per second; zero disables limiting |
+| `MCP_AUDIT_LOG_FILE` | empty | Optional owner-private non-content audit-log destination |
+| `MCP_SHELL_COMMANDS_ENABLED` | `false` | Enables shell execution; leave disabled unless explicitly required |
+
+The Swift TCP default and the MCP TCP fallback are different. The deployment
+avoids that ambiguity by configuring both sides with the same Unix socket.
+
+## Screenshot implementation
+
+Screenshot operations use ScreenCaptureKit's single-frame API,
+`SCScreenshotManager.captureImage(contentFilter:configuration:)`.
+
+The stream configuration receives explicit non-zero pixel dimensions derived
+from the content filter:
+
+```swift
+let scale = CGFloat(filter.pointPixelScale)
+config.width = Int(filter.contentRect.width * scale)
+config.height = Int(filter.contentRect.height * scale)
+```
+
+`contentRect` is measured in points and `pointPixelScale` is the conversion from
+points to pixels for the filtered content. This is preferable to setting width
+and height to zero, and it respects user-selected scaled display modes better
+than deriving capture size from a raw display mode.
+
+## Updating without losing permissions unnecessarily
+
+To rebuild and reinstall everything:
 
 ```sh
 gmake macos-use.install
 ```
 
-This rebuilds, re-bundles, re-signs (ad-hoc), and restarts the service.
+This replaces and re-signs the application. With the default ad-hoc identity,
+expect to re-grant TCC permissions. With a stable Apple Development identity,
+TCC should normally recognize the new build as the same app, provided the
+bundle identifier and designated requirement remain stable.
 
-## All Make Targets
-
-| Target | Description |
-|--------|-------------|
-| `macos-use.build-server` | Build the MacosUseServer release binary |
-| `macos-use.build-mcp` | Build and install the macos-use-mcp Go binary |
-| `macos-use.build` | Build both server and MCP |
-| `macos-use.bundle` | Create the .app bundle (clean, from scratch) |
-| `macos-use.sign` | Ad-hoc codesign (`--force --deep --sign -`) + xattr clear + verify |
-| `macos-use.register` | Register the .app with LaunchServices |
-| `macos-use.launchd` | Create and load the launchd service |
-| `macos-use.install` | Full install: build + bundle + sign + register + launchd |
-| `macos-use.verify` | Verify the deployment (signature, plist, socket, process) |
-| `macos-use.status` | Show launchd status, socket, process, and signature |
-| `macos-use.start` | Alias for `macos-use.restart` — start the service |
-| `macos-use.stop` | Stop the launchd service (no rebuild/codesign/uninstall) |
-| `macos-use.restart` | Restart the launchd service (no rebuild/codesign) |
-| `macos-use.tcc-reset` | Reset TCC permissions (Accessibility + Screen Recording) |
-| `macos-use.uninstall` | Completely uninstall: remove .app, plist, socket, logs, TCC |
-| `macos-use.logs` | Show recent MacosUseServer log entries |
-
-## Swift Server Configuration
-
-The Swift server (`MacosUseServer`) is configured via environment variables
-(set in the launchd plist):
-
-| Variable              | Default     | Description                                 |
-|-----------------------|-------------|---------------------------------------------|
-| `GRPC_LISTEN_ADDRESS` | `127.0.0.1` | IP address to bind to (loopback by default) |
-| `GRPC_PORT`           | `8080`      | TCP port number                             |
-| `GRPC_UNIX_SOCKET`    | (none)      | Unix socket path (overrides TCP if set)      |
-
-When `GRPC_UNIX_SOCKET` is set, the server ignores `GRPC_LISTEN_ADDRESS` and
-`GRPC_PORT` and listens only on the Unix socket.
-
-## Stopping the Service
-
-To stop the server without uninstalling (preserves the `.app`, plist, and TCC
-permissions):
-
-```sh
-gmake macos-use.stop
-```
-
-To start it again:
+To restart the same installed code after a configuration or TCC change:
 
 ```sh
 gmake macos-use.restart
 ```
 
-## Screenshot Capture Architecture
+That target does not touch the app's bytes or signature.
 
-The server uses Apple's **ScreenCaptureKit** framework for all screenshot
-operations (screen, window, region, and element captures).
+## Lifecycle and diagnostic targets
 
-### Single-Frame Capture via SCScreenshotManager
+| Target | Purpose |
+|---|---|
+| `macos-use.doctor` | Validate the host tools and expected source layout |
+| `macos-use.build-server` | Generate descriptors and build the release Swift server |
+| `macos-use.build-mcp` | Build and install the Go MCP proxy |
+| `macos-use.build` | Run both builds in a deterministic order |
+| `macos-use.bundle` | Stage and install the app, including SwiftPM resources |
+| `macos-use.sign` | Sign the existing app and verify it strictly |
+| `macos-use.register` | Register the existing signed app with LaunchServices |
+| `macos-use.launchd` | Write and bootstrap the per-user LaunchAgent |
+| `macos-use.install` | Run the complete ordered local installation |
+| `macos-use.verify` | Fail unless every required installed/runtime check passes |
+| `macos-use.status` | Print launchd, socket, signature, and MCP status without asserting success |
+| `macos-use.start` | Start a loaded or installed service without rebuilding |
+| `macos-use.restart` | Force-restart the service without rebuilding or signing |
+| `macos-use.stop` | Stop and unload the service while preserving installed files and TCC |
+| `macos-use.tcc-reset` | Reset Accessibility and ScreenCapture TCC records |
+| `macos-use.logs` | Show stdout, stderr, and recent unified-log entries |
+| `macos-use.uninstall` | Remove installed app, service, socket, logs, MCP binary, and matching TCC records |
 
-`ScreenshotCapture.swift` uses `SCScreenshotManager.captureImage` (macOS 14+)
-for single-frame captures. This replaces the older `SCStream` + delegate +
-`CheckedContinuation` pattern, eliminating the `startCapture` completion-handler
-race entirely.
+## Troubleshooting
 
-Pixel dimensions are derived from the `SCContentFilter` itself — the single
-source of truth that respects scaled display modes:
+### The server reports a missing resource bundle
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `filter.contentRect` | `CGRect` | Source rect in screen **points** |
-| `filter.pointPixelScale` | `Float` | Pixel-per-point ratio (2.0 Retina, 1.0 non-Retina) |
+Run:
 
-```swift
-let scale = CGFloat(filter.pointPixelScale)
-config.width  = Int(filter.contentRect.width  * scale)
-config.height = Int(filter.contentRect.height * scale)
-return try await SCScreenshotManager.captureImage(
-    contentFilter: filter,
-    configuration: config,
-)
+```sh
+ls -ld \
+  ~/Applications/MacosUseServer.app/Contents/Resources/MacosUseServer_MacosUseServer.bundle
+find ~/Applications/MacosUseServer.app -name '*.pb' -print
+gmake macos-use.verify
 ```
 
-> **Why not `CGDisplayPixelsWide`?** That returns the hardware mode's pixel
-> dimensions, which do NOT match when the user selects a scaled display mode
-> ("Larger Text" / "More Space" in System Settings). `pointPixelScale` is the
-> value ScreenCaptureKit itself uses for compositing.
+A correct deployment contains the real bundle under `Contents/Resources`.
+Re-run `gmake macos-use.install` if it is absent.
 
-### Apple Documentation
+### A TCC grant disappears after rebuilding
 
-- [SCScreenshotManager](https://developer.apple.com/documentation/screencapturekit/scscreenshotmanager)
-- [SCContentFilter.contentRect](https://developer.apple.com/documentation/screencapturekit/sccontentfilter/contentrect)
-- [SCContentFilter.pointPixelScale](https://developer.apple.com/documentation/screencapturekit/sccontentfilter/pointpixelscale)
-- [SCStreamConfiguration](https://developer.apple.com/documentation/screencapturekit/scstreamconfiguration)
-- [Capturing screen content in macOS](https://developer.apple.com/documentation/screencapturekit/capturing_screen_content_in_macos)
+The usual cause is ad-hoc signing. Install with a persistent Apple Development
+identity, then grant the permission once more:
+
+```sh
+gmake macos-use.install \
+  MACOS_USE_SIGN_IDENTITY='Apple Development: Your Name (TEAMID)'
+```
+
+### The privacy prompt does not appear
+
+Confirm that the installed app is signed and registered, and that launchd is
+running the executable from inside that app:
+
+```sh
+gmake macos-use.status
+codesign -dvvv ~/Applications/MacosUseServer.app
+gmake macos-use.register
+```
+
+`macos-use.register` does not rebuild or re-sign. If the app is still absent
+from the relevant System Settings panel, add
+`~/Applications/MacosUseServer.app` manually.
+
+### Screen capture remains denied after enabling it
+
+Apple's ScreenCaptureKit guidance requires restarting the app after approval.
+Run:
+
+```sh
+gmake macos-use.restart
+gmake macos-use.logs
+```
+
+### The socket is missing or the client cannot connect
+
+```sh
+gmake macos-use.status
+gmake macos-use.logs
+gmake macos-use.verify
+```
+
+Confirm that the path in `opencode.jsonc` exactly matches:
+
+```text
+~/Library/Caches/macosuse.sock
+```
+
+OpenCode configuration requires an absolute path; a literal `~` is not a safe
+substitute.
+
+### OpenCode cannot find `macos-use-mcp`
+
+Do not assume `~/go/bin`. Resolve the active Go install directory and use that
+absolute path in `opencode.jsonc`:
+
+```sh
+go env GOBIN
+go env GOPATH
+```
+
+The Makefile prints the final MCP path during installation and in
+`gmake macos-use.status`.
+
+### `launchctl bootstrap` reports that the service is already loaded
+
+Use the exact lifecycle targets rather than loading the plist manually:
+
+```sh
+gmake macos-use.stop
+gmake macos-use.launchd
+```
+
+They address the service as `gui/<uid>/com.macosusesdk.server` and remove a stale
+socket before bootstrapping.
+
+### Screenshot capture reports zero width or height
+
+The current implementation computes explicit dimensions from
+`SCContentFilter.contentRect` and `pointPixelScale`. Rebuild the installed app to
+ensure it contains that source:
+
+```sh
+gmake macos-use.install
+```
+
+### Quarantine or extended attributes interfere with signing
+
+The sign target runs `xattr -cr` only against the newly staged local app before
+signing. A locally built application normally should not need a separate
+quarantine workaround. Diagnose unexpected attributes before applying broader
+changes:
+
+```sh
+xattr -lr ~/Applications/MacosUseServer.app
+```
+
+## Security boundaries
+
+Accessibility and screen recording are high-impact permissions. Grant them only
+to an app you built from source and whose signature you inspected.
+
+The default local design keeps the trust boundary narrow:
+
+- the Swift server listens on a Unix socket instead of a network interface;
+- both launchd and the server use a restrictive `0177` umask;
+- the server enforces socket mode `0600`;
+- the service runs as the logged-in user, not as root;
+- the MCP proxy defaults to stdio; and
+- shell-command execution is disabled by default.
+
+Do not expose the MCP Streamable HTTP transport or the Swift gRPC TCP listener
+beyond loopback without adding authentication, TLS, rate limiting, and an
+explicit threat model.
 
 ## Uninstallation
 
@@ -296,167 +583,41 @@ return try await SCScreenshotManager.captureImage(
 gmake macos-use.uninstall
 ```
 
-This stops the service, removes the `.app` bundle, launchd plist, socket, logs,
-and resets TCC permissions.
+This removes installed runtime artifacts, including the app, LaunchAgent plist,
+socket, logs, resolved `macos-use-mcp` binary, LaunchServices registration, and
+matching TCC records. It does not delete source files or Swift/Go build caches in
+the repository.
 
-## Security Considerations
+## Primary references
 
-### Network Access
-
-The server defaults to **loopback only** (`127.0.0.1`). For local MCP use,
-Unix sockets are recommended — they bypass the network stack entirely and
-enforce filesystem permissions.
-
-### macOS Permissions
-
-Both Accessibility and Screen Recording are **powerful** permissions. Only
-grant them to the `MacosUseServer.app` bundle you built yourself. The `.app`
-bundle approach isolates the permission to a single, auditable binary.
-
-### Socket Permissions
-
-The server enforces `0600` (owner read/write only) on the Unix socket. Only
-the user running the server can connect.
-
-## Monitoring
-
-### Health Checks
-
-```sh
-gmake macos-use.status
-```
-
-Or use MCP tools:
-
-```
-macos-use_get_display
-```
-
-### Logging
-
-When running via launchd, logs go to:
-
-```
-~/Library/Logs/macosuse.log        (stdout)
-~/Library/Logs/macosuse.error.log  (stderr)
-```
-
-View recent logs:
-
-```sh
-gmake macos-use.logs
-```
-
-## Troubleshooting
-
-### TCC Permissions Revert After Rebuild
-
-**Cause:** The app was re-signed with a new ad-hoc identity, which changes
-the cdhash. TCC may invalidate the previous grant.
-
-**Fix:** After `gmake macos-use.install`, re-grant Accessibility and Screen
-Recording in System Settings, then `gmake macos-use.restart`.
-
-### Server Crashes on Startup (Resource Bundle Error)
-
-**Symptom:** `Fatal error: could not load resource bundle: from .../MacosUseServer_MacosUseServer.bundle`
-
-**Cause:** SPM's generated `resource_bundle_accessor.swift` calls `fatalError`
-when the resource bundle (containing protobuf descriptor sets for gRPC
-reflection) cannot be found. This only affects gRPC reflection — the
-server's core functionality (AX, screenshots, input) does not require it.
-
-**Fix:** Ensure the build directory still exists at the hardcoded fallback
-path inside `resource_bundle_accessor.swift`. For local deployment where the
-source tree is present, this works automatically.
-
-### `tccutil reset` Says "No Matching Bundle Identifier"
-
-**Cause:** The bundle identifier hasn't been registered with LaunchServices.
-
-**Fix:** Re-run `gmake macos-use.register`, then retry.
-
-### AX Permission Prompt Doesn't Appear
-
-**Cause:** TCC doesn't know about the `.app` bundle.
-
-**Fix:** Ensure `lsregister -f` has been run (via `gmake macos-use.register`
-or `gmake macos-use.install`) and the server is actually running from inside
-the `.app` bundle (not a bare binary). Check System Settings → Privacy &
-Security → Accessibility for `com.macosusesdk.server` and add it manually if
-needed.
-
-### Screen Recording Permission Denied
-
-**Symptom:** `CaptureScreenshot` returns an error, or `SCShareableContent` hangs.
-
-**Fix:** Grant Screen Recording permission in System Settings → Privacy &
-Security → Screen Recording. Add `MacosUseServer.app` and toggle it ON.
-Restart the server after toggling (`gmake macos-use.restart`).
-
-> **Note:** Every time the `.app` binary is re-signed (e.g. after
-> `gmake macos-use.install`), the ad-hoc cdhash changes and TCC may
-> invalidate the grant. Re-grant in System Settings, then
-> `gmake macos-use.restart` (which does NOT re-sign).
-
-### Screenshot Returns "invalid width 0 and height 0" or "Unknown error"
-
-**Symptom:** `CaptureScreenshot` fails with OSLog error:
-`-[SCStream serializeStreamProperties]: invalid width 0 and height 0`
-or a gRPC "Unknown error".
-
-**Cause:** macOS 15 (Sequoia) added a hard validation in
-`-[SCStream serializeStreamProperties]` that rejects `width == 0 || height == 0`.
-The old code set `config.width = 0` and `config.height = 0` as a "use source
-dimension" sentinel — this sentinel is no longer accepted.
-
-**Fix (already applied):** `ScreenshotCapture.swift` now uses
-`SCScreenshotManager.captureImage(contentFilter:configuration:)` (the
-single-frame API, macOS 14+) instead of the `SCStream` + delegate + continuation
-pattern. Pixel dimensions are derived from the filter itself:
-
-```swift
-let scale = CGFloat(filter.pointPixelScale)
-config.width  = Int(filter.contentRect.width  * scale)
-config.height = Int(filter.contentRect.height * scale)
-```
-
-`filter.contentRect` gives the source rect in screen **points**;
-`filter.pointPixelScale` gives the pixel-per-point ratio (2.0 on Retina,
-1.0 on non-Retina). This respects user-selected scaled display modes —
-unlike `CGDisplayPixelsWide`, which returns the raw hardware mode dimensions.
-
-**Apple documentation:**
-- [SCScreenshotManager](https://developer.apple.com/documentation/screencapturekit/scscreenshotmanager)
-- [SCContentFilter.contentRect](https://developer.apple.com/documentation/screencapturekit/sccontentfilter/contentrect)
-- [SCContentFilter.pointPixelScale](https://developer.apple.com/documentation/screencapturekit/sccontentfilter/pointpixelscale)
-- [Capturing screen content in macOS](https://developer.apple.com/documentation/screencapturekit/capturing_screen_content_in_macos)
-
-### Client Connection Refused
-
-1. Verify the server process is running:
-   ```sh
-   pgrep -fl MacosUseServer
-   ```
-
-2. Verify the socket exists:
-   ```sh
-   ls -la "$HOME/Library/Caches/macosuse.sock"
-   # Expected: srw------- (0600 — owner read/write only)
-   ```
-
-3. Check launchd status:
-   ```sh
-   gmake macos-use.status
-   ```
-
-4. Check the error log:
-   ```sh
-   gmake macos-use.logs
-   ```
-
-### Quarantine Attribute Blocking Execution
-
-```sh
-xattr -d com.apple.quarantine ~/Applications/MacosUseServer.app
-```
+- Apple, *Code Signing Tasks*:
+  <https://developer.apple.com/library/archive/documentation/Security/Conceptual/CodeSigningGuide/Procedures/Procedures.html>
+- Apple, *Technical Note TN2206: macOS Code Signing In Depth*:
+  <https://developer.apple.com/library/archive/technotes/tn2206/_index.html>
+- Apple, *Placing content in a bundle*:
+  <https://developer.apple.com/documentation/bundleresources/placing-content-in-a-bundle>
+- Apple, *Embedding nonstandard code structures in a bundle*:
+  <https://developer.apple.com/documentation/xcode/embedding-nonstandard-code-structures-in-a-bundle>
+- Apple, *Hardened Runtime*:
+  <https://developer.apple.com/documentation/security/hardened_runtime>
+- Apple, *Notarizing macOS software before distribution*:
+  <https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution>
+- Apple, `launchctl(1)` and `launchd.plist(5)` man pages as shipped with Xcode:
+  <https://keith.github.io/xcode-man-pages/launchctl.1.html>
+  and <https://keith.github.io/xcode-man-pages/launchd.plist.5.html>
+- Apple, *SCScreenshotManager*:
+  <https://developer.apple.com/documentation/screencapturekit/scscreenshotmanager>
+- Apple, *SCContentFilter.contentRect*:
+  <https://developer.apple.com/documentation/screencapturekit/sccontentfilter/contentrect>
+- Apple, *SCContentFilter.pointPixelScale*:
+  <https://developer.apple.com/documentation/screencapturekit/sccontentfilter/pointpixelscale>
+- Apple, *Capturing screen content in macOS*:
+  <https://developer.apple.com/documentation/screencapturekit/capturing-screen-content-in-macos>
+- Swift Package Manager, *Bundling resources with a Swift package*:
+  <https://developer.apple.com/documentation/xcode/bundling-resources-with-a-swift-package>
+- OpenCode, *MCP servers*:
+  <https://opencode.ai/docs/mcp-servers/>
+- OpenCode, *Config*:
+  <https://opencode.ai/docs/config/>
+- Go, *How to Write Go Code*:
+  <https://go.dev/doc/code>

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "macos-use",
+  "version": "1.0.0",
+  "description": "macOS desktop automation skill for the MacosUseSDK MCP server. Covers opening apps, finding and interacting with UI elements via Accessibility APIs, typing text, clicking, window management, clipboard operations, scripts, macros, and display queries.",
+  "author": {
+    "name": "Joseph Cumines"
+  },
+  "license": "MIT",
+  "keywords": [
+    "macos",
+    "automation",
+    "accessibility",
+    "desktop",
+    "mcp",
+    "cua",
+    "macos-use"
+  ]
+}
