@@ -5,7 +5,7 @@ go 1.26.3
 require (
 	cloud.google.com/go/longrunning v1.2.0
 	github.com/rivo/uniseg v0.4.7
-	golang.org/x/image v0.44.0
+	golang.org/x/image v0.45.0
 	golang.org/x/sys v0.47.0
 	golang.org/x/tools v0.48.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20260803160001-6ac0973c030d
@@ -26,7 +26,7 @@ require (
 	golang.org/x/mod v0.38.0 // indirect
 	golang.org/x/net v0.57.0 // indirect
 	golang.org/x/sync v0.22.0 // indirect
-	golang.org/x/text v0.40.0 // indirect
+	golang.org/x/text v0.41.0 // indirect
 	honnef.co/go/tools v0.7.0 // indirect
 )
 
