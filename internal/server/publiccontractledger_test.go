@@ -689,8 +689,8 @@ func publicResourceOwnership(
 	method protoreflect.MethodDescriptor,
 	path []protoreflect.FieldDescriptor,
 ) string {
-	for index := len(path) - 1; index >= 0; index-- {
-		field := path[index]
+	for _, field := range slices.Backward(path) {
+
 		if options, ok := field.Options().(*descriptorpb.FieldOptions); ok &&
 			proto.HasExtension(options, annotations.E_ResourceReference) {
 			reference, _ := proto.GetExtension(options, annotations.E_ResourceReference).(*annotations.ResourceReference)

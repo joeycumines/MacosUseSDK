@@ -22,8 +22,7 @@ func (s *MCPServer) cuaHandleGetDisplay(call *ToolCall) (*ToolResult, error) {
 
 	displays, err := loadAndValidateDisplayTopology(ctx, s.client)
 	if err != nil {
-		var validationError *displayResponseValidationError
-		if errors.As(err, &validationError) {
+		if _, ok := errors.AsType[*displayResponseValidationError](err); ok {
 			return errorResultf("Invalid display response: %v", err), nil
 		}
 		return grpcErrorResult(err, "get_display"), nil

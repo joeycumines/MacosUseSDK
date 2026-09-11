@@ -298,8 +298,7 @@ func (t *StdioTransport) Serve(handler func(*Message) (*Message, error)) error {
 				log.Println("Stdin closed, exiting")
 				return nil
 			}
-			var readErr *MessageReadError
-			if errors.As(err, &readErr) {
+			if readErr, ok := errors.AsType[*MessageReadError](err); ok {
 				if writeErr := t.WriteMessage(&Message{
 					JSONRPC: "2.0",
 					ID:      json.RawMessage("null"),

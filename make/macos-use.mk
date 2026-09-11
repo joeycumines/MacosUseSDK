@@ -109,8 +109,11 @@ endef
 
 # This is a LaunchAgent, not a LaunchDaemon: ScreenCaptureKit, AppKit, and
 # Accessibility must run in the logged-in user's GUI domain.  KeepAlive=true
-# also implies RunAtLoad.  The 0177 umask is defense in depth; the Swift server
-# independently sets umask(0177) and chmod(0600) on the Unix socket.
+# also implies RunAtLoad. The 0177 umask is defense in depth; launchd creates
+# the Unix socket with owner-only mode before activating it. The Swift server
+# receives that exact descriptor through launch_activate_socket and never binds
+# the pathname itself. ThrottleInterval bounds KeepAlive restarts so a repeated
+# fatal error cannot spin a tight crash loop; unmanaged paths are never mutated.
 define MACOS_USE_LAUNCHD_PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -127,10 +130,26 @@ define MACOS_USE_LAUNCHD_PLIST
         <key>GRPC_UNIX_SOCKET</key>
         <string>$(MACOS_USE_SOCKET)</string>
     </dict>
+    <key>Sockets</key>
+    <dict>
+        <key>Listener</key>
+        <dict>
+            <key>SockFamily</key>
+            <string>Unix</string>
+            <key>SockType</key>
+            <string>Stream</string>
+            <key>SockPathName</key>
+            <string>$(MACOS_USE_SOCKET)</string>
+            <key>SockPathMode</key>
+            <integer>384</integer>
+        </dict>
+    </dict>
     <key>KeepAlive</key>
     <true/>
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
     <key>Umask</key>
-    <string>0177</string>
+    <integer>127</integer>
     <key>AssociatedBundleIdentifiers</key>
     <array>
         <string>$(MACOS_USE_BUNDLE_ID)</string>
@@ -145,8 +164,64 @@ endef
 
 # Export multiline values for a single shell invocation.  Quoting the expanded
 # environment variable preserves all newlines and XML punctuation.
+# Reject values that would be unsafe when interpolated into generated XML or
+# make recipes. This is a make-time check: hostile backticks, `$()` text, shell
+# separators, and XML delimiters are rejected before any recipe is expanded.
+MACOS_USE_BACKTICK := `
+define MACOS_USE_VALIDATE_VALUE
+$(if $(findstring <,$(1)),$(error $(2) contains '<'; refusing unsafe deployment value))
+$(if $(findstring >,$(1)),$(error $(2) contains '>'; refusing unsafe deployment value))
+$(if $(findstring &,$(1)),$(error $(2) contains '&'; refusing unsafe deployment value))
+$(if $(findstring ",$(1)),$(error $(2) contains a quote; refusing unsafe deployment value))
+$(if $(findstring $(MACOS_USE_BACKTICK),$(1)),$(error $(2) contains a backtick; refusing unsafe deployment value))
+$(if $(findstring ;,$(1)),$(error $(2) contains ';'; refusing unsafe deployment value))
+$(if $(findstring |,$(1)),$(error $(2) contains '|'; refusing unsafe deployment value))
+$(if $(findstring $$,$(1)),$(error $(2) contains '$$'; refusing unsafe deployment value))
+endef
+define MACOS_USE_VALIDATE_CONFIG
+$(if $(filter command line environment environment-overrides,$(origin $(1))),$(call MACOS_USE_VALIDATE_VALUE,$(value $(1)),$(1)),$(call MACOS_USE_VALIDATE_VALUE,$($(1)),$(1)))
+endef
+$(eval $(call MACOS_USE_VALIDATE_CONFIG,MACOS_USE_APP_NAME))
+$(eval $(call MACOS_USE_VALIDATE_CONFIG,MACOS_USE_BUNDLE_ID))
+$(eval $(call MACOS_USE_VALIDATE_CONFIG,MACOS_USE_VERSION))
+$(eval $(call MACOS_USE_VALIDATE_CONFIG,MACOS_USE_BUILD_VERSION))
+$(eval $(call MACOS_USE_VALIDATE_CONFIG,MACOS_USE_MIN_MACOS))
+$(eval $(call MACOS_USE_VALIDATE_CONFIG,MACOS_USE_APP_DIR))
+$(eval $(call MACOS_USE_VALIDATE_CONFIG,MACOS_USE_APP_EXECUTABLE))
+$(eval $(call MACOS_USE_VALIDATE_CONFIG,MACOS_USE_PLIST))
+$(eval $(call MACOS_USE_VALIDATE_CONFIG,MACOS_USE_SOCKET))
+$(eval $(call MACOS_USE_VALIDATE_CONFIG,MACOS_USE_STDOUT_LOG))
+$(eval $(call MACOS_USE_VALIDATE_CONFIG,MACOS_USE_STDERR_LOG))
+$(eval $(call MACOS_USE_VALIDATE_CONFIG,MACOS_USE_SERVER_BUILD_DIR))
+$(eval $(call MACOS_USE_VALIDATE_CONFIG,MACOS_USE_SERVER_BIN))
+$(eval $(call MACOS_USE_VALIDATE_CONFIG,MACOS_USE_RESOURCE_BUNDLE_NAME))
+$(eval $(call MACOS_USE_VALIDATE_CONFIG,MACOS_USE_BUILD_LOG_DIR))
+$(eval $(call MACOS_USE_VALIDATE_CONFIG,MACOS_USE_SERVER_BUILD_LOG))
+$(eval $(call MACOS_USE_VALIDATE_CONFIG,MACOS_USE_MCP_BUILD_LOG))
+$(eval $(call MACOS_USE_VALIDATE_CONFIG,MACOS_USE_MCP_BIN))
+$(eval $(call MACOS_USE_VALIDATE_CONFIG,MACOS_USE_GO_BIN_DIR))
+$(eval $(call MACOS_USE_VALIDATE_CONFIG,MACOS_USE_LSREGISTER))
+$(eval $(call MACOS_USE_VALIDATE_CONFIG,MACOS_USE_SIGN_IDENTITY))
+$(eval $(call MACOS_USE_VALIDATE_CONFIG,MACOS_USE_WAIT_ATTEMPTS))
+$(eval $(call MACOS_USE_VALIDATE_CONFIG,MACOS_USE_WAIT_INTERVAL))
+$(eval $(call MACOS_USE_VALIDATE_CONFIG,PROJECT_ROOT))
+
+# Derived values are expanded from validated inputs; validate their expanded
+# result as well for defense in depth.
+$(eval $(call MACOS_USE_VALIDATE_VALUE,$(MACOS_USE_APP_EXECUTABLE),MACOS_USE_APP_EXECUTABLE))
+$(eval $(call MACOS_USE_VALIDATE_VALUE,$(MACOS_USE_PLIST),MACOS_USE_PLIST))
+$(eval $(call MACOS_USE_VALIDATE_VALUE,$(MACOS_USE_STAGING_DIR),MACOS_USE_STAGING_DIR))
+$(eval $(call MACOS_USE_VALIDATE_VALUE,$(MACOS_USE_REQUIRED_RESOURCE_BUNDLE),MACOS_USE_REQUIRED_RESOURCE_BUNDLE))
+$(eval $(call MACOS_USE_VALIDATE_VALUE,$(MACOS_USE_MCP_BIN_DIR),MACOS_USE_MCP_BIN_DIR))
+$(eval $(call MACOS_USE_VALIDATE_VALUE,$(MACOS_USE_SERVICE_TARGET),MACOS_USE_SERVICE_TARGET))
+
 export MACOS_USE_INFO_PLIST_E := $(MACOS_USE_INFO_PLIST)
 export MACOS_USE_LAUNCHD_PLIST_E := $(MACOS_USE_LAUNCHD_PLIST)
+# Export user-configurable XML inputs as data; recipes read these through shell
+# variables after the make-time safety gate above.
+export MACOS_USE_APP_NAME MACOS_USE_BUNDLE_ID MACOS_USE_VERSION MACOS_USE_BUILD_VERSION
+export MACOS_USE_MIN_MACOS MACOS_USE_APP_EXECUTABLE MACOS_USE_SOCKET
+export MACOS_USE_STDOUT_LOG MACOS_USE_STDERR_LOG
 
 # Only the two piped build recipes need Bash's pipefail.  `private` prevents
 # SHELL from leaking into their prerequisite targets.
@@ -187,7 +262,7 @@ macos-use.doctor: ## Check the local deployment toolchain and source layout.
 
 .PHONY: macos-use.build-server
 macos-use.build-server: ## Build the release Swift server and its resource bundle.
-	@set -euo pipefail; \
+	@set -uo pipefail; \
 	mkdir -p "$(MACOS_USE_BUILD_LOG_DIR)"; \
 	printf '%s\n' '=== Building MacosUseServer (release) ==='; \
 	$(MAKE) -C "$(PROJECT_ROOT)" --no-print-directory buf.descriptor-sets; \
@@ -207,8 +282,8 @@ macos-use.build-server: ## Build the release Swift server and its resource bundl
 
 .PHONY: macos-use.build-mcp
 macos-use.build-mcp: ## Build and install the Go MCP proxy at the resolved Go bin path.
-	@set -euo pipefail; \
-	mkdir -p "$(MACOS_USE_BUILD_LOG_DIR)" "$(MACOS_USE_MCP_BIN_DIR)"; \
+	@set -uo pipefail; \
+	mkdir -p "$(MACOS_USE_BUILD_LOG_DIR)" "$(MACOS_USE_MCP_BIN_DIR)"; \\
 	printf '%s\n' '=== Building macos-use-mcp ==='; \
 	cd "$(PROJECT_ROOT)"; \
 	GOBIN="$(MACOS_USE_MCP_BIN_DIR)" go install ./cmd/macos-use-mcp 2>&1 | tee "$(MACOS_USE_MCP_BUILD_LOG)" | tail -n 30; \
@@ -229,7 +304,14 @@ macos-use.build: ## Build the Swift server, then the Go MCP proxy.
 
 .PHONY: macos-use.bundle
 macos-use.bundle: ## Create a clean .app and include all SwiftPM resource bundles.
-	@set -eu; \
+	@set -u; \
+	validate_xml_value() { value="$$1"; name="$$2"; case "$$value" in *'<'*|*'>'*|*'&'*|*'"'*) printf 'ERROR: %s contains XML-significant characters.\\n' "$$name" >&2; exit 1;; esac; }; \
+	validate_xml_value "$$MACOS_USE_APP_NAME" MACOS_USE_APP_NAME; \
+	validate_xml_value "$$MACOS_USE_BUNDLE_ID" MACOS_USE_BUNDLE_ID; \
+	validate_xml_value "$$MACOS_USE_VERSION" MACOS_USE_VERSION; \
+	validate_xml_value "$$MACOS_USE_BUILD_VERSION" MACOS_USE_BUILD_VERSION; \
+	validate_xml_value "$$MACOS_USE_MIN_MACOS" MACOS_USE_MIN_MACOS; \
+	validate_xml_value "$$MACOS_USE_APP_EXECUTABLE" MACOS_USE_APP_EXECUTABLE; \
 	if launchctl print "$(MACOS_USE_SERVICE_TARGET)" >/dev/null 2>&1; then \
 		printf '%s\n' "ERROR: service is loaded; run 'gmake macos-use.stop' before replacing the app." >&2; \
 		exit 1; \
@@ -268,7 +350,7 @@ macos-use.bundle: ## Create a clean .app and include all SwiftPM resource bundle
 
 .PHONY: macos-use.sign
 macos-use.sign: ## Sign the existing .app, then perform strict recursive verification.
-	@set -eu; \
+	@set -u; \
 	if [ ! -x "$(MACOS_USE_APP_EXECUTABLE)" ]; then \
 		printf '%s\n' "ERROR: app bundle is missing; run 'gmake macos-use.bundle' first." >&2; \
 		exit 1; \
@@ -288,7 +370,7 @@ macos-use.sign: ## Sign the existing .app, then perform strict recursive verific
 
 .PHONY: macos-use.register
 macos-use.register: ## Register the existing signed .app with LaunchServices.
-	@set -eu; \
+	@set -u; \
 	if [ ! -d "$(MACOS_USE_APP_DIR)" ]; then \
 		printf '%s\n' "ERROR: app bundle is missing; run bundle and sign first." >&2; \
 		exit 1; \
@@ -305,30 +387,52 @@ macos-use.register: ## Register the existing signed .app with LaunchServices.
 
 .PHONY: macos-use.launchd
 macos-use.launchd: ## Write, bootstrap, and wait for the per-user LaunchAgent.
-	@set -eu; \
+	@set -u; \
+	validate_xml_value() { value="$$1"; name="$$2"; case "$$value" in *'<'*|*'>'*|*'&'*|*'"'*) printf 'ERROR: %s contains XML-significant characters.\\n' "$$name" >&2; exit 1;; esac; }; \
+	validate_xml_value "$$MACOS_USE_BUNDLE_ID" MACOS_USE_BUNDLE_ID; \
+	validate_xml_value "$$MACOS_USE_APP_EXECUTABLE" MACOS_USE_APP_EXECUTABLE; \
+	validate_xml_value "$$MACOS_USE_SOCKET" MACOS_USE_SOCKET; \
+	validate_xml_value "$$MACOS_USE_STDOUT_LOG" MACOS_USE_STDOUT_LOG; \
+	validate_xml_value "$$MACOS_USE_STDERR_LOG" MACOS_USE_STDERR_LOG; \
 	if [ ! -x "$(MACOS_USE_APP_EXECUTABLE)" ]; then \
 		printf '%s\n' 'ERROR: installed app executable is missing.' >&2; \
 		exit 1; \
 	fi; \
 	codesign --verify --deep --strict "$(MACOS_USE_APP_DIR)"; \
-	mkdir -p "$(dir $(MACOS_USE_PLIST))" "$(dir $(MACOS_USE_SOCKET))" "$(dir $(MACOS_USE_STDOUT_LOG))"; \
-	plist_tmp="$(MACOS_USE_PLIST).tmp"; \
+	mkdir -p "$(dir $(MACOS_USE_PLIST))" "$(dir $(MACOS_USE_SOCKET))" "$(dir $(MACOS_USE_STDOUT_LOG))" "$(dir $(MACOS_USE_STDERR_LOG))"; \
+	plist_tmp=$$(mktemp "$(MACOS_USE_PLIST).tmp.XXXXXX"); \
+	cleanup_plist_tmp() { rm -f "$$plist_tmp"; }; \
+	trap cleanup_plist_tmp EXIT INT TERM; \
 	printf '%s\n' "$$MACOS_USE_LAUNCHD_PLIST_E" > "$$plist_tmp"; \
 	plutil -lint "$$plist_tmp"; \
 	chmod 600 "$$plist_tmp"; \
+	service_absent() { output=$$(launchctl print "$(MACOS_USE_SERVICE_TARGET)" 2>&1); status=$$?; [ "$$status" -ne 0 ] && printf '%s\n' "$$output" | grep -Fq 'Could not find service'; }; \
+	if ! launchctl bootout "$(MACOS_USE_SERVICE_TARGET)" >/dev/null 2>&1; then \
+		if ! service_absent; then printf '%s\n' 'ERROR: could not confirm LaunchAgent bootout; refusing replacement.' >&2; exit 1; fi; \
+	fi; \
+	attempt=0; \
+	while ! service_absent && [ "$$attempt" -lt 10 ]; do sleep 1; attempt=$$((attempt + 1)); done; \
+	if ! service_absent; then \
+		printf '%s\n' 'ERROR: LaunchAgent remained loaded or could not be queried; refusing replacement.' >&2; \
+		exit 1; \
+	fi; \
 	mv "$$plist_tmp" "$(MACOS_USE_PLIST)"; \
-	launchctl bootout "$(MACOS_USE_SERVICE_TARGET)" >/dev/null 2>&1 || true; \
 	launchctl enable "$(MACOS_USE_SERVICE_TARGET)"; \
-	rm -f "$(MACOS_USE_SOCKET)"; \
 	launchctl bootstrap "$(MACOS_USE_LAUNCH_DOMAIN)" "$(MACOS_USE_PLIST)"
 	+@$(MAKE) -C "$(PROJECT_ROOT)" --no-print-directory macos-use.wait
 
 .PHONY: macos-use.wait
 macos-use.wait:
-	@attempt=0; \
+	@socket_endpoint_ready() { \
+		[ -S "$(MACOS_USE_SOCKET)" ] && [ ! -L "$(MACOS_USE_SOCKET)" ] || return 1; \
+		socket_owner=$$(stat -f '%u' "$(MACOS_USE_SOCKET)" 2>/dev/null || true); \
+		socket_mode=$$(stat -f '%Sp' "$(MACOS_USE_SOCKET)" 2>/dev/null || true); \
+		[ "$$socket_owner" = "$(MACOS_USE_UID)" ] && [ "$$socket_mode" = 'srw-------' ]; \
+	}; \
+	attempt=0; \
 	while [ "$$attempt" -lt "$(MACOS_USE_WAIT_ATTEMPTS)" ]; do \
 		if launchctl print "$(MACOS_USE_SERVICE_TARGET)" 2>/dev/null | grep -q 'state = running' \
-			&& [ -S "$(MACOS_USE_SOCKET)" ]; then \
+			&& socket_endpoint_ready; then \
 			printf 'Service ready: %s\n' "$(MACOS_USE_SERVICE_TARGET)"; \
 			ls -l "$(MACOS_USE_SOCKET)"; \
 			exit 0; \
@@ -393,9 +497,11 @@ macos-use.verify: ## Fail unless bundle, resources, signature, service, socket, 
 	if plutil -lint "$(MACOS_USE_PLIST)" >/dev/null 2>&1; then pass 'LaunchAgent plist is valid'; else fail 'LaunchAgent plist is invalid or missing'; fi; \
 	if launchctl print "$(MACOS_USE_SERVICE_TARGET)" >/dev/null 2>&1; then pass 'LaunchAgent is loaded in the GUI domain'; else fail 'LaunchAgent is not loaded'; fi; \
 	if launchctl print "$(MACOS_USE_SERVICE_TARGET)" 2>/dev/null | grep -q 'state = running'; then pass 'LaunchAgent process is running'; else fail 'LaunchAgent is not in the running state'; fi; \
-	if [ -S "$(MACOS_USE_SOCKET)" ]; then pass 'Unix socket exists'; else fail 'Unix socket is missing'; fi; \
-	if [ -S "$(MACOS_USE_SOCKET)" ]; then \
+	if [ -S "$(MACOS_USE_SOCKET)" ] && [ ! -L "$(MACOS_USE_SOCKET)" ]; then pass 'Unix socket exists without symlink indirection'; else fail 'Unix socket is missing or is a symlink'; fi; \
+	if [ -S "$(MACOS_USE_SOCKET)" ] && [ ! -L "$(MACOS_USE_SOCKET)" ]; then \
+		socket_owner=$$(stat -f '%u' "$(MACOS_USE_SOCKET)" 2>/dev/null || true); \
 		socket_mode=$$(stat -f '%Sp' "$(MACOS_USE_SOCKET)" 2>/dev/null || true); \
+		if [ "$$socket_owner" = "$(MACOS_USE_UID)" ]; then pass 'Unix socket owner matches current user'; else fail "Unix socket owner mismatch: $$socket_owner"; fi; \
 		if [ "$$socket_mode" = 'srw-------' ]; then pass 'Unix socket mode is 0600'; else fail "Unix socket mode is not 0600: $$socket_mode"; fi; \
 	fi; \
 	if [ -x "$(MACOS_USE_MCP_BIN)" ]; then pass 'macos-use-mcp binary exists and is executable'; else fail "macos-use-mcp is missing: $(MACOS_USE_MCP_BIN)"; fi; \
@@ -425,12 +531,11 @@ macos-use.status: ## Show exact LaunchAgent, process, socket, signature, and MCP
 
 .PHONY: macos-use.start
 macos-use.start: ## Start the service without rebuilding or signing.
-	@set -eu; \
+	@set -u; \
 	if [ ! -f "$(MACOS_USE_PLIST)" ]; then printf '%s\n' "ERROR: missing $(MACOS_USE_PLIST)" >&2; exit 1; fi; \
 	if launchctl print "$(MACOS_USE_SERVICE_TARGET)" >/dev/null 2>&1; then \
 		launchctl kickstart "$(MACOS_USE_SERVICE_TARGET)"; \
 	else \
-		rm -f "$(MACOS_USE_SOCKET)"; \
 		launchctl enable "$(MACOS_USE_SERVICE_TARGET)"; \
 		launchctl bootstrap "$(MACOS_USE_LAUNCH_DOMAIN)" "$(MACOS_USE_PLIST)"; \
 	fi
@@ -438,9 +543,8 @@ macos-use.start: ## Start the service without rebuilding or signing.
 
 .PHONY: macos-use.restart
 macos-use.restart: ## Restart the service without rebuilding or re-signing.
-	@set -eu; \
+	@set -u; \
 	if [ ! -f "$(MACOS_USE_PLIST)" ]; then printf '%s\n' "ERROR: missing $(MACOS_USE_PLIST)" >&2; exit 1; fi; \
-	rm -f "$(MACOS_USE_SOCKET)"; \
 	if launchctl print "$(MACOS_USE_SERVICE_TARGET)" >/dev/null 2>&1; then \
 		launchctl kickstart -k "$(MACOS_USE_SERVICE_TARGET)"; \
 	else \
@@ -451,9 +555,18 @@ macos-use.restart: ## Restart the service without rebuilding or re-signing.
 
 .PHONY: macos-use.stop
 macos-use.stop: ## Stop and unload the service; preserve app, plist, MCP, and TCC grants.
-	@printf '%s\n' 'Stopping MacosUseServer LaunchAgent...'; \
-	launchctl bootout "$(MACOS_USE_SERVICE_TARGET)" >/dev/null 2>&1 || true; \
-	rm -f "$(MACOS_USE_SOCKET)"; \
+	@set -u; \
+	printf '%s\n' 'Stopping MacosUseServer LaunchAgent...'; \
+	service_absent() { output=$$(launchctl print "$(MACOS_USE_SERVICE_TARGET)" 2>&1); status=$$?; [ "$$status" -ne 0 ] && printf '%s\n' "$$output" | grep -Eq 'Could not find service|No such process|service does not exist'; }; \
+	if ! launchctl bootout "$(MACOS_USE_SERVICE_TARGET)" >/dev/null 2>&1; then \
+		if ! service_absent; then printf '%s\n' 'ERROR: could not confirm LaunchAgent bootout; refusing success.' >&2; exit 1; fi; \
+	fi; \
+	attempt=0; \
+	while ! service_absent && [ "$$attempt" -lt 10 ]; do sleep 1; attempt=$$((attempt + 1)); done; \
+	if ! service_absent; then \
+		printf '%s\n' 'ERROR: LaunchAgent remained loaded or could not be queried; service was not confirmed stopped.' >&2; \
+		exit 1; \
+	fi; \
 	printf '%s\n' 'Service stopped.'
 
 .PHONY: macos-use.tcc-reset
@@ -478,15 +591,25 @@ macos-use.logs: ## Show recent stdout, stderr, and unified-log entries.
 	log show --last 5m --style compact --predicate 'process == "MacosUseServer"' 2>/dev/null | tail -n 80 || printf '%s\n' '(unavailable)'
 
 .PHONY: macos-use.uninstall
-macos-use.uninstall: ## Remove app, LaunchAgent, socket, logs, MCP binary, and matching TCC records.
+macos-use.uninstall: ## Remove app, LaunchAgent, plist, logs, MCP binary, and TCC records; preserve the configured socket pathname.
 	@printf '%s\n' '=== Uninstalling MacosUseServer ==='; \
-	launchctl bootout "$(MACOS_USE_SERVICE_TARGET)" >/dev/null 2>&1 || true; \
+	service_absent() { output=$$(launchctl print "$(MACOS_USE_SERVICE_TARGET)" 2>&1); status=$$?; [ "$$status" -ne 0 ] && printf '%s\n' "$$output" | grep -Eq 'Could not find service|No such process|service does not exist'; }; \
+	if ! launchctl bootout "$(MACOS_USE_SERVICE_TARGET)" >/dev/null 2>&1; then \
+		if ! service_absent; then printf '%s\n' 'ERROR: could not confirm LaunchAgent bootout; refusing uninstall.' >&2; exit 1; fi; \
+	fi; \
+	attempt=0; \
+	while ! service_absent && [ "$$attempt" -lt 10 ]; do sleep 1; attempt=$$((attempt + 1)); done; \
+	if ! service_absent; then \
+		printf '%s\n' 'ERROR: LaunchAgent remained loaded or could not be queried; refusing uninstall.' >&2; \
+		exit 1; \
+	fi; \
+
 	for tcc_service in Accessibility ScreenCapture; do \
 		tccutil reset "$$tcc_service" "$(MACOS_USE_BUNDLE_ID)" >/dev/null 2>&1 || true; \
 	done; \
 	if [ -d "$(MACOS_USE_APP_DIR)" ]; then "$(MACOS_USE_LSREGISTER)" -u "$(MACOS_USE_APP_DIR)" >/dev/null 2>&1 || true; fi; \
 	rm -rf "$(MACOS_USE_APP_DIR)" "$(MACOS_USE_STAGING_DIR)"; \
-	rm -f "$(MACOS_USE_PLIST)" "$(MACOS_USE_SOCKET)"; \
+	rm -f "$(MACOS_USE_PLIST)"; \
 	rm -f "$(MACOS_USE_STDOUT_LOG)" "$(MACOS_USE_STDERR_LOG)"; \
 	rm -f "$(MACOS_USE_MCP_BIN)"; \
 	printf '%s\n' 'Uninstall complete.'

@@ -20,7 +20,10 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
+	"path/filepath"
 	"sync"
+	"syscall"
 	"time"
 
 	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
@@ -286,9 +289,52 @@ func NewMCPServer(cfg *config.Config) (*MCPServer, error) {
 	return s, nil
 }
 
+// validateUnixSocketEndpoint validates only static configuration before the
+// lazy gRPC client is created. The socket may not exist yet (for example while
+// launchd is starting the server), and grpc.NewClient intentionally defers
+// connection establishment until the first RPC. Runtime pathname checks would
+// create a startup race and still would not establish a pathname lease.
+func validateUnixSocketEndpoint(path string) error {
+	if !filepath.IsAbs(path) {
+		return fmt.Errorf("Unix socket path must be absolute: %q", path)
+	}
+	pathBytes := len([]byte(path))
+	if pathBytes >= 104 {
+		return fmt.Errorf("Unix socket path is too long: %d bytes", pathBytes)
+	}
+	info, err := os.Lstat(path)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil
+		}
+		return fmt.Errorf("stat Unix socket %q: %w", path, err)
+	}
+	if info.Mode()&os.ModeSymlink != 0 {
+		return fmt.Errorf("Unix socket path must not be a symlink: %q", path)
+	}
+	if info.Mode()&os.ModeSocket == 0 {
+		return fmt.Errorf("Unix socket path is not a socket: %q", path)
+	}
+	if info.Mode().Perm() != 0600 {
+		return fmt.Errorf("Unix socket path must have mode 0600: %q has %04o", path, info.Mode().Perm())
+	}
+	status, ok := info.Sys().(*syscall.Stat_t)
+	if !ok || status.Uid != uint32(os.Geteuid()) {
+		return fmt.Errorf("Unix socket path is not owned by the current user: %q", path)
+	}
+	return nil
+}
+
 // initGRPC initializes the gRPC connection
 func (s *MCPServer) initGRPC() error {
 	opts, err := grpcClientDialOptions(s.cfg)
+
+	if s.cfg.ServerSocketPath != "" {
+		if err := validateUnixSocketEndpoint(s.cfg.ServerSocketPath); err != nil {
+			return err
+		}
+	}
+
 	if err != nil {
 		return err
 	}
@@ -399,8 +445,7 @@ func (s *MCPServer) Serve(tr *transport.StdioTransport) error {
 			select {
 			case msgCh <- readResult{msg, err}:
 				if err != nil {
-					var readErr *transport.MessageReadError
-					if errors.As(err, &readErr) {
+					if _, ok := errors.AsType[*transport.MessageReadError](err); ok {
 						continue
 					}
 					return
@@ -427,8 +472,7 @@ func (s *MCPServer) Serve(tr *transport.StdioTransport) error {
 					log.Println("MCP server stopping (EOF)")
 					return nil
 				}
-				var readErr *transport.MessageReadError
-				if errors.As(result.err, &readErr) {
+				if readErr, ok := errors.AsType[*transport.MessageReadError](result.err); ok {
 					if err := tr.WriteMessage(&transport.Message{
 						JSONRPC: "2.0",
 						ID:      json.RawMessage("null"),

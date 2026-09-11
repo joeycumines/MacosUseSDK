@@ -276,8 +276,7 @@ func (t *HTTPTransport) handleMCPPost(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		status := http.StatusBadRequest
-		var maxBytesErr *http.MaxBytesError
-		if errors.As(err, &maxBytesErr) {
+		if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
 			status = http.StatusRequestEntityTooLarge
 		}
 		writeHTTPProtocolError(w, status, ErrCodeInvalidRequest, invalidRequestMessage)

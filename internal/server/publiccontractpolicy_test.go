@@ -72,7 +72,7 @@ func TestPublicQueryPoliciesAreExactAndDocumented(t *testing.T) {
 	_, fieldRows := derivePublicContractLedger(t)
 	seen := make(map[string]bool, len(expectedPublicQuerySemantics))
 	for _, row := range fieldRows {
-		topLevel := strings.Split(row.path, ".")[0]
+		topLevel, _, _ := strings.Cut(row.path, ".")
 		key := row.rpc + ":" + topLevel
 		expected, ok := expectedPublicQuerySemantics[key]
 		if isPublicQueryPolicyField(topLevel) && !ok {
@@ -153,7 +153,7 @@ func publicRPCQueryPolicy(rpc string) string {
 }
 
 func publicQuerySemantics(rpc, path, paginationInputs string) string {
-	topLevel := strings.Split(path, ".")[0]
+	topLevel, _, _ := strings.Cut(path, ".")
 	if policy, ok := expectedPublicQuerySemantics[rpc+":"+topLevel]; ok {
 		return policy
 	}

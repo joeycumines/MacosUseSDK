@@ -10,6 +10,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -1500,6 +1503,40 @@ func TestHandleHTTPMessage_Initialize_Integration(t *testing.T) {
 // ============================================================================
 // Unix Socket Support Tests
 // ============================================================================
+
+func TestValidateUnixSocketEndpoint(t *testing.T) {
+	directory, err := os.MkdirTemp("/tmp", "mus-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.RemoveAll(directory) })
+	path := filepath.Join(directory, "server.sock")
+	listener, err := net.Listen("unix", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer listener.Close()
+	if err := os.Chmod(path, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := validateUnixSocketEndpoint(path); err != nil {
+		t.Fatalf("valid endpoint rejected: %v", err)
+	}
+	link := filepath.Join(directory, "link.sock")
+	if err := os.Symlink(path, link); err != nil {
+		t.Fatal(err)
+	}
+	if err := validateUnixSocketEndpoint(link); err == nil {
+		t.Fatal("symlink endpoint accepted")
+	}
+}
+
+func TestValidateUnixSocketEndpointAllowsMissing(t *testing.T) {
+	path := filepath.Join("/tmp", fmt.Sprintf("mus-missing-%d.sock", os.Getpid()))
+	if err := validateUnixSocketEndpoint(path); err != nil {
+		t.Fatalf("missing endpoint rejected: %v", err)
+	}
+}
 
 // TestMCPServer_WithUnixSocketConfig tests that MCPServer can be configured with Unix socket
 func TestMCPServer_WithUnixSocketConfig(t *testing.T) {

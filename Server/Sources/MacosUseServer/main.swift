@@ -28,7 +28,7 @@ private func setSecureUmask() -> mode_t {
 ///
 /// This function ensures all resources are properly cleaned up in the correct order:
 /// 1. Await the composition-owned service lifetime drain started with transport shutdown
-/// 2. Remove only the exact Unix-socket identity claimed after bind
+/// 2. Leave the launchd-owned Unix socket pathname untouched
 ///
 /// - Parameters:
 ///   - socketOwner: Optional identity-bound Unix socket path to clean up.
@@ -43,11 +43,10 @@ private func performGracefulShutdown(
     await serviceLifetime.shutdown()
     logger.info("Composition-owned service work drained")
 
-    // Remove only the exact socket identity claimed after bind.
+    // launchd owns the socket pathname. Never unlink it during shutdown.
     if let socketOwner {
-        if try socketOwner.cleanup() {
-            logger.info("Owned Unix socket file cleaned up: \(socketOwner.path, privacy: .private)")
-        }
+        _ = try socketOwner.cleanup()
+        logger.info("Left launchd-owned Unix socket pathname untouched: \(socketOwner.path, privacy: .private)")
     }
 
     logger.info("Graceful shutdown complete")
@@ -146,11 +145,38 @@ func main() async throws {
     } else {
         logger.info("Will listen on \(config.listenAddress, privacy: .public):\(config.port, privacy: .public)")
     }
-    let socketOwner: UnixSocketPathOwner? = try config.unixSocketPath.map { socketPath in
-        let owner = UnixSocketPathOwner(path: socketPath)
-        try owner.prepareForBind()
-        return owner
+    let socketOwner = config.unixSocketPath.map(UnixSocketPathOwner.init(path:))
+    var preboundSocketDescriptor: Int32?
+    var descriptorOwnershipTransferred = false
+    defer {
+        // The Posix transport takes ownership only after successful construction.
+        // Close any descriptor still owned by this function on a pre-transport
+        // failure; never unlink the pathname during that failure path.
+        if let descriptor = preboundSocketDescriptor, !descriptorOwnershipTransferred {
+            _ = Darwin.close(descriptor)
+        }
     }
+    if let socketOwner {
+        // launchd creates and owns the pathname, then hands this process the
+        // already-bound descriptor. Direct bind/lstat admission is disabled:
+        // Darwin does not provide a persistent pathname-to-descriptor identity
+        // primitive for a mutable AF_UNIX pathname.
+        do {
+            preboundSocketDescriptor = try socketOwner.activateLaunchdSocket(name: "Listener")
+            logger.info("Activated launchd Unix socket listener: \(socketOwner.path, privacy: .private)")
+        } catch let UnixSocketPathError.activatedSocketUnavailable(_, code)
+            where code == ENOENT || code == ESRCH
+        {
+            // Manual execution has no launchd socket dictionary. Fall back to
+            // the descriptor-owning direct bind path; launchd activation remains
+            // preferred and never falls back for malformed/insecure descriptors.
+            preboundSocketDescriptor = try socketOwner.makeListeningSocket()
+            logger.info("Created standalone Unix socket listener: \(socketOwner.path, privacy: .private)")
+        }
+    }
+
+    // The descriptor is consumed by the transport below. If any initialization
+    // step throws first, the defer above closes it without touching the path.
 
     // ═══════════════════════════════════════════════════════════════════════════
     // STEP 3: AppStateStore
@@ -227,21 +253,31 @@ func main() async throws {
         }
     }
 
-    // Set up and start gRPC server using the HTTP/2 NIO transport
-    let address: GRPCNIOTransportCore.SocketAddress
-
-    if let socketPath = config.unixSocketPath {
-        address = .unixDomainSocket(path: socketPath)
-        logger.info("Binding to Unix Domain Socket: \(socketPath, privacy: .private)")
+    // Set up and start gRPC server using the HTTP/2 NIO transport. Unix
+    // listeners are pre-bound so the descriptor, not a later pathname lookup,
+    // is the ownership boundary.
+    let grpcTransport: HTTP2ServerTransport.Posix
+    if let descriptor = preboundSocketDescriptor {
+        grpcTransport = HTTP2ServerTransport.Posix(
+            listeningSocketDescriptor: Int(descriptor),
+            transportSecurity: .plaintext,
+        )
+        descriptorOwnershipTransferred = true
+        logger.info("Using pre-bound Unix Domain Socket transport")
     } else {
-        address = .ipv4(host: config.listenAddress, port: config.port)
+        let address = GRPCNIOTransportCore.SocketAddress.ipv4(
+            host: config.listenAddress,
+            port: config.port,
+        )
         logger.info("Binding to TCP: \(config.listenAddress, privacy: .public):\(config.port, privacy: .public)")
+        grpcTransport = .http2NIOPosix(
+            address: address,
+            transportSecurity: .plaintext,
+        )
     }
 
-    let grpcTransport: HTTP2ServerTransport.Posix = .http2NIOPosix(
-        address: address,
-        transportSecurity: .plaintext,
-    )
+    preboundSocketDescriptor = nil
+
     let server = GRPCServer(
         transport: productionServerTransport(grpcTransport),
         services: services,
@@ -260,10 +296,6 @@ func main() async throws {
     }
     var lifecycleError: (any Error)?
     do {
-        // A Unix listener is not admitted until its exact owner-private socket
-        // identity has appeared. This replaces the fixed startup sleep.
-        try await socketOwner?.claimCreatedSocket()
-
         healthService.provider.updateStatus(.serving, forService: "macosusesdk.v1.MacosUse")
         healthService.provider.updateStatus(.serving, forService: "")
         logger.info("Health service status set to SERVING")
