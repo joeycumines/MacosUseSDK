@@ -141,6 +141,68 @@ struct ServerLifecycleTests {
 
     @Test
     @MainActor
+    func `activated node validation accepts owner-private socket node`() throws {
+        let directory = try makeShortSocketDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let path = directory.appendingPathComponent("s.sock").path
+
+        let listener = try bindListeningSocket(at: path)
+        defer {
+            _ = Darwin.close(listener)
+            _ = path.withCString { unlink($0) }
+        }
+        // launchd creates the node with SockPathMode 0600; the test fixture
+        // must set the same mode since the test process umask is 022.
+        #expect(path.withCString { chmod($0, 0o600) } == 0)
+        var nodeStatus = stat()
+        #expect(path.withCString { lstat($0, &nodeStatus) } == 0)
+        #expect(nodeStatus.st_uid == geteuid())
+        #expect(nodeStatus.st_mode & mode_t(0o777) == mode_t(0o600))
+
+        let probe = Darwin.socket(AF_UNIX, SOCK_STREAM, 0)
+        #expect(probe >= 0)
+        defer { _ = Darwin.close(probe) }
+        // Must not throw for a node owned by the current user with 0600 mode,
+        // even though fstat on a bare descriptor reports synthetic metadata.
+        try UnixSocketPathOwner.validateActivatedNode(
+            nodeStatus,
+            path: path,
+            descriptorForCleanup: probe,
+        )
+    }
+
+    @Test
+    @MainActor
+    func `activated node validation rejects wrong-mode node`() throws {
+        let directory = try makeShortSocketDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let path = directory.appendingPathComponent("s.sock").path
+
+        let listener = try bindListeningSocket(at: path)
+        defer {
+            _ = Darwin.close(listener)
+            _ = path.withCString { unlink($0) }
+        }
+        #expect(path.withCString { chmod($0, 0o644) } == 0)
+        var nodeStatus = stat()
+        #expect(path.withCString { lstat($0, &nodeStatus) } == 0)
+
+        let probe = Darwin.socket(AF_UNIX, SOCK_STREAM, 0)
+        #expect(probe >= 0)
+        guard probe >= 0 else { return }
+        // Validation owns and closes the descriptor on rejection. Do not probe
+        // the raw descriptor number afterward: concurrent tests may reuse it.
+        #expect(throws: UnixSocketPathError.self) {
+            try UnixSocketPathOwner.validateActivatedNode(
+                nodeStatus,
+                path: path,
+                descriptorForCleanup: probe,
+            )
+        }
+    }
+
+    @Test
+    @MainActor
     func `launchd activation failure leaves configured pathname untouched`() throws {
         let directory = try makeShortSocketDirectory()
         defer { try? FileManager.default.removeItem(at: directory) }
@@ -155,6 +217,18 @@ struct ServerLifecycleTests {
 
     @Test
     @MainActor
+    func `missing launchd activation maps to actionable fail-closed error`() {
+        let error = UnixSocketPathError.activationFailure(path: "/tmp/macosuse.sock", code: ENOENT)
+        #expect(error == .launchdActivationRequired("/tmp/macosuse.sock"))
+        #expect(error.localizedDescription.contains("must be activated by launchd"))
+        #expect(error.localizedDescription.contains("loopback TCP"))
+
+        let other = UnixSocketPathError.activationFailure(path: "/tmp/macosuse.sock", code: EACCES)
+        #expect(other == .activatedSocketUnavailable(path: "/tmp/macosuse.sock", code: EACCES))
+    }
+
+    @Test
+    @MainActor
     func `cleanup never mutates configured Unix pathname`() throws {
         let directory = try makeShortSocketDirectory()
         defer { try? FileManager.default.removeItem(at: directory) }
@@ -163,7 +237,7 @@ struct ServerLifecycleTests {
         try marker.write(to: URL(fileURLWithPath: path))
         let owner = UnixSocketPathOwner(path: path)
 
-        #expect(try owner.cleanup() == false)
+        #expect(owner.cleanup() == false)
         #expect(try Data(contentsOf: URL(fileURLWithPath: path)) == marker)
     }
 

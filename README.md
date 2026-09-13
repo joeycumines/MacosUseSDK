@@ -103,7 +103,7 @@ macOS uses **two distinct coordinate systems**:
 | `MACOS_USE_SERVER_ADDR` | gRPC server address for MCP proxy | `localhost:50051` |
 | `GRPC_LISTEN_ADDRESS` | Swift server bind address | `127.0.0.1` |
 | `GRPC_PORT` | Swift server port | `8080` |
-| `GRPC_UNIX_SOCKET` | Swift server Unix socket | - |
+| `GRPC_UNIX_SOCKET` | Launchd-activated Swift server Unix socket (overrides TCP); leave unset for manual runs | - |
 
 ## MCP Tool Catalog
 

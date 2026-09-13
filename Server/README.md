@@ -45,7 +45,7 @@ The server is configured via environment variables. All variables have sensible 
 |----------|-------------|---------|
 | `GRPC_LISTEN_ADDRESS` | gRPC server bind address | `127.0.0.1` |
 | `GRPC_PORT` | gRPC server port | `8080` |
-| `GRPC_UNIX_SOCKET` | Unix socket path (overrides TCP) | _(none)_ |
+| `GRPC_UNIX_SOCKET` | Launchd-activated Unix socket path (overrides TCP); leave unset for manual runs | _(none)_ |
 
 ### Transport Settings (for MCP tool)
 
@@ -72,13 +72,18 @@ The server is configured via environment variables. All variables have sensible 
 ### Example Configuration
 
 ```bash
-# Production deployment: Swift gRPC server bound to a unix socket
+# Manual development: bind the Swift gRPC server to loopback TCP.
+# Unix sockets require launchd activation and must be left unset here.
+unset GRPC_UNIX_SOCKET
 export GRPC_LISTEN_ADDRESS="127.0.0.1"
 export GRPC_PORT="8080"
-export GRPC_UNIX_SOCKET="$HOME/Library/Caches/macosuse.sock"
 
 swift run MacosUseServer
 ```
+
+The local LaunchAgent deployment configures `GRPC_UNIX_SOCKET` and supplies the
+matching launchd-owned descriptor. Do not set that variable for a manually
+launched server; use loopback TCP as shown above.
 
 When `MCP_AUDIT_LOG_FILE` is set, the MCP process records tool name, status, duration, and UTC timestamps only; tool arguments and user content are never stored. New files are created with mode `0600`. Existing paths must be regular files owned by the current user, mode `0600`, with one hard link; symlinks and non-regular files are rejected.
 
@@ -93,8 +98,9 @@ See [DEPLOYMENT.md](../DEPLOYMENT.md) for the complete deployment guide and the 
 
 ## TLS Setup
 
-The Swift gRPC server does not serve TLS: it is intended to bind to
-loopback or an owner-private Unix socket (see the Core Settings table).
+The Swift gRPC server does not serve TLS: manual execution binds to
+loopback TCP, while the local LaunchAgent may provide an owner-private Unix
+socket through launchd activation (see the Core Settings table).
 TLS is provided by the MCP proxy's Streamable HTTP endpoint:
 
 1. **Generate or obtain certificates:**

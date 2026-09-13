@@ -263,12 +263,12 @@ macos-use.doctor: ## Check the local deployment toolchain and source layout.
 .PHONY: macos-use.build-server
 macos-use.build-server: ## Build the release Swift server and its resource bundle.
 	@set -uo pipefail; \
-	mkdir -p "$(MACOS_USE_BUILD_LOG_DIR)"; \
+	if ! mkdir -p "$(MACOS_USE_BUILD_LOG_DIR)"; then printf '%s\n' 'ERROR: failed to create build log directory.' >&2; exit 1; fi; \
 	printf '%s\n' '=== Building MacosUseServer (release) ==='; \
-	$(MAKE) -C "$(PROJECT_ROOT)" --no-print-directory buf.descriptor-sets; \
-	cd "$(PROJECT_ROOT)/Server"; \
-	swift build --configuration release 2>&1 | tee "$(MACOS_USE_SERVER_BUILD_LOG)" | tail -n 40; \
-	test -x "$(MACOS_USE_SERVER_BIN)"; \
+	if ! $(MAKE) -C "$(PROJECT_ROOT)" --no-print-directory buf.descriptor-sets; then printf '%s\n' 'ERROR: descriptor generation failed.' >&2; exit 1; fi; \
+	if ! cd "$(PROJECT_ROOT)/Server"; then printf '%s\n' 'ERROR: Server project directory is unavailable.' >&2; exit 1; fi; \
+	if ! swift build --configuration release 2>&1 | tee "$(MACOS_USE_SERVER_BUILD_LOG)" | tail -n 40; then printf '%s\n' 'ERROR: Swift server build failed.' >&2; exit 1; fi; \
+	test -x "$(MACOS_USE_SERVER_BIN)" || { printf 'ERROR: server binary missing: %s\n' "$(MACOS_USE_SERVER_BIN)" >&2; exit 1; }; \
 	if [ ! -d "$(MACOS_USE_REQUIRED_RESOURCE_BUNDLE)" ]; then \
 		printf 'ERROR: SwiftPM resource bundle missing: %s\n' "$(MACOS_USE_REQUIRED_RESOURCE_BUNDLE)" >&2; \
 		exit 1; \
@@ -283,11 +283,11 @@ macos-use.build-server: ## Build the release Swift server and its resource bundl
 .PHONY: macos-use.build-mcp
 macos-use.build-mcp: ## Build and install the Go MCP proxy at the resolved Go bin path.
 	@set -uo pipefail; \
-	mkdir -p "$(MACOS_USE_BUILD_LOG_DIR)" "$(MACOS_USE_MCP_BIN_DIR)"; \\
+	if ! mkdir -p "$(MACOS_USE_BUILD_LOG_DIR)" "$(MACOS_USE_MCP_BIN_DIR)"; then printf '%s\n' 'ERROR: failed to create build log or MCP binary directory.' >&2; exit 1; fi; \
 	printf '%s\n' '=== Building macos-use-mcp ==='; \
-	cd "$(PROJECT_ROOT)"; \
-	GOBIN="$(MACOS_USE_MCP_BIN_DIR)" go install ./cmd/macos-use-mcp 2>&1 | tee "$(MACOS_USE_MCP_BUILD_LOG)" | tail -n 30; \
-	test -x "$(MACOS_USE_MCP_BIN)"; \
+	if ! cd "$(PROJECT_ROOT)"; then printf '%s\n' 'ERROR: project root is unavailable.' >&2; exit 1; fi; \
+	if ! GOBIN="$(MACOS_USE_MCP_BIN_DIR)" go install ./cmd/macos-use-mcp 2>&1 | tee "$(MACOS_USE_MCP_BUILD_LOG)" | tail -n 30; then printf '%s\n' 'ERROR: macos-use-mcp build failed.' >&2; exit 1; fi; \
+	test -x "$(MACOS_USE_MCP_BIN)" || { printf 'ERROR: MCP binary missing: %s\n' "$(MACOS_USE_MCP_BIN)" >&2; exit 1; }; \
 	printf 'MCP binary: %s\n' "$(MACOS_USE_MCP_BIN)"
 
 .PHONY: macos-use.build
@@ -326,31 +326,32 @@ macos-use.bundle: ## Create a clean .app and include all SwiftPM resource bundle
 		exit 1; \
 	fi; \
 	printf '%s\n' '=== Creating staged application bundle ==='; \
-	rm -rf "$(MACOS_USE_STAGING_DIR)"; \
-	mkdir -p "$(MACOS_USE_STAGING_DIR)/Contents/MacOS" "$(MACOS_USE_STAGING_DIR)/Contents/Resources"; \
-	install -m 0755 "$(MACOS_USE_SERVER_BIN)" "$(MACOS_USE_STAGING_DIR)/Contents/MacOS/$(MACOS_USE_APP_NAME)"; \
-	printf '%s\n' "$$MACOS_USE_INFO_PLIST_E" > "$(MACOS_USE_STAGING_DIR)/Contents/Info.plist"; \
+	if ! rm -rf "$(MACOS_USE_STAGING_DIR)"; then printf '%s\n' 'ERROR: failed to clear bundle staging directory.' >&2; exit 1; fi; \
+	if ! mkdir -p "$(MACOS_USE_STAGING_DIR)/Contents/MacOS" "$(MACOS_USE_STAGING_DIR)/Contents/Resources"; then printf '%s\n' 'ERROR: failed to create bundle staging directories.' >&2; exit 1; fi; \
+	if ! install -m 0755 "$(MACOS_USE_SERVER_BIN)" "$(MACOS_USE_STAGING_DIR)/Contents/MacOS/$(MACOS_USE_APP_NAME)"; then printf '%s\n' 'ERROR: failed to install server executable into bundle.' >&2; exit 1; fi; \
+	if ! printf '%s\n' "$$MACOS_USE_INFO_PLIST_E" > "$(MACOS_USE_STAGING_DIR)/Contents/Info.plist"; then printf '%s\n' 'ERROR: failed to write bundle Info.plist.' >&2; exit 1; fi; \
 	resource_count=0; \
 	for resource_bundle in "$(MACOS_USE_SERVER_BUILD_DIR)"/*.bundle; do \
 		[ -d "$$resource_bundle" ] || continue; \
 		resource_name=$$(basename "$$resource_bundle"); \
-		ditto "$$resource_bundle" "$(MACOS_USE_STAGING_DIR)/Contents/Resources/$$resource_name"; \
+		if ! ditto "$$resource_bundle" "$(MACOS_USE_STAGING_DIR)/Contents/Resources/$$resource_name"; then printf 'ERROR: failed to copy resource bundle: %s\n' "$$resource_bundle" >&2; exit 1; fi; \
 		resource_count=$$((resource_count + 1)); \
 	done; \
 	if [ "$$resource_count" -eq 0 ]; then \
 		printf '%s\n' 'ERROR: no SwiftPM .bundle resources were copied.' >&2; \
 		exit 1; \
 	fi; \
-	plutil -lint "$(MACOS_USE_STAGING_DIR)/Contents/Info.plist"; \
-	test -d "$(MACOS_USE_STAGING_DIR)/Contents/Resources/$(MACOS_USE_RESOURCE_BUNDLE_NAME)"; \
-	rm -rf "$(MACOS_USE_APP_DIR)"; \
-	mkdir -p "$(dir $(MACOS_USE_APP_DIR))"; \
-	mv "$(MACOS_USE_STAGING_DIR)" "$(MACOS_USE_APP_DIR)"; \
+	if ! plutil -lint "$(MACOS_USE_STAGING_DIR)/Contents/Info.plist"; then printf '%s\n' 'ERROR: generated Info.plist is invalid.' >&2; exit 1; fi; \
+	if [ ! -d "$(MACOS_USE_STAGING_DIR)/Contents/Resources/$(MACOS_USE_RESOURCE_BUNDLE_NAME)" ]; then printf 'ERROR: required resource bundle missing: %s\n' "$(MACOS_USE_RESOURCE_BUNDLE_NAME)" >&2; exit 1; fi; \
+	if ! rm -rf "$(MACOS_USE_APP_DIR)"; then printf '%s\n' 'ERROR: failed to replace installed app directory.' >&2; exit 1; fi; \
+	if ! mkdir -p "$(dir $(MACOS_USE_APP_DIR))"; then printf '%s\n' 'ERROR: failed to create app parent directory.' >&2; exit 1; fi; \
+	if ! mv "$(MACOS_USE_STAGING_DIR)" "$(MACOS_USE_APP_DIR)"; then printf '%s\n' 'ERROR: failed to install staged app bundle.' >&2; exit 1; fi; \
 	printf 'Bundle created: %s (%s SwiftPM resource bundle(s))\n' "$(MACOS_USE_APP_DIR)" "$$resource_count"
 
 .PHONY: macos-use.sign
+macos-use.sign: private SHELL := /bin/bash
 macos-use.sign: ## Sign the existing .app, then perform strict recursive verification.
-	@set -u; \
+	@set -uo pipefail; \
 	if [ ! -x "$(MACOS_USE_APP_EXECUTABLE)" ]; then \
 		printf '%s\n' "ERROR: app bundle is missing; run 'gmake macos-use.bundle' first." >&2; \
 		exit 1; \
@@ -360,13 +361,13 @@ macos-use.sign: ## Sign the existing .app, then perform strict recursive verific
 		exit 1; \
 	fi; \
 	printf '%s\n' '=== Clearing extended attributes from the generated app ==='; \
-	chmod -R u+w "$(MACOS_USE_APP_DIR)"; \
-	xattr -cr "$(MACOS_USE_APP_DIR)"; \
+	if ! chmod -R u+w "$(MACOS_USE_APP_DIR)"; then printf '%s\n' 'ERROR: failed to make app writable for signing.' >&2; exit 1; fi; \
+	if ! xattr -cr "$(MACOS_USE_APP_DIR)"; then printf '%s\n' 'ERROR: failed to clear app extended attributes.' >&2; exit 1; fi; \
 	printf '=== Signing with identity: %s ===\n' "$(MACOS_USE_SIGN_IDENTITY)"; \
-	codesign --force --sign "$(MACOS_USE_SIGN_IDENTITY)" "$(MACOS_USE_APP_DIR)"; \
+	if ! codesign --force --sign "$(MACOS_USE_SIGN_IDENTITY)" "$(MACOS_USE_APP_DIR)"; then printf '%s\n' 'ERROR: codesign failed.' >&2; exit 1; fi; \
 	printf '%s\n' '=== Verifying signature (deep + strict) ==='; \
-	codesign --verify --deep --strict --verbose=4 "$(MACOS_USE_APP_DIR)"; \
-	codesign -d --verbose=4 "$(MACOS_USE_APP_DIR)" 2>&1 | grep -E '^(Executable|Identifier|Format|CodeDirectory|Signature|TeamIdentifier)=' || true
+	if ! codesign --verify --deep --strict --verbose=4 "$(MACOS_USE_APP_DIR)"; then printf '%s\n' 'ERROR: codesign verification failed.' >&2; exit 1; fi; \
+	codesign -d --verbose=4 "$(MACOS_USE_APP_DIR)" 2>&1 | grep -E '^(Executable|Identifier|Format|CodeDirectory|Signature|TeamIdentifier)=' || { printf '%s\n' 'ERROR: signed app metadata could not be read.' >&2; exit 1; }
 
 .PHONY: macos-use.register
 macos-use.register: ## Register the existing signed .app with LaunchServices.
@@ -375,8 +376,8 @@ macos-use.register: ## Register the existing signed .app with LaunchServices.
 		printf '%s\n' "ERROR: app bundle is missing; run bundle and sign first." >&2; \
 		exit 1; \
 	fi; \
-	codesign --verify --deep --strict "$(MACOS_USE_APP_DIR)"; \
-	"$(MACOS_USE_LSREGISTER)" -f "$(MACOS_USE_APP_DIR)"; \
+	if ! codesign --verify --deep --strict "$(MACOS_USE_APP_DIR)"; then printf '%s\n' 'ERROR: app signature verification failed.' >&2; exit 1; fi; \
+	if ! "$(MACOS_USE_LSREGISTER)" -f "$(MACOS_USE_APP_DIR)"; then printf '%s\n' 'ERROR: LaunchServices registration failed.' >&2; exit 1; fi; \
 	printf 'Registered %s (%s) with LaunchServices.\n' "$(MACOS_USE_APP_DIR)" "$(MACOS_USE_BUNDLE_ID)"
 
 # =============================================================================
@@ -398,14 +399,14 @@ macos-use.launchd: ## Write, bootstrap, and wait for the per-user LaunchAgent.
 		printf '%s\n' 'ERROR: installed app executable is missing.' >&2; \
 		exit 1; \
 	fi; \
-	codesign --verify --deep --strict "$(MACOS_USE_APP_DIR)"; \
-	mkdir -p "$(dir $(MACOS_USE_PLIST))" "$(dir $(MACOS_USE_SOCKET))" "$(dir $(MACOS_USE_STDOUT_LOG))" "$(dir $(MACOS_USE_STDERR_LOG))"; \
-	plist_tmp=$$(mktemp "$(MACOS_USE_PLIST).tmp.XXXXXX"); \
+	if ! codesign --verify --deep --strict "$(MACOS_USE_APP_DIR)"; then printf '%s\n' 'ERROR: app signature verification failed.' >&2; exit 1; fi; \
+	if ! mkdir -p "$(dir $(MACOS_USE_PLIST))" "$(dir $(MACOS_USE_SOCKET))" "$(dir $(MACOS_USE_STDOUT_LOG))" "$(dir $(MACOS_USE_STDERR_LOG))"; then printf '%s\n' 'ERROR: failed to create LaunchAgent, socket, or log parent directories.' >&2; exit 1; fi; \
+	plist_tmp=$$(mktemp "$(MACOS_USE_PLIST).tmp.XXXXXX") || { printf '%s\n' 'ERROR: failed to create temporary LaunchAgent plist.' >&2; exit 1; }; \
 	cleanup_plist_tmp() { rm -f "$$plist_tmp"; }; \
 	trap cleanup_plist_tmp EXIT INT TERM; \
-	printf '%s\n' "$$MACOS_USE_LAUNCHD_PLIST_E" > "$$plist_tmp"; \
-	plutil -lint "$$plist_tmp"; \
-	chmod 600 "$$plist_tmp"; \
+	if ! printf '%s\n' "$$MACOS_USE_LAUNCHD_PLIST_E" > "$$plist_tmp"; then printf '%s\n' 'ERROR: failed to write LaunchAgent plist.' >&2; exit 1; fi; \
+	if ! plutil -lint "$$plist_tmp"; then printf '%s\n' 'ERROR: generated LaunchAgent plist is invalid.' >&2; exit 1; fi; \
+	if ! chmod 600 "$$plist_tmp"; then printf '%s\n' 'ERROR: failed to secure temporary LaunchAgent plist.' >&2; exit 1; fi; \
 	service_absent() { output=$$(launchctl print "$(MACOS_USE_SERVICE_TARGET)" 2>&1); status=$$?; [ "$$status" -ne 0 ] && printf '%s\n' "$$output" | grep -Fq 'Could not find service'; }; \
 	if ! launchctl bootout "$(MACOS_USE_SERVICE_TARGET)" >/dev/null 2>&1; then \
 		if ! service_absent; then printf '%s\n' 'ERROR: could not confirm LaunchAgent bootout; refusing replacement.' >&2; exit 1; fi; \
@@ -416,9 +417,9 @@ macos-use.launchd: ## Write, bootstrap, and wait for the per-user LaunchAgent.
 		printf '%s\n' 'ERROR: LaunchAgent remained loaded or could not be queried; refusing replacement.' >&2; \
 		exit 1; \
 	fi; \
-	mv "$$plist_tmp" "$(MACOS_USE_PLIST)"; \
-	launchctl enable "$(MACOS_USE_SERVICE_TARGET)"; \
-	launchctl bootstrap "$(MACOS_USE_LAUNCH_DOMAIN)" "$(MACOS_USE_PLIST)"
+	if ! mv "$$plist_tmp" "$(MACOS_USE_PLIST)"; then printf '%s\n' 'ERROR: failed to install LaunchAgent plist.' >&2; exit 1; fi; \
+	if ! launchctl enable "$(MACOS_USE_SERVICE_TARGET)"; then printf '%s\n' 'ERROR: failed to enable LaunchAgent.' >&2; exit 1; fi; \
+	if ! launchctl bootstrap "$(MACOS_USE_LAUNCH_DOMAIN)" "$(MACOS_USE_PLIST)"; then printf '%s\n' 'ERROR: failed to bootstrap LaunchAgent.' >&2; exit 1; fi
 	+@$(MAKE) -C "$(PROJECT_ROOT)" --no-print-directory macos-use.wait
 
 .PHONY: macos-use.wait
@@ -534,10 +535,10 @@ macos-use.start: ## Start the service without rebuilding or signing.
 	@set -u; \
 	if [ ! -f "$(MACOS_USE_PLIST)" ]; then printf '%s\n' "ERROR: missing $(MACOS_USE_PLIST)" >&2; exit 1; fi; \
 	if launchctl print "$(MACOS_USE_SERVICE_TARGET)" >/dev/null 2>&1; then \
-		launchctl kickstart "$(MACOS_USE_SERVICE_TARGET)"; \
+		if ! launchctl kickstart "$(MACOS_USE_SERVICE_TARGET)"; then printf '%s\n' 'ERROR: failed to kickstart LaunchAgent.' >&2; exit 1; fi; \
 	else \
-		launchctl enable "$(MACOS_USE_SERVICE_TARGET)"; \
-		launchctl bootstrap "$(MACOS_USE_LAUNCH_DOMAIN)" "$(MACOS_USE_PLIST)"; \
+		if ! launchctl enable "$(MACOS_USE_SERVICE_TARGET)"; then printf '%s\n' 'ERROR: failed to enable LaunchAgent.' >&2; exit 1; fi; \
+		if ! launchctl bootstrap "$(MACOS_USE_LAUNCH_DOMAIN)" "$(MACOS_USE_PLIST)"; then printf '%s\n' 'ERROR: failed to bootstrap LaunchAgent.' >&2; exit 1; fi; \
 	fi
 	+@$(MAKE) -C "$(PROJECT_ROOT)" --no-print-directory macos-use.wait
 
@@ -546,10 +547,10 @@ macos-use.restart: ## Restart the service without rebuilding or re-signing.
 	@set -u; \
 	if [ ! -f "$(MACOS_USE_PLIST)" ]; then printf '%s\n' "ERROR: missing $(MACOS_USE_PLIST)" >&2; exit 1; fi; \
 	if launchctl print "$(MACOS_USE_SERVICE_TARGET)" >/dev/null 2>&1; then \
-		launchctl kickstart -k "$(MACOS_USE_SERVICE_TARGET)"; \
+		if ! launchctl kickstart -k "$(MACOS_USE_SERVICE_TARGET)"; then printf '%s\n' 'ERROR: failed to restart LaunchAgent.' >&2; exit 1; fi; \
 	else \
-		launchctl enable "$(MACOS_USE_SERVICE_TARGET)"; \
-		launchctl bootstrap "$(MACOS_USE_LAUNCH_DOMAIN)" "$(MACOS_USE_PLIST)"; \
+		if ! launchctl enable "$(MACOS_USE_SERVICE_TARGET)"; then printf '%s\n' 'ERROR: failed to enable LaunchAgent.' >&2; exit 1; fi; \
+		if ! launchctl bootstrap "$(MACOS_USE_LAUNCH_DOMAIN)" "$(MACOS_USE_PLIST)"; then printf '%s\n' 'ERROR: failed to bootstrap LaunchAgent.' >&2; exit 1; fi; \
 	fi
 	+@$(MAKE) -C "$(PROJECT_ROOT)" --no-print-directory macos-use.wait
 

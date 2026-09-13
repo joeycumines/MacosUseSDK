@@ -31,7 +31,7 @@ private func setSecureUmask() -> mode_t {
 /// 2. Leave the launchd-owned Unix socket pathname untouched
 ///
 /// - Parameters:
-///   - socketOwner: Optional identity-bound Unix socket path to clean up.
+///   - socketOwner: Optional launchd-owned Unix socket path left untouched during cleanup.
 ///   - serviceLifetime: The composition-owned producer and mutation lifetime.
 @MainActor
 private func performGracefulShutdown(
@@ -45,7 +45,7 @@ private func performGracefulShutdown(
 
     // launchd owns the socket pathname. Never unlink it during shutdown.
     if let socketOwner {
-        _ = try socketOwner.cleanup()
+        _ = socketOwner.cleanup()
         logger.info("Left launchd-owned Unix socket pathname untouched: \(socketOwner.path, privacy: .private)")
     }
 
@@ -158,21 +158,13 @@ func main() async throws {
     }
     if let socketOwner {
         // launchd creates and owns the pathname, then hands this process the
-        // already-bound descriptor. Direct bind/lstat admission is disabled:
+        // already-bound descriptor. Direct pathname binding is disabled because
         // Darwin does not provide a persistent pathname-to-descriptor identity
         // primitive for a mutable AF_UNIX pathname.
-        do {
-            preboundSocketDescriptor = try socketOwner.activateLaunchdSocket(name: "Listener")
-            logger.info("Activated launchd Unix socket listener: \(socketOwner.path, privacy: .private)")
-        } catch let UnixSocketPathError.activatedSocketUnavailable(_, code)
-            where code == ENOENT || code == ESRCH
-        {
-            // Manual execution has no launchd socket dictionary. Fall back to
-            // the descriptor-owning direct bind path; launchd activation remains
-            // preferred and never falls back for malformed/insecure descriptors.
-            preboundSocketDescriptor = try socketOwner.makeListeningSocket()
-            logger.info("Created standalone Unix socket listener: \(socketOwner.path, privacy: .private)")
-        }
+        // When activation is unavailable, startup fails closed; manual execution
+        // must omit GRPC_UNIX_SOCKET and use the documented loopback TCP settings.
+        preboundSocketDescriptor = try socketOwner.activateLaunchdSocket(name: "Listener")
+        logger.info("Activated launchd Unix socket listener: \(socketOwner.path, privacy: .private)")
     }
 
     // The descriptor is consumed by the transport below. If any initialization
