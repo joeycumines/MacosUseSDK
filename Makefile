@@ -8,8 +8,7 @@ PROJECT_ROOT := $(patsubst %/,%,$(dir $(ROOT_MAKEFILE)))
 GO_TARGET_PREFIX := go.
 SWIFT_TARGET_PREFIX := swift.
 MAKEFILE_TARGET_PREFIXES := $(MAKEFILE_TARGET_PREFIXES) SWIFT_TARGET_PREFIX
-# Server package build depends on buf.descriptor-sets for gRPC reflection
-swift.build.Server: buf.descriptor-sets
+
 GO_MODULE_SLUGS_NO_PACKAGES ?= hack.google-api-linter
 GO_MODULE_SLUGS_NO_UPDATE ?= hack.google-api-linter
 # excludes generated files from linting/formatting
@@ -20,6 +19,7 @@ SWIFT_PACKAGE_FILES_NO_FORMAT ?= $(SWIFT_PACKAGE_FILES_NO_LINT_OR_FORMAT)
 BUF_BREAKING_AGAINST ?= .#branch=main
 GO_MODULE_PATHS_EXCLUDE_PATTERNS ?= %/.build
 SUBDIR_MAKEFILE_PATHS_EXCLUDE_PATTERNS ?= %/.build
+SWIFT_BUILD_FLAGS ?= --disable-prefetching --use-only-versions-from-resolved-file
 
 -include $(PROJECT_ROOT)/config.mk
 include $(PROJECT_ROOT)/make/go.mk
@@ -80,3 +80,6 @@ mcp-integration-binary: ## Build the exact MCP executable used by production-pat
 	@mkdir -p $(dir $(MCP_INTEGRATION_BINARY))
 	go build -o $(MCP_INTEGRATION_BINARY) ./cmd/macos-use-mcp
 go.test.integration: mcp-integration-binary
+
+# Server package build depends on buf.descriptor-sets for gRPC reflection
+swift.build.Server: buf.descriptor-sets
