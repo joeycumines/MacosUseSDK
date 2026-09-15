@@ -27,6 +27,11 @@ actions, and verification without redundant pauses:
 1. **Launch / Focus Browser:**
    - Check running status with `list_apps(kind="running")`. If not running, call
      `open_app(bundle)` with the bundle from `list_apps(kind="installed")`.
+     If the exact returned bundle is rejected as invalid, non-canonical, or
+     `Application bundle not found`, refresh the running inventory; when still absent,
+     use MCP `run(type="applescript", command=...)` with an identity-bound
+     `launch`/`activate` command, poll fresh app/window listings for a bounded number of
+     attempts, and select the user-facing process from title plus AX/content evidence.
    - Call `list_windows(app)` to obtain the browser window resource.
    - **Chrome Profile Picker Detection:** If Chrome opens a profile selection
      window, query `find_elements(parent=window, selector="role:AXButton")` to find
@@ -44,6 +49,28 @@ actions, and verification without redundant pauses:
    - Click articles or links via `click_element(parent=window, element=handle)`.
    - Scroll through dynamic feeds: `scroll(target=window, x=center_x, y=center_y, scroll_y=500)`
      followed by `wait(1.0)` and `find_elements(force_refresh=true)`.
+
+### Navigate Desktop Web-View and Canvas Apps (Figma / Electron)
+
+1. **Select the content window:** From `list_windows(app)`, ignore helper, title-bar,
+   feed, and zero-content windows. Resolve the candidate using its descriptive title
+   plus `AXWebArea`/destination evidence or a screenshot; window count alone is not
+   sufficient. If AX cannot access a candidate on another Space, activate the exact
+   process, re-list windows, and focus the accessible content window. Negative
+   coordinates alone indicate monitor placement, not a Space transition.
+2. **Discover controls:** Query `role:AXWebArea` and navigation roles. When a label
+   appears on both an `AXRow` and an `AXButton` (or another container/action pair), use
+   `find_elements` to inspect all matches and choose the actionable handle.
+3. **Mutate while fresh:** Call `click_element` immediately with the fresh handle. On a
+   stale/not-attached error, force-refresh and rediscover; after one more failure, never
+   reuse a failed handle or unscoped keyboard trigger. Follow the Click Escalation path
+   only after confirming focus/action or fresh visible bounds.
+4. **Verify navigation:** Capture a baseline before the action. Confirm two independent
+   post-action signals, with at least one proving a state change: fresh AX state
+   (selected row, title, focus, or URL) plus destination-specific content or a
+   before/after screenshot. If the destination was already selected, verify it and
+   report that no click was needed; otherwise report navigation as unverified when no
+   signal changes or identifies the destination.
 
 ### Visual Grounding Fallback (JetBrains IDEs & Non-AX Apps)
 

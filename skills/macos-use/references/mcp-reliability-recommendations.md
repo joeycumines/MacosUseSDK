@@ -74,12 +74,16 @@ VS Code), DOM redraws and dynamic updates invalidate element handles
 
 **Mitigations:**
 - Avoid conversational turns between `find_elements` and `click_element`.
-- If an element handle reports `Element ... is no longer available`, call
-  `read_element` immediately after discovery to record its center coordinates:
+- If an element handle reports `Element ... is no longer available` or is not attached
+  to an AX window, call `find_elements(force_refresh=true)` on the current parent and
+  use the fresh actionable handle immediately. If that also fails, re-list/focus the
+  exact process/window and rediscover before using coordinates.
+- When a fresh `read_element` provides usable bounds, record the center coordinates:
   $$\text{center\_x} = \text{bounds.x} + \frac{\text{bounds.width}}{2}$$
   $$\text{center\_y} = \text{bounds.y} + \frac{\text{bounds.height}}{2}$$
   Coordinate clicks on the geometric center via `click(target=window, x, y)`
-  are immune to snapshot handle invalidation.
+  are immune to snapshot handle invalidation, but only use them after confirming that
+  the target window is visible on the active Space.
 
 ## 8. Selector Ambiguity (`FailedPrecondition`) — **Empirical Finding**
 
@@ -117,6 +121,54 @@ is the top-left corner of the primary display:
   this same coordinate space, allowing direct linear addition:
   $$\text{global} = \text{window origin} + \text{window-relative pixel offset}$$
 
+## 11. Installed Bundle Resource Rejection — **Empirical Finding**
+
+On some server/runtime combinations, `open_app` can reject the exact
+`applicationBundles/{id}` resource returned by `list_apps(kind="installed")` with an
+invalid, non-canonical-resource, or `Application bundle not found` error. Treat this as
+a resource/cache mismatch, not as permission to edit the opaque ID.
+
+**Mitigation:**
+
+1. Refresh `list_apps(kind="running")`.
+2. If the target is still absent, use MCP `run(type="applescript", command=...)` with
+   an identity-bound command such as `tell application id "<bundle-id>" to launch` and
+   `tell application id "<bundle-id>" to activate`. Use the shell fallback only when
+   the server explicitly enables it.
+3. Poll fresh `list_apps(kind="running")` and `list_windows(app)` calls for a bounded
+   number of attempts. Stop and report the launch error if no user-facing content window
+   appears; do not loop indefinitely.
+4. Resolve the process from descriptive window title plus AXWebArea/destination evidence
+   or a screenshot. A nonzero window count alone does not identify the user-facing
+   process; helpers and web-content processes remain candidates to reject.
+
+## 12. Background Spaces and Multi-Process Apps — **Empirical Finding**
+
+`list_windows` can return title-bar windows, helper windows, feed/popup windows, and
+content windows on another Space. Negative global coordinates normally identify a
+secondary-monitor placement and do not, by themselves, identify a background Space.
+An otherwise valid window can still be inaccessible to pointer input from the active
+Space.
+
+**Mitigation:** use visibility/focus or AX-access evidence to distinguish Space access
+from monitor placement. If the content window is inaccessible, activate the exact
+running application process with `open_app(applications/{id})` or identity-bound
+AppleScript `activate`; then re-enumerate windows, focus the accessible content window,
+and rediscover AX elements. Do not call `focus_window` on the inaccessible background
+window or reuse handles obtained before the transition.
+
+## 13. Navigation Requires Two Signals — **Empirical Finding**
+
+A matching page or tab label does not prove that navigation completed. Rows and buttons
+can share text, canvas state can be invisible to AX, and the requested destination may
+already be selected before the action.
+
+**Mitigation:** capture a baseline, then verify two independent post-action signals, with
+at least one proving a state change: for example, a changed selected-row/title/URL signal
+plus destination-specific content or a before/after screenshot. If the baseline already
+shows the requested destination selected, report that no navigation action was needed.
+If neither signal changes or identifies the destination, report navigation as unverified.
+
 ---
 
 ## Priority & Impact Summary
@@ -133,3 +185,6 @@ is the top-left corner of the primary display:
 | 8 | Selector ambiguity handling | Empirical Finding | Prevents multi-match failure stalls |
 | 9 | Chrome Profile Picker detection | Empirical Finding | Unblocks fresh browser automations |
 | 10| Multi-monitor coordinate math | Empirical Finding | Eliminates pointer misses on secondary displays |
+| 11| Installed bundle recovery | Empirical Finding | Recovers from launch-resource mismatches without inventing IDs |
+| 12| Background Space/process selection | Empirical Finding | Avoids targeting helpers or inaccessible windows |
+| 13| Two-signal navigation verification | Empirical Finding | Prevents false completion on matching labels |
