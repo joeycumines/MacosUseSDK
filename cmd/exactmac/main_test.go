@@ -93,6 +93,12 @@ func TestRunRejectsMCPArgs(t *testing.T) {
 	}
 }
 
+func TestRunRejectsHTTPArgs(t *testing.T) {
+	if err := run([]string{"http", "extra"}); err == nil {
+		t.Fatal("run http with extra args returned nil error")
+	}
+}
+
 func TestRunHelpAndVersionSucceed(t *testing.T) {
 	for _, args := range [][]string{{"help"}, {"version"}} {
 		if err := run(args); err != nil {

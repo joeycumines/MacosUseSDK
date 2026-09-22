@@ -318,7 +318,6 @@ func TestMCPProductionListenerSecurity_InvalidConfigurationExitsBeforeBind(t *te
 				"MCP_SHELL_COMMANDS_ENABLED": "false",
 				"MCP_TLS_CERT_FILE":          "",
 				"MCP_TLS_KEY_FILE":           "",
-				"MCP_TRANSPORT":              "streamable-http",
 			}
 			for key, value := range test.environment {
 				if key == "MCP_HTTP_ADDRESS" && value == "unspecified" {
@@ -333,7 +332,7 @@ func TestMCPProductionListenerSecurity_InvalidConfigurationExitsBeforeBind(t *te
 
 			runCtx, cancelRun := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancelRun()
-			cmd := exec.CommandContext(runCtx, "../.build/debug/exactmac", "mcp")
+			cmd := exec.CommandContext(runCtx, "../.build/debug/exactmac", "http")
 			cmd.Env = testEnvironment(processEnvironment)
 			var output bytes.Buffer
 			cmd.Stdout = &output

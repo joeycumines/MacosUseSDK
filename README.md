@@ -78,7 +78,7 @@ Then register it in your AI tool (full per-client matrix with smoke checks:
 | Your tool | Where | Snippet |
 |-----------|-------|---------|
 | **Claude Code** | `claude mcp add` (project scope; `-s user` for global) | `claude mcp add exactmac -- /path/to/exactmac mcp` |
-| **Codex CLI** | `~/.codex/config.toml` | `[mcp_servers.exactmac]` + `command = "/path/to/exactmac"` + `args = ["mcp"]` (transport via `MCP_TRANSPORT` env) |
+| **Codex CLI** | `~/.codex/config.toml` | `[mcp_servers.exactmac]` + `command = "/path/to/exactmac"` + `args = ["mcp"]` |
 | **Cursor** | `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` | `"exactmac": { "command": "/path/to/exactmac", "args": ["mcp"] }` |
 | **OpenCode** | `opencode.jsonc` / `opencode.json` | `"exactmac": { "type": "local", "command": ["/path/to/exactmac", "mcp"] }` |
 | **Gemini CLI** | `~/.gemini/settings.json` | `"exactmac": { "command": "/path/to/exactmac", "args": ["mcp"] }` |
@@ -320,7 +320,7 @@ See [Server/README.md](Server/README.md) for detailed server documentation.
 Open Calculator and click using MCP tools over HTTP:
 
 ```sh
-# Start the Go proxy separately with MCP_TRANSPORT=streamable-http and point
+# Start the Go proxy with `exactmac http` and point
 # EXACTMAC_SERVER_ADDR at the Swift gRPC listener (or use a Unix socket).
 # Then initialize an MCP session.
 curl -X POST http://localhost:8080/mcp \

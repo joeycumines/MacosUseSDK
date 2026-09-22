@@ -113,10 +113,11 @@ shutdown. The server does not provide replay buffers or standalone SSE streams.
 
 #### Core Environment Variables
 
+Transport is selected by CLI subcommand: `exactmac mcp` (stdio) or `exactmac http` (Streamable HTTP).
+
 | Environment Variable | Description | Default |
 | :---- | :---- | :---- |
-| `MCP_TRANSPORT` | Transport type: `stdio` or `streamable-http` | `stdio` |
-| `MCP_HTTP_ADDRESS` | Streamable HTTP listen address | `127.0.0.1:8080` |
+| `MCP_HTTP_ADDRESS` | Streamable HTTP listen address (`exactmac http`) | `127.0.0.1:8080` |
 | `MCP_HTTP_SOCKET` | Unix socket path (takes precedence over address) | _(none)_ |
 | `MCP_CORS_ORIGIN` | Exact browser Origin to allow | _(none; Origin-bearing requests denied)_ |
 | `MCP_HTTP_READ_TIMEOUT` | HTTP read timeout | `30s` |
@@ -133,10 +134,9 @@ When both `MCP_TLS_CERT_FILE` and `MCP_TLS_KEY_FILE` are set, the server starts 
 
 **Example:**
 ```bash
-MCP_TRANSPORT=streamable-http \
-  MCP_TLS_CERT_FILE=/etc/ssl/certs/server.crt \
+MCP_TLS_CERT_FILE=/etc/ssl/certs/server.crt \
   MCP_TLS_KEY_FILE=/etc/ssl/private/server.key \
-  ./exactmac mcp
+  ./exactmac http
 ```
 
 #### Authentication Configuration
@@ -150,7 +150,7 @@ When `MCP_API_KEY` is set, all requests except `/health` require the `Authorizat
 **Example:**
 ```bash
 # Server
-MCP_TRANSPORT=streamable-http MCP_API_KEY=your-secret-key ./exactmac mcp
+MCP_API_KEY=your-secret-key ./exactmac http
 
 # Client
 curl -H "Authorization: Bearer your-secret-key" \
@@ -172,7 +172,7 @@ When set to a positive value, the server enforces a token bucket rate limiter wi
 **Example:**
 ```bash
 # Allow 100 requests per second with burst of 200
-MCP_TRANSPORT=streamable-http MCP_RATE_LIMIT=100 ./exactmac mcp
+MCP_RATE_LIMIT=100 ./exactmac http
 ```
 
 #### Audit Logging Configuration

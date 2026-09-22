@@ -172,7 +172,7 @@ func TestMCPUnixSocket_ExactProcessRejectsExistingPath(t *testing.T) {
 			}
 			runCtx, cancelRun := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancelRun()
-			cmd := exec.CommandContext(runCtx, "../.build/debug/exactmac", "mcp")
+			cmd := exec.CommandContext(runCtx, "../.build/debug/exactmac", "http")
 			cmd.Env = mcpUnixProcessEnvironment("127.0.0.1:1", path)
 			output, runErr := cmd.CombinedOutput()
 			if runCtx.Err() != nil {
@@ -235,7 +235,7 @@ func startMCPUnixSocketProcess(
 	if err != nil {
 		t.Fatalf("create production Unix-socket process log: %v", err)
 	}
-	cmd := exec.CommandContext(ctx, "../.build/debug/exactmac", "mcp")
+	cmd := exec.CommandContext(ctx, "../.build/debug/exactmac", "http")
 	cmd.Env = mcpUnixProcessEnvironment(grpcAddr, socketPath)
 	cmd.Stdout = logFile
 	cmd.Stderr = logFile
@@ -321,7 +321,6 @@ func mcpUnixProcessEnvironment(grpcAddr string, socketPath string) []string {
 		"MCP_SHELL_COMMANDS_ENABLED":  "false",
 		"MCP_TLS_CERT_FILE":           "",
 		"MCP_TLS_KEY_FILE":            "",
-		"MCP_TRANSPORT":               "streamable-http",
 	})
 }
 

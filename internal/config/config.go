@@ -57,7 +57,8 @@ type Config struct {
 	// If set, non-content tool metadata is appended to an owner-private regular file.
 	// If empty, audit logging is disabled.
 	AuditLogFile string
-	// Transport is the transport type: "stdio" or "streamable-http" (env: MCP_TRANSPORT, default: stdio)
+	// Transport is the transport type selected by the CLI subcommand:
+	// "stdio" for `exactmac mcp`, "streamable-http" for `exactmac http`.
 	Transport TransportType
 	// HTTPReadTimeout is the HTTP server read timeout (env: MCP_HTTP_READ_TIMEOUT, default: 30s)
 	HTTPReadTimeout time.Duration
@@ -80,9 +81,10 @@ type Config struct {
 	ShellCommandsEnabled bool
 }
 
-// Load loads configuration from environment variables and returns a Config.
-// All fields have sensible defaults. Returns an error if validation fails.
-func Load() (*Config, error) {
+// Load loads configuration from environment variables for the given transport
+// (selected by the CLI subcommand, not by environment). All other fields have
+// sensible defaults. Returns an error if validation fails.
+func Load(transport TransportType) (*Config, error) {
 	requestTimeout, err := getEnvAsInt("EXACTMAC_REQUEST_TIMEOUT", 30)
 	if err != nil {
 		return nil, err
@@ -138,8 +140,8 @@ func Load() (*Config, error) {
 		MaxConcurrentRequests:          maxConcurrentRequests,
 		MaxConcurrentRequestsPerClient: maxConcurrentRequestsPerClient,
 		Debug:                          debug,
-		// MCP Transport configuration
-		Transport:        TransportType(getEnv("MCP_TRANSPORT", "stdio")),
+		// Transport comes from the CLI subcommand (`mcp` or `http`).
+		Transport:        transport,
 		HTTPAddress:      getEnv("MCP_HTTP_ADDRESS", "127.0.0.1:8080"),
 		HTTPSocketPath:   os.Getenv("MCP_HTTP_SOCKET"),
 		CORSOrigin:       os.Getenv("MCP_CORS_ORIGIN"),

@@ -49,10 +49,11 @@ The server is configured via environment variables. All variables have sensible 
 
 ### Transport Settings (for MCP tool)
 
+Transport is selected by CLI subcommand: `exactmac mcp` (stdio) or `exactmac http` (Streamable HTTP).
+
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `MCP_TRANSPORT` | Transport type: `stdio` or `streamable-http` | `stdio` |
-| `MCP_HTTP_ADDRESS` | Streamable HTTP listen address | `127.0.0.1:8080` |
+| `MCP_HTTP_ADDRESS` | Streamable HTTP listen address (`exactmac http`) | `127.0.0.1:8080` |
 | `MCP_HTTP_SOCKET` | Unix socket path (overrides address) | _(none)_ |
 | `MCP_CORS_ORIGIN` | Exact allowed browser origin | _(none)_ |
 | `MCP_HTTP_READ_TIMEOUT` | HTTP read timeout | `30s` |
@@ -111,11 +112,11 @@ TLS is provided by the MCP proxy's Streamable HTTP endpoint:
    # For production, use certificates from a trusted CA
    ```
 
-2. **Configure the MCP proxy:**
+2. **Configure the MCP proxy** (`exactmac http`):
    ```bash
-    export MCP_TRANSPORT="streamable-http"
     export MCP_TLS_CERT_FILE="/path/to/cert.pem"
    export MCP_TLS_KEY_FILE="/path/to/key.pem"
+   # Then run: exactmac http
    ```
 
    Both variables are required; the certificate and key must be configured

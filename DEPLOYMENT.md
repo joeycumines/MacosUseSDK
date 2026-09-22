@@ -391,8 +391,7 @@ Use those absolute paths in the project configuration:
       "command": ["/Users/YOU/go/bin/exactmac", "mcp"],
       "enabled": true,
       "environment": {
-        "EXACTMAC_SERVER_SOCKET_PATH": "/Users/YOU/Library/Caches/exactmac.sock",
-        "MCP_TRANSPORT": "stdio"
+        "EXACTMAC_SERVER_SOCKET_PATH": "/Users/YOU/Library/Caches/exactmac.sock"
       },
       "timeout": 10000
     }
@@ -428,8 +427,7 @@ opens a TCP port.
 | `EXACTMAC_SERVER_ADDR` | `localhost:50051` | TCP fallback used only when no socket path is set |
 | `EXACTMAC_REQUEST_TIMEOUT` | `30` | gRPC request timeout in seconds |
 | `EXACTMAC_DEBUG` | `false` | Enable proxy debug logging |
-| `MCP_TRANSPORT` | `stdio` | MCP transport: `stdio` or `streamable-http` |
-| `MCP_HTTP_ADDRESS` | `127.0.0.1:8080` | Listener for Streamable HTTP transport |
+| `MCP_HTTP_ADDRESS` | `127.0.0.1:8080` | Listener for `exactmac http` (Streamable HTTP) |
 | `MCP_HTTP_SOCKET` | empty | Unix socket for HTTP transport |
 | `MCP_API_KEY` | empty | Bearer-token authentication for HTTP transport |
 | `MCP_RATE_LIMIT` | `0` | Requests per second; zero disables limiting |
@@ -652,7 +650,7 @@ The default local design keeps the trust boundary narrow:
 - launchd uses a restrictive `0177` umask and declares socket mode `0600`;
 - the server validates the activated descriptor before handing it to gRPC;
 - the service runs as the logged-in user, not as root;
-- the MCP proxy defaults to stdio; and
+- the MCP proxy runs over stdio via `exactmac mcp` (HTTP is the separate `exactmac http` subcommand); and
 - shell-command execution is disabled by default.
 
 Do not expose the MCP Streamable HTTP transport or the Swift gRPC TCP listener

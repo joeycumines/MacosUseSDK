@@ -11,9 +11,9 @@ func TestLoadRequestAdmissionDefaultsAndOverrides(t *testing.T) {
 	t.Run("defaults", func(t *testing.T) {
 		t.Setenv("MCP_MAX_CONCURRENT_REQUESTS", "")
 		t.Setenv("MCP_MAX_CONCURRENT_REQUESTS_PER_CLIENT", "")
-		cfg, err := Load()
+		cfg, err := Load(TransportStdio)
 		if err != nil {
-			t.Fatalf("Load() request admission defaults: %v", err)
+			t.Fatalf("Load(TransportStdio) request admission defaults: %v", err)
 		}
 		if cfg.MaxConcurrentRequests != 512 || cfg.MaxConcurrentRequestsPerClient != 256 {
 			t.Fatalf(
@@ -27,9 +27,9 @@ func TestLoadRequestAdmissionDefaultsAndOverrides(t *testing.T) {
 	t.Run("overrides", func(t *testing.T) {
 		t.Setenv("MCP_MAX_CONCURRENT_REQUESTS", "4")
 		t.Setenv("MCP_MAX_CONCURRENT_REQUESTS_PER_CLIENT", "2")
-		cfg, err := Load()
+		cfg, err := Load(TransportStdio)
 		if err != nil {
-			t.Fatalf("Load() request admission overrides: %v", err)
+			t.Fatalf("Load(TransportStdio) request admission overrides: %v", err)
 		}
 		if cfg.MaxConcurrentRequests != 4 || cfg.MaxConcurrentRequestsPerClient != 2 {
 			t.Fatalf(
@@ -84,9 +84,9 @@ func TestLoadRejectsInvalidRequestAdmission(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Setenv("MCP_MAX_CONCURRENT_REQUESTS", test.global)
 			t.Setenv("MCP_MAX_CONCURRENT_REQUESTS_PER_CLIENT", test.perClient)
-			_, err := Load()
+			_, err := Load(TransportStdio)
 			if err == nil || !strings.Contains(err.Error(), test.wantError) {
-				t.Fatalf("Load() error = %v, want substring %q", err, test.wantError)
+				t.Fatalf("Load(TransportStdio) error = %v, want substring %q", err, test.wantError)
 			}
 		})
 	}

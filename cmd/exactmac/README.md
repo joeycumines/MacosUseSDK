@@ -3,8 +3,8 @@
 The `exactmac` binary is the ExactMac command-line interface. The MCP server —
 the current 29 CUA-aligned macOS automation tools for any MCP-capable AI
 assistant (Claude Code, Codex CLI/App, Cursor, OpenCode, Gemini CLI, VS Code,
-Windsurf, or Claude Desktop) — runs as `exactmac mcp`. Transport is selected
-via `MCP_TRANSPORT` (`stdio` by default, `streamable-http` for HTTP).
+Windsurf, or Claude Desktop) — runs as `exactmac mcp` (stdio) or
+`exactmac http` (Streamable HTTP).
 
 ## Building
 
@@ -15,7 +15,7 @@ go build -o exactmac ./cmd/exactmac
 
 ## Running
 
-### `exactmac mcp` — Stdio Transport (Default)
+### `exactmac mcp` — Stdio Transport
 
 For MCP clients like Claude Desktop:
 
@@ -23,15 +23,14 @@ For MCP clients like Claude Desktop:
 ./exactmac mcp
 ```
 
-### Streamable HTTP Transport
+### `exactmac http` — Streamable HTTP Transport
 
 For web-based integrations:
 
 ```sh
-export MCP_TRANSPORT=streamable-http
 export MCP_HTTP_ADDRESS=127.0.0.1:8080
 export EXACTMAC_SERVER_ADDR=127.0.0.1:50051
-./exactmac mcp
+./exactmac http
 ```
 
 ## Configuration
@@ -44,7 +43,6 @@ All configuration is via environment variables. See [Server/README.md](../../Ser
 |----------|---------|-------------|
 | `EXACTMAC_SERVER_ADDR` | `localhost:50051` | gRPC backend address |
 | `EXACTMAC_REQUEST_TIMEOUT` | `30` | Default gRPC request timeout (seconds) |
-| `MCP_TRANSPORT` | `stdio` | Transport type: `stdio` or `streamable-http` |
 
 ### HTTP Transport Variables
 
@@ -71,7 +69,7 @@ unless TLS, API-key authentication, and a positive rate limit are all configured
 
 ## AI Tool Integration
 
-Any MCP-capable client works over stdio (default) with the absolute binary path
+Any MCP-capable client works over stdio with the absolute binary path
 plus the `mcp` subcommand. Full per-client matrix — Claude Code (`claude mcp add exactmac`),
 Codex CLI (`~/.codex/config.toml`), Codex App, Cursor, OpenCode
 (`opencode.jsonc` local type), Gemini CLI, VS Code, Windsurf, Claude Desktop —
@@ -88,8 +86,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
       "command": "/path/to/exactmac",
       "args": ["mcp"],
       "env": {
-        "EXACTMAC_SERVER_ADDR": "localhost:50051",
-        "MCP_TRANSPORT": "stdio"
+        "EXACTMAC_SERVER_ADDR": "localhost:50051"
       }
     }
   }

@@ -1,8 +1,8 @@
 // Copyright 2025 Joseph Cumines
 //
 // ExactMac CLI - one Go binary. `exactmac mcp` serves the 29 CUA-aligned
-// macOS automation tools over MCP (stdio by default, Streamable HTTP via
-// MCP_TRANSPORT=streamable-http).
+// macOS automation tools over MCP on stdio; `exactmac http` serves Streamable
+// HTTP.
 
 package main
 
@@ -22,8 +22,8 @@ import (
 const usageText = `Usage: exactmac <command>
 
 Commands:
-  mcp         Run the MCP server (stdio by default; Streamable HTTP when
-              MCP_TRANSPORT=streamable-http)
+  mcp         Run the MCP server over stdio
+  http        Run the MCP server over Streamable HTTP
   help        Show this help
   version     Show version
 `
@@ -47,7 +47,12 @@ func run(args []string) error {
 		if len(args) > 1 {
 			return fmt.Errorf("unknown arguments for mcp: %v", args[1:])
 		}
-		return runMCP()
+		return runMCP(config.TransportStdio)
+	case "http":
+		if len(args) > 1 {
+			return fmt.Errorf("unknown arguments for http: %v", args[1:])
+		}
+		return runMCP(config.TransportHTTP)
 	case "help", "-h", "--help":
 		fmt.Fprint(os.Stderr, usageText)
 		return nil
@@ -60,8 +65,8 @@ func run(args []string) error {
 	}
 }
 
-func runMCP() error {
-	cfg, err := config.Load()
+func runMCP(transportType config.TransportType) error {
+	cfg, err := config.Load(transportType)
 	if err != nil {
 		return fmt.Errorf("failed to load configuration: %w", err)
 	}
@@ -76,7 +81,7 @@ func runMCP() error {
 	defer signal.Stop(sigChan)
 
 	serve := func() error {
-		switch cfg.Transport {
+		switch transportType {
 		case config.TransportHTTP:
 			return runHTTPTransport(cfg, mcpServer)
 		default:

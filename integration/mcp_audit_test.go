@@ -38,7 +38,6 @@ func TestMCPAudit_ExactProcessRejectsSymlinkPath(t *testing.T) {
 		"EXACTMAC_SERVER_ADDR":        "127.0.0.1:1",
 		"EXACTMAC_SERVER_SOCKET_PATH": "",
 		"MCP_AUDIT_LOG_FILE":          auditPath,
-		"MCP_TRANSPORT":               "stdio",
 	})
 	output, err := cmd.CombinedOutput()
 	if err == nil {

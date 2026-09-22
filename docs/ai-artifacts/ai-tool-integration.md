@@ -1,9 +1,10 @@
 # ExactMac AI Tool Integration Matrix
 
-One local binary (`cmd/exactmac` → `exactmac`, served as `exactmac mcp`) serves every MCP-capable
-AI tool below over **stdio** (default, selected via `MCP_TRANSPORT`) or
-**Streamable HTTP**. No code changes per client — only the registration
-snippet differs. The MCP server runs as the `mcp` subcommand: `exactmac mcp`. Other subcommands: `exactmac help`, `exactmac version`. Unknown commands fail with usage on stderr.
+One local binary (`cmd/exactmac` → `exactmac`) serves every MCP-capable
+AI tool below over **stdio** (`exactmac mcp`) or **Streamable HTTP**
+(`exactmac http`). No code changes per client — only the registration
+snippet differs. Other subcommands: `exactmac help`, `exactmac version`.
+Unknown or missing commands fail with usage on stderr.
 
 Conventions used throughout:
 
@@ -157,8 +158,7 @@ In `~/Library/Application Support/Claude/claude_desktop_config.json`:
     "exactmac": {
       "command": "<EXACTMAC_BIN>",
       "env": {
-        "EXACTMAC_SERVER_ADDR": "localhost:50051",
-        "MCP_TRANSPORT": "stdio"
+        "EXACTMAC_SERVER_ADDR": "localhost:50051"
       }
     }
   }
@@ -174,10 +174,9 @@ bridge (same pattern as other multi-instance setups).
 One persistent proxy serves many clients:
 
 ```sh
-MCP_TRANSPORT=streamable-http \
 MCP_HTTP_ADDRESS=127.0.0.1:8080 \
 EXACTMAC_SERVER_ADDR=localhost:50051 \
-<EXACTMAC_BIN> mcp
+<EXACTMAC_BIN> http
 ```
 
 Or over a Unix socket: set `MCP_HTTP_SOCKET=/path/to/exactmac.sock` (overrides

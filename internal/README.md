@@ -6,10 +6,12 @@ This directory contains unexported implementation packages for the MCP server.
 
 ### `config/`
 
-Configuration loading from environment variables. Handles all MCP server settings including transport, security, and tuning parameters.
+Configuration loading from environment variables (transport comes from the CLI
+subcommand, not the environment). Handles all MCP server settings including
+security and tuning parameters.
 
 ```go
-cfg, err := config.Load()
+cfg, err := config.Load(config.TransportStdio) // or config.TransportHTTP
 ```
 
 ### `server/`

@@ -132,7 +132,6 @@ func startMCPStdioProcessWithOverrides(
 		"EXACTMAC_SERVER_ADDR":        grpcAddr,
 		"EXACTMAC_SERVER_SOCKET_PATH": "",
 		"MCP_AUDIT_LOG_FILE":          "",
-		"MCP_TRANSPORT":               "stdio",
 	}
 	maps.Copy(processEnvironment, overrides)
 	cmd.Env = testEnvironment(processEnvironment)

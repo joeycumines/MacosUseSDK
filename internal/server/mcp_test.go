@@ -426,7 +426,7 @@ func TestArgumentParsing(t *testing.T) {
 
 // TestConfigDefaults tests config default values
 func TestConfigDefaults(t *testing.T) {
-	cfg, err := config.Load()
+	cfg, err := config.Load(config.TransportStdio)
 	if err != nil {
 		t.Fatalf("Failed to load config: %v", err)
 	}

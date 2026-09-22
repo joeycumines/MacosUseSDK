@@ -18,7 +18,6 @@ func TestLoad_Defaults(t *testing.T) {
 	os.Unsetenv("EXACTMAC_SERVER_TLS")
 	os.Unsetenv("EXACTMAC_REQUEST_TIMEOUT")
 	os.Unsetenv("EXACTMAC_DEBUG")
-	os.Unsetenv("MCP_TRANSPORT")
 	os.Unsetenv("MCP_HTTP_ADDRESS")
 	os.Unsetenv("MCP_HTTP_SOCKET")
 	os.Unsetenv("MCP_CORS_ORIGIN")
@@ -28,9 +27,9 @@ func TestLoad_Defaults(t *testing.T) {
 	os.Unsetenv("MCP_AUDIT_LOG_FILE")
 	os.Unsetenv("MCP_RATE_LIMIT")
 
-	cfg, err := Load()
+	cfg, err := Load(TransportStdio)
 	if err != nil {
-		t.Fatalf("Load() error = %v", err)
+		t.Fatalf("Load(TransportStdio) error = %v", err)
 	}
 
 	if cfg.ServerAddr != "localhost:50051" {
@@ -64,19 +63,16 @@ func TestLoad_PhysicalRequestTimeoutMustFitTimeDuration(t *testing.T) {
 		"EXACTMAC_REQUEST_TIMEOUT",
 		strconv.FormatInt(maximumDurationSeconds+1, 10),
 	)
-	_, err := Load()
+	_, err := Load(TransportStdio)
 	if err == nil || !strings.Contains(err.Error(), "EXACTMAC_REQUEST_TIMEOUT") {
-		t.Fatalf("Load() error=%v, want request-timeout overflow rejection", err)
+		t.Fatalf("Load(TransportStdio) error=%v, want request-timeout overflow rejection", err)
 	}
 }
 
 func TestLoad_TransportStdio(t *testing.T) {
-	os.Setenv("MCP_TRANSPORT", "stdio")
-	defer os.Unsetenv("MCP_TRANSPORT")
-
-	cfg, err := Load()
+	cfg, err := Load(TransportStdio)
 	if err != nil {
-		t.Fatalf("Load() error = %v", err)
+		t.Fatalf("Load(TransportStdio) error = %v", err)
 	}
 
 	if cfg.Transport != TransportStdio {
@@ -85,12 +81,9 @@ func TestLoad_TransportStdio(t *testing.T) {
 }
 
 func TestLoad_TransportStreamableHTTP(t *testing.T) {
-	os.Setenv("MCP_TRANSPORT", "streamable-http")
-	defer os.Unsetenv("MCP_TRANSPORT")
-
-	cfg, err := Load()
+	cfg, err := Load(TransportHTTP)
 	if err != nil {
-		t.Fatalf("Load() error = %v", err)
+		t.Fatalf("Load(TransportHTTP) error = %v", err)
 	}
 
 	if cfg.Transport != TransportHTTP {
@@ -99,14 +92,24 @@ func TestLoad_TransportStreamableHTTP(t *testing.T) {
 }
 
 func TestLoad_TransportInvalid(t *testing.T) {
-	for _, value := range []string{"invalid", "sse"} {
-		t.Run(value, func(t *testing.T) {
-			t.Setenv("MCP_TRANSPORT", value)
-			_, err := Load()
+	for _, value := range []TransportType{"invalid", "sse", ""} {
+		t.Run(string(value), func(t *testing.T) {
+			_, err := Load(value)
 			if err == nil {
-				t.Fatalf("Load() accepted obsolete or invalid transport %q", value)
+				t.Fatalf("Load accepted obsolete or invalid transport %q", value)
 			}
 		})
+	}
+}
+
+func TestLoad_IgnoresMCPTransportEnv(t *testing.T) {
+	t.Setenv("MCP_TRANSPORT", "streamable-http")
+	cfg, err := Load(TransportStdio)
+	if err != nil {
+		t.Fatalf("Load(TransportStdio) error = %v", err)
+	}
+	if cfg.Transport != TransportStdio {
+		t.Fatalf("Transport = %s, want stdio (MCP_TRANSPORT must be ignored)", cfg.Transport)
 	}
 }
 
@@ -114,9 +117,9 @@ func TestLoad_InvalidInt(t *testing.T) {
 	os.Setenv("EXACTMAC_REQUEST_TIMEOUT", "not-a-number")
 	defer os.Unsetenv("EXACTMAC_REQUEST_TIMEOUT")
 
-	_, err := Load()
+	_, err := Load(TransportStdio)
 	if err == nil {
-		t.Error("Load() should return error for invalid integer config")
+		t.Error("Load(TransportStdio) should return error for invalid integer config")
 	}
 }
 
@@ -124,9 +127,9 @@ func TestLoad_InvalidDuration(t *testing.T) {
 	os.Setenv("MCP_HTTP_READ_TIMEOUT", "not-a-duration")
 	defer os.Unsetenv("MCP_HTTP_READ_TIMEOUT")
 
-	_, err := Load()
+	_, err := Load(TransportStdio)
 	if err == nil {
-		t.Error("Load() should return error for invalid duration config")
+		t.Error("Load(TransportStdio) should return error for invalid duration config")
 	}
 }
 
@@ -144,9 +147,9 @@ func TestLoad_HTTPConfig(t *testing.T) {
 		os.Unsetenv("MCP_HTTP_WRITE_TIMEOUT")
 	}()
 
-	cfg, err := Load()
+	cfg, err := Load(TransportStdio)
 	if err != nil {
-		t.Fatalf("Load() error = %v", err)
+		t.Fatalf("Load(TransportStdio) error = %v", err)
 	}
 
 	if cfg.HTTPAddress != "127.0.0.1:9000" {
@@ -320,9 +323,9 @@ func TestLoad_TLSConfig(t *testing.T) {
 		os.Unsetenv("MCP_TLS_KEY_FILE")
 	}()
 
-	cfg, err := Load()
+	cfg, err := Load(TransportStdio)
 	if err != nil {
-		t.Fatalf("Load() error = %v", err)
+		t.Fatalf("Load(TransportStdio) error = %v", err)
 	}
 
 	if cfg.TLSCertFile != "/path/to/cert.pem" {
@@ -338,9 +341,9 @@ func TestLoad_TLSConfigDefaults(t *testing.T) {
 	os.Unsetenv("MCP_TLS_CERT_FILE")
 	os.Unsetenv("MCP_TLS_KEY_FILE")
 
-	cfg, err := Load()
+	cfg, err := Load(TransportStdio)
 	if err != nil {
-		t.Fatalf("Load() error = %v", err)
+		t.Fatalf("Load(TransportStdio) error = %v", err)
 	}
 
 	if cfg.TLSCertFile != "" {
@@ -356,9 +359,9 @@ func TestLoad_APIKeyConfig(t *testing.T) {
 	os.Setenv("MCP_API_KEY", "test-secret-key-12345")
 	defer os.Unsetenv("MCP_API_KEY")
 
-	cfg, err := Load()
+	cfg, err := Load(TransportStdio)
 	if err != nil {
-		t.Fatalf("Load() error = %v", err)
+		t.Fatalf("Load(TransportStdio) error = %v", err)
 	}
 
 	if cfg.APIKey != "test-secret-key-12345" {
@@ -369,9 +372,9 @@ func TestLoad_APIKeyConfig(t *testing.T) {
 func TestLoad_APIKeyConfigDefault(t *testing.T) {
 	os.Unsetenv("MCP_API_KEY")
 
-	cfg, err := Load()
+	cfg, err := Load(TransportStdio)
 	if err != nil {
-		t.Fatalf("Load() error = %v", err)
+		t.Fatalf("Load(TransportStdio) error = %v", err)
 	}
 
 	if cfg.APIKey != "" {
@@ -383,9 +386,9 @@ func TestLoad_AuditLogFileConfig(t *testing.T) {
 	os.Setenv("MCP_AUDIT_LOG_FILE", "/var/log/mcp-audit.log")
 	defer os.Unsetenv("MCP_AUDIT_LOG_FILE")
 
-	cfg, err := Load()
+	cfg, err := Load(TransportStdio)
 	if err != nil {
-		t.Fatalf("Load() error = %v", err)
+		t.Fatalf("Load(TransportStdio) error = %v", err)
 	}
 
 	if cfg.AuditLogFile != "/var/log/mcp-audit.log" {
@@ -396,9 +399,9 @@ func TestLoad_AuditLogFileConfig(t *testing.T) {
 func TestLoad_AuditLogFileConfigDefault(t *testing.T) {
 	os.Unsetenv("MCP_AUDIT_LOG_FILE")
 
-	cfg, err := Load()
+	cfg, err := Load(TransportStdio)
 	if err != nil {
-		t.Fatalf("Load() error = %v", err)
+		t.Fatalf("Load(TransportStdio) error = %v", err)
 	}
 
 	if cfg.AuditLogFile != "" {
@@ -410,9 +413,9 @@ func TestLoad_RateLimitConfig(t *testing.T) {
 	os.Setenv("MCP_RATE_LIMIT", "100.5")
 	defer os.Unsetenv("MCP_RATE_LIMIT")
 
-	cfg, err := Load()
+	cfg, err := Load(TransportStdio)
 	if err != nil {
-		t.Fatalf("Load() error = %v", err)
+		t.Fatalf("Load(TransportStdio) error = %v", err)
 	}
 
 	if cfg.RateLimit != 100.5 {
@@ -423,9 +426,9 @@ func TestLoad_RateLimitConfig(t *testing.T) {
 func TestLoad_RateLimitConfigDefault(t *testing.T) {
 	os.Unsetenv("MCP_RATE_LIMIT")
 
-	cfg, err := Load()
+	cfg, err := Load(TransportStdio)
 	if err != nil {
-		t.Fatalf("Load() error = %v", err)
+		t.Fatalf("Load(TransportStdio) error = %v", err)
 	}
 
 	if cfg.RateLimit != 0 {
@@ -437,9 +440,9 @@ func TestLoad_RateLimitInvalid(t *testing.T) {
 	os.Setenv("MCP_RATE_LIMIT", "not-a-number")
 	defer os.Unsetenv("MCP_RATE_LIMIT")
 
-	_, err := Load()
+	_, err := Load(TransportStdio)
 	if err == nil {
-		t.Error("Load() should return error for invalid rate limit")
+		t.Error("Load(TransportStdio) should return error for invalid rate limit")
 	}
 }
 
@@ -533,7 +536,6 @@ func TestLoad_RejectsUnsafeHTTPConfiguration(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			t.Setenv("MCP_TRANSPORT", "streamable-http")
 			t.Setenv("MCP_HTTP_ADDRESS", "127.0.0.1:8080")
 			t.Setenv("MCP_HTTP_SOCKET", "")
 			t.Setenv("MCP_TLS_CERT_FILE", "")
@@ -545,28 +547,27 @@ func TestLoad_RejectsUnsafeHTTPConfiguration(t *testing.T) {
 				t.Setenv(key, value)
 			}
 
-			_, err := Load()
+			_, err := Load(TransportHTTP)
 			if err == nil {
-				t.Fatalf("Load() succeeded, want error containing %q", test.wantError)
+				t.Fatalf("Load(TransportHTTP) succeeded, want error containing %q", test.wantError)
 			}
 			if !strings.Contains(err.Error(), test.wantError) {
-				t.Fatalf("Load() error = %q, want substring %q", err, test.wantError)
+				t.Fatalf("Load(TransportHTTP) error = %q, want substring %q", err, test.wantError)
 			}
 		})
 	}
 }
 
 func TestLoad_AllowsProtectedRemoteHTTPListener(t *testing.T) {
-	t.Setenv("MCP_TRANSPORT", "streamable-http")
 	t.Setenv("MCP_HTTP_ADDRESS", "0.0.0.0:9443")
 	t.Setenv("MCP_TLS_CERT_FILE", "/tmp/server.crt")
 	t.Setenv("MCP_TLS_KEY_FILE", "/tmp/server.key")
 	t.Setenv("MCP_API_KEY", "production-secret")
 	t.Setenv("MCP_RATE_LIMIT", "25")
 
-	cfg, err := Load()
+	cfg, err := Load(TransportHTTP)
 	if err != nil {
-		t.Fatalf("Load() rejected protected remote listener: %v", err)
+		t.Fatalf("Load(TransportHTTP) rejected protected remote listener: %v", err)
 	}
 	if cfg.HTTPAddress != "0.0.0.0:9443" {
 		t.Fatalf("HTTPAddress = %q, want protected remote listener", cfg.HTTPAddress)
@@ -618,9 +619,9 @@ func TestLoad_ServerSocketPathConfig(t *testing.T) {
 	os.Setenv("EXACTMAC_SERVER_SOCKET_PATH", "/var/run/exactmac.sock")
 	defer os.Unsetenv("EXACTMAC_SERVER_SOCKET_PATH")
 
-	cfg, err := Load()
+	cfg, err := Load(TransportStdio)
 	if err != nil {
-		t.Fatalf("Load() error = %v", err)
+		t.Fatalf("Load(TransportStdio) error = %v", err)
 	}
 
 	if cfg.ServerSocketPath != "/var/run/exactmac.sock" {
@@ -631,9 +632,9 @@ func TestLoad_ServerSocketPathConfig(t *testing.T) {
 func TestLoad_ServerSocketPathConfigDefault(t *testing.T) {
 	os.Unsetenv("EXACTMAC_SERVER_SOCKET_PATH")
 
-	cfg, err := Load()
+	cfg, err := Load(TransportStdio)
 	if err != nil {
-		t.Fatalf("Load() error = %v", err)
+		t.Fatalf("Load(TransportStdio) error = %v", err)
 	}
 
 	if cfg.ServerSocketPath != "" {
@@ -650,9 +651,9 @@ func TestLoad_ServerSocketPathWithAddress(t *testing.T) {
 		os.Unsetenv("EXACTMAC_SERVER_SOCKET_PATH")
 	}()
 
-	cfg, err := Load()
+	cfg, err := Load(TransportStdio)
 	if err != nil {
-		t.Fatalf("Load() error = %v", err)
+		t.Fatalf("Load(TransportStdio) error = %v", err)
 	}
 
 	if cfg.ServerAddr != "localhost:50051" {
@@ -669,9 +670,9 @@ func TestLoad_ValidationWithOnlySocketPath(t *testing.T) {
 	os.Setenv("EXACTMAC_SERVER_SOCKET_PATH", "/tmp/test.sock")
 	defer os.Unsetenv("EXACTMAC_SERVER_SOCKET_PATH")
 
-	cfg, err := Load()
+	cfg, err := Load(TransportStdio)
 	if err != nil {
-		t.Fatalf("Load() error = %v", err)
+		t.Fatalf("Load(TransportStdio) error = %v", err)
 	}
 
 	if cfg.ServerSocketPath != "/tmp/test.sock" {
@@ -688,9 +689,9 @@ func TestLoad_ServerTLSConfig(t *testing.T) {
 	os.Setenv("EXACTMAC_SERVER_TLS", "true")
 	defer os.Unsetenv("EXACTMAC_SERVER_TLS")
 
-	cfg, err := Load()
+	cfg, err := Load(TransportStdio)
 	if err != nil {
-		t.Fatalf("Load() error = %v", err)
+		t.Fatalf("Load(TransportStdio) error = %v", err)
 	}
 
 	if cfg.ServerTLS != true {
@@ -702,9 +703,9 @@ func TestLoad_ServerTLSConfigFalse(t *testing.T) {
 	os.Setenv("EXACTMAC_SERVER_TLS", "false")
 	defer os.Unsetenv("EXACTMAC_SERVER_TLS")
 
-	cfg, err := Load()
+	cfg, err := Load(TransportStdio)
 	if err != nil {
-		t.Fatalf("Load() error = %v", err)
+		t.Fatalf("Load(TransportStdio) error = %v", err)
 	}
 
 	if cfg.ServerTLS != false {
@@ -715,9 +716,9 @@ func TestLoad_ServerTLSConfigFalse(t *testing.T) {
 func TestLoad_ServerTLSConfigDefault(t *testing.T) {
 	os.Unsetenv("EXACTMAC_SERVER_TLS")
 
-	cfg, err := Load()
+	cfg, err := Load(TransportStdio)
 	if err != nil {
-		t.Fatalf("Load() error = %v", err)
+		t.Fatalf("Load(TransportStdio) error = %v", err)
 	}
 
 	if cfg.ServerTLS != false {
@@ -729,9 +730,9 @@ func TestLoad_ServerCertFileConfig(t *testing.T) {
 	os.Setenv("EXACTMAC_SERVER_CERT_FILE", "/path/to/server.crt")
 	defer os.Unsetenv("EXACTMAC_SERVER_CERT_FILE")
 
-	cfg, err := Load()
+	cfg, err := Load(TransportStdio)
 	if err != nil {
-		t.Fatalf("Load() error = %v", err)
+		t.Fatalf("Load(TransportStdio) error = %v", err)
 	}
 
 	if cfg.ServerCertFile != "/path/to/server.crt" {
@@ -742,9 +743,9 @@ func TestLoad_ServerCertFileConfig(t *testing.T) {
 func TestLoad_ServerCertFileConfigDefault(t *testing.T) {
 	os.Unsetenv("EXACTMAC_SERVER_CERT_FILE")
 
-	cfg, err := Load()
+	cfg, err := Load(TransportStdio)
 	if err != nil {
-		t.Fatalf("Load() error = %v", err)
+		t.Fatalf("Load(TransportStdio) error = %v", err)
 	}
 
 	if cfg.ServerCertFile != "" {
@@ -756,9 +757,9 @@ func TestLoad_DebugConfig(t *testing.T) {
 	os.Setenv("EXACTMAC_DEBUG", "true")
 	defer os.Unsetenv("EXACTMAC_DEBUG")
 
-	cfg, err := Load()
+	cfg, err := Load(TransportStdio)
 	if err != nil {
-		t.Fatalf("Load() error = %v", err)
+		t.Fatalf("Load(TransportStdio) error = %v", err)
 	}
 
 	if cfg.Debug != true {
@@ -769,9 +770,9 @@ func TestLoad_DebugConfig(t *testing.T) {
 func TestLoad_DebugConfigDefault(t *testing.T) {
 	os.Unsetenv("EXACTMAC_DEBUG")
 
-	cfg, err := Load()
+	cfg, err := Load(TransportStdio)
 	if err != nil {
-		t.Fatalf("Load() error = %v", err)
+		t.Fatalf("Load(TransportStdio) error = %v", err)
 	}
 
 	if cfg.Debug != false {

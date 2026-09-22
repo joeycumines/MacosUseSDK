@@ -98,7 +98,7 @@ func startMCPTestServerWithOverrides(
 		t.Fatalf("create MCP HTTP process log: %v", err)
 	}
 
-	cmd := exec.CommandContext(ctx, "../.build/debug/exactmac", "mcp")
+	cmd := exec.CommandContext(ctx, "../.build/debug/exactmac", "http")
 	processEnvironment := map[string]string{
 		"EXACTMAC_DEBUG":              "false",
 		"EXACTMAC_SERVER_ADDR":        grpcAddr,
@@ -110,7 +110,6 @@ func startMCPTestServerWithOverrides(
 		"MCP_SHELL_COMMANDS_ENABLED":  "false",
 		"MCP_TLS_CERT_FILE":           "",
 		"MCP_TLS_KEY_FILE":            "",
-		"MCP_TRANSPORT":               "streamable-http",
 	}
 	maps.Copy(processEnvironment, overrides)
 	cmd.Env = testEnvironment(processEnvironment)
