@@ -104,8 +104,8 @@ Use `list_apps(kind="running")` first. If the target is absent, call
 
 If `open_app` rejects that exact returned resource with an invalid, non-canonical, or
 `Application bundle not found` error, do not edit or synthesize the ID. Refresh the
-running inventory. If the app is still absent, use the MCP `run` tool with an
-identity-bound AppleScript command such as
+running inventory. If the app is still absent, use the MCP `run` tool with
+`type="applescript"` and an identity-bound AppleScript command such as
 `tell application id "<bundle-id>" to launch` followed by
 `tell application id "<bundle-id>" to activate` as a last-resort fallback; use the
 shell fallback only when the server explicitly allows it. Poll the running inventory

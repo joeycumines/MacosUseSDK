@@ -67,7 +67,7 @@ MCP registry. The current implementation exposes 29 tools; see
 ### Added
 
 - **ExactMac full rename + AI tool integration matrix**: project renamed end-to-end (Go module `github.com/joeycumines/ExactMac`, proto `exactmac.v1`, Swift `ExactMac`/`ExactMacServer`, CLI `exactmac` (MCP served via `exactmac mcp`), skill `exactmac`, env `EXACTMAC_*`); README rewritten for AI-tool-integration search (Claude Code incl. built-in computer-use coexistence, Codex CLI/App, Cursor, OpenCode, Gemini CLI, VS Code, Windsurf, Claude Desktop); new `docs/ai-artifacts/ai-tool-integration.md` with per-client snippets and smoke checks
-- **Go CLI `exactmac` with `exactmac mcp`**: the former `exactmac-mcp` binary is now the `exactmac` CLI (`./cmd/exactmac`); the MCP server runs as the `mcp` subcommand over stdio (default) or Streamable HTTP via `MCP_TRANSPORT`; unknown commands fail with usage
+- **Go CLI `exactmac` with `exactmac mcp`**: the former `macos-use-mcp` binary is now the `exactmac` CLI (`./cmd/exactmac`); the MCP server runs as the `mcp` subcommand over stdio (default) or Streamable HTTP via `MCP_TRANSPORT`; unknown commands fail with usage
 - **Hard-fork detach**: upstream remote removed; README states explicitly that this project is not affiliated with mediar-ai / macos-use.dev
 
 - **Background Application Open Mode**: the gRPC `OpenApplication` API supports background launch without stealing focus
