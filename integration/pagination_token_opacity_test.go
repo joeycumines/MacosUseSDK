@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 )
 
 // TestMCPPaginationTokenOpacity_ListApplications verifies that page_token values
@@ -33,7 +33,7 @@ func TestMCPPaginationTokenOpacity_ListApplications(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	calculatorCtx, cancelCalculator := context.WithTimeout(ctx, 30*time.Second)
 	app1 := openCalculator(t, calculatorCtx, client)
 	cancelCalculator()
@@ -109,7 +109,7 @@ func TestMCPPaginationTokenOpacity_ListApplications(t *testing.T) {
 		len(token), token[:min(10, len(token))])
 }
 
-func cleanupPaginationApplication(t *testing.T, client pb.MacosUseClient, app *pb.Application) {
+func cleanupPaginationApplication(t *testing.T, client pb.ExactMacClient, app *pb.Application) {
 	t.Helper()
 	cleanupCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
@@ -127,7 +127,7 @@ func TestMCPPaginationTokenOpacity_ListWindows(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	app := openTextEdit(t, ctx, client)
 	defer cleanupApplication(t, ctx, client, app)
 
@@ -190,7 +190,7 @@ func TestMCPPaginationTokenOpacity_ViaHTTP(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	// list_windows pagination requires at least two windows in one application.
 	// Own two uniquely named non-empty files instead of depending on TextEdit's
 	// global front document or an unbounded AppleScript mutation.
@@ -343,7 +343,7 @@ func TestMCPPaginationTokenOpacity_FabricatedToken(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 
 	fabricatedTokens := []string{
 		"offset:10",

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 )
 
 // TestElementActions_GetActionsForButton verifies Element has actions populated during traversal.
@@ -24,7 +24,7 @@ func TestElementActions_GetActionsForButton(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	// Open Calculator
 	t.Log("Opening Calculator...")
 	app := openCalculator(t, ctx, client)
@@ -114,7 +114,7 @@ func TestElementActions_GetActionsForButton(t *testing.T) {
 func resolveCalculatorButtonElementID(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	app *pb.Application,
 	label string,
 ) string {
@@ -156,7 +156,7 @@ func TestElementActions_PerformAXPress(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	// Open Calculator
 	t.Log("Opening Calculator...")
 	app := openCalculator(t, ctx, client)
@@ -284,7 +284,7 @@ func TestElementActions_FindAndPressButton(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	// Open Calculator
 	t.Log("Opening Calculator...")
 	app := openCalculator(t, ctx, client)

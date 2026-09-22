@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	typepb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	typepb "github.com/joeycumines/ExactMac/gen/go/exactmac/type"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 )
 
 const typeElementDescription = "Set the value of an editable UI element (text field, text area, secure field). " +

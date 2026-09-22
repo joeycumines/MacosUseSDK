@@ -278,7 +278,7 @@ type ownedTextEditDragCall struct {
 func requireOwnedTextEditDrag(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	fixture *keyboardTextEditFixture,
 	path []ownedDragPoint,
 	duration float64,
@@ -334,7 +334,7 @@ func TestDragSafetyGuardRejectsMutatedOwnedDragChokePoint(t *testing.T) {
 func requireOwnedTextEditDrag(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	fixture *keyboardTextEditFixture,
 	path []ownedDragPoint,
 	duration float64,
@@ -352,7 +352,7 @@ func requireOwnedTextEditDrag(
 func requireOwnedTextEditDrag(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	fixture *keyboardTextEditFixture,
 	path []ownedDragPoint,
 	duration float64,
@@ -369,7 +369,7 @@ func requireOwnedTextEditDrag(
 func requireOwnedTextEditDrag(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	fixture *keyboardTextEditFixture,
 	path []ownedDragPoint,
 	duration float64,
@@ -386,7 +386,7 @@ func requireOwnedTextEditDrag(
 func requireOwnedTextEditDrag(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	fixture *keyboardTextEditFixture,
 	path []ownedDragPoint,
 	duration float64,

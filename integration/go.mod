@@ -1,12 +1,12 @@
-module github.com/joeycumines/MacosUseSDK/integration
+module github.com/joeycumines/ExactMac/integration
 
 go 1.26.3
 
-replace github.com/joeycumines/MacosUseSDK => ../
+replace github.com/joeycumines/ExactMac => ../
 
 require (
 	cloud.google.com/go/longrunning v1.2.0
-	github.com/joeycumines/MacosUseSDK v0.0.0-20260725215237-e90e731995ba
+	github.com/joeycumines/ExactMac v0.0.0-20260725215237-e90e731995ba
 	github.com/rivo/uniseg v0.4.7
 	google.golang.org/grpc v1.83.0
 	google.golang.org/protobuf v1.36.11

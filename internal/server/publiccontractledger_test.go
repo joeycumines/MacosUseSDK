@@ -14,14 +14,14 @@ import (
 	"testing"
 
 	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 	"google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
-const publicContractLedgerDigest = "fe9ab0f7519469efbe1dc83e1fca99ef630269b8a225fa83b7236a8590395b0a"
+const publicContractLedgerDigest = "8fd9b29cc14734093dd125bf2d5efeab00c0c944fe05d9d0059cf977cdefed57"
 
 const (
 	publicBoundaryAdmissionProof = "PublicRequestValidationGRPCTests.every descriptor valid public request crosses production validation"
@@ -149,7 +149,7 @@ func assertNoStalePublicContractPolicies(
 		}
 	}
 	for method := range deferredPublicMethods {
-		fullName := "macosusesdk.v1.MacosUse." + method
+		fullName := "exactmac.v1.ExactMac." + method
 		if !rpcs[fullName] {
 			t.Errorf("stale deferred-method policy for %s", fullName)
 		}
@@ -159,7 +159,7 @@ func assertNoStalePublicContractPolicies(
 func descriptorPublicContractCounts(t *testing.T) (rpcCount int, pageCollectionCount int) {
 	t.Helper()
 	services := []protoreflect.ServiceDescriptor{
-		pb.File_macosusesdk_v1_macos_use_proto.Services().ByName("MacosUse"),
+		pb.File_exactmac_v1_exact_mac_proto.Services().ByName("ExactMac"),
 		longrunningpb.File_google_longrunning_operations_proto.Services().ByName("Operations"),
 	}
 	descriptorPageCollections := make(map[string]bool)
@@ -215,10 +215,10 @@ func assertPaginationInputsExist(
 
 func derivePublicContractLedger(t *testing.T) ([]publicContractRPCRow, []publicContractFieldRow) {
 	t.Helper()
-	macosUseContracts := flattenRPCContracts(t)
+	exactMacContracts := flattenRPCContracts(t)
 	explicitFieldDispositions, fixtureErr := loadExplicitPublicFieldDispositions()
 	services := []protoreflect.ServiceDescriptor{
-		pb.File_macosusesdk_v1_macos_use_proto.Services().ByName("MacosUse"),
+		pb.File_exactmac_v1_exact_mac_proto.Services().ByName("ExactMac"),
 		longrunningpb.File_google_longrunning_operations_proto.Services().ByName("Operations"),
 	}
 
@@ -230,7 +230,7 @@ func derivePublicContractLedger(t *testing.T) ([]publicContractRPCRow, []publicC
 		}
 		for index := 0; index < service.Methods().Len(); index++ {
 			method := service.Methods().Get(index)
-			rpc := publicContractRPCPolicy(t, method, macosUseContracts)
+			rpc := publicContractRPCPolicy(t, method, exactMacContracts)
 			rpcRows = append(rpcRows, rpc)
 			ancestors := map[protoreflect.FullName]bool{method.Input().FullName(): true}
 			walkPublicRequestOccurrences(
@@ -333,7 +333,7 @@ func assertExactPublicFieldDispositionCoverage(
 func publicContractRPCPolicy(
 	t *testing.T,
 	method protoreflect.MethodDescriptor,
-	macosUseContracts map[string]rpcContract,
+	exactMacContracts map[string]rpcContract,
 ) publicContractRPCRow {
 	t.Helper()
 	fullName := string(method.FullName())
@@ -343,8 +343,8 @@ func publicContractRPCPolicy(
 	resourcePolicy := "canonical operations/{operation} names; global operation collection ownership"
 	queryPolicy := publicRPCQueryPolicy(fullName)
 
-	if method.Parent().FullName() == "macosusesdk.v1.MacosUse" {
-		contract, ok := macosUseContracts[string(method.Name())]
+	if method.Parent().FullName() == "exactmac.v1.ExactMac" {
+		contract, ok := exactMacContracts[string(method.Name())]
 		if !ok {
 			t.Fatalf("missing provider contract for %s", method.FullName())
 		}
@@ -357,7 +357,7 @@ func publicContractRPCPolicy(
 	lifecycle := "unary"
 	if method.IsStreamingServer() || method.IsStreamingClient() {
 		lifecycle = "stream"
-	} else if method.Parent().FullName() == "macosusesdk.v1.MacosUse" &&
+	} else if method.Parent().FullName() == "exactmac.v1.ExactMac" &&
 		method.Output().FullName() == "google.longrunning.Operation" {
 		lifecycle = "lro"
 	}
@@ -418,35 +418,35 @@ func assertPublicContractProofSources(t *testing.T) {
 		needle string
 	}{
 		{
-			path:   "Server/Tests/MacosUseServerTests/PublicRequestValidationGRPCTests.swift",
+			path:   "Server/Tests/ExactMacServerTests/PublicRequestValidationGRPCTests.swift",
 			needle: "func `every descriptor valid public request crosses production validation`()",
 		},
 		{
-			path:   "Server/Tests/MacosUseServerTests/PublicRequestValidationGRPCTests.swift",
+			path:   "Server/Tests/ExactMacServerTests/PublicRequestValidationGRPCTests.swift",
 			needle: "func `every public request rejects preserved unknown wire fields before side effects`()",
 		},
 		{
-			path:   "Server/Tests/MacosUseServerTests/PublicRequestValidationGRPCTests.swift",
+			path:   "Server/Tests/ExactMacServerTests/PublicRequestValidationGRPCTests.swift",
 			needle: "func `required fields and real oneofs reject recursively before state or work`()",
 		},
 		{
-			path:   "Server/Tests/MacosUseServerTests/PublicContractBoundaryGRPCTests.swift",
+			path:   "Server/Tests/ExactMacServerTests/PublicContractBoundaryGRPCTests.swift",
 			needle: "func `all five Operations methods enforce grammar missing resources and producer ownership through grpc`()",
 		},
 		{
-			path:   "Server/Tests/MacosUseServerTests/PublicContractBoundaryGRPCTests.swift",
+			path:   "Server/Tests/ExactMacServerTests/PublicContractBoundaryGRPCTests.swift",
 			needle: "func `every public collection rejects the legacy query-unbound token family`()",
 		},
 		{
-			path:   "Server/Tests/MacosUseServerTests/ServiceCompositionGRPCTests.swift",
+			path:   "Server/Tests/ExactMacServerTests/ServiceCompositionGRPCTests.swift",
 			needle: "func `element resource round trips and rejects a foreign application owner`()",
 		},
 		{
-			path:   "Server/Tests/MacosUseServerTests/PublicStreamLifecycleGRPCTests.swift",
+			path:   "Server/Tests/ExactMacServerTests/PublicStreamLifecycleGRPCTests.swift",
 			needle: "func `watch caller cancellation and service drain join the blocked producer`()",
 		},
 		{
-			path:   "Server/Tests/MacosUseServerTests/PublicStreamLifecycleGRPCTests.swift",
+			path:   "Server/Tests/ExactMacServerTests/PublicStreamLifecycleGRPCTests.swift",
 			needle: "func `observation caller cancellation producer failure and drain release every owner`()",
 		},
 		{
@@ -613,7 +613,7 @@ func inferredPublicFieldDisposition(
 	if publicPathHasBehavior(path, annotations.FieldBehavior_OUTPUT_ONLY) {
 		return "output-only"
 	}
-	if strings.HasPrefix(string(method.FullName()), "macosusesdk.v1.MacosUse.") &&
+	if strings.HasPrefix(string(method.FullName()), "exactmac.v1.ExactMac.") &&
 		deferredPublicMethods[string(method.Name())] {
 		return "deliberately deferred"
 	}
@@ -811,14 +811,14 @@ func publicContractRowsDigest(rpcRows []publicContractRPCRow, fieldRows []public
 }
 
 var rejectedPublicRequestFields = map[string]bool{
-	"macosusesdk.v1.MacosUse.CreateInput:input.name":                      true,
-	"macosusesdk.v1.MacosUse.CreateMacro:macro.name":                      true,
-	"macosusesdk.v1.MacosUse.CreateObservation:observation.name":          true,
-	"macosusesdk.v1.MacosUse.CreateSession:session.name":                  true,
-	"macosusesdk.v1.MacosUse.CloseWindow:force":                           true,
-	"macosusesdk.v1.MacosUse.DeleteSession:force":                         true,
-	"macosusesdk.v1.MacosUse.DeleteMacro:force":                           true,
-	"macosusesdk.v1.MacosUse.BeginTransaction:timeout":                    true,
+	"exactmac.v1.ExactMac.CreateInput:input.name":                         true,
+	"exactmac.v1.ExactMac.CreateMacro:macro.name":                         true,
+	"exactmac.v1.ExactMac.CreateObservation:observation.name":             true,
+	"exactmac.v1.ExactMac.CreateSession:session.name":                     true,
+	"exactmac.v1.ExactMac.CloseWindow:force":                              true,
+	"exactmac.v1.ExactMac.DeleteSession:force":                            true,
+	"exactmac.v1.ExactMac.DeleteMacro:force":                              true,
+	"exactmac.v1.ExactMac.BeginTransaction:timeout":                       true,
 	"google.longrunning.Operations.ListOperations:return_partial_success": true,
 }
 

@@ -7,7 +7,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/joeycumines/MacosUseSDK/internal/config"
+	"github.com/joeycumines/ExactMac/internal/config"
 	"github.com/rivo/uniseg"
 )
 

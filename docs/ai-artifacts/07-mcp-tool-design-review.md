@@ -18,7 +18,7 @@ The current Go MCP registry exposes **29 CUA-aligned tools** in six groups:
 | Macro management | 6 |
 
 The authoritative current signatures are in
-[`skills/macos-use/references/workflows-and-tools.md`](../../skills/macos-use/references/workflows-and-tools.md),
+[`skills/exactmac/references/workflows-and-tools.md`](../../skills/exactmac/references/workflows-and-tools.md),
 and the registry is implemented in `internal/server/toolregistry.go`.
 
 ## Important supersessions
@@ -84,5 +84,5 @@ socket unless a separately secured deployment boundary is provided.
 - Tool count and schemas: `internal/server/toolregistry.go`
 - HTTP lifecycle and sessions: `internal/transport/http.go`
 - Configuration and defaults: `internal/config/config.go`
-- Current workflow reference: `skills/macos-use/references/workflows-and-tools.md`
+- Current workflow reference: `skills/exactmac/references/workflows-and-tools.md`
 - Current MCP integration notes: `docs/ai-artifacts/05-mcp-integration.md`

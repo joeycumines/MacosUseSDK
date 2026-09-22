@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -26,7 +26,7 @@ func TestRetryBehavior(t *testing.T) {
 	conn1 := connectToServer(t, ctx, serverAddr)
 	defer conn1.Close()
 
-	client1 := pb.NewMacosUseClient(conn1)
+	client1 := pb.NewExactMacClient(conn1)
 	_, err := client1.ListApplications(ctx, &pb.ListApplicationsRequest{})
 	if err != nil {
 		t.Fatalf("First connection failed: %v", err)
@@ -42,7 +42,7 @@ func TestRetryBehavior(t *testing.T) {
 	conn2 := connectToServer(t, ctx, serverAddr)
 	defer conn2.Close()
 
-	client2 := pb.NewMacosUseClient(conn2)
+	client2 := pb.NewExactMacClient(conn2)
 	_, err = client2.ListApplications(ctx, &pb.ListApplicationsRequest{})
 	if err != nil {
 		t.Fatalf("Reconnection failed: %v", err)
@@ -53,7 +53,7 @@ func TestRetryBehavior(t *testing.T) {
 	t.Log("Testing rapid sequential connections...")
 	for i := range 3 {
 		conn := connectToServer(t, ctx, serverAddr)
-		client := pb.NewMacosUseClient(conn)
+		client := pb.NewExactMacClient(conn)
 		_, err := client.ListApplications(ctx, &pb.ListApplicationsRequest{})
 		conn.Close()
 		if err != nil {
@@ -83,7 +83,7 @@ func TestRetryExponentialBackoff(t *testing.T) {
 	t.Logf("Connection established in %v", elapsed)
 
 	// Verify the connection actually works
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	_, err := client.ListApplications(ctx, &pb.ListApplicationsRequest{})
 	if err != nil {
 		t.Fatalf("RPC call failed: %v", err)
@@ -104,7 +104,7 @@ func TestTransientErrorHandling(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 
 	// Test 1: Query non-existent application - should handle gracefully
 	t.Log("Testing non-existent application query...")

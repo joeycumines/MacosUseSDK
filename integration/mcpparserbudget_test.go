@@ -15,14 +15,14 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 	"google.golang.org/grpc"
 )
 
 const mcpStdioFrameTestLimit = 8 << 20
 
 type mcpStdioFrameBackend struct {
-	pb.UnimplementedMacosUseServer
+	pb.UnimplementedExactMacServer
 	calls atomic.Int64
 }
 
@@ -126,7 +126,7 @@ func startMCPStdioFrameBackend(t *testing.T) (string, *mcpStdioFrameBackend, fun
 	}
 	backend := &mcpStdioFrameBackend{}
 	server := grpc.NewServer()
-	pb.RegisterMacosUseServer(server, backend)
+	pb.RegisterExactMacServer(server, backend)
 	serveResult := make(chan error, 1)
 	go func() {
 		serveResult <- server.Serve(listener)

@@ -1,10 +1,10 @@
-# MCP Tool Design for MacosUseSDK
+# MCP Tool Design for ExactMac
 
 ## Overview
 
-This document describes the redesigned MCP (Model Context Protocol) server surface for macOS automation. The Go MCP proxy exposes 23 CUA-aligned tools backed by the consolidated `MacosUse` gRPC service.
+This document describes the redesigned MCP (Model Context Protocol) server surface for macOS automation. The Go MCP proxy exposes 29 CUA-aligned tools backed by the consolidated `ExactMac` gRPC service.
 
-**Status:** 23 tools implemented and operational in `internal/server/mcp.go`.
+**Status:** 29 tools implemented and operational in `internal/server/toolregistry.go` (registered by `registerTools`).
 
 ## Architecture
 
@@ -12,7 +12,7 @@ This document describes the redesigned MCP (Model Context Protocol) server surfa
 MCP Server (Go executable)
 ├── Transport Layer
 │   ├── Stdio (stdin/stdout JSON-RPC 2.0)
-│   └── HTTP/SSE (Server-Sent Events)
+│   └── Streamable HTTP (no standalone SSE)
 ├── Observability
 │   ├── /metrics endpoint (Prometheus format)
 │   ├── Audit logging (structured JSON)
@@ -21,9 +21,9 @@ MCP Server (Go executable)
 │   ├── TLS termination
 │   └── API key authentication
 ├── gRPC Client Connection
-│   └── pb.MacosUseClient
+│   └── pb.ExactMacClient
 └── Tool Registry
-    └── internal/server/mcp.go
+    └── internal/server/toolregistry.go
 ```
 
 ## Tool Categories
@@ -35,16 +35,17 @@ MCP Server (Go executable)
 | Element Interaction | `find_elements`, `click_element`, `type_element`, `read_element` |
 | Window Management | `focus_window`, `move_window`, `resize_window`, `list_windows` |
 | Utility | `clipboard`, `run`, `get_display` |
+| Macros | `create_macro`, `get_macro`, `list_macros`, `update_macro`, `delete_macro`, `execute_macro` |
 
 ## Design Notes
 
 - Coordinate fields use **Global Display Coordinates (top-left origin)**.
 - `find_elements` and `list_windows` accept `page_size` and `page_token`; returned page tokens are opaque.
-- Accessibility element tools use flat parameters (`parent`, `role`, `text`, `text_contains`, `element`) rather than nested selectors.
+- Accessibility element tools take `parent` plus one `key:value` `selector` string (e.g. `role:AXButton`) or a parent-bound element handle; selectors must resolve uniquely.
 - Input tools use CUA-friendly names: `type`, `keypress`, `move`, `drag`, and `wait`.
 - Tool failures are returned as MCP soft errors with `isError: true` when possible (MCP 2025-11-25 `CallToolResult`).
 - Shell execution through `run` is gated by `MCP_SHELL_COMMANDS_ENABLED`.
 
 ## Legacy Context
 
-Earlier design notes described a 77-tool surface that exposed lower-level SDK functions directly. The current production surface intentionally consolidates those operations into the 23 tools above so clients receive a stable, CUA-aligned command model.
+Earlier design notes described a 76-tool surface (see the 0.1.0 inventory in CHANGELOG.md) that exposed lower-level SDK functions directly. The production surface first consolidated those operations into 23 tools, then added the 6 macro tools, for the current 29-tool CUA-aligned command model.

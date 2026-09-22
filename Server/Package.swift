@@ -6,14 +6,14 @@ import PackageDescription
 /// NOTE: gRPC Swift 2 requires macOS 15+ for its Swift 6 concurrency features.
 /// The deployment target is set to macOS 15 to ensure compatibility.
 let package = Package(
-    name: "MacosUseServer",
+    name: "ExactMacServer",
     platforms: [
         .macOS(.v15),
     ],
     products: [
         .executable(
-            name: "MacosUseServer",
-            targets: ["MacosUseServer"],
+            name: "ExactMacServer",
+            targets: ["ExactMacServer"],
         ),
     ],
     dependencies: [
@@ -22,35 +22,35 @@ let package = Package(
         .package(url: "https://github.com/grpc/grpc-swift-protobuf.git", from: "2.4.0"),
         .package(url: "https://github.com/grpc/grpc-swift-nio-transport.git", from: "2.7.0"),
         .package(url: "https://github.com/grpc/grpc-swift-extras.git", from: "2.2.0"),
-        .package(name: "MacosUseSDK", path: "../"),
+        .package(name: "ExactMac", path: "../"),
     ],
     targets: [
         // Target for the generated Swift Protobuf and gRPC stubs
         // This makes the generated code available to the server target
         .target(
-            name: "MacosUseProto",
+            name: "ExactMacProto",
             dependencies: [
                 .product(name: "GRPCProtobuf", package: "grpc-swift-protobuf"),
             ],
-            path: "Sources/MacosUseProto",
+            path: "Sources/ExactMacProto",
             exclude: [],
-            sources: ["macosusesdk/", "google/"],
+            sources: ["exactmac/", "google/"],
             swiftSettings: [
                 .unsafeFlags(["-Xfrontend", "-warn-concurrency"]),
                 .unsafeFlags(["-warnings-as-errors"]),
             ],
         ),
         .executableTarget(
-            name: "MacosUseServer",
+            name: "ExactMacServer",
             dependencies: [
                 .product(name: "GRPCCore", package: "grpc-swift-2"),
                 .product(name: "GRPCNIOTransportHTTP2", package: "grpc-swift-nio-transport"),
                 .product(name: "GRPCReflectionService", package: "grpc-swift-extras"),
                 .product(name: "GRPCHealthService", package: "grpc-swift-extras"),
-                "MacosUseSDK",
-                "MacosUseProto", // Add dependency on the generated protos
+                "ExactMac",
+                "ExactMacProto", // Add dependency on the generated protos
             ],
-            path: "Sources/MacosUseServer",
+            path: "Sources/ExactMacServer",
             resources: [
                 .copy("DescriptorSets"),
             ],
@@ -60,10 +60,10 @@ let package = Package(
             ],
         ),
         .testTarget(
-            name: "MacosUseServerTests",
+            name: "ExactMacServerTests",
             dependencies: [
-                "MacosUseServer",
-                "MacosUseProto",
+                "ExactMacServer",
+                "ExactMacProto",
                 .product(name: "GRPCCore", package: "grpc-swift-2"),
                 .product(name: "GRPCInProcessTransport", package: "grpc-swift-2"),
                 .product(name: "GRPCNIOTransportHTTP2", package: "grpc-swift-nio-transport"),

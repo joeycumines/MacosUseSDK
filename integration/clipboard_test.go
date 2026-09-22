@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 )
 
 // Tests basic Write/Get/Clear clipboard using text content and verifies history.
@@ -19,7 +19,7 @@ func TestClipboardTextFlow(t *testing.T) {
 	conn := connectToServer(t, ctx, addr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 
 	// Ensure we start in a clean state by clearing clipboard
 	_, err := client.ClearClipboard(ctx, &pb.ClearClipboardRequest{})
@@ -95,7 +95,7 @@ func TestClipboardHistory(t *testing.T) {
 	conn := connectToServer(t, ctx, addr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 
 	// Clear clipboard to start fresh
 	_, _ = client.ClearClipboard(ctx, &pb.ClearClipboardRequest{})

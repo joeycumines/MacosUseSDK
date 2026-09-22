@@ -6,8 +6,8 @@ import (
 	"time"
 
 	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
-	pbtype "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pbtype "github.com/joeycumines/ExactMac/gen/go/exactmac/type"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 )
 
 // TestFindElementsPagination verifies that FindElements correctly implements AIP-158 pagination
@@ -23,7 +23,7 @@ func TestFindElementsPagination(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	// Open Calculator
 	t.Log("Opening Calculator...")
 	app := openCalculator(t, ctx, client)
@@ -133,7 +133,7 @@ func TestFindRegionElementsPagination(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	t.Log("Opening Calculator...")
 	app := openCalculator(t, ctx, client)
 	defer cleanupApplication(t, ctx, client, app)
@@ -265,7 +265,7 @@ func TestListObservationsPagination(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	opsClient := longrunningpb.NewOperationsClient(conn)
 
 	t.Log("Opening Calculator...")

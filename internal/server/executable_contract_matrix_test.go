@@ -17,8 +17,8 @@ import (
 	"testing"
 
 	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
-	"github.com/joeycumines/MacosUseSDK/internal/transport"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
+	"github.com/joeycumines/ExactMac/internal/transport"
 	"google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -58,9 +58,9 @@ func TestExecutableMCPContractMatrix(t *testing.T) {
 		if !strings.Contains(source, "func (s *MCPServer) "+contract.handler+"(") {
 			t.Errorf("tool %q handler %q is absent from %s", name, contract.handler, contract.source)
 		}
-		for _, rpc := range contract.macosUseRPCs {
+		for _, rpc := range contract.exactMacRPCs {
 			if _, ok := rpcNames[rpc]; !ok {
-				t.Errorf("tool %q depends on missing MacosUse RPC %q", name, rpc)
+				t.Errorf("tool %q depends on missing ExactMac RPC %q", name, rpc)
 			}
 			if !strings.Contains(source, "s.client."+rpc+"(") {
 				t.Errorf("tool %q contract says %s is used, but %s contains no client call", name, rpc, contract.source)
@@ -81,25 +81,25 @@ func TestExecutableMCPContractMatrix(t *testing.T) {
 }
 
 func TestExecutableGRPCContractMatrix(t *testing.T) {
-	service := pb.File_macosusesdk_v1_macos_use_proto.Services().ByName("MacosUse")
+	service := pb.File_exactmac_v1_exact_mac_proto.Services().ByName("ExactMac")
 	if service == nil {
-		t.Fatal("live protobuf descriptor has no MacosUse service")
+		t.Fatal("live protobuf descriptor has no ExactMac service")
 	}
 
 	contracts := flattenRPCContracts(t)
 	liveNames := descriptorMethodSet(t)
-	assertInventoryEqual(t, "MacosUse protobuf descriptor", keySet(contracts), liveNames)
+	assertInventoryEqual(t, "ExactMac protobuf descriptor", keySet(contracts), liveNames)
 
 	root := repositoryRoot(t)
-	generatedSwift := readFile(t, filepath.Join(root, "Server", "Sources", "MacosUseProto", "macosusesdk", "v1", "macos_use.grpc.swift"))
+	generatedSwift := readFile(t, filepath.Join(root, "Server", "Sources", "ExactMacProto", "exactmac", "v1", "exact_mac.grpc.swift"))
 	serviceProtocol := swiftServiceProtocol(t, generatedSwift)
-	serviceSource := readFile(t, filepath.Join(root, "Server", "Sources", "MacosUseServer", "MacosUseService.swift"))
-	if !strings.Contains(serviceSource, "final class MacosUseService: Macosusesdk_V1_MacosUse.ServiceProtocol") {
-		t.Error("MacosUseService does not declare generated ServiceProtocol conformance")
+	serviceSource := readFile(t, filepath.Join(root, "Server", "Sources", "ExactMacServer", "ExactMacService.swift"))
+	if !strings.Contains(serviceSource, "final class ExactMacService: Exactmac_V1_ExactMac.ServiceProtocol") {
+		t.Error("ExactMacService does not declare generated ServiceProtocol conformance")
 	}
 
-	clientType := reflect.TypeFor[pb.MacosUseClient]()
-	providerDir := filepath.Join(root, "Server", "Sources", "MacosUseServer")
+	clientType := reflect.TypeFor[pb.ExactMacClient]()
+	providerDir := filepath.Join(root, "Server", "Sources", "ExactMacServer")
 	providerSources := make(map[string]string)
 	for provider := range providerSet(contracts) {
 		providerSources[provider] = readFile(t, filepath.Join(providerDir, provider))
@@ -134,18 +134,18 @@ func TestExecutableGRPCContractMatrix(t *testing.T) {
 }
 
 func TestExecutableGRPCMetadataContract(t *testing.T) {
-	service := pb.File_macosusesdk_v1_macos_use_proto.Services().ByName("MacosUse")
+	service := pb.File_exactmac_v1_exact_mac_proto.Services().ByName("ExactMac")
 	if service == nil {
-		t.Fatal("live protobuf descriptor has no MacosUse service")
+		t.Fatal("live protobuf descriptor has no ExactMac service")
 	}
 
 	methods := service.Methods()
-	protoSource := readFile(t, filepath.Join(repositoryRoot(t), "proto", "macosusesdk", "v1", "macos_use.proto"))
+	protoSource := readFile(t, filepath.Join(repositoryRoot(t), "proto", "exactmac", "v1", "exact_mac.proto"))
 	if got := strings.Count(protoSource, "\n  rpc "); got != methods.Len() {
-		t.Errorf("macos_use.proto declares %d RPC source blocks, live descriptor has %d", got, methods.Len())
+		t.Errorf("exact_mac.proto declares %d RPC source blocks, live descriptor has %d", got, methods.Len())
 	}
 	if got := strings.Count(protoSource, "option (google.api.http)"); got != methods.Len() {
-		t.Errorf("macos_use.proto declares %d HTTP options for %d RPCs; each RPC must have exactly one", got, methods.Len())
+		t.Errorf("exact_mac.proto declares %d HTTP options for %d RPCs; each RPC must have exactly one", got, methods.Len())
 	}
 
 	resourceTypes := executableResourceTypes(t)
@@ -169,16 +169,16 @@ func TestExecutableGRPCMetadataContract(t *testing.T) {
 }
 
 func TestApplicationDiscoveryResourceContract(t *testing.T) {
-	service := pb.File_macosusesdk_v1_macos_use_proto.Services().ByName("MacosUse")
+	service := pb.File_exactmac_v1_exact_mac_proto.Services().ByName("ExactMac")
 	if service == nil {
-		t.Fatal("live protobuf descriptor has no MacosUse service")
+		t.Fatal("live protobuf descriptor has no ExactMac service")
 	}
 
 	requireMethod := func(name protoreflect.Name) protoreflect.MethodDescriptor {
 		t.Helper()
 		method := service.Methods().ByName(name)
 		if method == nil {
-			t.Errorf("MacosUse is missing %s", name)
+			t.Errorf("ExactMac is missing %s", name)
 		}
 		return method
 	}
@@ -241,17 +241,17 @@ func TestApplicationDiscoveryResourceContract(t *testing.T) {
 		}
 	}
 
-	bundle := requireMessage("macosusesdk.v1.ApplicationBundle")
-	requireResource(bundle, "macosusesdk.com/ApplicationBundle", "applicationBundles/{application_bundle}")
+	bundle := requireMessage("exactmac.v1.ApplicationBundle")
+	requireResource(bundle, "exactmac.com/ApplicationBundle", "applicationBundles/{application_bundle}")
 	requireField(bundle, "name", protoreflect.StringKind)
 	requireField(bundle, "display_name", protoreflect.StringKind)
 	requireField(bundle, "bundle_id", protoreflect.StringKind)
 	requireField(bundle, "bundle_url", protoreflect.StringKind)
 	requireField(bundle, "version", protoreflect.StringKind)
 
-	application := requireMessage("macosusesdk.v1.Application")
-	requireResource(application, "macosusesdk.com/Application", "applications/{application}")
-	requireResourceReference(requireField(application, "application_bundle", protoreflect.StringKind), "macosusesdk.com/ApplicationBundle")
+	application := requireMessage("exactmac.v1.Application")
+	requireResource(application, "exactmac.com/Application", "applications/{application}")
+	requireResourceReference(requireField(application, "application_bundle", protoreflect.StringKind), "exactmac.com/ApplicationBundle")
 	requireField(application, "bundle_id", protoreflect.StringKind)
 	requireField(application, "active", protoreflect.BoolKind)
 	processStart := requireField(application, "process_start_time", protoreflect.MessageKind)
@@ -265,7 +265,7 @@ func TestApplicationDiscoveryResourceContract(t *testing.T) {
 
 	open := requireMethod("OpenApplication")
 	if open != nil {
-		requireResourceReference(requireField(open.Input(), "name", protoreflect.StringKind), "macosusesdk.com/ApplicationBundle")
+		requireResourceReference(requireField(open.Input(), "name", protoreflect.StringKind), "exactmac.com/ApplicationBundle")
 		if open.Input().Fields().ByName("id") != nil {
 			t.Errorf("%s retains free-form id", open.Input().FullName())
 		}
@@ -277,7 +277,7 @@ func TestApplicationDiscoveryResourceContract(t *testing.T) {
 
 	activate := requireMethod("ActivateApplication")
 	if activate != nil {
-		requireResourceReference(requireField(activate.Input(), "name", protoreflect.StringKind), "macosusesdk.com/Application")
+		requireResourceReference(requireField(activate.Input(), "name", protoreflect.StringKind), "exactmac.com/Application")
 	}
 
 	getApplication := requireMethod("GetApplication")
@@ -505,7 +505,7 @@ func executableResourceTypes(t *testing.T) map[string]protoreflect.MessageDescri
 		resources[descriptor.GetType()] = message
 	})
 	if len(resources) == 0 {
-		t.Fatal("no macosusesdk resource types are registered")
+		t.Fatal("no exactmac resource types are registered")
 	}
 	return resources
 }
@@ -548,7 +548,7 @@ func assertExecutableResourceReferences(t *testing.T, resources map[string]proto
 
 func forEachExecutableMessage(visit func(protoreflect.MessageDescriptor)) {
 	protoregistry.GlobalFiles.RangeFiles(func(file protoreflect.FileDescriptor) bool {
-		if !strings.HasPrefix(string(file.Package()), "macosusesdk.") {
+		if !strings.HasPrefix(string(file.Package()), "exactmac.") {
 			return true
 		}
 		var walk func(protoreflect.MessageDescriptors)
@@ -607,9 +607,9 @@ func flattenRPCContracts(t *testing.T) map[string]rpcContract {
 
 func descriptorMethodSet(t *testing.T) map[string]struct{} {
 	t.Helper()
-	service := pb.File_macosusesdk_v1_macos_use_proto.Services().ByName("MacosUse")
+	service := pb.File_exactmac_v1_exact_mac_proto.Services().ByName("ExactMac")
 	if service == nil {
-		t.Fatal("live protobuf descriptor has no MacosUse service")
+		t.Fatal("live protobuf descriptor has no ExactMac service")
 	}
 	methods := service.Methods()
 	result := make(map[string]struct{}, methods.Len())
@@ -628,7 +628,7 @@ func assertGoClientMethod(t *testing.T, clientType reflect.Type, descriptor prot
 	name := string(descriptor.Name())
 	method, ok := clientType.MethodByName(name)
 	if !ok {
-		t.Errorf("generated Go MacosUseClient is missing %s", name)
+		t.Errorf("generated Go ExactMacClient is missing %s", name)
 		return
 	}
 	if !method.Type.IsVariadic() || method.Type.NumIn() != 3 || method.Type.NumOut() != 2 {

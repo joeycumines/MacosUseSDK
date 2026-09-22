@@ -14,8 +14,8 @@ import (
 	"time"
 )
 
-const listenerHelperEnvironment = "MACOSUSESDK_LISTENER_HELPER"
-const listenerIgnoreTerminationEnvironment = "MACOSUSESDK_LISTENER_IGNORE_TERM"
+const listenerHelperEnvironment = "EXACTMAC_LISTENER_HELPER"
+const listenerIgnoreTerminationEnvironment = "EXACTMAC_LISTENER_IGNORE_TERM"
 
 func TestNewSwiftServerCommandIsStaticAndIsolated(t *testing.T) {
 	t.Parallel()

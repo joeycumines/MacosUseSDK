@@ -258,7 +258,7 @@ func inspectFile(fileSet *token.FileSet, filename string, file *ast.File, consta
 						add(ruleDragToolName, typed.Pos())
 					}
 				}
-				if strings.Contains(value, "MacosUseServer") {
+				if strings.Contains(value, "ExactMacServer") {
 					if _, allowed := allowedServerExecutables[typed.Pos()]; !allowed {
 						add(ruleServerWideKill, typed.Pos())
 					}
@@ -471,7 +471,7 @@ func addComputedStringViolations(add func(string, token.Pos), position token.Pos
 	if stringCallsDragTool(value) {
 		add(ruleDragToolsCallJSON, position)
 	}
-	if strings.Contains(value, "MacosUseServer") || isProcessWideKillCommand(value) {
+	if strings.Contains(value, "ExactMacServer") || isProcessWideKillCommand(value) {
 		add(ruleServerWideKill, position)
 	}
 }

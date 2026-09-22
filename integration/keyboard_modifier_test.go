@@ -18,8 +18,8 @@ import (
 	"time"
 
 	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
-	pbtype "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pbtype "github.com/joeycumines/ExactMac/gen/go/exactmac/type"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 )
 
 // keyboardTextEditFixture owns one uniquely named TextEdit file, window, and
@@ -39,7 +39,7 @@ type keyboardTextEditFixture struct {
 func setupTextEditWithDocument(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	opsClient longrunningpb.OperationsClient,
 	text string,
 ) *keyboardTextEditFixture {
@@ -266,7 +266,7 @@ func visibleElementPointInWindow(element *pb.Element, bounds *pb.Bounds) (*pbtyp
 func getTextEditContent(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	fixture *keyboardTextEditFixture,
 ) string {
 	t.Helper()
@@ -282,7 +282,7 @@ func getTextEditContent(
 	return ""
 }
 
-func cleanupKeyboardApplication(t *testing.T, client pb.MacosUseClient, app *pb.Application) {
+func cleanupKeyboardApplication(t *testing.T, client pb.ExactMacClient, app *pb.Application) {
 	t.Helper()
 	cleanupCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
@@ -290,7 +290,7 @@ func cleanupKeyboardApplication(t *testing.T, client pb.MacosUseClient, app *pb.
 }
 
 // sendKeyboardInput sends a CreateInput request and returns the response.
-func sendKeyboardInput(t *testing.T, ctx context.Context, client pb.MacosUseClient, parent string, action *pb.InputAction) *pb.Input {
+func sendKeyboardInput(t *testing.T, ctx context.Context, client pb.ExactMacClient, parent string, action *pb.InputAction) *pb.Input {
 	t.Helper()
 	return createCompletedInput(
 		t,
@@ -343,7 +343,7 @@ func TestKeyboardModifiers_SelectAllCopyPaste(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	opsClient := longrunningpb.NewOperationsClient(conn)
 
 	testText := "Hello Modifier Test"
@@ -460,7 +460,7 @@ func TestKeyboardModifiers_MultipleModifiers(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	opsClient := longrunningpb.NewOperationsClient(conn)
 
 	testText := "Alpha Beta Gamma"
@@ -543,7 +543,7 @@ func TestKeyboardModifiers_OptionSpecialCharacter(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	opsClient := longrunningpb.NewOperationsClient(conn)
 
 	fixture := setupTextEditWithDocument(t, ctx, client, opsClient, "X")

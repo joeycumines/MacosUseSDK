@@ -47,7 +47,7 @@ func generateSelfSignedCert() (certPEM, keyPEM []byte, err error) {
 	template := x509.Certificate{
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
-			Organization:  []string{"MacosUseSDK Test"},
+			Organization:  []string{"ExactMac Test"},
 			Country:       []string{"AU"},
 			Province:      []string{"NSW"},
 			Locality:      []string{"Sydney"},

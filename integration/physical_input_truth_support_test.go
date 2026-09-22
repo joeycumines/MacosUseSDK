@@ -15,8 +15,8 @@ import (
 	"time"
 	"unicode"
 
-	typepb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	typepb "github.com/joeycumines/ExactMac/gen/go/exactmac/type"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -152,7 +152,7 @@ func decodePhysicalToolResult(
 func requireCompletedMCPInput(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	parent string,
 	before map[string]*pb.Input,
 	target *pb.InputTarget,
@@ -181,7 +181,7 @@ func requireCompletedMCPInput(
 func waitForMCPInputExecution(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	parent string,
 	before map[string]*pb.Input,
 	target *pb.InputTarget,
@@ -205,7 +205,7 @@ func waitForMCPInputExecution(
 func requireCancelledMCPInput(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	parent string,
 	before map[string]*pb.Input,
 	target *pb.InputTarget,
@@ -245,7 +245,7 @@ func requireCancelledMCPInput(
 func requireOwnedApplicationWindow(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	application *pb.Application,
 ) *pb.Window {
 	t.Helper()
@@ -323,7 +323,7 @@ func requireOwnedApplicationWindow(
 func requireCalculatorButtonElement(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	application *pb.Application,
 	window *pb.Window,
 	displays []*pb.Display,
@@ -379,7 +379,7 @@ func requireCalculatorButtonElement(
 func clearCalculatorWithGeneratedInput(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	application *pb.Application,
 	window *pb.Window,
 ) {
@@ -408,7 +408,7 @@ func clearCalculatorWithGeneratedInput(
 func switchCalculatorToBasicWithGeneratedInput(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	application *pb.Application,
 	window *pb.Window,
 ) {
@@ -438,7 +438,7 @@ func switchCalculatorToBasicWithGeneratedInput(
 func requireCalculatorPhysicalValue(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	application *pb.Application,
 	display *ownedCalculatorDisplay,
 	want string,
@@ -530,7 +530,7 @@ func normalizeCalculatorDisplayValue(value string) string {
 func requireTextEditVerticalScroll(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	fixture *keyboardTextEditFixture,
 ) *ownedTextEditScroll {
 	t.Helper()
@@ -589,7 +589,7 @@ func requireTextEditVerticalScroll(
 func requireTextEditScrollDelta(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	fixture *keyboardTextEditFixture,
 	before *ownedTextEditScroll,
 ) {
@@ -649,7 +649,7 @@ func sharedElementPathPrefix(lhs, rhs []int32) int {
 func moveCaretToDocumentStart(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	fixture *keyboardTextEditFixture,
 ) {
 	t.Helper()
@@ -659,7 +659,7 @@ func moveCaretToDocumentStart(
 func moveCaretToDocumentEnd(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	fixture *keyboardTextEditFixture,
 ) {
 	t.Helper()
@@ -669,7 +669,7 @@ func moveCaretToDocumentEnd(
 func sendWindowKey(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	fixture *keyboardTextEditFixture,
 	key string,
 	modifier pb.KeyPress_Modifier,
@@ -698,7 +698,7 @@ func sendWindowKey(
 func currentTextEditRawContent(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	fixture *keyboardTextEditFixture,
 ) (string, bool) {
 	t.Helper()
@@ -767,7 +767,7 @@ func ownedTextAreaIntersectsWindow(element *pb.Element, bounds *pb.Bounds) bool 
 func requireCurrentTextEditRawContent(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	fixture *keyboardTextEditFixture,
 ) string {
 	t.Helper()
@@ -791,7 +791,7 @@ func requireCurrentTextEditRawContent(
 func requireTextEditRawContent(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	fixture *keyboardTextEditFixture,
 	want string,
 ) {
@@ -821,7 +821,7 @@ func requireTextEditRawContent(
 func describeTextEditContentCandidates(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	fixture *keyboardTextEditFixture,
 ) []string {
 	t.Helper()
@@ -854,7 +854,7 @@ func describeTextEditContentCandidates(
 func requireTextEditChanged(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	fixture *keyboardTextEditFixture,
 	before string,
 ) {
@@ -871,7 +871,7 @@ func requireTextEditChanged(
 func requireTextEditStableAfterRecovery(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	fixture *keyboardTextEditFixture,
 	recovery string,
 ) {
@@ -901,7 +901,7 @@ func requireTextEditStableAfterRecovery(
 func replaceTextEditSelectionWithGeneratedInput(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	fixture *keyboardTextEditFixture,
 	replacement string,
 ) {
@@ -928,7 +928,7 @@ func replaceTextEditSelectionWithGeneratedInput(
 func requireWholeDocumentSelectionAndUndo(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	fixture *keyboardTextEditFixture,
 	document string,
 ) {
@@ -947,7 +947,7 @@ func requireWholeDocumentSelectionAndUndo(
 func requirePartialDocumentSelectionAndUndo(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	fixture *keyboardTextEditFixture,
 	document string,
 ) {
@@ -991,7 +991,7 @@ func requirePartialDocumentSelectionAndUndo(
 func requireClipboardSnapshot(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 ) *pb.ClipboardContent {
 	t.Helper()
 	clipboard, err := client.GetClipboard(ctx, &pb.GetClipboardRequest{Name: "clipboard"})
@@ -1006,7 +1006,7 @@ func requireClipboardSnapshot(
 
 func restoreClipboardSnapshot(
 	t *testing.T,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	content *pb.ClipboardContent,
 ) {
 	t.Helper()
@@ -1034,7 +1034,7 @@ func restoreClipboardSnapshot(
 func requireCursorSnapshot(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 ) (*pb.CaptureCursorPositionResponse, []*pb.Display) {
 	t.Helper()
 	displayList, err := client.ListDisplays(ctx, &pb.ListDisplaysRequest{PageSize: 1000})
@@ -1052,7 +1052,7 @@ func requireCursorSnapshot(
 
 func restoreCursorSnapshot(
 	t *testing.T,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	cursor *pb.CaptureCursorPositionResponse,
 ) {
 	t.Helper()
@@ -1078,7 +1078,7 @@ func restoreCursorSnapshot(
 func requireCursorAt(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	want *typepb.Point,
 ) {
 	t.Helper()
@@ -1104,7 +1104,7 @@ func requireCursorAt(
 func requireWindowGone(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	name string,
 ) {
 	t.Helper()

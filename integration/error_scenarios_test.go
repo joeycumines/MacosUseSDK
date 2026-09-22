@@ -16,8 +16,8 @@ import (
 	"testing"
 	"time"
 
-	pbtype "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pbtype "github.com/joeycumines/ExactMac/gen/go/exactmac/type"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
@@ -54,7 +54,7 @@ func TestErrorScenarios_ConnectionRefused(t *testing.T) {
 	defer conn.Close()
 
 	// RPC call should fail since no server is listening
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	_, err = client.ListApplications(ctx, &pb.ListApplicationsRequest{})
 	if err != nil {
 		t.Logf("✓ RPC correctly failed: %v", err)
@@ -86,7 +86,7 @@ func TestErrorScenarios_Timeout(t *testing.T) {
 	defer conn.Close()
 
 	// RPC call should timeout
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	_, err = client.ListApplications(shortCtx, &pb.ListApplicationsRequest{})
 	if err != nil {
 		if strings.Contains(err.Error(), "timeout") || strings.Contains(err.Error(), "deadline") || strings.Contains(err.Error(), "context deadline") {
@@ -121,7 +121,7 @@ func TestErrorScenarios_InvalidAPIKey(t *testing.T) {
 	}
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 
 	// This should succeed in test environment (no auth)
 	_, err = client.ListApplications(ctx, &pb.ListApplicationsRequest{})
@@ -144,7 +144,7 @@ func TestErrorScenarios_InsufficientPermissions(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 
 	// Try to traverse accessibility without permissions
 	// This should fail if Accessibility permissions are not granted
@@ -181,7 +181,7 @@ func TestErrorScenarios_AppCrashDuringOperation(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	// Open Calculator
 	t.Log("Opening Calculator...")
 	app := OpenApplicationObserved(t, ctx, client, "com.apple.calculator")
@@ -273,7 +273,7 @@ func TestErrorScenarios_InvalidCoordinates(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 
 	// Test cases for invalid coordinates
 	testCases := []struct {
@@ -393,7 +393,7 @@ func TestErrorScenarios_MissingElement(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 
 	// Test 1: Get non-existent application
 	t.Log("Test 1: Getting non-existent application...")
@@ -472,7 +472,7 @@ func TestErrorScenarios_InvalidInput(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 
 	// Test cases for invalid input
 	testCases := []struct {
@@ -593,7 +593,7 @@ func TestErrorScenarios_GracefulRecovery(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	// Establish baseline - verify server is working
 	t.Log("Establishing baseline...")
 	baseResp, err := client.ListApplications(ctx, &pb.ListApplicationsRequest{})

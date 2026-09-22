@@ -3,26 +3,29 @@ clean: true
 managed:
   enabled: true
   override:
-    - path: macosusesdk
+    - path: exactmac
       file_option: go_package_prefix
-      value: github.com/joeycumines/MacosUseSDK/gen/go
+      value: github.com/joeycumines/ExactMac/gen/go
 inputs:
   - directory: proto
   - module: buf.build/googleapis/googleapis
 plugins:
   - remote: buf.build/apple/swift
-    out: Server/Sources/MacosUseProto
+    out: Server/Sources/ExactMacProto
     opt:
       - Visibility=Public
     include_imports: true
   - remote: buf.build/grpc/swift-protobuf
-    out: Server/Sources/MacosUseProto
+    out: Server/Sources/ExactMacProto
     opt:
       - Visibility=Public
       - Server=true
       - Client=false
     include_imports: true
-  - remote: buf.build/protocolbuffers/go
+  # Pinned so regeneration is byte-stable against the committed tree and the
+  # protobuf runtime in go.mod (v1.36.11). Do not float without regenerating
+  # and re-verifying the full Go suite.
+  - remote: buf.build/protocolbuffers/go:v1.36.11
     out: gen/go
     opt:
       - paths=source_relative

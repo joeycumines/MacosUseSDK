@@ -275,8 +275,8 @@ func TestMCPProductionListenerSecurity_InvalidConfigurationExitsBeforeBind(t *te
 		},
 		{
 			name:        "zero request timeout",
-			environment: map[string]string{"MACOS_USE_REQUEST_TIMEOUT": "0"},
-			wantLog:     "MACOS_USE_REQUEST_TIMEOUT must be positive",
+			environment: map[string]string{"EXACTMAC_REQUEST_TIMEOUT": "0"},
+			wantLog:     "EXACTMAC_REQUEST_TIMEOUT must be positive",
 		},
 		{
 			name:        "malformed origin",
@@ -305,8 +305,8 @@ func TestMCPProductionListenerSecurity_InvalidConfigurationExitsBeforeBind(t *te
 
 			address := listener.Addr().String()
 			processEnvironment := map[string]string{
-				"MACOS_USE_REQUEST_TIMEOUT":  "30",
-				"MACOS_USE_SERVER_ADDR":      "127.0.0.1:1",
+				"EXACTMAC_REQUEST_TIMEOUT":   "30",
+				"EXACTMAC_SERVER_ADDR":       "127.0.0.1:1",
 				"MCP_API_KEY":                "",
 				"MCP_CORS_ORIGIN":            "",
 				"MCP_HEARTBEAT_INTERVAL":     "30s",
@@ -333,7 +333,7 @@ func TestMCPProductionListenerSecurity_InvalidConfigurationExitsBeforeBind(t *te
 
 			runCtx, cancelRun := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancelRun()
-			cmd := exec.CommandContext(runCtx, "../.build/debug/macos-use-mcp")
+			cmd := exec.CommandContext(runCtx, "../.build/debug/exactmac", "mcp")
 			cmd.Env = testEnvironment(processEnvironment)
 			var output bytes.Buffer
 			cmd.Stdout = &output

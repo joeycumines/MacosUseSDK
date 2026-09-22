@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-const swiftServerExecutable = "../Server/.build/release/MacosUseServer"
+const swiftServerExecutable = "../Server/.build/release/ExactMacServer"
 
 // NewSwiftServerCommand constructs, but does not start, the repository's exact
 // release Swift server child. Keeping the executable static here prevents

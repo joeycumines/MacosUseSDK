@@ -4,14 +4,14 @@
 import PackageDescription
 
 let package = Package(
-    name: "MacosUseSDK",
+    name: "ExactMac",
     platforms: [
         .macOS(.v12),
     ],
     products: [
         .library(
-            name: "MacosUseSDK",
-            targets: ["MacosUseSDK"],
+            name: "ExactMac",
+            targets: ["ExactMac"],
         ),
     ],
     dependencies: [
@@ -21,7 +21,7 @@ let package = Package(
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "MacosUseSDK",
+            name: "ExactMac",
             dependencies: [],
             linkerSettings: [
                 .linkedFramework("AppKit"),
@@ -29,8 +29,8 @@ let package = Package(
             ],
         ),
         .testTarget(
-            name: "MacosUseSDKTests",
-            dependencies: ["MacosUseSDK"],
+            name: "ExactMacTests",
+            dependencies: ["ExactMac"],
         ),
     ],
 )

@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 )
 
 // handleOpenApp opens one exact installed bundle or activates one exact running

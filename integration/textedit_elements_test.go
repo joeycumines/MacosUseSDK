@@ -12,8 +12,8 @@ import (
 	"time"
 
 	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
-	typepb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	typepb "github.com/joeycumines/ExactMac/gen/go/exactmac/type"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 )
 
 func isTextEditTextArea(role string) bool {
@@ -59,7 +59,7 @@ type textEditElementFixture struct {
 func openOwnedTextEditElementFixture(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	opsClient longrunningpb.OperationsClient,
 ) *textEditElementFixture {
 	t.Helper()
@@ -160,7 +160,7 @@ func openOwnedTextEditElementFixture(
 
 func cleanupOwnedTextEditElementFixture(
 	t *testing.T,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	fixture *textEditElementFixture,
 ) {
 	t.Helper()
@@ -198,7 +198,7 @@ func ownedTextAreaSelector(fixture *textEditElementFixture) *typepb.ElementSelec
 
 func pollOwnedTextAreaValue(
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	fixture *textEditElementFixture,
 	want string,
 ) (string, error) {
@@ -224,14 +224,14 @@ func pollOwnedTextAreaValue(
 
 func newTextEditElementTest(
 	t *testing.T,
-) (context.Context, pb.MacosUseClient, *textEditElementFixture) {
+) (context.Context, pb.ExactMacClient, *textEditElementFixture) {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 75*time.Second)
 	killTextEdit(t)
 
 	serverCmd, serverAddr := startServer(t, ctx)
 	conn := connectToServer(t, ctx, serverAddr)
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	opsClient := longrunningpb.NewOperationsClient(conn)
 	var fixture *textEditElementFixture
 	t.Cleanup(func() {

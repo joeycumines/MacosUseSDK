@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/joeycumines/MacosUseSDK/internal/integrationfixture"
+	"github.com/joeycumines/ExactMac/internal/integrationfixture"
 )
 
 func TestMCPUnixSocket_ExactProcessLifecycleAndBackendDispatch(t *testing.T) {
@@ -172,7 +172,7 @@ func TestMCPUnixSocket_ExactProcessRejectsExistingPath(t *testing.T) {
 			}
 			runCtx, cancelRun := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancelRun()
-			cmd := exec.CommandContext(runCtx, "../.build/debug/macos-use-mcp")
+			cmd := exec.CommandContext(runCtx, "../.build/debug/exactmac", "mcp")
 			cmd.Env = mcpUnixProcessEnvironment("127.0.0.1:1", path)
 			output, runErr := cmd.CombinedOutput()
 			if runCtx.Err() != nil {
@@ -225,7 +225,7 @@ func startMCPUnixSocketProcess(
 ) (*exec.Cmd, *http.Client, string, string, func()) {
 	t.Helper()
 
-	binaryPath := filepath.Clean("../.build/debug/macos-use-mcp")
+	binaryPath := filepath.Clean("../.build/debug/exactmac")
 	info, err := os.Stat(binaryPath)
 	if err != nil || info.Mode()&0111 == 0 {
 		t.Fatalf("production MCP test binary is unavailable or non-executable at %s: %v", binaryPath, err)
@@ -235,7 +235,7 @@ func startMCPUnixSocketProcess(
 	if err != nil {
 		t.Fatalf("create production Unix-socket process log: %v", err)
 	}
-	cmd := exec.CommandContext(ctx, "../.build/debug/macos-use-mcp")
+	cmd := exec.CommandContext(ctx, "../.build/debug/exactmac", "mcp")
 	cmd.Env = mcpUnixProcessEnvironment(grpcAddr, socketPath)
 	cmd.Stdout = logFile
 	cmd.Stderr = logFile
@@ -304,24 +304,24 @@ func startMCPUnixSocketProcess(
 
 func mcpUnixProcessEnvironment(grpcAddr string, socketPath string) []string {
 	return testEnvironment(map[string]string{
-		"MACOS_USE_DEBUG":              "false",
-		"MACOS_USE_REQUEST_TIMEOUT":    "30",
-		"MACOS_USE_SERVER_ADDR":        grpcAddr,
-		"MACOS_USE_SERVER_CERT_FILE":   "",
-		"MACOS_USE_SERVER_SOCKET_PATH": "",
-		"MACOS_USE_SERVER_TLS":         "false",
-		"MCP_API_KEY":                  "",
-		"MCP_AUDIT_LOG_FILE":           "",
-		"MCP_CORS_ORIGIN":              "",
-		"MCP_HTTP_ADDRESS":             "127.0.0.1:1",
-		"MCP_HTTP_READ_TIMEOUT":        "30s",
-		"MCP_HTTP_SOCKET":              socketPath,
-		"MCP_HTTP_WRITE_TIMEOUT":       "30s",
-		"MCP_RATE_LIMIT":               "0",
-		"MCP_SHELL_COMMANDS_ENABLED":   "false",
-		"MCP_TLS_CERT_FILE":            "",
-		"MCP_TLS_KEY_FILE":             "",
-		"MCP_TRANSPORT":                "streamable-http",
+		"EXACTMAC_DEBUG":              "false",
+		"EXACTMAC_REQUEST_TIMEOUT":    "30",
+		"EXACTMAC_SERVER_ADDR":        grpcAddr,
+		"EXACTMAC_SERVER_CERT_FILE":   "",
+		"EXACTMAC_SERVER_SOCKET_PATH": "",
+		"EXACTMAC_SERVER_TLS":         "false",
+		"MCP_API_KEY":                 "",
+		"MCP_AUDIT_LOG_FILE":          "",
+		"MCP_CORS_ORIGIN":             "",
+		"MCP_HTTP_ADDRESS":            "127.0.0.1:1",
+		"MCP_HTTP_READ_TIMEOUT":       "30s",
+		"MCP_HTTP_SOCKET":             socketPath,
+		"MCP_HTTP_WRITE_TIMEOUT":      "30s",
+		"MCP_RATE_LIMIT":              "0",
+		"MCP_SHELL_COMMANDS_ENABLED":  "false",
+		"MCP_TLS_CERT_FILE":           "",
+		"MCP_TLS_KEY_FILE":            "",
+		"MCP_TRANSPORT":               "streamable-http",
 	})
 }
 

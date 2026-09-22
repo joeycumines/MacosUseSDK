@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 )
 
 // TestCmdHHiddenStateBehavior explicitly validates Cmd+H behavior
@@ -36,7 +36,7 @@ func TestCmdHHiddenStateBehavior(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	// 2. Open Calculator
 	t.Log("Opening Calculator...")
 	app := openCalculator(t, ctx, client)
@@ -233,7 +233,7 @@ func TestCmdHHiddenStateBehavior(t *testing.T) {
 // - Flip-flops: Rapid state changes (visible->hidden->visible) within a 500ms window
 type sanityChecker struct {
 	ctx     context.Context
-	client  pb.MacosUseClient
+	client  pb.ExactMacClient
 	appName string
 	t       *testing.T
 

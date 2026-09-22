@@ -17,7 +17,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/joeycumines/MacosUseSDK/internal/transport"
+	"github.com/joeycumines/ExactMac/internal/transport"
 )
 
 var jsonNumberPattern = regexp.MustCompile(`^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$`)

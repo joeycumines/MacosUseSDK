@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
@@ -19,9 +19,9 @@ import (
 )
 
 func TestGeneratedGoClientRoutesEveryNonApplicationMethod(t *testing.T) {
-	service := pb.File_macosusesdk_v1_macos_use_proto.Services().ByName("MacosUse")
+	service := pb.File_exactmac_v1_exact_mac_proto.Services().ByName("ExactMac")
 	if service == nil {
-		t.Fatal("live protobuf descriptor has no MacosUse service")
+		t.Fatal("live protobuf descriptor has no ExactMac service")
 	}
 	contracts := flattenRPCContracts(t)
 	recordedMethods := make(chan string, service.Methods().Len())
@@ -61,7 +61,7 @@ func TestGeneratedGoClientRoutesEveryNonApplicationMethod(t *testing.T) {
 		}
 	})
 
-	client := reflect.ValueOf(pb.NewMacosUseClient(connection))
+	client := reflect.ValueOf(pb.NewExactMacClient(connection))
 	applicationMethods := 0
 	routedMethods := 0
 	methods := service.Methods()

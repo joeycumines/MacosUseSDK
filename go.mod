@@ -1,4 +1,4 @@
-module github.com/joeycumines/MacosUseSDK
+module github.com/joeycumines/ExactMac
 
 go 1.26.3
 

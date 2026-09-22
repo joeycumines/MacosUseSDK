@@ -13,8 +13,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	typepb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	typepb "github.com/joeycumines/ExactMac/gen/go/exactmac/type"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 )
 
 // cuaKeyMap maps CUA-style key names to macOS key names accepted by the gRPC server.

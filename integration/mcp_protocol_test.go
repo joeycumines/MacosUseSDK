@@ -46,7 +46,7 @@ func TestMCPInitialize_ProtocolVersion(t *testing.T) {
 	if result.ProtocolVersion != "2025-11-25" {
 		t.Fatalf("protocolVersion = %q, want 2025-11-25", result.ProtocolVersion)
 	}
-	if result.ServerInfo.Name != "macos-use-sdk" || result.ServerInfo.Version == "" {
+	if result.ServerInfo.Name != "exactmac" || result.ServerInfo.Version == "" {
 		t.Fatalf("unexpected serverInfo: name=%q version=%q", result.ServerInfo.Name, result.ServerInfo.Version)
 	}
 	if result.Capabilities.Tools == nil {

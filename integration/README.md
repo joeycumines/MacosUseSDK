@@ -1,12 +1,12 @@
 # Integration Tests
 
-This directory contains end-to-end integration tests for the MacosUseSDK gRPC server.
+This directory contains end-to-end integration tests for the ExactMac gRPC server.
 
 ## Overview
 
 These tests verify the complete system works correctly by:
 
-1. Starting the MacosUse gRPC server
+1. Starting the ExactMac gRPC server
 2. Connecting to it via gRPC
 3. Controlling real macOS applications
 4. Verifying the results
@@ -16,7 +16,7 @@ These tests verify the complete system works correctly by:
 ### Via Makefile
 
 ```sh
-make go.test.integration
+gmake go.test.integration
 ```
 
 ### Manually
@@ -31,7 +31,7 @@ If you want to test against a server that's already running:
 
 ```sh
 export INTEGRATION_SERVER_ADDR=localhost:50051
-cd integration_test
+cd integration
 go test -v -timeout 5m
 ```
 

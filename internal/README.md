@@ -47,4 +47,4 @@ go test -v ./internal/...
 
 ## Documentation
 
-See [the MCP tool reference](../skills/macos-use/references/workflows-and-tools.md) for the complete current tool reference.
+See [the MCP tool reference](../skills/exactmac/references/workflows-and-tools.md) for the complete current tool reference.

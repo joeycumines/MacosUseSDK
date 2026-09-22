@@ -9,7 +9,7 @@ type executableToolContract struct {
 	handler      string
 	effect       string
 	proof        string
-	macosUseRPCs []string
+	exactMacRPCs []string
 	externalRPCs []string
 }
 
@@ -17,35 +17,35 @@ var executableToolContracts = map[string]executableToolContract{
 	"screenshot": {
 		source: "cuascreenshot.go", handler: "handleScreenshot", effect: "capture",
 		proof:        "returned pixels and requested-region metadata",
-		macosUseRPCs: []string{"CaptureScreenshot", "CaptureWindowScreenshot", "CaptureRegionScreenshot"},
+		exactMacRPCs: []string{"CaptureScreenshot", "CaptureWindowScreenshot", "CaptureRegionScreenshot"},
 	},
 	"click": {
 		source: "cua_input_handlers.go", handler: "cuaHandleClick", effect: "input mutation",
-		proof: "owned target state delta", macosUseRPCs: []string{"CreateInput"},
+		proof: "owned target state delta", exactMacRPCs: []string{"CreateInput"},
 	},
 	"double_click": {
 		source: "cua_input_handlers.go", handler: "handleDoubleClick", effect: "input mutation",
-		proof: "owned target state delta", macosUseRPCs: []string{"CreateInput"},
+		proof: "owned target state delta", exactMacRPCs: []string{"CreateInput"},
 	},
 	"type": {
 		source: "cua_input_handlers.go", handler: "handleType", effect: "input mutation",
-		proof: "owned target value delta", macosUseRPCs: []string{"CreateInput"},
+		proof: "owned target value delta", exactMacRPCs: []string{"CreateInput"},
 	},
 	"keypress": {
 		source: "cua_input_handlers.go", handler: "handleKeypress", effect: "input mutation",
-		proof: "owned target state delta", macosUseRPCs: []string{"CreateInput"},
+		proof: "owned target state delta", exactMacRPCs: []string{"CreateInput"},
 	},
 	"scroll": {
 		source: "cua_input_handlers.go", handler: "cuaHandleScroll", effect: "input mutation",
-		proof: "owned target state delta", macosUseRPCs: []string{"CreateInput"},
+		proof: "owned target state delta", exactMacRPCs: []string{"CreateInput"},
 	},
 	"drag": {
 		source: "cua_input_handlers.go", handler: "cuaHandleDrag", effect: "input mutation",
-		proof: "owned target state delta", macosUseRPCs: []string{"CreateInput"},
+		proof: "owned target state delta", exactMacRPCs: []string{"CreateInput"},
 	},
 	"move": {
 		source: "cua_input_handlers.go", handler: "handleMove", effect: "input mutation",
-		proof: "cursor position delta", macosUseRPCs: []string{"CreateInput"},
+		proof: "cursor position delta", exactMacRPCs: []string{"CreateInput"},
 	},
 	"wait": {
 		source: "cua_wait.go", handler: "handleWait", effect: "local wait",
@@ -54,94 +54,94 @@ var executableToolContracts = map[string]executableToolContract{
 	"open_app": {
 		source: "cua_application.go", handler: "handleOpenApp", effect: "application lifecycle mutation",
 		proof:        "owned process identity and observed open disposition",
-		macosUseRPCs: []string{"OpenApplication", "ActivateApplication"},
+		exactMacRPCs: []string{"OpenApplication", "ActivateApplication"},
 	},
 	"list_apps": {
 		source: "cua_application.go", handler: "handleListApps", effect: "query",
-		proof: "installed bundles or live application and window resources", macosUseRPCs: []string{"ListApplicationBundles", "ListApplications", "ListWindows"},
+		proof: "installed bundles or live application and window resources", exactMacRPCs: []string{"ListApplicationBundles", "ListApplications", "ListWindows"},
 	},
 	"close_app": {
 		source: "cua_application.go", handler: "handleCloseApp", effect: "application lifecycle mutation",
 		proof:        "owned process disappearance",
-		macosUseRPCs: []string{"CloseApplication"},
+		exactMacRPCs: []string{"CloseApplication"},
 	},
 	"find_elements": {
 		source: "cua_element.go", handler: "cuaHandleFindElements", effect: "query",
-		proof: "live AX resources", macosUseRPCs: []string{"FindElements"},
+		proof: "live AX resources", exactMacRPCs: []string{"FindElements"},
 	},
 	"click_element": {
 		source: "cua_element.go", handler: "cuaHandleClickElement", effect: "AX mutation",
-		proof: "owned target state delta", macosUseRPCs: []string{"ClickElement", "GetElement"},
+		proof: "owned target state delta", exactMacRPCs: []string{"ClickElement", "GetElement"},
 	},
 	"type_element": {
 		source: "cua_element.go", handler: "handleTypeElement", effect: "AX or input mutation",
 		proof:        "owned target value delta",
-		macosUseRPCs: []string{"FocusWindow", "WriteElementValue", "GetElement", "GetElementActions"},
+		exactMacRPCs: []string{"FocusWindow", "WriteElementValue", "GetElement", "GetElementActions"},
 	},
 	"read_element": {
 		source: "cua_element.go", handler: "handleReadElement", effect: "query",
-		proof: "live AX resource and actions", macosUseRPCs: []string{"GetElement", "GetElementActions"},
+		proof: "live AX resource and actions", exactMacRPCs: []string{"GetElement", "GetElementActions"},
 	},
 	"focus_window": {
 		source: "cua_window.go", handler: "cuaHandleFocusWindow", effect: "window mutation",
-		proof: "owned focused-window delta", macosUseRPCs: []string{"FocusWindow"},
+		proof: "owned focused-window delta", exactMacRPCs: []string{"FocusWindow"},
 	},
 	"move_window": {
 		source: "cua_window.go", handler: "cuaHandleMoveWindow", effect: "window mutation",
-		proof: "owned bounds delta", macosUseRPCs: []string{"MoveWindow"},
+		proof: "owned bounds delta", exactMacRPCs: []string{"MoveWindow"},
 	},
 	"resize_window": {
 		source: "cua_window.go", handler: "cuaHandleResizeWindow", effect: "window mutation",
-		proof: "owned bounds delta", macosUseRPCs: []string{"ResizeWindow"},
+		proof: "owned bounds delta", exactMacRPCs: []string{"ResizeWindow"},
 	},
 	"list_windows": {
 		source: "cua_window.go", handler: "cuaHandleListWindows", effect: "query",
-		proof: "live window resources", macosUseRPCs: []string{"ListWindows"},
+		proof: "live window resources", exactMacRPCs: []string{"ListWindows"},
 	},
 	"clipboard": {
 		source: "cua_clipboard.go", handler: "handleClipboard", effect: "clipboard query or mutation",
 		proof:        "before and after clipboard contents",
-		macosUseRPCs: []string{"GetClipboard", "WriteClipboard", "ClearClipboard"},
+		exactMacRPCs: []string{"GetClipboard", "WriteClipboard", "ClearClipboard"},
 	},
 	"run": {
 		source: "cua_scripting.go", handler: "handleRun", effect: "script execution",
 		proof:        "result and owned side effect",
-		macosUseRPCs: []string{"ExecuteShellCommand", "ExecuteAppleScript", "ExecuteJavaScript"},
+		exactMacRPCs: []string{"ExecuteShellCommand", "ExecuteAppleScript", "ExecuteJavaScript"},
 	},
 	"get_display": {
 		source: "cua_display.go", handler: "cuaHandleGetDisplay", effect: "query",
 		proof:        "live display frames and cursor position",
-		macosUseRPCs: []string{"CaptureCursorPosition"},
+		exactMacRPCs: []string{"CaptureCursorPosition"},
 	},
 	"create_macro": {
 		source: "cua_macro.go", handler: "handleCreateMacro", effect: "macro lifecycle mutation",
 		proof:        "stored macro resource",
-		macosUseRPCs: []string{"CreateMacro"},
+		exactMacRPCs: []string{"CreateMacro"},
 	},
 	"get_macro": {
 		source: "cua_macro.go", handler: "handleGetMacro", effect: "query",
 		proof:        "stored macro resource",
-		macosUseRPCs: []string{"GetMacro"},
+		exactMacRPCs: []string{"GetMacro"},
 	},
 	"list_macros": {
 		source: "cua_macro.go", handler: "handleListMacros", effect: "query",
 		proof:        "stored macro resources and pagination",
-		macosUseRPCs: []string{"ListMacros"},
+		exactMacRPCs: []string{"ListMacros"},
 	},
 	"update_macro": {
 		source: "cua_macro.go", handler: "handleUpdateMacro", effect: "macro lifecycle mutation",
 		proof:        "stored macro resource delta",
-		macosUseRPCs: []string{"UpdateMacro"},
+		exactMacRPCs: []string{"UpdateMacro"},
 	},
 	"delete_macro": {
 		source: "cua_macro.go", handler: "handleDeleteMacro", effect: "macro lifecycle mutation",
 		proof:        "macro resource disappearance",
-		macosUseRPCs: []string{"DeleteMacro"},
+		exactMacRPCs: []string{"DeleteMacro"},
 	},
 	"execute_macro": {
 		source: "cua_macro.go", handler: "handleExecuteMacro", effect: "macro execution",
 		proof:        "owned long-running operation and runtime state",
-		macosUseRPCs: []string{"ExecuteMacro"},
+		exactMacRPCs: []string{"ExecuteMacro"},
 	},
 }
 

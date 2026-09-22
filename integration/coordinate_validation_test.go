@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	pbtype "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pbtype "github.com/joeycumines/ExactMac/gen/go/exactmac/type"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 )
 
 func TestCoordinateValidation_DisplayFramesRoundTrip(t *testing.T) {
@@ -25,7 +25,7 @@ func TestCoordinateValidation_DisplayFramesRoundTrip(t *testing.T) {
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 
 	response, err := client.ListDisplays(ctx, &pb.ListDisplaysRequest{})
 	if err != nil {
@@ -66,7 +66,7 @@ func TestCoordinateValidation_VisibleFrameRegionScreenshots(t *testing.T) {
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 
 	displays, err := client.ListDisplays(ctx, &pb.ListDisplaysRequest{})
 	if err != nil {
@@ -121,7 +121,7 @@ func TestCoordinateValidation_MCPRegionScreenshotViaHTTP(t *testing.T) {
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 
 	displays, err := client.ListDisplays(ctx, &pb.ListDisplaysRequest{})
 	if err != nil {
@@ -171,7 +171,7 @@ func TestCoordinateValidation_DisplayOrigins(t *testing.T) {
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 
 	displays, err := client.ListDisplays(ctx, &pb.ListDisplaysRequest{})
 	if err != nil {

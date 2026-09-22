@@ -19,4 +19,8 @@ coverage.lcov
 /tmp/
 /.build-logs
 # Generated protobuf descriptor sets for gRPC reflection (optional)
-/Server/Sources/MacosUseServer/DescriptorSets/*.pb
+/Server/Sources/ExactMacServer/DescriptorSets/*.pb
+# Host-local agent skill mirrors (tracked source is skills/); ignored here so
+# fresh clones stay clean, synced from the tracked skill on demand.
+/.claude/skills/
+/.agents/skills/

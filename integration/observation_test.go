@@ -7,7 +7,7 @@ import (
 	"time"
 
 	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 )
 
 // TestWindowChangeObservation verifies that StreamObservations correctly emits
@@ -33,7 +33,7 @@ func TestWindowChangeObservation(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	opsClient := longrunningpb.NewOperationsClient(conn)
 
 	// 2. Application Setup - Open TextEdit

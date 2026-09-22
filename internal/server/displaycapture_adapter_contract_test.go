@@ -16,8 +16,8 @@ import (
 	"strings"
 	"testing"
 
-	typepb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	typepb "github.com/joeycumines/ExactMac/gen/go/exactmac/type"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 	"golang.org/x/image/tiff"
 	"google.golang.org/protobuf/proto"
 )

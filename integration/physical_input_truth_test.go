@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	typepb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	typepb "github.com/joeycumines/ExactMac/gen/go/exactmac/type"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -69,7 +69,7 @@ func TestPhysicalInputTruth_ProductionRoutes(t *testing.T) {
 	defer cleanupServer(t, serverCommand, serverAddress)
 	connection := connectToServer(t, ctx, serverAddress)
 	defer connection.Close()
-	client := pb.NewMacosUseClient(connection)
+	client := pb.NewExactMacClient(connection)
 
 	originalClipboard := requireClipboardSnapshot(t, ctx, client)
 	var restoreClipboardOnce sync.Once
@@ -745,7 +745,7 @@ func TestPhysicalInputTruth_ProductionRoutes(t *testing.T) {
 func requireOwnedTextEditDrag(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	fixture *keyboardTextEditFixture,
 	path []ownedDragPoint,
 	duration float64,
@@ -788,7 +788,7 @@ func requireOwnedTextEditDrag(
 func requireCurrentOwnedTextEditGeometry(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	fixture *keyboardTextEditFixture,
 ) ownedTextEditGeometry {
 	t.Helper()

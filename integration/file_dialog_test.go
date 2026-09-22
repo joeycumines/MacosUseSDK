@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -37,7 +37,7 @@ func TestFileDialog_FailsClosed(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	const application = "applications/424242"
 	missingDirectory := filepath.Join(t.TempDir(), "must-not-be-created")
 
@@ -96,7 +96,7 @@ func TestFileDialog_ValidatesMalformedRequestsBeforeCapabilityError(t *testing.T
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	const application = "applications/424242"
 
 	// Missing required application resource reference.

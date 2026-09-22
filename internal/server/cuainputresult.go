@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"math"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 	"github.com/rivo/uniseg"
 	"google.golang.org/protobuf/proto"
 )

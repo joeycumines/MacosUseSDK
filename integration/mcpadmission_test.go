@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
 )
@@ -23,7 +23,7 @@ import (
 const requestAdmissionBusyCode = -32000
 
 type requestAdmissionBackend struct {
-	pb.UnimplementedMacosUseServer
+	pb.UnimplementedExactMacServer
 	entered chan string
 	exited  chan string
 	calls   atomic.Int64
@@ -222,7 +222,7 @@ func startRequestAdmissionBackend(t *testing.T) (string, *requestAdmissionBacken
 		exited:  make(chan string, 16),
 	}
 	grpcServer := grpc.NewServer()
-	pb.RegisterMacosUseServer(grpcServer, backend)
+	pb.RegisterExactMacServer(grpcServer, backend)
 	serveResult := make(chan error, 1)
 	go func() {
 		serveResult <- grpcServer.Serve(listener)
@@ -241,9 +241,9 @@ func startRequestAdmissionBackend(t *testing.T) (string, *requestAdmissionBacken
 
 func requestAdmissionProcessOverrides(global, perClient string) map[string]string {
 	return map[string]string{
-		"MACOS_USE_REQUEST_TIMEOUT":              "30",
-		"MACOS_USE_SERVER_CERT_FILE":             "",
-		"MACOS_USE_SERVER_TLS":                   "false",
+		"EXACTMAC_REQUEST_TIMEOUT":               "30",
+		"EXACTMAC_SERVER_CERT_FILE":              "",
+		"EXACTMAC_SERVER_TLS":                    "false",
 		"MCP_MAX_CONCURRENT_REQUESTS":            global,
 		"MCP_MAX_CONCURRENT_REQUESTS_PER_CLIENT": perClient,
 		"MCP_SHELL_COMMANDS_ENABLED":             "false",

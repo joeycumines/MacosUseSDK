@@ -10,7 +10,7 @@ import (
 
 const (
 	contextImportPath            = "context"
-	integrationFixtureImportPath = "github.com/joeycumines/MacosUseSDK/internal/integrationfixture"
+	integrationFixtureImportPath = "github.com/joeycumines/ExactMac/internal/integrationfixture"
 	osExecImportPath             = "os/exec"
 )
 
@@ -65,7 +65,7 @@ func allowedServerExecutablePositions(filename string, file *ast.File) map[token
 			if !ok || strings.Join(selectorChain(call.Fun), ".") != "exec.CommandContext" || len(call.Args) != 2 {
 				return true
 			}
-			if stringValue(call.Args[1]) == "../Server/.build/release/MacosUseServer" {
+			if stringValue(call.Args[1]) == "../Server/.build/release/ExactMacServer" {
 				allowed[call.Args[1].Pos()] = struct{}{}
 			}
 			return true
@@ -378,7 +378,7 @@ func exactServerChildBinding(file *ast.File, function *ast.FuncDecl) (identifier
 		}
 		call, ok := assignment.Rhs[0].(*ast.CallExpr)
 		if !ok || !isImportedSelectorCall(file, call, osExecImportPath, "CommandContext") || len(call.Args) != 2 ||
-			stringValue(call.Args[1]) != "../Server/.build/release/MacosUseServer" {
+			stringValue(call.Args[1]) != "../Server/.build/release/ExactMacServer" {
 			continue
 		}
 		identifier, ok := assignment.Lhs[0].(*ast.Ident)

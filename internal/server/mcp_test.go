@@ -17,9 +17,9 @@ import (
 	"strings"
 	"testing"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
-	"github.com/joeycumines/MacosUseSDK/internal/config"
-	"github.com/joeycumines/MacosUseSDK/internal/transport"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
+	"github.com/joeycumines/ExactMac/internal/config"
+	"github.com/joeycumines/ExactMac/internal/transport"
 )
 
 // TestNewMCPServer_WithDefaultConfig tests that NewMCPServer can be created
@@ -876,12 +876,12 @@ func TestInitializeResponse(t *testing.T) {
 	}{
 		{
 			name:     "valid initialize response",
-			response: `{"protocolVersion":"2025-11-25","capabilities":{"tools":{}},"serverInfo":{"name":"macos-use-sdk","version":"0.1.0"}}`,
+			response: `{"protocolVersion":"2025-11-25","capabilities":{"tools":{}},"serverInfo":{"name":"exactmac","version":"0.1.0"}}`,
 			wantErr:  false,
 		},
 		{
 			name:     "with displayInfo",
-			response: `{"protocolVersion":"2025-11-25","capabilities":{"tools":{}},"serverInfo":{"name":"macos-use-sdk","version":"0.1.0"},"displayInfo":{"screens":[]}}`,
+			response: `{"protocolVersion":"2025-11-25","capabilities":{"tools":{}},"serverInfo":{"name":"exactmac","version":"0.1.0"},"displayInfo":{"screens":[]}}`,
 			wantErr:  false,
 		},
 		{
@@ -983,7 +983,7 @@ func TestMCPProtocolVersion(t *testing.T) {
 	initResponse := map[string]any{
 		"protocolVersion": expectedVersion,
 		"capabilities":    map[string]any{"tools": map[string]any{}},
-		"serverInfo":      map[string]any{"name": "macos-use-sdk", "version": "0.1.0"},
+		"serverInfo":      map[string]any{"name": "exactmac", "version": "0.1.0"},
 	}
 
 	data, err := json.Marshal(initResponse)
@@ -1390,8 +1390,8 @@ func TestValidateAndProcessInitialize_ResponseFormat(t *testing.T) {
 	if !ok {
 		t.Fatal("serverInfo is not an object")
 	}
-	if serverInfo["name"] != "macos-use-sdk" {
-		t.Errorf("serverInfo.name = %q, want %q", serverInfo["name"], "macos-use-sdk")
+	if serverInfo["name"] != "exactmac" {
+		t.Errorf("serverInfo.name = %q, want %q", serverInfo["name"], "exactmac")
 	}
 	if serverInfo["version"] == nil || serverInfo["version"] == "" {
 		t.Error("serverInfo.version should not be empty")
@@ -1541,13 +1541,13 @@ func TestValidateUnixSocketEndpointAllowsMissing(t *testing.T) {
 // TestMCPServer_WithUnixSocketConfig tests that MCPServer can be configured with Unix socket
 func TestMCPServer_WithUnixSocketConfig(t *testing.T) {
 	cfg := &config.Config{
-		ServerSocketPath: "/var/run/macos-use.sock",
+		ServerSocketPath: "/var/run/exactmac.sock",
 		RequestTimeout:   30,
 	}
 
 	// Verify the config is set correctly
-	if cfg.ServerSocketPath != "/var/run/macos-use.sock" {
-		t.Errorf("ServerSocketPath = %s, want /var/run/macos-use.sock", cfg.ServerSocketPath)
+	if cfg.ServerSocketPath != "/var/run/exactmac.sock" {
+		t.Errorf("ServerSocketPath = %s, want /var/run/exactmac.sock", cfg.ServerSocketPath)
 	}
 
 	if cfg.ServerAddr != "" {
@@ -1601,9 +1601,9 @@ func TestMCPServer_UnixSocketAddressFormat(t *testing.T) {
 	}{
 		{
 			name:       "standard socket path",
-			socketPath: "/var/run/macos-use.sock",
+			socketPath: "/var/run/exactmac.sock",
 			wantPrefix: "unix://",
-			wantPath:   "/var/run/macos-use.sock",
+			wantPath:   "/var/run/exactmac.sock",
 		},
 		{
 			name:       "tmp socket path",
@@ -1613,9 +1613,9 @@ func TestMCPServer_UnixSocketAddressFormat(t *testing.T) {
 		},
 		{
 			name:       "user socket path",
-			socketPath: "/Users/test/.macos-use/socket",
+			socketPath: "/Users/test/.exactmac/socket",
 			wantPrefix: "unix://",
-			wantPath:   "/Users/test/.macos-use/socket",
+			wantPath:   "/Users/test/.exactmac/socket",
 		},
 	}
 
@@ -2445,7 +2445,7 @@ func TestMCPResourcesCapabilityAnnouncement(t *testing.T) {
 			}
 		},
 		"serverInfo": {
-			"name": "macos-use-sdk",
+			"name": "exactmac",
 			"version": "0.1.0"
 		}
 	}`
@@ -3278,7 +3278,7 @@ func TestMCPPromptsCapabilityAnnouncement(t *testing.T) {
 				"prompts": {}
 			},
 			"serverInfo": {
-				"name": "macos-use-sdk",
+				"name": "exactmac",
 				"version": "0.1.0"
 			}
 		}

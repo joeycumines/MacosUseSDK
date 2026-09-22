@@ -47,9 +47,9 @@ func TestHealthCheck_Serving(t *testing.T) {
 	t.Logf("Health check returned status: %v", resp.Status)
 }
 
-// TestHealthCheck_MacosUseService verifies the health check for the specific
-// MacosUse service returns SERVING status.
-func TestHealthCheck_MacosUseService(t *testing.T) {
+// TestHealthCheck_ExactMacService verifies the health check for the specific
+// ExactMac service returns SERVING status.
+func TestHealthCheck_ExactMacService(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
@@ -68,9 +68,9 @@ func TestHealthCheck_MacosUseService(t *testing.T) {
 
 	client := healthpb.NewHealthClient(conn)
 
-	// Check MacosUse service health
+	// Check ExactMac service health
 	resp, err := client.Check(ctx, &healthpb.HealthCheckRequest{
-		Service: "macosusesdk.v1.MacosUse",
+		Service: "exactmac.v1.ExactMac",
 	})
 	if err != nil {
 		t.Fatalf("Health check failed: %v", err)
@@ -80,7 +80,7 @@ func TestHealthCheck_MacosUseService(t *testing.T) {
 		t.Errorf("Expected SERVING status, got %v", resp.Status)
 	}
 
-	t.Logf("Health check for macosusesdk.v1.MacosUse returned status: %v", resp.Status)
+	t.Logf("Health check for exactmac.v1.ExactMac returned status: %v", resp.Status)
 }
 
 // TestHealthCheck_UnknownService verifies the health check for an unknown

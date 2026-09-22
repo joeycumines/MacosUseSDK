@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/joeycumines/MacosUseSDK/internal/config"
-	"github.com/joeycumines/MacosUseSDK/internal/transport"
+	"github.com/joeycumines/ExactMac/internal/config"
+	"github.com/joeycumines/ExactMac/internal/transport"
 )
 
 func TestPhysicalInputScheduleRejectsExactDeadlineBeforeCreateInput(t *testing.T) {

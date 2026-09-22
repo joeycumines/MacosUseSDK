@@ -193,7 +193,7 @@ func echoTransportMessage(message *Message) (*Message, error) {
 
 func shortUnixSocketDir(t *testing.T) string {
 	t.Helper()
-	directory, err := os.MkdirTemp("/tmp", "macos-use-mcp-uds-")
+	directory, err := os.MkdirTemp("/tmp", "exactmac-uds-")
 	if err != nil {
 		t.Fatalf("create short socket directory: %v", err)
 	}

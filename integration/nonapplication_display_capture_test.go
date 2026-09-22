@@ -23,9 +23,9 @@ import (
 	"testing"
 	"time"
 
-	pbtype "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
-	"github.com/joeycumines/MacosUseSDK/internal/integrationfixture"
+	pbtype "github.com/joeycumines/ExactMac/gen/go/exactmac/type"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
+	"github.com/joeycumines/ExactMac/internal/integrationfixture"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
@@ -42,9 +42,9 @@ func TestMCPDisplayCaptureProductionTransports_StrictBackendTruth(t *testing.T) 
 	grpcAddress, backend, stopBackend := startDisplayCaptureBackend(t)
 	defer stopBackend()
 	overrides := map[string]string{
-		"MACOS_USE_SERVER_TLS":       "false",
-		"MACOS_USE_SERVER_CERT_FILE": "",
-		"MACOS_USE_REQUEST_TIMEOUT":  "5",
+		"EXACTMAC_SERVER_TLS":        "false",
+		"EXACTMAC_SERVER_CERT_FILE":  "",
+		"EXACTMAC_REQUEST_TIMEOUT":   "5",
 		"MCP_SHELL_COMMANDS_ENABLED": "false",
 	}
 	_, baseURL, stopHTTP := startMCPTestServerWithOverrides(t, ctx, grpcAddress, overrides)
@@ -162,7 +162,7 @@ func TestDisplayCaptureReleaseSwiftDirectAndProductionTransports(t *testing.T) {
 	if err != nil {
 		t.Fatalf("construct direct gRPC client: %v", err)
 	}
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 
 	listed, err := client.ListDisplays(ctx, &pb.ListDisplaysRequest{PageSize: 1000})
 	if err != nil {
@@ -209,9 +209,9 @@ func TestDisplayCaptureReleaseSwiftDirectAndProductionTransports(t *testing.T) {
 	assertDirectRegionCapture(t, region, mainDisplay, requestedRegion)
 
 	overrides := map[string]string{
-		"MACOS_USE_SERVER_TLS":       "false",
-		"MACOS_USE_SERVER_CERT_FILE": "",
-		"MACOS_USE_REQUEST_TIMEOUT":  "30",
+		"EXACTMAC_SERVER_TLS":        "false",
+		"EXACTMAC_SERVER_CERT_FILE":  "",
+		"EXACTMAC_REQUEST_TIMEOUT":   "30",
 		"MCP_SHELL_COMMANDS_ENABLED": "false",
 	}
 	_, baseURL, httpCleanup := startMCPTestServerWithOverrides(t, ctx, serverAddr, overrides)
@@ -298,7 +298,7 @@ func TestDisplayCaptureReleaseSwiftDirectAndProductionTransports(t *testing.T) {
 }
 
 type displayCaptureBackend struct {
-	pb.UnimplementedMacosUseServer
+	pb.UnimplementedExactMacServer
 
 	mu             sync.Mutex
 	cursorFailure  bool
@@ -429,7 +429,7 @@ func startDisplayCaptureBackend(t *testing.T) (string, *displayCaptureBackend, f
 	}
 	backend := &displayCaptureBackend{}
 	server := grpc.NewServer()
-	pb.RegisterMacosUseServer(server, backend)
+	pb.RegisterExactMacServer(server, backend)
 	serveResult := make(chan error, 1)
 	go func() {
 		serveResult <- server.Serve(listener)

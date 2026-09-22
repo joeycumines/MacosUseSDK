@@ -27,9 +27,9 @@ import (
 	"time"
 
 	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
-	"github.com/joeycumines/MacosUseSDK/internal/config"
-	"github.com/joeycumines/MacosUseSDK/internal/transport"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
+	"github.com/joeycumines/ExactMac/internal/config"
+	"github.com/joeycumines/ExactMac/internal/transport"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -53,7 +53,7 @@ const (
 //
 //lint:ignore BETTERALIGN struct is intentionally ordered for clarity
 type MCPServer struct {
-	client         pb.MacosUseClient
+	client         pb.ExactMacClient
 	opsClient      longrunningpb.OperationsClient
 	httpTransport  *transport.HTTPTransport
 	auditLogger    *AuditLogger
@@ -296,31 +296,31 @@ func NewMCPServer(cfg *config.Config) (*MCPServer, error) {
 // create a startup race and still would not establish a pathname lease.
 func validateUnixSocketEndpoint(path string) error {
 	if !filepath.IsAbs(path) {
-		return fmt.Errorf("Unix socket path must be absolute: %q", path)
+		return fmt.Errorf("unix socket path must be absolute: %q", path)
 	}
 	pathBytes := len([]byte(path))
 	if pathBytes >= 104 {
-		return fmt.Errorf("Unix socket path is too long: %d bytes", pathBytes)
+		return fmt.Errorf("unix socket path is too long: %d bytes", pathBytes)
 	}
 	info, err := os.Lstat(path)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return nil
 		}
-		return fmt.Errorf("stat Unix socket %q: %w", path, err)
+		return fmt.Errorf("stat unix socket %q: %w", path, err)
 	}
 	if info.Mode()&os.ModeSymlink != 0 {
-		return fmt.Errorf("Unix socket path must not be a symlink: %q", path)
+		return fmt.Errorf("unix socket path must not be a symlink: %q", path)
 	}
 	if info.Mode()&os.ModeSocket == 0 {
-		return fmt.Errorf("Unix socket path is not a socket: %q", path)
+		return fmt.Errorf("unix socket path is not a socket: %q", path)
 	}
 	if info.Mode().Perm() != 0600 {
-		return fmt.Errorf("Unix socket path must have mode 0600: %q has %04o", path, info.Mode().Perm())
+		return fmt.Errorf("unix socket path must have mode 0600: %q has %04o", path, info.Mode().Perm())
 	}
 	status, ok := info.Sys().(*syscall.Stat_t)
 	if !ok || status.Uid != uint32(os.Geteuid()) {
-		return fmt.Errorf("Unix socket path is not owned by the current user: %q", path)
+		return fmt.Errorf("unix socket path is not owned by the current user: %q", path)
 	}
 	return nil
 }
@@ -356,7 +356,7 @@ func (s *MCPServer) initGRPC() error {
 	}
 
 	s.conn = conn
-	s.client = pb.NewMacosUseClient(conn)
+	s.client = pb.NewExactMacClient(conn)
 	s.opsClient = longrunningpb.NewOperationsClient(conn)
 
 	return nil

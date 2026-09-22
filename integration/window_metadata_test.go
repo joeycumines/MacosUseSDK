@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 )
 
 // rediscoverWindowAfterMutation finds the current window by polling for a window
@@ -15,7 +15,7 @@ import (
 func rediscoverWindowAfterMutation(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	appName string,
 	expectedX, expectedY, expectedW, expectedH float64,
 	tolerance float64,
@@ -64,7 +64,7 @@ func TestWindowMetadataPreservation(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	// 2. Open TextEdit
 	t.Log("Opening TextEdit...")
 	app := openTextEdit(t, ctx, client)

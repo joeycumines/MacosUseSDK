@@ -16,7 +16,7 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -196,7 +196,7 @@ func TestMCPTools_ClickElement_CalculatorStateDelta(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	app := openCalculator(t, ctx, client)
 	defer cleanupApplication(t, ctx, client, app)
 	restoreClipboard := preserveClipboard(t, ctx, client)
@@ -247,7 +247,7 @@ func TestMCPTools_ClickElement_CalculatorStateDelta(t *testing.T) {
 func requireCalculatorButtonHandle(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	app *pb.Application,
 	label string,
 ) string {
@@ -291,7 +291,7 @@ func TestMCPTools_CloseApp_CalculatorObservedLifecycle(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	app := openCalculator(t, ctx, client)
 	defer cleanupApplication(t, ctx, client, app)
 
@@ -337,7 +337,7 @@ func TestMCPTools_OpenApp_AllModesObserved(t *testing.T) {
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 
 	var ownedApps []*pb.Application
 	defer func() {
@@ -586,7 +586,7 @@ func callProductionMCPTool(t *testing.T, baseURL string, id int, name string, ar
 func trackedApplicationsNamed(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	displayName string,
 ) []*pb.Application {
 	t.Helper()
@@ -603,7 +603,7 @@ func trackedApplicationsNamed(
 	return applications
 }
 
-func requireCalculatorButtonText(t *testing.T, ctx context.Context, client pb.MacosUseClient, app *pb.Application, candidates ...string) string {
+func requireCalculatorButtonText(t *testing.T, ctx context.Context, client pb.ExactMacClient, app *pb.Application, candidates ...string) string {
 	t.Helper()
 	buttonCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
@@ -634,7 +634,7 @@ func requireCalculatorButtonText(t *testing.T, ctx context.Context, client pb.Ma
 	return matched
 }
 
-func preserveClipboard(t *testing.T, ctx context.Context, client pb.MacosUseClient) func() {
+func preserveClipboard(t *testing.T, ctx context.Context, client pb.ExactMacClient) func() {
 	t.Helper()
 	original, err := client.GetClipboard(ctx, &pb.GetClipboardRequest{Name: "clipboard"})
 	if err != nil {
@@ -655,9 +655,9 @@ func preserveClipboard(t *testing.T, ctx context.Context, client pb.MacosUseClie
 	}
 }
 
-func requireCalculatorCopiedResult(t *testing.T, ctx context.Context, client pb.MacosUseClient, app *pb.Application, expected string) string {
+func requireCalculatorCopiedResult(t *testing.T, ctx context.Context, client pb.ExactMacClient, app *pb.Application, expected string) string {
 	t.Helper()
-	sentinel := "MACOSUSESDK_CALCULATOR_COPY_SENTINEL_" + expected
+	sentinel := "EXACTMAC_CALCULATOR_COPY_SENTINEL_" + expected
 	write, err := client.WriteClipboard(ctx, &pb.WriteClipboardRequest{
 		Content: &pb.ClipboardContent{
 			Type:    pb.ContentType_CONTENT_TYPE_TEXT.Enum(),

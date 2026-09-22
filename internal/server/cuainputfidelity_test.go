@@ -12,8 +12,8 @@ import (
 	"time"
 	"unicode/utf8"
 
-	typepb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	typepb "github.com/joeycumines/ExactMac/gen/go/exactmac/type"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -220,7 +220,7 @@ func TestPhysicalInputHandlersForwardEveryIntentAndRequireStableIdentity(t *test
 	for _, test := range physicalInputHandlerCases() {
 		t.Run(test.name, func(t *testing.T) {
 			var captured *pb.CreateInputRequest
-			client := &mockMacosUseClient{
+			client := &mockExactMacClient{
 				createInputFunc: func(
 					_ context.Context,
 					request *pb.CreateInputRequest,
@@ -282,7 +282,7 @@ func TestPhysicalInputHandlersForwardEveryIntentAndRequireStableIdentity(t *test
 func TestPhysicalInputHandlersRejectMismatchedPostedEventCounts(t *testing.T) {
 	for _, test := range physicalInputHandlerCases() {
 		t.Run(test.name, func(t *testing.T) {
-			client := &mockMacosUseClient{
+			client := &mockExactMacClient{
 				createInputFunc: func(
 					_ context.Context,
 					request *pb.CreateInputRequest,
@@ -366,7 +366,7 @@ func TestPhysicalInputHandlerRejectsMalformedTerminalEvidence(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			client := &mockMacosUseClient{
+			client := &mockExactMacClient{
 				createInputFunc: func(
 					_ context.Context,
 					request *pb.CreateInputRequest,
@@ -441,7 +441,7 @@ func TestKeyboardInputHandlersRejectDisplayAuthorityBeforeCreateInput(t *testing
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			createCalls := 0
-			client := &mockMacosUseClient{
+			client := &mockExactMacClient{
 				createInputFunc: func(
 					_ context.Context,
 					request *pb.CreateInputRequest,

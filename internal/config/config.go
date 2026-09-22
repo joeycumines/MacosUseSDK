@@ -32,13 +32,13 @@ const (
 // Config holds the configuration for the MCP tool, loaded from environment variables.
 // All fields have sensible defaults via the Load function.
 type Config struct {
-	// ServerAddr is the gRPC server address (env: MACOS_USE_SERVER_ADDR, default: localhost:50051)
+	// ServerAddr is the gRPC server address (env: EXACTMAC_SERVER_ADDR, default: localhost:50051)
 	// When ServerSocketPath is set, this field is ignored.
 	ServerAddr string
-	// ServerSocketPath is the Unix socket path for the gRPC server (env: MACOS_USE_SERVER_SOCKET_PATH, optional)
+	// ServerSocketPath is the Unix socket path for the gRPC server (env: EXACTMAC_SERVER_SOCKET_PATH, optional)
 	// If set, the MCP server connects to the gRPC server via Unix socket.
 	ServerSocketPath string
-	// ServerCertFile is the path to the server TLS certificate (env: MACOS_USE_SERVER_CERT_FILE, optional)
+	// ServerCertFile is the path to the server TLS certificate (env: EXACTMAC_SERVER_CERT_FILE, optional)
 	ServerCertFile string
 	// HTTPAddress is the Streamable HTTP server listen address (env: MCP_HTTP_ADDRESS, default: 127.0.0.1:8080)
 	HTTPAddress string
@@ -65,15 +65,15 @@ type Config struct {
 	HTTPWriteTimeout time.Duration
 	// RateLimit is the rate limit in requests per second (env: MCP_RATE_LIMIT, default: 0 = disabled)
 	RateLimit float64
-	// RequestTimeout is the gRPC request timeout in seconds (env: MACOS_USE_REQUEST_TIMEOUT, default: 30)
+	// RequestTimeout is the gRPC request timeout in seconds (env: EXACTMAC_REQUEST_TIMEOUT, default: 30)
 	RequestTimeout int
 	// MaxConcurrentRequests is the global active MCP request limit (env: MCP_MAX_CONCURRENT_REQUESTS, default: 512)
 	MaxConcurrentRequests int
 	// MaxConcurrentRequestsPerClient is the active MCP request limit for one transport-owned client (env: MCP_MAX_CONCURRENT_REQUESTS_PER_CLIENT, default: 256)
 	MaxConcurrentRequestsPerClient int
-	// ServerTLS enables TLS for gRPC (env: MACOS_USE_SERVER_TLS, default: false)
+	// ServerTLS enables TLS for gRPC (env: EXACTMAC_SERVER_TLS, default: false)
 	ServerTLS bool
-	// Debug enables debug logging (env: MACOS_USE_DEBUG, default: false)
+	// Debug enables debug logging (env: EXACTMAC_DEBUG, default: false)
 	Debug bool
 	// ShellCommandsEnabled enables shell command execution (env: MCP_SHELL_COMMANDS_ENABLED, default: false)
 	// WARNING: Enabling this allows arbitrary command execution and should only be used in trusted environments.
@@ -83,7 +83,7 @@ type Config struct {
 // Load loads configuration from environment variables and returns a Config.
 // All fields have sensible defaults. Returns an error if validation fails.
 func Load() (*Config, error) {
-	requestTimeout, err := getEnvAsInt("MACOS_USE_REQUEST_TIMEOUT", 30)
+	requestTimeout, err := getEnvAsInt("EXACTMAC_REQUEST_TIMEOUT", 30)
 	if err != nil {
 		return nil, err
 	}
@@ -114,12 +114,12 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
-	serverTLS, err := getEnvAsBool("MACOS_USE_SERVER_TLS", false)
+	serverTLS, err := getEnvAsBool("EXACTMAC_SERVER_TLS", false)
 	if err != nil {
 		return nil, err
 	}
 
-	debug, err := getEnvAsBool("MACOS_USE_DEBUG", false)
+	debug, err := getEnvAsBool("EXACTMAC_DEBUG", false)
 	if err != nil {
 		return nil, err
 	}
@@ -130,10 +130,10 @@ func Load() (*Config, error) {
 	}
 
 	cfg := &Config{
-		ServerAddr:                     getEnv("MACOS_USE_SERVER_ADDR", "localhost:50051"),
-		ServerSocketPath:               os.Getenv("MACOS_USE_SERVER_SOCKET_PATH"),
+		ServerAddr:                     getEnv("EXACTMAC_SERVER_ADDR", "localhost:50051"),
+		ServerSocketPath:               os.Getenv("EXACTMAC_SERVER_SOCKET_PATH"),
 		ServerTLS:                      serverTLS,
-		ServerCertFile:                 os.Getenv("MACOS_USE_SERVER_CERT_FILE"),
+		ServerCertFile:                 os.Getenv("EXACTMAC_SERVER_CERT_FILE"),
 		RequestTimeout:                 requestTimeout,
 		MaxConcurrentRequests:          maxConcurrentRequests,
 		MaxConcurrentRequestsPerClient: maxConcurrentRequestsPerClient,
@@ -173,12 +173,12 @@ func (c *Config) validate() error {
 		return fmt.Errorf("invalid transport type: %s (must be 'stdio' or 'streamable-http')", c.Transport)
 	}
 	if c.RequestTimeout <= 0 {
-		return fmt.Errorf("MACOS_USE_REQUEST_TIMEOUT must be positive")
+		return fmt.Errorf("EXACTMAC_REQUEST_TIMEOUT must be positive")
 	}
 	const maximumDurationSeconds = int64((1<<63 - 1) / int64(time.Second))
 	if int64(c.RequestTimeout) > maximumDurationSeconds {
 		return fmt.Errorf(
-			"MACOS_USE_REQUEST_TIMEOUT must not exceed %d seconds",
+			"EXACTMAC_REQUEST_TIMEOUT must not exceed %d seconds",
 			maximumDurationSeconds,
 		)
 	}

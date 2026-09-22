@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/joeycumines/MacosUseSDK/internal/transport"
+	"github.com/joeycumines/ExactMac/internal/transport"
 )
 
 const maxMCPRequestIDBytes = 1024

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 )
 
 // TestListWindowsPagination verifies that ListWindows correctly implements pagination.
@@ -21,7 +21,7 @@ func TestListWindowsPagination(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	// 2. Application Setup
 	t.Log("Opening Calculator...")
 	app := openCalculator(t, ctx, client)
@@ -122,7 +122,7 @@ func TestListApplicationsPagination(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	// 2. Open multiple applications to ensure pagination is meaningful
 	t.Log("Opening Calculator and TextEdit...")
 	app1 := openCalculator(t, ctx, client)
@@ -201,7 +201,7 @@ func TestListApplicationsPagination(t *testing.T) {
 
 // openTextEdit opens TextEdit application with a new empty document for testing.
 // Uses OpenApplication followed by AppleScript to create a new document, avoiding the file picker.
-func openTextEdit(t *testing.T, ctx context.Context, client pb.MacosUseClient) *pb.Application {
+func openTextEdit(t *testing.T, ctx context.Context, client pb.ExactMacClient) *pb.Application {
 	t.Helper()
 
 	// Robustly kill TextEdit, clear saved state, and disable modal dialogs
@@ -235,7 +235,7 @@ func TestListInputsPagination(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	// 2. Application Setup
 	app := openCalculator(t, ctx, client)
 	defer cleanupApplication(t, ctx, client, app)

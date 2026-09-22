@@ -16,8 +16,8 @@ import (
 	"time"
 
 	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
-	_type "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	_type "github.com/joeycumines/ExactMac/gen/go/exactmac/type"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 )
 
 // OperationClient is a client for the Operations API
@@ -74,7 +74,7 @@ func PollUntilContext(ctx context.Context, interval time.Duration, condition fun
 // WaitForElement waits for an element to appear using the given selector.
 // The selector can be a *_type.ElementSelector or nil for no filtering.
 // It polls for elements at 500ms intervals until found or timeout.
-func WaitForElement(ctx context.Context, client pb.MacosUseClient, parent string, selector *_type.ElementSelector, timeout time.Duration) (*pb.FindElementsResponse, error) {
+func WaitForElement(ctx context.Context, client pb.ExactMacClient, parent string, selector *_type.ElementSelector, timeout time.Duration) (*pb.FindElementsResponse, error) {
 	const pollInterval = 500 * time.Millisecond
 	ticker := time.NewTicker(pollInterval)
 	defer ticker.Stop()

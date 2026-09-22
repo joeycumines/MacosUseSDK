@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 )
 
 const (
@@ -15,7 +15,7 @@ const (
 )
 
 // TestCalculatorAddition is an integration test that:
-// 1. Starts the MacosUse gRPC server
+// 1. Starts the ExactMac gRPC server
 // 2. Opens the Calculator app
 // 3. Performs addition (2+3)
 // 4. Reads the result from the UI
@@ -32,7 +32,7 @@ func TestCalculatorAddition(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	// Open Calculator
 	t.Log("Opening Calculator...")
 	app := openCalculator(t, ctx, client)
@@ -121,7 +121,7 @@ func TestCalculatorMultiplication(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	// Open Calculator
 	t.Log("Opening Calculator...")
 	app := openCalculator(t, ctx, client)
@@ -198,13 +198,13 @@ func TestCalculatorMultiplication(t *testing.T) {
 }
 
 // openCalculator opens or activates Calculator and requires an observed unary result.
-func openCalculator(t *testing.T, ctx context.Context, client pb.MacosUseClient) *pb.Application {
+func openCalculator(t *testing.T, ctx context.Context, client pb.ExactMacClient) *pb.Application {
 	t.Helper()
 	return OpenApplicationObserved(t, ctx, client, calculatorBundleID)
 }
 
 // switchCalculatorToBasicMode switches Calculator to Basic (decimal) mode using keyboard shortcut
-func switchCalculatorToBasicMode(t *testing.T, ctx context.Context, client pb.MacosUseClient, app *pb.Application) {
+func switchCalculatorToBasicMode(t *testing.T, ctx context.Context, client pb.ExactMacClient, app *pb.Application) {
 	// Use AppleScript to press Command+1 which switches to Basic mode
 	// Basic mode uses decimal (base 10)
 	script := `tell application "Calculator"
@@ -231,7 +231,7 @@ end tell`
 }
 
 // readCalculatorResult traverses the UI and extracts the calculator result
-func readCalculatorResult(t *testing.T, ctx context.Context, client pb.MacosUseClient, app *pb.Application) string {
+func readCalculatorResult(t *testing.T, ctx context.Context, client pb.ExactMacClient, app *pb.Application) string {
 	// Traverse the accessibility tree
 	resp, err := client.TraverseAccessibility(ctx, &pb.TraverseAccessibilityRequest{
 		Name: app.Name,
@@ -318,7 +318,7 @@ func TestServerHealthCheck(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 
 	// List applications (should return empty list initially)
 	resp, err := client.ListApplications(ctx, &pb.ListApplicationsRequest{})

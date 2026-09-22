@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	typepb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	typepb "github.com/joeycumines/ExactMac/gen/go/exactmac/type"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 	annotations "google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -20,7 +20,7 @@ import (
 )
 
 func TestInputExecutionDescriptorRequiresTargetAndTruthfulDelivery(t *testing.T) {
-	file := pb.File_macosusesdk_v1_input_proto
+	file := pb.File_exactmac_v1_input_proto
 	input := file.Messages().ByName("Input")
 	if input == nil {
 		t.Fatal("Input descriptor is absent")

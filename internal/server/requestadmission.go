@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/joeycumines/MacosUseSDK/internal/transport"
+	"github.com/joeycumines/ExactMac/internal/transport"
 )
 
 const (

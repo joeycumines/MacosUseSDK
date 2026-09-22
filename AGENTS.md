@@ -4,7 +4,7 @@ This file provides guidance to AI agents.
 
 ## Project Overview
 
-MacosUseSDK is a macOS accessibility automation framework consisting of:
+ExactMac is a macOS accessibility automation framework consisting of:
 
 - **Swift library**: Core SDK using Accessibility APIs for UI traversal and input simulation
 - **Swift gRPC server**: Production server backing the CUA-aligned MCP tools for AI agent integration
@@ -24,8 +24,8 @@ gmake all
 ### Testing
 
 ```bash
-# All tests
-gmake test
+# All tests (Go + Swift suites)
+gmake go.test swift.test
 
 # Swift unit tests only
 swift test
@@ -71,11 +71,11 @@ gmake go.vet # Runs go vet with proper flags
 
 ```bash
 cd Server && swift build -c release
-./.build/release/MacosUseServer
+./.build/release/ExactMacServer
 
 # The Swift server accepts gRPC configuration only. Configure MCP HTTP
-# transport variables on cmd/macos-use-mcp, not on this executable.
-GRPC_LISTEN_ADDRESS=127.0.0.1 GRPC_PORT=50051 ./.build/release/MacosUseServer
+# transport variables on cmd/exactmac (`exactmac mcp`), not on this executable.
+GRPC_LISTEN_ADDRESS=127.0.0.1 GRPC_PORT=50051 ./.build/release/ExactMacServer
 ```
 
 ## Key Directories
@@ -106,8 +106,8 @@ GRPC_LISTEN_ADDRESS=127.0.0.1 GRPC_PORT=50051 ./.build/release/MacosUseServer
 
 ## Proto API Structure
 
-- Location: `proto/macosusesdk/v1/`
-- Common types: `proto/macosusesdk/type/`
+- Location: `proto/exactmac/v1/`
+- Common types: `proto/exactmac/type/`
 - Resource definitions separate from service definitions
 - Naming follows Google AIPs 121, 190, 191
 - Use `buf` for generation, `api-linter` for design validation
@@ -116,8 +116,8 @@ GRPC_LISTEN_ADDRESS=127.0.0.1 GRPC_PORT=50051 ./.build/release/MacosUseServer
 
 ### Strict Mandates
 
-- AVOID and REPLACE ad-hoc `fputs` or unannotated `print` with `Logger` and `OSLogPrivacy` for any message emitted from Swift server components or SDK helpers in `Server/Sources/MacosUseServer` and `Sources/MacosUseSDK`.
-- `fputs` is forbidden in these server/SDK directories for diagnostic logs — it bypasses OS unified logging and cannot mark privacy. Use `Logger` with explicit `privacy` annotations for every interpolated value. For user-facing CLI help text (static strings) `print` is allowed only outside `Server/Sources/MacosUseServer` and `Sources/MacosUseSDK`.
+- AVOID and REPLACE ad-hoc `fputs` or unannotated `print` with `Logger` and `OSLogPrivacy` for any message emitted from Swift server components or SDK helpers in `Server/Sources/ExactMacServer` and `Sources/ExactMac`.
+- `fputs` is forbidden in these server/SDK directories for diagnostic logs — it bypasses OS unified logging and cannot mark privacy. Use `Logger` with explicit `privacy` annotations for every interpolated value. For user-facing CLI help text (static strings) `print` is allowed only outside `Server/Sources/ExactMacServer` and `Sources/ExactMac`.
 
 ### Core Directives
 
@@ -138,7 +138,7 @@ Previous sins (now corrected, not to be repeated):
 
 **API Scope:**
 
-- Expose ALL functionality via the `MacosUse` service (consolidated service).
+- Expose ALL functionality via the `ExactMac` service (consolidated service).
 - Include all resources: Window, Element, Observation, Session, Macro, Screenshot, Clipboard, File, Script, **Display**.
 - Support advanced inputs: Modifiers, Special Keys, Mouse Operations (drag, right-click).
 - Support VS Code integration patterns (multi-window, advanced targeting).
@@ -193,8 +193,8 @@ MCP compliance requirements are documented in docs/ai-artifacts/05-mcp-integrati
 
 ### Proto API Structure
 
-- **Path:** Proto files MUST be located at `proto/macosusesdk/v1/` and mirror package structure.
-- **Common Types:** Use `proto/macosusesdk/type` for shared definitions.
+- **Path:** Proto files MUST be located at `proto/exactmac/v1/` and mirror package structure.
+- **Common Types:** Use `proto/exactmac/type` for shared definitions.
 - **Separation:** Resource definitions MUST be in separate files from service definitions.
 - **Naming:** Follow https://google.aip.dev/121, 190, and 191.
 - **Linting:** Use `buf` for generation but `api-linter` (Google's linter) for design validation.

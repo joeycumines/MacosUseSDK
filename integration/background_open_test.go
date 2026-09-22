@@ -11,10 +11,10 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 )
 
-func requireFinderFrontmost(t *testing.T, ctx context.Context, client pb.MacosUseClient) {
+func requireFinderFrontmost(t *testing.T, ctx context.Context, client pb.ExactMacClient) {
 	t.Helper()
 	activation, err := client.ExecuteAppleScript(ctx, &pb.ExecuteAppleScriptRequest{
 		Script: `tell application "Finder" to activate`,
@@ -65,7 +65,7 @@ func TestBackgroundOpenDoesNotStealFocus(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 
 	// 2. Ensure Finder is frontmost first (stable starting point)
 	t.Log("Activating Finder as the starting frontmost application...")
@@ -151,7 +151,7 @@ func TestForegroundOpenDoesStealFocus(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 
 	// 2. Ensure Finder is frontmost first
 	t.Log("Activating Finder as the starting frontmost application...")

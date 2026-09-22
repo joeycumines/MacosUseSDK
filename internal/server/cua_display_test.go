@@ -11,17 +11,17 @@ import (
 	"strings"
 	"testing"
 
-	typepb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
-	"github.com/joeycumines/MacosUseSDK/internal/config"
+	typepb "github.com/joeycumines/ExactMac/gen/go/exactmac/type"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
+	"github.com/joeycumines/ExactMac/internal/config"
 	"google.golang.org/grpc"
 )
 
 // mockCUADisplayClient implements only the gRPC methods used by cuaHandleGetDisplay.
-// All other methods are promoted from the embedded pb.MacosUseClient interface; they
+// All other methods are promoted from the embedded pb.ExactMacClient interface; they
 // will panic at runtime if called, which is acceptable for these focused unit tests.
 type mockCUADisplayClient struct {
-	pb.MacosUseClient
+	pb.ExactMacClient
 
 	listDisplaysFunc          func(ctx context.Context, req *pb.ListDisplaysRequest) (*pb.ListDisplaysResponse, error)
 	captureCursorPositionFunc func(ctx context.Context, req *pb.CaptureCursorPositionRequest) (*pb.CaptureCursorPositionResponse, error)
@@ -41,7 +41,7 @@ func (m *mockCUADisplayClient) CaptureCursorPosition(ctx context.Context, req *p
 	return nil, errors.New("CaptureCursorPosition not implemented")
 }
 
-func newTestMCPServerWithDisplayClient(client pb.MacosUseClient) *MCPServer {
+func newTestMCPServerWithDisplayClient(client pb.ExactMacClient) *MCPServer {
 	return &MCPServer{
 		cfg:    &config.Config{RequestTimeout: 30},
 		ctx:    context.Background(),

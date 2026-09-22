@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -55,7 +55,7 @@ func TestHandleOpenAppOpensExactBundleForEveryMode(t *testing.T) {
 			calls := 0
 			var request *pb.OpenApplicationRequest
 			server := newTestServer()
-			server.client = &mockMacosUseClient{
+			server.client = &mockExactMacClient{
 				openApplicationFunc: func(_ context.Context, got *pb.OpenApplicationRequest) (*pb.OpenApplicationResponse, error) {
 					calls++
 					request = got
@@ -104,7 +104,7 @@ func TestHandleOpenAppActivatesExactRunningApplication(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			var request *pb.ActivateApplicationRequest
 			server := newTestServer()
-			server.client = &mockMacosUseClient{
+			server.client = &mockExactMacClient{
 				activateApplicationFunc: func(_ context.Context, got *pb.ActivateApplicationRequest) (*pb.ActivateApplicationResponse, error) {
 					request = got
 					return &pb.ActivateApplicationResponse{
@@ -146,7 +146,7 @@ func TestHandleOpenAppRejectsGuessingAndContradictoryRunningOptions(t *testing.T
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			server := newTestServer()
-			server.client = &mockMacosUseClient{}
+			server.client = &mockExactMacClient{}
 			result, err := server.handleOpenApp(&ToolCall{Name: "open_app", Arguments: json.RawMessage(test.arguments)})
 			if err != nil {
 				t.Fatalf("handleOpenApp() error = %v", err)
@@ -160,7 +160,7 @@ func TestHandleOpenAppRejectsGuessingAndContradictoryRunningOptions(t *testing.T
 
 func TestHandleOpenAppRejectsMismatchedBackendIdentity(t *testing.T) {
 	server := newTestServer()
-	server.client = &mockMacosUseClient{
+	server.client = &mockExactMacClient{
 		openApplicationFunc: func(context.Context, *pb.OpenApplicationRequest) (*pb.OpenApplicationResponse, error) {
 			return &pb.OpenApplicationResponse{
 				Application: &pb.Application{
@@ -182,7 +182,7 @@ func TestHandleOpenAppRejectsMismatchedBackendIdentity(t *testing.T) {
 
 func TestHandleOpenAppReturnsBackendFailure(t *testing.T) {
 	server := newTestServer()
-	server.client = &mockMacosUseClient{
+	server.client = &mockExactMacClient{
 		activateApplicationFunc: func(context.Context, *pb.ActivateApplicationRequest) (*pb.ActivateApplicationResponse, error) {
 			return nil, status.Error(codes.NotFound, "application instance is stale")
 		},
@@ -198,7 +198,7 @@ func TestHandleOpenAppReturnsBackendFailure(t *testing.T) {
 func TestHandleListAppsInstalledForwardsExactQuery(t *testing.T) {
 	var request *pb.ListApplicationBundlesRequest
 	server := newTestServer()
-	server.client = &mockMacosUseClient{
+	server.client = &mockExactMacClient{
 		listApplicationBundlesFunc: func(_ context.Context, got *pb.ListApplicationBundlesRequest) (*pb.ListApplicationBundlesResponse, error) {
 			request = got
 			return &pb.ListApplicationBundlesResponse{
@@ -228,7 +228,7 @@ func TestHandleListAppsInstalledForwardsExactQuery(t *testing.T) {
 func TestHandleListAppsRunningForwardsExactQueryAndEnrichesWindows(t *testing.T) {
 	var request *pb.ListApplicationsRequest
 	server := newTestServer()
-	server.client = &mockMacosUseClient{
+	server.client = &mockExactMacClient{
 		listApplicationsFunc: func(_ context.Context, got *pb.ListApplicationsRequest) (*pb.ListApplicationsResponse, error) {
 			request = got
 			return &pb.ListApplicationsResponse{Applications: []*pb.Application{{
@@ -259,7 +259,7 @@ func TestHandleListAppsRunningForwardsExactQueryAndEnrichesWindows(t *testing.T)
 func TestHandleListAppsRejectsInvalidLocalParametersBeforeRPC(t *testing.T) {
 	for _, arguments := range []string{`{"kind":"other"}`, `{"page_size":-1}`} {
 		server := newTestServer()
-		server.client = &mockMacosUseClient{}
+		server.client = &mockExactMacClient{}
 		result, err := server.handleListApps(&ToolCall{Name: "list_apps", Arguments: json.RawMessage(arguments)})
 		if err != nil || !resultIsError(result) {
 			t.Fatalf("handleListApps(%s) error=%v result=%q", arguments, err, resultText(result))
@@ -270,7 +270,7 @@ func TestHandleListAppsRejectsInvalidLocalParametersBeforeRPC(t *testing.T) {
 func TestHandleCloseAppCallsOnlyExactCloseApplication(t *testing.T) {
 	var request *pb.CloseApplicationRequest
 	server := newTestServer()
-	server.client = &mockMacosUseClient{
+	server.client = &mockExactMacClient{
 		closeApplicationFunc: func(_ context.Context, got *pb.CloseApplicationRequest) (*pb.CloseApplicationResponse, error) {
 			request = got
 			return &pb.CloseApplicationResponse{
@@ -296,7 +296,7 @@ func TestHandleCloseAppCallsOnlyExactCloseApplication(t *testing.T) {
 func TestHandleCloseAppRejectsGuessesBeforeRPC(t *testing.T) {
 	for _, app := range []string{"Calculator", "com.apple.calculator", testBundleName, "applications/a/extra"} {
 		server := newTestServer()
-		server.client = &mockMacosUseClient{}
+		server.client = &mockExactMacClient{}
 		arguments, err := json.Marshal(map[string]any{"app": app})
 		if err != nil {
 			t.Fatal(err)
@@ -310,7 +310,7 @@ func TestHandleCloseAppRejectsGuessesBeforeRPC(t *testing.T) {
 
 func TestHandleCloseAppRejectsMismatchedBackendIdentity(t *testing.T) {
 	server := newTestServer()
-	server.client = &mockMacosUseClient{
+	server.client = &mockExactMacClient{
 		closeApplicationFunc: func(context.Context, *pb.CloseApplicationRequest) (*pb.CloseApplicationResponse, error) {
 			return &pb.CloseApplicationResponse{
 				Application: &pb.Application{Name: "applications/different", Pid: 42},
@@ -328,7 +328,7 @@ func TestHandleCloseAppRejectsMismatchedBackendIdentity(t *testing.T) {
 
 func TestHandleCloseAppReturnsBackendFailure(t *testing.T) {
 	server := newTestServer()
-	server.client = &mockMacosUseClient{
+	server.client = &mockExactMacClient{
 		closeApplicationFunc: func(context.Context, *pb.CloseApplicationRequest) (*pb.CloseApplicationResponse, error) {
 			return nil, status.Error(codes.FailedPrecondition, "ownership is not proven")
 		},

@@ -16,8 +16,8 @@ import (
 	"testing"
 	"time"
 
-	typepb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	typepb "github.com/joeycumines/ExactMac/gen/go/exactmac/type"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -69,7 +69,7 @@ func (r *inputAdmissionBackendRecorder) drain() ([]string, []*pb.CreateInputRequ
 }
 
 type inputAdmissionBackend struct {
-	pb.UnimplementedMacosUseServer
+	pb.UnimplementedExactMacServer
 	recorder *inputAdmissionBackendRecorder
 }
 
@@ -102,9 +102,9 @@ func TestMCPInputAdmission_ProductionTransports(t *testing.T) {
 	grpcAddress, recorder, stopBackend := startInputAdmissionBackend(t)
 	defer stopBackend()
 	overrides := map[string]string{
-		"MACOS_USE_SERVER_TLS":                   "false",
-		"MACOS_USE_SERVER_CERT_FILE":             "",
-		"MACOS_USE_REQUEST_TIMEOUT":              "2",
+		"EXACTMAC_SERVER_TLS":                    "false",
+		"EXACTMAC_SERVER_CERT_FILE":              "",
+		"EXACTMAC_REQUEST_TIMEOUT":               "2",
 		"MCP_MAX_CONCURRENT_REQUESTS":            "1",
 		"MCP_MAX_CONCURRENT_REQUESTS_PER_CLIENT": "1",
 		"MCP_SHELL_COMMANDS_ENABLED":             "false",
@@ -140,8 +140,8 @@ func TestMCPInputAdmission_ProductionTransports(t *testing.T) {
 	}
 	methods, inputs := recorder.drain()
 	if !reflect.DeepEqual(methods, []string{
-		pb.MacosUse_ListDisplays_FullMethodName,
-		pb.MacosUse_ListDisplays_FullMethodName,
+		pb.ExactMac_ListDisplays_FullMethodName,
+		pb.ExactMac_ListDisplays_FullMethodName,
 	}) || len(inputs) != 0 {
 		t.Fatalf("initialization backend methods=%v inputs=%d", methods, len(inputs))
 	}
@@ -486,7 +486,7 @@ func startInputAdmissionBackend(t *testing.T) (string, *inputAdmissionBackendRec
 		recorder.recordMethod(info.FullMethod)
 		return handler(ctx, req)
 	}))
-	pb.RegisterMacosUseServer(grpcServer, inputAdmissionBackend{recorder: recorder})
+	pb.RegisterExactMacServer(grpcServer, inputAdmissionBackend{recorder: recorder})
 	serveResult := make(chan error, 1)
 	go func() { serveResult <- grpcServer.Serve(listener) }()
 	var stopOnce sync.Once
@@ -556,7 +556,7 @@ func assertInputAdmissionNoBackendCalls(t *testing.T, recorder *inputAdmissionBa
 func assertInputAdmissionDefaultClick(t *testing.T, recorder *inputAdmissionBackendRecorder, label string) {
 	t.Helper()
 	methods, inputs := recorder.drain()
-	if !reflect.DeepEqual(methods, []string{pb.MacosUse_CreateInput_FullMethodName}) || len(inputs) != 1 {
+	if !reflect.DeepEqual(methods, []string{pb.ExactMac_CreateInput_FullMethodName}) || len(inputs) != 1 {
 		t.Fatalf("%s methods=%v inputs=%d", label, methods, len(inputs))
 	}
 	click := inputs[0].GetInput().GetAction().GetClick()
@@ -588,7 +588,7 @@ func assertInputAdmissionForwarding(
 ) {
 	t.Helper()
 	methods, inputs := recorder.drain()
-	if !reflect.DeepEqual(methods, []string{pb.MacosUse_CreateInput_FullMethodName}) ||
+	if !reflect.DeepEqual(methods, []string{pb.ExactMac_CreateInput_FullMethodName}) ||
 		len(inputs) != 1 {
 		t.Fatalf("%s methods=%v inputs=%d", label, methods, len(inputs))
 	}

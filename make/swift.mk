@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 # Example and (current) source of truth:
-# https://github.com/joeycumines/MacosUseSDK/blob/main/make/swift.mk
+# https://github.com/joeycumines/ExactMac/blob/main/make/swift.mk
 
 # ---
 

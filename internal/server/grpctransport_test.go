@@ -9,15 +9,15 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
-	"github.com/joeycumines/MacosUseSDK/internal/config"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
+	"github.com/joeycumines/ExactMac/internal/config"
 	"google.golang.org/grpc"
 )
 
 const grpcLibraryDefaultReceiveBytes = 4 << 20
 
 type largeScreenshotService struct {
-	pb.UnimplementedMacosUseServer
+	pb.UnimplementedExactMacServer
 	imageData []byte
 }
 
@@ -38,7 +38,7 @@ func TestMCPGRPCTransportAcceptsPublicResponseAboveLibraryDefault(t *testing.T) 
 
 	imageData := bytes.Repeat([]byte{0xa5}, grpcLibraryDefaultReceiveBytes+1)
 	grpcServer := grpc.NewServer()
-	pb.RegisterMacosUseServer(grpcServer, &largeScreenshotService{imageData: imageData})
+	pb.RegisterExactMacServer(grpcServer, &largeScreenshotService{imageData: imageData})
 	serveErr := make(chan error, 1)
 	go func() {
 		serveErr <- grpcServer.Serve(listener)
@@ -66,7 +66,7 @@ func TestMCPGRPCTransportAcceptsPublicResponseAboveLibraryDefault(t *testing.T) 
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	response, err := pb.NewMacosUseClient(conn).CaptureScreenshot(ctx, &pb.CaptureScreenshotRequest{})
+	response, err := pb.NewExactMacClient(conn).CaptureScreenshot(ctx, &pb.CaptureScreenshotRequest{})
 	if err != nil {
 		t.Fatalf("capture response larger than gRPC library default: %v", err)
 	}

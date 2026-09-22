@@ -11,7 +11,7 @@ jobs:
     runs-on: self-hosted
     # Labels for self-hosted macOS runner with accessibility permissions
     # Runner must have:
-    # - macOS 14+ (Sonoma or later)
+    # - macOS 15+ (Sequoia or later; Swift server requires macOS 15)
     # - Screen Recording & Accessibility permissions for Terminal/runner process
     # - Xcode 16+ installed
     permissions:

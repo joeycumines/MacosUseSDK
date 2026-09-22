@@ -16,8 +16,8 @@ import (
 	"strings"
 	"testing"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
-	"github.com/joeycumines/MacosUseSDK/internal/config"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
+	"github.com/joeycumines/ExactMac/internal/config"
 	"google.golang.org/grpc"
 )
 
@@ -166,7 +166,7 @@ func TestCUAHandleClick_ModifierKeysNoPanic(t *testing.T) {
 
 // mockClickClient is a minimal gRPC client that records CreateInput requests.
 type mockClickClient struct {
-	pb.MacosUseClient
+	pb.ExactMacClient
 	created []*pb.CreateInputRequest
 }
 
@@ -200,7 +200,7 @@ func TestCUAInputHandlersRejectFailedBackendResources(t *testing.T) {
 	for _, tt := range tests {
 		for _, state := range nonCompletedStates {
 			t.Run(tt.name+"/"+state.String(), func(t *testing.T) {
-				client := &mockMacosUseClient{
+				client := &mockExactMacClient{
 					createInputFunc: func(_ context.Context, request *pb.CreateInputRequest) (*pb.Input, error) {
 						response := completedInputResponse(request)
 						response.State = state
@@ -245,7 +245,7 @@ func TestCUAModifiedPointerActionsUseOneAtomicInput(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var requests []*pb.CreateInputRequest
-			client := &mockMacosUseClient{
+			client := &mockExactMacClient{
 				createInputFunc: func(_ context.Context, request *pb.CreateInputRequest) (*pb.Input, error) {
 					requests = append(requests, request)
 					return completedInputResponse(request), nil
@@ -585,7 +585,7 @@ func TestCUAHandleListWindows_InvalidParams(t *testing.T) {
 func TestCUAHandleListWindowsForwardsCompleteQueryAndValidatesResponse(t *testing.T) {
 	var request *pb.ListWindowsRequest
 	server := newTestServer()
-	server.client = &mockMacosUseClient{
+	server.client = &mockExactMacClient{
 		listWindowsFunc: func(_ context.Context, got *pb.ListWindowsRequest) (*pb.ListWindowsResponse, error) {
 			request = got
 			return &pb.ListWindowsResponse{
@@ -1021,7 +1021,7 @@ func TestCUAHandleType_ExactTargetRouting(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var captured *pb.CreateInputRequest
-			mock := &mockMacosUseClient{
+			mock := &mockExactMacClient{
 				createInputFunc: func(_ context.Context, req *pb.CreateInputRequest) (*pb.Input, error) {
 					captured = req
 					return completedInputResponse(req), nil
@@ -1469,7 +1469,7 @@ func TestParseElementSelector(t *testing.T) {
 
 func TestCUAHandleTypeElement_SelectorBuildsRequest(t *testing.T) {
 	var captured *pb.WriteElementValueRequest
-	mock := &mockMacosUseClient{
+	mock := &mockExactMacClient{
 		focusWindowFunc: func(context.Context, *pb.FocusWindowRequest) (*pb.Window, error) {
 			return &pb.Window{Name: "applications/1/windows/1"}, nil
 		},
@@ -1513,7 +1513,7 @@ func TestCUAHandleTypeElement_SelectorBuildsRequest(t *testing.T) {
 
 func TestCUAHandleTypeElement_ElementBuildsRequest(t *testing.T) {
 	var captured *pb.WriteElementValueRequest
-	mock := &mockMacosUseClient{
+	mock := &mockExactMacClient{
 		focusWindowFunc: func(context.Context, *pb.FocusWindowRequest) (*pb.Window, error) {
 			return &pb.Window{Name: "applications/1/windows/1"}, nil
 		},
@@ -1599,7 +1599,7 @@ func TestCUAHandleReadElement_InvalidParams(t *testing.T) {
 
 func TestCUAHandleReadElement_BareIDCanonicalization(t *testing.T) {
 	var capturedName string
-	mock := &mockMacosUseClient{
+	mock := &mockExactMacClient{
 		getElementFunc: func(_ context.Context, req *pb.GetElementRequest) (*pb.Element, error) {
 			capturedName = req.Name
 			return &pb.Element{ElementId: req.Name, Role: "AXTextArea"}, nil
@@ -1842,7 +1842,7 @@ func TestCUATruncateText(t *testing.T) {
 
 func TestCUAHandleReadElement_WindowParentCanonicalizesToAppElements(t *testing.T) {
 	var capturedName string
-	mock := &mockMacosUseClient{
+	mock := &mockExactMacClient{
 		getElementFunc: func(_ context.Context, req *pb.GetElementRequest) (*pb.Element, error) {
 			capturedName = req.Name
 			return &pb.Element{ElementId: req.Name, Role: "AXTextArea"}, nil
@@ -1875,7 +1875,7 @@ func TestCUAHandleReadElement_WindowParentCanonicalizesToAppElements(t *testing.
 // --- handleTypeElement error handling ---
 
 func TestCUAHandleTypeElement_NotEditableErrorMessage(t *testing.T) {
-	mock := &mockMacosUseClient{
+	mock := &mockExactMacClient{
 		focusWindowFunc: func(context.Context, *pb.FocusWindowRequest) (*pb.Window, error) {
 			return &pb.Window{Name: "applications/1/windows/1"}, nil
 		},
@@ -1903,7 +1903,7 @@ func TestCUAHandleTypeElement_NotEditableErrorMessage(t *testing.T) {
 }
 
 func TestCUAHandleTypeElement_AXValueErrorMessage(t *testing.T) {
-	mock := &mockMacosUseClient{
+	mock := &mockExactMacClient{
 		focusWindowFunc: func(context.Context, *pb.FocusWindowRequest) (*pb.Window, error) {
 			return &pb.Window{Name: "applications/1/windows/1"}, nil
 		},
@@ -1935,7 +1935,7 @@ func TestCUAHandleTypeElement_AXValueErrorMessage(t *testing.T) {
 
 func TestCUAHandleClickElement_SelectorBuildsRequest(t *testing.T) {
 	var captured *pb.ClickElementRequest
-	mock := &mockMacosUseClient{
+	mock := &mockExactMacClient{
 		clickElementFunc: func(_ context.Context, req *pb.ClickElementRequest, _ ...grpc.CallOption) (*pb.ClickElementResponse, error) {
 			captured = req
 			return &pb.ClickElementResponse{Success: true}, nil
@@ -1972,7 +1972,7 @@ func TestCUAHandleClickElement_SelectorBuildsRequest(t *testing.T) {
 }
 
 func TestCUAHandleClickElement_SelectorReportsFailure(t *testing.T) {
-	mock := &mockMacosUseClient{
+	mock := &mockExactMacClient{
 		clickElementFunc: func(_ context.Context, req *pb.ClickElementRequest, _ ...grpc.CallOption) (*pb.ClickElementResponse, error) {
 			return &pb.ClickElementResponse{
 				Success: false,
@@ -2062,7 +2062,7 @@ func TestClickElementError_MapsServerErrorStrings(t *testing.T) {
 }
 
 func TestCUAHandleClickElement_SelectorNotVisible(t *testing.T) {
-	mock := &mockMacosUseClient{
+	mock := &mockExactMacClient{
 		clickElementFunc: func(_ context.Context, req *pb.ClickElementRequest, _ ...grpc.CallOption) (*pb.ClickElementResponse, error) {
 			return nil, fmt.Errorf("rpc error: code = FailedPrecondition desc = element matching selector is not visible after focusing; bring it into view")
 		},
@@ -2087,7 +2087,7 @@ func TestCUAHandleClickElement_SelectorNotVisible(t *testing.T) {
 }
 
 func TestCUAHandleClickElement_ElementIDReferenceUnavailable(t *testing.T) {
-	mock := &mockMacosUseClient{
+	mock := &mockExactMacClient{
 		clickElementFunc: func(_ context.Context, req *pb.ClickElementRequest, _ ...grpc.CallOption) (*pb.ClickElementResponse, error) {
 			return nil, fmt.Errorf("rpc error: code = NotFound desc = Element reference not available")
 		},
@@ -2117,7 +2117,7 @@ func TestCUAHandleClickElement_ElementIDReferenceUnavailable(t *testing.T) {
 func TestCUAHandleTypeElement_KeystrokesBuildsRequest(t *testing.T) {
 	var capturedWrite *pb.WriteElementValueRequest
 	clickElementCalls := 0
-	mock := &mockMacosUseClient{
+	mock := &mockExactMacClient{
 		focusWindowFunc: func(context.Context, *pb.FocusWindowRequest) (*pb.Window, error) {
 			return &pb.Window{Name: "applications/1/windows/1"}, nil
 		},
@@ -2174,7 +2174,7 @@ func TestCUAHandleTypeElement_KeystrokesBuildsRequest(t *testing.T) {
 }
 
 func TestCUAHandleTypeElement_KeystrokesFailure(t *testing.T) {
-	mock := &mockMacosUseClient{
+	mock := &mockExactMacClient{
 		focusWindowFunc: func(context.Context, *pb.FocusWindowRequest) (*pb.Window, error) {
 			return &pb.Window{Name: "applications/1/windows/1"}, nil
 		},
@@ -2208,7 +2208,7 @@ func TestCUAHandleTypeElement_KeystrokesFailure(t *testing.T) {
 func TestCUAHandleTypeElement_KeystrokesElementBuildsRequest(t *testing.T) {
 	var capturedWrite *pb.WriteElementValueRequest
 	clickElementCalls := 0
-	mock := &mockMacosUseClient{
+	mock := &mockExactMacClient{
 		focusWindowFunc: func(context.Context, *pb.FocusWindowRequest) (*pb.Window, error) {
 			return &pb.Window{Name: "applications/1/windows/1"}, nil
 		},
@@ -2266,7 +2266,7 @@ func TestCUAHandleTypeElement_KeystrokesNoPreClick(t *testing.T) {
 	// double-toggles checkboxes/toggles and produces an untruthful result.
 	clickElementCalls := 0
 	var writeElementValueCalled bool
-	mock := &mockMacosUseClient{
+	mock := &mockExactMacClient{
 		focusWindowFunc: func(context.Context, *pb.FocusWindowRequest) (*pb.Window, error) {
 			return &pb.Window{Name: "applications/1/windows/1"}, nil
 		},

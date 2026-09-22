@@ -63,9 +63,9 @@ For remote scenarios, current MCP uses a single Streamable HTTP endpoint. Client
 | **Primary Use Case** | Local Desktop Assistant (Claude Desktop) | Cloud Agents / CI/CD Automation |
 | **Message Direction** | Bidirectional Pipe | Correlated POST responses; optional SSE streams |
 
-## **1A. MacosUseSDK Streamable HTTP Transport**
+## **1A. ExactMac Streamable HTTP Transport**
 
-MacosUseSDK implements the MCP 2025-11-25 Streamable HTTP transport as the supported network transport. The obsolete project-specific split endpoint transport is not registered.
+ExactMac implements the MCP 2025-11-25 Streamable HTTP transport as the supported network transport. The obsolete project-specific split endpoint transport is not registered.
 
 ### **1B. MCP 2025-11-25 Message-Level Compliance**
 
@@ -81,7 +81,7 @@ The stdio MCP server in `internal/server/mcp.go` targets the **MCP 2025-11-25** 
 
 ### **1A.1 Transport Architecture**
 
-MacosUseSDK supplements stdio with a Streamable HTTP server. It uses synchronous
+ExactMac supplements stdio with a Streamable HTTP server. It uses synchronous
 JSON responses, creates bounded in-memory sessions during `initialize`, and does
 not initiate standalone SSE streams.
 
@@ -136,7 +136,7 @@ When both `MCP_TLS_CERT_FILE` and `MCP_TLS_KEY_FILE` are set, the server starts 
 MCP_TRANSPORT=streamable-http \
   MCP_TLS_CERT_FILE=/etc/ssl/certs/server.crt \
   MCP_TLS_KEY_FILE=/etc/ssl/private/server.key \
-  ./macos-use-mcp
+  ./exactmac mcp
 ```
 
 #### Authentication Configuration
@@ -150,7 +150,7 @@ When `MCP_API_KEY` is set, all requests except `/health` require the `Authorizat
 **Example:**
 ```bash
 # Server
-MCP_TRANSPORT=streamable-http MCP_API_KEY=your-secret-key ./macos-use-mcp
+MCP_TRANSPORT=streamable-http MCP_API_KEY=your-secret-key ./exactmac mcp
 
 # Client
 curl -H "Authorization: Bearer your-secret-key" \
@@ -172,7 +172,7 @@ When set to a positive value, the server enforces a token bucket rate limiter wi
 **Example:**
 ```bash
 # Allow 100 requests per second with burst of 200
-MCP_TRANSPORT=streamable-http MCP_RATE_LIMIT=100 ./macos-use-mcp
+MCP_TRANSPORT=streamable-http MCP_RATE_LIMIT=100 ./exactmac mcp
 ```
 
 #### Audit Logging Configuration
@@ -211,7 +211,7 @@ The HTTP transport exposes a `/metrics` endpoint that provides Prometheus-compat
 **Example Prometheus scrape config:**
 ```yaml
 scrape_configs:
-  - job_name: 'macos-use-mcp'
+  - job_name: 'exactmac'
     static_configs:
       - targets: ['localhost:8080']
     metrics_path: '/metrics'
@@ -248,12 +248,12 @@ rate limit.
 
 **Production Deployment Pattern:**
 ```
-[Client] → HTTPS (TLS + API Key) → [Go MCP proxy] → plaintext gRPC/Unix socket → [MacosUseServer]
+[Client] → HTTPS (TLS + API Key) → [Go MCP proxy] → plaintext gRPC/Unix socket → [ExactMacServer]
 ```
 
 Or with a reverse proxy:
 ```
-[Client] → HTTPS → [Reverse Proxy] → HTTP → [Go MCP proxy] → plaintext gRPC/Unix socket → [MacosUseServer]
+[Client] → HTTPS → [Reverse Proxy] → HTTP → [Go MCP proxy] → plaintext gRPC/Unix socket → [ExactMacServer]
 ```
 
 ### **1A.7 Implementation Notes**
@@ -407,7 +407,7 @@ The output action is encapsulated in a computer\_call object. This schema is sig
 A unique architectural feature of the CUA interface is the integration of safety metadata directly into the loop. The computer\_call output can return a pending\_safety\_checks array.
 
 * **Mechanism:** Before the model returns an action, a parallel safety classifier analyzes the screenshot and the intent. If it detects a high-risk scenario (e.g., interacting with a banking portal or a CAPTCHA), it injects a safety flag.  
-* **External harness behavior:** An OpenAI-style computer-use harness may see this flag, halt execution, and trigger a "Watch Mode" UI requiring user approval or takeover. MacosUseSDK does not expose `pending_safety_checks` or implement this approval flow; this is external reference behavior, not a server guarantee.21
+* **External harness behavior:** An OpenAI-style computer-use harness may see this flag, halt execution, and trigger a "Watch Mode" UI requiring user approval or takeover. ExactMac does not expose `pending_safety_checks` or implement this approval flow; this is external reference behavior, not a server guarantee.21
 
 ## **4\. The Semantic Gap: Accessibility Trees and Structured Perception**
 
@@ -502,7 +502,7 @@ An attacker sends a user a PDF containing hidden white text: *"Ignore previous i
 
 ### **6.2 Protocol-Level Defenses and Current Boundaries**
 
-* **`isError` is a result signal, not an authorization boundary:** MacosUseSDK reports tool failures with the MCP `isError` field. Hosts may add policy interception and user confirmation, but this server does not implement a blacklist-based approval workflow.
+* **`isError` is a result signal, not an authorization boundary:** ExactMac reports tool failures with the MCP `isError` field. Hosts may add policy interception and user confirmation, but this server does not implement a blacklist-based approval workflow.
 * **Sampling/confirmation is not implemented here:** The server advertises tools, resources, and prompts; it does not invoke MCP sampling or provide a built-in human approval modal. Hosts or deployment wrappers must supply that control if required.
 
 ### **6.3 Isolation and Sandboxing**

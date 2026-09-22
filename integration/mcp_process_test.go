@@ -19,7 +19,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/joeycumines/MacosUseSDK/internal/integrationfixture"
+	"github.com/joeycumines/ExactMac/internal/integrationfixture"
 )
 
 const (
@@ -70,7 +70,7 @@ func startMCPTestServerWithOverrides(
 ) (*exec.Cmd, string, func()) {
 	t.Helper()
 
-	binaryPath := filepath.Clean("../.build/debug/macos-use-mcp")
+	binaryPath := filepath.Clean("../.build/debug/exactmac")
 	info, err := os.Stat(binaryPath)
 	if err != nil {
 		t.Fatalf("production MCP test binary is unavailable at %s: %v", binaryPath, err)
@@ -98,19 +98,19 @@ func startMCPTestServerWithOverrides(
 		t.Fatalf("create MCP HTTP process log: %v", err)
 	}
 
-	cmd := exec.CommandContext(ctx, "../.build/debug/macos-use-mcp")
+	cmd := exec.CommandContext(ctx, "../.build/debug/exactmac", "mcp")
 	processEnvironment := map[string]string{
-		"MACOS_USE_DEBUG":              "false",
-		"MACOS_USE_SERVER_ADDR":        grpcAddr,
-		"MACOS_USE_SERVER_SOCKET_PATH": "",
-		"MCP_API_KEY":                  "",
-		"MCP_AUDIT_LOG_FILE":           "",
-		"MCP_HTTP_ADDRESS":             address,
-		"MCP_HTTP_SOCKET":              "",
-		"MCP_SHELL_COMMANDS_ENABLED":   "false",
-		"MCP_TLS_CERT_FILE":            "",
-		"MCP_TLS_KEY_FILE":             "",
-		"MCP_TRANSPORT":                "streamable-http",
+		"EXACTMAC_DEBUG":              "false",
+		"EXACTMAC_SERVER_ADDR":        grpcAddr,
+		"EXACTMAC_SERVER_SOCKET_PATH": "",
+		"MCP_API_KEY":                 "",
+		"MCP_AUDIT_LOG_FILE":          "",
+		"MCP_HTTP_ADDRESS":            address,
+		"MCP_HTTP_SOCKET":             "",
+		"MCP_SHELL_COMMANDS_ENABLED":  "false",
+		"MCP_TLS_CERT_FILE":           "",
+		"MCP_TLS_KEY_FILE":            "",
+		"MCP_TRANSPORT":               "streamable-http",
 	}
 	maps.Copy(processEnvironment, overrides)
 	cmd.Env = testEnvironment(processEnvironment)

@@ -13,7 +13,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/joeycumines/MacosUseSDK/internal/transport"
+	"github.com/joeycumines/ExactMac/internal/transport"
 )
 
 // toolListEntry decodes the tools/list wire response including annotations.
@@ -33,7 +33,7 @@ type toolListResultWithAnnotations struct {
 // the HTTP and stdio transports, and that read-only vs mutating tools carry
 // the contractually correct readOnlyHint.
 func TestMCPToolsList_AnnotationsSurfaceForEachTool(t *testing.T) {
-	server := newTestMCPServer(&mockMacosUseClient{})
+	server := newTestMCPServer(&mockExactMacClient{})
 	server.registerTools()
 
 	// Read tools/list straight off the registry-derived annotation helper and
@@ -87,7 +87,7 @@ func TestMCPToolsList_AnnotationsSurfaceForEachTool(t *testing.T) {
 // destructiveHint=false with destructiveHint=true, while create/update/get/list
 // stay non-destructive. This is a state-difference assertion across siblings.
 func TestMCPAnnotations_DestructiveMacrosAreFlagged(t *testing.T) {
-	server := newTestMCPServer(&mockMacosUseClient{})
+	server := newTestMCPServer(&mockExactMacClient{})
 	server.registerTools()
 
 	destructive := map[string]bool{
@@ -113,7 +113,7 @@ func TestMCPAnnotations_DestructiveMacrosAreFlagged(t *testing.T) {
 // type_element descriptions are multi-sentence prescriptive guidance (not the
 // prior one-sentence stubs) and reference their sibling tools where helpful.
 func TestMacroToolDescriptions_ArePrescriptive(t *testing.T) {
-	server := newTestMCPServer(&mockMacosUseClient{})
+	server := newTestMCPServer(&mockExactMacClient{})
 	server.registerTools()
 
 	// Each description must have >=3 sentences and mention at least one
@@ -257,7 +257,7 @@ func TestMacroValidateInput_ResourceInputRejectsBadName(t *testing.T) {
 // actually carry their ValidateInput so schema validation cannot silently
 // bypass the limits proven above.
 func TestMacroToolsWiredToValidators(t *testing.T) {
-	server := newTestMCPServer(&mockMacosUseClient{})
+	server := newTestMCPServer(&mockExactMacClient{})
 	server.registerTools()
 	withValidator := map[string]bool{
 		"create_macro":  true,

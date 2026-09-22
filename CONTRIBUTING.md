@@ -1,6 +1,6 @@
-# Contributing to MacosUseSDK
+# Contributing to ExactMac
 
-Thank you for your interest in contributing to MacosUseSDK!
+Thank you for your interest in contributing to ExactMac!
 
 ## Developer Setup
 
@@ -8,7 +8,7 @@ Thank you for your interest in contributing to MacosUseSDK!
 
 | Requirement | Minimum Version | Notes |
 |-------------|-----------------|-------|
-| **macOS** | 14.0 (Sonoma) | Required for Accessibility APIs |
+| **macOS** | 15.0 (Sequoia) | Swift server requires macOS 15+ (gRPC Swift 2, Swift 6 concurrency) |
 | **Xcode** | 16.0 | Includes Swift 6.1 toolchain |
 | **Go** | 1.25+ | For MCP server and integration tests |
 | **GNU Make** | 4.0+ | Build orchestration (Homebrew `make` provides `gmake`) |
@@ -50,8 +50,8 @@ osascript -e 'tell application "System Events" to get name of first application 
 
 ```sh
 # Clone the repository
-git clone https://github.com/joeycumines/MacosUseSDK.git
-cd MacosUseSDK
+git clone https://github.com/joeycumines/ExactMac.git
+cd ExactMac
 
 # Generate protobuf code (required before first build)
 gmake buf.generate
@@ -74,7 +74,7 @@ export GRPC_PORT="50051"
 
 # Go MCP server
 export MCP_HTTP_ADDRESS="127.0.0.1:8080"
-export MACOS_USE_SERVER_ADDR="127.0.0.1:50051"
+export EXACTMAC_SERVER_ADDR="127.0.0.1:50051"
 ```
 
 See the [Deployment Guide](DEPLOYMENT.md) for the full environment variable reference.
@@ -85,8 +85,8 @@ See the [Deployment Guide](DEPLOYMENT.md) for the full environment variable refe
 # Full build (Swift + Go + Proto generation)
 gmake all
 
-# Run all tests
-gmake test
+# Run all tests (Go + Swift suites)
+gmake go.test swift.test
 
 # Specific component builds
 gmake swift.build    # Swift SDK and Server
@@ -99,8 +99,8 @@ gmake buf.generate   # Regenerate protobuf code
 ### Unit Tests
 
 ```sh
-# All unit tests
-gmake test
+# All unit tests (Go + Swift suites)
+gmake go.test swift.test
 
 # Go unit tests
 gmake go.test

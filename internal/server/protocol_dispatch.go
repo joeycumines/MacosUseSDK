@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/joeycumines/MacosUseSDK/internal/transport"
+	"github.com/joeycumines/ExactMac/internal/transport"
 )
 
 // handleHTTPMessage executes a JSON-RPC message through the single production
@@ -148,7 +148,7 @@ func (s *MCPServer) validateAndProcessInitialize(msg *transport.Message) (*trans
 			"resources": map[string]any{"subscribe": false, "listChanged": false},
 			"prompts":   map[string]any{},
 		},
-		"serverInfo":  map[string]any{"name": "macos-use-sdk", "version": "0.1.0"},
+		"serverInfo":  map[string]any{"name": "exactmac", "version": "0.1.0"},
 		"displayInfo": json.RawMessage(displayInfo),
 	})
 	if err != nil {

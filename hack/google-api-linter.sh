@@ -27,7 +27,7 @@ if ! (cd "$REPO_ROOT" && buf export buf.build/googleapis/googleapis --output "$T
   exit 1
 fi
 
-find "$TEMP_DIR/macosusesdk" -name "*.proto" \
+find "$TEMP_DIR/exactmac" -name "*.proto" \
   -exec go -C "$LINTER_MODULE_DIR" tool github.com/googleapis/api-linter/cmd/api-linter \
   --config="$CONFIG_FILE" \
   --output-format=github \

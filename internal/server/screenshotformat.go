@@ -7,7 +7,7 @@ package server
 import (
 	"fmt"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 )
 
 // defaultJPEGQuality is the default quality setting for JPEG screenshots (1-100).

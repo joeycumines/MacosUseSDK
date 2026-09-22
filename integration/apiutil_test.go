@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 	"github.com/rivo/uniseg"
 	"google.golang.org/protobuf/proto"
 )
@@ -19,7 +19,7 @@ var mcpInputResourcePattern = regexp.MustCompile(
 )
 
 // cleanupApplication closes the exact owned process and verifies state cleanup.
-func cleanupApplication(t *testing.T, ctx context.Context, client pb.MacosUseClient, app *pb.Application) {
+func cleanupApplication(t *testing.T, ctx context.Context, client pb.ExactMacClient, app *pb.Application) {
 	CleanupApplication(t, ctx, client, app)
 }
 
@@ -72,7 +72,7 @@ func newIntegrationInputRequest(
 func createCompletedInput(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	request *pb.CreateInputRequest,
 	expectedPostedEvents int32,
 	operation string,
@@ -96,7 +96,7 @@ func createCompletedInput(
 func requireCompletedInput(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	request *pb.CreateInputRequest,
 	initial *pb.Input,
 	expectedPostedEvents int32,
@@ -211,7 +211,7 @@ func requireCompletedInput(
 func listInputSnapshot(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	parent string,
 ) map[string]*pb.Input {
 	t.Helper()
@@ -363,7 +363,7 @@ func requireInputTerminalEvidence(
 func requireInputRoundTrip(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	parent string,
 	want *pb.Input,
 ) {
@@ -388,7 +388,7 @@ func requireInputRoundTrip(
 }
 
 // performInput creates and executes an exact application-targeted text action.
-func performInput(t *testing.T, ctx context.Context, client pb.MacosUseClient, app *pb.Application, text string) {
+func performInput(t *testing.T, ctx context.Context, client pb.ExactMacClient, app *pb.Application, text string) {
 	request := newIntegrationInputRequest(
 		t,
 		app.GetName(),

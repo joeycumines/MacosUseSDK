@@ -1,8 +1,8 @@
 # Window State Management: Opaque Identity, Hybrid Authority, and Convergence
 
 **Status:** Living Document
-**Context:** MacosUseSDK Window Management Subsystem
-**Relevant Files:** `proto/macosusesdk/v1/window.proto`, `Server/Sources/MacosUseServer/WindowRegistry.swift`, `Server/Sources/MacosUseServer/WindowHelpers.swift`, `Server/Sources/MacosUseServer/ObservationManager.swift`, `Server/Sources/MacosUseServer/WindowMethods.swift`
+**Context:** ExactMac Window Management Subsystem
+**Relevant Files:** `proto/exactmac/v1/window.proto`, `Server/Sources/ExactMacServer/WindowRegistry.swift`, `Server/Sources/ExactMacServer/WindowHelpers.swift`, `Server/Sources/ExactMacServer/ObservationManager.swift`, `Server/Sources/ExactMacServer/WindowMethods.swift`
 
 -----
 
@@ -13,7 +13,7 @@ Window state management on macOS is a "split-brain" problem. The operating syste
 1.  **Quartz Window Services (CoreGraphics):** A global, read-only snapshot of the compositor's display list. It provides snapshot-local IDs (`CGWindowID`) and metadata, but snapshots may be stale and cannot manipulate windows. A CG ID is not a public resource identity and may be reused after disappearance.
 2.  **Accessibility API (AX):** A process-specific, synchronous IPC interface used for fine-grained state inspection and manipulation (Geometry, Visibility). It is authoritative for reads of an admitted element but lacks stable public identifiers and may fail to enumerate windows outside the active Space.
 
-**MacosUseSDK implements a "Hybrid Authority" model.** We do not attempt to abstract away this duality completely. Instead, we explicitly assign authority for specific data fields to specific APIs based on the nature of the RPC (Read-only Enumeration vs. Mutation/Inspection).
+**ExactMac implements a "Hybrid Authority" model.** We do not attempt to abstract away this duality completely. Instead, we explicitly assign authority for specific data fields to specific APIs based on the nature of the RPC (Read-only Enumeration vs. Mutation/Inspection).
 
 This document serves as the definitive reference for this architecture, the opaque public binding model, race-condition mitigations, and the fail-closed bridging logic used to reconcile the two systems.
 
@@ -103,14 +103,14 @@ flowchart TD
 
 ### 3.1 Component Responsibilities
 
-1.  **`Server/Sources/MacosUseServer/WindowRegistry.swift`**:
+1.  **`Server/Sources/ExactMacServer/WindowRegistry.swift`**:
 
       * Reads exactly one `CGWindowListCopyWindowInfo` snapshot per owner enumeration using options `[.optionAll, .excludeDesktopElements]`.
       * Reconciles that snapshot into server-issued, generation-scoped public bindings and retires missing or replaced-owner bindings immediately.
       * Preserves an opaque public name when the same already-admitted AX element reports a changed CG ID; a later reuse of a retired CG ID receives a different public name.
       * **Constraint:** Never blocks on AX IPC calls.
 
-2.  **`Server/Sources/MacosUseServer/WindowHelpers.swift`**:
+2.  **`Server/Sources/ExactMacServer/WindowHelpers.swift`**:
 
       * Orchestrates exact-owner resolution, response assembly, mutation convergence, and cancellation.
       * Preserves AX error codes and type failures instead of flattening them into false/default state. Only explicitly optional absence (`kAXErrorAttributeUnsupported` or `kAXErrorNoValue`) receives the documented default.
@@ -177,7 +177,7 @@ $$visible = cgOnScreen \land \neg windowMinimized \land \neg ownerApplicationHid
 
 ## 6\. Observation Logic and Race Condition Mitigation
 
-The `ObservationManager` (`Server/Sources/MacosUseServer/ObservationManager.swift`) is responsible for detecting changes. It must handle the "Orphan" race condition: when a window is transitioning (e.g., minimizing), it may briefly disappear from `kAXWindows` before reappearing with the `minimized` property set.
+The `ObservationManager` (`Server/Sources/ExactMacServer/ObservationManager.swift`) is responsible for detecting changes. It must handle the "Orphan" race condition: when a window is transitioning (e.g., minimizing), it may briefly disappear from `kAXWindows` before reappearing with the `minimized` property set.
 
 ### 6.1 Orphan Rescue Strategy
 
@@ -238,7 +238,7 @@ flowchart TD
 
 ### 6.4 Underlying CG ID Changes After Mutations
 
-**Critical macOS Behavior:** After certain window mutations, the underlying `CGWindowID` may change. MacosUse treats that number as ephemeral metadata, not as public identity.
+**Critical macOS Behavior:** After certain window mutations, the underlying `CGWindowID` may change. ExactMac treats that number as ephemeral metadata, not as public identity.
 
 **Symptoms:**
 - A mutation resolves the already-admitted AX element, but that element now reports a different CG ID.

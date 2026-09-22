@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 )
 
 const productionAuditPrivateMarker = "FUNC-002-PRODUCTION-AUDIT-PRIVATE-9d942f"
@@ -32,13 +32,13 @@ func TestMCPAudit_ExactProcessRejectsSymlinkPath(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, "../.build/debug/macos-use-mcp")
+	cmd := exec.CommandContext(ctx, "../.build/debug/exactmac", "mcp")
 	cmd.Env = testEnvironment(map[string]string{
-		"MACOS_USE_DEBUG":              "false",
-		"MACOS_USE_SERVER_ADDR":        "127.0.0.1:1",
-		"MACOS_USE_SERVER_SOCKET_PATH": "",
-		"MCP_AUDIT_LOG_FILE":           auditPath,
-		"MCP_TRANSPORT":                "stdio",
+		"EXACTMAC_DEBUG":              "false",
+		"EXACTMAC_SERVER_ADDR":        "127.0.0.1:1",
+		"EXACTMAC_SERVER_SOCKET_PATH": "",
+		"MCP_AUDIT_LOG_FILE":          auditPath,
+		"MCP_TRANSPORT":               "stdio",
 	})
 	output, err := cmd.CombinedOutput()
 	if err == nil {
@@ -67,7 +67,7 @@ func TestMCPAudit_NonContentOwnerPrivateAcrossProductionTransports(t *testing.T)
 	defer cleanupServer(t, serverCmd, serverAddr)
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	application := OpenApplicationObserved(t, ctx, client, "com.apple.calculator")
 	defer CleanupApplication(t, ctx, client, application)
 

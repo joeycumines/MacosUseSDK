@@ -18,7 +18,7 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -79,32 +79,32 @@ var safeNonApplicationAdmissionFixtures = map[string]map[string]any{
 }
 
 var safeNonApplicationFirstRPC = map[string]string{
-	"screenshot":    pb.MacosUse_CaptureScreenshot_FullMethodName,
-	"click":         pb.MacosUse_CreateInput_FullMethodName,
-	"double_click":  pb.MacosUse_CreateInput_FullMethodName,
-	"type":          pb.MacosUse_CreateInput_FullMethodName,
-	"keypress":      pb.MacosUse_CreateInput_FullMethodName,
-	"scroll":        pb.MacosUse_CreateInput_FullMethodName,
-	"drag":          pb.MacosUse_CreateInput_FullMethodName,
-	"move":          pb.MacosUse_CreateInput_FullMethodName,
+	"screenshot":    pb.ExactMac_CaptureScreenshot_FullMethodName,
+	"click":         pb.ExactMac_CreateInput_FullMethodName,
+	"double_click":  pb.ExactMac_CreateInput_FullMethodName,
+	"type":          pb.ExactMac_CreateInput_FullMethodName,
+	"keypress":      pb.ExactMac_CreateInput_FullMethodName,
+	"scroll":        pb.ExactMac_CreateInput_FullMethodName,
+	"drag":          pb.ExactMac_CreateInput_FullMethodName,
+	"move":          pb.ExactMac_CreateInput_FullMethodName,
 	"wait":          "",
-	"find_elements": pb.MacosUse_FindElements_FullMethodName,
-	"click_element": pb.MacosUse_ClickElement_FullMethodName,
-	"type_element":  pb.MacosUse_WriteElementValue_FullMethodName,
-	"read_element":  pb.MacosUse_GetElement_FullMethodName,
-	"focus_window":  pb.MacosUse_FocusWindow_FullMethodName,
-	"move_window":   pb.MacosUse_MoveWindow_FullMethodName,
-	"resize_window": pb.MacosUse_ResizeWindow_FullMethodName,
-	"list_windows":  pb.MacosUse_ListWindows_FullMethodName,
-	"clipboard":     pb.MacosUse_GetClipboard_FullMethodName,
-	"run":           pb.MacosUse_ExecuteJavaScript_FullMethodName,
-	"get_display":   pb.MacosUse_ListDisplays_FullMethodName,
-	"create_macro":  pb.MacosUse_CreateMacro_FullMethodName,
-	"get_macro":     pb.MacosUse_GetMacro_FullMethodName,
-	"list_macros":   pb.MacosUse_ListMacros_FullMethodName,
-	"update_macro":  pb.MacosUse_UpdateMacro_FullMethodName,
-	"delete_macro":  pb.MacosUse_DeleteMacro_FullMethodName,
-	"execute_macro": pb.MacosUse_ExecuteMacro_FullMethodName,
+	"find_elements": pb.ExactMac_FindElements_FullMethodName,
+	"click_element": pb.ExactMac_ClickElement_FullMethodName,
+	"type_element":  pb.ExactMac_WriteElementValue_FullMethodName,
+	"read_element":  pb.ExactMac_GetElement_FullMethodName,
+	"focus_window":  pb.ExactMac_FocusWindow_FullMethodName,
+	"move_window":   pb.ExactMac_MoveWindow_FullMethodName,
+	"resize_window": pb.ExactMac_ResizeWindow_FullMethodName,
+	"list_windows":  pb.ExactMac_ListWindows_FullMethodName,
+	"clipboard":     pb.ExactMac_GetClipboard_FullMethodName,
+	"run":           pb.ExactMac_ExecuteJavaScript_FullMethodName,
+	"get_display":   pb.ExactMac_ListDisplays_FullMethodName,
+	"create_macro":  pb.ExactMac_CreateMacro_FullMethodName,
+	"get_macro":     pb.ExactMac_GetMacro_FullMethodName,
+	"list_macros":   pb.ExactMac_ListMacros_FullMethodName,
+	"update_macro":  pb.ExactMac_UpdateMacro_FullMethodName,
+	"delete_macro":  pb.ExactMac_DeleteMacro_FullMethodName,
+	"execute_macro": pb.ExactMac_ExecuteMacro_FullMethodName,
 }
 
 var applicationMatrixTools = map[string]struct{}{
@@ -155,12 +155,12 @@ func (r *nonApplicationMatrixRecorder) displayBootstrapAllowed() bool {
 	return r.allowDisplayBootstrap
 }
 
-type nonApplicationMatrixMacosUseServer struct {
-	pb.UnimplementedMacosUseServer
+type nonApplicationMatrixExactMacServer struct {
+	pb.UnimplementedExactMacServer
 	recorder *nonApplicationMatrixRecorder
 }
 
-func (s nonApplicationMatrixMacosUseServer) ListDisplays(
+func (s nonApplicationMatrixExactMacServer) ListDisplays(
 	context.Context,
 	*pb.ListDisplaysRequest,
 ) (*pb.ListDisplaysResponse, error) {
@@ -177,9 +177,9 @@ func TestMCPNonApplicationAdmissionMatrix_ProductionTransports(t *testing.T) {
 	grpcAddress, recorder, stopSentinel := startNonApplicationMatrixSentinel(t)
 	defer stopSentinel()
 	overrides := map[string]string{
-		"MACOS_USE_SERVER_TLS":       "false",
-		"MACOS_USE_SERVER_CERT_FILE": "",
-		"MACOS_USE_REQUEST_TIMEOUT":  "2",
+		"EXACTMAC_SERVER_TLS":        "false",
+		"EXACTMAC_SERVER_CERT_FILE":  "",
+		"EXACTMAC_REQUEST_TIMEOUT":   "2",
 		"MCP_SHELL_COMMANDS_ENABLED": "false",
 	}
 	_, baseURL, stopHTTP := startMCPTestServerWithOverrides(t, ctx, grpcAddress, overrides)
@@ -215,8 +215,8 @@ func TestMCPNonApplicationAdmissionMatrix_ProductionTransports(t *testing.T) {
 
 	initializationCalls := recorder.drain()
 	wantInitializationCalls := []string{
-		pb.MacosUse_ListDisplays_FullMethodName,
-		pb.MacosUse_ListDisplays_FullMethodName,
+		pb.ExactMac_ListDisplays_FullMethodName,
+		pb.ExactMac_ListDisplays_FullMethodName,
 	}
 	sort.Strings(initializationCalls)
 	if !reflect.DeepEqual(initializationCalls, wantInitializationCalls) {
@@ -358,7 +358,7 @@ func startNonApplicationMatrixSentinel(t *testing.T) (string, *nonApplicationMat
 			return status.Error(codes.Unimplemented, "non-application matrix sentinel")
 		}),
 	)
-	pb.RegisterMacosUseServer(grpcServer, nonApplicationMatrixMacosUseServer{recorder: recorder})
+	pb.RegisterExactMacServer(grpcServer, nonApplicationMatrixExactMacServer{recorder: recorder})
 	serveResult := make(chan error, 1)
 	go func() {
 		serveResult <- grpcServer.Serve(listener)

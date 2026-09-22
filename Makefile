@@ -13,19 +13,19 @@ GO_MODULE_SLUGS_NO_PACKAGES ?= hack.google-api-linter
 GO_MODULE_SLUGS_NO_UPDATE ?= hack.google-api-linter
 # excludes generated files from linting/formatting
 SWIFT_PACKAGE_FILES_NO_LINT_OR_FORMAT ?= \
-./Server/Sources/MacosUseProto/%
+./Server/Sources/ExactMacProto/%
 SWIFT_PACKAGE_FILES_NO_LINT ?= $(SWIFT_PACKAGE_FILES_NO_LINT_OR_FORMAT)
 SWIFT_PACKAGE_FILES_NO_FORMAT ?= $(SWIFT_PACKAGE_FILES_NO_LINT_OR_FORMAT)
 BUF_BREAKING_AGAINST ?= .#branch=main
 GO_MODULE_PATHS_EXCLUDE_PATTERNS ?= %/.build
 SUBDIR_MAKEFILE_PATHS_EXCLUDE_PATTERNS ?= %/.build
-SWIFT_BUILD_FLAGS ?= --disable-prefetching --use-only-versions-from-resolved-file
+SWIFT_BUILD_FLAGS ?= --disable-prefetching --only-use-versions-from-resolved-file
 
 -include $(PROJECT_ROOT)/config.mk
 include $(PROJECT_ROOT)/make/go.mk
 include $(PROJECT_ROOT)/make/swift.mk
 include $(PROJECT_ROOT)/make/buf.mk
-include $(PROJECT_ROOT)/make/macos-use.mk
+include $(PROJECT_ROOT)/make/exactmac.mk
 
 ##@ Core Targets
 
@@ -74,11 +74,11 @@ google-api-linter: ## Lint the proto files.
 # N.B. The below comment is for the `make help` output, not for readers of this file.
 ##@ -- End of root Makefile --
 
-MCP_INTEGRATION_BINARY := $(PROJECT_ROOT)/.build/debug/macos-use-mcp
+MCP_INTEGRATION_BINARY := $(PROJECT_ROOT)/.build/debug/exactmac
 .PHONY: mcp-integration-binary
 mcp-integration-binary: ## Build the exact MCP executable used by production-path integration tests.
 	@mkdir -p $(dir $(MCP_INTEGRATION_BINARY))
-	go build -o $(MCP_INTEGRATION_BINARY) ./cmd/macos-use-mcp
+	go build -o $(MCP_INTEGRATION_BINARY) ./cmd/exactmac
 go.test.integration: mcp-integration-binary
 
 # Server package build depends on buf.descriptor-sets for gRPC reflection

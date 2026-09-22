@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	pbtype "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pbtype "github.com/joeycumines/ExactMac/gen/go/exactmac/type"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
@@ -35,7 +35,7 @@ func TestClipboardPasteIntoTextEdit(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	// Ensure TextEdit isn't already tracked from previous runs
 	killGoldenApplications()
 
@@ -413,7 +413,7 @@ func TestClipboardPasteIntoTextEdit(t *testing.T) {
 func requireTextEditDocumentState(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	targetName string,
 	expectedPath string,
 	wantModified bool,
@@ -454,7 +454,7 @@ func requireTextEditDocumentState(
 func requireTextEditDocumentChangedOrPersisted(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	targetName string,
 	expectedPath string,
 	expectedContent string,
@@ -507,7 +507,7 @@ type textEditDocumentState struct {
 
 func getTextEditDocumentState(
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	targetName string,
 ) (textEditDocumentState, string, error) {
 	// Bound the server-side osascript child strictly below the caller's gRPC

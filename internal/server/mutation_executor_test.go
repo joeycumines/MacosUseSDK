@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/joeycumines/MacosUseSDK/internal/transport"
+	"github.com/joeycumines/ExactMac/internal/transport"
 )
 
 func TestMutationExecutor_SerializesPhysicalDesktopJobs(t *testing.T) {

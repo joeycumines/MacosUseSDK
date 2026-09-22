@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/joeycumines/MacosUseSDK/internal/transport"
+	"github.com/joeycumines/ExactMac/internal/transport"
 )
 
 // Test tool schemas for validateToolInput tests.

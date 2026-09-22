@@ -9,7 +9,7 @@ import (
 	"time"
 
 	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 )
 
 // TestNoFocusStealingWithPassiveObservation verifies that observations with
@@ -30,7 +30,7 @@ func TestNoFocusStealingWithPassiveObservation(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	opsClient := longrunningpb.NewOperationsClient(conn)
 
 	// 2. Open Calculator
@@ -162,7 +162,7 @@ func TestFocusStealingWithActiveObservation(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	opsClient := longrunningpb.NewOperationsClient(conn)
 
 	t.Log("Opening Calculator...")
@@ -260,7 +260,7 @@ func TestFocusStealingWithActiveObservation(t *testing.T) {
 
 func waitForStableBackgroundProcess(
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	pid int32,
 	stableFor time.Duration,
 ) error {
@@ -289,7 +289,7 @@ func waitForStableBackgroundProcess(
 
 func exactProcessFrontmost(
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	pid int32,
 ) (present bool, frontmost bool, err error) {
 	script := `tell application "System Events"

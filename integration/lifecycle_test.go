@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -28,7 +28,7 @@ func TestCoreLifecycle(t *testing.T) {
 	}
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	// Ensure golden applications from any prior failed test are not running.
 	killGoldenApplications()
 
@@ -152,7 +152,7 @@ func TestMultipleApplications(t *testing.T) {
 	}
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	// Pre-cleanup
 	killGoldenApplications()
 

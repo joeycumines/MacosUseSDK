@@ -6,14 +6,14 @@ import (
 	"strings"
 	"testing"
 
-	typepb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	typepb "github.com/joeycumines/ExactMac/gen/go/exactmac/type"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 	"google.golang.org/grpc"
 )
 
 func TestFindElementsUsesOneCanonicalSelector(t *testing.T) {
 	var request *pb.FindElementsRequest
-	server := newTestMCPServer(&mockMacosUseClient{
+	server := newTestMCPServer(&mockExactMacClient{
 		findElementsFunc: func(_ context.Context, incoming *pb.FindElementsRequest) (*pb.FindElementsResponse, error) {
 			request = incoming
 			return &pb.FindElementsResponse{
@@ -66,7 +66,7 @@ func TestFindElementsRejectsMissingOrLegacyCriteriaBeforeGRPC(t *testing.T) {
 }
 
 func TestFindElementsSchemaAdvertisesOnlyCanonicalSelector(t *testing.T) {
-	server := newTestMCPServer(&mockMacosUseClient{})
+	server := newTestMCPServer(&mockExactMacClient{})
 	server.registerTools()
 	tool, ok := server.tools["find_elements"]
 	if !ok {
@@ -87,7 +87,7 @@ func TestFindElementsSchemaAdvertisesOnlyCanonicalSelector(t *testing.T) {
 }
 
 func TestElementGuidanceMatchesCanonicalSelectorAndScopeBoundHandles(t *testing.T) {
-	server := newTestMCPServer(&mockMacosUseClient{})
+	server := newTestMCPServer(&mockExactMacClient{})
 	server.registerTools()
 
 	prompts := server.listPrompts()
@@ -139,7 +139,7 @@ func TestElementGuidanceMatchesCanonicalSelectorAndScopeBoundHandles(t *testing.
 func TestReadElementCanonicalizesOpaqueWindowParent(t *testing.T) {
 	var elementName string
 	var actionsName string
-	server := newTestMCPServer(&mockMacosUseClient{
+	server := newTestMCPServer(&mockExactMacClient{
 		getElementFunc: func(_ context.Context, request *pb.GetElementRequest) (*pb.Element, error) {
 			elementName = request.GetName()
 			return &pb.Element{

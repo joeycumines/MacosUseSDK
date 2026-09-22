@@ -14,10 +14,10 @@ import (
 
 func TestLoad_Defaults(t *testing.T) {
 	// Clear any env vars that might affect the test
-	os.Unsetenv("MACOS_USE_SERVER_ADDR")
-	os.Unsetenv("MACOS_USE_SERVER_TLS")
-	os.Unsetenv("MACOS_USE_REQUEST_TIMEOUT")
-	os.Unsetenv("MACOS_USE_DEBUG")
+	os.Unsetenv("EXACTMAC_SERVER_ADDR")
+	os.Unsetenv("EXACTMAC_SERVER_TLS")
+	os.Unsetenv("EXACTMAC_REQUEST_TIMEOUT")
+	os.Unsetenv("EXACTMAC_DEBUG")
 	os.Unsetenv("MCP_TRANSPORT")
 	os.Unsetenv("MCP_HTTP_ADDRESS")
 	os.Unsetenv("MCP_HTTP_SOCKET")
@@ -61,11 +61,11 @@ func TestLoad_Defaults(t *testing.T) {
 func TestLoad_PhysicalRequestTimeoutMustFitTimeDuration(t *testing.T) {
 	const maximumDurationSeconds = int64((1<<63 - 1) / int64(time.Second))
 	t.Setenv(
-		"MACOS_USE_REQUEST_TIMEOUT",
+		"EXACTMAC_REQUEST_TIMEOUT",
 		strconv.FormatInt(maximumDurationSeconds+1, 10),
 	)
 	_, err := Load()
-	if err == nil || !strings.Contains(err.Error(), "MACOS_USE_REQUEST_TIMEOUT") {
+	if err == nil || !strings.Contains(err.Error(), "EXACTMAC_REQUEST_TIMEOUT") {
 		t.Fatalf("Load() error=%v, want request-timeout overflow rejection", err)
 	}
 }
@@ -111,8 +111,8 @@ func TestLoad_TransportInvalid(t *testing.T) {
 }
 
 func TestLoad_InvalidInt(t *testing.T) {
-	os.Setenv("MACOS_USE_REQUEST_TIMEOUT", "not-a-number")
-	defer os.Unsetenv("MACOS_USE_REQUEST_TIMEOUT")
+	os.Setenv("EXACTMAC_REQUEST_TIMEOUT", "not-a-number")
+	defer os.Unsetenv("EXACTMAC_REQUEST_TIMEOUT")
 
 	_, err := Load()
 	if err == nil {
@@ -471,13 +471,13 @@ func TestLoad_RejectsUnsafeHTTPConfiguration(t *testing.T) {
 		},
 		{
 			name:        "zero request timeout",
-			environment: map[string]string{"MACOS_USE_REQUEST_TIMEOUT": "0"},
-			wantError:   "MACOS_USE_REQUEST_TIMEOUT must be positive",
+			environment: map[string]string{"EXACTMAC_REQUEST_TIMEOUT": "0"},
+			wantError:   "EXACTMAC_REQUEST_TIMEOUT must be positive",
 		},
 		{
 			name:        "trailing request timeout data",
-			environment: map[string]string{"MACOS_USE_REQUEST_TIMEOUT": "30seconds"},
-			wantError:   "invalid value for MACOS_USE_REQUEST_TIMEOUT",
+			environment: map[string]string{"EXACTMAC_REQUEST_TIMEOUT": "30seconds"},
+			wantError:   "invalid value for EXACTMAC_REQUEST_TIMEOUT",
 		},
 		{
 			name:        "negative read timeout",
@@ -615,21 +615,21 @@ func TestGetEnvAsFloat(t *testing.T) {
 }
 
 func TestLoad_ServerSocketPathConfig(t *testing.T) {
-	os.Setenv("MACOS_USE_SERVER_SOCKET_PATH", "/var/run/macos-use.sock")
-	defer os.Unsetenv("MACOS_USE_SERVER_SOCKET_PATH")
+	os.Setenv("EXACTMAC_SERVER_SOCKET_PATH", "/var/run/exactmac.sock")
+	defer os.Unsetenv("EXACTMAC_SERVER_SOCKET_PATH")
 
 	cfg, err := Load()
 	if err != nil {
 		t.Fatalf("Load() error = %v", err)
 	}
 
-	if cfg.ServerSocketPath != "/var/run/macos-use.sock" {
-		t.Errorf("ServerSocketPath = %s, want /var/run/macos-use.sock", cfg.ServerSocketPath)
+	if cfg.ServerSocketPath != "/var/run/exactmac.sock" {
+		t.Errorf("ServerSocketPath = %s, want /var/run/exactmac.sock", cfg.ServerSocketPath)
 	}
 }
 
 func TestLoad_ServerSocketPathConfigDefault(t *testing.T) {
-	os.Unsetenv("MACOS_USE_SERVER_SOCKET_PATH")
+	os.Unsetenv("EXACTMAC_SERVER_SOCKET_PATH")
 
 	cfg, err := Load()
 	if err != nil {
@@ -643,11 +643,11 @@ func TestLoad_ServerSocketPathConfigDefault(t *testing.T) {
 
 func TestLoad_ServerSocketPathWithAddress(t *testing.T) {
 	// Both socket path and address should be configurable
-	os.Setenv("MACOS_USE_SERVER_ADDR", "localhost:50051")
-	os.Setenv("MACOS_USE_SERVER_SOCKET_PATH", "/tmp/test.sock")
+	os.Setenv("EXACTMAC_SERVER_ADDR", "localhost:50051")
+	os.Setenv("EXACTMAC_SERVER_SOCKET_PATH", "/tmp/test.sock")
 	defer func() {
-		os.Unsetenv("MACOS_USE_SERVER_ADDR")
-		os.Unsetenv("MACOS_USE_SERVER_SOCKET_PATH")
+		os.Unsetenv("EXACTMAC_SERVER_ADDR")
+		os.Unsetenv("EXACTMAC_SERVER_SOCKET_PATH")
 	}()
 
 	cfg, err := Load()
@@ -666,8 +666,8 @@ func TestLoad_ServerSocketPathWithAddress(t *testing.T) {
 
 func TestLoad_ValidationWithOnlySocketPath(t *testing.T) {
 	// Only socket path - should succeed (address uses default)
-	os.Setenv("MACOS_USE_SERVER_SOCKET_PATH", "/tmp/test.sock")
-	defer os.Unsetenv("MACOS_USE_SERVER_SOCKET_PATH")
+	os.Setenv("EXACTMAC_SERVER_SOCKET_PATH", "/tmp/test.sock")
+	defer os.Unsetenv("EXACTMAC_SERVER_SOCKET_PATH")
 
 	cfg, err := Load()
 	if err != nil {
@@ -685,8 +685,8 @@ func TestLoad_ValidationWithOnlySocketPath(t *testing.T) {
 }
 
 func TestLoad_ServerTLSConfig(t *testing.T) {
-	os.Setenv("MACOS_USE_SERVER_TLS", "true")
-	defer os.Unsetenv("MACOS_USE_SERVER_TLS")
+	os.Setenv("EXACTMAC_SERVER_TLS", "true")
+	defer os.Unsetenv("EXACTMAC_SERVER_TLS")
 
 	cfg, err := Load()
 	if err != nil {
@@ -699,8 +699,8 @@ func TestLoad_ServerTLSConfig(t *testing.T) {
 }
 
 func TestLoad_ServerTLSConfigFalse(t *testing.T) {
-	os.Setenv("MACOS_USE_SERVER_TLS", "false")
-	defer os.Unsetenv("MACOS_USE_SERVER_TLS")
+	os.Setenv("EXACTMAC_SERVER_TLS", "false")
+	defer os.Unsetenv("EXACTMAC_SERVER_TLS")
 
 	cfg, err := Load()
 	if err != nil {
@@ -713,7 +713,7 @@ func TestLoad_ServerTLSConfigFalse(t *testing.T) {
 }
 
 func TestLoad_ServerTLSConfigDefault(t *testing.T) {
-	os.Unsetenv("MACOS_USE_SERVER_TLS")
+	os.Unsetenv("EXACTMAC_SERVER_TLS")
 
 	cfg, err := Load()
 	if err != nil {
@@ -726,8 +726,8 @@ func TestLoad_ServerTLSConfigDefault(t *testing.T) {
 }
 
 func TestLoad_ServerCertFileConfig(t *testing.T) {
-	os.Setenv("MACOS_USE_SERVER_CERT_FILE", "/path/to/server.crt")
-	defer os.Unsetenv("MACOS_USE_SERVER_CERT_FILE")
+	os.Setenv("EXACTMAC_SERVER_CERT_FILE", "/path/to/server.crt")
+	defer os.Unsetenv("EXACTMAC_SERVER_CERT_FILE")
 
 	cfg, err := Load()
 	if err != nil {
@@ -740,7 +740,7 @@ func TestLoad_ServerCertFileConfig(t *testing.T) {
 }
 
 func TestLoad_ServerCertFileConfigDefault(t *testing.T) {
-	os.Unsetenv("MACOS_USE_SERVER_CERT_FILE")
+	os.Unsetenv("EXACTMAC_SERVER_CERT_FILE")
 
 	cfg, err := Load()
 	if err != nil {
@@ -753,8 +753,8 @@ func TestLoad_ServerCertFileConfigDefault(t *testing.T) {
 }
 
 func TestLoad_DebugConfig(t *testing.T) {
-	os.Setenv("MACOS_USE_DEBUG", "true")
-	defer os.Unsetenv("MACOS_USE_DEBUG")
+	os.Setenv("EXACTMAC_DEBUG", "true")
+	defer os.Unsetenv("EXACTMAC_DEBUG")
 
 	cfg, err := Load()
 	if err != nil {
@@ -767,7 +767,7 @@ func TestLoad_DebugConfig(t *testing.T) {
 }
 
 func TestLoad_DebugConfigDefault(t *testing.T) {
-	os.Unsetenv("MACOS_USE_DEBUG")
+	os.Unsetenv("EXACTMAC_DEBUG")
 
 	cfg, err := Load()
 	if err != nil {

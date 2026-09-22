@@ -8,16 +8,16 @@ import (
 	"strings"
 	"testing"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 	"google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 func TestClipboardContractRequiresContentAndReturnsObservedResources(t *testing.T) {
-	service := pb.File_macosusesdk_v1_macos_use_proto.Services().ByName("MacosUse")
+	service := pb.File_exactmac_v1_exact_mac_proto.Services().ByName("ExactMac")
 	if service == nil {
-		t.Fatal("MacosUse descriptor is missing")
+		t.Fatal("ExactMac descriptor is missing")
 	}
 	write := service.Methods().ByName("WriteClipboard")
 	clear := service.Methods().ByName("ClearClipboard")
@@ -31,11 +31,11 @@ func TestClipboardContractRequiresContentAndReturnsObservedResources(t *testing.
 	if !publicFieldHasBehavior(content, annotations.FieldBehavior_REQUIRED) {
 		t.Error("WriteClipboardRequest.content must be REQUIRED")
 	}
-	const writeResponse = "macosusesdk.v1.WriteClipboardResponse"
+	const writeResponse = "exactmac.v1.WriteClipboardResponse"
 	if got := string(write.Output().FullName()); got != writeResponse {
 		t.Errorf("WriteClipboard output = %q, want %q", got, writeResponse)
 	}
-	const clearResponse = "macosusesdk.v1.ClearClipboardResponse"
+	const clearResponse = "exactmac.v1.ClearClipboardResponse"
 	if got := string(clear.Output().FullName()); got != clearResponse {
 		t.Errorf("ClearClipboard output = %q, want %q", got, clearResponse)
 	}
@@ -50,7 +50,7 @@ func TestClipboardContractRequiresContentAndReturnsObservedResources(t *testing.
 		field := output.Fields().ByName("clipboard")
 		if field == nil ||
 			field.Message() == nil ||
-			string(field.Message().FullName()) != "macosusesdk.v1.Clipboard" {
+			string(field.Message().FullName()) != "exactmac.v1.Clipboard" {
 			t.Errorf("%s response clipboard field is missing or has the wrong type", methodName)
 		} else if !publicFieldHasBehavior(field, annotations.FieldBehavior_OUTPUT_ONLY) {
 			t.Errorf("%s response clipboard field must be OUTPUT_ONLY", methodName)
@@ -271,7 +271,7 @@ func TestClipboardToolDistinguishesAbsentContentFromPresentEmptyText(t *testing.
 }
 
 type clipboardTruthClient struct {
-	pb.MacosUseClient
+	pb.ExactMacClient
 	getClipboard func(
 		context.Context,
 		*pb.GetClipboardRequest,

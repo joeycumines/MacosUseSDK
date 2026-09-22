@@ -8,8 +8,8 @@ import (
 	"math"
 	"strconv"
 
-	typepb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	typepb "github.com/joeycumines/ExactMac/gen/go/exactmac/type"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 )
 
 const (
@@ -27,7 +27,7 @@ func (e *displayResponseValidationError) Error() string {
 
 func loadAndValidateDisplayTopology(
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 ) ([]*pb.Display, error) {
 	var displays []*pb.Display
 	seenTokens := map[string]struct{}{"": {}}

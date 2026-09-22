@@ -1,7 +1,7 @@
 // Copyright 2025 Joseph Cumines
 //
 // MCP stdio transport integration tests - validates JSON-RPC communication
-// over stdin/stdout with the macos-use-mcp binary.
+// over stdin/stdout with the exactmac CLI (`exactmac mcp`).
 // Task: T018
 
 package integration
@@ -77,8 +77,8 @@ func TestStdioTransport_Initialize(t *testing.T) {
 		t.Errorf("protocolVersion = %q, want %q", initResult.ProtocolVersion, expectedVersion)
 	}
 
-	if initResult.ServerInfo.Name != "macos-use-sdk" {
-		t.Errorf("serverInfo.name = %q, want %q", initResult.ServerInfo.Name, "macos-use-sdk")
+	if initResult.ServerInfo.Name != "exactmac" {
+		t.Errorf("serverInfo.name = %q, want %q", initResult.ServerInfo.Name, "exactmac")
 	}
 
 	t.Logf("Initialize succeeded: protocol=%s, server=%s", initResult.ProtocolVersion, initResult.ServerInfo.Name)

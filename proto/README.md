@@ -1,12 +1,12 @@
-# MacosUseSDK Proto API
+# ExactMac Proto API
 
-This directory contains the Protocol Buffer definitions for the MacosUseSDK gRPC API.
+This directory contains the Protocol Buffer definitions for the ExactMac gRPC API.
 
 ## Structure
 
 ```
 proto/
-├── macosusesdk/
+├── exactmac/
 │   ├── type/              # Common type definitions (AIP-213)
 │   │   ├── traversal.proto  # Traversal types
 │   │   ├── geometry.proto   # Point and geometric types
@@ -18,7 +18,7 @@ proto/
 │       ├── display.proto     # Display resource
 │       ├── element.proto     # Element resource
 │       ├── input.proto       # Input resource
-│       ├── macos_use.proto   # MacosUse service and methods
+│       ├── exact_mac.proto   # ExactMac service and methods
 │       ├── macro.proto       # Macro resource
 │       ├── observation.proto # Observation resource
 │       ├── screenshot.proto  # Screenshot types
@@ -119,8 +119,8 @@ To support complex automation workflows that require reliability, the API introd
 
 ### Service Structure (AIP-190, AIP-191)
 
-  * Single service: `MacosUse`
-  * File: `macos_use.proto` contains the service definition.
+  * Single service: `ExactMac`
+  * File: `exact_mac.proto` contains the service definition.
   * Resources are modularized into their own `.proto` files.
 
 ### Selector Grammar (Element Selection)
@@ -190,7 +190,7 @@ without changing the immutable action or target.
 ### Standard Methods (AIP-130 - AIP-135)
 
 Resources expose the standard and custom methods defined for each resource in
-`macos_use.proto`; the surface is not a uniform Get/List/Create/Update/Delete
+`exact_mac.proto`; the surface is not a uniform Get/List/Create/Update/Delete
 set for every resource.
 
 ### Pagination (AIP-158)
@@ -202,17 +202,17 @@ List methods support pagination via `page_size` and `page_token`.
 All proto files include mandatory options per AIP-191:
 
 ```protobuf
-option go_package = "github.com/joeycumines/MacosUseSDK/gen/go/...";
+option go_package = "github.com/joeycumines/ExactMac/gen/go/...";
 option java_multiple_files = true;
 option java_outer_classname = "...Proto";
-option java_package = "com.macosusesdk...";
+option java_package = "com.exactmac...";
 ```
 
 ## Code Generation
 
 Generated code is committed to the repository:
 
-  - `Server/Sources/MacosUseProto/`: Swift server stubs
+  - `Server/Sources/ExactMacProto/`: Swift server stubs
   - `gen/go/`: Go client stubs
 
 ### Regenerating Code

@@ -17,31 +17,31 @@ func TestProcessSafetyGuardRejectsMutations(t *testing.T) {
 		{
 			name:      "command process wide server kill",
 			filename:  "command_test.go",
-			source:    "package integration\nfunc test() { exec.Command(\"killall\", \"-9\", \"MacosUseServer\") }\n",
+			source:    "package integration\nfunc test() { exec.Command(\"killall\", \"-9\", \"ExactMacServer\") }\n",
 			wantRules: []string{ruleServerWideKill},
 		},
 		{
 			name:      "command context process wide server kill",
 			filename:  "command_context_test.go",
-			source:    "package integration\nfunc test() { exec.CommandContext(ctx, \"pkill\", \"MacosUseServer\") }\n",
+			source:    "package integration\nfunc test() { exec.CommandContext(ctx, \"pkill\", \"ExactMacServer\") }\n",
 			wantRules: []string{ruleServerWideKill},
 		},
 		{
 			name:      "aliased exec process wide server kill",
 			filename:  "aliased_exec_test.go",
-			source:    "package integration\nfunc test() { osexec.Command(\"/usr/bin/killall\", \"-9\", \"MacosUseServer\") }\n",
+			source:    "package integration\nfunc test() { osexec.Command(\"/usr/bin/killall\", \"-9\", \"ExactMacServer\") }\n",
 			wantRules: []string{ruleServerWideKill},
 		},
 		{
 			name:      "dot imported process wide server kill",
 			filename:  "dot_exec_test.go",
-			source:    "package integration\nfunc test() { Command(\"pkill\", \"MacosUseServer\") }\n",
+			source:    "package integration\nfunc test() { Command(\"pkill\", \"ExactMacServer\") }\n",
 			wantRules: []string{ruleServerWideKill},
 		},
 		{
 			name:      "shell process wide server kill",
 			filename:  "shell_exec_test.go",
-			source:    "package integration\nfunc test() { exec.Command(\"sh\", \"-c\", \"killall -9 MacosUseServer\") }\n",
+			source:    "package integration\nfunc test() { exec.Command(\"sh\", \"-c\", \"killall -9 ExactMacServer\") }\n",
 			wantRules: []string{ruleServerWideKill},
 		},
 		{
@@ -49,7 +49,7 @@ func TestProcessSafetyGuardRejectsMutations(t *testing.T) {
 			filename: "fragmented_shell_exec_test.go",
 			source: `package integration
 func test() {
-	exec.Command("sh", "-c", ("kill" + "all") + " -9 " + ("MacosUse" + "Server"))
+	exec.Command("sh", "-c", ("kill" + "all") + " -9 " + ("ExactMac" + "Server"))
 }
 `,
 			wantRules: []string{ruleServerWideKill},
@@ -61,7 +61,7 @@ func test() {
 const (
 	killPrefix = "kill"
 	killAlias
-	serverPrefix = "MacosUse"
+	serverPrefix = "ExactMac"
 	serverAlias
 )
 func test() { exec.Command("sh", "-c", killAlias+"all -9 "+serverAlias+"Server") }
@@ -71,13 +71,13 @@ func test() { exec.Command("sh", "-c", killAlias+"all -9 "+serverAlias+"Server")
 		{
 			name:      "variable process wide server kill",
 			filename:  "variable_exec_test.go",
-			source:    "package integration\nfunc test(command string) { server := \"MacosUseServer\"; exec.Command(command, server) }\n",
+			source:    "package integration\nfunc test(command string) { server := \"ExactMacServer\"; exec.Command(command, server) }\n",
 			wantRules: []string{ruleDynamicCommandExecutable, ruleServerWideKill},
 		},
 		{
 			name:      "wrapper process wide server kill",
 			filename:  "wrapper_exec_test.go",
-			source:    "package integration\nfunc terminate(command, target string) {}\nfunc test() { terminate(\"killall\", \"MacosUseServer\") }\n",
+			source:    "package integration\nfunc terminate(command, target string) {}\nfunc test() { terminate(\"killall\", \"ExactMacServer\") }\n",
 			wantRules: []string{ruleServerWideKill},
 		},
 		{
@@ -85,7 +85,7 @@ func test() { exec.Command("sh", "-c", killAlias+"all -9 "+serverAlias+"Server")
 			filename: "derived_server_name_test.go",
 			source: `package integration
 func test() {
-	serverPath := "../Server/.build/release/MacosUseServer"
+	serverPath := "../Server/.build/release/ExactMacServer"
 	serverName := filepath.Base(serverPath)
 	exec.Command("killall", "-9", serverName)
 }
@@ -247,10 +247,10 @@ import (
 	"context"
 	"os/exec"
 	"time"
-	"github.com/joeycumines/MacosUseSDK/internal/integrationfixture"
+	"github.com/joeycumines/ExactMac/internal/integrationfixture"
 )
 func startServer(t *testing.T, ctx context.Context) {
-	cmd := exec.CommandContext(ctx, "../Server/.build/release/MacosUseServer")
+	cmd := exec.CommandContext(ctx, "../Server/.build/release/ExactMacServer")
 	if err := cmd.Start(); err != nil { t.Fatal(err) }
 	t.Log("waiting")
 	serverCtx, cancel := context.WithTimeout(ctx, time.Second)
@@ -436,7 +436,7 @@ import (
 	"context"
 	"os/exec"
 	"time"
-	"github.com/joeycumines/MacosUseSDK/internal/integrationfixture"
+	"github.com/joeycumines/ExactMac/internal/integrationfixture"
 )
 func cleanupServer(t *testing.T, cmd *exec.Cmd, addr string) {
 	if cmd != nil {
@@ -444,7 +444,7 @@ func cleanupServer(t *testing.T, cmd *exec.Cmd, addr string) {
 	}
 }
 func startServer(t *testing.T, ctx context.Context) {
-` + beforeCommand + `	cmd := exec.CommandContext(ctx, "../Server/.build/release/MacosUseServer")
+` + beforeCommand + `	cmd := exec.CommandContext(ctx, "../Server/.build/release/ExactMacServer")
 	if err := cmd.Start(); err != nil { t.Fatal(err) }
 ` + preparation + `
 	t.Log("waiting")

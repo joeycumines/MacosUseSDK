@@ -1,10 +1,10 @@
-# MacosUseServer
+# ExactMacServer
 
-gRPC server providing macOS automation capabilities via the MacosUseSDK.
+gRPC server providing macOS automation capabilities via the ExactMac.
 
 ## Overview
 
-MacosUseServer is a Swift 6-based gRPC server that exposes macOS accessibility, window management, screenshot, input simulation, and scripting APIs. It serves as the backend for the MCP (Model Context Protocol) tool, enabling AI assistants to interact with macOS applications.
+ExactMacServer is a Swift 6-based gRPC server that exposes macOS accessibility, window management, screenshot, input simulation, and scripting APIs. It serves as the backend for the MCP (Model Context Protocol) tool, enabling AI assistants to interact with macOS applications.
 
 ## Prerequisites
 
@@ -25,14 +25,14 @@ swift build
 swift build -c release
 
 # Run the server
-swift run MacosUseServer
+swift run ExactMacServer
 ```
 
 Or from the project root using GNU make:
 
 ```bash
 gmake swift.build.Server   # Builds the Server package (release)
-# Run: Server/.build/release/MacosUseServer
+# Run: Server/.build/release/ExactMacServer
 ```
 
 ## Configuration
@@ -78,7 +78,7 @@ unset GRPC_UNIX_SOCKET
 export GRPC_LISTEN_ADDRESS="127.0.0.1"
 export GRPC_PORT="8080"
 
-swift run MacosUseServer
+swift run ExactMacServer
 ```
 
 The local LaunchAgent deployment configures `GRPC_UNIX_SOCKET` and supplies the
@@ -89,7 +89,7 @@ When `MCP_AUDIT_LOG_FILE` is set, the MCP process records tool name, status, dur
 
 ## API Reference
 
-See [DEPLOYMENT.md](../DEPLOYMENT.md) for the complete deployment guide and the gRPC proto sources under [proto/](../proto/) for the resource-oriented API. The MCP tool surface is documented in [../skills/macos-use/](../skills/macos-use/).
+See [DEPLOYMENT.md](../DEPLOYMENT.md) for the complete deployment guide and the gRPC proto sources under [proto/](../proto/) for the resource-oriented API. The MCP tool surface is documented in [../skills/exactmac/](../skills/exactmac/).
 
 - 29 CUA-aligned MCP tools (see the skill's workflow reference)
 - Coordinate system reference
@@ -134,13 +134,13 @@ See [DEPLOYMENT.md](../DEPLOYMENT.md) for comprehensive deployment guidance.
                             │ JSON-RPC over stdio / Streamable HTTP
                             ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                       macos-use-mcp (Go)                             │
+│                       exactmac mcp (Go)                             │
 │                  MCP Protocol Handler                           │
 └───────────────────────────┬─────────────────────────────────────┘
                             │ gRPC
                             ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                   MacosUseServer (Swift)                        │
+│                   ExactMacServer (Swift)                        │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
 │  │ Application │  │   Window    │  │        Element          │  │
 │  │  Handler    │  │  Handler    │  │        Handler          │  │
@@ -153,7 +153,7 @@ See [DEPLOYMENT.md](../DEPLOYMENT.md) for comprehensive deployment guidance.
                             │
                             ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                     MacosUseSDK (Swift)                         │
+│                     ExactMac (Swift)                         │
 │            Accessibility, Window, Input, Screenshot             │
 └───────────────────────────┬─────────────────────────────────────┘
                             │
@@ -174,7 +174,7 @@ swift test
 
 ### Proto Generation
 
-Proto files are located in `../proto/macosusesdk/v1/`. To regenerate Swift stubs:
+Proto files are located in `../proto/exactmac/v1/`. To regenerate Swift stubs:
 
 ```bash
 # From project root
@@ -186,7 +186,7 @@ gmake buf.generate
 - [grpc-swift-2](https://github.com/grpc/grpc-swift-2) - gRPC Swift 2 core
 - [grpc-swift-protobuf](https://github.com/grpc/grpc-swift-protobuf) - Protobuf integration
 - [grpc-swift-nio-transport](https://github.com/grpc/grpc-swift-nio-transport) - HTTP/2 transport
-- MacosUseSDK - macOS automation primitives
+- ExactMac - macOS automation primitives
 
 ## License
 

@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/joeycumines/MacosUseSDK/internal/config"
+	"github.com/joeycumines/ExactMac/internal/config"
 )
 
 func TestHandleWait_UsesToolCallContext(t *testing.T) {

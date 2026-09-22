@@ -9,13 +9,13 @@ import (
 	"strings"
 	"testing"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
-	"github.com/joeycumines/MacosUseSDK/internal/config"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
+	"github.com/joeycumines/ExactMac/internal/config"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 func TestInputAdmissionDescriptorSurface(t *testing.T) {
-	file := pb.File_macosusesdk_v1_input_proto
+	file := pb.File_exactmac_v1_input_proto
 	inputAction := file.Messages().ByName("InputAction")
 	if inputAction == nil {
 		t.Fatal("InputAction descriptor is absent")
@@ -273,7 +273,7 @@ func TestInputAdmissionRegisteredSchemasAndPreMutationValidation(t *testing.T) {
 
 func newInputAdmissionRecordingServer() (*MCPServer, *[]*pb.CreateInputRequest) {
 	requests := make([]*pb.CreateInputRequest, 0, 1)
-	client := &mockMacosUseClient{
+	client := &mockExactMacClient{
 		createInputFunc: func(_ context.Context, request *pb.CreateInputRequest) (*pb.Input, error) {
 			requests = append(requests, request)
 			return completedInputResponse(request), nil

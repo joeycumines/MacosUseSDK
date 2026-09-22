@@ -10,23 +10,23 @@ import (
 	"strings"
 	"testing"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 	"google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
 var expectedPublicQuerySemantics = map[string]string{
-	"macosusesdk.v1.MacosUse.ListApplicationBundles:order_by": "fields=name|display_name|bundle_id|bundle_url; default=name asc; optional direction=desc",
-	"macosusesdk.v1.MacosUse.ListApplicationBundles:filter":   "quoted equality fields=display_name|bundle_id; conjunction=AND; empty=all",
-	"macosusesdk.v1.MacosUse.ListApplications:order_by":       "fields=name|pid|display_name|bundle_id|active; default=name asc; optional direction=desc",
-	"macosusesdk.v1.MacosUse.ListApplications:filter":         "quoted equality fields=display_name|bundle_id; conjunction=AND; empty=all",
-	"macosusesdk.v1.MacosUse.ListInputs:filter":               "state token=PENDING|EXECUTING|COMPLETED|FAILED|CANCELLED; empty=all",
-	"macosusesdk.v1.MacosUse.GetWindow:read_mask":             "paths=name|title|bounds|visible|layer|bundle_id|*; empty=all; wildcard must be sole path",
-	"macosusesdk.v1.MacosUse.ListWindows:order_by":            "fields=name|title|layer; comma-separated; default=name asc; optional direction=asc|desc; ties=name asc",
-	"macosusesdk.v1.MacosUse.ListWindows:filter":              "clauses=title quoted case-sensitive equality with * wildcard|visible boolean; conjunction=whitespace|AND; empty=all; minimized is unsupported and rejected",
-	"macosusesdk.v1.MacosUse.UpdateMacro:update_mask":         "paths=display_name|description|actions|parameters|tags; empty=replace all mutable fields",
-	"google.longrunning.Operations.ListOperations:filter":     "expression=done=true|done=false; empty=all",
+	"exactmac.v1.ExactMac.ListApplicationBundles:order_by": "fields=name|display_name|bundle_id|bundle_url; default=name asc; optional direction=desc",
+	"exactmac.v1.ExactMac.ListApplicationBundles:filter":   "quoted equality fields=display_name|bundle_id; conjunction=AND; empty=all",
+	"exactmac.v1.ExactMac.ListApplications:order_by":       "fields=name|pid|display_name|bundle_id|active; default=name asc; optional direction=desc",
+	"exactmac.v1.ExactMac.ListApplications:filter":         "quoted equality fields=display_name|bundle_id; conjunction=AND; empty=all",
+	"exactmac.v1.ExactMac.ListInputs:filter":               "state token=PENDING|EXECUTING|COMPLETED|FAILED|CANCELLED; empty=all",
+	"exactmac.v1.ExactMac.GetWindow:read_mask":             "paths=name|title|bounds|visible|layer|bundle_id|*; empty=all; wildcard must be sole path",
+	"exactmac.v1.ExactMac.ListWindows:order_by":            "fields=name|title|layer; comma-separated; default=name asc; optional direction=asc|desc; ties=name asc",
+	"exactmac.v1.ExactMac.ListWindows:filter":              "clauses=title quoted case-sensitive equality with * wildcard|visible boolean; conjunction=whitespace|AND; empty=all; minimized is unsupported and rejected",
+	"exactmac.v1.ExactMac.UpdateMacro:update_mask":         "paths=display_name|description|actions|parameters|tags; empty=replace all mutable fields",
+	"google.longrunning.Operations.ListOperations:filter":  "expression=done=true|done=false; empty=all",
 }
 
 var expectedPublicQueryDocumentation = map[string][]string{
@@ -54,18 +54,18 @@ var expectedPublicQueryDocumentation = map[string][]string{
 }
 
 var publicPaginationInputs = map[string]string{
-	"macosusesdk.v1.MacosUse.ListApplicationBundles": "filter,order_by,view,page_size",
-	"macosusesdk.v1.MacosUse.ListApplications":       "filter,order_by,view,page_size",
-	"macosusesdk.v1.MacosUse.ListInputs":             "parent,filter,page_size",
-	"macosusesdk.v1.MacosUse.FindElements":           "parent,selector,visible_only,force_refresh,page_size",
-	"macosusesdk.v1.MacosUse.FindRegionElements":     "parent,region,selector,force_refresh,page_size",
-	"macosusesdk.v1.MacosUse.ListElements":           "parent,page_size",
-	"macosusesdk.v1.MacosUse.ListWindows":            "parent,filter,order_by",
-	"macosusesdk.v1.MacosUse.ListObservations":       "parent,page_size",
-	"macosusesdk.v1.MacosUse.ListSessions":           "page_size",
-	"macosusesdk.v1.MacosUse.ListMacros":             "page_size",
-	"macosusesdk.v1.MacosUse.ListDisplays":           "page_size",
-	"google.longrunning.Operations.ListOperations":   "name,filter,return_partial_success,page_size",
+	"exactmac.v1.ExactMac.ListApplicationBundles":  "filter,order_by,view,page_size",
+	"exactmac.v1.ExactMac.ListApplications":        "filter,order_by,view,page_size",
+	"exactmac.v1.ExactMac.ListInputs":              "parent,filter,page_size",
+	"exactmac.v1.ExactMac.FindElements":            "parent,selector,visible_only,force_refresh,page_size",
+	"exactmac.v1.ExactMac.FindRegionElements":      "parent,region,selector,force_refresh,page_size",
+	"exactmac.v1.ExactMac.ListElements":            "parent,page_size",
+	"exactmac.v1.ExactMac.ListWindows":             "parent,filter,order_by",
+	"exactmac.v1.ExactMac.ListObservations":        "parent,page_size",
+	"exactmac.v1.ExactMac.ListSessions":            "page_size",
+	"exactmac.v1.ExactMac.ListMacros":              "page_size",
+	"exactmac.v1.ExactMac.ListDisplays":            "page_size",
+	"google.longrunning.Operations.ListOperations": "name,filter,return_partial_success,page_size",
 }
 
 func TestPublicQueryPoliciesAreExactAndDocumented(t *testing.T) {
@@ -97,7 +97,7 @@ func TestPublicQueryPoliciesAreExactAndDocumented(t *testing.T) {
 	if !ok {
 		t.Fatal("cannot resolve contract-policy source path")
 	}
-	protoPath := filepath.Join(filepath.Dir(thisFile), "..", "..", "proto", "macosusesdk", "v1", "macos_use.proto")
+	protoPath := filepath.Join(filepath.Dir(thisFile), "..", "..", "proto", "exactmac", "v1", "exact_mac.proto")
 	protoBytes, err := os.ReadFile(protoPath)
 	if err != nil {
 		t.Fatalf("read public proto contract: %v", err)
@@ -159,7 +159,7 @@ func publicQuerySemantics(rpc, path, paginationInputs string) string {
 	}
 	switch topLevel {
 	case "page_size":
-		if rpc == "macosusesdk.v1.MacosUse.ListWindows" {
+		if rpc == "exactmac.v1.ExactMac.ListWindows" {
 			return "bounded shared page-size policy excluded from page-token query binding and honored on continuation"
 		}
 		return "bounded shared page-size policy included in page-token query binding"
@@ -178,10 +178,10 @@ func TestPublicFieldDispositionFixtureClassifiesRejectedCreateNames(t *testing.T
 		t.Fatalf("load explicit public field dispositions: %v", err)
 	}
 	for _, field := range []string{
-		"macosusesdk.v1.MacosUse.CreateInput:input.name",
-		"macosusesdk.v1.MacosUse.CreateMacro:macro.name",
-		"macosusesdk.v1.MacosUse.CreateObservation:observation.name",
-		"macosusesdk.v1.MacosUse.CreateSession:session.name",
+		"exactmac.v1.ExactMac.CreateInput:input.name",
+		"exactmac.v1.ExactMac.CreateMacro:macro.name",
+		"exactmac.v1.ExactMac.CreateObservation:observation.name",
+		"exactmac.v1.ExactMac.CreateSession:session.name",
 	} {
 		if got := policies[field]; got != "rejected" {
 			t.Errorf("%s disposition = %q, want rejected", field, got)
@@ -190,7 +190,7 @@ func TestPublicFieldDispositionFixtureClassifiesRejectedCreateNames(t *testing.T
 }
 
 func TestInputResourceDescriptorSupportsApplicationAndDesktopWildcard(t *testing.T) {
-	message := pb.File_macosusesdk_v1_input_proto.Messages().ByName("Input")
+	message := pb.File_exactmac_v1_input_proto.Messages().ByName("Input")
 	if message == nil {
 		t.Fatal("Input descriptor is missing")
 	}
@@ -223,14 +223,14 @@ func TestPaginationPoliciesCoverEveryCollectionAndListWindowsExcludesPageSize(t 
 			len(publicPaginationInputs),
 		)
 	}
-	inputs := publicPaginationInputs["macosusesdk.v1.MacosUse.ListWindows"]
+	inputs := publicPaginationInputs["exactmac.v1.ExactMac.ListWindows"]
 	if strings.Contains(","+inputs+",", ",page_size,") {
 		t.Errorf("ListWindows token inputs = %q, page_size must be honored rather than query-bound", inputs)
 	}
 }
 
 func TestWriteClipboardClearExistingIsRemovedAndReserved(t *testing.T) {
-	message := pb.File_macosusesdk_v1_macos_use_proto.Messages().ByName("WriteClipboardRequest")
+	message := pb.File_exactmac_v1_exact_mac_proto.Messages().ByName("WriteClipboardRequest")
 	if message == nil {
 		t.Fatal("WriteClipboardRequest descriptor is missing")
 	}
@@ -259,7 +259,7 @@ func TestWriteClipboardClearExistingIsRemovedAndReserved(t *testing.T) {
 	if err != nil {
 		t.Fatalf("load explicit public field dispositions: %v", err)
 	}
-	if disposition, ok := policies["macosusesdk.v1.MacosUse.WriteClipboard:clear_existing"]; ok {
+	if disposition, ok := policies["exactmac.v1.ExactMac.WriteClipboard:clear_existing"]; ok {
 		t.Errorf("removed clear_existing remains a live field policy with disposition %q", disposition)
 	}
 }

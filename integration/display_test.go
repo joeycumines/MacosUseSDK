@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 )
 
 func TestListDisplays(t *testing.T) {
@@ -15,7 +15,7 @@ func TestListDisplays(t *testing.T) {
 	conn := connectToServer(t, ctx, addr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 
 	// Make the call
 	resp, err := client.ListDisplays(ctx, &pb.ListDisplaysRequest{})

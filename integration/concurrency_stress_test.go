@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 )
 
 // TestConcurrencyStress sends multiple concurrent gRPC requests to verify
@@ -23,7 +23,7 @@ func TestConcurrencyStress(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 
 	const (
 		numGoroutines = 50
@@ -38,24 +38,24 @@ func TestConcurrencyStress(t *testing.T) {
 	)
 
 	// Define operation types to mix (all are parameter-free read-only ops)
-	operations := []func(ctx context.Context, c pb.MacosUseClient) error{
+	operations := []func(ctx context.Context, c pb.ExactMacClient) error{
 		// List applications (no parent/name required)
-		func(ctx context.Context, c pb.MacosUseClient) error {
+		func(ctx context.Context, c pb.ExactMacClient) error {
 			_, err := c.ListApplications(ctx, &pb.ListApplicationsRequest{PageSize: 10})
 			return err
 		},
 		// List displays
-		func(ctx context.Context, c pb.MacosUseClient) error {
+		func(ctx context.Context, c pb.ExactMacClient) error {
 			_, err := c.ListDisplays(ctx, &pb.ListDisplaysRequest{})
 			return err
 		},
 		// Get clipboard (requires Name: "clipboard")
-		func(ctx context.Context, c pb.MacosUseClient) error {
+		func(ctx context.Context, c pb.ExactMacClient) error {
 			_, err := c.GetClipboard(ctx, &pb.GetClipboardRequest{Name: "clipboard"})
 			return err
 		},
 		// List applications again with different page size
-		func(ctx context.Context, c pb.MacosUseClient) error {
+		func(ctx context.Context, c pb.ExactMacClient) error {
 			_, err := c.ListApplications(ctx, &pb.ListApplicationsRequest{PageSize: 50})
 			return err
 		},
@@ -146,7 +146,7 @@ func TestConcurrencyMutationSafety(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 
 	const numGoroutines = 10
 	var wg sync.WaitGroup
@@ -213,7 +213,7 @@ func TestConcurrencyNoDeadlock(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 
 	const numOps = 20
 	var (

@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/joeycumines/MacosUseSDK/internal/transport"
+	"github.com/joeycumines/ExactMac/internal/transport"
 )
 
 func TestRequestAdmissionGlobalPerClientNonBlockingAndReusable(t *testing.T) {

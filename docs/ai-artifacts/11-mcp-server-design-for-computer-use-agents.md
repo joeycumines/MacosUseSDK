@@ -32,7 +32,7 @@ Third, the earlier version treated production deployment data as a four-sentence
 
 Fourth, the earlier version stated falsification criteria in vague terms ("outperform," "equivalently"). This version provides actionable falsification criteria with minimum effect sizes, statistical tests, and cost estimates.
 
-Fifth, the earlier version did not acknowledge the source of its engineering observations. This version explicitly states that the observations in Section 6 were collected during the development of MacosUseSDK, an open-source macOS automation framework. The analysis was conducted after the implementation existed. Post-hoc analysis is inherently weaker than prospective research. This paper attempts to mitigate this bias by: (1) presenting raw observations with code references rather than design implications, (2) labeling hypotheses as hypotheses with falsification criteria, (3) framing engineering observations as instances of known problem classes rather than novel findings, (4) documenting five reliability mitigations present in the codebase that reduce the severity of the documented failures, and (5) marking unverifiable sources explicitly. The reader should assess whether these mitigations are sufficient. The engineering observations should be treated as confirmed for one implementation (n = 1), with cross-validation pending.
+Fifth, the earlier version did not acknowledge the source of its engineering observations. This version explicitly states that the observations in Section 6 were collected during the development of ExactMac, an open-source macOS automation framework. The analysis was conducted after the implementation existed. Post-hoc analysis is inherently weaker than prospective research. This paper attempts to mitigate this bias by: (1) presenting raw observations with code references rather than design implications, (2) labeling hypotheses as hypotheses with falsification criteria, (3) framing engineering observations as instances of known problem classes rather than novel findings, (4) documenting five reliability mitigations present in the codebase that reduce the severity of the documented failures, and (5) marking unverifiable sources explicitly. The reader should assess whether these mitigations are sufficient. The engineering observations should be treated as confirmed for one implementation (n = 1), with cross-validation pending.
 
 ### 1.2 Scope and Contributions
 
@@ -255,7 +255,7 @@ Romano et al. [ICSE 2021] analyzed 2,177 flaky UI tests across 62 open-source pr
 
 Luo et al. [FSE 2014] independently found that **45.9% of flakiness is caused by async-wait issues** across 201 commits from 51 projects. The convergence of these two studies at ~45% establishes the async-wait category as the dominant source of UI automation unreliability.
 
-The WEFix study [WWW 2024] found that **65.7% of end-to-end commands are flaky-prone** across 7 real-world web projects, and that **98.4% of flaky tests can be fixed by generating proper wait oracles** --- essentially the same strategy as the MacosUseSDK's PollUntil pattern after minimize operations (Section 6.4).
+The WEFix study [WWW 2024] found that **65.7% of end-to-end commands are flaky-prone** across 7 real-world web projects, and that **98.4% of flaky tests can be fixed by generating proper wait oracles** --- essentially the same strategy as the ExactMac's PollUntil pattern after minimize operations (Section 6.4).
 
 The ICST 2025 study of 123 flaky tests across 49 open-source projects found that DOM event flakiness takes an **average of 153.4 days to resolve**, indicating that these are persistent, difficult-to-fix problems, not transient bugs.
 
@@ -308,17 +308,17 @@ Wang et al. [ICLR 2024 Spotlight] formalized Delayed Observation MDPs (DOMDPs). 
 
 Chen et al. [NeurIPS 2023] established regret bounds for RL with impaired observability, proving that "a short delay does not reduce the optimal value, but slightly longer delay leads to substantial degradation" [Chen et al., 2023]. The formal result: RL with impaired observability is "provably as efficient as RL with full observability (up to poly factors of the horizon H)" when the delay is short relative to the horizon, but this efficiency guarantee degrades non-linearly as the delay-to-horizon ratio increases.
 
-Karamzade et al. [RLJ 2024] showed that **world models can mitigate observation delay by up to 250%** (improvement over agentic baselines on DMC vision tasks), using actions and predictions to reconstruct current state. The MacosUseSDK's AppStateStore serves an analogous function: it maintains a consistent view of the UI state that can be queried independently of the AX server's real-time state, providing a "world model" that partially compensates for AX staleness.
+Karamzade et al. [RLJ 2024] showed that **world models can mitigate observation delay by up to 250%** (improvement over agentic baselines on DMC vision tasks), using actions and predictions to reconstruct current state. The ExactMac's AppStateStore serves an analogous function: it maintains a consistent view of the UI state that can be queried independently of the AX server's real-time state, providing a "world model" that partially compensates for AX staleness.
 
 #### 4.4.2 The AX API as an Eventually Consistent System
 
-The macOS Accessibility API exhibits properties formally characterized in distributed systems as eventual consistency. After a mutation (e.g., moving a window), the AX server's internal state is temporarily inconsistent with the mutations that have been applied. Subsequent reads may return stale data for up to 750ms as observed in MacosUseSDK's retry budget (Section 6.1); this figure is an implementation-specific timeout, not a measured AX server convergence time. This is a **read-after-write consistency** problem: the write has committed, but the read does not yet reflect it.
+The macOS Accessibility API exhibits properties formally characterized in distributed systems as eventual consistency. After a mutation (e.g., moving a window), the AX server's internal state is temporarily inconsistent with the mutations that have been applied. Subsequent reads may return stale data for up to 750ms as observed in ExactMac's retry budget (Section 6.1); this figure is an implementation-specific timeout, not a measured AX server convergence time. This is a **read-after-write consistency** problem: the write has committed, but the read does not yet reflect it.
 
-Bailis et al. [VLDB 2012; CACM 2014] developed the **Probabilistically Bounded Staleness (PBS)** framework for quantifying such guarantees. PBS defines three metrics: t-visibility (time until a read is guaranteed to see a write), k-staleness (how many writes a read may miss), and (K,\Delta)-staleness (bounded staleness in both version and time). The AX API's behavior maps directly to PBS t-visibility: after a mutation, there exists a window of \Delta \approx 750ms (observed in MacosUseSDK; actual convergence may be faster) during which reads may not reflect the write.
+Bailis et al. [VLDB 2012; CACM 2014] developed the **Probabilistically Bounded Staleness (PBS)** framework for quantifying such guarantees. PBS defines three metrics: t-visibility (time until a read is guaranteed to see a write), k-staleness (how many writes a read may miss), and (K,\Delta)-staleness (bounded staleness in both version and time). The AX API's behavior maps directly to PBS t-visibility: after a mutation, there exists a window of \Delta \approx 750ms (observed in ExactMac; actual convergence may be faster) during which reads may not reflect the write.
 
 V3 cited specific consistency percentages (97.4% immediate consistency, >99.999% within 5ms) from LinkedIn production data in the PBS paper. **These figures could not be independently verified** from the published paper; they appear to derive from a slide deck presentation that could not be parsed reliably. The PBS framework's analytical framework is verified; the specific production numbers are unverifiable.
 
-The AX API's observed 750ms staleness window (a retry timeout from MacosUseSDK, not a measured convergence time) is significantly worse than typical eventually consistent systems, which converge in milliseconds. Note that this comparison is between a retry budget and convergence times — different quantities. The actual AX server convergence time is unknown. The AX server was designed for assistive technology consumers that poll at human-perceptible rates (typically 100ms or slower), not for automated agents that read-act-read in tight loops.
+The AX API's observed 750ms staleness window (a retry timeout from ExactMac, not a measured convergence time) is significantly worse than typical eventually consistent systems, which converge in milliseconds. Note that this comparison is between a retry budget and convergence times — different quantities. The actual AX server convergence time is unknown. The AX server was designed for assistive technology consumers that poll at human-perceptible rates (typically 100ms or slower), not for automated agents that read-act-read in tight loops.
 
 Daniel et al. [Middleware 2018] proved a **three-way impossibility result**: a system cannot simultaneously provide (1) atomic/order-preserving reads, (2) minimal delay, and (3) maximal freshness. This theorem applies directly to the desktop agent's dilemma:
 
@@ -326,7 +326,7 @@ Daniel et al. [Middleware 2018] proved a **three-way impossibility result**: a s
 - **Minimal delay**: Returning immediately without waiting for synchronization (800ms action cycle)
 - **Maximal freshness**: Reading the most recent state after a mutation (750ms AX propagation lag)
 
-The MacosUseSDK's three-tier data authority (ListWindows for fast cached data, GetWindow for fresh AX data, GetWindowState for deep authoritative data) is an engineering instantiation of this tradeoff: each tier optimizes for two of the three properties while sacrificing the third.
+The ExactMac's three-tier data authority (ListWindows for fast cached data, GetWindow for fresh AX data, GetWindowState for deep authoritative data) is an engineering instantiation of this tradeoff: each tier optimizes for two of the three properties while sacrificing the third.
 
 #### 4.4.3 Implications for Agent Architecture
 
@@ -429,7 +429,7 @@ New research strengthens and refines this finding:
 
 **Performance cliffs and exponential decay.** Wang et al. [AAAI 2026] proposed the CLAI framework, which models tool selection accuracy as Accuracy ≈ exp(-(k*CL_Total + b)), where CL_Total is the total cognitive load imposed by the tool interface. This exponential decay model was statistically validated via Hosmer-Lemeshow tests (p>0.05 for all tested models) across four LLMs: xLAM2-32B (78.8%), GPT-4o (68.0%), Claude 3.7 (64.8%), Llama3.3-70B (17.0%) [Wang et al., 2026]. The exponential model implies performance cliffs: accuracy remains high until cognitive load crosses a threshold, then drops sharply.
 
-**MCP-specific token overhead.** Sadani and Kumar [2026] --- correcting V3's misattribution to "Bansal et al." --- measured 15,000--55,000 tokens per turn overhead in typical 4--6 server MCP deployments. Their analysis identifies a **fracture point at N~50 tools**, where context utilization reaches ~70% and accuracy degrades sharply. For a MacosUseSDK-scale deployment, the token math is concrete: 77 tools * ~1,000 tokens per tool description = ~77,000 tokens, which is **60% of a 128K context window** --- crossing the fracture point. A compressed surface of 23 tools * ~500 tokens = ~11,500 tokens, or **9% of a 128K window** --- well within the safe range [MCP Issue #2808; Sadani & Kumar, 2026].
+**MCP-specific token overhead.** Sadani and Kumar [2026] --- correcting V3's misattribution to "Bansal et al." --- measured 15,000--55,000 tokens per turn overhead in typical 4--6 server MCP deployments. Their analysis identifies a **fracture point at N~50 tools**, where context utilization reaches ~70% and accuracy degrades sharply. For a ExactMac-scale deployment, the token math is concrete: 76 tools * ~1,000 tokens per tool description = ~76,000 tokens, which is **~60% of a 128K context window** --- crossing the fracture point. A compressed surface of 23 tools * ~500 tokens = ~11,500 tokens, or **9% of a 128K window** --- well within the safe range [MCP Issue #2808; Sadani & Kumar, 2026]. (Historical arithmetic from the 23-tool era; the production surface has since grown to 29 tools with the 6 macro tools — the fracture-point argument is unaffected, but the per-surface token math above is stale.)
 
 **Routing vs. execution accuracy.** The "Knowing-Doing Gap" [arXiv:2605.14038] found 26.5--54.0% mismatch between knowing which tool to use and correctly executing the invocation, on arithmetic tasks. The bottleneck is **execution, not knowing**. A four-layer evaluation stack distinguishes tool selection from argument extraction from result utilization from error recovery, and each layer adds independent failure probability. This distinction is critical for desktop automation: a model may correctly route to `click_element` but fail to extract the correct `element_id` parameter, producing a routing-correct but execution-failed action.
 
@@ -531,12 +531,12 @@ These three failure modes are real and consequential, and they make macOS qualit
 
 | Platform | Accessibility API | Observed Latency | Source |
 |---|---|---|---|
-| macOS | AXAPI | up to 750ms (retry timeout; MacosUseSDK n=1) | Section 6.1 |
+| macOS | AXAPI | up to 750ms (retry timeout; ExactMac n=1) | Section 6.1 |
 | Windows | UIA | 200--300ms (NVDA delays) | AccessKit/Slint issue #7546 |
 | Android | AccessibilityNodeInfo | ~100ms (Compose bounds batching) | Android documentation |
 | Linux | AT-SPI | Worst IPC latency (D-Bus round trips) | GNOME acknowledges "fatal flaw" |
 
-macOS has the highest observed single-query latency (750ms), but this figure comes from a specific implementation (MacosUseSDK) and may vary by macOS version, hardware, and query pattern. The Linux AT-SPI latency is the most consistently problematic: GNOME's own documentation acknowledges that D-Bus round trips create a "fatal flaw" for responsive accessibility.
+macOS has the highest observed single-query latency (750ms), but this figure comes from a specific implementation (ExactMac) and may vary by macOS version, hardware, and query pattern. The Linux AT-SPI latency is the most consistently problematic: GNOME's own documentation acknowledges that D-Bus round trips create a "fatal flaw" for responsive accessibility.
 
 #### 5.5.4 Benchmark Evidence
 
@@ -554,43 +554,43 @@ Three benchmarks provide cross-platform data:
 
 ## 6. Engineering Observations from macOS Accessibility
 
-This section documents failure modes observed during the development of MacosUseSDK, a macOS automation server built on the Accessibility API (AXAPI). Each observation is framed as an instance of a known problem class from the UI automation, distributed systems, or software testing literature. This framing is deliberate: the failure modes themselves are not novel. What warrants documentation is (a) their concrete manifestation in the macOS AX layer, (b) their interaction with an LLM decision-maker, and (c) the reliability mitigations present in the implementation that prior reporting of these observations omitted.
+This section documents failure modes observed during the development of ExactMac, a macOS automation server built on the Accessibility API (AXAPI). Each observation is framed as an instance of a known problem class from the UI automation, distributed systems, or software testing literature. This framing is deliberate: the failure modes themselves are not novel. What warrants documentation is (a) their concrete manifestation in the macOS AX layer, (b) their interaction with an LLM decision-maker, and (c) the reliability mitigations present in the implementation that prior reporting of these observations omitted.
 
 All observations originate from a single implementation (n=1). Section 6.8 assesses cross-validation status and generalizability.
 
 ### 6.1 AX Server State Propagation Lag
 
-**Observation.** After any window mutation (move, resize, minimize, restore), the private API `_AXUIElementGetWindow` fails for up to 750ms while the Accessibility server synchronizes its internal mappings. The MacosUseSDK implements a retry loop with exponential backoff: 5 retries with delays of 50ms, 100ms, 200ms, and 400ms, for a worst-case total delay of 750ms before falling back to heuristic matching (WindowHelpers.swift:149--179). The code comment states: "After geometry mutations (MoveWindow, ResizeWindow), the private API `_AXUIElementGetWindow` can transiently fail while the Accessibility server synchronizes internal mappings."
+**Observation (historical line refs).** After any window mutation (move, resize, minimize, restore), the private API `_AXUIElementGetWindow` fails for up to 750ms while the Accessibility server synchronizes its internal mappings. The ExactMac implements a retry loop with exponential backoff: up to 5 attempts with delays of 50ms, 100ms, 200ms, and 400ms (4 sleeps across 5 attempts, 750ms worst case), resolving by exact AX identity — no title/bounds heuristic fallback is used in the current implementation. Era-anchored line refs below are stale; see `findWindowElement` in `Server/Sources/ExactMacServer/WindowHelpers.swift` for current code.
 
 **Problem class.** This is the macOS equivalent of Selenium's `StaleElementReferenceException` --- an element reference becomes invalid because the underlying DOM (or, in this case, the AX server's internal index) has been updated between the reference acquisition and its use. Romano et al. [ICSE 2021] found that 45.1% of UI test flakiness is caused by asynchronous wait issues of this type. Luo et al. [FSE 2014] independently confirmed 45.9% async-wait prevalence across 51 projects. The WEFix study [WWW 2024] found that 65.7% of end-to-end commands are flaky-prone, with 98.4% fixable by generating proper wait oracles --- the same strategy as the retry-with-backoff pattern here.
 
-**Mitigations present in codebase.** The prior version of this paper (V3) documented the 750ms delay but omitted the primary mitigation. After the retry loop exhausts its attempts, WindowHelpers.swift falls back to heuristic geometric matching using bounds comparison (WindowHelpers.swift:181--222). In practice, most window lookups succeed --- either via exact ID match (fast path) or heuristic match (slower but reliable). The retry-with-fallback pattern is structurally identical to the self-healing selector strategies documented in the RPA literature, where fuzzy matching reduces locator failures by 40--60% [IJAM 2025].
+**Mitigations present in codebase.** The prior version of this paper (V3) documented the 750ms delay but omitted the primary mitigation. Resolution is by exact AX identity (retained element + private window ID); title/bounds heuristics are deliberately not used for presence (see `exactWindowPresence` in `WindowHelpers.swift`). References below to geometric fallback are era-anchored and stale. The retry pattern is structurally identical to the self-healing selector strategies documented in the RPA literature, where retry-with-backoff reduces locator failures [IJAM 2025].
 
 The 750ms figure is an empirical observation from one implementation, not a documented Apple specification. Whether this delay is constant or varies by macOS version, hardware, or query pattern has not been measured externally.
 
 ### 6.2 CGWindowList Staleness and the Hybrid Authority Problem
 
-**Observation.** `CGWindowListCopyWindowInfo` (the Quartz/CG API for enumerating windows) lags behind the Accessibility server by 10--100ms during normal operation and by multiple frames during animations. After a window mutation, the CG-reported bounds can differ from AX-reported bounds. The window-state-management document characterizes the delta as ranging from "tens to several hundreds" of pixels; a 1000-pixel threshold serves as the heuristic cutoff for rejecting CG/AX matches (WindowQuery.swift).
+**Observation (historical refs).** `CGWindowListCopyWindowInfo` (the Quartz/CG API for enumerating windows) lags behind the Accessibility server during animations. The living architecture reference is `docs/window-state-management.md` (Hybrid Authority model); the `WindowQuery.swift` filename and 1000px-threshold refs below are era-anchored — the current bridging logic lives in `WindowRegistry.swift` / `WindowHelpers.swift` and resolves by exact AX identity.
 
-**Problem class.** The "Hybrid Authority" model --- where two data sources (CG and AX) provide overlapping but potentially inconsistent views of the same entities --- is structurally identical to a multi-master replication problem in distributed systems. Bailis et al. [VLDB 2012] developed the Probabilistically Bounded Staleness (PBS) framework for quantifying such guarantees. PBS defines (K,\Delta)-staleness: a read is (K,\Delta)-staleness-consistent if it reflects at least K of the most recent writes, and the writes it reflects are no older than \Delta seconds. In the AX/CG context: a `ListWindows` call (CG authority) may return bounds that are \Delta milliseconds stale relative to the most recent mutation, where \Delta varies from 10ms (steady state) to multiple animation frames (during transitions).
+**Problem class.** The "Hybrid Authority" model --- where two data sources (CG and AX) provide overlapping but potentially inconsistent views of the same entities --- is structurally identical to a multi-master replication problem in distributed systems. Bailis et al. [VLDB 2012] developed the Probabilistically Bounded Staleness (PBS) framework for quantifying such guarantees. PBS defines (K,\Delta)-staleness: a read is (K,\Delta)-staleness-consistent if it reflects at least K of the most recent writes, and the writes it reflects are no older than \Delta seconds. In the AX/CG context: a `ListWindows` call (CG authority) may return bounds that are \Delta stale relative to the most recent mutation (illustrative numbers below; the living reference states only staleness-during-animation semantics — see `docs/window-state-management.md`).
 
-Daniel et al. [Middleware 2018] proved a three-way impossibility: a system cannot simultaneously provide atomic reads, minimal delay, and maximal freshness. The MacosUseSDK's three-tier data authority is an engineering instantiation of this tradeoff:
+Daniel et al. [Middleware 2018] proved a three-way impossibility: a system cannot simultaneously provide atomic reads, minimal delay, and maximal freshness. The ExactMac's three-tier data authority is an engineering instantiation of this tradeoff:
 
 | Tier | API | Authority | Consistency | Latency |
 |------|-----|-----------|-------------|---------|
-| 1 | ListWindows | CG (Quartz) | Eventually consistent (\Delta = 10--100ms steady, higher during animations) | Fast |
+| 1 | ListWindows | CG (Quartz) | Eventually consistent (stale during animations; illustrative \Delta figures in prior revisions are era-anchored) | Fast |
 | 2 | GetWindow | AX (Accessibility) | Read-after-write (fresh geometry for single window) | Moderate |
 | 3 | GetWindowState | AX (deep query) | Authoritative (full accessibility traversal) | Slow |
 
 Each tier optimizes for two of the three properties (atomicity, latency, freshness) while sacrificing the third. This design is consistent with Daniel et al.'s theorem: no single tier can provide all three simultaneously.
 
-**Mitigations present in codebase.** V3 documented the staleness problem but omitted the three-tier architecture that manages it. Additionally, CGWindowList serves as a fallback data source when AX queries fail entirely (WindowHelpers.swift). The single-window bypass --- where a PID with exactly one window requires no threshold-based matching at all --- eliminates the heuristic for the common case.
+**Mitigations present in codebase (historical refs).** V3 documented the staleness problem but omitted the tiered architecture that manages it (fast cached-CG enumeration vs fresh-AX reads — see `docs/window-state-management.md`). The single-window-bypass and CG-fallback refs below are era-anchored; the current implementation resolves bindings by exact AX identity and fails closed on ambiguity.
 
-**Correction from V3.** V3 characterized the CG/AX disagreement as "600+ pixels." The source document states "tens to several hundreds" of pixels; the 1000px threshold is a mitigation parameter, not a measured maximum. This characterization has been corrected.
+**Correction from V3 (historical).** V3 characterized the CG/AX disagreement as "600+ pixels" against a "tens to several hundreds" source range with a 1000px mitigation parameter. Those numbers and the `WindowQuery.swift` filename are era-anchored; the living reference is `docs/window-state-management.md`.
 
 ### 6.3 kAXWindows Emptiness During Transitions
 
-**Observation.** `kAXWindowsAttribute` can temporarily return an empty array even when windows exist. This occurs during window state transitions (minimizing, moving between Spaces). The ObservationManager implements an "Orphan Rescue" strategy: when a window disappears from `kAXWindows`, the code checks `kAXChildren` explicitly because the OS often moves transitioning windows to the generic children list temporarily (ObservationManager.swift:380--466). If the window is found in `kAXChildren`, the snapshot is updated. If not found in either attribute, but still present in `CGWindowList` with `isOnScreen: true`, CG data serves as a temporary substitute (ObservationManager.swift:444--461).
+**Observation (historical line refs).** `kAXWindowsAttribute` can temporarily return an empty array even when windows exist. The ObservationManager implements an "Orphan Rescue" strategy via `handleOrphanedWindows` (see current code; the `:380--466` / `:444--461` refs below are era-anchored): when a window disappears from `kAXWindows`, the code checks `kAXChildren` explicitly, then previous-window and CGWindowList sources with isOnScreen gating.
 
 **Problem class.** This is an instance of DOM event flakiness: the accessibility tree's structure changes transiently during state transitions, producing spurious "element disappeared" events that reverse themselves shortly after. The ICST 2025 study found that DOM event flakiness takes an average of 153.4 days to resolve across 49 projects --- indicating that transient structural inconsistencies are persistent, difficult-to-fix properties of event-driven UI systems, not transient bugs.
 
@@ -600,49 +600,51 @@ The Orphan Rescue strategy is a fallback consistency check structurally analogou
 
 ### 6.4 Minimize Requires State Verification
 
-**Observation.** Setting `kAXMinimizedAttribute = true` on a window does not cause the minimized state to be reflected immediately in AX queries. The AX server propagates the change asynchronously. The MacosUseSDK's minimize implementation polls in a 2-second loop with 10ms intervals to verify that `kAXMinimizedAttribute` reads back as `true` (WindowMethods.swift:437--457).
+**Observation (historical).** Setting `kAXMinimizedAttribute = true` on a window does not cause the minimized state to be reflected immediately in AX queries. At the time of writing, the minimize implementation polled in a 2-second loop with 10ms intervals (then-current `WindowMethods.swift`); the current implementation converges via the shared `windowMutationConvergencePolicy` (2s timeout, 25ms poll interval, 2 stable reads — see `Server/Sources/ExactMacServer/ExactMacService.swift`). Line numbers below are era-anchored, not current.
 
 **Problem class.** This is an instance of the async-wait pattern, the dominant cause of UI test flakiness (45.1% per Romano et al. [ICSE 2021], 45.9% per Luo et al. [FSE 2014]). The WEFix study demonstrated that 98.4% of flaky tests can be fixed by generating proper wait oracles --- the same strategy as the PollUntil pattern here. The 2-second timeout is a chosen parameter, not a measured delay; the actual propagation typically completes well before the timeout.
 
-**Mitigations present in codebase.** After the minimize operation, WindowMethods.swift explicitly invalidates the window registry cache (line 464), forcing fresh reads on subsequent queries. The same cache invalidation occurs after restore (line 395) and after move/resize mutations (line 527). This prevents stale cached state from propagating to subsequent tool calls.
+**Mitigations present in codebase (historical refs).** The convergence behavior is current (shared `windowMutationConvergencePolicy`: 2s timeout, 25ms poll, 2 stable reads), but the cache-invalidation call sites named below are era-anchored and stale — `WindowMethods.swift` performs no explicit invalidation today; convergence is observed, not cache-flushed.
 
-### 6.5 Focus Acquisition Is Best-Effort
+### 6.5 Focus Acquisition Is Cooperative-Throw (era-anchored "best-effort" refs below are stale)
 
-**Observation.** The `acquireFocusForElement` operation traverses the AX parent chain to find the window element and sets `kAXFocusedAttribute = true`, but this operation is best-effort. The code comment states: "Best-effort: if focus fails, the interaction still proceeds" (AutomationCoordinator.swift:42). When focus fails, the code logs "proceeding anyway" (AutomationCoordinator.swift:98) and continues with the interaction.
+**Observation (current).** `focusElementWindow` (`AutomationCoordinator.swift`) traverses the AX parent chain to find the window element and sets `kAXMain`/`kAXFocused`; if the window is already focused it returns, and after setting it polls (25ms interval, 2s deadline) until focused — throwing `failedPrecondition` when focus cannot be set and `deadlineExceeded` on timeout. Focus failure aborts the interaction; nothing proceeds unfocused. Historical refs below to `acquireFocusForElement`, "best-effort / proceeding anyway", and a 100ms post-focus sleep describe an implementation that no longer exists.
 
 **Problem class.** This is an instance of cooperative activation, a documented macOS platform behavior. As of macOS 14, `activateIgnoringOtherApps:` is deprecated; `activate()` is a cooperative request, not a command [Apple, NSApplication API Reference]. Apple's own documentation states that "GUI Scripting tends to result in fragile scripts" [AppleScriptX], acknowledging that programmatic focus management is inherently unreliable.
 
-**Mitigations present in codebase.** V3 documented the best-effort behavior but omitted the 100ms post-focus sleep (AutomationCoordinator.swift:96). After successfully setting `kAXFocusedAttribute`, a 100ms delay allows macOS to process the focus change before proceeding with the subsequent interaction. This does not guarantee focus acquisition but reduces the probability of a focus-related failure for the immediately following action.
+**Mitigations present in codebase (historical refs).** The V3-era 100ms post-focus sleep and best-effort framing are stale — the current implementation polls to a 2s deadline and throws on failure (see above). What remains true is the platform point below: programmatic focus management is inherently unreliable, which is why the code observes convergence instead of assuming the setter worked.
 
 ### 6.6 Element Bounds vs. Hit Area Mismatch
 
-**Observation.** Clicking the top-left corner of an element's AX-reported bounds frequently misses the element's hit area. The AX frame (`kAXPositionAttribute` + `kAXSizeAttribute`) provides the top-left corner and dimensions, but the actual clickable area may be offset by padding, borders, or other visual chrome. The MacosUseSDK works around this by always clicking the geometric center: `centerX = element.x + (element.width / 2)`, `centerY = element.y + (element.height / 2)` (ElementMethods.swift:1128--1129).
+**Observation (historical line refs).** Clicking the top-left corner of an element's AX-reported bounds frequently misses the element's hit area. The ExactMac works around this by always clicking the geometric center (see `elementClickPoint` in `ElementMethods.swift`; the `ElementMethods.swift:1128--1129` ref below is era-anchored).
 
 **Problem class.** This is an instance of element locator fragility --- the same class of problem as RPA selector brittleness and Selenium element locator drift. The RPA literature documents that ~60% of automation failures originate from UI changes and selector breaks [Aguirre & Rodriguez, 2017; Leotta et al., 2013]. Gupta et al. [2019] measured that 3--4% of test methods become fragile per release cycle, with 20--30% requiring modification at least once. The center-click heuristic is a geometric analogue of the self-healing selector strategies used in RPA: when the exact selector fails, a fuzzy fallback is attempted.
 
-**Mitigations present in codebase.** A size filter rejects elements with width or height below 10px, preventing clicks on invisible or decorator elements that would invariably miss their target. The center-click heuristic, while not guaranteed for all elements (particularly those with non-rectangular hit areas or large padding), is more reliable than top-left clicking and represents the same engineering compromise as RPA self-healing: trading precision for robustness.
+**Mitigations present in codebase.** The center-click heuristic stands (`elementClickPoint` in `ElementMethods.swift`: geometric center, zero-size guard). The 10px size-filter claim below is era-anchored and unverified against the current click path — the only `<10` checks in the current tree are window-observation filters (`ObservationManager.swift`), a different subsystem.
 
-### 6.7 Proto Schema Limitations
+### 6.7 Proto Schema History
 
-**Observation.** The protobuf schema for `MouseClick` does not include a `modifiers` field. The message defines `position`, `click_type`, and `click_count`, but not `modifiers` (input.proto:112--138). In contrast, `KeyPress` does include `repeated Modifier modifiers` (input.proto:152--158). Notably, `MouseButtonDown` and `MouseButtonUp` messages do include modifiers, meaning a modifier+click operation is expressible through decomposition into separate press-modifier, click, release-modifier operations.
+**Historical note (closed gap — do not treat as current).** An earlier revision of this section reported that the protobuf schema for `MouseClick` lacked a `modifiers` field (`position`, `click_type`, `click_count` only). That gap is **closed**: `proto/exactmac/v1/input.proto` now defines `repeated KeyPress.Modifier modifiers` on `MouseClick`, and the MCP `click` tool takes atomic `keys` (`internal/server/toolregistry.go`). The decomposition-race narrative below is retained as history of why the field exists, not as a current limitation.
 
-**Problem class.** This is an engineering constraint, not a novel finding. The decomposition adds latency (three operations instead of one) and introduces a race condition: if another event occurs between the modifier press and the click, the modifier state may be incorrect. This is a specific instance of the general principle that interface expressiveness affects reliability: when the tool surface cannot express a common operation atomically, the decomposition introduces failure modes that the atomic operation would avoid.
+**Observation (superseded — see historical note above).** The protobuf schema for `MouseClick` did not include a `modifiers` field at the time of writing (era-anchored field refs below). The message now defines `modifiers` (`proto/exactmac/v1/input.proto`); historical refs below to `MouseButtonDown`/`MouseButtonUp` messages are stale — neither message exists in the current schema (those oneof branches are reserved, never shipped).
 
-**Mitigation status.** The MacosUseSDK's MCP server layer handles modifier+click by decomposing into separate operations. No mitigation eliminates the race condition entirely; only a schema change (adding `modifiers` to `MouseClick`) would resolve it at the source.
+**Problem class (historical).** This was an engineering constraint, not a novel finding. The decomposition adds latency (three operations instead of one) and introduces a race condition: if another event occurs between the modifier press and the click, the modifier state may be incorrect. This is a specific instance of the general principle that interface expressiveness affects reliability: when the tool surface cannot express a common operation atomically, the decomposition introduces failure modes that the atomic operation would avoid.
+
+**Mitigation status (superseded).** At the time of writing, the MCP server layer handled modifier+click by decomposing into separate operations. That workaround is obsolete now that `MouseClick.modifiers` exists and the MCP `click` tool sets it atomically.
 
 ### 6.8 Scope and Generality of Observations
 
-All engineering observations in Section 6 come from a single implementation: MacosUseSDK. This section assesses which observations are likely to be general properties of the macOS platform and which may be implementation-specific.
+All engineering observations in Section 6 come from a single implementation: ExactMac. This section assesses which observations are likely to be general properties of the macOS platform and which may be implementation-specific.
 
 #### Cross-Validated Observations
 
-The following observations have been confirmed by at least one external source independent of MacosUseSDK:
+The following observations have been confirmed by at least one external source independent of ExactMac:
 
-| Observation | MacosUseSDK Finding | External Confirmation |
+| Observation | ExactMac Finding | External Confirmation |
 |-------------|---------------------|----------------------|
 | AX coverage gaps (Canvas, custom controls) | Confirmed | Apple Accessibility Programming Guide; Fazm.ai community report (Qt, OpenGL, Python tools return `kAXErrorCannotComplete`) |
-| AX cache desync after OS updates | Not yet observed in MacosUseSDK | Fazm.ai (Dec 2025): `AXIsProcessTrusted` reads from per-process cache; OS updates can invalidate without notification; no public API to reset cache; must quit and relaunch |
-| GUI scripting is fragile | Confirmed (focus best-effort, state staleness) | Apple's own documentation: "GUI Scripting tends to result in fragile scripts" [AppleScriptX] |
+| AX cache desync after OS updates | Not yet observed in ExactMac | Fazm.ai (Dec 2025): `AXIsProcessTrusted` reads from per-process cache; OS updates can invalidate without notification; no public API to reset cache; must quit and relaunch |
+| GUI scripting is fragile | Confirmed (cooperative activation, state staleness) | Apple's own documentation: "GUI Scripting tends to result in fragile scripts" [AppleScriptX] |
 | App Sandbox blocks `CGEvent.post()` | Not directly tested | DEV Community report: `CGEvent.post()` silently does nothing inside App Sandbox; no entitlement re-enables it; AppleScript round-trip adds 40--80ms latency |
 | Stage Manager breaks automation | Not directly tested | Apple Community: "no supported way to create Stage Manager groups"; MacScripter: "turning ON/OFF Show Recent apps breaks Shortcuts/Automator" |
 | Applications launch without AX trees | Confirmed (bare binaries) | Fazm.ai: "`kAXErrorCannotComplete`... the target app does not implement the accessibility tree at all... common with Qt apps, OpenGL apps, Python-based tools" |
@@ -651,32 +653,32 @@ The following observations have been confirmed by at least one external source i
 
 | Observation | Risk of Being Implementation-Specific | Reason |
 |-------------|---------------------------------------|--------|
-| 750ms specific propagation delay | Medium | May vary by macOS version, hardware, or query pattern. Only measured in MacosUseSDK. |
-| CG/AX bounds disagreement magnitude | High | Source document states "tens to several hundreds" of pixels; 1000px is a mitigation threshold. Magnitude may be application- and animation-specific. |
+| 750ms specific propagation delay | Medium | Retry schedule is current code (`findWindowElement`); the 750ms-worst-case figure is historical measurement, not a specified bound. |
+| CG/AX bounds disagreement magnitude | High | Historical pixel-range/threshold narrative is era-anchored; the living reference (`docs/window-state-management.md`) states only staleness-during-animation semantics. |
 | 2-second minimize verification timeout | Low | 2s is a chosen timeout, not a measured delay. Actual propagation typically completes sooner. |
 | Center-click heuristic effectiveness | Medium | Other tools (atomacos, pyautogui) may use different click strategies with different effectiveness. |
 
 #### Mitigations in the Codebase
 
-V3 presented the AX failure modes as unrepaired problems. The MacosUseSDK codebase contains ten reliability mitigations that reduce their severity in practice. Five of these were omitted from V3 entirely:
+V3 presented the AX failure modes as unrepaired problems. The ExactMac codebase contains ten reliability mitigations that reduce their severity in practice. Five of these were omitted from V3 entirely:
 
-1. **Exponential backoff with heuristic fallback** (WindowHelpers.swift:181--222): After the retry loop exhausts its attempts, falls back to geometric matching using bounds. Most window lookups succeed via either exact ID match or heuristic match.
+1. **Exponential backoff with exact-identity resolution** (see `findWindowElement` in `WindowHelpers.swift`; historical line refs below are era-anchored): retries with backoff, resolving by retained AX element + private window ID. Most window lookups succeed via exact identity match.
 
-2. **100ms post-focus sleep** (AutomationCoordinator.swift:96): After successfully setting `kAXFocusedAttribute`, a 100ms delay allows macOS to process the focus change before the subsequent interaction.
+2. **Convergence-observed focus** (see `focusElementWindow` in `AutomationCoordinator.swift`; historical refs below to a 100ms sleep are era-anchored and stale): after setting focus attributes, the implementation polls to a 2s deadline and throws on failure.
 
-3. **Cache invalidation after mutations** (WindowMethods.swift:395, 464, 527): After minimize, restore, and move/resize operations, the window registry cache is explicitly invalidated, forcing fresh reads on subsequent queries.
+3. **Convergence-observed mutations** (historical `WindowMethods.swift:395, 464, 527` invalidation refs below are era-anchored and stale): mutations poll the shared convergence policy instead of flushing a cache.
 
-4. **CGWindowList as fallback data source** (WindowHelpers.swift): When AX queries fail, the code falls back to CGWindowList data for bounds, providing a second independent data source.
+4. **CGWindowList as enumeration source** (`WindowRegistry.swift`; historical refs to a bounds fallback below are era-anchored): Quartz owns enumeration/metadata while AX owns geometry/state — see `docs/window-state-management.md`.
 
 5. **Three-tier window data authority** (proto API design): ListWindows (fast, cached CG), GetWindow (fresh AX), GetWindowState (deep AX) --- each with documented staleness characteristics, allowing clients to choose the appropriate consistency/latency tradeoff.
 
 Five additional mitigations were also present but not documented:
 
-6. **Orphan rescue** (ObservationManager.swift:380--466): kAXChildren check → CGWindowList fallback → isOnScreen validation, a three-layer fallback that reduces false "window destroyed" events.
+6. **Orphan rescue** (see `handleOrphanedWindows` in `ObservationManager.swift`; historical line refs below are era-anchored): kAXChildren check → previous-window + CGWindowList rescue with isOnScreen gating, a multi-layer fallback that reduces false "window destroyed" events.
 
-7. **Single-window bypass**: When a PID has exactly one window, accept it regardless of ID mismatch, eliminating the heuristic threshold for the common case.
+7. **Exact-identity window resolution** (era-anchored "single-window bypass" refs below are stale): bindings resolve by retained AX element + private window ID and fail closed on ambiguity — no ID-mismatch acceptance.
 
-8. **Size filter**: Reject elements with width or height below 10px, preventing clicks on invisible or decorator elements.
+8. **Element size guard**: `elementClickPoint` rejects zero-size elements (historical refs below to a 10px filter are era-anchored; the current guard is zero-size only).
 
 9. **ChangeDetector circuit breaker** (ObservationManager): Limits processing to 5 events per PID per 1-second window, preventing event floods from overwhelming the agent.
 
@@ -698,7 +700,7 @@ This section presents five hypotheses about tool interface design for desktop au
 
 **Evidence against.** Anthropic's deployed Computer Use product uses 15+ atomic tools and functions in production [Anthropic, 2024]. OpenAI's Operator uses a small set of atomic tools and functions in production [OpenAI, 2025]. The "Knowing-Doing Gap" [arXiv 2605.14038] demonstrates that execution is the bottleneck, not routing: 26.5--54.0% mismatch on arithmetic tasks where models correctly select the tool but execute it incorrectly. The Factorized Intervention study [arXiv 2605.00136] finds that the protocol penalty of decomposed operations can exceed the tool-execution gain by 2x. Compositional tools create parameter complexity and ambiguous parameter combinations that may reduce execution accuracy. The Execution Law from Chen et al. [2026] suggests that correct execution can "rescue" difficult downstream decisions by approximately 4x, implying that execution correctness matters more than routing correctness --- and atomic tools with simpler parameter spaces may have higher execution correctness.
 
-**Falsification criterion.** Falsified if 50+ atomic tools outperform 23 compositional tools by ≥5 percentage points on task success rate (paired bootstrap test, p<0.05) on macOSWorld (N≥100 tasks across K≥5 application categories). Estimated cost: ~$500--1,000 in API calls. Minimum detectable effect at 80% power with 100 tasks: δ≈5pp. This experiment requires implementing both tool surfaces for the same functional coverage and measuring agent performance with the same model and prompt, varying only the tool surface. It is achievable by any team with access to macOSWorld and an LLM API key.
+**Falsification criterion.** Falsified if 50+ atomic tools outperform the compositional surface (23 tools at the time of writing; now 29 with macros) by ≥5 percentage points on task success rate (paired bootstrap test, p<0.05) on macOSWorld (N≥100 tasks across K≥5 application categories). Estimated cost: ~$500--1,000 in API calls. Minimum detectable effect at 80% power with 100 tasks: δ≈5pp. This experiment requires implementing both tool surfaces for the same functional coverage and measuring agent performance with the same model and prompt, varying only the tool surface. It is achievable by any team with access to macOSWorld and an LLM API key.
 
 ### 7.2 Tool Descriptions Should Be Detailed
 
@@ -706,7 +708,7 @@ This section presents five hypotheses about tool interface design for desktop au
 
 **Evidence for.** Anthropic recommends "extremely detailed descriptions" of at least 3--4 sentences [Anthropic, VERIFIED]. ToolSword [Ye et al., 2024, ACL 2024] demonstrated that noisy tool names and descriptions misdirect models into selecting wrong or risky tools. TOOLRET [Shi et al., 2025, ACL 2025] identified the gap between user intent language and tool description language as a first-order problem. MetaTool [Huang et al., 2023] found that longer, more detailed tool descriptions improve tool selection accuracy.
 
-**Evidence against.** The tradeoff between description detail and token cost has not been studied for desktop automation. MCP deployments incur approximately 1,000 tokens per heavily documented tool and approximately 100 tokens per lightly documented tool [MCP Issue #2808]. For a 77-tool server, this yields 77,000 tokens (60% of a 128K context window) with heavy documentation versus 7,700 tokens (6%) with light documentation --- crossing the fracture point identified by Sadani & Kumar [2026]. SKILLREDUCER [2026] achieved 48% compression of tool descriptions with a 2.8% quality improvement, suggesting that beyond a threshold, additional detail degrades performance through context window pressure rather than improving it. The answer depends on context window pressure: when the context window is large relative to total tool tokens, longer descriptions help; when tool tokens approach the fracture point, shorter descriptions may be superior.
+**Evidence against.** The tradeoff between description detail and token cost has not been studied for desktop automation. MCP deployments incur approximately 1,000 tokens per heavily documented tool and approximately 100 tokens per lightly documented tool [MCP Issue #2808]. For a 76-tool server, this yields 76,000 tokens (~60% of a 128K context window) with heavy documentation versus 7,700 tokens (6%) with light documentation --- crossing the fracture point identified by Sadani & Kumar [2026]. SKILLREDUCER [2026] achieved 48% compression of tool descriptions with a 2.8% quality improvement, suggesting that beyond a threshold, additional detail degrades performance through context window pressure rather than improving it. The answer depends on context window pressure: when the context window is large relative to total tool tokens, longer descriptions help; when tool tokens approach the fracture point, shorter descriptions may be superior.
 
 **Falsification criterion.** Falsified if agents with minimal tool descriptions (1 sentence each, ~100 tokens/tool) perform equivalently to or better than agents with detailed descriptions (3--4 sentences, ~1,000 tokens/tool) on task success rate (paired bootstrap, p<0.05) on macOSWorld (N≥100 tasks). Both conditions must use the same functional tool surface, differing only in description length. Estimated cost: ~$500--1,000 in API calls. Minimum detectable effect at 80% power: δ≈5pp. This experiment should be run at two context window sizes (128K and 1M tokens) to test whether the effect is moderated by context window pressure.
 
@@ -716,7 +718,7 @@ This section presents five hypotheses about tool interface design for desktop au
 
 **Evidence for.** Inner Monologue [Huang et al., 2022, CoRL 2023] showed that closed-loop language feedback improves instruction completion in robotics settings. ReAct [Yao et al., 2023, ICLR 2023] showed that interleaving reasoning with actions reduces hallucination. The "Let Me Speak Freely?" paper [arXiv:2408.02442] raised the concern that strict structured output can degrade reasoning, though this finding is contested.
 
-**Evidence against.** No study has directly compared structured-only vs. structured-plus-natural-language return formats for desktop automation tools. The Inner Monologue and ReAct findings are from robotics and text-based agent settings, respectively. Their transfer to desktop automation is plausible but unvalidated. Natural language output increases token consumption per tool call, contributing to context window pressure (Section 7.2). For a 77-tool server making an average of 10 tool calls per task, adding 200 tokens of natural language per response consumes an additional 2,000 tokens per task --- modest relative to tool descriptions but non-zero.
+**Evidence against.** No study has directly compared structured-only vs. structured-plus-natural-language return formats for desktop automation tools. The Inner Monologue and ReAct findings are from robotics and text-based agent settings, respectively. Their transfer to desktop automation is plausible but unvalidated. Natural language output increases token consumption per tool call, contributing to context window pressure (Section 7.2). For a 76-tool server making an average of 10 tool calls per task, adding 200 tokens of natural language per response consumes an additional 2,000 tokens per task --- modest relative to tool descriptions but non-zero.
 
 **Falsification criterion.** Falsified if agents that receive only structured data (JSON-formatted tool responses with no natural language summary) perform equivalently to agents that receive both structured data and a 2--3 sentence natural language summary (paired bootstrap, p<0.05) on task success rate on macOSWorld (N≥100 tasks across K≥5 application categories). Estimated cost: ~$500--1,000 in API calls. Minimum detectable effect at 80% power with 100 tasks: δ≈5pp. The natural language condition should include a fixed token budget to control for context window effects.
 
@@ -724,7 +726,7 @@ This section presents five hypotheses about tool interface design for desktop au
 
 **Statement.** The "open application" tool must not return until the application's state is observable. It must infer launch mode (foreground, background, bare binary) and poll for window readiness using accessibility queries.
 
-**Evidence for.** macOS activation semantics are non-deterministic [Apple, NSApplication API Reference]. `CGWindowList` lags behind the Accessibility server by 10--100ms (Section 6.2). Applications may launch as bare binaries with no windows [Apple, ActivationPolicy Documentation]. The AX server state propagation lag (Section 6.1) means that immediate queries after launch may return stale or missing data. Apple's own documentation states that "GUI Scripting tends to result in fragile scripts" [AppleScriptX], acknowledging that programmatic application lifecycle management is inherently unreliable.
+**Evidence for.** macOS activation semantics are non-deterministic [Apple, NSApplication API Reference]. CG snapshots may be stale during animations (see `docs/window-state-management.md`; historical 10--100ms figures in prior revisions are era-anchored). Applications may launch as bare binaries with no windows [Apple, ActivationPolicy Documentation]. The AX server state propagation lag (Section 6.1) means that immediate queries after launch may return stale or missing data. Apple's own documentation states that "GUI Scripting tends to result in fragile scripts" [AppleScriptX], acknowledging that programmatic application lifecycle management is inherently unreliable.
 
 **Evidence against.** Polling adds latency. If the application launches quickly and the AX server synchronizes fast, the polling delay is unnecessary overhead. The tradeoff between reliability and latency has not been measured. For well-behaved applications that always launch with a visible window and activate immediately, the polling cost may exceed the benefit.
 
@@ -752,7 +754,7 @@ The following agenda ranks open questions by (a) impact on design decisions, (b)
 | High | Why a11y helps some models, hurts others | Whether to make a11y optional, model-specific, or format-adaptive | Ablation varying: token count, tree format (flat/serialized/pruned), model architecture, a11y-to-screenshot ratio | 4--8 wk | $5,000--15,000 | δ≈3pp at N=200 per model | Run 6mo |
 | High | AX failure impact on end-to-end task success | Whether to invest in AX reliability engineering or shift to vision-only fallbacks | Instrumented agent with AX failure taxonomy; measure correlation between failure frequency and task success | 4--8 wk | $2,000--5,000 | r≥0.3 at N=500 task attempts | Run 6mo |
 | High | Human-in-the-loop: help or hurt? | Whether to default to supervised or autonomous mode | Supervision experiment: measure task success, time-to-completion, and vigilance decay across supervision conditions (always-approve, selective-approve, post-hoc review) | 4--8 wk | $3,000--8,000 | δ≈5pp at N=60 participants | Run 6mo |
-| Medium | Compositional vs. atomic tool surfaces | Tool surface design for desktop MCP servers | Same-coverage A/B test: 23 compositional tools vs. 50+ atomic tools, same model, same tasks | 6--12 wk | $5,000--15,000 | δ≈5pp at N=100 | New infra |
+| Medium | Compositional vs. atomic tool surfaces | Tool surface design for desktop MCP servers | Same-coverage A/B test: compositional tools (23 at the time of writing; 29 with macros today) vs. 50+ atomic tools, same model, same tasks | 6--12 wk | $5,000--15,000 | δ≈5pp at N=100 | New infra |
 | Medium | Optimal cognitive load for desktop tools | How many tools to expose, how much description detail | Replicate ToolLoad-Bench framework [Wang et al., AAAI 2026] for desktop-specific tools | 4--8 wk | $2,000--5,000 | CL threshold at N=20 tool configurations | Run now |
 | Low | Domain-specific Routing Law coefficients | Whether desktop tools follow same Acc(N) curve as general skills | Replicate Chen et al. [2026] methodology for desktop-specific tool sets | 2--4 wk | $1,000--3,000 | Coefficient estimation within 95% CI | Run now |
 | Speculative | Long-term model improvement effects on tool design | Whether current design hypotheses will be obsoleted by model improvement | Cannot be resolved now; requires longitudinal data on model capability trajectory | N/A | N/A | N/A | Speculative |
@@ -769,11 +771,11 @@ Cost estimates assume macOSWorld provides a mature evaluation infrastructure wit
 
 ### Post-Hoc Analysis
 
-The engineering observations in Section 6 were collected during the development of MacosUseSDK. The analysis was conducted after the implementation existed. Post-hoc analysis is inherently weaker than prospective research because the analyst knows which conclusions they need the evidence to support. This paper has attempted to mitigate this bias by five means: (1) presenting raw observations with code references rather than design implications, (2) labeling hypotheses as hypotheses with actionable falsification criteria, (3) framing engineering observations as instances of known problem classes rather than novel findings, (4) explicitly identifying ten reliability mitigations in the codebase (five of which V3 omitted), and (5) marking unverifiable sources. The reader should assess whether these mitigations are sufficient.
+The engineering observations in Section 6 were collected during the development of ExactMac. The analysis was conducted after the implementation existed. Post-hoc analysis is inherently weaker than prospective research because the analyst knows which conclusions they need the evidence to support. This paper has attempted to mitigate this bias by five means: (1) presenting raw observations with code references rather than design implications, (2) labeling hypotheses as hypotheses with actionable falsification criteria, (3) framing engineering observations as instances of known problem classes rather than novel findings, (4) explicitly identifying ten reliability mitigations in the codebase (five of which V3 omitted), and (5) marking unverifiable sources. The reader should assess whether these mitigations are sufficient.
 
 ### Single-Implementation Origin
 
-All engineering observations come from MacosUseSDK (n=1). Cross-validation is partial: AX cache desync is confirmed by the Fazm.ai community report; AppleScript fragility is confirmed by Apple's own documentation; AX coverage gaps are confirmed by multiple independent sources. However, the 750ms propagation delay, the CG/AX bounds disagreement magnitude, and the specific focus acquisition failure rate have not been confirmed by external implementations (atomacos, pyautogui). These observations should be treated as confirmed for one implementation, with cross-validation pending.
+All engineering observations come from ExactMac (n=1). Cross-validation is partial: AX cache desync is confirmed by the Fazm.ai community report; AppleScript fragility is confirmed by Apple's own documentation; AX coverage gaps are confirmed by multiple independent sources. However, the 750ms propagation delay, the CG/AX bounds disagreement magnitude, and the specific focus acquisition failure rate have not been confirmed by external implementations (atomacos, pyautogui). These observations should be treated as confirmed for one implementation, with cross-validation pending.
 
 ### Partial Cross-Validation
 
@@ -909,21 +911,21 @@ This appendix reports the results of direct code reading to verify each AX failu
 |-------|-------|
 | Paper claim | 750ms propagation delay after window mutations |
 | Code file | WindowHelpers.swift |
-| Lines | 149--179 (retry loop), 181--222 (heuristic fallback) |
-| Actual values | 5 retries with delays of 50ms, 100ms, 200ms, 400ms; worst-case total 750ms |
+| Lines | Era-anchored (149--179 retry loop; 181--222 described a fallback that no longer exists — current resolution is exact-identity-only, see `findWindowElement`) |
+| Actual values | 5 attempts with delays of 50ms, 100ms, 200ms, 400ms; worst-case total 750ms; no heuristic fallback in current code |
 | Verdict | CONFIRMED |
-| Mitigations in code | (1) Exponential backoff with heuristic geometric fallback (lines 181--222). (2) Most lookups succeed via exact ID match (fast path). V3 omitted the heuristic fallback. |
+| Mitigations in code | (1) Exponential backoff with exact-identity resolution (`findWindowElement`). (2) Most lookups succeed via exact identity match. Historical refs below to a geometric fallback are era-anchored and stale. |
 
 ### B.2 CGWindowList Staleness
 
 | Field | Value |
 |-------|-------|
-| Paper claim | CG/AX bounds disagreement up to 600+ pixels |
-| Code file | WindowQuery.swift, window-state-management.md |
-| Lines | Threshold constant in WindowQuery.swift |
-| Actual values | Source document states "tens to several hundreds" of pixels; 1000px is heuristic threshold, not measured maximum |
-| Verdict | NUANCED --- "600+ pixels" overstates the documented range; the threshold is a mitigation parameter |
-| Mitigations in code | (1) Three-tier data authority (ListWindows/GetWindow/GetWindowState). (2) Single-window bypass (no threshold needed for PIDs with exactly one window). (3) CGWindowList as fallback when AX fails. V3 omitted all three. |
+| Paper claim | CG/AX bounds disagreement (historical `WindowQuery.swift` filename refs below are era-anchored; see `docs/window-state-management.md`) |
+| Code file | `docs/window-state-management.md` + `WindowRegistry.swift` / `WindowHelpers.swift` (historical `WindowQuery.swift` refs are era-anchored) |
+| Lines | Era-anchored (the `WindowQuery.swift` filename is historical — the file existed in earlier history but not in HEAD; see `docs/window-state-management.md` + `WindowRegistry.swift` / `WindowHelpers.swift` for current code) |
+| Actual values | Living architecture doc (`docs/window-state-management.md`) describes the Hybrid Authority split; the 1000px-threshold narrative is era-anchored and unverifiable against current code |
+| Verdict | NUANCED (historical — the pixel-range/threshold narrative is era-anchored; the living reference is `docs/window-state-management.md`) |
+| Mitigations in code | (1) Hybrid data authority (ListWindows/GetWindow/GetWindowState — see `docs/window-state-management.md`). (2) Exact-identity resolution, fail-closed on ambiguity. V3 omitted the architecture. |
 
 ### B.3 kAXWindows Emptiness During Transitions
 
@@ -931,8 +933,8 @@ This appendix reports the results of direct code reading to verify each AX failu
 |-------|-------|
 | Paper claim | kAXWindowsAttribute returns empty array during transitions |
 | Code file | ObservationManager.swift |
-| Lines | 380--466 (orphan rescue), 444--461 (CG fallback) |
-| Actual values | Confirmed: orphan rescue checks kAXChildren then CGWindowList with isOnScreen validation |
+| Lines | Era-anchored (380--466 orphan rescue, 444--461 CG fallback) — see `handleOrphanedWindows` in current `ObservationManager.swift` |
+| Actual values | Confirmed: orphan rescue checks kAXChildren, then previous-window and CGWindowList sources with isOnScreen gating |
 | Verdict | CONFIRMED |
 | Mitigations in code | (1) kAXChildren check as first fallback. (2) CGWindowList with isOnScreen as second fallback. (3) Three-layer fallback reduces false "window destroyed" events. V3 omitted the fallback chain. |
 
@@ -942,54 +944,55 @@ This appendix reports the results of direct code reading to verify each AX failu
 |-------|-------|
 | Paper claim | 2-second polling loop after minimize |
 | Code file | WindowMethods.swift |
-| Lines | 437--457 (polling loop), 464 (cache invalidation) |
-| Actual values | 2-second timeout with 10ms sleep intervals; cache invalidated at line 464 |
+| Lines | Era-anchored (437--457 polling loop, 464/395/527 invalidation sites) — current convergence uses the shared policy (2s timeout, 25ms poll, 2 stable reads); `WindowMethods.swift` performs no explicit invalidation today |
+| Actual values | 2-second timeout via shared convergence policy; era-anchored 10ms-interval + invalidation refs are stale |
 | Verdict | CONFIRMED |
-| Mitigations in code | (1) Cache invalidation after minimize (line 464). (2) Same invalidation after restore (line 395) and move/resize (line 527). V3 omitted the cache invalidation. |
+| Mitigations in code | Convergence observation (shared policy); historical invalidation refs are era-anchored and stale. |
 
-### B.5 Focus Acquisition Is Best-Effort
+### B.5 Focus Acquisition Is Cooperative-Throw (historical "best-effort" title refs are stale)
 
 | Field | Value |
 |-------|-------|
-| Paper claim | Focus acquisition is best-effort; "proceeding anyway" |
-| Code file | AutomationCoordinator.swift |
-| Lines | 42 ("Best-effort" comment), 96 (100ms post-focus sleep), 98 ("proceeding anyway" log) |
-| Actual values | Confirmed: best-effort focus with 100ms post-focus sleep and fallback to proceeding without focus |
-| Verdict | CONFIRMED |
-| Mitigations in code | 100ms post-focus sleep (line 96) allows macOS to process the focus change. V3 omitted this mitigation entirely. |
+| Paper claim | Focus acquisition is cooperative-throw (historical "best-effort / proceeding anyway" refs below are stale) |
+| Code file | AutomationCoordinator.swift (`focusElementWindow`; historical `acquireFocusForElement` refs are era-anchored) |
+| Lines | Era-anchored (historical :42/:96/:98 refs describe an implementation that no longer exists) |
+| Actual values | Superseded: focus failure throws (`failedPrecondition` / `deadlineExceeded`), polled at 25ms to a 2s deadline; nothing proceeds unfocused |
+| Verdict | SUPERSEDED — the best-effort characterization is false against current code |
+| Mitigations in code | Convergence polling to a deadline (current); historical 100ms-sleep refs are era-anchored and stale. |
 
 ### B.6 Element Bounds vs. Hit Area Mismatch
 
 | Field | Value |
 |-------|-------|
 | Paper claim | Geometric center heuristic for element clicking |
-| Code file | ElementMethods.swift |
-| Lines | 1128--1129 (centerX = x + w/2, centerY = y + h/2), 486--490 (comment) |
-| Actual values | Confirmed: center-click heuristic with explicit code comment |
-| Verdict | CONFIRMED |
-| Mitigations in code | Size filter: reject elements with width or height below 10px, preventing clicks on invisible elements. V3 did not mention this filter. |
+| Code file | ElementMethods.swift (`elementClickPoint`; historical ref below is era-anchored) |
+| Lines | Era-anchored (1128--1129 center formula + 486--490 comment describe the same heuristic now living in `elementClickPoint`) |
+| Actual values | Confirmed: center-click heuristic (`elementClickPoint`); zero-size guard only — historical 10px-filter refs are unverified against the current click path |
+| Verdict | CONFIRMED (heuristic; size-filter detail SUPERSEDED) |
+| Mitigations in code | Zero-size guard in `elementClickPoint`. Historical 10px-filter refs are era-anchored. |
 
-### B.7 MouseClick Lacks Modifiers
+### B.7 MouseClick Modifiers (CLOSED — historical record)
 
 | Field | Value |
 |-------|-------|
-| Paper claim | MouseClick proto message lacks modifiers field |
-| Code file | proto/macosusesdk/v1/input.proto |
-| Lines | 112--138 (MouseClick: no modifiers), 152--158 (KeyPress: has modifiers) |
-| Actual values | Confirmed: MouseClick has position, click_type, click_count; no modifiers. MouseButtonDown/MouseButtonUp DO have modifiers. |
-| Verdict | CONFIRMED |
-| Mitigations in code | MCP server layer decomposes modifier+click into separate operations. This is a workaround, not a mitigation --- the race condition remains. A schema change would be required to eliminate it. |
+| Historical claim | MouseClick proto message lacked a modifiers field |
+| Current truth | `MouseClick` HAS `repeated KeyPress.Modifier modifiers` (`proto/exactmac/v1/input.proto`); MCP `click` takes atomic `keys` |
+| Code file | proto/exactmac/v1/input.proto |
+| Lines | Era-anchored (112--138 described a field that now exists at 166--179; 152--158 KeyPress refs) |
+| Actual values | SUPERSEDED: `MouseClick` HAS `repeated KeyPress.Modifier modifiers = 4`; MCP `click` sets it atomically — no decomposition, no race, no schema change required |
+| Verdict | SUPERSEDED (was CONFIRMED against an older schema) |
+| Mitigations in code | Atomic modifier+click (current); the decomposition narrative below is history, not a workaround. |
 
 ### Summary
 
 | Claim | Verdict | Key Mitigation Omitted by V3 |
 |-------|---------|------------------------------|
-| 750ms propagation delay | CONFIRMED | Heuristic geometric fallback (WindowHelpers.swift:181--222) |
-| CG/AX bounds disagreement | NUANCED | Three-tier authority; single-window bypass; CG fallback |
+| 750ms propagation delay | CONFIRMED | Exact-identity resolution with backoff (`findWindowElement`); geometric fallback refs below are era-anchored |
+| CG/AX bounds disagreement | NUANCED | Hybrid authority (`docs/window-state-management.md`); exact-identity resolution, fail-closed |
 | kAXWindows emptiness | CONFIRMED | Three-layer fallback chain (kAXChildren → CGWindowList → isOnScreen) |
-| 2-second minimize polling | CONFIRMED | Cache invalidation after mutations (3 call sites) |
-| Focus best-effort | CONFIRMED | 100ms post-focus sleep |
-| Center-click heuristic | CONFIRMED | Size filter (< 10px rejection) |
-| MouseClick lacks modifiers | CONFIRMED | Workaround only (decomposition); no true mitigation |
+| 2-second minimize polling | CONFIRMED (via shared convergence policy: 2s timeout, 25ms poll, 2 stable reads) | Convergence observation (historical invalidation refs below are era-anchored) |
+| Focus acquisition | SUPERSEDED (cooperative-throw today; historical best-effort refs below are stale) | Convergence polling to a 2s deadline; failure throws |
+| Center-click heuristic | CONFIRMED | Zero-size guard (historical 10px-filter refs below are era-anchored) |
+| MouseClick modifiers | CLOSED (field exists; decomposition narrative is history) | Atomic modifier+click, no race |
 
-All seven claims are confirmed by direct code reading. Six of seven have mitigations in the codebase that V3 omitted. The CG/AX bounds disagreement requires nuance: the source document does not support the "600+ pixels" characterization; the 1000px threshold is a mitigation parameter. The overall pattern is consistent: V3 presented the AX failure modes as unmitigated problems, when in practice the implementation contains significant reliability engineering that reduces their severity.
+All six open claims are confirmed by direct code reading (the seventh, MouseClick modifiers, is closed — the field exists). Two verdicts changed with the implementation since V3: focus is cooperative-throw, not best-effort, and the size guard is zero-size, not 10px. The CG/AX bounds disagreement requires nuance: the historical 1000px-threshold refs are era-anchored; the living reference is `docs/window-state-management.md`. The overall pattern is consistent: V3 presented the AX failure modes as unmitigated problems, when in practice the implementation contains significant reliability engineering that reduces their severity.

@@ -11,7 +11,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 )
 
 // handleClipboard handles the clipboard tool — unified clipboard operations.

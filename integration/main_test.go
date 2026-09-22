@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
-	"github.com/joeycumines/MacosUseSDK/internal/integrationfixture"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
+	"github.com/joeycumines/ExactMac/internal/integrationfixture"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -31,7 +31,7 @@ func TestMain(m *testing.M) {
 	var logCmd *exec.Cmd
 	logCmd = exec.Command("/usr/bin/log", "stream",
 		"--level", "debug",
-		"--predicate", `subsystem == "com.macosusesdk"`,
+		"--predicate", `subsystem == "com.exactmac"`,
 		"--style", "compact")
 	logCmd.Stdout = os.Stdout
 	logCmd.Stderr = os.Stderr
@@ -173,7 +173,7 @@ func killGoldenApplications() {
 // resource names deliberately cannot be decoded back into a PID, so cleanup
 // retains the original output-only PID as fixture evidence.
 // This is the MANDATORY per-test cleanup pattern for Test Fixture Lifecycle (Phase 4.2).
-func CleanupApplication(t *testing.T, ctx context.Context, client pb.MacosUseClient, application *pb.Application) {
+func CleanupApplication(t *testing.T, ctx context.Context, client pb.ExactMacClient, application *pb.Application) {
 	t.Helper()
 	if application == nil {
 		return
@@ -332,7 +332,7 @@ func cleanupServer(t *testing.T, cmd *exec.Cmd, serverAddr string) {
 	}
 }
 
-// startServer starts the MacosUse server and returns the command and address
+// startServer starts the ExactMac server and returns the command and address
 func startServer(t *testing.T, ctx context.Context) (*exec.Cmd, string) {
 	// Check if INTEGRATION_SERVER_ADDR is set (for external server)
 	if addr := os.Getenv("INTEGRATION_SERVER_ADDR"); addr != "" {
@@ -355,9 +355,9 @@ func startServer(t *testing.T, ctx context.Context) (*exec.Cmd, string) {
 	}
 
 	// Start the server with dynamic port
-	t.Logf("Starting MacosUse server on %s...", serverAddr)
+	t.Logf("Starting ExactMac server on %s...", serverAddr)
 
-	cmd := exec.CommandContext(ctx, "../Server/.build/release/MacosUseServer")
+	cmd := exec.CommandContext(ctx, "../Server/.build/release/ExactMacServer")
 	cmd.Env = append(os.Environ(),
 		"GRPC_LISTEN_ADDRESS=127.0.0.1",
 		fmt.Sprintf("GRPC_PORT=%d", port),
@@ -384,7 +384,7 @@ func startServer(t *testing.T, ctx context.Context) (*exec.Cmd, string) {
 
 	err = waitForServerReadiness(serverCtx, 100*time.Millisecond, 250*time.Millisecond, func(attemptCtx context.Context) error {
 		response, probeErr := healthClient.Check(attemptCtx, &healthpb.HealthCheckRequest{
-			Service: "macosusesdk.v1.MacosUse",
+			Service: "exactmac.v1.ExactMac",
 		})
 		if probeErr != nil {
 			return probeErr
@@ -423,7 +423,7 @@ func connectToServer(t *testing.T, ctx context.Context, addr string) *grpc.Clien
 		)
 		if err == nil {
 			// Try to make a simple call to verify connection
-			client := pb.NewMacosUseClient(conn)
+			client := pb.NewExactMacClient(conn)
 			_, err = client.ListApplications(ctx, &pb.ListApplicationsRequest{})
 			if err == nil {
 				t.Log("Successfully connected to server")
@@ -454,7 +454,7 @@ func connectToServer(t *testing.T, ctx context.Context, addr string) *grpc.Clien
 func DiscoverApplicationBundle(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	bundleID string,
 ) *pb.ApplicationBundle {
 	t.Helper()
@@ -512,7 +512,7 @@ func DiscoverApplicationBundle(
 
 // OpenApplicationObserved discovers exactly one installed bundle before it
 // mutates the desktop, then opens only the returned resource name.
-func OpenApplicationObserved(t *testing.T, ctx context.Context, client pb.MacosUseClient, bundleID string) *pb.Application {
+func OpenApplicationObserved(t *testing.T, ctx context.Context, client pb.ExactMacClient, bundleID string) *pb.Application {
 	t.Helper()
 	bundle := DiscoverApplicationBundle(t, ctx, client, bundleID)
 

@@ -1,6 +1,6 @@
-# Deploying MacosUseSDK Locally on macOS
+# Deploying ExactMac Locally on macOS
 
-MacosUseSDK is not a conventional command-line service. Its Swift server needs
+ExactMac is not a conventional command-line service. Its Swift server needs
 to use Accessibility, Core Graphics input, AppKit, and ScreenCaptureKit from the
 logged-in desktop session. That changes the deployment design in three important
 ways:
@@ -11,7 +11,7 @@ ways:
 
 This guide implements that design for a **single-user, same-Mac development
 installation**. It builds the Swift gRPC server and Go MCP proxy, installs the
-server as `~/Applications/MacosUseServer.app`, signs and registers the app, and
+server as `~/Applications/ExactMacServer.app`, signs and registers the app, and
 runs it behind an owner-only Unix socket.
 
 > This is a local-development deployment, not a distribution pipeline. Shipping
@@ -20,21 +20,21 @@ runs it behind an owner-only Unix socket.
 > this guide.
 
 All commands below are run from the repository root. All deployment targets are
-implemented in [`make/macos-use.mk`](make/macos-use.mk). Run `gmake help` and
-look for the `[MacosUse]` sections to list them.
+implemented in [`make/exactmac.mk`](make/exactmac.mk). Run `gmake help` and
+look for the `[ExactMac]` sections to list them.
 
 ## The resulting architecture
 
 ```text
 ┌──────────────┐      MCP over stdio      ┌──────────────────┐
-│   OpenCode   │ ◄──────────────────────► │  macos-use-mcp   │
+│   OpenCode   │ ◄──────────────────────► │  exactmac mcp    │
 │  MCP client  │                          │    Go process    │
 └──────────────┘                          └────────┬─────────┘
                                                  │ gRPC
                                                  │ Unix socket (0600)
                                                  ▼
                                       ┌────────────────────────┐
-                                      │ MacosUseServer.app     │
+                                      │ ExactMacServer.app     │
                                       │ Swift LaunchAgent      │
                                       │ GUI user session       │
                                       └───────────┬────────────┘
@@ -44,14 +44,14 @@ look for the `[MacosUse]` sections to list them.
 
 The two executables have deliberately different responsibilities:
 
-- **`MacosUseServer`** is the native Swift service. It receives the macOS TCC
+- **`ExactMacServer`** is the native Swift service. It receives the macOS TCC
   grants and runs from an application bundle under the user's GUI launchd
   domain.
-- **`macos-use-mcp`** is the Go MCP adapter. It speaks MCP to OpenCode and gRPC
+- **`exactmac`** is the Go CLI. It speaks MCP to OpenCode (via `exactmac mcp`) and gRPC
   to the Swift server. It does not need Accessibility or screen-capture access.
 
 For the local installation, the two processes communicate through
-`~/Library/Caches/macosuse.sock`; no TCP listener is required.
+`~/Library/Caches/exactmac.sock`; no TCP listener is required.
 
 ## Prerequisites
 
@@ -61,7 +61,7 @@ The checked-in source currently establishes the authoritative versions:
 - **Swift 6 or later** — `Server/Package.swift` declares
   `// swift-tools-version: 6.0`.
 - **Go matching `go.mod`** — the current module directive is `go 1.26.3`.
-- **Buf CLI** — `macos-use.build-server` regenerates the descriptor set through
+- **Buf CLI** — `exactmac.build-server` regenerates the descriptor set through
   the repository's `buf.descriptor-sets` target.
 - **GNU Make 4 or later** — use Homebrew's `gmake`, not Apple's BSD `make`.
 - **Xcode Command Line Tools** — supplies `swift`, `codesign`, `plutil`, and the
@@ -84,7 +84,7 @@ brew install grpcurl
 Check the machine and source tree before deploying:
 
 ```sh
-gmake macos-use.doctor
+gmake exactmac.doctor
 ```
 
 ## Quick start
@@ -93,24 +93,24 @@ The default installation uses an ad-hoc signature, which is convenient for a
 one-off local build:
 
 ```sh
-gmake macos-use.install
+gmake exactmac.install
 ```
 
 Then grant the app both privacy permissions in **System Settings → Privacy &
 Security**:
 
-1. **Accessibility** — add `~/Applications/MacosUseServer.app` and enable it.
+1. **Accessibility** — add `~/Applications/ExactMacServer.app` and enable it.
 2. **Screen & System Audio Recording** — add the same app and enable it. On some
    macOS releases this panel is labelled **Screen Recording**.
 
 Restart the already-signed service so the new grants apply:
 
 ```sh
-gmake macos-use.restart
-gmake macos-use.verify
+gmake exactmac.restart
+gmake exactmac.verify
 ```
 
-`macos-use.restart` does not build, replace, or re-sign the application.
+`exactmac.restart` does not build, replace, or re-sign the application.
 
 ## Prefer a stable signing identity
 
@@ -129,8 +129,8 @@ For day-to-day development, install with a persistent Apple Development
 identity:
 
 ```sh
-gmake macos-use.install \
-  MACOS_USE_SIGN_IDENTITY='Apple Development: Your Name (TEAMID)'
+gmake exactmac.install \
+  EXACTMAC_SIGN_IDENTITY='Apple Development: Your Name (TEAMID)'
 ```
 
 Keep the bundle identifier and signing identity consistent across builds. That
@@ -144,7 +144,7 @@ verification phase does use `--deep --strict` to detect invalid nested content.
 If executable helpers, frameworks, or plug-ins are added later, sign those
 components explicitly before signing the app.
 
-## What `macos-use.install` does
+## What `exactmac.install` does
 
 The installation target runs these phases in a fixed order rather than relying
 on a parallel phony-prerequisite graph:
@@ -152,7 +152,7 @@ on a parallel phony-prerequisite graph:
 1. **Doctor** — validates macOS, GNU Make, required commands, and source files.
 2. **Build server** — generates the protobuf descriptor set and performs a
    release Swift build.
-3. **Build MCP proxy** — installs `macos-use-mcp` into the resolved Go binary
+3. **Build Go CLI** — installs `exactmac` into the resolved Go binary
    directory.
 4. **Stop service** — unloads any existing LaunchAgent before replacing signed
    code on disk.
@@ -168,7 +168,7 @@ on a parallel phony-prerequisite graph:
    LaunchAgent, running state, socket mode, and MCP binary are all valid.
 
 The low-level targets are intentionally independent. For example,
-`gmake macos-use.register` registers the app that is already installed; it does
+`gmake exactmac.register` registers the app that is already installed; it does
 not unexpectedly rebuild or re-sign it.
 
 ## Why the SwiftPM resource bundle matters
@@ -182,7 +182,7 @@ resources: [
 ```
 
 SwiftPM therefore emits a resource bundle named
-`MacosUseServer_MacosUseServer.bundle`. The generated `Bundle.module` accessor
+`ExactMacServer_ExactMacServer.bundle`. The generated `Bundle.module` accessor
 first looks for that bundle relative to `Bundle.main.bundleURL` and otherwise
 falls back to the build-tree path embedded at compile time.
 
@@ -194,7 +194,7 @@ The corrected bundle phase stores the real resource bundle under the standard
 macOS location:
 
 ```text
-MacosUseServer.app/Contents/Resources/MacosUseServer_MacosUseServer.bundle
+ExactMacServer.app/Contents/Resources/ExactMacServer_ExactMacServer.bundle
 ```
 
 The verifier checks the installed bundle and at least one packaged `*.pb`
@@ -209,13 +209,13 @@ WindowServer, AppKit, and ScreenCaptureKit.
 The generated plist is installed at:
 
 ```text
-~/Library/LaunchAgents/com.macosusesdk.server.plist
+~/Library/LaunchAgents/com.exactmac.server.plist
 ```
 
 It runs in the exact service domain:
 
 ```text
-gui/<uid>/com.macosusesdk.server
+gui/<uid>/com.exactmac.server
 ```
 
 Lifecycle commands use modern launchctl operations:
@@ -237,7 +237,7 @@ restarts so a repeated fatal error cannot spin a tight crash loop.
 
 The server never blindly deletes the configured socket path and never binds it
 through a mutable pathname in the application. The LaunchAgent declares the
-socket in its `Sockets` dictionary; `macos-use.launchd` validates all
+socket in its `Sockets` dictionary; `exactmac.launchd` validates all
 user-supplied XML values before writing the temporary plist, then launchd
 creates and owns that pathname and passes the already-bound descriptor to the process through
 `launch_activate_socket("Listener", ...)`. The server validates that the
@@ -263,12 +263,12 @@ startup fails closed. To run manually outside the LaunchAgent, omit
 `GRPC_UNIX_SOCKET` and use matching loopback settings for both processes:
 ```sh
 GRPC_LISTEN_ADDRESS=127.0.0.1 GRPC_PORT=50051 \
-  Server/.build/release/MacosUseServer &
-MACOS_USE_SERVER_ADDR=127.0.0.1:50051 \
-  $(go env GOPATH)/bin/macos-use-mcp
+  Server/.build/release/ExactMacServer &
+EXACTMAC_SERVER_ADDR=127.0.0.1:50051 \
+  $(go env GOPATH)/bin/exactmac mcp
 ```
 
-(The MCP binary path is `$GOBIN/macos-use-mcp` when `GOBIN` is set.)
+(The MCP binary path is `$GOBIN/exactmac` when `GOBIN` is set.)
 The Swift server's standalone default is `127.0.0.1:8080`; explicit matching
 values avoid relying on different defaults in the two processes.
 
@@ -279,7 +279,7 @@ or mutate them.
 The lifecycle targets preserve that guarantee: they boot out the exact
 LaunchAgent identity, wait for that identity to disappear, and fail closed
 before loading a replacement if it remains registered. They never unlink the
-configured path. `macos-use.stop` waits for the exact LaunchAgent identity to
+configured path. `exactmac.stop` waits for the exact LaunchAgent identity to
 disappear. The server also leaves its pathname untouched during shutdown so a
 concurrent replacement cannot be deleted. If a stale path remains, do not
 remove it through this target. First prove the prior service identity has
@@ -290,15 +290,15 @@ independently verified path; otherwise choose a new socket path.
 
 | Artifact | Default path |
 |---|---|
-| Application bundle | `~/Applications/MacosUseServer.app` |
-| Server executable | `~/Applications/MacosUseServer.app/Contents/MacOS/MacosUseServer` |
-| SwiftPM resources | `~/Applications/MacosUseServer.app/Contents/Resources/*.bundle` |
-| LaunchAgent plist | `~/Library/LaunchAgents/com.macosusesdk.server.plist` |
-| gRPC Unix socket | `~/Library/Caches/macosuse.sock` |
-| Standard output log | `~/Library/Logs/macosuse.log` |
-| Standard error log | `~/Library/Logs/macosuse.error.log` |
-| MCP binary | `$GOBIN/macos-use-mcp`, otherwise the first `$GOPATH/bin` |
-| Build logs | `.build-logs/macos-use-server.log` and `.build-logs/macos-use-mcp.log` |
+| Application bundle | `~/Applications/ExactMacServer.app` |
+| Server executable | `~/Applications/ExactMacServer.app/Contents/MacOS/ExactMacServer` |
+| SwiftPM resources | `~/Applications/ExactMacServer.app/Contents/Resources/*.bundle` |
+| LaunchAgent plist | `~/Library/LaunchAgents/com.exactmac.server.plist` |
+| gRPC Unix socket | `~/Library/Caches/exactmac.sock` |
+| Standard output log | `~/Library/Logs/exactmac.log` |
+| Standard error log | `~/Library/Logs/exactmac.error.log` |
+| MCP binary | `$GOBIN/exactmac` (MCP served via `exactmac mcp`), otherwise the first `$GOPATH/bin` |
+| Build logs | `.build-logs/exactmac-server.log` and `.build-logs/exactmac.log` |
 
 Go's usual default is `~/go/bin`, but the Makefile resolves `GOBIN` and
 `GOPATH` instead of assuming that location.
@@ -313,18 +313,18 @@ The server needs these grants:
 | Screen & System Audio Recording | `screenshot` | Capture displays and windows with ScreenCaptureKit |
 
 OpenCode may display MCP tools with the configured server-name prefix, such as
-`macos-use_screenshot`.
+`exactmac_screenshot`.
 
 After changing either permission, restart the process:
 
 ```sh
-gmake macos-use.restart
+gmake exactmac.restart
 ```
 
 To remove denied or stale records during development:
 
 ```sh
-gmake macos-use.tcc-reset
+gmake exactmac.tcc-reset
 ```
 
 Then re-enable both permissions in System Settings and restart again. The reset
@@ -336,7 +336,7 @@ removed.
 Run the strict structural and runtime verifier at any time:
 
 ```sh
-gmake macos-use.verify
+gmake exactmac.verify
 ```
 
 Unlike a status display, verification returns a non-zero exit status when a
@@ -376,8 +376,8 @@ if [ -z "$GOBIN_PATH" ]; then
   GOPATH_PATH="$(go env GOPATH)"
   GOBIN_PATH="${GOPATH_PATH%%:*}/bin"
 fi
-printf '%s\n' "$GOBIN_PATH/macos-use-mcp"
-printf '%s\n' "$HOME/Library/Caches/macosuse.sock"
+printf '%s\n' "$GOBIN_PATH/exactmac"
+printf '%s\n' "$HOME/Library/Caches/exactmac.sock"
 ```
 
 Use those absolute paths in the project configuration:
@@ -386,12 +386,12 @@ Use those absolute paths in the project configuration:
 {
   "$schema": "https://opencode.ai/config.json",
   "mcp": {
-    "macos-use": {
+    "exactmac": {
       "type": "local",
-      "command": ["/Users/YOU/go/bin/macos-use-mcp"],
+      "command": ["/Users/YOU/go/bin/exactmac", "mcp"],
       "enabled": true,
       "environment": {
-        "MACOS_USE_SERVER_SOCKET_PATH": "/Users/YOU/Library/Caches/macosuse.sock",
+        "EXACTMAC_SERVER_SOCKET_PATH": "/Users/YOU/Library/Caches/exactmac.sock",
         "MCP_TRANSPORT": "stdio"
       },
       "timeout": 10000
@@ -402,7 +402,7 @@ Use those absolute paths in the project configuration:
 
 OpenCode's `timeout` is expressed in milliseconds and controls how long it waits
 to fetch tools from the MCP server. The proxy's own gRPC request timeout is a
-separate setting, `MACOS_USE_REQUEST_TIMEOUT`, expressed in seconds.
+separate setting, `EXACTMAC_REQUEST_TIMEOUT`, expressed in seconds.
 
 Do not add the entry to the global OpenCode configuration unless the tools
 should be available in every project.
@@ -424,10 +424,10 @@ opens a TCP port.
 
 | Variable | Default | Meaning |
 |---|---:|---|
-| `MACOS_USE_SERVER_SOCKET_PATH` | empty | Launchd-activated Swift server Unix socket; when set, the TCP address is ignored |
-| `MACOS_USE_SERVER_ADDR` | `localhost:50051` | TCP fallback used only when no socket path is set |
-| `MACOS_USE_REQUEST_TIMEOUT` | `30` | gRPC request timeout in seconds |
-| `MACOS_USE_DEBUG` | `false` | Enable proxy debug logging |
+| `EXACTMAC_SERVER_SOCKET_PATH` | empty | Launchd-activated Swift server Unix socket; when set, the TCP address is ignored |
+| `EXACTMAC_SERVER_ADDR` | `localhost:50051` | TCP fallback used only when no socket path is set |
+| `EXACTMAC_REQUEST_TIMEOUT` | `30` | gRPC request timeout in seconds |
+| `EXACTMAC_DEBUG` | `false` | Enable proxy debug logging |
 | `MCP_TRANSPORT` | `stdio` | MCP transport: `stdio` or `streamable-http` |
 | `MCP_HTTP_ADDRESS` | `127.0.0.1:8080` | Listener for Streamable HTTP transport |
 | `MCP_HTTP_SOCKET` | empty | Unix socket for HTTP transport |
@@ -463,7 +463,7 @@ than deriving capture size from a raw display mode.
 To rebuild and reinstall everything:
 
 ```sh
-gmake macos-use.install
+gmake exactmac.install
 ```
 
 This replaces and re-signs the application. With the default ad-hoc identity,
@@ -474,7 +474,7 @@ bundle identifier and designated requirement remain stable.
 To restart the same installed code after a configuration or TCC change:
 
 ```sh
-gmake macos-use.restart
+gmake exactmac.restart
 ```
 
 That target does not touch the app's bytes or signature.
@@ -483,23 +483,23 @@ That target does not touch the app's bytes or signature.
 
 | Target | Purpose |
 |---|---|
-| `macos-use.doctor` | Validate the host tools and expected source layout |
-| `macos-use.build-server` | Generate descriptors and build the release Swift server |
-| `macos-use.build-mcp` | Build and install the Go MCP proxy |
-| `macos-use.build` | Run both builds in a deterministic order |
-| `macos-use.bundle` | Stage and install the app, including SwiftPM resources |
-| `macos-use.sign` | Sign the existing app and verify it strictly |
-| `macos-use.register` | Register the existing signed app with LaunchServices |
-| `macos-use.launchd` | Write and bootstrap the per-user LaunchAgent |
-| `macos-use.install` | Run the complete ordered local installation |
-| `macos-use.verify` | Fail unless every required installed/runtime check passes |
-| `macos-use.status` | Print launchd, socket, signature, and MCP status without asserting success |
-| `macos-use.start` | Start a loaded or installed service without rebuilding |
-| `macos-use.restart` | Force-restart the service without rebuilding or signing |
-| `macos-use.stop` | Stop and unload the service while preserving installed files and TCC |
-| `macos-use.tcc-reset` | Reset Accessibility and ScreenCapture TCC records |
-| `macos-use.logs` | Show stdout, stderr, and recent unified-log entries |
-| `macos-use.uninstall` | Remove installed app, service, plist, logs, MCP binary, and matching TCC records; socket cleanup remains ownership-controlled |
+| `exactmac.doctor` | Validate the host tools and expected source layout |
+| `exactmac.build-server` | Generate descriptors and build the release Swift server |
+| `exactmac.build-mcp` | Build and install the Go MCP proxy |
+| `exactmac.build` | Run both builds in a deterministic order |
+| `exactmac.bundle` | Stage and install the app, including SwiftPM resources |
+| `exactmac.sign` | Sign the existing app and verify it strictly |
+| `exactmac.register` | Register the existing signed app with LaunchServices |
+| `exactmac.launchd` | Write and bootstrap the per-user LaunchAgent |
+| `exactmac.install` | Run the complete ordered local installation |
+| `exactmac.verify` | Fail unless every required installed/runtime check passes |
+| `exactmac.status` | Print launchd, socket, signature, and MCP status without asserting success |
+| `exactmac.start` | Start a loaded or installed service without rebuilding |
+| `exactmac.restart` | Force-restart the service without rebuilding or signing |
+| `exactmac.stop` | Stop and unload the service while preserving installed files and TCC |
+| `exactmac.tcc-reset` | Reset Accessibility and ScreenCapture TCC records |
+| `exactmac.logs` | Show stdout, stderr, and recent unified-log entries |
+| `exactmac.uninstall` | Remove installed app, service, plist, logs, MCP binary, and matching TCC records; socket cleanup remains ownership-controlled |
 
 ## Troubleshooting
 
@@ -509,13 +509,13 @@ Run:
 
 ```sh
 ls -ld \
-  ~/Applications/MacosUseServer.app/Contents/Resources/MacosUseServer_MacosUseServer.bundle
-find ~/Applications/MacosUseServer.app -name '*.pb' -print
-gmake macos-use.verify
+  ~/Applications/ExactMacServer.app/Contents/Resources/ExactMacServer_ExactMacServer.bundle
+find ~/Applications/ExactMacServer.app -name '*.pb' -print
+gmake exactmac.verify
 ```
 
 A correct deployment contains the real bundle under `Contents/Resources`.
-Re-run `gmake macos-use.install` if it is absent.
+Re-run `gmake exactmac.install` if it is absent.
 
 ### A TCC grant disappears after rebuilding
 
@@ -523,8 +523,8 @@ The usual cause is ad-hoc signing. Install with a persistent Apple Development
 identity, then grant the permission once more:
 
 ```sh
-gmake macos-use.install \
-  MACOS_USE_SIGN_IDENTITY='Apple Development: Your Name (TEAMID)'
+gmake exactmac.install \
+  EXACTMAC_SIGN_IDENTITY='Apple Development: Your Name (TEAMID)'
 ```
 
 ### The privacy prompt does not appear
@@ -533,14 +533,14 @@ Confirm that the installed app is signed and registered, and that launchd is
 running the executable from inside that app:
 
 ```sh
-gmake macos-use.status
-codesign -dvvv ~/Applications/MacosUseServer.app
-gmake macos-use.register
+gmake exactmac.status
+codesign -dvvv ~/Applications/ExactMacServer.app
+gmake exactmac.register
 ```
 
-`macos-use.register` does not rebuild or re-sign. If the app is still absent
+`exactmac.register` does not rebuild or re-sign. If the app is still absent
 from the relevant System Settings panel, add
-`~/Applications/MacosUseServer.app` manually.
+`~/Applications/ExactMacServer.app` manually.
 
 ### Screen capture remains denied after enabling it
 
@@ -548,28 +548,28 @@ Apple's ScreenCaptureKit guidance requires restarting the app after approval.
 Run:
 
 ```sh
-gmake macos-use.restart
-gmake macos-use.logs
+gmake exactmac.restart
+gmake exactmac.logs
 ```
 
 ### The socket is missing or the client cannot connect
 
 ```sh
-gmake macos-use.status
-gmake macos-use.logs
-gmake macos-use.verify
+gmake exactmac.status
+gmake exactmac.logs
+gmake exactmac.verify
 ```
 
 Confirm that the path in `opencode.jsonc` exactly matches:
 
 ```text
-~/Library/Caches/macosuse.sock
+~/Library/Caches/exactmac.sock
 ```
 
 OpenCode configuration requires an absolute path; a literal `~` is not a safe
 substitute.
 
-### OpenCode cannot find `macos-use-mcp`
+### OpenCode cannot find `exactmac`
 
 Do not assume `~/go/bin`. Resolve the active Go install directory and use that
 absolute path in `opencode.jsonc`:
@@ -580,18 +580,18 @@ go env GOPATH
 ```
 
 The Makefile prints the final MCP path during installation and in
-`gmake macos-use.status`.
+`gmake exactmac.status`.
 
 ### `launchctl bootstrap` reports that the service is already loaded
 
 Use the exact lifecycle targets rather than loading the plist manually:
 
 ```sh
-gmake macos-use.stop
-gmake macos-use.launchd
+gmake exactmac.stop
+gmake exactmac.launchd
 ```
 
-They address the service as `gui/<uid>/com.macosusesdk.server`, boot out the
+They address the service as `gui/<uid>/com.exactmac.server`, boot out the
 exact LaunchAgent identity, and wait for that identity to disappear before
 bootstrapping. launchd recreates and owns the declared `Listener` socket; the
 server receives it through socket activation. The targets never unlink the
@@ -607,9 +607,9 @@ reports that launchd activation is required; unset that variable and configure
 matching loopback TCP settings instead. If restarts persist, inspect the crash reason:
 
 ```sh
-gmake macos-use.status
-gmake macos-use.logs
-gmake macos-use.verify
+gmake exactmac.status
+gmake exactmac.logs
+gmake exactmac.verify
 ```
 
 If an unmanaged object occupies the configured `GRPC_UNIX_SOCKET` path,
@@ -625,7 +625,7 @@ The current implementation computes explicit dimensions from
 ensure it contains that source:
 
 ```sh
-gmake macos-use.install
+gmake exactmac.install
 ```
 
 ### Quarantine or extended attributes interfere with signing
@@ -637,7 +637,7 @@ quarantine workaround. Diagnose unexpected attributes before applying broader
 changes:
 
 ```sh
-xattr -lr ~/Applications/MacosUseServer.app
+xattr -lr ~/Applications/ExactMacServer.app
 ```
 
 ## Security boundaries
@@ -662,11 +662,11 @@ explicit threat model.
 ## Uninstallation
 
 ```sh
-gmake macos-use.uninstall
+gmake exactmac.uninstall
 ```
 
 This removes installed runtime artifacts, including the app, LaunchAgent plist,
-logs, and resolved `macos-use-mcp` binary. It deliberately preserves the
+logs, and resolved `exactmac` binary. It deliberately preserves the
 configured socket pathname because the server and deployment targets cannot
 safely unlink a path that may have been replaced. It also attempts to remove
 the matching LaunchServices registration and TCC records; macOS may report no

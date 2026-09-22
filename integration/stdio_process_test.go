@@ -96,7 +96,7 @@ func (p *stdioResponsePump) read(ctx context.Context) (*stdioResponse, error) {
 	}
 }
 
-// startMCPStdioProcess starts the macos-use-mcp binary in stdio mode.
+// startMCPStdioProcess starts the exactmac CLI in MCP stdio mode (`exactmac mcp`).
 // Returns the command, stdin writer, sole stdout response pump, and cleanup
 // function that joins both output owners.
 func startMCPStdioProcess(
@@ -116,7 +116,7 @@ func startMCPStdioProcessWithOverrides(
 ) (*exec.Cmd, io.WriteCloser, *stdioResponsePump, func()) {
 	t.Helper()
 
-	builtBinary := "../.build/debug/macos-use-mcp"
+	builtBinary := "../.build/debug/exactmac"
 	info, err := os.Stat(builtBinary)
 	if err != nil {
 		t.Fatalf("production MCP test binary is unavailable at %s: %v", builtBinary, err)
@@ -124,15 +124,15 @@ func startMCPStdioProcessWithOverrides(
 	if info.Mode()&0o111 == 0 {
 		t.Fatalf("production MCP test binary is not executable: %s", builtBinary)
 	}
-	cmd := exec.CommandContext(ctx, "../.build/debug/macos-use-mcp")
+	cmd := exec.CommandContext(ctx, "../.build/debug/exactmac", "mcp")
 
 	// Configure environment for stdio transport
 	processEnvironment := map[string]string{
-		"MACOS_USE_DEBUG":              "false",
-		"MACOS_USE_SERVER_ADDR":        grpcAddr,
-		"MACOS_USE_SERVER_SOCKET_PATH": "",
-		"MCP_AUDIT_LOG_FILE":           "",
-		"MCP_TRANSPORT":                "stdio",
+		"EXACTMAC_DEBUG":              "false",
+		"EXACTMAC_SERVER_ADDR":        grpcAddr,
+		"EXACTMAC_SERVER_SOCKET_PATH": "",
+		"MCP_AUDIT_LOG_FILE":          "",
+		"MCP_TRANSPORT":               "stdio",
 	}
 	maps.Copy(processEnvironment, overrides)
 	cmd.Env = testEnvironment(processEnvironment)

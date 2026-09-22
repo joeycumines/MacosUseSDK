@@ -1,0 +1,95 @@
+// Copyright 2025 Joseph Cumines
+//
+// Application resource definition
+
+syntax = "proto3";
+
+package exactmac.v1;
+
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1";
+option java_multiple_files = true;
+option java_outer_classname = "ApplicationProto";
+option java_package = "com.exactmac.v1";
+
+// A discoverable installed macOS application bundle. Each distinct bundle
+// location is a separate resource even when multiple installations share a
+// bundle identifier.
+message ApplicationBundle {
+  option (google.api.resource) = {
+    type: "exactmac.com/ApplicationBundle"
+    pattern: "applicationBundles/{application_bundle}"
+    singular: "applicationBundle"
+    plural: "applicationBundles"
+  };
+
+  // Resource name in the format "applicationBundles/{application_bundle}".
+  // The resource ID is opaque and identifies one exact standardized bundle URL.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // The localized display name declared by the bundle.
+  string display_name = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // The bundle identifier, if the bundle declares one. This value is not a
+  // unique resource key because distinct installations may share it.
+  string bundle_id = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // The exact file URL for this installation. Populated only in FULL view.
+  string bundle_url = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // The human-readable bundle version. Populated only in FULL view.
+  string version = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// A resource representing one exact running application process instance.
+// Its opaque name changes when a PID is reused by a different process.
+message Application {
+  option (google.api.resource) = {
+    type: "exactmac.com/Application"
+    pattern: "applications/{application}"
+    singular: "application"
+    plural: "applications"
+  };
+
+  // Resource name in the format "applications/{application}". The resource ID
+  // is opaque and binds the PID to its kernel process start identity.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // The process ID of the application.
+  int32 pid = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // The localized name of the application.
+  string display_name = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // The exact installed bundle resource backing this process, when its bundle
+  // URL is discoverable in the current catalog.
+  string application_bundle = 4 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.resource_reference) = {type: "exactmac.com/ApplicationBundle"}
+  ];
+
+  // The bundle identifier reported by the process, if present.
+  string bundle_id = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether this exact process is currently the active application.
+  bool active = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Kernel-observed process start time used as part of exact instance identity.
+  google.protobuf.Timestamp process_start_time = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Controls the amount of application metadata returned by Get and List RPCs.
+enum ApplicationView {
+  // Defaults to BASIC.
+  APPLICATION_VIEW_UNSPECIFIED = 0;
+
+  // Returns stable identity and ordinary display metadata.
+  APPLICATION_VIEW_BASIC = 1;
+
+  // Also returns privacy-sensitive bundle location and version metadata where
+  // those fields are available.
+  APPLICATION_VIEW_FULL = 2;
+}

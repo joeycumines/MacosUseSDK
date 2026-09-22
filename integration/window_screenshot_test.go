@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	pbtype "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/type"
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pbtype "github.com/joeycumines/ExactMac/gen/go/exactmac/type"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 )
 
 func TestWindowScreenshot_OwnedFinderExactTruth(t *testing.T) {
@@ -23,7 +23,7 @@ func TestWindowScreenshot_OwnedFinderExactTruth(t *testing.T) {
 
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 
 	finder := requireRunningApplicationByBundleID(t, ctx, client, "com.apple.finder")
 	owned, cleanupOwned := createOwnedFinderWindow(t, ctx, client, finder)
@@ -114,7 +114,7 @@ func TestWindowScreenshot_OwnedFinderExactTruth(t *testing.T) {
 func requireRunningApplicationByBundleID(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	bundleID string,
 ) *pb.Application {
 	t.Helper()
@@ -145,7 +145,7 @@ func requireRunningApplicationByBundleID(
 func requireStableOwnedFinderWindow(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	parent string,
 	title string,
 ) *pb.Window {

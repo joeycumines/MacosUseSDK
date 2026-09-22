@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/joeycumines/MacosUseSDK/gen/go/macosusesdk/v1"
+	pb "github.com/joeycumines/ExactMac/gen/go/exactmac/v1"
 )
 
 type ownedFinderWindow struct {
@@ -27,12 +27,12 @@ type ownedFinderWindow struct {
 func createOwnedFinderWindow(
 	t *testing.T,
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	app *pb.Application,
 ) (ownedFinderWindow, func()) {
 	t.Helper()
 
-	directory, err := os.MkdirTemp(t.TempDir(), "macosuse-window-")
+	directory, err := os.MkdirTemp(t.TempDir(), "exactmac-window-")
 	if err != nil {
 		t.Fatalf("Create unique Finder fixture directory: %v", err)
 	}
@@ -133,7 +133,7 @@ end tell`, titleLiteral),
 // Finder state is never mutated or miscounted.
 func waitForOwnedWindowsAbsent(
 	ctx context.Context,
-	client pb.MacosUseClient,
+	client pb.ExactMacClient,
 	parent string,
 	titles ...string,
 ) error {
@@ -185,7 +185,7 @@ func TestFinderWindows_Lifecycle(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	// Open Finder
 	t.Log("Opening Finder...")
 	app := OpenApplicationObserved(t, ctx, client, "com.apple.finder")
@@ -322,7 +322,7 @@ func TestFinderWindows_Resize(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	// Open Finder
 	t.Log("Opening Finder...")
 	app := OpenApplicationObserved(t, ctx, client, "com.apple.finder")
@@ -414,7 +414,7 @@ func TestFinderWindows_ListMultiple(t *testing.T) {
 	conn := connectToServer(t, ctx, serverAddr)
 	defer conn.Close()
 
-	client := pb.NewMacosUseClient(conn)
+	client := pb.NewExactMacClient(conn)
 	// Open Finder
 	t.Log("Opening Finder...")
 	app := OpenApplicationObserved(t, ctx, client, "com.apple.finder")
