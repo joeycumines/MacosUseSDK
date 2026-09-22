@@ -86,7 +86,7 @@ GRPC_LISTEN_ADDRESS=127.0.0.1 GRPC_PORT=50051 ./.build/release/ExactMacServer
 - `proto/` - Protocol buffer definitions (must mirror package structure)
 - `integration/` - Integration tests (target Calculator, TextEdit, Finder)
 - `make/` - Make build system modules
-- `docs/` - Comprehensive documentation
+- `docs/` - Documentation
 
 ## Important Files
 
@@ -129,7 +129,7 @@ The gRPC server MUST:
 - Support configuration via environment variables (socket paths, addresses).
 - Maintain the **State Store** architecture: `AppStateStore` (copy-on-write view for queries), `WindowRegistry`, `ObservationManager`, and `SessionManager`.
 
-Previous sins (now corrected, not to be repeated):
+Previously violated requirements (now corrected):
 
 - **Pagination (AIP-158):** You MUST implement `page_size`, `page_token`, and `next_page_token` for ALL List/Find RPCs, and `page_token`/`next_page_token` MUST be treated as opaque by clients (no reliance on internal structure such as `"offset:N"`).
 - **State-Difference Assertions:** Tests MUST NOT rely on "Happy Path" OK statuses. Every mutator RPC (Click, Move, Resize) MUST be followed by an accessor RPC to verify the *delta* in state.
@@ -142,7 +142,7 @@ Previous sins (now corrected, not to be repeated):
 - Include all resources: Window, Element, Observation, Session, Macro, Screenshot, Clipboard, File, Script, **Display**.
 - Support advanced inputs: Modifiers, Special Keys, Mouse Operations (drag, right-click).
 - Support VS Code integration patterns (multi-window, advanced targeting).
-- **Display API (NEW 2025-11-30):** Must expose display/screen enumeration via `ListDisplays` RPC. Each Display resource must include:
+- **Display API (2025-11-30):** Must expose display/screen enumeration via `ListDisplays` RPC. Each Display resource must include:
     - Display ID (CGDirectDisplayID)
     - Frame (position and size in global coordinate space)
     - Visible frame (excluding menu bar and dock)
@@ -160,7 +160,7 @@ Previous sins (now corrected, not to be repeated):
 - The proto API documentation MUST clearly specify which coordinate system is used for each field.
 - NO coordinate conversion is needed between Window bounds and Input positions (both use the same coordinate system).
 
-**Authoring Guidance:** When writing code comments or documentation, always state explicitly which coordinate system is referenced. Use the phrases "Global Display Coordinates (top-left origin)" for AX/CGEvent/CGWindowList and "AppKit Coordinates (bottom-left origin)" for NSWindow/NSScreen. Avoid ambiguous shorthand such as "CGEvent coordinates" without the origin direction — this has led to prior incorrect comments.
+**Authoring Guidance:** When writing code comments or documentation, always state explicitly which coordinate system is referenced. Use the phrases "Global Display Coordinates (top-left origin)" for AX/CGEvent/CGWindowList and "AppKit Coordinates (bottom-left origin)" for NSWindow/NSScreen. Avoid ambiguous shorthand such as "CGEvent coordinates" without the origin direction.
 
 **Core Graphics/Cocoa/Accessibility Race Condition Mitigation:** Do not rely on `NSRunningApplication(processIdentifier:)` or `CGWindowListCopyWindowInfo` (and related `CGWindow*` APIs) for process/window liveness or existence checks when performing AX actions. These APIs can lag behind the real-time state of the Accessibility server. Always attempt AX actions (e.g., `AXUIElementCreateApplication(pid)`, `AXUIElementCopyAttributeValue`) directly, then handle invalid process/element errors if they occur. Using CG/NS APIs as a "guard" or "pre-check" introduces a race condition where valid AX targets are rejected because the slower API hasn't updated yet.
 
@@ -174,7 +174,7 @@ Previous sins (now corrected, not to be repeated):
 ### Documentation and Planning
 
 - **Execution State:** Record current execution state and interruptions in `WIP.md`.
-- **Verification Before Completion Claims:** Before treating any item as complete, verify the implementation and its tests. If there is any doubt, treat the item as not done.
+- **Verify before claiming completion:** Before treating any item as complete, verify the implementation and its tests. If there is any doubt, treat the item as not done.
 - **Living Documents:** Keep `WIP.md` and `docs/window-state-management.md` aligned with the actual code reality.
 
 ### Master (LIVING) Documents

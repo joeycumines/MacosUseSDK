@@ -1,4 +1,4 @@
-# ExactMac AI Tool Integration Matrix
+# ExactMac AI Tool Integration
 
 One local binary (`cmd/exactmac` → `exactmac`) serves every MCP-capable
 AI tool below over **stdio** (`exactmac mcp`) or **Streamable HTTP**
@@ -18,11 +18,11 @@ Conventions used throughout:
   terminal or agent app), not to the binary. Grant both in
   System Settings → Privacy & Security, then restart the host.
 
-## 1. Claude Code (recommended first target)
+## 1. Claude Code
 
 Claude Code routes **MCP tools before its built-in `computer-use` server**, so
-ExactMac becomes the fast, precise path (AX tree, click by text) and the built-in
-stays the screenshot safety net for canvases with no Accessibility tree.
+ExactMac is used first (AX tree, click by text) and the built-in remains the
+screenshot fallback for canvases with no Accessibility tree.
 
 ```sh
 # Project scope (persists for this project)
@@ -84,7 +84,7 @@ Global (`~/.cursor/mcp.json`) or per-project (`.cursor/mcp.json`):
 }
 ```
 
-Restart Cursor (Settings → MCP shows the server). Smoke: ask the agent to call
+Restart Cursor (Settings → MCP shows the server). Verify: ask the agent to call
 `list_apps`.
 
 ## 5. OpenCode
@@ -109,9 +109,9 @@ In `opencode.jsonc` (project) or `~/.config/opencode/opencode.json` (global):
 ```
 
 Note: the `type: "local"` + `command` array + `environment` + `timeout` shape is
-the OpenCode convention (see the OpenCode MCP docs). A personal absolute-path
-variant of this file may exist in this checkout — replace the binary path with
-your build and keep the environment block.
+the OpenCode convention (see the OpenCode MCP docs). If you keep a local
+absolute-path variant of this file, replace the binary path with your build and
+keep the environment block.
 
 ## 6. Gemini CLI
 
@@ -128,7 +128,7 @@ In `~/.gemini/settings.json`:
 }
 ```
 
-Restart Gemini CLI. Smoke: `list_apps`.
+Restart Gemini CLI. Verify: `list_apps`.
 
 ## 7. VS Code (Copilot Chat) / Windsurf
 
@@ -146,7 +146,7 @@ Both accept standard MCP stdio entries. Add to the client's MCP settings file:
 ```
 
 VS Code: MCP settings under Settings → MCP (or `.vscode/mcp.json` per project).
-Windsurf: MCP settings panel. Smoke in both: `list_apps`.
+Windsurf: MCP settings panel. Verify in both: `list_apps`.
 
 ## 8. Claude Desktop (stdio-only)
 
@@ -194,7 +194,7 @@ narrower verbs (snapshot → click/type/scroll at returned coordinates) followin
 the `skills/exactmac/` workflow; keep AX-first ordering and the coordinate
 math in Global Display Coordinates (top-left origin).
 
-## Smoke check (every client)
+## Verification steps
 
 1. `list_apps` (no args) returns running applications with exact
    `applications/{id}` names.
@@ -213,12 +213,12 @@ math in Global Display Coordinates (top-left origin).
 - After granting, restart the host process; macOS may require it before Screen
   Recording takes effect.
 
-## Known limits (honest)
+## Known limitations
 
 - Apps with no Accessibility tree (some games, custom canvases, JetBrains IDEs
   with screen-reader support off) fall back to coordinate input via screenshot —
   the skill's visual-grounding workflow covers this; built-in screenshot computer
-  use is the alternative safety net.
+  use remains the fallback.
 - Cross-window drag-and-drop is brittle; prefer copy/paste.
 - No record/replay API beyond the 6 macro tools.
 - One interactive desktop session at a time for physical input; concurrent MCP

@@ -15,7 +15,7 @@ Window state management on macOS is a "split-brain" problem. The operating syste
 
 **ExactMac implements a "Hybrid Authority" model.** We do not attempt to abstract away this duality completely. Instead, we explicitly assign authority for specific data fields to specific APIs based on the nature of the RPC (Read-only Enumeration vs. Mutation/Inspection).
 
-This document serves as the definitive reference for this architecture, the opaque public binding model, race-condition mitigations, and the fail-closed bridging logic used to reconcile the two systems.
+This document is the reference for this architecture, the opaque public binding model, race-condition mitigations, and the fail-closed bridging logic used to reconcile the two systems.
 
 -----
 

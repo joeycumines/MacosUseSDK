@@ -26,12 +26,12 @@ Automate macOS applications through the ExactMac MCP server (server key `exactma
 API is your primary interface — giving direct access to every element's role, text,
 geometry, and state without pixel processing. When AX is supported, use AX first;
 screenshots are for visual inspection, not for text reading. When AX is disabled by
-application runtimes (such as Java/Swing in JetBrains IDEs), seamlessly transition to
+application runtimes (such as Java/Swing in JetBrains IDEs), switch to
 visual grounding.
 
 > **Coexistence with built-in computer use.** Claude Code (`computer-use` MCP) and
-> Codex background use route MCP tools before screen control: this server is the
-> fast, precise path (AX tree, click by text) and the built-in is the safety net.
+> Codex background use route MCP tools before screen control: route to this
+> server first (AX tree, click by text) and keep the built-in as the fallback.
 > Yield to screenshots only for custom-rendered canvases and games with no
 > Accessibility tree at all — never as the default.
 
@@ -39,7 +39,7 @@ visual grounding.
 
 ## Core Principles
 
-### 1. High-Efficiency Transactions
+### 1. Efficient Transactions
 
 Avoid slow, conversational turn-by-turn micro-steps. Driving GUI automation via an AI
 agent requires compact, purposeful transactions:
@@ -63,7 +63,7 @@ the app type before deciding on your interaction strategy:
 
 1. **Native Cocoa & GPUI (Terminal, Zed, Finder, System Settings, TextEdit, Calculator):**
    - Full, rich AX tree.
-   - `find_elements` and `click_element` work with sub-millisecond precision.
+   - `find_elements` and `click_element` use exact AX bounds (no image guessing).
 2. **Chromium & WebViews (Chrome, Electron, Slack, VS Code, Discord):**
    - Rich `AXWebArea` accessibility tree.
    - **Caveat: Dynamic DOMs invalidate handles rapidly.** Act on element handles promptly.
@@ -273,7 +273,7 @@ Before declaring a desktop automation task complete, verify:
 - [ ] Correct application and window were targeted using exact resource names.
 - [ ] If launch required recovery, the fallback was bounded and the user-facing process
       was rediscovered after launch.
-- [ ] AX tree was utilized first before taking any screenshots.
+- [ ] AX tree was used first before taking any screenshots.
 - [ ] Dynamic element handle staleness was handled gracefully (fresh discovery, bounded
       escalation, and coordinate input only with fresh visible bounds).
 - [ ] If windows spanned Spaces or helpers, the content window was focused and re-enumerated.
@@ -307,7 +307,7 @@ Before declaring a desktop automation task complete, verify:
 
 **Actions:**
 1. `find_elements` returns `AX error -25202 (kAXErrorCannotComplete)` due to disabled JAB.
-2. Seamlessly pivot to Visual Grounding: capture `screenshot(window=window)`.
+2. Switch to Visual Grounding: capture `screenshot(window=window)`.
 3. Locate `metrics.go` in the project tree crop at local `(130, 498)`.
 4. Calculate global position: `x = 1207 + 130 = 1337`, `y = -1440 + 498 = -942`.
 5. Execute `double_click(target=window, x=1337, y=-942)` to open file.

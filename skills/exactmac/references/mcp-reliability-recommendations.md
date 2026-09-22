@@ -1,4 +1,4 @@
-# ExactMac Reliability Notes
+# MCP Reliability Recommendations
 
 Empirically derived notes on the MCP server's input, discovery, and runtime behavior.
 Items marked **Implemented** describe current server behavior; items marked **Empirical Finding**
@@ -175,16 +175,16 @@ If neither signal changes or identifies the destination, report navigation as un
 
 | # | Item | Status | Impact |
 |---|------|--------|--------|
-| 1 | Click center by default | Implemented | Eliminates most click failures |
-| 2 | Focus acquisition before click | Implemented | Eliminates focus-related failures |
-| 3 | DevTools console input | Partially addressed | Enables reliable diagnostic workflows |
+| 1 | Click center by default | Implemented | Prevents most click failures |
+| 2 | Focus acquisition before click | Implemented | Prevents focus-related failures |
+| 3 | DevTools console input | Partially addressed | Makes console typing more reliable |
 | 4 | `find_elements` staleness | Implemented | Reduces stale-data confusion |
 | 5 | Clickable area inference | Open proposal | Reduces mis-clicks on labels |
 | 6 | JetBrains / Swing AX disabled | Empirical Finding | Prevents infinite AX error loops |
-| 7 | Dynamic DOM handle invalidation | Empirical Finding | Ensures robust web/Electron automation |
+| 7 | Dynamic DOM handle invalidation | Empirical Finding | Handles web/Electron automation |
 | 8 | Selector ambiguity handling | Empirical Finding | Prevents multi-match failure stalls |
-| 9 | Chrome Profile Picker detection | Empirical Finding | Unblocks fresh browser automations |
-| 10| Multi-monitor coordinate math | Empirical Finding | Eliminates pointer misses on secondary displays |
+| 9 | Chrome Profile Picker detection | Empirical Finding | Gets past fresh browser automations |
+| 10| Multi-monitor coordinate math | Empirical Finding | Prevents pointer misses on secondary displays |
 | 11| Installed bundle recovery | Empirical Finding | Recovers from launch-resource mismatches without inventing IDs |
 | 12| Background Space/process selection | Empirical Finding | Avoids targeting helpers or inaccessible windows |
 | 13| Two-signal navigation verification | Empirical Finding | Prevents false completion on matching labels |

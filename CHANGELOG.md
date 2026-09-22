@@ -66,9 +66,9 @@ MCP registry. The current implementation exposes 29 tools; see
 
 ### Added
 
-- **ExactMac full rename + AI tool integration matrix**: project renamed end-to-end (Go module `github.com/joeycumines/ExactMac`, proto `exactmac.v1`, Swift `ExactMac`/`ExactMacServer`, CLI `exactmac` (MCP served via `exactmac mcp`), skill `exactmac`, env `EXACTMAC_*`); README rewritten for AI-tool-integration search (Claude Code incl. built-in computer-use coexistence, Codex CLI/App, Cursor, OpenCode, Gemini CLI, VS Code, Windsurf, Claude Desktop); new `docs/ai-artifacts/ai-tool-integration.md` with per-client snippets and smoke checks
+- **ExactMac full rename + AI tool integration matrix**: project renamed end-to-end (Go module `github.com/joeycumines/ExactMac`, proto `exactmac.v1`, Swift `ExactMac`/`ExactMacServer`, CLI `exactmac` (MCP served via `exactmac mcp`), skill `exactmac`, env `EXACTMAC_*`); README rewritten to cover AI tool integration (Claude Code incl. built-in computer-use coexistence, Codex CLI/App, Cursor, OpenCode, Gemini CLI, VS Code, Windsurf, Claude Desktop); new `docs/ai-artifacts/08-ai-tool-integration.md` with per-client snippets and verification steps
 - **Go CLI `exactmac` with required `exactmac mcp` / `exactmac http`**: the former `macos-use-mcp` binary is now the `exactmac` CLI (`./cmd/exactmac`); the MCP server runs only as an explicit subcommand — `exactmac mcp` over stdio, `exactmac http` over Streamable HTTP; unknown or missing commands fail with usage
-- **Hard-fork detach**: upstream remote removed; README states explicitly that this project is not affiliated with mediar-ai / macos-use.dev
+- **Upstream remote removed**: upstream remote removed; README states explicitly that this project is not affiliated with mediar-ai / macos-use.dev
 
 - **Background Application Open Mode**: the gRPC `OpenApplication` API supports background launch without stealing focus
 - **MCP Resources Support**: `resources/list` and `resources/read` methods for `screen://`, `accessibility://`, `clipboard://` URIs

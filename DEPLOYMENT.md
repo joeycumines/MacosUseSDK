@@ -16,8 +16,7 @@ runs it behind an owner-only Unix socket.
 
 > This is a local-development deployment, not a distribution pipeline. Shipping
 > the app to other Macs requires a Developer ID workflow, Hardened Runtime,
-> notarization, stapling, and an update strategy that are intentionally outside
-> this guide.
+> notarization, stapling, and an update strategy that are outside this guide.
 
 All commands below are run from the repository root. All deployment targets are
 implemented in [`make/exactmac.mk`](make/exactmac.mk). Run `gmake help` and
@@ -55,7 +54,7 @@ For the local installation, the two processes communicate through
 
 ## Prerequisites
 
-The checked-in source currently establishes the authoritative versions:
+Required versions come from the checked-in source:
 
 - **macOS 15 or later** — `Server/Package.swift` declares `.macOS(.v15)`.
 - **Swift 6 or later** — `Server/Package.swift` declares
@@ -136,7 +135,7 @@ gmake exactmac.install \
 Keep the bundle identifier and signing identity consistent across builds. That
 is the practical way to preserve TCC grants while iterating.
 
-The Makefile intentionally does **not** use `codesign --deep` while signing.
+The Makefile does **not** use `codesign --deep` while signing.
 Apple's signing model is to sign nested code from the inside out and then sign
 the outer app. This bundle currently contains one main executable and
 resource-only SwiftPM bundles, so signing the outer app is sufficient. The
@@ -167,7 +166,7 @@ on a parallel phony-prerequisite graph:
 9. **Verify** — fails unless the bundle, descriptor resources, signature,
    LaunchAgent, running state, socket mode, and MCP binary are all valid.
 
-The low-level targets are intentionally independent. For example,
+The low-level targets are independent. For example,
 `gmake exactmac.register` registers the app that is already installed; it does
 not unexpectedly rebuild or re-sign it.
 
@@ -190,7 +189,7 @@ Copying only the executable is not a complete deployment. It leaves production
 startup dependent on the source build directory and can trigger a fatal
 resource-bundle lookup failure.
 
-The corrected bundle phase stores the real resource bundle under the standard
+The bundle phase stores the real resource bundle under the standard
 macOS location:
 
 ```text
@@ -357,7 +356,7 @@ For an end-to-end permission check, exercise the MCP surface in this order:
 2. Accessibility: `open_app`, then `find_elements` for the returned application.
 3. Screen capture: `screenshot`.
 
-The Makefile deliberately does not automate TCC interaction or treat a missing
+The Makefile does not automate TCC interaction or treat a missing
 privacy grant as an installation failure; those decisions require the logged-in
 user.
 
@@ -491,7 +490,7 @@ That target does not touch the app's bytes or signature.
 | `exactmac.launchd` | Write and bootstrap the per-user LaunchAgent |
 | `exactmac.install` | Run the complete ordered local installation |
 | `exactmac.verify` | Fail unless every required installed/runtime check passes |
-| `exactmac.status` | Print launchd, socket, signature, and MCP status without asserting success |
+| `exactmac.status` | Print launchd, socket, signature, and MCP status (informational only) |
 | `exactmac.start` | Start a loaded or installed service without rebuilding |
 | `exactmac.restart` | Force-restart the service without rebuilding or signing |
 | `exactmac.stop` | Stop and unload the service while preserving installed files and TCC |
@@ -664,7 +663,7 @@ gmake exactmac.uninstall
 ```
 
 This removes installed runtime artifacts, including the app, LaunchAgent plist,
-logs, and resolved `exactmac` binary. It deliberately preserves the
+logs, and resolved `exactmac` binary. It preserves the
 configured socket pathname because the server and deployment targets cannot
 safely unlink a path that may have been replaced. It also attempts to remove
 the matching LaunchServices registration and TCC records; macOS may report no

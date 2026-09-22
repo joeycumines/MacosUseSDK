@@ -73,7 +73,7 @@ Any MCP-capable client works over stdio with the absolute binary path
 plus the `mcp` subcommand. Full per-client matrix — Claude Code (`claude mcp add exactmac`),
 Codex CLI (`~/.codex/config.toml`), Codex App, Cursor, OpenCode
 (`opencode.jsonc` local type), Gemini CLI, VS Code, Windsurf, Claude Desktop —
-with snippets and smoke checks: [ai-tool-integration.md](../../docs/ai-artifacts/ai-tool-integration.md).
+with snippets and verification steps: [08-ai-tool-integration.md](../../docs/ai-artifacts/08-ai-tool-integration.md).
 
 ### Claude Desktop Integration (example)
 
@@ -97,5 +97,5 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 - [MCP Integration](../../docs/ai-artifacts/05-mcp-integration.md) - Protocol compliance details
 - [Deployment Guide](../../DEPLOYMENT.md) - Full deployment guide
-- [AI Tool Integration](../../docs/ai-artifacts/ai-tool-integration.md) - Per-client setup for every supported AI coding tool
+- [AI Tool Integration](../../docs/ai-artifacts/08-ai-tool-integration.md) - Per-client setup for supported AI coding tools
 - [exactmac skill](../../skills/exactmac/) - Agent-facing workflow and tool reference

@@ -1,12 +1,12 @@
 > [!NOTE]
 >
-> **ExactMac is a hard fork, not the project at [macos-use.dev](https://macos-use.dev/).**
-> That site documents `mediar-ai/mcp-server-macos-use` (a 6-tool Swift stdio server).
-> ExactMac descends from `mediar-ai/MacosUseSDK` but the shipped implementation —
-> the Go MCP proxy, the Swift gRPC service, the 29-tool CUA surface, the
-> owned-input transaction model, the agent skill — is original post-divergence
-> work (60 commits, 456 files changed, upstream added nothing since the fork
-> point). There is no affiliation with mediar-ai.
+> **ExactMac is a fork of [mediar-ai/MacosUseSDK](https://github.com/mediar-ai/MacosUseSDK);
+> it is not affiliated with mediar-ai.**
+> The Go MCP proxy, Swift gRPC service, 29-tool CUA surface, owned-input
+> transaction model, and agent skill are work done since the fork; upstream has
+> had no commits since the fork point.
+> [macos-use.dev](https://macos-use.dev/) documents a different project,
+> `mediar-ai/mcp-server-macos-use` (a 6-tool Swift stdio server).
 
 [![CI](https://github.com/joeycumines/ExactMac/actions/workflows/ci.yaml/badge.svg)](https://github.com/joeycumines/ExactMac/actions/workflows/ci.yaml)
 [![Go Coverage](https://img.shields.io/badge/Go%20Coverage-70%25+-blue?style=flat)](https://github.com/joeycumines/ExactMac)
@@ -27,18 +27,18 @@ stdio, it can drive your Mac through ExactMac.
 ## Why ExactMac instead of built-in computer use or another MCP server?
 
 **Against built-in computer use (Claude Code's `computer-use`, Codex background use).**
-Built-ins are screenshot-first, slowest-path fallbacks: full-screen re-described
+Built-ins are screenshot-first fallbacks: full-screen re-described
 every step, pixel-guessed clicks, per-session app approvals, one session holding a
 machine-wide lock. ExactMac reads the native Accessibility tree — the same structured
 data Apple gives VoiceOver — so agents click by text (`"Send"`, `"Submit"`), not
 by guessed coordinates. Claude's own routing tries MCP tools first and falls back
-to screen control only when nothing better exists: ExactMac becomes the fast,
-precise path and the built-in stays the safety net for custom-rendered canvases
+to screen control only when nothing better exists: ExactMac is used first and
+the built-in remains the fallback for custom-rendered canvases
 with no Accessibility tree at all.
 
-**Against the many macOS MCP servers.** Most are thin AppleScript wrappers (only
-scriptable apps work), screenshot loopers (a vision-model bill per click), or raw
-coordinate clickers with no ownership model. ExactMac is:
+**Against the many macOS MCP servers.** Most wrap AppleScript (only scriptable
+apps work), loop screenshots (each click costs vision-model tokens), or click
+raw coordinates with no ownership model. ExactMac is:
 
 - **AX-first, not screenshot-first.** Structured roles, labels, and coordinates;
   screenshots only for visual verification, canvas apps, and JetBrains IDEs with
@@ -72,8 +72,8 @@ GRPC_LISTEN_ADDRESS=127.0.0.1 GRPC_PORT=50051 ./.build/release/ExactMacServer &
 go build -o exactmac ./cmd/exactmac
 ```
 
-Then register it in your AI tool (full per-client matrix with smoke checks:
-`docs/ai-artifacts/ai-tool-integration.md`):
+Then register it in your AI tool (per-client setup guide with verification
+steps: `docs/ai-artifacts/08-ai-tool-integration.md`):
 
 | Your tool | Where | Snippet |
 |-----------|-------|---------|
@@ -97,7 +97,7 @@ instead of guessing.
 - **ExactMac (Swift library)**: Core Accessibility automation primitives
   (`AXUIElement`, CoreGraphics input, AppKit windows). Published as the
   `ExactMac` Swift package; embedding notes under [Using the Library](#using-the-library).
-- **MCP Server (Go CLI `cmd/exactmac`, served via `exactmac mcp`)**: Production server exposing
+- **MCP Server (Go CLI `cmd/exactmac`, served via `exactmac mcp`)**: MCP server exposing
   **29 CUA-aligned MCP tools** via stdio or Streamable HTTP (TCP or Unix socket),
   with rate limiting, API-key auth, and audit logging.
 - **gRPC Server (Swift, `Server/`)**: Resource-oriented API following
@@ -108,7 +108,7 @@ instead of guessing.
 
 | Document | Description |
 |----------|-------------|
-| [AI Tool Integration](docs/ai-artifacts/ai-tool-integration.md) | Per-client setup (Claude Code, Codex, Cursor, OpenCode, Gemini, VS Code, Windsurf, Desktop) with snippets and smoke checks |
+| [AI Tool Integration](docs/ai-artifacts/08-ai-tool-integration.md) | Per-client setup (Claude Code, Codex, Cursor, OpenCode, Gemini, VS Code, Windsurf, Desktop) with snippets and verification steps |
 | [Agent Skill](skills/exactmac/SKILL.md) | Workflow, recovery, and troubleshooting reference your agent loads |
 | [Deployment Guide](DEPLOYMENT.md) | Local single-user deployment: app bundle, LaunchAgent, Unix socket, signing, TCC grants |
 | [MCP Integration](docs/ai-artifacts/05-mcp-integration.md) | Protocol compliance, transport specifications, security, and tooling details |
@@ -274,7 +274,7 @@ and returns a truthful terminal delivery result.
 
 ## gRPC Server
 
-The repository includes a production-ready gRPC server that exposes all SDK functionality via a resource-oriented API.
+The repository includes a gRPC server that exposes all SDK functionality via a resource-oriented API.
 
 ### Features
 
@@ -284,7 +284,7 @@ The repository includes a production-ready gRPC server that exposes all SDK func
 - **Real-time streaming**: Watch accessibility tree changes in real-time
 - **Thread-safe architecture**: CQRS-style with central control loop
 - **Flexible MCP transport**: stdio or Streamable HTTP; the HTTP listener can use TCP or a Unix socket
-- **Production-ready**: TLS, API key authentication, rate limiting, audit logging
+- **Security**: TLS, API key authentication, rate limiting, audit logging
 
 ### Quick Start
 
@@ -354,14 +354,12 @@ curl -X POST http://localhost:8080/mcp \
   -d '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"click","arguments":{"target":"desktop","x":100,"y":200}}}'
 ```
 
-## Fork history and development honesty
+## Fork history
 
-ExactMac began as a fork of `mediar-ai/MacosUseSDK` and is long since a hard
-fork: the shipped implementation is original work. Development direction was
-strict (particularly API semantics) and made heavy use of agentic AI alongside
-regular human review; the original author of this fork is not a native Swift
-developer. The code reflects an iterative AI-assisted process rather than
-expert-level fluency — and served as a surprisingly successful learning vehicle.
+ExactMac began as a fork of `mediar-ai/MacosUseSDK` and has long since
+diverged; the shipped implementation is work done since the fork. Development
+used AI-assisted coding with human review, and the author is not a Swift
+specialist.
 
 ## License
 

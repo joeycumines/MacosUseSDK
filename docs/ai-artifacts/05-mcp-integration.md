@@ -2,8 +2,8 @@
 
 ## **Executive Summary**
 
-The transition of Large Language Models (LLMs) from passive text generation engines to active agents capable of "Computer Use" represents a fundamental discontinuity in artificial intelligence engineering. This shift, exemplified by Anthropic’s Claude 3.5 Sonnet and OpenAI’s Operator, necessitates a standardized communication layer capable of mediating between the probabilistic reasoning of neural networks and the deterministic, stateful nature of operating system (OS) environments. The Model Context Protocol (MCP) has emerged as the critical architectural standard for this mediation, providing a universal schema for tool exposure, resource management, and agentic orchestration.  
-This report provides an exhaustive technical analysis of the AI-facing MCP tool interfaces utilized in cutting-edge Computer Use implementations. It dissects the JSON-RPC message structures, polymorphic input/output schemas, and execution harnesses that enable agents to perceive high-fidelity screen states, simulate precise human input, and navigate complex semantic accessibility trees. The analysis reveals that while current implementations share high-level architectural similarities—such as the reliance on screenshot-based visual feedback loops—they diverge significantly in their treatment of accessibility metadata, coordinate scaling methodologies, and security signaling protocols. Furthermore, the integration of structured accessibility data (via frameworks like Windows Agent Arena and Screen2AX) alongside pixel-based observation is identified as the decisive factor for enhancing agent reliability and reducing the token consumption inherent in purely visual approaches.
+The transition of Large Language Models (LLMs) from passive text generation engines to active agents capable of "Computer Use" represents a major shift in artificial intelligence engineering. This shift, exemplified by Anthropic’s Claude 3.5 Sonnet and OpenAI’s Operator, necessitates a standardized communication layer capable of mediating between the probabilistic reasoning of neural networks and the deterministic, stateful nature of operating system (OS) environments. The Model Context Protocol (MCP) has emerged as a standard protocol for this mediation, providing a universal schema for tool exposure, resource management, and agentic orchestration.  
+This report provides a technical analysis of the AI-facing MCP tool interfaces used in Computer Use implementations. It dissects the JSON-RPC message structures, polymorphic input/output schemas, and execution harnesses that enable agents to perceive high-fidelity screen states, simulate precise human input, and navigate complex semantic accessibility trees. The analysis reveals that while current implementations share high-level architectural similarities—such as the reliance on screenshot-based visual feedback loops—they diverge significantly in their treatment of accessibility metadata, coordinate scaling methodologies, and security signaling protocols. Furthermore, the integration of structured accessibility data (via frameworks like Windows Agent Arena and Screen2AX) alongside pixel-based observation is identified as a key factor in improving agent reliability and reducing the token consumption inherent in purely visual approaches.
 
 ## **1\. The Model Context Protocol (MCP): The Architectural Substrate**
 
@@ -228,7 +228,7 @@ histogram_quantile(0.95, rate(mcp_request_duration_seconds_bucket[5m]))
 
 ### **1A.6 Security Configuration**
 
-The HTTP transport now supports production-grade security features:
+The HTTP transport now supports the following security features:
 
 1. **TLS:** Native TLS termination via `MCP_TLS_CERT_FILE` and `MCP_TLS_KEY_FILE`. For certificate management, use Let's Encrypt or your organization's PKI.
 
@@ -267,7 +267,7 @@ Or with a reverse proxy:
 
 ## **2\. Anthropic Computer Use Interface: The Reference Implementation**
 
-Anthropic’s implementation of Computer Use, specifically the computer\_20251124 tool definition, serves as the current reference architecture for the industry. Unlike traditional tool use which relies on rigid, pre-defined JSON schemas for every parameter, the Computer Use tool is "schema-less" in its training but strictly defined in its execution harness. The model is fine-tuned to understand the tool's capabilities implicitly, allowing for more fluid interaction with the OS.13
+Anthropic’s implementation of Computer Use, specifically the computer\_20251124 tool definition, is a common reference architecture. Unlike traditional tool use which relies on rigid, pre-defined JSON schemas for every parameter, the Computer Use tool is "schema-less" in its training but strictly defined in its execution harness. The model is fine-tuned to understand the tool's capabilities implicitly, allowing for more fluid interaction with the OS.13
 
 ### **2.1 The Polymorphic computer Tool Definition**
 

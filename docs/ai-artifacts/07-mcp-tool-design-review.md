@@ -21,7 +21,7 @@ The authoritative current signatures are in
 [`skills/exactmac/references/workflows-and-tools.md`](../../skills/exactmac/references/workflows-and-tools.md),
 and the registry is implemented in `internal/server/toolregistry.go`.
 
-## Important supersessions
+## Superseded findings
 
 ### Screenshot consolidation
 
@@ -64,9 +64,9 @@ single `run` tool; shell execution is disabled unless
 
 The current proxy supports:
 
-- stdio, the default local transport; and
-- Streamable HTTP at `/mcp`, with synchronous JSON responses and bounded
-  in-memory sessions.
+- stdio via the `exactmac mcp` subcommand; and
+- Streamable HTTP via the `exactmac http` subcommand, at `/mcp`, with
+  synchronous JSON responses and bounded in-memory sessions.
 
 Successful HTTP `initialize` responses return `MCP-Session-Id`; later requests
 require that header. Sessions expire after one hour of inactivity and can be
