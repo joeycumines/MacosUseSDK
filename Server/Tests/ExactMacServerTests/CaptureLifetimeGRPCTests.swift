@@ -1168,12 +1168,14 @@ private actor CaptureLifetimeProbe {
 
     func waitUntilEntered() async throws {
         let clock = ContinuousClock()
-        let deadline = clock.now.advanced(by: .seconds(2))
+        let deadline = clock.now.advanced(by: captureLifetimeWaitBudget)
         while !entered {
             guard clock.now < deadline else {
                 throw CaptureLifetimeTestError.timeout("capture sink entry")
             }
-            await Task.yield()
+            // Sleep (not bare yield) so a busy loaded runner still schedules the
+            // producer side instead of spinning the waiter to the deadline.
+            try await Task.sleep(for: .milliseconds(1))
         }
     }
 
@@ -1319,7 +1321,7 @@ private func captureLifetimeUnary<
         descriptor: descriptor,
         serializer: ProtobufSerializer<Request>(),
         deserializer: ProtobufDeserializer<Response>(),
-        options: .defaults,
+        options: captureLifetimeCallOptions(),
     ) { response in
         try response.message
     }
@@ -1394,6 +1396,21 @@ private func captureLifetimeCall(
 
 private let captureLifetimeRegion = captureLifetimeRegionMessage(captureLifetimeDisplay.frame)
 
+/// Fail-closed hang budget for condition waits and capture RPCs.
+/// Normal completion is near-instant; this only fires when progress has stopped.
+/// Sized so a loaded full-suite run (many parallel packages) does not false-timeout.
+private let captureLifetimeWaitBudget = Duration.seconds(30)
+
+/// Call options for capture RPCs: wait for the Unix-socket connection instead of
+/// failing while the connection is still establishing under load, and bound the
+/// overall RPC so a true hang still fails closed.
+private func captureLifetimeCallOptions() -> CallOptions {
+    var options = CallOptions.defaults
+    options.waitForReady = true
+    options.timeout = captureLifetimeWaitBudget
+    return options
+}
+
 private func captureLifetimeRegionMessage(_ frame: CGRect) -> Exactmac_Type_Region {
     Exactmac_Type_Region.with {
         $0.x = frame.origin.x
@@ -1408,12 +1425,14 @@ private func pollCaptureLifetimeCondition(
     operation: @escaping @Sendable () async -> Bool,
 ) async throws {
     let clock = ContinuousClock()
-    let deadline = clock.now.advanced(by: .seconds(2))
+    let deadline = clock.now.advanced(by: captureLifetimeWaitBudget)
     while await !operation() {
         guard clock.now < deadline else {
             throw CaptureLifetimeTestError.timeout(label)
         }
-        await Task.yield()
+        // Sleep (not bare yield) so a busy loaded runner still schedules the
+        // producer side instead of spinning the waiter to the deadline.
+        try await Task.sleep(for: .milliseconds(1))
     }
 }
 
