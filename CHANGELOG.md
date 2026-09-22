@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to MacosUseSDK will be documented in this file.
+All notable changes to ExactMac will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 The following inventory describes the 0.1.0-era design and is not the current
 MCP registry. The current implementation exposes 29 tools; see
-`skills/macos-use/references/workflows-and-tools.md`.
+`skills/exactmac/references/workflows-and-tools.md`.
 
 - **Screenshot Tools (4)**: `capture_screenshot`, `capture_window_screenshot`, `capture_region_screenshot`, `capture_element_screenshot`
 - **Input Tools (11)**: `click`, `type_text`, `press_key`, `hold_key`, `mouse_move`, `scroll`, `drag`, `mouse_button_down`, `mouse_button_up`, `hover`, `gesture`
@@ -46,7 +46,7 @@ MCP registry. The current implementation exposes 29 tools; see
 #### Documentation
 
 - Production deployment guide (`DEPLOYMENT.md`)
-- MCP tool reference (`skills/macos-use/references/workflows-and-tools.md`)
+- MCP tool reference (`skills/exactmac/references/workflows-and-tools.md`)
 - MCP integration details (docs/ai-artifacts/05-mcp-integration.md)
 - Architecture documentation (docs/ai-artifacts/01-window-management-subsystems.md)
 
@@ -66,12 +66,17 @@ MCP registry. The current implementation exposes 29 tools; see
 
 ### Added
 
+- **ExactMac full rename + AI tool integration matrix**: project renamed end-to-end (Go module `github.com/joeycumines/ExactMac`, proto `exactmac.v1`, Swift `ExactMac`/`ExactMacServer`, CLI `exactmac` (MCP served via `exactmac mcp`), skill `exactmac`, env `EXACTMAC_*`); README rewritten for AI-tool-integration search (Claude Code incl. built-in computer-use coexistence, Codex CLI/App, Cursor, OpenCode, Gemini CLI, VS Code, Windsurf, Claude Desktop); new `docs/ai-artifacts/ai-tool-integration.md` with per-client snippets and smoke checks
+- **Go CLI `exactmac` with `exactmac mcp`**: the former `exactmac-mcp` binary is now the `exactmac` CLI (`./cmd/exactmac`); the MCP server runs as the `mcp` subcommand over stdio (default) or Streamable HTTP via `MCP_TRANSPORT`; unknown commands fail with usage
+- **Hard-fork detach**: upstream remote removed; README states explicitly that this project is not affiliated with mediar-ai / macos-use.dev
+
 - **Background Application Open Mode**: the gRPC `OpenApplication` API supports background launch without stealing focus
 - **MCP Resources Support**: `resources/list` and `resources/read` methods for `screen://`, `accessibility://`, `clipboard://` URIs
 - **MCP Prompts Support**: `prompts/list` and `prompts/get` methods for predefined automation prompts
 
 ### Changed
 
+- **Full rename, no wire compat**: every technical identity renamed; no deprecated aliases or dual paths; field numbers and enum values unchanged, fully-qualified names are new (breaking, pre-1.0)
 - **Owned Physical Input Transactions**: `CreateInput` now requires one exact application, window, display, or explicit desktop target; preserves caller IDs and immutable intent; reports `PENDING`, `EXECUTING`, `COMPLETED`, `FAILED`, or `CANCELLED`; and returns explicit delivery commitment, post count, and routed-observation evidence.
 - **Strict MCP Input Boundary**: All seven physical MCP tools require exact targets, generate opaque per-call input IDs, forward complete timing/modifier/path intent, and reject malformed or non-settled backend responses.
 - **Root Product Topology**: Removed the unsupported `ActionTool`, `AppOpenerTool`, `HighlightTraversalTool`, `InputControllerTool`, `TraversalTool`, and `VisualInputTool` executable products instead of preserving unowned bypass paths.
