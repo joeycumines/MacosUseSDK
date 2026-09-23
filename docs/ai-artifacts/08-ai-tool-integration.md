@@ -20,9 +20,10 @@ Conventions used throughout:
 
 ## 1. Claude Code
 
-Claude Code routes **MCP tools before its built-in `computer-use` server**, so
-ExactMac is used first (AX tree, click by text) and the built-in remains the
-screenshot fallback for canvases with no Accessibility tree.
+Anthropic documents computer use as the last resort after MCP servers, shell
+commands, and browser integration. Both tools appear in one session, so state
+the preference in the prompt; the ExactMac skill instructs agents to use it
+first and yield to screenshots only for canvases with no Accessibility tree.
 
 ```sh
 # Project scope (persists for this project)
@@ -41,8 +42,18 @@ claude mcp add -s user exactmac --env EXACTMAC_SERVER_ADDR=localhost:50051 -- <E
 Verify with `claude mcp list`, then ask for `list_apps`. To avoid per-tool
 permission prompts, add `mcp__exactmac__*` to `permissions.allow` in
 `.claude/settings.local.json`. The built-in `computer-use` server stays
-disabled until you enable it in `/mcp` — enable both and Claude picks ExactMac
-first automatically.
+disabled until you enable it in `/mcp` — enable both and direct Claude
+explicitly when it matters.
+
+### Agent skill as a plugin
+
+This repo is the plugin marketplace (`exactmac`). It distributes the agent
+skill; register the MCP server separately with `claude mcp add` above.
+
+```
+/plugin marketplace add joeycumines/MacosUseSDK
+/plugin install exactmac@exactmac
+```
 
 ## 2. Codex CLI
 

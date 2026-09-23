@@ -1,0 +1,12 @@
+{
+  "name": "exactmac",
+  "description": "macOS desktop automation for AI coding tools: drive apps, click, type, and manage windows through the ExactMac MCP server",
+  "author": {
+    "name": "Joseph Cumines",
+    "url": "https://github.com/joeycumines"
+  },
+  "homepage": "https://github.com/joeycumines/MacosUseSDK",
+  "repository": "https://github.com/joeycumines/MacosUseSDK",
+  "license": "MIT",
+  "keywords": ["macos", "desktop-automation", "computer-use", "mcp", "accessibility"]
+}

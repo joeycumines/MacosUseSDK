@@ -126,6 +126,17 @@ cd integration && go test -v -run TestCalculator ./...
 
 **Important**: Integration and asynchronous state-convergence tests use `PollUntilContext` rather than arbitrary sleeps. Tests must assert state differences, not just "OK" status. Some lower-level transport tests may use timing primitives to test timeout behavior.
 
+## Claude Plugin Development
+
+The agent skill in `skills/exactmac/` ships as the `exactmac` Claude Code plugin; this repo is the marketplace (`.claude-plugin/`). To test skill changes, add the marketplace from the local checkout — relative-path plugins in a local-directory marketplace load in place, so edits apply without reinstalling:
+
+```
+/plugin marketplace add /path/to/ExactMac
+/plugin install exactmac@exactmac
+```
+
+Validate manifests with `claude plugin validate .` from the repo root. The manifests carry no `version` field, so updates follow the git SHA while the plugin is under active development.
+
 ## Test Guidelines
 
 ### Golden Application Constraint

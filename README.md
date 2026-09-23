@@ -1,81 +1,37 @@
-> [!NOTE]
->
-> **ExactMac is a fork of [mediar-ai/MacosUseSDK](https://github.com/mediar-ai/MacosUseSDK);
-> it is not affiliated with mediar-ai.**
-> The Go MCP proxy, Swift gRPC service, 29-tool CUA surface, owned-input
-> transaction model, and agent skill are work done since the fork; upstream has
-> had no commits since the fork point.
-> [macos-use.dev](https://macos-use.dev/) documents a different project,
-> `mediar-ai/mcp-server-macos-use` (a 6-tool Swift stdio server).
-
 [![CI](https://github.com/joeycumines/ExactMac/actions/workflows/ci.yaml/badge.svg)](https://github.com/joeycumines/ExactMac/actions/workflows/ci.yaml)
 [![Go Coverage](https://img.shields.io/badge/Go%20Coverage-70%25+-blue?style=flat)](https://github.com/joeycumines/ExactMac)
 [![Swift Coverage](https://img.shields.io/badge/Swift%20Coverage-see%20CI-blue?style=flat)](https://github.com/joeycumines/ExactMac/actions)
 
-# ExactMac — macOS Computer Use for AI Coding Tools (MCP)
+> Fork note: ExactMac was forked from [`mediar-ai/MacosUseSDK`](https://github.com/mediar-ai/MacosUseSDK) and is unaffiliated with mediar-ai. Upstream built an embedded SDK; ExactMac is a background service, a Go MCP proxy plus a Swift gRPC daemon, for OS-level automation. [macos-use.dev](https://macos-use.dev/) documents a different project, [`mediar-ai/mcp-server-macos-use`](https://github.com/mediar-ai/mcp-server-macos-use); a code-grounded comparison is in [docs/ai-artifacts/12-mcp-server-macos-use-analysis.md](docs/ai-artifacts/12-mcp-server-macos-use-analysis.md).
 
-Give your AI coding assistant hands on your Mac: open apps, click buttons by name,
-type into fields, manage windows, and verify the result — through one local
-[Model Context Protocol](https://modelcontextprotocol.io/) server.
+# ExactMac
 
-ExactMac is built for developers who already live in **Claude Code**, **Codex CLI**,
-the **Codex app (Codex desktop)**, **Cursor**, **OpenCode**, **Gemini CLI**,
-**VS Code**, **Windsurf**, or **Claude Desktop** and want real macOS desktop
-automation — not a second agent harness to learn. If your tool speaks MCP over
-stdio, it can drive your Mac through ExactMac.
+macOS desktop automation for AI coding tools, over MCP.
 
-## Why ExactMac instead of built-in computer use or another MCP server?
+Let the assistant you already code with operate your Mac: open apps, click the button called `"Send"`, type into fields, arrange windows, then check its work. ExactMac is one local [Model Context Protocol](https://modelcontextprotocol.io/) server, reached over stdio or Streamable HTTP.
 
-**Against built-in computer use (Claude Code's `computer-use`, Codex background use).**
-Built-ins are screenshot-first fallbacks: full-screen re-described
-every step, pixel-guessed clicks, per-session app approvals, one session holding a
-machine-wide lock. ExactMac reads the native Accessibility tree — the same structured
-data Apple gives VoiceOver — so agents click by text (`"Send"`, `"Submit"`), not
-by guessed coordinates. Claude's own routing tries MCP tools first and falls back
-to screen control only when nothing better exists: ExactMac is used first and
-the built-in remains the fallback for custom-rendered canvases
-with no Accessibility tree at all.
+It works with Claude Code, Codex CLI, the Codex app, Cursor, OpenCode, Gemini CLI, VS Code, Windsurf, and Claude Desktop. If the tool speaks MCP over stdio, it can use ExactMac.
 
-**Against the many macOS MCP servers.** Most wrap AppleScript (only scriptable
-apps work), loop screenshots (each click costs vision-model tokens), or click
-raw coordinates with no ownership model. ExactMac is:
+## Why ExactMac
 
-- **AX-first, not screenshot-first.** Structured roles, labels, and coordinates;
-  screenshots only for visual verification, canvas apps, and JetBrains IDEs with
-  Accessibility disabled (clean visual-grounding fallback in the skill).
-- **Owned input transactions.** Every click, keypress, drag, and scroll names one
-  exact application, window, display, or explicit desktop target, converges on
-  focus/activation at the backend, and returns a truthful terminal delivery
-  result — never a bare "OK".
-- **29 focused CUA tools, one server.** Screen capture, mouse, keyboard, element
-  discovery and interaction, window and application management, clipboard,
-  command execution, display grounding, and recorded macros — over stdio or
-  Streamable HTTP, with TLS, API-key auth, rate limiting, and audit logging.
-- **100% local.** Swift gRPC service plus Go MCP proxy on your machine. No SaaS,
-  no network egress from the server itself.
+Built-in computer use (Claude Code `computer-use`, Codex background use) is screenshot-first: the full screen is re-described each step and clicks are guessed from pixels, with per-session approvals and one machine-wide lock. ExactMac reads the native Accessibility tree, the same structured data VoiceOver uses, so agents click by text.
 
-## Quick start
+Most macOS MCP servers wrap AppleScript (scriptable apps only), loop screenshots (vision tokens per click), or click raw coordinates with no ownership. ExactMac instead:
 
-Prerequisites: macOS with Accessibility permission granted to the host process
-(your terminal or agent app — that is macOS's TCC model, not ours), Xcode
-Command Line Tools for the Swift build, Go for the proxy build.
+- **Accessibility first.** Structured roles, labels, and coordinates. Screenshots are for verification, canvas apps, and IDEs with Accessibility disabled (visual-grounding fallback in the skill).
+- **Owned input.** Each click, keypress, drag, and scroll names one application, window, display, or explicit desktop target, brings it to focus before acting, and returns a delivery result rather than a bare `OK`.
+- **29 tools, one server.** Capture, mouse, keyboard, element search and interaction, window and application management, clipboard, command execution, display grounding, and recorded macros. Stdio or Streamable HTTP, with TLS, API-key auth, rate limiting, and audit logging.
+- **Local only.** A Swift gRPC service plus a Go MCP proxy on the machine. The server itself makes no network calls.
 
-```sh
-# Build everything (Swift + Go + protobuf checks use logged Make targets)
-gmake all
+## Setup
 
-# Start the Swift gRPC backend
-cd Server && swift build -c release
-GRPC_LISTEN_ADDRESS=127.0.0.1 GRPC_PORT=50051 ./.build/release/ExactMacServer &
+Build from source with [CONTRIBUTING.md](CONTRIBUTING.md) (prerequisites, first build, tests). Run the backend as a background service with [DEPLOYMENT.md](DEPLOYMENT.md) (app bundle, LaunchAgent, Unix socket, signing).
 
-# Build the MCP proxy
-go build -o exactmac ./cmd/exactmac
-```
+Point the proxy at the Swift backend with `EXACTMAC_SERVER_ADDR` (default `localhost:50051`; the socket deployment in [DEPLOYMENT.md](DEPLOYMENT.md) avoids TCP entirely).
 
-Then register it in your AI tool (per-client setup guide with verification
-steps: `docs/ai-artifacts/08-ai-tool-integration.md`):
+Register it in the AI tool (snippets and checks for every client: [AI Tool Integration](docs/ai-artifacts/08-ai-tool-integration.md)):
 
-| Your tool | Where | Snippet |
+| Tool | Where | Snippet |
 |-----------|-------|---------|
 | **Claude Code** | `claude mcp add` (project scope; `-s user` for global) | `claude mcp add exactmac -- /path/to/exactmac mcp` |
 | **Codex CLI** | `~/.codex/config.toml` | `[mcp_servers.exactmac]` + `command = "/path/to/exactmac"` + `args = ["mcp"]` |
@@ -85,165 +41,101 @@ steps: `docs/ai-artifacts/08-ai-tool-integration.md`):
 | **Claude Desktop** | `~/Library/Application Support/Claude/claude_desktop_config.json` | `"exactmac": { "command": "/path/to/exactmac", "args": ["mcp"] }` |
 | **VS Code / Windsurf** | MCP settings | same stdio command shape as above |
 
-Point `EXACTMAC_SERVER_ADDR` at the Swift backend (default `localhost:50051`).
-Verify with one call: `list_apps` should return your running applications.
-
-For repeatable GUI work, also load the agent skill in `skills/exactmac/` —
-recovery procedures, coordinate math, and workflow recipes your agent follows
-instead of guessing.
+For repeatable GUI work, load the agent skill in `skills/exactmac/` (Claude Code plugin install: [AI Tool Integration](docs/ai-artifacts/08-ai-tool-integration.md#1-claude-code)): recovery steps, coordinate math, and workflow recipes.
 
 ## Components
 
-- **ExactMac (Swift library)**: Core Accessibility automation primitives
-  (`AXUIElement`, CoreGraphics input, AppKit windows). Published as the
-  `ExactMac` Swift package; embedding notes under [Using the Library](#using-the-library).
-- **MCP Server (Go CLI `cmd/exactmac`, served via `exactmac mcp`)**: MCP server exposing
-  **29 CUA-aligned MCP tools** via stdio or Streamable HTTP (TCP or Unix socket),
-  with rate limiting, API-key auth, and audit logging.
-- **gRPC Server (Swift, `Server/`)**: Resource-oriented API following
-  [Google's AIPs](https://google.aip.dev/) — WindowRegistry, ObservationManager,
-  SessionManager, LRO pattern for async operations.
+- **ExactMac (Swift library):** Accessibility primitives (`AXUIElement`, CoreGraphics input, AppKit windows). Embedding notes under [Using the library](#using-the-library).
+- **MCP server (Go CLI `cmd/exactmac`, `exactmac mcp`):** 29 MCP tools over stdio or Streamable HTTP (TCP or Unix socket), with rate limiting, API-key auth, and audit logging.
+- **gRPC server (Swift, `Server/`):** Resource-oriented API following [Google's AIPs](https://google.aip.dev/): WindowRegistry, ObservationManager, SessionManager, LRO pattern for async operations. Automates several applications at once, streams observation changes, and is thread-safe under concurrency.
 
 ## Documentation
 
-| Document | Description |
+| Document | Contents |
 |----------|-------------|
-| [AI Tool Integration](docs/ai-artifacts/08-ai-tool-integration.md) | Per-client setup (Claude Code, Codex, Cursor, OpenCode, Gemini, VS Code, Windsurf, Desktop) with snippets and verification steps |
-| [Agent Skill](skills/exactmac/SKILL.md) | Workflow, recovery, and troubleshooting reference your agent loads |
+| [AI Tool Integration](docs/ai-artifacts/08-ai-tool-integration.md) | Per-client setup with snippets and verification steps |
+| [Agent Skill](skills/exactmac/SKILL.md) | Workflow, recovery, and troubleshooting reference for agents |
 | [Deployment Guide](DEPLOYMENT.md) | Local single-user deployment: app bundle, LaunchAgent, Unix socket, signing, TCC grants |
-| [MCP Integration](docs/ai-artifacts/05-mcp-integration.md) | Protocol compliance, transport specifications, security, and tooling details |
-| [MCP Server Design](docs/ai-artifacts/11-mcp-server-design-for-computer-use-agents.md) | Design notes for the CUA-aligned MCP server surface |
+| [MCP Integration](docs/ai-artifacts/05-mcp-integration.md) | Protocol version, transports, security, tooling |
+| [MCP Server Design](docs/ai-artifacts/11-mcp-server-design-for-computer-use-agents.md) | Design notes for the MCP surface |
 | [Tool Design Review](docs/ai-artifacts/07-mcp-tool-design-review.md) | Tool surface review and rationale |
 
 ## Architecture
 
-### Three-Layer Design
-
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                      AI Agents / Clients                     │
-│         (Claude Code, Codex, Cursor, OpenCode, Gemini)       │
-└─────────────────────────┬───────────────────────────────────┘
-                          │ JSON-RPC over Streamable HTTP or stdio
-                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│     Go CLI (cmd/exactmac, `exactmac mcp`)                        │
-│     • 29 CUA-aligned MCP Tools                               │
-│     • Streamable HTTP + stdio transports                     │
-│     • Rate limiting, API key auth, audit logging             │
-└─────────────────────────┬───────────────────────────────────┘
-                          │ gRPC (protobuf)
-                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│     Swift gRPC Server (Server/ExactMacServer)                │
-│     • Resource-oriented API (Google AIPs)                    │
-│     • WindowRegistry, ObservationManager, SessionManager     │
-│     • LRO pattern for async operations                       │
-└─────────────────────────┬───────────────────────────────────┘
-                          │ Native Swift APIs
-                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│     Swift SDK (Sources/ExactMac)                          │
-│     • Accessibility APIs (AXUIElement)                       │
-│     • CoreGraphics for input simulation                      │
-│     • AppKit for window management                           │
-└─────────────────────────────────────────────────────────────┘
+AI clients (Claude Code, Codex, Cursor, OpenCode, Gemini)
+        |  JSON-RPC over Streamable HTTP or stdio
+Go CLI (cmd/exactmac, `exactmac mcp`)
+  29 MCP tools; rate limiting, API-key auth, audit logging
+        |  gRPC (protobuf)
+Swift gRPC server (Server/ExactMacServer)
+  Resource-oriented API (Google AIPs); WindowRegistry,
+  ObservationManager, SessionManager; LRO for async ops
+        |  Native Swift APIs
+Swift SDK (Sources/ExactMac)
+  AXUIElement; CoreGraphics input; AppKit windows
 ```
 
-### Hybrid Authority Model
+Window and element reads use two authorities (see [window-state-management.md](docs/window-state-management.md)):
 
-Window and element management uses a **dual-API approach** (see [window-state-management.md](docs/window-state-management.md)):
-
-| Authority | API | Use Case |
+| Authority | API | Used for |
 |-----------|-----|----------|
-| **Quartz (CG)** | `CGWindowListCopyWindowInfo` | Fast enumeration, global window list, metadata |
-| **Accessibility (AX)** | `AXUIElement` | Precise geometry, mutations, element interaction |
+| **Quartz (CG)** | `CGWindowListCopyWindowInfo` | Fast enumeration, global list, metadata (may be stale) |
+| **Accessibility (AX)** | `AXUIElement` | Fresh geometry, mutations, element interaction |
 
-- `ListWindows` uses **Quartz** (one snapshot call plus parsing of the returned population; data may be stale)
-- `GetWindow` uses **Accessibility** (fresh geometry for single window)
-- Window mutations (move/resize) use **Accessibility**
-- Bridging via `_AXUIElementGetWindow` with 1000px heuristic fallback
+`ListWindows` reads Quartz; `GetWindow`, moves, and resizes use Accessibility; bridging uses `_AXUIElementGetWindow` with a 1000px heuristic fallback.
 
-### Coordinate Systems
+macOS keeps two coordinate systems:
 
-macOS uses **two distinct coordinate systems**:
+| Coordinates | Origin | Y grows | Used by |
+|-------------|--------|---------|---------|
+| **Global Display (top-left origin)** | Main display, top-left | Down | Window bounds; CGWindowList, AX, CGEvent; every input position |
+| **AppKit** | Main display, bottom-left | Up | NSWindow, NSScreen |
 
-| System | Origin | Y Direction | Used By |
-|--------|--------|-------------|---------|
-| **Global Display Coordinates (top-left origin)** | Top-left of main display | Down ↓ | CGWindowList, AX, CGEvent, Input APIs |
-| **AppKit** | Bottom-left of main display | Up ↑ | NSWindow, NSScreen |
+Window bounds and input positions share Global Display Coordinates, so no conversion is needed between them.
+Display geometry is relative to the main display, and represents the physical layout of the displays.
+The main display is always at (0,0).
+This means secondary displays may sit at negative X (left of main), negative Y (above main), or any other position, relative to the main display.
 
-**Important**: Window bounds and input coordinates both use **Global Display Coordinates**. No conversion needed between them. Secondary displays may have negative X (left of main) or negative Y (above main).
+## Configuration
 
-### Environment Variable Reference
+Configuration is environment variables only. The defaults live in code: [internal/config/config.go](internal/config/config.go) for the Go proxy, [ServerConfig.swift](Server/Sources/ExactMacServer/ServerConfig.swift) for the Swift server. The documented reference is [Runtime configuration](DEPLOYMENT.md#runtime-configuration) in the deployment guide, with per-component settings repeated in [Server/README.md](Server/README.md) and [cmd/exactmac/README.md](cmd/exactmac/README.md).
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `MCP_HTTP_ADDRESS` | HTTP server bind address | `127.0.0.1:8080` |
-| `MCP_HTTP_SOCKET` | Unix socket path (overrides HTTP) | - |
-| `MCP_TLS_CERT_FILE` | TLS certificate for HTTPS | - |
-| `MCP_TLS_KEY_FILE` | TLS private key | - |
-| `MCP_API_KEY` | API key for authentication | - |
-| `MCP_RATE_LIMIT` | Max requests/second; `0` disables | `0` |
-| `MCP_AUDIT_LOG_FILE` | Owner-private non-content audit log path | - |
-| `EXACTMAC_SERVER_ADDR` | gRPC server address for MCP proxy | `localhost:50051` |
-| `GRPC_LISTEN_ADDRESS` | Swift server bind address | `127.0.0.1` |
-| `GRPC_PORT` | Swift server port | `8080` |
-| `GRPC_UNIX_SOCKET` | Launchd-activated Swift server Unix socket (overrides TCP); leave unset for manual runs | - |
+## MCP tools
 
-## MCP Tool Catalog
+29 tools in 6 groups:
 
-The server exposes **29 CUA-aligned MCP tools** organized into 6 categories:
-
-| Category | Tools | Description |
+| Group | Tools | Covers |
 |----------|-------|-------------|
-| **Core CUA Input** | `screenshot`, `click`, `double_click`, `type`, `keypress`, `scroll`, `drag`, `move`, `wait` | Screen capture, mouse, keyboard, and wait input |
-| **Element Interaction** | `find_elements`, `click_element`, `type_element`, `read_element` | Accessibility element discovery and interaction |
-| **Window Management** | `focus_window`, `move_window`, `resize_window`, `list_windows` | Window enumeration and manipulation |
-| **Application Management** | `open_app`, `list_apps`, `close_app` | Application lifecycle management |
-| **Utility** | `clipboard`, `run`, `get_display` | Clipboard, command execution, and display grounding |
-| **Macros** | `create_macro`, `get_macro`, `list_macros`, `update_macro`, `delete_macro`, `execute_macro` | Recorded multi-step automation sequences |
+| **Input** | `screenshot`, `click`, `double_click`, `type`, `keypress`, `scroll`, `drag`, `move`, `wait` | Capture, mouse, keyboard, wait |
+| **Elements** | `find_elements`, `click_element`, `type_element`, `read_element` | Accessibility search and interaction |
+| **Windows** | `focus_window`, `move_window`, `resize_window`, `list_windows` | Enumeration and manipulation |
+| **Applications** | `open_app`, `list_apps`, `close_app` | Lifecycle management |
+| **Utility** | `clipboard`, `run`, `get_display` | Clipboard, command execution, display grounding |
+| **Macros** | `create_macro`, `get_macro`, `list_macros`, `update_macro`, `delete_macro`, `execute_macro` | Recorded multi-step sequences |
 
-
-https://github.com/user-attachments/assets/d8dc75ba-5b15-492c-bb40-d2bc5b65483e
-
-Highlight whatever is happening on the computer: text elements, clicks, typing
-![Image](https://github.com/user-attachments/assets/9e182bbc-bd30-4285-984a-207a58b32bc0)
-
-Listen to changes in the UI, elements changed, text changed
-![Image](https://github.com/user-attachments/assets/4a972dfa-ce4d-4b1a-9781-43379375b313)
-
-## Building
-
-Use the repository's logged GNU Make targets so Swift, Go, protobuf generation,
-and contract checks run with the supported configuration:
+HTTP example (full protocol: [MCP Integration](docs/ai-artifacts/05-mcp-integration.md)). Initialize, then pass the session id back on each call:
 
 ```sh
-gmake all
+curl -X POST http://localhost:8080/mcp \
+  -H "Accept: application/json, text/event-stream" \
+  -H "MCP-Protocol-Version: 2025-11-25" \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"example","version":"1.0"}}}'
+
+curl -X POST http://localhost:8080/mcp \
+  -H "Accept: application/json, text/event-stream" \
+  -H "MCP-Protocol-Version: 2025-11-25" \
+  -H "MCP-Session-Id: <session-id-from-initialize>" \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"list_apps","arguments":{}}}'
 ```
 
-The root Swift package intentionally publishes only the `ExactMac` library.
-The former standalone command-line products are not part of the supported
-surface; server deployments should use the owned gRPC transaction or MCP tool
-boundary.
+`open_app` takes the exact application resource `list_apps` returns.
 
-### Running Tests
+## Using the library
 
-Run only specific tests or test classes, use the --filter option.
-Run a specific test method: Provide the full identifier TestClassName/testMethodName
-
-```sh
-swift test
-# Example: Run the physical-input timing contract suite (SDK package)
-swift test --filter InputTimingContractTests
-# Example: Run the owned input-overlay contract suite (Server package)
-(cd Server && swift test --filter InputOverlayPresenterTests)
-```
-
-
-## Using the Library
-
-You can also use `ExactMac` as a local dependency in your own Swift projects:
+The root Swift package publishes only the `ExactMac` library. Use it as a local dependency in another Swift project:
 
 ```swift
 dependencies: [
@@ -251,124 +143,32 @@ dependencies: [
 ]
 ```
 
-And add `ExactMac` to your target's dependencies:
-
 ```swift
 .target(
     name: "YourApp",
     dependencies: ["ExactMac"]),
 ```
 
-Then import the low-level SDK:
-
 ```swift
 import ExactMac
 ```
 
-The SDK exposes process-local Accessibility and Core Graphics primitives for
-embedding. Those low-level functions do not carry the public gRPC resource
-target, ownership, cancellation, or delivery receipt. Production automation
-should use the generated `ExactMac` client or the MCP server so each physical
-input names an exact application, window, display, or explicit desktop target
-and returns a truthful terminal delivery result.
-
-## gRPC Server
-
-The repository includes a gRPC server that exposes all SDK functionality via a resource-oriented API.
-
-### Features
-
-- **29 CUA-aligned MCP tools** for focused macOS automation
-- **Resource-oriented API** following [Google's AIPs](https://google.aip.dev/)
-- **Multi-application support**: Automate multiple applications simultaneously
-- **Real-time streaming**: Watch accessibility tree changes in real-time
-- **Thread-safe architecture**: CQRS-style with central control loop
-- **Flexible MCP transport**: stdio or Streamable HTTP; the HTTP listener can use TCP or a Unix socket
-- **Security**: TLS, API key authentication, rate limiting, audit logging
-
-### Quick Start
-
-```sh
-# Install buf for protobuf code generation
-brew install bufbuild/buf/buf
-
-# Generate gRPC stubs
-buf generate
-
-# Build and run the server
-cd Server && swift build -c release
-.build/release/ExactMacServer
-```
-
-### Environment Variables
-
-Key configuration options (see [Server/README.md](Server/README.md) for the Swift server and [cmd/exactmac/README.md](cmd/exactmac/README.md) for the MCP proxy):
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `MCP_HTTP_ADDRESS` | HTTP server address | `127.0.0.1:8080` |
-| `MCP_HTTP_SOCKET` | Unix socket path (if set, uses UDS) | - |
-| `MCP_TLS_CERT_FILE` | TLS certificate file path | - |
-| `MCP_TLS_KEY_FILE` | TLS private key file path | - |
-| `MCP_API_KEY` | API key for authentication | - |
-| `MCP_RATE_LIMIT` | Requests per second limit; `0` disables | `0` |
-
-See [Server/README.md](Server/README.md) for detailed server documentation.
-
-### API Example
-
-Open Calculator and click using MCP tools over HTTP:
-
-```sh
-# Start the Go proxy with `exactmac http` and point
-# EXACTMAC_SERVER_ADDR at the Swift gRPC listener (or use a Unix socket).
-# Then initialize an MCP session.
-curl -X POST http://localhost:8080/mcp \
-	-H "Accept: application/json, text/event-stream" \
-	-H "MCP-Protocol-Version: 2025-11-25" \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"example","version":"1.0"}}}'
-
-# Call list_apps first, then pass the exact Calculator applicationBundles/*
-# resource it returns to open_app.
-curl -X POST http://localhost:8080/mcp \
-	-H "Accept: application/json, text/event-stream" \
-	-H "MCP-Protocol-Version: 2025-11-25" \
-	-H "MCP-Session-Id: <session-id-from-initialize>" \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"list_apps","arguments":{}}}'
-
-curl -X POST http://localhost:8080/mcp \
-	-H "Accept: application/json, text/event-stream" \
-	-H "MCP-Protocol-Version: 2025-11-25" \
-	-H "MCP-Session-Id: <session-id-from-initialize>" \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"open_app","arguments":{"app":"<calculator-application-bundle-resource>"}}}'
-
-# Call click tool at coordinates
-curl -X POST http://localhost:8080/mcp \
-	-H "Accept: application/json, text/event-stream" \
-	-H "MCP-Protocol-Version: 2025-11-25" \
-  -H "Content-Type: application/json" \
-  -H "MCP-Session-Id: <session-id-from-initialize>" \
-  -d '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"click","arguments":{"target":"desktop","x":100,"y":200}}}'
-```
+The SDK exposes process-local Accessibility and Core Graphics primitives. Those functions lack core the functionality which differentiates this computer use implementation from the rest.
+Production automation should use the generated `ExactMac` client or the MCP server so each input names an exact target and returns a delivery result.
+Note: Delivery of inputs may still be best-effort, dependent on the means of input.
 
 ## Fork history
 
-ExactMac began as a fork of `mediar-ai/MacosUseSDK` and has long since
-diverged; the shipped implementation is work done since the fork. Development
-used AI-assisted coding with human review, and the author is not a Swift
-specialist.
+ExactMac began as a fork of [`mediar-ai/MacosUseSDK`](https://github.com/mediar-ai/MacosUseSDK) and has since diverged; the shipped implementation is post-fork work. Development used AI-assisted coding with human review; the author is not a Swift specialist.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License; see [LICENSE](LICENSE).
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for version history.
+See [CHANGELOG.md](CHANGELOG.md).

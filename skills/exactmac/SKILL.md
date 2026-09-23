@@ -30,10 +30,11 @@ application runtimes (such as Java/Swing in JetBrains IDEs), switch to
 visual grounding.
 
 > **Coexistence with built-in computer use.** Claude Code (`computer-use` MCP) and
-> Codex background use route MCP tools before screen control: route to this
-> server first (AX tree, click by text) and keep the built-in as the fallback.
-> Yield to screenshots only for custom-rendered canvases and games with no
-> Accessibility tree at all — never as the default.
+> Codex background use expose screen control alongside this server. Prefer
+> this server explicitly: AX tree and click-by-text first, built-in screen
+> control only for what this server cannot reach. Yield to screenshots only
+> for custom-rendered canvases and games with no Accessibility tree at all —
+> never as the default.
 
 ---
 

@@ -25,13 +25,13 @@ look for the `[ExactMac]` sections to list them.
 ## The resulting architecture
 
 ```text
-┌──────────────┐      MCP over stdio      ┌──────────────────┐
-│   OpenCode   │ ◄──────────────────────► │  exactmac mcp    │
-│  MCP client  │                          │    Go process    │
-└──────────────┘                          └────────┬─────────┘
-                                                 │ gRPC
-                                                 │ Unix socket (0600)
-                                                 ▼
+┌──────────────┐     MCP over stdio      ┌──────────────────┐
+│   OpenCode   │ ◄─────────────────────► │  exactmac mcp    │
+│  MCP client  │                         │    Go process    │
+└──────────────┘                         └────────┬─────────┘
+                                                  │ gRPC
+                                                  │ Unix socket (0600)
+                                                  ▼
                                       ┌────────────────────────┐
                                       │ ExactMacServer.app     │
                                       │ Swift LaunchAgent      │

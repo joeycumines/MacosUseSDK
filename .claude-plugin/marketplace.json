@@ -1,0 +1,15 @@
+{
+  "name": "exactmac",
+  "description": "ExactMac plugin: macOS desktop automation skill for AI coding tools",
+  "owner": {
+    "name": "Joseph Cumines"
+  },
+  "plugins": [
+    {
+      "name": "exactmac",
+      "source": "./",
+      "description": "macOS desktop automation for AI coding tools: drive apps, click, type, and manage windows through the ExactMac MCP server",
+      "category": "automation"
+    }
+  ]
+}
