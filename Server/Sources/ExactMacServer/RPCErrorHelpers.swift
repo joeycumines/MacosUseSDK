@@ -25,7 +25,7 @@ import SwiftProtobuf
 public enum RPCErrorHelpers {
     /// The domain for all ExactMac errors.
     /// Per AIP-193, this should be a globally unique identifier for the service.
-    public static let domain = "exactmac.com"
+    public static let domain = "exactmac"
 
     // MARK: - Standard Error Reason Codes
 

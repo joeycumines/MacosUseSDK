@@ -9,7 +9,7 @@ package exactmac.v1;
 option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1";
 option java_multiple_files = true;
 option java_outer_classname = "ScreenshotProto";
-option java_package = "com.exactmac.v1";
+option java_package = "io.github.joeycumines.exactmac.v1";
 
 // Image format for screenshots.
 enum ImageFormat {

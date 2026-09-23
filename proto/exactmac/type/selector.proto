@@ -11,7 +11,7 @@ import "google/api/field_behavior.proto";
 option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/type;exactmactype";
 option java_multiple_files = true;
 option java_outer_classname = "SelectorProto";
-option java_package = "com.exactmac.type";
+option java_package = "io.github.joeycumines.exactmac.type";
 
 // Selector for finding UI elements in the accessibility tree.
 //

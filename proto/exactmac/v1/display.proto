@@ -13,12 +13,12 @@ import "google/api/resource.proto";
 option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1";
 option java_multiple_files = true;
 option java_outer_classname = "DisplayProto";
-option java_package = "com.exactmac.v1";
+option java_package = "io.github.joeycumines.exactmac.v1";
 
 // A resource representing a physical display/screen attached to the system.
 message Display {
   option (google.api.resource) = {
-    type: "exactmac.com/Display"
+    type: "exactmac/Display"
     pattern: "displays/{display}"
     singular: "display"
     plural: "displays"
@@ -61,7 +61,7 @@ message GetDisplayRequest {
   // Resource name of the display.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "exactmac.com/Display"}
+    (google.api.resource_reference) = {type: "exactmac/Display"}
   ];
 }
 
@@ -92,6 +92,6 @@ message CaptureCursorPositionResponse {
   // Display the cursor is currently on.
   string display = 3 [
     (google.api.field_behavior) = OUTPUT_ONLY,
-    (google.api.resource_reference) = {type: "exactmac.com/Display"}
+    (google.api.resource_reference) = {type: "exactmac/Display"}
   ];
 }

@@ -2,10 +2,11 @@ version: v2
 clean: true
 managed:
   enabled: true
-  override:
-    - path: exactmac
-      file_option: go_package_prefix
-      value: github.com/joeycumines/ExactMac/gen/go
+  disable:
+    - file_option: java_package
+    - file_option: java_outer_classname
+    - file_option: java_multiple_files
+    - file_option: go_package
 inputs:
   - directory: proto
   - module: buf.build/googleapis/googleapis
@@ -22,10 +23,7 @@ plugins:
       - Server=true
       - Client=false
     include_imports: true
-  # Pinned so regeneration is byte-stable against the committed tree and the
-  # protobuf runtime in go.mod (v1.36.11). Do not float without regenerating
-  # and re-verifying the full Go suite.
-  - remote: buf.build/protocolbuffers/go:v1.36.11
+  - remote: buf.build/protocolbuffers/go
     out: gen/go
     opt:
       - paths=source_relative

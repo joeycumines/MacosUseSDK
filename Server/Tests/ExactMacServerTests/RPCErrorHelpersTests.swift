@@ -70,7 +70,7 @@ final class RPCErrorHelpersTests: XCTestCase {
         )
 
         let errorInfo = try extractErrorInfo(from: error)
-        XCTAssertEqual(errorInfo.domain, "exactmac.com")
+        XCTAssertEqual(errorInfo.domain, "exactmac")
     }
 
     func testErrorInfoContainsMetadata() throws {
@@ -107,7 +107,7 @@ final class RPCErrorHelpersTests: XCTestCase {
 
         let errorInfo = try extractErrorInfo(from: error)
         XCTAssertEqual(errorInfo.reason, RPCErrorHelpers.ResourceNameReason.invalidFormat)
-        XCTAssertEqual(errorInfo.domain, "exactmac.com")
+        XCTAssertEqual(errorInfo.domain, "exactmac")
         XCTAssertEqual(errorInfo.metadata["resourceType"], "window")
         XCTAssertEqual(errorInfo.metadata["value"], "bad-name")
         XCTAssertEqual(errorInfo.metadata["expectedFormat"], "applications/{pid}/windows/{windowId}")
@@ -124,7 +124,7 @@ final class RPCErrorHelpersTests: XCTestCase {
 
         let errorInfo = try extractErrorInfo(from: error)
         XCTAssertEqual(errorInfo.reason, RPCErrorHelpers.NotFoundReason.windowNotFound)
-        XCTAssertEqual(errorInfo.domain, "exactmac.com")
+        XCTAssertEqual(errorInfo.domain, "exactmac")
         XCTAssertEqual(errorInfo.metadata["resourceName"], "applications/1234/windows/5678")
     }
 
@@ -139,7 +139,7 @@ final class RPCErrorHelpersTests: XCTestCase {
 
         let errorInfo = try extractErrorInfo(from: error)
         XCTAssertEqual(errorInfo.reason, RPCErrorHelpers.PermissionReason.accessibilityPermissionDenied)
-        XCTAssertEqual(errorInfo.domain, "exactmac.com")
+        XCTAssertEqual(errorInfo.domain, "exactmac")
         XCTAssertEqual(errorInfo.metadata["resource"], "applications/1234")
     }
 
@@ -167,7 +167,7 @@ final class RPCErrorHelpersTests: XCTestCase {
 
         let errorInfo = try extractErrorInfo(from: error)
         XCTAssertEqual(errorInfo.reason, RPCErrorHelpers.InternalReason.serializationFailed)
-        XCTAssertEqual(errorInfo.domain, "exactmac.com")
+        XCTAssertEqual(errorInfo.domain, "exactmac")
         XCTAssertEqual(errorInfo.metadata["component"], "WindowRegistry")
     }
 
@@ -183,7 +183,7 @@ final class RPCErrorHelpersTests: XCTestCase {
 
         let errorInfo = try extractErrorInfo(from: error)
         XCTAssertEqual(errorInfo.reason, RPCErrorHelpers.ValidationReason.outOfRange)
-        XCTAssertEqual(errorInfo.domain, "exactmac.com")
+        XCTAssertEqual(errorInfo.domain, "exactmac")
         XCTAssertEqual(errorInfo.metadata["field"], "page_size")
         XCTAssertEqual(errorInfo.metadata["value"], "500")
     }

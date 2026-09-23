@@ -502,7 +502,7 @@ final class RequestValidationTests: XCTestCase {
 
     func testErrorDomainIsCorrect() {
         // Verify the domain is set correctly
-        XCTAssertEqual(RPCErrorHelpers.domain, "exactmac.com")
+        XCTAssertEqual(RPCErrorHelpers.domain, "exactmac")
     }
 
     func testAllValidationErrorsHaveCorrectDomain() throws {
@@ -514,7 +514,7 @@ final class RequestValidationTests: XCTestCase {
         )
 
         let errorInfo = try extractErrorInfo(from: error)
-        XCTAssertEqual(errorInfo.domain, "exactmac.com")
+        XCTAssertEqual(errorInfo.domain, "exactmac")
     }
 
     // MARK: - Combined Validation Scenarios

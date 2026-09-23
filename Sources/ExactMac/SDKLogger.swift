@@ -3,7 +3,7 @@ import OSLog
 
 // Use Logger and OSLogPrivacy to log messages with appropriate privacy levels.
 
-private let subsystem = "com.exactmac"
+private let subsystem = "io.github.joeycumines.exactmac"
 
 /// Returns a configured `Logger` for the given category within the ExactMac subsystem.
 ///

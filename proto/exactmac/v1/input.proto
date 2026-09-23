@@ -14,14 +14,14 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1";
 option java_multiple_files = true;
 option java_outer_classname = "InputProto";
-option java_package = "com.exactmac.v1";
+option java_package = "io.github.joeycumines.exactmac.v1";
 
 // A resource representing an input action that was or will be executed.
 // Inputs form an execution timeline under an application or the explicit
 // desktop wildcard parent while target records the exact delivery authority.
 message Input {
   option (google.api.resource) = {
-    type: "exactmac.com/Input"
+    type: "exactmac/Input"
     pattern: "applications/{application}/inputs/{input}"
     singular: "input"
     plural: "inputs"
@@ -78,13 +78,13 @@ message Input {
 message InputTarget {
   oneof destination {
     // Exact running application resource.
-    string application = 1 [(google.api.resource_reference) = {type: "exactmac.com/Application"}];
+    string application = 1 [(google.api.resource_reference) = {type: "exactmac/Application"}];
 
     // Exact opaque window resource.
-    string window = 2 [(google.api.resource_reference) = {type: "exactmac.com/Window"}];
+    string window = 2 [(google.api.resource_reference) = {type: "exactmac/Window"}];
 
     // Exact display resource.
-    string display = 3 [(google.api.resource_reference) = {type: "exactmac.com/Display"}];
+    string display = 3 [(google.api.resource_reference) = {type: "exactmac/Display"}];
 
     // Explicit authorization for the active desktop union.
     bool desktop = 4;

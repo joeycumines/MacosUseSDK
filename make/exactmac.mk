@@ -24,7 +24,7 @@ PROJECT_ROOT ?= $(abspath $(dir $(EXACTMAC_MAKEFILE))/..)
 # --- Product and installation paths -----------------------------------------
 
 EXACTMAC_APP_NAME       ?= ExactMacServer
-EXACTMAC_BUNDLE_ID      ?= com.exactmac.server
+EXACTMAC_BUNDLE_ID      ?= io.github.joeycumines.exactmac.server
 EXACTMAC_VERSION        ?= 1.0.0
 EXACTMAC_BUILD_VERSION  ?= 1
 EXACTMAC_MIN_MACOS      ?= 15.0

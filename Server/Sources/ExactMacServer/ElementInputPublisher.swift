@@ -8,7 +8,7 @@ import GRPCCore
 
 //
 // Defect C6: ClickElementResponse.input / WriteElementValueResponse.input are
-// OUTPUT_ONLY resource_reference fields to a retrievable exactmac.com/Input.
+// OUTPUT_ONLY resource_reference fields to a retrievable exactmac/Input.
 // They MUST be populated with the name of a real Input resource (one GetInput
 // can retrieve) when a physical input transaction executed, and absent for
 // purely-AX paths. Previously every element-path executeInput was

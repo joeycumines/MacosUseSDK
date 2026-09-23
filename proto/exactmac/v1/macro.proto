@@ -14,13 +14,13 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1";
 option java_multiple_files = true;
 option java_outer_classname = "MacroProto";
-option java_package = "com.exactmac.v1";
+option java_package = "io.github.joeycumines.exactmac.v1";
 
 // A resource representing a recorded sequence of actions.
 // Macros can be replayed to automate repetitive tasks.
 message Macro {
   option (google.api.resource) = {
-    type: "exactmac.com/Macro"
+    type: "exactmac/Macro"
     pattern: "macros/{macro}"
     singular: "macro"
     plural: "macros"
@@ -58,7 +58,7 @@ message Macro {
 // Log entry for macro execution.
 message ExecutionLogEntry {
   option (google.api.resource) = {
-    type: "exactmac.com/ExecutionLogEntry"
+    type: "exactmac/ExecutionLogEntry"
     pattern: "macros/{macro}/executions/{execution}/logEntries/{log_entry}"
     singular: "executionLogEntry"
     plural: "executionLogEntries"

@@ -11,7 +11,7 @@ import "google/api/field_behavior.proto";
 option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1";
 option java_multiple_files = true;
 option java_outer_classname = "ScriptProto";
-option java_package = "com.exactmac.v1";
+option java_package = "io.github.joeycumines.exactmac.v1";
 
 // Scripting dictionaries.
 message ScriptingDictionaries {

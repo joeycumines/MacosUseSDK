@@ -208,13 +208,13 @@ WindowServer, AppKit, and ScreenCaptureKit.
 The generated plist is installed at:
 
 ```text
-~/Library/LaunchAgents/com.exactmac.server.plist
+~/Library/LaunchAgents/io.github.joeycumines.exactmac.server.plist
 ```
 
 It runs in the exact service domain:
 
 ```text
-gui/<uid>/com.exactmac.server
+gui/<uid>/io.github.joeycumines.exactmac.server
 ```
 
 Lifecycle commands use modern launchctl operations:
@@ -292,7 +292,7 @@ independently verified path; otherwise choose a new socket path.
 | Application bundle | `~/Applications/ExactMacServer.app` |
 | Server executable | `~/Applications/ExactMacServer.app/Contents/MacOS/ExactMacServer` |
 | SwiftPM resources | `~/Applications/ExactMacServer.app/Contents/Resources/*.bundle` |
-| LaunchAgent plist | `~/Library/LaunchAgents/com.exactmac.server.plist` |
+| LaunchAgent plist | `~/Library/LaunchAgents/io.github.joeycumines.exactmac.server.plist` |
 | gRPC Unix socket | `~/Library/Caches/exactmac.sock` |
 | Standard output log | `~/Library/Logs/exactmac.log` |
 | Standard error log | `~/Library/Logs/exactmac.error.log` |
@@ -588,7 +588,7 @@ gmake exactmac.stop
 gmake exactmac.launchd
 ```
 
-They address the service as `gui/<uid>/com.exactmac.server`, boot out the
+They address the service as `gui/<uid>/io.github.joeycumines.exactmac.server`, boot out the
 exact LaunchAgent identity, and wait for that identity to disappear before
 bootstrapping. launchd recreates and owns the declared `Listener` socket; the
 server receives it through socket activation. The targets never unlink the

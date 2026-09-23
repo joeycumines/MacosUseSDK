@@ -242,7 +242,7 @@ func TestApplicationDiscoveryResourceContract(t *testing.T) {
 	}
 
 	bundle := requireMessage("exactmac.v1.ApplicationBundle")
-	requireResource(bundle, "exactmac.com/ApplicationBundle", "applicationBundles/{application_bundle}")
+	requireResource(bundle, "exactmac/ApplicationBundle", "applicationBundles/{application_bundle}")
 	requireField(bundle, "name", protoreflect.StringKind)
 	requireField(bundle, "display_name", protoreflect.StringKind)
 	requireField(bundle, "bundle_id", protoreflect.StringKind)
@@ -250,8 +250,8 @@ func TestApplicationDiscoveryResourceContract(t *testing.T) {
 	requireField(bundle, "version", protoreflect.StringKind)
 
 	application := requireMessage("exactmac.v1.Application")
-	requireResource(application, "exactmac.com/Application", "applications/{application}")
-	requireResourceReference(requireField(application, "application_bundle", protoreflect.StringKind), "exactmac.com/ApplicationBundle")
+	requireResource(application, "exactmac/Application", "applications/{application}")
+	requireResourceReference(requireField(application, "application_bundle", protoreflect.StringKind), "exactmac/ApplicationBundle")
 	requireField(application, "bundle_id", protoreflect.StringKind)
 	requireField(application, "active", protoreflect.BoolKind)
 	processStart := requireField(application, "process_start_time", protoreflect.MessageKind)
@@ -265,7 +265,7 @@ func TestApplicationDiscoveryResourceContract(t *testing.T) {
 
 	open := requireMethod("OpenApplication")
 	if open != nil {
-		requireResourceReference(requireField(open.Input(), "name", protoreflect.StringKind), "exactmac.com/ApplicationBundle")
+		requireResourceReference(requireField(open.Input(), "name", protoreflect.StringKind), "exactmac/ApplicationBundle")
 		if open.Input().Fields().ByName("id") != nil {
 			t.Errorf("%s retains free-form id", open.Input().FullName())
 		}
@@ -277,7 +277,7 @@ func TestApplicationDiscoveryResourceContract(t *testing.T) {
 
 	activate := requireMethod("ActivateApplication")
 	if activate != nil {
-		requireResourceReference(requireField(activate.Input(), "name", protoreflect.StringKind), "exactmac.com/Application")
+		requireResourceReference(requireField(activate.Input(), "name", protoreflect.StringKind), "exactmac/Application")
 	}
 
 	getApplication := requireMethod("GetApplication")

@@ -12,12 +12,12 @@ import "google/api/resource.proto";
 option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1";
 option java_multiple_files = true;
 option java_outer_classname = "ConditionProto";
-option java_package = "com.exactmac.v1";
+option java_package = "io.github.joeycumines.exactmac.v1";
 
 // Attribute condition for waiting.
 message AttributeCondition {
   option (google.api.resource) = {
-    type: "exactmac.com/AttributeCondition"
+    type: "exactmac/AttributeCondition"
     pattern: "attributeConditions/{attribute_condition}"
     singular: "attributeCondition"
     plural: "attributeConditions"

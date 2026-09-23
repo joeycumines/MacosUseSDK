@@ -31,7 +31,7 @@ func TestMain(m *testing.M) {
 	var logCmd *exec.Cmd
 	logCmd = exec.Command("/usr/bin/log", "stream",
 		"--level", "debug",
-		"--predicate", `subsystem == "com.exactmac"`,
+		"--predicate", `subsystem == "io.github.joeycumines.exactmac"`,
 		"--style", "compact")
 	logCmd.Stdout = os.Stdout
 	logCmd.Stderr = os.Stderr

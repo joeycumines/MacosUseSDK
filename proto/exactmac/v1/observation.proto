@@ -14,14 +14,14 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1";
 option java_multiple_files = true;
 option java_outer_classname = "ObservationProto";
-option java_package = "com.exactmac.v1";
+option java_package = "io.github.joeycumines.exactmac.v1";
 
 // An observation monitors supported UI changes and publishes events through the
 // gRPC observation stream. Application-change observations are currently
 // rejected as unimplemented, and observations are in-memory resources.
 message Observation {
   option (google.api.resource) = {
-    type: "exactmac.com/Observation"
+    type: "exactmac/Observation"
     pattern: "applications/{application}/observations/{observation}"
     singular: "observation"
     plural: "observations"
@@ -105,7 +105,7 @@ message ObservationEvent {
   // Observation that generated this event.
   string observation = 1 [
     (google.api.field_behavior) = OUTPUT_ONLY,
-    (google.api.resource_reference) = {type: "exactmac.com/Observation"}
+    (google.api.resource_reference) = {type: "exactmac/Observation"}
   ];
 
   // When the event occurred.

@@ -12,13 +12,13 @@ import "google/api/resource.proto";
 option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1";
 option java_multiple_files = true;
 option java_outer_classname = "ElementProto";
-option java_package = "com.exactmac.v1";
+option java_package = "io.github.joeycumines.exactmac.v1";
 
 // A UI element retained from an Accessibility traversal. Element resources are
 // ephemeral: clients must rediscover them after expiry or server restart.
 message Element {
   option (google.api.resource) = {
-    type: "exactmac.com/Element"
+    type: "exactmac/Element"
     pattern: "applications/{application}/elements/{element}"
     singular: "element"
     plural: "elements"
@@ -72,6 +72,6 @@ message Element {
   // This is the canonical owner at discovery time; a stale element must be re-resolved.
   string parent = 14 [
     (google.api.field_behavior) = OUTPUT_ONLY,
-    (google.api.resource_reference) = {type: "exactmac.com/Application"}
+    (google.api.resource_reference) = {type: "exactmac/Application"}
   ];
 }

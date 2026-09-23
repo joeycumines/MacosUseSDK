@@ -205,7 +205,7 @@ All proto files include mandatory options per AIP-191:
 option go_package = "github.com/joeycumines/ExactMac/gen/go/...";
 option java_multiple_files = true;
 option java_outer_classname = "...Proto";
-option java_package = "com.exactmac...";
+option java_package = "io.github.joeycumines.exactmac...";
 ```
 
 ## Code Generation

@@ -13,14 +13,14 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1";
 option java_multiple_files = true;
 option java_outer_classname = "SessionProto";
-option java_package = "com.exactmac.v1";
+option java_package = "io.github.joeycumines.exactmac.v1";
 
 // A resource representing a session for coordinating complex workflows.
 // Sessions maintain context across multiple operations and support
 // transaction-like semantics for atomic operation groups.
 message Session {
   option (google.api.resource) = {
-    type: "exactmac.com/Session"
+    type: "exactmac/Session"
     pattern: "sessions/{session}"
     singular: "session"
     plural: "sessions"
@@ -81,7 +81,7 @@ message Transaction {
   // Session this transaction belongs to.
   string session = 2 [
     (google.api.field_behavior) = OUTPUT_ONLY,
-    (google.api.resource_reference) = {type: "exactmac.com/Session"}
+    (google.api.resource_reference) = {type: "exactmac/Session"}
   ];
 
   // Transaction state.

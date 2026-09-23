@@ -12,7 +12,7 @@ import "google/api/resource.proto";
 option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/v1;exactmacv1";
 option java_multiple_files = true;
 option java_outer_classname = "WindowProto";
-option java_package = "com.exactmac.v1";
+option java_package = "io.github.joeycumines.exactmac.v1";
 
 // A resource representing an individual window within an application.
 // Contains only cheap CoreGraphics data. For expensive AX state queries,
@@ -22,7 +22,7 @@ message Window {
   reserved "z_index";
 
   option (google.api.resource) = {
-    type: "exactmac.com/Window"
+    type: "exactmac/Window"
     pattern: "applications/{application}/windows/{window}"
     singular: "window"
     plural: "windows"
@@ -115,7 +115,7 @@ message WindowState {
   reserved "fullscreen";
 
   option (google.api.resource) = {
-    type: "exactmac.com/WindowState"
+    type: "exactmac/WindowState"
     pattern: "applications/{application}/windows/{window}/state"
     singular: "windowState"
     plural: "windowStates"

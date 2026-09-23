@@ -21,7 +21,7 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
-const publicContractLedgerDigest = "8fd9b29cc14734093dd125bf2d5efeab00c0c944fe05d9d0059cf977cdefed57"
+const publicContractLedgerDigest = "a4b831ca64997a9395cfd226e6d6ee85e2faab57de7dc71b2af4d01afdab59b8"
 
 const (
 	publicBoundaryAdmissionProof = "PublicRequestValidationGRPCTests.every descriptor valid public request crosses production validation"

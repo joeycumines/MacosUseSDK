@@ -9,7 +9,7 @@ package exactmac.type;
 option go_package = "github.com/joeycumines/ExactMac/gen/go/exactmac/type;exactmactype";
 option java_multiple_files = true;
 option java_outer_classname = "GeometryProto";
-option java_package = "com.exactmac.type";
+option java_package = "io.github.joeycumines.exactmac.type";
 
 // A 2D point with x and y coordinates.
 //
