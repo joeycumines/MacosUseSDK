@@ -59,12 +59,11 @@ final class ServerConfigTests: XCTestCase {
         XCTAssertNil(config.unixSocketPath)
     }
 
-    func testSecureUmaskValue() {
-        // The secure umask should be 0o177 (0177 in octal)
-        // This ensures files/sockets are created with 0600 permissions (owner read/write only)
-        // umask 0177 means: disable all bits for group and others
-        // Resulting permissions: 0666 & ~0177 = 0600
-        let expectedUmask: mode_t = 0o177
-        XCTAssertEqual(expectedUmask, 0o177, "Secure umask should be 0177 (octal)")
+    func testServerProcessUmaskPreservesOwnerTraversal() {
+        // Owner-only files and directories must still be traversable. A 0177
+        // umask masks the owner execute bit and breaks macOS framework caches.
+        XCTAssertEqual(ServerProcessPolicy.umask, 0o077)
+        XCTAssertEqual(0o666 & ~ServerProcessPolicy.umask, 0o600)
+        XCTAssertEqual(0o777 & ~ServerProcessPolicy.umask, 0o700)
     }
 }

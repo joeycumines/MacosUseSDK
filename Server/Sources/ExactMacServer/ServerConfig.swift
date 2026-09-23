@@ -1,4 +1,14 @@
+import Darwin
 import Foundation
+
+/// Process-wide filesystem policy shared by startup and deployment tests.
+enum ServerProcessPolicy {
+    /// Owner-only files and directories, with directory traversal preserved.
+    ///
+    /// `0177` masks the owner's execute bit and produces non-traversable cache
+    /// directories on macOS 27; `0077` produces `0600` files and `0700` directories.
+    static let umask: mode_t = 0o077
+}
 
 /// Server configuration loaded from environment variables
 public struct ServerConfig {

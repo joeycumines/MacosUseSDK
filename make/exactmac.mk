@@ -107,13 +107,15 @@ define EXACTMAC_INFO_PLIST
 </plist>
 endef
 
-# This is a LaunchAgent, not a LaunchDaemon: ScreenCaptureKit, AppKit, and
-# Accessibility must run in the logged-in user's GUI domain.  KeepAlive=true
-# also implies RunAtLoad. The 0177 umask is defense in depth; launchd creates
-# the Unix socket with owner-only mode before activating it. The Swift server
-# receives that exact descriptor through launch_activate_socket and never binds
-# the pathname itself. ThrottleInterval bounds KeepAlive restarts so a repeated
-# fatal error cannot spin a tight crash loop; unmanaged paths are never mutated.
+# This is a LaunchAgent, not a LaunchDaemon: ScreenCaptureKit, AppKit,
+# Accessibility, Vision, and Metal must run in the logged-in user's GUI domain.
+# KeepAlive=true also implies RunAtLoad. The 0077 umask keeps files and
+# directories owner-only while preserving the execute/search bit required by
+# macOS framework cache trees. launchd creates the Unix socket with owner-only
+# mode before activating it. The Swift server receives that exact descriptor
+# through launch_activate_socket and never binds the pathname itself.
+# ThrottleInterval bounds KeepAlive restarts so a repeated fatal error cannot
+# spin a tight crash loop; unmanaged paths are never mutated.
 define EXACTMAC_LAUNCHD_PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -149,7 +151,7 @@ define EXACTMAC_LAUNCHD_PLIST
     <key>ThrottleInterval</key>
     <integer>10</integer>
     <key>Umask</key>
-    <integer>127</integer>
+    <integer>63</integer>
     <key>AssociatedBundleIdentifiers</key>
     <array>
         <string>$(EXACTMAC_BUNDLE_ID)</string>

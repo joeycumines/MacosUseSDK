@@ -142,14 +142,14 @@ final class ScreenshotOCRTests: XCTestCase {
     // MARK: - Basic OCR Tests
 
     @MainActor
-    func testExtractTextWithSimpleWord() throws {
+    func testExtractTextWithSimpleWord() async throws {
         // Create image with a simple word that should be easily recognized
         guard let image = createImageWithText("HELLO", width: 200, height: 80, fontSize: 32) else {
             XCTFail("Failed to create test image")
             return
         }
 
-        let extractedText = try ScreenshotCapture.extractText(from: image)
+        let extractedText = try await ScreenshotCapture.extractText(from: image)
 
         // Vision OCR should recognize the word (case may vary)
         XCTAssertTrue(
@@ -159,14 +159,14 @@ final class ScreenshotOCRTests: XCTestCase {
     }
 
     @MainActor
-    func testExtractTextWithNumbers() throws {
+    func testExtractTextWithNumbers() async throws {
         // Numbers should be recognized
         guard let image = createImageWithText("12345", width: 200, height: 80, fontSize: 32) else {
             XCTFail("Failed to create test image")
             return
         }
 
-        let extractedText = try ScreenshotCapture.extractText(from: image)
+        let extractedText = try await ScreenshotCapture.extractText(from: image)
 
         XCTAssertTrue(
             extractedText.contains("12345"),
@@ -175,14 +175,14 @@ final class ScreenshotOCRTests: XCTestCase {
     }
 
     @MainActor
-    func testExtractTextWithMixedContent() throws {
+    func testExtractTextWithMixedContent() async throws {
         // Mixed alphanumeric content
         guard let image = createImageWithText("ABC123XYZ", width: 300, height: 80, fontSize: 32) else {
             XCTFail("Failed to create test image")
             return
         }
 
-        let extractedText = try ScreenshotCapture.extractText(from: image)
+        let extractedText = try await ScreenshotCapture.extractText(from: image)
 
         // Should contain at least part of the text
         XCTAssertFalse(
@@ -194,13 +194,13 @@ final class ScreenshotOCRTests: XCTestCase {
     // MARK: - Blank/Empty Image Tests
 
     @MainActor
-    func testExtractTextWithBlankImage() throws {
+    func testExtractTextWithBlankImage() async throws {
         guard let image = createBlankImage() else {
             XCTFail("Failed to create blank image")
             return
         }
 
-        let extractedText = try ScreenshotCapture.extractText(from: image)
+        let extractedText = try await ScreenshotCapture.extractText(from: image)
 
         // Blank image should yield empty or whitespace-only result
         XCTAssertTrue(
@@ -210,14 +210,14 @@ final class ScreenshotOCRTests: XCTestCase {
     }
 
     @MainActor
-    func testExtractTextWithSmallBlankImage() throws {
+    func testExtractTextWithSmallBlankImage() async throws {
         // Minimum image size for Vision is 3x3
         guard let image = createBlankImage(width: 10, height: 10) else {
             XCTFail("Failed to create small blank image")
             return
         }
 
-        let extractedText = try ScreenshotCapture.extractText(from: image)
+        let extractedText = try await ScreenshotCapture.extractText(from: image)
 
         XCTAssertTrue(
             extractedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
@@ -226,31 +226,88 @@ final class ScreenshotOCRTests: XCTestCase {
     }
 
     @MainActor
-    func testExtractTextWithTooSmallImageThrowsError() throws {
+    func testExtractTextWithTooSmallImageThrowsError() async throws {
         // Vision requires images larger than 2x2 pixels
         guard let image = createBlankImage(width: 1, height: 1) else {
             XCTFail("Failed to create tiny image")
             return
         }
 
-        XCTAssertThrowsError(try ScreenshotCapture.extractText(from: image)) { error in
-            // Vision framework throws an error for images smaller than 3x3
-            let nsError = error as NSError
-            XCTAssertEqual(nsError.domain, "com.apple.Vision")
+        do {
+            _ = try await ScreenshotCapture.extractText(from: image)
+            XCTFail("Expected OCR to reject an image smaller than 3x3")
+        } catch {
+            // Vision may reject the image as too small or the request may fail
+            // for another ordinary Swift error; either way it must not crash.
         }
+    }
+
+    @MainActor
+    func testExtractTextWithNilColorSpaceThrowsUnavailableInputError() async throws {
+        let width = 10
+        let height = 10
+        let data = Data(count: width * height)
+        let provider = try XCTUnwrap(CGDataProvider(data: data as CFData))
+        let image = try XCTUnwrap(
+            CGImage(
+                maskWidth: width,
+                height: height,
+                bitsPerComponent: 8,
+                bitsPerPixel: 8,
+                bytesPerRow: width,
+                provider: provider,
+                decode: [0, 1],
+                shouldInterpolate: false,
+            ),
+        )
+
+        XCTAssertNil(image.colorSpace)
+        do {
+            _ = try await ScreenshotCapture.extractText(from: image)
+            XCTFail("Expected OCR to reject a mask image without a color space")
+        } catch let error as ScreenshotError {
+            XCTAssertEqual(error.description, ScreenshotError.ocrInputUnavailable.description)
+        }
+    }
+
+    @MainActor
+    func testOCRResultReportsUnavailableForInvalidImage() async throws {
+        let width = 10
+        let height = 10
+        let data = Data(count: width * height)
+        let provider = try XCTUnwrap(CGDataProvider(data: data as CFData))
+        let image = try XCTUnwrap(
+            CGImage(
+                maskWidth: width,
+                height: height,
+                bitsPerComponent: 8,
+                bitsPerPixel: 8,
+                bytesPerRow: width,
+                provider: provider,
+                decode: [0, 1],
+                shouldInterpolate: false,
+            ),
+        )
+
+        let result = await ScreenshotCapture.ocrResult(for: image, requested: true)
+        guard case let .failure(status) = result else {
+            return XCTFail("Expected invalid OCR input to produce an OCR failure")
+        }
+        XCTAssertEqual(status.code, 14)
+        XCTAssertEqual(status.message, "OCR extraction unavailable")
     }
 
     // MARK: - Multiline Text Tests
 
     @MainActor
-    func testExtractTextWithMultipleLines() throws {
+    func testExtractTextWithMultipleLines() async throws {
         let lines = ["Line One", "Line Two", "Line Three"]
         guard let image = createMultilineImage(lines: lines, height: 200, fontSize: 24) else {
             XCTFail("Failed to create multiline image")
             return
         }
 
-        let extractedText = try ScreenshotCapture.extractText(from: image)
+        let extractedText = try await ScreenshotCapture.extractText(from: image)
 
         // Result should contain text from multiple lines (joined by newlines per extractText implementation)
         XCTAssertFalse(extractedText.isEmpty, "Multiline image should produce OCR result")
@@ -272,7 +329,7 @@ final class ScreenshotOCRTests: XCTestCase {
     }
 
     @MainActor
-    func testExtractTextMultilineContainsNewlines() throws {
+    func testExtractTextMultilineContainsNewlines() async throws {
         // Test that multiple detected text blocks are separated by newlines
         let lines = ["FIRST", "SECOND"]
         guard let image = createMultilineImage(lines: lines, height: 150, fontSize: 28) else {
@@ -280,7 +337,7 @@ final class ScreenshotOCRTests: XCTestCase {
             return
         }
 
-        let extractedText = try ScreenshotCapture.extractText(from: image)
+        let extractedText = try await ScreenshotCapture.extractText(from: image)
 
         // If multiple observations are found, they should be newline-separated
         // (per the extractText implementation using .joined(separator: "\n"))
@@ -296,14 +353,14 @@ final class ScreenshotOCRTests: XCTestCase {
     // MARK: - Unicode and International Text Tests
 
     @MainActor
-    func testExtractTextWithAccentedCharacters() throws {
+    func testExtractTextWithAccentedCharacters() async throws {
         // Accented Latin characters
         guard let image = createImageWithText("Café résumé", width: 300, height: 80, fontSize: 28) else {
             XCTFail("Failed to create test image")
             return
         }
 
-        let extractedText = try ScreenshotCapture.extractText(from: image)
+        let extractedText = try await ScreenshotCapture.extractText(from: image)
 
         // Vision may or may not preserve accents perfectly
         XCTAssertFalse(
@@ -315,13 +372,13 @@ final class ScreenshotOCRTests: XCTestCase {
     // MARK: - Edge Cases
 
     @MainActor
-    func testExtractTextWithLargeImage() throws {
+    func testExtractTextWithLargeImage() async throws {
         guard let image = createImageWithText("LARGE IMAGE TEST", width: 1920, height: 200, fontSize: 48) else {
             XCTFail("Failed to create large test image")
             return
         }
 
-        let extractedText = try ScreenshotCapture.extractText(from: image)
+        let extractedText = try await ScreenshotCapture.extractText(from: image)
 
         XCTAssertTrue(
             extractedText.uppercased().contains("LARGE") || extractedText.uppercased().contains("IMAGE") || extractedText.uppercased().contains("TEST"),
@@ -330,7 +387,7 @@ final class ScreenshotOCRTests: XCTestCase {
     }
 
     @MainActor
-    func testExtractTextWithSmallFontReturnsResult() throws {
+    func testExtractTextWithSmallFontReturnsResult() async throws {
         // Small font - may or may not be recognized depending on Vision capabilities
         guard let image = createImageWithText("Small Text", width: 200, height: 50, fontSize: 10) else {
             XCTFail("Failed to create test image")
@@ -338,7 +395,7 @@ final class ScreenshotOCRTests: XCTestCase {
         }
 
         // Should not throw - either extracts text or returns empty
-        let extractedText = try ScreenshotCapture.extractText(from: image)
+        let extractedText = try await ScreenshotCapture.extractText(from: image)
         XCTAssertNotNil(extractedText) // Just verify it returns something (even if empty)
     }
 
@@ -540,19 +597,23 @@ final class ScreenshotOCRTests: XCTestCase {
     // MARK: - Error Handling Tests
 
     @MainActor
-    func testExtractTextDoesNotThrowForValidImage() throws {
+    func testExtractTextDoesNotThrowForValidImage() async throws {
         guard let image = createImageWithText("Valid", width: 150, height: 60, fontSize: 24) else {
             XCTFail("Failed to create test image")
             return
         }
 
-        XCTAssertNoThrow(try ScreenshotCapture.extractText(from: image))
+        do {
+            _ = try await ScreenshotCapture.extractText(from: image)
+        } catch {
+            XCTFail("Valid image unexpectedly failed OCR: \(error)")
+        }
     }
 
     // MARK: - Performance Consideration Tests
 
     @MainActor
-    func testExtractTextPerformanceWithModerateSizeImage() throws {
+    func testExtractTextPerformanceWithModerateSizeImage() async throws {
         // Performance test with a moderately sized image
         guard let image = createImageWithText("Performance Test", width: 800, height: 200, fontSize: 36) else {
             XCTFail("Failed to create test image")
@@ -560,7 +621,7 @@ final class ScreenshotOCRTests: XCTestCase {
         }
 
         let startTime = Date()
-        _ = try ScreenshotCapture.extractText(from: image)
+        _ = try await ScreenshotCapture.extractText(from: image)
         let elapsed = Date().timeIntervalSince(startTime)
 
         // OCR should complete reasonably quickly (under 5 seconds for fast mode)

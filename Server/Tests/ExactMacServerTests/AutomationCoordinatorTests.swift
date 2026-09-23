@@ -28,9 +28,10 @@ final class AutomationCoordinatorTests: XCTestCase {
                         message: "Exact input identity already exists",
                     )
                 },
-            ) { _, _ in
-                XCTFail("Closed mutation admission executed a transaction")
-            }
+                { _, _ in
+                    XCTFail("Closed mutation admission executed a transaction")
+                },
+            )
             XCTFail("Expected exact closed-admission failure")
         } catch let error as RPCError {
             XCTAssertEqual(error.code, .alreadyExists)

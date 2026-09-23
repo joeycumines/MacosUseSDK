@@ -159,7 +159,7 @@ struct ScreenshotCapture {
         try validateCaptureFilter(filter, against: display)
         let image = try await capture(filter: filter)
         try await revalidateCaptureDisplay(display)
-        return try captureOutput(
+        return try await captureOutput(
             image: image,
             display: display,
             logicalFrame: display.frame,
@@ -221,7 +221,7 @@ struct ScreenshotCapture {
             width: pixelFrame.width / scaleX,
             height: pixelFrame.height / scaleY,
         )
-        return try captureOutput(
+        return try await captureOutput(
             image: image,
             display: display,
             logicalFrame: logicalFrame,
@@ -258,7 +258,7 @@ struct ScreenshotCapture {
         let dimensions = try checkedImageDimensions(cgImage)
         let imageData = try encodeImage(cgImage, format: format, quality: quality)
 
-        let ocrText = includeOCR ? try extractText(from: cgImage) : nil
+        let ocrText = includeOCR ? try await extractText(from: cgImage) : nil
 
         return (imageData, dimensions.width, dimensions.height, ocrText)
     }
@@ -334,7 +334,7 @@ struct ScreenshotCapture {
             throw RPCError(code: .unavailable, message: "Window capture geometry changed during capture")
         }
 
-        return try WindowScreenshotCaptureOutput(
+        return try await WindowScreenshotCaptureOutput(
             data: encodeImage(image, format: format, quality: quality),
             format: format,
             pixelWidth: dimensions.width,
@@ -418,7 +418,7 @@ struct ScreenshotCapture {
         let dimensions = try checkedImageDimensions(croppedImage)
         let imageData = try encodeImage(croppedImage, format: format, quality: quality)
 
-        let ocrText = includeOCR ? try extractText(from: croppedImage) : nil
+        let ocrText = includeOCR ? try await extractText(from: croppedImage) : nil
 
         return (imageData, dimensions.width, dimensions.height, ocrText)
     }
@@ -568,9 +568,9 @@ struct ScreenshotCapture {
         format: Exactmac_V1_ImageFormat,
         quality: Int32,
         includeOCR: Bool,
-    ) throws -> ScreenshotCaptureOutput {
+    ) async throws -> ScreenshotCaptureOutput {
         let dimensions = try checkedImageDimensions(image)
-        return try ScreenshotCaptureOutput(
+        return try await ScreenshotCaptureOutput(
             data: encodeImage(image, format: format, quality: quality),
             format: format,
             pixelWidth: dimensions.width,
@@ -594,18 +594,25 @@ struct ScreenshotCapture {
         return (Int32(image.width), Int32(image.height))
     }
 
-    private static func ocrResult(
+    static func ocrResult(
         for image: CGImage,
         requested: Bool,
-    ) -> ScreenshotOCRResult {
+    ) async -> ScreenshotOCRResult {
         guard requested else { return .notRequested }
         do {
-            return try .text(extractText(from: image))
+            return try await .text(extractText(from: image))
+        } catch is CancellationError {
+            return .failure(
+                Google_Rpc_Status.with {
+                    $0.code = 1
+                    $0.message = "OCR extraction cancelled"
+                },
+            )
         } catch {
             return .failure(
                 Google_Rpc_Status.with {
-                    $0.code = 13
-                    $0.message = "OCR extraction failed"
+                    $0.code = 14
+                    $0.message = "OCR extraction unavailable"
                 },
             )
         }
@@ -661,28 +668,36 @@ struct ScreenshotCapture {
         return data as Data
     }
 
-    /// Extract text from a CGImage using Vision framework.
-    /// Note: Internal visibility to allow unit testing of OCR functionality.
-    static func extractText(from cgImage: CGImage) throws -> String {
-        let requestHandler = VNImageRequestHandler(cgImage: cgImage, options: [:])
-        let request = VNRecognizeTextRequest()
+    /// Extract text from a CGImage using Vision's Swift-native text request.
+    ///
+    /// The Swift API returns typed `RecognizedTextObservation` values and
+    /// surfaces ordinary failures as Swift errors. Objective-C exceptions from
+    /// the underlying macOS frameworks cannot be recovered from in Swift; the
+    /// server's owner-only, traversable umask prevents the known macOS 27 Metal
+    /// cache-path crash before Vision is invoked.
+    static func extractText(from cgImage: CGImage) async throws -> String {
+        guard cgImage.width > 0,
+              cgImage.height > 0,
+              cgImage.colorSpace != nil
+        else {
+            throw ScreenshotError.ocrInputUnavailable
+        }
 
-        // Configure for fast recognition (trade off some accuracy)
+        var request = RecognizeTextRequest()
         request.recognitionLevel = .fast
         request.usesLanguageCorrection = true
+        // The default 3.125% height threshold drops normal UI labels and body
+        // text in full-screen screenshots. Keep the threshold low enough for
+        // screenshot-scale text while avoiding zero-height observations.
+        request.minimumTextHeightFraction = 0.005
 
-        try requestHandler.perform([request])
-
-        guard let observations = request.results else {
-            return ""
-        }
-
-        // Concatenate all recognized text
-        let recognizedStrings = observations.compactMap { observation in
-            observation.topCandidates(1).first?.string
-        }
-
-        return recognizedStrings.joined(separator: "\n")
+        let observations = try await request.perform(on: cgImage, orientation: nil)
+        return observations
+            .map { observation in
+                observation.topCandidates(1).first?.string ?? ""
+            }
+            .filter { !$0.isEmpty }
+            .joined(separator: "\n")
     }
 }
 
@@ -712,6 +727,7 @@ enum ScreenshotError: Error, CustomStringConvertible {
     case captureFailedRegion(CGRect)
     case captureFailedGeneric
     case invalidRegion
+    case ocrInputUnavailable
     case encodingFailed(Exactmac_V1_ImageFormat)
     case windowNotFound(CGWindowID)
     case elementNotFound(String)
@@ -728,6 +744,8 @@ enum ScreenshotError: Error, CustomStringConvertible {
             "Screenshot capture failed for an unknown reason"
         case .invalidRegion:
             "Invalid region bounds (width/height must be > 0)"
+        case .ocrInputUnavailable:
+            "OCR input image is unavailable"
         case let .encodingFailed(format):
             "Failed to encode image in format \(format)"
         case let .windowNotFound(windowID):

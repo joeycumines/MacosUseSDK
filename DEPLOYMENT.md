@@ -225,12 +225,14 @@ Lifecycle commands use modern launchctl operations:
 - `launchctl print gui/<uid>/<label>` to inspect that exact service.
 
 `KeepAlive=true` keeps the server resident and already implies `RunAtLoad`, so a
-separate `RunAtLoad` key is unnecessary. The plist sets an integer `127` umask
-(`0177` octal) and declares the Unix listener in `Sockets` with owner-only mode
-`384` (`0600` octal). launchd creates the socket before activation; the Swift
-server validates the activated descriptor and does not repair permissions
-through a replaceable pathname. `ThrottleInterval=10` bounds `KeepAlive`
-restarts so a repeated fatal error cannot spin a tight crash loop.
+separate `RunAtLoad` key is unnecessary. The plist sets an integer `63` umask
+(`0077` octal) and declares the Unix listener in `Sockets` with owner-only mode
+`384` (`0600` octal). The `0077` umask keeps files and directories owner-only
+while preserving the execute/search bit required by macOS framework cache trees.
+launchd creates the socket before activation; the Swift server validates the
+activated descriptor and does not repair permissions through a replaceable
+pathname. `ThrottleInterval=10` bounds `KeepAlive` restarts so a repeated fatal
+error cannot spin a tight crash loop.
 
 ### What happens when the socket path already exists
 
@@ -646,7 +648,8 @@ The default local design keeps the trust boundary narrow:
 
 - launchd owns and activates the Unix socket instead of the application binding
   a mutable pathname;
-- launchd uses a restrictive `0177` umask and declares socket mode `0600`;
+- launchd uses an owner-only `0077` umask, preserving directory traversal for
+  macOS framework caches, and declares socket mode `0600`;
 - the server validates the activated descriptor before handing it to gRPC;
 - the service runs as the logged-in user, not as root;
 - the MCP proxy runs over stdio via `exactmac mcp` (HTTP is the separate `exactmac http` subcommand); and

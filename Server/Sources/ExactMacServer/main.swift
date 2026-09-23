@@ -12,14 +12,10 @@ import OSLog
 
 private let logger = ExactMac.sdkLogger(category: "Main")
 
-/// Restrictive umask for secure socket creation (0600 - owner read/write only)
-/// This ensures Unix domain sockets are not world-readable or world-writable
-private let secureUmask: mode_t = 0o177
-
-/// Set umask for secure socket/file creation
-/// Returns the previous umask value
-private func setSecureUmask() -> mode_t {
-    umask(secureUmask)
+/// Set the server umask before AppKit, Vision, CoreImage, or Metal initialization.
+/// Returns the previous umask value.
+private func setServerProcessUmask() -> mode_t {
+    umask(ServerProcessPolicy.umask)
 }
 
 // MARK: - Graceful Shutdown
@@ -120,6 +116,12 @@ private func performGracefulShutdown(
 ///    This avoids cache inconsistencies and duplicate CG queries.
 @MainActor
 func main() async throws {
+    // Set the owner-only umask before AppKit, Vision, CoreImage, or Metal can
+    // create cache files and directories. Directories must retain owner execute
+    // permission for framework cache trees to be traversable.
+    _ = setServerProcessUmask()
+    logger.info("Set server process umask: \(ServerProcessPolicy.umask, privacy: .public)")
+
     logger.info("ExactMacServer starting...")
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -129,10 +131,6 @@ func main() async throws {
     // ═══════════════════════════════════════════════════════════════════════════
     _ = NSApplication.shared
     logger.info("NSApplication initialized")
-
-    // Set secure umask BEFORE creating any sockets (owner read/write only: 0600)
-    _ = setSecureUmask()
-    logger.info("Set secure umask: \(secureUmask, privacy: .public)")
 
     // ═══════════════════════════════════════════════════════════════════════════
     // STEP 2: ServerConfig
