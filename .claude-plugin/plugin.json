@@ -5,8 +5,8 @@
     "name": "Joseph Cumines",
     "url": "https://github.com/joeycumines"
   },
-  "homepage": "https://github.com/joeycumines/MacosUseSDK",
-  "repository": "https://github.com/joeycumines/MacosUseSDK",
+  "homepage": "https://github.com/joeycumines/ExactMac",
+  "repository": "https://github.com/joeycumines/ExactMac",
   "license": "MIT",
   "keywords": ["macos", "desktop-automation", "computer-use", "mcp", "accessibility"]
 }

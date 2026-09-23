@@ -51,7 +51,7 @@ This repo is the plugin marketplace (`exactmac`). It distributes the agent
 skill; register the MCP server separately with `claude mcp add` above.
 
 ```
-/plugin marketplace add joeycumines/MacosUseSDK
+/plugin marketplace add joeycumines/ExactMac
 /plugin install exactmac@exactmac
 ```
 
