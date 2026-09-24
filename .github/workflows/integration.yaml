@@ -68,7 +68,7 @@ jobs:
           cd Server && swift build -c release
       - name: Run integration tests
         run: |-
-          gmake go.test.integration GO_TEST_FLAGS="-v -timeout=15m -count=1"
+          gmake go.test.integration GO_TEST_FLAGS="-integration -v -timeout=15m -count=1"
         env:
           # Integration tests may need longer timeouts
           GRPC_GO_LOG_SEVERITY_LEVEL: "warning"

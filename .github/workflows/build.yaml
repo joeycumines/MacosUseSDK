@@ -93,11 +93,10 @@ jobs:
       - name: Run a full build
         run: |-
           gmake -j "$(sysctl -n hw.ncpu)"
-      - name: Go test coverage
+      - name: Go unit test coverage
         run: |-
-          echo "Running Go tests with coverage..." &&
-          go test -coverprofile=coverage.out ./... ./internal/... &&
-          (cd integration && go test -coverprofile=integration_coverage.out ./...) &&
+          echo "Running Go unit tests with coverage..." &&
+          go test -coverprofile=coverage.out ./cmd/... ./internal/... &&
           echo "::group::Coverage Summary" &&
           go tool cover -func=coverage.out | tail -1 &&
           echo "::endgroup::" &&

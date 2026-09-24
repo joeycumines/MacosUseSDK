@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Input creation now records an owned transaction with an exact application, window, display, or desktop target and reports observable delivery state.
 - Pagination page tokens are authenticated, encrypted, URL-safe, and opaque. Page size may change on a continuation, while semantic query changes remain bound to the token.
 - MCP tool schemas expose the supported user-facing arguments without the programmatic `skip` control.
-- CI keeps manual workflow dispatch, adds same-job formatting drift checks, and generates descriptor sets before the integration server build.
+- CI keeps manual workflow dispatch, adds same-job formatting drift checks, generates descriptor sets before the integration server build, gates permission-dependent integration tests behind the `-integration` flag for the self-hosted workflow, and measures Go coverage on hand-written CLI and internal packages.
 
 ### Fixed
 

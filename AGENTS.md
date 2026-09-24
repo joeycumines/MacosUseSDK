@@ -35,7 +35,7 @@ swift test --filter TestClassName/testMethodName
 gmake go.test
 
 # Integration tests (requires macOS accessibility permissions)
-gmake go.test.integration
+gmake go.test.integration GO_TEST_FLAGS="-integration"
 ```
 
 ### Code Generation

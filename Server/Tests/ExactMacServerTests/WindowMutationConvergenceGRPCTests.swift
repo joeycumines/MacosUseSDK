@@ -339,7 +339,9 @@ private func makeWindowMutationFixture(minimized: Bool = false) async -> WindowM
         stateStore: stateStore,
         system: system,
         windowMutationConvergencePolicy: WindowMutationConvergencePolicy(
-            timeout: .milliseconds(40),
+            // Keep deadline assertions fast while leaving enough scheduler
+            // headroom for the full Swift test suite on loaded CI workers.
+            timeout: .milliseconds(250),
             pollInterval: .milliseconds(1),
             geometryTolerance: 0.5,
             stableReadCount: 2,

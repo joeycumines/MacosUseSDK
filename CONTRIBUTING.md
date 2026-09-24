@@ -118,10 +118,10 @@ Integration tests require macOS accessibility permissions and target Calculator,
 
 ```sh
 # Run all integration tests (requires permissions)
-gmake go.test.integration
+gmake go.test.integration GO_TEST_FLAGS="-integration"
 
 # Run specific integration test suite
-cd integration && go test -v -run TestCalculator ./...
+cd integration && go test -integration -v -run TestCalculator ./...
 ```
 
 **Important**: Integration and asynchronous state-convergence tests use `PollUntilContext` rather than arbitrary sleeps. Tests must assert state differences, not just "OK" status. Some lower-level transport tests may use timing primitives to test timeout behavior.

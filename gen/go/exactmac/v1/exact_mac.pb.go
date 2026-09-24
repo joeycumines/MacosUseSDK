@@ -1770,16 +1770,15 @@ type FindElementsRequest struct {
 	PageToken string `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	// Whether to search only visible elements.
 	VisibleOnly bool `protobuf:"varint,5,opt,name=visible_only,json=visibleOnly,proto3" json:"visible_only,omitempty"`
-	// If true, the server discards any cached element data for the target
-	// application's PID before traversing the accessibility tree, so the
-	// returned element IDs and metadata reflect the *current* UI state rather
-	// than possibly-stale cached data. Defaults to false for backward
-	// compatibility and performance. Set to true after interactions that may
-	// mutate the app's UI (e.g. typing into a text field, dismissing a
-	// sheet) when the next find_elements call must observe the new state.
-	// Element IDs returned by this call are guaranteed fresh; any callers
-	// holding previously-issued element IDs must re-resolve them with
-	// get_element or a subsequent find_elements.
+	// If true on an initial request (with no page_token), the server discards
+	// cached element data for the target application's PID before traversing the
+	// accessibility tree, so the returned element IDs and metadata reflect the
+	// current UI state rather than possibly-stale cached data. Continuations
+	// retain the existing element handles so page results remain stable. Defaults
+	// to false for compatibility and performance. Set to true after interactions
+	// that may mutate the app's UI when the next initial find_elements call must
+	// observe the new state. Callers holding previously-issued IDs must
+	// re-resolve them with get_element or a subsequent find_elements call.
 	CacheBypass bool `protobuf:"varint,6,opt,name=cache_bypass,json=cacheBypass,proto3" json:"cache_bypass,omitempty"`
 	// Number of individual resources to skip before returning this page.
 	// A continuation adds this value to the position encoded by page_token.
@@ -1943,16 +1942,15 @@ type FindRegionElementsRequest struct {
 	// query inputs, not page_size or skip; clients may change either when continuing.
 	// Its structure is opaque and must not be relied upon by clients.
 	PageToken string `protobuf:"bytes,5,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
-	// If true, the server discards any cached element data for the target
-	// application's PID before traversing the accessibility tree, so the
-	// returned element IDs and metadata reflect the *current* UI state rather
-	// than possibly-stale cached data. Defaults to false for backward
-	// compatibility and performance. Set to true after interactions that may
-	// mutate the app's UI (e.g. typing into a text field, dismissing a
-	// sheet) when the next find_region_elements call must observe the new
-	// state. Element IDs returned by this call are guaranteed fresh; any
-	// callers holding previously-issued element IDs must re-resolve them
-	// with get_element or a subsequent find_region_elements.
+	// If true on an initial request (with no page_token), the server discards
+	// cached element data for the target application's PID before traversing the
+	// accessibility tree, so the returned element IDs and metadata reflect the
+	// current UI state rather than possibly-stale cached data. Continuations
+	// retain the existing element handles so page results remain stable. Defaults
+	// to false for compatibility and performance. Set to true after interactions
+	// that may mutate the app's UI when the next initial find_region_elements call
+	// must observe the new state. Callers holding previously-issued IDs must
+	// re-resolve them with get_element or a subsequent find_region_elements call.
 	CacheBypass bool `protobuf:"varint,6,opt,name=cache_bypass,json=cacheBypass,proto3" json:"cache_bypass,omitempty"`
 	// Number of individual resources to skip before returning this page.
 	// A continuation adds this value to the position encoded by page_token.
@@ -7294,7 +7292,7 @@ type ExecuteAppleScriptRequest struct {
 	Script string `protobuf:"bytes,1,opt,name=script,proto3" json:"script,omitempty"`
 	// Timeout for script execution.
 	Timeout *durationpb.Duration `protobuf:"bytes,2,opt,name=timeout,proto3" json:"timeout,omitempty"`
-	// Whether to compile the script (for validation).
+	// Validate the script without executing it.
 	ValidationOnly bool `protobuf:"varint,3,opt,name=validation_only,json=validationOnly,proto3" json:"validation_only,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
@@ -7431,7 +7429,7 @@ type ExecuteJavaScriptRequest struct {
 	Script string `protobuf:"bytes,1,opt,name=script,proto3" json:"script,omitempty"`
 	// Timeout for script execution.
 	Timeout *durationpb.Duration `protobuf:"bytes,2,opt,name=timeout,proto3" json:"timeout,omitempty"`
-	// Whether to compile the script (for validation).
+	// Validate the script without executing it.
 	ValidationOnly bool `protobuf:"varint,3,opt,name=validation_only,json=validationOnly,proto3" json:"validation_only,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache

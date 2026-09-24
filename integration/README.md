@@ -13,16 +13,18 @@ These tests verify the complete system works correctly by:
 
 ## Running the Tests
 
+Integration tests are gated by `TestMain`. Ordinary `go test` discovery compiles the package but does not launch the server or golden applications; pass `-integration` to run the suite.
+
 ### Via Makefile
 
 ```sh
-gmake go.test.integration
+gmake go.test.integration GO_TEST_FLAGS="-integration"
 ```
 
 ### Manually
 
 ```sh
-go -C integration test -v -timeout 5m
+go -C integration test -integration -v -timeout 5m
 ```
 
 ### Using an External Server
@@ -31,16 +33,7 @@ If you want to test against a server that's already running:
 
 ```sh
 export INTEGRATION_SERVER_ADDR=localhost:50051
-cd integration
-go test -v -timeout 5m
-```
-
-### Skipping Integration Tests
-
-Set the `SKIP_INTEGRATION_TESTS` environment variable to skip these tests:
-
-```sh
-export SKIP_INTEGRATION_TESTS=1
+go -C integration test -integration -v -timeout 5m
 ```
 
 ## Requirements

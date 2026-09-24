@@ -771,16 +771,15 @@ public nonisolated struct Exactmac_V1_FindElementsRequest: Sendable {
   /// Whether to search only visible elements.
   public var visibleOnly: Bool = false
 
-  /// If true, the server discards any cached element data for the target
-  /// application's PID before traversing the accessibility tree, so the
-  /// returned element IDs and metadata reflect the *current* UI state rather
-  /// than possibly-stale cached data. Defaults to false for backward
-  /// compatibility and performance. Set to true after interactions that may
-  /// mutate the app's UI (e.g. typing into a text field, dismissing a
-  /// sheet) when the next find_elements call must observe the new state.
-  /// Element IDs returned by this call are guaranteed fresh; any callers
-  /// holding previously-issued element IDs must re-resolve them with
-  /// get_element or a subsequent find_elements.
+  /// If true on an initial request (with no page_token), the server discards
+  /// cached element data for the target application's PID before traversing the
+  /// accessibility tree, so the returned element IDs and metadata reflect the
+  /// current UI state rather than possibly-stale cached data. Continuations
+  /// retain the existing element handles so page results remain stable. Defaults
+  /// to false for compatibility and performance. Set to true after interactions
+  /// that may mutate the app's UI when the next initial find_elements call must
+  /// observe the new state. Callers holding previously-issued IDs must
+  /// re-resolve them with get_element or a subsequent find_elements call.
   public var cacheBypass: Bool = false
 
   /// Number of individual resources to skip before returning this page.
@@ -854,16 +853,15 @@ public nonisolated struct Exactmac_V1_FindRegionElementsRequest: Sendable {
   /// Its structure is opaque and must not be relied upon by clients.
   public var pageToken: String = String()
 
-  /// If true, the server discards any cached element data for the target
-  /// application's PID before traversing the accessibility tree, so the
-  /// returned element IDs and metadata reflect the *current* UI state rather
-  /// than possibly-stale cached data. Defaults to false for backward
-  /// compatibility and performance. Set to true after interactions that may
-  /// mutate the app's UI (e.g. typing into a text field, dismissing a
-  /// sheet) when the next find_region_elements call must observe the new
-  /// state. Element IDs returned by this call are guaranteed fresh; any
-  /// callers holding previously-issued element IDs must re-resolve them
-  /// with get_element or a subsequent find_region_elements.
+  /// If true on an initial request (with no page_token), the server discards
+  /// cached element data for the target application's PID before traversing the
+  /// accessibility tree, so the returned element IDs and metadata reflect the
+  /// current UI state rather than possibly-stale cached data. Continuations
+  /// retain the existing element handles so page results remain stable. Defaults
+  /// to false for compatibility and performance. Set to true after interactions
+  /// that may mutate the app's UI when the next initial find_region_elements call
+  /// must observe the new state. Callers holding previously-issued IDs must
+  /// re-resolve them with get_element or a subsequent find_region_elements call.
   public var cacheBypass: Bool = false
 
   /// Number of individual resources to skip before returning this page.
@@ -3226,7 +3224,7 @@ public nonisolated struct Exactmac_V1_ExecuteAppleScriptRequest: Sendable {
   /// Clears the value of `timeout`. Subsequent reads from it will return its default value.
   public mutating func clearTimeout() {self._timeout = nil}
 
-  /// Whether to compile the script (for validation).
+  /// Validate the script without executing it.
   public var validationOnly: Bool = false
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -3287,7 +3285,7 @@ public nonisolated struct Exactmac_V1_ExecuteJavaScriptRequest: Sendable {
   /// Clears the value of `timeout`. Subsequent reads from it will return its default value.
   public mutating func clearTimeout() {self._timeout = nil}
 
-  /// Whether to compile the script (for validation).
+  /// Validate the script without executing it.
   public var validationOnly: Bool = false
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()

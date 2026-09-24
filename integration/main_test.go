@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"errors"
+	"flag"
 	"fmt"
 	"net"
 	"os"
@@ -21,9 +22,10 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	// Check if we're running on macOS
-	if os.Getenv("SKIP_INTEGRATION_TESTS") != "" {
-		fmt.Println("Skipping integration tests (SKIP_INTEGRATION_TESTS is set)")
+	integrationEnabled := flag.Bool("integration", false, "run permission-dependent integration tests")
+	flag.Parse()
+	if !*integrationEnabled {
+		fmt.Println("Skipping integration tests (pass -integration to enable)")
 		os.Exit(0)
 	}
 
