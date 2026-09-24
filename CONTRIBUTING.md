@@ -137,6 +137,10 @@ The agent skill in `skills/exactmac/` ships as the `exactmac` Claude Code plugin
 
 Validate manifests with `claude plugin validate .` from the repo root. The manifests carry no `version` field, so updates follow the git SHA while the plugin is under active development.
 
+## Releases
+
+See [RELEASE_PROCESS.md](RELEASE_PROCESS.md) for the one-version, one-root-tag release process. The document describes future release steps; it does not create a release or tag.
+
 ## Test Guidelines
 
 ### Golden Application Constraint
